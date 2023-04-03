@@ -91,20 +91,20 @@ function CUI:InstallComplete()
 end
 
 local function InsertOptions()
-	Elv.Options.args[CUI.Cronix_Installer] = {
+	Elv.Options.args[CUI.Pluginname] = {
 		order = 100,
 		type = "group",
-		name = format("|cff4beb2c%s|r", CUI.Cronix_Installer),
+		name = format("|cff4beb2c%s|r", CUI.Pluginname),
 		args = {
 			header1 = {
 				order = 1,
 				type = "header",
-				name = CUI.Cronix_Installer,
+				name = CUI.Pluginname,
 			},
 			description1 = {
 				order = 2,
 				type = "description",
-				name = format("%s is a layout for ElvUI.", CUI.Cronix_Installer),
+				name = format("%s is a layout for ElvUI.", CUI.Pluginname),
 			},
 			spacer1 = {
 				order = 3,

@@ -53,7 +53,7 @@ CUI.InstallerData  = {
 			PluginInstallFrame.Option1:SetScript("OnClick", CUI.InstallComplete)
 			PluginInstallFrame.Option1:SetText("Finished")
 
-        end
+        end,
     },
     StepTitles = {
 		[1] = "Welcome",
