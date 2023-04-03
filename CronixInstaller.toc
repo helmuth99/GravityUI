@@ -1,0 +1,21 @@
+## Interface: 100007
+## Title: CronixInstaller
+## Notes: Installs the Cronix Interface
+## Author: Helimeisterb
+## RequiredDeps: ElvUI
+## Version: 0.0.1
+## DefaultState: enabled
+## SavedVariables: CronixUI_DB
+## OptionalDeps: Ace3
+
+#MAINFILE
+CronixInstaller.lua
+Components/Components.lua
+Components/Frame.lua
+
+#libs
+
+
+#all imports dumps
+Profiles/ElvDump.lua
+Profiles/PlaterDump.lua
