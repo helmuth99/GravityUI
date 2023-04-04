@@ -1,13 +1,13 @@
-local addon, CUI = ...
+local addon, engine = ...
 local Version = GetAddOnMetadata(addon, "Version")
 
-CUI = {};
+engine[1] = {};
 
-function CUI:unpack()
+function engine:unpack()
 	return self[1]
 end
 
-
+CUI = engine[1];
 
 
 local function tprintf(table)
