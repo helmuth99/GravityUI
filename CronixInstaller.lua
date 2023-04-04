@@ -1,11 +1,12 @@
-local addon, engine = ...
-engine[1] = {}
+local addon, CUI = ...
 local Version = GetAddOnMetadata(addon, "Version")
 
+CUI = {};
 
-function engine:unpack()
+function CUI:unpack()
 	return self[1]
 end
+
 
 
 
@@ -17,7 +18,6 @@ local function tprintf(table)
 	print("___End:__");
 end
  --globals
-CUI = engine[1];
 CronixUIAddon = LibStub("AceAddon-3.0"):NewAddon("CronixUI Installer");
 CronixUIAddon.db = LibStub("AceDB-3.0"):New("CronixUI_DB");
 CUI.Pluginname = "CronixInstaller"
@@ -138,7 +138,6 @@ local function InsertOptions()
 end
 
 function CronixUI:OnInitialize()
-	print("starting addon")
 	--disable the details tutorials
 	--[[Details:SetTutorialCVar ("STREAMER_PLUGIN_FIRSTRUN", true)
 	Details:SetTutorialCVar ("version_announce", 1)
@@ -153,7 +152,7 @@ function CronixUI:OnInitialize()
 	if Elv.private.install_complete and CronixUIAddon.db.profile.install_version == nil then
 
 		Elv.global.ignoreIncompatible = true;
-		print("queuing frame")
+		tprintf(CUI)
 		Elv:GetModule("PluginInstaller"):Queue(CUI.InstallerData)
 
 	end
