@@ -14,7 +14,7 @@ private.Profilename = "CronixUI"
 -- GLOBALS: PluginInstallStepComplete, PluginInstallFrame
 
 --Change this line and use a unique name for your plugin.
-local MyPluginName = "|cff3fc7ebCroniX UI|r"
+local MyPluginName = "|cff0097faCroniX UI|r"
 
 --Create references to ElvUI internals
 local E, L, V, P, G = unpack(ElvUI)
@@ -24,6 +24,7 @@ local EP = LibStub("LibElvUIPlugin-1.0")
 
 --Create a new ElvUI module so ElvUI can handle initialization when ready
 local mod = E:NewModule(MyPluginName, "AceHook-3.0", "AceEvent-3.0", "AceTimer-3.0");
+
 
 function private:GetResolution()
 	horizontal, vertical = GetPhysicalScreenSize()
@@ -45,9 +46,8 @@ local function SetupLayout()
 	--[[
 	--	This section at the bottom is just to update ElvUI and display a message
 	--]]
-	E:UpdateMedia();
 	--Update ElvUI
-	E:UpdateAll(true)
+	--E:UpdateAll(true)
 	--Show message about layout being set
 	PluginInstallStepComplete.message = "Layout Set"
 	PluginInstallStepComplete:Show()
@@ -63,6 +63,7 @@ local function InstallComplete()
 	--Set a variable tracking the version of the addon when layout was installed
 	E.db[MyPluginName].install_version = Version
 	
+	CronixUIDB["Version"] = Version
 
 	ReloadUI()
 end
@@ -75,10 +76,10 @@ local InstallerData = {
 	tutorialImage = "Interface/Addons/CronixInstaller/croniX_Logo.tga", --If you have a logo you want to use, otherwise it uses the one from ElvUI
 	Pages = {
 		[1] = function()
-			if (E.db[MyPluginName].install_version == Version) then
+			if (CronixUIDB["Version"] == Version) then
 				PluginInstallFrame.SubTitle:SetFormattedText("Welcome to the installation for the %s.", MyPluginName)
 				PluginInstallFrame.Desc1:SetText("You have already installed the latest version of " .. MyPluginName .. " you can go throught the installer again or skip the process")
-				PluginInstallFrame.Desc2:SetText("Your Version:" .. E.db[MyPluginName].install_version .. "    ---     " .. MyPluginName .. " Version: " ..Version)
+				PluginInstallFrame.Desc2:SetText("Your Version: " .. CronixUIDB["Version"] .. "    ---     " .. MyPluginName .. " Version: " ..Version)
 				PluginInstallFrame.Option1:Show()
 				PluginInstallFrame.Option1:SetScript("OnClick", function() InstallComplete() end)
 				PluginInstallFrame.Option1:SetText("Skip Process")
@@ -93,7 +94,7 @@ local InstallerData = {
 		end,
 		[2] = function()
 			PluginInstallFrame.SubTitle:SetText("Layouts")
-			PluginInstallFrame.Desc1:SetText("Please click the button below to install the CronixUI Elvui part. There are different versions for different resolution. ")
+			PluginInstallFrame.Desc1:SetText("Please click the button below to install the CronixUI Elvui part. The addon automatically installs eather the 1080p or 1440p version based on your resolution. \n Because of technical reasons the changes will only be visible after a reload.")
 			PluginInstallFrame.Desc2:SetText("Importance: |cff07D400High|r")
 			PluginInstallFrame.Option1:Show()
 			PluginInstallFrame.Option1:SetScript("OnClick", function() SetupLayout() end)
@@ -109,7 +110,7 @@ local InstallerData = {
 		end,
 		[4] = function()
 			PluginInstallFrame.SubTitle:SetText("Weakaura")
-			PluginInstallFrame.Desc1:SetText("Please click the button below to install the CronixUI Weakauren. |cffff0000Important:|r all of your installed Weakauren will be removed!")
+			PluginInstallFrame.Desc1:SetText("Please click the button below to install the CronixUI Weakauren. \n|cffff0000Important:|r all of your installed Weakauren will be removed!")
 			PluginInstallFrame.Desc2:SetText("Importance: |cff07D400High|r")
 			PluginInstallFrame.Option1:Show()
 			PluginInstallFrame.Option1:SetScript("OnClick", function() private:WeakauraInstall() end)
@@ -117,7 +118,7 @@ local InstallerData = {
 		end,
 		[5] = function() 
 			PluginInstallFrame.SubTitle:SetText("BigWigs")
-			PluginInstallFrame.Desc1:SetText("Please click the button below to install the CronixUI BigWigs part. |cffff0000Important:|r All of your current settings will be wiped, for all characters")
+			PluginInstallFrame.Desc1:SetText("Please click the button below to install the CronixUI BigWigs part. \n|cffff0000Important:|r All of your current settings will be wiped, for all characters")
 			PluginInstallFrame.Desc2:SetText("Importance: |cff00ffffLow|r")
 			PluginInstallFrame.Option1:Show()
 			PluginInstallFrame.Option1:SetScript("OnClick", function() private:BWInstall() end)
@@ -125,7 +126,7 @@ local InstallerData = {
 		end,
 		[6] = function()
 			PluginInstallFrame.SubTitle:SetText("Method Raid Tools")
-			PluginInstallFrame.Desc1:SetText("Please click the button below to install the CronixUI Method Raid Tools part. |cffff0000Important:|r All of your current settings will be wiped, for all characters")
+			PluginInstallFrame.Desc1:SetText("Please click the button below to install the CronixUI Method Raid Tools part. \n|cffff0000Important:|r All of your current settings will be wiped, for all characters")
 			PluginInstallFrame.Desc2:SetText("Importance: |cff00ffffLow|r")
 			PluginInstallFrame.Option1:Show()
 			PluginInstallFrame.Option1:SetScript("OnClick", function() private:MRTInstall() end)
@@ -157,7 +158,7 @@ local InstallerData = {
 		end,
 		[10] = function()
 			PluginInstallFrame.SubTitle:SetText("HidingBar")
-			PluginInstallFrame.Desc1:SetText("Please click the button below to install the CronixUI HidingBar part. |cffff0000Important:|r All of your current settings will be wiped, for all characters")
+			PluginInstallFrame.Desc1:SetText("Please click the button below to install the CronixUI HidingBar part. \n|cffff0000Important:|r All of your current settings will be wiped, for all characters")
 			PluginInstallFrame.Desc2:SetText("Importance: |cff00ffffLow|r")
 			PluginInstallFrame.Option1:Show()
 			PluginInstallFrame.Option1:SetScript("OnClick", function() private:HidingbarInstall() end)
@@ -177,7 +178,7 @@ local InstallerData = {
 			PluginInstallFrame.Desc2:SetText("Please click the button below in order to finalize the process and automatically reload your UI.")
 			PluginInstallFrame.Option1:Show()
 			PluginInstallFrame.Option1:SetScript("OnClick", function() InstallComplete() end)
-			PluginInstallFrame.Option1:SetText("Finished")
+			PluginInstallFrame.Option1:SetText("Finish")
 		end,
 	},
 	StepTitles = {
@@ -255,7 +256,13 @@ P[MyPluginName] = {}
 --This function will handle initialization of the addon
 function mod:Initialize()
 	--Initiate installation process if ElvUI install is complete and our plugin install has not yet been run
-	if E.private.install_complete and E.db[MyPluginName].install_version == nil then
+	if CronixUIDB == nil then
+		CronixUIDB = {
+			["Version"] = 0
+	}
+	end
+	
+	if E.private.install_complete and E.db[MyPluginName].install_version == nil and CronixUIDB["Version"] ~= Version then
 		E:GetModule("PluginInstaller"):Queue(InstallerData)
 	end
 

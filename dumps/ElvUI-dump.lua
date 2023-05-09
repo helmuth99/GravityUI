@@ -3608,38 +3608,62 @@ local ElvUiDump1080 ={
 }
 
 local function importglobalsetting()
+    ElvDB["global"]["datatexts"]["customPanels"]["Clock"] = {
+            ["border"] = false,
+            ["tooltipYOffset"] = 0,
+            ["numPoints"] = 2,
+            ["growth"] = "VERTICAL",
+            ["width"] = 120,
+            ["fonts"] = {
+                ["font"] = "Expressway",
+            },
+            ["name"] = "Clock",
+            ["frameStrata"] = "HIGH",
+            ["height"] = 30,
+            ["tooltipXOffset"] = 0,
+            ["backdrop"] = false,
+        }
+    ElvDB["global"]["datatexts"]["customPanels"]["Stuff"] = {
+            ["panelTransparency"] = true,
+            ["border"] = false,
+            ["growth"] = "VERTICAL",
+            ["width"] = 247,
+            ["fonts"] = {
+                ["font"] = "Expressway",
+            },
+            ["name"] = "Stuff",
+            ["height"] = 47,
+        }
+end
 
-    if ElvDB["global"]["datatexts"] == nil then
-        ElvDB["global"]["datatexts"] = {}
-    end
+local function importglobalsetting1080()
+    ElvDB["global"]["datatexts"]["customPanels"]["Clock"] = {
+            ["border"] = false,
+            ["tooltipYOffset"] = 0,
+            ["numPoints"] = 2,
+            ["growth"] = "VERTICAL",
+            ["width"] = 195,
+            ["fonts"] = {
+                ["font"] = "Expressway",
+            },
+            ["name"] = "Clock",
+            ["frameStrata"] = "HIGH",
+            ["height"] = 30,
+            ["tooltipXOffset"] = 0,
+            ["backdrop"] = false,
+        }
 
-    ElvDB["global"]["datatexts"]["Clock"] = {
-        ["border"] = false,
-        ["tooltipYOffset"] = 0,
-        ["numPoints"] = 2,
-        ["frameStrata"] = "HIGH",
-        ["width"] = 120,
-        ["fonts"] = {
-            ["font"] = "Expressway",
-        },
-        ["growth"] = "VERTICAL",
-        ["name"] = "Clock",
-        ["backdrop"] = false,
-        ["height"] = 30,
-        ["tooltipXOffset"] = 0,
-    }
-
-    ElvDB["global"]["datatexts"]["Stuff"] = {
-        ["panelTransparency"] = true,
-        ["border"] = false,
-        ["growth"] = "VERTICAL",
-        ["width"] = 247,
-        ["fonts"] = {
-            ["font"] = "Expressway",
-        },
-        ["name"] = "Stuff",
-        ["height"] = 47,
-    }
+    ElvDB["global"]["datatexts"]["customPanels"]["Stuff"] = {
+            ["panelTransparency"] = true,
+            ["border"] = false,
+            ["growth"] = "VERTICAL",
+            ["width"] = 201,
+            ["fonts"] = {
+                ["font"] = "Expressway",
+            },
+            ["name"] = "Stuff",
+            ["height"] = 47,
+        }
 end
 
 function private:Elvinstall()
@@ -3651,11 +3675,13 @@ function private:Elvinstall()
         ElvDB["profiles"][private.Profilename] = ElvUiDump1440
         importglobalsetting()
         ElvUI[1].data:SetProfile(private.Profilename)
+        
     else
         ElvDB["global"]["general"]["UIScale"] = 0.71 
         ElvDB["profiles"][private.Profilename] = ElvUiDump1080 
-        importglobalsetting()
+        importglobalsetting1080()
         ElvUI[1].data:SetProfile(private.Profilename)
+        
     end
 
 end

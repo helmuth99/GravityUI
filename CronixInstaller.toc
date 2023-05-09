@@ -3,10 +3,10 @@
 ## Notes: Installs the Cronix Interface
 ## Author: Helimeisterb
 ## RequiredDeps: ElvUI, 
-## OptionalDeps: Plater, WeakAuras, MRT, WarpDeplete, AdiBags, Details, HidingBar, OmniCD
-## Version: 0.0.2
+## OptionalDeps: Plater, WeakAuras, MRT, WarpDeplete, AdiBags, Details, HidingBar, OmniCD, BigWigs
+## Version: 0.1.0
 ## DefaultState: enabled
-## SavedVariables:
+## SavedVariables: CronixUIDB
 
 Code.lua
 
