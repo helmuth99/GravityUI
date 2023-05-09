@@ -1,23 +1,23 @@
-## Interface: 100007
+## Interface: 100100
 ## Title: CronixInstaller
 ## Notes: Installs the Cronix Interface
 ## Author: Helimeisterb
-## RequiredDeps: ElvUI
-## Version: 0.0.1
+## RequiredDeps: ElvUI, 
+## OptionalDeps: Plater, WeakAuras, MRT, WarpDeplete, AdiBags, Details, HidingBar, OmniCD
+## Version: 0.0.2
 ## DefaultState: enabled
-## SavedVariables: CronixUI_DB
-## OptionalDeps: Ace3
+## SavedVariables:
 
-#MAINFILE
-CronixInstaller.lua
+Code.lua
 
-
-Components/Components.lua
-Components/Frame.lua
-
-#libs
-
-
-#all imports dumps
-Profiles/ElvDump.lua
-Profiles/PlaterDump.lua
+#all import dumps
+dumps/ElvUI-dump.lua
+dumps/Plater-dump.lua
+dumps/Weakaura-dump.lua
+dumps/MRT-dump.lua
+dumps/BigWigs-dump.lua
+dumps/AdiBags-dump.lua
+dumps/WarpDeplete-dump.lua
+dumps/OmniCD-dump.lua
+dumps/HidingBar-dump.lua
+dumps/Details-dump.lua
