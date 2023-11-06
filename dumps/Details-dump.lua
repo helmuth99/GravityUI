@@ -362,7 +362,7 @@ local Detailsdump = {
         ["fontsize_title"] = 10,
         ["commands"] = {
         },
-        ["fontface"] = "Naowh",
+        ["fontface"] = "Cronix",
         ["border_color"] = {
             0, -- [1]
             0, -- [2]
@@ -447,7 +447,7 @@ local Detailsdump = {
     ["numerical_system_symbols"] = "auto",
     ["report_schema"] = 1,
     ["font_faces"] = {
-        ["menus"] = "Naowh",
+        ["menus"] = "Cronix",
     },
     ["death_tooltip_width"] = 350,
     ["time_type"] = 2,
@@ -511,7 +511,7 @@ local Detailsdump = {
                 ["text_yoffset"] = 0,
                 ["texture_background_class_color"] = false,
                 ["start_after_icon"] = false,
-                ["font_face_file"] = "Interface\\Addons\\SharedMedia_MyMedia\\font\\Naowh.ttf",
+                ["font_face_file"] = "Interface\\Addons\\SharedMedia_MyMedia\\font\\Cronix.ttf",
                 ["faction_icon_size_offset"] = -10,
                 ["textL_custom_text"] = "{data1}. {data3}{data2}",
                 ["height"] = 23,
@@ -595,7 +595,7 @@ local Detailsdump = {
                     0, -- [2]
                 },
                 ["textR_bracket"] = "(",
-                ["font_face"] = "Naowh",
+                ["font_face"] = "Cronix",
                 ["texture_class_colors"] = true,
                 ["space"] = {
                     ["right"] = 0,
@@ -877,7 +877,7 @@ local Detailsdump = {
                 },
                 ["custom_text"] = "{name}",
                 ["show_timer_arena"] = true,
-                ["text_face"] = "Naowh",
+                ["text_face"] = "Cronix",
                 ["show_timer_always"] = false,
                 ["show_timer"] = true,
                 ["anchor"] = {
@@ -1003,7 +1003,7 @@ local Detailsdump = {
                 ["text_yoffset"] = 0,
                 ["texture_background_class_color"] = false,
                 ["start_after_icon"] = false,
-                ["font_face_file"] = "Interface\\Addons\\SharedMedia_MyMedia\\font\\Naowh.ttf",
+                ["font_face_file"] = "Interface\\Addons\\SharedMedia_MyMedia\\font\\Cronix.ttf",
                 ["faction_icon_size_offset"] = -10,
                 ["textL_custom_text"] = "{data1}. {data3}{data2}",
                 ["height"] = 23,
@@ -1087,7 +1087,7 @@ local Detailsdump = {
                     0, -- [2]
                 },
                 ["textR_bracket"] = "(",
-                ["font_face"] = "Naowh",
+                ["font_face"] = "Cronix",
                 ["texture_class_colors"] = true,
                 ["space"] = {
                     ["right"] = 0,
@@ -1369,7 +1369,7 @@ local Detailsdump = {
                 },
                 ["custom_text"] = "{name}",
                 ["show_timer_arena"] = true,
-                ["text_face"] = "Naowh",
+                ["text_face"] = "Cronix",
                 ["show_timer_always"] = false,
                 ["show_timer"] = true,
                 ["anchor"] = {
@@ -2156,7 +2156,7 @@ local Detailsdump1080 = {
         ["fontsize_title"] = 10,
         ["commands"] = {
         },
-        ["fontface"] = "Naowh",
+        ["fontface"] = "Cronix",
         ["border_color"] = {
             0, -- [1]
             0, -- [2]
@@ -2272,7 +2272,7 @@ local Detailsdump1080 = {
     ["class_icons_small"] = "Interface\\AddOns\\Details\\images\\classes_small",
     ["force_activity_time_pvp"] = true,
     ["font_faces"] = {
-        ["menus"] = "Naowh",
+        ["menus"] = "Cronix",
     },
     ["pvp_as_group"] = true,
     ["numerical_system"] = 1,
@@ -2648,7 +2648,7 @@ local Detailsdump1080 = {
                 ["text_yoffset"] = 0,
                 ["texture_background_class_color"] = false,
                 ["start_after_icon"] = false,
-                ["font_face_file"] = "Interface\\Addons\\SharedMedia_MyMedia\\font\\Naowh.ttf",
+                ["font_face_file"] = "Interface\\Addons\\SharedMedia_MyMedia\\font\\Cronix.ttf",
                 ["faction_icon_size_offset"] = -10,
                 ["textL_custom_text"] = "{data1}. {data3}{data2}",
                 ["height"] = 23,
@@ -2724,7 +2724,7 @@ local Detailsdump1080 = {
                     0, -- [2]
                 },
                 ["icon_file"] = "Interface\\AddOns\\Details\\images\\classes",
-                ["font_face"] = "Naowh",
+                ["font_face"] = "Cronix",
                 ["texture_class_colors"] = true,
                 ["textL_outline_small_color"] = {
                     0, -- [1]
@@ -3014,7 +3014,7 @@ local Detailsdump1080 = {
                 },
                 ["custom_text"] = "{name}",
                 ["show_timer_arena"] = true,
-                ["text_face"] = "Naowh",
+                ["text_face"] = "Cronix",
                 ["show_timer_always"] = false,
                 ["show_timer"] = true,
                 ["anchor"] = {
@@ -3140,7 +3140,7 @@ local Detailsdump1080 = {
                 ["text_yoffset"] = 0,
                 ["texture_background_class_color"] = false,
                 ["start_after_icon"] = false,
-                ["font_face_file"] = "Interface\\Addons\\SharedMedia_MyMedia\\font\\Naowh.ttf",
+                ["font_face_file"] = "Interface\\Addons\\SharedMedia_MyMedia\\font\\Cronix.ttf",
                 ["faction_icon_size_offset"] = -10,
                 ["textL_custom_text"] = "{data1}. {data3}{data2}",
                 ["height"] = 23,
@@ -3216,7 +3216,7 @@ local Detailsdump1080 = {
                     0, -- [2]
                 },
                 ["icon_file"] = "Interface\\AddOns\\Details\\images\\classes",
-                ["font_face"] = "Naowh",
+                ["font_face"] = "Cronix",
                 ["texture_class_colors"] = true,
                 ["textL_outline_small_color"] = {
                     0, -- [1]
@@ -3506,7 +3506,7 @@ local Detailsdump1080 = {
                 },
                 ["custom_text"] = "{name}",
                 ["show_timer_arena"] = true,
-                ["text_face"] = "Naowh",
+                ["text_face"] = "Cronix",
                 ["show_timer_always"] = false,
                 ["show_timer"] = true,
                 ["anchor"] = {

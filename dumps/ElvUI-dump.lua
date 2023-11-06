@@ -7,13 +7,13 @@ local ElvUiDump1440 = {
             ["backdropSpacing"] = 1,
             ["buttonSize"] = 30,
             ["buttonSpacing"] = 1,
-            ["countFont"] = "Expressway",
+            ["countFont"] = "Cronix",
             ["countFontOutline"] = "OUTLINE",
             ["countFontSize"] = 12,
-            ["hotkeyFont"] = "Expressway",
+            ["hotkeyFont"] = "Cronix",
             ["hotkeyFontOutline"] = "OUTLINE",
             ["hotkeyFontSize"] = 12,
-            ["macroFont"] = "Expressway",
+            ["macroFont"] = "Cronix",
             ["macroFontOutline"] = "OUTLINE",
             ["macroTextPosition"] = "BOTTOMLEFT",
             ["macroTextYOffset"] = 0,
@@ -31,14 +31,14 @@ local ElvUiDump1440 = {
         },
         ["bar10"] = {
             ["buttonsPerRow"] = 2,
-            ["countFont"] = "Expressway",
+            ["countFont"] = "Cronix",
             ["countFontOutline"] = "OUTLINE",
             ["countFontSize"] = 12,
             ["enabled"] = true,
-            ["hotkeyFont"] = "Expressway",
+            ["hotkeyFont"] = "Cronix",
             ["hotkeyFontOutline"] = "OUTLINE",
             ["hotkeyFontSize"] = 12,
-            ["macroFont"] = "Expressway",
+            ["macroFont"] = "Cronix",
             ["macroFontOutline"] = "OUTLINE",
             ["macroTextPosition"] = "BOTTOMLEFT",
             ["macroTextYOffset"] = 0,
@@ -52,7 +52,7 @@ local ElvUiDump1440 = {
             },
         },
         ["bar13"] = {
-            ["macroFont"] = "Expressway",
+            ["macroFont"] = "Cronix",
             ["macroTextPosition"] = "BOTTOMLEFT",
             ["macroTextYOffset"] = 0,
             ["macrotext"] = true,
@@ -64,7 +64,7 @@ local ElvUiDump1440 = {
             },
         },
         ["bar14"] = {
-            ["macroFont"] = "Expressway",
+            ["macroFont"] = "Cronix",
             ["macroTextPosition"] = "BOTTOMLEFT",
             ["macroTextYOffset"] = 0,
             ["macrotext"] = true,
@@ -79,7 +79,7 @@ local ElvUiDump1440 = {
             ["buttonSize"] = 20,
             ["clickThrough"] = true,
             ["enabled"] = true,
-            ["macroFont"] = "Expressway",
+            ["macroFont"] = "Cronix",
             ["macroTextPosition"] = "BOTTOMLEFT",
             ["macroTextYOffset"] = 0,
             ["macrotext"] = true,
@@ -93,17 +93,16 @@ local ElvUiDump1440 = {
             ["showGrid"] = false,
         },
         ["bar2"] = {
-            ["buttonSize"] = 30,
             ["buttonSpacing"] = 1,
             ["buttonsPerRow"] = 2,
-            ["countFont"] = "Expressway",
+            ["countFont"] = "Cronix",
             ["countFontOutline"] = "OUTLINE",
             ["countFontSize"] = 12,
             ["enabled"] = true,
-            ["hotkeyFont"] = "Expressway",
+            ["hotkeyFont"] = "Cronix",
             ["hotkeyFontOutline"] = "OUTLINE",
             ["hotkeyFontSize"] = 12,
-            ["macroFont"] = "Expressway",
+            ["macroFont"] = "Cronix",
             ["macroFontOutline"] = "OUTLINE",
             ["macroTextPosition"] = "BOTTOMLEFT",
             ["macroTextYOffset"] = 0,
@@ -122,13 +121,13 @@ local ElvUiDump1440 = {
             ["buttonSpacing"] = 1,
             ["buttons"] = 12,
             ["buttonsPerRow"] = 2,
-            ["countFont"] = "Expressway",
+            ["countFont"] = "Cronix",
             ["countFontOutline"] = "OUTLINE",
             ["countFontSize"] = 12,
-            ["hotkeyFont"] = "Expressway",
+            ["hotkeyFont"] = "Cronix",
             ["hotkeyFontOutline"] = "OUTLINE",
             ["hotkeyFontSize"] = 12,
-            ["macroFont"] = "Expressway",
+            ["macroFont"] = "Cronix",
             ["macroFontOutline"] = "OUTLINE",
             ["macroTextPosition"] = "BOTTOMLEFT",
             ["macroTextYOffset"] = 0,
@@ -147,13 +146,13 @@ local ElvUiDump1440 = {
             ["buttonSize"] = 30,
             ["buttonSpacing"] = 1,
             ["buttonsPerRow"] = 6,
-            ["countFont"] = "Expressway",
+            ["countFont"] = "Cronix",
             ["countFontOutline"] = "OUTLINE",
             ["countFontSize"] = 12,
-            ["hotkeyFont"] = "Expressway",
+            ["hotkeyFont"] = "Cronix",
             ["hotkeyFontOutline"] = "OUTLINE",
             ["hotkeyFontSize"] = 12,
-            ["macroFont"] = "Expressway",
+            ["macroFont"] = "Cronix",
             ["macroFontOutline"] = "OUTLINE",
             ["macroTextPosition"] = "BOTTOMLEFT",
             ["macroTextYOffset"] = 0,
@@ -172,13 +171,13 @@ local ElvUiDump1440 = {
             ["buttonSpacing"] = 1,
             ["buttons"] = 12,
             ["buttonsPerRow"] = 12,
-            ["countFont"] = "Expressway",
+            ["countFont"] = "Cronix",
             ["countFontOutline"] = "OUTLINE",
             ["countFontSize"] = 12,
-            ["hotkeyFont"] = "Expressway",
+            ["hotkeyFont"] = "Cronix",
             ["hotkeyFontOutline"] = "OUTLINE",
             ["hotkeyFontSize"] = 12,
-            ["macroFont"] = "Expressway",
+            ["macroFont"] = "Cronix",
             ["macroFontOutline"] = "OUTLINE",
             ["macroTextPosition"] = "BOTTOMLEFT",
             ["macroTextYOffset"] = 0,
@@ -194,14 +193,14 @@ local ElvUiDump1440 = {
             ["buttonSize"] = 30,
             ["buttonSpacing"] = 1,
             ["buttonsPerRow"] = 6,
-            ["countFont"] = "Expressway",
+            ["countFont"] = "Cronix",
             ["countFontOutline"] = "OUTLINE",
             ["countFontSize"] = 12,
             ["enabled"] = true,
-            ["hotkeyFont"] = "Expressway",
+            ["hotkeyFont"] = "Cronix",
             ["hotkeyFontOutline"] = "OUTLINE",
             ["hotkeyFontSize"] = 12,
-            ["macroFont"] = "Expressway",
+            ["macroFont"] = "Cronix",
             ["macroFontOutline"] = "OUTLINE",
             ["macroTextPosition"] = "BOTTOMLEFT",
             ["macroTextYOffset"] = 0,
@@ -218,14 +217,14 @@ local ElvUiDump1440 = {
         ["bar7"] = {
             ["buttonSize"] = 30,
             ["buttonSpacing"] = 1,
-            ["countFont"] = "Expressway",
+            ["countFont"] = "Cronix",
             ["countFontOutline"] = "OUTLINE",
             ["countFontSize"] = 12,
             ["enabled"] = true,
-            ["hotkeyFont"] = "Expressway",
+            ["hotkeyFont"] = "Cronix",
             ["hotkeyFontOutline"] = "OUTLINE",
             ["hotkeyFontSize"] = 12,
-            ["macroFont"] = "Expressway",
+            ["macroFont"] = "Cronix",
             ["macroFontOutline"] = "OUTLINE",
             ["macroTextPosition"] = "BOTTOMLEFT",
             ["macroTextYOffset"] = 0,
@@ -239,14 +238,14 @@ local ElvUiDump1440 = {
         },
         ["bar8"] = {
             ["buttons"] = 4,
-            ["countFont"] = "Expressway",
+            ["countFont"] = "Cronix",
             ["countFontOutline"] = "OUTLINE",
             ["countFontSize"] = 12,
             ["enabled"] = true,
-            ["hotkeyFont"] = "Expressway",
+            ["hotkeyFont"] = "Cronix",
             ["hotkeyFontOutline"] = "OUTLINE",
             ["hotkeyFontSize"] = 12,
-            ["macroFont"] = "Expressway",
+            ["macroFont"] = "Cronix",
             ["macroFontOutline"] = "OUTLINE",
             ["macroTextPosition"] = "BOTTOMLEFT",
             ["macroTextYOffset"] = 0,
@@ -262,14 +261,14 @@ local ElvUiDump1440 = {
         ["bar9"] = {
             ["buttonSize"] = 30,
             ["buttonSpacing"] = 1,
-            ["countFont"] = "Expressway",
+            ["countFont"] = "Cronix",
             ["countFontOutline"] = "OUTLINE",
             ["countFontSize"] = 12,
             ["enabled"] = true,
-            ["hotkeyFont"] = "Expressway",
+            ["hotkeyFont"] = "Cronix",
             ["hotkeyFontOutline"] = "OUTLINE",
             ["hotkeyFontSize"] = 12,
-            ["macroFont"] = "Expressway",
+            ["macroFont"] = "Cronix",
             ["macroFontOutline"] = "OUTLINE",
             ["macroTextPosition"] = "BOTTOMLEFT",
             ["macroTextYOffset"] = 0,
@@ -286,10 +285,10 @@ local ElvUiDump1440 = {
             ["buttonSize"] = 30,
             ["buttonSpacing"] = 3,
             ["buttonsPerRow"] = 5,
-            ["countFont"] = "Expressway",
+            ["countFont"] = "Cronix",
             ["countFontOutline"] = "OUTLINE",
             ["countFontSize"] = 12,
-            ["hotkeyFont"] = "Expressway",
+            ["hotkeyFont"] = "Cronix",
             ["hotkeyFontOutline"] = "OUTLINE",
             ["hotkeyFontSize"] = 12,
             ["mouseover"] = true,
@@ -300,7 +299,7 @@ local ElvUiDump1440 = {
             ["checkSeconds"] = true,
             ["fonts"] = {
                 ["enable"] = true,
-                ["font"] = "Expressway",
+                ["font"] = "Cronix",
                 ["fontSize"] = 14,
             },
             ["threshold"] = -1,
@@ -308,11 +307,11 @@ local ElvUiDump1440 = {
         ["desaturateOnCooldown"] = true,
         ["extraActionButton"] = {
             ["clean"] = true,
-            ["hotkeyFont"] = "Expressway",
+            ["hotkeyFont"] = "Cronix",
             ["hotkeyFontOutline"] = "OUTLINE",
             ["hotkeyFontSize"] = 12,
         },
-        ["font"] = "Expressway",
+        ["font"] = "Cronix",
         ["fontOutline"] = "OUTLINE",
         ["fontSize"] = 12,
         ["globalFadeAlpha"] = 1,
@@ -326,27 +325,27 @@ local ElvUiDump1440 = {
         ["stanceBar"] = {
             ["buttonSize"] = 28,
             ["enabled"] = false,
-            ["hotkeyFont"] = "Expressway",
+            ["hotkeyFont"] = "Cronix",
             ["hotkeyFontOutline"] = "OUTLINE",
             ["hotkeyFontSize"] = 12,
         },
         ["transparent"] = true,
         ["useDrawSwipeOnCharges"] = true,
         ["vehicleExitButton"] = {
-            ["hotkeyFont"] = "Expressway",
+            ["hotkeyFont"] = "Cronix",
             ["hotkeyFontOutline"] = "OUTLINE",
             ["hotkeyFontSize"] = 12,
         },
     },
     ["auras"] = {
         ["buffs"] = {
-            ["countFont"] = "Expressway",
+            ["countFont"] = "Cronix",
             ["countFontOutline"] = "OUTLINE",
             ["countFontSize"] = 14,
             ["countXOffset"] = -8,
             ["countYOffset"] = 24,
             ["horizontalSpacing"] = 3,
-            ["timeFont"] = "Expressway",
+            ["timeFont"] = "Cronix",
             ["timeFontOutline"] = "OUTLINE",
             ["timeFontSize"] = 14,
             ["timeYOffset"] = 8,
@@ -356,32 +355,35 @@ local ElvUiDump1440 = {
             ["threshold"] = -1,
         },
         ["debuffs"] = {
-            ["countFont"] = "Expressway",
+            ["countFont"] = "Cronix",
             ["countFontOutline"] = "OUTLINE",
             ["countFontSize"] = 14,
             ["countXOffset"] = -8,
             ["countYOffset"] = 24,
             ["horizontalSpacing"] = 3,
-            ["timeFont"] = "Expressway",
+            ["timeFont"] = "Cronix",
             ["timeFontOutline"] = "OUTLINE",
             ["timeFontSize"] = 14,
             ["timeYOffset"] = 8,
         },
     },
     ["bags"] = {
+        ["bagBar"] = {
+            ["font"] = "Cronix",
+        },
         ["bagSize"] = 33,
         ["cooldown"] = {
             ["fonts"] = {
                 ["enable"] = true,
-                ["font"] = "GothamNarrowUltra",
+                ["font"] = "Cronix",
             },
         },
-        ["countFont"] = "Expressway",
+        ["countFont"] = "Cronix",
         ["countFontOutline"] = "OUTLINE",
         ["countFontSize"] = 12,
-        ["itemInfoFont"] = "Expressway",
+        ["itemInfoFont"] = "Cronix",
         ["itemInfoFontOutline"] = "OUTLINE",
-        ["itemLevelFont"] = "Expressway",
+        ["itemLevelFont"] = "Cronix",
         ["itemLevelFontOutline"] = "OUTLINE",
         ["itemLevelFontSize"] = 12,
         ["moneyFormat"] = "BLIZZARD",
@@ -393,18 +395,24 @@ local ElvUiDump1440 = {
         ["chatHistory"] = false,
         ["editBoxPosition"] = "ABOVE_CHAT",
         ["emotionIcons"] = false,
-        ["font"] = "Expressway",
+        ["font"] = "Cronix",
         ["fontSize"] = 12,
         ["lfgIcons"] = false,
-        ["panelBackdrop"] = "HIDEBOTH",
+        ["panelBackdrop"] = "LEFT",
+        ["panelColor"] = {
+            ["a"] = 0.25530517101288,
+            ["b"] = 0,
+            ["g"] = 0,
+            ["r"] = 0,
+        },
         ["panelHeight"] = 230,
         ["panelHeightRight"] = 230,
+        ["panelTabTransparency"] = true,
         ["panelWidth"] = 445,
         ["panelWidthRight"] = 230,
         ["separateSizes"] = true,
-        ["tabFont"] = "Expressway",
+        ["tabFont"] = "Cronix",
         ["tabFontOutline"] = "OUTLINE",
-        ["tabFontSize"] = 11,
         ["tabSelector"] = "NONE",
     },
     ["convertPages"] = true,
@@ -412,7 +420,7 @@ local ElvUiDump1440 = {
         ["checkSeconds"] = true,
         ["fonts"] = {
             ["enable"] = true,
-            ["font"] = "Expressway",
+            ["font"] = "Cronix",
         },
         ["secondsColor"] = {
             ["b"] = 1,
@@ -423,7 +431,7 @@ local ElvUiDump1440 = {
     ["databars"] = {
         ["azerite"] = {
             ["enable"] = false,
-            ["font"] = "Expressway",
+            ["font"] = "Cronix",
             ["fontOutline"] = "OUTLINE",
             ["fontSize"] = 16,
             ["height"] = 5,
@@ -435,8 +443,9 @@ local ElvUiDump1440 = {
                 ["a"] = 1,
             },
         },
+        ["customTexture"] = true,
         ["experience"] = {
-            ["font"] = "Expressway",
+            ["font"] = "Cronix",
             ["fontOutline"] = "OUTLINE",
             ["fontSize"] = 14,
             ["height"] = 24,
@@ -445,12 +454,12 @@ local ElvUiDump1440 = {
         },
         ["honor"] = {
             ["enable"] = false,
-            ["font"] = "Expressway",
+            ["font"] = "Cronix",
             ["fontOutline"] = "OUTLINE",
         },
         ["reputation"] = {
             ["enable"] = true,
-            ["font"] = "Expressway",
+            ["font"] = "Cronix",
             ["fontOutline"] = "OUTLINE",
             ["fontSize"] = 14,
             ["height"] = 24,
@@ -460,17 +469,18 @@ local ElvUiDump1440 = {
         ["statusbar"] = "Melli",
         ["threat"] = {
             ["enable"] = false,
+            ["font"] = "Cronix",
         },
     },
     ["datatexts"] = {
-        ["font"] = "Expressway",
+        ["font"] = "Cronix",
         ["fontOutline"] = "OUTLINE",
         ["panels"] = {
             ["Clock"] = {
-                "Time", -- [1]
-                "System", -- [2]
-                ["enable"] = true,
+                [1] = "Time",
+                [2] = "System",
                 ["battleground"] = false,
+                ["enable"] = true,
             },
             ["LeftChatDataPanel"] = {
                 ["2"] = "System",
@@ -499,8 +509,11 @@ local ElvUiDump1440 = {
         },
     },
     ["general"] = {
+        ["addonCompartment"] = {
+            ["font"] = "Cronix",
+        },
         ["altPowerBar"] = {
-            ["font"] = "Expressway",
+            ["font"] = "Cronix",
             ["fontSize"] = 14,
             ["statusBar"] = "Melli",
         },
@@ -513,16 +526,16 @@ local ElvUiDump1440 = {
         },
         ["bottomPanel"] = false,
         ["decimalLength"] = 0,
-        ["font"] = "Expressway",
+        ["font"] = "Cronix",
         ["interruptAnnounce"] = "SAY",
         ["itemLevel"] = {
-            ["itemLevelFont"] = "Expressway",
+            ["itemLevelFont"] = "Cronix",
         },
         ["loginmessage"] = false,
         ["lootRoll"] = {
             ["buttonSize"] = 24,
             ["height"] = 40,
-            ["nameFont"] = "Expressway",
+            ["nameFont"] = "Cronix",
             ["qualityItemLevel"] = true,
             ["qualityName"] = true,
             ["statusBarTexture"] = "Melli",
@@ -537,16 +550,15 @@ local ElvUiDump1440 = {
                     ["xOffset"] = -2,
                     ["yOffset"] = -2,
                 },
-                ["queueStatus"] = {
-                    ["font"] = "Expressway",
-                    ["fontSize"] = 12,
-                },
             },
-            ["locationFont"] = "Expressway",
+            ["locationFont"] = "Cronix",
             ["size"] = 220,
-            ["timeFont"] = "Expressway",
+            ["timeFont"] = "Cronix",
         },
         ["objectiveFrameHeight"] = 450,
+        ["queueStatus"] = {
+            ["font"] = "Cronix",
+        },
         ["resurrectSound"] = true,
         ["totems"] = {
             ["growthDirection"] = "HORIZONTAL",
@@ -559,15 +571,15 @@ local ElvUiDump1440 = {
         },
     },
     ["movers"] = {
-        ["AlertFrameMover"] = "TOPRIGHT,UIParent,TOPRIGHT,-435,-501",
+        ["AlertFrameMover"] = "BOTTOMRIGHT,UIParent,BOTTOMRIGHT,-338,559",
         ["AltPowerBarMover"] = "BOTTOM,ElvUIParent,BOTTOM,0,178",
         ["ArenaHeaderMover"] = "TOPRIGHT,ElvUIParent,TOPRIGHT,-457,-373",
         ["ArtifactBarMover"] = "TOP,ElvUIParent,TOP,0,-4",
         ["AzeriteBarMover"] = "TOP,ElvUIParent,TOP,0,-7",
         ["BNETMover"] = "TOPLEFT,UIParent,TOPLEFT,4,-4",
-        ["BelowMinimapContainerMover"] = "TOPRIGHT,UIParent,TOPRIGHT,-354,-319",
+        ["BelowMinimapContainerMover"] = "TOPRIGHT,UIParent,TOPRIGHT,-365,-320",
         ["BossButton"] = "BOTTOM,ElvUIParent,BOTTOM,273,124",
-        ["BossHeaderMover"] = "TOPRIGHT,UIParent,TOPRIGHT,-455,-461",
+        ["BossHeaderMover"] = "TOPRIGHT,UIParent,TOPRIGHT,-357,-438",
         ["BuffsMover"] = "TOPRIGHT,ElvUIParent,TOPRIGHT,-237,-5",
         ["ClassBarMover"] = "BOTTOM,ElvUIParent,BOTTOM,0,513",
         ["ComboBarMover"] = "BOTTOM,ElvUIParent,BOTTOM,0,325",
@@ -579,14 +591,14 @@ local ElvUiDump1440 = {
         ["ElvAB_10"] = "BOTTOMRIGHT,ElvUIParent,BOTTOMRIGHT,-257,4",
         ["ElvAB_13"] = "BOTTOMRIGHT,UIParent,BOTTOMRIGHT,-166,499",
         ["ElvAB_14"] = "BOTTOMRIGHT,UIParent,BOTTOMRIGHT,-166,469",
-        ["ElvAB_15"] = "TOPLEFT,UIParent,TOPLEFT,203,-4",
-        ["ElvAB_2"] = "BOTTOMLEFT,ElvUIParent,BOTTOMLEFT,453,4",
+        ["ElvAB_15"] = "TOPLEFT,UIParent,TOPLEFT,4,-71",
+        ["ElvAB_2"] = "BOTTOMLEFT,ElvUIParent,BOTTOMLEFT,450,4",
         ["ElvAB_3"] = "BOTTOMRIGHT,UIParent,BOTTOMRIGHT,-257,235",
         ["ElvAB_4"] = "BOTTOM,ElvUIParent,BOTTOM,-90,0",
         ["ElvAB_5"] = "BOTTOM,ElvUIParent,BOTTOM,0,91",
         ["ElvAB_6"] = "BOTTOM,ElvUIParent,BOTTOM,91,0",
         ["ElvAB_7"] = "BOTTOM,ElvUIParent,BOTTOM,0,120",
-        ["ElvAB_8"] = "BOTTOMLEFT,UIParent,BOTTOMLEFT,453,182",
+        ["ElvAB_8"] = "BOTTOMLEFT,ElvUIParent,BOTTOMLEFT,450,202",
         ["ElvAB_9"] = "BOTTOM,ElvUIParent,BOTTOM,0,150",
         ["ElvUF_AssistMover"] = "TOPLEFT,ElvUIParent,BOTTOMLEFT,69,1014",
         ["ElvUF_BodyGuardMover"] = "BOTTOMLEFT,ElvUIParent,BOTTOMLEFT,478,251",
@@ -607,7 +619,7 @@ local ElvUiDump1440 = {
         ["ElvUF_TargetTargetMover"] = "BOTTOMRIGHT,ElvUIParent,BOTTOMRIGHT,-628,418",
         ["ExperienceBarMover"] = "BOTTOM,ElvUIParent,BOTTOM,0,0",
         ["LeftChatMover"] = "BOTTOMLEFT,UIParent,BOTTOMLEFT,4,4",
-        ["LootFrameMover"] = "TOP,UIParent,TOP,265,-498",
+        ["LootFrameMover"] = "TOP,UIParent,TOP,374,-629",
         ["LossControlMover"] = "TOP,ElvUIParent,TOP,0,-491",
         ["MawBuffsBelowMinimapMover"] = "TOP,UIParent,TOP,0,-4",
         ["MicrobarMover"] = "BOTTOMRIGHT,UIParent,BOTTOMRIGHT,-432,4",
@@ -627,7 +639,7 @@ local ElvUiDump1440 = {
         ["TotemBarMover"] = "BOTTOMLEFT,ElvUIParent,BOTTOMLEFT,4,216",
         ["TotemTrackerMover"] = "BOTTOMLEFT,UIParent,BOTTOMLEFT,526,4",
         ["VOICECHAT"] = "TOPLEFT,UIParent,TOPLEFT,4,-52",
-        ["VehicleLeaveButton"] = "BOTTOM,ElvUIParent,BOTTOM,343,239",
+        ["VehicleLeaveButton"] = "BOTTOMRIGHT,UIParent,BOTTOMRIGHT,-572,218",
         ["VehicleSeatMover"] = "BOTTOMLEFT,UIParent,BOTTOMLEFT,526,48",
         ["ZoneAbility"] = "BOTTOM,ElvUIParent,BOTTOM,273,61",
     },
@@ -653,7 +665,7 @@ local ElvUiDump1440 = {
         ["cooldown"] = {
             ["fonts"] = {
                 ["enable"] = true,
-                ["font"] = "Expressway",
+                ["font"] = "Cronix",
                 ["fontSize"] = 22,
             },
             ["threshold"] = -1,
@@ -724,14 +736,14 @@ local ElvUiDump1440 = {
         ["units"] = {
             ["ENEMY_NPC"] = {
                 ["buffs"] = {
-                    ["countFont"] = "Expressway",
+                    ["countFont"] = "Cronix",
                     ["countFontSize"] = 14,
                     ["priority"] = "Blacklist,RaidBuffsElvUI,Dispellable,blockNoDuration,CastByNPC,PlayerBuffs,TurtleBuffs,CastByUnit",
                     ["size"] = 28,
                     ["yOffset"] = -6,
                 },
                 ["castbar"] = {
-                    ["font"] = "Expressway",
+                    ["font"] = "Cronix",
                     ["fontSize"] = 12,
                     ["height"] = 20,
                     ["iconOffsetY"] = -1,
@@ -741,7 +753,7 @@ local ElvUiDump1440 = {
                     ["yOffset"] = -18,
                 },
                 ["debuffs"] = {
-                    ["countFont"] = "Expressway",
+                    ["countFont"] = "Cronix",
                     ["countFontSize"] = 14,
                     ["font"] = "GothamNarrowUltra",
                     ["fontSize"] = 12,
@@ -752,7 +764,7 @@ local ElvUiDump1440 = {
                 ["health"] = {
                     ["height"] = 14,
                     ["text"] = {
-                        ["font"] = "Expressway",
+                        ["font"] = "Cronix",
                         ["fontSize"] = 14,
                         ["format"] = "[perhp]%",
                         ["position"] = "BOTTOMRIGHT",
@@ -761,13 +773,13 @@ local ElvUiDump1440 = {
                 },
                 ["level"] = {
                     ["enable"] = false,
-                    ["font"] = "Expressway",
+                    ["font"] = "Cronix",
                     ["fontSize"] = 12,
                     ["xOffset"] = 22,
                     ["yOffset"] = -15,
                 },
                 ["name"] = {
-                    ["font"] = "Expressway",
+                    ["font"] = "Cronix",
                     ["fontSize"] = 12,
                     ["format"] = "[name:medium]",
                     ["yOffset"] = -6,
@@ -775,7 +787,7 @@ local ElvUiDump1440 = {
             },
             ["ENEMY_PLAYER"] = {
                 ["buffs"] = {
-                    ["countFont"] = "Expressway",
+                    ["countFont"] = "Cronix",
                     ["countFontSize"] = 14,
                     ["enable"] = false,
                     ["maxDuration"] = 0,
@@ -784,7 +796,7 @@ local ElvUiDump1440 = {
                     ["yOffset"] = -6,
                 },
                 ["castbar"] = {
-                    ["font"] = "Expressway",
+                    ["font"] = "Cronix",
                     ["fontSize"] = 12,
                     ["height"] = 20,
                     ["iconOffsetY"] = -1,
@@ -794,7 +806,7 @@ local ElvUiDump1440 = {
                     ["yOffset"] = -18,
                 },
                 ["debuffs"] = {
-                    ["countFont"] = "Expressway",
+                    ["countFont"] = "Cronix",
                     ["countFontSize"] = 14,
                     ["font"] = "GothamNarrowUltra",
                     ["fontSize"] = 12,
@@ -806,7 +818,7 @@ local ElvUiDump1440 = {
                 ["health"] = {
                     ["height"] = 14,
                     ["text"] = {
-                        ["font"] = "Expressway",
+                        ["font"] = "Cronix",
                         ["fontSize"] = 14,
                         ["format"] = "[perhp]%",
                         ["position"] = "BOTTOMRIGHT",
@@ -815,14 +827,14 @@ local ElvUiDump1440 = {
                 },
                 ["level"] = {
                     ["enable"] = false,
-                    ["font"] = "Expressway",
+                    ["font"] = "Cronix",
                     ["fontSize"] = 12,
                     ["format"] = "[difficultycolor][level][shortclassification]",
                     ["xOffset"] = 22,
                     ["yOffset"] = -15,
                 },
                 ["name"] = {
-                    ["font"] = "Expressway",
+                    ["font"] = "Cronix",
                     ["fontSize"] = 12,
                     ["format"] = "[name:medium]",
                     ["yOffset"] = -8,
@@ -833,7 +845,7 @@ local ElvUiDump1440 = {
             },
             ["FRIENDLY_NPC"] = {
                 ["castbar"] = {
-                    ["font"] = "Expressway",
+                    ["font"] = "Cronix",
                 },
                 ["questIcon"] = {
                     ["enable"] = false,
@@ -841,14 +853,14 @@ local ElvUiDump1440 = {
             },
             ["FRIENDLY_PLAYER"] = {
                 ["buffs"] = {
-                    ["countFont"] = "Expressway",
+                    ["countFont"] = "Cronix",
                     ["countFontSize"] = 14,
                     ["priority"] = "Blacklist,RaidBuffsElvUI,Dispellable,blockNoDuration,PlayerBuffs,TurtleBuffs,CastByUnit",
                     ["size"] = 24,
                     ["yOffset"] = -2,
                 },
                 ["castbar"] = {
-                    ["font"] = "Expressway",
+                    ["font"] = "Cronix",
                     ["fontSize"] = 12,
                     ["iconOffsetY"] = -1,
                     ["iconSize"] = 27,
@@ -857,7 +869,7 @@ local ElvUiDump1440 = {
                     ["yOffset"] = -13,
                 },
                 ["debuffs"] = {
-                    ["countFont"] = "Expressway",
+                    ["countFont"] = "Cronix",
                     ["countFontSize"] = 14,
                     ["font"] = "GothamNarrowUltra",
                     ["fontSize"] = 12,
@@ -868,7 +880,7 @@ local ElvUiDump1440 = {
                 ["health"] = {
                     ["height"] = 18,
                     ["text"] = {
-                        ["font"] = "Expressway",
+                        ["font"] = "Cronix",
                         ["fontSize"] = 14,
                         ["format"] = "[perhp]%",
                         ["xOffset"] = 1,
@@ -876,14 +888,14 @@ local ElvUiDump1440 = {
                 },
                 ["level"] = {
                     ["enable"] = false,
-                    ["font"] = "Expressway",
+                    ["font"] = "Cronix",
                     ["fontSize"] = 12,
                     ["format"] = "[difficultycolor][level][shortclassification]",
                     ["xOffset"] = 22,
                     ["yOffset"] = -15,
                 },
                 ["name"] = {
-                    ["font"] = "Expressway",
+                    ["font"] = "Cronix",
                     ["fontSize"] = 14,
                     ["format"] = "[name:medium]",
                     ["position"] = "CENTER",
@@ -934,63 +946,66 @@ local ElvUiDump1440 = {
             },
             ["defaultTexts"] = {
                 ["SL_AFKMessage"] = {
-                    ["font"] = "Expressway",
+                    ["font"] = "Cronix",
                 },
                 ["SL_AFKTimePassed"] = {
-                    ["font"] = "Expressway",
+                    ["font"] = "Cronix",
                 },
                 ["SL_Date"] = {
-                    ["font"] = "Expressway",
+                    ["font"] = "Cronix",
                 },
                 ["SL_GuildName"] = {
-                    ["font"] = "Expressway",
+                    ["font"] = "Cronix",
                 },
                 ["SL_GuildRank"] = {
-                    ["font"] = "Expressway",
+                    ["font"] = "Cronix",
                 },
                 ["SL_PlayerClass"] = {
-                    ["font"] = "Expressway",
+                    ["font"] = "Cronix",
                 },
                 ["SL_PlayerLevel"] = {
-                    ["font"] = "Expressway",
+                    ["font"] = "Cronix",
                 },
                 ["SL_PlayerName"] = {
-                    ["font"] = "Expressway",
+                    ["font"] = "Cronix",
                 },
                 ["SL_ScrollFrame"] = {
-                    ["font"] = "Expressway",
+                    ["font"] = "Cronix",
                 },
                 ["SL_SubText"] = {
-                    ["font"] = "Expressway",
+                    ["font"] = "Cronix",
                 },
                 ["SL_Time"] = {
-                    ["font"] = "Expressway",
+                    ["font"] = "Cronix",
                 },
             },
             ["enable"] = true,
         },
         ["armory"] = {
             ["character"] = {
+                ["background"] = {
+                    ["selectedBG"] = "CLASS",
+                },
                 ["durability"] = {
-                    ["font"] = "Expressway",
+                    ["font"] = "Cronix",
                     ["fontSize"] = 11,
                 },
                 ["enable"] = true,
                 ["enchant"] = {
-                    ["font"] = "Expressway",
+                    ["font"] = "Cronix",
                 },
                 ["gradient"] = {
                     ["quality"] = true,
                 },
                 ["ilvl"] = {
                     ["colorType"] = "QUALITY",
-                    ["font"] = "Expressway",
+                    ["font"] = "Cronix",
                 },
             },
             ["inspect"] = {
                 ["enable"] = true,
                 ["enchant"] = {
-                    ["font"] = "Expressway",
+                    ["font"] = "Cronix",
                     ["fontSize"] = 11,
                 },
                 ["gradient"] = {
@@ -998,7 +1013,7 @@ local ElvUiDump1440 = {
                 },
                 ["ilvl"] = {
                     ["colorType"] = "QUALITY",
-                    ["font"] = "Expressway",
+                    ["font"] = "Cronix",
                 },
             },
             ["stats"] = {
@@ -1006,14 +1021,14 @@ local ElvUiDump1440 = {
                     ["MOVESPEED"] = false,
                 },
                 ["itemLevel"] = {
-                    ["font"] = "Expressway",
+                    ["font"] = "Cronix",
                     ["fontSize"] = 14,
                 },
                 ["statHeaders"] = {
-                    ["font"] = "Expressway",
+                    ["font"] = "Cronix",
                 },
                 ["statLabels"] = {
-                    ["font"] = "Expressway",
+                    ["font"] = "Cronix",
                 },
             },
         },
@@ -1037,28 +1052,37 @@ local ElvUiDump1440 = {
         ["media"] = {
             ["fonts"] = {
                 ["gossip"] = {
-                    ["font"] = "Expressway",
+                    ["font"] = "Cronix",
                 },
                 ["mail"] = {
-                    ["font"] = "Expressway",
+                    ["font"] = "Cronix",
                 },
                 ["objective"] = {
-                    ["font"] = "Expressway",
+                    ["font"] = "Cronix",
                 },
                 ["objectiveHeader"] = {
-                    ["font"] = "Expressway",
+                    ["font"] = "Cronix",
                 },
                 ["pvp"] = {
-                    ["font"] = "Expressway",
+                    ["font"] = "Cronix",
                 },
                 ["questFontSuperHuge"] = {
-                    ["font"] = "Expressway",
+                    ["font"] = "Cronix",
+                },
+                ["scenarioStage"] = {
+                    ["HeaderText"] = {
+                        ["font"] = "Cronix",
+                    },
+                    ["TimerText"] = {
+                        ["font"] = "Cronix",
+                    },
                 },
                 ["subzone"] = {
-                    ["font"] = "Expressway",
+                    ["font"] = "Cronix",
                 },
                 ["zone"] = {
-                    ["font"] = "Expressway",
+                    ["font"] = "Cronix",
+                    ["fontOutline"] = "OUTLINE",
                 },
             },
         },
@@ -1070,15 +1094,17 @@ local ElvUiDump1440 = {
         },
     },
     ["tooltip"] = {
-        ["font"] = "Expressway",
+        ["font"] = "Cronix",
         ["fontOutline"] = "OUTLINE",
-        ["headerFont"] = "Expressway",
+        ["headerFont"] = "Cronix",
         ["headerFontOutline"] = "OUTLINE",
-        ["headerFontSize"] = 12,
         ["healthBar"] = {
-            ["font"] = "Expressway",
+            ["font"] = "Cronix",
             ["statusPosition"] = "DISABLED",
         },
+        ["itemQuality"] = true,
+        ["mythicDataEnable"] = false,
+        ["targetInfo"] = false,
         ["visibility"] = {
             ["combatOverride"] = "ALT",
         },
@@ -1183,11 +1209,11 @@ local ElvUiDump1440 = {
         ["cooldown"] = {
             ["fonts"] = {
                 ["enable"] = true,
-                ["font"] = "Expressway",
+                ["font"] = "Cronix",
             },
             ["threshold"] = -1,
         },
-        ["font"] = "Expressway",
+        ["font"] = "Cronix",
         ["fontOutline"] = "OUTLINE",
         ["fontSize"] = 12,
         ["smoothbars"] = true,
@@ -1197,6 +1223,7 @@ local ElvUiDump1440 = {
             ["arena"] = {
                 ["buffs"] = {
                     ["anchorPoint"] = "TOPLEFT",
+                    ["countFont"] = "Cronix",
                     ["maxDuration"] = 0,
                     ["sizeOverride"] = 20,
                     ["xOffset"] = 2,
@@ -1208,6 +1235,7 @@ local ElvUiDump1440 = {
                 },
                 ["debuffs"] = {
                     ["anchorPoint"] = "RIGHT",
+                    ["countFont"] = "Cronix",
                     ["maxDuration"] = 0,
                     ["perrow"] = 2,
                     ["sizeOverride"] = 36,
@@ -1244,12 +1272,18 @@ local ElvUiDump1440 = {
                 ["width"] = 180,
             },
             ["assist"] = {
+                ["buffs"] = {
+                    ["countFont"] = "Cronix",
+                },
+                ["debuffs"] = {
+                    ["countFont"] = "Cronix",
+                },
                 ["enable"] = false,
             },
             ["boss"] = {
                 ["buffs"] = {
                     ["anchorPoint"] = "TOPLEFT",
-                    ["countFont"] = "Expressway",
+                    ["countFont"] = "Cronix",
                     ["countPosition"] = "BOTTOM",
                     ["countXOffset"] = 2,
                     ["countYOffset"] = -4,
@@ -1267,7 +1301,7 @@ local ElvUiDump1440 = {
                     ["Power text"] = {
                         ["attachTextTo"] = "Health",
                         ["enable"] = true,
-                        ["font"] = "Expressway",
+                        ["font"] = "Cronix",
                         ["fontOutline"] = "OUTLINE",
                         ["justifyH"] = "RIGHT",
                         ["size"] = 14,
@@ -1278,7 +1312,7 @@ local ElvUiDump1440 = {
                 },
                 ["debuffs"] = {
                     ["anchorPoint"] = "RIGHT",
-                    ["countFont"] = "Expressway",
+                    ["countFont"] = "Cronix",
                     ["countPosition"] = "BOTTOM",
                     ["countYOffset"] = -4,
                     ["perrow"] = 2,
@@ -1312,6 +1346,9 @@ local ElvUiDump1440 = {
                 ["width"] = 160,
             },
             ["focus"] = {
+                ["buffs"] = {
+                    ["countFont"] = "Cronix",
+                },
                 ["castbar"] = {
                     ["enable"] = false,
                     ["height"] = 28,
@@ -1319,6 +1356,7 @@ local ElvUiDump1440 = {
                 },
                 ["debuffs"] = {
                     ["anchorPoint"] = "BOTTOMRIGHT",
+                    ["countFont"] = "Cronix",
                     ["enable"] = false,
                 },
                 ["disableTargetGlow"] = true,
@@ -1339,6 +1377,14 @@ local ElvUiDump1440 = {
                 ["threatStyle"] = "NONE",
                 ["width"] = 100,
             },
+            ["focustarget"] = {
+                ["buffs"] = {
+                    ["countFont"] = "Cronix",
+                },
+                ["debuffs"] = {
+                    ["countFont"] = "Cronix",
+                },
+            },
             ["party"] = {
                 ["ROLE1"] = "HEALER",
                 ["ROLE2"] = "TANK",
@@ -1347,7 +1393,7 @@ local ElvUiDump1440 = {
                 },
                 ["buffs"] = {
                     ["anchorPoint"] = "TOPRIGHT",
-                    ["countFont"] = "Expressway",
+                    ["countFont"] = "Cronix",
                     ["countPosition"] = "BOTTOM",
                     ["countYOffset"] = -4,
                     ["enable"] = true,
@@ -1363,19 +1409,19 @@ local ElvUiDump1440 = {
                     ["PowerGRP"] = {
                         ["attachTextTo"] = "Health",
                         ["enable"] = true,
-                        ["font"] = "Expressway",
+                        ["font"] = "Cronix",
                         ["fontOutline"] = "OUTLINE",
                         ["justifyH"] = "RIGHT",
-                        ["size"] = 10,
+                        ["size"] = 11,
                         ["text_format"] = "[powercolor][power:percent]",
                         ["xOffset"] = 1,
-                        ["yOffset"] = -10,
+                        ["yOffset"] = -8,
                     },
                 },
                 ["debuffs"] = {
                     ["anchorPoint"] = "LEFT",
                     ["clickThrough"] = true,
-                    ["countFont"] = "Expressway",
+                    ["countFont"] = "Cronix",
                     ["countPosition"] = "BOTTOM",
                     ["countYOffset"] = -4,
                     ["perrow"] = 2,
@@ -1423,10 +1469,8 @@ local ElvUiDump1440 = {
                     ["position"] = "TOPRIGHT",
                 },
                 ["raidicon"] = {
-                    ["attachTo"] = "RIGHT",
+                    ["attachTo"] = "CENTER",
                     ["size"] = 12,
-                    ["xOffset"] = -3,
-                    ["yOffset"] = -10,
                 },
                 ["rdebuffs"] = {
                     ["enable"] = false,
@@ -1456,6 +1500,7 @@ local ElvUiDump1440 = {
             },
             ["pet"] = {
                 ["buffs"] = {
+                    ["countFont"] = "Cronix",
                     ["priority"] = "CastByNPC",
                     ["sizeOverride"] = 46,
                 },
@@ -1467,6 +1512,7 @@ local ElvUiDump1440 = {
                 },
                 ["debuffs"] = {
                     ["anchorPoint"] = "LEFT",
+                    ["countFont"] = "Cronix",
                     ["perrow"] = 1,
                     ["priority"] = "Blacklist,Personal",
                     ["sizeOverride"] = 36,
@@ -1490,12 +1536,23 @@ local ElvUiDump1440 = {
                 ["threatStyle"] = "NONE",
                 ["width"] = 134,
             },
+            ["pettarget"] = {
+                ["buffs"] = {
+                    ["countFont"] = "Cronix",
+                },
+                ["debuffs"] = {
+                    ["countFont"] = "Cronix",
+                },
+            },
             ["player"] = {
                 ["RestIcon"] = {
                     ["enable"] = false,
                 },
                 ["aurabar"] = {
                     ["enable"] = false,
+                },
+                ["buffs"] = {
+                    ["countFont"] = "Cronix",
                 },
                 ["castbar"] = {
                     ["enable"] = false,
@@ -1513,7 +1570,7 @@ local ElvUiDump1440 = {
                     ["Absorb"] = {
                         ["attachTextTo"] = "Health",
                         ["enable"] = true,
-                        ["font"] = "Expressway",
+                        ["font"] = "Cronix",
                         ["fontOutline"] = "OUTLINE",
                         ["justifyH"] = "RIGHT",
                         ["size"] = 12,
@@ -1523,6 +1580,7 @@ local ElvUiDump1440 = {
                     },
                 },
                 ["debuffs"] = {
+                    ["countFont"] = "Cronix",
                     ["enable"] = false,
                     ["perrow"] = 6,
                     ["yOffset"] = 3,
@@ -1530,8 +1588,7 @@ local ElvUiDump1440 = {
                 ["health"] = {
                     ["position"] = "BOTTOMRIGHT",
                     ["text_format"] = "[perhp]% || [health:current:shortvalue]",
-                    ["xOffset"] = 0,
-                    ["yOffset"] = -16,
+                    ["yOffset"] = -18,
                 },
                 ["height"] = 30,
                 ["name"] = {
@@ -1561,7 +1618,7 @@ local ElvUiDump1440 = {
             ["raid1"] = {
                 ["buffs"] = {
                     ["anchorPoint"] = "TOPRIGHT",
-                    ["countFont"] = "Expressway",
+                    ["countFont"] = "Cronix",
                     ["countFontSize"] = 11,
                     ["countPosition"] = "TOP",
                     ["countYOffset"] = 4,
@@ -1579,7 +1636,7 @@ local ElvUiDump1440 = {
                 ["debuffs"] = {
                     ["anchorPoint"] = "BOTTOMRIGHT",
                     ["clickThrough"] = true,
-                    ["countFont"] = "Expressway",
+                    ["countFont"] = "Cronix",
                     ["countFontSize"] = 11,
                     ["countPosition"] = "TOP",
                     ["countXOffset"] = 1,
@@ -1638,7 +1695,7 @@ local ElvUiDump1440 = {
             ["raid2"] = {
                 ["buffs"] = {
                     ["anchorPoint"] = "TOPRIGHT",
-                    ["countFont"] = "Expressway",
+                    ["countFont"] = "Cronix",
                     ["countFontSize"] = 11,
                     ["countPosition"] = "TOP",
                     ["countYOffset"] = 4,
@@ -1656,7 +1713,7 @@ local ElvUiDump1440 = {
                 ["debuffs"] = {
                     ["anchorPoint"] = "BOTTOMRIGHT",
                     ["clickThrough"] = true,
-                    ["countFont"] = "Expressway",
+                    ["countFont"] = "Cronix",
                     ["countFontSize"] = 11,
                     ["countPosition"] = "TOP",
                     ["countXOffset"] = 1,
@@ -1691,7 +1748,7 @@ local ElvUiDump1440 = {
                     ["yOffset"] = -2,
                 },
                 ["rdebuffs"] = {
-                    ["font"] = "Expressway",
+                    ["font"] = "Cronix",
                     ["fontSize"] = 11,
                     ["size"] = 17,
                     ["stack"] = {
@@ -1713,7 +1770,7 @@ local ElvUiDump1440 = {
             ["raid3"] = {
                 ["buffs"] = {
                     ["anchorPoint"] = "TOPRIGHT",
-                    ["countFont"] = "Expressway",
+                    ["countFont"] = "Cronix",
                     ["countFontSize"] = 11,
                     ["countPosition"] = "TOP",
                     ["countYOffset"] = 4,
@@ -1731,7 +1788,7 @@ local ElvUiDump1440 = {
                 ["debuffs"] = {
                     ["anchorPoint"] = "BOTTOMRIGHT",
                     ["clickThrough"] = true,
-                    ["countFont"] = "Expressway",
+                    ["countFont"] = "Cronix",
                     ["countFontSize"] = 11,
                     ["countPosition"] = "TOP",
                     ["countXOffset"] = 1,
@@ -1764,7 +1821,7 @@ local ElvUiDump1440 = {
                     ["yOffset"] = 0,
                 },
                 ["rdebuffs"] = {
-                    ["font"] = "Expressway",
+                    ["font"] = "Cronix",
                     ["fontSize"] = 11,
                     ["size"] = 17,
                     ["stack"] = {
@@ -1783,7 +1840,21 @@ local ElvUiDump1440 = {
                 ["verticalSpacing"] = -1,
                 ["width"] = 90,
             },
+            ["raidpet"] = {
+                ["buffs"] = {
+                    ["countFont"] = "Cronix",
+                },
+                ["debuffs"] = {
+                    ["countFont"] = "Cronix",
+                },
+            },
             ["tank"] = {
+                ["buffs"] = {
+                    ["countFont"] = "Cronix",
+                },
+                ["debuffs"] = {
+                    ["countFont"] = "Cronix",
+                },
                 ["enable"] = false,
             },
             ["target"] = {
@@ -1791,7 +1862,7 @@ local ElvUiDump1440 = {
                     ["enable"] = false,
                 },
                 ["buffs"] = {
-                    ["countFont"] = "Expressway",
+                    ["countFont"] = "Cronix",
                     ["countPosition"] = "TOP",
                     ["countYOffset"] = 6,
                     ["numrows"] = 3,
@@ -1808,19 +1879,19 @@ local ElvUiDump1440 = {
                     ["Power text"] = {
                         ["attachTextTo"] = "Health",
                         ["enable"] = true,
-                        ["font"] = "Expressway",
+                        ["font"] = "Cronix",
                         ["fontOutline"] = "OUTLINE",
                         ["justifyH"] = "RIGHT",
                         ["size"] = 14,
                         ["text_format"] = "[powercolor][power:percent]",
                         ["xOffset"] = 2,
-                        ["yOffset"] = -22,
+                        ["yOffset"] = -24,
                     },
                 },
                 ["debuffs"] = {
                     ["anchorPoint"] = "TOPLEFT",
                     ["attachTo"] = "FRAME",
-                    ["countFont"] = "Expressway",
+                    ["countFont"] = "Cronix",
                     ["countPosition"] = "TOP",
                     ["countYOffset"] = 6,
                     ["growthX"] = "RIGHT",
@@ -1832,7 +1903,7 @@ local ElvUiDump1440 = {
                     ["position"] = "BOTTOMLEFT",
                     ["text_format"] = "[health:current:shortvalue] || [perhp]%",
                     ["xOffset"] = 2,
-                    ["yOffset"] = -16,
+                    ["yOffset"] = -18,
                 },
                 ["height"] = 30,
                 ["name"] = {
@@ -1863,7 +1934,11 @@ local ElvUiDump1440 = {
                 ["width"] = 220,
             },
             ["targettarget"] = {
+                ["buffs"] = {
+                    ["countFont"] = "Cronix",
+                },
                 ["debuffs"] = {
+                    ["countFont"] = "Cronix",
                     ["enable"] = false,
                 },
                 ["height"] = 20,
@@ -1879,6 +1954,14 @@ local ElvUiDump1440 = {
                     ["enable"] = false,
                 },
                 ["width"] = 100,
+            },
+            ["targettargettarget"] = {
+                ["buffs"] = {
+                    ["countFont"] = "Cronix",
+                },
+                ["debuffs"] = {
+                    ["countFont"] = "Cronix",
+                },
             },
         },
     },
