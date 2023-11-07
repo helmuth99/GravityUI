@@ -2,64 +2,75 @@ Addon, private = ...
 
 
 local HidingBarDump = {
-	["tstmp"] = 1683552583,
+	["tstmp"] = 1699222317,
 	["profiles"] = {
 		{
 			["isDefault"] = true,
 			["config"] = {
 				["addFromDataBroker"] = true,
 				["mbtnSettings"] = {
+					["LibDBIcon10_Details"] = {
+						true, -- [1]
+						["tstmp"] = 1699222317,
+					},
 					["BtWQuestsMinimapButton"] = {
 						true, -- [1]
-						["tstmp"] = 1683552583,
+						["tstmp"] = 1699222317,
 					},
 					["LibDBIcon10_MethodRaidTools"] = {
 						true, -- [1]
-						["tstmp"] = 1683552583,
+						["tstmp"] = 1699222317,
 					},
 					["LibDBIcon10_VocalRaidAssistant"] = {
 						true, -- [1]
-						["tstmp"] = 1683552583,
+						["tstmp"] = 1699222317,
 					},
 					["LibDBIcon10_MythicDungeonTools"] = {
-						["tstmp"] = 1683552583,
+						["tstmp"] = 1699222317,
 					},
 					["LibDBIcon10_SimulationCraft"] = {
-						["tstmp"] = 1683552583,
+						true, -- [1]
+						["tstmp"] = 1699222317,
+					},
+					["LibDBIcon10_DetailsStreamer"] = {
+						["tstmp"] = 1691598083,
+					},
+					["LibDBIcon10_WeakAuras"] = {
+						true, -- [1]
+						["tstmp"] = 1699222317,
+					},
+					["LibDBIcon10_Plater"] = {
+						true, -- [1]
+						["tstmp"] = 1699222317,
 					},
 					["AddonCompartmentFrame"] = {
 						true, -- [1]
-						["tstmp"] = 1683552583,
+						["tstmp"] = 1699222317,
 					},
-					["LibDBIcon10_Plater"] = {
-						["tstmp"] = 1683552583,
-					},
-					["LibDBIcon10_SilverDragon"] = {
-						["tstmp"] = 1683552583,
-					},
-					["LibDBIcon10_Hekili"] = {
-						["tstmp"] = 1675834143,
+					["LibDBIcon10_BigWigs"] = {
+						true, -- [1]
+						["tstmp"] = 1699222317,
 					},
 				},
 				["btnSettings"] = {
 					["HidingBar"] = {
 						true, -- [1]
-						["tstmp"] = 1683552583,
+						["tstmp"] = 1699222317,
 					},
 					["BigWigs"] = {
-						["tstmp"] = 1683552583,
+						["tstmp"] = 1699222317,
 					},
 					["VocalRaidAssistant"] = {
-						["tstmp"] = 1683552583,
+						["tstmp"] = 1699222317,
 					},
 					["BtWQuests"] = {
-						["tstmp"] = 1683552583,
+						["tstmp"] = 1699222317,
 					},
 					["WeakAuras"] = {
-						["tstmp"] = 1683552583,
+						["tstmp"] = 1699222317,
 					},
 					["MRT"] = {
-						["tstmp"] = 1683552583,
+						["tstmp"] = 1699222317,
 					},
 				},
 				["grabMinimap"] = true,
