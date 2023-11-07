@@ -7,7 +7,7 @@ local MRTDump = {
 		["Strata"] = "LOW",
 		["AutoLoad"] = {
 		},
-		["TimerGlowType"] = 1,
+		["FontSize"] = 13,
 		["Left"] = 2.450696706771851,
 		["HideOutsideRaid"] = true,
 		["ShowOnlyInRaid"] = true,
@@ -16,54 +16,114 @@ local MRTDump = {
 		["Fix"] = true,
 		["TimerGlow"] = true,
 		["ScaleBack"] = 0,
-		["Text1"] = "#portals ||cff00ff98Antagon||r ||cfff48cbaSanatio||r ||cffa330c9Kâzuto||r ||cffc41e3aCronîx||r ||cffc41e3aCadogan||r ||cffc69b6dShirtpants||r ||cfff48cbaMiatra||r ||cff00ff98Níce||r ||cfffff468Holicx||r ||cfff48cbaEstu||r ||cffffffffLeergut||r ||cff3fc7ebHelimeisterb||r ||cff3fc7ebMorpheusmage||r ||cffff7c0aTeesticle||r ||cffaad372Lukîî||r ||cff8788eePawx||r ||cff33937fDrakvel||r ||cffffffffNoañgel||r ||cff0070ddSanfa||r ||cffffffffEdolie||r\n\n{time:00:16}00:16 - ||cfff1c232Wall Dot 15 sec||r - ||cfffefefeNoañgel||r {spell:64843}  ||cff006fdcSanfa||r {spell:108280}  ||cfff38bb9Estu||r {spell:216331}\n{time:00:23}00:23 - ||cfff1c232Dot 7/15 sec||r - ||cfffefefeEdolie||r {spell:265202}\n{time:00:27}00:27 - ||cffe6dbc7Tank Wall Dot||r - ||cfffefefeNoañgel||r {spell:265202}\n{time:00:53}00:53 - ||cfff1c232Wall Dot 15 sec||r - ||cfffefefeEdolie||r {spell:64901}\n{time:01:04}01:04 - ||cffab8b00Tank Wall Dot||r - ||cfffefefeEdolie||r {spell:64843}  ||cfff38bb9Estu||r {spell:216331}\n{time:01:16}01:16 - ||cffaa0000AoE 411k||r - ||cfff38bb9Estu||r {spell:31821}  ||cffc31d39Cronîx||r {spell:51052}\n{time:01:22}01:22 - ||cff238e47Movement||r - ||cfffefefeNoañgel||r {spell:64901}\n{time:01:53}01:53 - ||cffe68e3dAoE 616k||r - ||cff006fdcSanfa||r {spell:114049}  ||cff006fdcSanfa||r {spell:108281}  ||cfff38bb9Estu||r {spell:216331}  Cadogan {spell:51052}\n{time:02:30}02:30 - ||cffe68e3dAoE 821k||r - ||cffc59a6cShirtpants||r {spell:97462}\n{time:00:26,SCC:409313:1}03:12 - ||cfff1c232Tank Wall Dot||r - ||cfff38bb9Estu||r {spell:216331}\n{time:00:42,SCC:409313:1}03:28 - ||cff8811ffBreak Walls||r - ||cff006fdcSanfa||r {spell:108280}\n{time:00:56,SCC:409313:1}03:42 - ||cfff1c232Tank Wall Dot||r - ||cfffefefeEdolie||r {spell:265202}\n{time:01:11,SCC:409313:1}03:57 - ||cff8811ffBreak Walls||r - ||cfff38bb9Estu||r {spell:216331}\n{time:01:16,SCC:409313:1}04:02 - ||cffdf9dc3Heart||r - ||cfffefefeEdolie||r {spell:64901}\n{time:01:26,SCC:409313:1}04:12 - ||cfff1c232Tank Wall Dot||r - ||cfffefefeNoañgel||r {spell:265202}  ||cff006fdcSanfa||r {spell:108281}  ||cff006fdcSanfa||r {spell:98008}\n{time:01:33,SCC:409313:1}04:19 - ||cffaa0000AoE 3 - 410k||r - ||cffc31d39Cronîx||r {spell:51052}\n{time:01:43,SCC:409313:1}04:29 - ||cff238e47corruption movement||r - ||cfffefefeNoañgel||r {spell:64901}\n{time:01:54,SCC:409313:1}04:40 - ||cfff1c232Tank Wall Dot||r - ||cfffefefeNoañgel||r {spell:64843}  ||cff006fdcSanfa||r {spell:114049}  ||cfff38bb9Estu||r {spell:216331}\n{time:02:04,SCC:409313:1}04:50 - ||cffaa0000AoE 4 - 531k||r - ||cfff38bb9Estu||r {spell:31821}  Cadogan {spell:51052}\n{time:00:38,SAR:404045:1}05:48 - ||cffc59a6cTank Hit||r - ||cfff38bb9Estu||r {spell:216331}\n{time:01:19,SAR:404045:1}06:29 - ||cfff1c232DoT 20s||r - ||cffc31d39Cronîx||r {spell:51052}\n{time:01:29,SAR:404045:1}06:39 - ||cfff1c232DoT 10/20s||r - ||cfffefefeEdolie||r {spell:64843}  ||cff006fdcSanfa||r {spell:108280}  ||cfff38bb9Estu||r {spell:216331}\n{time:01:33,SAR:404045:1}06:43 - ||cff8811ffDoT 10s||r - ||cfffefefeEdolie||r {spell:265202}  ||cffc59a6cShirtpants||r {spell:97462}\n{time:01:49,SAR:404045:1}06:59 - ||cfff1c232DoT 20s||r - ||cfffefefeNoañgel||r {spell:265202}  ||cff006fdcSanfa||r {spell:108281}  ||cff006fdcSanfa||r {spell:98008}  Cadogan {spell:51052}\n\nliquidStart\n||cffaad372Lukîî||r \n||cff3fc7ebHelimeisterb||r \n||cff3fc7ebMorpheusmage||r\n||cff8788eePawx||r \n||cff33937fDrakvel||r\n||cffff7c0aTeesticle||r\n||cffffffffLeergut||r\n||cff0070ddSanfa||r\n||cffffffffEdolie||r\n||cffffffffNoañgel||r\n||cfff48cbaEstu||r \nliquidEnd",
+		["Text1"] = "liquidStart\n||cffaad372Elgönndir||r ||cffa330c9Unluckyxd||r ||cffff7c0aKruelio||r ||cffc69b6dFêng||r ||cfff48cbaMiatra||r \n||cfffff468Korimadge||r ||cff8788eeSeblastian||r ||cff00ff98Fenx||r ||cffffffffAkurian||r ||cff33937fExtn||r\n||cffffffffMuzdanp||r ||cffffffffEdolie||r ||cff3fc7ebMorpheusmage||r ||cffff7c0aKaarun||r ||cff33937fDrakvel||r\nliquidEnd\n\n{time:00:08}00:08 - ||cfff88379AOE||r - ||cfff48cbaKritpala||r {spell:31884}\n{time:00:23}00:23 - ||cffe68e3dLava Soak||r - ||cfffefefeEdolie||r {spell:246287}  ||cff33937fHurtsevo||r {spell:359816}\n{time:00:50}00:50 - ||cfff88379AOE||r - ||cff33937fHurtsevo||r {spell:363534}  ||cff006fdcSanfa||r {spell:108281}\n{time:01:03}01:03 - ||cffe68e3dLava Soak||r - ||cfffefefeEdolie||r {spell:47536}  ||cfffefefeEdolie||r {spell:62618}\n{time:01:15}01:15 - ||cfff88379AOE||r - ||cff006fdcSanfa||r {spell:108280}\n{time:01:30}01:30 - ||cffe68e3dLava Soak||r - ||cff33937fHurtsevo||r {spell:373270}\n{time:01:57}01:57 - ||cfff88379AOE||r - ||cff006fdcSanfa||r {spell:114049}\n{time:02:10}02:10 - ||cffe68e3dLava Soak||r - ||cfffefefeEdolie||r {spell:246287}  ||cfff48cbaKritpala||r {spell:31884}  ||cfff48cbaKritpala||r {spell:31821}\n{time:02:37}02:37 - ||cffe68e3dLava Soak||r - ||cfffefefeEdolie||r {spell:47536}  ||cff33937fHurtsevo||r {spell:359816}\n{time:03:04}03:04 - ||cfff88379AOE||r - ||cff006fdcSanfa||r {spell:108281}\n{time:03:17}03:17 - ||cffe68e3dLava Soak||r - ||cff006fdcSanfa||r {spell:98008}\n{time:03:29}03:29 - ||cfff88379AOE||r - ||cfffefefeEdolie||r {spell:246287}\n{time:04:08}04:08 - ||cffdf9dc3Knock Dmg||r - ||cfffefefeEdolie||r {spell:47536}  ||cff006fdcSanfa||r {spell:108280}\n{time:04:11}04:11 - ||cfff88379AOE||r - ||cfff38bb9Estu||r {spell:31884}\n{time:04:24}04:24 - ||cffe68e3dLava Soak||r - ||cfffefefeEdolie||r {spell:62618}  ||cff33937fHurtsevo||r {spell:363534}\n{time:04:36}04:36 - ||cfff88379AOE||r - ||cff33937fHurtsevo||r {spell:373270}\n{time:04:51}04:51 - ||cffe68e3dLava Soak||r - ||cff33937fHurtsevo||r {spell:359816}\n{time:04:57}04:57 - ||cff238e47Frontal||r - ||cff006fdcSanfa||r {spell:114049}\n{time:05:15}05:15 - ||cffdf9dc3Knock Dmg||r - ||cfffefefeEdolie||r {spell:246287}  ||cff006fdcSanfa||r {spell:108281}  ||cfff48cbaKritpala||r {spell:31821}\n{time:05:32}05:32 - ||cff238e47Frontal||r - ||cfffefefeEdolie||r {spell:47536}\n{time:06:22}06:22 - ||cffdf9dc3Knock Dmg||r - ||cfff48cbaKritpala||r {spell:31884}",
 		["OptionsFormatting"] = true,
-		["DefName"] = "Echo",
-		["BlackNames"] = {
-			"Eranog Mythic", -- [1]
-			"Primal Council Mythic", -- [2]
-			"Terros Mythic", -- [3]
-			"Primal Council Mythic", -- [4]
-			"Terros*", -- [5]
-			"Terros Mythic", -- [6]
-			"Terros Mythic", -- [7]
-			"Sennarth Mythic", -- [8]
-			"Sennarth Mythic", -- [9]
-			"Primal Council Mythic", -- [10]
-			"Kurog Mythic", -- [11]
-			"Dathea Mythic", -- [12]
-			"Broodkeeper Mythic", -- [13]
-			"Raszageth", -- [14]
-			"Raszageth*", -- [15]
-			[30] = "Echo",
-			[31] = "Echo",
-			[32] = "Sarkareth",
-			[17] = "Assault*",
-			[34] = "Sarkareth",
-			[35] = "Sarkareth*",
-			[36] = "Sarkareth",
-			[19] = "Rashok",
-			[38] = "Echo",
-			[20] = "Rashok",
-			[21] = "Rashok",
-			[22] = "Rashok",
-			[23] = "Rashok*",
-			[24] = "Zkarn",
-			[25] = "Zkarn",
-			[26] = "Zkarn*",
-			[27] = "Zkarn",
-			[28] = "Magmorax",
-			[37] = "Echo*",
-			[29] = "Magmorax",
-			[33] = "Sarkareth",
-		},
+		["DefName"] = "Magmorax",
+		["LastUpdateTime"] = 1698264516,
 		["SaveAllNew"] = true,
 		["LastUpdateName"] = "Cronîx-Blackhand",
-		["TimerOnlyMy"] = true,
-		["Top"] = 1212.915649414063,
-		["LastUpdateTime"] = 1687374392,
-		["Width"] = 506.9999694824219,
-		["EnableWhenReceive"] = true,
+		["Height"] = 507.9999389648438,
+		["TimerPassedHide"] = true,
+		["FontName"] = "Interface\\Addons\\SharedMedia_MyMedia\\font\\Cronix.ttf",
+		["Width"] = 506.9999084472656,
+		["BlackLastUpdateName"] = {
+			nil, -- [1]
+			"Cronîx-Blackhand", -- [2]
+			"Cronîx-Blackhand", -- [3]
+			"Cronîx-Blackhand", -- [4]
+			"Extn-Blackhand", -- [5]
+			"Cronîx-Blackhand", -- [6]
+			"Cronîx-Blackhand", -- [7]
+			"Cronîx-Blackhand", -- [8]
+			[27] = "Cronîx-Blackhand",
+			[31] = "Cronîx-Blackhand",
+			[38] = "Cronîx-Blackhand",
+			[54] = "Cronîx-Blackhand",
+			[62] = "Cronîx-Blackhand",
+			[39] = "Cronîx-Blackhand",
+			[12] = "Cronîx-Blackhand",
+			[14] = "Cronîx-Blackhand",
+			[16] = "Cronîx-Blackhand",
+			[28] = "Cronîx-Blackhand",
+			[32] = "Cronîx-Blackhand",
+			[56] = "Cronîx-Blackhand",
+			[64] = "Cronîx-Blackhand",
+			[33] = "Cronîx-Blackhand",
+			[49] = "Cronîx-Blackhand",
+			[57] = "Cronîx-Blackhand",
+			[17] = "Cronîx-Blackhand",
+			[21] = "Cronîx-Blackhand",
+			[29] = "Cronîx-Blackhand",
+			[34] = "Cronîx-Blackhand",
+			[42] = "Cronîx-Blackhand",
+			[68] = "Cronîx-Blackhand",
+			[35] = "Edolie-Blackhand",
+			[11] = "Cronîx-Blackhand",
+			[13] = "Cronîx-Blackhand",
+			[15] = "Edolie-Blackhand",
+			[18] = "Cronîx-Blackhand",
+			[22] = "Cronîx-Blackhand",
+			[26] = "Extn-Blackhand",
+			[30] = "Cronîx-Blackhand",
+			[36] = "Cronîx-Blackhand",
+			[60] = "Cronîx-Blackhand",
+			[37] = "Edolie-Blackhand",
+			[45] = "Cronîx-Blackhand",
+			[67] = "Cronîx-Blackhand",
+			[65] = "Cronîx-Blackhand",
+			[55] = "Cronîx-Blackhand",
+			[23] = "Nórdos-Blackhand",
+			[66] = "Cronîx-Blackhand",
+		},
+		["BlackLastUpdateTime"] = {
+			nil, -- [1]
+			1672340541, -- [2]
+			1671747812, -- [3]
+			1673470410, -- [4]
+			1672341564, -- [5]
+			1672684096, -- [6]
+			1673204169, -- [7]
+			1672686596, -- [8]
+			[27] = 1690401835,
+			[31] = 1687366111,
+			[38] = 1692551927,
+			[54] = 1689534073,
+			[62] = 1698264466,
+			[39] = 1692552182,
+			[12] = 1674411685,
+			[14] = 1682534638,
+			[16] = 1683744773,
+			[28] = 1686597104,
+			[32] = 1687222568,
+			[56] = 1692823612,
+			[64] = 1692812282,
+			[33] = 1687222968,
+			[49] = 1689445266,
+			[57] = 1691608113,
+			[17] = 1684093408,
+			[21] = 1685381525,
+			[29] = 1686599048,
+			[34] = 1687222968,
+			[42] = 1688320553,
+			[68] = 1697049919,
+			[35] = 1695233525,
+			[11] = 1675885041,
+			[13] = 1682530872,
+			[15] = 1683712744,
+			[18] = 1684700731,
+			[22] = 1691346118,
+			[26] = 1690401723,
+			[30] = 1687107715,
+			[36] = 1687975427,
+			[60] = 1698260293,
+			[37] = 1694626704,
+			[45] = 1689445266,
+			[67] = 1698257775,
+			[65] = 1698255629,
+			[55] = 1693419266,
+			[23] = 1685565991,
+			[66] = 1694025672,
+		},
 		["Black"] = {
 			"{time:00:03}||cff91A4B6Pull||r - ||cfff38bb9Estu||r {spell:31884}\n{time:00:13}||cF3FF7000Incinerating Roar||r - ||cfffefefeEdolie||r {spell:246287}\n{time:00:33}||cff0000ffLeaping Flames||r - ||cffc59a6cShirtpants||r {spell:97462}\n{time:00:37}||cF3FF7000Incinerating Roar||r - ||cfffe7b09Kâmeron||r {spell:323764}\n{time:00:59}||cF3FF7000Incinerating Roar||r - ||cfffefefeEdolie||r {spell:47536}  ||cfffe7b09Kâmeron||r {spell:33891}\n{time:01:05}||cff0000ffLeaping Flames||r - ||cfffe7b09Kâmeron||r {spell:740}\n{time:01:21}||cF3FF7000Incinerating Roar||r - ||cff006fdcSanfa||r {spell:108280}\n{time:01:22}||cffdf9dc3Adds||r - ||cfff38bb9Estu||r {spell:31821}\n{time:01:34}||cff0000ffLeaping Flames||r - ||cffc31d39Cadogan||r {spell:51052}\n{time:01:39}||cffff0000Collapsing Army||r - ||cfffe7b09Kâmeron||r {spell:323764}\n{time:01:44}||cffff0000Collapsing Army||r - ||cfffefefeEdolie||r {spell:246287}\n{time:02:12}||cF3FF7000Incinerating Roar||r - ||cfff38bb9Estu||r {spell:31884}\n{time:02:36}||cff0000ffLeaping Flames||r - ||cfffefefeEdolie||r {spell:62618}\n{time:02:36}||cF3FF7000Incinerating Roar||r - ||cfffefefeEdolie||r {spell:47536}  ||cfffe7b09Kâmeron||r {spell:323764}\n{time:02:58}||cF3FF7000Incinerating Roar||r - ||cfffe7b09Kâmeron||r {spell:740}\n{time:03:02}||cff0000ffLeaping Flames||r - ||cffc31d39Cronîx||r {spell:51052}\n{time:03:20}||cF3FF7000Incinerating Roar||r - ||cfffefefeEdolie||r {spell:246287}\n{time:03:21}||cffdf9dc3Adds||r - ||cff006fdcSanfa||r {spell:98008}\n{time:03:34}||cff0000ffLeaping Flames||r - {everyone} {spell:6262}  ||cffc31d39Cadogan||r {spell:51052}\n{time:03:39}||cffff0000Collapsing Army||r - ||cfffe7b09Kâmeron||r {spell:323764}\n{time:04:13}||cF3FF7000Incinerating Roar||r - ||cfffefefeEdolie||r {spell:47536}  ||cfff38bb9Estu||r {spell:31884}\n{time:04:22}||cffdf9dc3Adds||r - ||cfff38bb9Estu||r {spell:31821}\n{time:04:32}||cff0000ffLeaping Flames||r - ||cffc59a6cShirtpants||r {spell:97462}  ||cff006fdcSanfa||r {spell:108280}\n{time:04:37}||cF3FF7000Incinerating Roar||r - ||cfffe7b09Kâmeron||r {spell:323764}\n{time:04:59}||cF3FF7000Incinerating Roar||r - ||cfffefefeEdolie||r {spell:246287}\n{time:05:04}||cff0000ffLeaping Flames||r - ||cffc31d39Cronîx||r {spell:51052}", -- [1]
 			"intstart\nnpc:187771 spell:372315 {skull} ||cfffff468Hamudì||r ||cffc69b6dShirtpants||r ||cffc69b6dModoreddo||r \nnpc:187768 spell:372394 {cross} ||cff33937fExtn||r ||cffc41e3aCadogan||r ||cfff48cbaSanatio||r ||cff33937fDrakvel||r \nintend\n\nSoak Melee:\n||cffa330c9Cysara||r ||cffc69b6dShirtpants||r ||cffc69b6dModoreddo||r ||cfffff468Hamudì||r ||cffc41e3aCronîx||r ||cffc41e3aCadogan||r ||cff00ff98Øløf||r \n\nSoak Range:\n||cff8788eeMesut||r ||cff8788eeLockbergen||r ||cff3fc7ebHelimeisterb||r ||cff3fc7ebMorpheusmage||r ||cffaad372Lukîî||r ||cff33937fExtn||r ||cffff7c0aTeesticle||r ||cff0070ddZyok||r \n\n{time:00:05}00:05 - ||cff91A4B6Pull||r - ||cfff38bb9Estu||r {spell:31884}\n{time:00:12}00:12 - ||cff8811FFConducive Mark||r - ||cff006fdcZyok||r {spell:108280}\n{time:00:29}00:29 - ||cF3FF7000Meteor Axe||r - ||cfffe7b09Kâmeron||r {spell:740}\n{time:00:41}00:41 - ||cffff0000Primal Blizzard||r - ||cfffefefeEdolie||r {spell:246287}\n{time:00:57}00:57 - ||cff8811FFConducive Mark||r - ||cff006fdcSanfa||r {spell:108280}\n{time:01:10}01:10 - ||cF3FF7000Meteor Axe||r - ||cfffefefeEdolie||r {spell:62618}\n{time:01:50}01:50 - ||cF3FF7000Meteor Axe||r - ||cffc31d39Cronîx||r {spell:51052}  ||cfff38bb9Estu||r {spell:31821}\n{time:02:10}02:10 - ||cffff0000Primal Blizzard||r - ||cfffefefeEdolie||r {spell:246287}\n{time:02:16}02:16 - ||cff8811FFConducive Mark||r - ||cfff38bb9Estu||r {spell:31884}\n{time:02:30}02:30 - ||cF3FF7000Meteor Axe||r - ||cfffe7b09Kâmeron||r {spell:740}\n{time:03:10}03:10 - ||cF3FF7000Meteor Axe||r - ||cff006fdcZyok||r {spell:98008}\n{time:03:11}03:11 - ||cff8811FFConducive Mark||r - ||cffc59a6cShirtpants||r {spell:97462}\n{time:03:29}03:29 - ||cffff0000Primal Blizzard||r - ||cff006fdcZyok||r {spell:108280}\n{time:03:36}03:36 - ||cff8811FFConducive Mark||r - ||cff006fdcSanfa||r {spell:98008}\n{time:03:50}03:50 - ||cF3FF7000Meteor Axe||r - ||cfffefefeEdolie||r {spell:246287}\n{time:04:06}04:06 - ||cff8811FFConducive Mark||r - {everyone} {spell:6262}  ||cff006fdcSanfa||r {spell:108280}\n{time:04:29}04:29 - ||cF3FF7000Meteor Axe||r - ||cfffefefeEdolie||r {spell:62618}  ||cfff38bb9Estu||r {spell:31884}\n{time:04:30}04:30 - ||cff8811FFConducive Mark||r - ||cfffe7b09Kâmeron||r {spell:740}\n{time:04:49}04:49 - ||cffff0000Primal Blizzard||r - ||cfff38bb9Estu||r {spell:31821}\n{time:05:10}05:10 - ||cF3FF7000Meteor Axe||r - ||cffc31d39Cadogan||r {spell:51052}\n{time:05:24}05:24 - ||cff8811FFConducive Mark||r - ||cfffefefeEdolie||r {spell:246287}\n{time:05:50}05:50 - ||cF3FF7000Meteor Axe||r - ||cffc31d39Cronîx||r {spell:51052}\n{time:06:12}06:12 - ||cffff0000Primal Blizzard||r - ||cff006fdcZyok||r {spell:108280}\n{time:06:31}06:31 - ||cF3FF7000Meteor Axe||r - ||cfffe7b09Kâmeron||r {spell:740}  ||cfff38bb9Estu||r {spell:31884}", -- [2]
@@ -86,12 +146,12 @@ local MRTDump = {
 			"1. ||cffc69b6dShirtpants||r ||cff00ff98Níce||r ||cfffff468Holicx||r ||cfff48cbaEstu||r \n2. ||cfff48cbaMiatra||r ||cffa330c9Kâzuto||r ||cfff48cbaSanatio||r ||cff00ff98Antagon||r ||cff33937fDrakvel||r \n3. ||cff3fc7ebMorpheusmage||r ||cff8788eeMesut||r ||cff33937fExtn||r ||cff0070ddSanfa||r ||cffffffffLeergut||r  \n4. ||cff3fc7ebHelimeisterb||r ||cffff7c0aKâmeron||r ||cffff7c0aTeesticle||r  ||cffffffffEdolie||r ||cffaad372Lukîî||r ", -- [19]
 			"1. ||cff00ff98Antagon||r ||cfff48cbaSanatio||r ||cffffffffEdolie||r ||cfff48cbaEstu||r \n2. ||cffffffffNoañgel||r ||cff3fc7ebMorpheusmage||r ||cff3fc7ebHelimeisterb||r ||cfffff468Holicx||r ||cff33937fDrakvel||r \n3. ||cffa330c9Kâzuto||r ||cff00ff98Níce||r ||cffc69b6dShirtpants||r ||cff33937fExtn||r ||cffffffffLeergut||r  \n4. ||cff8788eeLockbergen||r ||cff8788eeMesut||r ||cffff7c0aTeesticle||r ||cff8788eePawx||r ||cff0070ddSanfa||r \n\n{time:00:20}00:20 - ||cffdf9dc3Heal Absorb||r - ||cfffefefeEdolie||r {spell:246287}  ||cfff38bb9Estu||r {spell:216331}\n{time:00:26}00:26 - ||cffe68e3dMeteor Soak||r - ||cfff38bb9Estu||r {spell:31821}  ||cff006fdcSanfa||r {spell:114049}  ||cffc31d39Cronîx||r {spell:51052}  ||cffc59a6cShirtpants||r {spell:97462}\n{time:01:09}01:09 - ||cffe68e3dMeteor Soak||r - ||cff006fdcSanfa||r {spell:108280}\n{time:01:14}01:14 - ||cffaa0000Clear AOE||r - ||cfffefefeEdolie||r {spell:62618}  ||cfffefefeNoañgel||r {spell:265202}  ||cfffefefeNoañgel||r {spell:64843}  ||cfff38bb9Estu||r {spell:216331}\n{time:01:52}01:52 - ||cfff1c232Intermission 0/20 sec||r - ||cfffefefeEdolie||r {spell:47536}  ||cff006fdcSanfa||r {spell:108281}\n{time:02:02}02:02 - ||cfff1c232Intermission 10/20 sec||r - ||cfff38bb9Estu||r {spell:216331}\n{time:00:48,SAA:401419:1}02:40 - ||cffe68e3dMeteor Soak||r - ||cfffefefeEdolie||r {spell:246287}  ||cff006fdcSanfa||r {spell:98008}  ||cffc31d39Cronîx||r {spell:51052}\n{time:00:53,SAA:401419:1}02:45 - ||cffaa0000Clear AOE||r - ||cfff38bb9Estu||r {spell:216331}\n{time:01:31,SAA:401419:1}03:23 - ||cffe68e3dMeteor Soak||r - ||cfffefefeEdolie||r {spell:47536}  ||cfff38bb9Estu||r {spell:31821}  ||cff006fdcSanfa||r {spell:114049}  ||cffc59a6cShirtpants||r {spell:97462}\n{time:01:36,SAA:401419:1}03:28 - ||cffaa0000Clear AOE||r - ||cfff38bb9Estu||r {spell:216331}\n{time:02:20,SAA:401419:1}04:12 - ||cfff1c232Intermission 5/20 sec||r - ||cfffefefeEdolie||r {spell:246287}  ||cfff38bb9Estu||r {spell:216331}  ||cff006fdcSanfa||r {spell:108281}\n{time:00:20,SAA:401419:2}04:27 - ||cff969696Intermission End||r - ||cfffefefeNoañgel||r {spell:64901}\n{time:00:48,SAA:401419:2}04:55 - ||cffe68e3dMeteor Soak||r - ||cfffefefeEdolie||r {spell:47536}  ||cfffefefeNoañgel||r {spell:265202}  ||cfff38bb9Estu||r {spell:216331}  ||cffc31d39Cronîx||r {spell:51052}\n{time:01:11,SAA:401419:2}05:18 - ||cffab8b00Soak||r - ||cff006fdcSanfa||r {spell:108280}\n{time:01:19,SAA:401419:2}05:26 - ||cfff88379Jump AOE||r - ||cfffefefeEdolie||r {spell:62618}\n{time:01:25,SAA:401419:2}05:32 - ||cffdf9dc3Heal Absorb||r - ||cfffefefeNoañgel||r {spell:64843}\n{time:01:31,SAA:401419:2}05:38 - ||cffe68e3dMeteor Soak||r - ||cfff38bb9Estu||r {spell:216331}  ||cff006fdcSanfa||r {spell:98008}\n{time:01:52,SAA:401419:2}05:59 - ||cfff88379Jump AOE||r - ||cfffefefeEdolie||r {spell:246287}  ||cfff38bb9Estu||r {spell:31821}\n{time:02:23,SAA:401419:2}06:30 - ||cff969696Enrage||r - ||cfff38bb9Estu||r {spell:216331}  ||cff006fdcSanfa||r {spell:114049}  ||cff006fdcSanfa||r {spell:108281}", -- [20]
 			"1. ||cffff7c0aTeesticle||r ||cff8788eeMesut||r ||cffffffffEdolie||r ||cfff48cbaEstu||r \n2. ||cffffffffNoañgel||r ||cff3fc7ebMorpheusmage||r ||cff3fc7ebHelimeisterb||r ||cfffff468Holicx||r ||cff33937fDrakvel||r \n3. ||cffa330c9Kâzuto||r ||cff00ff98Níce||r ||cffc69b6dShirtpants||r ||cff33937fExtn||r ||cffffffffLeergut||r  \n4. ||cff00ff98Antagon||r ||cfff48cbaSanatio||r ||cff8788eeLockbergen||r ||cff8788eePawx||r ||cff0070ddSanfa||r \n\n{time:00:20}00:20 - ||cffdf9dc3Heal Absorb||r - ||cfffefefeEdolie||r {spell:246287}  ||cfff38bb9Estu||r {spell:216331}\n{time:00:26}00:26 - ||cffe68e3dMeteor Soak||r - ||cfff38bb9Estu||r {spell:31821}  ||cff006fdcSanfa||r {spell:114049}  ||cffc31d39Cronîx||r {spell:51052}  ||cffc59a6cShirtpants||r {spell:97462}\n{time:01:09}01:09 - ||cffe68e3dMeteor Soak||r - ||cff006fdcSanfa||r {spell:108280}\n{time:01:14}01:14 - ||cffaa0000Clear AOE||r - ||cfffefefeEdolie||r {spell:62618}  ||cfffefefeNoañgel||r {spell:265202}  ||cfffefefeNoañgel||r {spell:64843}  ||cfff38bb9Estu||r {spell:216331}\n{time:01:52}01:52 - ||cfff1c232Intermission 0/20 sec||r - ||cfffefefeEdolie||r {spell:47536}  ||cff006fdcSanfa||r {spell:108281}\n{time:02:02}02:02 - ||cfff1c232Intermission 10/20 sec||r - ||cfff38bb9Estu||r {spell:216331}\n{time:00:48,SAA:401419:1}02:40 - ||cffe68e3dMeteor Soak||r - ||cfffefefeEdolie||r {spell:246287}  ||cff006fdcSanfa||r {spell:98008}  ||cffc31d39Cronîx||r {spell:51052}\n{time:00:53,SAA:401419:1}02:45 - ||cffaa0000Clear AOE||r - ||cfff38bb9Estu||r {spell:216331}\n{time:01:31,SAA:401419:1}03:23 - ||cffe68e3dMeteor Soak||r - ||cfffefefeEdolie||r {spell:47536}  ||cfff38bb9Estu||r {spell:31821}  ||cff006fdcSanfa||r {spell:114049}  ||cffc59a6cShirtpants||r {spell:97462}\n{time:01:36,SAA:401419:1}03:28 - ||cffaa0000Clear AOE||r - ||cfff38bb9Estu||r {spell:216331}\n{time:02:20,SAA:401419:1}04:12 - ||cfff1c232Intermission 5/20 sec||r - ||cfffefefeEdolie||r {spell:246287}  ||cfff38bb9Estu||r {spell:216331}  ||cff006fdcSanfa||r {spell:108281}\n{time:00:20,SAA:401419:2}04:27 - ||cff969696Intermission End||r - ||cfffefefeNoañgel||r {spell:64901}\n{time:00:48,SAA:401419:2}04:55 - ||cffe68e3dMeteor Soak||r - ||cfffefefeEdolie||r {spell:47536}  ||cfffefefeNoañgel||r {spell:265202}  ||cfff38bb9Estu||r {spell:216331}  ||cffc31d39Cronîx||r {spell:51052}\n{time:01:11,SAA:401419:2}05:18 - ||cffab8b00Soak||r - ||cff006fdcSanfa||r {spell:108280}\n{time:01:19,SAA:401419:2}05:26 - ||cfff88379Jump AOE||r - ||cfffefefeEdolie||r {spell:62618}\n{time:01:25,SAA:401419:2}05:32 - ||cffdf9dc3Heal Absorb||r - ||cfffefefeNoañgel||r {spell:64843}\n{time:01:31,SAA:401419:2}05:38 - ||cffe68e3dMeteor Soak||r - ||cfff38bb9Estu||r {spell:216331}  ||cff006fdcSanfa||r {spell:98008}\n{time:01:52,SAA:401419:2}05:59 - ||cfff88379Jump AOE||r - ||cfffefefeEdolie||r {spell:246287}  ||cfff38bb9Estu||r {spell:31821}\n{time:02:23,SAA:401419:2}06:30 - ||cff969696Enrage||r - ||cfff38bb9Estu||r {spell:216331}  ||cff006fdcSanfa||r {spell:114049}  ||cff006fdcSanfa||r {spell:108281}", -- [21]
-			"1. ||cffff7c0aTeesticle||r ||cff8788eeMesut||r ||cffffffffEdolie||r ||cfff48cbaEstu||r \n2. ||cffffffffNoañgel||r ||cff3fc7ebMorpheusmage||r ||cff3fc7ebHelimeisterb||r ||cfffff468Holicx||r ||cff33937fDrakvel||r \n3. ||cffa330c9Kâzuto||r ||cff00ff98Níce||r ||cffc69b6dShirtpants||r ||cff33937fExtn||r ||cffffffffLeergut||r  \n4. ||cff00ff98Antagon||r ||cfff48cbaSanatio||r ||cff8788eeLockbergen||r ||cff8788eePawx||r ||cff0070ddSanfa||r \n\n{time:00:20}00:20 - ||cffdf9dc3Heal Absorb||r - ||cfffefefeEdolie||r {spell:246287}  ||cfff38bb9Estu||r {spell:216331}\n{time:00:26}00:26 - ||cffe68e3dMeteor Soak||r - ||cfff38bb9Estu||r {spell:31821}  ||cff006fdcSanfa||r {spell:114049}  ||cffc31d39Cronîx||r {spell:51052}  ||cffc59a6cShirtpants||r {spell:97462}\n{time:01:09}01:09 - ||cffe68e3dMeteor Soak||r - ||cff006fdcSanfa||r {spell:108280}\n{time:01:14}01:14 - ||cffaa0000Clear AOE||r - ||cfffefefeEdolie||r {spell:62618}  ||cfffefefeNoañgel||r {spell:265202}  ||cfffefefeNoañgel||r {spell:64843}  ||cfff38bb9Estu||r {spell:216331}\n{time:01:52}01:52 - ||cfff1c232Intermission 0/20 sec||r - ||cfffefefeEdolie||r {spell:47536}  ||cff006fdcSanfa||r {spell:108281}\n{time:02:02}02:02 - ||cfff1c232Intermission 10/20 sec||r - ||cfff38bb9Estu||r {spell:216331}\n{time:00:48,SAA:401419:1}02:40 - ||cffe68e3dMeteor Soak||r - ||cfffefefeEdolie||r {spell:246287}  ||cff006fdcSanfa||r {spell:98008}  ||cffc31d39Cronîx||r {spell:51052}\n{time:00:53,SAA:401419:1}02:45 - ||cffaa0000Clear AOE||r - ||cfff38bb9Estu||r {spell:216331}\n{time:01:31,SAA:401419:1}03:23 - ||cffe68e3dMeteor Soak||r - ||cfffefefeEdolie||r {spell:47536}  ||cfff38bb9Estu||r {spell:31821}  ||cff006fdcSanfa||r {spell:114049}  ||cffc59a6cShirtpants||r {spell:97462}\n{time:01:36,SAA:401419:1}03:28 - ||cffaa0000Clear AOE||r - ||cfff38bb9Estu||r {spell:216331}\n{time:02:20,SAA:401419:1}04:12 - ||cfff1c232Intermission 5/20 sec||r - ||cfffefefeEdolie||r {spell:246287}  ||cfff38bb9Estu||r {spell:216331}  ||cff006fdcSanfa||r {spell:108281}\n{time:00:20,SAA:401419:2}04:27 - ||cff969696Intermission End||r - ||cfffefefeNoañgel||r {spell:64901}\n{time:00:48,SAA:401419:2}04:55 - ||cffe68e3dMeteor Soak||r - ||cfffefefeEdolie||r {spell:47536}  ||cfffefefeNoañgel||r {spell:265202}  ||cfff38bb9Estu||r {spell:216331}  ||cffc31d39Cronîx||r {spell:51052}\n{time:01:11,SAA:401419:2}05:18 - ||cffab8b00Soak||r - ||cff006fdcSanfa||r {spell:108280}\n{time:01:19,SAA:401419:2}05:26 - ||cfff88379Jump AOE||r - ||cfffefefeEdolie||r {spell:62618}\n{time:01:25,SAA:401419:2}05:32 - ||cffdf9dc3Heal Absorb||r - ||cfffefefeNoañgel||r {spell:64843}\n{time:01:31,SAA:401419:2}05:38 - ||cffe68e3dMeteor Soak||r - ||cfff38bb9Estu||r {spell:216331}  ||cff006fdcSanfa||r {spell:98008}\n{time:01:52,SAA:401419:2}05:59 - ||cfff88379Jump AOE||r - ||cfffefefeEdolie||r {spell:246287}  ||cfff38bb9Estu||r {spell:31821}\n{time:02:23,SAA:401419:2}06:30 - ||cff969696Enrage||r - ||cfff38bb9Estu||r {spell:216331}  ||cff006fdcSanfa||r {spell:114049}  ||cff006fdcSanfa||r {spell:108281}", -- [22]
+			"1. ||cffff7c0aÖwlf||r ||cff8788eeMuzdan||r ||cffffffffEdolie||r ||cfff48cbaEstu||r \n2. ||cff33937fHurtsevo||r ||cffaad372Elgönndir||r ||cff3fc7ebHelimeisterb||r ||cfffff468Holicx||r ||cff33937fDrakvel||r \n3. ||cffa330c9Kâzuto||r ||cffc69b6dModoreddo||r ||cffc69b6dShirtpants||r ||cff33937fExtn||r ||cffffffffLeergut||r  \n4. ||cff00ff98Antagon||r ||cfff48cbaSanatio||r ||cffff7c0aDpxdru||r ||cff8788eePawx||r ||cff0070ddSanfa||r \n\n{time:00:14}00:14 - ||cfff88379Jump AOE||r - ||cfff38bb9Estu||r {spell:31884}\n{time:00:20}00:20 - ||cffdf9dc3Heal Absorb||r - ||cfffefefeEdolie||r {spell:246287}  ||cfff38bb9Estu||r {spell:200652}  ||cff006fdcSanfa||r {spell:108281}  ||cff006fdcSanfa||r {spell:108280}  ||cffa22fc8Kâzuto||r {spell:196718}\n{time:00:26}00:26 - ||cffe68e3dMeteor Soak||r - ||cff33937fHurtsevo||r {spell:359816}\n{time:01:09}01:09 - ||cffe68e3dMeteor Soak||r - ||cfffefefeEdolie||r {spell:47536}  ||cff006fdcSanfa||r {spell:114049}\n{time:01:14}01:14 - ||cffaa0000Clear AOE||r - ||cff006fdcSanfa||r {spell:98008}  ||cffc31d39Cronîx||r {spell:51052}\n{time:01:36}01:36 - ||cffdf9dc3Heal Absorb||r - ||cff33937fHurtsevo||r {spell:373270}\n{time:01:52}01:52 - ||cfff1c232Intermission 0/20 sec||r - ||cfff38bb9Estu||r {spell:200652}\n{time:01:57}01:57 - ||cfff1c232Intermission 5/20 sec||r - ||cfffefefeEdolie||r {spell:246287}  ||cfff38bb9Estu||r {spell:31821}\n{time:02:02}02:02 - ||cfff1c232Intermission 10/20 sec||r - ||cffc59a6cShirtpants||r {spell:97462}\n{time:00:36,SAA:401419:1}02:28 - ||cfff88379Jump AOE||r - ||cfff38bb9Estu||r {spell:31884}\n{time:00:43,SAA:401419:1}02:35 - ||cffdf9dc3Heal Absorb||r - ||cfffefefeEdolie||r {spell:47536}  ||cff33937fHurtsevo||r {spell:359816}\n{time:00:48,SAA:401419:1}02:40 - ||cffe68e3dMeteor Soak||r - ||cfffefefeEdolie||r {spell:62618}  ||cff33937fHurtsevo||r {spell:363534}\n{time:01:31,SAA:401419:1}03:23 - ||cffe68e3dMeteor Soak||r - ||cff006fdcSanfa||r {spell:108280}\n{time:01:36,SAA:401419:1}03:28 - ||cffaa0000Clear AOE||r - ||cfffefefeEdolie||r {spell:246287}  ||cfff38bb9Estu||r {spell:200652}  ||cff006fdcSanfa||r {spell:108281}  ||cffc31d39Cronîx||r {spell:51052}\n{time:02:15,SAA:401419:1}04:07 - ||cfff1c232Intermission 0/20 sec||r - ||cfffefefeEdolie||r {spell:47536}  ||cff006fdcSanfa||r {spell:114049}\n{time:02:20,SAA:401419:1}04:12 - ||cfff1c232Intermission 5/20 sec||r - ||cfff38bb9Estu||r {spell:31884}\n{time:00:42,SAA:401419:2}04:49 - ||cffdf9dc3Heal Absorb||r - ||cff33937fHurtsevo||r {spell:373270}\n{time:00:48,SAA:401419:2}04:55 - ||cffe68e3dMeteor Soak||r - ||cff33937fHurtsevo||r {spell:359816}\n{time:01:03,SAA:401419:2}05:10 - ||cff39b54aSoaks Run||r - ||cfff38bb9Estu||r {spell:200652}\n{time:01:19,SAA:401419:2}05:26 - ||cfff88379Jump AOE||r - ||cfffefefeEdolie||r {spell:246287}  ||cfff38bb9Estu||r {spell:31821}  ||cffc59a6cShirtpants||r {spell:97462}\n{time:01:25,SAA:401419:2}05:32 - ||cffdf9dc3Heal Absorb||r - ||cff006fdcSanfa||r {spell:108281}\n{time:01:31,SAA:401419:2}05:38 - ||cffe68e3dMeteor Soak||r - ||cfffefefeEdolie||r {spell:62618}  ||cff006fdcSanfa||r {spell:108280}\n{time:01:52,SAA:401419:2}05:59 - ||cfff88379Jump AOE||r - ||cfffefefeEdolie||r {spell:47536}  ||cff006fdcSanfa||r {spell:98008}", -- [22]
 			" ", -- [23]
 			"liquidStart\n||cfff48cbaEstu||r {spell:642}\n||cfff48cbaSanatio||r {spell:642}\n||cffaad372Lukîî||r {spell:186265}\n||cfff48cbaMiatra||r {spell:642}\n||cfff48cbaSanatio||r ||cfff48cbaSanatio||r's {spell:1022}\n||cfffff468Holicx||r \n||cfff48cbaMiatra||r {spell:1022}\n||cffaad372Lukîî||r {spell:186265}\n||cfff48cbaSanatio||r {spell:642}\n||cfff48cbaEstu||r {spell:642}\n||cfff48cbaMiatra||r {spell:642}\n||cff00ff98Antagon||r \n||cffaad372Lukîî||r {spell:186265}\n||cfff48cbaSanatio||r\nliquidEnd\n\n\"\n{time:00:10}00:10 - ||cff7030a0Debuffs 10 sec||r - ||cfff38bb9Estu||r {spell:216331}\n{time:00:16}00:16 - ||cffaa0000Knock AOE + Dot 15 sec||r - ||cfffe7b09Kâmeron||r {spell:323764}  ||cfffe7b09Kâmeron||r {spell:197721}\n{time:00:49}00:49 - ||cffaa0000Knock AOE + Dot 15 sec||r - ||cfffefefeEdolie||r {spell:64843}  ||cfffe7b09Kâmeron||r {spell:740}  ||cff006fdcSanfa||r {spell:108280}\n{time:00:57}00:57 - ||cff7030a0Debuffs 10 sec||r - ||cfff38bb9Estu||r {spell:216331}\n{time:01:22}01:22 - ||cffaa0000Knock AOE + Dot 15 sec||r - ||cfffe7b09Kâmeron||r {spell:323764}  ||cff006fdcSanfa||r {spell:114049}  ||cff006fdcSanfa||r {spell:108281}\n{time:01:29}01:29 - ||cff7030a0Debuffs 10 sec||r - ||cfffefefeEdolie||r {spell:265202}\n{time:01:56}01:56 - ||cffaa0000Knock AOE + Dot 15 sec||r - ||cfffe7b09Kâmeron||r {spell:197721}  ||cfff38bb9Estu||r {spell:216331}  ||cfff38bb9Estu||r {spell:31821}\n{time:02:30}02:30 - ||cffaa0000Knock AOE + Dot 15 sec||r - ||cfffe7b09Kâmeron||r {spell:323764}\n{time:02:33}02:33 - ||cff7030a0Debuffs 10 sec||r - ||cfff38bb9Estu||r {spell:216331}\n{time:03:06}03:06 - ||cff7030a0Debuffs 10 sec||r - ||cfffe7b09Kâmeron||r {spell:740}  ||cff006fdcSanfa||r {spell:98008}\n{time:03:36}03:36 - ||cffaa0000Knock AOE + Dot 15 sec||r - ||cfffe7b09Kâmeron||r {spell:323764}  ||cfffe7b09Kâmeron||r {spell:197721}  ||cfff38bb9Estu||r {spell:216331}\n{time:03:56}03:56 - ||cff7030a0Debuffs 10 sec||r - ||cff006fdcSanfa||r {spell:108280}  ||cff006fdcSanfa||r {spell:108281}\n{time:04:18}04:18 - ||cffaa0000Knock AOE + Dot 15 sec||r - ||cfffefefeEdolie||r {spell:265202}  ||cff006fdcSanfa||r {spell:114049}\n{time:04:19}04:19 - ||cff7030a0Debuffs 10 sec||r - ||cfff38bb9Estu||r {spell:216331}\n{time:04:52}04:52 - ||cffaa0000Knock AOE + Dot 15 sec||r - ||cfffefefeEdolie||r {spell:64843}  ||cfffe7b09Kâmeron||r {spell:323764}\n{time:05:09}05:09 - ||cff7030a0Debuffs 10 sec||r - ||cfffe7b09Kâmeron||r {spell:197721}  ||cfff38bb9Estu||r {spell:216331}\n{time:05:26}05:26 - ||cffaa0000Knock AOE + Dot 15 sec||r - ||cfffe7b09Kâmeron||r {spell:740}  ||cfff38bb9Estu||r {spell:31821}\n{time:05:58}05:58 - ||cff7030a0Debuffs 10 sec||r - ||cff006fdcSanfa||r {spell:108281}\n\"", -- [24]
 			"liquidStart\n||cfff48cbaEstu||r || BUBBLE\n||cfff48cbaMiatra||r || BOP\n||cfff48cbaMiatra||r || BUBBLE\n||cfff48cbaMiatra||r || DEF CD (AD)\n||cfff48cbaMiatra||r || GUARDIAN\n||cfff48cbaMiatra||r || BOP ESTU\n||cfff48cbaMiatra||r || DEF CD (AD)\n||cfff48cbaMiatra||r || SENTINAL\n||cfff48cbaMiatra||r || BUBBLE\n||cfff48cbaMiatra||r || DEF CD (AD)\n||cfff48cbaMiatra||r || BOP\n||cfff48cbaMiatra||r || MAYBE DEAD\nliquidEnd\n\n\"\n{time:00:10}00:10 - ||cff7030a0Debuffs 10 sec||r - ||cfff38bb9Estu||r {spell:216331}\n{time:00:16}00:16 - ||cffaa0000Knock AOE + Dot 15 sec||r - ||cfffe7b09Kâmeron||r {spell:323764}  ||cfffe7b09Kâmeron||r {spell:197721}\n{time:00:49}00:49 - ||cffaa0000Knock AOE + Dot 15 sec||r - ||cfffefefeEdolie||r {spell:64843}  ||cfffe7b09Kâmeron||r {spell:740}  ||cff006fdcSanfa||r {spell:108280}\n{time:00:57}00:57 - ||cff7030a0Debuffs 10 sec||r - ||cfff38bb9Estu||r {spell:216331}\n{time:01:22}01:22 - ||cffaa0000Knock AOE + Dot 15 sec||r - ||cfffe7b09Kâmeron||r {spell:323764}  ||cff006fdcSanfa||r {spell:114049}  ||cff006fdcSanfa||r {spell:108281}\n{time:01:29}01:29 - ||cff7030a0Debuffs 10 sec||r - ||cfffefefeEdolie||r {spell:265202}\n{time:01:56}01:56 - ||cffaa0000Knock AOE + Dot 15 sec||r - ||cfffe7b09Kâmeron||r {spell:197721}  ||cfff38bb9Estu||r {spell:216331}  ||cfff38bb9Estu||r {spell:31821}\n{time:02:30}02:30 - ||cffaa0000Knock AOE + Dot 15 sec||r - ||cfffe7b09Kâmeron||r {spell:323764}\n{time:02:33}02:33 - ||cff7030a0Debuffs 10 sec||r - ||cfff38bb9Estu||r {spell:216331}\n{time:03:06}03:06 - ||cff7030a0Debuffs 10 sec||r - ||cfffe7b09Kâmeron||r {spell:740}  ||cff006fdcSanfa||r {spell:98008}\n{time:03:36}03:36 - ||cffaa0000Knock AOE + Dot 15 sec||r - ||cfffe7b09Kâmeron||r {spell:323764}  ||cfffe7b09Kâmeron||r {spell:197721}  ||cfff38bb9Estu||r {spell:216331}\n{time:03:56}03:56 - ||cff7030a0Debuffs 10 sec||r - ||cff006fdcSanfa||r {spell:108280}  ||cff006fdcSanfa||r {spell:108281}\n{time:04:18}04:18 - ||cffaa0000Knock AOE + Dot 15 sec||r - ||cfffefefeEdolie||r {spell:265202}  ||cff006fdcSanfa||r {spell:114049}\n{time:04:19}04:19 - ||cff7030a0Debuffs 10 sec||r - ||cfff38bb9Estu||r {spell:216331}\n{time:04:52}04:52 - ||cffaa0000Knock AOE + Dot 15 sec||r - ||cfffefefeEdolie||r {spell:64843}  ||cfffe7b09Kâmeron||r {spell:323764}\n{time:05:09}05:09 - ||cff7030a0Debuffs 10 sec||r - ||cfffe7b09Kâmeron||r {spell:197721}  ||cfff38bb9Estu||r {spell:216331}\n{time:05:26}05:26 - ||cffaa0000Knock AOE + Dot 15 sec||r - ||cfffe7b09Kâmeron||r {spell:740}  ||cfff38bb9Estu||r {spell:31821}\n{time:05:58}05:58 - ||cff7030a0Debuffs 10 sec||r - ||cff006fdcSanfa||r {spell:108281}\n\"", -- [25]
-			"liquidStart\n||cfff48cbaEstu||r || {spell:642}\n||cfff48cbaMiatra||r || {spell:1022}\n||cfff48cbaMiatra||r || {spell:642}\n||cfff48cbaMiatra||r || DEF CD {spell:31850}/{spell:378974}\n||cfff48cbaMiatra||r || {spell:86659}\n||cfff48cbaMiatra||r || {spell:1022} ESTU\n||cfff48cbaMiatra||r || DEF CD {spell:31850}/{spell:389539}\n||cfff48cbaMiatra||r || {spell:642}\n||cfff48cbaMiatra||r || {spell:1022}\n||cfff48cbaMiatra||r || DEF CD {spell:31850}/{spell:378974}\n||cfff48cbaMiatra||r || ???\n||cfff48cbaMiatra||r || MAYBE DEAD\nliquidEnd\n\n\"\n{time:00:10}00:10 - ||cff7030a0Debuffs 10 sec||r - ||cfff38bb9Estu||r {spell:216331}\n{time:00:16}00:16 - ||cffaa0000Knock AOE + Dot 15 sec||r - ||cfffe7b09Kâmeron||r {spell:323764}  ||cfffe7b09Kâmeron||r {spell:197721}\n{time:00:49}00:49 - ||cffaa0000Knock AOE + Dot 15 sec||r - ||cfffefefeEdolie||r {spell:64843}  ||cfffe7b09Kâmeron||r {spell:740}  ||cff006fdcSanfa||r {spell:108280}\n{time:00:57}00:57 - ||cff7030a0Debuffs 10 sec||r - ||cfff38bb9Estu||r {spell:216331}\n{time:01:22}01:22 - ||cffaa0000Knock AOE + Dot 15 sec||r - ||cfffe7b09Kâmeron||r {spell:323764}  ||cff006fdcSanfa||r {spell:114049}  ||cff006fdcSanfa||r {spell:108281}\n{time:01:29}01:29 - ||cff7030a0Debuffs 10 sec||r - ||cfffefefeEdolie||r {spell:265202}\n{time:01:56}01:56 - ||cffaa0000Knock AOE + Dot 15 sec||r - ||cfffe7b09Kâmeron||r {spell:197721}  ||cfff38bb9Estu||r {spell:216331}  ||cfff38bb9Estu||r {spell:31821}\n{time:02:30}02:30 - ||cffaa0000Knock AOE + Dot 15 sec||r - ||cfffe7b09Kâmeron||r {spell:323764}\n{time:02:33}02:33 - ||cff7030a0Debuffs 10 sec||r - ||cfff38bb9Estu||r {spell:216331}\n{time:03:06}03:06 - ||cff7030a0Debuffs 10 sec||r - ||cfffe7b09Kâmeron||r {spell:740}  ||cff006fdcSanfa||r {spell:98008}\n{time:03:36}03:36 - ||cffaa0000Knock AOE + Dot 15 sec||r - ||cfffe7b09Kâmeron||r {spell:323764}  ||cfffe7b09Kâmeron||r {spell:197721}  ||cfff38bb9Estu||r {spell:216331}\n{time:03:56}03:56 - ||cff7030a0Debuffs 10 sec||r - ||cff006fdcSanfa||r {spell:108280}  ||cff006fdcSanfa||r {spell:108281}\n{time:04:18}04:18 - ||cffaa0000Knock AOE + Dot 15 sec||r - ||cfffefefeEdolie||r {spell:265202}  ||cff006fdcSanfa||r {spell:114049}\n{time:04:19}04:19 - ||cff7030a0Debuffs 10 sec||r - ||cfff38bb9Estu||r {spell:216331}\n{time:04:52}04:52 - ||cffaa0000Knock AOE + Dot 15 sec||r - ||cfffefefeEdolie||r {spell:64843}  ||cfffe7b09Kâmeron||r {spell:323764}\n{time:05:09}05:09 - ||cff7030a0Debuffs 10 sec||r - ||cfffe7b09Kâmeron||r {spell:197721}  ||cfff38bb9Estu||r {spell:216331}\n{time:05:26}05:26 - ||cffaa0000Knock AOE + Dot 15 sec||r - ||cfffe7b09Kâmeron||r {spell:740}  ||cfff38bb9Estu||r {spell:31821}\n{time:05:58}05:58 - ||cff7030a0Debuffs 10 sec||r - ||cff006fdcSanfa||r {spell:108281}\n\"", -- [26]
-			"liquidStart\n||cfff48cbaEstu||r || BUBBLE    \n||cfff48cbaMiatra||r || BOP\n||cfff48cbaMiatra||r || BUBBLE\n||cfff48cbaMiatra||r || DEF CD (AD)/BoL\n||cfff48cbaMiatra||r || GUARDIAN\n||cfff48cbaMiatra||r || BOP ESTU\n||cfff48cbaMiatra||r || DEF CD (AD)/Sentinel\n||cfff48cbaMiatra||r || BUBBLE\n||cfff48cbaMiatra||r || BOP\n||cfff48cbaMiatra||r || DEF CD (AD)/BoL\n||cfff48cbaMiatra||r || ???\n||cfff48cbaMiatra||r || MAYBE DEAD\nliquidEnd\n\n\"\n{time:00:10}00:10 - ||cff7030a0Debuffs 10 sec||r - ||cfff38bb9Estu||r {spell:216331}\n{time:00:16}00:16 - ||cffaa0000Knock AOE + Dot 15 sec||r - ||cfffe7b09Kâmeron||r {spell:323764}  ||cfffe7b09Kâmeron||r {spell:197721}\n{time:00:49}00:49 - ||cffaa0000Knock AOE + Dot 15 sec||r - ||cfffefefeEdolie||r {spell:64843}  ||cfffe7b09Kâmeron||r {spell:740}  ||cff006fdcSanfa||r {spell:108280}\n{time:00:57}00:57 - ||cff7030a0Debuffs 10 sec||r - ||cfff38bb9Estu||r {spell:216331}\n{time:01:22}01:22 - ||cffaa0000Knock AOE + Dot 15 sec||r - ||cfffe7b09Kâmeron||r {spell:323764}  ||cff006fdcSanfa||r {spell:114049}  ||cff006fdcSanfa||r {spell:108281}\n{time:01:29}01:29 - ||cff7030a0Debuffs 10 sec||r - ||cfffefefeEdolie||r {spell:265202}\n{time:01:56}01:56 - ||cffaa0000Knock AOE + Dot 15 sec||r - ||cfffe7b09Kâmeron||r {spell:197721}  ||cfff38bb9Estu||r {spell:216331}  ||cfff38bb9Estu||r {spell:31821}\n{time:02:30}02:30 - ||cffaa0000Knock AOE + Dot 15 sec||r - ||cfffe7b09Kâmeron||r {spell:323764}\n{time:02:33}02:33 - ||cff7030a0Debuffs 10 sec||r - ||cfff38bb9Estu||r {spell:216331}\n{time:03:06}03:06 - ||cff7030a0Debuffs 10 sec||r - ||cfffe7b09Kâmeron||r {spell:740}  ||cff006fdcSanfa||r {spell:98008}\n{time:03:36}03:36 - ||cffaa0000Knock AOE + Dot 15 sec||r - ||cfffe7b09Kâmeron||r {spell:323764}  ||cfffe7b09Kâmeron||r {spell:197721}  ||cfff38bb9Estu||r {spell:216331}\n{time:03:56}03:56 - ||cff7030a0Debuffs 10 sec||r - ||cff006fdcSanfa||r {spell:108280}  ||cff006fdcSanfa||r {spell:108281}\n{time:04:18}04:18 - ||cffaa0000Knock AOE + Dot 15 sec||r - ||cfffefefeEdolie||r {spell:265202}  ||cff006fdcSanfa||r {spell:114049}\n{time:04:19}04:19 - ||cff7030a0Debuffs 10 sec||r - ||cfff38bb9Estu||r {spell:216331}\n{time:04:52}04:52 - ||cffaa0000Knock AOE + Dot 15 sec||r - ||cfffefefeEdolie||r {spell:64843}  ||cfffe7b09Kâmeron||r {spell:323764}\n{time:05:09}05:09 - ||cff7030a0Debuffs 10 sec||r - ||cfffe7b09Kâmeron||r {spell:197721}  ||cfff38bb9Estu||r {spell:216331}\n{time:05:26}05:26 - ||cffaa0000Knock AOE + Dot 15 sec||r - ||cfffe7b09Kâmeron||r {spell:740}  ||cfff38bb9Estu||r {spell:31821}\n{time:05:58}05:58 - ||cff7030a0Debuffs 10 sec||r - ||cff006fdcSanfa||r {spell:108281}\n\"", -- [27]
+			"liquidStart\n||cfff48cbaEstu||r || BUBBLE    \n||cfff48cbaMiatra||r || BOP\n||cfff48cbaMiatra||r || BUBBLE\n||cfff48cbaMiatra||r || DEF CD (AD)/BoL\n||cfff48cbaMiatra||r || GUARDIAN\n||cfff48cbaMiatra||r || BOP ESTU\n||cfff48cbaMiatra||r || DEF CD (AD)/Sentinel\n||cfff48cbaMiatra||r || BUBBLE\n||cfff48cbaMiatra||r || BOP\n||cfff48cbaMiatra||r || DEF CD (AD)/BoL\n||cfff48cbaMiatra||r || ???\n||cfff48cbaMiatra||r || MAYBE DEAD\nliquidEnd\n\n\"\n{time:00:10}00:10 - ||cff7030a0Debuffs 10 sec||r - ||cfff38bb9Estu||r {spell:216331}\n{time:00:16}00:16 - ||cffaa0000Knock AOE + Dot 15 sec||r - ||cffff7c0aKruelio||r {spell:323764}  ||cffff7c0aKruelio||r {spell:197721}\n{time:00:49}00:49 - ||cffaa0000Knock AOE + Dot 15 sec||r - ||cfffefefeEdolie||r {spell:64843}  ||cffff7c0aKruelio||r {spell:740}  ||cff006fdcSanfa||r {spell:108280}\n{time:00:57}00:57 - ||cff7030a0Debuffs 10 sec||r - ||cfff38bb9Estu||r {spell:216331}\n{time:01:22}01:22 - ||cffaa0000Knock AOE + Dot 15 sec||r - ||cffff7c0aKruelio||r {spell:323764}  ||cff006fdcSanfa||r {spell:114049}  ||cff006fdcSanfa||r {spell:108281}\n{time:01:29}01:29 - ||cff7030a0Debuffs 10 sec||r - ||cfffefefeEdolie||r {spell:265202}\n{time:01:56}01:56 - ||cffaa0000Knock AOE + Dot 15 sec||r - ||cffff7c0aKruelio||r {spell:197721}  ||cfff38bb9Estu||r {spell:216331}  ||cfff38bb9Estu||r {spell:31821}\n{time:02:30}02:30 - ||cffaa0000Knock AOE + Dot 15 sec||r - ||cffff7c0aKruelio {spell:323764}\n{time:02:33}02:33 - ||cff7030a0Debuffs 10 sec||r - ||cfff38bb9Estu||r {spell:216331}\n{time:03:06}03:06 - ||cff7030a0Debuffs 10 sec||r - ||cffff7c0aKruelio||r {spell:740}  ||cff006fdcSanfa||r {spell:98008}\n{time:03:36}03:36 - ||cffaa0000Knock AOE + Dot 15 sec||r - ||cffff7c0aKruelio {spell:323764}  ||cffff7c0aKruelio||r {spell:197721}  ||cfff38bb9Estu||r {spell:216331}\n{time:03:56}03:56 - ||cff7030a0Debuffs 10 sec||r - ||cff006fdcSanfa||r {spell:108280}  ||cff006fdcSanfa||r {spell:108281}\n{time:04:18}04:18 - ||cffaa0000Knock AOE + Dot 15 sec||r - ||cfffefefeEdolie||r {spell:265202}  ||cff006fdcSanfa||r {spell:114049}\n{time:04:19}04:19 - ||cff7030a0Debuffs 10 sec||r - ||cfff38bb9Estu||r {spell:216331}\n{time:04:52}04:52 - ||cffaa0000Knock AOE + Dot 15 sec||r - ||cfffefefeEdolie||r {spell:64843}  ||cffff7c0aKruelio||r {spell:323764}\n{time:05:09}05:09 - ||cff7030a0Debuffs 10 sec||r - ||cffff7c0aKruelio||r {spell:197721}  ||cfff38bb9Estu||r {spell:216331}\n{time:05:26}05:26 - ||cffaa0000Knock AOE + Dot 15 sec||r - ||cffff7c0aKruelio||r {spell:740}  ||cfff38bb9Estu||r {spell:31821}\n{time:05:58}05:58 - ||cff7030a0Debuffs 10 sec||r - ||cff006fdcSanfa||r {spell:108281}\n\"", -- [26]
+			"liquidStart\n||cfff48cbaEstu||r || BUBBLE    \n||cfff48cbaMiatra||r || BOP\n||cfff48cbaMiatra||r || BUBBLE\n||cfff48cbaMiatra||r || DEF CD (AD)/BoL\n||cfff48cbaMiatra||r || GUARDIAN\n||cfff48cbaMiatra||r || BOP ESTU\n||cfff48cbaMiatra||r || DEF CD (AD)/Sentinel\n||cfff48cbaMiatra||r || BUBBLE\n||cfff48cbaMiatra||r || BOP\n||cfff48cbaMiatra||r || DEF CD (AD)/BoL\n||cfff48cbaMiatra||r || ???\n||cfff48cbaMiatra||r || MAYBE DEAD\nliquidEnd\n\n{time:00:10}00:10 - ||cff7030a0Debuffs 10 sec||r - ||cfff38bb9Estu||r {spell:216331}\n{time:00:16}00:16 - ||cffaa0000Knock AOE + Dot 15 sec||r - ||cffff7c0aKruelio||r {spell:323764}  ||cffff7c0aKruelio||r {spell:197721}\n{time:00:49}00:49 - ||cffaa0000Knock AOE + Dot 15 sec||r - ||cfffefefeEdolie||r {spell:64843}  ||cffff7c0aKruelio||r {spell:740}  ||cff006fdcSanfa||r {spell:108280}\n{time:00:57}00:57 - ||cff7030a0Debuffs 10 sec||r - ||cfff38bb9Estu||r {spell:216331}\n{time:01:22}01:22 - ||cffaa0000Knock AOE + Dot 15 sec||r - ||cffff7c0aKruelio||r {spell:323764}  ||cff006fdcSanfa||r {spell:114049}  ||cff006fdcSanfa||r {spell:108281}\n{time:01:29}01:29 - ||cff7030a0Debuffs 10 sec||r - ||cfffefefeEdolie||r {spell:265202}\n{time:01:56}01:56 - ||cffaa0000Knock AOE + Dot 15 sec||r - ||cffff7c0aKruelio||r {spell:197721}  ||cfff38bb9Estu||r {spell:216331}  ||cfff38bb9Estu||r {spell:31821}\n{time:02:30}02:30 - ||cffaa0000Knock AOE + Dot 15 sec||r - ||cffff7c0aKruelio||r {spell:323764}\n{time:02:33}02:33 - ||cff7030a0Debuffs 10 sec||r - ||cfff38bb9Estu||r {spell:216331}\n{time:03:06}03:06 - ||cff7030a0Debuffs 10 sec||r - ||cffff7c0aKruelio||r {spell:740}  ||cff006fdcSanfa||r {spell:98008}\n{time:03:36}03:36 - ||cffaa0000Knock AOE + Dot 15 sec||r - ||cffff7c0aKruelio||r {spell:323764}  ||cffff7c0aKruelio||r {spell:197721}  ||cfff38bb9Estu||r {spell:216331}\n{time:03:56}03:56 - ||cff7030a0Debuffs 10 sec||r - ||cff006fdcSanfa||r {spell:108280}  ||cff006fdcSanfa||r {spell:108281}\n{time:04:18}04:18 - ||cffaa0000Knock AOE + Dot 15 sec||r - ||cfffefefeEdolie||r {spell:265202}  ||cff006fdcSanfa||r {spell:114049}\n{time:04:19}04:19 - ||cff7030a0Debuffs 10 sec||r - ||cfff38bb9Estu||r {spell:216331}\n{time:04:52}04:52 - ||cffaa0000Knock AOE + Dot 15 sec||r - ||cfffefefeEdolie||r {spell:64843}  ||cffff7c0aKruelio||r {spell:323764}\n{time:05:09}05:09 - ||cff7030a0Debuffs 10 sec||r - ||cffff7c0aKruelio||r {spell:197721}  ||cfff38bb9Estu||r {spell:216331}\n{time:05:26}05:26 - ||cffaa0000Knock AOE + Dot 15 sec||r - ||cffff7c0aKruelio||r {spell:740}  ||cfff38bb9Estu||r {spell:31821}\n{time:05:58}05:58 - ||cff7030a0Debuffs 10 sec||r - ||cff006fdcSanfa||r {spell:108281}", -- [27]
 			"liquidStart\n||cff33937fDrakvel||r ||cffffffffLeergut||r ||cffffffffEdolie||r ||cffff7c0aTeesticle||r ||cffff7c0aDpxdru||r \n||cff33937fExtn||r ||cffaad372Elgönndir||r ||cff8788eePawx||r ||cffff7c0aKâmeron||r ||cffc69b6dShirtpants||r \n||cfff48cbaEstu||r ||cff0070ddSanfa||r ||cff3fc7ebHelimeisterb||r ||cff3fc7ebMorpheusmage||r ||cfffff468Holicx||r \nliquidEnd", -- [28]
 			"liquidStart\n||cff33937fDrakvel||r ||cffffffffLeergut||r ||cffffffffEdolie||r ||cff00ff98Níce||r ||cffff7c0aDpxdru||r \n||cff33937fExtn||r ||cffc69b6dModoreddo||r ||cff8788eePawx||r ||cffff7c0aKâmeron||r ||cffc69b6dShirtpants||r \n||cfff48cbaEstu||r ||cff0070ddSanfa||r ||cff3fc7ebHelimeisterb||r ||cff3fc7ebMorpheusmage||r ||cfffff468Holicx||r \nliquidEnd\n\n\"\n{time:00:03}00:03 - ||cff969696On Pull||r - ||cfffe7b09Kâmeron||r {spell:197721}\n{time:00:08}00:08 - ||cfff88379AOE||r - ||cfffe7b09Kâmeron||r {spell:323764}  ||cff006fdcSanfa||r {spell:108281}\n{time:00:23}00:23 - ||cffe68e3dLava Soak||r - ||cfffefefeEdolie||r {spell:265202}  ||cfff38bb9Estu||r {spell:216331}  ||cff006fdcSanfa||r {spell:108280}\n{time:00:47}00:47 - ||cffdf9dc3Knock Dmg||r - ||cfffe7b09Kâmeron||r {spell:740}\n{time:00:50}00:50 - ||cfff88379AOE||r - ||cfffefefeEdolie||r {spell:64843}  ||cff006fdcSanfa||r {spell:114049}\n{time:01:03}01:03 - ||cffe68e3dLava Soak||r - ||cfff38bb9Estu||r {spell:216331}  ||cff006fdcSanfa||r {spell:98008}\n{time:01:15}01:15 - ||cfff88379AOE||r - ||cfffe7b09Kâmeron||r {spell:323764}\n{time:01:30}01:30 - ||cffe68e3dLava Soak||r - ||cfffe7b09Kâmeron||r {spell:197721}\n{time:01:57}01:57 - ||cfff88379AOE||r - ||cfff38bb9Estu||r {spell:216331}\n{time:02:10}02:10 - ||cffe68e3dLava Soak||r - ||cfff38bb9Estu||r {spell:31821}  ||cff006fdcSanfa||r {spell:108281}\n{time:02:22}02:22 - ||cfff88379AOE||r - ||cfffe7b09Kâmeron||r {spell:323764}\n{time:02:37}02:37 - ||cffe68e3dLava Soak||r - ||cffc59a6cShirtpants||r {spell:97462}\n{time:03:01}03:01 - ||cffdf9dc3Knock Dmg||r - ||cfffe7b09Kâmeron||r {spell:740}  ||cfff38bb9Estu||r {spell:216331}\n{time:03:04}03:04 - ||cfff88379AOE||r - ||cfffe7b09Kâmeron||r {spell:197721}\n{time:03:17}03:17 - ||cffe68e3dLava Soak||r - ||cffc31d39Cronîx||r {spell:51052}\n{time:03:29}03:29 - ||cfff88379AOE||r - ||cfffe7b09Kâmeron||r {spell:323764}  ||cff006fdcSanfa||r {spell:108280}\n{time:03:44}03:44 - ||cffe68e3dLava Soak||r - ||cfff38bb9Estu||r {spell:216331}\n{time:03:50}03:50 - ||cff238e47Frontal||r - ||cff006fdcSanfa||r {spell:114049}\n{time:04:11}04:11 - ||cfff88379AOE||r - ||cfffefefeEdolie||r {spell:265202}\n{time:04:24}04:24 - ||cffe68e3dLava Soak||r - ||cfff38bb9Estu||r {spell:216331}  ||cff006fdcSanfa||r {spell:98008}  ||cff006fdcSanfa||r {spell:108281}\n{time:04:36}04:36 - ||cfff88379AOE||r - ||cfffefefeEdolie||r {spell:64843}  ||cfffe7b09Kâmeron||r {spell:323764}\n{time:04:51}04:51 - ||cffe68e3dLava Soak||r - ||cfffe7b09Kâmeron||r {spell:197721}\n{time:05:15}05:15 - ||cffdf9dc3Knock Dmg||r - ||cfffe7b09Kâmeron||r {spell:740}  ||cfff38bb9Estu||r {spell:31821}\n{time:05:18}05:18 - ||cfff88379AOE||r - ||cfff38bb9Estu||r {spell:216331}\n{time:05:31}05:31 - ||cffe68e3dLava Soak||r - ||cfffe7b09Kâmeron||r {spell:323764}  ||cffc31d39Cronîx||r {spell:51052}\n\"", -- [29]
 			"#portals ||cff00ff98Antagon||r ||cfff48cbaSanatio||r ||cffa330c9Kâzuto||r ||cffc41e3aCronîx||r ||cffc41e3aCadogan||r ||cffc69b6dShirtpants||r ||cfff48cbaMiatra||r ||cff00ff98Níce||r ||cfffff468Holicx||r ||cfff48cbaEstu||r ||cffffffffLeergut||r ||cff3fc7ebHelimeisterb||r ||cff3fc7ebMorpheusmage||r ||cffff7c0aTeesticle||r ||cffaad372Lukîî||r ||cff8788eePawx||r ||cffffffffNoañgel||r ||cff33937fDrakvel||r ||cff0070ddSanfa||r ||cffffffffEdolie||r\n\n{time:00:16}00:16 - ||cfff1c232Wall Dot 15 sec||r - ||cfffefefeNoañgel||r {spell:64843}  ||cff006fdcSanfa||r {spell:108280}  ||cfff38bb9Estu||r {spell:216331}\n{time:00:23}00:23 - ||cfff1c232Dot 7/15 sec||r - ||cfffefefeEdolie||r {spell:265202}\n{time:00:27}00:27 - ||cffe6dbc7Tank Wall Dot||r - ||cfffefefeNoañgel||r {spell:265202}\n{time:01:04}01:04 - ||cffab8b00Tank Wall Dot||r - ||cfffefefeEdolie||r {spell:64843}  ||cfff38bb9Estu||r {spell:216331}\n{time:01:16}01:16 - ||cffaa0000AoE 411k||r - ||cfff38bb9Estu||r {spell:31821}\n{time:01:53}01:53 - ||cffe68e3dAoE 616k||r - ||cff006fdcSanfa||r {spell:114049}  ||cff006fdcSanfa||r {spell:108281}  ||cfff38bb9Estu||r {spell:216331}\n{time:00:26,SCC:409313:1}03:12 - ||cfff1c232Tank Wall Dot||r - ||cfff38bb9Estu||r {spell:216331}\n{time:00:42,SCC:409313:1}03:28 - ||cff8811ffBreak Walls||r - ||cff006fdcSanfa||r {spell:108280}\n{time:00:56,SCC:409313:1}03:42 - ||cfff1c232Tank Wall Dot||r - ||cfffefefeEdolie||r {spell:265202}\n{time:01:11,SCC:409313:1}03:57 - ||cff8811ffBreak Walls||r - ||cfff38bb9Estu||r {spell:216331}\n{time:01:26,SCC:409313:1}04:12 - ||cfff1c232Tank Wall Dot||r - ||cfffefefeNoañgel||r {spell:265202}  ||cff006fdcSanfa||r {spell:108281}  ||cff006fdcSanfa||r {spell:98008}\n{time:01:54,SCC:409313:1}04:40 - ||cfff1c232Tank Wall Dot||r - ||cfffefefeNoañgel||r {spell:64843}  ||cff006fdcSanfa||r {spell:114049}  ||cfff38bb9Estu||r {spell:216331}\n{time:02:04,SCC:409313:1}04:50 - ||cffaa0000AoE 4 - 531k||r - ||cfff38bb9Estu||r {spell:31821}\n{time:00:38,SAR:404045:1}05:48 - ||cffc59a6cTank Hit||r - ||cfff38bb9Estu||r {spell:216331}\n{time:01:29,SAR:404045:1}06:39 - ||cfff1c232DoT 10/20s||r - ||cfffefefeEdolie||r {spell:64843}  ||cff006fdcSanfa||r {spell:108280}  ||cfff38bb9Estu||r {spell:216331}\n{time:01:33,SAR:404045:1}06:43 - ||cff8811ffDoT 10s||r - ||cfffefefeEdolie||r {spell:265202}\n{time:01:49,SAR:404045:1}06:59 - ||cfff1c232DoT 20s||r - ||cfffefefeNoañgel||r {spell:265202}  ||cff006fdcSanfa||r {spell:108281}  ||cff006fdcSanfa||r {spell:98008}\n\nliquidStart\n||cffaad372Lukîî||r \n||cff3fc7ebHelimeisterb||r \n||cff3fc7ebMorpheusmage||r\n||cff8788eePawx||r \n||cff33937fDrakvel||r\n||cffff7c0aTeesticle||r\n||cffffffffLeergut||r\n||cff0070ddSanfa||r\n||cffffffffEdolie||r\n||cffffffffNoañgel||r\n||cfff48cbaEstu||r \nliquidEnd", -- [30]
@@ -99,85 +159,383 @@ local MRTDump = {
 			"intstart\nnpc:202969 \nspell:411302 \n{skull}xx xx xx xx\n{skull}xx xx xx xx\nnpc:202971\nspell:404754 \n{square}xx xx\n{square}xx xx\n{cross}xx xx\n{cross}xx xx\n{skull}xx xx\n{skull}xx xx\nintend\n\nliquidStart\n||cffff7c0aXesevi||r ||cffffffffNick||r\n||cff8788eeThd ||r||cff8788eeSplat||r\np3\n||cff3fc7ebImfiredup||r ||cff3fc7ebKsp||r\n||cff8788eeThd ||r||cff8788eeSplat||r\n||cff3fc7ebImfiredup||r ||cff3fc7ebKsp||r\nliquidEnd", -- [32]
 			"intstart\nnpc:202969 \nspell:411302 \n{skull}||cff00ff98Níce||r ||cffa330c9Kâzuto||r ||cffc41e3aCronîx||r ||cffc69b6dShirtpants||r\n{skull}||cfffff468Holicx||r ||cfff48cbaMiatra||r ||cffc41e3aCadogan||r ||cffaad372Lukîî||r\nnpc:202971\nspell:404754 \n{square}||cff00ff98Níce||r ||cffaad372Lukîî||r\n{square}||cffa330c9Kâzuto||r ||cff3fc7ebMorpheusmage||r\n{cross}||cfffff468Holicx||r ||cffffffffLeergut||r\n{cross}||cffc69b6dShirtpants||r ||cffc41e3aCronîx||r\n{skull}||cffc41e3aCadogan||r ||cff33937fDrakvel||r\n{skull}||cfff48cbaMiatra||r ||cff3fc7ebHelimeisterb||r\nintend\n\nliquidStart\n||cffff7c0aTeesticle||r HolyPriest\n||cff8788eePawx||r ||rDD\np3\n||cff3fc7ebMorpheusmage||r ||cff3fc7ebHelimeisterb||r\n||cff8788eePawx||r ||rDD\n||cff3fc7ebMorpheusmage||r ||cff3fc7ebHelimeisterb||r\nliquidEnd", -- [33]
 			"intstart\nnpc:202969 \nspell:411302 \n{skull}||cff00ff98Níce||r ||cffa330c9Kâzuto||r ||cffc41e3aCronîx||r ||cffc69b6dShirtpants||r\n{skull}||cfffff468Holicx||r ||cfff48cbaMiatra||r ||cffc41e3aCadogan||r ||cffaad372Lukîî||r\nnpc:202971\nspell:404754 \n{square}||cff00ff98Níce||r ||cffaad372Lukîî||r\n{square}||cffa330c9Kâzuto||r ||cff3fc7ebMorpheusmage||r\n{cross}||cfffff468Holicx||r ||cffffffffLeergut||r\n{cross}||cffc69b6dShirtpants||r ||cffc41e3aCronîx||r\n{skull}||cffc41e3aCadogan||r ||cff33937fDrakvel||r\n{skull}||cfff48cbaMiatra||r ||cff3fc7ebHelimeisterb||r\nintend\n\nliquidStart\n||cffff7c0aTeesticle||r HolyPriest\n||cff8788eePawx||r ||rDD\np3\n||cff3fc7ebMorpheusmage||r ||cff3fc7ebHelimeisterb||r\n||cff8788eePawx||r ||rDD\n||cff3fc7ebMorpheusmage||r ||cff3fc7ebHelimeisterb||r\nliquidEnd", -- [34]
-			"intstart\nnpc:202969 \nspell:411302 \n{skull}||cff00ff98Níce||r ||cffa330c9Kâzuto||r ||cffc41e3aCronîx||r ||cffc69b6dShirtpants||r\n{skull}||cfffff468Holicx||r ||cfff48cbaMiatra||r ||cffc41e3aCadogan||r ||cffaad372Lukîî||r\nnpc:202971\nspell:404754 \n{square}||cff00ff98Níce||r ||cffaad372Lukîî||r\n{square}||cffa330c9Kâzuto||r ||cff3fc7ebMorpheusmage||r\n{cross}||cfffff468Holicx||r ||cffffffffLeergut||r\n{cross}||cffc69b6dShirtpants||r ||cffc41e3aCronîx||r\n{skull}||cffc41e3aCadogan||r ||cff33937fDrakvel||r\n{skull}||cfff48cbaMiatra||r ||cff3fc7ebHelimeisterb||r\nintend\n\nliquidStart\n||cff3fc7ebMorpheusmage||r ||cff3fc7ebHelimeisterb||r\n||cff8788eePawx||r ||rDD\np3\n||cff3fc7ebMorpheusmage||r ||cff3fc7ebHelimeisterb||r\n||cff8788eePawx||r ||rDD\n||cff3fc7ebMorpheusmage||r ||cff3fc7ebHelimeisterb||r\nliquidEnd", -- [35]
-			"intstart\nnpc:202969 \nspell:411302 \n{skull}||cff00ff98Níce||r ||cffa330c9Kâzuto||r ||cffc41e3aCronîx||r ||cffc69b6dShirtpants||r\n{skull}||cfffff468Holicx||r ||cfff48cbaMiatra||r ||cffc41e3aCadogan||r ||cffaad372Lukîî||r\nnpc:202971\nspell:404754 \n{square}||cff00ff98Níce||r ||cffaad372Lukîî||r\n{square}||cffa330c9Kâzuto||r ||cff3fc7ebMorpheusmage||r\n{cross}||cfffff468Holicx||r ||cffffffffLeergut||r\n{cross}||cffc69b6dShirtpants||r ||cffc41e3aCronîx||r\n{skull}||cffc41e3aCadogan||r ||cff33937fDrakvel||r\n{skull}||cfff48cbaMiatra||r ||cff3fc7ebHelimeisterb||r\nintend\n\nliquidStart\n||cff3fc7ebMorpheusmage||r ||cff3fc7ebHelimeisterb||r\n||cff8788eePawx||r ||rDD\np3\n||cff3fc7ebMorpheusmage||r ||cff3fc7ebHelimeisterb||r\n||cff8788eePawx||r ||rDD\n||cff3fc7ebMorpheusmage||r ||cff3fc7ebHelimeisterb||r\nliquidEnd", -- [36]
-			"#portals ||cff00ff98Antagon||r ||cfff48cbaSanatio||r ||cffa330c9Kâzuto||r ||cffc41e3aCronîx||r ||cffc41e3aCadogan||r ||cffc69b6dShirtpants||r ||cfff48cbaMiatra||r ||cff00ff98Níce||r ||cfffff468Holicx||r ||cfff48cbaEstu||r ||cffffffffLeergut||r ||cff3fc7ebHelimeisterb||r ||cff3fc7ebMorpheusmage||r ||cffff7c0aTeesticle||r ||cffaad372Lukîî||r ||cff8788eePawx||r ||cffffffffNoañgel||r ||cff33937fDrakvel||r ||cff0070ddSanfa||r ||cffffffffEdolie||r\n\n{time:00:16}00:16 - ||cfff1c232Wall Dot 15 sec||r - ||cfffefefeNoañgel||r {spell:64843}  ||cff006fdcSanfa||r {spell:108280}  ||cfff38bb9Estu||r {spell:216331}\n{time:00:23}00:23 - ||cfff1c232Dot 7/15 sec||r - ||cfffefefeEdolie||r {spell:265202}\n{time:00:27}00:27 - ||cffe6dbc7Tank Wall Dot||r - ||cfffefefeNoañgel||r {spell:265202}\n{time:00:53}00:53 - ||cfff1c232Wall Dot 15 sec||r - ||cfffefefeEdolie||r {spell:64901}\n{time:01:04}01:04 - ||cffab8b00Tank Wall Dot||r - ||cfffefefeEdolie||r {spell:64843}  ||cfff38bb9Estu||r {spell:216331}\n{time:01:16}01:16 - ||cffaa0000AoE 411k||r - ||cfff38bb9Estu||r {spell:31821}  ||cffc31d39Cronîx||r {spell:51052}\n{time:01:22}01:22 - ||cff238e47Movement||r - ||cfffefefeNoañgel||r {spell:64901}\n{time:01:53}01:53 - ||cffe68e3dAoE 616k||r - ||cff006fdcSanfa||r {spell:114049}  ||cff006fdcSanfa||r {spell:108281}  ||cfff38bb9Estu||r {spell:216331}  Cadogan {spell:51052}\n{time:02:30}02:30 - ||cffe68e3dAoE 821k||r - ||cffc59a6cShirtpants||r {spell:97462}\n{time:00:26,SCC:409313:1}03:12 - ||cfff1c232Tank Wall Dot||r - ||cfff38bb9Estu||r {spell:216331}\n{time:00:42,SCC:409313:1}03:28 - ||cff8811ffBreak Walls||r - ||cff006fdcSanfa||r {spell:108280}\n{time:00:56,SCC:409313:1}03:42 - ||cfff1c232Tank Wall Dot||r - ||cfffefefeEdolie||r {spell:265202}\n{time:01:11,SCC:409313:1}03:57 - ||cff8811ffBreak Walls||r - ||cfff38bb9Estu||r {spell:216331}\n{time:01:16,SCC:409313:1}04:02 - ||cffdf9dc3Heart||r - ||cfffefefeEdolie||r {spell:64901}\n{time:01:26,SCC:409313:1}04:12 - ||cfff1c232Tank Wall Dot||r - ||cfffefefeNoañgel||r {spell:265202}  ||cff006fdcSanfa||r {spell:108281}  ||cff006fdcSanfa||r {spell:98008}\n{time:01:33,SCC:409313:1}04:19 - ||cffaa0000AoE 3 - 410k||r - ||cffc31d39Cronîx||r {spell:51052}\n{time:01:43,SCC:409313:1}04:29 - ||cff238e47corruption movement||r - ||cfffefefeNoañgel||r {spell:64901}\n{time:01:54,SCC:409313:1}04:40 - ||cfff1c232Tank Wall Dot||r - ||cfffefefeNoañgel||r {spell:64843}  ||cff006fdcSanfa||r {spell:114049}  ||cfff38bb9Estu||r {spell:216331}\n{time:02:04,SCC:409313:1}04:50 - ||cffaa0000AoE 4 - 531k||r - ||cfff38bb9Estu||r {spell:31821}  Cadogan {spell:51052}\n{time:00:38,SAR:404045:1}05:48 - ||cffc59a6cTank Hit||r - ||cfff38bb9Estu||r {spell:216331}\n{time:01:19,SAR:404045:1}06:29 - ||cfff1c232DoT 20s||r - ||cffc31d39Cronîx||r {spell:51052}\n{time:01:29,SAR:404045:1}06:39 - ||cfff1c232DoT 10/20s||r - ||cfffefefeEdolie||r {spell:64843}  ||cff006fdcSanfa||r {spell:108280}  ||cfff38bb9Estu||r {spell:216331}\n{time:01:33,SAR:404045:1}06:43 - ||cff8811ffDoT 10s||r - ||cfffefefeEdolie||r {spell:265202}  ||cffc59a6cShirtpants||r {spell:97462}\n{time:01:49,SAR:404045:1}06:59 - ||cfff1c232DoT 20s||r - ||cfffefefeNoañgel||r {spell:265202}  ||cff006fdcSanfa||r {spell:108281}  ||cff006fdcSanfa||r {spell:98008}  Cadogan {spell:51052}\n\nliquidStart\n||cffaad372Lukîî||r \n||cff3fc7ebHelimeisterb||r \n||cff3fc7ebMorpheusmage||r\n||cff8788eePawx||r \n||cff33937fDrakvel||r\n||cffff7c0aTeesticle||r\n||cffffffffLeergut||r\n||cff0070ddSanfa||r\n||cffffffffEdolie||r\n||cffffffffNoañgel||r\n||cfff48cbaEstu||r \nliquidEnd", -- [37]
-			"#portals ||cff00ff98Antagon||r ||cfff48cbaSanatio||r ||cffa330c9Kâzuto||r ||cffc41e3aCronîx||r ||cffc41e3aCadogan||r ||cffc69b6dShirtpants||r ||cfff48cbaMiatra||r ||cff00ff98Níce||r ||cfffff468Holicx||r ||cfff48cbaEstu||r ||cffffffffLeergut||r ||cff3fc7ebHelimeisterb||r ||cff3fc7ebMorpheusmage||r ||cffff7c0aTeesticle||r ||cffaad372Lukîî||r ||cff8788eePawx||r ||cffffffffNoañgel||r ||cff33937fDrakvel||r ||cff0070ddSanfa||r ||cffffffffEdolie||r\n\n{time:00:16}00:16 - ||cfff1c232Wall Dot 15 sec||r - ||cfffefefeNoañgel||r {spell:64843}  ||cff006fdcSanfa||r {spell:108280}  ||cfff38bb9Estu||r {spell:216331}\n{time:00:23}00:23 - ||cfff1c232Dot 7/15 sec||r - ||cfffefefeEdolie||r {spell:265202}\n{time:00:27}00:27 - ||cffe6dbc7Tank Wall Dot||r - ||cfffefefeNoañgel||r {spell:265202}\n{time:00:53}00:53 - ||cfff1c232Wall Dot 15 sec||r - ||cfffefefeEdolie||r {spell:64901}\n{time:01:04}01:04 - ||cffab8b00Tank Wall Dot||r - ||cfffefefeEdolie||r {spell:64843}  ||cfff38bb9Estu||r {spell:216331}\n{time:01:16}01:16 - ||cffaa0000AoE 411k||r - ||cfff38bb9Estu||r {spell:31821}  ||cffc31d39Cronîx||r {spell:51052}\n{time:01:22}01:22 - ||cff238e47Movement||r - ||cfffefefeNoañgel||r {spell:64901}\n{time:01:53}01:53 - ||cffe68e3dAoE 616k||r - ||cff006fdcSanfa||r {spell:114049}  ||cff006fdcSanfa||r {spell:108281}  ||cfff38bb9Estu||r {spell:216331}  Cadogan {spell:51052}\n{time:02:30}02:30 - ||cffe68e3dAoE 821k||r - ||cffc59a6cShirtpants||r {spell:97462}\n{time:00:26,SCC:409313:1}03:12 - ||cfff1c232Tank Wall Dot||r - ||cfff38bb9Estu||r {spell:216331}\n{time:00:42,SCC:409313:1}03:28 - ||cff8811ffBreak Walls||r - ||cff006fdcSanfa||r {spell:108280}\n{time:00:56,SCC:409313:1}03:42 - ||cfff1c232Tank Wall Dot||r - ||cfffefefeEdolie||r {spell:265202}\n{time:01:11,SCC:409313:1}03:57 - ||cff8811ffBreak Walls||r - ||cfff38bb9Estu||r {spell:216331}\n{time:01:16,SCC:409313:1}04:02 - ||cffdf9dc3Heart||r - ||cfffefefeEdolie||r {spell:64901}\n{time:01:26,SCC:409313:1}04:12 - ||cfff1c232Tank Wall Dot||r - ||cfffefefeNoañgel||r {spell:265202}  ||cff006fdcSanfa||r {spell:108281}  ||cff006fdcSanfa||r {spell:98008}\n{time:01:33,SCC:409313:1}04:19 - ||cffaa0000AoE 3 - 410k||r - ||cffc31d39Cronîx||r {spell:51052}\n{time:01:43,SCC:409313:1}04:29 - ||cff238e47corruption movement||r - ||cfffefefeNoañgel||r {spell:64901}\n{time:01:54,SCC:409313:1}04:40 - ||cfff1c232Tank Wall Dot||r - ||cfffefefeNoañgel||r {spell:64843}  ||cff006fdcSanfa||r {spell:114049}  ||cfff38bb9Estu||r {spell:216331}\n{time:02:04,SCC:409313:1}04:50 - ||cffaa0000AoE 4 - 531k||r - ||cfff38bb9Estu||r {spell:31821}  Cadogan {spell:51052}\n{time:00:38,SAR:404045:1}05:48 - ||cffc59a6cTank Hit||r - ||cfff38bb9Estu||r {spell:216331}\n{time:01:19,SAR:404045:1}06:29 - ||cfff1c232DoT 20s||r - ||cffc31d39Cronîx||r {spell:51052}\n{time:01:29,SAR:404045:1}06:39 - ||cfff1c232DoT 10/20s||r - ||cfffefefeEdolie||r {spell:64843}  ||cff006fdcSanfa||r {spell:108280}  ||cfff38bb9Estu||r {spell:216331}\n{time:01:33,SAR:404045:1}06:43 - ||cff8811ffDoT 10s||r - ||cfffefefeEdolie||r {spell:265202}  ||cffc59a6cShirtpants||r {spell:97462}\n{time:01:49,SAR:404045:1}06:59 - ||cfff1c232DoT 20s||r - ||cfffefefeNoañgel||r {spell:265202}  ||cff006fdcSanfa||r {spell:108281}  ||cff006fdcSanfa||r {spell:98008}  Cadogan {spell:51052}\n\nliquidStart\n||cffaad372Lukîî||r \n||cff3fc7ebHelimeisterb||r \n||cff3fc7ebMorpheusmage||r\n||cff8788eePawx||r \n||cff33937fDrakvel||r\n||cffff7c0aTeesticle||r\n||cffffffffLeergut||r\n||cff0070ddSanfa||r\n||cffffffffEdolie||r\n||cffffffffNoañgel||r\n||cfff48cbaEstu||r \nliquidEnd", -- [38]
+			"intstart\nnpc:202969 \nspell:411302 \n{skull}||cffa330c9Kâzuto||r ||cfff48cbaMiatra||r ||cffc69b6dShirtpants||r ||cfffff468Korimadge||r\n{skull}||cff00ff98Fenx||r ||cffaad372Lukîî||r ||cff3fc7ebMorpheusmage||r ||cff3fc7ebHelimeisterb||r \n{skull}Leergut ||cff33937fExtn||r ||cfff48cbaSanatio||r ||cffc41e3aCadogan||r \nnpc:202971\nspell:404754 \n{square}||cff33937fExtn||r ||cffaad372Lukîî||r\n{square}||cffa330c9Kâzuto||r ||cff3fc7ebMorpheusmage||r \n{cross}||cfffff468Korimadge||r ||cff00ff98Fenx||r\n{cross}||cffc69b6dShirtpants||r ||cffc41e3aCadogan||r \n{moon}Leergut ||cff00ff98Antagon||r \n{moon}||cfff48cbaMiatra||r ||cffaad372Elgönndir||r \nintend\n\nliquidStart\n||cff0070ddSanfa||r ||cffc41e3aCronîx||r\n||cff8788eeMuzdan||r ||cff8788eePawx||r\np3\n||cff3fc7ebMorpheusmage||r ||cff3fc7ebHelimeisterb||r\n||cff8788eeMuzdan||r ||cff8788eePawx||r\n||cff3fc7ebMorpheusmage||r ||cff3fc7ebHelimeisterb||r\nliquidEnd\n\n\"\n{time:00:01}00:01 - ||cff969696On Pull||r - ||cfff38bb9Estu||r {spell:31884}  \n{time:00:02}00:02 - ||cff7b5d46Bomb Spawns||r - ||cfff38bb9Estu||r {spell:200652}  \n{time:00:41}00:41 - ||cff7030a0Breath||r - ||cff33937fHurtsevo||r {spell:359816}  ||cff006fdcSanfa||r {spell:108280}  \n{time:00:44}00:44 - ||cfff88379aoe 8 sec||r - ||cfffefefeEdolie||r {spell:64843}  ||cff33937fHurtsevo||r {spell:363534}  ||cff006fdcSanfa||r {spell:114049}  \n{time:00:59}00:59 - ||cff7030a0Breath||r - ||cfffefefeEdolie||r {spell:64901}  \n{time:01:07}01:07 - ||cfff88379aoe 8 sec||r - ||cff006fdcSanfa||r {spell:108281}  \n{time:01:29}01:29 - ||cff8811ffDisintegrate||r - ||cfff38bb9Estu||r {spell:31821}  \n{time:01:33}01:33 - ||cffaa0000aoe 8 sec||r - ||cfffefefeEdolie||r {spell:265202}  ||cff33937fHurtsevo||r {spell:373270}  ||cfff38bb9Estu||r {spell:200652}  ||cff006fdcSanfa||r {spell:98008}  ||cffc59a6cShirtpants||r {spell:97462}  ||cffa22fc8Kâzuto||r {spell:196718}  \n{time:00:29,SAR:410625:1}02:37 - ||cff00ffffKnock Debuff||r - ||cfff38bb9Estu||r {spell:31884}  \n{time:00:33,SAR:410625:1}02:41 - ||cff0072c6Knock Dispel||r - ||cff33937fHurtsevo||r {spell:359816}  \n{time:01:02,SAR:410625:1}03:10 - ||cff00ffffKnock Debuff||r - ||cfff38bb9Estu||r {spell:200652}  \n{time:01:32,SAR:410625:1}03:40 - ||cff00ffffKnock Debuff||r - ||cff006fdcSanfa||r {spell:108280}  \n{time:01:42,SAR:410625:1}03:50 - ||cff0072c6Knock Dispel||r - ||cff33937fHurtsevo||r {spell:363534}  \n{time:00:42,SAA:410654:1}04:34 - ||cfff26722Meteor Soak||r - ||cfff38bb9Estu||r {spell:31884}  \n{time:00:53,SAA:410654:1}04:45 - ||cff8dc63fHide||r - ||cfff38bb9Estu||r {spell:200652}  \n{time:01:09,SAA:410654:1}05:01 - ||cff00ffffKnock Debuff||r - ||cff006fdcSanfa||r {spell:114049}  \n{time:01:17,SAA:410654:1}05:09 - ||cff238e47Big Circle||r - ||cff006fdcSanfa||r {spell:98008}  \n{time:01:18,SAA:410654:1}05:10 - ||cff0072c6Knock Dispel||r - ||cff33937fHurtsevo||r {spell:373270}  \n{time:01:47,SAA:410654:1}05:39 - ||cfff26722Meteor Soak||r - ||cff33937fHurtsevo||r {spell:359816}  \n{time:02:06,SAA:410654:1}05:58 - ||cff8dc63fHide||r - ||cfffefefeEdolie||r {spell:64843}  \n{time:02:19,SAA:410654:1}06:11 - ||cffe68e3dHide AOE||r - ||cfff38bb9Estu||r {spell:200652}  \n{time:02:27,SAA:410654:1}06:19 - ||cfff26722Meteor Soak||r - ||cfffefefeEdolie||r {spell:265202}  \n{time:02:28,SAA:410654:1}06:20 - ||cff00ffffKnock Debuff||r - ||cfff38bb9Estu||r {spell:31821}  \n{time:02:34,SAA:410654:1}06:26 - ||cffee5555Bomb Stacks ||r - ||cff006fdcSanfa||r {spell:108280}  \n{time:02:39,SAA:410654:1}06:31 - ||cffee5555High stacks||r - ||cfff38bb9Estu||r {spell:31884}  \n{time:02:50,SAA:410654:1}06:42 - ||cff238e47Big Circle||r - ||cff33937fHurtsevo||r {spell:363534}  \n{time:03:14,SAA:410654:1}07:06 - ||cfff26722Meteor Soak||r - ||cff006fdcSanfa||r {spell:114049}  \n\"\n\n", -- [35]
+			"intstart\nnpc:202969 \nspell:411302 \n{skull}||cff00ff98Níce||r ||cffa330c9Kâzuto||r ||cffc41e3aCronîx||r ||cffc69b6dShirtpants||r\n{skull}||cfffff468Holicx||r ||cfff48cbaMiatra||r ||cffc41e3aCadogan||r ||cffaad372Lukîî||r\nnpc:202971\nspell:404754 \n{square}||cff00ff98Níce||r ||cffaad372Lukîî||r\n{square}||cffa330c9Kâzuto||r ||cff3fc7ebMorpheusmage||r\n{cross}||cfffff468Holicx||r ||cff33937fDrakvel||r \n{cross}||cffc69b6dShirtpants||r ||cffc41e3aCronîx||r\n{skull}||cffc41e3aCadogan||r ||cff33937fDrakvel||r\n{skull}||cfff48cbaMiatra||r ||cff3fc7ebHelimeisterb||r\nintend\n\nliquidStart\n||cff3fc7ebMorpheusmage||r ||cff3fc7ebHelimeisterb||r\n||cff8788eeMuzdan||r ||cff33937fExtn||r \np3\n||cff3fc7ebMorpheusmage||r ||cff3fc7ebHelimeisterb||r\n||cff8788eeMuzdan||r ||cff33937fExtn||r \n||cff3fc7ebMorpheusmage||r ||cff3fc7ebHelimeisterb||r\nliquidEnd", -- [36]
+			"#portals ||cff00ff98Antagon||r ||cfff48cbaSanatio||r ||cffa330c9Kâzuto||r ||cffc41e3aCronîx||r ||cffc41e3aCadogan||r ||cffc69b6dShirtpants||r ||cfff48cbaMiatra||r ||cff00ff98Fenx||r ||cfffff468Korimadge||r ||cfff48cbaEstu||r ||cffaad372Lukîî||r ||cff8788eeMuzdan||r ||cff3fc7ebMorpheusmage||r ||cffaad372Elgönndir||r ||cff33937fDpxevoker||r ||cff33937fExtn||r ||cff8788eePawx||r ||cffff7c0aKruelio||r ||cffffffffEdolie||r ||cff0070ddSanfa||r \n\n\"\n{time:00:16}00:16 - ||cfff1c232Wall Dot 15 sec||r - ||cfff38bb9Estu||r {spell:200652}  \n{time:00:16}00:16 - ||cffdf9dc3Heart||r - ||cfffe7b09Kruelio||r {spell:323764}  \n{time:00:23}00:23 - ||cfff1c232Dot 7/15 sec||r - ||cfffefefeEdolie||r {spell:246287}  ||cff006fdcSanfa||r {spell:114049}  \n{time:00:27}00:27 - ||cffe6dbc7Tank Wall Dot||r - ||cfff38bb9Estu||r {spell:31884}  \n{time:00:39}00:39 - ||cfff88379AoE 205k||r - ||cfffe7b09Kruelio||r {spell:740}  \n{time:00:53}00:53 - ||cfff1c232Wall Dot 15 sec||r - ||cff006fdcSanfa||r {spell:108280}  \n{time:01:04}01:04 - ||cffab8b00Tank Wall Dot||r - ||cfffe7b09Kruelio||r {spell:323764}  \n{time:01:16}01:16 - ||cffaa0000AoE 411k||r - ||cfffefefeEdolie||r {spell:47536}  ||cff006fdcSanfa||r {spell:98008}  ||cffc31d39Cronîx||r {spell:51052}  \n{time:01:37}01:37 - ||cfff1c232Dot 7/15 sec||r - ||cff006fdcSanfa||r {spell:108281}  \n{time:01:40}01:40 - ||cffab8b00Tank Wall Dot||r - ||cfff38bb9Estu||r {spell:200652}  \n{time:01:53}01:53 - ||cffe68e3dAoE 616k||r - ||cfffefefeEdolie||r {spell:62618}  ||cfff38bb9Estu||r {spell:31821}  ||cffa22fc8Kâzuto||r {spell:196718}  \n{time:02:07}02:07 - ||cffdf9dc3Heart||r - ||cfffe7b09Kruelio||r {spell:323764}  \n{time:02:30}02:30 - ||cffe68e3dAoE 821k||r - ||cfffefefeEdolie||r {spell:246287}  ||cfff38bb9Estu||r {spell:31884}  ||cffc59a6cShirtpants||r {spell:97462}  \n{time:00:26,SCC:409313:1}03:12 - ||cfff1c232Tank Wall Dot||r - ||cfffe7b09Kruelio||r {spell:323764}  ||cfff38bb9Estu||r {spell:200652}  \n{time:00:56,SCC:409313:1}03:42 - ||cfff1c232Tank Wall Dot||r - ||cfffe7b09Kruelio||r {spell:740}  \n{time:01:03,SCC:409313:1}03:49 - ||cffaa0000AoE 2 - 275k||r - ||cfffe7b09Kruelio||r {spell:323764}  ||cff006fdcSanfa||r {spell:114049}  \n{time:01:26,SCC:409313:1}04:12 - ||cfff1c232Tank Wall Dot||r - ||cfffefefeEdolie||r {spell:246287}  \n{time:01:33,SCC:409313:1}04:19 - ||cffaa0000AoE 3 - 410k||r - ||cfff38bb9Estu||r {spell:31884}  ||cff006fdcSanfa||r {spell:108281}  ||cff006fdcSanfa||r {spell:98008}  ||cffc31d39Cronîx||r {spell:51052}  \n{time:01:37,SCC:409313:1}04:23 - ||cfff1c232Dot 7/15 sec||r - ||cff006fdcSanfa||r {spell:108280}  \n{time:02:04,SCC:409313:1}04:50 - ||cffaa0000AoE 4 - 531k||r - ||cfffe7b09Kruelio||r {spell:323764}  ||cfff38bb9Estu||r {spell:31821}  ||cfff38bb9Estu||r {spell:200652}  ||cffa22fc8Kâzuto||r {spell:196718}  \n{time:00:49,SAR:404045:1}05:59 - ||cfff1c232DoT 20s||r - ||cfffe7b09Kruelio||r {spell:323764}  \n{time:00:59,SAR:404045:1}06:09 - ||cfff1c232DoT 10/20s||r - ||cfffe7b09Kruelio||r {spell:740}  \n{time:01:06,SAR:404045:1}06:16 - ||cffc59a6cTank Hit||r - ||cfff38bb9Estu||r {spell:31884}  \n{time:01:19,SAR:404045:1}06:29 - ||cfff1c232DoT 20s||r - ||cfffefefeEdolie||r {spell:246287}  ||cfff38bb9Estu||r {spell:200652}  ||cffc31d39Cronîx||r {spell:51052}  \n{time:01:29,SAR:404045:1}06:39 - ||cfff1c232DoT 10/20s||r - ||cfffefefeEdolie||r {spell:62618}  ||cff006fdcSanfa||r {spell:108281}  \n{time:01:33,SAR:404045:1}06:43 - ||cff8811ffDoT 10s||r - ||cffc59a6cShirtpants||r {spell:97462}  \n{time:01:49,SAR:404045:1}06:59 - ||cfff1c232DoT 20s||r - ||cfffefefeEdolie||r {spell:47536}  ||cff006fdcSanfa||r {spell:114049}  \n\"\n\nliquidStart\n||cffaad372Lukîî||r\n||cffaad372Elgönndir||r \n||cff3fc7ebMorpheusmage||r  \n||cff8788eeMuzdan||r\n||cff8788eePawx||r\n||cff33937fDpxevoker||r \n||cff33937fExtn||r\n||cff0070ddSanfa||r\n||cffffffffEdolie||r\n||cffff7c0aKruelio||r\n||cfff48cbaEstu||r\nliquidEnd", -- [37]
+			"#portals ||cff00ff98Antagon||r ||cfff48cbaSanatio||r ||cffa330c9Kâzuto||r ||cffc41e3aCronîx||r ||cffc41e3aCadogan||r ||cffc69b6dShirtpants||r ||cfff48cbaMiatra||r ||cfffff468Holicx||r ||cfff48cbaEstu||r ||cffffffffLeergut||r ||cff3fc7ebHelimeisterb||r ||cff3fc7ebMorpheusmage||r ||cff33937fDpxevoker||r ||cff33937fExtn||r ||cffaad372Lukîî||r ||cff8788eePawx||r ||cff33937fDrakvel||r ||cff33937fHurtsevo||r ||cffffffffEdolie||r ||cff006fdcSanfa||r\n\n{time:00:16}00:16 - ||cfff1c232Wall Dot 15 sec||r - ||cfffefefeNoañgel||r {spell:64843}  ||cff006fdcSanfa||r {spell:108280}  ||cfff38bb9Estu||r {spell:216331}\n{time:00:23}00:23 - ||cfff1c232Dot 7/15 sec||r - ||cfffefefeEdolie||r {spell:265202}\n{time:00:27}00:27 - ||cffe6dbc7Tank Wall Dot||r - ||cfffefefeNoañgel||r {spell:265202}\n{time:00:53}00:53 - ||cfff1c232Wall Dot 15 sec||r - ||cfffefefeEdolie||r {spell:64901}\n{time:01:04}01:04 - ||cffab8b00Tank Wall Dot||r - ||cfffefefeEdolie||r {spell:64843}  ||cfff38bb9Estu||r {spell:216331}\n{time:01:16}01:16 - ||cffaa0000AoE 411k||r - ||cfff38bb9Estu||r {spell:31821}  ||cffc31d39Cronîx||r {spell:51052}\n{time:01:22}01:22 - ||cff238e47Movement||r - ||cfffefefeNoañgel||r {spell:64901}\n{time:01:53}01:53 - ||cffe68e3dAoE 616k||r - ||cff006fdcSanfa||r {spell:114049}  ||cff006fdcSanfa||r {spell:108281}  ||cfff38bb9Estu||r {spell:216331}  Cadogan {spell:51052}\n{time:02:30}02:30 - ||cffe68e3dAoE 821k||r - ||cffc59a6cShirtpants||r {spell:97462}\n{time:00:26,SCC:409313:1}03:12 - ||cfff1c232Tank Wall Dot||r - ||cfff38bb9Estu||r {spell:216331}\n{time:00:42,SCC:409313:1}03:28 - ||cff8811ffBreak Walls||r - ||cff006fdcSanfa||r {spell:108280}\n{time:00:56,SCC:409313:1}03:42 - ||cfff1c232Tank Wall Dot||r - ||cfffefefeEdolie||r {spell:265202}\n{time:01:11,SCC:409313:1}03:57 - ||cff8811ffBreak Walls||r - ||cfff38bb9Estu||r {spell:216331}\n{time:01:16,SCC:409313:1}04:02 - ||cffdf9dc3Heart||r - ||cfffefefeEdolie||r {spell:64901}\n{time:01:26,SCC:409313:1}04:12 - ||cfff1c232Tank Wall Dot||r - ||cfffefefeNoañgel||r {spell:265202}  ||cff006fdcSanfa||r {spell:108281}  ||cff006fdcSanfa||r {spell:98008}\n{time:01:33,SCC:409313:1}04:19 - ||cffaa0000AoE 3 - 410k||r - ||cffc31d39Cronîx||r {spell:51052}\n{time:01:43,SCC:409313:1}04:29 - ||cff238e47corruption movement||r - ||cfffefefeNoañgel||r {spell:64901}\n{time:01:54,SCC:409313:1}04:40 - ||cfff1c232Tank Wall Dot||r - ||cfffefefeNoañgel||r {spell:64843}  ||cff006fdcSanfa||r {spell:114049}  ||cfff38bb9Estu||r {spell:216331}\n{time:02:04,SCC:409313:1}04:50 - ||cffaa0000AoE 4 - 531k||r - ||cfff38bb9Estu||r {spell:31821}  Cadogan {spell:51052}\n{time:00:38,SAR:404045:1}05:48 - ||cffc59a6cTank Hit||r - ||cfff38bb9Estu||r {spell:216331}\n{time:01:19,SAR:404045:1}06:29 - ||cfff1c232DoT 20s||r - ||cffc31d39Cronîx||r {spell:51052}\n{time:01:29,SAR:404045:1}06:39 - ||cfff1c232DoT 10/20s||r - ||cfffefefeEdolie||r {spell:64843}  ||cff006fdcSanfa||r {spell:108280}  ||cfff38bb9Estu||r {spell:216331}\n{time:01:33,SAR:404045:1}06:43 - ||cff8811ffDoT 10s||r - ||cfffefefeEdolie||r {spell:265202}  ||cffc59a6cShirtpants||r {spell:97462}\n{time:01:49,SAR:404045:1}06:59 - ||cfff1c232DoT 20s||r - ||cfffefefeNoañgel||r {spell:265202}  ||cff006fdcSanfa||r {spell:108281}  ||cff006fdcSanfa||r {spell:98008}  Cadogan {spell:51052}\n\nliquidStart\n||cffaad372Lukîî||r \n||cff3fc7ebHelimeisterb||r \n||cff3fc7ebMorpheusmage||r\n||cff8788eePawx||r \n||cff33937fDrakvel||r\n||cffff7c0aTeesticle||r\n||cffffffffLeergut||r\n||cff0070ddSanfa||r\n||cffffffffEdolie||r\n||cffffffffNoañgel||r\n||cfff48cbaEstu||r \nliquidEnd", -- [38]
+			"#portals ||cff00ff98Antagon||r ||cfff48cbaSanatio||r ||cffa330c9Kâzuto||r ||cffc41e3aCronîx||r ||cffc69b6dShirtpants||r ||cfff48cbaMiatra||r ||cfffff468Holicx||r ||cfff48cbaEstu||r ||cffffffffLeergut||r ||cffaad372Lukîî||r  ||cff3fc7ebMorpheusmage||r ||cff3fc7ebHelimeisterb||r ||cff33937fDpxevoker||r ||cff33937fExtn||r ||cff8788eePawx||r ||cff33937fDrakvel||r ||cff33937fHurtsevo||r ||cffffffffEdolie||r ||cff0070ddSanfa||r \n\n{time:00:16}00:16 - ||cfff1c232Wall Dot 15 sec||r - ||cfff48cbaEstu||r {spell:200652}\n{time:00:23}00:23 - ||cfff1c232Dot 7/15 sec||r - ||cfffefefeEdolie||r {spell:246287}  ||cff006fdcSanfa||r {spell:114049}\n{time:00:27}00:27 - ||cffe6dbc7Tank Wall Dot||r - ||cfff48cbaEstu||r {spell:31884}\n{time:00:39}00:39 - ||cfff88379AoE 205k||r - ||cff33937fHurtsevo||r {spell:373270}\n{time:00:53}00:53 - ||cfff1c232Wall Dot 15 sec||r - ||cff006fdcSanfa||r {spell:108280}\n{time:01:16}01:16 - ||cffaa0000AoE 411k||r - ||cff33937fHurtsevo||r {spell:363534}  ||cff006fdcSanfa||r {spell:98008}  ||cffc31d39Cronîx||r {spell:51052}\n{time:01:37}01:37 - ||cfff1c232Dot 7/15 sec||r - ||cff006fdcSanfa||r {spell:108281}\n{time:01:40}01:40 - ||cffab8b00Tank Wall Dot||r - ||cfff48cbaEstu||r {spell:200652}\n{time:01:53}01:53 - ||cffe68e3dAoE 616k||r - ||cfffefefeEdolie||r {spell:62618}  ||cff33937fHurtsevo||r {spell:359816}  ||cfff38bb9Estu||r {spell:31821}  ||cffa22fc8Kâzuto||r {spell:196718}\n{time:02:30}02:30 - ||cffe68e3dAoE 821k||r - ||cfffefefeEdolie||r {spell:246287}  ||cfff48cbaEstu||r {spell:31884}  ||cffc59a6cShirtpants||r {spell:97462}\n{time:00:26,SCC:409313:1}03:12 - ||cfff1c232Tank Wall Dot||r - ||cfff48cbaEstu||r {spell:200652}\n{time:01:00,SCC:409313:1}03:46 - ||cffdf9dc3Heart||r - ||cff33937fHurtsevo||r {spell:373270}\n{time:01:03,SCC:409313:1}03:49 - ||cffaa0000AoE 2 - 275k||r - ||cff006fdcSanfa||r {spell:114049}\n{time:01:16,SCC:409313:1}04:02 - ||cffdf9dc3Heart||r - ||cff33937fHurtsevo||r {spell:359816}\n{time:01:26,SCC:409313:1}04:12 - ||cfff1c232Tank Wall Dot||r - ||cfffefefeEdolie||r {spell:246287}\n{time:01:33,SCC:409313:1}04:19 - ||cffaa0000AoE 3 - 410k||r - ||cff33937fHurtsevo||r {spell:363534}  ||cfff48cbaEstu||r {spell:31884}  ||cff006fdcSanfa||r {spell:108281}  ||cffc31d39Cronîx||r {spell:51052}\n{time:01:37,SCC:409313:1}04:23 - ||cfff1c232Dot 7/15 sec||r - ||cff006fdcSanfa||r {spell:108280}\n{time:02:04,SCC:409313:1}04:50 - ||cffaa0000AoE 4 - 531k||r - ||cfff48cbaEstu||r {spell:31821}  ||cfff48cbaEstu||r {spell:200652}  ||cffa22fc8Kâzuto||r {spell:196718}\n{time:00:59,SAR:404045:1}06:09 - ||cfff1c232DoT 10/20s||r - ||cff33937fHurtsevo||r {spell:359816}\n{time:01:06,SAR:404045:1}06:16 - ||cffc59a6cTank Hit||r - ||cfff48cbaEstu||r {spell:31884}\n{time:01:19,SAR:404045:1}06:29 - ||cfff1c232DoT 20s||r - ||cfffefefeEdolie||r {spell:246287}  ||cfff48cbaEstu||r {spell:200652}  ||cffc31d39Cronîx||r {spell:51052}\n{time:01:29,SAR:404045:1}06:39 - ||cfff1c232DoT 10/20s||r - ||cfffefefeEdolie||r {spell:62618}  ||cff33937fHurtsevo||r {spell:359816}  ||cff006fdcSanfa||r {spell:108281}\n{time:01:33,SAR:404045:1}06:43 - ||cff8811ffDoT 10s||r - ||cffc59a6cShirtpants||r {spell:97462}\n{time:01:36,SAR:404045:1}06:46 - ||cffc59a6cTank Hit||r - ||cff33937fHurtsevo||r {spell:373270}\n{time:01:49,SAR:404045:1}06:59 - ||cfff1c232DoT 20s||r - ||cff006fdcSanfa||r {spell:114049}\n\nliquidStart\n||cffaad372Lukîî||r\n||cff3fc7ebHelimeisterb||r\n||cff3fc7ebMorpheusmage||r\n||cff8788eePawx||r\n||cff33937fDrakvel||r\n||cff33937fDpxevoker||r\n||cff33937fExtn||r\n||cffffffffLeergut||r\n||cff0070ddSanfa||r\n||cffffffffEdolie||r\n||cff33937fHurtsevo||r\n||cfff48cbaEstu||r\nliquidEnd", -- [39]
+			"intstart\nnpc:202969 \nspell:411302 \n{skull}||cff00ff98Níce||r ||cffa330c9Kâzuto||r ||cffc41e3aCronîx||r ||cffc69b6dShirtpants||r\n{skull}||cfffff468Holicx||r ||cfff48cbaMiatra||r ||cffc41e3aCadogan||r ||cffaad372Lukîî||r\nnpc:202971\nspell:404754 \n{square}||cff00ff98Níce||r ||cffaad372Lukîî||r\n{square}||cffa330c9Kâzuto||r ||cff3fc7ebMorpheusmage||r\n{cross}||cfffff468Holicx||r ||cff33937fDrakvel||r \n{cross}||cffc69b6dShirtpants||r ||cffc41e3aCronîx||r\n{skull}||cffc41e3aCadogan||r ||cff33937fDrakvel||r\n{skull}||cfff48cbaMiatra||r ||cff3fc7ebHelimeisterb||r\nintend\n\nliquidStart\n||cff3fc7ebMorpheusmage||r ||cff3fc7ebHelimeisterb||r\n||cff8788eeMuzdan||r ||cff33937fExtn||r \np3\n||cff3fc7ebMorpheusmage||r ||cff3fc7ebHelimeisterb||r\n||cff8788eeMuzdan||r ||cff33937fExtn||r \n||cff3fc7ebMorpheusmage||r ||cff3fc7ebHelimeisterb||r\nliquidEnd\n\n{time:00:05}00:05 - ||cffaa0000aoe 8 sec||r - ||cfff38bb9Estu||r {spell:216331}  ||cfffefefeLeergut||r {spell:15286}\n{time:00:32}00:32 - ||cff7b5d46Bomb Spawns||r - ||cff006fdcSanfa||r {spell:108281}\n{time:00:51}00:51 - ||cff8811ffDisintegrate||r - ||cfff38bb9Estu||r {spell:216331}\n{time:00:59}00:59 - ||cff7030a0Breath||r - ||cfffefefeEdolie||r {spell:265202}  ||cfffefefeNoañgel||r {spell:64843}  ||cfff38bb9Estu||r {spell:31821}  ||cff006fdcSanfa||r {spell:108280}  ||cffa22fc8Kâzuto||r {spell:196718}  ||cffc31d39Cronîx||r {spell:51052}\n{time:01:12}01:12 - ||cff7b5d46Bomb Spawns||r - ||cff006fdcSanfa||r {spell:114049}\n{time:01:24}01:24 - ||cfff88379aoe 8 sec||r - ||cfffefefeEdolie||r {spell:64843}\n{time:01:29}01:29 - ||cff8811ffDisintegrate||r - ||cfffefefeNoañgel||r {spell:265202}  ||cff006fdcSanfa||r {spell:98008}  ||cffc59a6cShirtpants||r {spell:97462}  ||cffc31d39Cadogan||r {spell:51052}\n{time:01:33}01:33 - ||cffaa0000aoe 8 sec||r - ||cfff38bb9Estu||r {spell:216331}\n{time:00:15,SAR:410625:1}02:23 - ||cff7b5d46Bomb Spawn||r - ||cfff38bb9Estu||r {spell:216331}\n{time:01:02,SAR:410625:1}03:10 - ||cff00ffffKnock Debuff||r - ||cfff38bb9Estu||r {spell:216331}\n{time:01:32,SAR:410625:1}03:40 - ||cff00ffffKnock Debuff||r - ||cff006fdcSanfa||r {spell:108280}  ||cff006fdcSanfa||r {spell:108281}\n{time:01:42,SAR:410625:1}03:50 - ||cff0072c6Knock Dispel||r - ||cfff38bb9Estu||r {spell:216331}\n{time:00:36,SAA:410654:1}04:28 - ||cff7b5d46Bomb Spawn||r - ||cfff38bb9Estu||r {spell:216331}\n{time:01:09,SAA:410654:1}05:01 - ||cff00ffffKnock Debuff||r - ||cffc59a6cShirtpants||r {spell:97462}\n{time:01:20,SAA:410654:1}05:12 - ||cfff26722Meteor Soak||r - ||cfffefefeEdolie||r {spell:265202}  ||cffc31d39Cronîx||r {spell:51052}  ||cffa22fc8Kâzuto||r {spell:196718}\n{time:01:47,SAA:410654:1}05:39 - ||cfff26722Meteor Soak||r - ||cfffefefeNoañgel||r {spell:64843}  ||cff006fdcSanfa||r {spell:114049}  ||cff006fdcSanfa||r {spell:108281}\n{time:02:19,SAA:410654:1}06:11 - ||cffe68e3dHide AOE||r - ||cfffefefeEdolie||r {spell:64843}  ||cfff38bb9Estu||r {spell:216331}\n{time:02:39,SAA:410654:1}06:31 - ||cffee5555High stacks||r - ||cff006fdcSanfa||r {spell:108280}  ||cff006fdcSanfa||r {spell:98008}\n{time:03:14,SAA:410654:1}07:06 - ||cfff26722Meteor Soak||r - ||cfff38bb9Estu||r {spell:216331}  ||cfff38bb9Estu||r {spell:31821}", -- [40]
+			"intstart\nnpc:202969 \nspell:411302 \n{skull}||cff00ff98Níce||r ||cffa330c9Kâzuto||r ||cffc41e3aCronîx||r ||cffc69b6dShirtpants||r\n{skull}||cfffff468Holicx||r ||cfff48cbaMiatra||r ||cffc41e3aCadogan||r ||cffaad372Lukîî||r\nnpc:202971\nspell:404754 \n{square}||cff00ff98Níce||r ||cffaad372Lukîî||r\n{square}||cffa330c9Kâzuto||r ||cff3fc7ebMorpheusmage||r\n{cross}||cfffff468Holicx||r ||cff33937fDrakvel||r \n{cross}||cffc69b6dShirtpants||r ||cffc41e3aCronîx||r\n{skull}||cffc41e3aCadogan||r ||cff33937fDrakvel||r\n{skull}||cfff48cbaMiatra||r ||cff3fc7ebHelimeisterb||r\nintend\n\nliquidStart\n||cff3fc7ebMorpheusmage||r ||cff3fc7ebHelimeisterb||r\n||cff8788eeMuzdan||r ||cff33937fExtn||r \np3\n||cff3fc7ebMorpheusmage||r ||cff3fc7ebHelimeisterb||r\n||cff8788eeMuzdan||r ||cff33937fExtn||r \n||cff3fc7ebMorpheusmage||r ||cff3fc7ebHelimeisterb||r\nliquidEnd\n\n{time:00:05}00:05 - ||cffaa0000aoe 8 sec||r - ||cfff38bb9Estu||r {spell:216331}  ||cfffefefeLeergut||r {spell:15286}\n{time:00:41}00:41 - ||cff7030a0Breath||r - ||cfffefefeEdolie||r {spell:265202}  ||cfffefefeNoañgel||r {spell:64843}  {spell:31821}  {spell:108280}  ||cffa22fc8Kâzuto||r {spell:196718}  ||cffc31d39Cronîx||r {spell:51052}\n{time:00:51}00:51 - ||cff8811ffDisintegrate||r - ||cfff38bb9Estu||r {spell:216331}\n{time:01:12}01:12 - ||cff7b5d46Bomb Spawns||r - ||cff006fdcSanfa||r {spell:108281}  ||cff006fdcSanfa||r {spell:114049} ||cff33937fExtn||r {spell:374968}\n{time:01:24}01:24 - ||cfff88379aoe 8 sec||r - ||cfffefefeEdolie||r {spell:64843}  ||cfffefefeNoañgel||r {spell:265202}\n{time:01:29}01:29 - ||cff8811ffDisintegrate||r - ||cff006fdcSanfa||r {spell:98008}  ||cffc59a6cShirtpants||r {spell:97462}  ||cffc31d39Cadogan||r {spell:51052}\n{time:01:33}01:33 - ||cffaa0000aoe 8 sec||r - ||cfff38bb9Estu||r {spell:216331}\n{time:00:15,SAR:410625:1}02:23 - ||cff7b5d46Bomb Spawn||r - ||cfff38bb9Estu||r {spell:216331}\n{time:01:02,SAR:410625:1}03:10 - ||cff00ffffKnock Debuff||r - ||cfff38bb9Estu||r {spell:216331}\n{time:01:32,SAR:410625:1}03:40 - ||cff00ffffKnock Debuff||r - ||cff006fdcSanfa||r {spell:108280}  ||cff006fdcSanfa||r {spell:108281}\n{time:01:42,SAR:410625:1}03:50 - ||cff0072c6Knock Dispel||r - ||cfff38bb9Estu||r {spell:216331}\n{time:00:36,SAA:410654:1}04:28 - ||cff7b5d46Bomb Spawn||r - ||cfff38bb9Estu||r {spell:216331}\n{time:01:09,SAA:410654:1}05:01 - ||cff00ffffKnock Debuff||r - ||cffc59a6cShirtpants||r {spell:97462}\n{time:01:20,SAA:410654:1}05:12 - ||cfff26722Meteor Soak||r - ||cfffefefeEdolie||r {spell:265202}  ||cffc31d39Cronîx||r {spell:51052}  ||cffa22fc8Kâzuto||r {spell:196718}\n{time:01:47,SAA:410654:1}05:39 - ||cfff26722Meteor Soak||r - ||cfffefefeNoañgel||r {spell:64843}  ||cff006fdcSanfa||r {spell:114049}  ||cff006fdcSanfa||r {spell:108281}\n{time:02:19,SAA:410654:1}06:11 - ||cffe68e3dHide AOE||r - ||cfffefefeEdolie||r {spell:64843}  ||cfff38bb9Estu||r {spell:216331}\n{time:02:39,SAA:410654:1}06:31 - ||cffee5555High stacks||r - ||cff006fdcSanfa||r {spell:108280}  ||cff006fdcSanfa||r {spell:98008}\n{time:03:14,SAA:410654:1}07:06 - ||cfff26722Meteor Soak||r - ||cfff38bb9Estu||r {spell:216331}  ||cfff38bb9Estu||r {spell:31821}", -- [41]
+			"intstart\nnpc:202969 \nspell:411302 \n{skull}||cffa330c9Kâzuto||r ||cffc41e3aCronîx||r ||cffc69b6dShirtpants||r ||cff33937fExtn||r \n{skull}||cfffff468Holicx||r ||cfff48cbaMiatra||r ||cffc41e3aCadogan||r ||cffaad372Lukîî||r\nnpc:202971\nspell:404754 \n{square}||cff33937fExtn||r ||cffaad372Lukîî||r\n{square}||cffa330c9Kâzuto||r ||cff3fc7ebMorpheusmage||r\n{cross}||cfffff468Holicx||r ||cff33937fDrakvel||r \n{cross}||cffc69b6dShirtpants||r ||cffc41e3aCronîx||r\n{skull}||cffc41e3aCadogan||r ||cff33937fDrakvel||r\n{skull}||cfff48cbaMiatra||r ||cff3fc7ebHelimeisterb||r\nintend\n\nliquidStart\n||cff3fc7ebMorpheusmage||r ||cff3fc7ebHelimeisterb||r\n||cff8788eeMuzdan||r ||cff8788eePawx||r \np3\n||cff3fc7ebMorpheusmage||r ||cff3fc7ebHelimeisterb||r\n||cff8788eeMuzdan||r ||cff8788eePawx||r \n||cff3fc7ebMorpheusmage||r ||cff3fc7ebHelimeisterb||r\nliquidEnd\n\n||cffffff00Scalecommander Sarkareth - Mythic||r\n{time:00:02} - Scorching Bomb -  ||cfffe7b09Nórdos||r {spell:391528}  ||cfffe7b09Nórdos||r {spell:197721}\n{time:00:04} - Glittering Surge -  ||cfff38bb9Estu||r {spell:375576}\n{time:00:40} - Searing Breath -  ||cfffe7b09Nórdos||r {spell:740}  ||cffa330c9Kâzuto||r {spell:196718}  ||cffc59a6cShirtpants||r {spell:97462}  ||cfff38bb9Estu||r {spell:216331}  ||cffffff00Edolie||r {spell:265202}\n{time:00:40} - Searing Breath -  ||cff006fdcSanfa||r {spell:108280}\n{time:00:54} - Scorching Bomb -  ||cff33937fSkiazard||r {spell:374968}  ||cff006fdcSanfa||r {spell:192077}\n{time:00:59} - Searing Breath -  ||cfffe7b09Nórdos||r {spell:391528}\n{time:01:04} - Mass Disintegrate -  ||cffffff00Edolie||r {spell:64901}  ||cff006fdcSanfa||r {spell:207399}\n{time:01:12} - Scorching Bomb -  ||cfff38bb9Estu||r {spell:375576}\n{time:01:23} - Mass Disintegrate -  ||cffc31d39Cronîx||r {spell:51052}  ||cfff38bb9Estu||r {spell:216331}  ||cff006fdcSanfa||r {spell:98008}  ||cffc31d39Cadogan||r {spell:51052}  ||cffffff00Edolie||r {spell:64843}\n{time:01:23} - Mass Disintegrate -  ||cff006fdcSanfa||r {spell:114052}\n{time:01:32} - Glittering Surge -  ||cfff38bb9Estu||r {spell:31821}  ||cff006fdcSanfa||r {spell:108281}  ||cfffe7b09Nórdos||r {spell:197721}\n{time:02:13} - Abyssal Breath -  ||cfff38bb9Estu||r {spell:216331}\n{time:02:40} - Dread -  ||cfff38bb9Estu||r {spell:375576}\n{time:03:13} - Dread -  ||cfffe7b09Nórdos||r {spell:391528}  ||cfffe7b09Nórdos||r {spell:197721}\n{time:03:19} - Void Bomb -  ||cfff38bb9Estu||r {spell:216331}\n{time:03:35} - Desolate Blossom -  ||cff006fdcSanfa||r {spell:108281}\n{time:03:43} - Dread -  ||cfffe7b09Nórdos||r {spell:740}\n{time:04:25} - Embrace of Nothingness -  ||cff006fdcSanfa||r {spell:192077}\n{time:04:33} - ||cfff38bb9Estu||r {spell:216331}\n{time:04:35} - ||cfffe7b09Nórdos||r {spell:391528}\n{time:04:38} - ||cfff38bb9Estu||r {spell:375576}\n{time:04:42} - ||cfffe7b09Nórdos||r {spell:197721}\n{time:05:03} - Embrace of Nothingness -  ||cffc31d39Cadogan||r {spell:51052}\n{time:05:08} - Dread -  ||cff33937fSkiazard||r {spell:374227}  ||cffc31d39Cronîx||r {spell:51052}\n{time:05:27} - Void Bomb -  ||cff006fdcSanfa||r {spell:108280}\n{time:05:30} - Embrace of Nothingness -  ||cfff38bb9Estu||r {spell:216331}  ||cfff38bb9Estu||r {spell:375576}  ||cfffe7b09Nórdos||r {spell:391528}\n{time:05:44} - ||cfffe7b09Nórdos||r {spell:740}\n{time:05:45} - ||cff006fdcSanfa||r {spell:114052}\n{time:05:46} - ||cff006fdcSanfa||r {spell:108281}\n{time:06:10} - Embrace of Nothingness -  ||cff006fdcSanfa||r {spell:207399}  ||cfffe7b09Nórdos||r {spell:197721}  ||cffffff00Edolie||r {spell:265202}\n{time:06:25} - Void Bomb -  ||cff33937fSkiazard||r {spell:374968}  ||cfff38bb9Estu||r {spell:31821}  ||cff006fdcSanfa||r {spell:98008}  ||cfff38bb9Estu||r {spell:216331}\n{time:06:41} - Cosmic Ascension -  ||cfffe7b09Nórdos||r {spell:391528}\n{time:07:03} - ||cfff38bb9Estu||r {spell:375576}\n{time:07:10} - ||cffffff00Edolie||r {spell:64901}\n{time:07:20} - Scouring Eternity -  ||cffc59a6cShirtpants||r {spell:97462}  ||cffa330c9Kâzuto||r {spell:196718}", -- [42]
+			"intstart\nnpc:202969 \nspell:411302 \n{skull}||cffa330c9Kâzuto||r ||cffc41e3aCronîx||r ||cffc69b6dShirtpants||r ||cff33937fExtn||r \n{skull}||cfffff468Holicx||r ||cfff48cbaMiatra||r ||cffc41e3aCadogan||r ||cffaad372Lukîî||r\nnpc:202971\nspell:404754 \n{square}||cff33937fExtn||r ||cffaad372Lukîî||r\n{square}||cffa330c9Kâzuto||r ||cff3fc7ebMorpheusmage||r\n{cross}||cfffff468Holicx||r ||cff33937fDrakvel||r \n{cross}||cffc69b6dShirtpants||r ||cffc41e3aCronîx||r\n{skull}||cffc41e3aCadogan||r ||cff33937fDrakvel||r\n{skull}||cfff48cbaMiatra||r ||cff3fc7ebHelimeisterb||r\nintend\n\nliquidStart\n||cff3fc7ebMorpheusmage||r ||cff3fc7ebHelimeisterb||r\n||cff8788eeMuzdan||r ||cff8788eePawx||r \np3\n||cff3fc7ebMorpheusmage||r ||cff3fc7ebHelimeisterb||r\n||cff8788eeMuzdan||r ||cff8788eePawx||r \n||cff3fc7ebMorpheusmage||r ||cff3fc7ebHelimeisterb||r\nliquidEnd\n\n||cffffff00Scalecommander Sarkareth - Mythic||r\n{time:00:02} - Scorching Bomb -  ||cfffe7b09Nórdos||r {spell:391528}  ||cfffe7b09Nórdos||r {spell:197721}\n{time:00:04} - Glittering Surge -  ||cfff38bb9Estu||r {spell:375576}\n{time:00:40} - Searing Breath -  ||cfffe7b09Nórdos||r {spell:740}  ||cffa330c9Kâzuto||r {spell:196718}  ||cffc59a6cShirtpants||r {spell:97462}  ||cfff38bb9Estu||r {spell:216331}  ||cffffff00Edolie||r {spell:265202}\n{time:00:40} - Searing Breath -  ||cff006fdcSanfa||r {spell:108280}\n{time:00:54} - Scorching Bomb -  ||cff33937fSkiazard||r {spell:374968}  ||cff006fdcSanfa||r {spell:192077}\n{time:00:59} - Searing Breath -  ||cfffe7b09Nórdos||r {spell:391528}\n{time:01:04} - Mass Disintegrate -  ||cffffff00Edolie||r {spell:64901}  ||cff006fdcSanfa||r {spell:207399}\n{time:01:12} - Scorching Bomb -  ||cfff38bb9Estu||r {spell:375576}\n{time:01:23} - Mass Disintegrate -  ||cffc31d39Cronîx||r {spell:51052}  ||cfff38bb9Estu||r {spell:216331}  ||cff006fdcSanfa||r {spell:98008}  ||cffc31d39Cadogan||r {spell:51052}  ||cffffff00Edolie||r {spell:64843}\n{time:01:23} - Mass Disintegrate -  ||cff006fdcSanfa||r {spell:114052}\n{time:01:32} - Glittering Surge -  ||cfff38bb9Estu||r {spell:31821}  ||cff006fdcSanfa||r {spell:108281}  ||cfffe7b09Nórdos||r {spell:197721}\n{time:02:13} - Abyssal Breath -  ||cfff38bb9Estu||r {spell:216331}\n{time:02:40} - Dread -  ||cfff38bb9Estu||r {spell:375576}\n{time:03:13} - Dread -  ||cfffe7b09Nórdos||r {spell:391528}  ||cfffe7b09Nórdos||r {spell:197721}\n{time:03:19} - Void Bomb -  ||cfff38bb9Estu||r {spell:216331}\n{time:03:35} - Desolate Blossom -  ||cff006fdcSanfa||r {spell:108281}\n{time:03:43} - Dread -  ||cfffe7b09Nórdos||r {spell:740}\n{time:04:25} - Embrace of Nothingness -  ||cff006fdcSanfa||r {spell:192077}\n{time:04:33} - ||cfff38bb9Estu||r {spell:216331}\n{time:04:35} - ||cfffe7b09Nórdos||r {spell:391528}\n{time:04:38} - ||cfff38bb9Estu||r {spell:375576}\n{time:04:42} - ||cfffe7b09Nórdos||r {spell:197721}\n{time:05:03} - Embrace of Nothingness -  ||cffc31d39Cadogan||r {spell:51052}\n{time:05:08} - Dread -  ||cff33937fSkiazard||r {spell:374227}  ||cffc31d39Cronîx||r {spell:51052}\n{time:05:27} - Void Bomb -  ||cff006fdcSanfa||r {spell:108280}\n{time:05:30} - Embrace of Nothingness -  ||cfff38bb9Estu||r {spell:216331}  ||cfff38bb9Estu||r {spell:375576}  ||cfffe7b09Nórdos||r {spell:391528}\n{time:05:44} - ||cfffe7b09Nórdos||r {spell:740}\n{time:05:45} - ||cff006fdcSanfa||r {spell:114052}\n{time:05:46} - ||cff006fdcSanfa||r {spell:108281}\n{time:06:10} - Embrace of Nothingness -  ||cff006fdcSanfa||r {spell:207399}  ||cfffe7b09Nórdos||r {spell:197721}  ||cffffff00Edolie||r {spell:265202}\n{time:06:25} - Void Bomb -  ||cff33937fSkiazard||r {spell:374968}  ||cfff38bb9Estu||r {spell:31821}  ||cff006fdcSanfa||r {spell:98008}  ||cfff38bb9Estu||r {spell:216331}\n{time:06:41} - Cosmic Ascension -  ||cfffe7b09Nórdos||r {spell:391528}\n{time:07:03} - ||cfff38bb9Estu||r {spell:375576}\n{time:07:10} - ||cffffff00Edolie||r {spell:64901}\n{time:07:20} - Scouring Eternity -  ||cffc59a6cShirtpants||r {spell:97462}  ||cffa330c9Kâzuto||r {spell:196718}", -- [43]
+			"intstart\nnpc:202969 \nspell:411302 \n{skull}||cffa330c9Kâzuto||r ||cffc41e3aCronîx||r ||cffc69b6dShirtpants||r ||cff00ff98Níce||r  \n{skull}||cfffff468Holicx||r ||cfff48cbaMiatra||r ||cffc41e3aCadogan||r ||cffaad372Lukîî||r\nnpc:202971\nspell:404754 \n{square}||cff00ff98Níce||r ||cffaad372Lukîî||r\n{square}||cffa330c9Kâzuto||r ||cff3fc7ebMorpheusmage||r\n{cross}||cfffff468Holicx||r ||cff33937fDrakvel||r \n{cross}||cffc69b6dShirtpants||r ||cffc41e3aCronîx||r\n{moon}||cffc41e3aCadogan||r ||cff33937fDrakvel||r\n{moon}||cfff48cbaMiatra||r ||cff3fc7ebHelimeisterb||r\nintend\n\nliquidStart\n||cfff48cbaEstu||r ||cff33937fExtn||r\n||cff8788eeMuzdan||r ||cff8788eePawx||r \np3\n||cff33937fExtn||r ||cff3fc7ebHelimeisterb||r\n||cff8788eeMuzdan||r ||cff8788eePawx||r \n||cff33937fDrakvel||r ||cff3fc7ebHelimeisterb||r\nliquidEnd\n\n{time:00:05}00:05 - ||cffaa0000aoe 8 sec||r - ||cfff38bb9Estu||r {spell:216331}  ||cfffefefeLeergut||r {spell:15286}\n{time:00:41}00:41 - ||cff7030a0Breath||r - ||cfffefefeEdolie||r {spell:265202}  ||cfffefefeNoañgel||r {spell:64843} ||cff0070ddSanfa||r  ||cffa22fc8Kâzuto||r {spell:196718}  ||cffc31d39Cronîx||r {spell:51052}\n{time:00:51}00:51 - ||cff8811ffDisintegrate||r - ||cfff38bb9Estu||r {spell:216331}\n{time:01:12}01:12 - ||cff7b5d46Bomb Spawns||r - ||cff006fdcSanfa||r {spell:108281}  ||cff006fdcSanfa||r {spell:114049}\n{time:01:24}01:24 - ||cfff88379aoe 8 sec||r - ||cfffefefeEdolie||r {spell:64843}  ||cfffefefeNoañgel||r {spell:265202}\n{time:01:29}01:29 - ||cff8811ffDisintegrate||r - ||cff006fdcSanfa||r {spell:98008}  ||cffc59a6cShirtpants||r {spell:97462}  ||cffc31d39Cadogan||r {spell:51052} ||cfff48cbaEstu||r {spell:31821} \n{time:01:33}01:33 - ||cffaa0000aoe 8 sec||r - ||cfff38bb9Estu||r {spell:216331}\n{time:00:15,SAR:410625:1}02:23 - ||cff7b5d46Bomb Spawn||r - ||cfff38bb9Estu||r {spell:216331}\n{time:01:02,SAR:410625:1}03:10 - ||cff00ffffKnock Debuff||r - ||cfff38bb9Estu||r {spell:216331}\n{time:01:32,SAR:410625:1}03:40 - ||cff00ffffKnock Debuff||r - ||cff006fdcSanfa||r {spell:108280}  ||cff006fdcSanfa||r {spell:108281}\n{time:01:42,SAR:410625:1}03:50 - ||cff0072c6Knock Dispel||r - ||cfff38bb9Estu||r {spell:216331}\n{time:00:36,SAA:410654:1}04:28 - ||cff7b5d46Bomb Spawn||r - ||cfff38bb9Estu||r {spell:216331}\n{time:01:09,SAA:410654:1}05:01 - ||cff00ffffKnock Debuff||r - ||cffc59a6cShirtpants||r {spell:97462}\n{time:01:20,SAA:410654:1}05:12 - ||cfff26722Meteor Soak||r - ||cfffefefeEdolie||r {spell:265202}  ||cffc31d39Cronîx||r {spell:51052}  ||cffa22fc8Kâzuto||r {spell:196718}\n{time:01:47,SAA:410654:1}05:39 - ||cfff26722Meteor Soak||r - ||cfffefefeNoañgel||r {spell:64843}  ||cff006fdcSanfa||r {spell:114049}  ||cff006fdcSanfa||r {spell:108281}\n{time:02:19,SAA:410654:1}06:11 - ||cffe68e3dHide AOE||r - ||cfffefefeEdolie||r {spell:64843}  ||cfff38bb9Estu||r {spell:216331}\n{time:02:39,SAA:410654:1}06:31 - ||cffee5555High stacks||r - ||cff006fdcSanfa||r {spell:108280}  ||cff006fdcSanfa||r {spell:98008}\n{time:03:14,SAA:410654:1}07:06 - ||cfff26722Meteor Soak||r - ||cfff38bb9Estu||r {spell:216331}  ||cfff38bb9Estu||r {spell:31821}", -- [44]
+			"intstart\nnpc:202969 \nspell:411302 \n{skull}||cffa330c9Kâzuto||r ||cfff48cbaMiatra||r ||cffc69b6dShirtpants||r ||cfffff468Holicx||r\n{skull}||cff33937fDrakvel||r ||cff3fc7ebHelimeisterb||r ||cff3fc7ebMorpheusmage||r ||cffaad372Lukîî||r\nnpc:202971\nspell:404754 \n{square}||cff33937fExtn||r ||cffaad372Lukîî||r\n{square}||cffa330c9Kâzuto||r ||cff3fc7ebMorpheusmage||r\n{cross}||cfffff468Holicx||r ||cff33937fDrakvel||r \n{cross}||cffc69b6dShirtpants||r ||cffc41e3aCronîx||r\n{moon}Leergut ||cff33937fDrakvel||r\n{moon}||cfff48cbaMiatra||r ||cff3fc7ebHelimeisterb||r\nintend\n\nliquidStart\n||cffff7c0aTeesticle||r ||cffc41e3aCronîx||r\n||cff8788eeMuzdan||r ||cff8788eePawx||r \np3\n||cff3fc7ebMorpheusmage||r ||cff3fc7ebHelimeisterb||r\n||cff8788eeMuzdan||r ||cff8788eePawx||r \n||cff3fc7ebMorpheusmage||r ||cff3fc7ebHelimeisterb||r\nliquidEnd\n\n", -- [45]
+			"intstart\nnpc:202969 \nspell:411302 \n{skull}||cffa330c9Kâzuto||r ||cffc41e3aCronîx||r ||cffc69b6dShirtpants||r ||cff33937fExtn||r   \n{skull}||cfffff468Holicx||r ||cfff48cbaMiatra||r ||cffc41e3aCadogan||r ||cffaad372Elgönndir||r \nnpc:202971\nspell:404754 \n{square}||cff33937fExtn||r ||cffaad372Elgönndir||r \n{square}||cffa330c9Kâzuto||r ||cff3fc7ebMorpheusmage||r\n{cross}||cfffff468Holicx||r ||cff33937fDrakvel||r \n{cross}||cffc69b6dShirtpants||r ||cffc41e3aCronîx||r\n{moon}||cffc41e3aCadogan||r ||cff33937fDrakvel||r\n{moon}||cfff48cbaMiatra||r ||cff3fc7ebHelimeisterb||r\nintend\n\nliquidStart\n||cffff7c0aTeesticle||r ||cff33937fExtn||r\n||cff8788eeMuzdan||r ||cff8788eePawx||r \np3\n||cff3fc7ebMorpheusmage||r ||cff3fc7ebHelimeisterb||r\n||cff8788eeMuzdan||r ||cff8788eePawx||r \n||cff3fc7ebMorpheusmage||r ||cff3fc7ebHelimeisterb||r\nliquidEnd\n\n||cffffff00Scalecommander Sarkareth - Mythic||r\n{time:00:02} - Scorching Bomb -  ||cffff7c0aKruelio||r {spell:391528}  ||cffff7c0aKruelio||r {spell:197721}\n{time:00:04} - Glittering Surge -  ||cfff38bb9Estu||r {spell:375576}\n{time:00:40} - Searing Breath -  ||cffff7c0aKruelio||r {spell:740}  ||cffa330c9Kâzuto||r {spell:196718}  ||cffc59a6cShirtpants||r {spell:97462}  ||cfff38bb9Estu||r {spell:216331}  ||cffffff00Edolie||r {spell:265202}\n{time:00:40} - Searing Breath -  ||cff0070ddKhaleesisham||r  {spell:108280}\n{time:00:54} - Scorching Bomb -  ||cff33937fSkiazard||r {spell:374968}  ||cff0070ddKhaleesisham||r  {spell:192077}\n{time:00:59} - Searing Breath -  ||cfffe7b09Nórdos||r {spell:391528}\n{time:01:04} - Mass Disintegrate -  ||cffffff00Edolie||r {spell:64901}  ||cff0070ddKhaleesisham||r  {spell:207399}\n{time:01:12} - Scorching Bomb -  ||cfff38bb9Estu||r {spell:375576}\n{time:01:23} - Mass Disintegrate -  ||cffc31d39Cronîx||r {spell:51052}  ||cfff38bb9Estu||r {spell:216331}  ||cff0070ddKhaleesisham||r  {spell:98008}  ||cffc31d39Cadogan||r {spell:51052}  ||cffffff00Edolie||r {spell:64843}\n{time:01:23} - Mass Disintegrate -  ||cff0070ddKhaleesisham||r {spell:114052}\n{time:01:32} - Glittering Surge -  ||cfff38bb9Estu||r {spell:31821}  ||cff0070ddKhaleesisham||r  {spell:108281}  ||cffff7c0aKruelio||r {spell:197721}\n{time:02:13} - Abyssal Breath -  ||cfff38bb9Estu||r {spell:216331}\n{time:02:40} - Dread -  ||cfff38bb9Estu||r {spell:375576}\n{time:03:13} - Dread -  ||cffff7c0aKruelio||r {spell:391528}  ||cffff7c0aKruelio||r {spell:197721}\n{time:03:19} - Void Bomb -  ||cfff38bb9Estu||r {spell:216331}\n{time:03:35} - Desolate Blossom -  ||cff0070ddKhaleesisham||r {spell:108281}\n{time:03:43} - Dread -  ||cffff7c0aKruelio||r {spell:740}\n{time:04:25} - Embrace of Nothingness -  ||cff0070ddKhaleesisham||r {spell:192077}\n{time:04:33} - ||cfff38bb9Estu||r {spell:216331}\n{time:04:35} - ||cffff7c0aKruelio||r  {spell:391528}\n{time:04:38} - ||cfff38bb9Estu||r {spell:375576}\n{time:04:42} - ||cffff7c0aKruelio||r  {spell:197721}\n{time:05:03} - Embrace of Nothingness -  ||cffc31d39Cadogan||r {spell:51052}\n{time:05:08} - Dread -  ||cff33937fSkiazard||r {spell:374227}  ||cffc31d39Cronîx||r {spell:51052}\n{time:05:27} - Void Bomb -  ||cff0070ddKhaleesisham||r  {spell:108280}\n{time:05:30} - Embrace of Nothingness -  ||cfff38bb9Estu||r {spell:216331}  ||cfff38bb9Estu||r {spell:375576}  ||cffff7c0aKruelio||r {spell:391528}\n{time:05:44} - ||cffff7c0aKruelio||r  {spell:740}\n{time:05:45} - ||cff0070ddKhaleesisham||r  {spell:114052}\n{time:05:46} - ||cff0070ddKhaleesisham||r  {spell:108281}\n{time:06:10} - Embrace of Nothingness -  ||cff0070ddKhaleesisham||r  {spell:207399}  ||cffff7c0aKruelio||r  {spell:197721}  ||cffffff00Edolie||r {spell:265202}\n{time:06:25} - Void Bomb -  ||cff33937fSkiazard||r {spell:374968}  ||cfff38bb9Estu||r {spell:31821}  ||cff0070ddKhaleesisham||r  {spell:98008}  ||cfff38bb9Estu||r {spell:216331}\n{time:06:41} - Cosmic Ascension -  ||cffff7c0aKruelio||r  {spell:391528}\n{time:07:03} - ||cfff38bb9Estu||r {spell:375576}\n{time:07:10} - ||cffffff00Edolie||r {spell:64901}\n{time:07:20} - Scouring Eternity -  ||cffc59a6cShirtpants||r {spell:97462}  ||cffa22fc8Bobblywobbly||r {spell:196718}", -- [46]
+			"intstart\nnpc:202969 \nspell:411302 \n{skull}||cffa330c9Kâzuto||r ||cffc41e3aCronîx||r ||cffc69b6dShirtpants||r ||cff33937fExtn||r   \n{skull}||cfffff468Holicx||r ||cfff48cbaMiatra||r ||cffc41e3aCadogan||r ||cffaad372Elgönndir||r \nnpc:202971\nspell:404754 \n{square}||cff33937fExtn||r ||cffaad372Elgönndir||r \n{square}||cffa330c9Kâzuto||r ||cff3fc7ebMorpheusmage||r\n{cross}||cfffff468Holicx||r ||cff33937fDrakvel||r \n{cross}||cffc69b6dShirtpants||r ||cffc41e3aCronîx||r\n{moon}||cffc41e3aCadogan||r ||cff33937fDrakvel||r\n{moon}||cfff48cbaMiatra||r ||cff3fc7ebHelimeisterb||r\nintend\n\nliquidStart\n||cffff7c0aTeesticle||r ||cff33937fExtn||r\n||cff8788eeMuzdan||r ||cff8788eePawx||r \np3\n||cff3fc7ebMorpheusmage||r ||cff3fc7ebHelimeisterb||r\n||cff8788eeMuzdan||r ||cff8788eePawx||r \n||cff3fc7ebMorpheusmage||r ||cff3fc7ebHelimeisterb||r\nliquidEnd\n\n||cffffff00Scalecommander Sarkareth - Mythic||r\n{time:00:02} - Scorching Bomb -  ||cffff7c0aKruelio||r {spell:391528}  ||cffff7c0aKruelio||r {spell:197721}\n{time:00:04} - Glittering Surge -  ||cfff38bb9Estu||r {spell:375576}\n{time:00:40} - Searing Breath -  ||cffff7c0aKruelio||r {spell:740}  ||cffa330c9Kâzuto||r {spell:196718}  ||cffc59a6cShirtpants||r {spell:97462}  ||cfff38bb9Estu||r {spell:216331}  ||cffffff00Edolie||r {spell:265202}\n{time:00:40} - Searing Breath -  ||cff0070ddKhaleesisham||r {spell:108280}\n{time:00:54} - Scorching Bomb -  ||cff33937fSkiazard||r {spell:374968}  ||cff0070ddKhaleesisham||r {spell:192077}\n{time:00:59} - Searing Breath -  ||cffff7c0aKruelio||r {spell:391528}\n{time:01:04} - Mass Disintegrate -  ||cffffff00Edolie||r {spell:64901}  ||cff0070ddKhaleesisham||r {spell:207399}\n{time:01:12} - Scorching Bomb -  ||cfff38bb9Estu||r {spell:375576}\n{time:01:23} - Mass Disintegrate -  ||cffc31d39Cronîx||r {spell:51052}  ||cfff38bb9Estu||r {spell:216331}  ||cff0070ddKhaleesisham||r  {spell:98008}  ||cffc31d39Cadogan||r {spell:51052}  ||cffffff00Edolie||r {spell:64843}\n{time:01:23} - Mass Disintegrat Bomb -  ||cff0070ddKhaleesisham||r {spell:108280}\n{time:05:30} - Embrace of Nothingness -  ||cfff38bb9Estu||r {spell:216331}  ||cfff38bb9Estu||r {spell:375576}  ||cffff7c0aKruelio||r {spell:391528}\n{time:05:44} - ||cffff7c0aKruelio||r {spell:740}\n{time:05:45} - ||cff0070ddKhaleesisham||r {spell:114052}\n{time:05:46} - ||cff0070ddKhaleesisham||r {spell:108281}\n{time:06:10} - Embrace of Nothingness -  ||cff0070ddKhaleesisham||r  {spell:207399}  ||cffff7c0aKruelio||r {spell:197721}  ||cffffff00Edolie||r {spell:265202}\n{time:06:25} - Void Bomb -  ||cff33937fSkiazard||r {spell:374968}  ||cfff38bb9Estu||r {spell:31821}  ||cff0070ddKhaleesisham||r {spell:98008}  ||cfff38bb9Estu||r {spell:216331}\n{time:06:41} - Cosmic Ascension -  ||cffff7c0aKruelio||r {spell:391528}\n{time:07:03} - ||cfff38bb9Estu||r {spell:375576}\n{time:07:10} - ||cffffff00Edolie||r {spell:64901}\n{time:07:20} - Scouring Eternity -  ||cffc59a6cShirtpants||r {spell:97462}  ||cffa22fc8Bobblywobbly||r {spell:196718}", -- [47]
+			"intstart\nnpc:202969 \nspell:411302 \n{skull}||cffa330c9Kâzuto||r ||cffc41e3aCronîx||r ||cffc69b6dShirtpants||r ||cff33937fExtn||r   \n{skull}||cfffff468Holicx||r ||cfff48cbaMiatra||r ||cffc41e3aCadogan||r ||cffaad372Elgönndir||r \nnpc:202971\nspell:404754 \n{square}||cff33937fExtn||r ||cffaad372Elgönndir||r \n{square}||cffa330c9Kâzuto||r ||cff3fc7ebMorpheusmage||r\n{cross}||cfffff468Holicx||r ||cff33937fDrakvel||r \n{cross}||cffc69b6dShirtpants||r ||cffc41e3aCronîx||r\n{moon}||cffc41e3aCadogan||r ||cff33937fDrakvel||r\n{moon}||cfff48cbaMiatra||r ||cff3fc7ebHelimeisterb||r\nintend\n\nliquidStart\n||cffff7c0aTeesticle||r ||cff33937fExtn||r\n||cff8788eeMuzdan||r ||cff8788eePawx||r \np3\n||cff3fc7ebMorpheusmage||r ||cff3fc7ebHelimeisterb||r\n||cff8788eeMuzdan||r ||cff8788eePawx||r \n||cff3fc7ebMorpheusmage||r ||cff3fc7ebHelimeisterb||r\nliquidEnd\n\n||cffffff00Scalecommander Sarkareth - Mythic||r\n{time:00:02} - Scorching Bomb -  ||cffff7c0aKruelio||r {spell:391528}  ||cffff7c0aKruelio||r {spell:197721}\n{time:00:04} - Glittering Surge -  ||cfff38bb9Estu||r {spell:375576}\n{time:00:40} - Searing Breath -  ||cffff7c0aKruelio||r {spell:740}  ||cffa330c9Kâzuto||r {spell:196718}  ||cffc59a6cShirtpants||r {spell:97462}  ||cfff38bb9Estu||r {spell:216331}  ||cffffff00Edolie||r {spell:265202}\n{time:00:40} - Searing Breath -  ||cff0070ddKhaleesisham||r {spell:108280}\n{time:00:54} - Scorching Bomb -  ||cff33937fExtn||r {spell:374968}  ||cff0070ddKhaleesisham||r {spell:192077}\n{time:00:59} - Searing Breath -  ||cffff7c0aKruelio||r {spell:391528}\n{time:01:04} - Mass Disintegrate -  ||cffffff00Edolie||r {spell:64901}  ||cff0070ddKhaleesisham||r {spell:207399}\n{time:01:12} - Scorching Bomb -  ||cfff38bb9Estu||r {spell:375576}\n{time:01:23} - Mass Disintegrate -  ||cffc31d39Cronîx||r {spell:51052}  ||cfff38bb9Estu||r {spell:216331}  ||cff0070ddKhaleesisham||r {spell:98008}  ||cffc31d39Cadogan||r {spell:51052}  ||cffffff00Edolie||r {spell:64843}\n{time:01:23} - Mass Disintegrat Bo ||cfff38bb9Estu||r {spell:216331}\n{time:06:41} - Cosmic Ascension -  ||cffff7c0aKruelio||r {spell:391528}\n{time:07:03} - ||cfff38bb9Estu||r {spell:375576}\n{time:07:10} - ||cffffff00Edolie||r {spell:64901}\n{time:07:20} - Scouring Eternity -  ||cffc59a6cShirtpants||r {spell:97462}  ||cffa330c9Kâzuto||r {spell:196718}", -- [48]
+			"intstart\nnpc:202969 \nspell:411302 \n{skull}||cffa330c9Kâzuto||r ||cfff48cbaMiatra||r ||cffc69b6dShirtpants||r ||cfffff468Holicx||r\n{skull}||cff33937fDrakvel||r ||cff3fc7ebHelimeisterb||r ||cff3fc7ebMorpheusmage||r ||cffaad372Lukîî||r\nnpc:202971\nspell:404754 \n{square}||cff33937fExtn||r ||cffaad372Lukîî||r\n{square}||cffa330c9Kâzuto||r ||cff3fc7ebMorpheusmage||r\n{cross}||cfffff468Holicx||r ||cff33937fDrakvel||r \n{cross}||cffc69b6dShirtpants||r ||cffc41e3aCronîx||r\n{moon}Leergut ||cff33937fDrakvel||r\n{moon}||cfff48cbaMiatra||r ||cff3fc7ebHelimeisterb||r\nintend\n\nliquidStart\n||cffff7c0aTeesticle||r ||cffc41e3aCronîx||r\n||cff8788eeMuzdan||r ||cff8788eePawx||r \np3\n||cff3fc7ebMorpheusmage||r ||cff3fc7ebHelimeisterb||r\n||cff8788eeMuzdan||r ||cff8788eePawx||r \n||cff3fc7ebMorpheusmage||r ||cff3fc7ebHelimeisterb||r\nliquidEnd\n\n", -- [49]
+			"intstart\nnpc:202969 \nspell:411302 \n{skull}||cffa330c9Kâzuto||r ||cfff48cbaMiatra||r ||cffc69b6dShirtpants||r ||cfffff468Holicx||r\n{skull}||cff33937fDrakvel||r ||cff3fc7ebHelimeisterb||r ||cff3fc7ebMorpheusmage||r ||cffaad372Lukîî||r\n{skull}\nnpc:202971\nspell:404754 \n{square}||cff33937fExtn||r ||cffaad372Lukîî||r\n{square}||cffa330c9Kâzuto||r ||cff3fc7ebMorpheusmage||r\n{cross}||cfffff468Holicx||r ||cff33937fDrakvel||r \n{cross}||cffc69b6dShirtpants||r ||cffc41e3aCronîx||r\n{moon}Leergut ||cff33937fDrakvel||r\n{moon}||cfff48cbaMiatra||r ||cff3fc7ebHelimeisterb||r\nintend\n\nliquidStart\n||cffff7c0aTeesticle||r ||cffc41e3aCronîx||r\n||cff8788eeMuzdan||r ||cff8788eePawx||r \np3\n||cff3fc7ebMorpheusmage||r ||cff3fc7ebHelimeisterb||r\n||cff8788eeMuzdan||r ||cff8788eePawx||r \n||cff3fc7ebMorpheusmage||r ||cff3fc7ebHelimeisterb||r\nliquidEnd\n\n||cffffff00Scalecommander Sarkareth - Neu||r\n{time:00:02} - Scorching Bomb -  ||cfffe7b09Kruelio||r {spell:197721}  ||cfffefefeLeergut||r {spell:15286}\n{time:00:17} - Scorching Detonation -  ||cfffe7b09Kruelio||r {spell:391528}\n{time:00:24} - Mass Disintegrate -  ||cfff38bb9Estu||r {spell:375576}\n{time:00:38} - Searing Breath -  ||cfff38bb9Estu||r {spell:31884}  ||cfff38bb9Estu||r {spell:31821}  ||cff006fdcSanfa||r {spell:108280}  ||cff006fdcSanfa||r {spell:114052}\n{time:00:42} - Searing Breath -  ||cfffe7b09Kruelio||r {spell:740}  ||cffffff00Edolie||r {spell:265202}\n{time:01:01} - Scorching Bomb -  ||cffffff00Edolie||r {spell:64901}\n{time:01:16} - Scorching Detonation -  ||cfffefefeLeergut||r {spell:15286}  ||cff006fdcSanfa||r {spell:207399}  ||cff006fdcSanfa||r {spell:108281}\n{time:01:19} - Scorching Bomb -  ||cfff38bb9Estu||r {spell:375576}\n{time:01:25} - Scorching Detonation -  ||cfffe7b09Kruelio||r {spell:391528}\n{time:01:32} - Mass Disintegrate -  ||cffffff00Edolie||r {spell:64843}  ||cff006fdcSanfa||r {spell:98008}  ||cffc59a6cShirtpants||r {spell:97462}  ||cffa22fc8Kâzuto||r {spell:196718}  ||cffc31d39Cronîx||r {spell:51052}\n{time:01:38} - Glittering Surge -  ||cfffe7b09Kruelio||r {spell:197721}\n{time:02:32} - Desolate Blossom -  ||cfff38bb9Estu||r {spell:31884}\n{time:02:36} - Void Bomb -  ||cfffe7b09Kruelio||r {spell:391528}\n{time:02:41} - Infinite Duress -  ||cfff38bb9Estu||r {spell:375576}  ||cff006fdcSanfa||r {spell:108281}\n{time:03:36} - Void Bomb -  ||cfffe7b09Kruelio||r {spell:391528}\n{time:03:44} - Abyssal Breath -  ||cfffe7b09Kruelio||r {spell:740}  ||cfff38bb9Estu||r {spell:375576}\n{time:03:47} - Dread -  ||cff006fdcSanfa||r {spell:108280}\n{time:04:19} -  -  ||cfff38bb9Estu||r {spell:31884}\n{time:04:26} - Embrace of Nothingness -\n{time:04:52} - Scouring Eternity -  ||cfffefefeLeergut||r {spell:15286}  ||cfffe7b09Kruelio||r {spell:197721}\n{time:05:04} - Embrace of Nothingness -  ||cffffff00Edolie||r {spell:265202}  ||cffc59a6cShirtpants||r {spell:97462}\n{time:05:09} - Cosmic Ascension -  ||cfffe7b09Kruelio||r {spell:391528}  ||cffc31d39Cronîx||r {spell:51052}  ||cfff38bb9Estu||r {spell:375576}\n{time:05:38} -  -  ||cffffff00Edolie||r {spell:64843}\n{time:05:47} -  -  ||cff006fdcSanfa||r {spell:108281}\n{time:06:05} - Scouring Eternity -  ||cfffe7b09Kruelio||r {spell:740}  ||cff33937fExtn||r {spell:374227}  ||cfffefefeLeergut||r {spell:15286}\n{time:06:11} - Embrace of Nothingness -  ||cfffe7b09Kruelio||r {spell:391528}  ||cff006fdcSanfa||r {spell:114052}  ||cfff38bb9Estu||r {spell:31821}\n{time:06:23} - Dread -  ||cfff38bb9Estu||r {spell:31884}\n{time:06:26} - Void Bomb -  ||cfff38bb9Estu||r {spell:375576}  ||cff006fdcSanfa||r {spell:108280}\n{time:06:42} - Cosmic Ascension -  ||cff006fdcSanfa||r {spell:98008}  ||cffa22fc8Kâzuto||r {spell:196718}\n{time:07:09} -  -  ||cfffe7b09Kruelio||r {spell:197721}\n{time:07:21} - Scouring Eternity -  ||cfffe7b09Kruelio||r {spell:391528}", -- [50]
+			"intstart\nnpc:202969 \nspell:411302 \n{skull}||cffa330c9Kâzuto||r ||cfff48cbaMiatra||r ||cffc69b6dShirtpants||r ||cfffff468Holicx||r\n{skull}||cff33937fDrakvel||r ||cff3fc7ebHelimeisterb||r ||cff3fc7ebMorpheusmage||r ||cffaad372Lukîî||r\n{skull}Leergut ||cff33937fExtn||r ||cfff48cbaSanatio||r ||cffc41e3aCronîx||r\nnpc:202971\nspell:404754 \n{square}||cff33937fExtn||r ||cffaad372Lukîî||r\n{square}||cffa330c9Kâzuto||r ||cff3fc7ebMorpheusmage||r\n{cross}||cfffff468Holicx||r ||cff33937fDrakvel||r \n{cross}||cffc69b6dShirtpants||r ||cffc41e3aCronîx||r\n{moon}Leergut ||cff33937fDrakvel||r\n{moon}||cfff48cbaMiatra||r ||cff3fc7ebHelimeisterb||r\nintend\n\nliquidStart\n||cffff7c0aTeesticle||r ||cffc41e3aCronîx||r\n||cff8788eeMuzdan||r ||cff8788eePawx||r \np3\n||cff3fc7ebMorpheusmage||r ||cff3fc7ebHelimeisterb||r\n||cff8788eeMuzdan||r ||cff8788eePawx||r \n||cff3fc7ebMorpheusmage||r ||cff3fc7ebHelimeisterb||r\nliquidEnd\n\n||cffffff00Scalecommander Sarkareth - Neu||r\n{time:00:02} - Scorching Bomb -  ||cfffe7b09Kruelio||r {spell:197721}  ||cfffefefeLeergut||r {spell:15286}\n{time:00:17} - Scorching Detonation -  ||cfffe7b09Kruelio||r {spell:391528}\n{time:00:24} - Mass Disintegrate -  ||cfff38bb9Estu||r {spell:375576}\n{time:00:38} - Searing Breath -  ||cfff38bb9Estu||r {spell:31884}  ||cfff38bb9Estu||r {spell:31821}  ||cff006fdcSanfa||r {spell:108280}  ||cff006fdcSanfa||r {spell:114052}\n{time:00:42} - Searing Breath -  ||cfffe7b09Kruelio||r {spell:740}  ||cffffff00Edolie||r {spell:265202}\n{time:01:01} - Scorching Bomb -  ||cffffff00Edolie||r {spell:64901}\n{time:01:16} - Scorching Detonation -  ||cfffefefeLeergut||r {spell:15286}  ||cff006fdcSanfa||r {spell:207399}  ||cff006fdcSanfa||r {spell:108281}\n{time:01:19} - Scorching Bomb -  ||cfff38bb9Estu||r {spell:375576}\n{time:01:25} - Scorching Detonation -  ||cfffe7b09Kruelio||r {spell:391528}\n{time:01:32} - Mass Disintegrate -  ||cffffff00Edolie||r {spell:64843}  ||cff006fdcSanfa||r {spell:98008}  ||cffc59a6cShirtpants||r {spell:97462}  ||cffa22fc8Kâzuto||r {spell:196718}  ||cffc31d39Cronîx||r {spell:51052}\n{time:01:38} - Glittering Surge -  ||cfffe7b09Kruelio||r {spell:197721}\n{time:02:32} - Desolate Blossom -  ||cfff38bb9Estu||r {spell:31884}\n{time:02:36} - Void Bomb -  ||cfffe7b09Kruelio||r {spell:391528}\n{time:02:41} - Infinite Duress -  ||cfff38bb9Estu||r {spell:375576}  ||cff006fdcSanfa||r {spell:108281}\n{time:03:36} - Void Bomb -  ||cfffe7b09Kruelio||r {spell:391528}\n{time:03:44} - Abyssal Breath -  ||cfffe7b09Kruelio||r {spell:740}  ||cfff38bb9Estu||r {spell:375576}\n{time:03:47} - Dread -  ||cff006fdcSanfa||r {spell:108280}\n{time:04:19} -  -  ||cfff38bb9Estu||r {spell:31884}\n{time:04:26} - Embrace of Nothingness -\n{time:04:52} - Scouring Eternity -  ||cfffefefeLeergut||r {spell:15286}  ||cfffe7b09Kruelio||r {spell:197721}\n{time:05:04} - Embrace of Nothingness -  ||cffffff00Edolie||r {spell:265202}  ||cffc59a6cShirtpants||r {spell:97462}\n{time:05:09} - Cosmic Ascension -  ||cfffe7b09Kruelio||r {spell:391528}  ||cffc31d39Cronîx||r {spell:51052}  ||cfff38bb9Estu||r {spell:375576}\n{time:05:38} -  -  ||cffffff00Edolie||r {spell:64843}\n{time:05:47} -  -  ||cff006fdcSanfa||r {spell:108281}\n{time:06:05} - Scouring Eternity -  ||cfffe7b09Kruelio||r {spell:740}  ||cff33937fExtn||r {spell:374227}  ||cfffefefeLeergut||r {spell:15286}\n{time:06:11} - Embrace of Nothingness -  ||cfffe7b09Kruelio||r {spell:391528}  ||cff006fdcSanfa||r {spell:114052}  ||cfff38bb9Estu||r {spell:31821}\n{time:06:23} - Dread -  ||cfff38bb9Estu||r {spell:31884}\n{time:06:26} - Void Bomb -  ||cfff38bb9Estu||r {spell:375576}  ||cff006fdcSanfa||r {spell:108280}\n{time:06:42} - Cosmic Ascension -  ||cff006fdcSanfa||r {spell:98008}  ||cffa22fc8Kâzuto||r {spell:196718}\n{time:07:09} -  -  ||cfffe7b09Kruelio||r {spell:197721}\n{time:07:21} - Scouring Eternity -  ||cfffe7b09Kruelio||r {spell:391528}", -- [51]
+			"intstart\nnpc:202969 \nspell:411302 \n{skull}||cffa330c9Kâzuto||r ||cfff48cbaMiatra||r ||cffc69b6dShirtpants||r ||cfffff468Holicx||r\n{skull}||cff33937fDrakvel||r ||cff3fc7ebHelimeisterb||r ||cff3fc7ebMorpheusmage||r ||cffaad372Lukîî||r\n{skull}Leergut ||cff33937fExtn||r ||cfff48cbaSanatio||r ||cffc41e3aCronîx||r\nnpc:202971\nspell:404754 \n{square}||cff33937fExtn||r ||cffaad372Lukîî||r\n{square}||cffa330c9Kâzuto||r ||cff3fc7ebMorpheusmage||r\n{cross}||cfffff468Holicx||r ||cff33937fDrakvel||r \n{cross}||cffc69b6dShirtpants||r ||cffc41e3aCronîx||r\n{moon}Leergut ||cff33937fDrakvel||r\n{moon}||cfff48cbaMiatra||r ||cff3fc7ebHelimeisterb||r\nintend\n\nliquidStart\n||cffff7c0aTeesticle||r ||cffc41e3aCronîx||r\n||cff8788eeMuzdan||r ||cff8788eePawx||r \np3\n||cff3fc7ebMorpheusmage||r ||cff3fc7ebHelimeisterb||r\n||cff8788eeMuzdan||r ||cff8788eePawx||r \n||cff3fc7ebMorpheusmage||r ||cff3fc7ebHelimeisterb||r\nliquidEnd\n\n||cffffff00Scalecommander Sarkareth - Neu||r\n{time:00:02} - Scorching Bomb -  ||cfffe7b09Kruelio||r {spell:197721}  ||cfffefefeLeergut||r {spell:15286}\n{time:00:17} - Scorching Detonation -  ||cfffe7b09Kruelio||r {spell:391528}\n{time:00:24} - Mass Disintegrate -  ||cfff38bb9Estu||r {spell:375576}\n{time:00:38} - Searing Breath -  ||cfff38bb9Estu||r {spell:31884}  ||cfff38bb9Estu||r {spell:31821}  ||cff006fdcSanfa||r {spell:108280}  ||cff006fdcSanfa||r {spell:114052}\n{time:00:42} - Searing Breath -  ||cfffe7b09Kruelio||r {spell:740}  ||cffffff00Edolie||r {spell:265202}\n{time:01:01} - Scorching Bomb -  ||cffffff00Edolie||r {sr {spell:265202}  ||cffc59a6cShirtpants||r {spell:97462}\n{time:05:09} - Cosmic Ascension -  ||cfffe7b09Kruelio||r {spell:391528}  ||cffc31d39Cronîx||r {spell:51052}  ||cfff38bb9Estu||r {spell:375576}\n{time:05:38} -  -  ||cffffff00Edolie||r {spell:64843}\n{time:05:47} -  -  ||cff006fdcSanfa||r {spell:108281}\n{time:06:05} - Scouring Eternity -  ||cfffe7b09Kruelio||r {spell:740}  ||cff33937fExtn||r {spell:374227}  ||cfffefefeLeergut||r {spell:15286}\n{time:06:11} - Embrace of Nothingness -  ||cfffe7b09Kruelio||r {spell:391528}  ||cff006fdcSanfa||r {spell:114052}  ||cfff38bb9Estu||r {spell:31821}\n{time:06:23} - Dread -  ||cfff38bb9Estu||r {spell:31884}\n{time:06:26} - Void Bomb -  ||cfff38bb9Estu||r {spell:375576}  ||cff006fdcSanfa||r {spell:108280}\n{time:06:42} - Cosmic Ascension -  ||cff006fdcSanfa||r {spell:98008}  ||cffa22fc8Kâzuto||r {spell:196718}\n{time:07:09} -  -  ||cfffe7b09Kruelio||r {spell:197721}\n{time:07:21} - Scouring Eternity -  ||cfffe7b09Kruelio||r {spell:391528}", -- [52]
+			"intstart\nnpc:202969 \nspell:411302 \n{skull}||cffa330c9Kâzuto||r ||cfff48cbaMiatra||r ||cffc69b6dShirtpants||r ||cfffff468Holicx||r\n{skull}||cff33937fDrakvel||r ||cff3fc7ebHelimeisterb||r ||cff3fc7ebMorpheusmage||r ||cffaad372Lukîî||r\n{skull}Leergut ||cff33937fExtn||r ||cfff48cbaSanatio||r ||cffc41e3aCronîx||r\nnpc:202971\nspell:404754 \n{square}||cff33937fExtn||r ||cffaad372Lukîî||r\n{square}||cffa330c9Kâzuto||r ||cff3fc7ebMorpheusmage||r\n{cross}||cfffff468Holicx||r ||cff33937fDrakvel||r \n{cross}||cffc69b6dShirtpants||r ||cffc41e3aCronîx||r\n{moon}Leergut ||cff33937fDrakvel||r\n{moon}||cfff48cbaMiatra||r ||cff3fc7ebHelimeisterb||r\nintend\n\nliquidStart\n||cffff7c0aTeesticle||r ||cffc41e3aCronîx||r\n||cff8788eeMuzdan||r ||cff8788eePawx||r \np3\n||cff3fc7ebMorpheusmage||r ||cff3fc7ebHelimeisterb||r\n||cff8788eeMuzdan||r ||cff8788eePawx||r \n||cff3fc7ebMorpheusmage||r ||cff3fc7ebHelimeisterb||r\nliquidEnd\n\n||cffffff00Scalecommander Sarkareth - Neu||r\n{time:00:02} - Scorching Bomb -  ||cfffe7b09Kruelio||r {spell:197721}  ||cfffefefeLeergut||r {spell:15286}\n{time:00:17} - Scorching Detonation -  ||cfffe7b09Kruelio||r {spell:391528}\n{time:00:24} - Mass Disintegrate -  ||cfff38bb9Estu||r {spell:375576}\n{time:00:38} - Searing Breath -  ||cfff38bb9Estu||r {spell:31884}  ||cfff38bb9Estu||r {spell:31821}  ||cff006fdcSanfa||r {spell:108280}  ||cff006fdcSanfa||r {spell:114052}\n{time:00:42} - Searing Breath -  ||cfffe7b09Kruelio||r {spell:740}  ||cffffff00Edolie||r {spell:265202}\n{time:01:01} - Scorching Bomb -  ||cffffff00Edolie||r {sr {spell:265202}  ||cffc59a6cShirtpants||r {spell:97462}\n{time:05:09} - Cosmic Ascension -  ||cfffe7b09Kruelio||r {spell:391528}  ||cffc31d39Cronîx||r {spell:51052}  ||cfff38bb9Estu||r {spell:375576}\n{time:05:38} -  -  ||cffffff00Edolie||r {spell:64843}\n{time:05:47} -  -  ||cff006fdcSanfa||r {spell:108281}\n{time:06:05} - Scouring Eternity -  ||cfffe7b09Kruelio||r {spell:740}  ||cff33937fExtn||r {spell:374227}  ||cfffefefeLeergut||r {spell:15286}\n{time:06:11} - Embrace of Nothingness -  ||cfffe7b09Kruelio||r {spell:391528}  ||cff006fdcSanfa||r {spell:114052}  ||cfff38bb9Estu||r {spell:31821}\n{time:06:23} - Dread -  ||cfff38bb9Estu||r {spell:31884}\n{time:06:26} - Void Bomb -  ||cfff38bb9Estu||r {spell:375576}  ||cff006fdcSanfa||r {spell:108280}\n{time:06:42} - Cosmic Ascension -  ||cff006fdcSanfa||r {spell:98008}  ||cffa22fc8Kâzuto||r {spell:196718}\n{time:07:09} -  -  ||cfffe7b09Kruelio||r {spell:197721}\n{time:07:21} - Scouring Eternity -  ||cfffe7b09Kruelio||r {spell:391528}", -- [53]
+			"intstart\nnpc:202969 \nspell:411302 \n{skull}||cffa330c9Kâzuto||r ||cfff48cbaMiatra||r ||cffc69b6dShirtpants||r ||cfffff468Holicx||r\n{skull}||cff33937fDrakvel||r ||cffaad372Lukîî||r ||cff3fc7ebMorpheusmage||r ||cff3fc7ebHelimeisterb||r\n{skull}Leergut ||cff33937fExtn||r ||cfff48cbaSanatio||r ||cffc41e3aCronîx||r\nnpc:202971\nspell:404754 \n{square}||cff33937fExtn||r ||cffaad372Lukîî||r\n{square}||cffa330c9Kâzuto||r ||cff3fc7ebMorpheusmage||r\n{cross}||cfffff468Holicx||r ||cff33937fDrakvel||r \n{cross}||cffc69b6dShirtpants||r ||cffc41e3aCronîx||r\n{moon}Leergut ||cff33937fDrakvel||r\n{moon}||cfff48cbaMiatra||r ||cff3fc7ebHelimeisterb||r\nintend\n\nliquidStart\n||cffff7c0aTeesticle||r ||cffc41e3aCronîx||r\n||cff8788eeMuzdan||r ||cff8788eePawx||r \np3\n||cff3fc7ebMorpheusmage||r ||cff3fc7ebHelimeisterb||r\n||cff8788eeMuzdan||r ||cff8788eePawx||r \n||cff3fc7ebMorpheusmage||r ||cff3fc7ebHelimeisterb||r\nliquidEnd\n\n||cffffff00Scalecommander Sarkareth - Neu||r\n{time:00:02} - Scorching Bomb -  ||cfffe7b09Kruelio||r {spell:197721}  ||cfffefefeLeergut||r {spell:15286}\n{time:00:17} - Scorching Detonation -  ||cfffe7b09Kruelio||r {spell:391528}\n{time:00:24} - Mass Disintegrate -  ||cfff38bb9Estu||r {spell:375576}\n{time:00:38} - Searing Breath -  ||cfff38bb9Estu||r {spell:31884}  ||cfff38bb9Estu||r {spell:31821}  ||cff006fdcSanfa||r {spell:108280}  ||cff006fdcSanfa||r {spell:114052}\n{time:00:42} - Searing Breath -  ||cfffe7b09Kruelio||r {spell:740}  ||cffffff00Edolie||r {spell:265202}\n{time:01:01} - Scorching Bomb -  ||cffffff00Edolie||r {spell:64901}\n{time:01:16} - Scorching Detonation -  ||cfffefefeLeergut||r {spell:15286}  ||cff006fdcSanfa||r {spell:207399}  ||cff006fdcSanfa||r {spell:108281}\n{time:01:19} - Scorching Bomb -  ||cfff38bb9Estu||r {spell:375576}\n{time:01:25} - Scorching Detonation -  ||cfffe7b09Kruelio||r {spell:391528}\n{time:01:32} - Mass Disintegrate -  ||cffffff00Edolie||r {spell:64843}  ||cff006fdcSanfa||r {spell:98008}  ||cffc59a6cShirtpants||r {spell:97462}  ||cffa22fc8Kâzuto||r {spell:196718}  ||cffc31d39Cronîx||r {spell:51052}\n{time:01:38} - Glittering Surge -  ||cfffe7b09Kruelio||r {spell:197721}\n{time:02:32} - Desolate Blossom -  ||cfff38bb9Estu||r {spell:31884}\n{time:02:36} - Void Bomb -  ||cfffe7b09Kruelio||r {spell:391528}\n{time:02:41} - Infinite Duress -  ||cfff38bb9Estu||r {spell:375576}  ||cff006fdcSanfa||r {spell:108281}\n{time:03:36} - Void Bomb -  ||cfffe7b09Kruelio||r {spell:391528}\n{time:03:44} - Abyssal Breath -  ||cfffe7b09Kruelio||r {spell:740}  ||cfff38bb9Estu||r {spell:375576}\n{time:03:47} - Dread -  ||cff006fdcSanfa||r {spell:108280}\n{time:04:19} -  -  ||cfff38bb9Estu||r {spell:31884}\n{time:04:26} - Embrace of Nothingness -\n{time:04:52} - Scouring Eternity -  ||cfffefefeLeergut||r {spell:15286}  ||cfffe7b09Kruelio||r {spell:197721}\n{time:05:04} - Embrace of Nothingness -  ||cffffff00Edolie||r {spell:265202}  ||cffc59a6cShirtpants||r {spell:97462}\n{time:05:09} - Cosmic Ascension -  ||cfffe7b09Kruelio||r {spell:391528}  ||cffc31d39Cronîx||r {spell:51052}  ||cfff38bb9Estu||r {spell:375576}\n{time:05:38} -  -  ||cffffff00Edolie||r {spell:64843}\n{time:05:47} -  -  ||cff006fdcSanfa||r {spell:108281}\n{time:06:05} - Scouring Eternity -  ||cfffe7b09Kruelio||r {spell:740}  ||cff33937fExtn||r {spell:374227}  ||cfffefefeLeergut||r {spell:15286}\n{time:06:11} - Embrace of Nothingness -  ||cfffe7b09Kruelio||r {spell:391528}  ||cff006fdcSanfa||r {spell:114052}  ||cfff38bb9Estu||r {spell:31821}\n{time:06:23} - Dread -  ||cfff38bb9Estu||r {spell:31884}\n{time:06:26} - Void Bomb -  ||cfff38bb9Estu||r {spell:375576}  ||cff006fdcSanfa||r {spell:108280}\n{time:06:42} - Cosmic Ascension -  ||cff006fdcSanfa||r {spell:98008}  ||cffa22fc8Kâzuto||r {spell:196718}\n{time:07:09} -  -  ||cfffe7b09Kruelio||r {spell:197721}\n{time:07:21} - Scouring Eternity -  ||cfffe7b09Kruelio||r {spell:391528}", -- [54]
+			"intstart\nnpc:202969 \nspell:411302 \n{skull}||cffa330c9Kâzuto||r ||cfff48cbaMiatra||r ||cffc69b6dShirtpants||r ||cfffff468Holicx||r\n{skull}||cff33937fDrakvel||r ||cffaad372Lukîî||r ||cffaad372Elgönndir||r ||cff3fc7ebHelimeisterb||r\n{skull}Leergut ||cff33937fExtn||r ||cfff48cbaSanatio||r ||cffc41e3aCadogan||r \nnpc:202971\nspell:404754 \n{square}||cff33937fExtn||r ||cffaad372Lukîî||r\n{square}||cffa330c9Kâzuto||r ||cffaad372Elgönndir||r \n{cross}||cfffff468Holicx||r ||cffc41e3aCronîx||r \n{cross}||cffc69b6dShirtpants||r ||cffc41e3aCadogan||r \n{moon}Leergut ||cff00ff98Antagon||r \n{moon}||cfff48cbaMiatra||r ||cff3fc7ebHelimeisterb||r\nintend\n\nliquidStart\n ||cffc41e3aCronîx||r\n||cff8788eeMuzdan||r ||cff8788eePawx||r \np3\n||cff3fc7ebMorpheusmage||r ||cff3fc7ebHelimeisterb||r\n||cff8788eeMuzdan||r ||cff8788eePawx||r \n||cff3fc7ebMorpheusmage||r ||cff3fc7ebHelimeisterb||r\nliquidEnd\n\n||cffffff00Scalecommander Sarkareth - Neu||r\n{time:00:02} - Scorching Bomb -  ||cfffe7b09Kruelio||r {spell:197721}  ||cfffefefeLeergut||r {spell:15286}\n{time:00:17} - Scorching Detonation -  ||cfffe7b09Kruelio||r {spell:391528}\n{time:00:24} - Mass Disintegrate -  ||cfff38bb9Estu||r {spell:375576}\n{time:00:38} - Searing Breath -  ||cfff38bb9Estu||r {spell:31884}  ||cfff38bb9Estu||r {spell:31821}  ||cff006fdcSanfa||r {spell:108280}  ||cff006fdcSanfa||r {spell:114052}\n{time:00:42} - Searing Breath -  ||cfffe7b09Kruelio||r {spell:740}  ||cffffff00Edolie||r {spell:265202}\n{time:01:01} - Scorching Bomb -  ||cffffff00Edolie||r {spell:64901}\n{time:01:16} - Scorching Detonation -  ||cfffefefeLeergut||r {spell:15286}  ||cff006fdcSanfa||r {spell:207399}  ||cff006fdcSanfa||r {spell:108281}\n{time:01:19} - Scorching Bomb -  ||cfff38bb9Estu||r {spell:375576}\n{time:01:25} - Scorching Detonation -  ||cfffe7b09Kruelio||r {spell:391528}\n{time:01:32} - Mass Disintegrate -  ||cffffff00Edolie||r {spell:64843}  ||cff006fdcSanfa||r {spell:98008}  ||cffc59a6cShirtpants||r {spell:97462}  ||cffa22fc8Kâzuto||r {spell:196718}  ||cffc31d39Cronîx||r {spell:51052}\n{time:01:38} - Glittering Surge -  ||cfffe7b09Kruelio||r {spell:197721}\n{time:02:32} - Desolate Blossom -  ||cfff38bb9Estu||r {spell:31884}\n{time:02:36} - Void Bomb -  ||cfffe7b09Kruelio||r {spell:391528}\n{time:02:41} - Infinite Duress -  ||cfff38bb9Estu||r {spell:375576}  ||cff006fdcSanfa||r {spell:108281}\n{time:03:36} - Void Bomb -  ||cfffe7b09Kruelio||r {spell:391528}\n{time:03:44} - Abyssal Breath -  ||cfffe7b09Kruelio||r {spell:740}  ||cfff38bb9Estu||r {spell:375576}\n{time:03:47} - Dread -  ||cff006fdcSanfa||r {spell:108280}\n{time:04:19} -  -  ||cfff38bb9Estu||r {spell:31884}\n{time:04:26} - Embrace of Nothingness -\n{time:04:52} - Scouring Eternity -  ||cfffefefeLeergut||r {spell:15286}  ||cfffe7b09Kruelio||r {spell:197721}\n{time:05:04} - Embrace of Nothingness -  ||cffffff00Edolie||r {spell:265202}  ||cffc59a6cShirtpants||r {spell:97462}\n{time:05:09} - Cosmic Ascension -  ||cfffe7b09Kruelio||r {spell:391528}  ||cffc31d39Cronîx||r {spell:51052}  ||cfff38bb9Estu||r {spell:375576}\n{time:05:38} -  -  ||cffffff00Edolie||r {spell:64843}\n{time:05:47} -  -  ||cff006fdcSanfa||r {spell:108281}\n{time:06:05} - Scouring Eternity -  ||cfffe7b09Kruelio||r {spell:740}  ||cff33937fExtn||r {spell:374227}  ||cfffefefeLeergut||r {spell:15286}\n{time:06:11} - Embrace of Nothingness -  ||cfffe7b09Kruelio||r {spell:391528}  ||cff006fdcSanfa||r {spell:114052}  ||cfff38bb9Estu||r {spell:31821}\n{time:06:23} - Dread -  ||cfff38bb9Estu||r {spell:31884}\n{time:06:26} - Void Bomb -  ||cfff38bb9Estu||r {spell:375576}  ||cff006fdcSanfa||r {spell:108280}\n{time:06:42} - Cosmic Ascension -  ||cff006fdcSanfa||r {spell:98008}  ||cffa22fc8Kâzuto||r {spell:196718}\n{time:07:09} -  -  ||cfffe7b09Kruelio||r {spell:197721}\n{time:07:21} - Scouring Eternity -  ||cfffe7b09Kruelio||r {spell:391528}", -- [55]
+			"liquidStart\n||cfff48cbaEstu||r || BUBBLE    \n||cfff48cbaMiatra||r || BOP\n||cfff48cbaMiatra||r || BUBBLE\n||cfff48cbaMiatra||r || DEF CD (AD)/BoL\n||cfff48cbaMiatra||r || GUARDIAN\n||cfff48cbaMiatra||r || BOP ESTU\n||cfff48cbaMiatra||r || DEF CD (AD)/Sentinel\n||cfff48cbaMiatra||r || BUBBLE\n||cfff48cbaMiatra||r || BOP\n||cfff48cbaMiatra||r || DEF CD (AD)/BoL\n||cfff48cbaMiatra||r || ???\n||cfff48cbaMiatra||r || MAYBE DEAD\nliquidEnd\n\n{time:00:10}00:10 - ||cff7030a0Debuffs 10 sec||r - ||cfff48cbaKritpala||r {spell:216331}\n{time:00:16}00:16 - ||cffaa0000Knock AOE + Dot 15 sec||r - ||cffff7c0aKruelio||r {spell:323764}  ||cffff7c0aKruelio||r {spell:197721}\n{time:00:49}00:49 - ||cffaa0000Knock AOE + Dot 15 sec||r - ||cfffefefeEdolie||r {spell:64843}  ||cffff7c0aKruelio||r {spell:740}  ||cff006fdcSanfa||r {spell:108280}\n{time:00:57}00:57 - ||cff7030a0Debuffs 10 sec||r - ||cfff48cbaKritpala||r {spell:216331}\n{time:01:22}01:22 - ||cffaa0000Knock AOE + Dot 15 sec||r - ||cffff7c0aKruelio||r {spell:323764}  ||cff006fdcSanfa||r {spell:114049}  ||cff006fdcSanfa||r {spell:108281}\n{time:01:29}01:29 - ||cff7030a0Debuffs 10 sec||r - ||cfffefefeEdolie||r {spell:265202}\n{time:01:56}01:56 - ||cffaa0000Knock AOE + Dot 15 sec||r - ||cffff7c0aKruelio||r {spell:197721}  ||cfff48cbaKritpala||r {spell:216331}  ||cfff48cbaKritpala||r {spell:31821}\n{time:02:30}02:30 - ||cffaa0000Knock AOE + Dot 15 sec||r - ||cffff7c0aKruelio||r {spell:323764}\n{time:02:33}02:33 - ||cff7030a0Debuffs 10 sec||r - ||cfff48cbaKritpala||r {spell:216331}\n{time:03:06}03:06 - ||cff7030a0Debuffs 10 sec||r - ||cffff7c0aKruelio||r {spell:740}  ||cff006fdcSanfa||r {spell:98008}\n{time:03:36}03:36 - ||cffaa0000Knock AOE + Dot 15 sec||r - ||cffff7c0aKruelio||r {spell:323764}  ||cffff7c0aKruelio||r {spell:197721}  ||cfff48cbaKritpala||r {spell:216331}\n{time:03:56}03:56 - ||cff7030a0Debuffs 10 sec||r - ||cff006fdcSanfa||r {spell:108280}  ||cff006fdcSanfa||r {spell:108281}\n{time:04:18}04:18 - ||cffaa0000Knock AOE + Dot 15 sec||r - ||cfffefefeEdolie||r {spell:265202}  ||cff006fdcSanfa||r {spell:114049}\n{time:04:19}04:19 - ||cff7030a0Debuffs 10 sec||r - ||cfff48cbaKritpala||r {spell:216331}\n{time:04:52}04:52 - ||cffaa0000Knock AOE + Dot 15 sec||r - ||cfffefefeEdolie||r {spell:64843}  ||cffff7c0aKruelio||r {spell:323764}\n{time:05:09}05:09 - ||cff7030a0Debuffs 10 sec||r - ||cffff7c0aKruelio||r {spell:197721}  ||cfff48cbaKritpala||r {spell:216331}\n{time:05:26}05:26 - ||cffaa0000Knock AOE + Dot 15 sec||r - ||cffff7c0aKruelio||r {spell:740}  ||cfff48cbaKritpala||r {spell:31821}\n{time:05:58}05:58 - ||cff7030a0Debuffs 10 sec||r - ||cff006fdcSanfa||r {spell:108281}", -- [56]
+			"liquidStart\n||cffaad372Lukîî||r ||cffffffffLeergut||r ||cffffffffEdolie||r ||cffa330c9Kâzuto||r ||cfff48cbaMiatra||r \n||cff33937fExtn||r ||cff8788eePawx||r ||cff33937fHurtsevo||r ||cffaad372Elgönndir||r ||cffc69b6dShirtpants||r \n||cfffff468Holicx||r ||cff0070ddSanfa||r ||cff3fc7ebHelimeisterb||r ||cff33937fDpxevoker||r ||cff8788eeMuzdan||r \nliquidEnd\n\n{time:00:08}00:08 - ||cfff88379AOE||r - ||cfff38bb9Estu||r {spell:31884}\n{time:00:23}00:23 - ||cffe68e3dLava Soak||r - ||cfffefefeEdolie||r {spell:246287}  ||cff33937fHurtsevo||r {spell:359816}\n{time:00:50}00:50 - ||cfff88379AOE||r - ||cff33937fHurtsevo||r {spell:363534}  ||cff006fdcSanfa||r {spell:108281}\n{time:01:03}01:03 - ||cffe68e3dLava Soak||r - ||cfffefefeEdolie||r {spell:47536}  ||cfffefefeEdolie||r {spell:62618}\n{time:01:15}01:15 - ||cfff88379AOE||r - ||cff006fdcSanfa||r {spell:108280}\n{time:01:30}01:30 - ||cffe68e3dLava Soak||r - ||cff33937fHurtsevo||r {spell:373270}\n{time:01:57}01:57 - ||cfff88379AOE||r - ||cff006fdcSanfa||r {spell:114049}\n{time:02:10}02:10 - ||cffe68e3dLava Soak||r - ||cfffefefeEdolie||r {spell:246287}  ||cfff38bb9Estu||r {spell:31884}  ||cfff38bb9Estu||r {spell:31821}\n{time:02:37}02:37 - ||cffe68e3dLava Soak||r - ||cfffefefeEdolie||r {spell:47536}  ||cff33937fHurtsevo||r {spell:359816}\n{time:03:04}03:04 - ||cfff88379AOE||r - ||cff006fdcSanfa||r {spell:108281}\n{time:03:17}03:17 - ||cffe68e3dLava Soak||r - ||cff006fdcSanfa||r {spell:98008}\n{time:03:29}03:29 - ||cfff88379AOE||r - ||cfffefefeEdolie||r {spell:246287}\n{time:04:08}04:08 - ||cffdf9dc3Knock Dmg||r - ||cfffefefeEdolie||r {spell:47536}  ||cff006fdcSanfa||r {spell:108280}\n{time:04:11}04:11 - ||cfff88379AOE||r - ||cfff38bb9Estu||r {spell:31884}\n{time:04:24}04:24 - ||cffe68e3dLava Soak||r - ||cfffefefeEdolie||r {spell:62618}  ||cff33937fHurtsevo||r {spell:363534}\n{time:04:36}04:36 - ||cfff88379AOE||r - ||cff33937fHurtsevo||r {spell:373270}\n{time:04:51}04:51 - ||cffe68e3dLava Soak||r - ||cff33937fHurtsevo||r {spell:359816}\n{time:04:57}04:57 - ||cff238e47Frontal||r - ||cff006fdcSanfa||r {spell:114049}\n{time:05:15}05:15 - ||cffdf9dc3Knock Dmg||r - ||cfffefefeEdolie||r {spell:246287}  ||cff006fdcSanfa||r {spell:108281}  ||cfff38bb9Estu||r {spell:31821}\n{time:05:32}05:32 - ||cff238e47Frontal||r - ||cfffefefeEdolie||r {spell:47536}\n{time:06:22}06:22 - ||cffdf9dc3Knock Dmg||r - ||cfff38bb9Estu||r {spell:31884}", -- [57]
+			"", -- [58]
+			"1. ||cffff7c0aÖwlf||r ||cff8788eeMuzdan||r ||cffffffffEdolie||r ||cfff48cbaEstu||r \n2. ||cff33937fHurtsevo||r ||cffaad372Elgönndir||r ||cff3fc7ebHelimeisterb||r ||cfffff468Holicx||r ||cff33937fDrakvel||r \n3. ||cffa330c9Kâzuto||r ||cffc69b6dModoreddo||r ||cffc69b6dShirtpants||r ||cff33937fExtn||r ||cffffffffLeergut||r  \n4. ||cff00ff98Antagon||r ||cfff48cbaSanatio||r ||cffff7c0aDpxdru||r ||cff8788eePawx||r ||cff0070ddSanfa||r \n\n{time:00:14}00:14 - ||cfff88379Jump AOE||r - ||cfff38bb9Estu||r {spell:31884}\n{time:00:20}00:20 - ||cffdf9dc3Heal Absorb||r - ||cfffefefeEdolie||r {spell:246287}  ||cfff38bb9Estu||r {spell:200652}  ||cff006fdcSanfa||r {spell:108281}  ||cff006fdcSanfa||r {spell:108280}  ||cffa22fc8Kâzuto||r {spell:196718}\n{time:00:26}00:26 - ||cffe68e3dMeteor Soak||r - ||cff33937fHurtsevo||r {spell:359816}\n{time:01:09}01:09 - ||cffe68e3dMeteor Soak||r - ||cfffefefeEdolie||r {spell:47536}  ||cff006fdcSanfa||r {spell:114049}\n{time:01:14}01:14 - ||cffaa0000Clear AOE||r - ||cff006fdcSanfa||r {spell:98008}  ||cffc31d39Cronîx||r {spell:51052}\n{time:01:36}01:36 - ||cffdf9dc3Heal Absorb||r - ||cff33937fHurtsevo||r {spell:373270}\n{time:01:52}01:52 - ||cfff1c232Intermission 0/20 sec||r - ||cfff38bb9Estu||r {spell:200652}\n{time:01:57}01:57 - ||cfff1c232Intermission 5/20 sec||r - ||cfffefefeEdolie||r {spell:246287}  ||cfff38bb9Estu||r {spell:31821}\n{time:02:02}02:02 - ||cfff1c232Intermission 10/20 sec||r - ||cffc59a6cShirtpants||r {spell:97462}\n{time:00:36,SAA:401419:1}02:28 - ||cfff88379Jump AOE||r - ||cfff38bb9Estu||r {spell:31884}\n{time:00:43,SAA:401419:1}02:35 - ||cffdf9dc3Heal Absorb||r - ||cfffefefeEdolie||r {spell:47536}  ||cff33937fHurtsevo||r {spell:359816}\n{time:00:48,SAA:401419:1}02:40 - ||cffe68e3dMeteor Soak||r - ||cfffefefeEdolie||r {spell:62618}  ||cff33937fHurtsevo||r {spell:363534}\n{time:01:31,SAA:401419:1}03:23 - ||cffe68e3dMeteor Soak||r - ||cff006fdcSanfa||r {spell:108280}\n{time:01:36,SAA:401419:1}03:28 - ||cffaa0000Clear AOE||r - ||cfffefefeEdolie||r {spell:246287}  ||cfff38bb9Estu||r {spell:200652}  ||cff006fdcSanfa||r {spell:108281}  ||cffc31d39Cronîx||r {spell:51052}\n{time:02:15,SAA:401419:1}04:07 - ||cfff1c232Intermission 0/20 sec||r - ||cfffefefeEdolie||r {spell:47536}  ||cff006fdcSanfa||r {spell:114049}\n{time:02:20,SAA:401419:1}04:12 - ||cfff1c232Intermission 5/20 sec||r - ||cfff38bb9Estu||r {spell:31884}\n{time:00:42,SAA:401419:2}04:49 - ||cffdf9dc3Heal Absorb||r - ||cff33937fHurtsevo||r {spell:373270}\n{time:00:48,SAA:401419:2}04:55 - ||cffe68e3dMeteor Soak||r - ||cff33937fHurtsevo||r {spell:359816}\n{time:01:03,SAA:401419:2}05:10 - ||cff39b54aSoaks Run||r - ||cfff38bb9Estu||r {spell:200652}\n{time:01:19,SAA:401419:2}05:26 - ||cfff88379Jump AOE||r - ||cfffefefeEdolie||r {spell:246287}  ||cfff38bb9Estu||r {spell:31821}  ||cffc59a6cShirtpants||r {spell:97462}\n{time:01:25,SAA:401419:2}05:32 - ||cffdf9dc3Heal Absorb||r - ||cff006fdcSanfa||r {spell:108281}\n{time:01:31,SAA:401419:2}05:38 - ||cffe68e3dMeteor Soak||r - ||cfffefefeEdolie||r {spell:62618}  ||cff006fdcSanfa||r {spell:108280}\n{time:01:52,SAA:401419:2}05:59 - ||cfff88379Jump AOE||r - ||cfffefefeEdolie||r {spell:47536}  ||cff006fdcSanfa||r {spell:98008}", -- [59]
+			"1. ||cffc69b6dFêng||r ||cffffffffMuzdanp||r ||cffffffffEdolie||r ||cffffffffAkurian||r ||cfff48cbaEstu||r ||cff33937fExtn||r \n2. ||cff3fc7ebMorpheusmage||r ||cffff7c0aKaarun||r ||cffaad372Lukîî||r ||cfff48cbaMiatra||r \n3. ||cffa330c9Kâzuto||r ||cff00ff98Fenx||r ||cfffff468Korimadge||r ||cffa330c9Unluckyxd||r\n4. ||cff00ff98Antagon||r ||cfff48cbaSanatio||r ||cff8788eeSeblastian||r ||cff0070ddSanfa||r \n\n{time:00:14}00:14 - ||cfff88379Jump AOE||r - ||cfff48cbaKritpala||r {spell:31884}\n{time:00:20}00:20 - ||cffdf9dc3Heal Absorb||r - ||cfffefefeEdolie||r {spell:246287}  ||cfff48cbaKritpala||r {spell:200652}  ||cff006fdcSanfa||r {spell:108281}  ||cff006fdcSanfa||r {spell:108280}  ||cffa22fc8Kâzuto||r {spell:196718}\n{time:00:26}00:26 - ||cffe68e3dMeteor Soak||r - ||cff33937fHurtsevo||r {spell:359816}\n{time:01:09}01:09 - ||cffe68e3dMeteor Soak||r - ||cfffefefeEdolie||r {spell:47536}  ||cff006fdcSanfa||r {spell:114049}\n{time:01:14}01:14 - ||cffaa0000Clear AOE||r - ||cff006fdcSanfa||r {spell:98008}  ||cffc31d39Cronîx||r {spell:51052}\n{time:01:36}01:36 - ||cffdf9dc3Heal Absorb||r - ||cff33937fHurtsevo||r {spell:373270}\n{time:01:52}01:52 - ||cfff1c232Intermission 0/20 sec||r - ||cfff48cbaKritpala||r {spell:200652}\n{time:01:57}01:57 - ||cfff1c232Intermission 5/20 sec||r - ||cfffefefeEdolie||r {spell:246287}  ||cfff48cbaKritpala||r {spell:31821}\n{time:02:02}02:02 - ||cfff1c232Intermission 10/20 sec||r - ||cffc59a6cShirtpants||r {spell:97462}\n{time:00:36,SAA:401419:1}02:28 - ||cfff88379Jump AOE||r - ||cfff48cbaKritpala||r {spell:31884}\n{time:00:43,SAA:401419:1}02:35 - ||cffdf9dc3Heal Absorb||r - ||cfffefefeEdolie||r {spell:47536}  ||cff33937fHurtsevo||r {spell:359816}\n{time:00:48,SAA:401419:1}02:40 - ||cffe68e3dMeteor Soak||r - ||cfffefefeEdolie||r {spell:62618}  ||cff33937fHurtsevo||r {spell:363534}\n{time:01:31,SAA:401419:1}03:23 - ||cffe68e3dMeteor Soak||r - ||cff006fdcSanfa||r {spell:108280}\n{time:01:36,SAA:401419:1}03:28 - ||cffaa0000Clear AOE||r - ||cfffefefeEdolie||r {spell:246287}  ||cfff48cbaKritpala||r {spell:200652}  ||cff006fdcSanfa||r {spell:108281}  ||cffc31d39Cronîx||r {spell:51052}\n{time:02:15,SAA:401419:1}04:07 - ||cfff1c232Intermission 0/20 sec||r - ||cfffefefeEdolie||r {spell:47536}  ||cff006fdcSanfa||r {spell:114049}\n{time:02:20,SAA:401419:1}04:12 - ||cfff1c232Intermission 5/20 sec||r - ||cfff48cbaKritpala||r {spell:31884}\n{time:00:42,SAA:401419:2}04:49 - ||cffdf9dc3Heal Absorb||r - ||cff33937fHurtsevo||r {spell:373270}\n{time:00:48,SAA:401419:2}04:55 - ||cffe68e3dMeteor Soak||r - ||cff33937fHurtsevo||r {spell:359816}\n{time:01:03,SAA:401419:2}05:10 - ||cff39b54aSoaks Run||r - ||cfff48cbaKritpala||r {spell:200652}\n{time:01:19,SAA:401419:2}05:26 - ||cfff88379Jump AOE||r - ||cfffefefeEdolie||r {spell:246287}  ||cfff48cbaKritpala||r {spell:31821}  ||cffc59a6cShirtpants||r {spell:97462}\n{time:01:25,SAA:401419:2}05:32 - ||cffdf9dc3Heal Absorb||r - ||cff006fdcSanfa||r {spell:108281}\n{time:01:31,SAA:401419:2}05:38 - ||cffe68e3dMeteor Soak||r - ||cfffefefeEdolie||r {spell:62618}  ||cff006fdcSanfa||r {spell:108280}\n{time:01:52,SAA:401419:2}05:59 - ||cfff88379Jump AOE||r - ||cfffefefeEdolie||r {spell:47536}  ||cff006fdcSanfa||r {spell:98008}", -- [60]
+			"liquidStart\n||cff33937fDrakvel||r ||cffffffffLeergut||r ||cffffffffEdolie||r ||cffa330c9Kâzuto||r ||cfff48cbaMiatra||r \n||cff33937fExtn||r ||cffc69b6dModoreddo||r ||cff33937fHurtsevo||r ||cffaad372Elgönndir||r ||cffc69b6dShirtpants||r \n||cff8788eePawx||r ||cff0070ddSanfa||r ||cff3fc7ebHelimeisterb||r ||cffff7c0aDpxdru||r ||cff8788eeMuzdan||r \nliquidEnd\n\n{time:00:08}00:08 - ||cfff88379AOE||r - ||cfff38bb9Estu||r {spell:31884}\n{time:00:23}00:23 - ||cffe68e3dLava Soak||r - ||cfffefefeEdolie||r {spell:246287}  ||cff33937fHurtsevo||r {spell:359816}\n{time:00:50}00:50 - ||cfff88379AOE||r - ||cff33937fHurtsevo||r {spell:363534}  ||cff006fdcSanfa||r {spell:108281}\n{time:01:03}01:03 - ||cffe68e3dLava Soak||r - ||cfffefefeEdolie||r {spell:47536}  ||cfffefefeEdolie||r {spell:62618}\n{time:01:15}01:15 - ||cfff88379AOE||r - ||cff006fdcSanfa||r {spell:108280}\n{time:01:30}01:30 - ||cffe68e3dLava Soak||r - ||cff33937fHurtsevo||r {spell:373270}\n{time:01:57}01:57 - ||cfff88379AOE||r - ||cff006fdcSanfa||r {spell:114049}\n{time:02:10}02:10 - ||cffe68e3dLava Soak||r - ||cfffefefeEdolie||r {spell:246287}  ||cfff38bb9Estu||r {spell:31884}  ||cfff38bb9Estu||r {spell:31821}\n{time:02:37}02:37 - ||cffe68e3dLava Soak||r - ||cfffefefeEdolie||r {spell:47536}  ||cff33937fHurtsevo||r {spell:359816}\n{time:03:04}03:04 - ||cfff88379AOE||r - ||cff006fdcSanfa||r {spell:108281}\n{time:03:17}03:17 - ||cffe68e3dLava Soak||r - ||cff006fdcSanfa||r {spell:98008}\n{time:03:29}03:29 - ||cfff88379AOE||r - ||cfffefefeEdolie||r {spell:246287}\n{time:04:08}04:08 - ||cffdf9dc3Knock Dmg||r - ||cfffefefeEdolie||r {spell:47536}  ||cff006fdcSanfa||r {spell:108280}\n{time:04:11}04:11 - ||cfff88379AOE||r - ||cfff38bb9Estu||r {spell:31884}\n{time:04:24}04:24 - ||cffe68e3dLava Soak||r - ||cfffefefeEdolie||r {spell:62618}  ||cff33937fHurtsevo||r {spell:363534}\n{time:04:36}04:36 - ||cfff88379AOE||r - ||cff33937fHurtsevo||r {spell:373270}\n{time:04:51}04:51 - ||cffe68e3dLava Soak||r - ||cff33937fHurtsevo||r {spell:359816}\n{time:04:57}04:57 - ||cff238e47Frontal||r - ||cff006fdcSanfa||r {spell:114049}\n{time:05:15}05:15 - ||cffdf9dc3Knock Dmg||r - ||cfffefefeEdolie||r {spell:246287}  ||cff006fdcSanfa||r {spell:108281}  ||cfff38bb9Estu||r {spell:31821}\n{time:05:32}05:32 - ||cff238e47Frontal||r - ||cfffefefeEdolie||r {spell:47536}\n{time:06:22}06:22 - ||cffdf9dc3Knock Dmg||r - ||cfff38bb9Estu||r {spell:31884}", -- [61]
+			"liquidStart\n||cffaad372Elgönndir||r ||cffa330c9Unluckyxd||r ||cffff7c0aKruelio||r ||cffc69b6dFêng||r ||cfff48cbaMiatra||r \n||cfffff468Korimadge||r ||cff8788eeSeblastian||r ||cff00ff98Fenx||r ||cffaad372Elgönndir||r ||cff33937fExtn||r\n||cffffffffMuzdanp||r ||cffffffffEdolie||r ||cff3fc7ebMorpheusmage||r ||cffff7c0aKaarun||r ||cff33937fDrakvel||r\nliquidEnd\n\n{time:00:08}00:08 - ||cfff88379AOE||r - ||cfff48cbaKritpala||r {spell:31884}\n{time:00:23}00:23 - ||cffe68e3dLava Soak||r - ||cfffefefeEdolie||r {spell:246287}  ||cff33937fHurtsevo||r {spell:359816}\n{time:00:50}00:50 - ||cfff88379AOE||r - ||cff33937fHurtsevo||r {spell:363534}  ||cff006fdcSanfa||r {spell:108281}\n{time:01:03}01:03 - ||cffe68e3dLava Soak||r - ||cfffefefeEdolie||r {spell:47536}  ||cfffefefeEdolie||r {spell:62618}\n{time:01:15}01:15 - ||cfff88379AOE||r - ||cff006fdcSanfa||r {spell:108280}\n{time:01:30}01:30 - ||cffe68e3dLava Soak||r - ||cff33937fHurtsevo||r {spell:373270}\n{time:01:57}01:57 - ||cfff88379AOE||r - ||cff006fdcSanfa||r {spell:114049}\n{time:02:10}02:10 - ||cffe68e3dLava Soak||r - ||cfffefefeEdolie||r {spell:246287}  ||cfff48cbaKritpala||r {spell:31884}  ||cfff48cbaKritpala||r {spell:31821}\n{time:02:37}02:37 - ||cffe68e3dLava Soak||r - ||cfffefefeEdolie||r {spell:47536}  ||cff33937fHurtsevo||r {spell:359816}\n{time:03:04}03:04 - ||cfff88379AOE||r - ||cff006fdcSanfa||r {spell:108281}\n{time:03:17}03:17 - ||cffe68e3dLava Soak||r - ||cff006fdcSanfa||r {spell:98008}\n{time:03:29}03:29 - ||cfff88379AOE||r - ||cfffefefeEdolie||r {spell:246287}\n{time:04:08}04:08 - ||cffdf9dc3Knock Dmg||r - ||cfffefefeEdolie||r {spell:47536}  ||cff006fdcSanfa||r {spell:108280}\n{time:04:11}04:11 - ||cfff88379AOE||r - ||cfff38bb9Estu||r {spell:31884}\n{time:04:24}04:24 - ||cffe68e3dLava Soak||r - ||cfffefefeEdolie||r {spell:62618}  ||cff33937fHurtsevo||r {spell:363534}\n{time:04:36}04:36 - ||cfff88379AOE||r - ||cff33937fHurtsevo||r {spell:373270}\n{time:04:51}04:51 - ||cffe68e3dLava Soak||r - ||cff33937fHurtsevo||r {spell:359816}\n{time:04:57}04:57 - ||cff238e47Frontal||r - ||cff006fdcSanfa||r {spell:114049}\n{time:05:15}05:15 - ||cffdf9dc3Knock Dmg||r - ||cfffefefeEdolie||r {spell:246287}  ||cff006fdcSanfa||r {spell:108281}  ||cfff48cbaKritpala||r {spell:31821}\n{time:05:32}05:32 - ||cff238e47Frontal||r - ||cfffefefeEdolie||r {spell:47536}\n{time:06:22}06:22 - ||cffdf9dc3Knock Dmg||r - ||cfff48cbaKritpala||r {spell:31884}", -- [62]
+			"#portals ||cff00ff98Antagon||r ||cfff48cbaSanatio||r ||cffa330c9Kâzuto||r ||cffc41e3aCronîx||r ||cffc69b6dShirtpants||r ||cfff48cbaMiatra||r ||cfffff468Holicx||r ||cfff48cbaEstu||r ||cffffffffLeergut||r ||cffaad372Lukîî||r  ||cff3fc7ebMorpheusmage||r ||cff3fc7ebHelimeisterb||r ||cff33937fDpxevoker||r ||cff33937fExtn||r ||cff8788eePawx||r ||cff33937fDrakvel||r ||cff33937fHurtsevo||r ||cffffffffEdolie||r ||cff0070ddSanfa||r \n\n{time:00:16}00:16 - ||cfff1c232Wall Dot 15 sec||r - ||cfff48cbaEstu||r {spell:200652}\n{time:00:23}00:23 - ||cfff1c232Dot 7/15 sec||r - ||cfffefefeEdolie||r {spell:246287}  ||cff006fdcSanfa||r {spell:114049}\n{time:00:27}00:27 - ||cffe6dbc7Tank Wall Dot||r - ||cfff48cbaEstu||r {spell:31884}\n{time:00:39}00:39 - ||cfff88379AoE 205k||r - ||cff33937fHurtsevo||r {spell:373270}\n{time:00:53}00:53 - ||cfff1c232Wall Dot 15 sec||r - ||cff006fdcSanfa||r {spell:108280}\n{time:01:16}01:16 - ||cffaa0000AoE 411k||r - ||cff33937fHurtsevo||r {spell:363534}  ||cff006fdcSanfa||r {spell:98008}  ||cffc31d39Cronîx||r {spell:51052}\n{time:01:37}01:37 - ||cfff1c232Dot 7/15 sec||r - ||cff006fdcSanfa||r {spell:108281}\n{time:01:40}01:40 - ||cffab8b00Tank Wall Dot||r - ||cfff48cbaEstu||r {spell:200652}\n{time:01:53}01:53 - ||cffe68e3dAoE 616k||r - ||cfffefefeEdolie||r {spell:62618}  ||cff33937fHurtsevo||r {spell:359816}  ||cfff38bb9Estu||r {spell:31821}  ||cffa22fc8Kâzuto||r {spell:196718}\n{time:02:30}02:30 - ||cffe68e3dAoE 821k||r - ||cfffefefeEdolie||r {spell:246287}  ||cfff48cbaEstu||r {spell:31884}  ||cffc59a6cShirtpants||r {spell:97462}\n{time:00:26,SCC:409313:1}03:12 - ||cfff1c232Tank Wall Dot||r - ||cfff48cbaEstu||r {spell:200652}\n{time:01:00,SCC:409313:1}03:46 - ||cffdf9dc3Heart||r - ||cff33937fHurtsevo||r {spell:373270}\n{time:01:03,SCC:409313:1}03:49 - ||cffaa0000AoE 2 - 275k||r - ||cff006fdcSanfa||r {spell:114049}\n{time:01:16,SCC:409313:1}04:02 - ||cffdf9dc3Heart||r - ||cff33937fHurtsevo||r {spell:359816}\n{time:01:26,SCC:409313:1}04:12 - ||cfff1c232Tank Wall Dot||r - ||cfffefefeEdolie||r {spell:246287}\n{time:01:33,SCC:409313:1}04:19 - ||cffaa0000AoE 3 - 410k||r - ||cff33937fHurtsevo||r {spell:363534}  ||cfff48cbaEstu||r {spell:31884}  ||cff006fdcSanfa||r {spell:108281}  ||cffc31d39Cronîx||r {spell:51052}\n{time:01:37,SCC:409313:1}04:23 - ||cfff1c232Dot 7/15 sec||r - ||cff006fdcSanfa||r {spell:108280}\n{time:02:04,SCC:409313:1}04:50 - ||cffaa0000AoE 4 - 531k||r - ||cfff48cbaEstu||r {spell:31821}  ||cfff48cbaEstu||r {spell:200652}  ||cffa22fc8Kâzuto||r {spell:196718}\n{time:00:59,SAR:404045:1}06:09 - ||cfff1c232DoT 10/20s||r - ||cff33937fHurtsevo||r {spell:359816}\n{time:01:06,SAR:404045:1}06:16 - ||cffc59a6cTank Hit||r - ||cfff48cbaEstu||r {spell:31884}\n{time:01:19,SAR:404045:1}06:29 - ||cfff1c232DoT 20s||r - ||cfffefefeEdolie||r {spell:246287}  ||cfff48cbaEstu||r {spell:200652}  ||cffc31d39Cronîx||r {spell:51052}\n{time:01:29,SAR:404045:1}06:39 - ||cfff1c232DoT 10/20s||r - ||cfffefefeEdolie||r {spell:62618}  ||cff33937fHurtsevo||r {spell:359816}  ||cff006fdcSanfa||r {spell:108281}\n{time:01:33,SAR:404045:1}06:43 - ||cff8811ffDoT 10s||r - ||cffc59a6cShirtpants||r {spell:97462}\n{time:01:36,SAR:404045:1}06:46 - ||cffc59a6cTank Hit||r - ||cff33937fHurtsevo||r {spell:373270}\n{time:01:49,SAR:404045:1}06:59 - ||cfff1c232DoT 20s||r - ||cff006fdcSanfa||r {spell:114049}\n\nliquidStart\n||cffaad372Lukîî||r\n||cff3fc7ebHelimeisterb||r\n||cff3fc7ebMorpheusmage||r\n||cff8788eePawx||r\n||cff33937fDrakvel||r\n||cff33937fDpxevoker||r\n||cff33937fExtn||r\n||cffffffffLeergut||r\n||cff0070ddSanfa||r\n||cffffffffEdolie||r\n||cff33937fHurtsevo||r\n||cfff48cbaEstu||r\nliquidEnd", -- [63]
+			"#portals ||cff00ff98Antagon||r ||cfff48cbaSanatio||r ||cffa330c9Kâzuto||r ||cffc41e3aCronîx||r ||cffc41e3aCadogan||r ||cffc69b6dShirtpants||r ||cfff48cbaMiatra||r ||cfffff468Holicx||r ||cfff48cbaEstu||r ||cffffffffLeergut||r ||cffaad372Lukîî||r ||cffff7c0aOewlf||r ||cff3fc7ebMorpheusmage||r ||cff33937fDpxevoker||r ||cff33937fExtn||r ||cff8788eePawx||r ||cffaad372Elgönndir||r ||cff33937fHurtsevo||r ||cffffffffEdolie||r ||cff0070ddSanfa||r \n\n{time:00:16}00:16 - ||cfff1c232Wall Dot 15 sec||r - ||cfff48cbaEstu||r {spell:200652}\n{time:00:23}00:23 - ||cfff1c232Dot 7/15 sec||r - ||cfffefefeEdolie||r {spell:246287}  ||cff006fdcSanfa||r {spell:114049}\n{time:00:27}00:27 - ||cffe6dbc7Tank Wall Dot||r - ||cfff48cbaEstu||r {spell:31884}\n{time:00:39}00:39 - ||cfff88379AoE 205k||r - ||cff33937fHurtsevo||r {spell:373270}\n{time:00:53}00:53 - ||cfff1c232Wall Dot 15 sec||r - ||cff006fdcSanfa||r {spell:108280}\n{time:01:16}01:16 - ||cffaa0000AoE 411k||r - ||cff33937fHurtsevo||r {spell:363534}  ||cff006fdcSanfa||r {spell:98008}  ||cffc31d39Cronîx||r {spell:51052}\n{time:01:37}01:37 - ||cfff1c232Dot 7/15 sec||r - ||cff006fdcSanfa||r {spell:108281}\n{time:01:40}01:40 - ||cffab8b00Tank Wall Dot||r - ||cfff48cbaEstu||r {spell:200652}\n{time:01:53}01:53 - ||cffe68e3dAoE 616k||r - ||cfffefefeEdolie||r {spell:62618}  ||cff33937fHurtsevo||r {l:108281}  ||cffc31d39Cronîx||r {spell:51052}\n{time:01:37,SCC:409313:1}04:23 - ||cfff1c232Dot 7/15 sec||r - ||cff006fdcSanfa||r {spell:108280}\n{time:02:04,SCC:409313:1}04:50 - ||cffaa0000AoE 4 - 531k||r - ||cfff48cbaEstu||r {spell:31821}  ||cfff48cbaEstu||r {spell:200652}  ||cffa22fc8Kâzuto||r {spell:196718}\n{time:00:59,SAR:404045:1}06:09 - ||cfff1c232DoT 10/20s||r - ||cff33937fHurtsevo||r {spell:359816}\n{time:01:06,SAR:404045:1}06:16 - ||cffc59a6cTank Hit||r - ||cfff48cbaEstu||r {spell:31884}\n{time:01:19,SAR:404045:1}06:29 - ||cfff1c232DoT 20s||r - ||cfffefefeEdolie||r {spell:246287}  ||cfff48cbaEstu||r {spell:200652}  ||cffc31d39Cronîx||r {spell:51052}\n{time:01:29,SAR:404045:1}06:39 - ||cfff1c232DoT 10/20s||r - ||cfffefefeEdolie||r {spell:62618}  ||cff33937fHurtsevo||r {spell:359816}  ||cff006fdcSanfa||r {spell:108281}\n{time:01:33,SAR:404045:1}06:43 - ||cff8811ffDoT 10s||r - ||cffc59a6cShirtpants||r {spell:97462}\n{time:01:36,SAR:404045:1}06:46 - ||cffc59a6cTank Hit||r - ||cff33937fHurtsevo||r {spell:373270}\n{time:01:49,SAR:404045:1}06:59 - ||cfff1c232DoT 20s||r - ||cff006fdcSanfa||r {spell:114049}\n\nliquidStart\n||cffaad372Lukîî||r\n||cffaad372Elgönndir||r \n||cff3fc7ebMorpheusmage||r\n||cff8788eePawx||r\n||cffff7c0aOewlf||r \n||cff33937fDpxevoker||r\n||cff33937fExtn||r\n||cffffffffLeergut||r\n||cff0070ddSanfa||r\n||cffffffffEdolie||r\n||cff33937fHurtsevo||r\n||cfff48cbaEstu||r\nliquidEnd", -- [64]
+			"#portals ||cff00ff98Antagon||r ||cfff48cbaSanatio||r ||cffa330c9Kâzuto||r ||cffc41e3aCronîx||r ||cffc41e3aCadogan||r ||cffc69b6dShirtpants||r ||cfff48cbaMiatra||r ||cfffff468Korimadge||r ||cff00ff98Fenx||r ||cfff48cbaEstu||r ||cffaad372Lukîî||r ||cff8788eeSeblastian||r ||cff3fc7ebHelimeisterb||r ||cff33937fExtn||r ||cff33937fDrakvel||r ||cff8788eePawx||r ||cff0070ddSanfa||r ||cffffffffEdolie||r ||cffff7c0aKruelio||r \n\n{time:00:16}00:16 - ||cfff1c232Wall Dot 15 sec||r - ||cfff38bb9Estu||r {spell:200652}\n{time:00:23}00:23 - ||cfff1c232Dot 7/15 sec||r - ||cfffefefeEdolie||r {spell:246287}  ||cff006fdcSanfa||r {spell:114049}\n{time:00:27}00:27 - ||cffe6dbc7Tank Wall Dot||r - ||cfff38bb9Estu||r {spell:31884}\n{time:00:39}00:39 - ||cfff88379AoE 205k||r - ||cff33937fHurtsevo||r {spell:373270}\n{time:00:53}00:53 - ||cfff1c232Wall Dot 15 sec||r - ||cff006fdcSanfa||r {spell:108280}\n{time:01:16}01:16 - ||cffaa0000AoE 411k||r - ||cff33937fHurtsevo||r {spell:363534}  ||cff006fdcSanfa||r {spell:98008}  ||cffc31d39Cronîx||r {spell:51052}\n{time:01:37}01:37 - ||cfff1c232Dot 7/15 sec||r - ||cff006fdcSanfa||r {spell:108281}\n{time:01:40}01:40 - ||cffab8b00Tank Wall Dot||r - ||cfff38bb9Estu||r {spell:200652}\n{time:01:53}01:53 - ||cffe68e3dAoE 616k||r - ||cfffefefeEdolie||r {spell:62618}  ||cff33937fHurtsevo||r {spell:359816}  ||cfff38bb9Estu||r {spell:31821}  ||cffa22fc8Kâzuto||r {spell:196718}\n{time:02:30}02:30 - ||cffe68e3dAoE 821k||r - ||cfffefefeEdolie||r {spell:246287}  ||cfff38bb9Estu||r {spell:31884}  ||cffc59a6cShirtpants||r {spell:97462}\n{time:00:26,SCC:409313:1}03:12 - ||cfff1c232Tank Wall Dot||r - ||cfff38bb9Estu||r {spell:200652}\n{time:01:00,SCC:409313:1}03:46 - ||cffdf9dc3Heart||r - ||cff33937fHurtsevo||r {spell:373270}\n{time:01:03,SCC:409313:1}03:49 - ||cffaa0000AoE 2 - 275k||r - ||cff006fdcSanfa||r {spell:114049}\n{time:01:16,SCC:409313:1}04:02 - ||cffdf9dc3Heart||r - ||cff33937fHurtsevo||r {spell:359816}\n{time:01:26,SCC:409313:1}04:12 - ||cfff1c232Tank Wall Dot||r - ||cfffefefeEdolie||r {spell:246287}\n{time:01:33,SCC:409313:1}04:19 - ||cffaa0000AoE 3 - 410k||r - ||cff33937fHurtsevo||r {spell:363534}  ||cfff38bb9Estu||r {spell:31884}  ||cff006fdcSanfa||r {spell:108281}  ||cffc31d39Cronîx||r {spell:51052}\n{time:01:37,SCC:409313:1}04:23 - ||cfff1c232Dot 7/15 sec||r - ||cff006fdcSanfa||r {spell:108280}\n{time:02:04,SCC:409313:1}04:50 - ||cffaa0000AoE 4 - 531k||r - ||cfff38bb9Estu||r {spell:31821}  ||cfff38bb9Estu||r {spell:200652}  ||cffa22fc8Kâzuto||r {spell:196718}\n{time:00:59,SAR:404045:1}06:09 - ||cfff1c232DoT 10/20s||r - ||cff33937fHurtsevo||r {spell:359816}\n{time:01:06,SAR:404045:1}06:16 - ||cffc59a6cTank Hit||r - ||cfff38bb9Estu||r {spell:31884}\n{time:01:19,SAR:404045:1}06:29 - ||cfff1c232DoT 20s||r - ||cfffefefeEdolie||r {spell:246287}  ||cfff38bb9Estu||r {spell:200652}  ||cffc31d39Cronîx||r {spell:51052}\n{time:01:29,SAR:404045:1}06:39 - ||cfff1c232DoT 10/20s||r - ||cfffefefeEdolie||r {spell:62618}  ||cff33937fHurtsevo||r {spell:359816}  ||cff006fdcSanfa||r {spell:108281}\n{time:01:33,SAR:404045:1}06:43 - ||cff8811ffDoT 10s||r - ||cffc59a6cShirtpants||r {spell:97462}\n{time:01:36,SAR:404045:1}06:46 - ||cffc59a6cTank Hit||r - ||cff33937fHurtsevo||r {spell:373270}\n{time:01:49,SAR:404045:1}06:59 - ||cfff1c232DoT 20s||r - ||cff006fdcSanfa||r {spell:114049}\n\nliquidStart\n||cffaad372Lukîî||r\n||cffaad372Elgönndir||r \n||cff3fc7ebMorpheusmage||r\n||cff3fc7ebHelimeisterb||r \n||cff8788eePawx||r\n||cffffffffMuzdanp||r\n||cff33937fExtn||r\n||cff33937fDpxevoker||r \n||cffff7c0aKruelio||r \n||cffffffffEdolie||r\n||cffffffffAkurian||r \nliquidEnd", -- [65]
+			"intstart\nnpc:202969 \nspell:411302 \n{skull}||cffa330c9Kâzuto||r ||cfff48cbaMiatra||r ||cffc69b6dShirtpants||r ||cfffff468Korimadge||r\n{skull}||cff33937fDrakvel||r ||cffaad372Lukîî||r ||cff3fc7ebMorpheusmage||r ||cff3fc7ebHelimeisterb||r\n{skull}Leergut ||cff33937fExtn||r ||cfff48cbaSanatio||r ||cffc41e3aCadogan||r \nnpc:202971\nspell:404754 \n{square}||cff33937fExtn||r ||cffaad372Lukîî||r\n{square}||cffa330c9Kâzuto||r ||cff3fc7ebMorpheusmage||r \n{cross}||cfffff468Korimadge||r ||cffc41e3aCronîx||r \n{cross}||cffc69b6dShirtpants||r ||cffc41e3aCadogan||r \n{moon}Leergut ||cff00ff98Antagon||r \n{moon}||cfff48cbaMiatra||r ||cff3fc7ebHelimeisterb||r\nintend\n\nliquidStart\n||cffff7c0aOewlf||r ||cffc41e3aCronîx||r\n||cff8788eeMuzdan||r ||cff8788eePawx||r \np3\n||cff3fc7ebMorpheusmage||r ||cff3fc7ebHelimeisterb||r\n||cff8788eeMuzdan||r ||cff8788eePawx||r \n||cff3fc7ebMorpheusmage||r ||cff3fc7ebHelimeisterb||r\nliquidEnd\n\n{time:00:01}00:01 - ||cff969696On Pull||r - ||cfffefefeEdolie||r {spell:246287}  ||cfffe7b09Kruelio||r {spell:197721}\n{time:00:14}00:14 - ||cfff88379aoe 8 sec||r - ||cfffe7b09Kruelio||r {spell:323764}\n{time:00:41}00:41 - ||cff7030a0Breath||r - {spell:62618}  ||cff33937fHurtsevo||r {spell:359816}  ||cff006fdcSanfa||r {spell:108280}\n{time:00:44}00:44 - ||cfff88379aoe 8 sec||r - ||cfffefefeEdolie||r {spell:47536}  ||cff33937fHurtsevo||r {spell:363534}  ||cfffe7b09Kruelio||r {spell:740}  ||cff006fdcSanfa||r {spell:114049}\n{time:01:07}01:07 - ||cfff88379aoe 8 sec||r - ||cff006fdcSanfa||r {spell:108281}\n{time:01:24}01:24 - ||cfff88379aoe 8 sec||r - ||cfffe7b09Kruelio||r {spell:323764}\n{time:01:33}01:33 - ||cffaa0000aoe 8 sec||r - ||cfffefefeEdolie||r {spell:246287}  ||cff33937fHurtsevo||r {spell:373270}  ||cff006fdcSanfa||r {spell:98008}  ||cffc59a6cShirtpants||r {spell:97462}  ||cffa22fc8Kâzuto||r {spell:196718}  ||cffc31d39Cronîx||r {spell:51052}\n{time:01:43}01:43 - ||cffe68e3dIntermission Dmg 10 sec||r - ||cfffe7b09Kruelio||r {spell:197721}\n{time:00:29,SAR:410625:1}02:37 - ||cff00ffffKnock Debuff||r - ||cfffe7b09Kruelio||r {spell:323764}\n{time:00:33,SAR:410625:1}02:41 - ||cff0072c6Knock Dispel||r - ||cfffefefeEdolie||r {spell:47536}  ||cff33937fHurtsevo||r {spell:359816}\n{time:01:02,SAR:410625:1}03:10 - ||cff00ffffKnock Debuff||r - ||cfffefefeEdolie||r {spell:246287}\n{time:01:28,SAR:410625:1}03:36 - ||cff238e47Bait Blossom||r - ||cfffe7b09Kruelio||r {spell:323764}\n{time:01:32,SAR:410625:1}03:40 - ||cff00ffffKnock Debuff||r - ||cfffe7b09Kruelio||r {spell:740}  ||cff006fdcSanfa||r {spell:108280}\n{time:01:42,SAR:410625:1}03:50 - ||cff0072c6Knock Dispel||r - ||cff33937fHurtsevo||r {spell:363534}\n{time:00:53,SAA:410654:1}04:45 - ||cff8dc63fHide||r - ||cfffefefeEdolie||r {spell:246287}\n{time:01:06,SAA:410654:1}04:58 - ||cffe68e3dHide AOE||r - ||cfffefefeEdolie||r {spell:47536}  ||cfffe7b09Kruelio||r {spell:197721}\n{time:01:09,SAA:410654:1}05:01 - ||cff00ffffKnock Debuff||r - ||cfffefefeEdolie||r {spell:62618}  ||cff006fdcSanfa||r {spell:114049}  ||cffc59a6cShirtpants||r {spell:97462}\n{time:01:17,SAA:410654:1}05:09 - ||cff238e47Big Circle||r - ||cfffe7b09Kruelio||r {spell:323764}  ||cff006fdcSanfa||r {spell:98008}  ||cffc31d39Cronîx||r {spell:51052}\n{time:01:18,SAA:410654:1}05:10 - ||cff0072c6Knock Dispel||r - ||cff33937fHurtsevo||r {spell:373270}\n{time:01:47,SAA:410654:1}05:39 - ||cfff26722Meteor Soak||r - ||cff33937fHurtsevo||r {spell:359816}\n{time:02:19,SAA:410654:1}06:11 - ||cffe68e3dHide AOE||r - ||cfffe7b09Kruelio||r {spell:740}\n{time:02:27,SAA:410654:1}06:19 - ||cfff26722Meteor Soak||r - ||cfffefefeEdolie||r {spell:246287}  ||cfffe7b09Kruelio||r {spell:323764}\n{time:02:34,SAA:410654:1}06:26 - ||cffee5555Bomb Stacks ||r - ||cff006fdcSanfa||r {spell:108280}\n{time:02:50,SAA:410654:1}06:42 - ||cff238e47Big Circle||r - ||cff33937fHurtsevo||r {spell:363534}\n{time:03:03,SAA:410654:1}06:55 - ||cff00ffffKnock Debuff||r - ||cfffefefeEdolie||r {spell:47536}\n{time:03:14,SAA:410654:1}07:06 - ||cfff26722Meteor Soak||r - ||cfffe7b09Kruelio||r {spell:197721}  ||cff006fdcSanfa||r {spell:114049}\n{time:03:22,SAA:410654:1}07:14 - ||cff8dc63fHide||r - ||cfffefefeEdolie||r {spell:246287}\n{time:03:35,SAA:410654:1}07:27 - ||cffe68e3dHide AOE||r - ||cfffe7b09Kruelio||r {spell:323764}", -- [66]
+			"intstart\nnpc:202969 \nspell:411302 \n{skull}||cffa330c9Kâzuto||r ||cfff48cbaMiatra||r ||cffc69b6dShirtpants||r ||cfffff468Korimadge||r\n{skull}||cffaad372Lukîî||r ||cff3fc7ebMorpheusmage||r ||cff3fc7ebHelimeisterb||r ||cff00ff98Fenx||r\n{skull}||cffaad372Elgönndir||r ||cff33937fExtn||r ||cfff48cbaSanatio||r ||cffc41e3aCadogan||r\nnpc:202971\nspell:404754 \n{square}||cff33937fExtn||r ||cffaad372Lukîî||r\n{square}||cffa330c9Kâzuto||r ||cff3fc7ebMorpheusmage||r\n{cross}||cfffff468Korimadge||r ||cff33937fDpxevoker||r\n{cross}||cffc41e3aCadogan||r ||cff00ff98Fenx||r\n{moon}||cffc69b6dShirtpants||r ||cff00ff98Antagon||r\n{moon}||cfff48cbaMiatra||r ||cff3fc7ebHelimeisterb||r\nintend\n\nliquidStart\n||cffaad372Elgönndir||r ||cffc41e3aCronîx||r\n||cffaad372Elgönndir||r ||cff8788eePawx||r\np3\n||cff3fc7ebMorpheusmage||r ||cff3fc7ebHelimeisterb||r\n||cffaad372Elgönndir||r ||cff8788eePawx||r\n||cff3fc7ebMorpheusmage||r ||cff3fc7ebHelimeisterb||r\nliquidEnd\n\n{time:00:01}00:01 - ||cff969696On Pull||r - ||cfffefefeEdolie||r {spell:246287}  ||cfffe7b09Kruelio||r {spell:197721}\n{time:00:14}00:14 - ||cfff88379aoe 8 sec||r - ||cfffe7b09Kruelio||r {spell:323764}\n{time:00:41}00:41 - ||cff7030a0Breath||r - {spell:62618}  ||cff33937fHurtsevo||r {spell:359816}  ||cff006fdcSanfa||r {spell:108280}\n{time:00:44}00:44 - ||cfff88379aoe 8 sec||r - ||cfffefefeEdolie||r {spell:47536}  ||cff33937fHurtsevo||r {spell:363534}  ||cfffe7b09Kruelio||r {spell:740}  ||cff006fdcSanfa||r {spell:114049}\n{time:01:07}01:07 - ||cfff88379aoe 8 sec||r - ||cff006fdcSanfa||r {spell:108281}\n{time:01:24}01:24 - ||cfff88379aoe 8 sec||r - ||cfffe7b09Kruelio||r {spell:323764}\n{time:01:33}01:33 - ||cffaa0000aoe 8 sec||r - ||cfffefefeEdolie||r {spell:246287}  ||cff33937fHurtsevo||r {spell:373270}  ||cff006fdcSanfa||r {spell:98008}  ||cffc59a6cShirtpants||r {spell:97462}  ||cffa22fc8Kâzuto||r {spell:196718}  ||cffc31d39Cronîx||r {spell:51052}\n{time:01:43}01:43 - ||cffe68e3dIntermission Dmg 10 sec||r - ||cfffe7b09Kruelio||r {spell:197721}\n{time:00:29,SAR:410625:1}02:37 - ||cff00ffffKnock Debuff||r - ||cfffe7b09Kruelio||r {spell:323764}\n{time:00:33,SAR:410625:1}02:41 - ||cff0072c6Knock Dispel||r - ||cfffefefeEdolie||r {spell:47536}  ||cff33937fHurtsevo||r {spell:359816}\n{time:01:02,SAR:410625:1}03:10 - ||cff00ffffKnock Debuff||r - ||cfffefefeEdolie||r {spell:246287}\n{time:01:28,SAR:410625:1}03:36 - ||cff238e47Bait Blossom||r - ||cfffe7b09Kruelio||r {spell:323764}\n{time:01:32,SAR:410625:1}03:40 - ||cff00ffffKnock Debuff||r - ||cfffe7b09Kruelio||r {spell:740}  ||cff006fdcSanfa||r {spell:108280}\n{time:01:42,SAR:410625:1}03:50 - ||cff0072c6Knock Dispel||r - ||cff33937fHurtsevo||r {spell:363534}\n{time:00:53,SAA:410654:1}04:45 - ||cff8dc63fHide||r - ||cfffefefeEdolie||r {spell:246287}\n{time:01:06,SAA:410654:1}04:58 - ||cffe68e3dHide AOE||r - ||cfffefefeEdolie||r {spell:47536}  ||cfffe7b09Kruelio||r {spell:197721}\n{time:01:09,SAA:410654:1}05:01 - ||cff00ffffKnock Debuff||r - ||cfffefefeEdolie||r {spell:62618}  ||cff006fdcSanfa||r {spell:114049}  ||cffc59a6cShirtpants||r {spell:97462}\n{time:01:17,SAA:410654:1}05:09 - ||cff238e47Big Circle||r - ||cfffe7b09Kruelio||r {spell:323764}  ||cff006fdcSanfa||r {spell:98008}  ||cffc31d39Cronîx||r {spell:51052}\n{time:01:18,SAA:410654:1}05:10 - ||cff0072c6Knock Dispel||r - ||cff33937fHurtsevo||r {spell:373270}\n{time:01:47,SAA:410654:1}05:39 - ||cfff26722Meteor Soak||r - ||cff33937fHurtsevo||r {spell:359816}\n{time:02:19,SAA:410654:1}06:11 - ||cffe68e3dHide AOE||r - ||cfffe7b09Kruelio||r {spell:740}\n{time:02:27,SAA:410654:1}06:19 - ||cfff26722Meteor Soak||r - ||cfffefefeEdolie||r {spell:246287}  ||cfffe7b09Kruelio||r {spell:323764}\n{time:02:34,SAA:410654:1}06:26 - ||cffee5555Bomb Stacks ||r - ||cff006fdcSanfa||r {spell:108280}\n{time:02:50,SAA:410654:1}06:42 - ||cff238e47Big Circle||r - ||cff33937fHurtsevo||r {spell:363534}\n{time:03:03,SAA:410654:1}06:55 - ||cff00ffffKnock Debuff||r - ||cfffefefeEdolie||r {spell:47536}\n{time:03:14,SAA:410654:1}07:06 - ||cfff26722Meteor Soak||r - ||cfffe7b09Kruelio||r {spell:197721}  ||cff006fdcSanfa||r {spell:114049}\n{time:03:22,SAA:410654:1}07:14 - ||cff8dc63fHide||r - ||cfffefefeEdolie||r {spell:246287}\n{time:03:35,SAA:410654:1}07:27 - ||cffe68e3dHide AOE||r - ||cfffe7b09Kruelio||r {spell:323764}", -- [67]
+			"liquidStart\n||cff3fc7ebHelimeisterb||r ||cffa330c9Unluckyxd||r ||cffa330c9Kâzuto||r ||cfff48cbaMiatra||r ||cffffffffAkurian||r \n||cfffff468Korimadge||r ||cff8788eePawx||r ||cfff48cbaEstu||r ||cffaad372Lukîî||r ||cffc69b6dFêng||r \n||cffffffffMuzdanp||r ||cffff7c0aKruelio||r ||cff3fc7ebMorpheusmage||r ||cff33937fDpxevoker||r ||cff33937fExtn||r\nliquidEnd\n\n{time:00:03}00:03 - ||cff969696On Pull||r - ||cfffe7b09Kâmeron||r {spell:197721}\n{time:00:08}00:08 - ||cfff88379AOE||r - ||cfffe7b09Kâmeron||r {spell:323764}  ||cff006fdcSanfa||r {spell:108281}\n{time:00:23}00:23 - ||cffe68e3dLava Soak||r - ||cfffefefeEdolie||r {spell:265202}  ||cfff38bb9Estu||r {spell:216331}  ||cff006fdcSanfa||r {spell:108280}\n{time:00:47}00:47 - ||cffdf9dc3Knock Dmg||r - ||cfffe7b09Kâmeron||r {spell:740}\n{time:00:50}00:50 - ||cfff88379AOE||r - ||cfffefefeEdolie||r {spell:64843}  ||cff006fdcSanfa||r {spell:114049}\n{time:01:03}01:03 - ||cffe68e3dLava Soak||r - ||cfff38bb9Estu||r {spell:216331}  ||cff006fdcSanfa||r {spell:98008}\n{time:01:15}01:15 - ||cfff88379AOE||r - ||cfffe7b09Kâmeron||r {spell:323764}\n{time:01:30}01:30 - ||cffe68e3dLava Soak||r - ||cfffe7b09Kâmeron||r {spell:197721}\n{time:01:57}01:57 - ||cfff88379AOE||r - ||cfff38bb9Estu||r {spell:216331}\n{time:02:10}02:10 - ||cffe68e3dLava Soak||r - ||cfff38bb9Estu||r {spell:31821}  ||cff006fdcSanfa||r {spell:108281}\n{time:02:22}02:22 - ||cfff88379AOE||r - ||cfffe7b09Kâmeron||r {spell:323764}\n{time:02:37}02:37 - ||cffe68e3dLava Soak||r - ||cffc59a6cShirtpants||r {spell:97462}\n{time:03:01}03:01 - ||cffdf9dc3Knock Dmg||r - ||cfffe7b09Kâmeron||r {spell:740}  ||cfff38bb9Estu||r {spell:216331}\n{time:03:04}03:04 - ||cfff88379AOE||r - ||cfffe7b09Kâmeron||r {spell:197721}\n{time:03:17}03:17 - ||cffe68e3dLava Soak||r - ||cffc31d39Cronîx||r {spell:51052}\n{time:03:29}03:29 - ||cfff88379AOE||r - ||cfffe7b09Kâmeron||r {spell:323764}  ||cff006fdcSanfa||r {spell:108280}\n{time:03:44}03:44 - ||cffe68e3dLava Soak||r - ||cfff38bb9Estu||r {spell:216331}\n{time:03:50}03:50 - ||cff238e47Frontal||r - ||cff006fdcSanfa||r {spell:114049}\n{time:04:11}04:11 - ||cfff88379AOE||r - ||cfffefefeEdolie||r {spell:265202}\n{time:04:24}04:24 - ||cffe68e3dLava Soak||r - ||cfff38bb9Estu||r {spell:216331}  ||cff006fdcSanfa||r {spell:98008}  ||cff006fdcSanfa||r {spell:108281}\n{time:04:36}04:36 - ||cfff88379AOE||r - ||cfffefefeEdolie||r {spell:64843}  ||cfffe7b09Kâmeron||r {spell:323764}\n{time:04:51}04:51 - ||cffe68e3dLava Soak||r - ||cfffe7b09Kâmeron||r {spell:197721}\n{time:05:15}05:15 - ||cffdf9dc3Knock Dmg||r - ||cfffe7b09Kâmeron||r {spell:740}  ||cfff38bb9Estu||r {spell:31821}\n{time:05:18}05:18 - ||cfff88379AOE||r - ||cfff38bb9Estu||r {spell:216331}\n{time:05:31}05:31 - ||cffe68e3dLava Soak||r - ||cfffe7b09Kâmeron||r {spell:323764}  ||cffc31d39Cronîx||r {spell:51052}", -- [68]
 		},
-		["BlackLastUpdateTime"] = {
-			nil, -- [1]
-			1672340541, -- [2]
-			1671747812, -- [3]
-			1673470410, -- [4]
-			1672341564, -- [5]
-			1672684096, -- [6]
-			1673204169, -- [7]
-			1672686596, -- [8]
-			nil, -- [9]
-			nil, -- [10]
-			1675885041, -- [11]
-			1674411685, -- [12]
-			1682530872, -- [13]
-			1682534638, -- [14]
-			1683712744, -- [15]
-			1683744773, -- [16]
-			1684093408, -- [17]
-			1684700731, -- [18]
-			[33] = 1687222968,
-			[26] = 1686590592,
-			[37] = 1687366126,
-			[28] = 1686597104,
-			[29] = 1686599048,
-			[30] = 1687107715,
-			[31] = 1687366111,
-			[32] = 1687222568,
-			[34] = 1687222968,
-			[21] = 1685381525,
-			[23] = 1685565991,
-			[35] = 1687295122,
+		["EnableWhenReceive"] = true,
+		["TimerOnlyMy"] = true,
+		["Top"] = 1212.915649414063,
+		["BlackNames"] = {
+			"Eranog Mythic", -- [1]
+			"Primal Council Mythic", -- [2]
+			"Terros Mythic", -- [3]
+			"Primal Council Mythic", -- [4]
+			"Terros*", -- [5]
+			"Terros Mythic", -- [6]
+			"Terros Mythic", -- [7]
+			"Sennarth Mythic", -- [8]
+			"Sennarth Mythic", -- [9]
+			"Primal Council Mythic", -- [10]
+			"Kurog Mythic", -- [11]
+			"Dathea Mythic", -- [12]
+			"Broodkeeper Mythic", -- [13]
+			"Raszageth", -- [14]
+			"Raszageth*", -- [15]
+			nil, -- [16]
+			"Assault*", -- [17]
+			nil, -- [18]
+			"Rashok", -- [19]
+			"Rashok", -- [20]
+			"Rashok", -- [21]
+			"Rashok", -- [22]
+			"Rashok*", -- [23]
+			"Zkarn", -- [24]
+			"Zkarn", -- [25]
+			"Zkarn*", -- [26]
+			"Zkarn", -- [27]
+			"Magmorax", -- [28]
+			"Magmorax", -- [29]
+			"Echo", -- [30]
+			"Echo", -- [31]
+			"Sarkareth", -- [32]
+			"Sarkareth", -- [33]
+			"Sarkareth", -- [34]
+			"Sarkareth*", -- [35]
+			"Sarkareth", -- [36]
+			"Echo*", -- [37]
+			"Echo", -- [38]
+			"Echo", -- [39]
+			"Sarkareth", -- [40]
+			"Sarkareth", -- [41]
+			"Sarkareth", -- [42]
+			"Sarkareth", -- [43]
+			"Sarkareth", -- [44]
+			"Sarkareth", -- [45]
+			"Sarkareth", -- [46]
+			"Sarkareth", -- [47]
+			"Sarkareth", -- [48]
+			"Sarkareth", -- [49]
+			"Sarkareth", -- [50]
+			"Sarkareth", -- [51]
+			"Sarkareth", -- [52]
+			"Sarkareth", -- [53]
+			"Sarkareth", -- [54]
+			"Sarkareth", -- [55]
+			"Zkarn", -- [56]
+			"Magmorax", -- [57]
+			nil, -- [58]
+			"Rashok", -- [59]
+			"Rashok", -- [60]
+			"Magmorax", -- [61]
+			"Magmorax", -- [62]
+			"Echo", -- [63]
+			"Echo", -- [64]
+			"Echo", -- [65]
+			"Sarkareth", -- [66]
+			"Sarkareth", -- [67]
+			"Magmorax*", -- [68]
 		},
-		["BlackLastUpdateName"] = {
-			nil, -- [1]
-			"Cronîx-Blackhand", -- [2]
-			"Cronîx-Blackhand", -- [3]
-			"Cronîx-Blackhand", -- [4]
-			"Extn-Blackhand", -- [5]
-			"Cronîx-Blackhand", -- [6]
-			"Cronîx-Blackhand", -- [7]
-			"Cronîx-Blackhand", -- [8]
-			nil, -- [9]
-			nil, -- [10]
-			"Cronîx-Blackhand", -- [11]
-			"Cronîx-Blackhand", -- [12]
-			"Cronîx-Blackhand", -- [13]
-			"Cronîx-Blackhand", -- [14]
-			"Edolie-Blackhand", -- [15]
-			"Cronîx-Blackhand", -- [16]
-			"Cronîx-Blackhand", -- [17]
-			"Cronîx-Blackhand", -- [18]
-			[33] = "Cronîx-Blackhand",
-			[26] = "Miatra-Blackhand",
-			[37] = "Cronîx",
-			[28] = "Cronîx-Blackhand",
-			[29] = "Cronîx-Blackhand",
-			[30] = "Cronîx-Blackhand",
-			[31] = "Cronîx-Blackhand",
-			[32] = "Cronîx-Blackhand",
-			[34] = "Cronîx-Blackhand",
-			[21] = "Cronîx-Blackhand",
-			[23] = "Nórdos-Blackhand",
-			[35] = "Cronîx",
-		},
-		["Height"] = 507.9999389648438,
-		["FontName"] = "Interface\\Addons\\SharedMedia_MyMedia\\font\\Cronix.ttf",
-		["TimerPassedHide"] = true,
-		["FontSize"] = 13,
+		["TimerGlowType"] = 1,
 	},
 	["ProfileKeys"] = {
 		["Cronìx-Blackhand"] = "croniXUI",
 		["Cronîx-Blackhand"] = "croniXUI",
+		["Cronixqq-Mal'Ganis"] = "default",
+		["Crônix-Blackhand"] = "default",
 	},
 	["Encounter"] = {
+		["names"] = {
+			[2512] = "Vigilant Guardian",
+			[2529] = "Halondrus the Reclaimer",
+			[2537] = "The Jailer",
+			[2539] = "Lihuvim, Principal Architect",
+			[2540] = "Dausegne, the Fallen Oracle",
+			[2542] = "Skolex, the Insatiable Ravener",
+			[2543] = "Lords of Dread",
+			[2544] = "Prototype Pantheon",
+			[2546] = "Anduin Wrynn",
+			[2549] = "Rygelon",
+			[2553] = "Artificer Xy'mox",
+			[1790] = "Rokmora",
+			[2555] = "The Lost Dwarves",
+			[2556] = "Bromach",
+			[2557] = "Sentinel Talondras",
+			[2558] = "Emberon",
+			[2559] = "Chrono-Lord Deios",
+			[1793] = "Dargrul the Underking",
+			[2562] = "Vexamus",
+			[2563] = "Overgrown Ancient",
+			[2564] = "Crawth",
+			[2565] = "Echo of Doragosa",
+			[2567] = "Gutshot",
+			[2568] = "Treemouth",
+			[2569] = "Decatriarch Wratheye",
+			[2570] = "Hackclaw's War-Band",
+			[2063] = "Aggramar",
+			[1036] = "Ascendant Lord Obsidius",
+			[2580] = "Balakar Khan",
+			[2581] = "Teera and Maruuk",
+			[2582] = "Leymor",
+			[2583] = "Telash Greywing",
+			[2584] = "Umbrelskul",
+			[2585] = "Azureblade",
+			[1806] = "Hyrja",
+			[1040] = "Rom'ogg Bonecrusher",
+			[1807] = "Fenryr",
+			[1041] = "Altairus",
+			[2590] = "The Primal Council",
+			[1042] = "Asaad",
+			[2592] = "Sennarth, The Cold Breath",
+			[1043] = "Grand Vizier Ertan",
+			[1044] = "Commander Ulthok",
+			[1045] = "Lady Naz'jar",
+			[1046] = "Mindbender Ghur'sha",
+			[1047] = "Ozumat",
+			[1303] = "Gu Cloudstrike",
+			[1048] = "Drahga Shadowburner",
+			[1304] = "Master Snowdrift",
+			[2094] = "Council o' Captains",
+			[2095] = "Ring of Booty",
+			[2607] = "Raszageth the Storm-Eater",
+			[1306] = "Taran Zhu",
+			[1051] = "General Umbriss",
+			[2610] = "Magmatusk",
+			[1052] = "General Husam",
+			[2612] = "Forgemaster Gorek",
+			[2613] = "Chargath, Bane of Scales",
+			[2614] = "Broodkeeper Diurna",
+			[2615] = "Watcher Irideus",
+			[2105] = "Coin-Operated Crowd Pummeler",
+			[1055] = "Siamat",
+			[2107] = "Rixxa Fluxfume",
+			[1056] = "Corborus",
+			[1057] = "High Priestess Azil",
+			[2111] = "Elder Leaxa",
+			[1058] = "Ozruk",
+			[1059] = "Slabhide",
+			[1060] = "\"Captain\" Cookie",
+			[2118] = "Cragmaw the Infested",
+			[1062] = "Admiral Ripsnarl",
+			[1063] = "Foe Reaper 5000",
+			[2123] = "Unbound Abomination",
+			[2635] = "Dathea, Ascended",
+			[2636] = "The Raging Tempest",
+			[2637] = "Granyth",
+			[1832] = "Amalgam of Souls",
+			[2639] = "Terros",
+			[2129] = "Gekkan",
+			[1834] = "Smashspite the Hateful",
+			[1835] = "Lord Kur'talos Ravencrest",
+			[1069] = "Baron Ashbury",
+			[1836] = "Archdruid Glaidalis",
+			[1070] = "Baron Silverlaine",
+			[1837] = "Oakheart",
+			[1071] = "Commander Springvale",
+			[1838] = "Dresaron",
+			[1072] = "Lord Godfrey",
+			[1839] = "Shade of Xavius",
+			[1073] = "Lord Walden",
+			[1075] = "Anraphet",
+			[1078] = "Rajh",
+			[1079] = "Setesh",
+			[2666] = "Chronikar",
+			[1080] = "Temple Guardian Anhuur",
+			[2668] = "Blight of Galakrond",
+			[1081] = "Vanessa VanCleef",
+			[2670] = "Tyr, the Infinite Keeper",
+			[2671] = "Morchie",
+			[2672] = "Time-Lost Battlefield",
+			[2673] = "Chrono-Lord Deios",
+			[1850] = "Inquisitor Tormentorum",
+			[2680] = "Rashok, the Elder",
+			[2682] = "Assault of the Zaqali",
+			[2683] = "Magmorax",
+			[2684] = "Echo of Neltharion",
+			[2685] = "Scalecommander Sarkareth",
+			[2687] = "The Amalgamation Chamber",
+			[2688] = "Kazzara, the Hellforged",
+			[2689] = "The Vigilant Steward, Zskarn",
+			[2693] = "The Forgotten Experiments",
+			[1868] = "Patrol Captain Gerdo",
+			[1869] = "Talixae Flamewreath",
+			[1870] = "Advisor Melandrus",
+			[2257] = "Tussle Tonks",
+			[2258] = "K.U.-J.0.",
+			[2259] = "Machinist's Garden",
+			[2260] = "King Mechagon",
+			[2290] = "King Gobbamak",
+			[2291] = "HK-8 Aerial Oppression Unit",
+			[2292] = "Gunker",
+			[1412] = "Ook-Ook",
+			[1413] = "Hoptallus",
+			[2312] = "Trixie & Naeno",
+			[1414] = "Yan-Zhu the Uncasked",
+			[1416] = "Liu Flameheart",
+			[1417] = "Lorewalker Stonestep",
+			[1418] = "Wise Mari",
+			[1677] = "Sadana Bloodfury",
+			[1679] = "Bonemaw",
+			[1426] = "Instructor Chillheart",
+			[1682] = "Ner'zhul",
+			[1427] = "Jandice Barov",
+			[1428] = "Rattlegore",
+			[1429] = "Lilian Voss",
+			[1430] = "Darkmaster Gandling",
+			[1688] = "Nhallish",
+			[2356] = "Ventunax",
+			[2357] = "Kin-Tara",
+			[2358] = "Oryphrion",
+			[2359] = "Devos, Paragon of Loyalty",
+			[2360] = "Kryxis the Voracious",
+			[2361] = "Executor Tarvold",
+			[2362] = "Grand Proctor Beryllia",
+			[2363] = "General Kaal",
+			[2364] = "Kul'tharok",
+			[2365] = "Gorechop",
+			[2366] = "Xav the Unfallen",
+			[1441] = "Xin the Weaponmaster",
+			[1442] = "Trial of the King",
+			[1954] = "Maiden of Virtue",
+			[1957] = "Opera Hall",
+			[2380] = "Echelon",
+			[2381] = "Lord Chamberlain",
+			[2382] = "Globgrog",
+			[1960] = "Attumen the Huntsman",
+			[2384] = "Doctor Ickus",
+			[2385] = "Domina Venomblade",
+			[1706] = "The Butcher",
+			[2387] = "Blightbone",
+			[2388] = "Amarth, The Harvester",
+			[2389] = "Surgeon Stitchflesh",
+			[2390] = "Nalthor the Rimebinder",
+			[1964] = "The Curator",
+			[2392] = "Mistcaller",
+			[2393] = "Tred'ova",
+			[2394] = "The Manastorms",
+			[2395] = "Hakkar, the Soulflayer",
+			[2396] = "Mueh'zala",
+			[2397] = "Ingra Maloch",
+			[2398] = "Shriekwing",
+			[2399] = "Sludgefist",
+			[2400] = "Dealer Xy'exa",
+			[2401] = "Halkias, the Sin-Stained Goliath",
+			[2402] = "Sun King's Salvation",
+			[2403] = "High Adjudicator Aleez",
+			[2404] = "Mordretha",
+			[2405] = "Artificer Xy'mox",
+			[2406] = "Lady Inerva Darkvein",
+			[2407] = "Sire Denathrius",
+			[2412] = "The Council of Blood",
+			[1720] = "Brackenspore",
+			[1721] = "Kargath Bladefist",
+			[2417] = "Stone Legion Generals",
+			[1722] = "Tectus, The Living Mountain",
+			[2419] = "Timecap'n Hooktail",
+			[1723] = "Ko'ragh",
+			[2422] = "Kel'Thuzad",
+			[2423] = "The Tarragrue",
+			[2424] = "Mailroom Mayhem",
+			[2425] = "Zo'phex the Sentinel",
+			[2426] = "Hylbrande",
+			[2429] = "The Nine",
+			[2430] = "Painsmith Raznal",
+			[2431] = "Fatescribe Roh-Kalo",
+			[2432] = "Remnant of Ner'zhul",
+			[2433] = "The Eye of the Jailer",
+			[2434] = "Soulrender Dormazain",
+			[2435] = "Sylvanas Windrunner",
+			[2436] = "Guardian of the First Ones",
+			[2437] = "So'azmi",
+			[1732] = "Nitrogg Thundertower",
+			[2440] = "Myza's Oasis",
+			[2441] = "The Grand Menagerie",
+			[2442] = "So'leah",
+			[1736] = "Skylord Tovra",
+			[1791] = "Ularogg Cragshaper",
+			[1719] = "Twin Ogron",
+			[1715] = "Rocketspark and Borka",
+			[1965] = "Shade of Medivh",
+			[2391] = "An Affront of Challengers",
+			[2386] = "Stradama Margrave",
+			[1833] = "Ilysanna Ravencrest",
+			[2418] = "Huntsman Altimor",
+			[2383] = "Hungering Destroyer",
+			[1065] = "Helix Gearbreaker",
+			[1748] = "Grimrail Enforcers",
+			[1705] = "Imperator Mar'gok",
+			[1749] = "Fleshrender Nok'gar",
+			[1064] = "Glubtok",
+			[1750] = "Oshir",
+			[1959] = "Mana Devourer",
+			[1961] = "Moroes",
+			[2093] = "Skycap'n Kragg",
+			[2112] = "Sporecaller Zancha",
+			[2623] = "Kyrakka and Erkhart Stormvein",
+			[2108] = "Mogul Razdunk",
+			[2618] = "Primal Tsunami",
+			[1754] = "Skulloc, Son of Gruul",
+			[1792] = "Naraxas",
+			[2617] = "Khajin the Unyielding",
+			[2616] = "Gulping Goliath",
+			[2609] = "Melidrussa Chillworn",
+			[1818] = "Cordana Felsong",
+			[2096] = "Lord Harlan Sweete",
+			[2605] = "Kurog Grimtotem",
+			[1816] = "Ash'Golm",
+			[2106] = "Azerokk",
+			[2611] = "Warlord Sargha",
+			[1050] = "Forgemaster Throngus",
+			[1054] = "Lockmaw",
+			[1053] = "High Prophet Barim",
+			[2606] = "Kokia Blazehoof",
+			[2017] = "Viz'aduum the Watcher",
+			[1815] = "Tirathon Saltheril",
+			[1049] = "Erudax",
+			[1809] = "Odyn",
+			[1817] = "Glazer",
+			[1808] = "God-King Skovald",
+			[2587] = "Eranog",
+			[1039] = "Karsh Steelbender",
+			[1805] = "Hymdall",
+			[1038] = "Corla, Herald of Twilight",
+			[1439] = "Sha of Doubt",
+			[2667] = "Manifested Timeways",
+			[1037] = "Beauty",
+			[2669] = "Iridikron",
+			[1305] = "Sha of Violence",
+		},
 		["list"] = {
 			["Cronìx"] = {
 				"^2397^8^1646772643^182^1^5^253.68^", -- [1]
@@ -874,6 +1232,42 @@ local MRTDump = {
 				"^1791^8^1687288334^137^1^5^435.95^", -- [692]
 				"^1792^8^1687288646^98^1^5^435.95^", -- [693]
 				"^1793^8^1687288975^135^1^5^435.95^", -- [694]
+				"^2111^8^1687805599^96^1^5^440.30^", -- [695]
+				"^2112^8^1687805990^147^1^5^440.30^", -- [696]
+				"^2118^8^1687806168^137^1^5^440.30^", -- [697]
+				"^2123^8^1687806513^173^1^5^440.30^", -- [698]
+				"^2093^8^1689019181^153^1^5^434.16^", -- [699]
+				"^2094^8^1689019519^297^1^5^434.16^Elillidano", -- [700]
+				"^2095^8^1689020297^258^1^5^434.16^Elillidano", -- [701]
+				"^2096^8^1689020733^238^1^5^434.16^Elillidano", -- [702]
+				"^2111^8^1689377954^62^1^5^441.61^", -- [703]
+				"^2118^8^1689378373^90^1^5^441.61^", -- [704]
+				"^2112^8^1689378596^89^1^5^441.61^", -- [705]
+				"^2123^8^1689378959^128^1^5^441.61^", -- [706]
+				"^2666^23^1689448950^97^1^5^436.95^", -- [707]
+				"^2667^23^1689449265^156^0^5^436.95^Extn", -- [708]
+				"^2667^23^1689449474^106^0^5^436.95^Tÿri", -- [709]
+				"^2667^23^1689449639^127^0^5^436.95^Extn", -- [710]
+				"^2667^23^1689449873^141^1^5^436.95^Tÿri", -- [711]
+				"^2668^23^1689450263^151^1^5^436.95^", -- [712]
+				"^2669^23^1689450725^145^1^5^436.95^", -- [713]
+				"^2670^23^1689451190^133^1^5^437.35^Nyøka", -- [714]
+				"^2672^23^1689451912^120^1^5^437.35^", -- [715]
+				"^2671^23^1689452262^343^1^5^437.35^Tÿri", -- [716]
+				"^2673^23^1689453134^270^0^5^437.35^Muzdan", -- [717]
+				"^2673^23^1689453501^338^1^5^437.35^Tÿri", -- [718]
+				"^2570^8^1689709958^97^1^5^441.57^", -- [719]
+				"^2568^8^1689710431^99^1^5^441.57^", -- [720]
+				"^2567^8^1689710661^92^1^5^441.57^Helimeisterb", -- [721]
+				"^2569^8^1689711142^130^1^5^441.57^", -- [722]
+				"^2111^8^1689712415^63^1^5^440.90^Extn", -- [723]
+				"^2118^8^1689712855^78^1^5^440.90^", -- [724]
+				"^2112^8^1689712958^95^1^5^440.90^", -- [725]
+				"^2123^8^1689713263^133^1^5^440.90^", -- [726]
+				"^2615^8^1689714589^146^1^5^442.52^", -- [727]
+				"^2616^8^1689715118^97^1^5^442.52^", -- [728]
+				"^2617^8^1689715444^118^1^5^442.52^Drakjävél-Kazzak", -- [729]
+				"^2618^8^1689715836^163^1^5^442.52^", -- [730]
 			},
 			["Crônix"] = {
 				"^1868^8^1673983514^72^1^5^389.96^", -- [1]
@@ -9166,270 +9560,1114 @@ local MRTDump = {
 				"^2684^16^1687380258^89^0^20^443.18^Leergut", -- [8222]
 				"^2684^16^1687380427^305^0^20^443.18^Drakvel", -- [8223]
 				"^2684^16^1687380806^446^0^20^443.18^Kâzuto", -- [8224]
+				"^2111^8^1687459806^110^1^5^441.23^", -- [8225]
+				"^2118^8^1687460413^186^1^5^441.23^", -- [8226]
+				"^2112^8^1687460624^179^1^5^441.23^", -- [8227]
+				"^2123^8^1687461047^176^1^5^441.23^", -- [8228]
+				"^1043^8^1687462103^193^1^5^441.23^Extn", -- [8229]
+				"^1041^8^1687462667^170^1^5^441.23^Muzdan", -- [8230]
+				"^1042^8^1687463139^197^1^5^441.23^", -- [8231]
+				"^2570^8^1687464268^189^1^5^441.23^Muzdan", -- [8232]
+				"^2568^8^1687464894^170^1^5^441.23^", -- [8233]
+				"^2567^8^1687465195^158^1^5^441.23^", -- [8234]
+				"^2569^8^1687465637^159^0^5^441.23^Miatra", -- [8235]
+				"^2569^8^1687465948^227^1^5^441.23^Dwagonuwu", -- [8236]
+				"^2093^8^1687466815^133^1^5^441.23^", -- [8237]
+				"^2094^8^1687467136^219^1^5^441.23^Extn", -- [8238]
+				"^2096^8^1687467548^278^1^5^441.23^Miatra", -- [8239]
+				"^2095^8^1687468109^151^1^5^441.23^Dwagonuwu", -- [8240]
+				"^2688^15^1687713480^8^0^19^443.30^", -- [8241]
+				"^2688^15^1687713899^110^1^24^443.31^", -- [8242]
+				"^2684^15^1687714196^0^0^25^443.28^", -- [8243]
+				"^2684^15^1687714270^215^1^25^443.28^", -- [8244]
+				"^2685^15^1687714682^314^1^25^443.28^Cadogan", -- [8245]
+				"^2684^16^1687715781^1^0^20^443.24^", -- [8246]
+				"^2684^16^1687716034^284^0^20^443.24^Sanfa", -- [8247]
+				"^2684^16^1687716395^0^0^20^443.24^", -- [8248]
+				"^2684^16^1687716618^45^0^20^443.24^Noañgel", -- [8249]
+				"^2684^16^1687716735^258^0^20^443.24^Muzdan", -- [8250]
+				"^2684^16^1687717075^44^0^20^443.24^Muzdan", -- [8251]
+				"^2684^16^1687717202^256^0^20^443.24^Muzdan", -- [8252]
+				"^2684^16^1687717550^416^0^20^443.24^Muzdan", -- [8253]
+				"^2684^16^1687718073^436^0^20^443.24^Drakvel", -- [8254]
+				"^2684^16^1687718612^456^0^20^443.24^Helimeisterb", -- [8255]
+				"^2684^16^1687719167^308^0^20^443.24^Lukîî", -- [8256]
+				"^2684^16^1687719570^455^0^20^443.24^Muzdan", -- [8257]
+				"^2684^16^1687720170^463^0^20^443.24^Níce", -- [8258]
+				"^2684^16^1687721389^82^0^20^443.24^Muzdan", -- [8259]
+				"^2684^16^1687721555^273^0^20^443.24^Morpheusmage", -- [8260]
+				"^2684^16^1687721895^432^0^20^443.24^Morpheusmage", -- [8261]
+				"^2684^16^1687722512^78^0^20^443.24^Cadogan", -- [8262]
+				"^2684^16^1687722738^116^0^20^443.24^Edolie", -- [8263]
+				"^2684^16^1687722947^303^0^20^443.24^Sanfa", -- [8264]
+				"^2684^16^1687723408^305^0^20^443.24^Muzdan", -- [8265]
+				"^2684^16^1687723814^81^0^20^443.24^Sanatio", -- [8266]
+				"^2684^16^1687723964^46^0^20^443.24^Leergut", -- [8267]
+				"^2684^16^1687724080^454^0^20^443.24^Noañgel", -- [8268]
+				"^2684^16^1687724671^243^0^20^443.24^Muzdan", -- [8269]
+				"^2684^16^1687724997^99^0^20^443.24^Shirtpants", -- [8270]
+				"^2684^16^1687725185^464^0^20^443.24^Kâzuto", -- [8271]
+				"^2684^16^1687725733^136^0^20^443.24^Morpheusmage", -- [8272]
+				"^2684^16^1687725955^312^0^20^443.24^Kâzuto", -- [8273]
+				"^2684^16^1687726349^383^0^20^443.24^Sanatio", -- [8274]
+				"^2111^8^1687798154^80^1^5^440.05^", -- [8275]
+				"^2112^8^1687798552^153^1^5^440.05^", -- [8276]
+				"^2118^8^1687798738^150^1^5^440.05^", -- [8277]
+				"^2123^8^1687799109^187^1^5^440.05^Adalee-TwistingNether", -- [8278]
+				"^2111^8^1687799821^100^1^5^442.82^", -- [8279]
+				"^2112^8^1687800249^164^1^5^442.82^", -- [8280]
+				"^2118^8^1687800440^163^1^5^442.82^Miatra", -- [8281]
+				"^2123^8^1687800832^171^1^5^442.82^", -- [8282]
+				"^2111^8^1687801557^80^1^5^442.48^", -- [8283]
+				"^2112^8^1687801931^135^1^5^442.48^", -- [8284]
+				"^2118^8^1687802174^166^1^5^442.48^Nènad-Haomarush", -- [8285]
+				"^2123^8^1687802480^220^1^5^442.48^Edolie", -- [8286]
+				"^2111^8^1687803465^91^1^5^440.90^", -- [8287]
+				"^2112^8^1687803909^175^1^5^440.90^", -- [8288]
+				"^2118^8^1687804111^147^1^5^440.90^", -- [8289]
+				"^2123^8^1687804493^192^1^5^440.90^Tÿri", -- [8290]
+				"^2684^16^1687973473^0^0^20^443.50^", -- [8291]
+				"^2684^16^1687973630^135^0^20^443.50^Sanfa", -- [8292]
+				"^2684^16^1687973869^335^0^20^443.50^Muzdan", -- [8293]
+				"^2684^16^1687974296^425^1^20^443.50^Estu", -- [8294]
+				"^2685^16^1687977324^117^0^20^443.54^Extn", -- [8295]
+				"^2685^16^1687977602^130^0^20^443.54^Drakvel", -- [8296]
+				"^2685^16^1687977820^130^0^20^443.54^Morpheusmage", -- [8297]
+				"^2685^16^1687978162^68^0^20^443.54^Helimeisterb", -- [8298]
+				"^2685^16^1687978406^151^0^20^443.54^Drakvel", -- [8299]
+				"^2685^16^1687978673^80^0^20^443.54^Helimeisterb", -- [8300]
+				"^2685^16^1687978889^128^0^20^443.54^Níce", -- [8301]
+				"^2685^16^1687979124^130^0^20^443.54^Drakvel", -- [8302]
+				"^2685^16^1687980174^150^0^20^443.54^Teesticle", -- [8303]
+				"^2685^16^1687980648^91^0^20^443.54^Noañgel", -- [8304]
+				"^2685^16^1687980848^162^0^20^443.54^Extn", -- [8305]
+				"^2685^16^1687981228^140^0^20^443.54^Extn", -- [8306]
+				"^2685^16^1687981498^152^0^20^443.54^Drakvel", -- [8307]
+				"^2685^16^1687981756^116^0^20^443.54^Cronîx", -- [8308]
+				"^2685^16^1687982027^42^0^20^443.54^Drakvel", -- [8309]
+				"^2685^16^1687982143^157^0^20^443.54^Estu", -- [8310]
+				"^2685^16^1687982414^151^0^20^443.54^Cadogan", -- [8311]
+				"^2685^16^1687982689^161^0^20^443.54^Sanfa", -- [8312]
+				"^2685^16^1687982948^151^0^20^443.54^Extn", -- [8313]
+				"^2685^16^1687983176^216^0^20^443.54^Cadogan", -- [8314]
+				"^2685^16^1687983600^204^0^20^443.54^Teesticle", -- [8315]
+				"^2685^16^1687983954^195^0^20^443.54^Drakvel", -- [8316]
+				"^2685^16^1687984309^225^0^20^443.54^Teesticle", -- [8317]
+				"^2685^16^1687984646^155^0^20^443.54^Edolie", -- [8318]
+				"^2685^16^1687984904^213^0^20^443.54^Teesticle", -- [8319]
+				"^2685^16^1687985243^163^0^20^443.54^Teesticle", -- [8320]
+				"^2685^16^1687985547^242^0^20^443.54^Morpheusmage", -- [8321]
+				"^2685^16^1687985914^236^0^20^443.54^Drakvel", -- [8322]
+				"^2093^8^1688062422^112^1^5^442.40^", -- [8323]
+				"^2094^8^1688062942^173^1^5^442.40^Dpxdru", -- [8324]
+				"^2095^8^1688063443^117^1^5^442.40^", -- [8325]
+				"^2096^8^1688063726^141^1^5^442.40^Elgönndir", -- [8326]
+				"^2610^8^1688064542^139^1^5^442.25^Dwagondolie", -- [8327]
+				"^2613^8^1688064986^114^1^5^442.25^", -- [8328]
+				"^2612^8^1688065738^139^1^5^442.25^", -- [8329]
+				"^2611^8^1688066232^121^1^5^442.25^Extn", -- [8330]
+				"^1790^8^1688067906^115^1^5^442.64^", -- [8331]
+				"^1791^8^1688068369^141^1^5^442.64^", -- [8332]
+				"^1792^8^1688068623^124^1^5^442.64^", -- [8333]
+				"^1793^8^1688068968^165^1^5^442.64^Elgönndir", -- [8334]
+				"^2111^8^1688069912^104^1^5^442.64^", -- [8335]
+				"^2118^8^1688070342^145^1^5^442.64^", -- [8336]
+				"^2112^8^1688070629^155^1^5^442.64^Extn", -- [8337]
+				"^2123^8^1688071157^169^1^5^442.64^", -- [8338]
+				"^2688^15^1688318561^11^0^21^443.99^", -- [8339]
+				"^2688^15^1688318865^111^1^23^443.85^", -- [8340]
+				"^2684^15^1688319180^0^0^23^443.85^", -- [8341]
+				"^2684^15^1688319249^223^1^23^443.85^Elgönndir", -- [8342]
+				"^2685^15^1688319679^271^1^23^443.85^Leergut", -- [8343]
+				"^2685^16^1688320825^131^0^20^443.72^Nórdos", -- [8344]
+				"^2685^16^1688321098^129^0^20^443.72^Muzdan", -- [8345]
+				"^2685^16^1688321320^153^0^20^443.72^Nórdos", -- [8346]
+				"^2685^16^1688321561^173^0^20^443.72^Muzdan", -- [8347]
+				"^2685^16^1688321880^148^0^20^443.72^Helimeisterb", -- [8348]
+				"^2685^16^1688322159^76^0^20^443.72^Nórdos", -- [8349]
+				"^2685^16^1688322343^75^0^20^443.72^Cronîx", -- [8350]
+				"^2685^16^1688322507^166^0^20^443.72^Pawx", -- [8351]
+				"^2685^16^1688322773^36^0^20^443.72^Muzdan", -- [8352]
+				"^2685^16^1688322897^165^0^20^443.72^Nórdos", -- [8353]
+				"^2685^16^1688323173^156^0^20^443.72^Morpheusmage", -- [8354]
+				"^2685^16^1688323415^185^0^20^443.72^Edolie", -- [8355]
+				"^2685^16^1688323698^213^0^20^443.72^Drakvel", -- [8356]
+				"^2685^16^1688324235^217^0^20^443.72^Cadogan", -- [8357]
+				"^2685^16^1688325190^54^0^20^443.72^Pawx", -- [8358]
+				"^2685^16^1688325334^88^0^20^443.72^Nórdos", -- [8359]
+				"^2685^16^1688325533^219^0^20^443.72^Holicx", -- [8360]
+				"^2685^16^1688325877^217^0^20^443.72^Muzdan", -- [8361]
+				"^2685^16^1688326240^224^0^20^443.72^Lukîî", -- [8362]
+				"^2685^16^1688326610^77^0^20^443.72^Cadogan", -- [8363]
+				"^2685^16^1688326780^155^0^20^443.72^Kâzuto", -- [8364]
+				"^2685^16^1688327064^231^0^20^443.72^Extn", -- [8365]
+				"^2685^16^1688327491^189^0^20^443.72^Estu", -- [8366]
+				"^2685^16^1688327790^69^0^20^443.72^Nórdos", -- [8367]
+				"^2685^16^1688327936^194^0^20^443.72^Extn", -- [8368]
+				"^2685^16^1688328204^155^0^20^443.72^Nórdos", -- [8369]
+				"^2685^16^1688328473^130^0^20^443.72^Edolie", -- [8370]
+				"^2685^16^1688328690^235^0^20^443.72^Extn", -- [8371]
+				"^2685^16^1688329033^213^0^20^443.72^Holicx", -- [8372]
+				"^2685^16^1688329358^207^0^20^443.72^Muzdan", -- [8373]
+				"^2685^16^1688329667^246^0^20^443.72^Sanfa", -- [8374]
+				"^2685^16^1688330042^213^0^20^443.72^Teesticle", -- [8375]
+				"^2685^16^1688330358^228^0^20^443.72^Nórdos", -- [8376]
+				"^2685^16^1688330617^13^0^20^443.72^Nórdos", -- [8377]
+				"^2685^16^1688330892^247^0^20^443.74^Extn", -- [8378]
+				"^2685^16^1688331259^75^0^20^443.74^Extn", -- [8379]
+				"^2685^16^1688331433^214^0^20^443.74^Extn", -- [8380]
+				"^2093^8^1688404203^97^1^5^443.29^", -- [8381]
+				"^2094^8^1688404521^148^1^5^443.29^Extn", -- [8382]
+				"^2095^8^1688405153^116^1^5^443.29^", -- [8383]
+				"^2096^8^1688405471^137^1^5^443.29^Dwagondolie", -- [8384]
+				"^1043^8^1688406516^134^1^5^443.54^", -- [8385]
+				"^1041^8^1688407096^163^1^5^443.54^", -- [8386]
+				"^1042^8^1688407787^198^1^5^443.54^Extn", -- [8387]
+				"^1790^8^1688409254^109^1^5^443.06^", -- [8388]
+				"^1791^8^1688409733^132^1^5^443.06^", -- [8389]
+				"^1792^8^1688410129^115^1^5^443.06^", -- [8390]
+				"^1793^8^1688410437^152^1^5^443.06^Miatra", -- [8391]
+				"^2093^8^1688411260^103^1^5^443.06^Extn", -- [8392]
+				"^2094^8^1688411554^215^1^5^443.06^Miatra", -- [8393]
+				"^2095^8^1688412312^108^1^5^443.06^", -- [8394]
+				"^2096^8^1688412542^156^1^5^443.06^", -- [8395]
+				"^2685^16^1688578221^11^0^20^440.82^Helimeisterb", -- [8396]
+				"^2685^16^1688578780^72^0^20^441.06^Drakvel", -- [8397]
+				"^2685^16^1688578923^224^0^20^441.06^Cadogan", -- [8398]
+				"^2685^16^1688579281^194^0^20^441.06^Sanfa", -- [8399]
+				"^2685^16^1688579531^1^0^20^441.06^Drakvel", -- [8400]
+				"^2685^16^1688579605^227^0^20^441.06^Antagon", -- [8401]
+				"^2685^16^1688579948^59^0^20^441.06^Extn", -- [8402]
+				"^2685^16^1688580083^154^0^20^441.06^Pawx", -- [8403]
+				"^2685^16^1688580290^14^0^20^441.06^Lukîî", -- [8404]
+				"^2685^16^1688580375^154^0^20^441.06^Edolie", -- [8405]
+				"^2685^16^1688580626^235^0^20^441.06^Edolie", -- [8406]
+				"^2685^16^1688581048^247^0^20^441.06^Sanatio", -- [8407]
+				"^2685^16^1688581442^237^0^20^441.06^Helimeisterb", -- [8408]
+				"^2685^16^1688581793^233^0^20^441.06^Drakvel", -- [8409]
+				"^2685^16^1688582222^137^0^20^441.06^Teesticle", -- [8410]
+				"^2685^16^1688582467^237^0^20^441.06^Teesticle", -- [8411]
+				"^2685^16^1688582812^256^0^20^441.06^Muzdan", -- [8412]
+				"^2685^16^1688583455^229^0^20^441.06^Holicx", -- [8413]
+				"^2685^16^1688584517^275^0^20^441.06^Cadogan", -- [8414]
+				"^2685^16^1688584890^204^0^20^441.06^Lukîî", -- [8415]
+				"^2685^16^1688585191^226^0^20^441.06^Drakvel", -- [8416]
+				"^2685^16^1688585507^266^0^20^441.06^Lukîî", -- [8417]
+				"^2685^16^1688585925^210^0^20^441.06^Níce", -- [8418]
+				"^2685^16^1688586238^301^0^20^441.06^Kâzuto", -- [8419]
+				"^2685^16^1688586570^13^0^20^441.06^Holicx", -- [8420]
+				"^2685^16^1688586761^149^0^20^441.06^Kâzuto", -- [8421]
+				"^2685^16^1688587004^153^0^20^441.06^Extn", -- [8422]
+				"^2685^16^1688587274^72^0^20^441.06^Muzdan", -- [8423]
+				"^2685^16^1688587422^244^0^20^441.06^Noañgel", -- [8424]
+				"^2685^16^1688587868^245^0^20^441.06^Helimeisterb", -- [8425]
+				"^2685^16^1688588283^276^0^20^441.06^Sanatio", -- [8426]
+				"^2685^16^1688588645^77^0^20^441.06^Edolie", -- [8427]
+				"^2685^16^1688588815^187^0^20^441.06^Edolie", -- [8428]
+				"^2685^16^1688589092^66^0^20^441.06^Teesticle", -- [8429]
+				"^2685^16^1688589234^76^0^20^441.06^Estu", -- [8430]
+				"^2685^16^1688589400^223^0^20^441.06^Drakvel", -- [8431]
+				"^2685^16^1688589963^286^0^20^441.06^Noañgel", -- [8432]
+				"^2685^16^1688590519^323^0^20^441.06^Helimeisterb", -- [8433]
+				"^1790^8^1688763225^133^1^5^442.69^", -- [8434]
+				"^1791^8^1688763646^204^1^5^442.69^", -- [8435]
+				"^1792^8^1688763957^153^1^5^442.69^Gungñir", -- [8436]
+				"^1793^8^1688764280^210^1^5^442.69^Helimeisterb", -- [8437]
+				"^2093^8^1688764947^124^1^5^441.69^Cytix-TwistingNether", -- [8438]
+				"^2094^8^1688765355^15^0^5^441.69^", -- [8439]
+				"^2094^8^1688765443^179^1^5^441.69^Cytix-TwistingNether", -- [8440]
+				"^2095^8^1688765917^142^1^5^441.69^Cytix-TwistingNether", -- [8441]
+				"^2096^8^1688766162^194^1^5^441.69^", -- [8442]
+				"^2570^8^1688767146^171^1^5^441.69^Cytix-TwistingNether", -- [8443]
+				"^2568^8^1688767677^188^1^5^441.69^", -- [8444]
+				"^2567^8^1688767960^147^1^5^441.69^Cytix-TwistingNether", -- [8445]
+				"^2569^8^1688768353^201^1^5^441.69^", -- [8446]
+				"^2111^8^1688769285^92^1^5^443.00^", -- [8447]
+				"^2112^8^1688769702^180^1^5^443.00^Helimeisterb", -- [8448]
+				"^2118^8^1688769913^183^1^5^443.00^Polleviable-Kazzak", -- [8449]
+				"^2123^8^1688770344^212^1^5^443.00^", -- [8450]
+				"^2685^16^1688924229^126^0^20^444.17^Sanfa", -- [8451]
+				"^2685^16^1688924435^163^0^20^444.17^Teesticle", -- [8452]
+				"^2685^16^1688924679^187^0^20^444.17^Extn", -- [8453]
+				"^2685^16^1688924951^161^0^20^444.17^Drakvel", -- [8454]
+				"^2685^16^1688925208^219^0^20^444.17^Edolie", -- [8455]
+				"^2685^16^1688925625^156^0^20^444.17^Helimeisterb", -- [8456]
+				"^2685^16^1688925864^112^0^20^444.17^Estu", -- [8457]
+				"^2685^16^1688926062^193^0^20^444.17^Lukîî", -- [8458]
+				"^2685^16^1688926349^69^0^20^444.17^Morpheusmage", -- [8459]
+				"^2685^16^1688926539^166^0^20^444.17^Helimeisterb", -- [8460]
+				"^2685^16^1688926793^253^0^20^444.17^Noañgel", -- [8461]
+				"^2685^16^1688927216^70^0^20^444.17^Muzdan", -- [8462]
+				"^2685^16^1688927361^250^0^20^444.17^Helimeisterb", -- [8463]
+				"^2685^16^1688927763^190^0^20^444.17^Kâzuto", -- [8464]
+				"^2685^16^1688928098^93^0^20^444.17^Drakvel", -- [8465]
+				"^2685^16^1688928272^237^0^20^444.17^Sanatio", -- [8466]
+				"^2685^16^1688928642^145^0^20^444.17^Helimeisterb", -- [8467]
+				"^2685^16^1688928880^235^0^20^444.17^Edolie", -- [8468]
+				"^2685^16^1688929842^247^0^20^444.17^Teesticle", -- [8469]
+				"^2685^16^1688930184^66^0^20^444.17^Helimeisterb", -- [8470]
+				"^2685^16^1688930316^293^0^20^444.17^Edolie", -- [8471]
+				"^2685^16^1688930812^108^0^20^444.17^Helimeisterb", -- [8472]
+				"^2685^16^1688931154^223^0^20^444.17^Teesticle", -- [8473]
+				"^2685^16^1688931464^96^0^20^444.11^Morpheusmage", -- [8474]
+				"^2685^16^1688931647^283^0^20^444.11^Noañgel", -- [8475]
+				"^2685^16^1688932077^323^0^20^444.11^Lukîî", -- [8476]
+				"^2685^16^1688932542^250^0^20^444.11^Cronîx", -- [8477]
+				"^2685^16^1688932868^27^0^20^444.11^Extn", -- [8478]
+				"^2685^16^1688933045^224^0^20^444.11^Drakvel", -- [8479]
+				"^2685^16^1688933366^191^0^20^444.11^Drakvel", -- [8480]
+				"^2685^16^1688933673^308^0^20^444.09^Morpheusmage", -- [8481]
+				"^2685^16^1688934086^291^0^20^444.11^Teesticle", -- [8482]
+				"^2685^16^1688934539^319^0^20^444.11^Muzdan", -- [8483]
+				"^2685^16^1688934953^57^0^20^444.11^Teesticle", -- [8484]
+				"^2685^16^1688935120^72^0^20^444.11^Drakvel", -- [8485]
+				"^2685^16^1688935270^331^0^20^444.11^Noañgel", -- [8486]
+				"^2685^16^1688935747^221^0^20^444.11^Morpheusmage", -- [8487]
+				"^2685^16^1688936051^130^0^20^444.11^", -- [8488]
+				"^2685^16^1688936281^261^0^20^444.11^Shirtpants", -- [8489]
+				"^2688^15^1689182849^0^0^18^444.89^", -- [8490]
+				"^2688^15^1689183259^115^1^21^444.88^Elgönndir", -- [8491]
+				"^2682^15^1689183706^8^0^21^444.88^", -- [8492]
+				"^2682^15^1689183761^44^1^21^444.88^", -- [8493]
+				"^2680^15^1689183871^1^0^21^444.88^Lukîî", -- [8494]
+				"^2680^15^1689183993^161^1^21^444.88^Drakvel", -- [8495]
+				"^2687^15^1689184376^146^1^21^444.88^Modoreddo", -- [8496]
+				"^2693^15^1689184707^6^0^21^444.88^Lukîî", -- [8497]
+				"^2693^15^1689184775^154^1^21^444.88^Muzdan", -- [8498]
+				"^2689^15^1689185038^0^0^21^444.88^", -- [8499]
+				"^2689^15^1689185098^130^1^21^444.88^Estu", -- [8500]
+				"^2683^15^1689185433^0^0^21^444.88^", -- [8501]
+				"^2683^15^1689185464^144^1^21^444.88^", -- [8502]
+				"^2684^15^1689185782^0^0^21^444.88^", -- [8503]
+				"^2684^15^1689185854^235^1^21^444.88^Cronîx", -- [8504]
+				"^2685^15^1689186363^305^1^21^444.76^Pawx", -- [8505]
+				"^2685^16^1689188229^164^0^20^444.66^Elgönndir", -- [8506]
+				"^2685^16^1689188495^116^0^20^444.66^Pawx", -- [8507]
+				"^2685^16^1689188797^130^0^20^444.66^Khaleesisham", -- [8508]
+				"^2685^16^1689189037^59^0^20^444.66^Kruelio", -- [8509]
+				"^2685^16^1689189199^225^0^20^444.66^Morpheusmage", -- [8510]
+				"^2685^16^1689189528^147^0^20^444.66^Antagon", -- [8511]
+				"^2685^16^1689189774^149^0^20^444.66^Kruelio", -- [8512]
+				"^2685^16^1689190143^213^0^20^444.66^Kruelio", -- [8513]
+				"^2685^16^1689190477^169^0^20^444.66^Morpheusmage", -- [8514]
+				"^2685^16^1689190750^297^0^20^444.68^Extn", -- [8515]
+				"^2685^16^1689191439^115^0^20^444.68^Drakvel", -- [8516]
+				"^2685^16^1689191643^220^0^20^444.68^Kruelio", -- [8517]
+				"^2685^16^1689191991^297^0^20^444.68^Pawx", -- [8518]
+				"^2685^16^1689192413^242^0^20^444.68^Helimeisterb", -- [8519]
+				"^2685^16^1689192767^212^0^20^444.62^Extn", -- [8520]
+				"^2666^23^1689276563^98^1^5^444.50^Miatra", -- [8521]
+				"^2667^23^1689276915^136^1^5^444.50^Edolie", -- [8522]
+				"^2668^23^1689277366^179^1^5^444.50^", -- [8523]
+				"^2669^23^1689277804^174^1^5^444.50^", -- [8524]
+				"^2670^23^1689278299^140^1^5^444.50^", -- [8525]
+				"^2671^23^1689279023^203^1^5^444.50^Extn", -- [8526]
+				"^2672^23^1689279505^108^1^5^444.50^", -- [8527]
+				"^2673^23^1689280197^316^1^5^444.50^Elgönndir", -- [8528]
+				"^2111^8^1689281904^39^1^5^444.88^", -- [8529]
+				"^2118^8^1689282367^98^1^5^444.88^", -- [8530]
+				"^2112^8^1689282617^75^1^5^444.88^", -- [8531]
+				"^2123^8^1689283025^107^1^5^444.88^", -- [8532]
+				"^2610^8^1689371495^64^1^5^443.84^", -- [8533]
+				"^2613^8^1689371804^116^1^5^443.84^", -- [8534]
+				"^2612^8^1689372527^80^1^5^443.84^", -- [8535]
+				"^2611^8^1689372805^116^1^5^443.84^Steellol-Ragnaros", -- [8536]
+				"^2555^8^1689373562^76^1^5^442.96^", -- [8537]
+				"^2556^8^1689373758^131^1^5^442.96^", -- [8538]
+				"^2557^8^1689374015^109^1^5^442.96^", -- [8539]
+				"^2558^8^1689374359^101^1^5^442.96^", -- [8540]
+				"^2559^8^1689375016^143^1^5^442.96^Helimeisterb", -- [8541]
+				"^2111^8^1689375731^83^1^5^443.06^Cronîx", -- [8542]
+				"^2118^8^1689376180^88^1^5^443.06^", -- [8543]
+				"^2112^8^1689376364^109^1^5^443.06^", -- [8544]
+				"^2123^8^1689376725^131^1^5^443.06^", -- [8545]
+				"^2685^16^1689528810^168^0^20^445.08^Leergut", -- [8546]
+				"^2685^16^1689529068^216^0^20^445.08^Cronîx", -- [8547]
+				"^2685^16^1689529383^220^0^20^445.08^Kâzuto", -- [8548]
+				"^2685^16^1689529726^258^0^20^445.08^Holicx", -- [8549]
+				"^2685^16^1689530216^229^0^20^445.08^Edolie", -- [8550]
+				"^2685^16^1689530546^314^0^20^445.08^Extn", -- [8551]
+				"^2685^16^1689530966^222^0^20^445.08^Leergut", -- [8552]
+				"^2685^16^1689531266^354^0^20^445.08^Cronîx", -- [8553]
+				"^2685^16^1689531810^206^0^20^445.08^Shirtpants", -- [8554]
+				"^2685^16^1689532218^296^0^20^445.08^Drakvel", -- [8555]
+				"^2685^16^1689532669^227^0^20^445.08^Cronîx", -- [8556]
+				"^2685^16^1689532991^218^0^20^445.08^Cronîx", -- [8557]
+				"^2685^16^1689533291^17^0^20^445.08^Holicx", -- [8558]
+				"^2685^16^1689533399^232^0^20^445.08^Miatra", -- [8559]
+				"^2685^16^1689533728^219^0^20^445.08^Muzdan", -- [8560]
+				"^2685^16^1689534756^211^0^20^445.15^Helimeisterb", -- [8561]
+				"^2685^16^1689535038^215^0^20^445.15^Muzdan", -- [8562]
+				"^2685^16^1689535353^342^0^20^445.15^Sanatio", -- [8563]
+				"^2685^16^1689535858^297^0^20^445.15^Leergut", -- [8564]
+				"^2685^16^1689536250^340^0^20^445.15^Lukîî", -- [8565]
+				"^2685^16^1689536729^29^0^20^445.15^Leergut", -- [8566]
+				"^2685^16^1689536894^318^0^20^445.15^Estu", -- [8567]
+				"^2685^16^1689537325^285^0^20^445.15^Drakvel", -- [8568]
+				"^2685^16^1689537704^266^0^20^445.15^Pawx", -- [8569]
+				"^2685^16^1689538066^301^0^20^445.15^Drakvel", -- [8570]
+				"^2685^16^1689538502^219^0^20^445.15^Leergut", -- [8571]
+				"^2685^16^1689538806^281^0^20^445.15^Pawx", -- [8572]
+				"^2685^16^1689539223^237^0^20^445.15^Kruelio", -- [8573]
+				"^2685^16^1689539578^220^0^20^445.15^Drakvel", -- [8574]
+				"^2685^16^1689539893^336^0^20^445.15^Holicx", -- [8575]
+				"^2685^16^1689540586^348^0^20^445.15^Kâzuto", -- [8576]
+				"^2685^16^1689541052^345^0^20^445.15^Kruelio", -- [8577]
+				"^2685^16^1689615142^215^0^20^445.06^Cronîx", -- [8578]
+				"^2685^16^1689615457^202^0^20^445.06^Teesticle", -- [8579]
+				"^2685^16^1689615739^309^0^20^445.06^Edolie", -- [8580]
+				"^2685^16^1689616128^295^0^20^445.06^Muzdan", -- [8581]
+				"^2685^16^1689616454^14^0^20^445.06^Morpheusmage", -- [8582]
+				"^2685^16^1689616587^390^0^20^445.06^Holicx", -- [8583]
+				"^2685^16^1689617419^316^0^20^445.06^Muzdan", -- [8584]
+				"^2685^16^1689617892^397^0^20^445.06^Kâzuto", -- [8585]
+				"^2685^16^1689618723^212^0^20^445.06^Edolie", -- [8586]
+				"^2685^16^1689619040^249^0^20^445.06^Teesticle", -- [8587]
+				"^2685^16^1689619384^350^0^20^445.06^Miatra", -- [8588]
+				"^2685^16^1689619872^351^0^20^445.06^Leergut", -- [8589]
+				"^2685^16^1689620406^127^0^20^445.06^Teesticle", -- [8590]
+				"^2685^16^1689621444^215^0^20^445.06^Kâzuto", -- [8591]
+				"^2685^16^1689621808^115^0^20^445.06^Leergut", -- [8592]
+				"^2685^16^1689622023^242^0^20^445.06^Kâzuto", -- [8593]
+				"^2685^16^1689622363^89^0^20^445.06^Totemtôni-Kazzak", -- [8594]
+				"^2685^16^1689622528^346^0^20^445.06^Lukîî", -- [8595]
+				"^2685^16^1689622966^211^0^20^445.06^Miatra", -- [8596]
+				"^2685^16^1689623267^358^0^20^445.06^Kruelio", -- [8597]
+				"^2685^16^1689623755^351^0^20^445.06^Totemtôni-Kazzak", -- [8598]
+				"^2685^16^1689624308^288^0^20^445.07^Drakvel", -- [8599]
+				"^2685^16^1689624722^377^0^20^445.07^Miatra", -- [8600]
+				"^2685^16^1689625226^330^0^20^445.07^Morpheusmage", -- [8601]
+				"^2685^16^1689625724^237^0^20^445.07^Totemtôni-Kazzak", -- [8602]
+				"^2685^16^1689626071^274^0^20^445.07^Kruelio", -- [8603]
+				"^2685^16^1689626447^361^0^20^445.07^Totemtôni-Kazzak", -- [8604]
+				"^2685^16^1689626918^310^0^20^445.07^Muzdan", -- [8605]
+				"^2685^16^1689627303^134^0^20^445.07^Leergut", -- [8606]
+				"^2685^16^1689627541^241^0^20^445.07^Estu", -- [8607]
+				"^2685^16^1689788169^213^0^20^445.30^Morpheusmage", -- [8608]
+				"^2685^16^1689788455^355^0^20^445.30^Teesticle", -- [8609]
+				"^2685^16^1689788915^355^0^20^445.30^Estu", -- [8610]
+				"^2685^16^1689789459^293^0^20^445.30^Leergut", -- [8611]
+				"^2685^16^1689789864^341^0^20^445.30^Pawx", -- [8612]
+				"^2685^16^1689790381^401^0^20^445.30^Teesticle", -- [8613]
+				"^2685^16^1689790922^214^0^20^445.30^Muzdan", -- [8614]
+				"^2685^16^1689791237^396^0^20^445.30^Teesticle", -- [8615]
+				"^2685^16^1689792006^63^0^20^445.30^Leergut", -- [8616]
+				"^2685^16^1689792151^271^0^20^445.30^Shirtpants", -- [8617]
+				"^2685^16^1689792518^400^0^20^445.30^Antagon", -- [8618]
+				"^2685^16^1689793014^397^0^20^445.30^Lukîî", -- [8619]
+				"^2685^16^1689794289^213^0^20^445.30^Edolie", -- [8620]
+				"^2685^16^1689794586^361^0^20^445.30^Teesticle", -- [8621]
+				"^2685^16^1689795124^95^0^20^445.30^Muzdan", -- [8622]
+				"^2685^16^1689795290^284^0^20^445.30^Helimeisterb", -- [8623]
+				"^2685^16^1689795657^438^0^20^445.30^Teesticle", -- [8624]
+				"^2685^16^1689796434^129^0^20^445.30^Morpheusmage", -- [8625]
+				"^2685^16^1689796632^460^0^20^445.30^Edolie", -- [8626]
+				"^2685^16^1689797420^412^0^20^445.30^Helimeisterb", -- [8627]
+				"^2685^16^1689797978^405^0^20^445.30^Leergut", -- [8628]
+				"^2685^16^1689798573^325^0^20^445.30^Kruelio", -- [8629]
+				"^2685^16^1689798989^463^0^20^445.30^Pawx", -- [8630]
+				"^2685^16^1689799603^228^0^20^445.30^Drakvel", -- [8631]
+				"^2685^16^1689799911^372^0^20^445.30^Kruelio", -- [8632]
+				"^2685^16^1689800366^220^0^20^445.30^Pawx", -- [8633]
+				"^2666^23^1690047136^73^1^5^444.89^", -- [8634]
+				"^2667^23^1690047420^94^1^5^444.89^", -- [8635]
+				"^2668^23^1690047787^136^1^5^444.89^", -- [8636]
+				"^2669^23^1690048178^147^1^5^444.89^", -- [8637]
+				"^2670^23^1690048659^97^1^5^444.89^", -- [8638]
+				"^2671^23^1690049396^122^1^5^444.89^", -- [8639]
+				"^2672^23^1690049777^92^1^5^444.89^", -- [8640]
+				"^2673^23^1690050204^271^1^5^444.89^", -- [8641]
+				"^2615^8^1690052943^140^1^5^444.64^", -- [8642]
+				"^2616^8^1690053388^125^1^5^444.64^", -- [8643]
+				"^2617^8^1690053696^111^1^5^444.64^", -- [8644]
+				"^2618^8^1690054046^237^1^5^444.64^", -- [8645]
+				"^2685^16^1690133451^302^0^20^445.40^Kâzuto", -- [8646]
+				"^2685^16^1690133858^0^0^20^445.54^Edolie", -- [8647]
+				"^2685^16^1690134350^411^0^20^445.39^Pawx", -- [8648]
+				"^2685^16^1690135044^130^0^20^445.39^Edolie", -- [8649]
+				"^2685^16^1690135246^349^0^20^445.39^Elgönndir", -- [8650]
+				"^2685^16^1690135683^408^0^20^445.39^Drakvel", -- [8651]
+				"^2685^16^1690136234^72^0^20^445.39^Kruelio", -- [8652]
+				"^2685^16^1690136400^321^0^20^445.39^Kâzuto", -- [8653]
+				"^2685^16^1690136830^344^0^20^445.39^Elgönndir", -- [8654]
+				"^2685^16^1690137336^438^0^20^445.39^Elgönndir", -- [8655]
+				"^2685^16^1690137939^18^0^20^445.39^Leergut", -- [8656]
+				"^2685^16^1690138054^411^0^20^445.39^Pawx", -- [8657]
+				"^2685^16^1690138577^220^0^20^445.39^Muzdan", -- [8658]
+				"^2685^16^1690139550^411^0^20^445.39^Elgönndir", -- [8659]
+				"^2685^16^1690140049^335^0^20^445.39^Drakvel", -- [8660]
+				"^2685^16^1690140440^12^0^20^445.39^Estu", -- [8661]
+				"^2685^16^1690140552^246^0^20^445.39^Pawx", -- [8662]
+				"^2685^16^1690140894^317^0^20^445.39^Edolie", -- [8663]
+				"^2685^16^1690141319^468^0^20^445.39^Kruelio", -- [8664]
+				"^2685^16^1690141907^245^0^20^445.39^Elgönndir", -- [8665]
+				"^2685^16^1690142256^421^0^20^445.39^Pawx", -- [8666]
+				"^2685^16^1690142761^322^0^20^445.39^Kruelio", -- [8667]
+				"^2685^16^1690143156^452^1^20^445.39^Teesticle", -- [8668]
+				"^2111^8^1690218649^65^1^5^444.27^", -- [8669]
+				"^2112^8^1690219011^139^1^5^444.27^", -- [8670]
+				"^2118^8^1690219179^156^1^5^444.27^", -- [8671]
+				"^2123^8^1690219553^158^1^5^444.27^", -- [8672]
+				"^2556^8^1690220332^175^1^5^444.32^Bornbad-Drak'thul", -- [8673]
+				"^2555^8^1690220524^135^1^5^444.32^", -- [8674]
+				"^2557^8^1690220793^169^1^5^444.32^", -- [8675]
+				"^2558^8^1690221186^212^1^5^444.32^Bornbad-Drak'thul", -- [8676]
+				"^2559^8^1690221841^223^1^5^444.32^", -- [8677]
+				"^2093^8^1690222574^155^1^5^444.38^", -- [8678]
+				"^2094^8^1690222982^163^1^5^444.38^", -- [8679]
+				"^2095^8^1690223523^172^1^5^444.38^Extn", -- [8680]
+				"^2096^8^1690223855^293^1^5^444.38^Bornbad-Drak'thul", -- [8681]
+				"^2111^8^1690318498^91^1^5^445.38^Miatra", -- [8682]
+				"^2112^8^1690319036^167^1^5^445.38^Miatra", -- [8683]
+				"^2118^8^1690319231^166^1^5^445.38^", -- [8684]
+				"^2123^8^1690319659^180^1^5^445.38^", -- [8685]
+				"^2688^16^1690392251^0^0^20^445.46^", -- [8686]
+				"^2688^16^1690392576^222^1^20^445.50^Leergut", -- [8687]
+				"^2682^16^1690393146^8^0^20^446.44^", -- [8688]
+				"^2682^16^1690393422^122^0^20^445.48^Hurtsevo-Eredar", -- [8689]
+				"^2682^16^1690393654^161^0^20^445.46^Muzdan", -- [8690]
+				"^2682^16^1690393948^217^1^20^445.46^Sanfa", -- [8691]
+				"^2680^16^1690394253^1^0^20^445.39^Lukîî", -- [8692]
+				"^2680^16^1690394495^140^0^20^445.37^Dpxdru", -- [8693]
+				"^2680^16^1690394714^299^0^20^445.37^Modoreddo", -- [8694]
+				"^2680^16^1690395114^256^0^20^445.33^Kruelio", -- [8695]
+				"^2680^16^1690395466^394^0^20^445.25^Drakvel", -- [8696]
+				"^2680^16^1690396014^364^0^20^445.25^Edolie", -- [8697]
+				"^2680^16^1690396481^398^0^20^445.25^Teesticle", -- [8698]
+				"^2680^16^1690397028^388^0^20^445.25^Extn", -- [8699]
+				"^2680^16^1690397555^397^0^20^445.32^Muzdan", -- [8700]
+				"^2680^16^1690398900^381^1^20^445.40^Estu", -- [8701]
+				"^2687^16^1690399677^0^0^20^445.32^", -- [8702]
+				"^2687^16^1690399736^160^0^20^445.31^Dpxdru", -- [8703]
+				"^2687^16^1690399975^272^1^20^445.35^Kruelio", -- [8704]
+				"^2693^16^1690400489^5^0^20^445.35^", -- [8705]
+				"^2693^16^1690400663^161^0^20^445.35^Estu", -- [8706]
+				"^2693^16^1690400909^279^1^20^445.35^Extn", -- [8707]
+				"^2689^16^1690401338^0^0^20^445.21^", -- [8708]
+				"^2689^16^1690402051^228^0^20^445.40^Drakvel", -- [8709]
+				"^2689^16^1690402368^243^0^20^445.40^Estu", -- [8710]
+				"^2689^16^1690402721^344^0^20^445.40^Elgönndir", -- [8711]
+				"^2689^16^1690403175^356^0^20^445.40^Cronîx", -- [8712]
+				"^2689^16^1690403631^148^0^20^445.42^Elgönndir", -- [8713]
+				"^2689^16^1690403861^308^1^20^445.42^Elgönndir", -- [8714]
+				"^2683^16^1690404816^79^0^20^445.60^Helimeisterb", -- [8715]
+				"^2683^16^1690404933^0^0^20^445.60^", -- [8716]
+				"^2683^16^1690405038^299^0^20^445.53^Pawx", -- [8717]
+				"^2683^16^1690405458^277^0^20^445.53^Modoreddo", -- [8718]
+				"^2683^16^1690405766^2^0^20^445.52^Extn", -- [8719]
+				"^2683^16^1690738020^0^0^20^445.76^", -- [8720]
+				"^2683^16^1690738210^0^0^20^445.79^", -- [8721]
+				"^2683^16^1690738504^186^0^20^445.70^Elgönndir", -- [8722]
+				"^2683^16^1690738769^256^0^20^445.63^Modoreddo", -- [8723]
+				"^2683^16^1690739157^170^0^20^445.63^Sanfa", -- [8724]
+				"^2683^16^1690739428^301^0^20^447.00^Sanfa", -- [8725]
+				"^2683^16^1690739840^214^0^20^445.65^Leergut", -- [8726]
+				"^2683^16^1690740142^143^0^20^445.65^Miatra", -- [8727]
+				"^2683^16^1690740388^341^1^20^445.65^Kâzuto", -- [8728]
+				"^2684^16^1690740991^0^0^20^445.65^", -- [8729]
+				"^2684^16^1690741980^272^0^20^445.72^Edolie", -- [8730]
+				"^2684^16^1690742409^46^0^20^445.72^Teesticle", -- [8731]
+				"^2684^16^1690742542^296^0^20^445.72^Kâzuto", -- [8732]
+				"^2684^16^1690742968^308^0^20^445.72^Pawx", -- [8733]
+				"^2684^16^1690743400^42^0^20^445.72^Shirtpants", -- [8734]
+				"^2684^16^1690744189^410^0^20^445.74^Antagon", -- [8735]
+				"^2684^16^1690744740^456^0^20^445.74^Teesticle", -- [8736]
+				"^2684^16^1690745362^254^0^20^445.74^Hurtsevo-Eredar", -- [8737]
+				"^2684^16^1690745696^30^0^20^445.81^Shirtpants", -- [8738]
+				"^2684^16^1690745797^307^0^20^445.81^Elgönndir", -- [8739]
+				"^2684^16^1690746224^272^0^20^445.81^Elgönndir", -- [8740]
+				"^2684^16^1690746632^196^0^20^445.81^Helimeisterb", -- [8741]
+				"^2684^16^1690746912^430^0^20^445.81^Teesticle", -- [8742]
+				"^2684^16^1690747443^307^0^20^445.81^Edolie", -- [8743]
+				"^2684^16^1690747854^77^0^20^445.81^Extn", -- [8744]
+				"^2684^16^1690748006^219^0^20^445.81^Helimeisterb", -- [8745]
+				"^2684^16^1690748302^316^0^20^445.81^Elgönndir", -- [8746]
+				"^2684^16^1690748719^305^0^20^445.81^Kâzuto", -- [8747]
+				"^2684^16^1690749110^456^0^20^445.81^Muzdan", -- [8748]
+				"^2684^16^1690749694^252^0^20^445.81^Teesticle", -- [8749]
+				"^2684^16^1690750048^164^0^20^445.81^Estu", -- [8750]
+				"^2684^16^1690750296^438^0^20^445.81^Modoreddo", -- [8751]
+				"^2610^8^1690919352^66^1^5^446.06^Elgönndir", -- [8752]
+				"^2613^8^1690919643^93^1^5^446.06^Elgönndir", -- [8753]
+				"^2612^8^1690920261^71^1^5^446.06^", -- [8754]
+				"^2611^8^1690920509^94^1^5^446.06^", -- [8755]
+				"^2570^8^1690922439^110^1^5^439.75^Elgönndir", -- [8756]
+				"^2568^8^1690922951^130^1^5^439.75^", -- [8757]
+				"^2567^8^1690923203^108^1^5^439.75^Miatra", -- [8758]
+				"^2569^8^1690923534^157^1^5^439.75^Elgönndir", -- [8759]
+				"^2688^14^1690997522^123^1^16^442.87^Leergut", -- [8760]
+				"^2687^14^1690997850^0^0^16^442.87^", -- [8761]
+				"^2687^14^1690997931^177^1^16^442.87^", -- [8762]
+				"^2693^14^1690998356^264^1^16^443.13^", -- [8763]
+				"^2682^14^1690999123^210^1^16^443.13^", -- [8764]
+				"^2680^14^1690999431^293^1^16^443.13^", -- [8765]
+				"^2689^14^1690999851^0^0^16^443.13^", -- [8766]
+				"^2689^14^1690999925^35^0^16^443.13^", -- [8767]
+				"^2689^14^1690999991^127^1^16^443.13^", -- [8768]
+				"^2683^14^1691000492^203^1^16^443.13^", -- [8769]
+				"^2684^14^1691001449^0^0^15^443.51^", -- [8770]
+				"^2684^14^1691001572^250^1^16^443.51^Helimeisterb", -- [8771]
+				"^2685^14^1691002099^236^1^16^443.51^Pawxx-Blackmoore", -- [8772]
+				"^2688^16^1691342432^0^0^20^446.02^", -- [8773]
+				"^2688^16^1691343153^209^1^20^445.98^Holicx", -- [8774]
+				"^2687^16^1691343610^0^0^20^445.98^", -- [8775]
+				"^2687^16^1691343690^276^1^20^445.98^Cronîx", -- [8776]
+				"^2693^16^1691344166^12^0^20^445.98^", -- [8777]
+				"^2693^16^1691344273^160^0^20^445.98^Leergut", -- [8778]
+				"^2693^16^1691344509^275^1^20^445.98^Leergut", -- [8779]
+				"^2682^16^1691345267^7^0^20^445.97^", -- [8780]
+				"^2682^16^1691345371^236^0^20^445.98^Elgönndir", -- [8781]
+				"^2682^16^1691345638^11^0^20^445.98^", -- [8782]
+				"^2682^16^1691345721^213^1^20^445.98^Dpxdru", -- [8783]
+				"^2680^16^1691346013^0^0^20^444.57^", -- [8784]
+				"^2680^16^1691346251^365^1^20^446.02^Öwlf-Blackrock", -- [8785]
+				"^2689^16^1691346747^6^0^20^446.06^", -- [8786]
+				"^2689^16^1691347015^87^0^20^446.00^Extn", -- [8787]
+				"^2689^16^1691347185^338^1^20^445.98^Miatra", -- [8788]
+				"^2683^16^1691347731^25^0^20^445.98^Extn", -- [8789]
+				"^2683^16^1691348761^336^1^20^446.02^Sanfa", -- [8790]
+				"^2684^16^1691349409^9^0^20^446.02^Antagon", -- [8791]
+				"^2684^16^1691349737^61^0^20^446.02^Muzdan", -- [8792]
+				"^2684^16^1691349876^135^0^20^446.00^Edolie", -- [8793]
+				"^2684^16^1691350174^313^0^20^446.00^Helimeisterb", -- [8794]
+				"^2684^16^1691350661^322^0^20^446.00^Hurtsevo", -- [8795]
+				"^2684^16^1691351117^424^0^20^446.00^Kâzuto", -- [8796]
+				"^2684^16^1691351642^105^0^20^446.00^Elgönndir", -- [8797]
+				"^2684^16^1691351853^465^0^20^446.00^Leergut", -- [8798]
+				"^2684^16^1691352589^359^0^20^446.00^Helimeisterb", -- [8799]
+				"^2684^16^1691353056^311^0^20^446.00^Muzdan", -- [8800]
+				"^2684^16^1691353491^220^0^20^446.00^Muzdan", -- [8801]
+				"^2684^16^1691353879^308^0^20^446.00^Pawx", -- [8802]
+				"^2684^16^1691354284^170^0^20^445.96^Dpxdru", -- [8803]
+				"^2684^16^1691354570^284^0^20^445.96^Öwlf-Blackrock", -- [8804]
+				"^2684^16^1691354948^250^0^20^445.96^Dpxdru", -- [8805]
+				"^2684^16^1691355275^461^0^20^445.98^Öwlf-Blackrock", -- [8806]
+				"^2688^16^1691601947^0^0^20^446.25^", -- [8807]
+				"^2688^16^1691602176^196^0^20^446.27^Kâzuto", -- [8808]
+				"^2688^16^1691602446^215^1^20^446.27^Hurtsevo", -- [8809]
+				"^2687^16^1691602864^0^0^20^446.25^", -- [8810]
+				"^2687^16^1691602979^277^1^20^446.25^Estu", -- [8811]
+				"^2693^16^1691603477^4^0^20^446.24^", -- [8812]
+				"^2693^16^1691603548^203^0^20^446.24^Kâzuto", -- [8813]
+				"^2693^16^1691603828^296^1^20^446.24^Pawx", -- [8814]
+				"^2682^16^1691604568^6^0^20^446.25^", -- [8815]
+				"^2682^16^1691604638^7^0^20^446.22^", -- [8816]
+				"^2682^16^1691604768^167^1^20^446.22^Leergut", -- [8817]
+				"^2680^16^1691605036^21^0^20^446.22^Lukîî", -- [8818]
+				"^2680^16^1691605275^350^1^20^446.16^Helimeisterb", -- [8819]
+				"^2689^16^1691605701^1^0^20^446.05^Lukîî", -- [8820]
+				"^2689^16^1691605767^5^0^20^446.05^", -- [8821]
+				"^2689^16^1691606049^347^0^20^446.07^Muzdan", -- [8822]
+				"^2689^16^1691606519^234^0^20^446.07^Lukîî", -- [8823]
+				"^2689^16^1691606925^312^0^20^446.09^Cronîx", -- [8824]
+				"^2689^16^1691607359^320^1^20^446.09^Estu", -- [8825]
+				"^2683^16^1691607921^2^0^20^446.11^", -- [8826]
+				"^2683^16^1691607959^2^0^20^446.11^", -- [8827]
+				"^2683^16^1691607997^3^0^20^446.11^", -- [8828]
+				"^2683^16^1691608710^298^0^20^446.14^Edolie", -- [8829]
+				"^2683^16^1691609114^334^0^20^446.14^Helimeisterb", -- [8830]
+				"^2683^16^1691609557^324^1^20^446.14^Elgönndir", -- [8831]
+				"^2684^16^1691610110^0^0^20^446.14^", -- [8832]
+				"^2684^16^1691610246^8^0^20^446.14^", -- [8833]
+				"^2684^16^1691610613^233^0^20^446.20^Drakvel", -- [8834]
+				"^2684^16^1691611016^258^0^20^446.20^Drakvel", -- [8835]
+				"^2684^16^1691611460^128^0^20^446.26^Lukîî", -- [8836]
+				"^2684^16^1691611712^452^0^20^446.26^Muzdan", -- [8837]
+				"^2684^16^1691612379^40^0^20^446.26^Estu", -- [8838]
+				"^2684^16^1691613009^321^0^20^446.26^Lukîî", -- [8839]
+				"^2684^16^1691613470^442^1^20^446.26^Öwlf", -- [8840]
+				"^2688^15^1691850030^0^0^18^404.47^", -- [8841]
+				"^2688^15^1691850644^153^1^30^423.42^Øutblast-Silvermoon", -- [8842]
+				"^2682^15^1691851052^8^0^30^422.73^", -- [8843]
+				"^2682^15^1691851127^109^1^30^423.53^Ngamahu-Antonidas", -- [8844]
+				"^2680^15^1691851285^0^0^30^423.53^", -- [8845]
+				"^2680^15^1691851388^298^1^30^423.58^Influhancer", -- [8846]
+				"^2687^15^1691851850^0^0^30^423.60^", -- [8847]
+				"^2687^15^1691851950^219^1^30^423.60^Bubatzwo-Blackrock", -- [8848]
+				"^2693^15^1691852348^4^0^30^423.62^", -- [8849]
+				"^2693^15^1691852393^202^1^30^423.62^Ngamahu-Antonidas", -- [8850]
+				"^2689^15^1691852686^5^0^30^424.10^", -- [8851]
+				"^2689^15^1691852829^205^1^30^424.10^Ngamahu-Antonidas", -- [8852]
+				"^2683^15^1691853220^0^0^30^424.83^", -- [8853]
+				"^2683^15^1691853289^217^1^30^424.83^Scrùbby-TwistingNether", -- [8854]
+				"^2684^15^1691853670^0^0^30^425.00^", -- [8855]
+				"^2684^15^1691853765^329^1^30^424.92^Ngamahu-Antonidas", -- [8856]
+				"^2685^15^1691854230^1^0^29^424.92^", -- [8857]
+				"^2685^15^1691854424^464^1^30^425.16^Bubatzwo-Blackrock", -- [8858]
+				"^2685^16^1691948131^1^0^20^446.44^", -- [8859]
+				"^2685^16^1691948199^77^0^20^446.44^Hurtsevo", -- [8860]
+				"^2685^16^1691948372^216^0^20^446.44^Holicx", -- [8861]
+				"^2685^16^1691948620^15^0^20^446.44^Hurtsevo", -- [8862]
+				"^2685^16^1691948748^133^0^20^446.44^Kâzuto", -- [8863]
+				"^2685^16^1691948989^213^0^20^446.44^Estu", -- [8864]
+				"^2685^16^1691949361^292^0^20^446.46^Estu", -- [8865]
+				"^2685^16^1691949790^122^0^20^446.46^Estu", -- [8866]
+				"^2685^16^1691950008^113^0^20^446.46^Hurtsevo", -- [8867]
+				"^2685^16^1691950218^78^0^20^446.46^Cadogan", -- [8868]
+				"^2685^16^1691950392^215^0^20^446.46^Hurtsevo", -- [8869]
+				"^2685^16^1691950730^65^0^20^446.44^Hurtsevo", -- [8870]
+				"^2685^16^1691950918^56^0^20^446.44^Sanfa", -- [8871]
+				"^2685^16^1691951085^123^0^20^446.44^Estu", -- [8872]
+				"^2685^16^1691951304^232^0^20^446.44^Cadogan", -- [8873]
+				"^2685^16^1691951697^287^0^20^446.44^Drakvel", -- [8874]
+				"^2685^16^1691952170^224^0^20^446.44^Shirtpants", -- [8875]
+				"^2685^16^1691952499^348^0^20^446.44^Hurtsevo", -- [8876]
+				"^2685^16^1691952933^342^0^20^446.44^Leergut", -- [8877]
+				"^2685^16^1691954113^321^0^20^446.46^Leergut", -- [8878]
+				"^2685^16^1691954521^374^0^20^446.46^Cadogan", -- [8879]
+				"^2685^16^1691954997^300^0^20^446.46^Pawx", -- [8880]
+				"^2685^16^1691955380^365^0^20^446.44^Muzdan", -- [8881]
+				"^2685^16^1691955949^276^0^20^446.53^Antagon", -- [8882]
+				"^2685^16^1691956341^413^0^20^446.53^Elgönndir", -- [8883]
+				"^2685^16^1691956904^214^0^20^446.53^Hurtsevo", -- [8884]
+				"^2685^16^1691957236^412^0^20^446.53^Helimeisterb", -- [8885]
+				"^2685^16^1691957800^345^0^20^446.53^Hurtsevo", -- [8886]
+				"^2685^16^1691958283^238^0^20^446.53^Antagon", -- [8887]
+				"^2685^16^1691958617^251^0^20^446.46^Helimeisterb", -- [8888]
+				"^2685^16^1691958992^349^0^20^446.46^Leergut", -- [8889]
+				"^2685^16^1691959493^411^0^20^446.46^Hurtsevo", -- [8890]
+				"^2685^16^1691960030^420^0^20^446.46^Shirtpants", -- [8891]
+				"^2688^16^1692206708^0^0^20^446.28^", -- [8892]
+				"^2688^16^1692207089^221^1^20^445.93^Cronîx", -- [8893]
+				"^2687^16^1692207517^0^0^20^446.00^", -- [8894]
+				"^2687^16^1692207623^269^1^20^445.92^Edolie", -- [8895]
+				"^2693^16^1692208101^5^0^20^445.92^", -- [8896]
+				"^2693^16^1692208289^300^1^20^445.92^Edolie", -- [8897]
+				"^2682^16^1692209038^6^0^20^446.13^", -- [8898]
+				"^2682^16^1692209205^160^1^20^446.14^Helimeisterb", -- [8899]
+				"^2680^16^1692209468^9^0^20^446.05^", -- [8900]
+				"^2680^16^1692209791^47^0^20^445.99^Sanfa", -- [8901]
+				"^2680^16^1692209944^363^1^20^445.99^Helimeisterb", -- [8902]
+				"^2689^16^1692210452^4^0^20^446.07^", -- [8903]
+				"^2689^16^1692210884^231^0^20^446.19^Antagon", -- [8904]
+				"^2689^16^1692211175^6^0^20^446.19^Pawx", -- [8905]
+				"^2689^16^1692211342^365^1^20^446.15^Kâzuto", -- [8906]
+				"^2683^16^1692212570^0^0^20^446.24^", -- [8907]
+				"^2683^16^1692212862^334^1^20^446.23^Öwlf", -- [8908]
+				"^2684^16^1692213369^0^0^20^446.20^", -- [8909]
+				"^2684^16^1692214003^288^0^20^446.12^Leergut", -- [8910]
+				"^2684^16^1692214465^309^0^20^446.12^Morpheusmage", -- [8911]
+				"^2684^16^1692214871^273^0^20^446.12^Kritpala", -- [8912]
+				"^2684^16^1692215241^140^0^20^446.12^Morpheusmage", -- [8913]
+				"^2684^16^1692215526^56^0^20^446.12^Sanfa", -- [8914]
+				"^2684^16^1692215749^291^0^20^446.16^Cadogan", -- [8915]
+				"^2684^16^1692216167^260^0^20^446.16^Hurtsevo", -- [8916]
+				"^2684^16^1692216540^304^0^20^446.16^Morpheusmage", -- [8917]
+				"^2684^16^1692216933^258^0^20^446.16^Helimeisterb", -- [8918]
+				"^2684^16^1692217308^356^0^20^446.16^Cadogan", -- [8919]
+				"^2684^16^1692217778^201^0^20^446.16^Sanatio", -- [8920]
+				"^2684^16^1692218087^311^0^20^446.08^Kritpala", -- [8921]
+				"^2684^16^1692218493^418^0^20^446.08^Helimeisterb", -- [8922]
+				"^2684^16^1692219076^453^0^20^446.08^Edolie", -- [8923]
+				"^2688^15^1692295685^12^0^17^440.10^", -- [8924]
+				"^2688^15^1692295751^160^1^17^440.10^", -- [8925]
+				"^2684^15^1692296213^0^0^17^440.10^", -- [8926]
+				"^2684^15^1692296303^269^1^17^440.10^Schnickfitzi-Eredar", -- [8927]
+				"^2685^15^1692296750^0^0^17^440.10^", -- [8928]
+				"^2685^15^1692296859^411^1^17^440.10^Tÿri", -- [8929]
+				"^2682^15^1692297966^7^0^16^440.57^", -- [8930]
+				"^2682^15^1692298114^88^1^17^439.40^Schnickfitzi-Eredar", -- [8931]
+				"^2680^15^1692298262^0^0^17^439.40^", -- [8932]
+				"^2680^15^1692298318^240^1^17^439.40^", -- [8933]
+				"^2687^15^1692298815^0^0^17^439.40^", -- [8934]
+				"^2687^15^1692298992^208^1^18^439.27^", -- [8935]
+				"^2693^15^1692299458^6^0^18^439.27^", -- [8936]
+				"^2693^15^1692299521^216^1^18^439.27^", -- [8937]
+				"^2689^15^1692299849^7^0^18^439.27^", -- [8938]
+				"^2689^15^1692299961^211^1^18^439.27^Zognaff-Khaz'goroth", -- [8939]
+				"^2683^15^1692300374^0^0^18^439.27^", -- [8940]
+				"^2683^15^1692300405^25^0^18^439.27^Norrit-Arygos", -- [8941]
+				"^2683^15^1692300552^206^1^18^439.27^", -- [8942]
+				"^2610^8^1692376827^146^1^5^445.98^", -- [8943]
+				"^2613^8^1692377172^174^1^5^445.98^", -- [8944]
+				"^2612^8^1692377761^141^1^5^446.05^", -- [8945]
+				"^2611^8^1692378099^119^0^5^446.05^Edolie", -- [8946]
+				"^2611^8^1692378283^197^1^5^446.05^Miatra", -- [8947]
+				"^1790^8^1692380379^187^1^5^446.30^", -- [8948]
+				"^1791^8^1692380973^227^1^5^446.30^Elgönndir", -- [8949]
+				"^1792^8^1692381344^244^1^5^446.30^Elgönndir", -- [8950]
+				"^1793^8^1692381777^280^1^5^446.30^", -- [8951]
+				"^1043^8^1692383610^180^1^5^446.30^", -- [8952]
+				"^1041^8^1692384121^195^1^5^446.30^", -- [8953]
+				"^1042^8^1692384766^215^1^5^446.30^Edolie", -- [8954]
+				"^2570^8^1692386277^161^1^5^446.30^", -- [8955]
+				"^2568^8^1692386787^181^1^5^446.30^", -- [8956]
+				"^2567^8^1692387129^171^1^5^446.30^Elgönndir", -- [8957]
+				"^2569^8^1692387578^238^1^5^446.30^", -- [8958]
+				"^2093^8^1692388476^142^1^5^446.30^Miatra", -- [8959]
+				"^2094^8^1692388848^176^1^5^446.30^Elgönndir", -- [8960]
+				"^2095^8^1692389299^142^1^5^446.30^", -- [8961]
+				"^2096^8^1692389589^183^1^5^446.30^Edolie", -- [8962]
+				"^2556^8^1692392439^197^1^5^446.30^Elgönndir", -- [8963]
+				"^2555^8^1692392659^129^1^5^446.30^Edolie", -- [8964]
+				"^2557^8^1692392925^170^1^5^446.30^", -- [8965]
+				"^2558^8^1692393424^230^1^5^446.30^Edolie", -- [8966]
+				"^2559^8^1692394047^216^1^5^446.30^", -- [8967]
+				"^2684^16^1692552554^0^0^20^446.42^", -- [8968]
+				"^2684^16^1692552761^322^0^20^446.42^Cadogan", -- [8969]
+				"^2684^16^1692553199^458^0^20^446.42^Drakvel", -- [8970]
+				"^2684^16^1692553838^429^1^20^446.42^Hurtsevo", -- [8971]
+				"^2685^16^1692555119^212^0^20^446.61^Cadogan", -- [8972]
+				"^2685^16^1692555437^336^0^20^446.61^Holicx", -- [8973]
+				"^2685^16^1692555912^214^0^20^446.61^Pawx", -- [8974]
+				"^2685^16^1692556271^216^0^20^446.61^Morpheusmage", -- [8975]
+				"^2685^16^1692556674^408^0^20^446.61^Leergut", -- [8976]
+				"^2685^16^1692557219^355^0^20^446.61^Helimeisterb", -- [8977]
+				"^2685^16^1692557701^418^0^20^446.61^Drakvel", -- [8978]
+				"^2685^16^1692558235^412^0^20^446.61^Helimeisterb", -- [8979]
+				"^2685^16^1692559377^215^0^20^446.61^Lukîî", -- [8980]
+				"^2685^16^1692559696^89^0^20^446.61^Holicx", -- [8981]
+				"^2685^16^1692559864^366^0^20^446.61^Leergut", -- [8982]
+				"^2685^16^1692560312^151^0^20^446.61^Pawx", -- [8983]
+				"^2685^16^1692560551^298^0^20^446.61^Holicx", -- [8984]
+				"^2685^16^1692560933^300^0^20^446.69^Leergut", -- [8985]
+				"^2685^16^1692561351^426^0^20^446.69^Holicx", -- [8986]
+				"^2685^16^1692561906^152^0^20^446.69^Drakvel", -- [8987]
+				"^2685^16^1692562170^429^0^20^446.69^Helimeisterb", -- [8988]
+				"^2685^16^1692562787^291^0^20^446.69^Kâzuto", -- [8989]
+				"^2685^16^1692563179^344^0^20^446.69^Pawx", -- [8990]
+				"^2685^16^1692563623^342^0^20^446.69^Cronîx", -- [8991]
+				"^2685^16^1692564063^429^0^20^446.69^Hurtsevo", -- [8992]
+				"^2685^16^1692564656^463^0^20^446.69^Holicx", -- [8993]
+				"^2666^23^1692644766^114^1^5^440.79^", -- [8994]
+				"^2667^23^1692645048^142^1^5^429.49^Dpxevoker", -- [8995]
+				"^2668^23^1692645475^160^1^5^440.68^", -- [8996]
+				"^2669^23^1692645970^195^1^5^440.68^", -- [8997]
+				"^2670^23^1692646415^135^1^5^440.75^", -- [8998]
+				"^2672^23^1692647109^124^1^5^441.15^Influhancer", -- [8999]
+				"^2671^23^1692647378^193^1^5^440.95^Cadogan", -- [9000]
+				"^2673^23^1692647871^585^1^5^440.95^Hurtsshaman", -- [9001]
+				"^2555^8^1692807732^88^1^5^443.18^", -- [9002]
+				"^2556^8^1692807902^112^1^5^443.18^", -- [9003]
+				"^2557^8^1692808102^119^1^5^443.18^Influhancer", -- [9004]
+				"^2558^8^1692808544^96^1^5^443.18^Sanfa", -- [9005]
+				"^2559^8^1692809090^125^1^5^443.18^", -- [9006]
+				"^2688^16^1692811472^0^0^20^438.85^", -- [9007]
+				"^2688^16^1692811704^1^0^20^446.64^", -- [9008]
+				"^2688^16^1692811802^203^1^20^446.66^Leergut", -- [9009]
+				"^2684^16^1692812186^0^0^20^446.65^", -- [9010]
+				"^2684^16^1692812481^396^0^20^446.65^Leergut", -- [9011]
+				"^2684^16^1692813010^78^0^20^446.65^Shirtpants", -- [9012]
+				"^2684^16^1692813164^410^1^20^446.65^Hurtsevo", -- [9013]
+				"^2685^16^1692813827^0^0^20^446.65^", -- [9014]
+				"^2685^16^1692814376^429^0^20^446.69^Oewlf", -- [9015]
+				"^2685^16^1692815037^149^0^20^446.69^Cronîx", -- [9016]
+				"^2685^16^1692815272^408^0^20^446.69^Pawx", -- [9017]
+				"^2685^16^1692815789^290^0^20^446.66^Kâzuto", -- [9018]
+				"^2685^16^1692816162^398^0^20^446.64^Oewlf", -- [9019]
+				"^2685^16^1692816684^464^0^20^446.64^Oewlf", -- [9020]
+				"^2685^16^1692817305^486^0^20^446.64^Morpheusmage", -- [9021]
+				"^2685^16^1692818545^351^0^20^446.65^Elgönndir", -- [9022]
+				"^2685^16^1692819016^243^0^20^446.65^Cronîx", -- [9023]
+				"^2685^16^1692819354^443^1^20^446.66^Sanfa", -- [9024]
+				"^2687^16^1692820264^0^0^20^446.47^", -- [9025]
+				"^2687^16^1692820643^283^0^20^446.64^Unluckyxd", -- [9026]
+				"^2687^16^1692821012^275^1^20^446.64^Kâzuto", -- [9027]
+				"^2693^16^1692821723^277^1^20^446.62^Kruelio", -- [9028]
+				"^2682^16^1692822391^7^0^20^446.66^", -- [9029]
+				"^2682^16^1692822553^147^1^20^446.63^Sanfa", -- [9030]
+				"^2680^16^1692822794^9^0^20^446.57^", -- [9031]
+				"^2680^16^1692822986^353^1^20^446.61^Morpheusmage", -- [9032]
+				"^2689^16^1692823435^1^0^20^446.62^", -- [9033]
+				"^2689^16^1692823472^4^0^20^446.68^", -- [9034]
+				"^2689^16^1692823731^287^1^20^446.73^Pawx", -- [9035]
+				"^2683^16^1692824182^0^0^20^446.78^", -- [9036]
+				"^2683^16^1692824338^290^0^20^446.80^Kruelio", -- [9037]
+				"^1790^8^1693342606^114^1^5^442.74^", -- [9038]
+				"^1791^8^1693343206^119^1^5^442.74^", -- [9039]
+				"^1792^8^1693343540^124^1^5^442.74^Guccigut", -- [9040]
+				"^1793^8^1693343934^121^0^5^442.74^Guccigut", -- [9041]
+				"^1793^8^1693344181^149^1^5^442.74^", -- [9042]
+				"^2688^16^1693416056^0^0^20^446.76^", -- [9043]
+				"^2688^16^1693416499^208^1^20^446.88^Leergut", -- [9044]
+				"^2684^16^1693417004^9^0^20^446.87^Cadogan", -- [9045]
+				"^2684^16^1693417550^456^0^20^446.89^Fenx", -- [9046]
+				"^2684^16^1693418147^286^0^20^446.89^Leergut", -- [9047]
+				"^2684^16^1693418509^427^1^20^446.89^Fenx", -- [9048]
+				"^2685^16^1693419813^317^0^20^446.99^Kruelio", -- [9049]
+				"^2685^16^1693420304^215^0^20^446.99^Leergut", -- [9050]
+				"^2685^16^1693420610^405^0^20^447.01^Morpheusmage", -- [9051]
+				"^2685^16^1693421159^449^0^20^447.02^Kruelio", -- [9052]
+				"^2685^16^1693421757^297^0^20^446.99^Pawx", -- [9053]
+				"^2685^16^1693422147^445^1^20^446.99^Pawx", -- [9054]
+				"^2682^16^1693423949^7^0^20^446.85^", -- [9055]
+				"^2682^16^1693424267^156^1^20^446.94^Drakvel", -- [9056]
+				"^2680^16^1693424522^0^0^20^447.07^", -- [9057]
+				"^2680^16^1693424747^377^1^20^447.09^Sanfa", -- [9058]
+				"^2687^16^1693425440^1^0^20^447.04^", -- [9059]
+				"^2687^16^1693425518^260^1^20^447.04^", -- [9060]
+				"^2693^16^1693425979^12^0^20^446.87^Muzdan", -- [9061]
+				"^2693^16^1693426139^179^0^20^446.87^Leergut", -- [9062]
+				"^2693^16^1693426400^214^0^20^446.87^Sanatio", -- [9063]
+				"^2693^16^1693426715^273^1^20^446.83^Antagon", -- [9064]
+				"^2689^16^1693427053^6^0^20^446.81^", -- [9065]
+				"^2689^16^1693427093^4^0^20^446.81^", -- [9066]
+				"^2689^16^1693427322^303^0^20^446.82^Edolie", -- [9067]
+				"^2689^16^1693427725^303^1^20^446.82^Elgönndir", -- [9068]
+				"^2683^16^1693428182^1^0^20^446.93^", -- [9069]
+				"^2683^16^1693428372^91^0^20^446.93^Lukîî", -- [9070]
+				"^2683^16^1693428536^326^0^20^446.93^Unluckyxd", -- [9071]
+				"^2683^16^1693428968^331^1^20^446.92^Fenx", -- [9072]
+				"^2688^16^1694020976^0^0^20^447.00^", -- [9073]
+				"^2688^16^1694021688^204^1^20^447.03^Fenx", -- [9074]
+				"^2684^16^1694022088^0^0^20^447.03^", -- [9075]
+				"^2684^16^1694022571^453^0^20^447.11^Oewlf", -- [9076]
+				"^2684^16^1694023170^286^0^20^447.11^Fenx", -- [9077]
+				"^2684^16^1694023554^453^0^20^447.08^Elgönndir", -- [9078]
+				"^2684^16^1694024111^62^0^20^447.08^Shirtpants", -- [9079]
+				"^2684^16^1694024245^451^0^20^447.06^Fenx", -- [9080]
+				"^2684^16^1694024880^425^1^20^447.06^Shirtpants", -- [9081]
+				"^2685^16^1694025492^0^0^20^447.10^", -- [9082]
+				"^2685^16^1694025970^254^0^20^447.02^Oewlf", -- [9083]
+				"^2685^16^1694026351^468^0^20^447.02^Fenx", -- [9084]
+				"^2685^16^1694026982^299^0^20^446.98^Muzdan", -- [9085]
+				"^2685^16^1694028105^70^0^20^447.03^Kruelio", -- [9086]
+				"^2685^16^1694028247^261^0^20^447.03^Morpheusmage", -- [9087]
+				"^2685^16^1694028588^227^0^20^447.03^Muzdan", -- [9088]
+				"^2685^16^1694028982^76^0^20^447.03^Morpheusmage", -- [9089]
+				"^2685^16^1694029165^334^0^20^447.03^Kruelio", -- [9090]
+				"^2685^16^1694029593^357^0^20^447.03^Helimeisterb", -- [9091]
+				"^2685^16^1694030060^116^0^20^447.03^Kâzuto", -- [9092]
+				"^2685^16^1694030327^376^0^20^447.03^Fenx", -- [9093]
+				"^2685^16^1694030789^351^0^20^447.03^Oewlf", -- [9094]
+				"^2685^16^1694031251^299^0^20^447.03^Oewlf", -- [9095]
+				"^2685^16^1694031860^294^0^20^447.18^Edolie", -- [9096]
+				"^2685^16^1694032236^477^1^20^447.18^Muzdan", -- [9097]
+				"^2687^16^1694033016^0^0^20^447.19^", -- [9098]
+				"^2687^16^1694033188^269^1^20^447.04^Muzdan", -- [9099]
+				"^2693^16^1694033659^6^0^20^447.03^", -- [9100]
+				"^2693^16^1694033754^206^0^20^446.96^Estu", -- [9101]
+				"^2693^16^1694034071^316^1^20^446.96^Fenx", -- [9102]
+				"^2111^8^1694543224^35^1^5^435.06^", -- [9103]
+				"^2118^8^1694543567^80^1^5^435.06^", -- [9104]
+				"^2112^8^1694543760^80^1^5^435.06^", -- [9105]
+				"^2123^8^1694544094^81^1^5^435.06^", -- [9106]
+				"^2688^16^1694625695^0^0^20^447.34^", -- [9107]
+				"^2688^16^1694626084^212^1^20^447.04^Guccigut", -- [9108]
+				"^2684^16^1694626489^0^0^20^447.28^", -- [9109]
+				"^2684^16^1694626771^298^0^20^447.27^Muzdan", -- [9110]
+				"^2684^16^1694627186^433^0^20^447.27^Lukîî", -- [9111]
+				"^2684^16^1694627724^224^0^20^447.27^Fenx", -- [9112]
+				"^2684^16^1694628045^251^0^20^447.27^Dpxevoker", -- [9113]
+				"^2684^16^1694628369^426^1^20^447.27^Kruelio", -- [9114]
+				"^2685^16^1694628973^0^0^20^447.30^", -- [9115]
+				"^2685^16^1694629417^429^0^20^447.32^Leergut", -- [9116]
+				"^2685^16^1694629958^75^0^20^447.32^Leergut", -- [9117]
+				"^2685^16^1694630113^464^1^20^447.32^Hurtsevo", -- [9118]
+				"^2687^16^1694631065^0^0^20^447.31^", -- [9119]
+				"^2687^16^1694631281^262^1^20^447.07^Morpheusmage", -- [9120]
+				"^2693^16^1694632602^165^0^20^447.08^Sanatio", -- [9121]
+				"^2693^16^1694632833^269^1^20^447.10^Sanatio", -- [9122]
+				"^2682^16^1694633461^7^0^20^447.04^", -- [9123]
+				"^2682^16^1694633712^169^1^20^447.05^Kruelio", -- [9124]
+				"^2680^16^1694634053^8^0^20^447.06^", -- [9125]
+				"^2680^16^1694634167^389^0^20^447.07^Guccigut", -- [9126]
+				"^2680^16^1694634777^203^0^20^447.10^Hurtsevo", -- [9127]
+				"^2680^16^1694635073^354^1^20^447.09^", -- [9128]
+				"^2689^16^1694635701^0^0^20^447.09^", -- [9129]
+				"^2689^16^1694635770^132^0^20^447.09^Hurtsevo", -- [9130]
+				"^2689^16^1694635982^158^0^20^447.10^Fenx", -- [9131]
+				"^2688^16^1695230554^0^0^20^447.68^", -- [9132]
+				"^2688^16^1695231024^220^1^20^447.56^Extn", -- [9133]
+				"^2684^16^1695231438^1^0^20^443.20^", -- [9134]
+				"^2684^16^1695231626^437^0^20^447.54^Hurtsevo", -- [9135]
+				"^2684^16^1695232175^307^0^20^447.54^Muzdan", -- [9136]
+				"^2684^16^1695232562^81^0^20^447.54^Kruelio", -- [9137]
+				"^2684^16^1695232722^427^1^20^447.54^Pawx", -- [9138]
+				"^2685^16^1695233325^1^0^20^447.52^", -- [9139]
+				"^2685^16^1695233763^475^0^20^447.46^Cadogan", -- [9140]
+				"^2685^16^1695234358^447^1^20^447.46^Fenx", -- [9141]
+				"^2682^16^1695235272^12^0^20^447.44^", -- [9142]
+				"^2682^16^1695235528^163^1^20^446.82^Antagon", -- [9143]
+				"^2680^16^1695235800^9^0^20^446.79^", -- [9144]
+				"^2680^16^1695236090^353^1^20^446.73^Muzdanp", -- [9145]
+				"^2687^16^1695236601^0^0^20^446.76^", -- [9146]
+				"^2687^16^1695237319^256^1^20^446.74^Antagon", -- [9147]
+				"^2693^16^1695237786^11^0^20^446.73^Lukîî", -- [9148]
+				"^2693^16^1695237942^304^1^20^446.82^Muzdanp", -- [9149]
+				"^2689^16^1695238304^3^0^20^446.85^Lukîî", -- [9150]
+				"^2689^16^1695238369^0^0^20^446.85^", -- [9151]
+				"^2689^16^1695238537^311^1^20^447.43^Cadogan", -- [9152]
+				"^2683^16^1695239067^0^0^20^447.46^", -- [9153]
+				"^2683^16^1695239402^313^1^20^447.38^Cadogan", -- [9154]
+				"^2688^16^1695835373^0^0^20^447.15^", -- [9155]
+				"^2688^16^1695835850^195^1^20^447.13^Cadogan", -- [9156]
+				"^2684^16^1695836229^0^0^20^447.16^", -- [9157]
+				"^2684^16^1695836428^453^0^20^447.50^Leergut", -- [9158]
+				"^2684^16^1695836965^416^1^20^447.50^Sanfa", -- [9159]
+				"^2685^16^1695837548^0^0^20^447.51^", -- [9160]
+				"^2685^16^1695837939^0^0^20^447.41^", -- [9161]
+				"^2685^16^1695838001^370^0^20^447.41^Unluckyxd", -- [9162]
+				"^2685^16^1695838458^294^0^20^447.41^Sanfa", -- [9163]
+				"^2685^16^1695838837^482^0^20^447.35^Helimeisterb", -- [9164]
+				"^2685^16^1695839663^319^0^20^447.37^Morpheusmage", -- [9165]
+				"^2685^16^1695840110^116^0^20^447.37^Drakvel", -- [9166]
+				"^2685^16^1695840338^216^0^20^447.39^Kruelio", -- [9167]
+				"^2685^16^1695840657^240^0^20^447.39^Unluckyxd", -- [9168]
+				"^2685^16^1695841012^157^0^20^447.39^Pawx", -- [9169]
+				"^2685^16^1695841274^470^1^20^447.39^Kruelio", -- [9170]
+				"^2682^16^1695842896^7^0^20^447.07^", -- [9171]
+				"^2682^16^1695843093^236^0^20^447.09^Cadogan", -- [9172]
+				"^2682^16^1695843391^22^0^20^447.09^Hurtspriest", -- [9173]
+				"^2682^16^1695843519^136^0^20^447.07^Cadogan", -- [9174]
+				"^2682^16^1695843685^41^0^20^447.07^Drakvel", -- [9175]
+				"^2682^16^1695843809^139^1^20^447.07^", -- [9176]
+				"^2680^16^1695844010^0^0^20^447.02^", -- [9177]
+				"^2680^16^1695844129^359^1^20^447.05^Morpheusmage", -- [9178]
+				"^2687^16^1695844706^0^0^20^447.10^", -- [9179]
+				"^2687^16^1695844833^263^1^20^447.11^Muzdanp", -- [9180]
+				"^2693^16^1695845295^5^0^20^447.10^", -- [9181]
+				"^2693^16^1695845364^300^1^20^447.10^Helimeisterb", -- [9182]
+				"^2689^16^1695845737^3^0^20^447.13^Lukîî", -- [9183]
+				"^2689^16^1695845777^9^0^20^447.13^", -- [9184]
+				"^2689^16^1695846117^302^1^20^447.10^Helimeisterb", -- [9185]
+				"^2683^16^1695846587^0^0^20^447.12^", -- [9186]
+				"^2683^16^1695846767^147^0^20^447.14^Helimeisterb", -- [9187]
+				"^2683^16^1695847018^255^0^20^447.14^Kâzuto", -- [9188]
+				"^2683^16^1695847383^257^0^20^447.14^Dpxevoker", -- [9189]
+				"^2683^16^1695847731^316^1^20^447.14^Muzdanp", -- [9190]
+				"^2688^16^1696440354^11^0^20^447.34^", -- [9191]
+				"^2688^16^1696440405^12^0^20^447.35^", -- [9192]
+				"^2688^16^1696440609^202^1^20^447.38^Kruelio", -- [9193]
+				"^2684^16^1696440995^0^0^20^447.37^", -- [9194]
+				"^2684^16^1696441237^455^0^20^447.37^Pawx", -- [9195]
+				"^2684^16^1696441788^217^0^20^447.37^Muzdanp", -- [9196]
+				"^2684^16^1696442126^303^0^20^447.35^Leergut", -- [9197]
+				"^2684^16^1696442538^448^0^20^447.37^Kruelio", -- [9198]
+				"^2684^16^1696443094^155^0^20^447.37^Edolie", -- [9199]
+				"^2684^16^1696443422^434^1^20^447.59^Elgönndir", -- [9200]
+				"^2685^16^1696444051^1^0^20^447.65^", -- [9201]
+				"^2685^16^1696444292^88^0^20^447.66^Cronîx", -- [9202]
+				"^2685^16^1696444453^483^0^20^447.66^Fenx", -- [9203]
+				"^2685^16^1696445033^391^0^20^447.67^Sanatio", -- [9204]
+				"^2685^16^1696445500^229^0^20^447.67^Kruelio", -- [9205]
+				"^2685^16^1696445829^347^0^20^447.67^Cadogan", -- [9206]
+				"^2685^16^1696447098^295^0^20^447.73^Elgönndir", -- [9207]
+				"^2685^16^1696447459^241^0^20^447.73^Pawx", -- [9208]
+				"^2685^16^1696447791^244^0^20^447.73^Kruelio", -- [9209]
+				"^2685^16^1696448117^404^0^20^447.70^Leergut", -- [9210]
+				"^2685^16^1696448605^434^1^20^447.70^Edolie", -- [9211]
+				"^2682^16^1696449667^136^0^20^447.50^Pawx", -- [9212]
+				"^2682^16^1696449947^141^1^20^447.50^Shirtpants", -- [9213]
+				"^2680^16^1696450176^1^0^20^447.40^", -- [9214]
+				"^2680^16^1696450324^233^0^20^447.44^Helimeisterb", -- [9215]
+				"^2680^16^1696450659^353^1^20^447.44^Cadogan", -- [9216]
+				"^2687^16^1696451188^0^0^20^447.49^", -- [9217]
+				"^2687^16^1696451320^259^1^20^447.44^Unluckyxd", -- [9218]
+				"^2693^16^1696451774^4^0^20^447.41^", -- [9219]
+				"^2693^16^1696451854^281^1^20^447.41^Muzdanp", -- [9220]
+				"^2689^16^1696452179^4^0^20^447.41^Lukîî", -- [9221]
+				"^2689^16^1696452219^4^0^20^447.41^", -- [9222]
+				"^2689^16^1696452380^142^0^20^447.35^Sanatio", -- [9223]
+				"^2689^16^1696452617^190^0^20^447.35^Helimeisterb", -- [9224]
+				"^2689^16^1696452892^295^1^20^447.35^Elgönndir", -- [9225]
+				"^2688^16^1697045089^0^0^20^447.60^", -- [9226]
+				"^2688^16^1697045434^200^1^20^447.47^Drakvel", -- [9227]
+				"^2682^16^1697045923^8^0^20^447.44^", -- [9228]
+				"^2682^16^1697046040^149^1^20^447.49^", -- [9229]
+				"^2680^16^1697046254^2^0^20^447.46^Lukîî", -- [9230]
+				"^2680^16^1697046380^375^0^20^447.46^Morpheusmage", -- [9231]
+				"^2680^16^1697046828^336^1^20^447.48^Akurian-Thrall", -- [9232]
+				"^2687^16^1697047324^0^0^20^447.58^", -- [9233]
+				"^2687^16^1697047427^275^1^20^447.43^Unluckyxd", -- [9234]
+				"^2693^16^1697047892^6^0^20^447.43^", -- [9235]
+				"^2693^16^1697048031^279^1^20^447.43^Miatra", -- [9236]
+				"^2689^16^1697048396^1^0^20^447.50^", -- [9237]
+				"^2689^16^1697048602^302^0^20^447.41^Edolie", -- [9238]
+				"^2689^16^1697049029^212^0^20^447.41^Unluckyxd", -- [9239]
+				"^2689^16^1697049328^316^1^20^447.47^Sanatio", -- [9240]
+				"^2683^16^1697049817^0^0^20^447.42^", -- [9241]
+				"^2683^16^1697050153^319^1^20^447.42^Estu", -- [9242]
+				"^2684^16^1697050635^0^0^20^447.42^", -- [9243]
+				"^2684^16^1697051501^304^0^20^447.57^Kruelio", -- [9244]
+				"^2684^16^1697051889^330^0^20^447.57^Muzdanp", -- [9245]
+				"^2684^16^1697052303^134^0^20^447.57^Antagon", -- [9246]
+				"^2684^16^1697052524^306^0^20^447.57^Morpheusmage", -- [9247]
+				"^2684^16^1697052987^353^0^20^447.57^Morpheusmage", -- [9248]
+				"^2684^16^1697053492^291^0^20^447.57^Kruelio", -- [9249]
+				"^2684^16^1697054230^430^1^20^447.57^Muzdanp", -- [9250]
+				"^2685^16^1697054842^0^0^20^447.62^", -- [9251]
+				"^2685^16^1697055386^214^0^20^447.60^Kruelio", -- [9252]
+				"^2685^16^1697055699^304^0^20^447.60^Pawx", -- [9253]
+				"^2685^16^1697056082^352^0^20^447.60^Helimeisterb", -- [9254]
+				"^2685^16^1697056521^337^0^20^447.55^Akurian-Thrall", -- [9255]
+				"^2685^16^1697056963^130^0^20^447.55^Estu", -- [9256]
+				"^2685^16^1697057181^457^1^20^447.62^Extn", -- [9257]
+				"^2688^16^1697649872^0^0^20^447.60^", -- [9258]
+				"^2688^16^1697650119^209^1^20^447.63^Kâzuto", -- [9259]
+				"^2684^16^1697650504^0^0^20^447.58^", -- [9260]
+				"^2684^16^1697650717^311^0^20^447.58^Cadogan", -- [9261]
+				"^2684^16^1697651130^306^0^20^447.58^Edolie", -- [9262]
+				"^2684^16^1697651540^304^0^20^447.58^Akurian-Thrall", -- [9263]
+				"^2684^16^1697651949^114^0^20^447.58^Edolie", -- [9264]
+				"^2684^16^1697652199^428^0^20^447.58^Seblastian-Blackrock", -- [9265]
+				"^2684^16^1697652789^251^0^20^447.66^Kruelio", -- [9266]
+				"^2684^16^1697653167^445^0^20^447.66^Pawx", -- [9267]
+				"^2684^16^1697653737^452^0^20^447.66^Fêng-TwistingNether", -- [9268]
+				"^2684^16^1697654331^459^0^20^447.66^Fenx", -- [9269]
+				"^2684^16^1697654922^323^0^20^447.66^Lukîî", -- [9270]
+				"^2684^16^1697655343^428^1^20^447.66^Kruelio", -- [9271]
+				"^2685^16^1697656609^17^0^20^447.68^Fêng-TwistingNether", -- [9272]
+				"^2685^16^1697656796^485^0^20^447.68^Cronîx", -- [9273]
+				"^2685^16^1697657390^95^0^20^447.68^Seblastian-Blackrock", -- [9274]
+				"^2685^16^1697657584^114^0^20^447.68^Pawx", -- [9275]
+				"^2685^16^1697657791^279^0^20^447.68^Pawx", -- [9276]
+				"^2685^16^1697658166^341^0^20^447.68^Edolie", -- [9277]
+				"^2685^16^1697658599^239^0^20^447.68^Akurian-Thrall", -- [9278]
+				"^2685^16^1697658928^291^0^20^447.68^Helimeisterb", -- [9279]
+				"^2685^16^1697659302^416^0^20^447.68^Cadogan", -- [9280]
+				"^2685^16^1697659820^213^0^20^447.68^Fêng-TwistingNether", -- [9281]
+				"^2685^16^1697660129^93^0^20^447.68^Seblastian-Blackrock", -- [9282]
+				"^2685^16^1697660348^274^0^20^447.68^Fêng-TwistingNether", -- [9283]
+				"^2685^16^1697660732^321^0^20^447.68^Lukîî", -- [9284]
+				"^2685^16^1697661166^352^0^20^447.68^Extn", -- [9285]
+				"^2685^16^1697661551^14^0^20^447.68^Helimeisterb", -- [9286]
+				"^2685^16^1697661727^401^0^20^447.74^Kruelio", -- [9287]
+				"^2685^16^1697662257^222^0^20^447.68^Pawx", -- [9288]
+				"^2685^16^1697662579^456^1^20^447.68^Sanatio", -- [9289]
+				"^2688^16^1698254393^0^0^20^447.48^", -- [9290]
+				"^2688^16^1698255133^209^1^20^447.38^Fêng-TwistingNether", -- [9291]
+				"^2684^16^1698255512^1^0^20^447.51^", -- [9292]
+				"^2684^16^1698255752^291^0^20^447.70^Drakvel", -- [9293]
+				"^2684^16^1698256126^453^0^20^447.70^Pawx", -- [9294]
+				"^2684^16^1698256682^320^0^20^447.69^Seblastian-Blackrock", -- [9295]
+				"^2684^16^1698257105^418^1^20^447.69^Sanfa", -- [9296]
+				"^2685^16^1698257683^0^0^20^447.82^", -- [9297]
+				"^2685^16^1698257984^122^0^20^447.80^Elgönndir", -- [9298]
+				"^2685^16^1698258179^481^0^20^447.80^Helimeisterb", -- [9299]
+				"^2685^16^1698258741^453^1^20^447.80^Muzdanp", -- [9300]
+				"^2682^16^1698259976^159^1^20^447.57^Fêng-TwistingNether", -- [9301]
+				"^2680^16^1698260205^0^0^20^447.57^", -- [9302]
+				"^2680^16^1698260382^375^0^20^447.48^Kâzuto", -- [9303]
+				"^2680^16^1698260844^350^1^20^447.48^Cadogan", -- [9304]
+				"^2687^16^1698262035^0^0^20^447.57^", -- [9305]
+				"^2687^16^1698262306^267^1^20^447.47^Muzdanp", -- [9306]
+				"^2693^16^1698262939^166^0^20^447.46^Unluckyxd", -- [9307]
+				"^2693^16^1698263187^273^1^20^447.46^Antagon", -- [9308]
+				"^2689^16^1698263508^1^0^20^447.55^", -- [9309]
+				"^2689^16^1698263609^4^0^20^447.56^", -- [9310]
+				"^2689^16^1698263872^320^1^20^447.52^Miatra", -- [9311]
+				"^2683^16^1698264447^0^0^20^447.50^", -- [9312]
+				"^2683^16^1698264621^55^0^20^447.50^Elgönndir", -- [9313]
+				"^2683^16^1698264774^308^0^20^447.49^Akurian-Thrall", -- [9314]
+				"^2683^16^1698265220^254^0^20^447.44^Elgönndir", -- [9315]
+				"^2683^16^1698265557^326^1^20^447.50^Korimadge", -- [9316]
+				"^2093^8^1698952264^114^1^5^448.11^Extn", -- [9317]
+				"^2094^8^1698952695^140^1^5^448.11^Elgönndir", -- [9318]
+				"^2095^8^1698953170^129^1^5^448.11^", -- [9319]
+				"^2096^8^1698953509^126^1^5^448.11^", -- [9320]
 			},
-		},
-		["names"] = {
-			[1036] = "Ascendant Lord Obsidius",
-			[1037] = "Beauty",
-			[1677] = "Sadana Bloodfury",
-			[1038] = "Corla, Herald of Twilight",
-			[2063] = "Aggramar",
-			[1040] = "Rom'ogg Bonecrusher",
-			[2584] = "Umbrelskul",
-			[2580] = "Balakar Khan",
-			[1868] = "Patrol Captain Gerdo",
-			[2581] = "Teera and Maruuk",
-			[1042] = "Asaad",
-			[1805] = "Hymdall",
-			[1869] = "Talixae Flamewreath",
-			[2583] = "Telash Greywing",
-			[1043] = "Grand Vizier Ertan",
-			[1041] = "Altairus",
-			[1870] = "Advisor Melandrus",
-			[2585] = "Azureblade",
-			[2590] = "The Primal Council",
-			[1807] = "Fenryr",
-			[1427] = "Jandice Barov",
-			[2587] = "Eranog",
-			[1045] = "Lady Naz'jar",
-			[1808] = "God-King Skovald",
-			[1416] = "Liu Flameheart",
-			[1426] = "Instructor Chillheart",
-			[2606] = "Kokia Blazehoof",
-			[1044] = "Commander Ulthok",
-			[1049] = "Erudax",
-			[1682] = "Ner'zhul",
-			[1815] = "Tirathon Saltheril",
-			[2592] = "Sennarth, The Cold Breath",
-			[2312] = "Trixie & Naeno",
-			[1428] = "Rattlegore",
-			[1688] = "Nhallish",
-			[1046] = "Mindbender Ghur'sha",
-			[2094] = "Council o' Captains",
-			[1429] = "Lilian Voss",
-			[1748] = "Grimrail Enforcers",
-			[1047] = "Ozumat",
-			[2096] = "Lord Harlan Sweete",
-			[1430] = "Darkmaster Gandling",
-			[1749] = "Fleshrender Nok'gar",
-			[1303] = "Gu Cloudstrike",
-			[1414] = "Yan-Zhu the Uncasked",
-			[1053] = "High Prophet Barim",
-			[1750] = "Oshir",
-			[1304] = "Master Snowdrift",
-			[1054] = "Lockmaw",
-			[2436] = "Guardian of the First Ones",
-			[1413] = "Hoptallus",
-			[1050] = "Forgemaster Throngus",
-			[2611] = "Warlord Sargha",
-			[2093] = "Skycap'n Kragg",
-			[2616] = "Gulping Goliath",
-			[1306] = "Taran Zhu",
-			[2434] = "Soulrender Dormazain",
-			[2095] = "Ring of Booty",
-			[2357] = "Kin-Tara",
-			[1817] = "Glazer",
-			[2433] = "The Eye of the Jailer",
-			[2607] = "Raszageth the Storm-Eater",
-			[1754] = "Skulloc, Son of Gruul",
-			[1818] = "Cordana Felsong",
-			[2614] = "Broodkeeper Diurna",
-			[2609] = "Melidrussa Chillworn",
-			[2432] = "Remnant of Ner'zhul",
-			[2610] = "Magmatusk",
-			[2360] = "Kryxis the Voracious",
-			[2356] = "Ventunax",
-			[2361] = "Executor Tarvold",
-			[2612] = "Forgemaster Gorek",
-			[1793] = "Dargrul the Underking",
-			[2613] = "Chargath, Bane of Scales",
-			[2685] = "Scalecommander Sarkareth",
-			[2359] = "Devos, Paragon of Loyalty",
-			[2617] = "Khajin the Unyielding",
-			[2105] = "Coin-Operated Crowd Pummeler",
-			[2684] = "Echo of Neltharion",
-			[2106] = "Azerokk",
-			[1792] = "Naraxas",
-			[2362] = "Grand Proctor Beryllia",
-			[2618] = "Primal Tsunami",
-			[2108] = "Mogul Razdunk",
-			[2363] = "General Kaal",
-			[1441] = "Xin the Weaponmaster",
-			[1679] = "Bonemaw",
-			[2365] = "Gorechop",
-			[2111] = "Elder Leaxa",
-			[1442] = "Trial of the King",
-			[1048] = "Drahga Shadowburner",
-			[1060] = "\"Captain\" Cookie",
-			[2615] = "Watcher Irideus",
-			[2623] = "Kyrakka and Erkhart Stormvein",
-			[2017] = "Viz'aduum the Watcher",
-			[2425] = "Zo'phex the Sentinel",
-			[1052] = "General Husam",
-			[1954] = "Maiden of Virtue",
-			[2112] = "Sporecaller Zancha",
-			[1062] = "Admiral Ripsnarl",
-			[1057] = "High Priestess Azil",
-			[1063] = "Foe Reaper 5000",
-			[2639] = "Terros",
-			[2118] = "Cragmaw the Infested",
-			[2129] = "Gekkan",
-			[2380] = "Echelon",
-			[2635] = "Dathea, Ascended",
-			[1064] = "Glubtok",
-			[2381] = "Lord Chamberlain",
-			[1957] = "Opera Hall",
-			[1960] = "Attumen the Huntsman",
-			[1065] = "Helix Gearbreaker",
-			[2383] = "Hungering Destroyer",
-			[2123] = "Unbound Abomination",
-			[1961] = "Moroes",
-			[2291] = "HK-8 Aerial Oppression Unit",
-			[2418] = "Huntsman Altimor",
-			[1959] = "Mana Devourer",
-			[2257] = "Tussle Tonks",
-			[1832] = "Amalgam of Souls",
-			[2417] = "Stone Legion Generals",
-			[2382] = "Globgrog",
-			[1834] = "Smashspite the Hateful",
-			[1833] = "Ilysanna Ravencrest",
-			[1836] = "Archdruid Glaidalis",
-			[2384] = "Doctor Ickus",
-			[2512] = "Vigilant Guardian",
-			[1069] = "Baron Ashbury",
-			[2258] = "K.U.-J.0.",
-			[2386] = "Stradama Margrave",
-			[2259] = "Machinist's Garden",
-			[1070] = "Baron Silverlaine",
-			[2260] = "King Mechagon",
-			[2388] = "Amarth, The Harvester",
-			[1071] = "Commander Springvale",
-			[2389] = "Surgeon Stitchflesh",
-			[2387] = "Blightbone",
-			[2390] = "Nalthor the Rimebinder",
-			[2391] = "An Affront of Challengers",
-			[1837] = "Oakheart",
-			[2392] = "Mistcaller",
-			[1965] = "Shade of Medivh",
-			[1706] = "The Butcher",
-			[1073] = "Lord Walden",
-			[1055] = "Siamat",
-			[2394] = "The Manastorms",
-			[1835] = "Lord Kur'talos Ravencrest",
-			[1839] = "Shade of Xavius",
-			[1720] = "Brackenspore",
-			[2396] = "Mueh'zala",
-			[2397] = "Ingra Maloch",
-			[1075] = "Anraphet",
-			[1051] = "General Umbriss",
-			[2398] = "Shriekwing",
-			[1838] = "Dresaron",
-			[2399] = "Sludgefist",
-			[2364] = "Kul'tharok",
-			[2400] = "Dealer Xy'exa",
-			[1715] = "Rocketspark and Borka",
-			[2401] = "Halkias, the Sin-Stained Goliath",
-			[2529] = "Halondrus the Reclaimer",
-			[2402] = "Sun King's Salvation",
-			[2403] = "High Adjudicator Aleez",
-			[1078] = "Rajh",
-			[1058] = "Ozruk",
-			[2404] = "Mordretha",
-			[1964] = "The Curator",
-			[2405] = "Artificer Xy'mox",
-			[1056] = "Corborus",
-			[2406] = "Lady Inerva Darkvein",
-			[1080] = "Temple Guardian Anhuur",
-			[2407] = "Sire Denathrius",
-			[1079] = "Setesh",
-			[2395] = "Hakkar, the Soulflayer",
-			[2366] = "Xav the Unfallen",
-			[1081] = "Vanessa VanCleef",
-			[2537] = "The Jailer",
-			[1719] = "Twin Ogron",
-			[2107] = "Rixxa Fluxfume",
-			[1439] = "Sha of Doubt",
-			[2539] = "Lihuvim, Principal Architect",
-			[2412] = "The Council of Blood",
-			[2540] = "Dausegne, the Fallen Oracle",
-			[1072] = "Lord Godfrey",
-			[2393] = "Tred'ova",
-			[1721] = "Kargath Bladefist",
-			[2542] = "Skolex, the Insatiable Ravener",
-			[1305] = "Sha of Violence",
-			[2543] = "Lords of Dread",
-			[1722] = "Tectus, The Living Mountain",
-			[2544] = "Prototype Pantheon",
-			[1850] = "Inquisitor Tormentorum",
-			[2290] = "King Gobbamak",
-			[1723] = "Ko'ragh",
-			[2546] = "Anduin Wrynn",
-			[2419] = "Timecap'n Hooktail",
-			[2292] = "Gunker",
-			[2385] = "Domina Venomblade",
-			[1705] = "Imperator Mar'gok",
-			[2636] = "The Raging Tempest",
-			[2549] = "Rygelon",
-			[2422] = "Kel'Thuzad",
-			[2637] = "Granyth",
-			[2423] = "The Tarragrue",
-			[1059] = "Slabhide",
-			[2424] = "Mailroom Mayhem",
-			[1790] = "Rokmora",
-			[2680] = "Rashok, the Elder",
-			[2553] = "Artificer Xy'mox",
-			[2426] = "Hylbrande",
-			[1791] = "Ularogg Cragshaper",
-			[2682] = "Assault of the Zaqali",
-			[2555] = "The Lost Dwarves",
-			[2683] = "Magmorax",
-			[2556] = "Bromach",
-			[2429] = "The Nine",
-			[2557] = "Sentinel Talondras",
-			[2430] = "Painsmith Raznal",
-			[2558] = "Emberon",
-			[2431] = "Fatescribe Roh-Kalo",
-			[2559] = "Chrono-Lord Deios",
-			[2687] = "The Amalgamation Chamber",
-			[2358] = "Oryphrion",
-			[2688] = "Kazzara, the Hellforged",
-			[1412] = "Ook-Ook",
-			[2689] = "The Vigilant Steward, Zskarn",
-			[2562] = "Vexamus",
-			[2435] = "Sylvanas Windrunner",
-			[2563] = "Overgrown Ancient",
-			[1732] = "Nitrogg Thundertower",
-			[2564] = "Crawth",
-			[2437] = "So'azmi",
-			[2565] = "Echo of Doragosa",
-			[2693] = "The Forgotten Experiments",
-			[2605] = "Kurog Grimtotem",
-			[1816] = "Ash'Golm",
-			[2567] = "Gutshot",
-			[2440] = "Myza's Oasis",
-			[2568] = "Treemouth",
-			[2441] = "The Grand Menagerie",
-			[2569] = "Decatriarch Wratheye",
-			[2442] = "So'leah",
-			[2570] = "Hackclaw's War-Band",
-			[1809] = "Odyn",
-			[1417] = "Lorewalker Stonestep",
-			[1736] = "Skylord Tovra",
-			[1806] = "Hyrja",
-			[2582] = "Leymor",
-			[1418] = "Wise Mari",
-			[1039] = "Karsh Steelbender",
 		},
 	},
 	["InviteTool"] = {
-		["Words"] = "inv invite 123",
 		["AutoRaidDiff"] = true,
+		["Words"] = "inv invite 123",
 		["AutoPromote"] = true,
-		["ListInv1"] = "Twistedw\nScottstb\nNickspriest\nDrineytwo\nNoripalb\nMaeveychi\nAdeen\nVilwarr\nAtrocityw\nLipwarrior\nZubang\nGoopwar\nJpcharge\nBenw\nImpecs\nAtlasdumpy\nOnehealplzz\nSoupshop\nImfiredup\nEricsdruid\nBirchon\nKíngflylock",
+		["ListInv3"] = "Twistedm\nScottbrexit\nCerepriest\nDriney\nCiory\nMaeveythree\nAtrocity\nChilldrills\nImpecblue\nJpconetrick\nTrillshaman\nBirchout\nFloormopzz\nKíngflyhunt\nMalarkus\nBucketbill\nEricjunior\nLiphunt\nGoopdtwo\nBenimjeans\nThdlock\nMallark",
 		["InvByChat"] = true,
 		["RaidDiff"] = 16,
 		["PromoteRank"] = 2,
-		["LootThreshold"] = 2,
+		["ListInv1"] = "Twistedw\nScottstb\nNickspriest\nDrineytwo\nNoripalb\nMaeveychi\nAdeen\nVilwarr\nAtrocityw\nLipwarrior\nZubang\nGoopwar\nJpcharge\nBenw\nImpecs\nAtlasdumpy\nOnehealplzz\nSoupshop\nImfiredup\nEricsdruid\nBirchon\nKíngflylock",
 		["ListInv2"] = "Twistedm\nScottbrexit\nCerepriest\nDriney\nCiory\nMaeveythree\nAtrocity\nChilldrills\nImpecblue\nJpconetrick\nTrillshaman\nBirchout\nFloormopzz\nKíngflyhunt\nMallark\nEricjunior\nLiphunt\nGoopdtwo\nBabombabam\nThdlock",
 		["Ranks"] = {
 			true, -- [1]
@@ -9443,7 +10681,7 @@ local MRTDump = {
 		["MasterLooters"] = "",
 		["LootMethod"] = "group",
 		["PromoteNames"] = "Edolie Antagon Sanatio Sanfa",
-		["ListInv3"] = "Twistedm\nScottbrexit\nCerepriest\nDriney\nCiory\nMaeveythree\nAtrocity\nChilldrills\nImpecblue\nJpconetrick\nTrillshaman\nBirchout\nFloormopzz\nKíngflyhunt\nMalarkus\nBucketbill\nEricjunior\nLiphunt\nGoopdtwo\nBenimjeans\nThdlock\nMallark",
+		["LootThreshold"] = 2,
 		["Rank"] = 1,
 	},
 	["ExCD2"] = {
@@ -9477,27 +10715,27 @@ local MRTDump = {
 			["77764;3"] = 3,
 			["47788;3"] = 1,
 			["102342;5"] = 1,
-			["108199;2"] = 3,
+			["6940;1"] = 1,
 			["51052;4"] = 1,
 			["31821;2"] = 2,
-			["6940;3"] = 1,
+			["64382;4"] = 1,
 			["73325;1"] = 1,
 			["33206;2"] = 1,
 			["98008;4"] = 1,
 			["633;1"] = 1,
 			["51052;1"] = 1,
-			["1022;4"] = 1,
-			["10060;3"] = 1,
-			["64382;1"] = 1,
+			["64382;2"] = 1,
 			["1044;2"] = 1,
+			["64382;1"] = 1,
+			["10060;3"] = 1,
+			["3411;4"] = 1,
 			["1044;3"] = 1,
 			["1022;2"] = 1,
-			["3411;4"] = 1,
 			["64382;3"] = 1,
-			["64382;2"] = 1,
+			["1022;4"] = 1,
 			["3411;3"] = 1,
-			["64382;4"] = 1,
-			["6940;1"] = 1,
+			["6940;3"] = 1,
+			["108199;2"] = 3,
 			["1044;1"] = 1,
 		},
 		["ReverseSorting"] = true,
@@ -9505,15 +10743,15 @@ local MRTDump = {
 			[102342] = 25,
 			[98008] = 5,
 			[116849] = 20,
-			[207399] = 35,
+			[73325] = 100,
 			[196718] = 0,
 			[6940] = 45,
 			[97462] = 0,
-			[33206] = 0,
+			[51052] = 10,
 			[1022] = 55,
 			[47788] = 5,
-			[51052] = 10,
-			[73325] = 100,
+			[33206] = 0,
+			[207399] = 35,
 		},
 		["CDE"] = {
 			[102342] = true,
@@ -9523,264 +10761,389 @@ local MRTDump = {
 			[6940] = true,
 			[1022] = true,
 			[47788] = true,
-			[33206] = true,
 			[51052] = true,
+			[33206] = true,
 		},
 		["enabled"] = true,
 		["gnGUIDs"] = {
+			["Steellol-Ragnaros"] = 72,
 			["Elrindir-Aman'thul"] = 103,
-			["Idioteque-Sylvanas"] = 103,
-			["Mazz-Zul'jin"] = 265,
-			["Morpheusmage"] = 62,
-			["Lukîî"] = 253,
-			["Ashrge-TarrenMill"] = 261,
-			["Zorahnus-Khaz'goroth"] = 266,
-			["Jhonî-TarrenMill"] = 258,
+			["Sonnaxt-Khaz'goroth"] = 66,
+			["Kurop-Thrall"] = 258,
+			["Socava-Kazzak"] = 577,
 			["Múng-Stormscale"] = 252,
-			["Níce"] = 269,
 			["Dom-Blackmoore"] = 72,
-			["Arrowhaed-Eonar"] = 253,
-			["Quallenfisch-Arthas"] = 577,
-			["Holgerdk-TarrenMill"] = 72,
-			["Zootelbaer-Blackmoore"] = 264,
-			["Imidlass"] = 103,
-			["Judgêmental"] = 70,
-			["Illidario-Pozzodell'Eternità"] = 577,
-			["Yiipyiip-Hyjal"] = 268,
-			["Шоу-Гордунни"] = 262,
+			["Rikaé-Antonidas"] = 260,
+			["Tÿri"] = 263,
+			["Nichaba-Stormscale"] = 261,
 			["Nerytha-Antonidas"] = 266,
-			["Leergut"] = 258,
 			["Deadnott-Sanguino"] = 264,
 			["Schlêîchdîch-Thrall"] = 259,
 			["Forkspoon-ArgentDawn"] = 70,
-			["Cadogan"] = 252,
-			["Socava-Kazzak"] = 577,
+			["Tdo-Thrall"] = 261,
 			["Shadballs-TarrenMill"] = 64,
-			["Morgulis-Stormreaver"] = 260,
-			["Falkw-Kazzak"] = 266,
 			["Týrs-DunMorogh"] = 70,
-			["Siva-Thrall"] = 66,
-			["Dpxdru"] = 102,
-			["Nostradalex"] = 267,
-			["Tÿri"] = 263,
-			["Asklepias-Blackrock"] = 257,
-			["Lamacunior-Blackrock"] = 253,
-			["Holicx"] = 261,
-			["Тохикс-Гордунни"] = 256,
-			["Kaydormu-TwistingNether"] = 1467,
+			["Drynwyl-Dethecus"] = 251,
+			["Iliketurtois-Silvermoon"] = 70,
+			["Èleven-Kazzak"] = 265,
 			["Broner-Eredar"] = 254,
-			["Eldidk-BurningLegion"] = 250,
-			["Marvolo-Gul'dan"] = 105,
-			["Hhannkey-Hyjal"] = 102,
-			["Nutsnack-TarrenMill"] = 102,
 			["Nórdos"] = 105,
-			["Mistywaves-Stormscale"] = 268,
-			["Wrolfo-Sanguino"] = 267,
-			["Moonwrath-Nemesis"] = 267,
-			["Dismar-Ragnaros"] = 261,
-			["Dwagonuwu"] = 1468,
-			["Itsmagic"] = 64,
+			["Kâmeron"] = 105,
+			["Flameboyant-Bloodhoof"] = 1467,
 			["Vortemix-TarrenMill"] = 261,
 			["Flöl-Blackmoore"] = 269,
 			["Ageander-Eredar"] = 253,
-			["Antagon"] = 268,
-			["Vodraalus-Zul'jin"] = 256,
 			["Skaylord-Dalaran"] = 577,
 			["Zeu-Malfurion"] = 262,
-			["Huntbaar-BurningLegion"] = 254,
-			["Legôlàs-Blackmoore"] = 253,
+			["Tchar-Drak'thul"] = 251,
 			["Înah-Hyjal"] = 66,
 			["Mendingdots-Kazzak"] = 258,
-			["Earth Spirit"] = 269,
 			["Exuro-Ragnaros"] = 1468,
-			["Spreist-Kazzak"] = 258,
-			["Iliketurtois-Silvermoon"] = 70,
-			["Nichaba-Stormscale"] = 261,
-			["Hulkong-Stormscale"] = 72,
-			["Dracoro-Forscherliga"] = 64,
-			["Heallmeup-Kazzak"] = 102,
-			["Kâmeron"] = 105,
-			["Flameboyant-Bloodhoof"] = 1467,
-			["Edolie"] = 257,
-			["Headshotplx-Blackrock"] = 253,
-			["Maligawa-Nemesis"] = 267,
-			["Рэдкор-Ревущийфьорд"] = 252,
 			["Tristantotem-Hyjal"] = 263,
-			["Drakvel"] = 1467,
+			["Face-TarrenMill"] = 267,
 			["Salis"] = 257,
-			["Frostyjaw-Draenor"] = 64,
-			["Noañgel"] = 257,
+			["Hornblende"] = 1468,
 			["Lorital-Blackrock"] = 63,
 			["Дибето-Ревущийфьорд"] = 253,
-			["Nalan-Gul'dan"] = 257,
-			["Tchar-Drak'thul"] = 251,
 			["Súsanna-Draenor"] = 253,
 			["Солонна-СвежевательДуш"] = 64,
-			["Night-Draenor"] = 252,
 			["Skulduggery-SteamwheedleCartel"] = 266,
-			["Nicetotems-Blackrock"] = 263,
-			["Knopsen-Blackrock"] = 253,
+			["Blackdorud-Skullcrusher"] = 1468,
 			["Xorash-Destromath"] = 64,
 			["Комббас-Ревущийфьорд"] = 267,
 			["Mialuna-Hyjal"] = 263,
-			["Foxlol-Blackrock"] = 253,
-			["Héfira-Ysondre"] = 252,
-			["Endovena-Pozzodell'Eternità"] = 102,
+			["Öwlf-Blackrock"] = 102,
+			["Hurtsshaman"] = 264,
 			["Akanîe"] = 1467,
-			["Kisore-Blackrock"] = 267,
-			["Alteffearbzz"] = 266,
-			["Maagíka-Magtheridon"] = 258,
-			["Servusx"] = 1467,
-			["Lisasch-Blackrock"] = 258,
+			["Sadorak-Nefarian"] = 251,
+			["Гориндур-Галакронд"] = 262,
 			["Sylphreana-Draenor"] = 66,
-			["Hornblende"] = 1468,
 			["Mórríoghaín-Arathor"] = 260,
-			["Cronìx"] = 581,
-			["Loica-TwistingNether"] = 254,
-			["Veloudinos-TwistingNether"] = 264,
 			["Bayoyajo-BurningLegion"] = 269,
-			["Kâzuto"] = 577,
-			["Nacornuta-Nemesis"] = 581,
-			["Mani-ArgentDawn"] = 102,
-			["Медрэйн-СвежевательДуш"] = 257,
-			["Blackdorud-Skullcrusher"] = 1468,
-			["Blueana-Thrall"] = 267,
+			["Histopal-Eredar"] = 70,
+			["Kisscac-Archimonde"] = 64,
 			["Loszorro-Blackrock"] = 266,
 			["Ayenn-Kazzak"] = 577,
 			["Popyto-Draenor"] = 253,
-			["Deathheaven-TarrenMill"] = 577,
+			["Paçârîslî-TwistingNether"] = 252,
 			["Bullybull-Stormscale"] = 66,
-			["Teesticle"] = 102,
 			["Akunda-Stormreaver"] = 1467,
 			["Mesut"] = 267,
 			["Ixdre-C'Thun"] = 268,
 			["Будувеликим-СвежевательДуш"] = 251,
 			["Kletom-Frostmourne"] = 62,
+			["Mollendk-TarrenMill"] = 250,
+			["Norrit-Arygos"] = 1467,
+			["Gigawrath-Kazzak"] = 70,
+			["Hornydragon-ArgentDawn"] = 268,
+			["Buring-TarrenMill"] = 252,
+			["Frozwa-Draenor"] = 70,
+			["Sadienw-ArgentDawn"] = 63,
+			["Jazzipriest"] = 256,
+			["Sakentank-Kazzak"] = 70,
+			["Níce"] = 269,
+			["Caeruleis-Destromath"] = 1467,
+			["Dpxevoker"] = 1473,
+			["Jaggedpaw"] = 257,
+			["Exedk-Blackrock"] = 250,
+			["Cronîx"] = 252,
+			["Jaaxn-Blackmoore"] = 71,
+			["Miriwood"] = 63,
+			["Modoreddo"] = 72,
+			["Seik-Zul'jin"] = 254,
+			["Stewschonkfu-Draenor"] = 270,
+			["Sariphine-Arthas"] = 70,
+			["Kèz-Trollbane"] = 105,
+			["Foxythingz-Doomhammer"] = 71,
+			["Röschtidrood-Blackmoore"] = 105,
+			["Psykomini-TwistingNether"] = 264,
+			["Kill-Nathrezim"] = 253,
+			["Schnickfitzi-Eredar"] = 577,
+			["Matiasek-BurningLegion"] = 71,
+			["Totemtôni-Kazzak"] = 264,
+			["Elillidano"] = 577,
+			["Zeraspin-TarrenMill"] = 269,
+			["Dajenda-Arygos"] = 102,
+			["Vnvqt-TwistingNether"] = 251,
+			["Mogúsh-Kazzak"] = 73,
+			["Gïã-Hyjal"] = 577,
+			["Salvatìon-Ravencrest"] = 256,
+			["Ariqt-Kazzak"] = 72,
+			["Capsslock-Silvermoon"] = 267,
+			["Yttrin-Thrall"] = 1468,
+			["Beermancer-Blackrock"] = 270,
+			["Marvolo-Gul'dan"] = 105,
+			["Venixya-Ravencrest"] = 263,
+			["Valhâlla-Blackrock"] = 268,
+			["Ísthar-Sanguino"] = 72,
+			["Minksie-Draenor"] = 105,
+			["Sarcasmder-TarrenMill"] = 263,
+			["Beastcall-Tyrande"] = 253,
+			["Demoisback-Ysondre"] = 267,
+			["Матрын-СвежевательДуш"] = 250,
+			["Lightfooted-TwistingNether"] = 70,
+			["Lynariel-Draenor"] = 258,
+			["Itzel-Al'Akir"] = 70,
+			["Shirtpants"] = 72,
+			["Noeyebeamrdy"] = 577,
+			["Ralekdab-Hyjal"] = 62,
+			["Vodahmin-Blackrock"] = 64,
+			["Bloodanger-ChamberofAspects"] = 252,
+			["Kmxk-Mannoroth"] = 102,
+			["Ricosaurus-ArgentDawn"] = 1467,
+			["Holgerdk-TarrenMill"] = 72,
+			["Idioteque-Sylvanas"] = 103,
+			["Mazz-Zul'jin"] = 265,
+			["Юрбыц-ПиратскаяБухта"] = 72,
+			["Lammor-Arathi"] = 65,
+			["Ashrge-TarrenMill"] = 261,
+			["Zorahnus-Khaz'goroth"] = 266,
+			["Âdept-TarrenMill"] = 72,
+			["Nohj-Kazzak"] = 1473,
+			["Kruelio"] = 105,
+			["Lazozero-Stormscale"] = 102,
+			["Arrowhaed-Eonar"] = 253,
+			["Huntbaar-BurningLegion"] = 254,
+			["Gungñir"] = 267,
+			["Zootelbaer-Blackmoore"] = 264,
+			["Imidlass"] = 103,
+			["Antagon"] = 268,
+			["Illidario-Pozzodell'Eternità"] = 577,
+			["Лоногат-Ревущийфьорд"] = 62,
+			["Шоу-Гордунни"] = 262,
+			["Mistywaves-Stormscale"] = 268,
+			["Lukîî"] = 254,
+			["Itsmagic"] = 64,
+			["Lexz-TwistingNether"] = 64,
+			["Dogshíthorse-TwistingNether"] = 65,
+			["Korimadge"] = 261,
+			["Винома-Ревущийфьорд"] = 261,
+			["Тэйлатор-Ревущийфьорд"] = 263,
+			["Vodraalus-Zul'jin"] = 256,
+			["Zmajetina-TwistingNether"] = 1473,
+			["Cronìx"] = 581,
+			["Siva-Thrall"] = 66,
+			["Guccigut"] = 262,
+			["Nalan-Gul'dan"] = 257,
+			["Sivaa-Frostwolf"] = 258,
+			["Asklepias-Blackrock"] = 257,
+			["Drkcóòkie-TarrenMill"] = 105,
+			["Kyôshi-Zenedar"] = 268,
+			["Тохикс-Гордунни"] = 256,
+			["Kaydormu-TwistingNether"] = 1467,
+			["Liyana-TwistingNether"] = 581,
+			["Bornbad-Drak'thul"] = 258,
+			["Berrybrew-Doomhammer"] = 250,
+			["Hhannkey-Hyjal"] = 102,
+			["Chaossins-Blackmoore"] = 266,
+			["Heallmeup-Kazzak"] = 102,
+			["Writings-Ragnaros"] = 262,
+			["Wrolfo-Sanguino"] = 267,
+			["Hurtsevo"] = 1468,
+			["Dismar-Ragnaros"] = 261,
+			["Dwagonuwu"] = 1468,
+			["Griindelwald-Thrall"] = 64,
+			["Jupat-Aman'thul"] = 70,
+			["Falkw-Kazzak"] = 266,
+			["Saerom-TwistingNether"] = 253,
+			["Mckaiver-Khaz'goroth"] = 581,
+			["Öwlf"] = 102,
+			["Noañgel"] = 257,
+			["Legôlàs-Blackmoore"] = 253,
+			["Zurqhan-Draenor"] = 71,
+			["Vudustyle-Kazzak"] = 103,
+			["Rivass-Thrall"] = 66,
+			["Maagíka-Magtheridon"] = 258,
+			["Morpheusmage"] = 64,
+			["Tyinne-Mal'Ganis"] = 256,
+			["Moonwrath-Nemesis"] = 267,
+			["Influhancer"] = 262,
+			["Tanariâ-Khaz'goroth"] = 105,
+			["Sovelion"] = 72,
+			["Krullr-Drak'thul"] = 104,
+			["Elgönndir"] = 253,
+			["Adalee-TwistingNether"] = 70,
+			["Ngamahu-Antonidas"] = 253,
+			["Servusx"] = 1467,
+			["Headshotplx-Blackrock"] = 253,
+			["Maligawa-Nemesis"] = 267,
+			["Loica-TwistingNether"] = 254,
+			["Härrimonk-Blackrock"] = 269,
+			["Drakvel"] = 1467,
+			["Fêng-TwistingNether"] = 71,
+			["Acmaster-Stormscale"] = 70,
+			["Sanusi-Thrall"] = 263,
+			["Karishi-ChamberofAspects"] = 270,
+			["Lamacunior-Blackrock"] = 253,
+			["Naegapaladin-Draenor"] = 66,
+			["Lisasch-Blackrock"] = 258,
+			["Hulkong-Stormscale"] = 72,
+			["Icawshavoc-Draenor"] = 577,
+			["Nacornuta-Nemesis"] = 581,
+			["Night-Draenor"] = 252,
+			["Nicetotems-Blackrock"] = 263,
+			["Mellatha-Ragnaros"] = 266,
+			["Ayrïlia-Ysondre"] = 104,
+			["Øutblast-Silvermoon"] = 254,
+			["Yiipyiip-Hyjal"] = 268,
+			["Judgêmental"] = 70,
+			["Héfira-Ysondre"] = 252,
+			["Nènad-Haomarush"] = 72,
+			["Zannys-Draenor"] = 258,
+			["Kisore-Blackrock"] = 267,
+			["Extn"] = 1473,
+			["Towliè-Perenolde"] = 270,
+			["Vijox-Blackrock"] = 269,
+			["Milanny-Gorgonnash"] = 261,
+			["Рэдкор-Ревущийфьорд"] = 252,
+			["Blueráy-Arygos"] = 103,
+			["Alteffearbzz"] = 266,
+			["Schroox-Draenor"] = 72,
+			["Knopsen-Blackrock"] = 253,
+			["Nândrâ"] = 62,
+			["Unluckyxd"] = 577,
+			["Kâzuto"] = 577,
+			["Scrùbby-TwistingNether"] = 262,
+			["Loganjackson-Ragnaros"] = 261,
+			["Медрэйн-СвежевательДуш"] = 257,
+			["Dracoro-Forscherliga"] = 64,
+			["Blueana-Thrall"] = 267,
+			["Dwagondolie"] = 1468,
+			["Drakjävél-Kazzak"] = 1468,
+			["Endovena-Pozzodell'Eternità"] = 102,
+			["Deathheaven-TarrenMill"] = 577,
+			["Wokeindy-Blackrock"] = 1473,
+			["Teesticle"] = 102,
+			["Карттикея-Ревущийфьорд"] = 66,
+			["Morpheusele"] = 263,
+			["Muzdan"] = 266,
+			["Scayley-Draenor"] = 1467,
+			["Kysebook-Ragnaros"] = 252,
 			["Dinglstation-TarrenMill"] = 1467,
 			["Rootx-TwistingNether"] = 258,
 			["Drakthari-Aggra(Português)"] = 1468,
 			["Сердцебит-СвежевательДуш"] = 70,
-			["Лоногат-Ревущийфьорд"] = 62,
+			["Muzdanp"] = 258,
 			["Lockbergen"] = 267,
-			["Sheamer-Silvermoon"] = 1468,
+			["Barimanalow-Kazzak"] = 256,
 			["Miatra"] = 70,
-			["Lightfooted-TwistingNether"] = 70,
-			["Buring-TarrenMill"] = 252,
+			["Conina-Arygos"] = 577,
 			["Infinitefury-Stormscale"] = 72,
+			["Melon-Frostwolf"] = 270,
 			["Сангвиний-СвежевательДуш"] = 250,
-			["Zannys-Draenor"] = 258,
-			["Nyøka"] = 258,
-			["Furyprotects-Kazzak"] = 66,
-			["Sadorak-Nefarian"] = 251,
-			["Itzel-Al'Akir"] = 70,
-			["Sciz"] = 262,
-			["Sakentank-Kazzak"] = 70,
+			["Tamós-Khaz'goroth"] = 264,
+			["Nyøka"] = 257,
+			["Светбород-Гордунни"] = 264,
+			["Fullmétal-Arygos"] = 261,
+			["Sanfa"] = 264,
+			["Silversan-Draenor"] = 70,
+			["Nutsnack-TarrenMill"] = 102,
 			["Shathur"] = 267,
 			["Helimeisterb"] = 62,
-			["Caeruleis-Destromath"] = 1467,
+			["Patras-Eredar"] = 70,
 			["Büxenschiete-Antonidas"] = 266,
-			["Jaggedpaw"] = 257,
-			["Exedk-Blackrock"] = 250,
-			["Cronîx"] = 252,
-			["Гориндур-Галакронд"] = 262,
-			["Icawshavoc-Draenor"] = 577,
-			["Jaaxn-Blackmoore"] = 71,
+			["Frostyjaw-Draenor"] = 64,
+			["Earth Spirit"] = 269,
+			["Pamxh-Blackrock"] = 1448,
+			["Fire Spirit"] = 269,
+			["Leergut"] = 258,
+			["Gódlock-Kazzak"] = 267,
 			["Manirá-Thrall"] = 70,
-			["Morpheusele"] = 263,
-			["Acmaster-Stormscale"] = 70,
+			["Eldidk-BurningLegion"] = 250,
+			["Doomvolker-TwistingNether"] = 1467,
 			["Stonêcold-Garrosh"] = 250,
-			["Seik-Zul'jin"] = 254,
+			["Krítlock"] = 267,
 			["Scartland-Ysondre"] = 72,
-			["Histopal-Eredar"] = 70,
-			["Bubbledan-Pozzodell'Eternità"] = 577,
-			["Paçârîslî-TwistingNether"] = 252,
+			["Polleviable-Kazzak"] = 258,
+			["Khaleesisham"] = 264,
+			["Mani-ArgentDawn"] = 102,
 			["Guroc-TwistingNether"] = 71,
-			["Kysebook-Ragnaros"] = 252,
+			["Грязефмяк-Ревущийфьорд"] = 581,
 			["Docholiday-Destromath"] = 257,
-			["Карттикея-Ревущийфьорд"] = 66,
+			["Dreamblast-Kazzak"] = 63,
 			["Tranqmonk-Blackrock"] = 269,
-			["Röschtidrood-Blackmoore"] = 105,
-			["Psykomini-TwistingNether"] = 264,
+			["Sighthe-TwistingNether"] = 63,
+			["Fôôlin"] = 254,
 			["Junnycz-Drak'thul"] = 64,
 			["Ðaddý-Kazzak"] = 72,
 			["Gortmog-Nemesis"] = 258,
-			["Silversan-Draenor"] = 70,
-			["Mellatha-Ragnaros"] = 266,
-			["Patras-Eredar"] = 70,
-			["Gigawrath-Kazzak"] = 70,
-			["Sighthe-TwistingNether"] = 63,
-			["Kill-Nathrezim"] = 253,
-			["Fullmétal-Arygos"] = 261,
-			["Fire Spirit"] = 269,
-			["Светбород-Гордунни"] = 264,
-			["Matiasek-BurningLegion"] = 71,
-			["Sanatio"] = 66,
-			["Scayley-Draenor"] = 1467,
-			["Griindelwald-Thrall"] = 64,
-			["Elillidano"] = 577,
-			["Estu"] = 65,
-			["Miriwood"] = 63,
-			["Сестрёнкахил-Гордунни"] = 257,
-			["Plkplkplk-Silvermoon"] = 72,
-			["Boltas-Blackrock"] = 254,
-			["Loganjackson-Ragnaros"] = 261,
-			["Gódlock-Kazzak"] = 267,
-			["Симотти-Ревущийфьорд"] = 1468,
-			["Schroox-Draenor"] = 72,
-			["Грязефмяк-Ревущийфьорд"] = 581,
-			["Mogúsh-Kazzak"] = 73,
-			["Foxythingz-Doomhammer"] = 71,
-			["Нормилфа-Ревущийфьорд"] = 266,
-			["Towliè-Perenolde"] = 270,
-			["Moonforg-TwistingNether"] = 105,
-			["Ayrïlia-Ysondre"] = 104,
-			["Majáka"] = 258,
-			["Salvatìon-Ravencrest"] = 256,
-			["Xplosiv-TwistingNether"] = 270,
-			["Capsslock-Silvermoon"] = 267,
-			["Sanfa"] = 264,
-			["Valhâlla-Blackrock"] = 268,
-			["Beermancer-Blackrock"] = 270,
-			["Sulmthu-BurningLegion"] = 267,
-			["Gundersen-TarrenMill"] = 72,
-			["Rrazhunt-Hyjal"] = 255,
-			["Naegapaladin-Draenor"] = 66,
-			["Ironstrike-Gul'dan"] = 264,
-			["Doomvolker-TwistingNether"] = 1467,
-			["Venixya-Ravencrest"] = 263,
-			["Fôôlin"] = 254,
-			["Terkhet-Pozzodell'Eternità"] = 70,
-			["Pawx"] = 266,
-			["Sigurbirna-TarrenMill"] = 577,
-			["Minksie-Draenor"] = 105,
-			["Shamjar-TarrenMill"] = 262,
-			["Saerom-TwistingNether"] = 253,
-			["Sarcasmder-TarrenMill"] = 263,
-			["Beastcall-Tyrande"] = 253,
-			["Demoisback-Ysondre"] = 267,
-			["Hunimpala-Blackmoore"] = 66,
-			["Ugruuk-Baelgun"] = 262,
-			["Palabetter-KhazModan"] = 70,
-			["Monsieurpaté-Ysondre"] = 65,
+			["Pamw-Blackrock"] = 71,
 			["Hotmamajune-TarrenMill"] = 257,
-			["Sariphine-Arthas"] = 70,
-			["Blueráy-Arygos"] = 103,
-			["Lynariel-Draenor"] = 258,
-			["Reckiller-Draenor"] = 266,
-			["Kèz-Trollbane"] = 105,
-			["Винома-Ревущийфьорд"] = 261,
-			["Shirtpants"] = 72,
-			["Xtrong-Agamaggan"] = 577,
-			["Niwea-Drak'thul"] = 70,
+			["Majáka"] = 258,
+			["Entelligans-Thrall"] = 62,
+			["Veloudinos-TwistingNether"] = 264,
 			["Wildpaw"] = 253,
+			["Zognaff-Khaz'goroth"] = 263,
+			["Furyprotects-Kazzak"] = 66,
+			["Sebbop-Antonidas"] = 258,
+			["Gundersen-TarrenMill"] = 72,
+			["Bubbledan-Pozzodell'Eternità"] = 577,
+			["Hurtsevo-Eredar"] = 1473,
+			["Ochsford-Thrall"] = 104,
+			["Spreist-Kazzak"] = 258,
+			["Estu"] = 65,
+			["Moonforg-TwistingNether"] = 105,
+			["Wanish"] = 577,
+			["Nezys-Thrall"] = 263,
+			["Boltas-Blackrock"] = 254,
+			["Palabetter-KhazModan"] = 70,
+			["Anaheat-Sanguino"] = 102,
+			["Симотти-Ревущийфьорд"] = 1468,
+			["Shamjar-TarrenMill"] = 262,
+			["Plkplkplk-Silvermoon"] = 72,
+			["Нормилфа-Ревущийфьорд"] = 266,
+			["Dpxdru"] = 104,
+			["Shayol-Thrall"] = 577,
+			["Niwea-Drak'thul"] = 70,
+			["Tzha-Uldum"] = 261,
+			["Fenx"] = 269,
+			["Sanatio"] = 66,
+			["Kaarun-TwistingNether"] = 102,
+			["Xplosiv-TwistingNether"] = 270,
+			["Shímanoú-Blackrock"] = 70,
+			["Pawxx-Blackmoore"] = 103,
+			["Valyrose-Arygos"] = 266,
+			["Hunimpala-Blackmoore"] = 66,
+			["Sulmthu-BurningLegion"] = 267,
+			["Yesiamback-TarrenMill"] = 250,
+			["Rrazhunt-Hyjal"] = 255,
+			["Gumbill-Mug'thol"] = 265,
+			["Ironstrike-Gul'dan"] = 264,
+			["Hitzewelle-Frostwolf"] = 1467,
+			["Quallenfisch-Arthas"] = 577,
+			["Kazgot-Uldum"] = 264,
+			["Terkhet-Pozzodell'Eternità"] = 70,
+			["Fengoran-Blackmoore"] = 1467,
+			["Sigurbirna-TarrenMill"] = 577,
+			["Windfuryjr-Blackmoore"] = 263,
+			["Holicx"] = 261,
+			["Сестрёнкахил-Гордунни"] = 257,
+			["Kyykkyviini-Stormreaver"] = 1473,
 			["Azermi-TarrenMill"] = 70,
-			["Noeyebeamrdy"] = 577,
-			["Ralekdab-Hyjal"] = 62,
-			["Vodahmin-Blackrock"] = 64,
-			["Jupat-Aman'thul"] = 70,
-			["Âdept-TarrenMill"] = 72,
-			["Bloodanger-ChamberofAspects"] = 252,
-			["Kmxk-Mannoroth"] = 102,
+			["Oewlf"] = 102,
+			["Cytix-TwistingNether"] = 102,
+			["Ugruuk-Baelgun"] = 262,
+			["Toucq-TwistingNether"] = 258,
+			["Monsieurpaté-Ysondre"] = 65,
+			["Edolie"] = 256,
+			["Hurtspriest"] = 257,
+			["Sheamer-Silvermoon"] = 1468,
+			["Sciz"] = 262,
+			["Volandi"] = 257,
+			["Morgulis-Stormreaver"] = 260,
+			["Akurian-Thrall"] = 257,
+			["Reckiller-Draenor"] = 266,
+			["Xtrong-Agamaggan"] = 577,
+			["Kritpala"] = 65,
+			["Nixenn-DefiasBrotherhood"] = 1467,
+			["Rambazø-Sanguino"] = 66,
+			["Nostradalex"] = 267,
+			["Foxlol-Blackrock"] = 253,
+			["Jhonî-TarrenMill"] = 258,
+			["Thrabos-LesSentinelles"] = 72,
+			["Bubatzwo-Blackrock"] = 102,
+			["Рейсиро-Ревущийфьорд"] = 581,
+			["Seblastian-Blackrock"] = 266,
 			["Odysews-TwistingNether"] = 105,
 		},
 		["userDB"] = {
@@ -9792,9 +11155,7 @@ local MRTDump = {
 		},
 		["Top"] = 489.1792297363281,
 		["lock"] = true,
-		["NoRaid"] = true,
-		["Left"] = 451.2861938476563,
-		["SortByAvailability"] = true,
+		["upd4380"] = true,
 		["colSet"] = {
 			{
 				["textureColorTextDefaultR"] = 1,
@@ -9803,7 +11164,7 @@ local MRTDump = {
 				["textureColorTimeLineActiveR"] = 0,
 				["textureColorBackgroundCooldownR"] = 0,
 				["textureColorTextCooldownB"] = 0.6,
-				["textureAlphaCooldown"] = 0.5,
+				["textureColorTextDefaultG"] = 1,
 				["textureClassBackground"] = false,
 				["textureColorBackgroundCooldownG"] = 0,
 				["textureColorBackgroundActiveR"] = 0,
@@ -9811,15 +11172,15 @@ local MRTDump = {
 				["textureColorTextCooldownR"] = 1,
 				["frameLines"] = 11,
 				["textureFile"] = "Interface\\AddOns\\MRT\\media\\bar16.tga",
-				["textureColorBackgroundDefaultB"] = 0,
+				["fontName"] = "Interface\\Addons\\SharedMedia_MyMedia\\font\\Cronix.ttf",
 				["textureColorTimeLineCooldownG"] = 0,
 				["textureColorTextActiveB"] = 1,
-				["textTemplateRight"] = "",
+				["frameColumns"] = 1,
 				["textureColorTimeLineDefaultR"] = 0,
 				["blacklistGeneral"] = true,
-				["iconPosition"] = 1,
+				["textureColorTextActiveR"] = 1,
 				["textureColorTimeLineActiveB"] = 0,
-				["methodsStyleAnimation"] = 1,
+				["frameScale"] = 100,
 				["textureColorBackgroundActiveG"] = 0,
 				["textureColorTimeLineDefaultB"] = 0,
 				["textureAlphaBackground"] = 0.8,
@@ -9829,61 +11190,61 @@ local MRTDump = {
 				["textTemplateCenter"] = "",
 				["fontOutline"] = true,
 				["iconGray"] = true,
-				["visibilityGeneral"] = true,
+				["textureColorTextCooldownG"] = 0.6,
 				["methodsLineClickWhisper"] = true,
-				["textureClassText"] = false,
+				["fontSize"] = 12,
 				["textureClassTimeLine"] = true,
-				["textTemplateLeft"] = "%name%",
 				["textureColorTimeLineCooldownR"] = 0,
-				["textureColorTimeLineDefaultG"] = 0,
+				["textTemplateLeft"] = "%name%",
+				["enabled"] = true,
 				["textureColorBackgroundDefaultR"] = 0,
 				["iconSize"] = 20,
-				["iconGlowType"] = 4,
+				["methodsTimeLineAnimation"] = 2,
+				["frameWidth"] = 130,
 				["textureAlphaTimeLine"] = 1,
 				["fontShadow"] = false,
-				["frameWidth"] = 130,
-				["methodsTimeLineAnimation"] = 2,
-				["enabled"] = true,
+				["iconGlowType"] = 4,
+				["textureColorTimeLineDefaultG"] = 0,
 				["textureColorBackgroundCooldownB"] = 0,
 				["frameAnchorBottom"] = true,
-				["fontSize"] = 12,
-				["textureColorTextCooldownG"] = 0.6,
+				["textureClassText"] = false,
+				["visibilityGeneral"] = true,
 				["textureColorTimeLineActiveG"] = 0,
 				["textureColorTextActiveG"] = 1,
-				["frameScale"] = 100,
-				["textureColorTextActiveR"] = 1,
-				["frameColumns"] = 1,
-				["fontName"] = "Interface\\Addons\\SharedMedia_MyMedia\\font\\Cronix.ttf",
+				["methodsStyleAnimation"] = 1,
+				["iconPosition"] = 1,
+				["textTemplateRight"] = "",
+				["textureColorBackgroundDefaultB"] = 0,
 				["methodsIconTooltip"] = true,
 				["iconHideBlizzardEdges"] = true,
-				["textureColorTextDefaultG"] = 1,
+				["textureAlphaCooldown"] = 0.5,
 			}, -- [1]
 			{
 				["fontSize"] = 12,
 				["iconGray"] = true,
 				["methodsGeneral"] = true,
 				["frameBetweenLines"] = 0,
-				["fontOutline"] = true,
 				["posX"] = 3.125729560852051,
+				["fontOutline"] = true,
 				["visibilityGeneral"] = true,
-				["textureAnimation"] = true,
-				["frameScale"] = 100,
+				["frameWidth"] = 130,
+				["textureAlphaBackground"] = 0.3,
 				["fontGeneral"] = true,
 				["frameLines"] = 15,
-				["textureGeneral"] = true,
+				["iconSize"] = 16,
 				["methodsReverseSorting"] = true,
 				["methodsAlphaNotInRangeNum"] = 90,
 				["textGeneral"] = true,
 				["fontShadow"] = false,
 				["methodsSortByAvailability"] = true,
 				["blacklistGeneral"] = true,
-				["textureAlphaTimeLine"] = 0.8,
 				["posY"] = 1438.359130859375,
+				["textureAlphaTimeLine"] = 0.8,
 				["iconGeneral"] = true,
 				["frameColumns"] = 1,
-				["iconSize"] = 16,
-				["textureAlphaBackground"] = 0.3,
-				["frameWidth"] = 130,
+				["textureGeneral"] = true,
+				["frameScale"] = 100,
+				["textureAnimation"] = true,
 				["textureAlphaCooldown"] = 1,
 			}, -- [2]
 			{
@@ -9893,23 +11254,23 @@ local MRTDump = {
 				["frameBetweenLines"] = 0,
 				["fontOutline"] = true,
 				["visibilityGeneral"] = true,
-				["fontShadow"] = false,
 				["fontGeneral"] = true,
+				["fontShadow"] = false,
 				["frameLines"] = 15,
-				["textureAnimation"] = true,
+				["frameWidth"] = 130,
 				["methodsReverseSorting"] = true,
 				["methodsAlphaNotInRangeNum"] = 90,
 				["textGeneral"] = true,
 				["textureGeneral"] = true,
-				["posY"] = 1496.366455078125,
+				["methodsSortByAvailability"] = true,
 				["blacklistGeneral"] = true,
-				["posX"] = 226.0439758300781,
+				["iconSize"] = 16,
 				["textureAlphaTimeLine"] = 0.8,
 				["iconGeneral"] = true,
-				["iconSize"] = 16,
-				["methodsSortByAvailability"] = true,
+				["posX"] = 226.0439758300781,
+				["posY"] = 1496.366455078125,
 				["textureAlphaBackground"] = 0.3,
-				["frameWidth"] = 130,
+				["textureAnimation"] = true,
 				["textureAlphaCooldown"] = 1,
 			}, -- [3]
 			{
@@ -9923,22 +11284,22 @@ local MRTDump = {
 				["fontShadow"] = false,
 				["frameLines"] = 15,
 				["methodsReverseSorting"] = true,
-				["fontGeneral"] = true,
+				["textureGeneral"] = true,
 				["textGeneral"] = true,
-				["textureAnimation"] = true,
+				["frameWidth"] = 130,
 				["iconSize"] = 16,
 				["blacklistGeneral"] = true,
-				["posX"] = 281.251708984375,
-				["posY"] = 1284.385009765625,
-				["iconGeneral"] = true,
-				["methodsSortByAvailability"] = true,
 				["textureAlphaTimeLine"] = 0.8,
+				["methodsSortByAvailability"] = true,
+				["iconGeneral"] = true,
+				["posY"] = 1284.385009765625,
+				["posX"] = 281.251708984375,
 				["textureAlphaBackground"] = 0.3,
-				["frameWidth"] = 130,
-				["textureGeneral"] = true,
+				["textureAnimation"] = true,
+				["fontGeneral"] = true,
 			}, -- [4]
 			{
-				["fontShadow"] = false,
+				["textureGeneral"] = true,
 				["methodsSortByAvailability"] = true,
 				["methodsReverseSorting"] = true,
 				["iconGray"] = true,
@@ -9946,17 +11307,17 @@ local MRTDump = {
 				["methodsGeneral"] = true,
 				["posY"] = 857.8178100585938,
 				["blacklistGeneral"] = true,
-				["fontGeneral"] = true,
-				["fontOutline"] = true,
-				["iconGeneral"] = true,
-				["posX"] = 1250.004638671875,
-				["visibilityGeneral"] = true,
 				["frameGeneral"] = true,
+				["posX"] = 1250.004638671875,
+				["iconGeneral"] = true,
+				["fontOutline"] = true,
+				["visibilityGeneral"] = true,
+				["fontGeneral"] = true,
 				["textureAnimation"] = true,
-				["textureGeneral"] = true,
+				["fontShadow"] = false,
 			}, -- [5]
 			{
-				["fontShadow"] = false,
+				["textureGeneral"] = true,
 				["methodsSortByAvailability"] = true,
 				["methodsReverseSorting"] = true,
 				["iconGray"] = true,
@@ -9964,17 +11325,17 @@ local MRTDump = {
 				["methodsGeneral"] = true,
 				["posY"] = 857.8178100585938,
 				["blacklistGeneral"] = true,
-				["fontGeneral"] = true,
-				["fontOutline"] = true,
-				["iconGeneral"] = true,
-				["posX"] = 1250.004638671875,
-				["visibilityGeneral"] = true,
 				["frameGeneral"] = true,
+				["posX"] = 1250.004638671875,
+				["iconGeneral"] = true,
+				["fontOutline"] = true,
+				["visibilityGeneral"] = true,
+				["fontGeneral"] = true,
 				["textureAnimation"] = true,
-				["textureGeneral"] = true,
+				["fontShadow"] = false,
 			}, -- [6]
 			{
-				["fontShadow"] = false,
+				["textureGeneral"] = true,
 				["methodsSortByAvailability"] = true,
 				["methodsReverseSorting"] = true,
 				["iconGray"] = true,
@@ -9982,17 +11343,17 @@ local MRTDump = {
 				["methodsGeneral"] = true,
 				["posY"] = 857.8178100585938,
 				["blacklistGeneral"] = true,
-				["fontGeneral"] = true,
-				["fontOutline"] = true,
-				["iconGeneral"] = true,
-				["posX"] = 1250.004638671875,
-				["visibilityGeneral"] = true,
 				["frameGeneral"] = true,
+				["posX"] = 1250.004638671875,
+				["iconGeneral"] = true,
+				["fontOutline"] = true,
+				["visibilityGeneral"] = true,
+				["fontGeneral"] = true,
 				["textureAnimation"] = true,
-				["textureGeneral"] = true,
+				["fontShadow"] = false,
 			}, -- [7]
 			{
-				["fontShadow"] = false,
+				["textureGeneral"] = true,
 				["methodsSortByAvailability"] = true,
 				["methodsReverseSorting"] = true,
 				["iconGray"] = true,
@@ -10000,17 +11361,17 @@ local MRTDump = {
 				["methodsGeneral"] = true,
 				["posY"] = 857.8178100585938,
 				["blacklistGeneral"] = true,
-				["fontGeneral"] = true,
-				["fontOutline"] = true,
-				["iconGeneral"] = true,
-				["posX"] = 1250.004638671875,
-				["visibilityGeneral"] = true,
 				["frameGeneral"] = true,
+				["posX"] = 1250.004638671875,
+				["iconGeneral"] = true,
+				["fontOutline"] = true,
+				["visibilityGeneral"] = true,
+				["fontGeneral"] = true,
 				["textureAnimation"] = true,
-				["textureGeneral"] = true,
+				["fontShadow"] = false,
 			}, -- [8]
 			{
-				["fontShadow"] = false,
+				["textureGeneral"] = true,
 				["methodsSortByAvailability"] = true,
 				["methodsReverseSorting"] = true,
 				["iconGray"] = true,
@@ -10018,17 +11379,17 @@ local MRTDump = {
 				["methodsGeneral"] = true,
 				["posY"] = 857.8178100585938,
 				["blacklistGeneral"] = true,
-				["fontGeneral"] = true,
-				["fontOutline"] = true,
-				["iconGeneral"] = true,
-				["posX"] = 1250.004638671875,
-				["visibilityGeneral"] = true,
 				["frameGeneral"] = true,
+				["posX"] = 1250.004638671875,
+				["iconGeneral"] = true,
+				["fontOutline"] = true,
+				["visibilityGeneral"] = true,
+				["fontGeneral"] = true,
 				["textureAnimation"] = true,
-				["textureGeneral"] = true,
+				["fontShadow"] = false,
 			}, -- [9]
 			{
-				["fontShadow"] = false,
+				["textureGeneral"] = true,
 				["methodsSortByAvailability"] = true,
 				["methodsReverseSorting"] = true,
 				["iconGray"] = true,
@@ -10036,14 +11397,14 @@ local MRTDump = {
 				["methodsGeneral"] = true,
 				["posY"] = 857.8178100585938,
 				["blacklistGeneral"] = true,
-				["fontGeneral"] = true,
-				["fontOutline"] = true,
-				["iconGeneral"] = true,
-				["posX"] = 1250.004638671875,
-				["visibilityGeneral"] = true,
 				["frameGeneral"] = true,
+				["posX"] = 1250.004638671875,
+				["iconGeneral"] = true,
+				["fontOutline"] = true,
+				["visibilityGeneral"] = true,
+				["fontGeneral"] = true,
 				["textureAnimation"] = true,
-				["textureGeneral"] = true,
+				["fontShadow"] = false,
 			}, -- [10]
 			{
 				["textureColorTextCastR"] = 1,
@@ -10080,11 +11441,11 @@ local MRTDump = {
 				["textureColorTextDefaultG"] = 1,
 				["fontLeftSize"] = 12,
 				["textureColorTextDefaultR"] = 1,
-				["fontLeftName"] = "Interface\\Addons\\SharedMedia_MyMedia\\font\\Naowh.ttf",
+				["frameBlackBack"] = 0,
 				["textureColorTimeLineCooldownR"] = 1,
 				["textureSmoothAnimation"] = true,
 				["textureColorBackgroundActiveB"] = 1,
-				["textureClassBackground"] = true,
+				["fontRightOutline"] = true,
 				["textureColorTimeLineActiveR"] = 1,
 				["textureColorBackgroundCooldownR"] = 1,
 				["textureColorTextCooldownB"] = 1,
@@ -10093,58 +11454,60 @@ local MRTDump = {
 				["visibilityGeneral"] = true,
 				["textureColorTextCastB"] = 0.5,
 				["fontRightName"] = "Interface\\Addons\\SharedMedia_MyMedia\\font\\Naowh.ttf",
-				["textTemplateRight"] = "%time%",
+				["textureColorTextActiveR"] = 0.5,
 				["frameLines"] = 15,
 				["textureFile"] = "Interface\\AddOns\\MRT\\media\\bar6.tga",
-				["visibilityDisableArena"] = true,
+				["iconPosition"] = 1,
 				["textureColorTimeLineCooldownG"] = 1,
 				["textureClassText"] = false,
+				["methodsStyleAnimation"] = 2,
 				["textureColorTimeLineDefaultR"] = 1,
-				["fontName"] = "Interface\\Addons\\SharedMedia_MyMedia\\font\\Cronix.ttf",
-				["textureAnimation"] = true,
-				["frameScale"] = 100,
+				["textureColorTimeLineActiveB"] = 1,
+				["textureAlphaBackground"] = 0.2,
 				["fontIconCDOutline"] = true,
 				["fontCenterSize"] = 13,
-				["iconGray"] = false,
+				["visibilityDisable5ppl"] = true,
 				["textureColorTimeLineDefaultB"] = 1,
-				["textureAlphaBackground"] = 0.2,
+				["frameScale"] = 100,
 				["frameWidth"] = 130,
 				["textureColorTimeLineCooldownB"] = 1,
 				["textureColorTextCastG"] = 1,
 				["fontSize"] = 12,
 				["visibilityDisableWorld"] = true,
-				["visibilityDisable5ppl"] = true,
-				["textureClassTimeLine"] = true,
+				["iconGray"] = false,
+				["textureColorTextCooldownG"] = 1,
 				["methodsLineClickWhisper"] = true,
-				["fontIconCDName"] = "Interface\\Addons\\SharedMedia_MyMedia\\font\\Naowh.ttf",
 				["textureColorTimeLineCastB"] = 1,
+				["fontIconCDName"] = "Interface\\Addons\\SharedMedia_MyMedia\\font\\Naowh.ttf",
 				["textureColorBackgroundCooldownB"] = 1,
 				["textureColorTextActiveB"] = 0.5,
 				["textureColorBackgroundDefaultB"] = 1,
-				["visibilityPartyType"] = 2,
-				["fontLeftOutline"] = true,
-				["textureColorBackgroundDefaultG"] = 1,
-				["methodsSortByAvailability"] = true,
-				["textureAlphaTimeLine"] = 1,
 				["visibilityDisableBG"] = true,
+				["textureAlphaTimeLine"] = 1,
+				["methodsSortByAvailability"] = true,
+				["textureColorBackgroundDefaultG"] = 1,
+				["fontLeftOutline"] = true,
+				["visibilityPartyType"] = 2,
 				["methodsTimeLineAnimation"] = 2,
 				["methodsReverseSorting"] = true,
 				["methodsAlphaNotInRangeNum"] = 49,
 				["frameAnchorBottom"] = true,
-				["textureColorTextCooldownG"] = 1,
+				["textureClassTimeLine"] = true,
 				["fontCenterName"] = "Interface\\Addons\\SharedMedia_MyMedia\\font\\Naowh.ttf",
 				["textureColorTimeLineActiveG"] = 1,
-				["textureColorTimeLineActiveB"] = 1,
-				["methodsStyleAnimation"] = 2,
-				["iconPosition"] = 1,
-				["textureColorTextActiveR"] = 0.5,
-				["fontRightOutline"] = true,
+				["textureAnimation"] = true,
+				["fontName"] = "Interface\\Addons\\SharedMedia_MyMedia\\font\\Cronix.ttf",
+				["visibilityDisableArena"] = true,
+				["textTemplateRight"] = "%time%",
+				["textureClassBackground"] = true,
 				["methodsIconTooltip"] = true,
-				["frameBlackBack"] = 0,
+				["fontLeftName"] = "Interface\\Addons\\SharedMedia_MyMedia\\font\\Naowh.ttf",
 				["textureAlphaCooldown"] = 0.85,
 			}, -- [11]
 		},
-		["upd4380"] = true,
+		["SortByAvailability"] = true,
+		["Left"] = 451.2861938476563,
+		["NoRaid"] = true,
 		["OptFav"] = {
 		},
 	},
@@ -10163,15 +11526,31 @@ local MRTDump = {
 		["ColorizeLowIlvl685"] = false,
 		["ColorizeNoEnch"] = true,
 		["ColorizeNoGems"] = true,
-		["ColorizeLowIlvl"] = true,
 		["ColorizeNoTopEnchGems"] = false,
+		["ColorizeLowIlvl"] = true,
 		["ColorizeNoValorUpgrade"] = false,
 	},
-	["BattleRes"] = {
-		["Top"] = 70.80488586425781,
-		["Strata"] = "HIGH",
-		["Left"] = 883.4515991210938,
-		["Scale"] = 58,
+	["RaidCheck"] = {
+		["ReadyCheckLeft"] = 5.611234188079834,
+		["ReadyCheckFrameTimerFade"] = 4,
+		["BuffsCheck"] = true,
+		["ReadyCheckFrame"] = true,
+		["ReadyCheckFrameScale"] = 100,
+		["ReadyCheckFont"] = "Interface\\Addons\\SharedMedia_MyMedia\\font\\Naowh.ttf",
+		["OilsCheck"] = true,
+		["FlaskLQ"] = true,
+		["ReadyCheckFrameOnlyRL"] = true,
+		["RunesCheck"] = true,
+		["RCW_Mini"] = false,
+		["KitsCheck"] = true,
+		["WeaponEnch"] = {
+			["Cronìx-Blackhand"] = 194823,
+			["Cronîx-Blackhand"] = 194820,
+			["Crônix-Blackhand"] = -33757,
+		},
+		["FlaskExp"] = 1,
+		["ReadyCheckTop"] = 1016.825073242188,
+		["ReadyCheckSortClass"] = true,
 	},
 	["WhoPulled"] = {
 		["DisableChat"] = true,
@@ -10208,61 +11587,45 @@ local MRTDump = {
 			[72] = 10,
 			[104] = 10,
 			[73] = 10,
-			[581] = 10,
-			[105] = 10,
-			[577] = 10,
-			[256] = 10,
-			[254] = 10,
 			[252] = 10,
+			[105] = 10,
+			[254] = 10,
+			[256] = 10,
+			[577] = 10,
+			[581] = 10,
 		},
 		["Type"] = 2,
 		["timeToKillAnalyze"] = 15,
 		["Left"] = 379.2945556640625,
 		["Top"] = 235.8606109619141,
 		["DisableRW"] = true,
-		["Strata"] = "HIGH",
-		["Alpha"] = 100,
 		["Scale"] = 99,
+		["Alpha"] = 100,
+		["Strata"] = "HIGH",
 	},
 	["Addon"] = {
 		["migrateMRT"] = true,
-		["Version"] = 4740,
+		["Version"] = 4785,
 		["Scale"] = 1,
-		["Timer"] = 0.1,
-		["PreVersion"] = 4740,
 		["IconMiniMapHide"] = true,
+		["PreVersion"] = 4785,
+		["Timer"] = 0.1,
 	},
 	["Marks"] = {
 		["list"] = {
-			[2] = "Sanatio",
-			[4] = "Antagon",
-		},
-	},
-	["BossWatcher"] = {
-		["optionsDamageGraph"] = true,
-		["fightsNum"] = 2,
-		["optionsPositionsDist"] = true,
-		["optionsHealingGraph"] = true,
-		["trackingDamageSpells"] = {
+			"Extn", -- [1]
+			"Sanatio", -- [2]
+			"Cronîx", -- [3]
+			"Antagon", -- [4]
 		},
 	},
 	["LootHistory"] = {
-		["list"] = {
-		},
+		["disable"] = true,
 		["instanceNames"] = {
 		},
 		["bossNames"] = {
 		},
-		["disable"] = true,
-	},
-	["Profile"] = "croniXUI",
-	["LootLink"] = {
-	},
-	["RaidGroups"] = {
-		["KeepPosInGroup"] = true,
-		["upd4550"] = true,
-		["importType"] = 3,
-		["profiles"] = {
+		["list"] = {
 		},
 	},
 	["Profiles"] = {
@@ -10299,18 +11662,299 @@ local MRTDump = {
 					[72] = 10,
 					[104] = 10,
 					[73] = 10,
-					[581] = 10,
-					[105] = 10,
-					[577] = 10,
-					[256] = 10,
-					[254] = 10,
 					[252] = 10,
+					[105] = 10,
+					[254] = 10,
+					[256] = 10,
+					[577] = 10,
+					[581] = 10,
 				},
 				["Strata"] = "HIGH",
-				["DisableRW"] = true,
 				["timeToKillAnalyze"] = 15,
+				["DisableRW"] = true,
 			},
 			["Encounter"] = {
+				["names"] = {
+					[2032] = "Goroth",
+					[1777] = "Fel Lord Zakuun",
+					[1778] = "Hellfire Assault",
+					[2036] = "Harjatan",
+					[2037] = "Mistress Sassz'ine",
+					[2038] = "Fallen Avatar",
+					[1783] = "Gorefiend",
+					[1784] = "Tyrant Velhari",
+					[1785] = "Iron Reaver",
+					[1786] = "Kilrogg Deadeye",
+					[1787] = "Kormrok",
+					[1788] = "Shadow-Lord Iskar",
+					[1023] = "Chimaeron",
+					[1024] = "Magmaw",
+					[1025] = "Maloriak",
+					[1026] = "Nefarian's End",
+					[1027] = "Omnotron Defense System",
+					[2051] = "Kil'jaeden",
+					[1028] = "Ascendant Council",
+					[1795] = "Mannoroth",
+					[2054] = "The Desolate Host",
+					[1030] = "Halfus Wyrmbreaker",
+					[1798] = "Hellfire High Council",
+					[1032] = "Theralion and Valiona",
+					[1799] = "Archimonde",
+					[2063] = "Aggramar",
+					[1034] = "Al'Akir",
+					[1035] = "Conclave of Wind",
+					[2069] = "Varimathras",
+					[2070] = "Antoran High Command",
+					[2073] = "The Coven of Shivarra",
+					[2074] = "Felhounds of Sargeras",
+					[2076] = "Garothi Worldbreaker",
+					[2082] = "Imonar the Soulhunter",
+					[2084] = "Priestess Alun'za",
+					[2085] = "Vol'kaal",
+					[2086] = "Rezan",
+					[2087] = "Yazma",
+					[2088] = "Kin'garoth",
+					[2092] = "Argus the Unmaker",
+					[2093] = "Skycap'n Kragg",
+					[2094] = "Council o' Captains",
+					[2095] = "Ring of Booty",
+					[2096] = "Lord Harlan Sweete",
+					[2097] = "Sergeant Bainbridge",
+					[2098] = "Chopper Redhook",
+					[2099] = "Hadal Darkfathom",
+					[2100] = "Viq'Goth",
+					[2101] = "The Sand Queen",
+					[2102] = "Jes Howlis",
+					[2103] = "Knight Captain Valyri",
+					[1565] = "Tortos",
+					[2105] = "Coin-Operated Crowd Pummeler",
+					[2106] = "Azerokk",
+					[2107] = "Rixxa Fluxfume",
+					[2108] = "Mogul Razdunk",
+					[2109] = "Dread Captain Lockwood",
+					[2111] = "Elder Leaxa",
+					[2112] = "Sporecaller Zancha",
+					[2113] = "Heartsbane Triad",
+					[2114] = "Soulbound Goliath",
+					[2115] = "Raal the Gluttonous",
+					[2116] = "Lord and Lady Waycrest",
+					[2117] = "Gorak Tul",
+					[2118] = "Cragmaw the Infested",
+					[1573] = "Ji-Kun",
+					[1574] = "Primordius",
+					[2123] = "Unbound Abomination",
+					[2124] = "Adderis and Aspix",
+					[2125] = "Merektha",
+					[2126] = "Galvazzt",
+					[2127] = "Avatar of Sethraliss",
+					[1577] = "Jin'rokh the Breaker",
+					[2130] = "Aqu'sirr",
+					[2131] = "Tidesage Council",
+					[2132] = "Lord Stormsong",
+					[2133] = "Vol'zith the Whisperer",
+					[1581] = "Ra-den",
+					[664] = "Magmadar",
+					[2139] = "The Golden Serpent",
+					[2140] = "The Council of Tribes",
+					[665] = "Gehennas",
+					[2142] = "Mchimba the Embalmer",
+					[2143] = "King Dazar",
+					[666] = "Garr",
+					[667] = "Shazzrah",
+					[668] = "Baron Geddon",
+					[669] = "Sulfuron Harbinger",
+					[1593] = "Paragons of the Klaxxi",
+					[670] = "Golemagg the Incinerator",
+					[1594] = "Spoils of Pandaria",
+					[1595] = "Malkorok",
+					[671] = "Majordomo Executus",
+					[672] = "Ragnaros",
+					[1598] = "Fallen Protectors",
+					[1854] = "Dragons of Nightmare",
+					[1599] = "Thok the Bloodthirsty",
+					[1600] = "Iron Juggernaut",
+					[1601] = "Siegecrafter Blackfuse",
+					[1602] = "Immerseus",
+					[1603] = "General Nazgrim",
+					[1604] = "Sha of Pride",
+					[1095] = "Blood Council",
+					[1096] = "Deathbringer Saurfang",
+					[1097] = "Festergut",
+					[1864] = "Xavius",
+					[1098] = "Valithria Dreamwalker",
+					[1099] = "Icecrown Gunship Battle",
+					[1100] = "Lady Deathwhisper",
+					[1101] = "Lord Marrowgar",
+					[1102] = "Professor Putricide",
+					[1103] = "Queen Lana'thel",
+					[1104] = "Rotface",
+					[1105] = "Sindragosa",
+					[1106] = "The Lich King",
+					[1873] = "Il'gynoth, The Heart of Corruption",
+					[1108] = "Gluth",
+					[1109] = "Gothik the Harvester",
+					[1876] = "Elerethe Renferal",
+					[1877] = "Cenarius",
+					[1622] = "Galakras",
+					[1623] = "Garrosh Hellscream",
+					[1113] = "Instructor Razuvious",
+					[1118] = "Patchwerk",
+					[1120] = "Thaddius",
+					[1121] = "The Four Horsemen",
+					[1130] = "Algalon the Observer",
+					[2257] = "Tussle Tonks",
+					[2258] = "K.U.-J.0.",
+					[2259] = "Machinist's Garden",
+					[2260] = "King Mechagon",
+					[1133] = "Freya",
+					[2263] = "Grong",
+					[1134] = "General Vezax",
+					[2265] = "Champion of the Light",
+					[2266] = "Jadefire Masters",
+					[2268] = "Conclave of the Chosen",
+					[1137] = "Kologarn",
+					[2271] = "Opulence",
+					[1138] = "Mimiron",
+					[1139] = "Razorscale",
+					[1395] = "The Stone Guard",
+					[1140] = "The Assembly of Iron",
+					[1141] = "Thorim",
+					[1142] = "XT-002 Deconstructor",
+					[2281] = "Lady Jaina Proudmoore",
+					[1143] = "Yogg-Saron",
+					[2289] = "Blackwater Behemoth",
+					[2290] = "King Gobbamak",
+					[2291] = "HK-8 Aerial Oppression Unit",
+					[2292] = "Gunker",
+					[2293] = "Za'qul",
+					[2298] = "Abyssal Commander Sivara",
+					[1407] = "Will of the Emperor",
+					[2303] = "Orgozoa",
+					[2304] = "Lady Ashvane",
+					[2305] = "Radiance of Azshara",
+					[2311] = "The Queen's Court",
+					[2312] = "Trixie & Naeno",
+					[2327] = "Maut",
+					[2328] = "Dark Inquisitor Xanesh",
+					[2329] = "Wrathion",
+					[2331] = "Ra-den the Despoiled",
+					[2333] = "The Hivemind",
+					[2334] = "Prophet Skitra",
+					[2335] = "Shad'har the Insatiable",
+					[2336] = "Vexiona",
+					[2337] = "Carapace of N'Zoth",
+					[2343] = "Drest'agath",
+					[2344] = "N'Zoth the Corruptor",
+					[2345] = "Il'gynoth, Corruption Reborn",
+					[1431] = "Sha of Fear",
+					[1689] = "Flamebender Ka'graz",
+					[1434] = "Gara'jal the Spiritbinder",
+					[1690] = "Blast Furnace",
+					[1691] = "Gruul",
+					[1436] = "The Spirit Kings",
+					[1692] = "Operator Thogar",
+					[2359] = "Devos, Paragon of Loyalty",
+					[1693] = "Hans'gar & Franzok",
+					[2361] = "Executor Tarvold",
+					[1694] = "Beastlord Darmac",
+					[2363] = "General Kaal",
+					[1695] = "The Iron Maidens",
+					[2365] = "Gorechop",
+					[1696] = "Oregorger the Devourer",
+					[1443] = "Adarogg",
+					[2380] = "Echelon",
+					[2381] = "Lord Chamberlain",
+					[2382] = "Globgrog",
+					[2383] = "Hungering Destroyer",
+					[1705] = "Imperator Mar'gok",
+					[2385] = "Domina Venomblade",
+					[2386] = "Stradama Margrave",
+					[2387] = "Blightbone",
+					[2388] = "Amarth, The Harvester",
+					[2389] = "Stichflesh",
+					[2390] = "Nalthor the Rimebinder",
+					[2391] = "An Affront of Challengers",
+					[2392] = "Mistcaller",
+					[2393] = "Tred'ova",
+					[2394] = "The Manastorms",
+					[2395] = "Hakkar, the Soulflayer",
+					[2396] = "Mueh'zala",
+					[2397] = "Ingra Maloch",
+					[2398] = "Shriekwing",
+					[2399] = "Sludgefist",
+					[1713] = "Kromog, Legend of the Mountain",
+					[2401] = "Halkias, the Sin-Stained Goliath",
+					[2402] = "Sun King's Salvation",
+					[2403] = "High Adjudicator Aleez",
+					[2404] = "Mordretha",
+					[2405] = "Artificer Xy'mox",
+					[1205] = "Shannox",
+					[2407] = "Sire Denathrius",
+					[1463] = "Garalon",
+					[1719] = "Twin Ogron",
+					[1720] = "Brackenspore",
+					[1721] = "Kargath Bladefist",
+					[2417] = "Stone Legion Generals",
+					[1722] = "Tectus, The Living Mountain",
+					[1723] = "Ko'ragh",
+					[2412] = "The Council of Blood",
+					[2358] = "Oryphrion",
+					[2356] = "Ventunax",
+					[2357] = "Kin-Tara",
+					[2400] = "Dealer Xy'exa",
+					[2364] = "Kul'tharok",
+					[2366] = "Xav the Unfallen",
+					[1853] = "Nythendra",
+					[2064] = "Portal Keeper Hasabel",
+					[2362] = "Grand Proctor Beryllia",
+					[2360] = "Kryxis the Voracious",
+					[1560] = "Twin Consorts",
+					[2052] = "Maiden of Vigilance",
+					[2384] = "Doctor Ickus",
+					[1111] = "Grobbulus",
+					[1606] = "Kor'kron Dark Shaman",
+					[1794] = "Socrethar the Eternal",
+					[1559] = "Iron Qon",
+					[1570] = "Council of Elders",
+					[1624] = "Norushen",
+					[1822] = "Ymiron, the Fallen King",
+					[1575] = "Horridon",
+					[663] = "Lucifron",
+					[1572] = "Durumu the Forgotten",
+					[2050] = "Sisters of the Moon",
+					[1578] = "Megaera",
+					[1498] = "Wind Lord Mel'jarak",
+					[1824] = "Helya",
+					[1499] = "Amber-Shaper Un'sok",
+					[1579] = "Lei Shen",
+					[1500] = "Elegon",
+					[1704] = "Blackhand",
+					[1501] = "Grand Empress Shek'zeer",
+					[2048] = "Demonic Inquisition",
+					[1576] = "Dark Animus",
+					[1706] = "The Butcher",
+					[2104] = "Overseer Korgus",
+					[2299] = "Queen Azshara",
+					[1504] = "Blade Lord Ta'yak",
+					[1135] = "Hodir",
+					[1505] = "Tsulong",
+					[1131] = "Auriaya",
+					[1506] = "Lei Shi",
+					[1132] = "Flame Leviathan",
+					[1507] = "Imperial Vizier Zor'lok",
+					[1390] = "Feng the Accursed",
+					[1136] = "Ignis the Furnace Master",
+					[2272] = "King Rastakhan",
+					[1841] = "Ursoc",
+					[2276] = "Mekkatorque",
+					[2280] = "Stormwall Blockade",
+					[1823] = "Harbaron",
+					[1409] = "Protectors of the Endless",
+					[1029] = "Cho'gall",
+					[1800] = "Xhul'horac",
+					[2418] = "Huntsman Altimor",
+					[2406] = "Lady Inerva Darkvein",
+				},
 				["list"] = {
 					["Atrocityra"] = {
 						"^2101^23^1587684123^9^0^5^480.50^Imfiredup", -- [1]
@@ -18434,380 +20078,2246 @@ local MRTDump = {
 						"^2259^8^1593459635^144^1^5^481.63^Twisteds", -- [4]
 						"^2260^8^1593460164^259^1^5^481.63^", -- [5]
 					},
-					["Atrocityxe"] = {
+					["Cronîx"] = {
 					},
-					["Venøm"] = {
+					["Atrocityjr"] = {
+						"^2139^8^1587614451^123^1^5^454.14^Twistedxo", -- [1]
+						"^2142^8^1587615108^111^1^5^454.14^", -- [2]
+						"^2140^8^1587615459^189^0^5^454.14^Gooptard", -- [3]
+						"^2140^8^1587615814^38^0^5^429.91^Atrocityjr", -- [4]
+						"^2140^8^1587616007^186^1^5^429.91^", -- [5]
+						"^2143^8^1587616500^182^1^5^443.46^Atrocityjr", -- [6]
+						"^2387^23^1606871249^37^1^5^173.16^", -- [7]
+						"^2388^23^1606871398^56^1^5^173.16^", -- [8]
+						"^2389^23^1606871732^81^1^5^173.16^", -- [9]
+						"^2390^23^1606871833^69^1^5^173.16^", -- [10]
+						"^2357^23^1606872192^43^1^5^174.29^", -- [11]
+						"^2356^23^1606872567^39^1^5^174.29^", -- [12]
+						"^2358^23^1606872730^80^1^5^174.29^", -- [13]
+						"^2359^23^1606872937^144^1^5^174.03^", -- [14]
+						"^2391^23^1606873357^67^1^5^174.86^", -- [15]
+						"^2364^23^1606873664^39^1^5^175.44^", -- [16]
+						"^2366^23^1606873888^86^1^5^175.44^", -- [17]
+						"^2365^23^1606874177^58^1^5^175.44^", -- [18]
+						"^2404^23^1606874300^46^1^5^175.44^Nickspriest", -- [19]
+						"^2382^23^1606874485^65^1^5^175.99^", -- [20]
+						"^2384^23^1606874655^65^1^5^175.99^", -- [21]
+						"^2385^23^1606874873^73^1^5^175.99^", -- [22]
+						"^2386^23^1606875079^103^1^5^176.31^", -- [23]
+						"^2401^23^1606875682^70^1^5^176.31^", -- [24]
+						"^2380^23^1606875797^45^1^5^175.55^", -- [25]
+						"^2403^23^1606875928^46^1^5^175.55^", -- [26]
+						"^2381^23^1606876030^61^1^5^175.75^", -- [27]
+						"^2360^23^1606876458^38^1^5^177.05^", -- [28]
+						"^2361^23^1606876810^56^1^5^177.05^Syreth", -- [29]
+						"^2362^23^1606876920^71^1^5^177.21^", -- [30]
+						"^2363^23^1606877233^85^1^5^178.30^", -- [31]
+						"^2397^23^1606877765^48^1^5^178.30^", -- [32]
+						"^2392^23^1606878124^92^1^5^178.10^", -- [33]
+						"^2393^23^1606878282^42^1^5^179.19^", -- [34]
+						"^2395^23^1606878752^42^1^5^179.39^", -- [35]
+						"^2394^23^1606879122^57^1^5^179.39^", -- [36]
+						"^2400^23^1606879384^48^1^5^179.39^", -- [37]
+						"^2396^23^1606879503^122^1^5^179.39^", -- [38]
+						"^2360^8^1607490010^108^1^5^181.40^", -- [39]
+						"^2361^8^1607490826^92^0^5^180.67^Thdlock", -- [40]
+						"^2361^8^1607491052^64^1^5^180.67^", -- [41]
+						"^2362^8^1607491220^93^1^5^181.40^", -- [42]
+						"^2363^8^1607491827^98^1^5^181.40^", -- [43]
+						"^2417^15^1607619597^535^1^30^186.25^Goopd", -- [44]
+						"^2407^15^1607644677^172^0^30^188.13^Avade", -- [45]
+						"^2407^15^1607644923^68^0^30^188.17^Podd", -- [46]
+						"^2407^15^1607645086^469^0^30^188.17^Liphunt", -- [47]
+						"^2407^15^1607645664^481^1^30^188.17^Póôpööpêèpëë", -- [48]
+						"^2399^15^1607790602^317^1^30^192.63^Tagzz", -- [49]
+						"^2417^14^1607799222^7^0^28^196.38^", -- [50]
+						"^2417^14^1607799296^310^1^29^196.43^Ericsmage", -- [51]
+						"^2407^14^1607800202^426^1^30^196.01^Scottm", -- [52]
+						"^2357^8^1607892535^92^1^5^200.53^", -- [53]
+						"^2356^8^1607893807^82^1^5^200.53^Atrocityjr", -- [54]
+						"^2358^8^1607894051^147^1^5^200.53^Atrocityjr", -- [55]
+						"^2359^8^1607894515^164^1^5^200.53^", -- [56]
+						"^2417^15^1608140504^662^1^27^202.61^Pródigy-Kil'jaeden", -- [57]
+						"^2398^16^1609376665^231^0^20^198.34^Ringofpiecez", -- [58]
+						"^2398^16^1609377106^380^1^20^198.34^Drineyp", -- [59]
+						"^2418^16^1609377675^6^0^20^198.73^", -- [60]
+						"^2418^16^1609377726^179^0^20^198.73^Bigscro", -- [61]
+						"^2418^16^1609378042^333^0^20^198.78^Maeveytwo", -- [62]
+						"^2418^16^1609378550^244^0^20^198.08^Kamshams", -- [63]
+						"^2418^16^1609378885^118^0^20^198.08^Darkeedk", -- [64]
+						"^2418^16^1609379092^178^0^20^198.08^Ringofpiecez", -- [65]
+						"^2418^16^1609379391^363^1^20^197.96^Vilknight", -- [66]
+						"^2397^8^1609568674^394^0^5^213.36^Norialaxo", -- [67]
+						"^2397^8^1609569100^227^1^5^213.36^", -- [68]
+						"^2392^8^1609569680^167^1^5^210.94^", -- [69]
+						"^2393^8^1609570142^126^1^5^213.36^Atlasxo", -- [70]
+						"^2397^8^1610183921^113^1^5^208.07^", -- [71]
+						"^2392^8^1610184438^150^1^5^205.11^Twistedm", -- [72]
+						"^2393^8^1610184887^138^1^5^211.78^Mb-Mal'Ganis", -- [73]
+						"^2382^8^1610401481^59^1^5^201.61^", -- [74]
+						"^2384^8^1610402126^125^1^5^201.61^", -- [75]
+						"^2385^8^1610402485^84^1^5^208.92^", -- [76]
+						"^2386^8^1610402797^150^1^5^204.28^Goopem", -- [77]
+						"^2397^8^1610403604^88^1^5^207.46^", -- [78]
+						"^2392^8^1610404172^183^1^5^207.56^Atlaschi", -- [79]
+						"^2393^8^1610404770^93^1^5^211.59^", -- [80]
+						"^2397^8^1610406433^120^1^5^203.05^", -- [81]
+						"^2392^8^1610407093^169^1^5^203.05^Atlaschi", -- [82]
+						"^2393^8^1610407635^117^1^5^203.05^Goopem", -- [83]
+						"^2401^8^1610493120^114^1^5^210.95^Twistedm", -- [84]
+						"^2380^8^1610493406^128^0^5^210.95^Atrocityjr", -- [85]
+						"^2380^8^1610493576^168^1^5^210.95^Atrocityjr", -- [86]
+						"^2403^8^1610493868^136^1^5^210.95^", -- [87]
+						"^2381^8^1610494085^153^1^5^210.95^Twistedm", -- [88]
+						"^2398^16^1610513061^13^0^20^215.86^Truckboy", -- [89]
+						"^2398^16^1610513217^259^1^20^215.71^", -- [90]
+						"^2418^16^1610513654^6^0^20^216.04^", -- [91]
+						"^2418^16^1610513777^286^1^20^215.53^Goophunt", -- [92]
+						"^2383^16^1610514257^7^0^20^215.47^", -- [93]
+						"^2383^16^1610514454^438^0^20^215.73^Ringofpiecez", -- [94]
+						"^2383^16^1610515015^428^0^20^215.73^Truckboy", -- [95]
+						"^2383^16^1610515644^363^1^20^215.73^Vilknight", -- [96]
+						"^2405^16^1610516659^10^0^20^216.01^", -- [97]
+						"^2405^16^1610516823^476^1^20^216.01^Siory", -- [98]
+						"^2402^16^1610602443^172^0^20^208.15^Norishockxo", -- [99]
+						"^2402^16^1610602725^132^0^20^208.15^Worstclass", -- [100]
+						"^2402^16^1610602949^322^0^20^208.15^Worstclass", -- [101]
+						"^2402^16^1610603468^79^0^20^211.51^Atrocityjr", -- [102]
+						"^2402^16^1610603625^377^1^20^211.51^Ericsmage", -- [103]
+						"^2401^8^1611089625^94^1^5^211.11^", -- [104]
+						"^2380^8^1611089888^165^1^5^211.11^Atrocityjr", -- [105]
+						"^2403^8^1611090237^101^1^5^214.30^", -- [106]
+						"^2381^8^1611090498^80^1^5^214.30^", -- [107]
+						"^2387^8^1611270433^63^1^5^213.85^", -- [108]
+						"^2388^8^1611270949^86^1^5^213.85^", -- [109]
+						"^2389^8^1611271546^84^1^5^213.85^", -- [110]
+						"^2390^8^1611271645^136^1^5^213.85^", -- [111]
+						"^2397^8^1611272912^111^1^5^213.28^", -- [112]
+						"^2392^8^1611273441^109^1^5^213.28^", -- [113]
+						"^2393^8^1611273925^69^1^5^213.28^", -- [114]
+						"^2395^8^1611275222^38^1^5^211.78^", -- [115]
+						"^2394^8^1611275696^103^1^5^214.10^", -- [116]
+						"^2400^8^1611276357^77^1^5^214.10^", -- [117]
+						"^2396^8^1611276496^131^1^5^214.10^", -- [118]
+						"^2398^16^1611635141^10^0^20^201.86^Scottm", -- [119]
+						"^2398^16^1611635274^315^1^20^213.57^Lipmonk", -- [120]
+						"^2418^16^1611635755^6^0^20^213.62^", -- [121]
+						"^2418^16^1611635834^281^1^20^213.62^Trilldh", -- [122]
+						"^2383^16^1611636297^8^0^20^213.62^", -- [123]
+						"^2383^16^1611636518^352^1^20^214.09^Rukhran", -- [124]
+						"^2405^16^1611637364^8^0^20^213.99^", -- [125]
+						"^2405^16^1611637470^282^0^20^213.99^Norishiftxo", -- [126]
+						"^2405^16^1611637894^365^0^20^213.99^Lipmonk", -- [127]
+						"^2405^16^1611638352^289^0^20^213.99^Tagzz", -- [128]
+						"^2405^16^1611638708^384^1^20^213.99^Burtleshirt", -- [129]
+						"^2398^16^1611802242^70^0^20^214.48^Scottm", -- [130]
+						"^2398^16^1611802447^308^1^20^216.29^Lipwarlock", -- [131]
+						"^2418^16^1611802941^5^0^20^216.34^", -- [132]
+						"^2418^16^1611803018^290^1^20^216.24^Burtleshirt", -- [133]
+						"^2383^16^1611803560^8^0^20^214.85^", -- [134]
+						"^2383^16^1611803684^407^1^20^215.01^Maeveypie", -- [135]
+						"^2405^16^1611804600^8^0^20^215.45^", -- [136]
+						"^2405^16^1611804805^398^1^20^215.59^Lipwarlock", -- [137]
+						"^2382^8^1611980232^100^1^5^213.34^", -- [138]
+						"^2384^8^1611980814^157^1^5^213.34^", -- [139]
+						"^2385^8^1611981203^149^0^5^213.34^Atlasd", -- [140]
+						"^2385^8^1611981417^164^1^5^213.34^Atlasd", -- [141]
+						"^2386^8^1611981744^184^1^5^213.34^Atlasd", -- [142]
+						"^2391^8^1612214450^121^1^5^218.51^", -- [143]
+						"^2366^8^1612214846^138^1^5^218.51^Burtleshirt", -- [144]
+						"^2365^8^1612215239^123^1^5^216.89^", -- [145]
+						"^2364^8^1612215698^122^1^5^218.51^", -- [146]
+						"^2404^8^1612215873^126^1^5^218.51^", -- [147]
+						"^2397^8^1612221327^252^1^5^214.06^", -- [148]
+						"^2392^8^1612222044^165^1^5^214.06^", -- [149]
+						"^2393^8^1612222461^176^1^5^214.06^Powercleans", -- [150]
+						"^2387^8^1612223393^74^1^5^222.62^", -- [151]
+						"^2388^8^1612223905^112^1^5^222.62^", -- [152]
+						"^2389^8^1612224444^87^1^5^222.62^", -- [153]
+						"^2390^8^1612224546^176^1^5^222.86^", -- [154]
+						"^2401^8^1612477108^62^1^5^207.67^", -- [155]
+						"^2380^8^1612477335^102^1^5^207.67^", -- [156]
+						"^2403^8^1612477557^67^1^5^207.67^", -- [157]
+						"^2381^8^1612477791^91^1^5^207.67^Goopsp", -- [158]
+						"^2401^8^1612479311^96^1^5^217.31^", -- [159]
+						"^2380^8^1612479581^106^1^5^217.31^Goopsp", -- [160]
+						"^2403^8^1612479821^114^1^5^217.31^", -- [161]
+						"^2381^8^1612480120^73^1^5^217.31^Goopsp", -- [162]
+						"^2391^8^1612480750^116^1^5^216.12^", -- [163]
+						"^2366^8^1612481242^139^1^5^216.12^", -- [164]
+						"^2364^8^1612481913^110^1^5^216.12^", -- [165]
+						"^2365^8^1612482449^95^1^5^216.12^", -- [166]
+						"^2404^8^1612482602^123^1^5^216.12^Imnnk", -- [167]
+						"^2382^8^1612485274^78^1^5^218.31^", -- [168]
+						"^2384^8^1612485835^160^1^5^216.55^Goopsp", -- [169]
+						"^2385^8^1612486275^80^1^5^214.25^", -- [170]
+						"^2386^8^1612486496^131^1^5^216.55^Atrocityjr", -- [171]
+						"^2387^8^1612487179^35^1^5^221.99^", -- [172]
+						"^2388^8^1612487508^80^1^5^219.79^", -- [173]
+						"^2389^8^1612487905^74^1^5^221.99^", -- [174]
+						"^2390^8^1612487994^106^1^5^220.55^", -- [175]
+						"^2395^8^1612662372^41^1^5^216.71^", -- [176]
+						"^2394^8^1612662810^95^1^5^214.88^", -- [177]
+						"^2400^8^1612663849^43^1^5^220.59^", -- [178]
+						"^2396^8^1612663967^144^1^5^220.59^", -- [179]
+						"^2397^8^1612664938^58^1^5^216.71^", -- [180]
+						"^2392^8^1612665381^129^1^5^216.71^", -- [181]
+						"^2393^8^1612665909^69^1^5^216.71^", -- [182]
+						"^2382^8^1612667638^74^1^5^222.00^", -- [183]
+						"^2384^8^1612668216^108^0^5^221.48^Impec", -- [184]
+						"^2384^8^1612668451^131^1^5^221.48^Impec", -- [185]
+						"^2385^8^1612668823^100^1^5^221.48^", -- [186]
+						"^2386^8^1612669066^112^1^5^221.48^", -- [187]
+						"^2382^8^1612670456^48^1^5^220.53^", -- [188]
+						"^2384^8^1612671057^49^1^5^221.76^", -- [189]
+						"^2385^8^1612671393^80^1^5^221.76^", -- [190]
+						"^2386^8^1612671656^124^1^5^221.76^Imnnk", -- [191]
+						"^2391^8^1612672830^68^0^5^217.95^Atrocityjr", -- [192]
+						"^2391^8^1612672969^116^1^5^218.11^", -- [193]
+						"^2364^8^1612673516^77^1^5^215.67^", -- [194]
+						"^2366^8^1612673966^138^1^5^217.95^", -- [195]
+						"^2365^8^1612674560^60^1^5^217.95^", -- [196]
+						"^2404^8^1612674681^97^1^5^217.95^", -- [197]
+						"^2407^15^1612753900^388^1^30^220.01^Dakisshaman-Tichondrius", -- [198]
+						"^2398^16^1613018196^16^0^20^205.21^", -- [199]
+						"^2398^16^1613018360^303^1^20^218.24^Kamsdhunter", -- [200]
+						"^2418^16^1613018837^6^0^20^218.89^", -- [201]
+						"^2418^16^1613018995^227^0^20^215.98^Atlasd", -- [202]
+						"^2418^16^1613019343^269^1^20^215.98^Atrocityjr", -- [203]
+						"^2383^16^1613019790^7^0^20^218.10^", -- [204]
+						"^2383^16^1613019953^326^1^20^218.08^Siory", -- [205]
+						"^2405^16^1613020744^10^0^20^218.18^", -- [206]
+						"^2405^16^1613020847^388^1^20^218.18^Atlasd", -- [207]
+						"^2402^16^1613021421^9^0^20^218.27^", -- [208]
+						"^2402^16^1613021590^347^1^20^218.11^", -- [209]
+						"^2387^8^1613032821^43^0^5^222.32^Twistedw", -- [210]
+						"^2387^8^1613032896^130^1^5^222.32^", -- [211]
+						"^2388^8^1613033333^110^1^5^222.32^", -- [212]
+						"^2389^8^1613033766^102^1^5^224.28^", -- [213]
+						"^2390^8^1613033884^148^1^5^224.28^", -- [214]
+						"^2397^8^1613530417^45^1^5^219.57^", -- [215]
+						"^2392^8^1613530837^108^1^5^219.57^", -- [216]
+						"^2393^8^1613531288^78^1^5^219.57^", -- [217]
+						"^2398^16^1613618764^10^0^20^218.54^", -- [218]
+						"^2398^16^1613618914^254^1^20^219.44^Kamslock", -- [219]
+						"^2418^16^1613619320^5^0^20^219.17^", -- [220]
+						"^2418^16^1613619379^9^0^20^219.54^", -- [221]
+						"^2418^16^1613619420^6^0^20^219.02^", -- [222]
+						"^2418^16^1613619484^245^1^20^218.99^Catlas", -- [223]
+						"^2383^16^1613620004^7^0^20^219.93^", -- [224]
+						"^2383^16^1613620183^311^1^20^220.54^Catlas", -- [225]
+						"^2406^16^1613620656^11^0^20^220.09^", -- [226]
+						"^2406^16^1613620820^269^0^20^221.05^Xyroh", -- [227]
+						"^2406^16^1613621202^140^0^20^221.05^Kamslock", -- [228]
+						"^2406^16^1613621442^139^0^20^221.05^Siory", -- [229]
+						"^2406^16^1613621677^340^1^20^221.11^Catlas", -- [230]
+						"^2405^16^1613622444^9^0^20^220.80^", -- [231]
+						"^2405^16^1613622599^69^0^20^220.80^Catlas", -- [232]
+						"^2405^16^1613622772^324^1^20^221.88^Atrocityjr", -- [233]
+						"^2402^16^1613623284^9^0^20^221.18^", -- [234]
+						"^2402^16^1613623345^330^1^20^221.18^", -- [235]
+						"^2387^8^1613944192^60^1^5^222.68^", -- [236]
+						"^2388^8^1613944726^139^1^5^222.68^Wommy", -- [237]
+						"^2389^8^1613945395^121^1^5^222.68^Wommy", -- [238]
+						"^2390^8^1613945574^181^1^5^222.68^Mb-Mal'Ganis", -- [239]
+						"^2397^8^1613946572^138^1^5^222.68^Mb-Mal'Ganis", -- [240]
+						"^2392^8^1613947152^177^1^5^222.68^", -- [241]
+						"^2393^8^1613947774^86^1^5^222.68^", -- [242]
+						"^2387^8^1613948285^64^1^5^222.80^", -- [243]
+						"^2388^8^1613948748^81^1^5^222.80^", -- [244]
+						"^2389^8^1613949317^48^1^5^222.80^", -- [245]
+						"^2390^8^1613949381^145^1^5^222.80^Thdlock", -- [246]
+						"^2401^8^1614114722^116^1^5^224.28^", -- [247]
+						"^2380^8^1614115021^128^1^5^224.28^", -- [248]
+						"^2403^8^1614115278^117^1^5^221.23^", -- [249]
+						"^2381^8^1614115524^118^1^5^220.54^", -- [250]
+						"^2401^8^1614212476^81^1^5^219.93^", -- [251]
+						"^2380^8^1614212691^119^1^5^219.93^", -- [252]
+						"^2403^8^1614212915^99^1^5^220.55^", -- [253]
+						"^2381^8^1614213154^100^1^5^220.55^", -- [254]
+						"^2382^8^1614214349^96^1^5^221.51^", -- [255]
+						"^2384^8^1614214918^192^1^5^221.51^", -- [256]
+						"^2385^8^1614215389^170^1^5^221.61^", -- [257]
+						"^2386^8^1614215725^204^1^5^221.61^Mb-Mal'Ganis", -- [258]
+						"^2397^8^1614240042^49^1^5^225.42^", -- [259]
+						"^2392^8^1614240372^129^1^5^225.11^", -- [260]
+						"^2393^8^1614240741^88^1^5^225.11^", -- [261]
+						"^2397^8^1614241788^64^1^5^222.66^", -- [262]
+						"^2392^8^1614242149^117^1^5^222.28^", -- [263]
+						"^2393^8^1614242492^126^1^5^222.28^", -- [264]
+						"^2397^8^1614243284^91^1^5^223.68^", -- [265]
+						"^2392^8^1614243678^156^1^5^223.68^", -- [266]
+						"^2393^8^1614244026^149^1^5^223.68^", -- [267]
+						"^2401^8^1614245079^202^1^5^223.01^Goophunt", -- [268]
+						"^2380^8^1614245374^99^1^5^223.01^Atrocityjr", -- [269]
+						"^2403^8^1614245570^88^1^5^223.01^", -- [270]
+						"^2381^8^1614245758^67^1^5^223.01^", -- [271]
+						"^2401^8^1614246465^113^1^5^222.46^Goopem", -- [272]
+						"^2380^8^1614246673^103^1^5^222.46^", -- [273]
+						"^2403^8^1614246818^127^1^5^222.46^", -- [274]
+						"^2381^8^1614247058^117^1^5^222.46^Goopem", -- [275]
+						"^2387^8^1614301233^138^1^5^214.30^", -- [276]
+						"^2388^8^1614301852^160^1^5^214.30^", -- [277]
+						"^2389^8^1614302383^110^1^5^214.30^", -- [278]
+						"^2390^8^1614302510^226^1^5^214.30^Goopsp", -- [279]
+						"^2401^8^1614303946^115^1^5^215.07^Goopsp", -- [280]
+						"^2380^8^1614304159^128^1^5^215.07^Jacobww-Mal'Ganis", -- [281]
+						"^2403^8^1614304343^152^1^5^215.07^Twistedr", -- [282]
+						"^2381^8^1614304684^124^1^5^214.48^", -- [283]
+						"^2398^16^1614653779^12^0^20^218.10^", -- [284]
+						"^2398^16^1614653930^246^1^20^218.10^Rukhran", -- [285]
+						"^2418^16^1614654323^5^0^20^218.18^", -- [286]
+						"^2418^16^1614654389^215^0^20^218.18^Tagzz", -- [287]
+						"^2418^16^1614654707^238^1^20^218.14^Atrocityjr", -- [288]
+						"^2383^16^1614655135^7^0^20^218.73^", -- [289]
+						"^2383^16^1614655266^306^1^20^218.77^Rwreturns", -- [290]
+						"^2406^16^1614655753^11^0^20^218.77^", -- [291]
+						"^2406^16^1614655838^336^0^20^218.77^Vilknight", -- [292]
+						"^2406^16^1614656335^324^1^20^218.85^Catlas", -- [293]
+						"^2405^16^1614657324^9^0^20^222.34^", -- [294]
+						"^2405^16^1614657406^318^1^20^222.34^Worstclass", -- [295]
+						"^2402^16^1614657892^11^0^20^222.49^", -- [296]
+						"^2402^16^1614657984^329^1^20^222.49^", -- [297]
+						"^2412^16^1614658538^21^0^20^223.07^Thdmoon", -- [298]
+						"^2412^16^1614658684^591^1^20^223.07^Atrocityjr", -- [299]
+						"^2398^16^1614733008^12^0^20^220.35^Demonjin", -- [300]
+						"^2398^16^1614733239^210^1^20^221.31^Demonjin", -- [301]
+						"^2418^16^1614733590^5^0^20^227.35^", -- [302]
+						"^2418^16^1614733670^218^1^20^226.57^", -- [303]
+						"^2383^16^1614734127^247^1^20^226.59^Demonjin", -- [304]
+						"^2406^16^1614734493^11^0^20^226.67^", -- [305]
+						"^2406^16^1614734550^310^1^20^226.67^Atrocityjr", -- [306]
+						"^2405^16^1614735242^10^0^20^226.70^", -- [307]
+						"^2405^16^1614735311^358^0^20^226.68^Stankylip", -- [308]
+						"^2405^16^1614735819^218^0^20^219.93^Demonjin", -- [309]
+						"^2405^16^1614736125^231^0^20^219.60^Demonjin", -- [310]
+						"^2405^16^1614736460^270^1^20^219.60^Demonjin", -- [311]
+						"^2402^16^1614736861^9^0^20^219.51^Demonjin", -- [312]
+						"^2402^16^1614736913^278^1^20^219.51^Demonjin", -- [313]
+						"^2412^16^1614737365^11^0^20^219.88^Demonjin", -- [314]
+						"^2412^16^1614737442^533^1^20^219.42^Demonjin", -- [315]
+						"^2399^16^1614738128^352^0^20^219.35^Demonjin", -- [316]
+						"^2399^16^1614738590^137^0^20^219.35^Demonjin", -- [317]
+						"^2399^16^1614738795^293^1^20^219.35^Demonjin", -- [318]
+						"^2417^16^1614739228^7^0^20^219.34^", -- [319]
+						"^2417^16^1614739379^572^1^20^219.79^Demonjin", -- [320]
+						"^2407^16^1614740177^35^0^20^219.82^Demonjin", -- [321]
+						"^2407^16^1614740291^390^0^20^219.82^Demonjin", -- [322]
+						"^2407^16^1614740762^468^0^20^219.84^Demonjin", -- [323]
+						"^2407^16^1614741328^247^0^20^219.88^Demonjin", -- [324]
+						"^2407^16^1614741669^612^0^20^219.88^Demonjin", -- [325]
+						"^2407^16^1614742359^613^0^20^219.88^Demonjin", -- [326]
+						"^2407^16^1614743072^278^0^20^219.88^Demonjin", -- [327]
+						"^2407^16^1614743436^471^0^20^219.88^Demonjin", -- [328]
+						"^2407^16^1614744043^590^1^20^219.88^Demonjin", -- [329]
+						"^2395^8^1614839444^166^0^5^227.20^Goopdtwo", -- [330]
+						"^2395^8^1614840189^84^1^5^227.11^", -- [331]
+						"^2394^8^1614840692^157^1^5^227.11^", -- [332]
+						"^2400^8^1614841623^92^1^5^227.11^Maeveythree", -- [333]
+						"^2396^8^1614842062^184^1^5^226.81^", -- [334]
+						"^2387^8^1614843600^108^1^5^227.11^Maeveythree", -- [335]
+						"^2388^8^1614844238^170^0^5^227.11^Maeveythree", -- [336]
+						"^2387^8^1614844708^124^1^5^227.11^", -- [337]
+						"^2388^8^1614845470^196^1^5^227.11^Atrocityjr", -- [338]
+						"^2360^8^1614846989^64^1^5^226.82^", -- [339]
+						"^2361^8^1614847727^96^1^5^226.82^", -- [340]
+						"^2362^8^1614847971^102^1^5^226.82^Maeveycakes", -- [341]
+						"^2363^8^1614848549^143^1^5^226.82^", -- [342]
+						"^2391^8^1614849707^100^1^5^226.82^Maeveycakes", -- [343]
+						"^2364^8^1614850453^112^1^5^226.82^", -- [344]
+						"^2397^8^1614988417^49^1^5^217.70^", -- [345]
+						"^2392^8^1614988970^153^1^5^217.70^Atrocityjr", -- [346]
+						"^2393^8^1614989637^83^1^5^215.58^", -- [347]
+						"^2357^8^1614990748^52^1^5^218.68^", -- [348]
+						"^2356^8^1614991748^51^1^5^221.45^", -- [349]
+						"^2358^8^1614991970^101^1^5^218.68^", -- [350]
+						"^2359^8^1614992338^64^0^5^218.68^Clozerw-Mal'Ganis", -- [351]
+						"^2359^8^1614992480^159^1^5^218.68^", -- [352]
+						"^2391^8^1615321767^130^1^5^223.75^", -- [353]
+						"^2366^8^1615322218^142^1^5^222.61^", -- [354]
+						"^2364^8^1615322685^145^1^5^223.64^", -- [355]
+						"^2365^8^1615323165^126^1^5^223.75^", -- [356]
+						"^2404^8^1615323350^134^1^5^223.75^", -- [357]
+						"^2391^8^1615326473^132^1^5^224.96^", -- [358]
+						"^2366^8^1615326945^116^1^5^224.96^", -- [359]
+						"^2364^8^1615327395^118^1^5^226.62^Kíngflysp", -- [360]
+						"^2365^8^1615327823^117^1^5^224.96^Atrocityjr", -- [361]
+						"^2404^8^1615327988^116^1^5^224.96^Atrocityjr", -- [362]
+						"^2391^8^1615330666^100^1^5^226.79^", -- [363]
+						"^2366^8^1615331049^99^1^5^226.79^", -- [364]
+						"^2364^8^1615331438^120^1^5^226.79^", -- [365]
+						"^2365^8^1615331826^85^1^5^226.79^", -- [366]
+						"^2404^8^1615331955^114^1^5^226.79^", -- [367]
+						"^2398^16^1615337769^11^0^20^218.00^", -- [368]
 					},
 					["Cnxwarrior"] = {
 					},
-					["Boostmehp"] = {
-						"^2093^8^1577407451^49^1^5^422.20^", -- [1]
-						"^2094^8^1577407927^82^1^5^422.20^Brickp-Proudmoore", -- [2]
-						"^2095^8^1577408299^58^1^5^422.20^", -- [3]
-						"^2096^8^1577408469^76^1^5^422.20^", -- [4]
-						"^2260^23^1577413791^220^1^5^414.90^Brickp-Proudmoore", -- [5]
-						"^2086^8^1577426535^76^1^5^416.56^", -- [6]
-						"^2085^8^1577426856^10^0^5^416.56^Swipe", -- [7]
-						"^2085^8^1577427205^108^1^5^416.56^", -- [8]
-						"^2084^8^1577427672^69^1^5^416.56^", -- [9]
-						"^2087^8^1577427790^107^1^5^416.56^", -- [10]
-						"^2111^8^1577428521^30^1^5^420.21^", -- [11]
-						"^2118^8^1577428892^65^1^5^420.21^", -- [12]
-						"^2112^8^1577429075^79^1^5^413.89^Literalhomo", -- [13]
-						"^2123^8^1577429458^78^1^5^413.89^", -- [14]
-						"^2093^8^1577430056^85^1^5^421.21^", -- [15]
-						"^2094^8^1577430513^75^1^5^421.21^Literalhomo", -- [16]
-						"^2095^8^1577430899^84^1^5^421.21^", -- [17]
-						"^2096^8^1577431092^84^1^5^421.21^", -- [18]
-						"^2105^8^1577614108^58^1^5^421.57^", -- [19]
-						"^2106^8^1577614762^100^1^5^421.57^Xylem-Khaz'goroth", -- [20]
-						"^2107^8^1577615135^76^1^5^421.57^", -- [21]
-						"^2108^8^1577615283^121^1^5^421.57^", -- [22]
-						"^2093^8^1577617362^68^1^5^424.82^", -- [23]
-						"^2094^8^1577617798^98^1^5^424.82^", -- [24]
-						"^2095^8^1577618360^107^1^5^424.82^Literalhomo", -- [25]
-						"^2096^8^1577618698^87^1^5^424.82^", -- [26]
-						"^2124^8^1577695148^143^1^5^422.48^Shashris-Kilrogg", -- [27]
-						"^2125^8^1577695888^140^1^5^422.48^", -- [28]
-						"^2126^8^1577696359^49^0^5^422.48^Literalhomo", -- [29]
-						"^2126^8^1577696458^107^1^5^422.48^", -- [30]
-						"^2127^8^1577697048^277^1^5^422.48^", -- [31]
-						"^2093^8^1578297072^87^1^5^433.24^", -- [32]
-						"^2094^8^1578297477^125^1^5^433.24^Literalhomo", -- [33]
-						"^2095^8^1578297827^85^1^5^433.24^", -- [34]
-						"^2096^8^1578297956^120^1^5^433.24^", -- [35]
-						"^2086^8^1578466256^130^1^5^423.55^", -- [36]
-						"^2085^8^1578466629^160^1^5^423.55^Literalhomo", -- [37]
-						"^2084^8^1578467356^101^1^5^423.55^", -- [38]
-						"^2087^8^1578467563^133^1^5^423.55^", -- [39]
-						"^2312^23^1578468845^88^1^5^395.48^", -- [40]
-						"^2290^23^1578468992^77^1^5^431.73^", -- [41]
-						"^2292^23^1578469126^85^1^5^423.16^", -- [42]
-						"^2291^23^1578469301^122^1^5^423.55^", -- [43]
-						"^2257^23^1578469510^116^1^5^423.94^", -- [44]
-						"^2258^23^1578469694^67^1^5^423.94^", -- [45]
-						"^2259^23^1578470044^65^1^5^425.21^", -- [46]
-						"^2260^23^1578470298^167^1^5^425.21^", -- [47]
-						"^2114^8^1578878982^64^1^5^434.02^", -- [48]
-						"^2115^8^1578879061^77^1^5^434.02^", -- [49]
-						"^2113^8^1578879285^88^1^5^434.02^", -- [50]
-						"^2116^8^1578879544^70^1^5^434.02^", -- [51]
-						"^2117^8^1578879691^43^1^5^434.02^", -- [52]
-						"^2139^8^1578880834^91^1^5^435.95^", -- [53]
-						"^2142^8^1578881413^96^1^5^435.95^", -- [54]
-						"^2140^8^1578881985^173^1^5^433.33^", -- [55]
-						"^2143^8^1578882311^141^1^5^433.33^", -- [56]
-						"^2124^8^1578884047^79^1^5^429.27^", -- [57]
-						"^2125^8^1578884332^115^1^5^429.27^", -- [58]
-						"^2126^8^1578884587^74^1^5^429.27^", -- [59]
-						"^2127^8^1578884869^174^1^5^429.27^", -- [60]
-						"^2113^8^1578886189^107^1^5^429.16^", -- [61]
-						"^2114^8^1578886773^96^1^5^429.16^", -- [62]
-						"^2115^8^1578886961^125^1^5^429.16^Literalhomo", -- [63]
-						"^2116^8^1578887465^116^1^5^429.16^", -- [64]
-						"^2117^8^1578887691^89^1^5^429.16^", -- [65]
-						"^2105^8^1578891993^68^1^5^434.40^", -- [66]
-						"^2106^8^1578892671^62^1^5^434.40^", -- [67]
-						"^2107^8^1578892830^59^1^5^434.40^", -- [68]
-						"^2108^8^1578893014^137^1^5^434.40^", -- [69]
-						"^2111^8^1578894113^46^1^5^434.33^", -- [70]
-						"^2118^8^1578894656^135^1^5^434.76^", -- [71]
-						"^2112^8^1578895011^106^1^5^434.76^Literalhomo", -- [72]
-						"^2123^8^1578895339^115^1^5^435.67^", -- [73]
-						"^2124^8^1578896250^108^1^5^437.00^Captianholt-Kargath", -- [74]
-						"^2125^8^1578896787^138^1^5^437.00^", -- [75]
-						"^2126^8^1578897098^91^1^5^437.00^", -- [76]
-						"^2127^8^1578897561^233^1^5^437.58^", -- [77]
-						"^2111^8^1578898793^35^1^5^437.64^", -- [78]
-						"^2118^8^1578899191^86^1^5^437.64^", -- [79]
-						"^2112^8^1578899451^61^1^5^437.64^", -- [80]
-						"^2123^8^1578899699^102^1^5^437.64^", -- [81]
+					["Crónix"] = {
 					},
-					["Sddf"] = {
+					["Atrocitydk"] = {
+						"^2139^8^1567406687^133^1^5^436.13^", -- [1]
+						"^2142^8^1567407359^135^1^5^436.13^", -- [2]
+						"^2140^8^1567407860^287^1^5^436.81^Twistedlock", -- [3]
+						"^2143^8^1567408314^219^1^5^436.81^", -- [4]
+						"^2086^8^1567577175^110^1^5^433.83^", -- [5]
+						"^2085^8^1567577509^107^1^5^433.83^", -- [6]
+						"^2084^8^1567578015^102^1^5^434.70^", -- [7]
+						"^2087^8^1567578214^104^1^5^434.70^", -- [8]
+						"^2111^8^1568172102^78^1^5^436.44^", -- [9]
+						"^2118^8^1568172493^137^1^5^436.44^", -- [10]
+						"^2112^8^1568172843^124^1^5^436.44^", -- [11]
+						"^2123^8^1568173077^158^1^5^436.44^", -- [12]
+						"^1113^3^1568437938^4^1^10^436.72^", -- [13]
+						"^1109^3^1568438003^273^1^10^436.72^", -- [14]
+						"^2086^8^1568955535^115^1^5^440.81^Disciplinae", -- [15]
+						"^2085^8^1568956124^136^1^5^442.33^", -- [16]
+						"^2084^8^1568956651^70^1^5^441.77^", -- [17]
+						"^2087^8^1568956817^115^1^5^441.77^Mbdtf", -- [18]
+						"^2124^8^1569050777^94^1^5^410.21^Heartbreak-Mal'Ganis", -- [19]
+						"^2125^8^1569051234^122^1^5^415.25^", -- [20]
+						"^2126^8^1569051617^56^1^5^418.81^", -- [21]
+						"^2127^8^1569051972^196^1^5^418.81^Heartbreak-Mal'Ganis", -- [22]
+						"^1822^23^1569164878^12^1^5^440.50^", -- [23]
+						"^1823^23^1569164957^12^1^5^440.50^", -- [24]
+						"^1824^23^1569165057^58^1^5^440.50^", -- [25]
+						"^2111^8^1569473851^45^1^5^437.81^", -- [26]
+						"^2118^8^1569474231^125^1^5^437.81^", -- [27]
+						"^2112^8^1569474472^115^1^5^437.81^", -- [28]
+						"^2123^8^1569474816^123^1^5^437.81^", -- [29]
+						"^1822^23^1574839493^16^1^5^417.81^", -- [30]
+						"^1823^23^1574839610^9^1^5^417.81^", -- [31]
+						"^1824^23^1574839681^61^1^5^417.81^", -- [32]
+						"^1822^2^1574840205^11^1^5^440.31^", -- [33]
+						"^1823^2^1574840292^11^1^5^440.31^", -- [34]
+						"^1824^2^1574840400^67^1^5^440.31^", -- [35]
+						"^1822^1^1574840590^9^1^5^440.31^", -- [36]
+						"^1823^1^1574840670^11^1^5^440.31^", -- [37]
+						"^1824^1^1574840753^47^1^5^440.31^", -- [38]
+						"^1822^1^1574840848^7^1^5^440.31^", -- [39]
+						"^1823^1^1574840924^8^1^5^440.31^", -- [40]
+						"^1824^1^1574840989^66^1^5^440.31^", -- [41]
+						"^1822^1^1574841150^9^1^5^440.31^", -- [42]
+						"^1823^1^1574841228^10^1^5^440.31^", -- [43]
+						"^1824^1^1574841320^42^1^5^440.31^", -- [44]
+						"^1822^1^1574841472^9^1^5^440.31^", -- [45]
+						"^1823^1^1574841555^9^1^5^440.31^", -- [46]
+						"^1824^1^1574841627^57^1^5^440.31^", -- [47]
+						"^1822^1^1574841741^8^1^5^440.31^", -- [48]
+						"^1823^1^1574841829^8^1^5^437.13^", -- [49]
+						"^1824^1^1574842120^41^1^5^440.31^", -- [50]
+						"^1824^1^1574842443^35^1^5^440.31^", -- [51]
+						"^1822^1^1574842530^14^1^5^440.31^", -- [52]
+						"^1823^1^1574842603^8^1^5^440.31^", -- [53]
+						"^1824^1^1574842665^35^1^5^440.31^", -- [54]
+						"^1822^1^1574842759^10^1^5^440.31^", -- [55]
+						"^1823^1^1574842823^5^1^5^440.31^", -- [56]
+						"^1824^1^1574842879^33^1^5^440.31^", -- [57]
+						"^1824^1^1574843974^31^1^5^440.31^", -- [58]
+						"^2260^23^1575103794^154^1^5^440.20^", -- [59]
+						"^2086^8^1575104538^78^1^5^431.09^", -- [60]
+						"^2085^8^1575105041^106^1^5^428.06^", -- [61]
+						"^2084^8^1575105561^75^1^5^428.06^", -- [62]
+						"^2087^8^1575105747^93^1^5^428.06^Hannod", -- [63]
+						"^2305^15^1575163557^193^1^30^428.91^Twisteddh", -- [64]
+						"^2304^15^1575163878^11^0^28^435.52^", -- [65]
+						"^2304^15^1575164053^211^1^29^435.40^", -- [66]
+						"^2303^15^1575164291^2^0^29^435.40^Twisteddh", -- [67]
+						"^2303^15^1575164330^7^0^29^435.16^", -- [68]
+						"^2303^15^1575164377^234^1^29^435.18^Flexatron-Destromath", -- [69]
+						"^2311^15^1575164793^8^0^29^436.67^Sotan-Zangarmarsh", -- [70]
+						"^2311^15^1575164851^6^0^29^436.67^", -- [71]
+						"^2311^15^1575164908^401^0^29^435.05^Gardria-Mal'Ganis", -- [72]
+						"^2311^15^1575165489^244^0^28^434.70^Hannod", -- [73]
+						"^2311^15^1575165825^250^1^28^433.53^Hannod", -- [74]
+						"^2293^15^1575166419^235^1^28^436.41^Glogzh-Area52", -- [75]
+						"^2299^15^1575166878^381^1^30^433.35^Shift-Area52", -- [76]
+						"^2298^16^1575168521^214^1^20^436.31^Beladesham", -- [77]
+						"^2289^16^1575169182^314^1^20^439.38^Nievin", -- [78]
+						"^2305^16^1575170310^258^1^20^439.45^Domrashi-Eitrigg", -- [79]
+						"^2304^16^1575170744^12^0^20^439.27^", -- [80]
+						"^2304^16^1575170949^274^1^20^439.12^Atrocitydk", -- [81]
+						"^2303^16^1575171260^3^0^20^439.08^Chmpagnepapi", -- [82]
+						"^2303^16^1575171759^6^0^20^439.68^Beladesham", -- [83]
+						"^2303^16^1575171816^264^0^20^440.16^Twisticles", -- [84]
+						"^2303^16^1575172120^6^0^20^440.16^Chmpagnepapi", -- [85]
+						"^2303^16^1575172196^311^0^20^440.26^Wuuzzyy-Lightning'sBlade", -- [86]
+						"^2303^16^1575172623^190^0^20^440.35^Glogzp-Area52", -- [87]
+						"^2303^16^1575172931^264^0^20^440.35^Wuuzzyy-Lightning'sBlade", -- [88]
+						"^2303^16^1575173252^8^0^20^440.06^Chmpagnepapi", -- [89]
+						"^2311^15^1575406202^434^0^19^437.57^Ládytiny-Area52", -- [90]
+						"^2311^15^1575406894^277^0^19^431.90^Luhara-Gallywix", -- [91]
+						"^2311^15^1575407588^426^1^19^437.34^Borrasca-Azralon", -- [92]
+						"^2298^15^1575408547^5^0^23^438.05^", -- [93]
+						"^2298^15^1575408585^5^0^23^438.05^", -- [94]
+						"^2298^15^1575408709^164^1^26^438.40^Taiumi-Quel'Thalas", -- [95]
+						"^2305^15^1575409361^189^1^28^439.46^Massacreop-Zul'jin", -- [96]
+						"^2298^16^1575426213^187^1^20^418.18^Atrocitydk", -- [97]
+						"^2305^16^1575426891^233^1^20^426.14^Poddk", -- [98]
+						"^2289^16^1575427488^205^1^20^442.09^Preheat", -- [99]
+						"^2304^16^1575427868^12^0^20^442.33^", -- [100]
+						"^2304^16^1575427967^228^1^20^442.33^", -- [101]
+						"^2303^16^1575428221^3^0^20^442.33^Soupshop", -- [102]
+						"^2303^16^1575428292^6^0^20^442.53^Maximums", -- [103]
+						"^2303^16^1575428340^406^1^20^442.88^Poddk", -- [104]
+						"^2311^16^1575428939^9^0^20^443.47^", -- [105]
+						"^2311^16^1575429138^453^1^20^443.68^Realestxo", -- [106]
+						"^2293^16^1575429918^427^0^20^443.56^Twistedsp", -- [107]
+						"^2293^16^1575430441^324^0^20^443.56^Yungthotty", -- [108]
+						"^2293^16^1575430877^334^0^20^443.60^Syrethqt", -- [109]
+						"^2293^16^1575431386^426^1^20^443.48^Xariiz", -- [110]
+						"^2111^8^1575625450^54^1^5^442.69^", -- [111]
+						"^2118^8^1575625902^110^1^5^442.69^", -- [112]
+						"^2112^8^1575626188^101^1^5^442.69^Psylok-Nagrand", -- [113]
+						"^2123^8^1575626501^115^1^5^441.98^", -- [114]
+						"^2260^23^1575757941^162^1^5^435.17^", -- [115]
+						"^2298^16^1576032739^172^1^20^443.05^Kíngflysp", -- [116]
+						"^2305^16^1576033394^205^1^20^443.23^Poddk", -- [117]
+						"^2289^16^1576033937^209^1^20^442.96^Lippdh", -- [118]
+						"^2304^16^1576034313^13^0^20^442.66^", -- [119]
+						"^2304^16^1576034380^230^1^20^443.13^Maximums", -- [120]
+						"^2303^16^1576034635^8^0^20^442.93^Soupshop", -- [121]
+						"^2303^16^1576034739^352^1^20^443.41^Xariiz", -- [122]
+						"^2311^16^1576035283^10^0^20^443.08^", -- [123]
+						"^2311^16^1576035331^3^0^20^443.28^", -- [124]
+						"^2311^16^1576035364^108^0^20^443.09^Eroys", -- [125]
+						"^2311^16^1576035554^404^1^20^443.09^Norialaxo", -- [126]
+						"^2293^16^1576036407^443^1^20^443.84^Xariiz", -- [127]
+						"^2260^23^1576039727^239^1^5^419.77^Stuart", -- [128]
+						"^2097^8^1576371577^46^1^5^438.39^", -- [129]
+						"^2109^8^1576371803^109^1^5^438.39^", -- [130]
+						"^2099^8^1576372349^54^1^5^438.39^", -- [131]
+						"^2100^8^1576372422^162^1^5^438.39^", -- [132]
+						"^2093^8^1576629007^106^1^5^436.63^", -- [133]
+						"^2094^8^1576629363^105^1^5^436.63^", -- [134]
+						"^2095^8^1576629755^107^1^5^434.95^", -- [135]
+						"^2096^8^1576629967^135^1^5^434.95^", -- [136]
+						"^2298^16^1576636679^185^1^20^438.35^", -- [137]
+						"^2305^16^1576637269^212^1^20^438.95^", -- [138]
+						"^2289^16^1576637840^211^1^20^441.50^Lippdh", -- [139]
+						"^2304^16^1576638212^11^0^20^441.75^", -- [140]
+						"^2304^16^1576638271^238^1^20^441.79^", -- [141]
+						"^2303^16^1576638541^4^0^20^441.46^Lippdh", -- [142]
+						"^2303^16^1576638635^361^1^20^441.74^Poddk", -- [143]
+						"^2311^16^1576639185^8^0^20^441.68^", -- [144]
+						"^2311^16^1576639220^9^0^20^441.68^", -- [145]
+						"^2311^16^1576639262^401^1^20^441.68^Poddk", -- [146]
+						"^2293^16^1576640015^458^1^20^443.79^Maeveycakes", -- [147]
+						"^2312^23^1576736512^20^0^5^436.38^", -- [148]
+						"^2312^23^1576736694^89^1^5^437.31^Powercleans", -- [149]
+						"^2290^23^1576736829^83^1^5^439.02^", -- [150]
+						"^2292^23^1576736971^69^1^5^439.02^", -- [151]
+						"^2291^23^1576737171^112^1^5^439.02^", -- [152]
+						"^2257^23^1576737363^125^1^5^439.02^", -- [153]
+						"^2258^23^1576737579^51^1^5^442.92^", -- [154]
+						"^2259^23^1576737844^66^1^5^442.92^", -- [155]
+						"^2260^23^1576738045^174^1^5^442.92^Atlaschi", -- [156]
+						"^2305^15^1577067200^186^1^30^424.85^Høot-Aegwynn", -- [157]
+						"^2289^15^1577067877^185^1^30^431.12^Ambrosiadh-Mal'Ganis", -- [158]
+						"^2304^15^1577068189^13^0^30^430.69^", -- [159]
+						"^2304^15^1577068268^203^1^30^434.42^Ambrosiadh-Mal'Ganis", -- [160]
+						"^2303^15^1577068496^5^0^30^433.97^", -- [161]
+						"^2303^15^1577068590^214^1^30^434.01^Blindstorm-Thrall", -- [162]
+						"^2311^15^1577068988^6^0^30^434.10^", -- [163]
+						"^2311^15^1577069035^266^1^30^433.96^Demonicrool-Area52", -- [164]
+						"^2293^15^1577069602^227^1^30^433.09^Slowride-BleedingHollow", -- [165]
+						"^2299^15^1577069947^369^1^30^433.26^Høot-Aegwynn", -- [166]
+						"^2260^23^1577246781^138^1^5^445.22^", -- [167]
+						"^2111^8^1577346099^33^1^5^436.82^", -- [168]
+						"^2118^8^1577346442^104^1^5^436.23^", -- [169]
+						"^2112^8^1577346655^89^1^5^436.23^", -- [170]
+						"^2123^8^1577346953^77^1^5^436.23^", -- [171]
+						"^2113^8^1577859395^90^1^5^445.43^", -- [172]
+						"^2114^8^1577859683^82^1^5^445.33^", -- [173]
+						"^2115^8^1577859829^103^1^5^445.33^", -- [174]
+						"^2116^8^1577860155^109^1^5^445.43^", -- [175]
+						"^2117^8^1577860286^94^1^5^445.43^", -- [176]
+						"^2298^16^1578019916^164^1^20^440.30^", -- [177]
+						"^2305^16^1578020484^202^1^20^440.00^Maeveycakes", -- [178]
+						"^2289^16^1578021056^185^1^20^443.51^Drineym", -- [179]
+						"^2304^16^1578021492^12^0^20^443.46^", -- [180]
+						"^2304^16^1578021575^215^1^20^443.46^", -- [181]
+						"^2303^16^1578021816^3^0^20^443.46^Thdemon", -- [182]
+						"^2303^16^1578021947^335^1^20^443.48^Realestxo", -- [183]
+						"^2311^16^1578022457^8^0^20^443.72^", -- [184]
+						"^2311^16^1578022527^171^0^20^443.54^Podra", -- [185]
+						"^2311^16^1578022800^183^0^20^443.76^Xyronic", -- [186]
+						"^2311^16^1578023094^7^0^20^443.88^", -- [187]
+						"^2311^16^1578023150^367^1^20^443.88^Realestxo", -- [188]
+						"^2293^16^1578453522^479^0^20^444.19^Sanghelios", -- [189]
+						"^2293^16^1578454078^437^1^20^444.32^Anshul", -- [190]
+						"^2299^16^1578454838^357^0^20^443.89^Podlock", -- [191]
+						"^2299^16^1578455281^584^1^20^444.28^Sanghelios", -- [192]
+						"^2115^8^1578554395^63^0^5^444.15^Twistedlock", -- [193]
+						"^2115^8^1578554545^58^1^5^444.15^", -- [194]
+						"^2114^8^1578554720^40^1^5^444.15^", -- [195]
+						"^2113^8^1578554939^72^1^5^444.15^", -- [196]
+						"^2116^8^1578555209^84^1^5^444.15^", -- [197]
+						"^2117^8^1578555351^40^1^5^444.15^", -- [198]
+						"^2337^15^1579987465^186^0^23^447.47^Maximumw", -- [199]
+						"^2337^15^1579987782^710^0^23^447.47^Innocentpal-Arthas", -- [200]
+						"^2337^15^1579988610^619^1^23^448.41^Thotiano", -- [201]
+						"^2344^15^1579990285^299^0^20^450.06^Ericswarrior", -- [202]
+						"^2344^15^1579990769^295^0^21^441.41^Dossoudmg", -- [203]
+						"^2344^15^1579991240^644^1^21^447.71^Thdeath", -- [204]
+						"^2329^15^1579992363^3^0^22^439.39^Lipdk", -- [205]
+						"^2329^15^1579992572^323^1^23^448.93^Aspen-Mal'Ganis", -- [206]
+						"^2329^15^1579993117^316^1^23^449.23^Thotiano", -- [207]
+						"^2329^15^1579993568^303^1^23^449.23^Zerørequiem-EmeraldDream", -- [208]
+						"^2329^15^1579994735^308^1^21^435.06^Iceycreep", -- [209]
+						"^2329^15^1579995182^341^1^21^449.91^Tsung-Dunemaul", -- [210]
+						"^2329^15^1579995699^312^1^21^449.51^Atrocitydk", -- [211]
+						"^2327^15^1579996617^356^1^20^450.85^Noripalxo", -- [212]
+						"^2334^15^1579997456^372^1^21^450.79^Machera", -- [213]
+						"^2328^15^1579998449^6^0^20^449.98^", -- [214]
+						"^2328^15^1579998496^400^1^20^449.98^", -- [215]
+						"^2336^15^1579999143^16^0^20^450.00^", -- [216]
+						"^2336^15^1579999216^486^0^20^450.00^Siory", -- [217]
+						"^2336^15^1579999791^395^1^20^450.00^Wafe", -- [218]
+						"^2333^15^1580000388^8^0^19^451.30^Domeynicus", -- [219]
+						"^2333^15^1580000488^5^0^19^451.25^", -- [220]
+						"^2333^15^1580000525^7^0^19^451.25^", -- [221]
+						"^2333^15^1580000601^302^1^19^450.84^", -- [222]
+						"^2331^15^1580001095^13^0^19^451.55^", -- [223]
+						"^2331^15^1580001352^383^1^19^451.68^Atrocitydk", -- [224]
+						"^2343^15^1580002422^461^1^19^452.04^Machera", -- [225]
+						"^2335^15^1580003032^13^0^19^452.07^Ruinxd", -- [226]
+						"^2335^15^1580003153^257^1^19^452.38^Machera", -- [227]
+						"^2345^15^1580003654^135^0^19^453.38^Ruinxd", -- [228]
+						"^2345^15^1580003871^532^1^19^453.38^Iceycreep", -- [229]
+						"^2086^8^1581652084^171^0^5^451.99^Twisticles", -- [230]
+						"^2086^8^1581652301^35^0^5^451.99^Twisticles", -- [231]
+						"^2086^8^1581652595^218^1^5^452.74^Twisticles", -- [232]
+						"^2084^8^1581653303^138^1^5^452.74^Atrocitydk", -- [233]
+						"^2085^8^1581653712^271^1^5^452.74^Jetk-Magtheridon", -- [234]
+						"^2087^8^1581654876^252^1^5^452.74^Jetk-Magtheridon", -- [235]
+						"^2292^8^1582934090^131^1^5^461.44^", -- [236]
+						"^2312^8^1582934475^76^1^5^460.58^", -- [237]
+						"^2290^8^1582934799^72^0^5^461.44^Hannod", -- [238]
+						"^2290^8^1582935028^150^1^5^459.66^", -- [239]
+						"^2291^8^1582935545^290^1^5^459.66^Mbwar", -- [240]
+						"^2292^8^1583902455^124^1^5^466.18^Famousxo", -- [241]
+						"^2312^8^1583902954^91^1^5^466.18^Atlasxo", -- [242]
+						"^2290^8^1583903224^112^1^5^466.18^", -- [243]
+						"^2291^8^1583903567^146^1^5^466.18^", -- [244]
+						"^666^9^1584278684^1^1^40^449.50^", -- [245]
+						"^668^9^1584278745^0^1^40^449.50^", -- [246]
+						"^2113^8^1584514497^101^1^5^463.40^", -- [247]
+						"^2114^8^1584515259^70^1^5^461.58^", -- [248]
+						"^2115^8^1584515460^93^1^5^461.58^", -- [249]
+						"^2116^8^1584516056^95^1^5^461.58^", -- [250]
+						"^2117^8^1584516272^106^1^5^461.58^", -- [251]
+						"^2093^8^1584599879^90^1^5^459.31^", -- [252]
+						"^2094^8^1584600446^99^1^5^459.31^", -- [253]
+						"^2095^8^1584600881^105^1^5^459.31^", -- [254]
+						"^2096^8^1584601083^130^1^5^459.31^", -- [255]
+						"^2257^8^1584605450^130^1^5^465.95^Imup", -- [256]
+						"^2258^8^1584605801^158^1^5^465.95^", -- [257]
+						"^2259^8^1584606507^158^1^5^465.95^Drineym", -- [258]
+						"^2260^8^1584606955^278^1^5^465.95^Mbdh", -- [259]
+						"^666^9^1584619119^1^1^40^458.50^", -- [260]
+						"^668^9^1584619180^2^1^40^458.50^", -- [261]
+						"^2101^8^1589948613^150^1^5^469.88^Hannospal", -- [262]
+						"^2102^8^1589949315^133^1^5^471.13^", -- [263]
+						"^2103^8^1589949878^153^1^5^471.13^Bustysocrmom", -- [264]
+						"^2104^8^1589950170^94^0^5^471.13^Hannospal", -- [265]
+						"^2104^8^1589950366^173^1^5^471.13^", -- [266]
+						"^2139^8^1589951702^94^1^5^472.18^", -- [267]
+						"^2142^8^1589952125^106^1^5^472.18^", -- [268]
+						"^2140^8^1589952528^206^1^5^472.18^", -- [269]
+						"^2143^8^1589952887^146^1^5^472.18^", -- [270]
+						"^2086^8^1589953659^27^0^5^470.75^Gooptard", -- [271]
+						"^2086^8^1589953736^117^0^5^470.75^Twisticles", -- [272]
+						"^2086^8^1589953911^27^0^5^470.75^Atrocitydk", -- [273]
+						"^2086^8^1589953989^47^0^5^470.75^Atrocitydk", -- [274]
+						"^2084^8^1589954186^23^0^5^470.75^Atrocitydk", -- [275]
+						"^2086^8^1589954257^17^0^5^470.75^Atrocitydk", -- [276]
+						"^2085^8^1589954605^135^1^5^470.75^", -- [277]
+						"^2086^8^1589954799^162^1^5^470.75^", -- [278]
+						"^2084^8^1589955040^100^1^5^470.75^", -- [279]
+						"^2087^8^1589955371^170^1^5^470.75^Twisticles", -- [280]
+						"^2113^8^1589956668^132^1^5^466.00^", -- [281]
+						"^2114^8^1589957043^139^1^5^462.73^Gooppal", -- [282]
+						"^2115^8^1589957325^87^0^5^466.00^Atrocitydk", -- [283]
+						"^2115^8^1589957455^141^1^5^466.00^", -- [284]
+						"^2116^8^1589958059^182^0^5^466.00^Twistedw", -- [285]
+						"^2116^8^1589958324^121^0^5^462.47^Atrocitydk", -- [286]
+						"^2116^8^1589958577^133^1^5^468.88^", -- [287]
+						"^2117^8^1589958788^136^0^5^468.88^Mbh", -- [288]
+						"^2117^8^1589958964^169^1^5^471.69^", -- [289]
+						"^2086^8^1590722672^109^0^5^455.07^Gooptard", -- [290]
+						"^2086^8^1590723134^120^1^5^450.22^", -- [291]
+						"^2084^8^1590723588^95^0^5^450.22^Kaides-Mal'Ganis", -- [292]
+						"^2084^8^1590723731^72^1^5^450.22^", -- [293]
+						"^2085^8^1590724080^5^0^5^450.22^", -- [294]
+						"^2085^8^1590724166^123^1^5^450.22^", -- [295]
+						"^2087^8^1590724588^164^1^5^450.22^Kaides-Mal'Ganis", -- [296]
+						"^2111^8^1595294066^78^1^5^473.73^", -- [297]
+						"^2112^8^1595294455^113^1^5^473.73^", -- [298]
+						"^2118^8^1595294626^101^1^5^473.73^", -- [299]
+						"^2123^8^1595295067^140^1^5^473.73^", -- [300]
+						"^2093^8^1595704421^98^1^5^475.43^Atrocitydk", -- [301]
+						"^2094^8^1595704883^159^1^5^475.43^Notbad-Zul'jin", -- [302]
+						"^2095^8^1595705262^88^1^5^475.43^Atrocitydk", -- [303]
+						"^2096^8^1595705406^134^1^5^475.43^", -- [304]
+						"^2111^8^1596351762^54^1^5^475.36^", -- [305]
+						"^2118^8^1596352072^131^1^5^475.36^", -- [306]
+						"^2112^8^1596352344^133^1^5^475.36^Atrocitydk", -- [307]
+						"^2123^8^1596352730^156^1^5^475.36^Soakzy-Area52", -- [308]
 					},
-					["Atrocitybdx"] = {
-						"^2093^8^1593123003^127^1^5^480.38^Ericn", -- [1]
-						"^2094^8^1593123275^83^1^5^480.38^", -- [2]
-						"^2095^8^1593123743^101^1^5^480.38^", -- [3]
-						"^2096^8^1593124474^77^0^5^480.38^Ericn", -- [4]
+					["Transmogg"] = {
 					},
 					["Atrocityd"] = {
 					},
-					["Atrocitychad"] = {
-						"^2139^8^1587706495^80^0^5^481.13^Maxfingrguns", -- [1]
-						"^2139^8^1587706773^104^1^5^481.13^", -- [2]
-						"^2142^8^1587707182^54^0^5^481.13^Maxfingrguns", -- [3]
-						"^2139^8^1587707841^153^0^5^481.13^Atrocitychad", -- [4]
-						"^2139^8^1587759934^91^1^5^481.13^", -- [5]
-						"^2142^8^1587760342^107^1^5^481.13^Maxfingrguns", -- [6]
-						"^2140^8^1587760589^165^1^5^481.13^", -- [7]
-						"^2143^8^1587760917^217^1^5^481.13^Atrocitychad", -- [8]
-						"^2139^8^1587761501^103^1^5^481.13^", -- [9]
-						"^2139^8^1587762222^111^0^5^481.13^Maxfingrguns", -- [10]
-						"^2139^8^1587762619^111^1^5^481.13^Maxfingrguns", -- [11]
-						"^2142^8^1587763030^118^1^5^481.13^", -- [12]
-						"^2140^8^1587763248^175^1^5^481.13^", -- [13]
-						"^2143^8^1587763641^171^1^5^481.13^", -- [14]
-						"^2139^8^1587764067^93^1^5^481.13^", -- [15]
-						"^2142^8^1587764472^119^1^5^481.13^", -- [16]
-						"^2140^8^1587764683^175^1^5^481.13^Imfiredup", -- [17]
-						"^2143^8^1587765023^164^1^5^481.28^", -- [18]
-						"^2139^8^1587765727^82^1^5^481.13^", -- [19]
-						"^2142^8^1587766126^133^1^5^481.13^", -- [20]
-						"^2140^8^1587766356^171^1^5^481.13^", -- [21]
-						"^2143^8^1587766678^158^1^5^481.13^Ericchad", -- [22]
-						"^2139^8^1587767751^62^0^5^481.13^Maxfingrguns", -- [23]
-						"^2139^8^1587768302^99^1^5^481.13^Imfiredupdie", -- [24]
-						"^2142^8^1587768735^118^1^5^481.13^Maxfingrguns", -- [25]
-						"^2139^8^1587929175^80^1^5^480.97^", -- [26]
-						"^2142^8^1587929572^119^1^5^481.33^", -- [27]
-						"^2140^8^1587929804^150^1^5^481.33^", -- [28]
-						"^2143^8^1587930154^134^0^5^481.33^Twisted", -- [29]
-						"^2143^8^1587930921^167^0^5^481.13^Twisted", -- [30]
-						"^2143^8^1587931819^4^0^5^481.13^", -- [31]
-						"^2143^8^1587931927^53^0^5^481.13^Imfiredup", -- [32]
-						"^2143^8^1587932119^0^0^5^481.13^", -- [33]
-						"^2143^8^1587932153^16^0^5^481.13^Maxfingrguns", -- [34]
-						"^2143^8^1587932242^45^0^5^481.13^Twisted", -- [35]
-						"^2143^8^1587932558^36^0^5^481.13^Maxfingrguns", -- [36]
-						"^2143^8^1587933161^72^0^5^481.13^Imfiredup", -- [37]
-						"^2143^8^1587933386^179^0^5^481.13^Ericchad", -- [38]
-						"^2143^8^1587933760^82^0^5^481.13^Maxfingrguns", -- [39]
-						"^2143^8^1587934036^183^1^5^481.13^Twisted", -- [40]
-						"^2139^8^1587937506^75^1^5^481.13^", -- [41]
-						"^2142^8^1587937894^121^1^5^481.13^", -- [42]
-						"^2140^8^1587938109^184^1^5^481.13^", -- [43]
-						"^2143^8^1587938436^164^1^5^481.13^", -- [44]
-						"^2139^8^1587939071^83^1^5^481.13^", -- [45]
-						"^2142^8^1587939443^23^0^5^481.13^Maxfingrguns", -- [46]
-						"^2139^8^1587940037^75^1^5^481.13^", -- [47]
-						"^2142^8^1587940385^103^1^5^481.13^", -- [48]
-						"^2139^8^1587940872^96^1^5^481.13^", -- [49]
-						"^2139^8^1587941666^77^1^5^481.13^", -- [50]
-						"^2142^8^1587942075^97^1^5^481.13^", -- [51]
-						"^2140^8^1587942274^168^1^5^481.13^Twisted", -- [52]
-						"^2143^8^1587942592^78^0^5^481.13^Maxfingrguns", -- [53]
-						"^2143^8^1587943347^50^0^5^481.13^Twisted", -- [54]
-						"^2143^8^1587943600^160^1^5^481.13^", -- [55]
-						"^2139^8^1587944241^79^1^5^481.13^", -- [56]
-						"^2142^8^1587944594^28^0^5^481.13^Imfiredup", -- [57]
-						"^2139^8^1587953735^108^1^5^481.13^", -- [58]
-						"^2142^8^1587954146^125^1^5^481.13^Atrocitychad", -- [59]
-						"^2140^8^1587954356^110^0^5^481.13^Ericchad", -- [60]
-						"^2139^8^1587954685^95^1^5^481.13^Maxfingrguns", -- [61]
-						"^2142^8^1587955098^97^1^5^481.13^", -- [62]
-						"^2140^8^1587955303^157^1^5^481.13^", -- [63]
-						"^2143^8^1587955623^163^1^5^481.13^Imfiredup", -- [64]
-						"^2139^8^1587956043^71^1^5^481.13^", -- [65]
-						"^2142^8^1587956381^114^1^5^481.13^Maxfingrguns", -- [66]
-						"^2140^8^1587956570^170^1^5^481.13^", -- [67]
-						"^2143^8^1587956912^201^1^5^481.13^Ericchad", -- [68]
-						"^2139^8^1587958012^84^1^5^481.13^Imfiredup", -- [69]
-						"^2142^8^1587958432^104^1^5^481.13^", -- [70]
-						"^2140^8^1587958615^177^1^5^481.13^", -- [71]
-						"^2143^8^1587959064^179^0^5^481.13^Ericchad", -- [72]
-						"^2143^8^1587959702^76^0^5^481.13^Twisted", -- [73]
-						"^2139^8^1587961097^82^1^5^481.13^", -- [74]
-						"^2142^8^1587961482^107^1^5^481.13^", -- [75]
-						"^2140^8^1587961667^271^1^5^481.13^Ericchad", -- [76]
-						"^2143^8^1587962121^101^0^5^481.13^Twisted", -- [77]
-						"^2139^8^1587962777^93^1^5^481.13^", -- [78]
-						"^2142^8^1587963194^142^1^5^481.13^", -- [79]
-						"^2140^8^1587963543^110^0^5^481.13^Twisted", -- [80]
-						"^2139^8^1587963832^66^1^5^481.13^", -- [81]
-						"^2142^8^1587964210^109^1^5^481.13^", -- [82]
-						"^2140^8^1587964407^220^1^5^481.13^Twisted", -- [83]
-						"^2143^8^1587964772^175^1^5^481.13^Imfiredup", -- [84]
-						"^2139^8^1587966045^88^1^5^481.13^", -- [85]
-						"^2142^8^1587966433^35^0^5^481.13^Imfiredup", -- [86]
-						"^2142^8^1587966664^103^1^5^481.33^Ericchad", -- [87]
-						"^2140^8^1587966869^217^1^5^481.28^", -- [88]
-						"^2143^8^1587967212^0^0^5^481.28^Imfiredup", -- [89]
-						"^2139^8^1588028501^84^1^5^481.13^", -- [90]
-						"^2142^8^1588028977^6^0^5^480.97^", -- [91]
-						"^2142^8^1588029137^105^1^5^480.97^", -- [92]
-						"^2140^8^1588029329^71^0^5^480.97^Maxfingrguns", -- [93]
-						"^2140^8^1588029842^57^0^5^480.97^Twistedchad", -- [94]
-						"^2140^8^1588030119^89^0^5^480.97^Twistedchad", -- [95]
-						"^2140^8^1588030498^4^0^5^480.97^", -- [96]
-						"^2140^8^1588030565^175^1^5^480.97^Imfiredup", -- [97]
-						"^2143^8^1588030943^46^0^5^481.13^Maxfingrguns", -- [98]
-						"^2139^8^1588031193^105^0^5^481.13^Twistedchad", -- [99]
-						"^2139^8^1588031634^83^1^5^481.13^", -- [100]
-						"^2142^8^1588031985^107^1^5^481.13^", -- [101]
-						"^2140^8^1588032178^180^1^5^481.13^", -- [102]
-						"^2143^8^1588032498^65^0^5^481.13^Maxfingrguns", -- [103]
-						"^2139^8^1588033283^102^1^5^481.13^", -- [104]
-						"^2142^8^1588033676^97^1^5^481.13^", -- [105]
-						"^2140^8^1588033856^177^1^5^481.13^", -- [106]
-						"^2143^8^1588034177^178^1^5^481.13^", -- [107]
-						"^2139^8^1588034751^94^1^5^481.13^", -- [108]
-						"^2142^8^1588035109^105^1^5^481.13^", -- [109]
-						"^2140^8^1588035288^177^1^5^481.13^", -- [110]
-						"^2143^8^1588035608^133^0^5^481.13^Ericchad", -- [111]
-						"^2139^8^1588036197^98^1^5^481.13^", -- [112]
-						"^2142^8^1588036571^105^1^5^481.13^", -- [113]
-						"^2140^8^1588036758^176^1^5^481.13^", -- [114]
-						"^2143^8^1588037066^176^1^5^481.13^Imfiredup", -- [115]
-						"^2139^8^1588474210^90^1^5^481.13^", -- [116]
-						"^2142^8^1588474608^120^1^5^481.13^Imfiredup", -- [117]
-						"^2140^8^1588474892^168^1^5^481.13^", -- [118]
-						"^2143^8^1588475255^178^1^5^481.13^Maxfingrguns", -- [119]
-						"^2139^8^1588522904^101^1^5^481.13^", -- [120]
-						"^2142^8^1588523302^103^1^5^481.13^", -- [121]
-						"^2140^8^1588523791^48^0^5^481.13^Ericchad", -- [122]
-						"^2139^8^1588524782^92^1^5^481.13^", -- [123]
-						"^2142^8^1588525233^6^0^5^481.13^Ericchad", -- [124]
-						"^2142^8^1588525548^88^1^5^480.92^", -- [125]
-						"^2140^8^1588525958^169^1^5^480.92^", -- [126]
-						"^2143^8^1588526336^80^0^5^480.97^Twistedchad", -- [127]
-						"^2139^8^1588526924^94^1^5^481.13^Imfiredup", -- [128]
-						"^2142^8^1588527333^92^1^5^481.13^", -- [129]
-						"^2140^8^1588527666^167^1^5^481.13^", -- [130]
-						"^2143^8^1588527984^163^1^5^481.13^Atrocitychad", -- [131]
-						"^2139^8^1588532279^98^1^5^362.42^", -- [132]
-						"^2142^8^1588532663^94^1^5^362.42^", -- [133]
-						"^2140^8^1588532847^169^1^5^362.42^", -- [134]
-						"^2143^8^1588533151^160^1^5^362.42^Maxfingrguns", -- [135]
-						"^2139^8^1589516914^88^1^5^481.13^", -- [136]
-						"^2142^8^1589517714^90^1^5^481.13^", -- [137]
-						"^2140^8^1589518256^158^1^5^481.13^", -- [138]
-						"^2143^8^1589518680^148^1^5^481.13^", -- [139]
-						"^2139^8^1589597430^87^1^5^481.00^", -- [140]
-						"^2142^8^1589597916^90^1^5^480.97^", -- [141]
-						"^2139^8^1589655563^86^1^5^326.59^", -- [142]
-						"^2142^8^1589656044^95^1^5^326.59^", -- [143]
-						"^2140^8^1589656289^155^1^5^326.59^", -- [144]
-						"^2143^8^1589656662^161^1^5^326.59^", -- [145]
+					["Atrocitydh"] = {
+						"^2298^16^1578450349^159^1^20^401.32^", -- [1]
+						"^2305^16^1578450889^193^1^20^415.13^", -- [2]
+						"^2289^16^1578451419^190^1^20^415.13^Thdemon", -- [3]
+						"^2304^16^1578451780^8^0^20^428.94^", -- [4]
+						"^2304^16^1578451878^212^1^20^442.86^", -- [5]
+						"^2303^16^1578452110^21^0^20^442.42^Horseboy", -- [6]
+						"^2303^16^1578452229^336^1^20^442.93^Kíngfly", -- [7]
+						"^2311^16^1578452734^8^0^20^442.84^", -- [8]
+						"^2311^16^1578452830^345^1^20^442.90^Atrocitydh", -- [9]
+						"^2113^8^1578457361^20^0^5^445.63^Twistedr", -- [10]
+						"^2113^8^1578457410^216^1^5^445.63^Yungthotty", -- [11]
+						"^2114^8^1578458268^194^1^5^445.63^Atrocitydh", -- [12]
+						"^2101^8^1578543270^167^1^5^446.38^Atrocitydh", -- [13]
+						"^2102^8^1578544102^127^1^5^445.50^", -- [14]
+						"^2103^8^1578545079^116^1^5^445.50^", -- [15]
+						"^2104^8^1578545313^134^1^5^445.50^", -- [16]
+						"^2105^8^1578622848^123^1^5^446.06^Tarcisw", -- [17]
+						"^2106^8^1578623348^164^1^5^446.06^Hedylamarr-Area52", -- [18]
+						"^2107^8^1578623621^127^1^5^446.06^", -- [19]
+						"^2108^8^1578623884^228^1^5^446.06^Hedylamarr-Area52", -- [20]
+						"^2101^8^1578625363^144^1^5^445.79^", -- [21]
+						"^2102^8^1578626124^152^1^5^445.79^", -- [22]
+						"^2103^8^1578626706^131^1^5^445.79^", -- [23]
+						"^2104^8^1578627093^161^1^5^445.79^Atrocitydh", -- [24]
+						"^2335^15^1579636693^11^0^30^439.41^Satchadh", -- [25]
+						"^2335^15^1579637113^355^1^30^439.40^Lone-Tichondrius", -- [26]
+						"^2329^15^1579637784^453^1^30^447.47^Lippdh", -- [27]
+						"^2329^15^1579638416^289^1^30^447.59^Eroys", -- [28]
+						"^2329^15^1579638870^190^0^30^447.86^Bigmids-Area52", -- [29]
+						"^2329^15^1579639107^291^1^30^447.44^Norichixo", -- [30]
+						"^2329^15^1579640268^262^1^30^449.23^Dhsareapes", -- [31]
+						"^2329^15^1579640682^271^1^30^449.56^Lippdh", -- [32]
+						"^2329^15^1579641093^258^1^30^449.41^Thdemon", -- [33]
+						"^2327^15^1579641659^9^0^30^449.56^", -- [34]
+						"^2327^15^1579641769^195^0^30^449.60^Thdemon", -- [35]
+						"^2327^15^1579642161^229^1^30^448.39^", -- [36]
+						"^2334^15^1579642827^322^1^29^448.25^Grìmbles-Thrall", -- [37]
+						"^2343^15^1579644350^479^1^30^449.26^Bigmids-Area52", -- [38]
+						"^2328^15^1579645400^179^0^30^449.34^Kricxus-Stormrage", -- [39]
+						"^2328^15^1579645728^350^1^30^449.03^Ruinxaxa", -- [40]
+						"^2336^15^1579646460^14^0^30^448.88^", -- [41]
+						"^2336^15^1579646627^445^0^30^448.61^Darkee", -- [42]
+						"^2336^15^1579647297^404^1^30^448.48^Grìmbles-Thrall", -- [43]
+						"^2333^15^1579649017^420^1^29^449.77^Remhoe-Mal'Ganis", -- [44]
+						"^2331^15^1579650648^201^0^29^449.89^Maeveyvates", -- [45]
+						"^2331^15^1579651055^323^1^29^449.67^Twistedr", -- [46]
+						"^2345^15^1579821308^452^1^19^452.83^", -- [47]
+						"^2337^15^1579822329^524^1^19^451.96^Twistedr", -- [48]
+						"^2344^15^1579836764^221^0^25^450.93^Drineym", -- [49]
+						"^2344^15^1579837089^252^0^25^452.35^Dossoubk", -- [50]
+						"^2344^15^1579837493^267^0^25^453.04^Chmpagnepapi", -- [51]
+						"^2344^15^1579837853^638^0^25^453.43^Moonfiredup", -- [52]
+						"^2344^15^1579838663^580^0^25^453.26^Ruinxaxa", -- [53]
+						"^2344^15^1579839461^242^0^25^452.97^Avade", -- [54]
+						"^2344^15^1579839975^603^1^25^453.01^Chmpagnepapi", -- [55]
+						"^2329^14^1579842164^205^1^30^451.04^Keebw-Kil'jaeden", -- [56]
+						"^2327^14^1579842646^9^0^29^451.68^", -- [57]
+						"^2327^14^1579842680^188^1^29^451.68^Keebw-Kil'jaeden", -- [58]
+						"^2334^14^1579843183^254^1^29^452.32^Kíngflydh", -- [59]
+						"^2328^14^1579843980^6^0^28^452.41^", -- [60]
+						"^2328^14^1579844045^260^1^28^452.38^Keebw-Kil'jaeden", -- [61]
+						"^2336^14^1579844501^16^0^28^452.28^", -- [62]
+						"^2336^14^1579844636^228^1^28^452.36^Goopweeb", -- [63]
+						"^2333^14^1579845115^4^0^28^452.20^", -- [64]
+						"^2333^14^1579845154^199^1^28^452.12^", -- [65]
+						"^2331^14^1579845584^10^0^28^451.81^Satchadh", -- [66]
+						"^2331^14^1579845622^7^0^28^451.81^", -- [67]
+						"^2331^14^1579845699^9^0^28^451.92^", -- [68]
+						"^2331^14^1579845803^222^1^28^451.94^Tze-Azralon", -- [69]
+						"^2343^14^1579846077^1^0^28^451.86^Goopweeb", -- [70]
+						"^2343^14^1579846245^8^0^28^451.86^Lippdh", -- [71]
+						"^2343^14^1579846592^285^1^28^451.86^", -- [72]
+						"^2335^14^1579847116^200^1^28^451.86^Divinitÿ", -- [73]
+						"^2345^14^1579847556^322^1^28^451.87^Darkee", -- [74]
+						"^2337^14^1579848376^428^1^28^452.23^Chmpagnepapi", -- [75]
+						"^2344^14^1579848888^312^0^28^452.38^Keebw-Kil'jaeden", -- [76]
+						"^2344^14^1579849342^633^0^18^451.86^Goopweeb", -- [77]
+						"^2344^14^1579850037^559^1^18^453.12^Goopweeb", -- [78]
+						"^2344^15^1579908339^618^1^24^453.82^Girlguy", -- [79]
+						"^2139^8^1579923150^107^1^5^449.29^", -- [80]
+						"^2142^8^1579923783^98^1^5^449.29^", -- [81]
+						"^2140^8^1579924212^180^1^5^449.29^", -- [82]
+						"^2143^8^1579924768^137^1^5^449.29^", -- [83]
+						"^2329^15^1580573902^230^1^30^454.19^Norishiftxo", -- [84]
+						"^2334^15^1580574454^257^1^30^456.51^", -- [85]
+						"^2327^15^1580575070^10^0^30^456.66^", -- [86]
+						"^2328^15^1580577282^5^0^27^457.29^", -- [87]
+						"^2328^15^1580577548^279^1^30^457.90^Syrethkin", -- [88]
+						"^2336^15^1580578036^16^0^29^457.70^", -- [89]
+						"^2336^15^1580578339^269^1^30^457.18^Kíngflydh", -- [90]
+						"^2333^15^1580578937^5^0^30^457.34^", -- [91]
+						"^2333^15^1580578974^140^0^30^457.34^Lippdh", -- [92]
+						"^2333^15^1580579189^255^1^30^456.98^Ohnoesdh", -- [93]
+						"^2331^15^1580579611^6^0^30^457.64^", -- [94]
+						"^2331^15^1580579681^7^0^30^458.78^", -- [95]
+						"^2331^15^1580579762^262^1^30^458.63^Arie-BurningBlade", -- [96]
+						"^2335^15^1580580438^227^1^30^458.98^Dalsondemon-Thrall", -- [97]
+						"^2343^15^1580580954^270^1^30^458.91^Ruinxaxa", -- [98]
+						"^2345^15^1580581279^27^0^30^458.91^Shift-Area52", -- [99]
+						"^2345^15^1580581491^499^0^30^457.07^Ruinxaxa", -- [100]
+						"^2345^15^1580582073^369^1^30^456.98^Drineym", -- [101]
+						"^2111^8^1581114161^66^1^5^456.40^", -- [102]
+						"^2118^8^1581114807^102^1^5^456.40^", -- [103]
+						"^2112^8^1581115003^102^1^5^456.40^", -- [104]
+						"^2123^8^1581115532^144^1^5^456.40^Yungthotty", -- [105]
+						"^2344^15^1581127245^0^0^29^457.03^Rixxa-Feathermoon", -- [106]
+						"^2257^8^1581482647^175^1^5^456.31^Imup", -- [107]
+						"^2258^8^1581483166^175^1^5^456.31^Imup", -- [108]
+						"^2259^8^1581483855^151^1^5^456.31^Imup", -- [109]
+						"^2260^8^1581484419^271^0^5^456.31^Imup", -- [110]
+						"^2260^8^1581484757^304^0^5^452.64^Imup", -- [111]
+						"^2260^8^1581485231^213^0^5^451.15^Imup", -- [112]
+						"^2260^8^1581485539^354^1^5^451.15^Twistedw", -- [113]
+						"^2329^16^1581814855^588^0^20^460.55^Ericjunior", -- [114]
+						"^2329^16^1581815528^536^1^20^460.41^Imup", -- [115]
+						"^2334^16^1581816484^309^1^20^459.76^Twistedsp", -- [116]
+						"^2327^16^1581817338^10^0^20^462.30^", -- [117]
+						"^2327^16^1581817436^167^0^20^462.30^Dossoudmg", -- [118]
+						"^2327^16^1581817838^142^0^20^460.69^Soreanananan", -- [119]
+						"^2327^16^1581818004^35^0^20^460.69^Imup", -- [120]
+						"^2327^16^1581818180^381^1^20^460.86^Kíngflydh", -- [121]
+						"^2333^16^1581819395^5^0^20^461.41^", -- [122]
+						"^2333^16^1581819567^177^0^20^461.53^Eroys", -- [123]
+						"^2333^16^1581819997^174^0^20^461.22^Maeveypie", -- [124]
+						"^2333^16^1581820340^387^0^20^462.55^Asterixxpal", -- [125]
+						"^2333^16^1581820879^235^0^20^462.67^Thdmoon", -- [126]
+						"^2333^16^1581821290^416^0^20^462.86^Gooppal", -- [127]
+						"^2333^16^1581821905^223^0^20^462.85^Darkeedk", -- [128]
+						"^2333^16^1581822264^274^0^20^461.06^Dossoudmg", -- [129]
+						"^2333^16^1581822670^376^0^20^460.94^Lippdh", -- [130]
+						"^2333^16^1581823424^372^1^20^462.75^", -- [131]
+						"^2093^8^1582089612^88^1^5^461.76^", -- [132]
+						"^2094^8^1582089977^85^1^5^461.76^", -- [133]
+						"^2095^8^1582090319^107^1^5^461.76^Eyelidpasta", -- [134]
+						"^2096^8^1582090574^137^1^5^461.76^", -- [135]
+						"^2329^16^1582678772^432^1^20^469.30^", -- [136]
+						"^2334^16^1582679723^256^1^20^466.66^", -- [137]
+						"^2327^16^1582680477^50^0^20^468.63^Atrocitydh", -- [138]
+						"^2327^16^1582680648^255^1^20^468.92^Ruinxaxa", -- [139]
+						"^2333^16^1582681576^5^0^20^470.29^", -- [140]
+						"^2333^16^1582681738^287^1^20^469.13^Lippdh", -- [141]
+						"^2331^16^1582682394^9^0^20^468.88^", -- [142]
+						"^2331^16^1582682867^166^0^20^470.05^Realestxo", -- [143]
+						"^2331^16^1582683135^61^0^20^470.24^Xyronic", -- [144]
+						"^2331^16^1582683463^113^0^20^470.24^Lippdh", -- [145]
+						"^2331^16^1582683648^302^1^20^470.14^Soreanan", -- [146]
+						"^2328^16^1582685864^87^0^20^470.32^Maxibabe", -- [147]
+						"^2328^16^1582686041^151^0^20^470.31^Norialaxo", -- [148]
+						"^2328^16^1582686296^54^0^20^470.20^Twistedw", -- [149]
+						"^2328^16^1582686437^239^0^20^470.31^Twistedw", -- [150]
+						"^2328^16^1582686777^317^1^20^470.31^", -- [151]
+						"^2336^16^1582687300^18^0^20^470.32^", -- [152]
+						"^2336^16^1582687388^14^0^20^470.32^", -- [153]
+						"^2336^16^1582687548^311^1^20^469.99^Realestxo", -- [154]
+						"^2343^16^1582688512^503^1^20^469.83^Twistedw", -- [155]
+						"^2097^8^1582790814^100^1^5^451.85^", -- [156]
+						"^2109^8^1582791290^24^0^5^451.85^", -- [157]
+						"^2109^8^1582791349^220^1^5^451.85^", -- [158]
+						"^2099^8^1582792184^4^0^5^447.44^Daddytwist", -- [159]
+						"^2099^8^1582792228^174^1^5^447.44^", -- [160]
+						"^2100^8^1582792441^81^0^5^447.44^Mbwar", -- [161]
+						"^2100^8^1582792556^323^1^5^447.44^", -- [162]
+						"^2329^16^1583370152^429^1^20^467.31^Maeveysoup", -- [163]
+						"^2334^16^1583370967^189^1^20^469.54^Imup", -- [164]
+						"^2327^16^1583371575^9^0^20^471.00^", -- [165]
+						"^2327^16^1583371639^224^1^20^470.92^", -- [166]
+						"^2328^16^1583372355^5^0^20^470.61^", -- [167]
+						"^2328^16^1583372413^7^0^20^470.83^", -- [168]
+						"^2328^16^1583372569^151^0^20^470.94^Ericjunior", -- [169]
+						"^2328^16^1583372813^59^0^20^470.90^Imup", -- [170]
+						"^2328^16^1583372962^319^1^20^470.90^Soreanan", -- [171]
+						"^2336^16^1583373449^15^0^20^471.14^", -- [172]
+						"^2336^16^1583373607^379^1^20^471.27^Ciory", -- [173]
+						"^2333^16^1583374230^6^0^20^471.06^", -- [174]
+						"^2333^16^1583374350^286^1^20^471.22^Imup", -- [175]
+						"^2331^16^1583374821^8^0^20^471.21^", -- [176]
+						"^2331^16^1583375121^101^0^20^471.53^Goopd", -- [177]
+						"^2331^16^1583375370^137^0^20^471.53^Maeveysoup", -- [178]
+						"^2331^16^1583375575^276^0^20^471.41^Sang", -- [179]
+						"^2331^16^1583375956^266^1^20^471.56^Soreanan", -- [180]
+						"^2335^16^1583376661^234^1^20^472.35^Realestxo", -- [181]
+						"^2343^16^1583377046^5^0^20^472.43^Ciory", -- [182]
+						"^2343^16^1583377334^471^1^20^472.15^Kíngflysp", -- [183]
+						"^2345^16^1583377910^29^0^20^472.35^Soreanan", -- [184]
+						"^2345^16^1583378339^0^0^20^471.92^", -- [185]
+						"^2345^16^1583378490^128^0^20^471.78^Drineym", -- [186]
+						"^2345^16^1583378805^1^0^20^471.78^", -- [187]
+						"^2345^16^1583378873^168^0^20^471.78^Twistedp", -- [188]
+						"^2345^16^1583379177^233^0^20^471.65^Maeveysoup", -- [189]
+						"^2345^16^1583379474^0^0^20^471.57^", -- [190]
+						"^2345^16^1583379525^121^0^20^471.64^Ruinxaxa", -- [191]
+						"^2345^16^1583380214^1^0^20^471.83^", -- [192]
+						"^2345^16^1583380307^143^0^20^471.77^Ciory", -- [193]
+						"^2345^16^1583380521^0^0^20^471.79^", -- [194]
+						"^2345^16^1583380564^559^0^20^471.79^Soreanan", -- [195]
+						"^2345^16^1583381249^558^1^20^471.64^", -- [196]
+						"^2337^16^1583382228^0^0^20^471.93^", -- [197]
+						"^2337^16^1583382800^275^0^20^472.34^Kíngflysp", -- [198]
+						"^2337^16^1583383730^423^0^20^472.49^Maeveysoup", -- [199]
+						"^2337^16^1583384266^407^0^20^472.04^Realestxo", -- [200]
+						"^2337^16^1583384787^355^0^20^472.10^Ericjunior", -- [201]
+						"^2337^16^1583385314^418^0^20^472.10^Liphunt", -- [202]
+						"^2337^16^1583385811^406^0^20^472.23^Atrocitydh", -- [203]
+						"^2337^16^1583386320^342^0^20^472.08^Ericjunior", -- [204]
+						"^2337^16^1583386761^510^0^20^472.13^Girlguy", -- [205]
+						"^2290^8^1583615084^85^1^5^471.14^Ringofpiecez-Zul'jin", -- [206]
+						"^2292^8^1583615535^77^1^5^471.14^Ringofpiecez-Zul'jin", -- [207]
+						"^2312^8^1583615786^60^1^5^471.59^", -- [208]
+						"^2291^8^1583616021^132^1^5^471.59^Lippdh", -- [209]
+						"^2113^8^1583867814^117^1^5^470.94^", -- [210]
+						"^2114^8^1583868204^118^1^5^470.94^", -- [211]
+						"^2115^8^1583868789^129^1^5^470.94^", -- [212]
+						"^2116^8^1583869137^59^0^5^470.94^Hannospal", -- [213]
+						"^2116^8^1583869469^104^0^5^470.83^Jazzwowzzer-Area52", -- [214]
+						"^2116^8^1583869748^171^0^5^472.00^Jazzwowzzer-Area52", -- [215]
+						"^2116^8^1583870273^116^0^5^470.28^Jazzwowzzer-Area52", -- [216]
+						"^2116^8^1583870553^125^0^5^470.64^Jazzwowzzer-Area52", -- [217]
+						"^2116^8^1583870916^178^1^5^470.10^", -- [218]
+						"^2117^8^1583871518^105^0^5^467.09^Atrocitydh", -- [219]
+						"^2117^8^1583872079^202^1^5^463.83^", -- [220]
+						"^2265^16^1583985571^7^0^20^475.47^", -- [221]
+						"^2265^16^1583985735^8^0^20^475.73^", -- [222]
+						"^2265^16^1583985821^27^1^20^474.34^", -- [223]
+						"^2263^16^1583986147^98^1^20^473.30^Kíngflysp", -- [224]
+						"^2266^16^1583986394^89^1^20^473.40^Darkee", -- [225]
+						"^2271^16^1583986657^7^0^20^473.81^", -- [226]
+						"^2271^16^1583986698^61^0^20^473.90^Atrocitydh", -- [227]
+						"^2271^16^1583986806^183^1^20^474.11^Kamshams", -- [228]
+						"^2268^16^1583987115^77^1^20^474.11^Goopd", -- [229]
+						"^2272^16^1583987303^2^0^20^473.89^", -- [230]
+						"^2272^16^1583987370^116^1^20^473.89^", -- [231]
+						"^2276^16^1583987603^154^1^20^474.07^", -- [232]
+						"^2280^16^1583988028^89^1^20^474.07^", -- [233]
+						"^2281^16^1583988238^197^1^20^469.03^Lipmonk", -- [234]
+						"^666^9^1584277441^1^1^40^465.63^", -- [235]
+						"^668^9^1584277525^0^1^40^465.63^", -- [236]
+						"^2115^8^1584494290^75^1^5^469.57^", -- [237]
+						"^2114^8^1584494766^80^1^5^469.57^", -- [238]
+						"^2113^8^1584495103^137^1^5^469.57^Mbdh", -- [239]
+						"^2116^8^1584495598^105^1^5^469.57^", -- [240]
+						"^2117^8^1584495800^95^1^5^469.57^", -- [241]
+						"^2097^8^1584608457^68^1^5^470.86^", -- [242]
+						"^2109^8^1584609226^114^1^5^467.45^Driney", -- [243]
+						"^2099^8^1584609664^6^0^5^467.45^", -- [244]
+						"^2099^8^1584609780^131^1^5^467.45^Mbdh", -- [245]
+						"^2100^8^1584609933^152^1^5^469.60^", -- [246]
+						"^2097^8^1584933719^79^1^5^473.16^Imfiredup", -- [247]
+						"^2109^8^1584934219^121^1^5^473.16^", -- [248]
+						"^2099^8^1584934905^5^0^5^473.16^", -- [249]
+						"^2099^8^1584935065^115^1^5^473.16^", -- [250]
+						"^2100^8^1584935214^174^1^5^473.16^", -- [251]
+						"^2124^8^1584936328^126^1^5^473.16^", -- [252]
+						"^2125^8^1584936857^156^1^5^473.16^", -- [253]
+						"^2126^8^1584937256^96^1^5^473.16^", -- [254]
+						"^2127^8^1584937770^251^1^5^473.16^", -- [255]
+						"^2093^8^1585122504^194^1^5^474.71^Gooppal", -- [256]
+						"^2094^8^1585123132^195^1^5^474.19^Gooppal", -- [257]
+						"^2095^8^1585123650^215^1^5^474.19^Hannospal", -- [258]
+						"^2096^8^1585124005^231^1^5^474.19^Jacobxaxa", -- [259]
+						"^2334^16^1585181580^170^1^20^473.39^Lippdh", -- [260]
+						"^2327^16^1585182173^9^0^20^472.74^", -- [261]
+						"^2327^16^1585182234^221^1^20^472.74^Sanghelios", -- [262]
+						"^2337^16^1585183424^106^0^20^474.31^Maeveysoup", -- [263]
+						"^2337^16^1585183703^498^1^20^473.98^Atlasxo", -- [264]
+						"^2328^16^1585184627^5^0^20^473.86^", -- [265]
+						"^2328^16^1585184710^299^1^20^473.73^Soiy", -- [266]
+						"^2336^16^1585185186^15^0^20^473.78^", -- [267]
+						"^2336^16^1585185276^281^1^20^473.67^Soiy", -- [268]
+						"^2333^16^1585185794^5^0^20^473.78^", -- [269]
+						"^2333^16^1585185925^227^1^20^473.03^Soiy", -- [270]
+						"^2331^16^1585186601^8^0^20^472.43^", -- [271]
+						"^2331^16^1585186759^147^0^20^473.85^Madblur", -- [272]
+						"^2331^16^1585186991^290^1^20^473.85^Madblur", -- [273]
+						"^2335^16^1585187606^218^1^20^474.54^Kíngflydh", -- [274]
+						"^2343^16^1585187907^5^0^20^474.61^Imup", -- [275]
+						"^2343^16^1585188239^156^0^20^474.51^Soiy", -- [276]
+						"^2343^16^1585188426^31^0^20^474.68^Dharkee", -- [277]
+						"^2343^16^1585188996^451^1^20^474.76^Soiy", -- [278]
+						"^2344^16^1585189559^23^0^20^474.80^Imup", -- [279]
+						"^2345^16^1585189730^0^0^20^474.80^", -- [280]
+						"^2345^16^1585189813^307^0^20^474.41^Maeveysoup", -- [281]
+						"^2345^16^1585190224^0^0^20^474.47^", -- [282]
+						"^2345^16^1585190292^391^0^20^474.23^Drineys", -- [283]
+						"^2345^16^1585190728^0^0^20^474.23^", -- [284]
+						"^2345^16^1585190787^540^1^20^474.24^Ericjunior", -- [285]
+						"^2344^16^1585192211^188^0^20^474.78^Drineys", -- [286]
+						"^2344^16^1585192575^400^0^20^474.95^Soiy", -- [287]
+						"^2344^16^1585193126^155^0^20^474.78^Willxo", -- [288]
+						"^2130^8^1585420049^160^1^5^481.25^", -- [289]
+						"^2131^8^1585420379^35^0^5^481.25^Twisted", -- [290]
+						"^2130^8^1585420876^115^1^5^481.25^Twisted", -- [291]
+						"^2131^8^1585421395^43^0^5^481.25^Ericsdk", -- [292]
+						"^2131^8^1585421715^59^0^5^481.25^Ericsdk", -- [293]
+						"^2130^8^1585423166^59^0^5^481.25^Maxdogbowl", -- [294]
+						"^2130^8^1585423471^110^1^5^481.25^", -- [295]
+						"^2131^8^1585423788^213^1^5^481.25^Imfiredup", -- [296]
+						"^2084^8^1585453490^94^1^5^481.13^", -- [297]
+						"^2086^8^1585453647^11^0^5^481.13^Atrocitydh", -- [298]
+						"^2084^8^1585453945^87^1^5^481.13^", -- [299]
+						"^2086^8^1585454073^137^1^5^481.13^", -- [300]
+						"^2085^8^1585454471^3^0^5^481.13^Eric", -- [301]
+						"^2085^8^1585454505^123^1^5^481.13^", -- [302]
+						"^2087^8^1585454685^130^1^5^481.13^", -- [303]
+						"^2084^8^1585456498^69^1^5^481.00^Eric", -- [304]
+						"^2086^8^1585456615^111^1^5^481.00^", -- [305]
+						"^2085^8^1585456958^170^1^5^481.00^", -- [306]
+						"^2087^8^1585457203^109^0^5^481.00^Atrocitydh", -- [307]
+						"^2257^8^1585457945^69^1^5^480.88^", -- [308]
+						"^2257^8^1585458307^49^1^5^480.88^", -- [309]
+						"^2257^8^1585458656^57^1^5^481.00^", -- [310]
+						"^2258^8^1585458843^116^1^5^481.25^Atrocitydh", -- [311]
+						"^2259^8^1585459164^75^1^5^481.25^", -- [312]
+						"^2260^8^1585459542^155^1^5^481.25^Eric", -- [313]
+						"^2257^8^1585460045^58^1^5^481.25^", -- [314]
+						"^2257^8^1585460800^44^1^5^481.13^", -- [315]
+						"^2258^8^1585460919^68^1^5^481.13^", -- [316]
+						"^2259^8^1585461197^60^1^5^481.13^", -- [317]
+						"^2260^8^1585461581^49^0^5^481.13^Ericsmage", -- [318]
+						"^2260^8^1585461808^136^1^5^481.13^", -- [319]
+						"^2265^16^1585526616^29^1^20^476.23^", -- [320]
+						"^2263^16^1585526820^67^1^20^476.41^", -- [321]
+						"^2266^16^1585526995^89^1^20^476.19^Hideyokids-Area52", -- [322]
+						"^2271^16^1585527272^162^1^20^476.29^Hideyokids-Area52", -- [323]
+						"^2268^16^1585527534^83^1^20^476.33^", -- [324]
+						"^2272^16^1585527892^109^1^20^476.20^Twistedw", -- [325]
+						"^2276^16^1585528120^155^1^20^476.31^Xyronic", -- [326]
+						"^2280^16^1585528464^97^1^20^476.31^Hideyokids-Area52", -- [327]
+						"^2281^16^1585528684^36^0^20^476.15^Imfiredup", -- [328]
+						"^2281^16^1585528810^202^1^20^458.24^Pokkets", -- [329]
+						"^2329^15^1585530373^131^1^29^461.78^Thongs-Zul'jin", -- [330]
+						"^2334^15^1585530780^152^1^29^460.78^Dinglejuice", -- [331]
+						"^2327^15^1585531257^8^0^29^461.61^", -- [332]
+						"^2327^15^1585531327^155^1^29^464.54^Nonuggets", -- [333]
+						"^2328^15^1585532009^7^0^29^465.95^", -- [334]
+						"^2328^15^1585532108^249^1^30^466.08^Seanmañ-Thrall", -- [335]
+						"^2336^15^1585532530^15^0^30^467.44^", -- [336]
+						"^2336^15^1585532623^224^1^30^466.94^Dinglejuice", -- [337]
+						"^2333^15^1585533070^4^0^30^466.32^", -- [338]
+						"^2333^15^1585533142^179^1^30^466.45^Dinglejuice", -- [339]
+						"^2331^15^1585533487^5^0^30^466.43^", -- [340]
+						"^2331^15^1585533570^10^0^30^466.53^", -- [341]
+						"^2331^15^1585533639^210^1^30^464.62^Cesspul-Thrall", -- [342]
+						"^2335^15^1585534058^0^0^30^465.73^", -- [343]
+						"^2335^15^1585534080^0^0^30^465.73^", -- [344]
+						"^2335^15^1585534097^0^0^30^465.73^", -- [345]
+						"^2335^15^1585534182^203^1^30^465.73^Thongs-Zul'jin", -- [346]
+						"^2343^15^1585534644^90^0^30^465.87^Liphunt", -- [347]
+						"^2343^15^1585534849^253^1^30^466.60^Nonuggets", -- [348]
+						"^2345^15^1585535424^287^1^30^467.03^Dinglejuice", -- [349]
+						"^2337^15^1585536078^0^0^30^468.09^", -- [350]
+						"^2337^15^1585536122^385^1^30^467.57^Nonuggets", -- [351]
+						"^2344^15^1585536715^556^1^30^467.17^Nonuggets", -- [352]
+						"^2084^8^1585547103^74^1^5^481.13^", -- [353]
+						"^2086^8^1585547222^38^0^5^481.13^Maxdogbowl", -- [354]
+						"^2084^8^1585547445^68^1^5^481.13^", -- [355]
+						"^2084^8^1585547714^69^1^5^481.13^", -- [356]
+						"^2086^8^1585547835^120^1^5^481.13^Maxdogbowl", -- [357]
+						"^2084^8^1585548158^67^1^5^481.13^", -- [358]
+						"^2086^8^1585548281^111^1^5^481.13^", -- [359]
+						"^2085^8^1585548515^3^0^5^481.13^Atrocitydh", -- [360]
+						"^2085^8^1585548549^112^1^5^481.13^", -- [361]
+						"^2087^8^1585548714^63^0^5^481.13^Atrocitydh", -- [362]
+						"^2087^8^1585548894^32^0^5^481.13^Atrocitydh", -- [363]
+						"^2087^8^1585549026^22^0^5^481.13^Eric", -- [364]
+						"^2087^8^1585549210^37^0^5^481.13^Twisted", -- [365]
+						"^2086^23^1585549457^7^0^5^481.13^", -- [366]
+						"^2084^8^1585549756^69^1^5^481.13^", -- [367]
+						"^2086^8^1585549871^120^1^5^481.13^", -- [368]
+						"^2085^8^1585550101^158^1^5^481.13^", -- [369]
+						"^2087^8^1585550326^221^0^5^481.13^Atrocitydh", -- [370]
+						"^2113^2^1585558650^7^0^5^481.13^", -- [371]
+						"^2084^8^1585595761^68^1^5^480.88^", -- [372]
+						"^2086^8^1585595883^117^1^5^480.88^", -- [373]
+						"^2085^8^1585596142^109^1^5^480.88^", -- [374]
+						"^2087^8^1585596310^108^0^5^480.88^Imfiredup", -- [375]
+						"^2257^8^1585599493^57^1^5^481.00^", -- [376]
+						"^2257^8^1585600053^46^1^5^481.00^", -- [377]
+						"^2258^8^1585600164^92^0^5^481.00^Twisted", -- [378]
+						"^2257^8^1585600418^71^1^5^481.00^", -- [379]
+						"^2257^8^1585600840^46^1^5^481.00^", -- [380]
+						"^2258^8^1585600957^36^0^5^481.00^Maxdogbowl", -- [381]
+						"^2258^8^1585601216^217^0^5^480.81^Maxdogbowl", -- [382]
+						"^2258^8^1585601571^275^1^5^480.81^Twisted", -- [383]
+						"^2259^8^1585602207^92^1^5^480.81^Atrocitydh", -- [384]
+						"^2260^8^1585602540^32^0^5^481.00^Maxdogbowl", -- [385]
+						"^2257^8^1585603488^44^0^5^481.00^Ericsmage", -- [386]
+						"^2257^8^1585603709^47^1^5^481.00^", -- [387]
+						"^2257^8^1585604024^35^0^5^481.00^Atrocitydh", -- [388]
+						"^2257^8^1585604491^43^1^5^481.00^", -- [389]
+						"^2258^8^1585604599^72^1^5^481.00^", -- [390]
+						"^2259^8^1585604864^86^1^5^481.00^", -- [391]
+						"^2260^8^1585605107^141^1^5^481.00^Atrocitydh", -- [392]
+						"^2257^8^1585605537^42^1^5^481.00^", -- [393]
+						"^2258^8^1585605639^59^0^5^481.00^Imfiredupbrh", -- [394]
+						"^2257^8^1585605862^51^1^5^481.00^", -- [395]
+						"^2258^8^1585605970^92^0^5^481.00^Eric", -- [396]
+						"^2257^8^1585606354^16^0^5^481.00^Imfiredupbrh", -- [397]
+						"^2257^8^1585606583^43^1^5^481.00^", -- [398]
+						"^2258^8^1585606683^110^1^5^481.00^Maxdogbowl", -- [399]
+						"^2259^8^1585607090^66^1^5^481.00^", -- [400]
+						"^2260^8^1585607296^148^1^5^481.00^Eric", -- [401]
+						"^2257^8^1585607762^47^1^5^481.00^", -- [402]
+						"^2258^8^1585607861^82^1^5^481.00^", -- [403]
+						"^2259^8^1585608155^61^1^5^481.00^", -- [404]
+						"^2260^8^1585608376^141^1^5^481.00^", -- [405]
+						"^2257^8^1585609069^52^1^5^480.75^", -- [406]
+						"^2258^8^1585609184^78^1^5^480.75^", -- [407]
+						"^2259^8^1585609438^84^1^5^480.75^Imfiredupbrh", -- [408]
+						"^2260^8^1585609680^143^1^5^480.75^", -- [409]
+						"^2084^8^1585679926^69^1^5^481.13^", -- [410]
+						"^2086^8^1585680035^121^1^5^481.13^", -- [411]
+						"^2085^8^1585680339^110^1^5^481.13^", -- [412]
+						"^2087^8^1585680504^66^0^5^481.13^Twisted", -- [413]
+						"^2130^8^1585684326^114^1^5^481.00^", -- [414]
+						"^2131^8^1585684556^122^1^5^481.00^", -- [415]
+						"^2132^8^1585684841^116^1^5^481.00^", -- [416]
+						"^2133^8^1585685030^230^0^5^481.00^Ericsdk", -- [417]
+						"^2130^8^1585685589^5^0^5^481.00^Maxdogbowl", -- [418]
+						"^2130^8^1585685984^17^0^5^481.00^Maxdogbowl", -- [419]
+						"^2130^8^1585686709^118^1^5^481.00^", -- [420]
+						"^2131^8^1585686917^141^1^5^481.00^Imfiredup", -- [421]
+						"^2132^8^1585687212^117^1^5^481.00^", -- [422]
+						"^2133^8^1585687402^285^1^5^481.00^Twisted", -- [423]
+						"^2257^8^1585688137^47^1^5^480.75^", -- [424]
+						"^2258^8^1585688240^77^1^5^480.75^", -- [425]
+						"^2259^8^1585688484^81^1^5^480.75^Maxdogbowl", -- [426]
+						"^2260^8^1585688722^149^1^5^480.75^Atrocitydh", -- [427]
+						"^2111^8^1585692734^36^0^5^481.00^Atrocitydh", -- [428]
+						"^2111^8^1585692983^78^1^5^481.00^", -- [429]
+						"^2118^8^1585693087^56^0^5^481.00^Twisted", -- [430]
+						"^2084^8^1585768199^67^1^5^480.81^", -- [431]
+						"^2086^8^1585768311^133^1^5^480.81^", -- [432]
+						"^2085^8^1585768566^150^1^5^480.81^", -- [433]
+						"^2087^8^1585768785^126^1^5^481.44^", -- [434]
+						"^2130^8^1585772952^151^1^5^481.00^Imfiredup", -- [435]
+						"^2130^8^1585773623^70^0^5^481.00^Maxdogbowl", -- [436]
+						"^2130^8^1585774156^110^1^5^481.00^", -- [437]
+						"^2131^8^1585774366^139^1^5^481.00^Twisted", -- [438]
+						"^2132^8^1585774810^104^1^5^481.00^", -- [439]
+						"^2133^8^1585774997^50^0^5^481.00^Twisted", -- [440]
+						"^2111^8^1585776630^72^1^5^481.00^", -- [441]
+						"^2118^8^1585776734^168^1^5^480.81^Twisted", -- [442]
+						"^2111^8^1585777490^66^1^5^481.00^", -- [443]
+						"^2118^8^1585777584^119^1^5^481.00^", -- [444]
+						"^2112^8^1585777755^126^1^5^481.00^Atrocitydh", -- [445]
+						"^2111^8^1585778853^67^1^5^481.00^", -- [446]
+						"^2118^8^1585778956^27^0^5^481.00^Atrocitydh", -- [447]
+						"^2111^8^1585779273^69^1^5^481.00^", -- [448]
+						"^2118^8^1585779369^25^0^5^481.00^Twisted", -- [449]
+						"^2111^8^1585779591^68^1^5^481.00^", -- [450]
+						"^2118^8^1585779679^26^0^5^481.00^Atrocitydh", -- [451]
+						"^2111^8^1585779865^68^1^5^481.00^Imfiredup", -- [452]
+						"^2118^8^1585779962^21^0^5^481.00^Ericsdk", -- [453]
+						"^2257^8^1585860192^52^1^5^480.75^", -- [454]
+						"^2257^8^1585860497^60^1^5^480.75^", -- [455]
+						"^2258^8^1585860613^89^0^5^480.75^Atrocitydh", -- [456]
+						"^2257^8^1585860886^41^1^5^480.75^", -- [457]
+						"^2258^8^1585860985^100^1^5^480.75^", -- [458]
+						"^2259^8^1585861437^78^1^5^480.75^", -- [459]
+						"^2260^8^1585861740^32^0^5^480.75^Imfiredupbrh", -- [460]
+						"^2257^8^1585862215^57^1^5^480.75^", -- [461]
+						"^2258^8^1585862326^113^1^5^480.75^Imfiredupbrh", -- [462]
+						"^2259^8^1585862654^97^1^5^480.75^Twisted", -- [463]
+						"^2260^8^1585863021^51^0^5^480.75^Atrocitydh", -- [464]
+						"^2260^8^1585863228^190^1^5^480.75^Imfiredupbrh", -- [465]
+						"^2257^8^1585863748^50^1^5^480.75^", -- [466]
+						"^2257^8^1585864016^63^1^5^480.75^", -- [467]
+						"^2257^8^1585864273^51^1^5^480.75^Twisted", -- [468]
+						"^2257^8^1585864591^46^1^5^480.75^Atrocitydh", -- [469]
+						"^2257^8^1585864908^58^0^5^480.75^Maxdogbowl", -- [470]
+						"^2257^8^1585865321^91^1^5^480.75^Twisted", -- [471]
+						"^2257^8^1585865743^56^1^5^480.75^", -- [472]
+						"^2258^8^1585865861^31^0^5^480.75^Twisted", -- [473]
+						"^2257^8^1585866221^45^1^5^480.75^", -- [474]
+						"^2258^8^1585866317^34^0^5^480.75^Ericsmage", -- [475]
+						"^2257^8^1585866602^38^1^5^480.75^", -- [476]
+						"^2257^8^1585866872^49^1^5^480.75^", -- [477]
+						"^2258^8^1585866999^106^1^5^480.75^", -- [478]
+						"^2259^8^1585867333^85^1^5^480.75^", -- [479]
+						"^2260^8^1585867659^59^0^5^480.75^Atrocitydh", -- [480]
+						"^2260^8^1585867879^26^0^5^480.75^Maxdogbowl", -- [481]
+						"^2257^8^1585868325^58^1^5^480.75^Twisted", -- [482]
+						"^2258^8^1585868437^113^1^5^480.75^Atrocitydh", -- [483]
+						"^2259^8^1585868821^76^1^5^480.75^", -- [484]
+						"^2260^8^1585869075^174^1^5^480.75^", -- [485]
+						"^2084^8^1586213566^79^1^5^481.00^", -- [486]
+						"^2086^8^1586213677^149^1^5^481.00^", -- [487]
+						"^2085^8^1586213960^131^1^5^481.00^", -- [488]
+						"^2087^8^1586214149^79^0^5^481.00^Imfiredup", -- [489]
+						"^2113^8^1586233016^123^1^5^480.88^", -- [490]
+						"^2114^8^1586233157^23^0^5^481.13^Atrocitydh", -- [491]
+						"^2113^8^1586233346^133^1^5^480.88^", -- [492]
+						"^2114^8^1586233498^134^1^5^480.88^", -- [493]
+						"^2115^8^1586233653^134^1^5^480.88^", -- [494]
+						"^2116^8^1586233881^125^1^5^480.88^", -- [495]
+						"^2117^8^1586234037^129^1^5^480.88^", -- [496]
+						"^2105^8^1586235321^68^1^5^480.88^", -- [497]
+						"^2106^8^1586235530^41^0^5^480.88^Twisted", -- [498]
+						"^2106^8^1586235707^99^1^5^480.88^", -- [499]
+						"^2107^8^1586236165^105^1^5^481.13^Imfiredup", -- [500]
+						"^2108^8^1586236420^56^0^5^481.13^Atrocitydh", -- [501]
+						"^2105^8^1586237434^39^0^5^480.88^Twisted", -- [502]
+						"^2105^8^1586238814^69^1^5^480.88^", -- [503]
+						"^2106^8^1586238997^76^1^5^480.88^", -- [504]
+						"^2107^8^1586239453^95^1^5^480.81^Imfiredup", -- [505]
+						"^2108^8^1586239682^44^0^5^480.81^Ericsdk", -- [506]
+						"^2292^8^1586250957^86^1^5^473.13^", -- [507]
+						"^2312^8^1586251235^36^0^5^473.13^Druidpew-Tichondrius", -- [508]
+						"^2312^8^1586251539^62^1^5^473.13^", -- [509]
+						"^2290^8^1586251979^111^1^5^472.78^", -- [510]
+						"^2291^8^1586252396^142^1^5^473.13^", -- [511]
+						"^2290^23^1586386332^27^1^5^481.44^", -- [512]
+						"^2312^23^1586386485^55^1^5^481.44^", -- [513]
+						"^2292^23^1586386704^39^1^5^481.44^", -- [514]
+						"^2291^23^1586386849^116^1^5^481.44^", -- [515]
+						"^2290^8^1586388165^26^0^5^480.88^Twisted", -- [516]
+						"^2290^8^1586388262^59^0^5^480.88^Ericsdk", -- [517]
+						"^2290^8^1586388519^53^0^5^480.88^Atrocitydh", -- [518]
+						"^2290^8^1586388695^123^1^5^480.88^Ericsdk", -- [519]
+						"^2292^8^1586389308^30^0^5^480.88^Maxdogbowl", -- [520]
+						"^2292^8^1586389395^103^1^5^480.88^", -- [521]
+						"^2312^8^1586389856^79^1^5^480.88^Twisted", -- [522]
+						"^2086^23^1586390716^45^0^5^481.13^", -- [523]
+						"^2139^23^1586391859^75^0^5^481.13^Atrocitydh", -- [524]
+						"^2084^8^1586398994^88^1^5^480.88^", -- [525]
+						"^2086^8^1586399123^138^1^5^480.88^", -- [526]
+						"^2085^8^1586399383^138^1^5^480.88^", -- [527]
+						"^2087^8^1586399574^252^1^5^480.88^Imfiredup", -- [528]
+						"^2105^8^1586404345^91^1^5^480.88^", -- [529]
+						"^2106^8^1586404535^37^0^5^480.88^Maxdogbowl", -- [530]
+						"^2106^8^1586404698^104^1^5^480.88^Twisted", -- [531]
+						"^2107^8^1586405061^21^0^5^480.88^Maxdogbowl", -- [532]
+						"^2107^8^1586405195^112^1^5^480.88^Imfiredup", -- [533]
+						"^2108^8^1586405395^0^0^5^480.88^Twisted", -- [534]
+						"^2257^8^1586580281^109^0^5^480.13^Ericsmage", -- [535]
+						"^2257^8^1586580531^77^1^5^480.13^", -- [536]
+						"^2257^8^1586580923^77^1^5^480.13^", -- [537]
+						"^2257^8^1586581264^95^1^5^480.13^Ericsmage", -- [538]
+						"^2258^8^1586581471^148^1^5^480.03^", -- [539]
+						"^2259^8^1586581808^156^1^5^480.03^Atrocitydh", -- [540]
+						"^2260^8^1586582151^248^1^5^480.13^Imfiredupbrh", -- [541]
+						"^2257^8^1586582814^76^1^5^480.00^Imfiredupbrh", -- [542]
+						"^2257^8^1586583102^79^0^5^480.00^Maxdogbowl", -- [543]
+						"^2257^8^1586583261^73^0^5^479.88^Imfiredupbrh", -- [544]
+						"^2257^8^1586583393^48^0^5^479.88^Twistedp", -- [545]
+						"^2257^8^1586583597^60^0^5^480.00^Twistedp", -- [546]
+						"^2257^8^1586583790^106^1^5^480.00^Atrocitydh", -- [547]
+						"^2258^8^1586583959^163^1^5^480.00^Maxdogbowl", -- [548]
+						"^2259^8^1586584319^163^1^5^480.00^Twistedp", -- [549]
+						"^2260^8^1586585026^130^0^5^480.00^Maxdogbowl", -- [550]
+						"^2257^8^1586636782^92^1^5^480.19^", -- [551]
+						"^2257^8^1586637222^89^1^5^479.88^", -- [552]
+						"^2258^8^1586637366^69^0^5^479.88^Imfiredupbrh", -- [553]
+						"^2258^8^1586637882^12^0^5^480.19^Twisted", -- [554]
+						"^2257^8^1586638118^80^1^5^479.88^Atrocitydh", -- [555]
+						"^2258^8^1586638257^153^1^5^479.88^Imfiredupbrh", -- [556]
+						"^2259^8^1586638608^47^0^5^479.88^Ericsmage", -- [557]
+						"^2257^8^1586639227^71^1^5^480.38^Atrocitydh", -- [558]
+						"^2258^8^1586639358^152^1^5^480.38^Ericxo", -- [559]
+						"^2259^8^1586639711^146^1^5^480.38^Ericxo", -- [560]
+						"^2260^8^1586640005^69^0^5^480.38^Maxdogbowl", -- [561]
+						"^2257^8^1586640307^87^1^5^480.38^", -- [562]
+						"^2258^8^1586640449^56^0^5^480.38^Maxdogbowl", -- [563]
+						"^2257^8^1586640765^84^1^5^480.38^", -- [564]
+						"^2258^8^1586640904^44^0^5^480.38^Ericxo", -- [565]
+						"^2257^8^1586641157^96^1^5^480.38^", -- [566]
+						"^2258^8^1586641309^128^1^5^480.81^", -- [567]
+						"^2259^8^1586641633^123^0^5^480.81^Maxdogbowl", -- [568]
+						"^2257^8^1586642020^98^1^5^480.38^", -- [569]
+						"^2258^8^1586642178^2^0^5^480.38^", -- [570]
+						"^2257^8^1586642425^63^1^5^480.38^", -- [571]
+						"^2258^8^1586642546^125^1^5^480.38^", -- [572]
+						"^2259^8^1586642886^124^1^5^480.38^", -- [573]
+						"^2260^8^1586643168^242^1^5^480.38^", -- [574]
+						"^2257^8^1586643726^72^1^5^480.81^Ericxo", -- [575]
+						"^2257^8^1586643985^68^1^5^480.50^", -- [576]
+						"^2258^8^1586644109^134^1^5^480.50^", -- [577]
+						"^2259^8^1586644416^146^1^5^480.50^", -- [578]
+						"^2260^8^1586644731^252^1^5^480.50^Atrocitydh", -- [579]
+						"^2257^8^1586647588^71^1^5^480.50^", -- [580]
+						"^2258^8^1586647769^6^0^5^480.50^Twisted", -- [581]
+						"^2257^8^1586647964^70^1^5^480.50^", -- [582]
+						"^2258^8^1586648089^142^1^5^480.50^", -- [583]
+						"^2259^8^1586648398^134^1^5^480.50^", -- [584]
+						"^2260^8^1586648703^63^0^5^480.50^Atrocitydh", -- [585]
+						"^2257^8^1586649254^84^1^5^480.50^", -- [586]
+						"^2258^8^1586649397^110^0^5^480.50^Twisted", -- [587]
+						"^2257^8^1586649812^68^1^5^480.50^", -- [588]
+						"^2258^8^1586649932^131^1^5^480.50^", -- [589]
+						"^2259^8^1586650242^152^1^5^480.50^Atrocitydh", -- [590]
+						"^2260^8^1586650583^50^0^5^480.50^Imfiredupbrh", -- [591]
+						"^2260^8^1586650899^169^0^5^480.50^Eric", -- [592]
+						"^2260^8^1586651246^59^0^5^480.50^Imfiredupbrh", -- [593]
+						"^2257^8^1586655927^67^1^5^480.50^", -- [594]
+						"^2258^8^1586656048^125^1^5^480.50^", -- [595]
+						"^2259^8^1586656395^128^1^5^480.50^", -- [596]
+						"^2260^8^1586656659^234^1^5^480.50^", -- [597]
+						"^2257^8^1586657139^62^1^5^480.50^", -- [598]
+						"^2258^8^1586657256^145^1^5^480.50^", -- [599]
+						"^2259^8^1586657571^16^0^5^480.50^Atrocitydh", -- [600]
+						"^2259^8^1586657617^148^1^5^480.66^", -- [601]
+						"^2260^8^1586657932^228^1^5^480.66^", -- [602]
+						"^2257^8^1586658647^66^1^5^480.50^", -- [603]
+						"^2258^8^1586658768^140^1^5^480.50^", -- [604]
+						"^2259^8^1586659076^139^1^5^480.50^", -- [605]
+						"^2260^8^1586659361^222^1^5^480.50^", -- [606]
+						"^2257^8^1586659788^75^1^5^480.50^", -- [607]
+						"^2258^8^1586659916^66^0^5^480.50^Atrocitydh", -- [608]
+						"^2257^8^1586660717^66^1^5^480.50^", -- [609]
+						"^2258^8^1586660836^134^1^5^480.50^", -- [610]
+						"^2259^8^1586661137^137^1^5^480.66^", -- [611]
+						"^2260^8^1586661411^217^1^5^480.66^", -- [612]
+						"^2113^8^1586662158^27^0^5^481.00^Imfiredup", -- [613]
+						"^2113^8^1586662314^33^0^5^481.00^Twisted", -- [614]
+						"^2113^8^1586662443^37^0^5^481.00^Twisted", -- [615]
+						"^2113^8^1586662676^96^1^5^481.00^", -- [616]
+						"^2114^8^1586662828^22^0^5^481.00^Atrocitydh", -- [617]
+						"^2114^8^1586663019^106^1^5^481.00^", -- [618]
+						"^2115^8^1586663209^20^0^5^481.00^Twisted", -- [619]
+						"^2113^8^1586663808^98^1^5^481.00^", -- [620]
+						"^2114^8^1586663987^22^0^5^481.00^Atrocitydh", -- [621]
+						"^2113^8^1586664193^32^0^5^481.00^Twisted", -- [622]
+						"^2113^8^1586664397^94^1^5^481.00^", -- [623]
+						"^2114^8^1586664523^29^0^5^481.00^Imfiredup", -- [624]
+						"^2113^8^1586665451^84^1^5^481.00^", -- [625]
+						"^2114^8^1586665644^42^0^5^481.00^Imfiredup", -- [626]
+						"^2113^8^1586666135^110^1^5^481.00^Ericsdk", -- [627]
+						"^2114^8^1586666530^105^1^5^481.00^", -- [628]
+						"^2115^8^1586666684^1^0^5^481.00^Maxfingrguns", -- [629]
+						"^2115^8^1586666920^19^0^5^481.00^Maxfingrguns", -- [630]
+						"^2115^8^1586667159^93^1^5^481.00^", -- [631]
+						"^2116^8^1586667818^101^1^5^481.00^", -- [632]
+						"^2117^8^1586668133^20^0^5^480.97^Atrocitydh", -- [633]
+						"^2117^8^1586668251^21^0^5^480.97^Ericsdk", -- [634]
+						"^2113^8^1586821266^86^1^5^481.00^", -- [635]
+						"^2113^8^1586821542^91^1^5^481.00^", -- [636]
+						"^2114^8^1586821735^159^1^5^481.00^Imfiredup", -- [637]
+						"^2115^8^1586822036^89^0^5^481.00^Twisted", -- [638]
+						"^2113^8^1586822332^104^1^5^481.00^", -- [639]
+						"^2114^8^1586822590^136^1^5^481.00^Atrocitydh", -- [640]
+						"^2115^8^1586822889^122^1^5^481.00^Atrocitydh", -- [641]
+						"^2116^8^1586823229^102^1^5^481.00^", -- [642]
+						"^2117^8^1586823361^105^1^5^481.00^", -- [643]
+						"^2113^8^1586823798^87^1^5^481.00^", -- [644]
+						"^2113^8^1586824073^75^1^5^481.00^", -- [645]
+						"^2114^8^1586824275^194^1^5^481.00^Imfiredup", -- [646]
+						"^2115^8^1586824600^29^0^5^481.00^Imfiredup", -- [647]
+						"^2113^8^1586827497^94^1^5^480.88^", -- [648]
+						"^2113^8^1586827695^8^0^5^481.00^", -- [649]
+						"^2113^8^1586827823^90^1^5^481.00^", -- [650]
+						"^2113^8^1586828083^82^1^5^481.00^", -- [651]
+						"^2113^8^1586828532^82^1^5^481.00^", -- [652]
+						"^2113^8^1586828872^90^1^5^481.00^Ericsdk", -- [653]
+						"^2113^8^1586829111^95^1^5^481.00^", -- [654]
+						"^2114^8^1586829468^33^0^5^481.00^Imfiredup", -- [655]
+						"^2113^8^1586829749^97^1^5^481.13^", -- [656]
+						"^2114^8^1586830019^38^0^5^481.13^Imfiredup", -- [657]
+						"^2113^8^1586830453^93^1^5^481.13^", -- [658]
+						"^2113^8^1586830759^102^1^5^481.13^", -- [659]
+						"^2113^8^1586831075^92^1^5^481.13^", -- [660]
+						"^2114^8^1586831270^41^0^5^481.13^Twisted", -- [661]
+						"^2113^8^1586831553^90^1^5^481.13^", -- [662]
+						"^2113^8^1586831948^88^1^5^481.13^", -- [663]
+						"^2114^8^1586832129^49^0^5^481.44^Twisted", -- [664]
+						"^2113^8^1586832462^89^1^5^481.13^", -- [665]
+						"^2113^8^1586832739^113^1^5^481.13^Imfiredup", -- [666]
+						"^2113^8^1586833181^104^1^5^481.13^", -- [667]
+						"^2113^8^1586833531^89^1^5^481.13^", -- [668]
+						"^2114^8^1586833786^124^1^5^481.13^", -- [669]
+						"^2115^8^1586833939^27^0^5^481.13^Twisted", -- [670]
+						"^2113^8^1586834100^82^1^5^481.13^Imfiredup", -- [671]
+						"^2114^8^1586834333^147^0^5^481.13^Atrocitydh", -- [672]
+						"^2113^8^1586834634^92^1^5^481.13^", -- [673]
+						"^2114^8^1586834899^21^0^5^481.13^Twisted", -- [674]
+						"^2113^8^1586835040^89^1^5^481.13^", -- [675]
+						"^2114^8^1586835307^61^0^5^481.13^Twisted", -- [676]
+						"^2114^8^1586835434^114^1^5^481.13^", -- [677]
+						"^2115^8^1586835599^110^1^5^481.13^Atrocitydh", -- [678]
+						"^2116^8^1586835770^108^1^5^481.13^", -- [679]
+						"^2117^8^1586835913^0^0^5^481.13^", -- [680]
+						"^2113^8^1586837137^98^1^5^481.13^", -- [681]
+						"^2114^8^1586837396^23^0^5^481.13^Atrocitydh", -- [682]
+						"^2113^8^1586837524^84^1^5^481.13^", -- [683]
+						"^2114^8^1586837786^28^0^5^481.13^Ericsdk", -- [684]
+						"^2113^8^1586838025^84^1^5^481.13^", -- [685]
+						"^2114^8^1586838254^48^0^5^481.13^Imfiredup", -- [686]
+						"^2113^8^1586838641^85^1^5^481.13^", -- [687]
+						"^2113^8^1586838892^92^1^5^481.13^", -- [688]
+						"^2113^8^1586839268^87^1^5^481.13^", -- [689]
+						"^2114^8^1586839528^38^0^5^481.13^Ericsdk", -- [690]
+						"^2113^8^1586839703^92^1^5^481.13^", -- [691]
+						"^2114^8^1586839946^22^0^5^481.13^Maxdogbowl", -- [692]
+						"^2113^8^1586840156^100^1^5^481.13^", -- [693]
+						"^2114^8^1586840391^152^1^5^481.13^", -- [694]
+						"^2115^8^1586840621^31^0^5^481.13^Atrocitydh", -- [695]
+						"^2113^8^1586841057^91^1^5^481.13^", -- [696]
+						"^2114^8^1586841298^148^1^5^480.97^Twisted", -- [697]
+						"^2115^8^1586841529^37^0^5^480.97^Maxdogbowl", -- [698]
+						"^2115^8^1586841612^99^1^5^480.97^", -- [699]
+						"^2116^8^1586841751^105^1^5^481.33^Twisted", -- [700]
+						"^2117^8^1586841883^105^1^5^481.44^", -- [701]
+						"^2113^8^1586842371^84^1^5^481.13^", -- [702]
+						"^2114^8^1586842720^70^0^5^481.44^Atrocitydh", -- [703]
+						"^2114^8^1586842824^134^1^5^481.44^", -- [704]
+						"^2115^8^1586843363^86^1^5^481.44^", -- [705]
+						"^2113^8^1586843671^97^1^5^481.13^", -- [706]
+						"^2114^8^1586843909^31^0^5^481.13^Imfiredup", -- [707]
+						"^2113^8^1586844133^83^1^5^481.13^", -- [708]
+						"^2114^8^1586844380^147^1^5^481.13^", -- [709]
+						"^2115^8^1586844641^104^1^5^481.13^", -- [710]
+						"^2116^8^1586844799^119^1^5^481.13^", -- [711]
+						"^2117^8^1586844944^108^1^5^481.13^Ericsdk", -- [712]
+						"^2113^8^1586845314^29^0^5^481.13^Imfiredup", -- [713]
+						"^2257^8^1586845778^67^1^5^480.50^", -- [714]
+						"^2258^8^1586845908^141^1^5^480.50^", -- [715]
+						"^2259^8^1586846239^167^0^5^480.50^Eric", -- [716]
+						"^2257^8^1586846673^62^1^5^480.50^", -- [717]
+						"^2258^8^1586846791^117^1^5^480.50^", -- [718]
+						"^2259^8^1586847076^142^1^5^480.50^", -- [719]
+						"^2257^8^1586847694^61^1^5^480.50^", -- [720]
+						"^2258^8^1586847810^116^1^5^480.50^", -- [721]
+						"^2259^8^1586848104^142^1^5^480.50^", -- [722]
+						"^2260^8^1586848382^224^1^5^480.50^Twisted", -- [723]
+						"^2257^8^1586848784^76^1^5^480.50^", -- [724]
+						"^2258^8^1586848916^132^1^5^480.50^Atrocitydh", -- [725]
+						"^2113^8^1586899453^73^1^5^470.84^", -- [726]
+						"^2114^8^1586899822^90^1^5^469.36^", -- [727]
+						"^2115^8^1586900065^2^0^5^470.84^", -- [728]
+						"^2115^8^1586900254^94^1^5^470.84^", -- [729]
+						"^2116^8^1586900615^89^1^5^470.84^", -- [730]
+						"^2117^8^1586900842^112^1^5^470.84^", -- [731]
+						"^2333^16^1586910783^202^1^20^475.60^Soiy", -- [732]
+						"^2331^16^1586911147^10^0^20^476.47^", -- [733]
+						"^2331^16^1586911187^7^0^20^476.55^", -- [734]
+						"^2331^16^1586911414^55^0^20^476.38^Grojon", -- [735]
+						"^2331^16^1586911564^205^1^20^471.27^Willxo", -- [736]
+						"^2337^16^1586912114^0^0^20^477.22^", -- [737]
+						"^2337^16^1586912222^414^1^20^477.21^Soiy", -- [738]
+						"^2086^23^1586928271^35^0^5^475.75^Atrocitydh", -- [739]
+						"^2086^23^1586930903^89^0^5^475.75^", -- [740]
+						"^2086^23^1586932826^69^0^5^475.75^Atrocitydh", -- [741]
+						"^2086^23^1586933395^47^0^5^475.75^", -- [742]
+						"^2086^23^1586933775^33^0^5^475.75^Atrocitydh", -- [743]
+						"^2130^8^1587003660^12^0^5^481.13^Atrocitydh", -- [744]
+						"^2130^8^1587003767^3^0^5^481.13^", -- [745]
+						"^2130^8^1587003800^130^1^5^481.13^Imfiredup", -- [746]
+						"^2131^8^1587004425^113^1^5^481.13^", -- [747]
+						"^2132^8^1587004801^103^1^5^481.13^", -- [748]
+						"^2133^8^1587004978^230^1^5^481.13^Imfiredup", -- [749]
+						"^2084^8^1587005648^68^1^5^481.13^", -- [750]
+						"^2084^8^1587006069^73^1^5^480.97^Imfiredup", -- [751]
+						"^2086^8^1587006232^37^0^5^480.97^Twisted", -- [752]
+						"^2113^8^1587164776^82^1^5^481.25^", -- [753]
+						"^2113^8^1587165184^40^0^5^481.13^Ericsdk", -- [754]
+						"^2113^8^1587165359^91^1^5^481.25^", -- [755]
+						"^2114^8^1587165595^129^1^5^481.25^", -- [756]
+						"^2115^8^1587165844^111^1^5^481.25^Twisted", -- [757]
+						"^2116^8^1587166004^41^0^5^481.25^Ericsdk", -- [758]
+						"^2113^8^1587166284^85^1^5^481.25^", -- [759]
+						"^2114^8^1587166509^46^0^5^481.25^Imfiredup", -- [760]
+						"^2113^8^1587166806^98^1^5^481.25^", -- [761]
+						"^2113^8^1587167081^87^1^5^481.13^", -- [762]
+						"^2114^8^1587167311^123^1^5^481.13^", -- [763]
+						"^2115^8^1587167526^93^1^5^481.13^", -- [764]
+						"^2116^8^1587167665^106^1^5^481.13^", -- [765]
+						"^2117^8^1587167796^35^0^5^481.13^Twisted", -- [766]
+						"^2117^8^1587168090^35^0^5^481.33^Maxdogbowl", -- [767]
+						"^2117^8^1587168217^20^0^5^481.33^Atrocitydh", -- [768]
+						"^2113^8^1587168475^91^1^5^481.25^", -- [769]
+						"^2113^8^1587171906^47^0^5^480.71^Twisted", -- [770]
+						"^2113^8^1587172096^94^1^5^481.13^", -- [771]
+						"^2114^8^1587172346^131^1^5^481.13^", -- [772]
+						"^2115^8^1587172561^93^1^5^481.13^", -- [773]
+						"^2116^8^1587172704^115^1^5^481.13^", -- [774]
+						"^2117^8^1587172846^101^1^5^481.13^", -- [775]
+						"^2113^8^1587184370^95^1^5^481.13^", -- [776]
+						"^2114^8^1587184615^39^0^5^481.13^Twisted", -- [777]
+						"^2113^8^1587184838^91^1^5^481.13^", -- [778]
+						"^2114^8^1587185070^117^1^5^481.13^", -- [779]
+						"^2115^8^1587185270^90^1^5^481.13^", -- [780]
+						"^2116^8^1587185414^113^1^5^481.13^", -- [781]
+						"^2117^8^1587185693^23^0^5^481.13^Atrocitydh", -- [782]
+						"^2117^8^1587185948^28^0^5^481.13^Twisted", -- [783]
+						"^2117^8^1587186135^22^0^5^481.13^Atrocitydh", -- [784]
+						"^2117^8^1587186375^52^0^5^481.13^Imfiredup", -- [785]
+						"^2113^8^1587229612^98^1^5^481.13^", -- [786]
+						"^2114^8^1587229847^126^1^5^481.13^", -- [787]
+						"^2115^8^1587230068^89^1^5^481.13^", -- [788]
+						"^2116^8^1587230216^104^1^5^481.13^", -- [789]
+						"^2117^8^1587230352^35^0^5^481.13^Maxdogbowl", -- [790]
+						"^2113^8^1587230605^94^1^5^481.13^", -- [791]
+						"^2114^8^1587230840^133^1^5^481.13^Twisted", -- [792]
+						"^2113^8^1587231139^96^1^5^481.13^", -- [793]
+						"^2114^8^1587231370^118^1^5^481.13^Twisted", -- [794]
+						"^2115^8^1587231577^35^0^5^481.13^Twisted", -- [795]
+						"^2113^8^1587232701^88^1^5^362.42^", -- [796]
+						"^2114^8^1587232934^127^1^5^362.42^", -- [797]
+						"^2115^8^1587233139^97^1^5^362.42^", -- [798]
+						"^2116^8^1587233338^113^1^5^362.42^", -- [799]
+						"^2117^8^1587233493^29^0^5^362.42^Imfiredup", -- [800]
+						"^2117^8^1587233616^116^1^5^362.42^", -- [801]
+						"^2257^8^1587264738^61^1^5^480.63^", -- [802]
+						"^2258^8^1587264855^38^0^5^480.63^Twisted", -- [803]
+						"^2257^8^1587265024^74^1^5^480.63^", -- [804]
+						"^2257^8^1587265386^63^1^5^480.63^", -- [805]
+						"^2257^8^1587265671^63^1^5^480.50^", -- [806]
+						"^2258^8^1587265790^125^1^5^480.50^Eric", -- [807]
+						"^2259^8^1587266099^49^0^5^480.50^Maxdogbowl", -- [808]
+						"^2259^8^1587266200^127^1^5^480.63^", -- [809]
+						"^2260^8^1587266466^27^0^5^480.63^Maxdogbowl", -- [810]
+						"^2260^8^1587266690^46^0^5^480.63^Twisted", -- [811]
+						"^2260^8^1587267075^44^0^5^480.63^Maxdogbowl", -- [812]
+						"^2113^8^1587267532^88^1^5^481.13^", -- [813]
+						"^2114^8^1587267849^43^0^5^481.13^Imfiredup", -- [814]
+						"^2114^8^1587267947^111^1^5^481.13^", -- [815]
+						"^2115^8^1587268146^86^1^5^481.13^", -- [816]
+						"^2116^8^1587268541^39^0^5^481.13^Maxdogbowl", -- [817]
+						"^2116^8^1587268682^110^1^5^481.13^", -- [818]
+						"^2117^8^1587268824^69^0^5^481.13^Ericsdk", -- [819]
+						"^2113^8^1587313026^102^1^5^481.13^", -- [820]
+						"^2114^8^1587313280^125^1^5^481.13^", -- [821]
+						"^2115^8^1587313483^91^1^5^481.13^", -- [822]
+						"^2116^8^1587313675^121^1^5^481.13^", -- [823]
+						"^2117^8^1587313879^79^1^5^481.13^", -- [824]
+						"^2257^8^1587314280^87^1^5^480.63^", -- [825]
+						"^2258^8^1587314429^119^1^5^480.63^", -- [826]
+						"^2259^8^1587314750^140^1^5^480.63^Eric", -- [827]
+						"^2260^8^1587315040^60^0^5^480.63^Eric", -- [828]
+						"^2257^8^1587315277^62^1^5^480.63^", -- [829]
+						"^2258^8^1587315392^126^1^5^480.63^Atrocitydh", -- [830]
+						"^2259^8^1587315728^131^1^5^480.63^", -- [831]
+						"^2260^8^1587315995^225^1^5^480.63^Maxdogbowl", -- [832]
+						"^2257^8^1587321855^67^1^5^326.36^", -- [833]
+						"^2258^8^1587321976^150^1^5^304.34^Imfiredupbrh", -- [834]
+						"^2259^8^1587322328^155^1^5^326.36^", -- [835]
+						"^2260^8^1587322626^222^1^5^326.36^Atrocitydh", -- [836]
+						"^2257^8^1587326727^68^1^5^412.06^", -- [837]
+						"^2258^8^1587326851^117^1^5^412.06^", -- [838]
+						"^2259^8^1587327168^132^1^5^412.06^", -- [839]
+						"^2260^8^1587327427^239^1^5^412.06^", -- [840]
+						"^2113^8^1587328022^83^1^5^412.48^", -- [841]
+						"^2114^8^1587328383^120^1^5^412.48^", -- [842]
+						"^2115^8^1587328583^95^1^5^412.48^Twisted", -- [843]
+						"^2116^8^1587328779^108^1^5^412.48^", -- [844]
+						"^2117^8^1587328915^65^1^5^412.48^", -- [845]
+						"^2113^8^1587332860^87^1^5^325.77^", -- [846]
+						"^2114^8^1587333093^111^1^5^325.77^", -- [847]
+						"^2115^8^1587333281^108^1^5^303.58^Imfiredup", -- [848]
+						"^2116^8^1587333507^114^1^5^303.58^Twisted", -- [849]
+						"^2117^8^1587333652^73^1^5^303.58^", -- [850]
+						"^2292^8^1587499431^90^0^5^473.65^Jetshunter", -- [851]
+						"^2292^8^1587499622^105^1^5^473.65^", -- [852]
+						"^2312^8^1587499971^86^1^5^473.65^Mbh", -- [853]
+						"^2290^8^1587500341^132^1^5^473.19^Jetshunter", -- [854]
+						"^2291^8^1587500737^147^1^5^473.19^", -- [855]
+						"^2329^16^1587513621^298^1^20^476.00^Lipp", -- [856]
+						"^2334^16^1587514227^178^1^20^475.03^Kíngflydh", -- [857]
+						"^2327^16^1587514760^8^0^20^475.88^", -- [858]
+						"^2327^16^1587514846^208^1^20^475.89^Premonhunter", -- [859]
+						"^2328^16^1587515628^5^0^20^476.33^", -- [860]
+						"^2328^16^1587515701^242^1^20^476.47^Willxo", -- [861]
+						"^2336^16^1587516087^16^0^20^476.37^", -- [862]
+						"^2336^16^1587516158^267^0^20^476.46^Driney", -- [863]
+						"^2336^16^1587516557^266^1^20^476.69^Premonhunter", -- [864]
+						"^2333^16^1587517000^5^0^20^476.68^", -- [865]
+						"^2333^16^1587517074^201^1^20^476.62^Vilwarr", -- [866]
+						"^2331^16^1587517424^8^0^20^476.39^", -- [867]
+						"^2331^16^1587517580^52^0^20^476.58^Depletos-Area52", -- [868]
+						"^2331^16^1587517724^210^1^20^477.07^Premonhunter", -- [869]
+						"^2335^16^1587518245^207^1^20^476.92^Soiy", -- [870]
+						"^2343^16^1587518631^446^1^20^476.81^Lipp", -- [871]
+						"^2345^16^1587519119^18^0^20^476.51^Trillr", -- [872]
+						"^2345^16^1587519234^0^0^20^476.51^", -- [873]
+						"^2345^16^1587519352^455^1^20^476.97^Depletojr-Area52", -- [874]
+						"^2337^16^1587520380^454^1^20^477.39^Soiy", -- [875]
+						"^2344^16^1587521874^509^0^20^475.77^Willxo", -- [876]
+						"^2344^16^1587522514^734^1^20^476.96^Depletos-Area52", -- [877]
+						"^2111^8^1588107308^44^1^5^476.14^", -- [878]
+						"^2118^8^1588107535^151^1^5^476.14^Twistedsp", -- [879]
+						"^2112^8^1588107815^81^1^5^475.66^", -- [880]
+						"^2123^8^1588108210^108^1^5^475.66^Atrocitydh", -- [881]
+						"^2265^16^1588723602^10^0^20^476.94^", -- [882]
+						"^2265^16^1588723652^89^1^20^477.60^", -- [883]
+						"^2263^16^1588724029^178^1^20^477.14^Vilshady-Thrall", -- [884]
+						"^2266^16^1588724385^7^0^20^476.34^", -- [885]
+						"^2266^16^1588724444^179^1^20^476.47^Noripalxo", -- [886]
+						"^2271^16^1588724736^4^0^20^477.40^Øñgødñøcap", -- [887]
+						"^2271^16^1588724772^3^0^20^477.40^", -- [888]
+						"^2271^16^1588724901^500^1^20^477.34^Vilshady-Thrall", -- [889]
+						"^2268^16^1588725584^212^1^20^477.54^Syreth", -- [890]
+						"^2272^16^1588728152^95^1^20^473.00^Piecez", -- [891]
+						"^2276^16^1588728357^147^1^20^473.06^Lipp", -- [892]
+						"^2280^16^1588728758^73^1^20^473.01^", -- [893]
+						"^2281^16^1588729683^202^1^20^477.58^Bubblejerb-Tichondrius", -- [894]
+						"^2086^8^1588811427^94^1^5^473.45^", -- [895]
+						"^2084^8^1588811812^74^1^5^473.45^", -- [896]
+						"^2085^8^1588812301^25^0^5^473.45^Hannospal", -- [897]
+						"^2085^8^1588812367^113^1^5^473.45^", -- [898]
+						"^2087^8^1588812617^127^1^5^473.45^", -- [899]
+						"^2333^16^1589329590^5^0^20^452.50^", -- [900]
+						"^2333^16^1589329629^173^1^20^477.29^", -- [901]
+						"^2331^16^1589330103^117^0^20^472.28^Soiy", -- [902]
+						"^2331^16^1589330395^203^1^20^478.36^Goopd", -- [903]
+						"^2337^16^1589331075^435^1^20^478.01^Déathstroke", -- [904]
+						"^2084^8^1589431219^68^1^5^469.99^", -- [905]
+						"^2086^8^1589431401^16^0^5^469.99^Gooptard", -- [906]
+						"^2085^8^1589431626^91^1^5^469.99^", -- [907]
+						"^2086^8^1589431754^76^1^5^469.99^Notbad-Zul'jin", -- [908]
+						"^2087^8^1589432185^121^1^5^469.99^", -- [909]
+						"^2093^8^1589776773^181^1^5^477.54^Shifttay-Zul'jin", -- [910]
+						"^2094^8^1589777017^134^1^5^477.54^Shifttay-Zul'jin", -- [911]
+						"^2095^8^1589777725^201^1^5^477.00^Atrocitydh", -- [912]
+						"^2096^8^1589778081^257^1^5^477.00^", -- [913]
+						"^2130^8^1589780069^245^1^5^477.66^", -- [914]
+						"^2131^8^1589781074^219^1^5^477.50^", -- [915]
+						"^2132^8^1589781610^219^1^5^477.50^Jazorogue-Area52", -- [916]
+						"^2133^8^1589781947^617^1^5^477.50^Atrocitydh", -- [917]
+						"^2113^8^1589783962^152^1^5^477.73^Shifttay-Zul'jin", -- [918]
+						"^2114^8^1589784612^178^1^5^477.73^", -- [919]
+						"^2115^8^1589784894^1^0^5^477.73^", -- [920]
+						"^2115^8^1589784989^183^1^5^477.73^Atrocitydh", -- [921]
+						"^2116^8^1589785708^188^1^5^477.73^", -- [922]
+						"^2117^8^1589786004^134^0^5^477.73^Imfiredup", -- [923]
+						"^2117^8^1589786193^232^1^5^477.73^", -- [924]
+						"^2086^8^1589795918^192^1^5^476.57^", -- [925]
+						"^2084^8^1589796491^101^1^5^476.57^Kiwivodka", -- [926]
+						"^2085^8^1589796912^196^1^5^476.57^Jazorogue-Area52", -- [927]
+						"^2087^8^1589797297^286^1^5^476.57^Atrocitydh", -- [928]
+						"^2344^15^1589848415^461^1^20^471.66^Tezcan-WyrmrestAccord", -- [929]
+						"^2093^8^1589927763^102^1^5^475.93^", -- [930]
+						"^2094^8^1589928236^119^1^5^475.93^Atrocitydh", -- [931]
+						"^2095^8^1589928542^114^1^5^475.93^", -- [932]
+						"^2096^8^1589928850^148^1^5^475.93^", -- [933]
+						"^2334^16^1589933696^155^1^20^476.16^Avade", -- [934]
+						"^2327^16^1589934231^10^0^20^476.16^", -- [935]
+						"^2327^16^1589934320^196^1^20^477.50^Señorchewps", -- [936]
+						"^2328^16^1589934964^5^0^20^478.88^", -- [937]
+						"^2328^16^1589935051^5^0^20^478.63^", -- [938]
+						"^2328^16^1589935112^144^0^20^478.63^Dossouh", -- [939]
+						"^2328^16^1589935419^215^1^20^478.08^Dossouh", -- [940]
+						"^2336^16^1589935770^14^0^20^478.57^", -- [941]
+						"^2336^16^1589935855^237^1^20^458.28^Ursys-Stormrage", -- [942]
+						"^2333^16^1589936326^5^0^20^458.07^", -- [943]
+						"^2333^16^1589936389^158^1^20^476.16^Noripalxo", -- [944]
+						"^2331^16^1589936793^7^0^20^476.05^", -- [945]
+						"^2331^16^1589936914^187^1^20^476.52^Siory", -- [946]
+						"^2337^16^1589937607^427^1^20^475.97^Driney", -- [947]
+						"^2344^16^1589938483^496^0^20^478.30^Noripalxo", -- [948]
+						"^2344^16^1589939062^651^1^20^477.79^Willxo", -- [949]
+						"^2329^15^1590053871^159^1^14^445.86^Mbwar", -- [950]
+						"^2334^15^1590054392^177^1^15^441.15^Atrocitydh", -- [951]
+						"^2257^8^1590055115^103^1^5^475.95^", -- [952]
+						"^2258^8^1590055307^93^1^5^475.95^", -- [953]
+						"^2259^8^1590055645^104^1^5^475.95^", -- [954]
+						"^2260^8^1590055919^160^1^5^475.39^", -- [955]
+						"^2257^8^1590122380^91^1^5^473.06^Felsfubar-Dath'Remar", -- [956]
+						"^2258^8^1590122574^121^1^5^473.06^", -- [957]
+						"^2259^8^1590122944^130^1^5^473.06^Felsfubar-Dath'Remar", -- [958]
+						"^2260^8^1590123226^216^1^5^473.06^Felsfubar-Dath'Remar", -- [959]
+						"^2257^8^1590123640^143^1^5^477.43^Mbdtf", -- [960]
+						"^2258^8^1590123897^238^1^5^477.43^Mbdtf", -- [961]
+						"^2259^8^1590124379^142^1^5^477.43^", -- [962]
+						"^2260^8^1590124741^270^1^5^477.43^", -- [963]
+						"^2257^8^1590125615^79^1^5^476.18^", -- [964]
+						"^2258^8^1590125776^116^1^5^476.18^", -- [965]
+						"^2259^8^1590126099^41^0^5^476.18^Qara", -- [966]
+						"^2259^8^1590126214^117^1^5^476.18^", -- [967]
+						"^2260^8^1590126493^245^1^5^476.18^Qara", -- [968]
+						"^2257^8^1590127280^87^1^5^476.81^", -- [969]
+						"^2258^8^1590127457^132^1^5^476.81^", -- [970]
+						"^2259^8^1590127800^3^0^5^476.81^", -- [971]
+						"^2259^8^1590127834^122^1^5^476.81^", -- [972]
+						"^2260^8^1590128134^195^1^5^476.81^", -- [973]
+						"^2257^8^1590128648^96^1^5^476.61^", -- [974]
+						"^2258^8^1590128900^130^1^5^476.61^Lonzoballo", -- [975]
+						"^2259^8^1590129261^87^0^5^476.61^Lonzoballo", -- [976]
+						"^2259^8^1590129379^153^1^5^476.61^Mbdtf", -- [977]
+						"^2260^8^1590129694^51^0^5^476.61^Atrocitydh", -- [978]
+						"^2260^8^1590129822^288^1^5^476.61^Lonzoballo", -- [979]
+						"^2257^8^1590130384^78^1^5^476.95^", -- [980]
+						"^2258^8^1590130555^198^1^5^476.95^Atrocitydh", -- [981]
+						"^2259^8^1590130994^129^1^5^477.19^", -- [982]
+						"^2260^8^1590131299^220^1^5^477.19^", -- [983]
+						"^2257^8^1590131783^88^1^5^476.26^", -- [984]
+						"^2258^8^1590131975^114^1^5^476.26^", -- [985]
+						"^2259^8^1590132311^114^1^5^476.26^Mbdtf", -- [986]
+						"^2260^8^1590132572^209^1^5^476.26^", -- [987]
+						"^2344^15^1590214363^524^1^29^466.50^Animus-Khadgar", -- [988]
+						"^2337^15^1590451284^0^0^16^465.38^", -- [989]
+						"^2337^15^1590451478^286^1^20^465.22^Immvp-ShatteredHalls", -- [990]
+						"^2344^15^1590451898^483^1^26^465.65^Herush", -- [991]
+						"^2337^15^1590453362^251^1^21^466.58^", -- [992]
+						"^2344^15^1590453716^461^1^27^455.94^Loaks-Thrall", -- [993]
+						"^2344^15^1590455691^463^1^27^470.29^Drewsky", -- [994]
+						"^2337^15^1590456611^0^0^17^473.19^", -- [995]
+						"^2337^15^1590457021^306^1^25^470.48^Wikiwiki-MoonGuard", -- [996]
+						"^2344^15^1590457411^483^1^27^451.86^Iamgladious-Dalaran", -- [997]
+						"^2344^15^1590458652^465^1^27^471.09^Potatoskins-Detheroc", -- [998]
+						"^2337^15^1590459661^0^0^18^477.84^", -- [999]
+						"^2337^15^1590460367^321^1^26^475.61^Samses-EmeraldDream", -- [1000]
+						"^2344^15^1590460825^484^1^30^471.23^Pandapayx-Zul'jin", -- [1001]
+						"^2344^15^1590462300^425^1^22^474.90^Pandapaybtw-Zul'jin", -- [1002]
+						"^2337^15^1590464028^1^0^24^472.65^", -- [1003]
+						"^2337^15^1590464092^299^1^24^472.65^Ocke-ArgentDawn", -- [1004]
+						"^2344^15^1590464513^445^1^24^472.61^Ocke-ArgentDawn", -- [1005]
+						"^2329^15^1590534451^120^1^17^457.72^", -- [1006]
+						"^2337^15^1590535421^422^1^18^472.52^Bigups-Ravenholdt", -- [1007]
+						"^2344^15^1590536216^495^1^18^462.74^", -- [1008]
+						"^2076^16^1590612389^62^1^20^480.63^", -- [1009]
+						"^2073^16^1590612601^114^0^20^480.63^Atrocitydh", -- [1010]
+						"^2073^16^1590613019^118^1^20^480.63^", -- [1011]
+						"^2084^8^1590716294^78^1^5^478.19^", -- [1012]
+						"^2086^8^1590716732^130^1^5^478.19^", -- [1013]
+						"^2085^8^1590717042^129^1^5^478.08^", -- [1014]
+						"^2087^8^1590717380^186^1^5^478.08^Goopd", -- [1015]
+						"^2329^16^1590800242^312^1^20^472.84^Kíngflydh", -- [1016]
+						"^2334^16^1590800820^222^1^20^466.60^Ericswarrior", -- [1017]
+						"^2327^16^1590801367^10^0^20^470.62^", -- [1018]
+						"^2327^16^1590801453^197^1^20^475.99^", -- [1019]
+						"^2328^16^1590802105^6^0^20^475.82^", -- [1020]
+						"^2328^16^1590802341^6^0^20^476.29^", -- [1021]
+						"^2328^16^1590802382^88^0^20^476.14^Pregame", -- [1022]
+						"^2328^16^1590802584^58^0^20^476.12^Ericswarrior", -- [1023]
+						"^2328^16^1590802708^138^0^20^476.12^Ericswarrior", -- [1024]
+						"^2328^16^1590802917^281^1^20^476.12^Jetslock", -- [1025]
+						"^2336^16^1590803353^15^0^20^476.16^", -- [1026]
+						"^2336^16^1590803436^351^1^20^476.05^Maladh-Area52", -- [1027]
+						"^2333^16^1590803976^0^0^20^0.00^", -- [1028]
+						"^2333^16^1590804068^209^1^20^475.70^Ravilianz", -- [1029]
+						"^2331^16^1590804454^10^0^20^480.75^Kíngflydh", -- [1030]
+						"^2331^16^1590804790^12^0^20^473.38^", -- [1031]
+						"^2331^16^1590804876^69^0^20^474.48^Ravilianz", -- [1032]
+						"^2331^16^1590805005^192^0^20^474.65^Gooptard", -- [1033]
+						"^2331^16^1590805314^227^1^20^474.58^Ravilianz", -- [1034]
+						"^2335^16^1590805968^218^1^20^476.10^Jetshunter", -- [1035]
+						"^2343^16^1590806406^456^1^20^476.39^Norichixo", -- [1036]
+						"^2345^16^1590807237^0^0^20^476.15^", -- [1037]
+						"^2345^16^1590807365^534^0^20^476.13^Ericswarrior", -- [1038]
+						"^2345^16^1590807954^0^0^20^475.80^", -- [1039]
+						"^2345^16^1590808009^247^0^20^475.80^Imshootinup", -- [1040]
+						"^2345^16^1590808336^482^1^20^476.04^Jacobxo", -- [1041]
+						"^2337^16^1590809147^0^0^20^476.07^", -- [1042]
+						"^2337^16^1590809570^119^0^20^476.17^Ericswarrior", -- [1043]
+						"^2337^16^1590809803^387^0^20^476.17^Jetslock", -- [1044]
+						"^2337^16^1590810296^472^0^20^476.04^Mbdh", -- [1045]
+						"^2337^16^1590810893^46^0^20^476.04^Ericswarrior", -- [1046]
+						"^2337^16^1590811011^93^0^20^476.04^Fakemoosh", -- [1047]
+						"^2337^16^1590811148^0^0^20^476.04^Zipzoop-Mal'Ganis", -- [1048]
+						"^2290^8^1591061424^71^1^5^464.25^", -- [1049]
+						"^2292^8^1591061960^64^1^5^465.64^", -- [1050]
+						"^2312^8^1591062578^80^0^5^467.98^Trevordruid-Area52", -- [1051]
+						"^2312^8^1591062689^56^1^5^467.98^", -- [1052]
+						"^2291^8^1591062988^224^0^5^467.98^Girthlordx", -- [1053]
+						"^2291^8^1591063293^77^0^5^467.19^Trevordruid-Area52", -- [1054]
+						"^2291^8^1591063456^278^1^5^467.19^Girthlordx", -- [1055]
+						"^2329^16^1591142835^253^1^20^478.52^Lipp", -- [1056]
+						"^2334^16^1591143479^154^1^20^444.08^Momonidebi", -- [1057]
+						"^2327^16^1591143954^8^0^20^440.82^", -- [1058]
+						"^2327^16^1591144003^10^0^20^440.82^", -- [1059]
+						"^2327^16^1591144094^193^1^20^444.03^Momonidebi", -- [1060]
+						"^2328^16^1591144771^4^0^20^444.11^", -- [1061]
+						"^2328^16^1591145113^216^1^20^444.11^Momonidebi", -- [1062]
+						"^2336^16^1591145465^16^0^20^443.98^", -- [1063]
+						"^2336^16^1591145589^285^0^20^452.68^Momonidebi", -- [1064]
+						"^2336^16^1591145973^252^1^20^452.68^Momonidebi", -- [1065]
+						"^2333^16^1591146415^5^0^20^452.66^", -- [1066]
+						"^2333^16^1591146500^171^1^20^452.68^Momonidebi", -- [1067]
+						"^2331^16^1591146796^10^0^20^453.87^", -- [1068]
+						"^2331^16^1591146844^9^0^20^453.87^", -- [1069]
+						"^2331^16^1591147056^7^0^20^455.40^", -- [1070]
+						"^2331^16^1591147143^194^1^20^455.40^Momonidebi", -- [1071]
+						"^2335^16^1591147597^189^1^20^455.37^Momonidebi", -- [1072]
+						"^2337^16^1591148211^0^0^20^455.30^", -- [1073]
+						"^2337^16^1591148264^422^1^20^455.30^Momonidebi", -- [1074]
+						"^2344^16^1591149324^636^0^20^456.76^Momonidebi", -- [1075]
+						"^2344^16^1591150056^659^0^20^456.79^Momonidebi", -- [1076]
+						"^2344^16^1591150830^524^0^20^456.79^Momonidebi", -- [1077]
+						"^2344^16^1591151450^563^0^20^453.96^Momonidebi", -- [1078]
+						"^2344^16^1591152133^678^1^20^456.80^Momonidebi", -- [1079]
+						"^2111^8^1591215559^135^1^5^477.80^Mbdtf", -- [1080]
+						"^2118^8^1591216090^171^0^5^477.80^Twistedjr", -- [1081]
+						"^2118^8^1591216293^243^1^5^477.80^", -- [1082]
+						"^2112^8^1591216781^164^0^5^477.80^Mbdtf", -- [1083]
+						"^2112^8^1591217051^190^1^5^477.80^", -- [1084]
+						"^2123^8^1591217512^228^1^5^477.80^", -- [1085]
+						"^2076^16^1591222431^81^1^20^480.44^", -- [1086]
+						"^2073^16^1591222719^81^1^20^480.44^", -- [1087]
+						"^2337^15^1591661195^333^1^23^467.08^Eredinn-Kargath", -- [1088]
+						"^2344^15^1591661751^458^1^23^470.45^Revân", -- [1089]
+						"^2344^15^1591663119^468^1^23^472.17^Sookey-BurningLegion", -- [1090]
+						"^2337^15^1591664214^0^0^15^473.11^", -- [1091]
+						"^2337^15^1591664909^293^1^26^470.85^Magwalker-Sargeras", -- [1092]
+						"^2344^15^1591665399^461^1^26^463.63^Ahoyvey-Area52", -- [1093]
+						"^2344^15^1591667230^489^1^24^470.77^Aeryn-Agamaggan", -- [1094]
+						"^2337^15^1591668798^0^0^29^473.17^", -- [1095]
+						"^2337^15^1591668843^299^1^29^473.17^Frizzygummy-Area52", -- [1096]
+						"^2344^15^1591669243^453^1^30^449.96^Grinningtoad-Stormreaver", -- [1097]
+						"^2344^15^1591671026^477^1^29^467.62^Brandon-Coilfang", -- [1098]
+						"^2337^15^1591672733^0^0^22^466.89^", -- [1099]
+						"^2337^15^1591672772^299^1^22^466.89^Sallyqt-Tichondrius", -- [1100]
+						"^2344^15^1591673273^441^1^22^462.36^Sallyqt-Tichondrius", -- [1101]
+						"^2344^15^1591674763^496^1^25^446.91^Phaizdk-Thrall", -- [1102]
+						"^2337^15^1591675670^0^0^11^472.45^", -- [1103]
+						"^2337^15^1591675960^286^1^22^468.41^Jambini-Area52", -- [1104]
+						"^2344^15^1591676414^433^1^23^468.41^Jambini-Area52", -- [1105]
+						"^2344^15^1591677561^455^1^24^471.97^Zephahdk", -- [1106]
+						"^2337^15^1591678644^0^0^14^473.66^", -- [1107]
+						"^2337^15^1591678998^287^1^21^476.57^Sleepwalkw", -- [1108]
+						"^2344^15^1591679427^431^1^23^476.72^Sleepwalkw", -- [1109]
+						"^2337^15^1591681073^230^1^17^475.62^", -- [1110]
+						"^2344^15^1591681442^416^1^19^469.49^Wasabî-Mug'thol", -- [1111]
+						"^2290^23^1591830776^36^0^5^480.75^Screaym-Hyjal", -- [1112]
+						"^2290^23^1591830880^39^1^5^480.75^", -- [1113]
+						"^2292^23^1591831170^44^1^5^479.88^", -- [1114]
+						"^2312^23^1591831288^42^1^5^478.69^", -- [1115]
+						"^2291^23^1591831373^85^1^5^478.69^Screaym-Hyjal", -- [1116]
+						"^2257^23^1591831530^59^1^5^478.69^", -- [1117]
+						"^2258^23^1591831642^8^0^5^478.90^", -- [1118]
+						"^2258^23^1591831690^34^1^5^478.90^Screaym-Hyjal", -- [1119]
+						"^2259^23^1591831834^45^1^5^474.73^", -- [1120]
+						"^2260^23^1591832029^81^1^5^474.73^", -- [1121]
+						"^2292^8^1591936017^45^1^5^476.25^", -- [1122]
+						"^2290^8^1591936393^48^1^5^476.08^", -- [1123]
+						"^2312^8^1591936647^40^1^5^476.25^", -- [1124]
+						"^2291^8^1591936949^144^1^5^476.25^Bustysocrmom", -- [1125]
+						"^2329^16^1592009603^297^1^20^473.77^Pregame", -- [1126]
+						"^2334^16^1592010206^152^1^20^476.32^Fashionkilla", -- [1127]
+						"^2327^16^1592010708^7^0^20^476.32^", -- [1128]
+						"^2327^16^1592010806^200^1^20^474.74^Imdreamedup-Zul'jin", -- [1129]
+						"^2333^16^1592011529^4^0^20^474.68^", -- [1130]
+						"^2333^16^1592011639^193^1^20^474.74^Norichixo", -- [1131]
+						"^2331^16^1592012049^11^0^20^474.52^", -- [1132]
+						"^2331^16^1592012245^11^0^20^476.47^", -- [1133]
+						"^2331^16^1592012367^199^1^20^476.47^Imdreamedup-Zul'jin", -- [1134]
+						"^2337^16^1592013194^275^0^20^472.29^Ericswarrior", -- [1135]
+						"^2337^16^1592013540^376^0^20^472.29^Jacobxo", -- [1136]
+						"^2337^16^1592014008^289^0^20^476.81^Gooptard", -- [1137]
+						"^2337^16^1592014377^454^0^20^476.93^Jetslock", -- [1138]
+						"^2337^16^1592014913^486^0^20^476.97^Fakemoosh", -- [1139]
+						"^2337^16^1592015467^456^1^20^477.09^Lammara-Zul'jin", -- [1140]
+						"^2344^16^1592017046^467^0^20^477.31^Lammara-Zul'jin", -- [1141]
+						"^2344^16^1592017599^176^0^20^477.39^Ericswarrior", -- [1142]
+						"^2344^16^1592017851^367^0^20^477.17^Gooptard", -- [1143]
+						"^2344^16^1592018329^631^0^20^477.25^Imshootinup", -- [1144]
+						"^2344^16^1592019069^183^0^20^477.47^Lammara-Zul'jin", -- [1145]
+						"^2344^16^1592019336^117^0^20^477.52^Ericswarrior", -- [1146]
+						"^2344^16^1592019566^139^0^20^477.69^Fakemoosh", -- [1147]
+						"^2344^16^1592019777^519^0^20^477.64^Jetslock", -- [1148]
+						"^2344^16^1592020390^181^0^20^477.64^Twistedp", -- [1149]
+						"^2093^8^1592062481^87^1^5^474.74^", -- [1150]
+						"^2094^8^1592062978^89^1^5^474.74^", -- [1151]
+						"^2095^8^1592063399^115^1^5^474.61^Shockhunt-Turalyon", -- [1152]
+						"^2096^8^1592063633^170^1^5^474.61^", -- [1153]
+						"^2130^8^1592343738^291^1^5^477.69^Powercleans", -- [1154]
+						"^2131^8^1592344463^17^0^5^477.69^Atrocitydh", -- [1155]
+						"^2131^8^1592344623^216^1^5^477.69^Powercleans", -- [1156]
+						"^2132^8^1592345272^258^1^5^477.69^Powercleans", -- [1157]
+						"^2133^8^1592345623^51^0^5^477.69^Powercleans", -- [1158]
+						"^2133^8^1592345880^396^1^5^477.69^Hannosp", -- [1159]
+						"^2093^8^1592614296^91^1^5^476.56^", -- [1160]
+						"^2094^8^1592614881^121^1^5^476.56^Xennald", -- [1161]
+						"^2095^8^1592615205^100^1^5^476.56^Jetspal", -- [1162]
+						"^2096^8^1592615420^150^1^5^476.56^", -- [1163]
+						"^2257^8^1592947208^82^1^5^478.30^Atlasxo", -- [1164]
+						"^2258^8^1592947531^93^0^5^478.30^Mbdtf", -- [1165]
+						"^2258^8^1592947662^98^1^5^478.30^", -- [1166]
+						"^2259^8^1592948069^120^1^5^478.00^Atrocitydh", -- [1167]
+						"^2260^8^1592948454^213^0^5^478.00^Atrocitydh", -- [1168]
+						"^2260^8^1592948780^214^1^5^479.38^Jetslock", -- [1169]
+						"^2257^8^1593576837^93^1^5^478.45^", -- [1170]
+						"^2258^8^1593577102^102^1^5^478.45^", -- [1171]
+						"^2259^8^1593577425^167^0^5^478.31^Hannomage", -- [1172]
+						"^2259^8^1593577640^215^1^5^478.31^Hannomage", -- [1173]
+						"^2260^8^1593578067^246^1^5^478.31^Mbdh", -- [1174]
+						"^2312^23^1593654343^15^0^5^479.92^Atrocitydh", -- [1175]
+						"^2292^23^1593654504^41^1^5^482.13^", -- [1176]
+						"^2312^23^1593654595^50^1^5^482.13^", -- [1177]
+						"^2290^23^1593654671^54^1^5^481.34^", -- [1178]
+						"^2291^23^1593654789^91^1^5^481.34^", -- [1179]
+						"^2257^23^1593654946^66^1^5^481.34^", -- [1180]
+						"^2258^23^1593655060^54^1^5^482.13^Atrocitydh", -- [1181]
+						"^2111^8^1594264483^62^1^5^479.41^", -- [1182]
+						"^2118^8^1594264885^98^0^5^479.41^Twistedp", -- [1183]
+						"^2118^8^1594265134^69^0^5^479.41^Mbwar", -- [1184]
+						"^2118^8^1594265248^104^1^5^479.41^Xennald", -- [1185]
+						"^2112^8^1594265607^105^1^5^479.41^", -- [1186]
+						"^2123^8^1594266012^127^1^5^479.41^", -- [1187]
+						"^2084^8^1594675621^69^1^5^477.44^", -- [1188]
+						"^2086^8^1594675903^135^1^5^477.44^Scottbrexit", -- [1189]
+						"^2085^8^1594676375^117^1^5^479.60^", -- [1190]
+						"^2087^8^1594676811^89^1^5^439.19^", -- [1191]
+						"^2093^8^1594754746^104^1^5^476.27^", -- [1192]
+						"^2094^8^1594755102^136^1^5^476.27^", -- [1193]
+						"^2095^8^1594755538^128^1^5^475.42^", -- [1194]
+						"^2096^8^1594755848^187^1^5^475.42^Xsuma", -- [1195]
+						"^2329^16^1595033979^222^1^20^474.42^Lammara-Zul'jin", -- [1196]
+						"^2334^16^1595034438^18^0^20^477.66^", -- [1197]
+						"^2334^16^1595034509^149^1^20^477.66^Atrocitydh", -- [1198]
+						"^2333^16^1595035266^4^0^20^476.58^", -- [1199]
+						"^2333^16^1595035390^154^1^20^476.42^", -- [1200]
+						"^2331^16^1595035690^7^0^20^476.60^", -- [1201]
+						"^2331^16^1595035913^234^1^20^476.60^Lammara-Zul'jin", -- [1202]
+						"^2337^16^1595036658^434^1^20^476.53^Goophunt", -- [1203]
+						"^2331^16^1595377222^146^1^20^466.07^Soupshop", -- [1204]
+						"^2344^16^1595378572^635^1^20^477.74^Thelissa", -- [1205]
+						"^2257^8^1595702279^85^1^5^479.05^", -- [1206]
+						"^2258^8^1595702476^70^0^5^479.05^Mbwar", -- [1207]
+						"^2258^8^1595702667^39^0^5^479.47^Arcindex-Zul'jin", -- [1208]
+						"^2258^8^1595702740^85^1^5^479.47^", -- [1209]
+						"^2259^8^1595703184^59^1^5^479.47^", -- [1210]
+						"^2260^8^1595703465^138^1^5^479.47^Twistedw", -- [1211]
+						"^2111^8^1596348199^59^1^5^480.75^", -- [1212]
+						"^2118^8^1596348527^198^1^5^480.75^Soakzy-Area52", -- [1213]
+						"^2112^8^1596348849^2^0^5^480.75^", -- [1214]
+						"^2112^8^1596348882^131^1^5^480.75^Soakzy-Area52", -- [1215]
+						"^2123^8^1596349233^118^1^5^480.75^", -- [1216]
+						"^2111^8^1596584013^81^1^5^479.68^", -- [1217]
+						"^2118^8^1596584439^122^1^5^479.68^Lovepet-Area52", -- [1218]
+						"^2112^8^1596584763^142^1^5^479.68^Lovepet-Area52", -- [1219]
+						"^2123^8^1596585356^133^1^5^479.68^Lovepet-Area52", -- [1220]
+						"^2331^16^1596586807^136^1^20^480.66^Deñna-Hyjal", -- [1221]
+						"^2329^16^1597190253^225^0^20^465.87^Noripalxo", -- [1222]
+						"^2329^16^1597190523^205^1^20^475.76^Atrocitydh", -- [1223]
+						"^2333^16^1597194489^140^1^20^449.89^Podd", -- [1224]
+						"^2331^16^1597194736^8^0^20^479.86^", -- [1225]
+						"^2331^16^1597194903^237^1^20^479.21^Lixomai-Azralon", -- [1226]
+						"^2335^16^1597195400^186^1^20^478.79^Podd", -- [1227]
+						"^2343^16^1597195781^293^1^20^477.63^Podd", -- [1228]
+						"^2345^16^1597196244^0^0^20^477.90^", -- [1229]
+						"^2111^8^1597687751^79^1^5^478.11^", -- [1230]
+						"^2118^8^1597688192^100^1^5^478.11^", -- [1231]
+						"^2112^8^1597688341^62^0^5^478.11^Otrewtres-Quel'Thalas", -- [1232]
+						"^2112^8^1597688592^90^1^5^478.11^", -- [1233]
+						"^2123^8^1597688893^162^1^5^478.11^Atrocitydh", -- [1234]
+						"^2105^23^1597700583^27^0^5^482.25^", -- [1235]
+						"^2105^23^1597700898^24^0^5^482.25^", -- [1236]
+						"^2105^23^1597701326^23^0^5^482.25^", -- [1237]
+						"^2105^23^1597702224^67^0^5^482.25^", -- [1238]
+						"^2106^23^1597702344^29^0^5^482.25^", -- [1239]
+						"^2106^23^1597702436^28^0^5^482.25^", -- [1240]
+						"^2106^23^1597703075^36^0^5^482.25^", -- [1241]
+						"^2106^23^1597703481^54^1^5^482.25^", -- [1242]
+						"^2105^23^1597712022^51^0^5^482.25^", -- [1243]
+						"^2105^23^1597713743^60^0^5^482.25^", -- [1244]
+						"^2329^16^1597794994^294^0^20^438.66^Maximumd", -- [1245]
+						"^2329^16^1597795339^280^1^20^438.66^Alireza", -- [1246]
+						"^2333^16^1597796199^5^0^20^458.04^", -- [1247]
+						"^2333^16^1597796235^167^1^20^458.04^", -- [1248]
+						"^2331^16^1597796537^9^0^20^458.08^", -- [1249]
+						"^2331^16^1597796770^148^1^20^474.36^Sanghelios", -- [1250]
+						"^2337^16^1597797265^347^1^20^479.87^Maximumd", -- [1251]
+						"^2093^8^1597812205^100^1^5^481.34^", -- [1252]
+						"^2094^8^1597812585^101^1^5^481.34^", -- [1253]
+						"^2095^8^1597812991^104^1^5^481.34^Mbdtf", -- [1254]
+						"^2096^8^1597813187^144^1^5^481.34^Mbdtf", -- [1255]
+						"^2105^23^1598311053^12^0^5^482.38^", -- [1256]
+						"^2105^23^1598311431^22^0^5^482.38^", -- [1257]
+						"^2265^15^1598332952^13^0^10^482.09^Atrocitydh", -- [1258]
+						"^2265^14^1598333200^214^0^10^480.69^Atrocitydh", -- [1259]
+						"^2265^14^1598334035^63^0^10^481.75^Atrocitydh", -- [1260]
+						"^2329^16^1598400610^251^1^20^478.83^Vogonfury-Windrunner", -- [1261]
+						"^2334^16^1598401083^140^1^20^477.93^Podd", -- [1262]
+						"^2327^16^1598401568^9^0^20^478.69^", -- [1263]
+						"^2327^16^1598401680^167^1^20^478.91^Vogonfury-Windrunner", -- [1264]
+						"^2328^16^1598402270^6^0^20^476.41^", -- [1265]
+						"^2328^16^1598402315^226^1^20^476.41^Girlguy", -- [1266]
+						"^2336^16^1598402694^16^0^20^476.49^Drineym", -- [1267]
+						"^2336^16^1598402796^216^1^20^478.89^Siory", -- [1268]
+						"^2333^16^1598403166^5^0^20^478.92^", -- [1269]
+						"^2333^16^1598403207^139^1^20^478.92^Vogonfury-Windrunner", -- [1270]
+						"^2331^16^1598403486^9^0^20^479.03^", -- [1271]
+						"^2331^16^1598403646^170^1^20^478.92^Preheat", -- [1272]
+						"^2335^16^1598403993^167^1^20^479.01^Vogonfury-Windrunner", -- [1273]
+						"^2343^16^1598404361^300^1^20^479.16^Xyroblast", -- [1274]
+						"^2345^16^1598404726^12^0^20^479.16^Hannohunter", -- [1275]
+						"^2345^16^1598404954^0^0^20^479.14^", -- [1276]
+						"^2345^16^1598405055^396^1^20^479.14^Vogonfury-Windrunner", -- [1277]
+						"^2344^15^1599905696^477^0^22^464.50^Iampurty-Detheroc", -- [1278]
+						"^2344^15^1599906438^557^1^20^469.97^Iampurty-Detheroc", -- [1279]
+						"^2329^16^1602719962^226^1^20^133.14^Atrocitydh", -- [1280]
+						"^2337^16^1602720888^0^0^20^133.31^", -- [1281]
+						"^2337^16^1602720942^319^1^20^133.31^", -- [1282]
+						"^2086^23^1603102040^12^0^5^135.25^Atrocitydh", -- [1283]
+						"^2329^16^1604451631^236^1^20^126.97^Tagzs", -- [1284]
+						"^2334^16^1604452121^188^1^20^126.97^Xyroblast", -- [1285]
+						"^2327^16^1604452669^10^0^20^127.34^", -- [1286]
+						"^2327^16^1604452752^165^1^20^127.45^Mooncrikkit", -- [1287]
+						"^2328^16^1604453324^5^0^20^130.97^", -- [1288]
+						"^2328^16^1604453394^59^0^20^130.97^Mooncrikkit", -- [1289]
+						"^2328^16^1604453524^59^0^20^130.97^Mooncrikkit", -- [1290]
+						"^2328^16^1604453660^155^0^20^130.97^Mooncrikkit", -- [1291]
+						"^2328^16^1604453902^193^1^20^130.97^", -- [1292]
+						"^2336^16^1604454261^15^0^20^127.74^", -- [1293]
+						"^2336^16^1604454343^227^1^20^127.91^Mooncrikkit", -- [1294]
+						"^2333^16^1604454710^6^0^20^128.04^", -- [1295]
+						"^2333^16^1604454752^161^1^20^128.04^Mooncrikkit", -- [1296]
+						"^2331^16^1604455057^12^0^20^128.27^", -- [1297]
+						"^2331^16^1604455102^82^0^20^128.27^Tagzs", -- [1298]
+						"^2331^16^1604455354^146^1^20^128.27^Mooncrikkit", -- [1299]
+						"^2335^16^1604455792^159^1^20^128.72^Tagzs", -- [1300]
+						"^2343^16^1604456288^281^1^20^131.55^", -- [1301]
+						"^2345^16^1604456601^15^0^20^131.55^Thdlock", -- [1302]
+						"^2345^16^1604456779^393^1^20^131.55^Mooncrikkit", -- [1303]
+						"^2337^16^1604457573^452^0^20^131.78^Mooncrikkit", -- [1304]
+						"^2337^16^1604458088^145^0^20^131.73^", -- [1305]
+						"^2337^16^1604458291^368^1^20^131.94^Mooncrikkit", -- [1306]
+						"^2344^16^1604459174^477^0^20^132.13^Mooncrikkit", -- [1307]
+						"^2344^16^1604459722^626^1^20^132.13^Amayah", -- [1308]
+						"^2281^16^1605668575^258^1^20^128.48^Drineys", -- [1309]
+						"^2401^1^1627105334^41^1^5^121.06^", -- [1310]
+						"^2380^1^1627105407^33^1^5^121.06^", -- [1311]
+						"^2403^1^1627105461^27^1^5^121.50^", -- [1312]
+						"^2381^1^1627105526^31^1^5^125.20^", -- [1313]
+						"^2382^1^1627105607^45^1^5^120.38^Sanction-Thrall", -- [1314]
+						"^2384^1^1627105810^42^1^5^120.38^", -- [1315]
+						"^2385^1^1627105914^33^1^5^120.38^", -- [1316]
+						"^2386^1^1627106011^76^1^5^120.38^", -- [1317]
+						"^2397^1^1627106270^27^1^5^117.31^", -- [1318]
+						"^2392^1^1627106502^44^1^5^117.53^", -- [1319]
+						"^2393^1^1627106602^66^1^5^117.53^Volcanohands", -- [1320]
+						"^2401^1^1627107000^38^1^5^114.44^", -- [1321]
+						"^2380^1^1627107064^40^1^5^114.44^", -- [1322]
+						"^2403^1^1627107127^42^1^5^114.44^Twistedlock", -- [1323]
+						"^2381^1^1627107231^37^1^5^114.44^", -- [1324]
+						"^2382^1^1627107312^38^1^5^122.76^Twistedlock", -- [1325]
+						"^2384^1^1627107570^24^1^5^122.76^", -- [1326]
+						"^2385^1^1627107643^41^1^5^122.76^", -- [1327]
+						"^2386^1^1627107762^77^1^5^122.76^", -- [1328]
+						"^2397^1^1627108039^37^1^5^131.40^", -- [1329]
+						"^2392^1^1627108284^57^1^5^131.47^", -- [1330]
+						"^2393^1^1627108400^59^1^5^131.47^", -- [1331]
+						"^2382^1^1627108540^68^1^5^132.43^Twistedlock", -- [1332]
+						"^2384^1^1627108714^31^1^5^132.43^", -- [1333]
+						"^2385^1^1627108844^33^1^5^132.43^", -- [1334]
+						"^2386^1^1627108945^84^1^5^132.62^Maccrugger", -- [1335]
+						"^2401^1^1627109338^36^1^5^121.25^", -- [1336]
+						"^2380^1^1627109399^57^1^5^121.25^", -- [1337]
+						"^2403^1^1627109481^43^1^5^121.61^", -- [1338]
+						"^2381^1^1627109566^42^1^5^121.61^", -- [1339]
+						"^2387^1^1627109762^37^1^5^85.79^", -- [1340]
+						"^2388^1^1627109996^22^1^5^107.15^", -- [1341]
+						"^2389^1^1627110170^32^1^5^107.19^", -- [1342]
+						"^2390^1^1627110217^37^1^5^107.19^Tervis-Daggerspine", -- [1343]
+						"^2387^1^1627110317^55^1^5^107.19^Twistedlock", -- [1344]
+						"^2388^1^1627110653^32^1^5^107.19^", -- [1345]
+						"^2389^1^1627110834^39^1^5^107.19^", -- [1346]
+						"^2390^1^1627110888^51^1^5^107.34^", -- [1347]
+						"^2401^1^1627111201^39^1^5^97.99^", -- [1348]
+						"^2380^1^1627111264^54^1^5^97.99^Twistedlock", -- [1349]
+						"^2403^1^1627111359^64^1^5^97.99^Twistedlock", -- [1350]
+						"^2381^1^1627111463^30^1^5^97.99^", -- [1351]
+						"^2397^1^1627170106^26^1^5^128.90^", -- [1352]
+						"^2392^1^1627170295^50^1^5^128.90^", -- [1353]
+						"^2393^1^1627170401^58^1^5^128.90^Volcanohands", -- [1354]
+						"^2387^1^1627170505^46^1^5^129.12^Twistedlock", -- [1355]
+						"^2388^1^1627170745^29^1^5^129.12^", -- [1356]
+						"^2389^1^1627170920^63^1^5^129.12^", -- [1357]
+						"^2390^1^1627170997^34^1^5^129.12^", -- [1358]
+						"^2382^1^1627171145^35^1^5^128.76^", -- [1359]
+						"^2384^1^1627171289^28^1^5^128.76^", -- [1360]
+						"^2385^1^1627171371^50^1^5^128.76^", -- [1361]
+						"^2386^1^1627171478^77^1^5^128.76^", -- [1362]
+						"^2401^1^1627171759^38^1^5^123.40^", -- [1363]
+						"^2380^1^1627171821^49^1^5^123.40^", -- [1364]
+						"^2403^1^1627171895^38^1^5^123.40^", -- [1365]
+						"^2381^1^1627171972^45^1^5^123.40^", -- [1366]
+						"^2397^1^1627172172^29^1^5^130.32^", -- [1367]
+						"^2392^1^1627172358^53^1^5^130.32^", -- [1368]
+						"^2393^1^1627172467^64^1^5^130.81^", -- [1369]
+						"^2387^1^1627172573^73^1^5^131.05^Volcanohands", -- [1370]
+						"^2388^1^1627172857^34^1^5^131.05^", -- [1371]
+						"^2389^1^1627173050^38^1^5^131.45^", -- [1372]
+						"^2390^1^1627173103^34^1^5^131.45^", -- [1373]
+						"^2382^1^1627173270^45^1^5^120.58^", -- [1374]
+						"^2384^1^1627173404^40^1^5^121.17^", -- [1375]
+						"^2385^1^1627173503^45^1^5^121.17^", -- [1376]
+						"^2386^1^1627173610^76^1^5^121.17^", -- [1377]
+						"^2401^1^1627173939^58^1^5^121.54^Jackray", -- [1378]
+						"^2380^1^1627174022^62^1^5^121.54^Jackray", -- [1379]
+						"^2403^1^1627174110^59^1^5^122.14^", -- [1380]
+						"^2381^1^1627174208^44^1^5^122.14^", -- [1381]
+						"^2387^1^1627174363^45^1^5^145.40^", -- [1382]
+						"^2388^1^1627174617^25^1^5^145.62^", -- [1383]
+						"^2389^1^1627174787^33^1^5^146.03^", -- [1384]
+						"^2390^1^1627174834^28^1^5^146.03^", -- [1385]
+						"^2382^1^1627174973^57^1^5^124.83^Potatobrains", -- [1386]
+						"^2384^1^1627175127^38^1^5^124.83^", -- [1387]
+						"^2385^1^1627175210^47^1^5^124.83^", -- [1388]
+						"^2386^1^1627175320^80^1^5^124.83^", -- [1389]
+						"^2397^1^1627175506^38^1^5^113.24^", -- [1390]
+						"^2392^1^1627175753^68^1^5^113.24^", -- [1391]
+						"^2393^1^1627175877^120^1^5^113.24^Volcanohands", -- [1392]
+						"^2387^1^1627176360^51^1^5^112.14^Nyghtlock", -- [1393]
+						"^2388^1^1627176693^33^1^5^129.45^", -- [1394]
+						"^2389^1^1627176895^37^1^5^129.28^", -- [1395]
+						"^2390^1^1627176946^30^1^5^129.28^", -- [1396]
+						"^2401^1^1627177308^58^1^5^124.49^", -- [1397]
+						"^2380^1^1627177394^43^0^5^124.49^Atrocitydh", -- [1398]
+						"^2403^1^1627177556^59^1^5^124.76^", -- [1399]
+						"^2381^1^1627177652^40^1^5^125.16^", -- [1400]
+						"^2397^1^1627177961^30^1^5^112.85^", -- [1401]
+						"^2392^1^1627178202^43^1^5^119.62^", -- [1402]
+						"^2393^1^1627178320^55^1^5^124.50^", -- [1403]
+						"^2387^1^1627178533^72^1^5^129.75^", -- [1404]
+						"^2388^1^1627178817^26^1^5^129.75^", -- [1405]
+						"^2389^1^1627179002^37^1^5^129.75^", -- [1406]
+						"^2390^1^1627179053^35^1^5^129.90^", -- [1407]
+						"^2401^1^1627179334^35^1^5^122.16^", -- [1408]
+						"^2380^1^1627179396^69^1^5^122.16^", -- [1409]
+						"^2403^1^1627179496^70^1^5^122.21^", -- [1410]
+						"^2381^1^1627179611^41^1^5^122.21^", -- [1411]
+						"^2397^1^1627179780^47^1^5^120.02^", -- [1412]
+						"^2392^1^1627180036^57^1^5^115.74^", -- [1413]
+						"^2393^1^1627180150^99^1^5^115.74^Honduraas-CenarionCircle", -- [1414]
+						"^2382^1^1627180329^59^1^5^115.74^Honduraas-CenarionCircle", -- [1415]
+						"^2384^1^1627180504^39^1^5^115.74^", -- [1416]
+						"^2385^1^1627180637^47^1^5^111.92^Honduraas-CenarionCircle", -- [1417]
+						"^2386^1^1627180752^97^1^5^111.92^Honduraas-CenarionCircle", -- [1418]
+						"^2397^8^1627253947^134^0^5^228.68^Atrocitydh", -- [1419]
+						"^2397^8^1627254144^230^1^5^228.68^", -- [1420]
+						"^2392^8^1627254758^170^1^5^228.68^Atrocitydh", -- [1421]
+						"^2393^8^1627255089^172^1^5^228.68^Atrocitydh", -- [1422]
+						"^2395^8^1627411183^128^1^5^226.50^", -- [1423]
+						"^2394^8^1627411874^149^1^5^226.50^", -- [1424]
+						"^2400^8^1627412659^101^1^5^226.50^", -- [1425]
+						"^2396^8^1627412819^232^1^5^226.50^Atrocitydh", -- [1426]
+						"^2357^8^1627583712^109^1^5^233.11^Atrocitydh", -- [1427]
+						"^2356^8^1627584445^79^1^5^233.11^", -- [1428]
+						"^2358^8^1627584758^107^1^5^233.11^", -- [1429]
+						"^2359^8^1627585090^166^1^5^233.11^", -- [1430]
 					},
-					["Gidle"] = {
+					["Atrocityhogn"] = {
 					},
-					["Atrocitydr"] = {
-						"^2111^1^1609023584^22^1^5^90.16^", -- [1]
-						"^2118^1^1609023702^34^1^5^90.23^", -- [2]
-						"^2112^1^1609023798^33^1^5^90.23^", -- [3]
-						"^2123^1^1609023931^68^1^5^90.00^", -- [4]
-						"^2397^1^1609024282^33^1^5^97.35^", -- [5]
-						"^2392^1^1609024527^48^1^5^106.56^", -- [6]
-						"^2393^1^1609024667^64^1^5^99.88^", -- [7]
-						"^2401^1^1609025071^36^1^5^107.84^", -- [8]
-						"^2380^1^1609025144^50^1^5^107.84^", -- [9]
-						"^2403^1^1609025249^44^1^5^102.03^", -- [10]
-						"^2381^1^1609025333^64^1^5^102.20^", -- [11]
-						"^2382^1^1609025841^36^1^5^100.91^", -- [12]
-						"^2384^1^1609026132^45^1^5^101.05^", -- [13]
-						"^2385^1^1609026305^42^1^5^101.05^", -- [14]
-						"^2386^1^1609026431^99^1^5^101.19^Atrocitydr", -- [15]
-						"^2397^1^1609026760^44^1^5^89.28^", -- [16]
-						"^2392^1^1609027075^74^1^5^103.66^", -- [17]
-						"^2393^1^1609027282^80^1^5^103.66^", -- [18]
-						"^2401^1^1609055252^30^1^5^90.99^", -- [19]
-						"^2380^1^1609055396^43^1^5^90.99^", -- [20]
-						"^2403^1^1609055498^33^1^5^90.99^", -- [21]
-						"^2381^1^1609055572^41^1^5^91.06^", -- [22]
-						"^2387^1^1609055806^42^1^5^104.34^", -- [23]
-						"^2388^1^1609056099^43^1^5^104.34^", -- [24]
-						"^2389^1^1609056372^48^1^5^104.34^", -- [25]
-						"^2390^1^1609056438^72^1^5^104.34^Teashop", -- [26]
-						"^2397^1^1609056680^52^1^5^90.09^", -- [27]
-						"^2392^1^1609056987^74^1^5^90.30^", -- [28]
-						"^2393^1^1609057185^58^1^5^90.88^", -- [29]
-						"^2382^1^1609057365^47^1^5^110.56^", -- [30]
-						"^2384^1^1609057581^53^1^5^110.56^", -- [31]
-						"^2385^1^1609057731^52^1^5^110.56^", -- [32]
-						"^2386^1^1609057863^96^1^5^110.56^", -- [33]
-						"^2387^1^1609058030^47^1^5^110.71^", -- [34]
-						"^2388^1^1609058285^49^1^5^110.96^", -- [35]
-						"^2389^1^1609058560^43^1^5^110.96^", -- [36]
-						"^2390^1^1609058619^54^1^5^110.96^", -- [37]
-						"^2401^1^1609059026^38^1^5^111.83^", -- [38]
-						"^2380^1^1609059159^57^1^5^111.83^", -- [39]
-						"^2403^1^1609059282^46^1^5^111.83^", -- [40]
-						"^2381^1^1609059406^50^1^5^111.83^", -- [41]
-						"^2397^1^1609059593^80^1^5^111.83^", -- [42]
-						"^2392^1^1609059930^83^1^5^112.17^", -- [43]
-						"^2393^1^1609060157^72^1^5^112.17^", -- [44]
-						"^2387^1^1609060312^38^1^5^112.38^", -- [45]
-						"^2388^1^1609060655^41^1^5^115.95^", -- [46]
-						"^2389^1^1609060937^46^1^5^115.95^", -- [47]
-						"^2390^1^1609060999^72^1^5^115.98^Jetslock-Mal'Ganis", -- [48]
-						"^2401^1^1609061347^48^1^5^116.70^", -- [49]
-						"^2380^1^1609061478^56^1^5^116.73^", -- [50]
-						"^2403^1^1609061596^54^1^5^117.28^", -- [51]
-						"^2381^1^1609061698^59^1^5^117.83^", -- [52]
-						"^2382^1^1609061950^36^1^5^116.88^", -- [53]
-						"^2384^1^1609062123^37^1^5^117.25^", -- [54]
-						"^2385^1^1609062273^40^1^5^117.25^", -- [55]
-						"^2386^1^1609062388^89^1^5^113.99^Twistedstu", -- [56]
-						"^2387^1^1609062556^50^1^5^115.05^", -- [57]
-						"^2388^1^1609062855^45^1^5^115.05^", -- [58]
-						"^2389^1^1609063140^39^1^5^116.05^", -- [59]
-						"^2390^1^1609063194^69^1^5^116.05^", -- [60]
-						"^2401^1^1609112665^45^1^5^117.30^", -- [61]
-						"^2380^1^1609112764^63^1^5^117.30^", -- [62]
-						"^2403^1^1609112882^59^1^5^118.26^", -- [63]
-						"^2381^1^1609112980^68^1^5^118.26^", -- [64]
-						"^2397^1^1609113275^59^1^5^123.59^", -- [65]
-						"^2392^1^1609113563^61^1^5^119.90^", -- [66]
-						"^2393^1^1609113746^71^1^5^119.97^", -- [67]
-						"^2382^1^1609113981^39^1^5^120.20^", -- [68]
-						"^2384^1^1609114165^39^1^5^120.20^", -- [69]
-						"^2385^1^1609114333^51^1^5^120.50^", -- [70]
-						"^2386^1^1609114465^90^1^5^120.58^", -- [71]
-						"^2387^1^1609114619^49^1^5^121.33^", -- [72]
-						"^2388^1^1609114897^46^1^5^121.33^", -- [73]
-						"^2389^1^1609115224^46^1^5^121.33^", -- [74]
-						"^2390^1^1609115286^100^1^5^121.33^Jetslock-Mal'Ganis", -- [75]
-						"^2397^1^1609115563^68^1^5^121.75^", -- [76]
-						"^2392^1^1609115858^72^1^5^122.05^", -- [77]
-						"^2393^1^1609116097^83^1^5^122.05^", -- [78]
-						"^2401^1^1609116475^53^1^5^123.67^", -- [79]
-						"^2380^1^1609116579^85^1^5^124.41^", -- [80]
-						"^2403^1^1609116726^38^1^5^124.41^", -- [81]
-						"^2381^1^1609116813^65^1^5^124.41^", -- [82]
-						"^2382^1^1609116943^76^1^5^124.41^", -- [83]
-						"^2384^1^1609117179^65^1^5^124.41^Jetslock-Mal'Ganis", -- [84]
-						"^2385^1^1609117366^55^1^5^124.41^", -- [85]
-						"^2386^1^1609117512^97^1^5^124.79^", -- [86]
-						"^2397^1^1609117782^77^1^5^124.79^", -- [87]
-						"^2392^1^1609118136^93^1^5^124.86^", -- [88]
-						"^2393^1^1609118363^78^1^5^124.86^", -- [89]
-						"^2401^1^1609133197^42^1^5^113.04^", -- [90]
-						"^2380^1^1609133331^56^1^5^113.04^", -- [91]
-						"^2403^1^1609133458^64^1^5^113.72^", -- [92]
-						"^2381^1^1609133570^61^1^5^113.72^", -- [93]
-						"^2387^1^1609133752^26^1^5^123.40^", -- [94]
-						"^2388^1^1609134068^34^1^5^123.90^", -- [95]
-						"^2389^1^1609134327^41^1^5^124.05^", -- [96]
-						"^2390^1^1609134385^46^1^5^124.22^", -- [97]
-						"^2382^1^1609134604^61^1^5^129.25^", -- [98]
-						"^2384^1^1609134902^36^1^5^129.25^", -- [99]
-						"^2385^1^1609135060^53^1^5^129.55^", -- [100]
-						"^2386^1^1609135210^96^1^5^129.62^", -- [101]
-						"^2401^1^1609135638^54^1^5^106.01^Òni", -- [102]
-						"^2380^1^1609135790^54^1^5^106.01^", -- [103]
-						"^2403^1^1609135906^50^1^5^106.01^", -- [104]
-						"^2381^1^1609136006^49^1^5^106.01^", -- [105]
-						"^2387^1^1609136166^34^1^5^114.40^", -- [106]
-						"^2388^1^1609136486^34^1^5^114.40^", -- [107]
-						"^2389^1^1609136809^47^1^5^114.53^", -- [108]
-						"^2390^1^1609136873^72^1^5^114.53^", -- [109]
-						"^2397^1^1609137126^47^1^5^123.71^", -- [110]
-						"^2392^1^1609137357^55^1^5^124.01^", -- [111]
-						"^2393^1^1609137549^52^1^5^124.01^", -- [112]
-						"^2387^8^1609194838^94^1^5^187.14^", -- [113]
-						"^2388^8^1609195529^119^0^5^193.62^Atrocitydr", -- [114]
-						"^2388^8^1609195742^99^1^5^193.62^", -- [115]
-						"^2389^8^1609196499^121^1^5^193.62^", -- [116]
-						"^2390^8^1609196695^133^1^5^193.62^", -- [117]
-						"^2360^8^1609571111^97^1^5^209.34^Hannosp", -- [118]
-						"^2361^8^1609571645^127^1^5^205.91^Atrocitydr", -- [119]
-						"^2362^8^1609571982^118^1^5^205.91^Hannosp", -- [120]
-						"^2363^8^1609572478^146^1^5^209.34^Atrocitydr", -- [121]
+					["Atrocityp"] = {
+						"^1113^3^1568436934^2^1^10^336.94^", -- [1]
+						"^1109^3^1568437003^272^1^10^386.59^", -- [2]
+						"^1118^3^1568437468^5^1^10^386.59^", -- [3]
+						"^1111^3^1568437503^2^1^10^386.59^", -- [4]
+						"^1108^3^1568437553^6^1^10^386.59^", -- [5]
+						"^1118^3^1568948526^2^1^10^336.94^", -- [6]
+						"^1111^3^1568948542^1^1^10^336.94^", -- [7]
+						"^1108^3^1568948593^2^1^10^336.94^", -- [8]
+						"^2257^8^1583914734^136^1^5^448.02^Imfurredup", -- [9]
+						"^2258^8^1583915119^143^1^5^446.55^", -- [10]
+						"^2259^8^1583915520^140^1^5^442.04^Atrocityp", -- [11]
+						"^2260^8^1583915860^270^1^5^447.56^Atrocityp", -- [12]
+						"^2290^8^1583917597^144^1^5^449.41^Atrocityp", -- [13]
+						"^2312^8^1583918073^86^1^5^0.00^Moonfiredup", -- [14]
+						"^2292^8^1583918563^107^1^5^449.41^", -- [15]
+						"^2291^8^1583918824^163^1^5^449.41^", -- [16]
+						"^2257^8^1583989803^118^1^5^457.41^Atrocityp", -- [17]
+						"^2258^8^1583990056^219^1^5^457.41^Moonfiredup", -- [18]
+						"^2259^8^1583990835^189^1^5^457.41^", -- [19]
+						"^2260^8^1583991231^224^1^5^457.72^Atrocityp", -- [20]
+						"^2257^8^1583991863^84^0^5^456.02^Thdeath", -- [21]
+						"^2257^8^1583991980^164^1^5^456.02^Atrocityp", -- [22]
+						"^2258^8^1583992467^147^1^5^456.02^Atrocityp", -- [23]
+						"^2259^8^1583992989^189^1^5^456.02^Moonfiredup", -- [24]
+						"^2260^8^1583993435^315^1^5^456.02^Atrocityp", -- [25]
+						"^2094^23^1583994652^39^1^5^456.56^", -- [26]
+						"^2096^23^1583994784^41^1^5^456.35^", -- [27]
+						"^2101^23^1583995205^40^1^5^456.81^", -- [28]
+						"^2102^23^1583995401^24^1^5^460.23^", -- [29]
+						"^2103^23^1583995607^33^1^5^460.27^", -- [30]
+						"^2104^23^1583995698^34^1^5^464.63^", -- [31]
+						"^2124^23^1583996113^26^1^5^463.78^", -- [32]
+						"^2125^23^1583996278^81^1^5^465.38^", -- [33]
+						"^2126^23^1583996436^19^1^5^465.38^", -- [34]
+						"^2127^23^1583996611^92^1^5^461.75^", -- [35]
+						"^2111^23^1583997188^34^1^5^449.09^", -- [36]
+						"^2118^23^1583997254^76^1^5^451.59^Mbdtf", -- [37]
+						"^2112^23^1583997491^74^1^5^451.44^", -- [38]
+						"^2123^23^1583997647^93^1^5^451.44^", -- [39]
+						"^2139^8^1583999518^136^1^5^458.94^", -- [40]
+						"^2142^8^1584000295^145^1^5^459.94^Atrocityp", -- [41]
+						"^2140^8^1584000759^254^1^5^461.88^", -- [42]
+						"^2143^8^1584001161^38^0^5^461.88^Atrocityp", -- [43]
+						"^2143^8^1584001259^110^0^5^461.88^Twistedsp", -- [44]
+						"^2143^8^1584001421^200^1^5^461.88^Imfurredup", -- [45]
+						"^2292^8^1584002452^94^1^5^460.89^", -- [46]
+						"^2312^8^1584002813^98^1^5^460.89^Atrocityp", -- [47]
+						"^2290^8^1584003167^141^1^5^460.89^Mbdh", -- [48]
+						"^2291^8^1584003533^64^0^5^457.38^Ericswarrior", -- [49]
+						"^2291^8^1584003832^203^1^5^457.38^Ericswarrior", -- [50]
+						"^2329^15^1584061274^209^1^30^453.67^Goopweeb", -- [51]
+						"^2334^15^1584062105^211^1^30^456.42^", -- [52]
+						"^2327^15^1584062671^10^0^30^456.23^Grojon", -- [53]
+						"^2327^15^1584062734^264^0^30^456.24^Jetspal", -- [54]
+						"^2327^15^1584063221^186^1^30^464.05^Xito-Ragnaros", -- [55]
+						"^2328^15^1584064012^7^0^30^463.80^", -- [56]
+						"^2328^15^1584064111^281^1^30^463.61^Spanknpray-Thrall", -- [57]
+						"^2336^15^1584064592^16^0^30^463.87^", -- [58]
+						"^2336^15^1584064733^262^1^30^464.14^Mbwar", -- [59]
+						"^2333^15^1584065247^6^0^29^463.61^", -- [60]
+						"^2333^15^1584065399^237^1^29^463.86^", -- [61]
+						"^2331^15^1584066293^176^0^30^465.54^Jazzyboyswag-Area52", -- [62]
+						"^2331^15^1584066746^257^1^30^463.91^Tsung-Dunemaul", -- [63]
+						"^2335^15^1584067809^228^1^29^464.33^Bgheals", -- [64]
+						"^2343^15^1584068358^294^1^30^465.16^", -- [65]
+						"^2345^15^1584068927^423^1^30^464.80^Spanknpray-Thrall", -- [66]
+						"^2337^15^1584069739^0^0^29^465.04^", -- [67]
+						"^2337^15^1584069859^491^1^30^462.55^Elahri-Thrall", -- [68]
+						"^2344^15^1584070509^53^0^30^462.73^Goopweeb", -- [69]
+						"^2344^15^1584070796^406^0^30^464.77^Imfurredup", -- [70]
+						"^2344^15^1584071331^296^0^30^464.24^Wuttodonow-Hyjal", -- [71]
+						"^2344^15^1584071766^465^0^30^464.10^Tsung-Dunemaul", -- [72]
+						"^2344^15^1584072627^567^1^23^466.61^Premonhunter", -- [73]
+						"^2084^8^1584075899^101^1^5^464.11^", -- [74]
+						"^2086^8^1584076191^217^1^5^462.78^Atlaschi", -- [75]
+						"^2085^8^1584076699^152^1^5^462.78^Atlaschi", -- [76]
+						"^2087^8^1584077205^179^1^5^464.30^", -- [77]
+						"^2111^8^1584163795^101^1^5^455.31^", -- [78]
+						"^2118^8^1584164288^186^1^5^454.03^Avyda", -- [79]
+						"^2112^8^1584164585^167^1^5^454.03^Atrocityp", -- [80]
+						"^2123^8^1584165052^202^1^5^461.81^", -- [81]
+						"^666^9^1584274141^0^1^40^462.75^", -- [82]
+						"^668^9^1584274226^0^1^40^462.75^", -- [83]
+						"^2265^16^1584316389^37^1^20^450.81^", -- [84]
+						"^2263^16^1584316642^94^1^20^470.90^", -- [85]
+						"^2266^16^1584316872^106^1^20^470.90^Twistedr", -- [86]
+						"^2271^16^1584317063^3^0^20^470.90^", -- [87]
+						"^2271^16^1584317101^2^0^20^470.90^", -- [88]
+						"^2271^16^1584317192^197^1^20^470.90^Drineys", -- [89]
+						"^2268^16^1584317500^96^1^20^470.83^", -- [90]
+						"^2272^16^1584317726^1^0^20^470.83^", -- [91]
+						"^2272^16^1584317781^156^1^20^470.83^Maeveypie", -- [92]
+						"^2276^16^1584318063^208^1^20^470.83^Norichixo", -- [93]
+						"^2280^16^1584318465^123^1^20^470.83^Drineys", -- [94]
+						"^2281^16^1584318771^4^0^20^470.83^Atrocityp", -- [95]
+						"^2281^16^1584318909^255^1^20^457.91^Norichixo", -- [96]
+						"^2084^8^1584511390^79^1^5^471.73^", -- [97]
+						"^2086^8^1584511623^126^1^5^471.84^", -- [98]
+						"^2085^8^1584512336^167^1^5^471.84^Atrocityp", -- [99]
+						"^2087^8^1584512833^23^0^5^471.84^Atrocityp", -- [100]
+						"^2087^8^1584512962^198^0^5^471.71^Faithfulman", -- [101]
+						"^2087^8^1584513230^170^1^5^471.71^", -- [102]
+						"^2113^8^1584602153^100^1^5^469.28^", -- [103]
+						"^2114^8^1584602601^88^1^5^470.69^", -- [104]
+						"^2115^8^1584602978^80^1^5^470.69^", -- [105]
+						"^2116^8^1584603777^96^1^5^471.34^", -- [106]
+						"^2117^8^1584603962^98^1^5^470.69^", -- [107]
+						"^2111^8^1585222857^97^1^5^468.25^", -- [108]
+						"^2112^8^1585223316^199^1^5^468.25^Karizhyla-Tichondrius", -- [109]
+						"^2118^8^1585223558^176^1^5^468.25^", -- [110]
+						"^2123^8^1585224172^176^1^5^467.00^", -- [111]
 					},
 					["Cronixqq"] = {
 					},
-					["Atrocitywar"] = {
+					["Cnxmonk"] = {
 					},
 					["Atrocitywoot"] = {
 						"^2257^8^1586220542^52^1^5^480.38^", -- [1]
@@ -20746,2522 +24256,375 @@ local MRTDump = {
 						"^2259^8^1594504565^121^1^5^412.90^", -- [30]
 						"^2260^8^1594504892^237^1^5^412.90^Atrocitybna", -- [31]
 					},
-					["Cnxmonk"] = {
+					["Atrocitywar"] = {
 					},
-					["Atrocityp"] = {
-						"^1113^3^1568436934^2^1^10^336.94^", -- [1]
-						"^1109^3^1568437003^272^1^10^386.59^", -- [2]
-						"^1118^3^1568437468^5^1^10^386.59^", -- [3]
-						"^1111^3^1568437503^2^1^10^386.59^", -- [4]
-						"^1108^3^1568437553^6^1^10^386.59^", -- [5]
-						"^1118^3^1568948526^2^1^10^336.94^", -- [6]
-						"^1111^3^1568948542^1^1^10^336.94^", -- [7]
-						"^1108^3^1568948593^2^1^10^336.94^", -- [8]
-						"^2257^8^1583914734^136^1^5^448.02^Imfurredup", -- [9]
-						"^2258^8^1583915119^143^1^5^446.55^", -- [10]
-						"^2259^8^1583915520^140^1^5^442.04^Atrocityp", -- [11]
-						"^2260^8^1583915860^270^1^5^447.56^Atrocityp", -- [12]
-						"^2290^8^1583917597^144^1^5^449.41^Atrocityp", -- [13]
-						"^2312^8^1583918073^86^1^5^0.00^Moonfiredup", -- [14]
-						"^2292^8^1583918563^107^1^5^449.41^", -- [15]
-						"^2291^8^1583918824^163^1^5^449.41^", -- [16]
-						"^2257^8^1583989803^118^1^5^457.41^Atrocityp", -- [17]
-						"^2258^8^1583990056^219^1^5^457.41^Moonfiredup", -- [18]
-						"^2259^8^1583990835^189^1^5^457.41^", -- [19]
-						"^2260^8^1583991231^224^1^5^457.72^Atrocityp", -- [20]
-						"^2257^8^1583991863^84^0^5^456.02^Thdeath", -- [21]
-						"^2257^8^1583991980^164^1^5^456.02^Atrocityp", -- [22]
-						"^2258^8^1583992467^147^1^5^456.02^Atrocityp", -- [23]
-						"^2259^8^1583992989^189^1^5^456.02^Moonfiredup", -- [24]
-						"^2260^8^1583993435^315^1^5^456.02^Atrocityp", -- [25]
-						"^2094^23^1583994652^39^1^5^456.56^", -- [26]
-						"^2096^23^1583994784^41^1^5^456.35^", -- [27]
-						"^2101^23^1583995205^40^1^5^456.81^", -- [28]
-						"^2102^23^1583995401^24^1^5^460.23^", -- [29]
-						"^2103^23^1583995607^33^1^5^460.27^", -- [30]
-						"^2104^23^1583995698^34^1^5^464.63^", -- [31]
-						"^2124^23^1583996113^26^1^5^463.78^", -- [32]
-						"^2125^23^1583996278^81^1^5^465.38^", -- [33]
-						"^2126^23^1583996436^19^1^5^465.38^", -- [34]
-						"^2127^23^1583996611^92^1^5^461.75^", -- [35]
-						"^2111^23^1583997188^34^1^5^449.09^", -- [36]
-						"^2118^23^1583997254^76^1^5^451.59^Mbdtf", -- [37]
-						"^2112^23^1583997491^74^1^5^451.44^", -- [38]
-						"^2123^23^1583997647^93^1^5^451.44^", -- [39]
-						"^2139^8^1583999518^136^1^5^458.94^", -- [40]
-						"^2142^8^1584000295^145^1^5^459.94^Atrocityp", -- [41]
-						"^2140^8^1584000759^254^1^5^461.88^", -- [42]
-						"^2143^8^1584001161^38^0^5^461.88^Atrocityp", -- [43]
-						"^2143^8^1584001259^110^0^5^461.88^Twistedsp", -- [44]
-						"^2143^8^1584001421^200^1^5^461.88^Imfurredup", -- [45]
-						"^2292^8^1584002452^94^1^5^460.89^", -- [46]
-						"^2312^8^1584002813^98^1^5^460.89^Atrocityp", -- [47]
-						"^2290^8^1584003167^141^1^5^460.89^Mbdh", -- [48]
-						"^2291^8^1584003533^64^0^5^457.38^Ericswarrior", -- [49]
-						"^2291^8^1584003832^203^1^5^457.38^Ericswarrior", -- [50]
-						"^2329^15^1584061274^209^1^30^453.67^Goopweeb", -- [51]
-						"^2334^15^1584062105^211^1^30^456.42^", -- [52]
-						"^2327^15^1584062671^10^0^30^456.23^Grojon", -- [53]
-						"^2327^15^1584062734^264^0^30^456.24^Jetspal", -- [54]
-						"^2327^15^1584063221^186^1^30^464.05^Xito-Ragnaros", -- [55]
-						"^2328^15^1584064012^7^0^30^463.80^", -- [56]
-						"^2328^15^1584064111^281^1^30^463.61^Spanknpray-Thrall", -- [57]
-						"^2336^15^1584064592^16^0^30^463.87^", -- [58]
-						"^2336^15^1584064733^262^1^30^464.14^Mbwar", -- [59]
-						"^2333^15^1584065247^6^0^29^463.61^", -- [60]
-						"^2333^15^1584065399^237^1^29^463.86^", -- [61]
-						"^2331^15^1584066293^176^0^30^465.54^Jazzyboyswag-Area52", -- [62]
-						"^2331^15^1584066746^257^1^30^463.91^Tsung-Dunemaul", -- [63]
-						"^2335^15^1584067809^228^1^29^464.33^Bgheals", -- [64]
-						"^2343^15^1584068358^294^1^30^465.16^", -- [65]
-						"^2345^15^1584068927^423^1^30^464.80^Spanknpray-Thrall", -- [66]
-						"^2337^15^1584069739^0^0^29^465.04^", -- [67]
-						"^2337^15^1584069859^491^1^30^462.55^Elahri-Thrall", -- [68]
-						"^2344^15^1584070509^53^0^30^462.73^Goopweeb", -- [69]
-						"^2344^15^1584070796^406^0^30^464.77^Imfurredup", -- [70]
-						"^2344^15^1584071331^296^0^30^464.24^Wuttodonow-Hyjal", -- [71]
-						"^2344^15^1584071766^465^0^30^464.10^Tsung-Dunemaul", -- [72]
-						"^2344^15^1584072627^567^1^23^466.61^Premonhunter", -- [73]
-						"^2084^8^1584075899^101^1^5^464.11^", -- [74]
-						"^2086^8^1584076191^217^1^5^462.78^Atlaschi", -- [75]
-						"^2085^8^1584076699^152^1^5^462.78^Atlaschi", -- [76]
-						"^2087^8^1584077205^179^1^5^464.30^", -- [77]
-						"^2111^8^1584163795^101^1^5^455.31^", -- [78]
-						"^2118^8^1584164288^186^1^5^454.03^Avyda", -- [79]
-						"^2112^8^1584164585^167^1^5^454.03^Atrocityp", -- [80]
-						"^2123^8^1584165052^202^1^5^461.81^", -- [81]
-						"^666^9^1584274141^0^1^40^462.75^", -- [82]
-						"^668^9^1584274226^0^1^40^462.75^", -- [83]
-						"^2265^16^1584316389^37^1^20^450.81^", -- [84]
-						"^2263^16^1584316642^94^1^20^470.90^", -- [85]
-						"^2266^16^1584316872^106^1^20^470.90^Twistedr", -- [86]
-						"^2271^16^1584317063^3^0^20^470.90^", -- [87]
-						"^2271^16^1584317101^2^0^20^470.90^", -- [88]
-						"^2271^16^1584317192^197^1^20^470.90^Drineys", -- [89]
-						"^2268^16^1584317500^96^1^20^470.83^", -- [90]
-						"^2272^16^1584317726^1^0^20^470.83^", -- [91]
-						"^2272^16^1584317781^156^1^20^470.83^Maeveypie", -- [92]
-						"^2276^16^1584318063^208^1^20^470.83^Norichixo", -- [93]
-						"^2280^16^1584318465^123^1^20^470.83^Drineys", -- [94]
-						"^2281^16^1584318771^4^0^20^470.83^Atrocityp", -- [95]
-						"^2281^16^1584318909^255^1^20^457.91^Norichixo", -- [96]
-						"^2084^8^1584511390^79^1^5^471.73^", -- [97]
-						"^2086^8^1584511623^126^1^5^471.84^", -- [98]
-						"^2085^8^1584512336^167^1^5^471.84^Atrocityp", -- [99]
-						"^2087^8^1584512833^23^0^5^471.84^Atrocityp", -- [100]
-						"^2087^8^1584512962^198^0^5^471.71^Faithfulman", -- [101]
-						"^2087^8^1584513230^170^1^5^471.71^", -- [102]
-						"^2113^8^1584602153^100^1^5^469.28^", -- [103]
-						"^2114^8^1584602601^88^1^5^470.69^", -- [104]
-						"^2115^8^1584602978^80^1^5^470.69^", -- [105]
-						"^2116^8^1584603777^96^1^5^471.34^", -- [106]
-						"^2117^8^1584603962^98^1^5^470.69^", -- [107]
-						"^2111^8^1585222857^97^1^5^468.25^", -- [108]
-						"^2112^8^1585223316^199^1^5^468.25^Karizhyla-Tichondrius", -- [109]
-						"^2118^8^1585223558^176^1^5^468.25^", -- [110]
-						"^2123^8^1585224172^176^1^5^467.00^", -- [111]
+					["Atrocitydr"] = {
+						"^2111^1^1609023584^22^1^5^90.16^", -- [1]
+						"^2118^1^1609023702^34^1^5^90.23^", -- [2]
+						"^2112^1^1609023798^33^1^5^90.23^", -- [3]
+						"^2123^1^1609023931^68^1^5^90.00^", -- [4]
+						"^2397^1^1609024282^33^1^5^97.35^", -- [5]
+						"^2392^1^1609024527^48^1^5^106.56^", -- [6]
+						"^2393^1^1609024667^64^1^5^99.88^", -- [7]
+						"^2401^1^1609025071^36^1^5^107.84^", -- [8]
+						"^2380^1^1609025144^50^1^5^107.84^", -- [9]
+						"^2403^1^1609025249^44^1^5^102.03^", -- [10]
+						"^2381^1^1609025333^64^1^5^102.20^", -- [11]
+						"^2382^1^1609025841^36^1^5^100.91^", -- [12]
+						"^2384^1^1609026132^45^1^5^101.05^", -- [13]
+						"^2385^1^1609026305^42^1^5^101.05^", -- [14]
+						"^2386^1^1609026431^99^1^5^101.19^Atrocitydr", -- [15]
+						"^2397^1^1609026760^44^1^5^89.28^", -- [16]
+						"^2392^1^1609027075^74^1^5^103.66^", -- [17]
+						"^2393^1^1609027282^80^1^5^103.66^", -- [18]
+						"^2401^1^1609055252^30^1^5^90.99^", -- [19]
+						"^2380^1^1609055396^43^1^5^90.99^", -- [20]
+						"^2403^1^1609055498^33^1^5^90.99^", -- [21]
+						"^2381^1^1609055572^41^1^5^91.06^", -- [22]
+						"^2387^1^1609055806^42^1^5^104.34^", -- [23]
+						"^2388^1^1609056099^43^1^5^104.34^", -- [24]
+						"^2389^1^1609056372^48^1^5^104.34^", -- [25]
+						"^2390^1^1609056438^72^1^5^104.34^Teashop", -- [26]
+						"^2397^1^1609056680^52^1^5^90.09^", -- [27]
+						"^2392^1^1609056987^74^1^5^90.30^", -- [28]
+						"^2393^1^1609057185^58^1^5^90.88^", -- [29]
+						"^2382^1^1609057365^47^1^5^110.56^", -- [30]
+						"^2384^1^1609057581^53^1^5^110.56^", -- [31]
+						"^2385^1^1609057731^52^1^5^110.56^", -- [32]
+						"^2386^1^1609057863^96^1^5^110.56^", -- [33]
+						"^2387^1^1609058030^47^1^5^110.71^", -- [34]
+						"^2388^1^1609058285^49^1^5^110.96^", -- [35]
+						"^2389^1^1609058560^43^1^5^110.96^", -- [36]
+						"^2390^1^1609058619^54^1^5^110.96^", -- [37]
+						"^2401^1^1609059026^38^1^5^111.83^", -- [38]
+						"^2380^1^1609059159^57^1^5^111.83^", -- [39]
+						"^2403^1^1609059282^46^1^5^111.83^", -- [40]
+						"^2381^1^1609059406^50^1^5^111.83^", -- [41]
+						"^2397^1^1609059593^80^1^5^111.83^", -- [42]
+						"^2392^1^1609059930^83^1^5^112.17^", -- [43]
+						"^2393^1^1609060157^72^1^5^112.17^", -- [44]
+						"^2387^1^1609060312^38^1^5^112.38^", -- [45]
+						"^2388^1^1609060655^41^1^5^115.95^", -- [46]
+						"^2389^1^1609060937^46^1^5^115.95^", -- [47]
+						"^2390^1^1609060999^72^1^5^115.98^Jetslock-Mal'Ganis", -- [48]
+						"^2401^1^1609061347^48^1^5^116.70^", -- [49]
+						"^2380^1^1609061478^56^1^5^116.73^", -- [50]
+						"^2403^1^1609061596^54^1^5^117.28^", -- [51]
+						"^2381^1^1609061698^59^1^5^117.83^", -- [52]
+						"^2382^1^1609061950^36^1^5^116.88^", -- [53]
+						"^2384^1^1609062123^37^1^5^117.25^", -- [54]
+						"^2385^1^1609062273^40^1^5^117.25^", -- [55]
+						"^2386^1^1609062388^89^1^5^113.99^Twistedstu", -- [56]
+						"^2387^1^1609062556^50^1^5^115.05^", -- [57]
+						"^2388^1^1609062855^45^1^5^115.05^", -- [58]
+						"^2389^1^1609063140^39^1^5^116.05^", -- [59]
+						"^2390^1^1609063194^69^1^5^116.05^", -- [60]
+						"^2401^1^1609112665^45^1^5^117.30^", -- [61]
+						"^2380^1^1609112764^63^1^5^117.30^", -- [62]
+						"^2403^1^1609112882^59^1^5^118.26^", -- [63]
+						"^2381^1^1609112980^68^1^5^118.26^", -- [64]
+						"^2397^1^1609113275^59^1^5^123.59^", -- [65]
+						"^2392^1^1609113563^61^1^5^119.90^", -- [66]
+						"^2393^1^1609113746^71^1^5^119.97^", -- [67]
+						"^2382^1^1609113981^39^1^5^120.20^", -- [68]
+						"^2384^1^1609114165^39^1^5^120.20^", -- [69]
+						"^2385^1^1609114333^51^1^5^120.50^", -- [70]
+						"^2386^1^1609114465^90^1^5^120.58^", -- [71]
+						"^2387^1^1609114619^49^1^5^121.33^", -- [72]
+						"^2388^1^1609114897^46^1^5^121.33^", -- [73]
+						"^2389^1^1609115224^46^1^5^121.33^", -- [74]
+						"^2390^1^1609115286^100^1^5^121.33^Jetslock-Mal'Ganis", -- [75]
+						"^2397^1^1609115563^68^1^5^121.75^", -- [76]
+						"^2392^1^1609115858^72^1^5^122.05^", -- [77]
+						"^2393^1^1609116097^83^1^5^122.05^", -- [78]
+						"^2401^1^1609116475^53^1^5^123.67^", -- [79]
+						"^2380^1^1609116579^85^1^5^124.41^", -- [80]
+						"^2403^1^1609116726^38^1^5^124.41^", -- [81]
+						"^2381^1^1609116813^65^1^5^124.41^", -- [82]
+						"^2382^1^1609116943^76^1^5^124.41^", -- [83]
+						"^2384^1^1609117179^65^1^5^124.41^Jetslock-Mal'Ganis", -- [84]
+						"^2385^1^1609117366^55^1^5^124.41^", -- [85]
+						"^2386^1^1609117512^97^1^5^124.79^", -- [86]
+						"^2397^1^1609117782^77^1^5^124.79^", -- [87]
+						"^2392^1^1609118136^93^1^5^124.86^", -- [88]
+						"^2393^1^1609118363^78^1^5^124.86^", -- [89]
+						"^2401^1^1609133197^42^1^5^113.04^", -- [90]
+						"^2380^1^1609133331^56^1^5^113.04^", -- [91]
+						"^2403^1^1609133458^64^1^5^113.72^", -- [92]
+						"^2381^1^1609133570^61^1^5^113.72^", -- [93]
+						"^2387^1^1609133752^26^1^5^123.40^", -- [94]
+						"^2388^1^1609134068^34^1^5^123.90^", -- [95]
+						"^2389^1^1609134327^41^1^5^124.05^", -- [96]
+						"^2390^1^1609134385^46^1^5^124.22^", -- [97]
+						"^2382^1^1609134604^61^1^5^129.25^", -- [98]
+						"^2384^1^1609134902^36^1^5^129.25^", -- [99]
+						"^2385^1^1609135060^53^1^5^129.55^", -- [100]
+						"^2386^1^1609135210^96^1^5^129.62^", -- [101]
+						"^2401^1^1609135638^54^1^5^106.01^Òni", -- [102]
+						"^2380^1^1609135790^54^1^5^106.01^", -- [103]
+						"^2403^1^1609135906^50^1^5^106.01^", -- [104]
+						"^2381^1^1609136006^49^1^5^106.01^", -- [105]
+						"^2387^1^1609136166^34^1^5^114.40^", -- [106]
+						"^2388^1^1609136486^34^1^5^114.40^", -- [107]
+						"^2389^1^1609136809^47^1^5^114.53^", -- [108]
+						"^2390^1^1609136873^72^1^5^114.53^", -- [109]
+						"^2397^1^1609137126^47^1^5^123.71^", -- [110]
+						"^2392^1^1609137357^55^1^5^124.01^", -- [111]
+						"^2393^1^1609137549^52^1^5^124.01^", -- [112]
+						"^2387^8^1609194838^94^1^5^187.14^", -- [113]
+						"^2388^8^1609195529^119^0^5^193.62^Atrocitydr", -- [114]
+						"^2388^8^1609195742^99^1^5^193.62^", -- [115]
+						"^2389^8^1609196499^121^1^5^193.62^", -- [116]
+						"^2390^8^1609196695^133^1^5^193.62^", -- [117]
+						"^2360^8^1609571111^97^1^5^209.34^Hannosp", -- [118]
+						"^2361^8^1609571645^127^1^5^205.91^Atrocitydr", -- [119]
+						"^2362^8^1609571982^118^1^5^205.91^Hannosp", -- [120]
+						"^2363^8^1609572478^146^1^5^209.34^Atrocitydr", -- [121]
 					},
-					["Atrocityhogn"] = {
+					["Gidle"] = {
 					},
-					["Atrocitydh"] = {
-						"^2298^16^1578450349^159^1^20^401.32^", -- [1]
-						"^2305^16^1578450889^193^1^20^415.13^", -- [2]
-						"^2289^16^1578451419^190^1^20^415.13^Thdemon", -- [3]
-						"^2304^16^1578451780^8^0^20^428.94^", -- [4]
-						"^2304^16^1578451878^212^1^20^442.86^", -- [5]
-						"^2303^16^1578452110^21^0^20^442.42^Horseboy", -- [6]
-						"^2303^16^1578452229^336^1^20^442.93^Kíngfly", -- [7]
-						"^2311^16^1578452734^8^0^20^442.84^", -- [8]
-						"^2311^16^1578452830^345^1^20^442.90^Atrocitydh", -- [9]
-						"^2113^8^1578457361^20^0^5^445.63^Twistedr", -- [10]
-						"^2113^8^1578457410^216^1^5^445.63^Yungthotty", -- [11]
-						"^2114^8^1578458268^194^1^5^445.63^Atrocitydh", -- [12]
-						"^2101^8^1578543270^167^1^5^446.38^Atrocitydh", -- [13]
-						"^2102^8^1578544102^127^1^5^445.50^", -- [14]
-						"^2103^8^1578545079^116^1^5^445.50^", -- [15]
-						"^2104^8^1578545313^134^1^5^445.50^", -- [16]
-						"^2105^8^1578622848^123^1^5^446.06^Tarcisw", -- [17]
-						"^2106^8^1578623348^164^1^5^446.06^Hedylamarr-Area52", -- [18]
-						"^2107^8^1578623621^127^1^5^446.06^", -- [19]
-						"^2108^8^1578623884^228^1^5^446.06^Hedylamarr-Area52", -- [20]
-						"^2101^8^1578625363^144^1^5^445.79^", -- [21]
-						"^2102^8^1578626124^152^1^5^445.79^", -- [22]
-						"^2103^8^1578626706^131^1^5^445.79^", -- [23]
-						"^2104^8^1578627093^161^1^5^445.79^Atrocitydh", -- [24]
-						"^2335^15^1579636693^11^0^30^439.41^Satchadh", -- [25]
-						"^2335^15^1579637113^355^1^30^439.40^Lone-Tichondrius", -- [26]
-						"^2329^15^1579637784^453^1^30^447.47^Lippdh", -- [27]
-						"^2329^15^1579638416^289^1^30^447.59^Eroys", -- [28]
-						"^2329^15^1579638870^190^0^30^447.86^Bigmids-Area52", -- [29]
-						"^2329^15^1579639107^291^1^30^447.44^Norichixo", -- [30]
-						"^2329^15^1579640268^262^1^30^449.23^Dhsareapes", -- [31]
-						"^2329^15^1579640682^271^1^30^449.56^Lippdh", -- [32]
-						"^2329^15^1579641093^258^1^30^449.41^Thdemon", -- [33]
-						"^2327^15^1579641659^9^0^30^449.56^", -- [34]
-						"^2327^15^1579641769^195^0^30^449.60^Thdemon", -- [35]
-						"^2327^15^1579642161^229^1^30^448.39^", -- [36]
-						"^2334^15^1579642827^322^1^29^448.25^Grìmbles-Thrall", -- [37]
-						"^2343^15^1579644350^479^1^30^449.26^Bigmids-Area52", -- [38]
-						"^2328^15^1579645400^179^0^30^449.34^Kricxus-Stormrage", -- [39]
-						"^2328^15^1579645728^350^1^30^449.03^Ruinxaxa", -- [40]
-						"^2336^15^1579646460^14^0^30^448.88^", -- [41]
-						"^2336^15^1579646627^445^0^30^448.61^Darkee", -- [42]
-						"^2336^15^1579647297^404^1^30^448.48^Grìmbles-Thrall", -- [43]
-						"^2333^15^1579649017^420^1^29^449.77^Remhoe-Mal'Ganis", -- [44]
-						"^2331^15^1579650648^201^0^29^449.89^Maeveyvates", -- [45]
-						"^2331^15^1579651055^323^1^29^449.67^Twistedr", -- [46]
-						"^2345^15^1579821308^452^1^19^452.83^", -- [47]
-						"^2337^15^1579822329^524^1^19^451.96^Twistedr", -- [48]
-						"^2344^15^1579836764^221^0^25^450.93^Drineym", -- [49]
-						"^2344^15^1579837089^252^0^25^452.35^Dossoubk", -- [50]
-						"^2344^15^1579837493^267^0^25^453.04^Chmpagnepapi", -- [51]
-						"^2344^15^1579837853^638^0^25^453.43^Moonfiredup", -- [52]
-						"^2344^15^1579838663^580^0^25^453.26^Ruinxaxa", -- [53]
-						"^2344^15^1579839461^242^0^25^452.97^Avade", -- [54]
-						"^2344^15^1579839975^603^1^25^453.01^Chmpagnepapi", -- [55]
-						"^2329^14^1579842164^205^1^30^451.04^Keebw-Kil'jaeden", -- [56]
-						"^2327^14^1579842646^9^0^29^451.68^", -- [57]
-						"^2327^14^1579842680^188^1^29^451.68^Keebw-Kil'jaeden", -- [58]
-						"^2334^14^1579843183^254^1^29^452.32^Kíngflydh", -- [59]
-						"^2328^14^1579843980^6^0^28^452.41^", -- [60]
-						"^2328^14^1579844045^260^1^28^452.38^Keebw-Kil'jaeden", -- [61]
-						"^2336^14^1579844501^16^0^28^452.28^", -- [62]
-						"^2336^14^1579844636^228^1^28^452.36^Goopweeb", -- [63]
-						"^2333^14^1579845115^4^0^28^452.20^", -- [64]
-						"^2333^14^1579845154^199^1^28^452.12^", -- [65]
-						"^2331^14^1579845584^10^0^28^451.81^Satchadh", -- [66]
-						"^2331^14^1579845622^7^0^28^451.81^", -- [67]
-						"^2331^14^1579845699^9^0^28^451.92^", -- [68]
-						"^2331^14^1579845803^222^1^28^451.94^Tze-Azralon", -- [69]
-						"^2343^14^1579846077^1^0^28^451.86^Goopweeb", -- [70]
-						"^2343^14^1579846245^8^0^28^451.86^Lippdh", -- [71]
-						"^2343^14^1579846592^285^1^28^451.86^", -- [72]
-						"^2335^14^1579847116^200^1^28^451.86^Divinitÿ", -- [73]
-						"^2345^14^1579847556^322^1^28^451.87^Darkee", -- [74]
-						"^2337^14^1579848376^428^1^28^452.23^Chmpagnepapi", -- [75]
-						"^2344^14^1579848888^312^0^28^452.38^Keebw-Kil'jaeden", -- [76]
-						"^2344^14^1579849342^633^0^18^451.86^Goopweeb", -- [77]
-						"^2344^14^1579850037^559^1^18^453.12^Goopweeb", -- [78]
-						"^2344^15^1579908339^618^1^24^453.82^Girlguy", -- [79]
-						"^2139^8^1579923150^107^1^5^449.29^", -- [80]
-						"^2142^8^1579923783^98^1^5^449.29^", -- [81]
-						"^2140^8^1579924212^180^1^5^449.29^", -- [82]
-						"^2143^8^1579924768^137^1^5^449.29^", -- [83]
-						"^2329^15^1580573902^230^1^30^454.19^Norishiftxo", -- [84]
-						"^2334^15^1580574454^257^1^30^456.51^", -- [85]
-						"^2327^15^1580575070^10^0^30^456.66^", -- [86]
-						"^2328^15^1580577282^5^0^27^457.29^", -- [87]
-						"^2328^15^1580577548^279^1^30^457.90^Syrethkin", -- [88]
-						"^2336^15^1580578036^16^0^29^457.70^", -- [89]
-						"^2336^15^1580578339^269^1^30^457.18^Kíngflydh", -- [90]
-						"^2333^15^1580578937^5^0^30^457.34^", -- [91]
-						"^2333^15^1580578974^140^0^30^457.34^Lippdh", -- [92]
-						"^2333^15^1580579189^255^1^30^456.98^Ohnoesdh", -- [93]
-						"^2331^15^1580579611^6^0^30^457.64^", -- [94]
-						"^2331^15^1580579681^7^0^30^458.78^", -- [95]
-						"^2331^15^1580579762^262^1^30^458.63^Arie-BurningBlade", -- [96]
-						"^2335^15^1580580438^227^1^30^458.98^Dalsondemon-Thrall", -- [97]
-						"^2343^15^1580580954^270^1^30^458.91^Ruinxaxa", -- [98]
-						"^2345^15^1580581279^27^0^30^458.91^Shift-Area52", -- [99]
-						"^2345^15^1580581491^499^0^30^457.07^Ruinxaxa", -- [100]
-						"^2345^15^1580582073^369^1^30^456.98^Drineym", -- [101]
-						"^2111^8^1581114161^66^1^5^456.40^", -- [102]
-						"^2118^8^1581114807^102^1^5^456.40^", -- [103]
-						"^2112^8^1581115003^102^1^5^456.40^", -- [104]
-						"^2123^8^1581115532^144^1^5^456.40^Yungthotty", -- [105]
-						"^2344^15^1581127245^0^0^29^457.03^Rixxa-Feathermoon", -- [106]
-						"^2257^8^1581482647^175^1^5^456.31^Imup", -- [107]
-						"^2258^8^1581483166^175^1^5^456.31^Imup", -- [108]
-						"^2259^8^1581483855^151^1^5^456.31^Imup", -- [109]
-						"^2260^8^1581484419^271^0^5^456.31^Imup", -- [110]
-						"^2260^8^1581484757^304^0^5^452.64^Imup", -- [111]
-						"^2260^8^1581485231^213^0^5^451.15^Imup", -- [112]
-						"^2260^8^1581485539^354^1^5^451.15^Twistedw", -- [113]
-						"^2329^16^1581814855^588^0^20^460.55^Ericjunior", -- [114]
-						"^2329^16^1581815528^536^1^20^460.41^Imup", -- [115]
-						"^2334^16^1581816484^309^1^20^459.76^Twistedsp", -- [116]
-						"^2327^16^1581817338^10^0^20^462.30^", -- [117]
-						"^2327^16^1581817436^167^0^20^462.30^Dossoudmg", -- [118]
-						"^2327^16^1581817838^142^0^20^460.69^Soreanananan", -- [119]
-						"^2327^16^1581818004^35^0^20^460.69^Imup", -- [120]
-						"^2327^16^1581818180^381^1^20^460.86^Kíngflydh", -- [121]
-						"^2333^16^1581819395^5^0^20^461.41^", -- [122]
-						"^2333^16^1581819567^177^0^20^461.53^Eroys", -- [123]
-						"^2333^16^1581819997^174^0^20^461.22^Maeveypie", -- [124]
-						"^2333^16^1581820340^387^0^20^462.55^Asterixxpal", -- [125]
-						"^2333^16^1581820879^235^0^20^462.67^Thdmoon", -- [126]
-						"^2333^16^1581821290^416^0^20^462.86^Gooppal", -- [127]
-						"^2333^16^1581821905^223^0^20^462.85^Darkeedk", -- [128]
-						"^2333^16^1581822264^274^0^20^461.06^Dossoudmg", -- [129]
-						"^2333^16^1581822670^376^0^20^460.94^Lippdh", -- [130]
-						"^2333^16^1581823424^372^1^20^462.75^", -- [131]
-						"^2093^8^1582089612^88^1^5^461.76^", -- [132]
-						"^2094^8^1582089977^85^1^5^461.76^", -- [133]
-						"^2095^8^1582090319^107^1^5^461.76^Eyelidpasta", -- [134]
-						"^2096^8^1582090574^137^1^5^461.76^", -- [135]
-						"^2329^16^1582678772^432^1^20^469.30^", -- [136]
-						"^2334^16^1582679723^256^1^20^466.66^", -- [137]
-						"^2327^16^1582680477^50^0^20^468.63^Atrocitydh", -- [138]
-						"^2327^16^1582680648^255^1^20^468.92^Ruinxaxa", -- [139]
-						"^2333^16^1582681576^5^0^20^470.29^", -- [140]
-						"^2333^16^1582681738^287^1^20^469.13^Lippdh", -- [141]
-						"^2331^16^1582682394^9^0^20^468.88^", -- [142]
-						"^2331^16^1582682867^166^0^20^470.05^Realestxo", -- [143]
-						"^2331^16^1582683135^61^0^20^470.24^Xyronic", -- [144]
-						"^2331^16^1582683463^113^0^20^470.24^Lippdh", -- [145]
-						"^2331^16^1582683648^302^1^20^470.14^Soreanan", -- [146]
-						"^2328^16^1582685864^87^0^20^470.32^Maxibabe", -- [147]
-						"^2328^16^1582686041^151^0^20^470.31^Norialaxo", -- [148]
-						"^2328^16^1582686296^54^0^20^470.20^Twistedw", -- [149]
-						"^2328^16^1582686437^239^0^20^470.31^Twistedw", -- [150]
-						"^2328^16^1582686777^317^1^20^470.31^", -- [151]
-						"^2336^16^1582687300^18^0^20^470.32^", -- [152]
-						"^2336^16^1582687388^14^0^20^470.32^", -- [153]
-						"^2336^16^1582687548^311^1^20^469.99^Realestxo", -- [154]
-						"^2343^16^1582688512^503^1^20^469.83^Twistedw", -- [155]
-						"^2097^8^1582790814^100^1^5^451.85^", -- [156]
-						"^2109^8^1582791290^24^0^5^451.85^", -- [157]
-						"^2109^8^1582791349^220^1^5^451.85^", -- [158]
-						"^2099^8^1582792184^4^0^5^447.44^Daddytwist", -- [159]
-						"^2099^8^1582792228^174^1^5^447.44^", -- [160]
-						"^2100^8^1582792441^81^0^5^447.44^Mbwar", -- [161]
-						"^2100^8^1582792556^323^1^5^447.44^", -- [162]
-						"^2329^16^1583370152^429^1^20^467.31^Maeveysoup", -- [163]
-						"^2334^16^1583370967^189^1^20^469.54^Imup", -- [164]
-						"^2327^16^1583371575^9^0^20^471.00^", -- [165]
-						"^2327^16^1583371639^224^1^20^470.92^", -- [166]
-						"^2328^16^1583372355^5^0^20^470.61^", -- [167]
-						"^2328^16^1583372413^7^0^20^470.83^", -- [168]
-						"^2328^16^1583372569^151^0^20^470.94^Ericjunior", -- [169]
-						"^2328^16^1583372813^59^0^20^470.90^Imup", -- [170]
-						"^2328^16^1583372962^319^1^20^470.90^Soreanan", -- [171]
-						"^2336^16^1583373449^15^0^20^471.14^", -- [172]
-						"^2336^16^1583373607^379^1^20^471.27^Ciory", -- [173]
-						"^2333^16^1583374230^6^0^20^471.06^", -- [174]
-						"^2333^16^1583374350^286^1^20^471.22^Imup", -- [175]
-						"^2331^16^1583374821^8^0^20^471.21^", -- [176]
-						"^2331^16^1583375121^101^0^20^471.53^Goopd", -- [177]
-						"^2331^16^1583375370^137^0^20^471.53^Maeveysoup", -- [178]
-						"^2331^16^1583375575^276^0^20^471.41^Sang", -- [179]
-						"^2331^16^1583375956^266^1^20^471.56^Soreanan", -- [180]
-						"^2335^16^1583376661^234^1^20^472.35^Realestxo", -- [181]
-						"^2343^16^1583377046^5^0^20^472.43^Ciory", -- [182]
-						"^2343^16^1583377334^471^1^20^472.15^Kíngflysp", -- [183]
-						"^2345^16^1583377910^29^0^20^472.35^Soreanan", -- [184]
-						"^2345^16^1583378339^0^0^20^471.92^", -- [185]
-						"^2345^16^1583378490^128^0^20^471.78^Drineym", -- [186]
-						"^2345^16^1583378805^1^0^20^471.78^", -- [187]
-						"^2345^16^1583378873^168^0^20^471.78^Twistedp", -- [188]
-						"^2345^16^1583379177^233^0^20^471.65^Maeveysoup", -- [189]
-						"^2345^16^1583379474^0^0^20^471.57^", -- [190]
-						"^2345^16^1583379525^121^0^20^471.64^Ruinxaxa", -- [191]
-						"^2345^16^1583380214^1^0^20^471.83^", -- [192]
-						"^2345^16^1583380307^143^0^20^471.77^Ciory", -- [193]
-						"^2345^16^1583380521^0^0^20^471.79^", -- [194]
-						"^2345^16^1583380564^559^0^20^471.79^Soreanan", -- [195]
-						"^2345^16^1583381249^558^1^20^471.64^", -- [196]
-						"^2337^16^1583382228^0^0^20^471.93^", -- [197]
-						"^2337^16^1583382800^275^0^20^472.34^Kíngflysp", -- [198]
-						"^2337^16^1583383730^423^0^20^472.49^Maeveysoup", -- [199]
-						"^2337^16^1583384266^407^0^20^472.04^Realestxo", -- [200]
-						"^2337^16^1583384787^355^0^20^472.10^Ericjunior", -- [201]
-						"^2337^16^1583385314^418^0^20^472.10^Liphunt", -- [202]
-						"^2337^16^1583385811^406^0^20^472.23^Atrocitydh", -- [203]
-						"^2337^16^1583386320^342^0^20^472.08^Ericjunior", -- [204]
-						"^2337^16^1583386761^510^0^20^472.13^Girlguy", -- [205]
-						"^2290^8^1583615084^85^1^5^471.14^Ringofpiecez-Zul'jin", -- [206]
-						"^2292^8^1583615535^77^1^5^471.14^Ringofpiecez-Zul'jin", -- [207]
-						"^2312^8^1583615786^60^1^5^471.59^", -- [208]
-						"^2291^8^1583616021^132^1^5^471.59^Lippdh", -- [209]
-						"^2113^8^1583867814^117^1^5^470.94^", -- [210]
-						"^2114^8^1583868204^118^1^5^470.94^", -- [211]
-						"^2115^8^1583868789^129^1^5^470.94^", -- [212]
-						"^2116^8^1583869137^59^0^5^470.94^Hannospal", -- [213]
-						"^2116^8^1583869469^104^0^5^470.83^Jazzwowzzer-Area52", -- [214]
-						"^2116^8^1583869748^171^0^5^472.00^Jazzwowzzer-Area52", -- [215]
-						"^2116^8^1583870273^116^0^5^470.28^Jazzwowzzer-Area52", -- [216]
-						"^2116^8^1583870553^125^0^5^470.64^Jazzwowzzer-Area52", -- [217]
-						"^2116^8^1583870916^178^1^5^470.10^", -- [218]
-						"^2117^8^1583871518^105^0^5^467.09^Atrocitydh", -- [219]
-						"^2117^8^1583872079^202^1^5^463.83^", -- [220]
-						"^2265^16^1583985571^7^0^20^475.47^", -- [221]
-						"^2265^16^1583985735^8^0^20^475.73^", -- [222]
-						"^2265^16^1583985821^27^1^20^474.34^", -- [223]
-						"^2263^16^1583986147^98^1^20^473.30^Kíngflysp", -- [224]
-						"^2266^16^1583986394^89^1^20^473.40^Darkee", -- [225]
-						"^2271^16^1583986657^7^0^20^473.81^", -- [226]
-						"^2271^16^1583986698^61^0^20^473.90^Atrocitydh", -- [227]
-						"^2271^16^1583986806^183^1^20^474.11^Kamshams", -- [228]
-						"^2268^16^1583987115^77^1^20^474.11^Goopd", -- [229]
-						"^2272^16^1583987303^2^0^20^473.89^", -- [230]
-						"^2272^16^1583987370^116^1^20^473.89^", -- [231]
-						"^2276^16^1583987603^154^1^20^474.07^", -- [232]
-						"^2280^16^1583988028^89^1^20^474.07^", -- [233]
-						"^2281^16^1583988238^197^1^20^469.03^Lipmonk", -- [234]
-						"^666^9^1584277441^1^1^40^465.63^", -- [235]
-						"^668^9^1584277525^0^1^40^465.63^", -- [236]
-						"^2115^8^1584494290^75^1^5^469.57^", -- [237]
-						"^2114^8^1584494766^80^1^5^469.57^", -- [238]
-						"^2113^8^1584495103^137^1^5^469.57^Mbdh", -- [239]
-						"^2116^8^1584495598^105^1^5^469.57^", -- [240]
-						"^2117^8^1584495800^95^1^5^469.57^", -- [241]
-						"^2097^8^1584608457^68^1^5^470.86^", -- [242]
-						"^2109^8^1584609226^114^1^5^467.45^Driney", -- [243]
-						"^2099^8^1584609664^6^0^5^467.45^", -- [244]
-						"^2099^8^1584609780^131^1^5^467.45^Mbdh", -- [245]
-						"^2100^8^1584609933^152^1^5^469.60^", -- [246]
-						"^2097^8^1584933719^79^1^5^473.16^Imfiredup", -- [247]
-						"^2109^8^1584934219^121^1^5^473.16^", -- [248]
-						"^2099^8^1584934905^5^0^5^473.16^", -- [249]
-						"^2099^8^1584935065^115^1^5^473.16^", -- [250]
-						"^2100^8^1584935214^174^1^5^473.16^", -- [251]
-						"^2124^8^1584936328^126^1^5^473.16^", -- [252]
-						"^2125^8^1584936857^156^1^5^473.16^", -- [253]
-						"^2126^8^1584937256^96^1^5^473.16^", -- [254]
-						"^2127^8^1584937770^251^1^5^473.16^", -- [255]
-						"^2093^8^1585122504^194^1^5^474.71^Gooppal", -- [256]
-						"^2094^8^1585123132^195^1^5^474.19^Gooppal", -- [257]
-						"^2095^8^1585123650^215^1^5^474.19^Hannospal", -- [258]
-						"^2096^8^1585124005^231^1^5^474.19^Jacobxaxa", -- [259]
-						"^2334^16^1585181580^170^1^20^473.39^Lippdh", -- [260]
-						"^2327^16^1585182173^9^0^20^472.74^", -- [261]
-						"^2327^16^1585182234^221^1^20^472.74^Sanghelios", -- [262]
-						"^2337^16^1585183424^106^0^20^474.31^Maeveysoup", -- [263]
-						"^2337^16^1585183703^498^1^20^473.98^Atlasxo", -- [264]
-						"^2328^16^1585184627^5^0^20^473.86^", -- [265]
-						"^2328^16^1585184710^299^1^20^473.73^Soiy", -- [266]
-						"^2336^16^1585185186^15^0^20^473.78^", -- [267]
-						"^2336^16^1585185276^281^1^20^473.67^Soiy", -- [268]
-						"^2333^16^1585185794^5^0^20^473.78^", -- [269]
-						"^2333^16^1585185925^227^1^20^473.03^Soiy", -- [270]
-						"^2331^16^1585186601^8^0^20^472.43^", -- [271]
-						"^2331^16^1585186759^147^0^20^473.85^Madblur", -- [272]
-						"^2331^16^1585186991^290^1^20^473.85^Madblur", -- [273]
-						"^2335^16^1585187606^218^1^20^474.54^Kíngflydh", -- [274]
-						"^2343^16^1585187907^5^0^20^474.61^Imup", -- [275]
-						"^2343^16^1585188239^156^0^20^474.51^Soiy", -- [276]
-						"^2343^16^1585188426^31^0^20^474.68^Dharkee", -- [277]
-						"^2343^16^1585188996^451^1^20^474.76^Soiy", -- [278]
-						"^2344^16^1585189559^23^0^20^474.80^Imup", -- [279]
-						"^2345^16^1585189730^0^0^20^474.80^", -- [280]
-						"^2345^16^1585189813^307^0^20^474.41^Maeveysoup", -- [281]
-						"^2345^16^1585190224^0^0^20^474.47^", -- [282]
-						"^2345^16^1585190292^391^0^20^474.23^Drineys", -- [283]
-						"^2345^16^1585190728^0^0^20^474.23^", -- [284]
-						"^2345^16^1585190787^540^1^20^474.24^Ericjunior", -- [285]
-						"^2344^16^1585192211^188^0^20^474.78^Drineys", -- [286]
-						"^2344^16^1585192575^400^0^20^474.95^Soiy", -- [287]
-						"^2344^16^1585193126^155^0^20^474.78^Willxo", -- [288]
-						"^2130^8^1585420049^160^1^5^481.25^", -- [289]
-						"^2131^8^1585420379^35^0^5^481.25^Twisted", -- [290]
-						"^2130^8^1585420876^115^1^5^481.25^Twisted", -- [291]
-						"^2131^8^1585421395^43^0^5^481.25^Ericsdk", -- [292]
-						"^2131^8^1585421715^59^0^5^481.25^Ericsdk", -- [293]
-						"^2130^8^1585423166^59^0^5^481.25^Maxdogbowl", -- [294]
-						"^2130^8^1585423471^110^1^5^481.25^", -- [295]
-						"^2131^8^1585423788^213^1^5^481.25^Imfiredup", -- [296]
-						"^2084^8^1585453490^94^1^5^481.13^", -- [297]
-						"^2086^8^1585453647^11^0^5^481.13^Atrocitydh", -- [298]
-						"^2084^8^1585453945^87^1^5^481.13^", -- [299]
-						"^2086^8^1585454073^137^1^5^481.13^", -- [300]
-						"^2085^8^1585454471^3^0^5^481.13^Eric", -- [301]
-						"^2085^8^1585454505^123^1^5^481.13^", -- [302]
-						"^2087^8^1585454685^130^1^5^481.13^", -- [303]
-						"^2084^8^1585456498^69^1^5^481.00^Eric", -- [304]
-						"^2086^8^1585456615^111^1^5^481.00^", -- [305]
-						"^2085^8^1585456958^170^1^5^481.00^", -- [306]
-						"^2087^8^1585457203^109^0^5^481.00^Atrocitydh", -- [307]
-						"^2257^8^1585457945^69^1^5^480.88^", -- [308]
-						"^2257^8^1585458307^49^1^5^480.88^", -- [309]
-						"^2257^8^1585458656^57^1^5^481.00^", -- [310]
-						"^2258^8^1585458843^116^1^5^481.25^Atrocitydh", -- [311]
-						"^2259^8^1585459164^75^1^5^481.25^", -- [312]
-						"^2260^8^1585459542^155^1^5^481.25^Eric", -- [313]
-						"^2257^8^1585460045^58^1^5^481.25^", -- [314]
-						"^2257^8^1585460800^44^1^5^481.13^", -- [315]
-						"^2258^8^1585460919^68^1^5^481.13^", -- [316]
-						"^2259^8^1585461197^60^1^5^481.13^", -- [317]
-						"^2260^8^1585461581^49^0^5^481.13^Ericsmage", -- [318]
-						"^2260^8^1585461808^136^1^5^481.13^", -- [319]
-						"^2265^16^1585526616^29^1^20^476.23^", -- [320]
-						"^2263^16^1585526820^67^1^20^476.41^", -- [321]
-						"^2266^16^1585526995^89^1^20^476.19^Hideyokids-Area52", -- [322]
-						"^2271^16^1585527272^162^1^20^476.29^Hideyokids-Area52", -- [323]
-						"^2268^16^1585527534^83^1^20^476.33^", -- [324]
-						"^2272^16^1585527892^109^1^20^476.20^Twistedw", -- [325]
-						"^2276^16^1585528120^155^1^20^476.31^Xyronic", -- [326]
-						"^2280^16^1585528464^97^1^20^476.31^Hideyokids-Area52", -- [327]
-						"^2281^16^1585528684^36^0^20^476.15^Imfiredup", -- [328]
-						"^2281^16^1585528810^202^1^20^458.24^Pokkets", -- [329]
-						"^2329^15^1585530373^131^1^29^461.78^Thongs-Zul'jin", -- [330]
-						"^2334^15^1585530780^152^1^29^460.78^Dinglejuice", -- [331]
-						"^2327^15^1585531257^8^0^29^461.61^", -- [332]
-						"^2327^15^1585531327^155^1^29^464.54^Nonuggets", -- [333]
-						"^2328^15^1585532009^7^0^29^465.95^", -- [334]
-						"^2328^15^1585532108^249^1^30^466.08^Seanmañ-Thrall", -- [335]
-						"^2336^15^1585532530^15^0^30^467.44^", -- [336]
-						"^2336^15^1585532623^224^1^30^466.94^Dinglejuice", -- [337]
-						"^2333^15^1585533070^4^0^30^466.32^", -- [338]
-						"^2333^15^1585533142^179^1^30^466.45^Dinglejuice", -- [339]
-						"^2331^15^1585533487^5^0^30^466.43^", -- [340]
-						"^2331^15^1585533570^10^0^30^466.53^", -- [341]
-						"^2331^15^1585533639^210^1^30^464.62^Cesspul-Thrall", -- [342]
-						"^2335^15^1585534058^0^0^30^465.73^", -- [343]
-						"^2335^15^1585534080^0^0^30^465.73^", -- [344]
-						"^2335^15^1585534097^0^0^30^465.73^", -- [345]
-						"^2335^15^1585534182^203^1^30^465.73^Thongs-Zul'jin", -- [346]
-						"^2343^15^1585534644^90^0^30^465.87^Liphunt", -- [347]
-						"^2343^15^1585534849^253^1^30^466.60^Nonuggets", -- [348]
-						"^2345^15^1585535424^287^1^30^467.03^Dinglejuice", -- [349]
-						"^2337^15^1585536078^0^0^30^468.09^", -- [350]
-						"^2337^15^1585536122^385^1^30^467.57^Nonuggets", -- [351]
-						"^2344^15^1585536715^556^1^30^467.17^Nonuggets", -- [352]
-						"^2084^8^1585547103^74^1^5^481.13^", -- [353]
-						"^2086^8^1585547222^38^0^5^481.13^Maxdogbowl", -- [354]
-						"^2084^8^1585547445^68^1^5^481.13^", -- [355]
-						"^2084^8^1585547714^69^1^5^481.13^", -- [356]
-						"^2086^8^1585547835^120^1^5^481.13^Maxdogbowl", -- [357]
-						"^2084^8^1585548158^67^1^5^481.13^", -- [358]
-						"^2086^8^1585548281^111^1^5^481.13^", -- [359]
-						"^2085^8^1585548515^3^0^5^481.13^Atrocitydh", -- [360]
-						"^2085^8^1585548549^112^1^5^481.13^", -- [361]
-						"^2087^8^1585548714^63^0^5^481.13^Atrocitydh", -- [362]
-						"^2087^8^1585548894^32^0^5^481.13^Atrocitydh", -- [363]
-						"^2087^8^1585549026^22^0^5^481.13^Eric", -- [364]
-						"^2087^8^1585549210^37^0^5^481.13^Twisted", -- [365]
-						"^2086^23^1585549457^7^0^5^481.13^", -- [366]
-						"^2084^8^1585549756^69^1^5^481.13^", -- [367]
-						"^2086^8^1585549871^120^1^5^481.13^", -- [368]
-						"^2085^8^1585550101^158^1^5^481.13^", -- [369]
-						"^2087^8^1585550326^221^0^5^481.13^Atrocitydh", -- [370]
-						"^2113^2^1585558650^7^0^5^481.13^", -- [371]
-						"^2084^8^1585595761^68^1^5^480.88^", -- [372]
-						"^2086^8^1585595883^117^1^5^480.88^", -- [373]
-						"^2085^8^1585596142^109^1^5^480.88^", -- [374]
-						"^2087^8^1585596310^108^0^5^480.88^Imfiredup", -- [375]
-						"^2257^8^1585599493^57^1^5^481.00^", -- [376]
-						"^2257^8^1585600053^46^1^5^481.00^", -- [377]
-						"^2258^8^1585600164^92^0^5^481.00^Twisted", -- [378]
-						"^2257^8^1585600418^71^1^5^481.00^", -- [379]
-						"^2257^8^1585600840^46^1^5^481.00^", -- [380]
-						"^2258^8^1585600957^36^0^5^481.00^Maxdogbowl", -- [381]
-						"^2258^8^1585601216^217^0^5^480.81^Maxdogbowl", -- [382]
-						"^2258^8^1585601571^275^1^5^480.81^Twisted", -- [383]
-						"^2259^8^1585602207^92^1^5^480.81^Atrocitydh", -- [384]
-						"^2260^8^1585602540^32^0^5^481.00^Maxdogbowl", -- [385]
-						"^2257^8^1585603488^44^0^5^481.00^Ericsmage", -- [386]
-						"^2257^8^1585603709^47^1^5^481.00^", -- [387]
-						"^2257^8^1585604024^35^0^5^481.00^Atrocitydh", -- [388]
-						"^2257^8^1585604491^43^1^5^481.00^", -- [389]
-						"^2258^8^1585604599^72^1^5^481.00^", -- [390]
-						"^2259^8^1585604864^86^1^5^481.00^", -- [391]
-						"^2260^8^1585605107^141^1^5^481.00^Atrocitydh", -- [392]
-						"^2257^8^1585605537^42^1^5^481.00^", -- [393]
-						"^2258^8^1585605639^59^0^5^481.00^Imfiredupbrh", -- [394]
-						"^2257^8^1585605862^51^1^5^481.00^", -- [395]
-						"^2258^8^1585605970^92^0^5^481.00^Eric", -- [396]
-						"^2257^8^1585606354^16^0^5^481.00^Imfiredupbrh", -- [397]
-						"^2257^8^1585606583^43^1^5^481.00^", -- [398]
-						"^2258^8^1585606683^110^1^5^481.00^Maxdogbowl", -- [399]
-						"^2259^8^1585607090^66^1^5^481.00^", -- [400]
-						"^2260^8^1585607296^148^1^5^481.00^Eric", -- [401]
-						"^2257^8^1585607762^47^1^5^481.00^", -- [402]
-						"^2258^8^1585607861^82^1^5^481.00^", -- [403]
-						"^2259^8^1585608155^61^1^5^481.00^", -- [404]
-						"^2260^8^1585608376^141^1^5^481.00^", -- [405]
-						"^2257^8^1585609069^52^1^5^480.75^", -- [406]
-						"^2258^8^1585609184^78^1^5^480.75^", -- [407]
-						"^2259^8^1585609438^84^1^5^480.75^Imfiredupbrh", -- [408]
-						"^2260^8^1585609680^143^1^5^480.75^", -- [409]
-						"^2084^8^1585679926^69^1^5^481.13^", -- [410]
-						"^2086^8^1585680035^121^1^5^481.13^", -- [411]
-						"^2085^8^1585680339^110^1^5^481.13^", -- [412]
-						"^2087^8^1585680504^66^0^5^481.13^Twisted", -- [413]
-						"^2130^8^1585684326^114^1^5^481.00^", -- [414]
-						"^2131^8^1585684556^122^1^5^481.00^", -- [415]
-						"^2132^8^1585684841^116^1^5^481.00^", -- [416]
-						"^2133^8^1585685030^230^0^5^481.00^Ericsdk", -- [417]
-						"^2130^8^1585685589^5^0^5^481.00^Maxdogbowl", -- [418]
-						"^2130^8^1585685984^17^0^5^481.00^Maxdogbowl", -- [419]
-						"^2130^8^1585686709^118^1^5^481.00^", -- [420]
-						"^2131^8^1585686917^141^1^5^481.00^Imfiredup", -- [421]
-						"^2132^8^1585687212^117^1^5^481.00^", -- [422]
-						"^2133^8^1585687402^285^1^5^481.00^Twisted", -- [423]
-						"^2257^8^1585688137^47^1^5^480.75^", -- [424]
-						"^2258^8^1585688240^77^1^5^480.75^", -- [425]
-						"^2259^8^1585688484^81^1^5^480.75^Maxdogbowl", -- [426]
-						"^2260^8^1585688722^149^1^5^480.75^Atrocitydh", -- [427]
-						"^2111^8^1585692734^36^0^5^481.00^Atrocitydh", -- [428]
-						"^2111^8^1585692983^78^1^5^481.00^", -- [429]
-						"^2118^8^1585693087^56^0^5^481.00^Twisted", -- [430]
-						"^2084^8^1585768199^67^1^5^480.81^", -- [431]
-						"^2086^8^1585768311^133^1^5^480.81^", -- [432]
-						"^2085^8^1585768566^150^1^5^480.81^", -- [433]
-						"^2087^8^1585768785^126^1^5^481.44^", -- [434]
-						"^2130^8^1585772952^151^1^5^481.00^Imfiredup", -- [435]
-						"^2130^8^1585773623^70^0^5^481.00^Maxdogbowl", -- [436]
-						"^2130^8^1585774156^110^1^5^481.00^", -- [437]
-						"^2131^8^1585774366^139^1^5^481.00^Twisted", -- [438]
-						"^2132^8^1585774810^104^1^5^481.00^", -- [439]
-						"^2133^8^1585774997^50^0^5^481.00^Twisted", -- [440]
-						"^2111^8^1585776630^72^1^5^481.00^", -- [441]
-						"^2118^8^1585776734^168^1^5^480.81^Twisted", -- [442]
-						"^2111^8^1585777490^66^1^5^481.00^", -- [443]
-						"^2118^8^1585777584^119^1^5^481.00^", -- [444]
-						"^2112^8^1585777755^126^1^5^481.00^Atrocitydh", -- [445]
-						"^2111^8^1585778853^67^1^5^481.00^", -- [446]
-						"^2118^8^1585778956^27^0^5^481.00^Atrocitydh", -- [447]
-						"^2111^8^1585779273^69^1^5^481.00^", -- [448]
-						"^2118^8^1585779369^25^0^5^481.00^Twisted", -- [449]
-						"^2111^8^1585779591^68^1^5^481.00^", -- [450]
-						"^2118^8^1585779679^26^0^5^481.00^Atrocitydh", -- [451]
-						"^2111^8^1585779865^68^1^5^481.00^Imfiredup", -- [452]
-						"^2118^8^1585779962^21^0^5^481.00^Ericsdk", -- [453]
-						"^2257^8^1585860192^52^1^5^480.75^", -- [454]
-						"^2257^8^1585860497^60^1^5^480.75^", -- [455]
-						"^2258^8^1585860613^89^0^5^480.75^Atrocitydh", -- [456]
-						"^2257^8^1585860886^41^1^5^480.75^", -- [457]
-						"^2258^8^1585860985^100^1^5^480.75^", -- [458]
-						"^2259^8^1585861437^78^1^5^480.75^", -- [459]
-						"^2260^8^1585861740^32^0^5^480.75^Imfiredupbrh", -- [460]
-						"^2257^8^1585862215^57^1^5^480.75^", -- [461]
-						"^2258^8^1585862326^113^1^5^480.75^Imfiredupbrh", -- [462]
-						"^2259^8^1585862654^97^1^5^480.75^Twisted", -- [463]
-						"^2260^8^1585863021^51^0^5^480.75^Atrocitydh", -- [464]
-						"^2260^8^1585863228^190^1^5^480.75^Imfiredupbrh", -- [465]
-						"^2257^8^1585863748^50^1^5^480.75^", -- [466]
-						"^2257^8^1585864016^63^1^5^480.75^", -- [467]
-						"^2257^8^1585864273^51^1^5^480.75^Twisted", -- [468]
-						"^2257^8^1585864591^46^1^5^480.75^Atrocitydh", -- [469]
-						"^2257^8^1585864908^58^0^5^480.75^Maxdogbowl", -- [470]
-						"^2257^8^1585865321^91^1^5^480.75^Twisted", -- [471]
-						"^2257^8^1585865743^56^1^5^480.75^", -- [472]
-						"^2258^8^1585865861^31^0^5^480.75^Twisted", -- [473]
-						"^2257^8^1585866221^45^1^5^480.75^", -- [474]
-						"^2258^8^1585866317^34^0^5^480.75^Ericsmage", -- [475]
-						"^2257^8^1585866602^38^1^5^480.75^", -- [476]
-						"^2257^8^1585866872^49^1^5^480.75^", -- [477]
-						"^2258^8^1585866999^106^1^5^480.75^", -- [478]
-						"^2259^8^1585867333^85^1^5^480.75^", -- [479]
-						"^2260^8^1585867659^59^0^5^480.75^Atrocitydh", -- [480]
-						"^2260^8^1585867879^26^0^5^480.75^Maxdogbowl", -- [481]
-						"^2257^8^1585868325^58^1^5^480.75^Twisted", -- [482]
-						"^2258^8^1585868437^113^1^5^480.75^Atrocitydh", -- [483]
-						"^2259^8^1585868821^76^1^5^480.75^", -- [484]
-						"^2260^8^1585869075^174^1^5^480.75^", -- [485]
-						"^2084^8^1586213566^79^1^5^481.00^", -- [486]
-						"^2086^8^1586213677^149^1^5^481.00^", -- [487]
-						"^2085^8^1586213960^131^1^5^481.00^", -- [488]
-						"^2087^8^1586214149^79^0^5^481.00^Imfiredup", -- [489]
-						"^2113^8^1586233016^123^1^5^480.88^", -- [490]
-						"^2114^8^1586233157^23^0^5^481.13^Atrocitydh", -- [491]
-						"^2113^8^1586233346^133^1^5^480.88^", -- [492]
-						"^2114^8^1586233498^134^1^5^480.88^", -- [493]
-						"^2115^8^1586233653^134^1^5^480.88^", -- [494]
-						"^2116^8^1586233881^125^1^5^480.88^", -- [495]
-						"^2117^8^1586234037^129^1^5^480.88^", -- [496]
-						"^2105^8^1586235321^68^1^5^480.88^", -- [497]
-						"^2106^8^1586235530^41^0^5^480.88^Twisted", -- [498]
-						"^2106^8^1586235707^99^1^5^480.88^", -- [499]
-						"^2107^8^1586236165^105^1^5^481.13^Imfiredup", -- [500]
-						"^2108^8^1586236420^56^0^5^481.13^Atrocitydh", -- [501]
-						"^2105^8^1586237434^39^0^5^480.88^Twisted", -- [502]
-						"^2105^8^1586238814^69^1^5^480.88^", -- [503]
-						"^2106^8^1586238997^76^1^5^480.88^", -- [504]
-						"^2107^8^1586239453^95^1^5^480.81^Imfiredup", -- [505]
-						"^2108^8^1586239682^44^0^5^480.81^Ericsdk", -- [506]
-						"^2292^8^1586250957^86^1^5^473.13^", -- [507]
-						"^2312^8^1586251235^36^0^5^473.13^Druidpew-Tichondrius", -- [508]
-						"^2312^8^1586251539^62^1^5^473.13^", -- [509]
-						"^2290^8^1586251979^111^1^5^472.78^", -- [510]
-						"^2291^8^1586252396^142^1^5^473.13^", -- [511]
-						"^2290^23^1586386332^27^1^5^481.44^", -- [512]
-						"^2312^23^1586386485^55^1^5^481.44^", -- [513]
-						"^2292^23^1586386704^39^1^5^481.44^", -- [514]
-						"^2291^23^1586386849^116^1^5^481.44^", -- [515]
-						"^2290^8^1586388165^26^0^5^480.88^Twisted", -- [516]
-						"^2290^8^1586388262^59^0^5^480.88^Ericsdk", -- [517]
-						"^2290^8^1586388519^53^0^5^480.88^Atrocitydh", -- [518]
-						"^2290^8^1586388695^123^1^5^480.88^Ericsdk", -- [519]
-						"^2292^8^1586389308^30^0^5^480.88^Maxdogbowl", -- [520]
-						"^2292^8^1586389395^103^1^5^480.88^", -- [521]
-						"^2312^8^1586389856^79^1^5^480.88^Twisted", -- [522]
-						"^2086^23^1586390716^45^0^5^481.13^", -- [523]
-						"^2139^23^1586391859^75^0^5^481.13^Atrocitydh", -- [524]
-						"^2084^8^1586398994^88^1^5^480.88^", -- [525]
-						"^2086^8^1586399123^138^1^5^480.88^", -- [526]
-						"^2085^8^1586399383^138^1^5^480.88^", -- [527]
-						"^2087^8^1586399574^252^1^5^480.88^Imfiredup", -- [528]
-						"^2105^8^1586404345^91^1^5^480.88^", -- [529]
-						"^2106^8^1586404535^37^0^5^480.88^Maxdogbowl", -- [530]
-						"^2106^8^1586404698^104^1^5^480.88^Twisted", -- [531]
-						"^2107^8^1586405061^21^0^5^480.88^Maxdogbowl", -- [532]
-						"^2107^8^1586405195^112^1^5^480.88^Imfiredup", -- [533]
-						"^2108^8^1586405395^0^0^5^480.88^Twisted", -- [534]
-						"^2257^8^1586580281^109^0^5^480.13^Ericsmage", -- [535]
-						"^2257^8^1586580531^77^1^5^480.13^", -- [536]
-						"^2257^8^1586580923^77^1^5^480.13^", -- [537]
-						"^2257^8^1586581264^95^1^5^480.13^Ericsmage", -- [538]
-						"^2258^8^1586581471^148^1^5^480.03^", -- [539]
-						"^2259^8^1586581808^156^1^5^480.03^Atrocitydh", -- [540]
-						"^2260^8^1586582151^248^1^5^480.13^Imfiredupbrh", -- [541]
-						"^2257^8^1586582814^76^1^5^480.00^Imfiredupbrh", -- [542]
-						"^2257^8^1586583102^79^0^5^480.00^Maxdogbowl", -- [543]
-						"^2257^8^1586583261^73^0^5^479.88^Imfiredupbrh", -- [544]
-						"^2257^8^1586583393^48^0^5^479.88^Twistedp", -- [545]
-						"^2257^8^1586583597^60^0^5^480.00^Twistedp", -- [546]
-						"^2257^8^1586583790^106^1^5^480.00^Atrocitydh", -- [547]
-						"^2258^8^1586583959^163^1^5^480.00^Maxdogbowl", -- [548]
-						"^2259^8^1586584319^163^1^5^480.00^Twistedp", -- [549]
-						"^2260^8^1586585026^130^0^5^480.00^Maxdogbowl", -- [550]
-						"^2257^8^1586636782^92^1^5^480.19^", -- [551]
-						"^2257^8^1586637222^89^1^5^479.88^", -- [552]
-						"^2258^8^1586637366^69^0^5^479.88^Imfiredupbrh", -- [553]
-						"^2258^8^1586637882^12^0^5^480.19^Twisted", -- [554]
-						"^2257^8^1586638118^80^1^5^479.88^Atrocitydh", -- [555]
-						"^2258^8^1586638257^153^1^5^479.88^Imfiredupbrh", -- [556]
-						"^2259^8^1586638608^47^0^5^479.88^Ericsmage", -- [557]
-						"^2257^8^1586639227^71^1^5^480.38^Atrocitydh", -- [558]
-						"^2258^8^1586639358^152^1^5^480.38^Ericxo", -- [559]
-						"^2259^8^1586639711^146^1^5^480.38^Ericxo", -- [560]
-						"^2260^8^1586640005^69^0^5^480.38^Maxdogbowl", -- [561]
-						"^2257^8^1586640307^87^1^5^480.38^", -- [562]
-						"^2258^8^1586640449^56^0^5^480.38^Maxdogbowl", -- [563]
-						"^2257^8^1586640765^84^1^5^480.38^", -- [564]
-						"^2258^8^1586640904^44^0^5^480.38^Ericxo", -- [565]
-						"^2257^8^1586641157^96^1^5^480.38^", -- [566]
-						"^2258^8^1586641309^128^1^5^480.81^", -- [567]
-						"^2259^8^1586641633^123^0^5^480.81^Maxdogbowl", -- [568]
-						"^2257^8^1586642020^98^1^5^480.38^", -- [569]
-						"^2258^8^1586642178^2^0^5^480.38^", -- [570]
-						"^2257^8^1586642425^63^1^5^480.38^", -- [571]
-						"^2258^8^1586642546^125^1^5^480.38^", -- [572]
-						"^2259^8^1586642886^124^1^5^480.38^", -- [573]
-						"^2260^8^1586643168^242^1^5^480.38^", -- [574]
-						"^2257^8^1586643726^72^1^5^480.81^Ericxo", -- [575]
-						"^2257^8^1586643985^68^1^5^480.50^", -- [576]
-						"^2258^8^1586644109^134^1^5^480.50^", -- [577]
-						"^2259^8^1586644416^146^1^5^480.50^", -- [578]
-						"^2260^8^1586644731^252^1^5^480.50^Atrocitydh", -- [579]
-						"^2257^8^1586647588^71^1^5^480.50^", -- [580]
-						"^2258^8^1586647769^6^0^5^480.50^Twisted", -- [581]
-						"^2257^8^1586647964^70^1^5^480.50^", -- [582]
-						"^2258^8^1586648089^142^1^5^480.50^", -- [583]
-						"^2259^8^1586648398^134^1^5^480.50^", -- [584]
-						"^2260^8^1586648703^63^0^5^480.50^Atrocitydh", -- [585]
-						"^2257^8^1586649254^84^1^5^480.50^", -- [586]
-						"^2258^8^1586649397^110^0^5^480.50^Twisted", -- [587]
-						"^2257^8^1586649812^68^1^5^480.50^", -- [588]
-						"^2258^8^1586649932^131^1^5^480.50^", -- [589]
-						"^2259^8^1586650242^152^1^5^480.50^Atrocitydh", -- [590]
-						"^2260^8^1586650583^50^0^5^480.50^Imfiredupbrh", -- [591]
-						"^2260^8^1586650899^169^0^5^480.50^Eric", -- [592]
-						"^2260^8^1586651246^59^0^5^480.50^Imfiredupbrh", -- [593]
-						"^2257^8^1586655927^67^1^5^480.50^", -- [594]
-						"^2258^8^1586656048^125^1^5^480.50^", -- [595]
-						"^2259^8^1586656395^128^1^5^480.50^", -- [596]
-						"^2260^8^1586656659^234^1^5^480.50^", -- [597]
-						"^2257^8^1586657139^62^1^5^480.50^", -- [598]
-						"^2258^8^1586657256^145^1^5^480.50^", -- [599]
-						"^2259^8^1586657571^16^0^5^480.50^Atrocitydh", -- [600]
-						"^2259^8^1586657617^148^1^5^480.66^", -- [601]
-						"^2260^8^1586657932^228^1^5^480.66^", -- [602]
-						"^2257^8^1586658647^66^1^5^480.50^", -- [603]
-						"^2258^8^1586658768^140^1^5^480.50^", -- [604]
-						"^2259^8^1586659076^139^1^5^480.50^", -- [605]
-						"^2260^8^1586659361^222^1^5^480.50^", -- [606]
-						"^2257^8^1586659788^75^1^5^480.50^", -- [607]
-						"^2258^8^1586659916^66^0^5^480.50^Atrocitydh", -- [608]
-						"^2257^8^1586660717^66^1^5^480.50^", -- [609]
-						"^2258^8^1586660836^134^1^5^480.50^", -- [610]
-						"^2259^8^1586661137^137^1^5^480.66^", -- [611]
-						"^2260^8^1586661411^217^1^5^480.66^", -- [612]
-						"^2113^8^1586662158^27^0^5^481.00^Imfiredup", -- [613]
-						"^2113^8^1586662314^33^0^5^481.00^Twisted", -- [614]
-						"^2113^8^1586662443^37^0^5^481.00^Twisted", -- [615]
-						"^2113^8^1586662676^96^1^5^481.00^", -- [616]
-						"^2114^8^1586662828^22^0^5^481.00^Atrocitydh", -- [617]
-						"^2114^8^1586663019^106^1^5^481.00^", -- [618]
-						"^2115^8^1586663209^20^0^5^481.00^Twisted", -- [619]
-						"^2113^8^1586663808^98^1^5^481.00^", -- [620]
-						"^2114^8^1586663987^22^0^5^481.00^Atrocitydh", -- [621]
-						"^2113^8^1586664193^32^0^5^481.00^Twisted", -- [622]
-						"^2113^8^1586664397^94^1^5^481.00^", -- [623]
-						"^2114^8^1586664523^29^0^5^481.00^Imfiredup", -- [624]
-						"^2113^8^1586665451^84^1^5^481.00^", -- [625]
-						"^2114^8^1586665644^42^0^5^481.00^Imfiredup", -- [626]
-						"^2113^8^1586666135^110^1^5^481.00^Ericsdk", -- [627]
-						"^2114^8^1586666530^105^1^5^481.00^", -- [628]
-						"^2115^8^1586666684^1^0^5^481.00^Maxfingrguns", -- [629]
-						"^2115^8^1586666920^19^0^5^481.00^Maxfingrguns", -- [630]
-						"^2115^8^1586667159^93^1^5^481.00^", -- [631]
-						"^2116^8^1586667818^101^1^5^481.00^", -- [632]
-						"^2117^8^1586668133^20^0^5^480.97^Atrocitydh", -- [633]
-						"^2117^8^1586668251^21^0^5^480.97^Ericsdk", -- [634]
-						"^2113^8^1586821266^86^1^5^481.00^", -- [635]
-						"^2113^8^1586821542^91^1^5^481.00^", -- [636]
-						"^2114^8^1586821735^159^1^5^481.00^Imfiredup", -- [637]
-						"^2115^8^1586822036^89^0^5^481.00^Twisted", -- [638]
-						"^2113^8^1586822332^104^1^5^481.00^", -- [639]
-						"^2114^8^1586822590^136^1^5^481.00^Atrocitydh", -- [640]
-						"^2115^8^1586822889^122^1^5^481.00^Atrocitydh", -- [641]
-						"^2116^8^1586823229^102^1^5^481.00^", -- [642]
-						"^2117^8^1586823361^105^1^5^481.00^", -- [643]
-						"^2113^8^1586823798^87^1^5^481.00^", -- [644]
-						"^2113^8^1586824073^75^1^5^481.00^", -- [645]
-						"^2114^8^1586824275^194^1^5^481.00^Imfiredup", -- [646]
-						"^2115^8^1586824600^29^0^5^481.00^Imfiredup", -- [647]
-						"^2113^8^1586827497^94^1^5^480.88^", -- [648]
-						"^2113^8^1586827695^8^0^5^481.00^", -- [649]
-						"^2113^8^1586827823^90^1^5^481.00^", -- [650]
-						"^2113^8^1586828083^82^1^5^481.00^", -- [651]
-						"^2113^8^1586828532^82^1^5^481.00^", -- [652]
-						"^2113^8^1586828872^90^1^5^481.00^Ericsdk", -- [653]
-						"^2113^8^1586829111^95^1^5^481.00^", -- [654]
-						"^2114^8^1586829468^33^0^5^481.00^Imfiredup", -- [655]
-						"^2113^8^1586829749^97^1^5^481.13^", -- [656]
-						"^2114^8^1586830019^38^0^5^481.13^Imfiredup", -- [657]
-						"^2113^8^1586830453^93^1^5^481.13^", -- [658]
-						"^2113^8^1586830759^102^1^5^481.13^", -- [659]
-						"^2113^8^1586831075^92^1^5^481.13^", -- [660]
-						"^2114^8^1586831270^41^0^5^481.13^Twisted", -- [661]
-						"^2113^8^1586831553^90^1^5^481.13^", -- [662]
-						"^2113^8^1586831948^88^1^5^481.13^", -- [663]
-						"^2114^8^1586832129^49^0^5^481.44^Twisted", -- [664]
-						"^2113^8^1586832462^89^1^5^481.13^", -- [665]
-						"^2113^8^1586832739^113^1^5^481.13^Imfiredup", -- [666]
-						"^2113^8^1586833181^104^1^5^481.13^", -- [667]
-						"^2113^8^1586833531^89^1^5^481.13^", -- [668]
-						"^2114^8^1586833786^124^1^5^481.13^", -- [669]
-						"^2115^8^1586833939^27^0^5^481.13^Twisted", -- [670]
-						"^2113^8^1586834100^82^1^5^481.13^Imfiredup", -- [671]
-						"^2114^8^1586834333^147^0^5^481.13^Atrocitydh", -- [672]
-						"^2113^8^1586834634^92^1^5^481.13^", -- [673]
-						"^2114^8^1586834899^21^0^5^481.13^Twisted", -- [674]
-						"^2113^8^1586835040^89^1^5^481.13^", -- [675]
-						"^2114^8^1586835307^61^0^5^481.13^Twisted", -- [676]
-						"^2114^8^1586835434^114^1^5^481.13^", -- [677]
-						"^2115^8^1586835599^110^1^5^481.13^Atrocitydh", -- [678]
-						"^2116^8^1586835770^108^1^5^481.13^", -- [679]
-						"^2117^8^1586835913^0^0^5^481.13^", -- [680]
-						"^2113^8^1586837137^98^1^5^481.13^", -- [681]
-						"^2114^8^1586837396^23^0^5^481.13^Atrocitydh", -- [682]
-						"^2113^8^1586837524^84^1^5^481.13^", -- [683]
-						"^2114^8^1586837786^28^0^5^481.13^Ericsdk", -- [684]
-						"^2113^8^1586838025^84^1^5^481.13^", -- [685]
-						"^2114^8^1586838254^48^0^5^481.13^Imfiredup", -- [686]
-						"^2113^8^1586838641^85^1^5^481.13^", -- [687]
-						"^2113^8^1586838892^92^1^5^481.13^", -- [688]
-						"^2113^8^1586839268^87^1^5^481.13^", -- [689]
-						"^2114^8^1586839528^38^0^5^481.13^Ericsdk", -- [690]
-						"^2113^8^1586839703^92^1^5^481.13^", -- [691]
-						"^2114^8^1586839946^22^0^5^481.13^Maxdogbowl", -- [692]
-						"^2113^8^1586840156^100^1^5^481.13^", -- [693]
-						"^2114^8^1586840391^152^1^5^481.13^", -- [694]
-						"^2115^8^1586840621^31^0^5^481.13^Atrocitydh", -- [695]
-						"^2113^8^1586841057^91^1^5^481.13^", -- [696]
-						"^2114^8^1586841298^148^1^5^480.97^Twisted", -- [697]
-						"^2115^8^1586841529^37^0^5^480.97^Maxdogbowl", -- [698]
-						"^2115^8^1586841612^99^1^5^480.97^", -- [699]
-						"^2116^8^1586841751^105^1^5^481.33^Twisted", -- [700]
-						"^2117^8^1586841883^105^1^5^481.44^", -- [701]
-						"^2113^8^1586842371^84^1^5^481.13^", -- [702]
-						"^2114^8^1586842720^70^0^5^481.44^Atrocitydh", -- [703]
-						"^2114^8^1586842824^134^1^5^481.44^", -- [704]
-						"^2115^8^1586843363^86^1^5^481.44^", -- [705]
-						"^2113^8^1586843671^97^1^5^481.13^", -- [706]
-						"^2114^8^1586843909^31^0^5^481.13^Imfiredup", -- [707]
-						"^2113^8^1586844133^83^1^5^481.13^", -- [708]
-						"^2114^8^1586844380^147^1^5^481.13^", -- [709]
-						"^2115^8^1586844641^104^1^5^481.13^", -- [710]
-						"^2116^8^1586844799^119^1^5^481.13^", -- [711]
-						"^2117^8^1586844944^108^1^5^481.13^Ericsdk", -- [712]
-						"^2113^8^1586845314^29^0^5^481.13^Imfiredup", -- [713]
-						"^2257^8^1586845778^67^1^5^480.50^", -- [714]
-						"^2258^8^1586845908^141^1^5^480.50^", -- [715]
-						"^2259^8^1586846239^167^0^5^480.50^Eric", -- [716]
-						"^2257^8^1586846673^62^1^5^480.50^", -- [717]
-						"^2258^8^1586846791^117^1^5^480.50^", -- [718]
-						"^2259^8^1586847076^142^1^5^480.50^", -- [719]
-						"^2257^8^1586847694^61^1^5^480.50^", -- [720]
-						"^2258^8^1586847810^116^1^5^480.50^", -- [721]
-						"^2259^8^1586848104^142^1^5^480.50^", -- [722]
-						"^2260^8^1586848382^224^1^5^480.50^Twisted", -- [723]
-						"^2257^8^1586848784^76^1^5^480.50^", -- [724]
-						"^2258^8^1586848916^132^1^5^480.50^Atrocitydh", -- [725]
-						"^2113^8^1586899453^73^1^5^470.84^", -- [726]
-						"^2114^8^1586899822^90^1^5^469.36^", -- [727]
-						"^2115^8^1586900065^2^0^5^470.84^", -- [728]
-						"^2115^8^1586900254^94^1^5^470.84^", -- [729]
-						"^2116^8^1586900615^89^1^5^470.84^", -- [730]
-						"^2117^8^1586900842^112^1^5^470.84^", -- [731]
-						"^2333^16^1586910783^202^1^20^475.60^Soiy", -- [732]
-						"^2331^16^1586911147^10^0^20^476.47^", -- [733]
-						"^2331^16^1586911187^7^0^20^476.55^", -- [734]
-						"^2331^16^1586911414^55^0^20^476.38^Grojon", -- [735]
-						"^2331^16^1586911564^205^1^20^471.27^Willxo", -- [736]
-						"^2337^16^1586912114^0^0^20^477.22^", -- [737]
-						"^2337^16^1586912222^414^1^20^477.21^Soiy", -- [738]
-						"^2086^23^1586928271^35^0^5^475.75^Atrocitydh", -- [739]
-						"^2086^23^1586930903^89^0^5^475.75^", -- [740]
-						"^2086^23^1586932826^69^0^5^475.75^Atrocitydh", -- [741]
-						"^2086^23^1586933395^47^0^5^475.75^", -- [742]
-						"^2086^23^1586933775^33^0^5^475.75^Atrocitydh", -- [743]
-						"^2130^8^1587003660^12^0^5^481.13^Atrocitydh", -- [744]
-						"^2130^8^1587003767^3^0^5^481.13^", -- [745]
-						"^2130^8^1587003800^130^1^5^481.13^Imfiredup", -- [746]
-						"^2131^8^1587004425^113^1^5^481.13^", -- [747]
-						"^2132^8^1587004801^103^1^5^481.13^", -- [748]
-						"^2133^8^1587004978^230^1^5^481.13^Imfiredup", -- [749]
-						"^2084^8^1587005648^68^1^5^481.13^", -- [750]
-						"^2084^8^1587006069^73^1^5^480.97^Imfiredup", -- [751]
-						"^2086^8^1587006232^37^0^5^480.97^Twisted", -- [752]
-						"^2113^8^1587164776^82^1^5^481.25^", -- [753]
-						"^2113^8^1587165184^40^0^5^481.13^Ericsdk", -- [754]
-						"^2113^8^1587165359^91^1^5^481.25^", -- [755]
-						"^2114^8^1587165595^129^1^5^481.25^", -- [756]
-						"^2115^8^1587165844^111^1^5^481.25^Twisted", -- [757]
-						"^2116^8^1587166004^41^0^5^481.25^Ericsdk", -- [758]
-						"^2113^8^1587166284^85^1^5^481.25^", -- [759]
-						"^2114^8^1587166509^46^0^5^481.25^Imfiredup", -- [760]
-						"^2113^8^1587166806^98^1^5^481.25^", -- [761]
-						"^2113^8^1587167081^87^1^5^481.13^", -- [762]
-						"^2114^8^1587167311^123^1^5^481.13^", -- [763]
-						"^2115^8^1587167526^93^1^5^481.13^", -- [764]
-						"^2116^8^1587167665^106^1^5^481.13^", -- [765]
-						"^2117^8^1587167796^35^0^5^481.13^Twisted", -- [766]
-						"^2117^8^1587168090^35^0^5^481.33^Maxdogbowl", -- [767]
-						"^2117^8^1587168217^20^0^5^481.33^Atrocitydh", -- [768]
-						"^2113^8^1587168475^91^1^5^481.25^", -- [769]
-						"^2113^8^1587171906^47^0^5^480.71^Twisted", -- [770]
-						"^2113^8^1587172096^94^1^5^481.13^", -- [771]
-						"^2114^8^1587172346^131^1^5^481.13^", -- [772]
-						"^2115^8^1587172561^93^1^5^481.13^", -- [773]
-						"^2116^8^1587172704^115^1^5^481.13^", -- [774]
-						"^2117^8^1587172846^101^1^5^481.13^", -- [775]
-						"^2113^8^1587184370^95^1^5^481.13^", -- [776]
-						"^2114^8^1587184615^39^0^5^481.13^Twisted", -- [777]
-						"^2113^8^1587184838^91^1^5^481.13^", -- [778]
-						"^2114^8^1587185070^117^1^5^481.13^", -- [779]
-						"^2115^8^1587185270^90^1^5^481.13^", -- [780]
-						"^2116^8^1587185414^113^1^5^481.13^", -- [781]
-						"^2117^8^1587185693^23^0^5^481.13^Atrocitydh", -- [782]
-						"^2117^8^1587185948^28^0^5^481.13^Twisted", -- [783]
-						"^2117^8^1587186135^22^0^5^481.13^Atrocitydh", -- [784]
-						"^2117^8^1587186375^52^0^5^481.13^Imfiredup", -- [785]
-						"^2113^8^1587229612^98^1^5^481.13^", -- [786]
-						"^2114^8^1587229847^126^1^5^481.13^", -- [787]
-						"^2115^8^1587230068^89^1^5^481.13^", -- [788]
-						"^2116^8^1587230216^104^1^5^481.13^", -- [789]
-						"^2117^8^1587230352^35^0^5^481.13^Maxdogbowl", -- [790]
-						"^2113^8^1587230605^94^1^5^481.13^", -- [791]
-						"^2114^8^1587230840^133^1^5^481.13^Twisted", -- [792]
-						"^2113^8^1587231139^96^1^5^481.13^", -- [793]
-						"^2114^8^1587231370^118^1^5^481.13^Twisted", -- [794]
-						"^2115^8^1587231577^35^0^5^481.13^Twisted", -- [795]
-						"^2113^8^1587232701^88^1^5^362.42^", -- [796]
-						"^2114^8^1587232934^127^1^5^362.42^", -- [797]
-						"^2115^8^1587233139^97^1^5^362.42^", -- [798]
-						"^2116^8^1587233338^113^1^5^362.42^", -- [799]
-						"^2117^8^1587233493^29^0^5^362.42^Imfiredup", -- [800]
-						"^2117^8^1587233616^116^1^5^362.42^", -- [801]
-						"^2257^8^1587264738^61^1^5^480.63^", -- [802]
-						"^2258^8^1587264855^38^0^5^480.63^Twisted", -- [803]
-						"^2257^8^1587265024^74^1^5^480.63^", -- [804]
-						"^2257^8^1587265386^63^1^5^480.63^", -- [805]
-						"^2257^8^1587265671^63^1^5^480.50^", -- [806]
-						"^2258^8^1587265790^125^1^5^480.50^Eric", -- [807]
-						"^2259^8^1587266099^49^0^5^480.50^Maxdogbowl", -- [808]
-						"^2259^8^1587266200^127^1^5^480.63^", -- [809]
-						"^2260^8^1587266466^27^0^5^480.63^Maxdogbowl", -- [810]
-						"^2260^8^1587266690^46^0^5^480.63^Twisted", -- [811]
-						"^2260^8^1587267075^44^0^5^480.63^Maxdogbowl", -- [812]
-						"^2113^8^1587267532^88^1^5^481.13^", -- [813]
-						"^2114^8^1587267849^43^0^5^481.13^Imfiredup", -- [814]
-						"^2114^8^1587267947^111^1^5^481.13^", -- [815]
-						"^2115^8^1587268146^86^1^5^481.13^", -- [816]
-						"^2116^8^1587268541^39^0^5^481.13^Maxdogbowl", -- [817]
-						"^2116^8^1587268682^110^1^5^481.13^", -- [818]
-						"^2117^8^1587268824^69^0^5^481.13^Ericsdk", -- [819]
-						"^2113^8^1587313026^102^1^5^481.13^", -- [820]
-						"^2114^8^1587313280^125^1^5^481.13^", -- [821]
-						"^2115^8^1587313483^91^1^5^481.13^", -- [822]
-						"^2116^8^1587313675^121^1^5^481.13^", -- [823]
-						"^2117^8^1587313879^79^1^5^481.13^", -- [824]
-						"^2257^8^1587314280^87^1^5^480.63^", -- [825]
-						"^2258^8^1587314429^119^1^5^480.63^", -- [826]
-						"^2259^8^1587314750^140^1^5^480.63^Eric", -- [827]
-						"^2260^8^1587315040^60^0^5^480.63^Eric", -- [828]
-						"^2257^8^1587315277^62^1^5^480.63^", -- [829]
-						"^2258^8^1587315392^126^1^5^480.63^Atrocitydh", -- [830]
-						"^2259^8^1587315728^131^1^5^480.63^", -- [831]
-						"^2260^8^1587315995^225^1^5^480.63^Maxdogbowl", -- [832]
-						"^2257^8^1587321855^67^1^5^326.36^", -- [833]
-						"^2258^8^1587321976^150^1^5^304.34^Imfiredupbrh", -- [834]
-						"^2259^8^1587322328^155^1^5^326.36^", -- [835]
-						"^2260^8^1587322626^222^1^5^326.36^Atrocitydh", -- [836]
-						"^2257^8^1587326727^68^1^5^412.06^", -- [837]
-						"^2258^8^1587326851^117^1^5^412.06^", -- [838]
-						"^2259^8^1587327168^132^1^5^412.06^", -- [839]
-						"^2260^8^1587327427^239^1^5^412.06^", -- [840]
-						"^2113^8^1587328022^83^1^5^412.48^", -- [841]
-						"^2114^8^1587328383^120^1^5^412.48^", -- [842]
-						"^2115^8^1587328583^95^1^5^412.48^Twisted", -- [843]
-						"^2116^8^1587328779^108^1^5^412.48^", -- [844]
-						"^2117^8^1587328915^65^1^5^412.48^", -- [845]
-						"^2113^8^1587332860^87^1^5^325.77^", -- [846]
-						"^2114^8^1587333093^111^1^5^325.77^", -- [847]
-						"^2115^8^1587333281^108^1^5^303.58^Imfiredup", -- [848]
-						"^2116^8^1587333507^114^1^5^303.58^Twisted", -- [849]
-						"^2117^8^1587333652^73^1^5^303.58^", -- [850]
-						"^2292^8^1587499431^90^0^5^473.65^Jetshunter", -- [851]
-						"^2292^8^1587499622^105^1^5^473.65^", -- [852]
-						"^2312^8^1587499971^86^1^5^473.65^Mbh", -- [853]
-						"^2290^8^1587500341^132^1^5^473.19^Jetshunter", -- [854]
-						"^2291^8^1587500737^147^1^5^473.19^", -- [855]
-						"^2329^16^1587513621^298^1^20^476.00^Lipp", -- [856]
-						"^2334^16^1587514227^178^1^20^475.03^Kíngflydh", -- [857]
-						"^2327^16^1587514760^8^0^20^475.88^", -- [858]
-						"^2327^16^1587514846^208^1^20^475.89^Premonhunter", -- [859]
-						"^2328^16^1587515628^5^0^20^476.33^", -- [860]
-						"^2328^16^1587515701^242^1^20^476.47^Willxo", -- [861]
-						"^2336^16^1587516087^16^0^20^476.37^", -- [862]
-						"^2336^16^1587516158^267^0^20^476.46^Driney", -- [863]
-						"^2336^16^1587516557^266^1^20^476.69^Premonhunter", -- [864]
-						"^2333^16^1587517000^5^0^20^476.68^", -- [865]
-						"^2333^16^1587517074^201^1^20^476.62^Vilwarr", -- [866]
-						"^2331^16^1587517424^8^0^20^476.39^", -- [867]
-						"^2331^16^1587517580^52^0^20^476.58^Depletos-Area52", -- [868]
-						"^2331^16^1587517724^210^1^20^477.07^Premonhunter", -- [869]
-						"^2335^16^1587518245^207^1^20^476.92^Soiy", -- [870]
-						"^2343^16^1587518631^446^1^20^476.81^Lipp", -- [871]
-						"^2345^16^1587519119^18^0^20^476.51^Trillr", -- [872]
-						"^2345^16^1587519234^0^0^20^476.51^", -- [873]
-						"^2345^16^1587519352^455^1^20^476.97^Depletojr-Area52", -- [874]
-						"^2337^16^1587520380^454^1^20^477.39^Soiy", -- [875]
-						"^2344^16^1587521874^509^0^20^475.77^Willxo", -- [876]
-						"^2344^16^1587522514^734^1^20^476.96^Depletos-Area52", -- [877]
-						"^2111^8^1588107308^44^1^5^476.14^", -- [878]
-						"^2118^8^1588107535^151^1^5^476.14^Twistedsp", -- [879]
-						"^2112^8^1588107815^81^1^5^475.66^", -- [880]
-						"^2123^8^1588108210^108^1^5^475.66^Atrocitydh", -- [881]
-						"^2265^16^1588723602^10^0^20^476.94^", -- [882]
-						"^2265^16^1588723652^89^1^20^477.60^", -- [883]
-						"^2263^16^1588724029^178^1^20^477.14^Vilshady-Thrall", -- [884]
-						"^2266^16^1588724385^7^0^20^476.34^", -- [885]
-						"^2266^16^1588724444^179^1^20^476.47^Noripalxo", -- [886]
-						"^2271^16^1588724736^4^0^20^477.40^Øñgødñøcap", -- [887]
-						"^2271^16^1588724772^3^0^20^477.40^", -- [888]
-						"^2271^16^1588724901^500^1^20^477.34^Vilshady-Thrall", -- [889]
-						"^2268^16^1588725584^212^1^20^477.54^Syreth", -- [890]
-						"^2272^16^1588728152^95^1^20^473.00^Piecez", -- [891]
-						"^2276^16^1588728357^147^1^20^473.06^Lipp", -- [892]
-						"^2280^16^1588728758^73^1^20^473.01^", -- [893]
-						"^2281^16^1588729683^202^1^20^477.58^Bubblejerb-Tichondrius", -- [894]
-						"^2086^8^1588811427^94^1^5^473.45^", -- [895]
-						"^2084^8^1588811812^74^1^5^473.45^", -- [896]
-						"^2085^8^1588812301^25^0^5^473.45^Hannospal", -- [897]
-						"^2085^8^1588812367^113^1^5^473.45^", -- [898]
-						"^2087^8^1588812617^127^1^5^473.45^", -- [899]
-						"^2333^16^1589329590^5^0^20^452.50^", -- [900]
-						"^2333^16^1589329629^173^1^20^477.29^", -- [901]
-						"^2331^16^1589330103^117^0^20^472.28^Soiy", -- [902]
-						"^2331^16^1589330395^203^1^20^478.36^Goopd", -- [903]
-						"^2337^16^1589331075^435^1^20^478.01^Déathstroke", -- [904]
-						"^2084^8^1589431219^68^1^5^469.99^", -- [905]
-						"^2086^8^1589431401^16^0^5^469.99^Gooptard", -- [906]
-						"^2085^8^1589431626^91^1^5^469.99^", -- [907]
-						"^2086^8^1589431754^76^1^5^469.99^Notbad-Zul'jin", -- [908]
-						"^2087^8^1589432185^121^1^5^469.99^", -- [909]
-						"^2093^8^1589776773^181^1^5^477.54^Shifttay-Zul'jin", -- [910]
-						"^2094^8^1589777017^134^1^5^477.54^Shifttay-Zul'jin", -- [911]
-						"^2095^8^1589777725^201^1^5^477.00^Atrocitydh", -- [912]
-						"^2096^8^1589778081^257^1^5^477.00^", -- [913]
-						"^2130^8^1589780069^245^1^5^477.66^", -- [914]
-						"^2131^8^1589781074^219^1^5^477.50^", -- [915]
-						"^2132^8^1589781610^219^1^5^477.50^Jazorogue-Area52", -- [916]
-						"^2133^8^1589781947^617^1^5^477.50^Atrocitydh", -- [917]
-						"^2113^8^1589783962^152^1^5^477.73^Shifttay-Zul'jin", -- [918]
-						"^2114^8^1589784612^178^1^5^477.73^", -- [919]
-						"^2115^8^1589784894^1^0^5^477.73^", -- [920]
-						"^2115^8^1589784989^183^1^5^477.73^Atrocitydh", -- [921]
-						"^2116^8^1589785708^188^1^5^477.73^", -- [922]
-						"^2117^8^1589786004^134^0^5^477.73^Imfiredup", -- [923]
-						"^2117^8^1589786193^232^1^5^477.73^", -- [924]
-						"^2086^8^1589795918^192^1^5^476.57^", -- [925]
-						"^2084^8^1589796491^101^1^5^476.57^Kiwivodka", -- [926]
-						"^2085^8^1589796912^196^1^5^476.57^Jazorogue-Area52", -- [927]
-						"^2087^8^1589797297^286^1^5^476.57^Atrocitydh", -- [928]
-						"^2344^15^1589848415^461^1^20^471.66^Tezcan-WyrmrestAccord", -- [929]
-						"^2093^8^1589927763^102^1^5^475.93^", -- [930]
-						"^2094^8^1589928236^119^1^5^475.93^Atrocitydh", -- [931]
-						"^2095^8^1589928542^114^1^5^475.93^", -- [932]
-						"^2096^8^1589928850^148^1^5^475.93^", -- [933]
-						"^2334^16^1589933696^155^1^20^476.16^Avade", -- [934]
-						"^2327^16^1589934231^10^0^20^476.16^", -- [935]
-						"^2327^16^1589934320^196^1^20^477.50^Señorchewps", -- [936]
-						"^2328^16^1589934964^5^0^20^478.88^", -- [937]
-						"^2328^16^1589935051^5^0^20^478.63^", -- [938]
-						"^2328^16^1589935112^144^0^20^478.63^Dossouh", -- [939]
-						"^2328^16^1589935419^215^1^20^478.08^Dossouh", -- [940]
-						"^2336^16^1589935770^14^0^20^478.57^", -- [941]
-						"^2336^16^1589935855^237^1^20^458.28^Ursys-Stormrage", -- [942]
-						"^2333^16^1589936326^5^0^20^458.07^", -- [943]
-						"^2333^16^1589936389^158^1^20^476.16^Noripalxo", -- [944]
-						"^2331^16^1589936793^7^0^20^476.05^", -- [945]
-						"^2331^16^1589936914^187^1^20^476.52^Siory", -- [946]
-						"^2337^16^1589937607^427^1^20^475.97^Driney", -- [947]
-						"^2344^16^1589938483^496^0^20^478.30^Noripalxo", -- [948]
-						"^2344^16^1589939062^651^1^20^477.79^Willxo", -- [949]
-						"^2329^15^1590053871^159^1^14^445.86^Mbwar", -- [950]
-						"^2334^15^1590054392^177^1^15^441.15^Atrocitydh", -- [951]
-						"^2257^8^1590055115^103^1^5^475.95^", -- [952]
-						"^2258^8^1590055307^93^1^5^475.95^", -- [953]
-						"^2259^8^1590055645^104^1^5^475.95^", -- [954]
-						"^2260^8^1590055919^160^1^5^475.39^", -- [955]
-						"^2257^8^1590122380^91^1^5^473.06^Felsfubar-Dath'Remar", -- [956]
-						"^2258^8^1590122574^121^1^5^473.06^", -- [957]
-						"^2259^8^1590122944^130^1^5^473.06^Felsfubar-Dath'Remar", -- [958]
-						"^2260^8^1590123226^216^1^5^473.06^Felsfubar-Dath'Remar", -- [959]
-						"^2257^8^1590123640^143^1^5^477.43^Mbdtf", -- [960]
-						"^2258^8^1590123897^238^1^5^477.43^Mbdtf", -- [961]
-						"^2259^8^1590124379^142^1^5^477.43^", -- [962]
-						"^2260^8^1590124741^270^1^5^477.43^", -- [963]
-						"^2257^8^1590125615^79^1^5^476.18^", -- [964]
-						"^2258^8^1590125776^116^1^5^476.18^", -- [965]
-						"^2259^8^1590126099^41^0^5^476.18^Qara", -- [966]
-						"^2259^8^1590126214^117^1^5^476.18^", -- [967]
-						"^2260^8^1590126493^245^1^5^476.18^Qara", -- [968]
-						"^2257^8^1590127280^87^1^5^476.81^", -- [969]
-						"^2258^8^1590127457^132^1^5^476.81^", -- [970]
-						"^2259^8^1590127800^3^0^5^476.81^", -- [971]
-						"^2259^8^1590127834^122^1^5^476.81^", -- [972]
-						"^2260^8^1590128134^195^1^5^476.81^", -- [973]
-						"^2257^8^1590128648^96^1^5^476.61^", -- [974]
-						"^2258^8^1590128900^130^1^5^476.61^Lonzoballo", -- [975]
-						"^2259^8^1590129261^87^0^5^476.61^Lonzoballo", -- [976]
-						"^2259^8^1590129379^153^1^5^476.61^Mbdtf", -- [977]
-						"^2260^8^1590129694^51^0^5^476.61^Atrocitydh", -- [978]
-						"^2260^8^1590129822^288^1^5^476.61^Lonzoballo", -- [979]
-						"^2257^8^1590130384^78^1^5^476.95^", -- [980]
-						"^2258^8^1590130555^198^1^5^476.95^Atrocitydh", -- [981]
-						"^2259^8^1590130994^129^1^5^477.19^", -- [982]
-						"^2260^8^1590131299^220^1^5^477.19^", -- [983]
-						"^2257^8^1590131783^88^1^5^476.26^", -- [984]
-						"^2258^8^1590131975^114^1^5^476.26^", -- [985]
-						"^2259^8^1590132311^114^1^5^476.26^Mbdtf", -- [986]
-						"^2260^8^1590132572^209^1^5^476.26^", -- [987]
-						"^2344^15^1590214363^524^1^29^466.50^Animus-Khadgar", -- [988]
-						"^2337^15^1590451284^0^0^16^465.38^", -- [989]
-						"^2337^15^1590451478^286^1^20^465.22^Immvp-ShatteredHalls", -- [990]
-						"^2344^15^1590451898^483^1^26^465.65^Herush", -- [991]
-						"^2337^15^1590453362^251^1^21^466.58^", -- [992]
-						"^2344^15^1590453716^461^1^27^455.94^Loaks-Thrall", -- [993]
-						"^2344^15^1590455691^463^1^27^470.29^Drewsky", -- [994]
-						"^2337^15^1590456611^0^0^17^473.19^", -- [995]
-						"^2337^15^1590457021^306^1^25^470.48^Wikiwiki-MoonGuard", -- [996]
-						"^2344^15^1590457411^483^1^27^451.86^Iamgladious-Dalaran", -- [997]
-						"^2344^15^1590458652^465^1^27^471.09^Potatoskins-Detheroc", -- [998]
-						"^2337^15^1590459661^0^0^18^477.84^", -- [999]
-						"^2337^15^1590460367^321^1^26^475.61^Samses-EmeraldDream", -- [1000]
-						"^2344^15^1590460825^484^1^30^471.23^Pandapayx-Zul'jin", -- [1001]
-						"^2344^15^1590462300^425^1^22^474.90^Pandapaybtw-Zul'jin", -- [1002]
-						"^2337^15^1590464028^1^0^24^472.65^", -- [1003]
-						"^2337^15^1590464092^299^1^24^472.65^Ocke-ArgentDawn", -- [1004]
-						"^2344^15^1590464513^445^1^24^472.61^Ocke-ArgentDawn", -- [1005]
-						"^2329^15^1590534451^120^1^17^457.72^", -- [1006]
-						"^2337^15^1590535421^422^1^18^472.52^Bigups-Ravenholdt", -- [1007]
-						"^2344^15^1590536216^495^1^18^462.74^", -- [1008]
-						"^2076^16^1590612389^62^1^20^480.63^", -- [1009]
-						"^2073^16^1590612601^114^0^20^480.63^Atrocitydh", -- [1010]
-						"^2073^16^1590613019^118^1^20^480.63^", -- [1011]
-						"^2084^8^1590716294^78^1^5^478.19^", -- [1012]
-						"^2086^8^1590716732^130^1^5^478.19^", -- [1013]
-						"^2085^8^1590717042^129^1^5^478.08^", -- [1014]
-						"^2087^8^1590717380^186^1^5^478.08^Goopd", -- [1015]
-						"^2329^16^1590800242^312^1^20^472.84^Kíngflydh", -- [1016]
-						"^2334^16^1590800820^222^1^20^466.60^Ericswarrior", -- [1017]
-						"^2327^16^1590801367^10^0^20^470.62^", -- [1018]
-						"^2327^16^1590801453^197^1^20^475.99^", -- [1019]
-						"^2328^16^1590802105^6^0^20^475.82^", -- [1020]
-						"^2328^16^1590802341^6^0^20^476.29^", -- [1021]
-						"^2328^16^1590802382^88^0^20^476.14^Pregame", -- [1022]
-						"^2328^16^1590802584^58^0^20^476.12^Ericswarrior", -- [1023]
-						"^2328^16^1590802708^138^0^20^476.12^Ericswarrior", -- [1024]
-						"^2328^16^1590802917^281^1^20^476.12^Jetslock", -- [1025]
-						"^2336^16^1590803353^15^0^20^476.16^", -- [1026]
-						"^2336^16^1590803436^351^1^20^476.05^Maladh-Area52", -- [1027]
-						"^2333^16^1590803976^0^0^20^0.00^", -- [1028]
-						"^2333^16^1590804068^209^1^20^475.70^Ravilianz", -- [1029]
-						"^2331^16^1590804454^10^0^20^480.75^Kíngflydh", -- [1030]
-						"^2331^16^1590804790^12^0^20^473.38^", -- [1031]
-						"^2331^16^1590804876^69^0^20^474.48^Ravilianz", -- [1032]
-						"^2331^16^1590805005^192^0^20^474.65^Gooptard", -- [1033]
-						"^2331^16^1590805314^227^1^20^474.58^Ravilianz", -- [1034]
-						"^2335^16^1590805968^218^1^20^476.10^Jetshunter", -- [1035]
-						"^2343^16^1590806406^456^1^20^476.39^Norichixo", -- [1036]
-						"^2345^16^1590807237^0^0^20^476.15^", -- [1037]
-						"^2345^16^1590807365^534^0^20^476.13^Ericswarrior", -- [1038]
-						"^2345^16^1590807954^0^0^20^475.80^", -- [1039]
-						"^2345^16^1590808009^247^0^20^475.80^Imshootinup", -- [1040]
-						"^2345^16^1590808336^482^1^20^476.04^Jacobxo", -- [1041]
-						"^2337^16^1590809147^0^0^20^476.07^", -- [1042]
-						"^2337^16^1590809570^119^0^20^476.17^Ericswarrior", -- [1043]
-						"^2337^16^1590809803^387^0^20^476.17^Jetslock", -- [1044]
-						"^2337^16^1590810296^472^0^20^476.04^Mbdh", -- [1045]
-						"^2337^16^1590810893^46^0^20^476.04^Ericswarrior", -- [1046]
-						"^2337^16^1590811011^93^0^20^476.04^Fakemoosh", -- [1047]
-						"^2337^16^1590811148^0^0^20^476.04^Zipzoop-Mal'Ganis", -- [1048]
-						"^2290^8^1591061424^71^1^5^464.25^", -- [1049]
-						"^2292^8^1591061960^64^1^5^465.64^", -- [1050]
-						"^2312^8^1591062578^80^0^5^467.98^Trevordruid-Area52", -- [1051]
-						"^2312^8^1591062689^56^1^5^467.98^", -- [1052]
-						"^2291^8^1591062988^224^0^5^467.98^Girthlordx", -- [1053]
-						"^2291^8^1591063293^77^0^5^467.19^Trevordruid-Area52", -- [1054]
-						"^2291^8^1591063456^278^1^5^467.19^Girthlordx", -- [1055]
-						"^2329^16^1591142835^253^1^20^478.52^Lipp", -- [1056]
-						"^2334^16^1591143479^154^1^20^444.08^Momonidebi", -- [1057]
-						"^2327^16^1591143954^8^0^20^440.82^", -- [1058]
-						"^2327^16^1591144003^10^0^20^440.82^", -- [1059]
-						"^2327^16^1591144094^193^1^20^444.03^Momonidebi", -- [1060]
-						"^2328^16^1591144771^4^0^20^444.11^", -- [1061]
-						"^2328^16^1591145113^216^1^20^444.11^Momonidebi", -- [1062]
-						"^2336^16^1591145465^16^0^20^443.98^", -- [1063]
-						"^2336^16^1591145589^285^0^20^452.68^Momonidebi", -- [1064]
-						"^2336^16^1591145973^252^1^20^452.68^Momonidebi", -- [1065]
-						"^2333^16^1591146415^5^0^20^452.66^", -- [1066]
-						"^2333^16^1591146500^171^1^20^452.68^Momonidebi", -- [1067]
-						"^2331^16^1591146796^10^0^20^453.87^", -- [1068]
-						"^2331^16^1591146844^9^0^20^453.87^", -- [1069]
-						"^2331^16^1591147056^7^0^20^455.40^", -- [1070]
-						"^2331^16^1591147143^194^1^20^455.40^Momonidebi", -- [1071]
-						"^2335^16^1591147597^189^1^20^455.37^Momonidebi", -- [1072]
-						"^2337^16^1591148211^0^0^20^455.30^", -- [1073]
-						"^2337^16^1591148264^422^1^20^455.30^Momonidebi", -- [1074]
-						"^2344^16^1591149324^636^0^20^456.76^Momonidebi", -- [1075]
-						"^2344^16^1591150056^659^0^20^456.79^Momonidebi", -- [1076]
-						"^2344^16^1591150830^524^0^20^456.79^Momonidebi", -- [1077]
-						"^2344^16^1591151450^563^0^20^453.96^Momonidebi", -- [1078]
-						"^2344^16^1591152133^678^1^20^456.80^Momonidebi", -- [1079]
-						"^2111^8^1591215559^135^1^5^477.80^Mbdtf", -- [1080]
-						"^2118^8^1591216090^171^0^5^477.80^Twistedjr", -- [1081]
-						"^2118^8^1591216293^243^1^5^477.80^", -- [1082]
-						"^2112^8^1591216781^164^0^5^477.80^Mbdtf", -- [1083]
-						"^2112^8^1591217051^190^1^5^477.80^", -- [1084]
-						"^2123^8^1591217512^228^1^5^477.80^", -- [1085]
-						"^2076^16^1591222431^81^1^20^480.44^", -- [1086]
-						"^2073^16^1591222719^81^1^20^480.44^", -- [1087]
-						"^2337^15^1591661195^333^1^23^467.08^Eredinn-Kargath", -- [1088]
-						"^2344^15^1591661751^458^1^23^470.45^Revân", -- [1089]
-						"^2344^15^1591663119^468^1^23^472.17^Sookey-BurningLegion", -- [1090]
-						"^2337^15^1591664214^0^0^15^473.11^", -- [1091]
-						"^2337^15^1591664909^293^1^26^470.85^Magwalker-Sargeras", -- [1092]
-						"^2344^15^1591665399^461^1^26^463.63^Ahoyvey-Area52", -- [1093]
-						"^2344^15^1591667230^489^1^24^470.77^Aeryn-Agamaggan", -- [1094]
-						"^2337^15^1591668798^0^0^29^473.17^", -- [1095]
-						"^2337^15^1591668843^299^1^29^473.17^Frizzygummy-Area52", -- [1096]
-						"^2344^15^1591669243^453^1^30^449.96^Grinningtoad-Stormreaver", -- [1097]
-						"^2344^15^1591671026^477^1^29^467.62^Brandon-Coilfang", -- [1098]
-						"^2337^15^1591672733^0^0^22^466.89^", -- [1099]
-						"^2337^15^1591672772^299^1^22^466.89^Sallyqt-Tichondrius", -- [1100]
-						"^2344^15^1591673273^441^1^22^462.36^Sallyqt-Tichondrius", -- [1101]
-						"^2344^15^1591674763^496^1^25^446.91^Phaizdk-Thrall", -- [1102]
-						"^2337^15^1591675670^0^0^11^472.45^", -- [1103]
-						"^2337^15^1591675960^286^1^22^468.41^Jambini-Area52", -- [1104]
-						"^2344^15^1591676414^433^1^23^468.41^Jambini-Area52", -- [1105]
-						"^2344^15^1591677561^455^1^24^471.97^Zephahdk", -- [1106]
-						"^2337^15^1591678644^0^0^14^473.66^", -- [1107]
-						"^2337^15^1591678998^287^1^21^476.57^Sleepwalkw", -- [1108]
-						"^2344^15^1591679427^431^1^23^476.72^Sleepwalkw", -- [1109]
-						"^2337^15^1591681073^230^1^17^475.62^", -- [1110]
-						"^2344^15^1591681442^416^1^19^469.49^Wasabî-Mug'thol", -- [1111]
-						"^2290^23^1591830776^36^0^5^480.75^Screaym-Hyjal", -- [1112]
-						"^2290^23^1591830880^39^1^5^480.75^", -- [1113]
-						"^2292^23^1591831170^44^1^5^479.88^", -- [1114]
-						"^2312^23^1591831288^42^1^5^478.69^", -- [1115]
-						"^2291^23^1591831373^85^1^5^478.69^Screaym-Hyjal", -- [1116]
-						"^2257^23^1591831530^59^1^5^478.69^", -- [1117]
-						"^2258^23^1591831642^8^0^5^478.90^", -- [1118]
-						"^2258^23^1591831690^34^1^5^478.90^Screaym-Hyjal", -- [1119]
-						"^2259^23^1591831834^45^1^5^474.73^", -- [1120]
-						"^2260^23^1591832029^81^1^5^474.73^", -- [1121]
-						"^2292^8^1591936017^45^1^5^476.25^", -- [1122]
-						"^2290^8^1591936393^48^1^5^476.08^", -- [1123]
-						"^2312^8^1591936647^40^1^5^476.25^", -- [1124]
-						"^2291^8^1591936949^144^1^5^476.25^Bustysocrmom", -- [1125]
-						"^2329^16^1592009603^297^1^20^473.77^Pregame", -- [1126]
-						"^2334^16^1592010206^152^1^20^476.32^Fashionkilla", -- [1127]
-						"^2327^16^1592010708^7^0^20^476.32^", -- [1128]
-						"^2327^16^1592010806^200^1^20^474.74^Imdreamedup-Zul'jin", -- [1129]
-						"^2333^16^1592011529^4^0^20^474.68^", -- [1130]
-						"^2333^16^1592011639^193^1^20^474.74^Norichixo", -- [1131]
-						"^2331^16^1592012049^11^0^20^474.52^", -- [1132]
-						"^2331^16^1592012245^11^0^20^476.47^", -- [1133]
-						"^2331^16^1592012367^199^1^20^476.47^Imdreamedup-Zul'jin", -- [1134]
-						"^2337^16^1592013194^275^0^20^472.29^Ericswarrior", -- [1135]
-						"^2337^16^1592013540^376^0^20^472.29^Jacobxo", -- [1136]
-						"^2337^16^1592014008^289^0^20^476.81^Gooptard", -- [1137]
-						"^2337^16^1592014377^454^0^20^476.93^Jetslock", -- [1138]
-						"^2337^16^1592014913^486^0^20^476.97^Fakemoosh", -- [1139]
-						"^2337^16^1592015467^456^1^20^477.09^Lammara-Zul'jin", -- [1140]
-						"^2344^16^1592017046^467^0^20^477.31^Lammara-Zul'jin", -- [1141]
-						"^2344^16^1592017599^176^0^20^477.39^Ericswarrior", -- [1142]
-						"^2344^16^1592017851^367^0^20^477.17^Gooptard", -- [1143]
-						"^2344^16^1592018329^631^0^20^477.25^Imshootinup", -- [1144]
-						"^2344^16^1592019069^183^0^20^477.47^Lammara-Zul'jin", -- [1145]
-						"^2344^16^1592019336^117^0^20^477.52^Ericswarrior", -- [1146]
-						"^2344^16^1592019566^139^0^20^477.69^Fakemoosh", -- [1147]
-						"^2344^16^1592019777^519^0^20^477.64^Jetslock", -- [1148]
-						"^2344^16^1592020390^181^0^20^477.64^Twistedp", -- [1149]
-						"^2093^8^1592062481^87^1^5^474.74^", -- [1150]
-						"^2094^8^1592062978^89^1^5^474.74^", -- [1151]
-						"^2095^8^1592063399^115^1^5^474.61^Shockhunt-Turalyon", -- [1152]
-						"^2096^8^1592063633^170^1^5^474.61^", -- [1153]
-						"^2130^8^1592343738^291^1^5^477.69^Powercleans", -- [1154]
-						"^2131^8^1592344463^17^0^5^477.69^Atrocitydh", -- [1155]
-						"^2131^8^1592344623^216^1^5^477.69^Powercleans", -- [1156]
-						"^2132^8^1592345272^258^1^5^477.69^Powercleans", -- [1157]
-						"^2133^8^1592345623^51^0^5^477.69^Powercleans", -- [1158]
-						"^2133^8^1592345880^396^1^5^477.69^Hannosp", -- [1159]
-						"^2093^8^1592614296^91^1^5^476.56^", -- [1160]
-						"^2094^8^1592614881^121^1^5^476.56^Xennald", -- [1161]
-						"^2095^8^1592615205^100^1^5^476.56^Jetspal", -- [1162]
-						"^2096^8^1592615420^150^1^5^476.56^", -- [1163]
-						"^2257^8^1592947208^82^1^5^478.30^Atlasxo", -- [1164]
-						"^2258^8^1592947531^93^0^5^478.30^Mbdtf", -- [1165]
-						"^2258^8^1592947662^98^1^5^478.30^", -- [1166]
-						"^2259^8^1592948069^120^1^5^478.00^Atrocitydh", -- [1167]
-						"^2260^8^1592948454^213^0^5^478.00^Atrocitydh", -- [1168]
-						"^2260^8^1592948780^214^1^5^479.38^Jetslock", -- [1169]
-						"^2257^8^1593576837^93^1^5^478.45^", -- [1170]
-						"^2258^8^1593577102^102^1^5^478.45^", -- [1171]
-						"^2259^8^1593577425^167^0^5^478.31^Hannomage", -- [1172]
-						"^2259^8^1593577640^215^1^5^478.31^Hannomage", -- [1173]
-						"^2260^8^1593578067^246^1^5^478.31^Mbdh", -- [1174]
-						"^2312^23^1593654343^15^0^5^479.92^Atrocitydh", -- [1175]
-						"^2292^23^1593654504^41^1^5^482.13^", -- [1176]
-						"^2312^23^1593654595^50^1^5^482.13^", -- [1177]
-						"^2290^23^1593654671^54^1^5^481.34^", -- [1178]
-						"^2291^23^1593654789^91^1^5^481.34^", -- [1179]
-						"^2257^23^1593654946^66^1^5^481.34^", -- [1180]
-						"^2258^23^1593655060^54^1^5^482.13^Atrocitydh", -- [1181]
-						"^2111^8^1594264483^62^1^5^479.41^", -- [1182]
-						"^2118^8^1594264885^98^0^5^479.41^Twistedp", -- [1183]
-						"^2118^8^1594265134^69^0^5^479.41^Mbwar", -- [1184]
-						"^2118^8^1594265248^104^1^5^479.41^Xennald", -- [1185]
-						"^2112^8^1594265607^105^1^5^479.41^", -- [1186]
-						"^2123^8^1594266012^127^1^5^479.41^", -- [1187]
-						"^2084^8^1594675621^69^1^5^477.44^", -- [1188]
-						"^2086^8^1594675903^135^1^5^477.44^Scottbrexit", -- [1189]
-						"^2085^8^1594676375^117^1^5^479.60^", -- [1190]
-						"^2087^8^1594676811^89^1^5^439.19^", -- [1191]
-						"^2093^8^1594754746^104^1^5^476.27^", -- [1192]
-						"^2094^8^1594755102^136^1^5^476.27^", -- [1193]
-						"^2095^8^1594755538^128^1^5^475.42^", -- [1194]
-						"^2096^8^1594755848^187^1^5^475.42^Xsuma", -- [1195]
-						"^2329^16^1595033979^222^1^20^474.42^Lammara-Zul'jin", -- [1196]
-						"^2334^16^1595034438^18^0^20^477.66^", -- [1197]
-						"^2334^16^1595034509^149^1^20^477.66^Atrocitydh", -- [1198]
-						"^2333^16^1595035266^4^0^20^476.58^", -- [1199]
-						"^2333^16^1595035390^154^1^20^476.42^", -- [1200]
-						"^2331^16^1595035690^7^0^20^476.60^", -- [1201]
-						"^2331^16^1595035913^234^1^20^476.60^Lammara-Zul'jin", -- [1202]
-						"^2337^16^1595036658^434^1^20^476.53^Goophunt", -- [1203]
-						"^2331^16^1595377222^146^1^20^466.07^Soupshop", -- [1204]
-						"^2344^16^1595378572^635^1^20^477.74^Thelissa", -- [1205]
-						"^2257^8^1595702279^85^1^5^479.05^", -- [1206]
-						"^2258^8^1595702476^70^0^5^479.05^Mbwar", -- [1207]
-						"^2258^8^1595702667^39^0^5^479.47^Arcindex-Zul'jin", -- [1208]
-						"^2258^8^1595702740^85^1^5^479.47^", -- [1209]
-						"^2259^8^1595703184^59^1^5^479.47^", -- [1210]
-						"^2260^8^1595703465^138^1^5^479.47^Twistedw", -- [1211]
-						"^2111^8^1596348199^59^1^5^480.75^", -- [1212]
-						"^2118^8^1596348527^198^1^5^480.75^Soakzy-Area52", -- [1213]
-						"^2112^8^1596348849^2^0^5^480.75^", -- [1214]
-						"^2112^8^1596348882^131^1^5^480.75^Soakzy-Area52", -- [1215]
-						"^2123^8^1596349233^118^1^5^480.75^", -- [1216]
-						"^2111^8^1596584013^81^1^5^479.68^", -- [1217]
-						"^2118^8^1596584439^122^1^5^479.68^Lovepet-Area52", -- [1218]
-						"^2112^8^1596584763^142^1^5^479.68^Lovepet-Area52", -- [1219]
-						"^2123^8^1596585356^133^1^5^479.68^Lovepet-Area52", -- [1220]
-						"^2331^16^1596586807^136^1^20^480.66^Deñna-Hyjal", -- [1221]
-						"^2329^16^1597190253^225^0^20^465.87^Noripalxo", -- [1222]
-						"^2329^16^1597190523^205^1^20^475.76^Atrocitydh", -- [1223]
-						"^2333^16^1597194489^140^1^20^449.89^Podd", -- [1224]
-						"^2331^16^1597194736^8^0^20^479.86^", -- [1225]
-						"^2331^16^1597194903^237^1^20^479.21^Lixomai-Azralon", -- [1226]
-						"^2335^16^1597195400^186^1^20^478.79^Podd", -- [1227]
-						"^2343^16^1597195781^293^1^20^477.63^Podd", -- [1228]
-						"^2345^16^1597196244^0^0^20^477.90^", -- [1229]
-						"^2111^8^1597687751^79^1^5^478.11^", -- [1230]
-						"^2118^8^1597688192^100^1^5^478.11^", -- [1231]
-						"^2112^8^1597688341^62^0^5^478.11^Otrewtres-Quel'Thalas", -- [1232]
-						"^2112^8^1597688592^90^1^5^478.11^", -- [1233]
-						"^2123^8^1597688893^162^1^5^478.11^Atrocitydh", -- [1234]
-						"^2105^23^1597700583^27^0^5^482.25^", -- [1235]
-						"^2105^23^1597700898^24^0^5^482.25^", -- [1236]
-						"^2105^23^1597701326^23^0^5^482.25^", -- [1237]
-						"^2105^23^1597702224^67^0^5^482.25^", -- [1238]
-						"^2106^23^1597702344^29^0^5^482.25^", -- [1239]
-						"^2106^23^1597702436^28^0^5^482.25^", -- [1240]
-						"^2106^23^1597703075^36^0^5^482.25^", -- [1241]
-						"^2106^23^1597703481^54^1^5^482.25^", -- [1242]
-						"^2105^23^1597712022^51^0^5^482.25^", -- [1243]
-						"^2105^23^1597713743^60^0^5^482.25^", -- [1244]
-						"^2329^16^1597794994^294^0^20^438.66^Maximumd", -- [1245]
-						"^2329^16^1597795339^280^1^20^438.66^Alireza", -- [1246]
-						"^2333^16^1597796199^5^0^20^458.04^", -- [1247]
-						"^2333^16^1597796235^167^1^20^458.04^", -- [1248]
-						"^2331^16^1597796537^9^0^20^458.08^", -- [1249]
-						"^2331^16^1597796770^148^1^20^474.36^Sanghelios", -- [1250]
-						"^2337^16^1597797265^347^1^20^479.87^Maximumd", -- [1251]
-						"^2093^8^1597812205^100^1^5^481.34^", -- [1252]
-						"^2094^8^1597812585^101^1^5^481.34^", -- [1253]
-						"^2095^8^1597812991^104^1^5^481.34^Mbdtf", -- [1254]
-						"^2096^8^1597813187^144^1^5^481.34^Mbdtf", -- [1255]
-						"^2105^23^1598311053^12^0^5^482.38^", -- [1256]
-						"^2105^23^1598311431^22^0^5^482.38^", -- [1257]
-						"^2265^15^1598332952^13^0^10^482.09^Atrocitydh", -- [1258]
-						"^2265^14^1598333200^214^0^10^480.69^Atrocitydh", -- [1259]
-						"^2265^14^1598334035^63^0^10^481.75^Atrocitydh", -- [1260]
-						"^2329^16^1598400610^251^1^20^478.83^Vogonfury-Windrunner", -- [1261]
-						"^2334^16^1598401083^140^1^20^477.93^Podd", -- [1262]
-						"^2327^16^1598401568^9^0^20^478.69^", -- [1263]
-						"^2327^16^1598401680^167^1^20^478.91^Vogonfury-Windrunner", -- [1264]
-						"^2328^16^1598402270^6^0^20^476.41^", -- [1265]
-						"^2328^16^1598402315^226^1^20^476.41^Girlguy", -- [1266]
-						"^2336^16^1598402694^16^0^20^476.49^Drineym", -- [1267]
-						"^2336^16^1598402796^216^1^20^478.89^Siory", -- [1268]
-						"^2333^16^1598403166^5^0^20^478.92^", -- [1269]
-						"^2333^16^1598403207^139^1^20^478.92^Vogonfury-Windrunner", -- [1270]
-						"^2331^16^1598403486^9^0^20^479.03^", -- [1271]
-						"^2331^16^1598403646^170^1^20^478.92^Preheat", -- [1272]
-						"^2335^16^1598403993^167^1^20^479.01^Vogonfury-Windrunner", -- [1273]
-						"^2343^16^1598404361^300^1^20^479.16^Xyroblast", -- [1274]
-						"^2345^16^1598404726^12^0^20^479.16^Hannohunter", -- [1275]
-						"^2345^16^1598404954^0^0^20^479.14^", -- [1276]
-						"^2345^16^1598405055^396^1^20^479.14^Vogonfury-Windrunner", -- [1277]
-						"^2344^15^1599905696^477^0^22^464.50^Iampurty-Detheroc", -- [1278]
-						"^2344^15^1599906438^557^1^20^469.97^Iampurty-Detheroc", -- [1279]
-						"^2329^16^1602719962^226^1^20^133.14^Atrocitydh", -- [1280]
-						"^2337^16^1602720888^0^0^20^133.31^", -- [1281]
-						"^2337^16^1602720942^319^1^20^133.31^", -- [1282]
-						"^2086^23^1603102040^12^0^5^135.25^Atrocitydh", -- [1283]
-						"^2329^16^1604451631^236^1^20^126.97^Tagzs", -- [1284]
-						"^2334^16^1604452121^188^1^20^126.97^Xyroblast", -- [1285]
-						"^2327^16^1604452669^10^0^20^127.34^", -- [1286]
-						"^2327^16^1604452752^165^1^20^127.45^Mooncrikkit", -- [1287]
-						"^2328^16^1604453324^5^0^20^130.97^", -- [1288]
-						"^2328^16^1604453394^59^0^20^130.97^Mooncrikkit", -- [1289]
-						"^2328^16^1604453524^59^0^20^130.97^Mooncrikkit", -- [1290]
-						"^2328^16^1604453660^155^0^20^130.97^Mooncrikkit", -- [1291]
-						"^2328^16^1604453902^193^1^20^130.97^", -- [1292]
-						"^2336^16^1604454261^15^0^20^127.74^", -- [1293]
-						"^2336^16^1604454343^227^1^20^127.91^Mooncrikkit", -- [1294]
-						"^2333^16^1604454710^6^0^20^128.04^", -- [1295]
-						"^2333^16^1604454752^161^1^20^128.04^Mooncrikkit", -- [1296]
-						"^2331^16^1604455057^12^0^20^128.27^", -- [1297]
-						"^2331^16^1604455102^82^0^20^128.27^Tagzs", -- [1298]
-						"^2331^16^1604455354^146^1^20^128.27^Mooncrikkit", -- [1299]
-						"^2335^16^1604455792^159^1^20^128.72^Tagzs", -- [1300]
-						"^2343^16^1604456288^281^1^20^131.55^", -- [1301]
-						"^2345^16^1604456601^15^0^20^131.55^Thdlock", -- [1302]
-						"^2345^16^1604456779^393^1^20^131.55^Mooncrikkit", -- [1303]
-						"^2337^16^1604457573^452^0^20^131.78^Mooncrikkit", -- [1304]
-						"^2337^16^1604458088^145^0^20^131.73^", -- [1305]
-						"^2337^16^1604458291^368^1^20^131.94^Mooncrikkit", -- [1306]
-						"^2344^16^1604459174^477^0^20^132.13^Mooncrikkit", -- [1307]
-						"^2344^16^1604459722^626^1^20^132.13^Amayah", -- [1308]
-						"^2281^16^1605668575^258^1^20^128.48^Drineys", -- [1309]
-						"^2401^1^1627105334^41^1^5^121.06^", -- [1310]
-						"^2380^1^1627105407^33^1^5^121.06^", -- [1311]
-						"^2403^1^1627105461^27^1^5^121.50^", -- [1312]
-						"^2381^1^1627105526^31^1^5^125.20^", -- [1313]
-						"^2382^1^1627105607^45^1^5^120.38^Sanction-Thrall", -- [1314]
-						"^2384^1^1627105810^42^1^5^120.38^", -- [1315]
-						"^2385^1^1627105914^33^1^5^120.38^", -- [1316]
-						"^2386^1^1627106011^76^1^5^120.38^", -- [1317]
-						"^2397^1^1627106270^27^1^5^117.31^", -- [1318]
-						"^2392^1^1627106502^44^1^5^117.53^", -- [1319]
-						"^2393^1^1627106602^66^1^5^117.53^Volcanohands", -- [1320]
-						"^2401^1^1627107000^38^1^5^114.44^", -- [1321]
-						"^2380^1^1627107064^40^1^5^114.44^", -- [1322]
-						"^2403^1^1627107127^42^1^5^114.44^Twistedlock", -- [1323]
-						"^2381^1^1627107231^37^1^5^114.44^", -- [1324]
-						"^2382^1^1627107312^38^1^5^122.76^Twistedlock", -- [1325]
-						"^2384^1^1627107570^24^1^5^122.76^", -- [1326]
-						"^2385^1^1627107643^41^1^5^122.76^", -- [1327]
-						"^2386^1^1627107762^77^1^5^122.76^", -- [1328]
-						"^2397^1^1627108039^37^1^5^131.40^", -- [1329]
-						"^2392^1^1627108284^57^1^5^131.47^", -- [1330]
-						"^2393^1^1627108400^59^1^5^131.47^", -- [1331]
-						"^2382^1^1627108540^68^1^5^132.43^Twistedlock", -- [1332]
-						"^2384^1^1627108714^31^1^5^132.43^", -- [1333]
-						"^2385^1^1627108844^33^1^5^132.43^", -- [1334]
-						"^2386^1^1627108945^84^1^5^132.62^Maccrugger", -- [1335]
-						"^2401^1^1627109338^36^1^5^121.25^", -- [1336]
-						"^2380^1^1627109399^57^1^5^121.25^", -- [1337]
-						"^2403^1^1627109481^43^1^5^121.61^", -- [1338]
-						"^2381^1^1627109566^42^1^5^121.61^", -- [1339]
-						"^2387^1^1627109762^37^1^5^85.79^", -- [1340]
-						"^2388^1^1627109996^22^1^5^107.15^", -- [1341]
-						"^2389^1^1627110170^32^1^5^107.19^", -- [1342]
-						"^2390^1^1627110217^37^1^5^107.19^Tervis-Daggerspine", -- [1343]
-						"^2387^1^1627110317^55^1^5^107.19^Twistedlock", -- [1344]
-						"^2388^1^1627110653^32^1^5^107.19^", -- [1345]
-						"^2389^1^1627110834^39^1^5^107.19^", -- [1346]
-						"^2390^1^1627110888^51^1^5^107.34^", -- [1347]
-						"^2401^1^1627111201^39^1^5^97.99^", -- [1348]
-						"^2380^1^1627111264^54^1^5^97.99^Twistedlock", -- [1349]
-						"^2403^1^1627111359^64^1^5^97.99^Twistedlock", -- [1350]
-						"^2381^1^1627111463^30^1^5^97.99^", -- [1351]
-						"^2397^1^1627170106^26^1^5^128.90^", -- [1352]
-						"^2392^1^1627170295^50^1^5^128.90^", -- [1353]
-						"^2393^1^1627170401^58^1^5^128.90^Volcanohands", -- [1354]
-						"^2387^1^1627170505^46^1^5^129.12^Twistedlock", -- [1355]
-						"^2388^1^1627170745^29^1^5^129.12^", -- [1356]
-						"^2389^1^1627170920^63^1^5^129.12^", -- [1357]
-						"^2390^1^1627170997^34^1^5^129.12^", -- [1358]
-						"^2382^1^1627171145^35^1^5^128.76^", -- [1359]
-						"^2384^1^1627171289^28^1^5^128.76^", -- [1360]
-						"^2385^1^1627171371^50^1^5^128.76^", -- [1361]
-						"^2386^1^1627171478^77^1^5^128.76^", -- [1362]
-						"^2401^1^1627171759^38^1^5^123.40^", -- [1363]
-						"^2380^1^1627171821^49^1^5^123.40^", -- [1364]
-						"^2403^1^1627171895^38^1^5^123.40^", -- [1365]
-						"^2381^1^1627171972^45^1^5^123.40^", -- [1366]
-						"^2397^1^1627172172^29^1^5^130.32^", -- [1367]
-						"^2392^1^1627172358^53^1^5^130.32^", -- [1368]
-						"^2393^1^1627172467^64^1^5^130.81^", -- [1369]
-						"^2387^1^1627172573^73^1^5^131.05^Volcanohands", -- [1370]
-						"^2388^1^1627172857^34^1^5^131.05^", -- [1371]
-						"^2389^1^1627173050^38^1^5^131.45^", -- [1372]
-						"^2390^1^1627173103^34^1^5^131.45^", -- [1373]
-						"^2382^1^1627173270^45^1^5^120.58^", -- [1374]
-						"^2384^1^1627173404^40^1^5^121.17^", -- [1375]
-						"^2385^1^1627173503^45^1^5^121.17^", -- [1376]
-						"^2386^1^1627173610^76^1^5^121.17^", -- [1377]
-						"^2401^1^1627173939^58^1^5^121.54^Jackray", -- [1378]
-						"^2380^1^1627174022^62^1^5^121.54^Jackray", -- [1379]
-						"^2403^1^1627174110^59^1^5^122.14^", -- [1380]
-						"^2381^1^1627174208^44^1^5^122.14^", -- [1381]
-						"^2387^1^1627174363^45^1^5^145.40^", -- [1382]
-						"^2388^1^1627174617^25^1^5^145.62^", -- [1383]
-						"^2389^1^1627174787^33^1^5^146.03^", -- [1384]
-						"^2390^1^1627174834^28^1^5^146.03^", -- [1385]
-						"^2382^1^1627174973^57^1^5^124.83^Potatobrains", -- [1386]
-						"^2384^1^1627175127^38^1^5^124.83^", -- [1387]
-						"^2385^1^1627175210^47^1^5^124.83^", -- [1388]
-						"^2386^1^1627175320^80^1^5^124.83^", -- [1389]
-						"^2397^1^1627175506^38^1^5^113.24^", -- [1390]
-						"^2392^1^1627175753^68^1^5^113.24^", -- [1391]
-						"^2393^1^1627175877^120^1^5^113.24^Volcanohands", -- [1392]
-						"^2387^1^1627176360^51^1^5^112.14^Nyghtlock", -- [1393]
-						"^2388^1^1627176693^33^1^5^129.45^", -- [1394]
-						"^2389^1^1627176895^37^1^5^129.28^", -- [1395]
-						"^2390^1^1627176946^30^1^5^129.28^", -- [1396]
-						"^2401^1^1627177308^58^1^5^124.49^", -- [1397]
-						"^2380^1^1627177394^43^0^5^124.49^Atrocitydh", -- [1398]
-						"^2403^1^1627177556^59^1^5^124.76^", -- [1399]
-						"^2381^1^1627177652^40^1^5^125.16^", -- [1400]
-						"^2397^1^1627177961^30^1^5^112.85^", -- [1401]
-						"^2392^1^1627178202^43^1^5^119.62^", -- [1402]
-						"^2393^1^1627178320^55^1^5^124.50^", -- [1403]
-						"^2387^1^1627178533^72^1^5^129.75^", -- [1404]
-						"^2388^1^1627178817^26^1^5^129.75^", -- [1405]
-						"^2389^1^1627179002^37^1^5^129.75^", -- [1406]
-						"^2390^1^1627179053^35^1^5^129.90^", -- [1407]
-						"^2401^1^1627179334^35^1^5^122.16^", -- [1408]
-						"^2380^1^1627179396^69^1^5^122.16^", -- [1409]
-						"^2403^1^1627179496^70^1^5^122.21^", -- [1410]
-						"^2381^1^1627179611^41^1^5^122.21^", -- [1411]
-						"^2397^1^1627179780^47^1^5^120.02^", -- [1412]
-						"^2392^1^1627180036^57^1^5^115.74^", -- [1413]
-						"^2393^1^1627180150^99^1^5^115.74^Honduraas-CenarionCircle", -- [1414]
-						"^2382^1^1627180329^59^1^5^115.74^Honduraas-CenarionCircle", -- [1415]
-						"^2384^1^1627180504^39^1^5^115.74^", -- [1416]
-						"^2385^1^1627180637^47^1^5^111.92^Honduraas-CenarionCircle", -- [1417]
-						"^2386^1^1627180752^97^1^5^111.92^Honduraas-CenarionCircle", -- [1418]
-						"^2397^8^1627253947^134^0^5^228.68^Atrocitydh", -- [1419]
-						"^2397^8^1627254144^230^1^5^228.68^", -- [1420]
-						"^2392^8^1627254758^170^1^5^228.68^Atrocitydh", -- [1421]
-						"^2393^8^1627255089^172^1^5^228.68^Atrocitydh", -- [1422]
-						"^2395^8^1627411183^128^1^5^226.50^", -- [1423]
-						"^2394^8^1627411874^149^1^5^226.50^", -- [1424]
-						"^2400^8^1627412659^101^1^5^226.50^", -- [1425]
-						"^2396^8^1627412819^232^1^5^226.50^Atrocitydh", -- [1426]
-						"^2357^8^1627583712^109^1^5^233.11^Atrocitydh", -- [1427]
-						"^2356^8^1627584445^79^1^5^233.11^", -- [1428]
-						"^2358^8^1627584758^107^1^5^233.11^", -- [1429]
-						"^2359^8^1627585090^166^1^5^233.11^", -- [1430]
+					["Atrocitychad"] = {
+						"^2139^8^1587706495^80^0^5^481.13^Maxfingrguns", -- [1]
+						"^2139^8^1587706773^104^1^5^481.13^", -- [2]
+						"^2142^8^1587707182^54^0^5^481.13^Maxfingrguns", -- [3]
+						"^2139^8^1587707841^153^0^5^481.13^Atrocitychad", -- [4]
+						"^2139^8^1587759934^91^1^5^481.13^", -- [5]
+						"^2142^8^1587760342^107^1^5^481.13^Maxfingrguns", -- [6]
+						"^2140^8^1587760589^165^1^5^481.13^", -- [7]
+						"^2143^8^1587760917^217^1^5^481.13^Atrocitychad", -- [8]
+						"^2139^8^1587761501^103^1^5^481.13^", -- [9]
+						"^2139^8^1587762222^111^0^5^481.13^Maxfingrguns", -- [10]
+						"^2139^8^1587762619^111^1^5^481.13^Maxfingrguns", -- [11]
+						"^2142^8^1587763030^118^1^5^481.13^", -- [12]
+						"^2140^8^1587763248^175^1^5^481.13^", -- [13]
+						"^2143^8^1587763641^171^1^5^481.13^", -- [14]
+						"^2139^8^1587764067^93^1^5^481.13^", -- [15]
+						"^2142^8^1587764472^119^1^5^481.13^", -- [16]
+						"^2140^8^1587764683^175^1^5^481.13^Imfiredup", -- [17]
+						"^2143^8^1587765023^164^1^5^481.28^", -- [18]
+						"^2139^8^1587765727^82^1^5^481.13^", -- [19]
+						"^2142^8^1587766126^133^1^5^481.13^", -- [20]
+						"^2140^8^1587766356^171^1^5^481.13^", -- [21]
+						"^2143^8^1587766678^158^1^5^481.13^Ericchad", -- [22]
+						"^2139^8^1587767751^62^0^5^481.13^Maxfingrguns", -- [23]
+						"^2139^8^1587768302^99^1^5^481.13^Imfiredupdie", -- [24]
+						"^2142^8^1587768735^118^1^5^481.13^Maxfingrguns", -- [25]
+						"^2139^8^1587929175^80^1^5^480.97^", -- [26]
+						"^2142^8^1587929572^119^1^5^481.33^", -- [27]
+						"^2140^8^1587929804^150^1^5^481.33^", -- [28]
+						"^2143^8^1587930154^134^0^5^481.33^Twisted", -- [29]
+						"^2143^8^1587930921^167^0^5^481.13^Twisted", -- [30]
+						"^2143^8^1587931819^4^0^5^481.13^", -- [31]
+						"^2143^8^1587931927^53^0^5^481.13^Imfiredup", -- [32]
+						"^2143^8^1587932119^0^0^5^481.13^", -- [33]
+						"^2143^8^1587932153^16^0^5^481.13^Maxfingrguns", -- [34]
+						"^2143^8^1587932242^45^0^5^481.13^Twisted", -- [35]
+						"^2143^8^1587932558^36^0^5^481.13^Maxfingrguns", -- [36]
+						"^2143^8^1587933161^72^0^5^481.13^Imfiredup", -- [37]
+						"^2143^8^1587933386^179^0^5^481.13^Ericchad", -- [38]
+						"^2143^8^1587933760^82^0^5^481.13^Maxfingrguns", -- [39]
+						"^2143^8^1587934036^183^1^5^481.13^Twisted", -- [40]
+						"^2139^8^1587937506^75^1^5^481.13^", -- [41]
+						"^2142^8^1587937894^121^1^5^481.13^", -- [42]
+						"^2140^8^1587938109^184^1^5^481.13^", -- [43]
+						"^2143^8^1587938436^164^1^5^481.13^", -- [44]
+						"^2139^8^1587939071^83^1^5^481.13^", -- [45]
+						"^2142^8^1587939443^23^0^5^481.13^Maxfingrguns", -- [46]
+						"^2139^8^1587940037^75^1^5^481.13^", -- [47]
+						"^2142^8^1587940385^103^1^5^481.13^", -- [48]
+						"^2139^8^1587940872^96^1^5^481.13^", -- [49]
+						"^2139^8^1587941666^77^1^5^481.13^", -- [50]
+						"^2142^8^1587942075^97^1^5^481.13^", -- [51]
+						"^2140^8^1587942274^168^1^5^481.13^Twisted", -- [52]
+						"^2143^8^1587942592^78^0^5^481.13^Maxfingrguns", -- [53]
+						"^2143^8^1587943347^50^0^5^481.13^Twisted", -- [54]
+						"^2143^8^1587943600^160^1^5^481.13^", -- [55]
+						"^2139^8^1587944241^79^1^5^481.13^", -- [56]
+						"^2142^8^1587944594^28^0^5^481.13^Imfiredup", -- [57]
+						"^2139^8^1587953735^108^1^5^481.13^", -- [58]
+						"^2142^8^1587954146^125^1^5^481.13^Atrocitychad", -- [59]
+						"^2140^8^1587954356^110^0^5^481.13^Ericchad", -- [60]
+						"^2139^8^1587954685^95^1^5^481.13^Maxfingrguns", -- [61]
+						"^2142^8^1587955098^97^1^5^481.13^", -- [62]
+						"^2140^8^1587955303^157^1^5^481.13^", -- [63]
+						"^2143^8^1587955623^163^1^5^481.13^Imfiredup", -- [64]
+						"^2139^8^1587956043^71^1^5^481.13^", -- [65]
+						"^2142^8^1587956381^114^1^5^481.13^Maxfingrguns", -- [66]
+						"^2140^8^1587956570^170^1^5^481.13^", -- [67]
+						"^2143^8^1587956912^201^1^5^481.13^Ericchad", -- [68]
+						"^2139^8^1587958012^84^1^5^481.13^Imfiredup", -- [69]
+						"^2142^8^1587958432^104^1^5^481.13^", -- [70]
+						"^2140^8^1587958615^177^1^5^481.13^", -- [71]
+						"^2143^8^1587959064^179^0^5^481.13^Ericchad", -- [72]
+						"^2143^8^1587959702^76^0^5^481.13^Twisted", -- [73]
+						"^2139^8^1587961097^82^1^5^481.13^", -- [74]
+						"^2142^8^1587961482^107^1^5^481.13^", -- [75]
+						"^2140^8^1587961667^271^1^5^481.13^Ericchad", -- [76]
+						"^2143^8^1587962121^101^0^5^481.13^Twisted", -- [77]
+						"^2139^8^1587962777^93^1^5^481.13^", -- [78]
+						"^2142^8^1587963194^142^1^5^481.13^", -- [79]
+						"^2140^8^1587963543^110^0^5^481.13^Twisted", -- [80]
+						"^2139^8^1587963832^66^1^5^481.13^", -- [81]
+						"^2142^8^1587964210^109^1^5^481.13^", -- [82]
+						"^2140^8^1587964407^220^1^5^481.13^Twisted", -- [83]
+						"^2143^8^1587964772^175^1^5^481.13^Imfiredup", -- [84]
+						"^2139^8^1587966045^88^1^5^481.13^", -- [85]
+						"^2142^8^1587966433^35^0^5^481.13^Imfiredup", -- [86]
+						"^2142^8^1587966664^103^1^5^481.33^Ericchad", -- [87]
+						"^2140^8^1587966869^217^1^5^481.28^", -- [88]
+						"^2143^8^1587967212^0^0^5^481.28^Imfiredup", -- [89]
+						"^2139^8^1588028501^84^1^5^481.13^", -- [90]
+						"^2142^8^1588028977^6^0^5^480.97^", -- [91]
+						"^2142^8^1588029137^105^1^5^480.97^", -- [92]
+						"^2140^8^1588029329^71^0^5^480.97^Maxfingrguns", -- [93]
+						"^2140^8^1588029842^57^0^5^480.97^Twistedchad", -- [94]
+						"^2140^8^1588030119^89^0^5^480.97^Twistedchad", -- [95]
+						"^2140^8^1588030498^4^0^5^480.97^", -- [96]
+						"^2140^8^1588030565^175^1^5^480.97^Imfiredup", -- [97]
+						"^2143^8^1588030943^46^0^5^481.13^Maxfingrguns", -- [98]
+						"^2139^8^1588031193^105^0^5^481.13^Twistedchad", -- [99]
+						"^2139^8^1588031634^83^1^5^481.13^", -- [100]
+						"^2142^8^1588031985^107^1^5^481.13^", -- [101]
+						"^2140^8^1588032178^180^1^5^481.13^", -- [102]
+						"^2143^8^1588032498^65^0^5^481.13^Maxfingrguns", -- [103]
+						"^2139^8^1588033283^102^1^5^481.13^", -- [104]
+						"^2142^8^1588033676^97^1^5^481.13^", -- [105]
+						"^2140^8^1588033856^177^1^5^481.13^", -- [106]
+						"^2143^8^1588034177^178^1^5^481.13^", -- [107]
+						"^2139^8^1588034751^94^1^5^481.13^", -- [108]
+						"^2142^8^1588035109^105^1^5^481.13^", -- [109]
+						"^2140^8^1588035288^177^1^5^481.13^", -- [110]
+						"^2143^8^1588035608^133^0^5^481.13^Ericchad", -- [111]
+						"^2139^8^1588036197^98^1^5^481.13^", -- [112]
+						"^2142^8^1588036571^105^1^5^481.13^", -- [113]
+						"^2140^8^1588036758^176^1^5^481.13^", -- [114]
+						"^2143^8^1588037066^176^1^5^481.13^Imfiredup", -- [115]
+						"^2139^8^1588474210^90^1^5^481.13^", -- [116]
+						"^2142^8^1588474608^120^1^5^481.13^Imfiredup", -- [117]
+						"^2140^8^1588474892^168^1^5^481.13^", -- [118]
+						"^2143^8^1588475255^178^1^5^481.13^Maxfingrguns", -- [119]
+						"^2139^8^1588522904^101^1^5^481.13^", -- [120]
+						"^2142^8^1588523302^103^1^5^481.13^", -- [121]
+						"^2140^8^1588523791^48^0^5^481.13^Ericchad", -- [122]
+						"^2139^8^1588524782^92^1^5^481.13^", -- [123]
+						"^2142^8^1588525233^6^0^5^481.13^Ericchad", -- [124]
+						"^2142^8^1588525548^88^1^5^480.92^", -- [125]
+						"^2140^8^1588525958^169^1^5^480.92^", -- [126]
+						"^2143^8^1588526336^80^0^5^480.97^Twistedchad", -- [127]
+						"^2139^8^1588526924^94^1^5^481.13^Imfiredup", -- [128]
+						"^2142^8^1588527333^92^1^5^481.13^", -- [129]
+						"^2140^8^1588527666^167^1^5^481.13^", -- [130]
+						"^2143^8^1588527984^163^1^5^481.13^Atrocitychad", -- [131]
+						"^2139^8^1588532279^98^1^5^362.42^", -- [132]
+						"^2142^8^1588532663^94^1^5^362.42^", -- [133]
+						"^2140^8^1588532847^169^1^5^362.42^", -- [134]
+						"^2143^8^1588533151^160^1^5^362.42^Maxfingrguns", -- [135]
+						"^2139^8^1589516914^88^1^5^481.13^", -- [136]
+						"^2142^8^1589517714^90^1^5^481.13^", -- [137]
+						"^2140^8^1589518256^158^1^5^481.13^", -- [138]
+						"^2143^8^1589518680^148^1^5^481.13^", -- [139]
+						"^2139^8^1589597430^87^1^5^481.00^", -- [140]
+						"^2142^8^1589597916^90^1^5^480.97^", -- [141]
+						"^2139^8^1589655563^86^1^5^326.59^", -- [142]
+						"^2142^8^1589656044^95^1^5^326.59^", -- [143]
+						"^2140^8^1589656289^155^1^5^326.59^", -- [144]
+						"^2143^8^1589656662^161^1^5^326.59^", -- [145]
 					},
-					["Transmogg"] = {
+					["Atrocitybdx"] = {
+						"^2093^8^1593123003^127^1^5^480.38^Ericn", -- [1]
+						"^2094^8^1593123275^83^1^5^480.38^", -- [2]
+						"^2095^8^1593123743^101^1^5^480.38^", -- [3]
+						"^2096^8^1593124474^77^0^5^480.38^Ericn", -- [4]
 					},
-					["Atrocitydk"] = {
-						"^2139^8^1567406687^133^1^5^436.13^", -- [1]
-						"^2142^8^1567407359^135^1^5^436.13^", -- [2]
-						"^2140^8^1567407860^287^1^5^436.81^Twistedlock", -- [3]
-						"^2143^8^1567408314^219^1^5^436.81^", -- [4]
-						"^2086^8^1567577175^110^1^5^433.83^", -- [5]
-						"^2085^8^1567577509^107^1^5^433.83^", -- [6]
-						"^2084^8^1567578015^102^1^5^434.70^", -- [7]
-						"^2087^8^1567578214^104^1^5^434.70^", -- [8]
-						"^2111^8^1568172102^78^1^5^436.44^", -- [9]
-						"^2118^8^1568172493^137^1^5^436.44^", -- [10]
-						"^2112^8^1568172843^124^1^5^436.44^", -- [11]
-						"^2123^8^1568173077^158^1^5^436.44^", -- [12]
-						"^1113^3^1568437938^4^1^10^436.72^", -- [13]
-						"^1109^3^1568438003^273^1^10^436.72^", -- [14]
-						"^2086^8^1568955535^115^1^5^440.81^Disciplinae", -- [15]
-						"^2085^8^1568956124^136^1^5^442.33^", -- [16]
-						"^2084^8^1568956651^70^1^5^441.77^", -- [17]
-						"^2087^8^1568956817^115^1^5^441.77^Mbdtf", -- [18]
-						"^2124^8^1569050777^94^1^5^410.21^Heartbreak-Mal'Ganis", -- [19]
-						"^2125^8^1569051234^122^1^5^415.25^", -- [20]
-						"^2126^8^1569051617^56^1^5^418.81^", -- [21]
-						"^2127^8^1569051972^196^1^5^418.81^Heartbreak-Mal'Ganis", -- [22]
-						"^1822^23^1569164878^12^1^5^440.50^", -- [23]
-						"^1823^23^1569164957^12^1^5^440.50^", -- [24]
-						"^1824^23^1569165057^58^1^5^440.50^", -- [25]
-						"^2111^8^1569473851^45^1^5^437.81^", -- [26]
-						"^2118^8^1569474231^125^1^5^437.81^", -- [27]
-						"^2112^8^1569474472^115^1^5^437.81^", -- [28]
-						"^2123^8^1569474816^123^1^5^437.81^", -- [29]
-						"^1822^23^1574839493^16^1^5^417.81^", -- [30]
-						"^1823^23^1574839610^9^1^5^417.81^", -- [31]
-						"^1824^23^1574839681^61^1^5^417.81^", -- [32]
-						"^1822^2^1574840205^11^1^5^440.31^", -- [33]
-						"^1823^2^1574840292^11^1^5^440.31^", -- [34]
-						"^1824^2^1574840400^67^1^5^440.31^", -- [35]
-						"^1822^1^1574840590^9^1^5^440.31^", -- [36]
-						"^1823^1^1574840670^11^1^5^440.31^", -- [37]
-						"^1824^1^1574840753^47^1^5^440.31^", -- [38]
-						"^1822^1^1574840848^7^1^5^440.31^", -- [39]
-						"^1823^1^1574840924^8^1^5^440.31^", -- [40]
-						"^1824^1^1574840989^66^1^5^440.31^", -- [41]
-						"^1822^1^1574841150^9^1^5^440.31^", -- [42]
-						"^1823^1^1574841228^10^1^5^440.31^", -- [43]
-						"^1824^1^1574841320^42^1^5^440.31^", -- [44]
-						"^1822^1^1574841472^9^1^5^440.31^", -- [45]
-						"^1823^1^1574841555^9^1^5^440.31^", -- [46]
-						"^1824^1^1574841627^57^1^5^440.31^", -- [47]
-						"^1822^1^1574841741^8^1^5^440.31^", -- [48]
-						"^1823^1^1574841829^8^1^5^437.13^", -- [49]
-						"^1824^1^1574842120^41^1^5^440.31^", -- [50]
-						"^1824^1^1574842443^35^1^5^440.31^", -- [51]
-						"^1822^1^1574842530^14^1^5^440.31^", -- [52]
-						"^1823^1^1574842603^8^1^5^440.31^", -- [53]
-						"^1824^1^1574842665^35^1^5^440.31^", -- [54]
-						"^1822^1^1574842759^10^1^5^440.31^", -- [55]
-						"^1823^1^1574842823^5^1^5^440.31^", -- [56]
-						"^1824^1^1574842879^33^1^5^440.31^", -- [57]
-						"^1824^1^1574843974^31^1^5^440.31^", -- [58]
-						"^2260^23^1575103794^154^1^5^440.20^", -- [59]
-						"^2086^8^1575104538^78^1^5^431.09^", -- [60]
-						"^2085^8^1575105041^106^1^5^428.06^", -- [61]
-						"^2084^8^1575105561^75^1^5^428.06^", -- [62]
-						"^2087^8^1575105747^93^1^5^428.06^Hannod", -- [63]
-						"^2305^15^1575163557^193^1^30^428.91^Twisteddh", -- [64]
-						"^2304^15^1575163878^11^0^28^435.52^", -- [65]
-						"^2304^15^1575164053^211^1^29^435.40^", -- [66]
-						"^2303^15^1575164291^2^0^29^435.40^Twisteddh", -- [67]
-						"^2303^15^1575164330^7^0^29^435.16^", -- [68]
-						"^2303^15^1575164377^234^1^29^435.18^Flexatron-Destromath", -- [69]
-						"^2311^15^1575164793^8^0^29^436.67^Sotan-Zangarmarsh", -- [70]
-						"^2311^15^1575164851^6^0^29^436.67^", -- [71]
-						"^2311^15^1575164908^401^0^29^435.05^Gardria-Mal'Ganis", -- [72]
-						"^2311^15^1575165489^244^0^28^434.70^Hannod", -- [73]
-						"^2311^15^1575165825^250^1^28^433.53^Hannod", -- [74]
-						"^2293^15^1575166419^235^1^28^436.41^Glogzh-Area52", -- [75]
-						"^2299^15^1575166878^381^1^30^433.35^Shift-Area52", -- [76]
-						"^2298^16^1575168521^214^1^20^436.31^Beladesham", -- [77]
-						"^2289^16^1575169182^314^1^20^439.38^Nievin", -- [78]
-						"^2305^16^1575170310^258^1^20^439.45^Domrashi-Eitrigg", -- [79]
-						"^2304^16^1575170744^12^0^20^439.27^", -- [80]
-						"^2304^16^1575170949^274^1^20^439.12^Atrocitydk", -- [81]
-						"^2303^16^1575171260^3^0^20^439.08^Chmpagnepapi", -- [82]
-						"^2303^16^1575171759^6^0^20^439.68^Beladesham", -- [83]
-						"^2303^16^1575171816^264^0^20^440.16^Twisticles", -- [84]
-						"^2303^16^1575172120^6^0^20^440.16^Chmpagnepapi", -- [85]
-						"^2303^16^1575172196^311^0^20^440.26^Wuuzzyy-Lightning'sBlade", -- [86]
-						"^2303^16^1575172623^190^0^20^440.35^Glogzp-Area52", -- [87]
-						"^2303^16^1575172931^264^0^20^440.35^Wuuzzyy-Lightning'sBlade", -- [88]
-						"^2303^16^1575173252^8^0^20^440.06^Chmpagnepapi", -- [89]
-						"^2311^15^1575406202^434^0^19^437.57^Ládytiny-Area52", -- [90]
-						"^2311^15^1575406894^277^0^19^431.90^Luhara-Gallywix", -- [91]
-						"^2311^15^1575407588^426^1^19^437.34^Borrasca-Azralon", -- [92]
-						"^2298^15^1575408547^5^0^23^438.05^", -- [93]
-						"^2298^15^1575408585^5^0^23^438.05^", -- [94]
-						"^2298^15^1575408709^164^1^26^438.40^Taiumi-Quel'Thalas", -- [95]
-						"^2305^15^1575409361^189^1^28^439.46^Massacreop-Zul'jin", -- [96]
-						"^2298^16^1575426213^187^1^20^418.18^Atrocitydk", -- [97]
-						"^2305^16^1575426891^233^1^20^426.14^Poddk", -- [98]
-						"^2289^16^1575427488^205^1^20^442.09^Preheat", -- [99]
-						"^2304^16^1575427868^12^0^20^442.33^", -- [100]
-						"^2304^16^1575427967^228^1^20^442.33^", -- [101]
-						"^2303^16^1575428221^3^0^20^442.33^Soupshop", -- [102]
-						"^2303^16^1575428292^6^0^20^442.53^Maximums", -- [103]
-						"^2303^16^1575428340^406^1^20^442.88^Poddk", -- [104]
-						"^2311^16^1575428939^9^0^20^443.47^", -- [105]
-						"^2311^16^1575429138^453^1^20^443.68^Realestxo", -- [106]
-						"^2293^16^1575429918^427^0^20^443.56^Twistedsp", -- [107]
-						"^2293^16^1575430441^324^0^20^443.56^Yungthotty", -- [108]
-						"^2293^16^1575430877^334^0^20^443.60^Syrethqt", -- [109]
-						"^2293^16^1575431386^426^1^20^443.48^Xariiz", -- [110]
-						"^2111^8^1575625450^54^1^5^442.69^", -- [111]
-						"^2118^8^1575625902^110^1^5^442.69^", -- [112]
-						"^2112^8^1575626188^101^1^5^442.69^Psylok-Nagrand", -- [113]
-						"^2123^8^1575626501^115^1^5^441.98^", -- [114]
-						"^2260^23^1575757941^162^1^5^435.17^", -- [115]
-						"^2298^16^1576032739^172^1^20^443.05^Kíngflysp", -- [116]
-						"^2305^16^1576033394^205^1^20^443.23^Poddk", -- [117]
-						"^2289^16^1576033937^209^1^20^442.96^Lippdh", -- [118]
-						"^2304^16^1576034313^13^0^20^442.66^", -- [119]
-						"^2304^16^1576034380^230^1^20^443.13^Maximums", -- [120]
-						"^2303^16^1576034635^8^0^20^442.93^Soupshop", -- [121]
-						"^2303^16^1576034739^352^1^20^443.41^Xariiz", -- [122]
-						"^2311^16^1576035283^10^0^20^443.08^", -- [123]
-						"^2311^16^1576035331^3^0^20^443.28^", -- [124]
-						"^2311^16^1576035364^108^0^20^443.09^Eroys", -- [125]
-						"^2311^16^1576035554^404^1^20^443.09^Norialaxo", -- [126]
-						"^2293^16^1576036407^443^1^20^443.84^Xariiz", -- [127]
-						"^2260^23^1576039727^239^1^5^419.77^Stuart", -- [128]
-						"^2097^8^1576371577^46^1^5^438.39^", -- [129]
-						"^2109^8^1576371803^109^1^5^438.39^", -- [130]
-						"^2099^8^1576372349^54^1^5^438.39^", -- [131]
-						"^2100^8^1576372422^162^1^5^438.39^", -- [132]
-						"^2093^8^1576629007^106^1^5^436.63^", -- [133]
-						"^2094^8^1576629363^105^1^5^436.63^", -- [134]
-						"^2095^8^1576629755^107^1^5^434.95^", -- [135]
-						"^2096^8^1576629967^135^1^5^434.95^", -- [136]
-						"^2298^16^1576636679^185^1^20^438.35^", -- [137]
-						"^2305^16^1576637269^212^1^20^438.95^", -- [138]
-						"^2289^16^1576637840^211^1^20^441.50^Lippdh", -- [139]
-						"^2304^16^1576638212^11^0^20^441.75^", -- [140]
-						"^2304^16^1576638271^238^1^20^441.79^", -- [141]
-						"^2303^16^1576638541^4^0^20^441.46^Lippdh", -- [142]
-						"^2303^16^1576638635^361^1^20^441.74^Poddk", -- [143]
-						"^2311^16^1576639185^8^0^20^441.68^", -- [144]
-						"^2311^16^1576639220^9^0^20^441.68^", -- [145]
-						"^2311^16^1576639262^401^1^20^441.68^Poddk", -- [146]
-						"^2293^16^1576640015^458^1^20^443.79^Maeveycakes", -- [147]
-						"^2312^23^1576736512^20^0^5^436.38^", -- [148]
-						"^2312^23^1576736694^89^1^5^437.31^Powercleans", -- [149]
-						"^2290^23^1576736829^83^1^5^439.02^", -- [150]
-						"^2292^23^1576736971^69^1^5^439.02^", -- [151]
-						"^2291^23^1576737171^112^1^5^439.02^", -- [152]
-						"^2257^23^1576737363^125^1^5^439.02^", -- [153]
-						"^2258^23^1576737579^51^1^5^442.92^", -- [154]
-						"^2259^23^1576737844^66^1^5^442.92^", -- [155]
-						"^2260^23^1576738045^174^1^5^442.92^Atlaschi", -- [156]
-						"^2305^15^1577067200^186^1^30^424.85^Høot-Aegwynn", -- [157]
-						"^2289^15^1577067877^185^1^30^431.12^Ambrosiadh-Mal'Ganis", -- [158]
-						"^2304^15^1577068189^13^0^30^430.69^", -- [159]
-						"^2304^15^1577068268^203^1^30^434.42^Ambrosiadh-Mal'Ganis", -- [160]
-						"^2303^15^1577068496^5^0^30^433.97^", -- [161]
-						"^2303^15^1577068590^214^1^30^434.01^Blindstorm-Thrall", -- [162]
-						"^2311^15^1577068988^6^0^30^434.10^", -- [163]
-						"^2311^15^1577069035^266^1^30^433.96^Demonicrool-Area52", -- [164]
-						"^2293^15^1577069602^227^1^30^433.09^Slowride-BleedingHollow", -- [165]
-						"^2299^15^1577069947^369^1^30^433.26^Høot-Aegwynn", -- [166]
-						"^2260^23^1577246781^138^1^5^445.22^", -- [167]
-						"^2111^8^1577346099^33^1^5^436.82^", -- [168]
-						"^2118^8^1577346442^104^1^5^436.23^", -- [169]
-						"^2112^8^1577346655^89^1^5^436.23^", -- [170]
-						"^2123^8^1577346953^77^1^5^436.23^", -- [171]
-						"^2113^8^1577859395^90^1^5^445.43^", -- [172]
-						"^2114^8^1577859683^82^1^5^445.33^", -- [173]
-						"^2115^8^1577859829^103^1^5^445.33^", -- [174]
-						"^2116^8^1577860155^109^1^5^445.43^", -- [175]
-						"^2117^8^1577860286^94^1^5^445.43^", -- [176]
-						"^2298^16^1578019916^164^1^20^440.30^", -- [177]
-						"^2305^16^1578020484^202^1^20^440.00^Maeveycakes", -- [178]
-						"^2289^16^1578021056^185^1^20^443.51^Drineym", -- [179]
-						"^2304^16^1578021492^12^0^20^443.46^", -- [180]
-						"^2304^16^1578021575^215^1^20^443.46^", -- [181]
-						"^2303^16^1578021816^3^0^20^443.46^Thdemon", -- [182]
-						"^2303^16^1578021947^335^1^20^443.48^Realestxo", -- [183]
-						"^2311^16^1578022457^8^0^20^443.72^", -- [184]
-						"^2311^16^1578022527^171^0^20^443.54^Podra", -- [185]
-						"^2311^16^1578022800^183^0^20^443.76^Xyronic", -- [186]
-						"^2311^16^1578023094^7^0^20^443.88^", -- [187]
-						"^2311^16^1578023150^367^1^20^443.88^Realestxo", -- [188]
-						"^2293^16^1578453522^479^0^20^444.19^Sanghelios", -- [189]
-						"^2293^16^1578454078^437^1^20^444.32^Anshul", -- [190]
-						"^2299^16^1578454838^357^0^20^443.89^Podlock", -- [191]
-						"^2299^16^1578455281^584^1^20^444.28^Sanghelios", -- [192]
-						"^2115^8^1578554395^63^0^5^444.15^Twistedlock", -- [193]
-						"^2115^8^1578554545^58^1^5^444.15^", -- [194]
-						"^2114^8^1578554720^40^1^5^444.15^", -- [195]
-						"^2113^8^1578554939^72^1^5^444.15^", -- [196]
-						"^2116^8^1578555209^84^1^5^444.15^", -- [197]
-						"^2117^8^1578555351^40^1^5^444.15^", -- [198]
-						"^2337^15^1579987465^186^0^23^447.47^Maximumw", -- [199]
-						"^2337^15^1579987782^710^0^23^447.47^Innocentpal-Arthas", -- [200]
-						"^2337^15^1579988610^619^1^23^448.41^Thotiano", -- [201]
-						"^2344^15^1579990285^299^0^20^450.06^Ericswarrior", -- [202]
-						"^2344^15^1579990769^295^0^21^441.41^Dossoudmg", -- [203]
-						"^2344^15^1579991240^644^1^21^447.71^Thdeath", -- [204]
-						"^2329^15^1579992363^3^0^22^439.39^Lipdk", -- [205]
-						"^2329^15^1579992572^323^1^23^448.93^Aspen-Mal'Ganis", -- [206]
-						"^2329^15^1579993117^316^1^23^449.23^Thotiano", -- [207]
-						"^2329^15^1579993568^303^1^23^449.23^Zerørequiem-EmeraldDream", -- [208]
-						"^2329^15^1579994735^308^1^21^435.06^Iceycreep", -- [209]
-						"^2329^15^1579995182^341^1^21^449.91^Tsung-Dunemaul", -- [210]
-						"^2329^15^1579995699^312^1^21^449.51^Atrocitydk", -- [211]
-						"^2327^15^1579996617^356^1^20^450.85^Noripalxo", -- [212]
-						"^2334^15^1579997456^372^1^21^450.79^Machera", -- [213]
-						"^2328^15^1579998449^6^0^20^449.98^", -- [214]
-						"^2328^15^1579998496^400^1^20^449.98^", -- [215]
-						"^2336^15^1579999143^16^0^20^450.00^", -- [216]
-						"^2336^15^1579999216^486^0^20^450.00^Siory", -- [217]
-						"^2336^15^1579999791^395^1^20^450.00^Wafe", -- [218]
-						"^2333^15^1580000388^8^0^19^451.30^Domeynicus", -- [219]
-						"^2333^15^1580000488^5^0^19^451.25^", -- [220]
-						"^2333^15^1580000525^7^0^19^451.25^", -- [221]
-						"^2333^15^1580000601^302^1^19^450.84^", -- [222]
-						"^2331^15^1580001095^13^0^19^451.55^", -- [223]
-						"^2331^15^1580001352^383^1^19^451.68^Atrocitydk", -- [224]
-						"^2343^15^1580002422^461^1^19^452.04^Machera", -- [225]
-						"^2335^15^1580003032^13^0^19^452.07^Ruinxd", -- [226]
-						"^2335^15^1580003153^257^1^19^452.38^Machera", -- [227]
-						"^2345^15^1580003654^135^0^19^453.38^Ruinxd", -- [228]
-						"^2345^15^1580003871^532^1^19^453.38^Iceycreep", -- [229]
-						"^2086^8^1581652084^171^0^5^451.99^Twisticles", -- [230]
-						"^2086^8^1581652301^35^0^5^451.99^Twisticles", -- [231]
-						"^2086^8^1581652595^218^1^5^452.74^Twisticles", -- [232]
-						"^2084^8^1581653303^138^1^5^452.74^Atrocitydk", -- [233]
-						"^2085^8^1581653712^271^1^5^452.74^Jetk-Magtheridon", -- [234]
-						"^2087^8^1581654876^252^1^5^452.74^Jetk-Magtheridon", -- [235]
-						"^2292^8^1582934090^131^1^5^461.44^", -- [236]
-						"^2312^8^1582934475^76^1^5^460.58^", -- [237]
-						"^2290^8^1582934799^72^0^5^461.44^Hannod", -- [238]
-						"^2290^8^1582935028^150^1^5^459.66^", -- [239]
-						"^2291^8^1582935545^290^1^5^459.66^Mbwar", -- [240]
-						"^2292^8^1583902455^124^1^5^466.18^Famousxo", -- [241]
-						"^2312^8^1583902954^91^1^5^466.18^Atlasxo", -- [242]
-						"^2290^8^1583903224^112^1^5^466.18^", -- [243]
-						"^2291^8^1583903567^146^1^5^466.18^", -- [244]
-						"^666^9^1584278684^1^1^40^449.50^", -- [245]
-						"^668^9^1584278745^0^1^40^449.50^", -- [246]
-						"^2113^8^1584514497^101^1^5^463.40^", -- [247]
-						"^2114^8^1584515259^70^1^5^461.58^", -- [248]
-						"^2115^8^1584515460^93^1^5^461.58^", -- [249]
-						"^2116^8^1584516056^95^1^5^461.58^", -- [250]
-						"^2117^8^1584516272^106^1^5^461.58^", -- [251]
-						"^2093^8^1584599879^90^1^5^459.31^", -- [252]
-						"^2094^8^1584600446^99^1^5^459.31^", -- [253]
-						"^2095^8^1584600881^105^1^5^459.31^", -- [254]
-						"^2096^8^1584601083^130^1^5^459.31^", -- [255]
-						"^2257^8^1584605450^130^1^5^465.95^Imup", -- [256]
-						"^2258^8^1584605801^158^1^5^465.95^", -- [257]
-						"^2259^8^1584606507^158^1^5^465.95^Drineym", -- [258]
-						"^2260^8^1584606955^278^1^5^465.95^Mbdh", -- [259]
-						"^666^9^1584619119^1^1^40^458.50^", -- [260]
-						"^668^9^1584619180^2^1^40^458.50^", -- [261]
-						"^2101^8^1589948613^150^1^5^469.88^Hannospal", -- [262]
-						"^2102^8^1589949315^133^1^5^471.13^", -- [263]
-						"^2103^8^1589949878^153^1^5^471.13^Bustysocrmom", -- [264]
-						"^2104^8^1589950170^94^0^5^471.13^Hannospal", -- [265]
-						"^2104^8^1589950366^173^1^5^471.13^", -- [266]
-						"^2139^8^1589951702^94^1^5^472.18^", -- [267]
-						"^2142^8^1589952125^106^1^5^472.18^", -- [268]
-						"^2140^8^1589952528^206^1^5^472.18^", -- [269]
-						"^2143^8^1589952887^146^1^5^472.18^", -- [270]
-						"^2086^8^1589953659^27^0^5^470.75^Gooptard", -- [271]
-						"^2086^8^1589953736^117^0^5^470.75^Twisticles", -- [272]
-						"^2086^8^1589953911^27^0^5^470.75^Atrocitydk", -- [273]
-						"^2086^8^1589953989^47^0^5^470.75^Atrocitydk", -- [274]
-						"^2084^8^1589954186^23^0^5^470.75^Atrocitydk", -- [275]
-						"^2086^8^1589954257^17^0^5^470.75^Atrocitydk", -- [276]
-						"^2085^8^1589954605^135^1^5^470.75^", -- [277]
-						"^2086^8^1589954799^162^1^5^470.75^", -- [278]
-						"^2084^8^1589955040^100^1^5^470.75^", -- [279]
-						"^2087^8^1589955371^170^1^5^470.75^Twisticles", -- [280]
-						"^2113^8^1589956668^132^1^5^466.00^", -- [281]
-						"^2114^8^1589957043^139^1^5^462.73^Gooppal", -- [282]
-						"^2115^8^1589957325^87^0^5^466.00^Atrocitydk", -- [283]
-						"^2115^8^1589957455^141^1^5^466.00^", -- [284]
-						"^2116^8^1589958059^182^0^5^466.00^Twistedw", -- [285]
-						"^2116^8^1589958324^121^0^5^462.47^Atrocitydk", -- [286]
-						"^2116^8^1589958577^133^1^5^468.88^", -- [287]
-						"^2117^8^1589958788^136^0^5^468.88^Mbh", -- [288]
-						"^2117^8^1589958964^169^1^5^471.69^", -- [289]
-						"^2086^8^1590722672^109^0^5^455.07^Gooptard", -- [290]
-						"^2086^8^1590723134^120^1^5^450.22^", -- [291]
-						"^2084^8^1590723588^95^0^5^450.22^Kaides-Mal'Ganis", -- [292]
-						"^2084^8^1590723731^72^1^5^450.22^", -- [293]
-						"^2085^8^1590724080^5^0^5^450.22^", -- [294]
-						"^2085^8^1590724166^123^1^5^450.22^", -- [295]
-						"^2087^8^1590724588^164^1^5^450.22^Kaides-Mal'Ganis", -- [296]
-						"^2111^8^1595294066^78^1^5^473.73^", -- [297]
-						"^2112^8^1595294455^113^1^5^473.73^", -- [298]
-						"^2118^8^1595294626^101^1^5^473.73^", -- [299]
-						"^2123^8^1595295067^140^1^5^473.73^", -- [300]
-						"^2093^8^1595704421^98^1^5^475.43^Atrocitydk", -- [301]
-						"^2094^8^1595704883^159^1^5^475.43^Notbad-Zul'jin", -- [302]
-						"^2095^8^1595705262^88^1^5^475.43^Atrocitydk", -- [303]
-						"^2096^8^1595705406^134^1^5^475.43^", -- [304]
-						"^2111^8^1596351762^54^1^5^475.36^", -- [305]
-						"^2118^8^1596352072^131^1^5^475.36^", -- [306]
-						"^2112^8^1596352344^133^1^5^475.36^Atrocitydk", -- [307]
-						"^2123^8^1596352730^156^1^5^475.36^Soakzy-Area52", -- [308]
+					["Sddf"] = {
 					},
-					["Crónix"] = {
+					["Boostmehp"] = {
+						"^2093^8^1577407451^49^1^5^422.20^", -- [1]
+						"^2094^8^1577407927^82^1^5^422.20^Brickp-Proudmoore", -- [2]
+						"^2095^8^1577408299^58^1^5^422.20^", -- [3]
+						"^2096^8^1577408469^76^1^5^422.20^", -- [4]
+						"^2260^23^1577413791^220^1^5^414.90^Brickp-Proudmoore", -- [5]
+						"^2086^8^1577426535^76^1^5^416.56^", -- [6]
+						"^2085^8^1577426856^10^0^5^416.56^Swipe", -- [7]
+						"^2085^8^1577427205^108^1^5^416.56^", -- [8]
+						"^2084^8^1577427672^69^1^5^416.56^", -- [9]
+						"^2087^8^1577427790^107^1^5^416.56^", -- [10]
+						"^2111^8^1577428521^30^1^5^420.21^", -- [11]
+						"^2118^8^1577428892^65^1^5^420.21^", -- [12]
+						"^2112^8^1577429075^79^1^5^413.89^Literalhomo", -- [13]
+						"^2123^8^1577429458^78^1^5^413.89^", -- [14]
+						"^2093^8^1577430056^85^1^5^421.21^", -- [15]
+						"^2094^8^1577430513^75^1^5^421.21^Literalhomo", -- [16]
+						"^2095^8^1577430899^84^1^5^421.21^", -- [17]
+						"^2096^8^1577431092^84^1^5^421.21^", -- [18]
+						"^2105^8^1577614108^58^1^5^421.57^", -- [19]
+						"^2106^8^1577614762^100^1^5^421.57^Xylem-Khaz'goroth", -- [20]
+						"^2107^8^1577615135^76^1^5^421.57^", -- [21]
+						"^2108^8^1577615283^121^1^5^421.57^", -- [22]
+						"^2093^8^1577617362^68^1^5^424.82^", -- [23]
+						"^2094^8^1577617798^98^1^5^424.82^", -- [24]
+						"^2095^8^1577618360^107^1^5^424.82^Literalhomo", -- [25]
+						"^2096^8^1577618698^87^1^5^424.82^", -- [26]
+						"^2124^8^1577695148^143^1^5^422.48^Shashris-Kilrogg", -- [27]
+						"^2125^8^1577695888^140^1^5^422.48^", -- [28]
+						"^2126^8^1577696359^49^0^5^422.48^Literalhomo", -- [29]
+						"^2126^8^1577696458^107^1^5^422.48^", -- [30]
+						"^2127^8^1577697048^277^1^5^422.48^", -- [31]
+						"^2093^8^1578297072^87^1^5^433.24^", -- [32]
+						"^2094^8^1578297477^125^1^5^433.24^Literalhomo", -- [33]
+						"^2095^8^1578297827^85^1^5^433.24^", -- [34]
+						"^2096^8^1578297956^120^1^5^433.24^", -- [35]
+						"^2086^8^1578466256^130^1^5^423.55^", -- [36]
+						"^2085^8^1578466629^160^1^5^423.55^Literalhomo", -- [37]
+						"^2084^8^1578467356^101^1^5^423.55^", -- [38]
+						"^2087^8^1578467563^133^1^5^423.55^", -- [39]
+						"^2312^23^1578468845^88^1^5^395.48^", -- [40]
+						"^2290^23^1578468992^77^1^5^431.73^", -- [41]
+						"^2292^23^1578469126^85^1^5^423.16^", -- [42]
+						"^2291^23^1578469301^122^1^5^423.55^", -- [43]
+						"^2257^23^1578469510^116^1^5^423.94^", -- [44]
+						"^2258^23^1578469694^67^1^5^423.94^", -- [45]
+						"^2259^23^1578470044^65^1^5^425.21^", -- [46]
+						"^2260^23^1578470298^167^1^5^425.21^", -- [47]
+						"^2114^8^1578878982^64^1^5^434.02^", -- [48]
+						"^2115^8^1578879061^77^1^5^434.02^", -- [49]
+						"^2113^8^1578879285^88^1^5^434.02^", -- [50]
+						"^2116^8^1578879544^70^1^5^434.02^", -- [51]
+						"^2117^8^1578879691^43^1^5^434.02^", -- [52]
+						"^2139^8^1578880834^91^1^5^435.95^", -- [53]
+						"^2142^8^1578881413^96^1^5^435.95^", -- [54]
+						"^2140^8^1578881985^173^1^5^433.33^", -- [55]
+						"^2143^8^1578882311^141^1^5^433.33^", -- [56]
+						"^2124^8^1578884047^79^1^5^429.27^", -- [57]
+						"^2125^8^1578884332^115^1^5^429.27^", -- [58]
+						"^2126^8^1578884587^74^1^5^429.27^", -- [59]
+						"^2127^8^1578884869^174^1^5^429.27^", -- [60]
+						"^2113^8^1578886189^107^1^5^429.16^", -- [61]
+						"^2114^8^1578886773^96^1^5^429.16^", -- [62]
+						"^2115^8^1578886961^125^1^5^429.16^Literalhomo", -- [63]
+						"^2116^8^1578887465^116^1^5^429.16^", -- [64]
+						"^2117^8^1578887691^89^1^5^429.16^", -- [65]
+						"^2105^8^1578891993^68^1^5^434.40^", -- [66]
+						"^2106^8^1578892671^62^1^5^434.40^", -- [67]
+						"^2107^8^1578892830^59^1^5^434.40^", -- [68]
+						"^2108^8^1578893014^137^1^5^434.40^", -- [69]
+						"^2111^8^1578894113^46^1^5^434.33^", -- [70]
+						"^2118^8^1578894656^135^1^5^434.76^", -- [71]
+						"^2112^8^1578895011^106^1^5^434.76^Literalhomo", -- [72]
+						"^2123^8^1578895339^115^1^5^435.67^", -- [73]
+						"^2124^8^1578896250^108^1^5^437.00^Captianholt-Kargath", -- [74]
+						"^2125^8^1578896787^138^1^5^437.00^", -- [75]
+						"^2126^8^1578897098^91^1^5^437.00^", -- [76]
+						"^2127^8^1578897561^233^1^5^437.58^", -- [77]
+						"^2111^8^1578898793^35^1^5^437.64^", -- [78]
+						"^2118^8^1578899191^86^1^5^437.64^", -- [79]
+						"^2112^8^1578899451^61^1^5^437.64^", -- [80]
+						"^2123^8^1578899699^102^1^5^437.64^", -- [81]
 					},
-					["Atrocityjr"] = {
-						"^2139^8^1587614451^123^1^5^454.14^Twistedxo", -- [1]
-						"^2142^8^1587615108^111^1^5^454.14^", -- [2]
-						"^2140^8^1587615459^189^0^5^454.14^Gooptard", -- [3]
-						"^2140^8^1587615814^38^0^5^429.91^Atrocityjr", -- [4]
-						"^2140^8^1587616007^186^1^5^429.91^", -- [5]
-						"^2143^8^1587616500^182^1^5^443.46^Atrocityjr", -- [6]
-						"^2387^23^1606871249^37^1^5^173.16^", -- [7]
-						"^2388^23^1606871398^56^1^5^173.16^", -- [8]
-						"^2389^23^1606871732^81^1^5^173.16^", -- [9]
-						"^2390^23^1606871833^69^1^5^173.16^", -- [10]
-						"^2357^23^1606872192^43^1^5^174.29^", -- [11]
-						"^2356^23^1606872567^39^1^5^174.29^", -- [12]
-						"^2358^23^1606872730^80^1^5^174.29^", -- [13]
-						"^2359^23^1606872937^144^1^5^174.03^", -- [14]
-						"^2391^23^1606873357^67^1^5^174.86^", -- [15]
-						"^2364^23^1606873664^39^1^5^175.44^", -- [16]
-						"^2366^23^1606873888^86^1^5^175.44^", -- [17]
-						"^2365^23^1606874177^58^1^5^175.44^", -- [18]
-						"^2404^23^1606874300^46^1^5^175.44^Nickspriest", -- [19]
-						"^2382^23^1606874485^65^1^5^175.99^", -- [20]
-						"^2384^23^1606874655^65^1^5^175.99^", -- [21]
-						"^2385^23^1606874873^73^1^5^175.99^", -- [22]
-						"^2386^23^1606875079^103^1^5^176.31^", -- [23]
-						"^2401^23^1606875682^70^1^5^176.31^", -- [24]
-						"^2380^23^1606875797^45^1^5^175.55^", -- [25]
-						"^2403^23^1606875928^46^1^5^175.55^", -- [26]
-						"^2381^23^1606876030^61^1^5^175.75^", -- [27]
-						"^2360^23^1606876458^38^1^5^177.05^", -- [28]
-						"^2361^23^1606876810^56^1^5^177.05^Syreth", -- [29]
-						"^2362^23^1606876920^71^1^5^177.21^", -- [30]
-						"^2363^23^1606877233^85^1^5^178.30^", -- [31]
-						"^2397^23^1606877765^48^1^5^178.30^", -- [32]
-						"^2392^23^1606878124^92^1^5^178.10^", -- [33]
-						"^2393^23^1606878282^42^1^5^179.19^", -- [34]
-						"^2395^23^1606878752^42^1^5^179.39^", -- [35]
-						"^2394^23^1606879122^57^1^5^179.39^", -- [36]
-						"^2400^23^1606879384^48^1^5^179.39^", -- [37]
-						"^2396^23^1606879503^122^1^5^179.39^", -- [38]
-						"^2360^8^1607490010^108^1^5^181.40^", -- [39]
-						"^2361^8^1607490826^92^0^5^180.67^Thdlock", -- [40]
-						"^2361^8^1607491052^64^1^5^180.67^", -- [41]
-						"^2362^8^1607491220^93^1^5^181.40^", -- [42]
-						"^2363^8^1607491827^98^1^5^181.40^", -- [43]
-						"^2417^15^1607619597^535^1^30^186.25^Goopd", -- [44]
-						"^2407^15^1607644677^172^0^30^188.13^Avade", -- [45]
-						"^2407^15^1607644923^68^0^30^188.17^Podd", -- [46]
-						"^2407^15^1607645086^469^0^30^188.17^Liphunt", -- [47]
-						"^2407^15^1607645664^481^1^30^188.17^Póôpööpêèpëë", -- [48]
-						"^2399^15^1607790602^317^1^30^192.63^Tagzz", -- [49]
-						"^2417^14^1607799222^7^0^28^196.38^", -- [50]
-						"^2417^14^1607799296^310^1^29^196.43^Ericsmage", -- [51]
-						"^2407^14^1607800202^426^1^30^196.01^Scottm", -- [52]
-						"^2357^8^1607892535^92^1^5^200.53^", -- [53]
-						"^2356^8^1607893807^82^1^5^200.53^Atrocityjr", -- [54]
-						"^2358^8^1607894051^147^1^5^200.53^Atrocityjr", -- [55]
-						"^2359^8^1607894515^164^1^5^200.53^", -- [56]
-						"^2417^15^1608140504^662^1^27^202.61^Pródigy-Kil'jaeden", -- [57]
-						"^2398^16^1609376665^231^0^20^198.34^Ringofpiecez", -- [58]
-						"^2398^16^1609377106^380^1^20^198.34^Drineyp", -- [59]
-						"^2418^16^1609377675^6^0^20^198.73^", -- [60]
-						"^2418^16^1609377726^179^0^20^198.73^Bigscro", -- [61]
-						"^2418^16^1609378042^333^0^20^198.78^Maeveytwo", -- [62]
-						"^2418^16^1609378550^244^0^20^198.08^Kamshams", -- [63]
-						"^2418^16^1609378885^118^0^20^198.08^Darkeedk", -- [64]
-						"^2418^16^1609379092^178^0^20^198.08^Ringofpiecez", -- [65]
-						"^2418^16^1609379391^363^1^20^197.96^Vilknight", -- [66]
-						"^2397^8^1609568674^394^0^5^213.36^Norialaxo", -- [67]
-						"^2397^8^1609569100^227^1^5^213.36^", -- [68]
-						"^2392^8^1609569680^167^1^5^210.94^", -- [69]
-						"^2393^8^1609570142^126^1^5^213.36^Atlasxo", -- [70]
-						"^2397^8^1610183921^113^1^5^208.07^", -- [71]
-						"^2392^8^1610184438^150^1^5^205.11^Twistedm", -- [72]
-						"^2393^8^1610184887^138^1^5^211.78^Mb-Mal'Ganis", -- [73]
-						"^2382^8^1610401481^59^1^5^201.61^", -- [74]
-						"^2384^8^1610402126^125^1^5^201.61^", -- [75]
-						"^2385^8^1610402485^84^1^5^208.92^", -- [76]
-						"^2386^8^1610402797^150^1^5^204.28^Goopem", -- [77]
-						"^2397^8^1610403604^88^1^5^207.46^", -- [78]
-						"^2392^8^1610404172^183^1^5^207.56^Atlaschi", -- [79]
-						"^2393^8^1610404770^93^1^5^211.59^", -- [80]
-						"^2397^8^1610406433^120^1^5^203.05^", -- [81]
-						"^2392^8^1610407093^169^1^5^203.05^Atlaschi", -- [82]
-						"^2393^8^1610407635^117^1^5^203.05^Goopem", -- [83]
-						"^2401^8^1610493120^114^1^5^210.95^Twistedm", -- [84]
-						"^2380^8^1610493406^128^0^5^210.95^Atrocityjr", -- [85]
-						"^2380^8^1610493576^168^1^5^210.95^Atrocityjr", -- [86]
-						"^2403^8^1610493868^136^1^5^210.95^", -- [87]
-						"^2381^8^1610494085^153^1^5^210.95^Twistedm", -- [88]
-						"^2398^16^1610513061^13^0^20^215.86^Truckboy", -- [89]
-						"^2398^16^1610513217^259^1^20^215.71^", -- [90]
-						"^2418^16^1610513654^6^0^20^216.04^", -- [91]
-						"^2418^16^1610513777^286^1^20^215.53^Goophunt", -- [92]
-						"^2383^16^1610514257^7^0^20^215.47^", -- [93]
-						"^2383^16^1610514454^438^0^20^215.73^Ringofpiecez", -- [94]
-						"^2383^16^1610515015^428^0^20^215.73^Truckboy", -- [95]
-						"^2383^16^1610515644^363^1^20^215.73^Vilknight", -- [96]
-						"^2405^16^1610516659^10^0^20^216.01^", -- [97]
-						"^2405^16^1610516823^476^1^20^216.01^Siory", -- [98]
-						"^2402^16^1610602443^172^0^20^208.15^Norishockxo", -- [99]
-						"^2402^16^1610602725^132^0^20^208.15^Worstclass", -- [100]
-						"^2402^16^1610602949^322^0^20^208.15^Worstclass", -- [101]
-						"^2402^16^1610603468^79^0^20^211.51^Atrocityjr", -- [102]
-						"^2402^16^1610603625^377^1^20^211.51^Ericsmage", -- [103]
-						"^2401^8^1611089625^94^1^5^211.11^", -- [104]
-						"^2380^8^1611089888^165^1^5^211.11^Atrocityjr", -- [105]
-						"^2403^8^1611090237^101^1^5^214.30^", -- [106]
-						"^2381^8^1611090498^80^1^5^214.30^", -- [107]
-						"^2387^8^1611270433^63^1^5^213.85^", -- [108]
-						"^2388^8^1611270949^86^1^5^213.85^", -- [109]
-						"^2389^8^1611271546^84^1^5^213.85^", -- [110]
-						"^2390^8^1611271645^136^1^5^213.85^", -- [111]
-						"^2397^8^1611272912^111^1^5^213.28^", -- [112]
-						"^2392^8^1611273441^109^1^5^213.28^", -- [113]
-						"^2393^8^1611273925^69^1^5^213.28^", -- [114]
-						"^2395^8^1611275222^38^1^5^211.78^", -- [115]
-						"^2394^8^1611275696^103^1^5^214.10^", -- [116]
-						"^2400^8^1611276357^77^1^5^214.10^", -- [117]
-						"^2396^8^1611276496^131^1^5^214.10^", -- [118]
-						"^2398^16^1611635141^10^0^20^201.86^Scottm", -- [119]
-						"^2398^16^1611635274^315^1^20^213.57^Lipmonk", -- [120]
-						"^2418^16^1611635755^6^0^20^213.62^", -- [121]
-						"^2418^16^1611635834^281^1^20^213.62^Trilldh", -- [122]
-						"^2383^16^1611636297^8^0^20^213.62^", -- [123]
-						"^2383^16^1611636518^352^1^20^214.09^Rukhran", -- [124]
-						"^2405^16^1611637364^8^0^20^213.99^", -- [125]
-						"^2405^16^1611637470^282^0^20^213.99^Norishiftxo", -- [126]
-						"^2405^16^1611637894^365^0^20^213.99^Lipmonk", -- [127]
-						"^2405^16^1611638352^289^0^20^213.99^Tagzz", -- [128]
-						"^2405^16^1611638708^384^1^20^213.99^Burtleshirt", -- [129]
-						"^2398^16^1611802242^70^0^20^214.48^Scottm", -- [130]
-						"^2398^16^1611802447^308^1^20^216.29^Lipwarlock", -- [131]
-						"^2418^16^1611802941^5^0^20^216.34^", -- [132]
-						"^2418^16^1611803018^290^1^20^216.24^Burtleshirt", -- [133]
-						"^2383^16^1611803560^8^0^20^214.85^", -- [134]
-						"^2383^16^1611803684^407^1^20^215.01^Maeveypie", -- [135]
-						"^2405^16^1611804600^8^0^20^215.45^", -- [136]
-						"^2405^16^1611804805^398^1^20^215.59^Lipwarlock", -- [137]
-						"^2382^8^1611980232^100^1^5^213.34^", -- [138]
-						"^2384^8^1611980814^157^1^5^213.34^", -- [139]
-						"^2385^8^1611981203^149^0^5^213.34^Atlasd", -- [140]
-						"^2385^8^1611981417^164^1^5^213.34^Atlasd", -- [141]
-						"^2386^8^1611981744^184^1^5^213.34^Atlasd", -- [142]
-						"^2391^8^1612214450^121^1^5^218.51^", -- [143]
-						"^2366^8^1612214846^138^1^5^218.51^Burtleshirt", -- [144]
-						"^2365^8^1612215239^123^1^5^216.89^", -- [145]
-						"^2364^8^1612215698^122^1^5^218.51^", -- [146]
-						"^2404^8^1612215873^126^1^5^218.51^", -- [147]
-						"^2397^8^1612221327^252^1^5^214.06^", -- [148]
-						"^2392^8^1612222044^165^1^5^214.06^", -- [149]
-						"^2393^8^1612222461^176^1^5^214.06^Powercleans", -- [150]
-						"^2387^8^1612223393^74^1^5^222.62^", -- [151]
-						"^2388^8^1612223905^112^1^5^222.62^", -- [152]
-						"^2389^8^1612224444^87^1^5^222.62^", -- [153]
-						"^2390^8^1612224546^176^1^5^222.86^", -- [154]
-						"^2401^8^1612477108^62^1^5^207.67^", -- [155]
-						"^2380^8^1612477335^102^1^5^207.67^", -- [156]
-						"^2403^8^1612477557^67^1^5^207.67^", -- [157]
-						"^2381^8^1612477791^91^1^5^207.67^Goopsp", -- [158]
-						"^2401^8^1612479311^96^1^5^217.31^", -- [159]
-						"^2380^8^1612479581^106^1^5^217.31^Goopsp", -- [160]
-						"^2403^8^1612479821^114^1^5^217.31^", -- [161]
-						"^2381^8^1612480120^73^1^5^217.31^Goopsp", -- [162]
-						"^2391^8^1612480750^116^1^5^216.12^", -- [163]
-						"^2366^8^1612481242^139^1^5^216.12^", -- [164]
-						"^2364^8^1612481913^110^1^5^216.12^", -- [165]
-						"^2365^8^1612482449^95^1^5^216.12^", -- [166]
-						"^2404^8^1612482602^123^1^5^216.12^Imnnk", -- [167]
-						"^2382^8^1612485274^78^1^5^218.31^", -- [168]
-						"^2384^8^1612485835^160^1^5^216.55^Goopsp", -- [169]
-						"^2385^8^1612486275^80^1^5^214.25^", -- [170]
-						"^2386^8^1612486496^131^1^5^216.55^Atrocityjr", -- [171]
-						"^2387^8^1612487179^35^1^5^221.99^", -- [172]
-						"^2388^8^1612487508^80^1^5^219.79^", -- [173]
-						"^2389^8^1612487905^74^1^5^221.99^", -- [174]
-						"^2390^8^1612487994^106^1^5^220.55^", -- [175]
-						"^2395^8^1612662372^41^1^5^216.71^", -- [176]
-						"^2394^8^1612662810^95^1^5^214.88^", -- [177]
-						"^2400^8^1612663849^43^1^5^220.59^", -- [178]
-						"^2396^8^1612663967^144^1^5^220.59^", -- [179]
-						"^2397^8^1612664938^58^1^5^216.71^", -- [180]
-						"^2392^8^1612665381^129^1^5^216.71^", -- [181]
-						"^2393^8^1612665909^69^1^5^216.71^", -- [182]
-						"^2382^8^1612667638^74^1^5^222.00^", -- [183]
-						"^2384^8^1612668216^108^0^5^221.48^Impec", -- [184]
-						"^2384^8^1612668451^131^1^5^221.48^Impec", -- [185]
-						"^2385^8^1612668823^100^1^5^221.48^", -- [186]
-						"^2386^8^1612669066^112^1^5^221.48^", -- [187]
-						"^2382^8^1612670456^48^1^5^220.53^", -- [188]
-						"^2384^8^1612671057^49^1^5^221.76^", -- [189]
-						"^2385^8^1612671393^80^1^5^221.76^", -- [190]
-						"^2386^8^1612671656^124^1^5^221.76^Imnnk", -- [191]
-						"^2391^8^1612672830^68^0^5^217.95^Atrocityjr", -- [192]
-						"^2391^8^1612672969^116^1^5^218.11^", -- [193]
-						"^2364^8^1612673516^77^1^5^215.67^", -- [194]
-						"^2366^8^1612673966^138^1^5^217.95^", -- [195]
-						"^2365^8^1612674560^60^1^5^217.95^", -- [196]
-						"^2404^8^1612674681^97^1^5^217.95^", -- [197]
-						"^2407^15^1612753900^388^1^30^220.01^Dakisshaman-Tichondrius", -- [198]
-						"^2398^16^1613018196^16^0^20^205.21^", -- [199]
-						"^2398^16^1613018360^303^1^20^218.24^Kamsdhunter", -- [200]
-						"^2418^16^1613018837^6^0^20^218.89^", -- [201]
-						"^2418^16^1613018995^227^0^20^215.98^Atlasd", -- [202]
-						"^2418^16^1613019343^269^1^20^215.98^Atrocityjr", -- [203]
-						"^2383^16^1613019790^7^0^20^218.10^", -- [204]
-						"^2383^16^1613019953^326^1^20^218.08^Siory", -- [205]
-						"^2405^16^1613020744^10^0^20^218.18^", -- [206]
-						"^2405^16^1613020847^388^1^20^218.18^Atlasd", -- [207]
-						"^2402^16^1613021421^9^0^20^218.27^", -- [208]
-						"^2402^16^1613021590^347^1^20^218.11^", -- [209]
-						"^2387^8^1613032821^43^0^5^222.32^Twistedw", -- [210]
-						"^2387^8^1613032896^130^1^5^222.32^", -- [211]
-						"^2388^8^1613033333^110^1^5^222.32^", -- [212]
-						"^2389^8^1613033766^102^1^5^224.28^", -- [213]
-						"^2390^8^1613033884^148^1^5^224.28^", -- [214]
-						"^2397^8^1613530417^45^1^5^219.57^", -- [215]
-						"^2392^8^1613530837^108^1^5^219.57^", -- [216]
-						"^2393^8^1613531288^78^1^5^219.57^", -- [217]
-						"^2398^16^1613618764^10^0^20^218.54^", -- [218]
-						"^2398^16^1613618914^254^1^20^219.44^Kamslock", -- [219]
-						"^2418^16^1613619320^5^0^20^219.17^", -- [220]
-						"^2418^16^1613619379^9^0^20^219.54^", -- [221]
-						"^2418^16^1613619420^6^0^20^219.02^", -- [222]
-						"^2418^16^1613619484^245^1^20^218.99^Catlas", -- [223]
-						"^2383^16^1613620004^7^0^20^219.93^", -- [224]
-						"^2383^16^1613620183^311^1^20^220.54^Catlas", -- [225]
-						"^2406^16^1613620656^11^0^20^220.09^", -- [226]
-						"^2406^16^1613620820^269^0^20^221.05^Xyroh", -- [227]
-						"^2406^16^1613621202^140^0^20^221.05^Kamslock", -- [228]
-						"^2406^16^1613621442^139^0^20^221.05^Siory", -- [229]
-						"^2406^16^1613621677^340^1^20^221.11^Catlas", -- [230]
-						"^2405^16^1613622444^9^0^20^220.80^", -- [231]
-						"^2405^16^1613622599^69^0^20^220.80^Catlas", -- [232]
-						"^2405^16^1613622772^324^1^20^221.88^Atrocityjr", -- [233]
-						"^2402^16^1613623284^9^0^20^221.18^", -- [234]
-						"^2402^16^1613623345^330^1^20^221.18^", -- [235]
-						"^2387^8^1613944192^60^1^5^222.68^", -- [236]
-						"^2388^8^1613944726^139^1^5^222.68^Wommy", -- [237]
-						"^2389^8^1613945395^121^1^5^222.68^Wommy", -- [238]
-						"^2390^8^1613945574^181^1^5^222.68^Mb-Mal'Ganis", -- [239]
-						"^2397^8^1613946572^138^1^5^222.68^Mb-Mal'Ganis", -- [240]
-						"^2392^8^1613947152^177^1^5^222.68^", -- [241]
-						"^2393^8^1613947774^86^1^5^222.68^", -- [242]
-						"^2387^8^1613948285^64^1^5^222.80^", -- [243]
-						"^2388^8^1613948748^81^1^5^222.80^", -- [244]
-						"^2389^8^1613949317^48^1^5^222.80^", -- [245]
-						"^2390^8^1613949381^145^1^5^222.80^Thdlock", -- [246]
-						"^2401^8^1614114722^116^1^5^224.28^", -- [247]
-						"^2380^8^1614115021^128^1^5^224.28^", -- [248]
-						"^2403^8^1614115278^117^1^5^221.23^", -- [249]
-						"^2381^8^1614115524^118^1^5^220.54^", -- [250]
-						"^2401^8^1614212476^81^1^5^219.93^", -- [251]
-						"^2380^8^1614212691^119^1^5^219.93^", -- [252]
-						"^2403^8^1614212915^99^1^5^220.55^", -- [253]
-						"^2381^8^1614213154^100^1^5^220.55^", -- [254]
-						"^2382^8^1614214349^96^1^5^221.51^", -- [255]
-						"^2384^8^1614214918^192^1^5^221.51^", -- [256]
-						"^2385^8^1614215389^170^1^5^221.61^", -- [257]
-						"^2386^8^1614215725^204^1^5^221.61^Mb-Mal'Ganis", -- [258]
-						"^2397^8^1614240042^49^1^5^225.42^", -- [259]
-						"^2392^8^1614240372^129^1^5^225.11^", -- [260]
-						"^2393^8^1614240741^88^1^5^225.11^", -- [261]
-						"^2397^8^1614241788^64^1^5^222.66^", -- [262]
-						"^2392^8^1614242149^117^1^5^222.28^", -- [263]
-						"^2393^8^1614242492^126^1^5^222.28^", -- [264]
-						"^2397^8^1614243284^91^1^5^223.68^", -- [265]
-						"^2392^8^1614243678^156^1^5^223.68^", -- [266]
-						"^2393^8^1614244026^149^1^5^223.68^", -- [267]
-						"^2401^8^1614245079^202^1^5^223.01^Goophunt", -- [268]
-						"^2380^8^1614245374^99^1^5^223.01^Atrocityjr", -- [269]
-						"^2403^8^1614245570^88^1^5^223.01^", -- [270]
-						"^2381^8^1614245758^67^1^5^223.01^", -- [271]
-						"^2401^8^1614246465^113^1^5^222.46^Goopem", -- [272]
-						"^2380^8^1614246673^103^1^5^222.46^", -- [273]
-						"^2403^8^1614246818^127^1^5^222.46^", -- [274]
-						"^2381^8^1614247058^117^1^5^222.46^Goopem", -- [275]
-						"^2387^8^1614301233^138^1^5^214.30^", -- [276]
-						"^2388^8^1614301852^160^1^5^214.30^", -- [277]
-						"^2389^8^1614302383^110^1^5^214.30^", -- [278]
-						"^2390^8^1614302510^226^1^5^214.30^Goopsp", -- [279]
-						"^2401^8^1614303946^115^1^5^215.07^Goopsp", -- [280]
-						"^2380^8^1614304159^128^1^5^215.07^Jacobww-Mal'Ganis", -- [281]
-						"^2403^8^1614304343^152^1^5^215.07^Twistedr", -- [282]
-						"^2381^8^1614304684^124^1^5^214.48^", -- [283]
-						"^2398^16^1614653779^12^0^20^218.10^", -- [284]
-						"^2398^16^1614653930^246^1^20^218.10^Rukhran", -- [285]
-						"^2418^16^1614654323^5^0^20^218.18^", -- [286]
-						"^2418^16^1614654389^215^0^20^218.18^Tagzz", -- [287]
-						"^2418^16^1614654707^238^1^20^218.14^Atrocityjr", -- [288]
-						"^2383^16^1614655135^7^0^20^218.73^", -- [289]
-						"^2383^16^1614655266^306^1^20^218.77^Rwreturns", -- [290]
-						"^2406^16^1614655753^11^0^20^218.77^", -- [291]
-						"^2406^16^1614655838^336^0^20^218.77^Vilknight", -- [292]
-						"^2406^16^1614656335^324^1^20^218.85^Catlas", -- [293]
-						"^2405^16^1614657324^9^0^20^222.34^", -- [294]
-						"^2405^16^1614657406^318^1^20^222.34^Worstclass", -- [295]
-						"^2402^16^1614657892^11^0^20^222.49^", -- [296]
-						"^2402^16^1614657984^329^1^20^222.49^", -- [297]
-						"^2412^16^1614658538^21^0^20^223.07^Thdmoon", -- [298]
-						"^2412^16^1614658684^591^1^20^223.07^Atrocityjr", -- [299]
-						"^2398^16^1614733008^12^0^20^220.35^Demonjin", -- [300]
-						"^2398^16^1614733239^210^1^20^221.31^Demonjin", -- [301]
-						"^2418^16^1614733590^5^0^20^227.35^", -- [302]
-						"^2418^16^1614733670^218^1^20^226.57^", -- [303]
-						"^2383^16^1614734127^247^1^20^226.59^Demonjin", -- [304]
-						"^2406^16^1614734493^11^0^20^226.67^", -- [305]
-						"^2406^16^1614734550^310^1^20^226.67^Atrocityjr", -- [306]
-						"^2405^16^1614735242^10^0^20^226.70^", -- [307]
-						"^2405^16^1614735311^358^0^20^226.68^Stankylip", -- [308]
-						"^2405^16^1614735819^218^0^20^219.93^Demonjin", -- [309]
-						"^2405^16^1614736125^231^0^20^219.60^Demonjin", -- [310]
-						"^2405^16^1614736460^270^1^20^219.60^Demonjin", -- [311]
-						"^2402^16^1614736861^9^0^20^219.51^Demonjin", -- [312]
-						"^2402^16^1614736913^278^1^20^219.51^Demonjin", -- [313]
-						"^2412^16^1614737365^11^0^20^219.88^Demonjin", -- [314]
-						"^2412^16^1614737442^533^1^20^219.42^Demonjin", -- [315]
-						"^2399^16^1614738128^352^0^20^219.35^Demonjin", -- [316]
-						"^2399^16^1614738590^137^0^20^219.35^Demonjin", -- [317]
-						"^2399^16^1614738795^293^1^20^219.35^Demonjin", -- [318]
-						"^2417^16^1614739228^7^0^20^219.34^", -- [319]
-						"^2417^16^1614739379^572^1^20^219.79^Demonjin", -- [320]
-						"^2407^16^1614740177^35^0^20^219.82^Demonjin", -- [321]
-						"^2407^16^1614740291^390^0^20^219.82^Demonjin", -- [322]
-						"^2407^16^1614740762^468^0^20^219.84^Demonjin", -- [323]
-						"^2407^16^1614741328^247^0^20^219.88^Demonjin", -- [324]
-						"^2407^16^1614741669^612^0^20^219.88^Demonjin", -- [325]
-						"^2407^16^1614742359^613^0^20^219.88^Demonjin", -- [326]
-						"^2407^16^1614743072^278^0^20^219.88^Demonjin", -- [327]
-						"^2407^16^1614743436^471^0^20^219.88^Demonjin", -- [328]
-						"^2407^16^1614744043^590^1^20^219.88^Demonjin", -- [329]
-						"^2395^8^1614839444^166^0^5^227.20^Goopdtwo", -- [330]
-						"^2395^8^1614840189^84^1^5^227.11^", -- [331]
-						"^2394^8^1614840692^157^1^5^227.11^", -- [332]
-						"^2400^8^1614841623^92^1^5^227.11^Maeveythree", -- [333]
-						"^2396^8^1614842062^184^1^5^226.81^", -- [334]
-						"^2387^8^1614843600^108^1^5^227.11^Maeveythree", -- [335]
-						"^2388^8^1614844238^170^0^5^227.11^Maeveythree", -- [336]
-						"^2387^8^1614844708^124^1^5^227.11^", -- [337]
-						"^2388^8^1614845470^196^1^5^227.11^Atrocityjr", -- [338]
-						"^2360^8^1614846989^64^1^5^226.82^", -- [339]
-						"^2361^8^1614847727^96^1^5^226.82^", -- [340]
-						"^2362^8^1614847971^102^1^5^226.82^Maeveycakes", -- [341]
-						"^2363^8^1614848549^143^1^5^226.82^", -- [342]
-						"^2391^8^1614849707^100^1^5^226.82^Maeveycakes", -- [343]
-						"^2364^8^1614850453^112^1^5^226.82^", -- [344]
-						"^2397^8^1614988417^49^1^5^217.70^", -- [345]
-						"^2392^8^1614988970^153^1^5^217.70^Atrocityjr", -- [346]
-						"^2393^8^1614989637^83^1^5^215.58^", -- [347]
-						"^2357^8^1614990748^52^1^5^218.68^", -- [348]
-						"^2356^8^1614991748^51^1^5^221.45^", -- [349]
-						"^2358^8^1614991970^101^1^5^218.68^", -- [350]
-						"^2359^8^1614992338^64^0^5^218.68^Clozerw-Mal'Ganis", -- [351]
-						"^2359^8^1614992480^159^1^5^218.68^", -- [352]
-						"^2391^8^1615321767^130^1^5^223.75^", -- [353]
-						"^2366^8^1615322218^142^1^5^222.61^", -- [354]
-						"^2364^8^1615322685^145^1^5^223.64^", -- [355]
-						"^2365^8^1615323165^126^1^5^223.75^", -- [356]
-						"^2404^8^1615323350^134^1^5^223.75^", -- [357]
-						"^2391^8^1615326473^132^1^5^224.96^", -- [358]
-						"^2366^8^1615326945^116^1^5^224.96^", -- [359]
-						"^2364^8^1615327395^118^1^5^226.62^Kíngflysp", -- [360]
-						"^2365^8^1615327823^117^1^5^224.96^Atrocityjr", -- [361]
-						"^2404^8^1615327988^116^1^5^224.96^Atrocityjr", -- [362]
-						"^2391^8^1615330666^100^1^5^226.79^", -- [363]
-						"^2366^8^1615331049^99^1^5^226.79^", -- [364]
-						"^2364^8^1615331438^120^1^5^226.79^", -- [365]
-						"^2365^8^1615331826^85^1^5^226.79^", -- [366]
-						"^2404^8^1615331955^114^1^5^226.79^", -- [367]
-						"^2398^16^1615337769^11^0^20^218.00^", -- [368]
+					["Venøm"] = {
 					},
-					["Cronîx"] = {
+					["Atrocityxe"] = {
 					},
-				},
-				["names"] = {
-					[2032] = "Goroth",
-					[1777] = "Fel Lord Zakuun",
-					[1778] = "Hellfire Assault",
-					[2036] = "Harjatan",
-					[2037] = "Mistress Sassz'ine",
-					[2038] = "Fallen Avatar",
-					[1783] = "Gorefiend",
-					[1784] = "Tyrant Velhari",
-					[1785] = "Iron Reaver",
-					[1786] = "Kilrogg Deadeye",
-					[1787] = "Kormrok",
-					[1788] = "Shadow-Lord Iskar",
-					[1023] = "Chimaeron",
-					[1024] = "Magmaw",
-					[1025] = "Maloriak",
-					[1026] = "Nefarian's End",
-					[1027] = "Omnotron Defense System",
-					[2051] = "Kil'jaeden",
-					[1028] = "Ascendant Council",
-					[1795] = "Mannoroth",
-					[2054] = "The Desolate Host",
-					[1030] = "Halfus Wyrmbreaker",
-					[1798] = "Hellfire High Council",
-					[1032] = "Theralion and Valiona",
-					[1799] = "Archimonde",
-					[2063] = "Aggramar",
-					[1034] = "Al'Akir",
-					[1035] = "Conclave of Wind",
-					[2069] = "Varimathras",
-					[2070] = "Antoran High Command",
-					[2073] = "The Coven of Shivarra",
-					[2074] = "Felhounds of Sargeras",
-					[2076] = "Garothi Worldbreaker",
-					[2082] = "Imonar the Soulhunter",
-					[2084] = "Priestess Alun'za",
-					[2085] = "Vol'kaal",
-					[2086] = "Rezan",
-					[2087] = "Yazma",
-					[2088] = "Kin'garoth",
-					[2092] = "Argus the Unmaker",
-					[2093] = "Skycap'n Kragg",
-					[2094] = "Council o' Captains",
-					[2095] = "Ring of Booty",
-					[2096] = "Lord Harlan Sweete",
-					[2097] = "Sergeant Bainbridge",
-					[2098] = "Chopper Redhook",
-					[2099] = "Hadal Darkfathom",
-					[2100] = "Viq'Goth",
-					[2101] = "The Sand Queen",
-					[2102] = "Jes Howlis",
-					[2103] = "Knight Captain Valyri",
-					[1565] = "Tortos",
-					[2105] = "Coin-Operated Crowd Pummeler",
-					[2106] = "Azerokk",
-					[2107] = "Rixxa Fluxfume",
-					[2108] = "Mogul Razdunk",
-					[2109] = "Dread Captain Lockwood",
-					[2111] = "Elder Leaxa",
-					[2112] = "Sporecaller Zancha",
-					[2113] = "Heartsbane Triad",
-					[2114] = "Soulbound Goliath",
-					[2115] = "Raal the Gluttonous",
-					[2116] = "Lord and Lady Waycrest",
-					[2117] = "Gorak Tul",
-					[2118] = "Cragmaw the Infested",
-					[1573] = "Ji-Kun",
-					[1574] = "Primordius",
-					[2123] = "Unbound Abomination",
-					[2124] = "Adderis and Aspix",
-					[2125] = "Merektha",
-					[2126] = "Galvazzt",
-					[2127] = "Avatar of Sethraliss",
-					[1577] = "Jin'rokh the Breaker",
-					[2130] = "Aqu'sirr",
-					[2131] = "Tidesage Council",
-					[2132] = "Lord Stormsong",
-					[2133] = "Vol'zith the Whisperer",
-					[1581] = "Ra-den",
-					[664] = "Magmadar",
-					[2139] = "The Golden Serpent",
-					[2140] = "The Council of Tribes",
-					[665] = "Gehennas",
-					[2142] = "Mchimba the Embalmer",
-					[2143] = "King Dazar",
-					[666] = "Garr",
-					[667] = "Shazzrah",
-					[668] = "Baron Geddon",
-					[669] = "Sulfuron Harbinger",
-					[1593] = "Paragons of the Klaxxi",
-					[670] = "Golemagg the Incinerator",
-					[1594] = "Spoils of Pandaria",
-					[1595] = "Malkorok",
-					[671] = "Majordomo Executus",
-					[672] = "Ragnaros",
-					[1598] = "Fallen Protectors",
-					[1854] = "Dragons of Nightmare",
-					[1599] = "Thok the Bloodthirsty",
-					[1600] = "Iron Juggernaut",
-					[1601] = "Siegecrafter Blackfuse",
-					[1602] = "Immerseus",
-					[1603] = "General Nazgrim",
-					[1604] = "Sha of Pride",
-					[1095] = "Blood Council",
-					[1096] = "Deathbringer Saurfang",
-					[1097] = "Festergut",
-					[1864] = "Xavius",
-					[1098] = "Valithria Dreamwalker",
-					[1099] = "Icecrown Gunship Battle",
-					[1100] = "Lady Deathwhisper",
-					[1101] = "Lord Marrowgar",
-					[1102] = "Professor Putricide",
-					[1103] = "Queen Lana'thel",
-					[1104] = "Rotface",
-					[1105] = "Sindragosa",
-					[1106] = "The Lich King",
-					[1873] = "Il'gynoth, The Heart of Corruption",
-					[1108] = "Gluth",
-					[1109] = "Gothik the Harvester",
-					[1876] = "Elerethe Renferal",
-					[1877] = "Cenarius",
-					[1622] = "Galakras",
-					[1623] = "Garrosh Hellscream",
-					[1113] = "Instructor Razuvious",
-					[1118] = "Patchwerk",
-					[1120] = "Thaddius",
-					[1121] = "The Four Horsemen",
-					[1130] = "Algalon the Observer",
-					[2257] = "Tussle Tonks",
-					[2258] = "K.U.-J.0.",
-					[2259] = "Machinist's Garden",
-					[2260] = "King Mechagon",
-					[1133] = "Freya",
-					[2263] = "Grong",
-					[1134] = "General Vezax",
-					[2265] = "Champion of the Light",
-					[2266] = "Jadefire Masters",
-					[2268] = "Conclave of the Chosen",
-					[1137] = "Kologarn",
-					[2271] = "Opulence",
-					[1138] = "Mimiron",
-					[1139] = "Razorscale",
-					[1395] = "The Stone Guard",
-					[1140] = "The Assembly of Iron",
-					[1141] = "Thorim",
-					[1142] = "XT-002 Deconstructor",
-					[2281] = "Lady Jaina Proudmoore",
-					[1143] = "Yogg-Saron",
-					[2289] = "Blackwater Behemoth",
-					[2290] = "King Gobbamak",
-					[2291] = "HK-8 Aerial Oppression Unit",
-					[2292] = "Gunker",
-					[2293] = "Za'qul",
-					[2298] = "Abyssal Commander Sivara",
-					[1407] = "Will of the Emperor",
-					[2303] = "Orgozoa",
-					[2304] = "Lady Ashvane",
-					[2305] = "Radiance of Azshara",
-					[2311] = "The Queen's Court",
-					[2312] = "Trixie & Naeno",
-					[2327] = "Maut",
-					[2328] = "Dark Inquisitor Xanesh",
-					[2329] = "Wrathion",
-					[2331] = "Ra-den the Despoiled",
-					[2333] = "The Hivemind",
-					[2334] = "Prophet Skitra",
-					[2335] = "Shad'har the Insatiable",
-					[2336] = "Vexiona",
-					[2337] = "Carapace of N'Zoth",
-					[2343] = "Drest'agath",
-					[2344] = "N'Zoth the Corruptor",
-					[2345] = "Il'gynoth, Corruption Reborn",
-					[1431] = "Sha of Fear",
-					[1689] = "Flamebender Ka'graz",
-					[1434] = "Gara'jal the Spiritbinder",
-					[1690] = "Blast Furnace",
-					[1691] = "Gruul",
-					[1436] = "The Spirit Kings",
-					[1692] = "Operator Thogar",
-					[2359] = "Devos, Paragon of Loyalty",
-					[1693] = "Hans'gar & Franzok",
-					[2361] = "Executor Tarvold",
-					[1694] = "Beastlord Darmac",
-					[2363] = "General Kaal",
-					[1695] = "The Iron Maidens",
-					[2365] = "Gorechop",
-					[1696] = "Oregorger the Devourer",
-					[1443] = "Adarogg",
-					[2380] = "Echelon",
-					[2381] = "Lord Chamberlain",
-					[2382] = "Globgrog",
-					[2383] = "Hungering Destroyer",
-					[1705] = "Imperator Mar'gok",
-					[2385] = "Domina Venomblade",
-					[2386] = "Stradama Margrave",
-					[2387] = "Blightbone",
-					[2388] = "Amarth, The Harvester",
-					[2389] = "Stichflesh",
-					[2390] = "Nalthor the Rimebinder",
-					[2391] = "An Affront of Challengers",
-					[2392] = "Mistcaller",
-					[2393] = "Tred'ova",
-					[2394] = "The Manastorms",
-					[2395] = "Hakkar, the Soulflayer",
-					[2396] = "Mueh'zala",
-					[2397] = "Ingra Maloch",
-					[2398] = "Shriekwing",
-					[2399] = "Sludgefist",
-					[1713] = "Kromog, Legend of the Mountain",
-					[2401] = "Halkias, the Sin-Stained Goliath",
-					[2402] = "Sun King's Salvation",
-					[2403] = "High Adjudicator Aleez",
-					[2404] = "Mordretha",
-					[2405] = "Artificer Xy'mox",
-					[1205] = "Shannox",
-					[2407] = "Sire Denathrius",
-					[1463] = "Garalon",
-					[1719] = "Twin Ogron",
-					[1720] = "Brackenspore",
-					[1721] = "Kargath Bladefist",
-					[2417] = "Stone Legion Generals",
-					[1722] = "Tectus, The Living Mountain",
-					[1723] = "Ko'ragh",
-					[2406] = "Lady Inerva Darkvein",
-					[2418] = "Huntsman Altimor",
-					[1800] = "Xhul'horac",
-					[1029] = "Cho'gall",
-					[1409] = "Protectors of the Endless",
-					[1823] = "Harbaron",
-					[2280] = "Stormwall Blockade",
-					[2276] = "Mekkatorque",
-					[1841] = "Ursoc",
-					[2272] = "King Rastakhan",
-					[1136] = "Ignis the Furnace Master",
-					[1390] = "Feng the Accursed",
-					[2052] = "Maiden of Vigilance",
-					[1132] = "Flame Leviathan",
-					[1111] = "Grobbulus",
-					[1131] = "Auriaya",
-					[1794] = "Socrethar the Eternal",
-					[1135] = "Hodir",
-					[1570] = "Council of Elders",
-					[2299] = "Queen Azshara",
-					[2104] = "Overseer Korgus",
-					[1706] = "The Butcher",
-					[1576] = "Dark Animus",
-					[2048] = "Demonic Inquisition",
-					[2050] = "Sisters of the Moon",
-					[1704] = "Blackhand",
-					[1498] = "Wind Lord Mel'jarak",
-					[1824] = "Helya",
-					[1499] = "Amber-Shaper Un'sok",
-					[1579] = "Lei Shen",
-					[1500] = "Elegon",
-					[1578] = "Megaera",
-					[1501] = "Grand Empress Shek'zeer",
-					[1572] = "Durumu the Forgotten",
-					[663] = "Lucifron",
-					[1575] = "Horridon",
-					[1822] = "Ymiron, the Fallen King",
-					[1624] = "Norushen",
-					[1504] = "Blade Lord Ta'yak",
-					[1559] = "Iron Qon",
-					[1505] = "Tsulong",
-					[1606] = "Kor'kron Dark Shaman",
-					[1506] = "Lei Shi",
-					[2384] = "Doctor Ickus",
-					[1507] = "Imperial Vizier Zor'lok",
-					[1560] = "Twin Consorts",
-					[2360] = "Kryxis the Voracious",
-					[2362] = "Grand Proctor Beryllia",
-					[2064] = "Portal Keeper Hasabel",
-					[1853] = "Nythendra",
-					[2366] = "Xav the Unfallen",
-					[2364] = "Kul'tharok",
-					[2400] = "Dealer Xy'exa",
-					[2357] = "Kin-Tara",
-					[2356] = "Ventunax",
-					[2358] = "Oryphrion",
-					[2412] = "The Council of Blood",
 				},
 			},
 			["Marks"] = {
@@ -23299,23 +24662,23 @@ local MRTDump = {
 					["102342;5"] = 1,
 					["31821;2"] = 2,
 					["6940;3"] = 1,
-					["73325;1"] = 1,
+					["47788;3"] = 1,
 					["33206;2"] = 1,
 					["98008;4"] = 2,
 					["633;1"] = 1,
-					["97462;1"] = 1,
+					["116849;4"] = 1,
 					["204018;3"] = 2,
-					["62618;2"] = 2,
+					["1044;2"] = 1,
 					["64382;1"] = 1,
 					["10060;3"] = 1,
-					["1044;3"] = 1,
 					["1022;2"] = 1,
+					["1044;3"] = 1,
 					["77764;3"] = 3,
 					["64382;3"] = 1,
-					["1044;2"] = 1,
+					["62618;2"] = 2,
 					["3411;3"] = 1,
-					["116849;4"] = 1,
-					["47788;3"] = 1,
+					["97462;1"] = 1,
+					["73325;1"] = 1,
 					["1044;1"] = 1,
 				},
 				["lock"] = true,
@@ -23325,18 +24688,18 @@ local MRTDump = {
 					[33206] = 0,
 					[6940] = 0,
 					[102342] = 0,
-					[1022] = 100,
 					[116849] = 0,
+					[1022] = 100,
 				},
 				["CDE"] = {
 					[47788] = true,
 					[1022] = true,
-					[73325] = true,
+					[10060] = true,
 					[33206] = true,
 					[6940] = true,
 					[102342] = true,
 					[116849] = true,
-					[10060] = true,
+					[73325] = true,
 				},
 				["enabled"] = true,
 				["gnGUIDs"] = {
@@ -23346,6 +24709,7 @@ local MRTDump = {
 					["Truckboy"] = 269,
 					["Kamslock"] = 265,
 					["Atrocityxe"] = 259,
+					["Alígator-Blackhand"] = 266,
 					["Burtleshirt"] = 72,
 					["Scottwarr"] = 73,
 					["Maeveycakes"] = 264,
@@ -23387,179 +24751,179 @@ local MRTDump = {
 					["Darkdaggers"] = 259,
 					["Drakvel"] = 1467,
 					["Randu-Sen'jin"] = 266,
-					["Atrocityx"] = 258,
+					["Crónix"] = 71,
 					["Venøm"] = 261,
 					["Imshootinup"] = 254,
 					["Atrocityw"] = 72,
 					["Catlas"] = 104,
 					["Dreamz-Shadowmoon"] = 103,
-					["Sharkshoes"] = 259,
+					["Atrocitywm"] = 72,
 					["Mithras-Feathermoon"] = 105,
 					["Wommy"] = 66,
-					["Unwaanted"] = 577,
+					["Goopdtwo"] = 104,
 					["Dîvino-Ragnaros"] = 264,
-					["Norishockxo"] = 264,
-					["Goopwar"] = 72,
+					["Cnxwarrior"] = 71,
 					["Lipwarlock"] = 265,
+					["Goopwar"] = 72,
 					["Clozerw-Mal'Ganis"] = 72,
 					["Nicksdruid"] = 105,
-					["Madmardigon-Madoran"] = 252,
-					["Goophunt"] = 254,
+					["Maccrugger"] = 72,
+					["Crônix"] = 263,
 					["Celëbrimbor-Azralon"] = 65,
 					["Drineym"] = 270,
-					["Cronixqq"] = 251,
 					["Volcanohands"] = 259,
+					["Cronixqq"] = 252,
 					["Lulani-Skullcrusher"] = 254,
 					["Twistedxo"] = 262,
 					["Padmaster"] = 71,
-					["Mbw-Mal'Ganis"] = 71,
+					["Thdmoon"] = 102,
 					["Tayter-Thunderhorn"] = 257,
 					["Atlaschi"] = 268,
-					["Rwreturns"] = 63,
-					["Rukhran"] = 262,
 					["Jahmaican-Area52"] = 65,
+					["Kíngfly"] = 258,
+					["Rwreturns"] = 63,
 					["Bgheals"] = 105,
 					["Drenacoxd"] = 267,
-					["Goopd"] = 102,
-					["Arcinde-Mal'Ganis"] = 265,
-					["Atrocitys"] = 264,
+					["Honduraas-CenarionCircle"] = 254,
+					["Sanction-Thrall"] = 65,
+					["Scottbrexit"] = 581,
 					["Eiguarracuco-Kel'Thuzad"] = 103,
 					["Atrocitywar"] = 72,
-					["Domeynicus"] = 252,
+					["Worstclass"] = 65,
 					["Loreanth-Azralon"] = 62,
 					["Murdek-TheVentureCo"] = 254,
 					["Goopsp"] = 258,
-					["Ericjunior"] = 254,
-					["Kopec-Tichondrius"] = 71,
+					["Trilldh"] = 577,
+					["Avengawr-Gurubashi"] = 65,
 					["Imexiledh"] = 577,
 					["Mbd-Mal'Ganis"] = 104,
-					["Demonjin"] = 577,
-					["Abuul-Frostwolf"] = 105,
-					["Nickspally"] = 65,
+					["Goopdh"] = 577,
+					["Twistedtnt"] = 268,
+					["Ankhaa-Arthas"] = 65,
 					["Jacobww-Mal'Ganis"] = 269,
 					["Jollerdruid-Ragnaros"] = 102,
-					["Norallyn-Ragnaros"] = 65,
-					["Aconite-Barthilas"] = 256,
+					["Tervis-Daggerspine"] = 269,
+					["Jeandra-Deathwing"] = 258,
 					["Lakiesha-Madoran"] = 581,
 					["Nazug-Dragonmaw"] = 266,
 					["Potatobrains"] = 71,
-					["Twistedbb"] = 63,
+					["Zombmage"] = 62,
 					["Atrocitydh"] = 577,
-					["Lorisdisco"] = 64,
-					["Ringofpiecez"] = 269,
+					["Baekho-Shu'halo"] = 65,
 					["Atrocitymagi"] = 64,
-					["Lightee"] = 66,
+					["Ringofpiecez"] = 269,
 					["Deadlydemon-Spirestone"] = 577,
-					["Gravîty"] = 251,
+					["Atrocitywl"] = 267,
 					["Imnnk"] = 265,
+					["Gravîty"] = 251,
 					["Kuzzooj"] = 258,
 					["Soph-Mal'Ganis"] = 577,
 					["Marklyp-Azralon"] = 65,
 					["Fuuz-Doomhammer"] = 253,
-					["Tilttay-Zul'jin"] = 65,
+					["Ilovegachixo-Area52"] = 270,
 					["Bigscro"] = 104,
-					["Lipdh"] = 577,
-					["Lavabanger"] = 262,
+					["Tilttay-Zul'jin"] = 65,
+					["Cronîx"] = 252,
 					["Filfaeril-Aman'Thul"] = 258,
 					["Mb-Mal'Ganis"] = 70,
 					["Jaeroc-Hyjal"] = 269,
 					["Bovinetits"] = 253,
 					["Surgemachine"] = 102,
-					["Impec"] = 260,
+					["Imexiledk"] = 252,
 					["Brucechì-Arthas"] = 270,
 					["Chaosjack-Khaz'goroth"] = 266,
 					["Mercurialis-Quel'dorei"] = 257,
-					["Jackray"] = 103,
-					["Aynvustro-Medivh"] = 64,
-					["Xybeaned"] = 266,
+					["Thdemon"] = 577,
+					["Kajukenbo-Agamaggan"] = 256,
+					["Atrocityjr"] = 258,
 					["Onehealplzz"] = 70,
 					["Maeveythree"] = 264,
-					["Thundercraig"] = 252,
+					["Weedbirdy-Area52"] = 257,
 					["Vilknight"] = 252,
 					["Strohmpriest-Firetree"] = 256,
 					["Atlasxo"] = 252,
 					["Shward-Area52"] = 262,
 					["Lutheroggo-EmeraldDream"] = 258,
-					["Gobiparatha-Thunderlord"] = 62,
+					["Mbshaman-Mal'Ganis"] = 263,
 					["Atrocity"] = 577,
 					["Xyroblast"] = 64,
-					["Samrua"] = 102,
-					["Ungravedrage"] = 252,
 					["Deemø"] = 66,
+					["Impecwl"] = 267,
+					["Samrua"] = 102,
 					["Fearrful"] = 256,
 					["Handricks-Quel'Thalas"] = 258,
-					["Cithi-Mal'Ganis"] = 252,
-					["Impecwl"] = 267,
 					["Stankylip"] = 102,
-					["Evonix"] = 1465,
-					["Norichixo"] = 270,
-					["Testinyo"] = 72,
+					["Ungravedrage"] = 252,
+					["Goopem"] = 269,
 					["Jacobxo-Mal'Ganis"] = 102,
+					["Norichixo"] = 270,
+					["Atrocityp"] = 70,
+					["Cithi-Mal'Ganis"] = 252,
 					["Darkeewar"] = 73,
 					["Bwomde-Thrall"] = 257,
-					["Kosmik-Proudmoore"] = 64,
+					["Lynphelps"] = 267,
 					["Nyghtlock"] = 267,
 					["Twistedlock"] = 265,
 					["Impecs"] = 263,
 					["Tagzz"] = 65,
-					["Deadwelorc-Barthilas"] = 71,
 					["Atrocityhunt"] = 254,
+					["Deadwelorc-Barthilas"] = 71,
 					["Twistedjr"] = 105,
-					["Lynphelps"] = 267,
-					["Atrocityp"] = 70,
+					["Kosmik-Proudmoore"] = 64,
+					["Testinyo"] = 72,
 					["Maeveytwo"] = 264,
-					["Goopem"] = 269,
+					["Evonix"] = 1465,
 					["Kelsier-Hyjal"] = 105,
 					["Liprogue"] = 260,
 					["Raevyne-Area52"] = 254,
-					["Mbshaman-Mal'Ganis"] = 263,
+					["Gobiparatha-Thunderlord"] = 62,
 					["Hossuna"] = 581,
 					["Nynæve-Ravenholdt"] = 270,
 					["Squiddisco"] = 265,
-					["Weedbirdy-Area52"] = 257,
-					["Atrocityjr"] = 258,
-					["Kajukenbo-Agamaggan"] = 256,
-					["Thdemon"] = 577,
-					["Imexiledk"] = 252,
-					["Cronîx"] = 252,
-					["Ilovegachixo-Area52"] = 270,
+					["Thundercraig"] = 252,
+					["Xybeaned"] = 266,
+					["Aynvustro-Medivh"] = 64,
+					["Jackray"] = 103,
+					["Impec"] = 260,
+					["Lavabanger"] = 262,
+					["Lipdh"] = 577,
 					["Blessa-Rexxar"] = 257,
 					["Atrocitydr"] = 102,
 					["Xucnoris-Azralon"] = 269,
-					["Atrocitywl"] = 267,
+					["Lightee"] = 66,
 					["Imfiredup"] = 64,
-					["Baekho-Shu'halo"] = 65,
-					["Zombmage"] = 62,
+					["Lorisdisco"] = 64,
+					["Twistedbb"] = 63,
 					["Twistedp"] = 66,
-					["Jeandra-Deathwing"] = 258,
-					["Tervis-Daggerspine"] = 269,
-					["Ankhaa-Arthas"] = 65,
-					["Twistedtnt"] = 268,
-					["Goopdh"] = 577,
+					["Aconite-Barthilas"] = 256,
+					["Norallyn-Ragnaros"] = 65,
+					["Nickspally"] = 65,
+					["Abuul-Frostwolf"] = 105,
+					["Demonjin"] = 577,
 					["Soupshop"] = 577,
-					["Avengawr-Gurubashi"] = 65,
-					["Trilldh"] = 577,
+					["Kopec-Tichondrius"] = 71,
+					["Ericjunior"] = 254,
 					["Buckfifty"] = 259,
-					["Worstclass"] = 65,
-					["Scottbrexit"] = 581,
-					["Sanction-Thrall"] = 65,
-					["Honduraas-CenarionCircle"] = 254,
-					["Kíngfly"] = 258,
+					["Domeynicus"] = 252,
+					["Atrocitys"] = 264,
+					["Arcinde-Mal'Ganis"] = 265,
+					["Goopd"] = 102,
+					["Rukhran"] = 262,
 					["Testindos"] = 72,
-					["Thdmoon"] = 102,
+					["Mbw-Mal'Ganis"] = 71,
 					["Noridhxo"] = 581,
 					["Scottdk"] = 250,
 					["Kadeemo"] = 66,
-					["Crônix"] = 263,
-					["Maccrugger"] = 72,
+					["Goophunt"] = 254,
+					["Madmardigon-Madoran"] = 252,
 					["Cnxmonk"] = 269,
-					["Cnxwarrior"] = 71,
-					["Goopdtwo"] = 104,
+					["Norishockxo"] = 264,
+					["Unwaanted"] = 577,
 					["Cowbun"] = 70,
-					["Atrocitywm"] = 72,
+					["Sharkshoes"] = 259,
 					["Atrocitydk"] = 251,
 					["Nagasa-ScarletCrusade"] = 270,
-					["Crónix"] = 71,
+					["Atrocityx"] = 258,
 					["Nohealsnocry-Area52"] = 264,
 				},
 				["userDB"] = {
@@ -23571,7 +24935,8 @@ local MRTDump = {
 					["List"] = {
 					},
 				},
-				["ReverseSorting"] = true,
+				["NoRaid"] = true,
+				["Left"] = 452.84124755859,
 				["colSet"] = {
 					{
 						["textureColorTextCastR"] = 1,
@@ -23624,31 +24989,31 @@ local MRTDump = {
 						["iconGray"] = false,
 						["iconPosition"] = 1,
 						["textureColorTextCooldownG"] = 0.5,
-						["methodsSortByAvailability"] = true,
+						["methodsGeneral"] = true,
 						["textureColorTimeLineCastB"] = 1,
-						["frameGeneral"] = true,
-						["textureColorTimeLineCooldownR"] = 1,
-						["textureColorTextActiveR"] = 0.5,
+						["textureBorderSize"] = 0,
+						["textureColorTimeLineDefaultG"] = 1,
+						["textTemplateRight"] = "",
 						["posX"] = 423.77725219726,
-						["textureClassText"] = false,
-						["textureColorTextActiveB"] = 0.5,
+						["methodsStyleAnimation"] = 1,
+						["textureClassBackground"] = false,
+						["textureAlphaBackground"] = 0,
 						["textureAlphaTimeLine"] = 0,
-						["textureGeneral"] = true,
 						["textureColorBackgroundCooldownB"] = 1,
 						["methodsTimeLineAnimation"] = 1,
 						["methodsReverseSorting"] = true,
 						["methodsAlphaNotInRangeNum"] = 90,
-						["textureColorTimeLineDefaultR"] = 1,
-						["textureColorTimeLineCooldownB"] = 1,
 						["textureColorTimeLineActiveR"] = 1,
+						["textureColorTimeLineCooldownB"] = 1,
+						["textureColorTimeLineDefaultR"] = 1,
 						["textureColorTimeLineActiveG"] = 1,
-						["textureAlphaBackground"] = 0,
-						["textureClassBackground"] = false,
-						["methodsStyleAnimation"] = 1,
-						["textTemplateRight"] = "",
-						["textureColorTimeLineDefaultG"] = 1,
-						["textureBorderSize"] = 0,
-						["methodsGeneral"] = true,
+						["textureGeneral"] = true,
+						["textureColorTextActiveB"] = 0.5,
+						["textureClassText"] = false,
+						["textureColorTextActiveR"] = 0.5,
+						["textureColorTimeLineCooldownR"] = 1,
+						["frameGeneral"] = true,
+						["methodsSortByAvailability"] = true,
 						["textureAlphaCooldown"] = 1,
 					}, -- [1]
 					{
@@ -23659,24 +25024,24 @@ local MRTDump = {
 						["methodsSortByAvailability"] = true,
 						["fontOutline"] = true,
 						["visibilityGeneral"] = true,
-						["frameWidth"] = 130,
-						["frameScale"] = 100,
+						["textureAnimation"] = true,
+						["textureAlphaBackground"] = 0.3,
 						["textureGeneral"] = true,
 						["frameLines"] = 15,
+						["fontGeneral"] = true,
 						["posY"] = 1438.3591308594,
-						["methodsReverseSorting"] = true,
 						["methodsAlphaNotInRangeNum"] = 90,
 						["textGeneral"] = true,
 						["posX"] = 3.1257295608521,
 						["iconSize"] = 16,
 						["blacklistGeneral"] = true,
-						["textureAlphaTimeLine"] = 0.8,
 						["fontShadow"] = false,
+						["textureAlphaTimeLine"] = 0.8,
 						["iconGeneral"] = true,
 						["frameColumns"] = 1,
-						["fontGeneral"] = true,
-						["textureAlphaBackground"] = 0.3,
-						["textureAnimation"] = true,
+						["methodsReverseSorting"] = true,
+						["frameScale"] = 100,
+						["frameWidth"] = 130,
 						["textureAlphaCooldown"] = 1,
 					}, -- [2]
 					{
@@ -23689,20 +25054,20 @@ local MRTDump = {
 						["methodsSortByAvailability"] = true,
 						["fontShadow"] = false,
 						["frameLines"] = 15,
-						["textureAnimation"] = true,
+						["frameWidth"] = 130,
 						["methodsReverseSorting"] = true,
 						["methodsAlphaNotInRangeNum"] = 90,
 						["textGeneral"] = true,
 						["posX"] = 226.04397583008,
-						["posY"] = 1496.3664550781,
+						["fontGeneral"] = true,
 						["blacklistGeneral"] = true,
-						["textureAlphaTimeLine"] = 0.8,
+						["iconSize"] = 16,
 						["textureGeneral"] = true,
 						["iconGeneral"] = true,
-						["iconSize"] = 16,
-						["fontGeneral"] = true,
+						["textureAlphaTimeLine"] = 0.8,
+						["posY"] = 1496.3664550781,
 						["textureAlphaBackground"] = 0.3,
-						["frameWidth"] = 130,
+						["textureAnimation"] = true,
 						["textureAlphaCooldown"] = 1,
 					}, -- [3]
 					{
@@ -23716,22 +25081,22 @@ local MRTDump = {
 						["fontShadow"] = false,
 						["frameLines"] = 15,
 						["posY"] = 1284.3850097656,
-						["methodsReverseSorting"] = true,
+						["textureAlphaTimeLine"] = 0.8,
 						["textGeneral"] = true,
-						["textureAnimation"] = true,
+						["frameWidth"] = 130,
 						["fontGeneral"] = true,
 						["blacklistGeneral"] = true,
-						["methodsSortByAvailability"] = true,
-						["iconSize"] = 16,
-						["iconGeneral"] = true,
-						["posX"] = 281.25170898438,
 						["textureGeneral"] = true,
+						["posX"] = 281.25170898438,
+						["iconGeneral"] = true,
+						["iconSize"] = 16,
+						["methodsSortByAvailability"] = true,
 						["textureAlphaBackground"] = 0.3,
-						["frameWidth"] = 130,
-						["textureAlphaTimeLine"] = 0.8,
+						["textureAnimation"] = true,
+						["methodsReverseSorting"] = true,
 					}, -- [4]
 					{
-						["fontShadow"] = false,
+						["textureGeneral"] = true,
 						["methodsSortByAvailability"] = true,
 						["methodsReverseSorting"] = true,
 						["iconGray"] = true,
@@ -23739,17 +25104,17 @@ local MRTDump = {
 						["methodsGeneral"] = true,
 						["posY"] = 857.81781005859,
 						["blacklistGeneral"] = true,
-						["frameGeneral"] = true,
-						["fontOutline"] = true,
-						["iconGeneral"] = true,
-						["posX"] = 1250.0046386719,
-						["visibilityGeneral"] = true,
 						["fontGeneral"] = true,
+						["posX"] = 1250.0046386719,
+						["iconGeneral"] = true,
+						["fontOutline"] = true,
+						["visibilityGeneral"] = true,
+						["frameGeneral"] = true,
 						["textureAnimation"] = true,
-						["textureGeneral"] = true,
+						["fontShadow"] = false,
 					}, -- [5]
 					{
-						["fontShadow"] = false,
+						["textureGeneral"] = true,
 						["methodsSortByAvailability"] = true,
 						["methodsReverseSorting"] = true,
 						["iconGray"] = true,
@@ -23757,17 +25122,17 @@ local MRTDump = {
 						["methodsGeneral"] = true,
 						["posY"] = 857.81781005859,
 						["blacklistGeneral"] = true,
-						["frameGeneral"] = true,
-						["fontOutline"] = true,
-						["iconGeneral"] = true,
-						["posX"] = 1250.0046386719,
-						["visibilityGeneral"] = true,
 						["fontGeneral"] = true,
+						["posX"] = 1250.0046386719,
+						["iconGeneral"] = true,
+						["fontOutline"] = true,
+						["visibilityGeneral"] = true,
+						["frameGeneral"] = true,
 						["textureAnimation"] = true,
-						["textureGeneral"] = true,
+						["fontShadow"] = false,
 					}, -- [6]
 					{
-						["fontShadow"] = false,
+						["textureGeneral"] = true,
 						["methodsSortByAvailability"] = true,
 						["methodsReverseSorting"] = true,
 						["iconGray"] = true,
@@ -23775,17 +25140,17 @@ local MRTDump = {
 						["methodsGeneral"] = true,
 						["posY"] = 857.81781005859,
 						["blacklistGeneral"] = true,
-						["frameGeneral"] = true,
-						["fontOutline"] = true,
-						["iconGeneral"] = true,
-						["posX"] = 1250.0046386719,
-						["visibilityGeneral"] = true,
 						["fontGeneral"] = true,
+						["posX"] = 1250.0046386719,
+						["iconGeneral"] = true,
+						["fontOutline"] = true,
+						["visibilityGeneral"] = true,
+						["frameGeneral"] = true,
 						["textureAnimation"] = true,
-						["textureGeneral"] = true,
+						["fontShadow"] = false,
 					}, -- [7]
 					{
-						["fontShadow"] = false,
+						["textureGeneral"] = true,
 						["methodsSortByAvailability"] = true,
 						["methodsReverseSorting"] = true,
 						["iconGray"] = true,
@@ -23793,17 +25158,17 @@ local MRTDump = {
 						["methodsGeneral"] = true,
 						["posY"] = 857.81781005859,
 						["blacklistGeneral"] = true,
-						["frameGeneral"] = true,
-						["fontOutline"] = true,
-						["iconGeneral"] = true,
-						["posX"] = 1250.0046386719,
-						["visibilityGeneral"] = true,
 						["fontGeneral"] = true,
+						["posX"] = 1250.0046386719,
+						["iconGeneral"] = true,
+						["fontOutline"] = true,
+						["visibilityGeneral"] = true,
+						["frameGeneral"] = true,
 						["textureAnimation"] = true,
-						["textureGeneral"] = true,
+						["fontShadow"] = false,
 					}, -- [8]
 					{
-						["fontShadow"] = false,
+						["textureGeneral"] = true,
 						["methodsSortByAvailability"] = true,
 						["methodsReverseSorting"] = true,
 						["iconGray"] = true,
@@ -23811,17 +25176,17 @@ local MRTDump = {
 						["methodsGeneral"] = true,
 						["posY"] = 857.81781005859,
 						["blacklistGeneral"] = true,
-						["frameGeneral"] = true,
-						["fontOutline"] = true,
-						["iconGeneral"] = true,
-						["posX"] = 1250.0046386719,
-						["visibilityGeneral"] = true,
 						["fontGeneral"] = true,
+						["posX"] = 1250.0046386719,
+						["iconGeneral"] = true,
+						["fontOutline"] = true,
+						["visibilityGeneral"] = true,
+						["frameGeneral"] = true,
 						["textureAnimation"] = true,
-						["textureGeneral"] = true,
+						["fontShadow"] = false,
 					}, -- [9]
 					{
-						["fontShadow"] = false,
+						["textureGeneral"] = true,
 						["methodsSortByAvailability"] = true,
 						["methodsReverseSorting"] = true,
 						["iconGray"] = true,
@@ -23829,14 +25194,14 @@ local MRTDump = {
 						["methodsGeneral"] = true,
 						["posY"] = 857.81781005859,
 						["blacklistGeneral"] = true,
-						["frameGeneral"] = true,
-						["fontOutline"] = true,
-						["iconGeneral"] = true,
-						["posX"] = 1250.0046386719,
-						["visibilityGeneral"] = true,
 						["fontGeneral"] = true,
+						["posX"] = 1250.0046386719,
+						["iconGeneral"] = true,
+						["fontOutline"] = true,
+						["visibilityGeneral"] = true,
+						["frameGeneral"] = true,
 						["textureAnimation"] = true,
-						["textureGeneral"] = true,
+						["fontShadow"] = false,
 					}, -- [10]
 					{
 						["textureColorTextCastR"] = 1,
@@ -23882,7 +25247,7 @@ local MRTDump = {
 						["textureColorTextActiveB"] = 0.5,
 						["textureColorTimeLineDefaultR"] = 1,
 						["frameLines"] = 8,
-						["methodsSortByAvailability"] = true,
+						["textureBorderSize"] = 0,
 						["textureColorTimeLineDefaultB"] = 1,
 						["textureAlphaBackground"] = 0,
 						["frameWidth"] = 160,
@@ -23891,39 +25256,38 @@ local MRTDump = {
 						["fontSize"] = 14,
 						["visibilityDisableWorld"] = true,
 						["iconGray"] = false,
-						["frameScale"] = 100,
+						["textTemplateLeft"] = "%name_stime%",
 						["textureColorTextCooldownG"] = 0.5,
-						["textureColorTextDefaultB"] = 1,
+						["textureClassText"] = true,
 						["textureColorTimeLineCastB"] = 1,
-						["textTemplateRight"] = "",
-						["textureColorBackgroundCastG"] = 1,
+						["textureColorTextActiveR"] = 0.5,
+						["frameColumns"] = 1,
 						["textureFile"] = "Interface\\Addons\\AtrocityMedia\\Atrocity.tga",
-						["textureColorBackgroundDefaultB"] = 1,
+						["textureColorTimeLineDefaultG"] = 1,
 						["visibilityDisable5ppl"] = true,
 						["textureClassBackground"] = false,
-						["textureColorTimeLineCooldownB"] = 1,
+						["methodsStyleAnimation"] = 1,
 						["textureAlphaTimeLine"] = 0,
 						["fontName"] = "Fonts\\ARIALN.TTF",
 						["methodsTimeLineAnimation"] = 1,
 						["methodsReverseSorting"] = true,
 						["methodsAlphaNotInRangeNum"] = 50,
 						["frameAnchorBottom"] = true,
-						["methodsStyleAnimation"] = 1,
+						["textureColorTimeLineCooldownB"] = 1,
 						["methodsDisableActive"] = true,
 						["textureColorTimeLineActiveG"] = 1,
-						["textureColorTimeLineDefaultG"] = 1,
+						["textureColorBackgroundDefaultB"] = 1,
 						["textureSmoothAnimationDuration"] = 50,
-						["frameColumns"] = 1,
-						["textureColorTextActiveR"] = 0.5,
-						["textureClassText"] = true,
-						["textTemplateLeft"] = "%name_stime%",
-						["textureBorderSize"] = 0,
+						["textureColorBackgroundCastG"] = 1,
+						["textTemplateRight"] = "",
+						["textureColorTextDefaultB"] = 1,
+						["frameScale"] = 100,
+						["methodsSortByAvailability"] = true,
 						["textureAlphaCooldown"] = 0.35,
 					}, -- [11]
 				},
 				["SortByAvailability"] = true,
-				["Left"] = 452.84124755859,
-				["NoRaid"] = true,
+				["ReverseSorting"] = true,
 				["OptFav"] = {
 				},
 			},
@@ -23944,9 +25308,8 @@ local MRTDump = {
 				["ReadyCheckFrameTimerFade"] = 4,
 				["ReadyCheck"] = true,
 				["FlaskExp"] = 1,
-				["ReadyCheckFrameScale"] = 110,
+				["FlaskLQ"] = false,
 				["RunesCheck"] = true,
-				["ReadyCheckTop"] = 1059.848754882813,
 				["WeaponEnch"] = {
 					["Atrocityjr-Illidan"] = 171285,
 					["Atrocitywar-Illidan"] = 171437,
@@ -23954,17 +25317,17 @@ local MRTDump = {
 					["Atrocitywl-Illidan"] = 171285,
 					["Padmaster-Illidan"] = 171437,
 				},
+				["ReadyCheckTop"] = 1059.848754882813,
 				["ReadyCheckSortClass"] = true,
 				["SendSelf"] = true,
-				["FlaskLQ"] = false,
+				["ReadyCheckFrameScale"] = 110,
 			},
-			["InspectViewer"] = {
-				["ColorizeLowIlvl685"] = false,
-				["ColorizeNoEnch"] = true,
-				["ColorizeNoGems"] = true,
-				["ColorizeLowIlvl"] = true,
-				["ColorizeNoTopEnchGems"] = false,
-				["ColorizeNoValorUpgrade"] = false,
+			["BattleRes"] = {
+				["Top"] = 70.00016784667969,
+				["Strata"] = "HIGH",
+				["Scale"] = 100,
+				["Left"] = 456.994873046875,
+				["Alpha"] = 100,
 			},
 			["InviteTool"] = {
 				["Words"] = "inv invite 123",
@@ -23991,7 +25354,26 @@ local MRTDump = {
 			["WhoPulled"] = {
 			},
 			["LootHistory"] = {
-				["disable"] = true,
+				["instanceNames"] = {
+					[571] = "Northrend",
+					[2284] = "Sanguine Depths",
+					[2162] = "Torghast, Tower of the Damned",
+					[2290] = "Mists of Tirna Scithe",
+					[2296] = "Castle Nathria",
+					[389] = "Ragefire Chasm",
+					[1712] = "Antorus, the Burning Throne",
+					[2217] = "Ny'alotha, the Waking City",
+					[2285] = "Spires of Ascension",
+					[2070] = "Battle of Dazar'alor",
+					[2289] = "Plaguefall",
+					[2291] = "De Other Side",
+					[2293] = "Theater of Pain",
+					[1754] = "Freehold",
+					[2287] = "Halls of Atonement",
+					[2286] = "The Necrotic Wake",
+					[2222] = "The Shadowlands",
+					[1841] = "The Underrot",
+				},
 				["list"] = {
 					"1602439982#2063#1712#17#Atrocity#1#1#item:152018::::::::120:71::4:4:3613:1457:5860:3337:::", -- [1]
 					"1602439982#2063#1712#17#Atrocity#1#1#item:151950::::::::120:71::4:3:3613:1457:3528:::", -- [2]
@@ -28039,35 +29421,16 @@ local MRTDump = {
 					[2329] = "Wrathion",
 					[2361] = "Executor Tarvold",
 					[2393] = "Tred'ova",
-					[2366] = "Xav the Unfallen",
-					[1443] = "Adarogg",
+					[2111] = "Elder Leaxa",
 					[2362] = "Grand Proctor Beryllia",
+					[1443] = "Adarogg",
 					[2394] = "The Manastorms",
 					[2281] = "Lady Jaina Proudmoore",
 					[2331] = "Ra-den the Despoiled",
 					[2363] = "General Kaal",
-					[2111] = "Elder Leaxa",
+					[2366] = "Xav the Unfallen",
 				},
-				["instanceNames"] = {
-					[571] = "Northrend",
-					[2284] = "Sanguine Depths",
-					[2162] = "Torghast, Tower of the Damned",
-					[2290] = "Mists of Tirna Scithe",
-					[2296] = "Castle Nathria",
-					[389] = "Ragefire Chasm",
-					[1712] = "Antorus, the Burning Throne",
-					[2217] = "Ny'alotha, the Waking City",
-					[2285] = "Spires of Ascension",
-					[2070] = "Battle of Dazar'alor",
-					[2289] = "Plaguefall",
-					[2291] = "De Other Side",
-					[2293] = "Theater of Pain",
-					[1754] = "Freehold",
-					[1841] = "The Underrot",
-					[2222] = "The Shadowlands",
-					[2286] = "The Necrotic Wake",
-					[2287] = "Halls of Atonement",
-				},
+				["disable"] = true,
 			},
 			["BossWatcher"] = {
 				["optionsDamageGraph"] = true,
@@ -28128,12 +29491,40 @@ local MRTDump = {
 				["Text1"] = "intstart\n{skull} ||cffc31d39Imexiledk||r ||cffc31d39Atlasxo||r ||cffa22fc8Lipdh||r ||cffa22fc8Soupshop||r ||cffa22fc8Avade||r \n{cross} ||cffa22fc8Scottbrexit||r ||cff006fdcNorishockxo||r ||cff006fdcMaeveycakes||r ||cff3ec6eaXyroblast||r ||cff3ec6eaImfiredup||r \nintend\n\n\nMirror: ||cffc31d39Darkeedk||r ||cffa22fc8Scottbrexit||r ||cffa22fc8Lipdh||r ||cffc31d39Imexiledk||r ||cffc31d39Atlasxo||r ||cffa22fc8Soupshop||r ||cffa22fc8Avade||r ||cff006fdcNorishockxo||r ||cfff38bb9Driney||r ||cff3ec6eaImfiredup||r \nOutside: ||cff8687edDrenacoxd||r ||cff8687edLynphelps||r ||cff8687edImpecwl||r ||cff8687edAtrocitywl||r ||cfffefefeKíngfly||r ||cff3ec6eaXyroblast||r ||cfffe7b09Surgemachine||r ||cfffe7b09Seenin||r ||cfffefefeFearrful||r ||cff006fdcMaeveycakes||r \n\nSinsear\n||cfffefefeKíngfly||r ||cfffe7b09Surgemachine||r ||cfffe7b09Seenin||r ||cff8687edDrenacoxd||r ||cff8687edLynphelps||r \n",
 				["OptionsFormatting"] = true,
 				["DefName"] = "Sire Denathrius Group 1",
-				["enabled"] = true,
+				["FontSize"] = 15,
 				["SaveAllNew"] = true,
 				["LastUpdateName"] = "Kíngfly-Illidan",
-				["Outline"] = true,
-				["LastUpdateTime"] = 1625266515,
 				["FontName"] = "Interface\\AddOns\\ElvUI\\Media\\Fonts\\Expressway.ttf",
+				["BlackLastUpdateName"] = {
+					nil, -- [1]
+					nil, -- [2]
+					nil, -- [3]
+					"Ericjunior-Illidan", -- [4]
+					"Kíngflydk-Illidan", -- [5]
+					"Kíngflyhunt-Illidan", -- [6]
+					"Kíngflydk-Illidan", -- [7]
+					"Kíngflydk-Illidan", -- [8]
+					"Ericjunior-Illidan", -- [9]
+					"Kíngfly-Illidan", -- [10]
+					"Kíngflysp-Illidan", -- [11]
+					"Kíngflydk-Illidan", -- [12]
+					"Kíngflydk-Illidan", -- [13]
+					"Kíngflydk-Illidan", -- [14]
+					"Kíngflydk-Illidan", -- [15]
+					"Kíngflydk-Illidan", -- [16]
+					"Kíngflydk-Illidan", -- [17]
+					"Kíngflysp-Illidan", -- [18]
+					"Kíngflyspb-Illidan", -- [19]
+					"Kíngflyspb-Illidan", -- [20]
+					"Kíngflyspb-Illidan", -- [21]
+					"Kíngflydh-Illidan", -- [22]
+					"Kíngflydh-Illidan", -- [23]
+					"Kíngflyspb-Illidan", -- [24]
+					"Kíngflyspb-Illidan", -- [25]
+					"Kíngflydk-Illidan", -- [26]
+					"Kíngflydk-Illidan", -- [27]
+				},
+				["Alpha"] = 90,
 				["Width"] = 477,
 				["Top"] = 1379.501342773438,
 				["EnableWhenReceive"] = true,
@@ -28196,37 +29587,9 @@ local MRTDump = {
 					1614736773, -- [27]
 				},
 				["Height"] = 452.0000610351563,
-				["BlackLastUpdateName"] = {
-					nil, -- [1]
-					nil, -- [2]
-					nil, -- [3]
-					"Ericjunior-Illidan", -- [4]
-					"Kíngflydk-Illidan", -- [5]
-					"Kíngflyhunt-Illidan", -- [6]
-					"Kíngflydk-Illidan", -- [7]
-					"Kíngflydk-Illidan", -- [8]
-					"Ericjunior-Illidan", -- [9]
-					"Kíngfly-Illidan", -- [10]
-					"Kíngflysp-Illidan", -- [11]
-					"Kíngflydk-Illidan", -- [12]
-					"Kíngflydk-Illidan", -- [13]
-					"Kíngflydk-Illidan", -- [14]
-					"Kíngflydk-Illidan", -- [15]
-					"Kíngflydk-Illidan", -- [16]
-					"Kíngflydk-Illidan", -- [17]
-					"Kíngflysp-Illidan", -- [18]
-					"Kíngflyspb-Illidan", -- [19]
-					"Kíngflyspb-Illidan", -- [20]
-					"Kíngflyspb-Illidan", -- [21]
-					"Kíngflydh-Illidan", -- [22]
-					"Kíngflydh-Illidan", -- [23]
-					"Kíngflyspb-Illidan", -- [24]
-					"Kíngflyspb-Illidan", -- [25]
-					"Kíngflydk-Illidan", -- [26]
-					"Kíngflydk-Illidan", -- [27]
-				},
-				["Alpha"] = 90,
-				["FontSize"] = 15,
+				["LastUpdateTime"] = 1625266515,
+				["Outline"] = true,
+				["enabled"] = true,
 			},
 			["Logging"] = {
 				["disableMythic"] = true,
@@ -28236,13 +29599,13 @@ local MRTDump = {
 			["MarksBar"] = {
 				["pulltimer"] = 10,
 				["Strata"] = "HIGH",
+				["pulltimer_right"] = 10,
 				["Show"] = {
 					true, -- [1]
 					true, -- [2]
 					true, -- [3]
 					true, -- [4]
 				},
-				["pulltimer_right"] = 10,
 			},
 			["VisNote"] = {
 				["data"] = {
@@ -28262,15 +29625,34 @@ local MRTDump = {
 					},
 				},
 			},
-			["BattleRes"] = {
-				["Top"] = 70.00016784667969,
-				["Strata"] = "HIGH",
-				["Scale"] = 100,
-				["Left"] = 456.994873046875,
-				["Alpha"] = 100,
+			["InspectViewer"] = {
+				["ColorizeLowIlvl685"] = false,
+				["ColorizeNoEnch"] = true,
+				["ColorizeNoGems"] = true,
+				["ColorizeNoTopEnchGems"] = false,
+				["ColorizeLowIlvl"] = true,
+				["ColorizeNoValorUpgrade"] = false,
 			},
 		},
 		["croniXUI"] = {
+		},
+	},
+	["Profile"] = "croniXUI",
+	["LootLink"] = {
+	},
+	["RaidGroups"] = {
+		["KeepPosInGroup"] = true,
+		["upd4550"] = true,
+		["importType"] = 3,
+		["profiles"] = {
+		},
+	},
+	["BossWatcher"] = {
+		["optionsDamageGraph"] = true,
+		["fightsNum"] = 2,
+		["optionsPositionsDist"] = true,
+		["optionsHealingGraph"] = true,
+		["trackingDamageSpells"] = {
 		},
 	},
 	["Logging"] = {
@@ -28280,17 +29662,17 @@ local MRTDump = {
 	["MarksBar"] = {
 		["Top"] = 433.5303649902344,
 		["Strata"] = "HIGH",
-		["pulltimer_right"] = 10,
-		["Left"] = 738.8248901367188,
-		["Scale"] = 170,
-		["pulltimer"] = 10,
-		["ShowOnHoverAlpha"] = 0,
 		["Show"] = {
 			nil, -- [1]
 			nil, -- [2]
 			nil, -- [3]
 			true, -- [4]
 		},
+		["ShowOnHoverAlpha"] = 0,
+		["Scale"] = 170,
+		["pulltimer"] = 10,
+		["Left"] = 738.8248901367188,
+		["pulltimer_right"] = 10,
 	},
 	["VisNote"] = {
 		["data"] = {
@@ -28310,29 +29692,14 @@ local MRTDump = {
 			},
 		},
 	},
-	["RaidCheck"] = {
-		["ReadyCheckSortClass"] = true,
-		["ReadyCheckTop"] = 1016.825073242188,
-		["BuffsCheck"] = true,
-		["ReadyCheckFrame"] = true,
-		["ReadyCheckFrameScale"] = 100,
-		["ReadyCheckFrameOnlyRL"] = true,
-		["WeaponEnch"] = {
-			["Cronìx-Blackhand"] = 194823,
-			["Cronîx-Blackhand"] = 194820,
-			["Crônix-Blackhand"] = -33757,
-		},
-		["ReadyCheckFont"] = "Interface\\Addons\\SharedMedia_MyMedia\\font\\Naowh.ttf",
-		["FlaskExp"] = 1,
-		["RunesCheck"] = true,
-		["FlaskLQ"] = true,
-		["KitsCheck"] = true,
-		["OilsCheck"] = true,
-		["RCW_Mini"] = false,
-		["ReadyCheckFrameTimerFade"] = 4,
-		["ReadyCheckLeft"] = 5.611234188079834,
+	["BattleRes"] = {
+		["Top"] = 70.80488586425781,
+		["Strata"] = "HIGH",
+		["Left"] = 883.4515991210938,
+		["Scale"] = 58,
 	},
 }
+
 
 function private:MRTInstall()
     VMRT = MRTDump

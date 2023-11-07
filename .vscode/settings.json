@@ -42,6 +42,8 @@
         "ACTIONBARS_LABEL",
         "STANDARD_TEXT_FONT",
         "LE_PARTY_CATEGORY_INSTANCE",
-        "CLOSE"
+        "CLOSE",
+        "UnitName",
+        "GetRealmName"
     ]
 }
