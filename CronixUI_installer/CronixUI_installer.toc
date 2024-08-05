@@ -1,0 +1,26 @@
+## Interface: 100107
+## Title: CronixInstaller
+## Notes: Installs the Cronix Interface
+## Author: Helimeisterb, Cronix
+## RequiredDeps: ElvUI, 
+## OptionalDeps: Plater, WeakAuras, MRT, WarpDeplete, AdiBags, Details, HidingBar, OmniCD, BigWigs
+## Version: 0.6.0
+## DefaultState: enabled
+## SavedVariables: CronixUIDB
+
+Code.lua
+
+#dumps
+dumps/ElvUI-dump.lua
+dumps/Plater-dump.lua
+dumps/Weakaura-dump.lua
+dumps/MRT-dump.lua
+dumps/BigWigs-dump.lua
+dumps/AdiBags-dump.lua
+dumps/WarpDeplete-dump.lua
+dumps/OmniCD-dump.lua
+dumps/HidingBar-dump.lua
+dumps/Details-dump.lua
+
+#Media wip enable when moving shared media into addon
+#SharedMedia/SharedMedia.lua
