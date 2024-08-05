@@ -1,0 +1,6 @@
+# Ignore everything:
+*
+!.gitignore
+!CronixUI_installer
+!CronixUI_installer/**
+!README.md
