@@ -1,7 +1,7 @@
 # Ignore everything:
 *
-!.gitlab
-!.gitlab/**
+!.github
+!.github/**
 !.gitignore
 !CronixUI_installer
 !CronixUI_installer/**
