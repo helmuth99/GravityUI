@@ -1,4 +1,4 @@
-package-as: CronixUI
+package-as: CronixUI_installer
 
 ignore:
   - "*.md"
