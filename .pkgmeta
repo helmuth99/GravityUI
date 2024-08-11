@@ -10,5 +10,5 @@ ignore:
 
 
 move-folders:
-  CronixInstaller/CronixUI_installer: CronixUI_installer
+  CronixInstaller/CronixUI_installer: CronixInstaller
   CronixInstaller/SharedMedia_CronixUI: SharedMedia_CronixUI
