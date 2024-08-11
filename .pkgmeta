@@ -1,4 +1,4 @@
-package-as: CronixInstaller
+package-as: CronixUI_installer
 
 ignore:
   - "*.md"
@@ -10,5 +10,5 @@ ignore:
 
 
 move-folders:
-  CronixInstaller/CronixUI_installer: CronixInstaller
+  CronixInstaller/CronixUI_installer: CronixUI_installer
   CronixInstaller/SharedMedia_CronixUI: SharedMedia_CronixUI
