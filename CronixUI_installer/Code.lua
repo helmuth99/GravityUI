@@ -91,18 +91,18 @@ local InstallerData = {
 				private:Elvinstall(InstallParams)
 			end)
 			PluginInstallFrame.Option1:SetText("DPS")
-			PluginInstallFrame.Option1:Show()
-			PluginInstallFrame.Option1:SetScript("OnClick", function()
+			PluginInstallFrame.Option2:Show()
+			PluginInstallFrame.Option2:SetScript("OnClick", function()
 				InstallParams = 1
 				private:Elvinstall(InstallParams)
 			end)
-			PluginInstallFrame.Option1:SetText("HEAL")
-			PluginInstallFrame.Option1:Show()
-			PluginInstallFrame.Option1:SetScript("OnClick", function()
+			PluginInstallFrame.Option2:SetText("HEAL")
+			PluginInstallFrame.Option3:Show()
+			PluginInstallFrame.Option3:SetScript("OnClick", function()
 				InstallParams = 2
 				private:Elvinstall(InstallParams)
 			end)
-			PluginInstallFrame.Option1:SetText("DPS + HEAL")
+			PluginInstallFrame.Option3:SetText("DPS + HEAL")
 		end,
 		[3] = function()
 			PluginInstallFrame.SubTitle:SetText("Plater")
@@ -178,7 +178,7 @@ local InstallerData = {
 			PluginInstallFrame.Desc2:SetText("Importance: |cff00ffffLow|r")
 			PluginInstallFrame.Option1:Show()
 			PluginInstallFrame.Option1:SetScript("OnClick", function() private:CellInstall() end)
-			PluginInstallFrame.Option1:SetText("CronixUI Adibag")
+			PluginInstallFrame.Option1:SetText("CronixUI Cell")
 		end,
 		[12] = function()
 			PluginInstallFrame.SubTitle:SetText("Installation Complete")
