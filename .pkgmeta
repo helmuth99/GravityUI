@@ -1,3 +1,5 @@
+package-as: CronixUI
+
 ignore:
   - "*.md"
   - "*.textile"
@@ -8,5 +10,5 @@ ignore:
 
 
 move-folders:
-  CronixUI_installer/CronixUI_installer: CronixUI_installer
+  CronixUI_installer/CronixUI_installer: CronixUI
   CronixUI_installer/SharedMedia_CronixUI: SharedMedia_CronixUI
