@@ -9,3 +9,4 @@ CronixUI_installer/tempdumps/*
 !SharedMedia_CronixUI
 !SharedMedia_CronixUI/**
 !README.md
+!.pkgmeta

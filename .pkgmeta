@@ -1,0 +1,14 @@
+package-as: ElvUI
+
+
+ignore:
+  - "*.md"
+  - "*.textile"
+  - ElvUI_Libraries/Core/LibStub/tests
+  - Makefile
+  - .gitignore
+
+
+move-folders:
+  CronixInstaller/CronixUI_installer: CronixUI_installer
+  CronixInstaller/SharedMedia_CronixUI: SharedMedia_CronixUI
