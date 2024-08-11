@@ -5,4 +5,5 @@
 !.gitignore
 !CronixUI_installer
 !CronixUI_installer/**
+CronixUI_installer/tempdumps/*
 !README.md
