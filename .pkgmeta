@@ -6,6 +6,7 @@ ignore:
   - ElvUI_Libraries/Core/LibStub/tests
   - Makefile
   - .gitignore
+  - .github/*
 
 
 move-folders:
