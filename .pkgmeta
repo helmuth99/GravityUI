@@ -1,5 +1,3 @@
-package-as: CronixUI
-
 ignore:
   - "*.md"
   - "*.textile"
