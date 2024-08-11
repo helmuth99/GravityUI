@@ -1,9 +1,9 @@
-## Interface: 100107
+## Interface: 110000
 ## Title: CronixInstaller
 ## Notes: Installs the Cronix Interface
 ## Author: Helimeisterb, Cronix
 ## RequiredDeps: ElvUI, 
-## OptionalDeps: Plater, WeakAuras, MRT, WarpDeplete, AdiBags, Details, HidingBar, OmniCD, BigWigs
+## OptionalDeps: Plater, WeakAuras, MRT, WarpDeplete, Details, HidingBar, OmniCD, BigWigs, Cell,
 ## Version: 0.6.0
 ## DefaultState: enabled
 ## SavedVariables: CronixUIDB
