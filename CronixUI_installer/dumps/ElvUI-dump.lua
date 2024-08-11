@@ -787,7 +787,8 @@ local ElvUiDump1440Dps = {
                 ["buffs"] = {
                     ["countFont"] = "Cronix",
                     ["countFontSize"] = 14,
-                    ["priority"] = "Blacklist,RaidBuffsElvUI,Dispellable,blockNoDuration,CastByNPC,PlayerBuffs,TurtleBuffs,CastByUnit",
+                    ["priority"] =
+                    "Blacklist,RaidBuffsElvUI,Dispellable,blockNoDuration,CastByNPC,PlayerBuffs,TurtleBuffs,CastByUnit",
                     ["size"] = 28,
                     ["yOffset"] = -6,
                 },
@@ -840,7 +841,8 @@ local ElvUiDump1440Dps = {
                     ["countFontSize"] = 14,
                     ["enable"] = false,
                     ["maxDuration"] = 0,
-                    ["priority"] = "Blacklist,RaidBuffsElvUI,Dispellable,blockNoDuration,CastByNPC,PlayerBuffs,TurtleBuffs,CastByUnit",
+                    ["priority"] =
+                    "Blacklist,RaidBuffsElvUI,Dispellable,blockNoDuration,CastByNPC,PlayerBuffs,TurtleBuffs,CastByUnit",
                     ["size"] = 28,
                     ["yOffset"] = -6,
                 },
@@ -904,7 +906,8 @@ local ElvUiDump1440Dps = {
                 ["buffs"] = {
                     ["countFont"] = "Cronix",
                     ["countFontSize"] = 14,
-                    ["priority"] = "Blacklist,RaidBuffsElvUI,Dispellable,blockNoDuration,PlayerBuffs,TurtleBuffs,CastByUnit",
+                    ["priority"] =
+                    "Blacklist,RaidBuffsElvUI,Dispellable,blockNoDuration,PlayerBuffs,TurtleBuffs,CastByUnit",
                     ["size"] = 24,
                     ["yOffset"] = -2,
                 },
@@ -2849,7 +2852,8 @@ local ElvUiDump1440Heal = {
                 ["buffs"] = {
                     ["countFont"] = "Cronix",
                     ["countFontSize"] = 14,
-                    ["priority"] = "Blacklist,RaidBuffsElvUI,Dispellable,blockNoDuration,CastByNPC,PlayerBuffs,TurtleBuffs,CastByUnit",
+                    ["priority"] =
+                    "Blacklist,RaidBuffsElvUI,Dispellable,blockNoDuration,CastByNPC,PlayerBuffs,TurtleBuffs,CastByUnit",
                     ["size"] = 28,
                     ["yOffset"] = -6,
                 },
@@ -2902,7 +2906,8 @@ local ElvUiDump1440Heal = {
                     ["countFontSize"] = 14,
                     ["enable"] = false,
                     ["maxDuration"] = 0,
-                    ["priority"] = "Blacklist,RaidBuffsElvUI,Dispellable,blockNoDuration,CastByNPC,PlayerBuffs,TurtleBuffs,CastByUnit",
+                    ["priority"] =
+                    "Blacklist,RaidBuffsElvUI,Dispellable,blockNoDuration,CastByNPC,PlayerBuffs,TurtleBuffs,CastByUnit",
                     ["size"] = 28,
                     ["yOffset"] = -6,
                 },
@@ -2966,7 +2971,8 @@ local ElvUiDump1440Heal = {
                 ["buffs"] = {
                     ["countFont"] = "Cronix",
                     ["countFontSize"] = 14,
-                    ["priority"] = "Blacklist,RaidBuffsElvUI,Dispellable,blockNoDuration,PlayerBuffs,TurtleBuffs,CastByUnit",
+                    ["priority"] =
+                    "Blacklist,RaidBuffsElvUI,Dispellable,blockNoDuration,PlayerBuffs,TurtleBuffs,CastByUnit",
                     ["size"] = 24,
                     ["yOffset"] = -2,
                 },
@@ -4159,14 +4165,35 @@ local function importglobalsetting()
     }
 end
 
+local function InstallDPS()
+    ElvDB["profiles"][private.Profilename .. "-DPS"] = ElvUiDump1440Dps
+end
 
-function private:Elvinstall()
+local function InstallHeal()
+    ElvDB["profiles"][private.Profilename .. "-HEAL"] = ElvUiDump1440Heal
+end
+
+function private:Elvinstall(importer)
     ElvDB["global"]["general"]["UIScale"] = 0.60
     ElvDB["global"]["general"]["WorldMapCoordinates"] = {
         ["xOffset"] = 100,
         ["yOffset"] = 20,
     }
-    ElvDB["profiles"][private.Profilename] = ElvUiDump1440
     importglobalsetting()
-    ElvUI[1].data:SetProfile(private.Profilename)
+    if importer == 0 then
+        InstallDPS()
+        ElvUI[1].data:SetProfile(private.Profilename .. "-DPS")
+    elseif importer == 1 then
+        InstallHeal()
+        ElvUI[1].data:SetProfile(private.Profilename .. "-HEAL")
+    elseif importer == 2 then
+        InstallDPS()
+        InstallHeal()
+        ElvUI[1].data:SetProfile(private.Profilename .. "-DPS")
+    else
+        RaidNotice_AddMessage(RaidWarningFrame, "Something went wrong", ChatTypeInfo["RAID_WARNING"])
+    end
+
+    PluginInstallStepComplete.message = "ElvUI Profiles Loaded"
+    PluginInstallStepComplete:Show()
 end

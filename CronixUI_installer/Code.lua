@@ -35,25 +35,6 @@ function private:GetResolution()
 	end
 end
 
---This function will hold your layout settings
-local function SetupLayout()
-	--[[
-	--	PUT YOUR EXPORTED PROFILE/SETTINGS BELOW HERE
-	--]]	
-	private:Elvinstall()
-	
-
-	--[[
-	--	This section at the bottom is just to update ElvUI and display a message
-	--]]
-	--Update ElvUI
-	--E:UpdateAll(true)
-	--Show message about layout being set
-	PluginInstallStepComplete.message = "Layout Set"
-	PluginInstallStepComplete:Show()
-	
-end
-
 --This function is executed when you press "Skip Process" or "Finished" in the installer.
 local function InstallComplete()
 	if GetCVarBool("Sound_EnableMusic") then
@@ -62,7 +43,7 @@ local function InstallComplete()
 
 	--Set a variable tracking the version of the addon when layout was installed
 	E.db[MyPluginName].install_version = Version
-	
+
 	CronixUIDB["Version"] = Version
 
 	ReloadUI()
@@ -70,6 +51,8 @@ end
 
 --This is the data we pass on to the ElvUI Plugin Installer.
 --The Plugin Installer is reponsible for displaying the install guide for this layout.
+local InstallParams = 0
+
 local InstallerData = {
 	Title = format("|cff4beb2c%s %s|r", private.Profilename, "Installation"),
 	Name = MyPluginName,
@@ -78,27 +61,48 @@ local InstallerData = {
 		[1] = function()
 			if (CronixUIDB["Version"] == Version) then
 				PluginInstallFrame.SubTitle:SetFormattedText("Welcome to the installation for the %s.", MyPluginName)
-				PluginInstallFrame.Desc1:SetText("You have already installed the latest version of " .. MyPluginName .. " you can go throught the installer again or skip the process")
-				PluginInstallFrame.Desc2:SetText("Your Version: " .. CronixUIDB["Version"] .. "    ---     " .. MyPluginName .. " Version: " ..Version)
+				PluginInstallFrame.Desc1:SetText("You have already installed the latest version of " ..
+					MyPluginName .. " you can go throught the installer again or skip the process")
+				PluginInstallFrame.Desc2:SetText("Your Version: " ..
+					CronixUIDB["Version"] .. "    ---     " .. MyPluginName .. " Version: " .. Version)
 				PluginInstallFrame.Option1:Show()
 				PluginInstallFrame.Option1:SetScript("OnClick", function() InstallComplete() end)
 				PluginInstallFrame.Option1:SetText("Skip Process")
 			else
-			PluginInstallFrame.SubTitle:SetFormattedText("Welcome to the installation for %s.", MyPluginName)
-			PluginInstallFrame.Desc1:SetText("This installation process will guide you through a few steps and create a new ElvUI profile. If you want to be able to go back to your original settings then create a new profile before going through this installation process.")
-			PluginInstallFrame.Desc2:SetText("Please press the continue button if you wish to go through the installation process, otherwise click the 'Skip Process' button.")
-			PluginInstallFrame.Option1:Show()
-			PluginInstallFrame.Option1:SetScript("OnClick", function() InstallComplete() end)
-			PluginInstallFrame.Option1:SetText("Skip Process")
+				PluginInstallFrame.SubTitle:SetFormattedText("Welcome to the installation for %s.", MyPluginName)
+				PluginInstallFrame.Desc1:SetText(
+					"This installation process will guide you through a few steps and create a new ElvUI profile. If you want to be able to go back to your original settings then create a new profile before going through this installation process.")
+				PluginInstallFrame.Desc2:SetText(
+					"Please press the continue button if you wish to go through the installation process, otherwise click the 'Skip Process' button.")
+				PluginInstallFrame.Option1:Show()
+				PluginInstallFrame.Option1:SetScript("OnClick", function() InstallComplete() end)
+				PluginInstallFrame.Option1:SetText("Skip Process")
 			end
 		end,
 		[2] = function()
-			PluginInstallFrame.SubTitle:SetText("Layouts")
-			PluginInstallFrame.Desc1:SetText("Please click the button below to install the CronixUI Elvui part. The addon automatically installs eather the 1080p or 1440p version based on your resolution. \n Because of technical reasons the changes will only be visible after a reload.")
+			PluginInstallFrame.SubTitle:SetText("ElvUI")
+			PluginInstallFrame.Desc1:SetText("Please select the roles you want to install the " ..
+				private.Profilename ..
+				" for.\n Because of technical reasons the changes will only be visible after a reload.")
 			PluginInstallFrame.Desc2:SetText("Importance: |cff07D400High|r")
 			PluginInstallFrame.Option1:Show()
-			PluginInstallFrame.Option1:SetScript("OnClick", function() SetupLayout() end)
-			PluginInstallFrame.Option1:SetText("CronixUI ElvUI")
+			PluginInstallFrame.Option1:SetScript("OnClick", function()
+				InstallParams = 0
+				private:Elvinstall(InstallParams)
+			end)
+			PluginInstallFrame.Option1:SetText("DPS")
+			PluginInstallFrame.Option1:Show()
+			PluginInstallFrame.Option1:SetScript("OnClick", function()
+				InstallParams = 1
+				private:Elvinstall(InstallParams)
+			end)
+			PluginInstallFrame.Option1:SetText("HEAL")
+			PluginInstallFrame.Option1:Show()
+			PluginInstallFrame.Option1:SetScript("OnClick", function()
+				InstallParams = 2
+				private:Elvinstall(InstallParams)
+			end)
+			PluginInstallFrame.Option1:SetText("DPS + HEAL")
 		end,
 		[3] = function()
 			PluginInstallFrame.SubTitle:SetText("Plater")
@@ -110,15 +114,17 @@ local InstallerData = {
 		end,
 		[4] = function()
 			PluginInstallFrame.SubTitle:SetText("Weakaura")
-			PluginInstallFrame.Desc1:SetText("Please click the button below to install the CronixUI Weakauren. \n|cffff0000Important:|r all of your installed Weakauren will be removed!")
+			PluginInstallFrame.Desc1:SetText(
+				"Please click the button below to install the CronixUI Weakauren. \n|cffff0000Important:|r all of your installed Weakauren will be removed!")
 			PluginInstallFrame.Desc2:SetText("Importance: |cff07D400High|r")
 			PluginInstallFrame.Option1:Show()
 			PluginInstallFrame.Option1:SetScript("OnClick", function() private:WeakauraInstall() end)
 			PluginInstallFrame.Option1:SetText("CronixUI Weakaura")
 		end,
-		[5] = function() 
+		[5] = function()
 			PluginInstallFrame.SubTitle:SetText("BigWigs")
-			PluginInstallFrame.Desc1:SetText("Please click the button below to install the CronixUI BigWigs part. \n|cffff0000Important:|r All of your current settings will be wiped, for all characters")
+			PluginInstallFrame.Desc1:SetText(
+				"Please click the button below to install the CronixUI BigWigs part. \n|cffff0000Important:|r All of your current settings will be wiped, for all characters")
 			PluginInstallFrame.Desc2:SetText("Importance: |cff00ffffLow|r")
 			PluginInstallFrame.Option1:Show()
 			PluginInstallFrame.Option1:SetScript("OnClick", function() private:BWInstall() end)
@@ -126,21 +132,14 @@ local InstallerData = {
 		end,
 		[6] = function()
 			PluginInstallFrame.SubTitle:SetText("Method Raid Tools")
-			PluginInstallFrame.Desc1:SetText("Please click the button below to install the CronixUI Method Raid Tools part. \n|cffff0000Important:|r All of your current settings will be wiped, for all characters")
+			PluginInstallFrame.Desc1:SetText(
+				"Please click the button below to install the CronixUI Method Raid Tools part. \n|cffff0000Important:|r All of your current settings will be wiped, for all characters")
 			PluginInstallFrame.Desc2:SetText("Importance: |cff00ffffLow|r")
 			PluginInstallFrame.Option1:Show()
 			PluginInstallFrame.Option1:SetScript("OnClick", function() private:MRTInstall() end)
 			PluginInstallFrame.Option1:SetText("CronixUI MRT")
 		end,
 		[7] = function()
-			PluginInstallFrame.SubTitle:SetText("Method Raid Tools")
-			PluginInstallFrame.Desc1:SetText("Please click the button below to install the CronixUI Adibag part.")
-			PluginInstallFrame.Desc2:SetText("Importance: |cff00ffffLow|r")
-			PluginInstallFrame.Option1:Show()
-			PluginInstallFrame.Option1:SetScript("OnClick", function() private:AdiBagInstall() end)
-			PluginInstallFrame.Option1:SetText("CronixUI Adibag")
-		end,
-		[8] = function()
 			PluginInstallFrame.SubTitle:SetText("WarpDeplete")
 			PluginInstallFrame.Desc1:SetText("Please click the button below to install the CronixUI WarpDeplete part.")
 			PluginInstallFrame.Desc2:SetText("Importance: |cff00ffffLow|r")
@@ -148,7 +147,7 @@ local InstallerData = {
 			PluginInstallFrame.Option1:SetScript("OnClick", function() private:WarpDepleteInstall() end)
 			PluginInstallFrame.Option1:SetText("CronixUI WarpDeplete")
 		end,
-		[9] = function()
+		[8] = function()
 			PluginInstallFrame.SubTitle:SetText("OmniCD")
 			PluginInstallFrame.Desc1:SetText("Please click the button below to install the CronixUI OmniCD part.")
 			PluginInstallFrame.Desc2:SetText("Importance: |cff00ffffLow|r")
@@ -156,15 +155,16 @@ local InstallerData = {
 			PluginInstallFrame.Option1:SetScript("OnClick", function() private:OmniCDInstall() end)
 			PluginInstallFrame.Option1:SetText("CronixUI OmniCD")
 		end,
-		[10] = function()
+		[9] = function()
 			PluginInstallFrame.SubTitle:SetText("HidingBar")
-			PluginInstallFrame.Desc1:SetText("Please click the button below to install the CronixUI HidingBar part. \n|cffff0000Important:|r All of your current settings will be wiped, for all characters")
+			PluginInstallFrame.Desc1:SetText(
+				"Please click the button below to install the CronixUI HidingBar part. \n|cffff0000Important:|r All of your current settings will be wiped, for all characters")
 			PluginInstallFrame.Desc2:SetText("Importance: |cff00ffffLow|r")
 			PluginInstallFrame.Option1:Show()
 			PluginInstallFrame.Option1:SetScript("OnClick", function() private:HidingbarInstall() end)
 			PluginInstallFrame.Option1:SetText("CronixUI HidingBar")
 		end,
-		[11] = function()
+		[10] = function()
 			PluginInstallFrame.SubTitle:SetText("Details")
 			PluginInstallFrame.Desc1:SetText("Please click the button below to install the CronixUI Details part.")
 			PluginInstallFrame.Desc2:SetText("Importance: |cff00ffffLow|r")
@@ -172,14 +172,24 @@ local InstallerData = {
 			PluginInstallFrame.Option1:SetScript("OnClick", function() private:DetailsInstall() end)
 			PluginInstallFrame.Option1:SetText("CronixUI Details")
 		end,
+		[11] = function()
+			PluginInstallFrame.SubTitle:SetText("Cell")
+			PluginInstallFrame.Desc1:SetText("Please click the button below to install the CronixUI Cell Part.")
+			PluginInstallFrame.Desc2:SetText("Importance: |cff00ffffLow|r")
+			PluginInstallFrame.Option1:Show()
+			PluginInstallFrame.Option1:SetScript("OnClick", function() private:CellInstall() end)
+			PluginInstallFrame.Option1:SetText("CronixUI Adibag")
+		end,
 		[12] = function()
 			PluginInstallFrame.SubTitle:SetText("Installation Complete")
 			PluginInstallFrame.Desc1:SetText("You have completed the installation process.")
-			PluginInstallFrame.Desc2:SetText("Please click the button below in order to finalize the process and automatically reload your UI.")
+			PluginInstallFrame.Desc2:SetText(
+				"Please click the button below in order to finalize the process and automatically reload your UI.")
 			PluginInstallFrame.Option1:Show()
 			PluginInstallFrame.Option1:SetScript("OnClick", function() InstallComplete() end)
 			PluginInstallFrame.Option1:SetText("Finish")
-		end,
+		end
+		
 	},
 	StepTitles = {
 		[1] = "Welcome",
@@ -188,15 +198,15 @@ local InstallerData = {
 		[4] = "WeakAuren Installation",
 		[5] = "BigWigs Installation",
 		[6] = "MRT Installation",
-		[7] = "Adibag Installation",
-		[8] = "WarpDeplete Installation",
-		[9] = "OmniCD Installation",
-		[10] = "HidingBar Installation",
-		[11] = "Details Installation",
-		[12] = "Installation Complete"
+		[7] = "WarpDeplete Installation",
+		[8] = "OmniCD Installation",
+		[9] = "HidingBar Installation",
+		[10] = "Details Installation",
+		[11] = "Cell Installation",
+		[12] = "Installation Complete",
 	},
-	StepTitlesColor = {1, 1, 1},
-	StepTitlesColorSelected = {0, 179/255, 1},
+	StepTitlesColor = { 1, 1, 1 },
+	StepTitlesColorSelected = { 0, 179 / 255, 1 },
 	StepTitleWidth = 200,
 	StepTitleButtonWidth = 180,
 	StepTitleTextJustification = "RIGHT",
@@ -232,7 +242,8 @@ local function InsertOptions()
 			description2 = {
 				order = 5,
 				type = "description",
-				name = "The installation guide should pop up automatically after you have completed the ElvUI installation. If you wish to re-run the installation process for this layout then please click the button below.",
+				name =
+				"The installation guide should pop up automatically after you have completed the ElvUI installation. If you wish to re-run the installation process for this layout then please click the button below.",
 			},
 			spacer2 = {
 				order = 6,
@@ -244,7 +255,9 @@ local function InsertOptions()
 				type = "execute",
 				name = "Install",
 				desc = "Run the installation process.",
-				func = function() E:GetModule("PluginInstaller"):Queue(InstallerData); E:ToggleOptions(); end,
+				func = function()
+					E:GetModule("PluginInstaller"):Queue(InstallerData); E:ToggleOptions();
+				end,
 			},
 		},
 	}
@@ -259,9 +272,9 @@ function mod:Initialize()
 	if CronixUIDB == nil then
 		CronixUIDB = {
 			["Version"] = 0
-	}
+		}
 	end
-	
+
 	if E.private.install_complete and E.db[MyPluginName].install_version == nil and CronixUIDB["Version"] ~= Version then
 		E:GetModule("PluginInstaller"):Queue(InstallerData)
 	end

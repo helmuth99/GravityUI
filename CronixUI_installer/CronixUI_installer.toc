@@ -16,11 +16,12 @@ dumps/Plater-dump.lua
 dumps/Weakaura-dump.lua
 dumps/MRT-dump.lua
 dumps/BigWigs-dump.lua
-dumps/AdiBags-dump.lua
 dumps/WarpDeplete-dump.lua
 dumps/OmniCD-dump.lua
 dumps/HidingBar-dump.lua
 dumps/Details-dump.lua
+dumps/Cell-dump.lua
+dumps/BetterBags-dump.lua
 
 #Media wip enable when moving shared media into addon
 #SharedMedia/SharedMedia.lua
