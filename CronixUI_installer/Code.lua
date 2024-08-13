@@ -143,79 +143,126 @@ local InstallerData = {
 			end
 		end,
 		[4] = function()
-			PluginInstallFrame.SubTitle:SetText("Weakaura")
-			PluginInstallFrame.Desc1:SetText(
-				"Please click the button below to install the CronixUI Weakauren. \n|cffff0000Important:|r all of your installed Weakauren will be removed!")
-			PluginInstallFrame.Desc2:SetText("Importance: |cff07D400High|r")
-			PluginInstallFrame.Option1:Show()
-			PluginInstallFrame.Option1:SetScript("OnClick", function() private:WeakauraInstall() end)
-			PluginInstallFrame.Option1:SetText("CronixUI Weakaura")
+			if IsAddOnLoaded("WeakAuras") then
+				PluginInstallFrame.SubTitle:SetText("Weakaura")
+				PluginInstallFrame.Desc1:SetText(
+					"Please click the button below to install the CronixUI Weakauren. \n|cffff0000Important:|r all of your installed Weakauren will be removed and overwritten!")
+				PluginInstallFrame.Desc2:SetText("Importance: |cff07D400High|r")
+				PluginInstallFrame.Option1:Show()
+				PluginInstallFrame.Option1:SetScript("OnClick", function() private:WeakauraInstall() end)
+				PluginInstallFrame.Option1:SetText("CronixUI Weakaura")
+			else
+				PluginInstallFrame.SubTitle:SetText("Weakaura")
+				PluginInstallFrame.Desc1:SetText("The addon Weakaura |cffff0000is not loaded|r. If you want to install the "..private.Profilename.." Weakaura part, please install/enable Weakaura and restart the installer.")
+				PluginInstallFrame.Desc2:SetText("Importance: |cff07D400High|r")
+			end
 		end,
 		[5] = function()
-			PluginInstallFrame.SubTitle:SetText("BigWigs")
-			PluginInstallFrame.Desc1:SetText(
-				"Please click the button below to install the CronixUI BigWigs part. \n|cffff0000Important:|r All of your current settings will be wiped, for all characters")
-			PluginInstallFrame.Desc2:SetText("Importance: |cff00ffffLow|r")
-			PluginInstallFrame.Option1:Show()
-			PluginInstallFrame.Option1:SetScript("OnClick", function() private:BWInstall() end)
-			PluginInstallFrame.Option1:SetText("CronixUI Bigwigs")
-		end,
-		[6] = function()
-			PluginInstallFrame.SubTitle:SetText("Method Raid Tools")
-			PluginInstallFrame.Desc1:SetText(
-				"Please click the button below to install the CronixUI Method Raid Tools part. \n|cffff0000Important:|r All of your current settings will be wiped, for all characters")
-			PluginInstallFrame.Desc2:SetText("Importance: |cff00ffffLow|r")
-			PluginInstallFrame.Option1:Show()
-			PluginInstallFrame.Option1:SetScript("OnClick", function() private:MRTInstall() end)
-			PluginInstallFrame.Option1:SetText("CronixUI MRT")
-		end,
-		[7] = function()
-			PluginInstallFrame.SubTitle:SetText("WarpDeplete")
-			PluginInstallFrame.Desc1:SetText("Please click the button below to install the CronixUI WarpDeplete part.")
-			PluginInstallFrame.Desc2:SetText("Importance: |cff00ffffLow|r")
-			PluginInstallFrame.Option1:Show()
-			PluginInstallFrame.Option1:SetScript("OnClick", function() private:WarpDepleteInstall() end)
-			PluginInstallFrame.Option1:SetText("CronixUI WarpDeplete")
-		end,
-		[8] = function()
-			PluginInstallFrame.SubTitle:SetText("OmniCD")
-			PluginInstallFrame.Desc1:SetText("Please click the button below to install the CronixUI OmniCD part.")
-			PluginInstallFrame.Desc2:SetText("Importance: |cff00ffffLow|r")
-			PluginInstallFrame.Option1:Show()
-			PluginInstallFrame.Option1:SetScript("OnClick", function() private:OmniCDInstall() end)
-			PluginInstallFrame.Option1:SetText("CronixUI OmniCD")
-		end,
-		[9] = function()
-			PluginInstallFrame.SubTitle:SetText("HidingBar")
-			PluginInstallFrame.Desc1:SetText(
-				"Please click the button below to install the CronixUI HidingBar part. \n|cffff0000Important:|r All of your current settings will be wiped, for all characters")
-			PluginInstallFrame.Desc2:SetText("Importance: |cff00ffffLow|r")
-			PluginInstallFrame.Option1:Show()
-			PluginInstallFrame.Option1:SetScript("OnClick", function() private:HidingbarInstall() end)
-			PluginInstallFrame.Option1:SetText("CronixUI HidingBar")
-		end,
-		[10] = function()
-			PluginInstallFrame.SubTitle:SetText("Details")
-			PluginInstallFrame.Desc1:SetText("Please click the button below to install the CronixUI Details part.")
-			PluginInstallFrame.Desc2:SetText("Importance: |cff00ffffLow|r")
-			PluginInstallFrame.Option1:Show()
-			PluginInstallFrame.Option1:SetScript("OnClick", function() private:DetailsInstall() end)
-			PluginInstallFrame.Option1:SetText("CronixUI Details")
-		end,
-		[11] = function()
-			if InstallParams == 0 then
-				PluginInstallFrame.SubTitle:SetText("Cell")
-				PluginInstallFrame.Desc1:SetText("Please skip to the next page, since Cell is not needed for the DPS only profile.")
-				PluginInstallFrame.Desc2:SetText("Importance: |cff00ffffirrelevant|r")
-			else
-				PluginInstallFrame.SubTitle:SetText("Cell")
-				PluginInstallFrame.Desc1:SetText("Please click the button below to install the CronixUI Cell Part.")
+			if IsAddOnLoaded("BigWigs") then
+				PluginInstallFrame.SubTitle:SetText("BigWigs")
+				PluginInstallFrame.Desc1:SetText(
+					"Please click the button below to install the CronixUI BigWigs part. \n|cffff0000Important:|r All of your current settings will be wiped, for all characters")
 				PluginInstallFrame.Desc2:SetText("Importance: |cff00ffffLow|r")
 				PluginInstallFrame.Option1:Show()
-				PluginInstallFrame.Option1:SetScript("OnClick", function() private:CellInstall() end)
-				PluginInstallFrame.Option1:SetText("CronixUI Cell")
+				PluginInstallFrame.Option1:SetScript("OnClick", function() private:BWInstall() end)
+				PluginInstallFrame.Option1:SetText("CronixUI Bigwigs")
+			else
+				PluginInstallFrame.SubTitle:SetText("BigWigs")
+				PluginInstallFrame.Desc1:SetText("The addon BigWigs |cffff0000is not loaded|r. If you want to install the "..private.Profilename.." BigWigs part, please install/enable BigWigs and restart the installer.")
+				PluginInstallFrame.Desc2:SetText("Importance: |cff07D400High|r")
 			end
-			
+		end,
+		[6] = function()
+			if IsAddOnLoaded("MRT") then
+				PluginInstallFrame.SubTitle:SetText("Method Raid Tools")
+				PluginInstallFrame.Desc1:SetText(
+					"Please click the button below to install the CronixUI Method Raid Tools part. \n|cffff0000Important:|r All of your current settings will be wiped, for all characters")
+				PluginInstallFrame.Desc2:SetText("Importance: |cff00ffffLow|r")
+				PluginInstallFrame.Option1:Show()
+				PluginInstallFrame.Option1:SetScript("OnClick", function() private:MRTInstall() end)
+				PluginInstallFrame.Option1:SetText("CronixUI MRT")
+			else
+				PluginInstallFrame.SubTitle:SetText("Method Raid Tools")
+				PluginInstallFrame.Desc1:SetText("The addon Method Raid Tools |cffff0000is not loaded|r. If you want to install the "..private.Profilename.." Method Raid Tools part, please install/enable Method Raid Tools and restart the installer.")
+				PluginInstallFrame.Desc2:SetText("Importance: |cff07D400High|r")
+			end	
+		end,
+		[7] = function()
+			if IsAddOnLoaded("WarpDeplete") then
+				PluginInstallFrame.SubTitle:SetText("WarpDeplete")
+				PluginInstallFrame.Desc1:SetText("Please click the button below to install the CronixUI WarpDeplete part.")
+				PluginInstallFrame.Desc2:SetText("Importance: |cff00ffffLow|r")
+				PluginInstallFrame.Option1:Show()
+				PluginInstallFrame.Option1:SetScript("OnClick", function() private:WarpDepleteInstall() end)
+				PluginInstallFrame.Option1:SetText("CronixUI WarpDeplete")
+			else
+				PluginInstallFrame.SubTitle:SetText("WarpDeplete")
+				PluginInstallFrame.Desc1:SetText("The addon WarpDeplete |cffff0000is not loaded|r. If you want to install the "..private.Profilename.." WarpDeplete part, please install/enable WarpDeplete and restart the installer.")
+				PluginInstallFrame.Desc2:SetText("Importance: |cff07D400High|r")
+			end	
+		end,
+		[8] = function()
+			if IsAddOnLoaded("OmniCD") then
+				PluginInstallFrame.SubTitle:SetText("OmniCD")
+				PluginInstallFrame.Desc1:SetText("Please click the button below to install the CronixUI OmniCD part.")
+				PluginInstallFrame.Desc2:SetText("Importance: |cff00ffffLow|r")
+				PluginInstallFrame.Option1:Show()
+				PluginInstallFrame.Option1:SetScript("OnClick", function() private:OmniCDInstall() end)
+				PluginInstallFrame.Option1:SetText("CronixUI OmniCD")
+			else 
+				PluginInstallFrame.SubTitle:SetText("OmniCD")
+				PluginInstallFrame.Desc1:SetText("The addon OmniCD |cffff0000is not loaded|r. If you want to install the "..private.Profilename.." OmniCD part, please install/enable OmniCD and restart the installer.")
+				PluginInstallFrame.Desc2:SetText("Importance: |cff07D400High|r")
+			end
+		end,
+		[9] = function()
+			if IsAddOnLoaded("HidingBar") then
+				PluginInstallFrame.SubTitle:SetText("HidingBar")
+				PluginInstallFrame.Desc1:SetText(
+					"Please click the button below to install the CronixUI HidingBar part. \n|cffff0000Important:|r All of your current settings will be wiped, for all characters")
+				PluginInstallFrame.Desc2:SetText("Importance: |cff00ffffLow|r")
+				PluginInstallFrame.Option1:Show()
+				PluginInstallFrame.Option1:SetScript("OnClick", function() private:HidingbarInstall() end)
+				PluginInstallFrame.Option1:SetText("CronixUI HidingBar")
+			else
+				PluginInstallFrame.SubTitle:SetText("HidingBar")
+				PluginInstallFrame.Desc1:SetText("The addon HidingBar |cffff0000is not loaded|r. If you want to install the "..private.Profilename.." HidingBar part, please install/enable HidingBar and restart the installer.")
+				PluginInstallFrame.Desc2:SetText("Importance: |cff07D400High|r")
+			end
+		end,
+		[10] = function()
+			if IsAddOnLoaded("Details") then
+				PluginInstallFrame.SubTitle:SetText("Details")
+				PluginInstallFrame.Desc1:SetText("Please click the button below to install the CronixUI Details part.")
+				PluginInstallFrame.Desc2:SetText("Importance: |cff00ffffLow|r")
+				PluginInstallFrame.Option1:Show()
+				PluginInstallFrame.Option1:SetScript("OnClick", function() private:DetailsInstall() end)
+				PluginInstallFrame.Option1:SetText("CronixUI Details")
+			else 
+				PluginInstallFrame.SubTitle:SetText("Details")
+				PluginInstallFrame.Desc1:SetText("The addon Details |cffff0000is not loaded|r. If you want to install the "..private.Profilename.." Details part, please install/enable Details and restart the installer.")
+				PluginInstallFrame.Desc2:SetText("Importance: |cff07D400High|r")
+			end
+		end,
+		[11] = function()
+			if IsAddOnLoaded("Cell") then
+				if InstallParams == 0 then
+					PluginInstallFrame.SubTitle:SetText("Cell")
+					PluginInstallFrame.Desc1:SetText("Please skip to the next page, since Cell is not needed for the DPS only profile.")
+					PluginInstallFrame.Desc2:SetText("Importance: |cff00ffffirrelevant|r")
+				else
+					PluginInstallFrame.SubTitle:SetText("Cell")
+					PluginInstallFrame.Desc1:SetText("Please click the button below to install the CronixUI Cell Part.")
+					PluginInstallFrame.Desc2:SetText("Importance: |cff00ffffLow|r")
+					PluginInstallFrame.Option1:Show()
+					PluginInstallFrame.Option1:SetScript("OnClick", function() private:CellInstall() end)
+					PluginInstallFrame.Option1:SetText("CronixUI Cell")
+				end
+			else
+				PluginInstallFrame.SubTitle:SetText("Cell")
+				PluginInstallFrame.Desc1:SetText("The addon Cell |cffff0000is not loaded|r. If you want to install the "..private.Profilename.." Cell part, please install/enable Cell and restart the installer.")
+				PluginInstallFrame.Desc2:SetText("Importance: |cff07D400High|r")
+			end
 		end,
 		[12] = function()
 			PluginInstallFrame.SubTitle:SetText("Installation Complete")
