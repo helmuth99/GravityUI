@@ -49,6 +49,30 @@ local function InstallComplete()
 	ReloadUI()
 end
 
+local AddonList = {"ElvUI", "Plater", "WeakAuras", "MRT", "WarpDeplete", "Details", "HidingBar", "OmniCD", "BigWigs", "Cell", "BetterBags"}
+
+local CronixEverythingLoaded = true
+
+local function CronixIsAddOnLoaded(AddonName)
+	if IsAddOnLoaded(AddonName) == true then
+		return("|cff00ff00loaded|r")
+	else
+		CronixEverythingLoaded = false
+		return("|cffff0000Not loaded|r")
+	end
+end
+
+local function Listaddon()
+	local str = ""
+    for i, v in ipairs(AddonList) do
+      str = str..v.." : "..CronixIsAddOnLoaded(v).."\n"
+    end
+	return str
+end
+
+--most ugly solution for the problem that EverytingLoaded is not set correctly, but it will be only run twice so should be fine
+
+
 --This is the data we pass on to the ElvUI Plugin Installer.
 --The Plugin Installer is reponsible for displaying the install guide for this layout.
 local InstallParams = 0
@@ -56,7 +80,7 @@ local InstallParams = 0
 local InstallerData = {
 	Title = format("|cff4beb2c%s %s|r", private.Profilename, "Installation"),
 	Name = MyPluginName,
-	tutorialImage = "Interface/Addons/CronixInstaller/croniX_Logo.tga", --If you have a logo you want to use, otherwise it uses the one from ElvUI
+	tutorialImage = "Interface/Addons/CronixUI_installer/croniX_Logo.tga", --If you have a logo you want to use, otherwise it uses the one from ElvUI
 	Pages = {
 		[1] = function()
 			if (CronixUIDB["Version"] == Version) then
@@ -214,7 +238,7 @@ local InstallerData = {
 
 --This function holds the options table which will be inserted into the ElvUI config
 local function InsertOptions()
-	E.Options.args.MyPluginName = {
+	E.Options.args.CronixUI = {
 		order = 100,
 		type = "group",
 		name = format("|cff4beb2c%s|r", MyPluginName),
@@ -248,12 +272,27 @@ local function InsertOptions()
 			spacer2 = {
 				order = 6,
 				type = "description",
-				name = "",
+				name = "\n\n\n",
+			},
+			header3 = {
+				order = 7,
+				type = "header",
+				name = "Addons",
+			},
+			description3 = {
+				order = 8,
+				type = "description",
+				name = "Check the list below if every addon is loaded, that is going to be used during the installtion. \n\n".. Listaddon(),
+			},
+			spacer3 = {
+				order = 9,
+				type = "description",
+				name = "\n\n\n",
 			},
 			install = {
-				order = 7,
+				order = 10,
 				type = "execute",
-				name = "Install",
+				name = "Install "..MyPluginName,
 				desc = "Run the installation process.",
 				func = function()
 					E:GetModule("PluginInstaller"):Queue(InstallerData); E:ToggleOptions();
@@ -261,6 +300,25 @@ local function InsertOptions()
 			},
 		},
 	}
+	if CronixEverythingLoaded == false then
+		print("Not every addon is loaded")
+		E.Options.args.CronixUI.args.install2 = {
+			order = 10,
+			type = "execute",
+			name = "(optional) load addons",
+			desc = "Press to enable all addons and start installation",
+			func = function()
+				for _ , value in ipairs(AddonList) do
+					if IsAddOnLoaded(value) == false then
+						EnableAddOn(value)
+					end
+				end
+				CronixUIDB.reload = true
+				ReloadUI()
+				
+			end,
+		}
+	end
 end
 
 --Create a unique table for our plugin
@@ -274,8 +332,15 @@ function mod:Initialize()
 			["Version"] = 0
 		}
 	end
+	
+
+	
 
 	if E.private.install_complete and E.db[MyPluginName].install_version == nil and CronixUIDB["Version"] ~= Version then
+		E:GetModule("PluginInstaller"):Queue(InstallerData)
+	end
+	if CronixUIDB.reload then
+		CronixUIDB.reload = false
 		E:GetModule("PluginInstaller"):Queue(InstallerData)
 	end
 
