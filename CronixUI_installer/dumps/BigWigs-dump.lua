@@ -619,8 +619,6 @@ local BigWigsDump = {
 }
 
 
---should not  be changed a lot 
-
 function private:BWInstall()
 
 	local resolution = private:GetResolution()
