@@ -129,12 +129,18 @@ local InstallerData = {
 			PluginInstallFrame.Option3:SetText("DPS + HEAL")
 		end,
 		[3] = function()
-			PluginInstallFrame.SubTitle:SetText("Plater")
-			PluginInstallFrame.Desc1:SetText("Please click the button below to install the CronixUI Plater part.")
-			PluginInstallFrame.Desc2:SetText("Importance: |cff07D400High|r")
-			PluginInstallFrame.Option1:Show()
-			PluginInstallFrame.Option1:SetScript("OnClick", function() private:PlaterImport() end)
-			PluginInstallFrame.Option1:SetText("CronixUI Plater")
+			if IsAddOnLoaded("Plater") then
+				PluginInstallFrame.SubTitle:SetText("Plater")
+				PluginInstallFrame.Desc1:SetText("Please click the button below to install the CronixUI Plater part.")
+				PluginInstallFrame.Desc2:SetText("Importance: |cff07D400High|r")
+				PluginInstallFrame.Option1:Show()
+				PluginInstallFrame.Option1:SetScript("OnClick", function() private:PlaterImport() end)
+				PluginInstallFrame.Option1:SetText("CronixUI Plater")
+			else 
+				PluginInstallFrame.SubTitle:SetText("Plater")
+				PluginInstallFrame.Desc1:SetText("The addon Plater |cffff0000is not loaded|r. If you want to install the "..private.Profilename.." Plater part, please install/enable Plater and restart the installer.")
+				PluginInstallFrame.Desc2:SetText("Importance: |cff07D400High|r")
+			end
 		end,
 		[4] = function()
 			PluginInstallFrame.SubTitle:SetText("Weakaura")
