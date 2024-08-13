@@ -197,12 +197,19 @@ local InstallerData = {
 			PluginInstallFrame.Option1:SetText("CronixUI Details")
 		end,
 		[11] = function()
-			PluginInstallFrame.SubTitle:SetText("Cell")
-			PluginInstallFrame.Desc1:SetText("Please click the button below to install the CronixUI Cell Part.")
-			PluginInstallFrame.Desc2:SetText("Importance: |cff00ffffLow|r")
-			PluginInstallFrame.Option1:Show()
-			PluginInstallFrame.Option1:SetScript("OnClick", function() private:CellInstall() end)
-			PluginInstallFrame.Option1:SetText("CronixUI Cell")
+			if InstallParams == 0 then
+				PluginInstallFrame.SubTitle:SetText("Cell")
+				PluginInstallFrame.Desc1:SetText("Please skip to the next page, since Cell is not needed for the DPS only profile.")
+				PluginInstallFrame.Desc2:SetText("Importance: |cff00ffffirrelevant|r")
+			else
+				PluginInstallFrame.SubTitle:SetText("Cell")
+				PluginInstallFrame.Desc1:SetText("Please click the button below to install the CronixUI Cell Part.")
+				PluginInstallFrame.Desc2:SetText("Importance: |cff00ffffLow|r")
+				PluginInstallFrame.Option1:Show()
+				PluginInstallFrame.Option1:SetScript("OnClick", function() private:CellInstall() end)
+				PluginInstallFrame.Option1:SetText("CronixUI Cell")
+			end
+			
 		end,
 		[12] = function()
 			PluginInstallFrame.SubTitle:SetText("Installation Complete")
