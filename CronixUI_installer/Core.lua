@@ -318,6 +318,8 @@ local InstallerData = {
 		end
 
 	},
+
+	
 	StepTitles = {
 		[1] = "Welcome",
 		[2] = "ElvUI Installation",
