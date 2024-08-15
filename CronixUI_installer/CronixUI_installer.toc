@@ -4,7 +4,7 @@
 ## Author: Helimeisterb, Cronix
 ## RequiredDeps: ElvUI, 
 ## OptionalDeps: Plater, WeakAuras, MRT, WarpDeplete, Details, HidingBar, OmniCD, BigWigs, Cell, BetterBags,
-## Version: 0.6.0
+## Version: @project-version@
 ## DefaultState: enabled
 ## SavedVariables: CronixUIDB
 
