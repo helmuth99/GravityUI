@@ -1,5 +1,4 @@
-## Interface: 100205
-
+## Interface: 110002
 ## Title: |cff00ccffCronixUI Media|r
 ## Notes: Media for CronixUI Installer
 ## Version: @project-version@
