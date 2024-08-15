@@ -1,5 +1,7 @@
 Addon, private = ...
 
+local E, L, V, P, G = unpack(ElvUI)
+
 local ElvUiDump1440Dps = {
     ["actionbar"] = {
         ["bar1"] = {
@@ -4133,6 +4135,26 @@ local ElvUiDump1440Heal = {
     },
 }
 
+local function ElvUIPrivate() 
+    E.private["bags"]["enable"] = false
+    E.private["general"]["chatBubbleFont"] = "Cronix"
+    E.private["general"]["chatBubbleFontOutline"] = "OUTLINE"
+    E.private["general"]["chatBubbleFontSize"] = 9
+    E.private["general"]["chatBubbles"] = "disabled"
+    E.private["general"]["dmgfont"] = "Cronix"
+    E.private["general"]["glossTex"] = "Cronix"
+    E.private["general"]["namefont"] = "Cronix"
+    E.private["general"]["nameplateFont"] = "Cronix"
+    E.private["general"]["nameplateLargeFont"] = "Cronix"
+    E.private["general"]["normTex"] = "Cronix"
+    E.private["general"]["raidUtility"] = false
+    E.private["install_complete"] = 13.32
+    E.private["nameplates"]["enable"] = false
+    E.private["skins"]["parchmentRemoverEnable"] = true
+    E.private["sle"]["skins"]["merchant"]["enable"] = true
+    E.private["sle"]["skins"]["objectiveTracker"]["texture"] = "Solid"
+end
+
 
 --todo 1080
 
@@ -4193,6 +4215,7 @@ function private:Elvinstall(importer)
     else
         RaidNotice_AddMessage(RaidWarningFrame, "Something went wrong", ChatTypeInfo["RAID_WARNING"])
     end
+    ElvUIPrivate()
 
     PluginInstallStepComplete.message = "ElvUI Profiles Loaded"
     PluginInstallStepComplete:Show()
