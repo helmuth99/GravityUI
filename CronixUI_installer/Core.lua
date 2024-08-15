@@ -62,11 +62,17 @@ local function CronixIsAddOnLoaded(AddonName)
 		return ("|cffff0000Not loaded|r")
 	end
 end
-
+local function CronixCellCheck(AddonName)
+	if AddonName == "Cell" then
+		return " (only for HealUI needed) "
+	else
+		return ""
+	end
+end
 local function Listaddon()
 	local str = ""
 	for i, v in ipairs(AddonList) do
-		str = str .. v .. " : " .. CronixIsAddOnLoaded(v) .. "\n"
+		str = str .. v ..CronixCellCheck(v).." : " .. CronixIsAddOnLoaded(v) .. "\n"
 	end
 	return str
 end
@@ -347,7 +353,10 @@ local function InsertOptions()
 			description1 = {
 				order = 2,
 				type = "description",
-				name = format("%s is a layout for ElvUI.", MyPluginName),
+				name = "",
+				image = function() return "Interface/Addons/CronixUI_installer/CRONIX_UI_LOGO.tga", 400, 200 end,
+				imageWidth = 64,
+				imageHeight = 32,
 			},
 			spacer1 = {
 				order = 3,
@@ -385,10 +394,26 @@ local function InsertOptions()
 			spacer3 = {
 				order = 9,
 				type = "description",
-				name = "\n\n\n",
+				name = "\n\n",
+			},
+			header4 = {
+				order = 10,
+				type = "header",
+				name = "Shoutout",
+			},
+			description4 = {
+				order = 11,
+				type = "description",
+				name =
+				"Special shoutout to |cff0097faHijack|r for letting us use his class weakauras. Check him out on |Hurl:https://www.wago.io|hWago|h here: |cff71d5ffhttps://wago.io/p/iamhijack|r \n\n",
+			},
+			spacer4 = {
+				order = 12,
+				type = "description",
+				name = "\n\n",
 			},
 			install = {
-				order = 10,
+				order = 13,
 				type = "execute",
 				name = "Install " .. MyPluginName,
 				desc = "Run the installation process.",
@@ -405,6 +430,7 @@ local function InsertOptions()
 			type = "execute",
 			name = "(optional) load addons",
 			desc = "Press to enable all addons and start installation",
+			width = "full",
 			func = function()
 				for _, value in ipairs(AddonList) do
 					if C_AddOns.IsAddOnLoaded(value) == false then
@@ -414,6 +440,7 @@ local function InsertOptions()
 				CronixUIDB.reload = true
 				ReloadUI()
 			end,
+			
 		}
 	end
 end
