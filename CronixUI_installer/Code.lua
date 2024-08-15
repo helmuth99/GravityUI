@@ -74,8 +74,8 @@ end
 function private:CronixUIWarning(string, importFunction)
 	StaticPopupDialogs["ProfileOverrideConfirm"] = {
 		text = string,
-		button1 = "Yes",
-		button2 = "No",
+		button1 = "Accept",
+		button2 = "Decline",
 		OnAccept = function()
 			importFunction()
 		end,
