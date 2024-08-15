@@ -77,13 +77,14 @@ local function Listaddon()
 	return str
 end
 
-function private:CronixUIWarning(string, importFunction)
+function private:CronixUIWarning(string, importFunction, ...)
+	local args = {...}
 	StaticPopupDialogs["ProfileOverrideConfirm"] = {
 		text = string,
 		button1 = "Accept",
 		button2 = "Decline",
 		OnAccept = function()
-			importFunction()
+			importFunction(unpack(args))
 		end,
 		timeout = 0,
 		whileDead = true,
@@ -363,21 +364,35 @@ local function InsertOptions()
 				type = "description",
 				name = "\n\n\n",
 			},
-			header2 = {
+			header5 = {
 				order = 4,
 				type = "header",
-				name = "Installation",
+				name = "options",
 			},
-			description2 = {
+			option1 = {
 				order = 5,
-				type = "description",
-				name =
-				"The installation guide should pop up automatically after you have completed the ElvUI installation. If you wish to re-run the installation process for this layout then please click the button below.",
+				type = "toggle",
+				name = "Cell helper",
+				desc = "This will enable/disable the Cell helper. The Cell helper will promt you to disable/enable Cell for the intended use in the CronixUI.",
+				set = function (info,val)
+					if val then
+						CronixUIDB.CellHelper = true
+						mod:RegisterEvent("ACTIVE_PLAYER_SPECIALIZATION_CHANGED")
+						mod:CellHelperDo()
+					else
+						print("unregistered event")
+						CronixUIDB.CellHelper = false
+						mod:UnregisterEvent("ACTIVE_PLAYER_SPECIALIZATION_CHANGED")
+					end
+				end,
+				get = function ()
+					return CronixUIDB.CellHelper
+				end
 			},
 			spacer2 = {
 				order = 6,
 				type = "description",
-				name = "\n\n\n",
+				name = "\n",
 			},
 			header3 = {
 				order = 7,
@@ -412,11 +427,33 @@ local function InsertOptions()
 				type = "description",
 				name = "\n\n",
 			},
-			install = {
+			header2 = {
 				order = 13,
+				type = "header",
+				name = "Installation",
+			},
+			description2 = {
+				order = 14,
+				type = "description",
+				name =
+				"The installation guide should pop up automatically after you have completed the ElvUI installation. If you wish to re-run the installation process for this layout then please click the button below.",
+			},
+			install = {
+				order = 15,
 				type = "execute",
 				name = "Install " .. MyPluginName,
-				desc = "Run the installation process.",
+				desc = "Run the installation process for CronixUI.",
+				width = "half",
+				func = function()
+					E:GetModule("PluginInstaller"):Queue(InstallerData); E:ToggleOptions();
+				end,
+			},
+			install2 = {
+				order = 15,
+				type = "execute",
+				name = "Install " .. MyPluginName .. "Twinks (WIP)",
+				desc = "Run the installation process CronixUI for twinks.",
+				width = "half",
 				func = function()
 					E:GetModule("PluginInstaller"):Queue(InstallerData); E:ToggleOptions();
 				end,
@@ -448,6 +485,33 @@ end
 --Create a unique table for our plugin
 P[MyPluginName] = {}
 
+
+--CronixUI Cell helper
+local function CronixEnableCell(active)
+	if active then
+		C_AddOns.EnableAddOn("Cell")
+	else
+		C_AddOns.DisableAddOn("Cell")
+	end
+	ReloadUI()
+end
+
+function mod:CellHelperDo()
+	local id, name, desc, icon, role, primary = GetSpecializationInfo(GetSpecialization())
+	if role == "HEALER" and not C_AddOns.IsAddOnLoaded("Cell") then
+		private:CronixUIWarning("CronixUI: Cell should be actived as a heal. Should we fix this?\n This will reload your UI! ", CronixEnableCell, true)
+		return
+	end
+	if role ~= "Healer" and C_AddOns.IsAddOnLoaded("Cell") then
+		private:CronixUIWarning("CronixUI: Cell should not be actived as a "..role..". Should we fix this?\n This will reload your UI! ", CronixEnableCell, false)
+		return
+	end
+end
+
+function mod:ACTIVE_PLAYER_SPECIALIZATION_CHANGED()
+	mod:CellHelperDo()
+end
+
 --This function will handle initialization of the addon
 function mod:Initialize()
 	--Initiate installation process if ElvUI install is complete and our plugin install has not yet been run
@@ -457,8 +521,9 @@ function mod:Initialize()
 		}
 	end
 
-
-
+	if CronixUIDB.CellHelper == nil then
+		CronixUIDB.CellHelper = true
+	end
 
 	if E.private.install_complete and E.db[MyPluginName].install_version == nil and CronixUIDB["Version"] ~= Version then
 		E:GetModule("PluginInstaller"):Queue(InstallerData)
@@ -470,6 +535,13 @@ function mod:Initialize()
 
 	--Insert our options table when ElvUI config is loaded
 	EP:RegisterPlugin(addon, InsertOptions)
+
+	if CronixUIDB.CellHelper then
+		self:RegisterEvent("ACTIVE_PLAYER_SPECIALIZATION_CHANGED")
+		mod:CellHelperDo()
+	end
+	
+	
 end
 
 --Register module with callback so it gets initialized when ready
