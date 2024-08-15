@@ -1,5 +1,0 @@
-## Interface: 110002 
-## Title: SharedMedia_CronixUI
-## Dependencies:
-Libs\Libs.xml
-Main.lua 

@@ -1,0 +1,15 @@
+## Interface: 100205
+
+## Title: |cff00ccffCronixUI Media|r
+## Notes: Media for CronixUI Installer
+## Version: 0.6.0
+## IconTexture: Interface\AddOns\CronixUIMedia\CRONIX.blp
+## Author: helimerister
+## DefaultState: Enable
+
+Libs\LibStub.lua
+Libs\CallbackHandler-1.0.lua
+Libs\LibSharedMedia-3.0.lua
+
+CronixUIMedia.lua 
+

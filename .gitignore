@@ -5,8 +5,7 @@
 !.gitignore
 !CronixUI_installer
 !CronixUI_installer/**
-CronixUI_installer/tempdumps/*
-!SharedMedia_CronixUI
-!SharedMedia_CronixUI/**
+!CronixUIMedia
+!CronixUIMedia/**
 !README.md
 !.pkgmeta
