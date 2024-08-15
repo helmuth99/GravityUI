@@ -1,4 +1,4 @@
-## Interface: 110000
+## Interface: 110002
 ## Title: CronixInstaller
 ## Notes: Installs the Cronix Interface
 ## Author: Helimeisterb, Cronix

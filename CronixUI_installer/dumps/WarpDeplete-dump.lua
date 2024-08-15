@@ -45,6 +45,7 @@ function private:WarpDepleteInstall()
 
     WarpDepleteDB["profileKeys"][name .. " - " .. realm] = private.Profilename
 
+
     PluginInstallStepComplete.message = "WarpDeplete Profile Imported"
     PluginInstallStepComplete:Show()
 

@@ -23816,7 +23816,7 @@ PlaterDump = {
 
 function private:PlaterImport()
   PlaterDB["profiles"][private.Profilename] = PlaterDump
-  
+
   local name = UnitName("PLAYER")
   local realm = GetRealmName()
   --if we overwrite the PlaterDB to add our profiles it will forget which profile to load
