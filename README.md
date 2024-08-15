@@ -1,7 +1,5 @@
 # CronixUI Installer
 
-[![Latest Release][badge-latest-release]][Releases]
-
 CronixUI is a full UI option build ontop of multiple popular addons. It supports all classes and specs and includes many custom frames, sounds, media and font options. The installer will guide you though the whole installation process.
 
 **Supports:**
