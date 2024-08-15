@@ -48,7 +48,7 @@ local function InstallComplete()
 	CronixUIDB["Version"] = Version
 	local name = UnitName("PLAYER")
     local realm = GetRealmName()
-	CronixUIDB["char"][name.."-"..realm]["Installed"] = true
+	CronixUIDB["Char"][name.."-"..realm]["Installed"] = true
 	ReloadUI()
 end
 
