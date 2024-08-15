@@ -201,7 +201,7 @@ local InstallerData = {
 					"Please click the button below to install the CronixUI Method Raid Tools part. \n|cffff0000Important:|r All of your current settings will be wiped, for all characters")
 				PluginInstallFrame.Desc2:SetText("Importance: |cff00ffffLow|r")
 				PluginInstallFrame.Option1:Show()
-				PluginInstallFrame.Option1:SetScript("OnClick", function() private:MRTInstall() end)
+				PluginInstallFrame.Option1:SetScript("OnClick", function() private:CronixUIWarning("|cffff0000Accepting this will overwrite MRT for every character!|r", private.MRTInstall) end)
 				PluginInstallFrame.Option1:SetText("CronixUI MRT")
 			else
 				PluginInstallFrame.SubTitle:SetText("Method Raid Tools")
@@ -252,7 +252,7 @@ local InstallerData = {
 					"Please click the button below to install the CronixUI HidingBar part. \n|cffff0000Important:|r All of your current settings will be wiped, for all characters")
 				PluginInstallFrame.Desc2:SetText("Importance: |cff00ffffLow|r")
 				PluginInstallFrame.Option1:Show()
-				PluginInstallFrame.Option1:SetScript("OnClick", function() private:HidingbarInstall() end)
+				PluginInstallFrame.Option1:SetScript("OnClick", function() private:CronixUIWarning("|cffff0000Accepting this will overwrite HidingBar for every character!|r", private.HidingbarInstall) end)
 				PluginInstallFrame.Option1:SetText("CronixUI HidingBar")
 			else
 				PluginInstallFrame.SubTitle:SetText("HidingBar")
@@ -290,7 +290,7 @@ local InstallerData = {
 					PluginInstallFrame.Desc1:SetText("Please click the button below to install the CronixUI Cell Part.")
 					PluginInstallFrame.Desc2:SetText("Importance: |cff00ffffLow|r")
 					PluginInstallFrame.Option1:Show()
-					PluginInstallFrame.Option1:SetScript("OnClick", function() private:CellInstall() end)
+					PluginInstallFrame.Option1:SetScript("OnClick", function() private:CronixUIWarning("|cffff0000Accepting this will overwrite Cell for every character!|r", private.CellInstall) end)
 					PluginInstallFrame.Option1:SetText("CronixUI Cell")
 				end
 			else
