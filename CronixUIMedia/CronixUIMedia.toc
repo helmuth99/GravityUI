@@ -2,7 +2,7 @@
 
 ## Title: |cff00ccffCronixUI Media|r
 ## Notes: Media for CronixUI Installer
-## Version: 0.6.0
+## Version: @project-version@
 ## IconTexture: Interface\AddOns\CronixUIMedia\CRONIX.blp
 ## Author: helimerister
 ## DefaultState: Enable
