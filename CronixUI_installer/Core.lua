@@ -173,7 +173,7 @@ local InstallerData = {
 					"Please click the button below to install the CronixUI Weakauras. \n|cffff0000Important:|r All of your installed Weakauras will be removed and overwritten!")
 				PluginInstallFrame.Desc2:SetText("Importance: |cff07D400High|r")
 				PluginInstallFrame.Option1:Show()
-				PluginInstallFrame.Option1:SetScript("OnClick", function() private:CronixUIWarning("|cffff0000Accepting this will overwrite all Weakauras on every characters! There will be no way to restore the lost Data!|r", private.WeakauraInstall) end)
+				PluginInstallFrame.Option1:SetScript("OnClick", function() private:CronixUIWarning("|cffff0000Accepting this will overwrite all Weakauras on every characters! There will be no way to restore the lost data!|r", private.WeakauraInstall) end)
 				PluginInstallFrame.Option1:SetText("CronixUI Weakaura")
 			else
 				PluginInstallFrame.SubTitle:SetText("Weakaura")
