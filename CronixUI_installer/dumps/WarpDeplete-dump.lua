@@ -37,6 +37,13 @@ local CronixUI = {
 	["keyFont"] = "Cronix",
 }
 
+function private:WarpDepleteInstallTwink()
+	local name = UnitName("PLAYER")
+    local realm = GetRealmName()
+    WarpDepleteDB["profileKeys"][name .. " - " .. realm] = private.Profilename
+end
+
+
 function private:WarpDepleteInstall()
     WarpDepleteDB["profiles"][private.Profilename] = CronixUI
 

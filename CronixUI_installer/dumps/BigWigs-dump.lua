@@ -618,6 +618,13 @@ local BigWigsDump = {
     },
 }
 
+function private:BWInstallTwink()
+    local name = UnitName("PLAYER")
+    local realm = GetRealmName()
+    BigWigs3DB["profileKeys"][name.."-"..realm] = private.Profilename
+
+end
+
 
 function private:BWInstall()
 

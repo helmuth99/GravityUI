@@ -4195,6 +4195,15 @@ local function InstallHeal()
     ElvDB["profiles"][private.Profilename .. "-HEAL"] = ElvUiDump1440Heal
 end
 
+function private:ElvinstallTwink(importer)
+    if importer == 0 then
+        ElvUI[1].data:SetProfile(private.Profilename .. "-DPS")
+    else
+        ElvUI[1].data:SetProfile(private.Profilename .. "-HEAL")
+    end
+    ElvUIPrivate()
+end
+
 function private:Elvinstall(importer)
     ElvDB["global"]["general"]["UIScale"] = 0.60
     ElvDB["global"]["general"]["WorldMapCoordinates"] = {

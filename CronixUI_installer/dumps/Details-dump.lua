@@ -1840,7 +1840,9 @@ local Detailsdump = {
         ["damage"] = "red",
     },
 }
-
+function private:DetailsInstallTwink()
+    _detalhes:ApplyProfile(private.Profilename)
+end
 
 function private:DetailsInstall()
 

@@ -5682,6 +5682,12 @@ local MRTDump = {
 	},
 }
 
+function private:MRTInstallTwink()
+	local name = UnitName("PLAYER")
+	local realm = GetRealmName()
+	VMRT["ProfileKeys"][name .. "-" .. realm] = private.Profilename
+end
+
 
 function private:MRTInstall()
 	VMRT = MRTDump

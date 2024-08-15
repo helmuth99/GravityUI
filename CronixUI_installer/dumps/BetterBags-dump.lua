@@ -3580,6 +3580,13 @@ BetterBagsDump = {
     },
 }
 
+function private:BetterBagsInstallTwink()
+    local name = UnitName("PLAYER")
+    local realm = GetRealmName()
+    BetterBagsDB["profileKeys"][name.."-"..realm] = private.Profilename;
+end
+
+
 function private:BetterBagsInstall()
     local name = UnitName("PLAYER")
     local realm = GetRealmName()

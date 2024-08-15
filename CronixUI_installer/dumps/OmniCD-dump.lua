@@ -294,7 +294,11 @@ local CronixUI = {
     },
 }
 
-
+function private:OmniCDInstallTwink()
+    local name = UnitName("PLAYER")
+    local realm = GetRealmName()
+    OmniCDDB["profileKeys"][name .. " - " .. realm] = private.Profilename
+end
 function private:OmniCDInstall()
 
     local resolution = private:GetResolution()

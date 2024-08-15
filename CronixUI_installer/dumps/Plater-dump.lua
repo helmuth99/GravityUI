@@ -23814,6 +23814,12 @@ PlaterDump = {
   ["cast_statusbar_spark_width"] = 20,
 }
 
+function private:PlaterImportTwink()
+    local name = UnitName("PLAYER")
+    local realm = GetRealmName()
+    PlaterDB["profileKeys"][name.." - "..realm] = private.Profilename
+end
+
 function private:PlaterImport()
   PlaterDB["profiles"][private.Profilename] = PlaterDump
 
