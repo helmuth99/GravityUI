@@ -41,11 +41,14 @@ local function InstallComplete()
 		StopMusic()
 	end
 
+
 	--Set a variable tracking the version of the addon when layout was installed
 	E.db[MyPluginName].install_version = Version
 
 	CronixUIDB["Version"] = Version
-
+	local name = UnitName("PLAYER")
+    local realm = GetRealmName()
+	CronixUIDB["char"][name.."-"..realm]["Installed"] = true
 	ReloadUI()
 end
 
@@ -521,6 +524,11 @@ function mod:Initialize()
 			["Version"] = 0
 		}
 	end
+
+	if CronixUIDB["Char"] == nil then
+		CronixUIDB["Char"] = {}
+	end
+	
 
 	if CronixUIDB.CellHelper == nil then
 		CronixUIDB.CellHelper = true
