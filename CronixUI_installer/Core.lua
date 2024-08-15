@@ -380,7 +380,6 @@ local function InsertOptions()
 						mod:RegisterEvent("ACTIVE_PLAYER_SPECIALIZATION_CHANGED")
 						mod:CellHelperDo()
 					else
-						print("unregistered event")
 						CronixUIDB.CellHelper = false
 						mod:UnregisterEvent("ACTIVE_PLAYER_SPECIALIZATION_CHANGED")
 					end
@@ -444,25 +443,24 @@ local function InsertOptions()
 				type = "execute",
 				name = "Install " .. MyPluginName,
 				desc = "Run the installation process for CronixUI.",
-				width = "half",
+				width = "double",
 				func = function()
 					E:GetModule("PluginInstaller"):Queue(InstallerData); E:ToggleOptions();
 				end,
 			},
-			install2 = {
-				order = 16,
+			install3 = {
+				order = 17,
 				type = "execute",
-				name = "Install " .. MyPluginName .. "Twinks (WIP)",
+				name = "Install " .. MyPluginName .. " Twinks (WIP)",
 				desc = "Run the installation process CronixUI for twinks.",
-				width = "half",
+				width = "double",
 				func = function()
-					E:GetModule("PluginInstaller"):Queue(InstallerData); E:ToggleOptions();
+					print("non functional still WIP")
 				end,
 			},
 		},
 	}
 	if CronixEverythingLoaded == false then
-		print("Not every addon is loaded")
 		E.Options.args.CronixUI.args.install2 = {
 			order = 10,
 			type = "execute",
