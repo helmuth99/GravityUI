@@ -411,35 +411,36 @@ local function InsertOptions()
 				type = "description",
 				name = "\n\n",
 			},
+			--skip one order here for addon load button
 			header4 = {
-				order = 10,
+				order = 11,
 				type = "header",
 				name = "Shoutout",
 			},
 			description4 = {
-				order = 11,
+				order = 12,
 				type = "description",
 				name =
 				"Special shoutout to |cff0097faHijack|r for letting us use his class weakauras. Check him out on |Hurl:https://www.wago.io|hWago|h here: |cff71d5ffhttps://wago.io/p/iamhijack|r \n\n",
 			},
 			spacer4 = {
-				order = 12,
+				order = 13,
 				type = "description",
 				name = "\n\n",
 			},
 			header2 = {
-				order = 13,
+				order = 14,
 				type = "header",
 				name = "Installation",
 			},
 			description2 = {
-				order = 14,
+				order = 15,
 				type = "description",
 				name =
 				"The installation guide should pop up automatically after you have completed the ElvUI installation. If you wish to re-run the installation process for this layout then please click the button below.",
 			},
 			install = {
-				order = 15,
+				order = 16,
 				type = "execute",
 				name = "Install " .. MyPluginName,
 				desc = "Run the installation process for CronixUI.",
@@ -449,7 +450,7 @@ local function InsertOptions()
 				end,
 			},
 			install2 = {
-				order = 15,
+				order = 16,
 				type = "execute",
 				name = "Install " .. MyPluginName .. "Twinks (WIP)",
 				desc = "Run the installation process CronixUI for twinks.",
