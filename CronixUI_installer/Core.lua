@@ -7,6 +7,8 @@ local format = string.format
 local GetCVarBool = GetCVarBool
 local ReloadUI = ReloadUI
 local StopMusic = StopMusic
+local name = UnitName("PLAYER")
+local realm = GetRealmName()
 
 private.Profilename = "CronixUI"
 
@@ -18,6 +20,8 @@ local MyPluginName = "|cff0097faCroniX UI|r"
 
 --Create references to ElvUI internals
 local E, L, V, P, G = unpack(ElvUI)
+local PI = E:GetModule('PluginInstaller')
+
 
 --Create reference to LibElvUIPlugin
 local EP = LibStub("LibElvUIPlugin-1.0")
@@ -46,15 +50,22 @@ local function InstallComplete()
 	E.db[MyPluginName].install_version = Version
 
 	CronixUIDB["Version"] = Version
-	local name = UnitName("PLAYER")
-    local realm = GetRealmName()
-	CronixUIDB["Char"][name.."-"..realm]["Installed"] = true
+	
+	CronixUIDB["Char"][name.."-"..realm] = true
+	ReloadUI()
+end
+
+local function InstallCompleteTwink()
+	if GetCVarBool("Sound_EnableMusic") then
+		StopMusic()
+	end
+	
+	CronixUIDB["Char"][name.."-"..realm] = true
 	ReloadUI()
 end
 
 local AddonList = { "ElvUI", "Plater", "WeakAuras", "MRT", "WarpDeplete", "Details", "HidingBar", "OmniCD", "BigWigs",
 	"Cell", "BetterBags" }
-
 local CronixEverythingLoaded = true
 
 local function CronixIsAddOnLoaded(AddonName)
@@ -102,6 +113,91 @@ end
 --The Plugin Installer is reponsible for displaying the install guide for this layout.
 local InstallParams = 0
 
+local function SetAddonAsInstalled(AddonName)
+	CronixUIDB["InstalledAddons"][AddonName] = true
+end
+local function CronixExpressInstallationTwink()
+	local _, _, _, _, role, _ = GetSpecializationInfo(GetSpecialization())
+	
+	if CronixUIDB["InstalledAddons"]["ElvUI"] and C_AddOns.IsAddOnLoaded("ElvUI") then
+		if role == "HEALER" then
+			private:ElvinstallTwink(1)
+		else
+			private:ElvinstallTwink(0)
+		end
+	end
+	if CronixUIDB["InstalledAddons"]["BetterBags"] and C_AddOns.IsAddOnLoaded("BetterBags") then
+		private:BetterBagsInstallTwink()
+	end
+	if CronixUIDB["InstalledAddons"]["BigWigs"] and C_AddOns.IsAddOnLoaded("BigWigs") then
+		private:BWInstallTwink()
+	end
+	if CronixUIDB["InstalledAddons"]["Details"] and C_AddOns.IsAddOnLoaded("Details") then
+		private:DetailsInstallTwink()
+	end
+	if CronixUIDB["InstalledAddons"]["MRT"] and C_AddOns.IsAddOnLoaded("MRT") then
+		private:MRTInstallTwink()
+	end
+	if CronixUIDB["InstalledAddons"]["OmniCD"] and C_AddOns.IsAddOnLoaded("OmniCD") then
+		private:OmniCDInstallTwink()
+	end
+	if CronixUIDB["InstalledAddons"]["Plater"] and C_AddOns.IsAddOnLoaded("Plater") then
+		private:PlaterImportTwink()
+	end
+	if CronixUIDB["InstalledAddons"]["WarpDeplete"] and C_AddOns.IsAddOnLoaded("WarpDeplete") then
+		private:WarpDepleteInstallTwink()
+	end
+	
+	PluginInstallStepComplete.message = "Express installation done"
+  	PluginInstallStepComplete:Show()
+
+	PI:NextPage()
+end
+
+local InstallDataTwink = {
+	Title = format("|cff0097fa%s %s|r", private.Profilename, "Installation"),
+	Name = MyPluginName,
+	tutorialImage = "Interface/Addons/CronixUI_installer/CRONIX_UI_LOGO.tga", --If you have a logo you want to use, otherwise it uses the one from ElvUI
+	tutorialImagePoint = {0, 35},
+	Pages = {
+		[1] = function()
+			PluginInstallFrame.SubTitle:SetFormattedText("Welcome to the twink installation for the %s.", MyPluginName)
+			PluginInstallFrame.Desc1:SetText("You already installed "..private.Profilename..". Do you want to use "..private.Profilename.. " for this twink?")
+			PluginInstallFrame.Desc2:SetText("We offer you a express installation or you can skip this whole process. \n Using the express installation will only set the profiles and will not reimport everything new. This ensures that things you personalized and set accountbound, like Weakauras, are not reset and overwritten.")
+			PluginInstallFrame.Option1:Show()
+			PluginInstallFrame.Option1:SetScript("OnClick", function()
+				CronixExpressInstallationTwink()
+			end)
+			PluginInstallFrame.Option1:SetText("Express install")
+			PluginInstallFrame.Option2:Show()
+			PluginInstallFrame.Option2:SetScript("OnClick", function()
+				InstallCompleteTwink()
+			end)
+			PluginInstallFrame.Option2:SetText("Skip")
+		end,
+		[2] = function()
+			PluginInstallFrame.SubTitle:SetText("Installation Complete")
+			PluginInstallFrame.Desc1:SetText("Everything should be set now. Thank you for choosing "..private.Profilename.. " again.")
+			PluginInstallFrame.Desc2:SetText(
+				"Please click the button below in order to finalize the process and automatically reload your UI. \n Because of technical reasons, if you choose ElvUI Heal + DPS or/and have specc specific profiles activated, please set them manually. ")
+			PluginInstallFrame.Option1:Show()
+			PluginInstallFrame.Option1:SetScript("OnClick", function() InstallCompleteTwink() end)
+			PluginInstallFrame.Option1:SetText("Finish")
+		end,
+	},
+	StepTitles = {
+		[1] = "Welcome",
+		[2] = "Installation Complete",
+
+	},
+	StepTitlesColor = { 1, 1, 1 },
+	StepTitlesColorSelected = { 0, 179 / 255, 1 },
+	StepTitleWidth = 200,
+	StepTitleButtonWidth = 180,
+	StepTitleTextJustification = "RIGHT",
+
+}
+
 local InstallerData = {
 	Title = format("|cff0097fa%s %s|r", private.Profilename, "Installation"),
 	Name = MyPluginName,
@@ -139,18 +235,21 @@ local InstallerData = {
 			PluginInstallFrame.Option1:SetScript("OnClick", function()
 				InstallParams = 0
 				private:Elvinstall(InstallParams)
+				SetAddonAsInstalled("ElvUI")
 			end)
 			PluginInstallFrame.Option1:SetText("DPS")
 			PluginInstallFrame.Option2:Show()
 			PluginInstallFrame.Option2:SetScript("OnClick", function()
 				InstallParams = 1
 				private:Elvinstall(InstallParams)
+				SetAddonAsInstalled("ElvUI")
 			end)
 			PluginInstallFrame.Option2:SetText("HEAL")
 			PluginInstallFrame.Option3:Show()
 			PluginInstallFrame.Option3:SetScript("OnClick", function()
 				InstallParams = 2
 				private:Elvinstall(InstallParams)
+				SetAddonAsInstalled("ElvUI")
 			end)
 			PluginInstallFrame.Option3:SetText("DPS + HEAL")
 		end,
@@ -160,7 +259,10 @@ local InstallerData = {
 				PluginInstallFrame.Desc1:SetText("Please click the button below to install the CronixUI Plater part.")
 				PluginInstallFrame.Desc2:SetText("Importance: |cff07D400High|r")
 				PluginInstallFrame.Option1:Show()
-				PluginInstallFrame.Option1:SetScript("OnClick", function() private:PlaterImport() end)
+				PluginInstallFrame.Option1:SetScript("OnClick", function() 
+					private:PlaterImport() 
+					SetAddonAsInstalled("Plater")
+					end)
 				PluginInstallFrame.Option1:SetText("CronixUI Plater")
 			else
 				PluginInstallFrame.SubTitle:SetText("Plater")
@@ -172,13 +274,16 @@ local InstallerData = {
 		end,
 		[4] = function()
 			if C_AddOns.IsAddOnLoaded("WeakAuras") then
-				PluginInstallFrame.SubTitle:SetText("Weakaura")
+				PluginInstallFrame.SubTitle:SetText("Weakauras")
 				PluginInstallFrame.Desc1:SetText(
 					"Please click the button below to install the CronixUI Weakauras. \n|cffff0000Important:|r All of your installed Weakauras will be removed and overwritten!")
 				PluginInstallFrame.Desc2:SetText("Importance: |cff07D400High|r")
 				PluginInstallFrame.Option1:Show()
-				PluginInstallFrame.Option1:SetScript("OnClick", function() private:CronixUIWarning("|cffff0000Accepting this will overwrite all Weakauras on every characters! There will be no way to restore the lost data!|r", private.WeakauraInstall) end)
-				PluginInstallFrame.Option1:SetText("CronixUI Weakaura")
+				PluginInstallFrame.Option1:SetScript("OnClick", function() private:CronixUIWarning("|cffff0000Accepting this will overwrite all Weakauras on every characters! There will be no way to restore the lost data!|r", function ()
+					private:WeakauraInstall()
+					SetAddonAsInstalled("WeakAuras")
+				end) end)
+				PluginInstallFrame.Option1:SetText("CronixUI Weakauras")
 			else
 				PluginInstallFrame.SubTitle:SetText("Weakaura")
 				PluginInstallFrame.Desc1:SetText(
@@ -194,7 +299,10 @@ local InstallerData = {
 					"Please click the button below to install the CronixUI BigWigs part. \n|cffff0000Important:|r All of your current settings will be wiped, for all characters")
 				PluginInstallFrame.Desc2:SetText("Importance: |cff00ffffLow|r")
 				PluginInstallFrame.Option1:Show()
-				PluginInstallFrame.Option1:SetScript("OnClick", function() private:CronixUIWarning("|cffff0000Accepting this will overwrite Bigwigs for every character!|r", private.BWInstall) end)
+				PluginInstallFrame.Option1:SetScript("OnClick", function() private:CronixUIWarning("|cffff0000Accepting this will overwrite Bigwigs for every character!|r", function() 
+					private:BWInstall()
+					SetAddonAsInstalled("BigWigs")
+				end) end)
 				PluginInstallFrame.Option1:SetText("CronixUI Bigwigs")
 			else
 				PluginInstallFrame.SubTitle:SetText("BigWigs")
@@ -211,7 +319,10 @@ local InstallerData = {
 					"Please click the button below to install the CronixUI Method Raid Tools part. \n|cffff0000Important:|r All of your current settings will be wiped, for all characters")
 				PluginInstallFrame.Desc2:SetText("Importance: |cff00ffffLow|r")
 				PluginInstallFrame.Option1:Show()
-				PluginInstallFrame.Option1:SetScript("OnClick", function() private:CronixUIWarning("|cffff0000Accepting this will overwrite MRT for every character!|r", private.MRTInstall) end)
+				PluginInstallFrame.Option1:SetScript("OnClick", function() private:CronixUIWarning("|cffff0000Accepting this will overwrite MRT for every character!|r", function() 
+					private:MRTInstall()
+					SetAddonAsInstalled("MRT")
+				end) end)
 				PluginInstallFrame.Option1:SetText("CronixUI MRT")
 			else
 				PluginInstallFrame.SubTitle:SetText("Method Raid Tools")
@@ -229,7 +340,10 @@ local InstallerData = {
 				"Please click the button below to install the CronixUI WarpDeplete part.")
 				PluginInstallFrame.Desc2:SetText("Importance: |cff00ffffLow|r")
 				PluginInstallFrame.Option1:Show()
-				PluginInstallFrame.Option1:SetScript("OnClick", function() private:WarpDepleteInstall() end)
+				PluginInstallFrame.Option1:SetScript("OnClick", function() 
+					private:WarpDepleteInstall() 
+					SetAddonAsInstalled("WarpDeplete")
+					end)
 				PluginInstallFrame.Option1:SetText("CronixUI WarpDeplete")
 			else
 				PluginInstallFrame.SubTitle:SetText("WarpDeplete")
@@ -245,7 +359,10 @@ local InstallerData = {
 				PluginInstallFrame.Desc1:SetText("Please click the button below to install the CronixUI OmniCD part.")
 				PluginInstallFrame.Desc2:SetText("Importance: |cff00ffffLow|r")
 				PluginInstallFrame.Option1:Show()
-				PluginInstallFrame.Option1:SetScript("OnClick", function() private:OmniCDInstall() end)
+				PluginInstallFrame.Option1:SetScript("OnClick", function() 
+					private:OmniCDInstall() 
+					SetAddonAsInstalled("OmniCD")	
+					end)
 				PluginInstallFrame.Option1:SetText("CronixUI OmniCD")
 			else
 				PluginInstallFrame.SubTitle:SetText("OmniCD")
@@ -262,7 +379,11 @@ local InstallerData = {
 					"Please click the button below to install the CronixUI HidingBar part. \n|cffff0000Important:|r All of your current settings will be wiped, for all characters")
 				PluginInstallFrame.Desc2:SetText("Importance: |cff00ffffLow|r")
 				PluginInstallFrame.Option1:Show()
-				PluginInstallFrame.Option1:SetScript("OnClick", function() private:CronixUIWarning("|cffff0000Accepting this will overwrite HidingBar for every character!|r", private.HidingbarInstall) end)
+				PluginInstallFrame.Option1:SetScript("OnClick", function() private:CronixUIWarning("|cffff0000Accepting this will overwrite HidingBar for every character!|r", function()
+					private:HidingbarInstall()
+					SetAddonAsInstalled("HidingBar")	
+					end)
+				end)
 				PluginInstallFrame.Option1:SetText("CronixUI HidingBar")
 			else
 				PluginInstallFrame.SubTitle:SetText("HidingBar")
@@ -278,7 +399,10 @@ local InstallerData = {
 				PluginInstallFrame.Desc1:SetText("Please click the button below to install the CronixUI Details part.")
 				PluginInstallFrame.Desc2:SetText("Importance: |cff00ffffLow|r")
 				PluginInstallFrame.Option1:Show()
-				PluginInstallFrame.Option1:SetScript("OnClick", function() private:DetailsInstall() end)
+				PluginInstallFrame.Option1:SetScript("OnClick", function() 
+					private:DetailsInstall() 
+					SetAddonAsInstalled("Details")	
+					end)
 				PluginInstallFrame.Option1:SetText("CronixUI Details")
 			else
 				PluginInstallFrame.SubTitle:SetText("Details")
@@ -300,7 +424,10 @@ local InstallerData = {
 					PluginInstallFrame.Desc1:SetText("Please click the button below to install the CronixUI Cell Part.")
 					PluginInstallFrame.Desc2:SetText("Importance: |cff00ffffLow|r")
 					PluginInstallFrame.Option1:Show()
-					PluginInstallFrame.Option1:SetScript("OnClick", function() private:CronixUIWarning("|cffff0000Accepting this will overwrite Cell for every character!|r", private.CellInstall) end)
+					PluginInstallFrame.Option1:SetScript("OnClick", function() private:CronixUIWarning("|cffff0000Accepting this will overwrite Cell for every character!|r", function() 
+						private:CellInstall()
+						SetAddonAsInstalled("Cell")	
+						end) end)
 					PluginInstallFrame.Option1:SetText("CronixUI Cell")
 				end
 			else
@@ -314,7 +441,7 @@ local InstallerData = {
 			PluginInstallFrame.SubTitle:SetText("Installation Complete")
 			PluginInstallFrame.Desc1:SetText("You have completed the installation process.")
 			PluginInstallFrame.Desc2:SetText(
-				"Please click the button below in order to finalize the process and automatically reload your UI.")
+				"Please click the button below in order to finalize the process and automatically reload your UI. \nBecause of technical reasons, if you choose ElvUI Heal + DPS or/and have specc specific profiles activated, please set them manually.")
 			PluginInstallFrame.Option1:Show()
 			PluginInstallFrame.Option1:SetScript("OnClick", function() InstallComplete() end)
 			PluginInstallFrame.Option1:SetText("Finish")
@@ -456,11 +583,11 @@ local function InsertOptions()
 			install3 = {
 				order = 17,
 				type = "execute",
-				name = "Install " .. MyPluginName .. " Twinks (WIP)",
+				name = "Install " .. MyPluginName .. " Twinks",
 				desc = "Run the installation process CronixUI for twinks.",
 				width = "double",
 				func = function()
-					print("non functional still WIP")
+					E:GetModule("PluginInstaller"):Queue(InstallDataTwink); E:ToggleOptions();
 				end,
 			},
 		},
@@ -506,7 +633,7 @@ function mod:CellHelperDo()
 		private:CronixUIWarning("CronixUI: Cell should be actived as a heal. Should we fix this?\n This will reload your UI! ", CronixEnableCell, true)
 		return
 	end
-	if role ~= "Healer" and C_AddOns.IsAddOnLoaded("Cell") then
+	if role ~= "HEALER" and C_AddOns.IsAddOnLoaded("Cell") then
 		private:CronixUIWarning("CronixUI: Cell should not be actived as a "..role..". Should we fix this?\n This will reload your UI! ", CronixEnableCell, false)
 		return
 	end
@@ -524,7 +651,9 @@ function mod:Initialize()
 			["Version"] = 0
 		}
 	end
-
+	if CronixUIDB.InstalledAddons == nil then
+		CronixUIDB.InstalledAddons = {}
+	end
 	
 
 	if E.private.install_complete and E.db[MyPluginName].install_version == nil and CronixUIDB["Version"] ~= Version then
@@ -542,6 +671,14 @@ function mod:Initialize()
 	--start of Twinkinstall
 	if CronixUIDB["Char"] == nil then
 		CronixUIDB["Char"] = {}
+	end
+
+	if CronixUIDB["Char"][name.."-"..realm] == nil then
+		CronixUIDB["Char"][name.."-"..realm] = false;
+	end
+
+	if CronixUIDB["Char"][name.."-"..realm] == false and CronixUIDB["Version"] ~= 0 then
+		E:GetModule("PluginInstaller"):Queue(InstallDataTwink)
 	end
 	
 	

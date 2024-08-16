@@ -4151,8 +4151,6 @@ local function ElvUIPrivate()
     E.private["install_complete"] = 13.32
     E.private["nameplates"]["enable"] = false
     E.private["skins"]["parchmentRemoverEnable"] = true
-    E.private["sle"]["skins"]["merchant"]["enable"] = true
-    E.private["sle"]["skins"]["objectiveTracker"]["texture"] = "Solid"
 end
 
 
