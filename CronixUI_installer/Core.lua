@@ -525,14 +525,7 @@ function mod:Initialize()
 		}
 	end
 
-	if CronixUIDB["Char"] == nil then
-		CronixUIDB["Char"] = {}
-	end
 	
-
-	if CronixUIDB.CellHelper == nil then
-		CronixUIDB.CellHelper = true
-	end
 
 	if E.private.install_complete and E.db[MyPluginName].install_version == nil and CronixUIDB["Version"] ~= Version then
 		E:GetModule("PluginInstaller"):Queue(InstallerData)
@@ -541,6 +534,17 @@ function mod:Initialize()
 		CronixUIDB.reload = false
 		E:GetModule("PluginInstaller"):Queue(InstallerData)
 	end
+
+	if CronixUIDB.CellHelper == nil then
+		CronixUIDB.CellHelper = true
+	end
+
+	--start of Twinkinstall
+	if CronixUIDB["Char"] == nil then
+		CronixUIDB["Char"] = {}
+	end
+	
+	
 
 	--Insert our options table when ElvUI config is loaded
 	EP:RegisterPlugin(addon, InsertOptions)
