@@ -2,7 +2,7 @@
 ## Title: |cff00ccffCronix Installer|r
 ## Notes: Installs the Cronix Interface
 ## IconTexture: Interface\AddOns\CronixUI_installer\CRONIX.blp
-## Author: Helimeisterb, Cronix
+## Author: Helimeister, Cronix
 ## RequiredDeps: ElvUI, 
 ## OptionalDeps: Plater, WeakAuras, MRT, WarpDeplete, Details, HidingBar, OmniCD, BigWigs, Cell, BetterBags,
 ## Version: @project-version@

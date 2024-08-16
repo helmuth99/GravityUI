@@ -3,7 +3,7 @@
 ## Notes: Media for CronixUI Installer
 ## Version: @project-version@
 ## IconTexture: Interface\AddOns\CronixUIMedia\CRONIX.blp
-## Author: helimerister
+## Author: Helimeister, Cronix
 ## DefaultState: Enable
 
 Libs\LibStub.lua
