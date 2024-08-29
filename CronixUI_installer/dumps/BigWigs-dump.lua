@@ -629,7 +629,7 @@ local BigWigsDump = {
 function private:BWInstallTwink()
     local name = UnitName("PLAYER")
     local realm = GetRealmName()
-    BigWigs3DB["profileKeys"][name.."-"..realm] = private.Profilename
+    BigWigs3DB["profileKeys"][name.." - "..realm] = "croniXUI"
 
 end
 
@@ -654,7 +654,7 @@ function private:BWInstall()
 
     local name = UnitName("PLAYER")
     local realm = GetRealmName()
-    BigWigs3DB["profileKeys"][name.."-"..realm] = private.Profilename
+    BigWigs3DB["profileKeys"][name.." - "..realm] = "croniXUI"
     
     PluginInstallStepComplete.message = "BigWigs Imported"
   	PluginInstallStepComplete:Show()
