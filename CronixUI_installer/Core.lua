@@ -65,7 +65,7 @@ local function InstallCompleteTwink()
 end
 
 local AddonList = { "ElvUI", "Plater", "WeakAuras", "MRT", "WarpDeplete", "Details", "HidingBar", "OmniCD", "BigWigs",
-	"Cell", "BetterBags" }
+	"Cell", "Baganator" }
 local CronixEverythingLoaded = true
 
 local function CronixIsAddOnLoaded(AddonName)
@@ -126,8 +126,8 @@ local function CronixExpressInstallationTwink()
 			private:ElvinstallTwink(0)
 		end
 	end
-	if CronixUIDB["InstalledAddons"]["BetterBags"] and C_AddOns.IsAddOnLoaded("BetterBags") then
-		private:BetterBagsInstallTwink()
+	if CronixUIDB["InstalledAddons"]["Baganator"] and C_AddOns.IsAddOnLoaded("Baganator") then
+		private:BaganatorInstallTwink()
 	end
 	if CronixUIDB["InstalledAddons"]["BigWigs"] and C_AddOns.IsAddOnLoaded("BigWigs") then
 		private:BWInstallTwink()
@@ -462,27 +462,27 @@ local InstallerData = {
 			end
 		end,
 		[12] = function()
-			if C_AddOns.IsAddOnLoaded("BetterBags") then
-				PluginInstallFrame.SubTitle:SetText("BetterBags")
+			if C_AddOns.IsAddOnLoaded("Baganator") then
+				PluginInstallFrame.SubTitle:SetText("Baganator")
 				PluginInstallFrame.Desc1:SetText(
-				"Please click the button below to install the CronixUI BetterBags Part.")
+				"Please click the button below to install the CronixUI Baganator Part.")
 				PluginInstallFrame.Desc2:SetText("Importance: |cff00ffffLow|r")
 				PluginInstallFrame.Option1:Show()
 				PluginInstallFrame.Option1:SetScript("OnClick",
 					function()
 						private:CronixUIWarning(
-							"|cffff0000Accepting this will overwrite BetterBags for every character!|r", function()
-								private:BetterBagsInstall()
-								SetAddonAsInstalled("BetterBags")
+							"|cffff0000Accepting this will overwrite Baganator for every character!|r", function()
+								private:BaganatorInstall()
+								SetAddonAsInstalled("Baganator")
 							end)
 					end)
-				PluginInstallFrame.Option1:SetText("CronixUI BetterBags")
+				PluginInstallFrame.Option1:SetText("CronixUI Baganator")
 			else
-				PluginInstallFrame.SubTitle:SetText("BetterBags")
+				PluginInstallFrame.SubTitle:SetText("Baganator")
 				PluginInstallFrame.Desc1:SetText(
-					"The addon BetterBags |cffff0000is not loaded|r. If you want to install the " ..
+					"The addon Baganator |cffff0000is not loaded|r. If you want to install the " ..
 					private.Profilename ..
-					" BetterBags part, please install/enable BetterBags and restart the installer.")
+					" Baganator part, please install/enable Baganator and restart the installer.")
 				PluginInstallFrame.Desc2:SetText("Importance: |cff07D400High|r")
 			end
 		end,
@@ -511,7 +511,7 @@ local InstallerData = {
 		[9] = "HidingBar Installation",
 		[10] = "Details Installation",
 		[11] = "Cell Installation",
-		[12] = "BetterBags Installation",
+		[12] = "Baganator Installation",
 		[13] = "Installation Complete",
 	},
 	StepTitlesColor = { 1, 1, 1 },

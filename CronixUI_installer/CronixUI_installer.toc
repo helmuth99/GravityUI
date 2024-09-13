@@ -4,7 +4,7 @@
 ## IconTexture: Interface\AddOns\CronixUI_installer\CRONIX.blp
 ## Author: Helimeister, Cronix
 ## RequiredDeps: ElvUI, 
-## OptionalDeps: Plater, WeakAuras, MRT, WarpDeplete, Details, HidingBar, OmniCD, BigWigs, Cell, BetterBags,
+## OptionalDeps: Plater, WeakAuras, MRT, WarpDeplete, Details, HidingBar, OmniCD, BigWigs, Cell, Baganator,
 ## Version: @project-version@
 ## DefaultState: enabled
 ## SavedVariables: CronixUIDB
@@ -24,7 +24,7 @@ dumps/OmniCD-dump.lua
 dumps/HidingBar-dump.lua
 dumps/Details-dump.lua
 dumps/Cell-dump.lua
-dumps/BetterBags-dump.lua
+dumps/Baganator-dump.lua
 
 #Media wip enable when moving shared media into addon
 #SharedMedia/SharedMedia.lua
