@@ -27,7 +27,7 @@ CronixUI uses the following addons:
 -   Weakaura
 -   Plater
 -   BigWigs
--   BetterBags
+-   Baganator
 -   Cell
 -   Details
 -   Method Raid Tools
