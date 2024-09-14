@@ -8,7 +8,7 @@
 ## Version: @project-version@
 ## DefaultState: enabled
 ## SavedVariables: CronixUIDB
-
+## X-Curse-Project-ID: 1102290
 ## X-Wago-ID: 96E7e8Gg
 
 Core.lua
