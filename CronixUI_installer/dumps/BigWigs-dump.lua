@@ -7,30 +7,32 @@ local BigWigsDump = {
             ["profiles"] = {
                 ["Cronix"] = {
                     [288449] = 0,
-                    [284831] = 0,
-                    [287333] = 1032439,
-                    [284719] = 0,
-                    [286742] = 967415,
                     [284781] = 0,
+                    [287333] = 1032439,
+                    [286742] = 967415,
+                    [284719] = 0,
+                    [284831] = 0,
                 },
             },
         },
-        ["BigWigs_Plugins_EchoRename"] = {
-        },
-        ["BigWigs_Bosses_Grong Horde"] = {
+        ["BigWigs_Bosses_Terros"] = {
             ["profiles"] = {
                 ["Cronix"] = {
-                    [282243] = 0,
-                    [285994] = 1032439,
-                    [285660] = 0,
-                    [282082] = 0,
-                    [285659] = 0,
+                    ["custom_off_381315"] = true,
+                },
+            },
+        },
+        ["BigWigs_Bosses_Broodtwister Ovi'nax"] = {
+            ["profiles"] = {
+                ["croniXUI"] = {
+                    [442526] = 3588311,
+                    ["custom_off_-28999"] = true,
                 },
             },
         },
         ["BigWigs_Plugins_Alt Power"] = {
         },
-        ["BigWigs_Plugins_BossBlock"] = {
+        ["LibDualSpec-1.0"] = {
         },
         ["BigWigs_Bosses_Lords of Dread"] = {
             ["profiles"] = {
@@ -41,6 +43,66 @@ local BigWigsDump = {
                     [361934] = 3064054,
                     [360284] = 3065078,
                     [360012] = 3064054,
+                },
+            },
+        },
+        ["BigWigs_Bosses_Queen Ansurek"] = {
+            ["profiles"] = {
+                ["croniXUI"] = {
+                    ["custom_on_437592"] = false,
+                },
+            },
+        },
+        ["BigWigs_Bosses_Lady Ashvane"] = {
+            ["profiles"] = {
+                ["Cronix"] = {
+                    [296725] = 1033463,
+                },
+            },
+        },
+        ["BigWigs_Plugins_Statistics"] = {
+        },
+        ["BigWigs_Plugins_AltPower"] = {
+            ["profiles"] = {
+                ["croniXUI"] = {
+                    ["fontName"] = "Cronix",
+                },
+            },
+        },
+        ["BigWigs_Bosses_Jadefire Masters Horde"] = {
+            ["profiles"] = {
+                ["Cronix"] = {
+                    [282037] = 0,
+                    [286379] = 0,
+                    [286425] = 0,
+                    [286988] = 0,
+                    [284374] = 0,
+                },
+            },
+        },
+        ["BigWigs_Bosses_Raszageth the Storm-Eater"] = {
+            ["profiles"] = {
+                ["Cronix"] = {
+                    ["custom_off_-25641"] = true,
+                    ["custom_off_399713"] = true,
+                },
+            },
+        },
+        ["BigWigs_Plugins_Raid Icons"] = {
+        },
+        ["BigWigs_Plugins_EchoRename"] = {
+        },
+        ["BigWigs_Bosses_Rygelon"] = {
+            ["profiles"] = {
+                ["Cronix"] = {
+                    [362806] = 3064054,
+                    [362206] = 3064054,
+                    [362390] = 3129591,
+                    [363533] = 3064054,
+                    [362275] = 3064054,
+                    [366379] = 3064054,
+                    [362184] = 2802934,
+                    [362172] = 0,
                 },
             },
         },
@@ -63,90 +125,18 @@ local BigWigsDump = {
                 },
             },
         },
-        ["BigWigs_Bosses_Lady Ashvane"] = {
+        ["BigWigs_Bosses_Rezan"] = {
             ["profiles"] = {
                 ["Cronix"] = {
-                    [296725] = 1033463,
+                    [255434] = 3064055,
                 },
             },
-        },
-        ["BigWigs_Plugins_Statistics"] = {
-        },
-        ["BigWigs_Plugins_AutoReply"] = {
-        },
-        ["LibDualSpec-1.0"] = {
-        },
-        ["BigWigs_Bosses_Oakheart"] = {
-            ["profiles"] = {
-                ["croniXUI"] = {
-                    [204611] = 4178167,
-                    [204667] = 4178167,
-                },
-            },
-        },
-        ["BigWigs_Bosses_Priestess Alun'za"] = {
-            ["profiles"] = {
-                ["Cronix"] = {
-                    [255579] = 3064055,
-                },
-            },
-        },
-        ["BigWigs_Plugins_AltPower"] = {
-            ["profiles"] = {
-                ["croniXUI"] = {
-                    ["fontName"] = "Cronix",
-                },
-            },
-        },
-        ["BigWigs_Plugins_Super Emphasize"] = {
-        },
-        ["BigWigs_Bosses_Raszageth the Storm-Eater"] = {
-            ["profiles"] = {
-                ["Cronix"] = {
-                    ["custom_off_399713"] = true,
-                    ["custom_off_-25641"] = true,
-                },
-            },
-        },
-        ["BigWigs_Plugins_Raid Icons"] = {
         },
         ["BigWigs_Bosses_Coin-Operated Crowd Pummeler"] = {
             ["profiles"] = {
                 ["Cronix"] = {
                     [269493] = 0,
                     [271784] = 0,
-                },
-            },
-        },
-        ["BigWigs_Bosses_Tindral Sageswift, Seer of the Flame"] = {
-            ["profiles"] = {
-                ["croniXUI"] = {
-                    ["custom_off_424581"] = true,
-                },
-            },
-        },
-        ["BigWigs_Plugins_Nameplates"] = {
-            ["profiles"] = {
-                ["croniXUI"] = {
-                    ["nameplateIconZoom"] = 0.3,
-                    ["nameplateIconCooldownTimerFontSize"] = 8,
-                    ["nameplateIconOffsetX"] = 2,
-                    ["nameplateIconWidth"] = 14,
-                    ["nameplateIconCooldownTimerFontName"] = "Cronix",
-                    ["nameplateIconGlowColor"] = {
-                        0.9686275124549866,
-                        1,
-                        0.9764706492424011,
-                    },
-                    ["nameplateIconOffsetY"] = 0,
-                    ["nameplateIconHeight"] = 14,
-                },
-            },
-        },
-        ["BigWigs_Bosses_Rezan"] = {
-            ["profiles"] = {
-                ["Cronix"] = {
-                    [255434] = 3064055,
                 },
             },
         },
@@ -159,20 +149,9 @@ local BigWigsDump = {
                 },
             },
         },
-        ["BigWigs_Bosses_Smolderon"] = {
-            ["profiles"] = {
-                ["croniXUI"] = {
-                    [422691] = 3129591,
-                },
-            },
+        ["BigWigs_Plugins_AutoReply"] = {
         },
-        ["BigWigs_Bosses_Scalecommander Sarkareth"] = {
-            ["profiles"] = {
-                ["croniXUI"] = {
-                    ["custom_on_404288"] = false,
-                    ["custom_off_405486"] = true,
-                },
-            },
+        ["BigWigs_Plugins_Wipe"] = {
         },
         ["BigWigs_Plugins_Messages"] = {
             ["profiles"] = {
@@ -205,10 +184,18 @@ local BigWigsDump = {
                     [274271] = 0,
                     [273451] = 0,
                     ["bloodhexer"] = 0,
-                    [273350] = 0,
+                    [273365] = 0,
                     [273361] = 0,
                     [-18530] = 0,
-                    [273365] = 0,
+                    [273350] = 0,
+                },
+            },
+        },
+        ["BigWigs_Bosses_Broodkeeper Diurna"] = {
+            ["profiles"] = {
+                ["Cronix"] = {
+                    ["custom_off_-25139"] = true,
+                    ["custom_off_-25144"] = true,
                 },
             },
         },
@@ -221,11 +208,17 @@ local BigWigsDump = {
         },
         ["BigWigs_Plugins_Victory"] = {
         },
-        ["BigWigs_Bosses_Skycap'n Kragg"] = {
+        ["BigWigs_Bosses_Stormwall Blockade"] = {
             ["profiles"] = {
                 ["Cronix"] = {
-                    [256106] = 966887,
-                    ["stages"] = 0,
+                    [285350] = 0,
+                    [284383] = 0,
+                    [286558] = 0,
+                    [284405] = 0,
+                    [284106] = 0,
+                    [284262] = 0,
+                    [284362] = 0,
+                    [287995] = 0,
                 },
             },
         },
@@ -260,24 +253,7 @@ local BigWigsDump = {
                 },
             },
         },
-        ["BigWigs_Bosses_Kel'Thuzad"] = {
-            ["profiles"] = {
-                ["Cronix"] = {
-                    ["custom_off_-23224"] = true,
-                    ["custom_off_346459"] = true,
-                    ["custom_off_-23435"] = true,
-                },
-            },
-        },
-        ["BigWigs_Bosses_Halondrus the Reclaimer"] = {
-            ["profiles"] = {
-                ["Cronix"] = {
-                    [360115] = 0,
-                    [368363] = 0,
-                    [369207] = 0,
-                    [365297] = 0,
-                },
-            },
+        ["BigWigs_Plugins_BossBlock"] = {
         },
         ["BigWigs_Plugins_Sounds"] = {
             ["profiles"] = {
@@ -316,41 +292,38 @@ local BigWigsDump = {
                 },
             },
         },
-        ["BigWigs_Bosses_The Vigilant Steward, Zskarn"] = {
-            ["profiles"] = {
-                ["croniXUI"] = {
-                    [403978] = 3064567,
-                },
-            },
-        },
-        ["BigWigs_Bosses_Rygelon"] = {
+        ["BigWigs_Bosses_Priestess Alun'za"] = {
             ["profiles"] = {
                 ["Cronix"] = {
-                    [362806] = 3064054,
-                    [362206] = 3064054,
-                    [362390] = 3129591,
-                    [363533] = 3064054,
-                    [362275] = 3064054,
-                    [366379] = 3064054,
-                    [362172] = 0,
-                    [362184] = 2802934,
+                    [255579] = 3064055,
                 },
             },
         },
-        ["BigWigs_Plugins_Countdown"] = {
+        ["BigWigs_Bosses_Kel'Thuzad"] = {
+            ["profiles"] = {
+                ["Cronix"] = {
+                    ["custom_off_-23224"] = true,
+                    ["custom_off_346459"] = true,
+                    ["custom_off_-23435"] = true,
+                },
+            },
+        },
+        ["BigWigs_Bosses_Lady Jaina Proudmoore"] = {
+            ["profiles"] = {
+                ["Cronix"] = {
+                    [287993] = 0,
+                    [285459] = 1032439,
+                },
+            },
+        },
+        ["BigWigs_Plugins_InfoBox"] = {
             ["profiles"] = {
                 ["croniXUI"] = {
-                    ["outline"] = "OUTLINE",
-                    ["fontName"] = "Cronix",
-                    ["fontColor"] = {
-                        ["g"] = 1,
-                        ["b"] = 1,
-                    },
                     ["position"] = {
-                        "CENTER",
-                        "CENTER",
-                        -3,
-                        141,
+                        "LEFT",
+                        "LEFT",
+                        258.1112060546875,
+                        177.7779083251953,
                     },
                 },
             },
@@ -363,13 +336,28 @@ local BigWigsDump = {
                 },
             },
         },
-        ["BigWigs_Plugins_Wipe"] = {
+        ["BigWigs_Bosses_Tindral Sageswift, Seer of the Flame"] = {
+            ["profiles"] = {
+                ["croniXUI"] = {
+                    ["custom_off_424581"] = true,
+                },
+            },
         },
-        ["BigWigs_Bosses_Lady Jaina Proudmoore"] = {
+        ["BigWigs_Bosses_Scalecommander Sarkareth"] = {
+            ["profiles"] = {
+                ["croniXUI"] = {
+                    ["custom_off_405486"] = true,
+                    ["custom_on_404288"] = false,
+                },
+            },
+        },
+        ["BigWigs_Bosses_Halondrus the Reclaimer"] = {
             ["profiles"] = {
                 ["Cronix"] = {
-                    [287993] = 0,
-                    [285459] = 1032439,
+                    [360115] = 0,
+                    [368363] = 0,
+                    [369207] = 0,
+                    [365297] = 0,
                 },
             },
         },
@@ -382,26 +370,26 @@ local BigWigsDump = {
                 },
             },
         },
-        ["BigWigs_Bosses_Mythrax the Unraveler"] = {
+        ["BigWigs_Bosses_Skycap'n Kragg"] = {
             ["profiles"] = {
                 ["Cronix"] = {
-                    [276922] = 966887,
-                    [274230] = 0,
-                    [272404] = 967399,
-                    [273282] = 0,
-                    [272536] = 0,
-                    ["stages"] = 966887,
-                    [273949] = 966887,
-                    [273538] = 0,
-                    [279157] = 0,
-                    [279013] = 0,
-                    [272146] = 835815,
+                    [256106] = 966887,
+                    ["stages"] = 0,
                 },
             },
         },
         ["BigWigs_Plugins_Colors"] = {
             ["profiles"] = {
                 ["croniXUI"] = {
+                    ["barColor"] = {
+                        ["BigWigs_Plugins_Colors"] = {
+                            ["default"] = {
+                                0,
+                                0.63921568627451,
+                                1,
+                            },
+                        },
+                    },
                     ["barEmphasized"] = {
                         ["BigWigs_Plugins_Colors"] = {
                             ["default"] = {
@@ -421,34 +409,39 @@ local BigWigsDump = {
                             },
                         },
                     },
-                    ["barColor"] = {
-                        ["BigWigs_Plugins_Colors"] = {
-                            ["default"] = {
-                                0,
-                                0.63921568627451,
-                                1,
-                            },
-                        },
+                },
+            },
+        },
+        ["BigWigs_Plugins_Countdown"] = {
+            ["profiles"] = {
+                ["croniXUI"] = {
+                    ["outline"] = "OUTLINE",
+                    ["fontColor"] = {
+                        ["g"] = 1,
+                        ["b"] = 1,
+                    },
+                    ["fontName"] = "Cronix",
+                    ["position"] = {
+                        "CENTER",
+                        "CENTER",
+                        -3,
+                        141,
                     },
                 },
             },
         },
-        ["BigWigs_Bosses_Broodkeeper Diurna"] = {
-            ["profiles"] = {
-                ["Cronix"] = {
-                    ["custom_off_-25139"] = true,
-                    ["custom_off_-25144"] = true,
-                },
-            },
-        },
-        ["BigWigs_Plugins_InfoBox"] = {
+        ["BigWigs_Plugins_Nameplates"] = {
             ["profiles"] = {
                 ["croniXUI"] = {
-                    ["position"] = {
-                        "LEFT",
-                        "LEFT",
-                        258.1112060546875,
-                        177.7779083251953,
+                    ["iconFontSize"] = 8,
+                    ["iconZoom"] = 0.3,
+                    ["iconWidth"] = 14,
+                    ["iconFontName"] = "Cronix",
+                    ["iconHeight"] = 14,
+                    ["iconGlowColor"] = {
+                        0.9686275124549866,
+                        1,
+                        0.9764706492424011,
                     },
                 },
             },
@@ -458,12 +451,8 @@ local BigWigsDump = {
                 ["croniXUI"] = {
                     ["outline"] = "OUTLINE",
                     ["normalWidth"] = 211,
-                    ["normalPosition"] = {
-                        "RIGHT",
-                        "RIGHT",
-                        -11,
-                        -166,
-                    },
+                    ["emphasizeTime"] = 15,
+                    ["barStyle"] = "MonoUI",
                     ["growup"] = true,
                     ["fontSizeEmph"] = 11,
                     ["expPosition"] = {
@@ -473,14 +462,19 @@ local BigWigsDump = {
                         -105,
                     },
                     ["expHeight"] = 26,
-                    ["fontName"] = "Cronix",
+                    ["normalHeight"] = 22,
                     ["emphasizeGrowup"] = true,
                     ["visibleBarLimitEmph"] = 3,
                     ["expWidth"] = 184,
                     ["fontSize"] = 12,
-                    ["normalHeight"] = 22,
-                    ["barStyle"] = "MonoUI",
-                    ["emphasizeTime"] = 15,
+                    ["texture"] = "Cronix",
+                    ["fontName"] = "Cronix",
+                    ["normalPosition"] = {
+                        "RIGHT",
+                        "RIGHT",
+                        -11,
+                        -166,
+                    },
                 },
                 ["Default"] = {
                     ["outline"] = "OUTLINE",
@@ -491,24 +485,44 @@ local BigWigsDump = {
                 },
             },
         },
-        ["BigWigs_Bosses_Stormwall Blockade"] = {
+        ["BigWigs_Bosses_The Vigilant Steward, Zskarn"] = {
             ["profiles"] = {
-                ["Cronix"] = {
-                    [287995] = 0,
-                    [284362] = 0,
-                    [284262] = 0,
-                    [285350] = 0,
-                    [284106] = 0,
-                    [286558] = 0,
-                    [284383] = 0,
-                    [284405] = 0,
+                ["croniXUI"] = {
+                    [403978] = 3064567,
                 },
             },
         },
-        ["BigWigs_Bosses_Terros"] = {
+        ["BigWigs_Plugins_Super Emphasize"] = {
+        },
+        ["BigWigs_Bosses_Smolderon"] = {
+            ["profiles"] = {
+                ["croniXUI"] = {
+                    [422691] = 3129591,
+                },
+            },
+        },
+        ["BigWigs_Bosses_Oakheart"] = {
+            ["profiles"] = {
+                ["croniXUI"] = {
+                    [204611] = 4178167,
+                    [204667] = 4178167,
+                },
+            },
+        },
+        ["BigWigs_Bosses_Mythrax the Unraveler"] = {
             ["profiles"] = {
                 ["Cronix"] = {
-                    ["custom_off_381315"] = true,
+                    [276922] = 966887,
+                    [274230] = 0,
+                    [272404] = 967399,
+                    [273282] = 0,
+                    [272536] = 0,
+                    ["stages"] = 966887,
+                    [272146] = 835815,
+                    [273538] = 0,
+                    [279013] = 0,
+                    [279157] = 0,
+                    [273949] = 966887,
                 },
             },
         },
@@ -533,17 +547,27 @@ local BigWigsDump = {
         },
         ["BigWigs_Plugins_Pull"] = {
         },
-        ["BigWigs_Bosses_Jadefire Masters Horde"] = {
+        ["BigWigs_Bosses_Grong Horde"] = {
             ["profiles"] = {
                 ["Cronix"] = {
-                    [282037] = 0,
-                    [286379] = 0,
-                    [286425] = 0,
-                    [284374] = 0,
-                    [286988] = 0,
+                    [282243] = 0,
+                    [285994] = 1032439,
+                    [285660] = 0,
+                    [285659] = 0,
+                    [282082] = 0,
                 },
             },
         },
+    },
+    ["profileKeys"] = {
+        ["Cronixe - Blackhand"] = "croniXUI",
+        ["Crônîx - Blackhand"] = "croniXUI",
+        ["Cronîx - Blackhand"] = "croniXUI",
+        ["Cròníx - Blackhand"] = "croniXUI",
+        ["Tbsn - Blackrock"] = "croniXUI",
+        ["Cnxhunt - Blackhand"] = "croniXUI",
+        ["Crônix - Blackhand"] = "croniXUI",
+        ["Cronìx - Blackhand"] = "croniXUI",
     },
     ["global"] = {
         ["watchedMovies"] = {
@@ -568,40 +592,32 @@ local BigWigsDump = {
             [-2004] = true,
             [957] = true,
             [656] = true,
-            [958] = true,
-            [927] = true,
-            [-323] = true,
-            [991] = true,
-            [682] = true,
+            [-2233] = true,
+            [-575] = true,
+            [886] = true,
+            [-1597] = true,
             [-2238] = {
                 true,
                 true,
             },
+            [1003] = true,
+            [875] = true,
+            [-607] = true,
             [-609] = true,
-            [688] = true,
-            [686] = true,
-            [-1151] = true,
             [-1352] = {
                 [2] = true,
             },
-            [875] = true,
-            [1003] = true,
-            [-607] = true,
-            [-1597] = true,
-            [886] = true,
-            [-575] = true,
-            [-2233] = true,
+            [682] = true,
+            [-1151] = true,
+            [991] = true,
+            [686] = true,
+            [688] = true,
+            [-323] = true,
+            [927] = true,
+            [958] = true,
+            [-2292] = true,
+            [-2296] = true,
         },
-    },
-    ["profileKeys"] = {
-        ["Cronixe - Blackhand"] = "croniXUI",
-        ["Crônîx - Blackhand"] = "croniXUI",
-        ["Cronîx - Blackhand"] = "croniXUI",
-        ["Cròníx - Blackhand"] = "croniXUI",
-        ["Tbsn - Blackrock"] = "croniXUI",
-        ["Crônix - Blackhand"] = "croniXUI",
-        ["Cnxhunt - Blackhand"] = "croniXUI",
-        ["Cronìx - Blackhand"] = "croniXUI",
     },
     ["profiles"] = {
         ["Gravîty - Blackhand"] = {
@@ -610,54 +626,51 @@ local BigWigsDump = {
         },
         ["Cnxmonk - Blackhand"] = {
         },
-        ["croniXUI"] = {
-            ["flash"] = false,
-            ["fakeDBMVersion"] = true,
+        ["Cronîx - Blackhand"] = {
         },
         ["Default"] = {
             ["showZoneMessages"] = false,
-            ["fakeDBMVersion"] = true,
             ["flash"] = false,
+            ["fakeDBMVersion"] = true,
         },
         ["Crônix - Blackhand"] = {
         },
-        ["Cronîx - Blackhand"] = {
+        ["croniXUI"] = {
+            ["fakeDBMVersion"] = true,
+            ["flash"] = false,
         },
     },
 }
 
+
+
 function private:BWInstallTwink()
     local name = UnitName("PLAYER")
     local realm = GetRealmName()
-    BigWigs3DB["profileKeys"][name.." - "..realm] = "croniXUI"
-
+    BigWigs3DB["profileKeys"][name .. " - " .. realm] = "croniXUI"
 end
 
-
 function private:BWInstall()
+    local resolution = private:GetResolution()
 
-	local resolution = private:GetResolution()
-	
-	if resolution == 1080 then
-		BigWigs3DB = BigWigsDump
-	else
-		BigWigs3DB = BigWigsDump
-	end
+    if resolution == 1080 then
+        BigWigs3DB = BigWigsDump
+    else
+        BigWigs3DB = BigWigsDump
+    end
 
-	--[[
+    --[[
 	should be in the dump integrated
-	for key, value in pairs(globals) do 
+	for key, value in pairs(globals) do
 		BigWigs3DB[key] = value
-	end 
+	end
 	]]
-	
+
 
     local name = UnitName("PLAYER")
     local realm = GetRealmName()
-    BigWigs3DB["profileKeys"][name.." - "..realm] = "croniXUI"
-    
+    BigWigs3DB["profileKeys"][name .. " - " .. realm] = "croniXUI"
+
     PluginInstallStepComplete.message = "BigWigs Imported"
-  	PluginInstallStepComplete:Show()
-
+    PluginInstallStepComplete:Show()
 end
-
