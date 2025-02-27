@@ -27,7 +27,7 @@ local PI = E:GetModule('PluginInstaller')
 local EP = LibStub("LibElvUIPlugin-1.0")
 
 --Create a new ElvUI module so ElvUI can handle initialization when ready
-local mod = E:NewModule(MyPluginName, "AceHook-3.0", "AceEvent-3.0", "AceTimer-3.0");
+local mod = E:NewModule(MyPluginName, "AceHook-3.0", "AceEvent-3.0", "AceTimer-3.0", "AceConsole-3.0");
 
 
 function private:GetResolution()
@@ -64,7 +64,7 @@ local function InstallCompleteTwink()
 	ReloadUI()
 end
 
-local AddonList = { "ElvUI", "Plater", "WeakAuras", "MRT", "WarpDeplete", "Details", "HidingBar", "OmniCD", "BigWigs",
+local AddonList = { "ElvUI", "ElvUI_SLE", "Plater", "WeakAuras", "MRT", "WarpDeplete", "Details", "HidingBar", "OmniCD", "BigWigs",
 	"Cell", "Baganator" }
 local CronixEverythingLoaded = true
 
@@ -154,6 +154,8 @@ local function CronixExpressInstallationTwink()
 	PI:NextPage()
 end
 
+
+--todo twinkinstall weakauras
 local InstallDataTwink = {
 	Title = format("|cff0097fa%s %s|r", private.Profilename, "Installation"),
 	Name = MyPluginName,
@@ -201,6 +203,8 @@ local InstallDataTwink = {
 
 }
 
+
+--todo weakaura install options frame
 local InstallerData = {
 	Title = format("|cff0097fa%s %s|r", private.Profilename, "Installation"),
 	Name = MyPluginName,
@@ -279,17 +283,12 @@ local InstallerData = {
 			if C_AddOns.IsAddOnLoaded("WeakAuras") then
 				PluginInstallFrame.SubTitle:SetText("Weakauras")
 				PluginInstallFrame.Desc1:SetText(
-					"Please click the button below to install the CronixUI Weakauras. \n|cffff0000Important:|r All of your installed Weakauras will be removed and overwritten!")
+					"Please click the button below to install the CronixUI Weakauras.")
 				PluginInstallFrame.Desc2:SetText("Importance: |cff07D400High|r")
 				PluginInstallFrame.Option1:Show()
 				PluginInstallFrame.Option1:SetScript("OnClick",
 					function()
-						private:CronixUIWarning(
-							"|cffff0000Accepting this will overwrite all Weakauras on every characters! There will be no way to restore the lost data!|r",
-							function()
-								private:WeakauraInstall()
-								SetAddonAsInstalled("WeakAuras")
-							end)
+						private:CreateWeakauraFrame()
 					end)
 				PluginInstallFrame.Option1:SetText("CronixUI Weakauras")
 			else
@@ -501,18 +500,18 @@ local InstallerData = {
 
 	StepTitles = {
 		[1] = "Welcome",
-		[2] = "ElvUI Installation",
-		[3] = "Plater Installation",
-		[4] = "WeakAuras Installation",
-		[5] = "BigWigs Installation",
-		[6] = "MRT Installation",
-		[7] = "WarpDeplete Installation",
-		[8] = "OmniCD Installation",
-		[9] = "HidingBar Installation",
-		[10] = "Details Installation",
-		[11] = "Cell Installation",
-		[12] = "Baganator Installation",
-		[13] = "Installation Complete",
+		[2] = "ElvUI",
+		[3] = "Plater",
+		[4] = "WeakAuras",
+		[5] = "BigWigs",
+		[6] = "MRT",
+		[7] = "WarpDeplete",
+		[8] = "OmniCD",
+		[9] = "HidingBar",
+		[10] = "Details",
+		[11] = "Cell",
+		[12] = "Baganator",
+		[13] = "Complete",
 	},
 	StepTitlesColor = { 1, 1, 1 },
 	StepTitlesColorSelected = { 0, 179 / 255, 1 },
@@ -699,6 +698,9 @@ function mod:ACTIVE_PLAYER_SPECIALIZATION_CHANGED()
 	mod:CellHelperDo()
 end
 
+function mod:ChatCommand()
+	E:GetModule("PluginInstaller"):Queue(InstallerData)
+end
 --This function will handle initialization of the addon
 function mod:Initialize()
 	--Initiate installation process if ElvUI install is complete and our plugin install has not yet been run
@@ -707,6 +709,10 @@ function mod:Initialize()
 			["Version"] = 0
 		}
 	end
+
+	-- Register chat command
+	self:RegisterChatCommand("cui", "ChatCommand")
+	
 	if CronixUIDB.InstalledAddons == nil then
 		CronixUIDB.InstalledAddons = {}
 	end
@@ -715,6 +721,7 @@ function mod:Initialize()
 	if E.private.install_complete and E.db[MyPluginName].install_version == nil and CronixUIDB["Version"] ~= Version then
 		E:GetModule("PluginInstaller"):Queue(InstallerData)
 	end
+
 	if CronixUIDB.reload then
 		CronixUIDB.reload = false
 		E:GetModule("PluginInstaller"):Queue(InstallerData)
