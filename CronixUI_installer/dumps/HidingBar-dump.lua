@@ -2,7 +2,7 @@ Addon, private = ...
 
 
 local HidingBarDump = {
-    ["tstmp"] = 1722544997,
+    ["tstmp"] = 1740606357,
     ["profiles"] = {
         {
             ["isDefault"] = true,
@@ -11,81 +11,85 @@ local HidingBarDump = {
                 ["mbtnSettings"] = {
                     ["LibDBIcon10_Details"] = {
                         true,
-                        ["tstmp"] = 1722544997,
-                    },
-                    ["BtWQuestsMinimapButton"] = {
-                        true,
-                        ["tstmp"] = 1722544997,
-                    },
-                    ["LibDBIcon10_BigWigs"] = {
-                        true,
-                        ["tstmp"] = 1722544997,
-                    },
-                    ["LibDBIcon10_RaiderIO"] = {
-                        ["tstmp"] = 1722544997,
-                    },
-                    ["LibDBIcon10_MethodRaidTools"] = {
-                        true,
-                        ["tstmp"] = 1722544997,
+                        ["tstmp"] = 1740606357,
                     },
                     ["LibDBIcon10_VocalRaidAssistant"] = {
                         true,
-                        ["tstmp"] = 1722544997,
-                    },
-                    ["LibDBIcon10_MythicDungeonTools"] = {
-                        ["tstmp"] = 1722544997,
-                    },
-                    ["AddonCompartmentFrame"] = {
-                        true,
-                        ["tstmp"] = 1722544997,
+                        ["tstmp"] = 1740606357,
                     },
                     ["LibDBIcon10_SimulationCraft"] = {
                         true,
-                        ["tstmp"] = 1722544997,
+                        ["tstmp"] = 1740606357,
                     },
-                    ["Narci_MinimapButton"] = {
-                        ["tstmp"] = 1722363448,
-                    },
-                    ["LibDBIcon10_WeakAuras"] = {
+                    ["BtWQuestsMinimapButton"] = {
                         true,
-                        ["tstmp"] = 1722544997,
+                        ["tstmp"] = 1740606357,
                     },
-                    ["LibDBIcon10_BugSack"] = {
-                        ["tstmp"] = 1722544997,
+                    ["LibDBIcon10_KeystoneGroupList"] = {
+                        true,
+                        ["tstmp"] = 1740605089,
+                    },
+                    ["LibDBIcon10_RaiderIO"] = {
+                        ["tstmp"] = 1740606357,
+                    },
+                    ["LibDBIcon10_MethodRaidTools"] = {
+                        true,
+                        ["tstmp"] = 1740606357,
+                    },
+                    ["AddonCompartmentFrame"] = {
+                        true,
+                        ["tstmp"] = 1740606357,
+                    },
+                    ["LibDBIcon10_MythicDungeonTools"] = {
+                        ["tstmp"] = 1740606357,
                     },
                     ["LibDBIcon10_Plater"] = {
                         true,
-                        ["tstmp"] = 1722544997,
+                        ["tstmp"] = 1740606357,
                     },
-                    ["LibDBIcon10_DetailsStreamer"] = {
-                        ["tstmp"] = 1722544997,
+                    ["LibDBIcon10_vGambler"] = {
+                        ["tstmp"] = 1740604341,
+                    },
+                    ["LibDBIcon10_MinimapIcon"] = {
+                        ["tstmp"] = 1740603676,
+                    },
+                    ["LibDBIcon10_WeakAuras"] = {
+                        true,
+                        ["tstmp"] = 1740606357,
+                    },
+                    ["LibDBIcon10_BugSack"] = {
+                        ["tstmp"] = 1740606357,
+                    },
+                    ["LibDBIcon10_BigWigs"] = {
+                        true,
+                        ["tstmp"] = 1740606357,
+                    },
+                    ["LibDBIcon10_CrossGamblingIcon"] = {
+                        ["tstmp"] = 1740606357,
                     },
                 },
                 ["btnSettings"] = {
                     ["RaiderIO"] = {
-                        ["tstmp"] = 1722544997,
-                    },
-                    ["Narcissus"] = {
-                        ["tstmp"] = 1722363448,
+                        ["tstmp"] = 1740606357,
                     },
                     ["HidingBar"] = {
                         true,
-                        ["tstmp"] = 1722544997,
+                        ["tstmp"] = 1740606357,
                     },
                     ["BigWigs"] = {
-                        ["tstmp"] = 1722544997,
+                        ["tstmp"] = 1740606357,
                     },
                     ["MRT"] = {
-                        ["tstmp"] = 1722544997,
+                        ["tstmp"] = 1740606357,
                     },
                     ["BtWQuests"] = {
-                        ["tstmp"] = 1722544997,
+                        ["tstmp"] = 1740606357,
                     },
                     ["WeakAuras"] = {
-                        ["tstmp"] = 1722544997,
+                        ["tstmp"] = 1740606357,
                     },
                     ["VocalRaidAssistant"] = {
-                        ["tstmp"] = 1722544997,
+                        ["tstmp"] = 1740606357,
                     },
                 },
                 ["grabMinimap"] = true,
@@ -126,12 +130,13 @@ local HidingBarDump = {
                         ["barTypePosition"] = 0,
                         ["size"] = 10,
                         ["interceptTooltipPosition"] = 0,
+                        ["petBattleHide"] = true,
                         ["lineColor"] = {
                             0.1647058823529412,
                             0.7333333333333333,
                             1,
                         },
-                        ["position"] = 630.0446665304771,
+                        ["position"] = 630.0446910293102,
                         ["mbtnPosition"] = 2,
                         ["lineBorderEdge"] = false,
                         ["lineBorderOffset"] = 1,
@@ -153,8 +158,9 @@ local HidingBarDump = {
                         },
                         ["borderOffset"] = 4,
                         ["omb"] = {
-                            ["hide"] = true,
                             ["distanceToBar"] = 0,
+                            ["hide"] = true,
+                            ["fadeOpacity"] = 1,
                             ["anchor"] = "right",
                             ["barDisplacement"] = 0,
                             ["canGrabbed"] = false,
@@ -175,6 +181,7 @@ local HidingBarDump = {
         },
     },
 }
+
 
 function private:HidingbarInstall()
     HidingBarDB = HidingBarDump
