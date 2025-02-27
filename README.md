@@ -24,16 +24,23 @@ CronixUI is a full UI option build ontop of multiple popular addons. It supports
 
 CronixUI uses the following addons:
 -   ElvUI  **[REQUIRED]**
--   Weakaura
--   Plater
--   BigWigs
--   Baganator
--   Cell
--   Details
--   Method Raid Tools
--   HidingBar
--   OmniCD
--   WarpDeplete
+-   Weakaura  **[suggested]**
+-   Plater **[suggested]**
+-   BigWigs **[suggested]**
+-   Baganator **[suggested]**
+-   Cell **[suggested healer only]**
+-   Details **[suggested]**
+-   Method Raid Tools **[suggested]**
+-   HidingBar **[suggested]**
+-   OmniCD **[suggested]**
+-   WarpDeplete **[suggested]**
+-   LittleWigs  **[suggested]**
+-   BlizzMove 
+-   CauseseDB
+-   Causese_SharedMedia
+-   ElvUI Shadow & Light **[suggested]**
+-   Northern Sky Media
+
 
 **Shoutout:**
 Special thank to [Hijack](https://wago.io/p/iamhijack) for building and letting us use his awesome class Weakauras.

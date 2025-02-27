@@ -1,4 +1,4 @@
-Addon, private = ...
+local Addon, private = ...
 
 
 local Aurafilter = {
@@ -5640,6 +5640,7 @@ local function InstallHeal()
 end
 
 function private:ElvinstallTwink(importer)
+	
     if importer == 0 then
         ElvUI[1].data:SetProfile(private.Profilename .. "-DPS")
     else
@@ -5649,6 +5650,7 @@ function private:ElvinstallTwink(importer)
 end
 
 function private:Elvinstall(importer)
+	
     ElvDB["global"]["general"]["UIScale"] = 0.60
     ElvDB["global"]["general"]["WorldMapCoordinates"] = {
         ["xOffset"] = 100,

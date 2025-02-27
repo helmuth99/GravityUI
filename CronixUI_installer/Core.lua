@@ -65,7 +65,7 @@ local function InstallCompleteTwink()
 end
 
 local AddonList = { "ElvUI", "ElvUI_SLE", "Plater", "WeakAuras", "MRT", "WarpDeplete", "Details", "HidingBar", "OmniCD", "BigWigs",
-	"Cell", "Baganator" }
+	"Cell", "Baganator", "BlizzMove", "CauseseDB", "SharedMedia_Causese", "NorthernSkyMedia" }
 local CronixEverythingLoaded = true
 
 local function CronixIsAddOnLoaded(AddonName)
@@ -703,6 +703,7 @@ function mod:ChatCommand()
 end
 --This function will handle initialization of the addon
 function mod:Initialize()
+	
 	--Initiate installation process if ElvUI install is complete and our plugin install has not yet been run
 	if CronixUIDB == nil then
 		CronixUIDB = {

@@ -1,10 +1,10 @@
-## Interface: 110002
+## Interface: 110002, 110100
 ## Title: |cff00ccffCronix Installer|r
 ## Notes: Installs the Cronix Interface
 ## IconTexture: Interface\AddOns\CronixUI_installer\CRONIX.blp
 ## Author: Helimeister, Cronix
 ## RequiredDeps: ElvUI, 
-## OptionalDeps: ElvUI_SLE, Plater, WeakAuras, MRT, WarpDeplete, Details, HidingBar, OmniCD, BigWigs, Cell, Baganator,
+## OptionalDeps: ElvUI_SLE, Plater, WeakAuras, MRT, WarpDeplete, Details, HidingBar, OmniCD, BigWigs, Cell, Baganator, BlizzMove, CauseseDB", SharedMedia_Causese, NorthernSkyMedia
 ## Version: @project-version@
 ## DefaultState: enabled
 ## SavedVariables: CronixUIDB
