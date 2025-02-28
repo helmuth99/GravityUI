@@ -602,7 +602,7 @@ local function InsertOptions()
 				order = 12,
 				type = "description",
 				name =
-				"Special shoutout to |cff0097faHijack|r for letting us use his class weakauras. Check him out on |Hurl:https://www.wago.io|hWago|h here: |cff71d5ffhttps://wago.io/p/iamhijack|r \n\n",
+				"Most class weakauras are from Luxthos and edited by Cronix.\n\n",
 			},
 			spacer4 = {
 				order = 13,
