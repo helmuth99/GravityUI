@@ -1,0 +1,48 @@
+## Interface: 110002, 110100
+## Title: |cff00ccffGravityUI|r
+## Notes: Installs the GravityUI
+## IconTexture: Interface\AddOns\CronixUI_installer\CRONIX.blp
+## Author: Helimeister, Cronix
+## RequiredDeps:  
+## OptionalDeps: 
+## Version: @project-version@
+## DefaultState: enabled
+## SavedVariables: GravityUIDB
+## X-Curse-Project-ID: 1102290
+## X-Wago-ID: 96E7e8Gg
+
+Core.lua
+embeds.xml
+
+Utils/GravityFrame.lua
+Utils/GravityInlineGroup.lua
+
+Utils/Paginator.lua
+Utils/StyledFrames.lua
+
+#frames
+Pages/Home.lua
+
+#Utils/WeakauraFrame.lua
+
+
+#registers check Cell.lua to check for convention
+Register/Cell.lua
+Register/Plater.lua
+Register/BigWigs.lua
+Register/Details.lua
+#dumps/ElvUI-dump.lua
+#dumps/Plater-dump.lua
+#dumps/Weakaura-dump.lua
+#dumps/MRT-dump.lua
+#dumps/BigWigs-dump.lua
+#dumps/WarpDeplete-dump.lua
+#dumps/OmniCD-dump.lua
+#dumps/HidingBar-dump.lua
+#dumps/Details-dump.lua
+#dumps/Cell-dump.lua
+#dumps/Baganator-dump.lua
+
+
+#Media wip enable when moving shared media into addon
+#SharedMedia/SharedMedia.lua
