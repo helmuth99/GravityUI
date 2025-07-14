@@ -1,4 +1,4 @@
-package-as: CronixUI_installer
+package-as: GravityUI
 
 ignore:
   - "*.md"
@@ -10,5 +10,5 @@ ignore:
 
 
 move-folders:
-  CronixUI_installer/GravityUI: GravityUI
-  CronixUI_installer/CronixUIMedia: CronixUIMedia
+  GravityUI/GravityUI: GravityUI
+  GravityUI/CronixUIMedia: CronixUIMedia
