@@ -1,10 +1,10 @@
 ## Interface: 110002, 110100, 110107
 ## Title: |cff00ccffGravityUI|r
 ## Notes: Installs the GravityUI
-## IconTexture: Interface\AddOns\CronixUI_installer\CRONIX.blp
+## IconTexture: Interface\AddOns\GravityUI\Media\GRAVITY_UI_Icon.blp
 ## Author: Helimeister, Cronix
 ## RequiredDeps: CronixUIMedia
-## OptionalDeps: 
+## OptionalDeps: Cell, Dominos, Prat-3.0, Details, Plater, WeakAuras, Leatrix_Plus, Baganator, BigWigs, HidingBar, MRT, OmniCD, Skinner, WarpDeplete, WeakAuras,
 ## Version: @project-version@
 ## DefaultState: enabled
 ## SavedVariables: GravityUIDB
