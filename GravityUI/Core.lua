@@ -50,7 +50,9 @@ function GravityUI:ShowFrame()
         private.pages:Home(frame)
         frame:SetTitle("GRAVITY UI powered by |cff00ccffCronix UI|r")
         private.g.mainFrame = frame
-        frame:SetCallback("OnClose", function(widget) ShouldReload() end)
+        frame:SetCallback("OnClose", function(widget) 
+            ShouldReload() 
+            end)
         return
     end
     if private.g.mainFrame:IsShown() then
@@ -76,11 +78,14 @@ function GravityUI:OnInitialize()
     self.db = LibStub("AceDB-3.0"):New("GravityUIDB", defaults, true)
 
 
-    if GravityUI.db.global.reload then --this was set by a reload we still need to fix this
-		GravityUI.db.global.reload = false
-        print("fix this")
-		
+    if not GravityUI.db.global.Version or GravityUI.db.global.Version == 0 then --this was set by a reload we still need to fix this
+		GravityUI:ShowFrame()
+        GravityUI.db.global.Version = Version
 	end
+
+    if not GravityUI.db.char or not GravityUI.db.char[private.g.cName .. "-" .. private.g.cRealm] then
+        GravityUI.db.char[private.g.cName .. "-" .. private.g.cRealm] = true
+    end
 
 
 

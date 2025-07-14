@@ -1,45 +1,54 @@
-# CronixUI Installer
+# GravityUI x CronixUI 2.0
 
-CronixUI is a full UI option build ontop of multiple popular addons. It supports all classes and specs and includes many custom frames, sounds, media and font options. The installer will guide you though the whole installation process.
+We are happy to announce that CronixUI is officially now GravityUI. The beloved CronixUI moved away from ElvUI and build a high performant version of the CronixUI.
+GravityUI is a full UI option build ontop of multiple popular addons. It supports all classes and specs and includes many custom frames, sounds, media and font options.
+
+To open the installer manuelly use any of these chat commands: /cui, /CUI, /GUI, /gui
 
 **Supports:**
 
--   Currently we only tested it for retail and it should fully work for TWW.
+-   Currently we only tested it for retail
 -   It was build on a 1440p monitor, other resolutions will follow.
 
 # Features
 
--   Fully guided installation with a installer.
 -   Custom fonts, sound and media files.
 -   DPS/Tank and Healer profile setup.
 -   Custom theme and style
--   Twink installation for easy setup on Twinks
+-   Twink installation for easy setup on Twinks **[Upcoming]**
 
 # Known Issues
 
--   The CronixUI profiels are not set specc specific, please set them manualy.
 -   OmniCD profile is currendly optimised for DPS only, update is planned.
 
 # Addons
 
 CronixUI uses the following addons:
--   ElvUI  **[REQUIRED]**
--   Weakaura  **[suggested]**
--   Plater **[suggested]**
--   BigWigs **[suggested]**
--   Baganator **[suggested]**
--   Cell **[suggested healer only]**
--   Details **[suggested]**
--   Method Raid Tools **[suggested]**
--   HidingBar **[suggested]**
--   OmniCD **[suggested]**
--   WarpDeplete **[suggested]**
--   LittleWigs  **[suggested]**
--   BlizzMove 
--   CauseseDB
--   Causese_SharedMedia
--   ElvUI Shadow & Light **[suggested]**
--   Northern Sky Media
+
+**[important]**
+Cell (Unit- Group- Raidframes) 
+Dominos (ActionBars + Group Loot) 
+Prat 3.0 (Chat) 
+Details (Damage Meter) 
+Plater (Nameplates) 
+WeakAuras (WeakAuras)
+Leatrix Plus (Many functions for Interface "minimap") 
+
+**[nice to have]**
+Baganator + Syndicator (Bags) 
+WarpDeplete (M+ Keys) 
+BigWigs (Boss Mods) 
+OmniCD (Cooldown management Party, Raid) 
+
+**[usefull]**
+HidingBar (Minimap Buttons hide in a bar) 
+
+**[design]**
+CronixUI Media (Fonts, Textures, Bars) (included)
+Skinner (UI Overhaul "dark windows") 
+
+**[raid + dungeons]**
+Method Raid Tools (Raid)
 
 
 **Shoutout:**
@@ -52,8 +61,5 @@ Some addons have limited or no profile specific setting and some steps in the in
 Please update the Weakauras with the WA-Companion app. [Link](https://weakauras.wtf/)
 
 If update change something major, we will offer instructions on what to do.
-
-
-
 
 All fonts used are under the SIL Open Font License. 
