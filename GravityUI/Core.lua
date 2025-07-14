@@ -87,7 +87,10 @@ function GravityUI:OnInitialize()
         GravityUI.db.char[private.g.cName .. "-" .. private.g.cRealm] = true
     end
 
-
+    if GravityUI.db.global.reload then
+        GravityUI.db.global.reload = false
+    end
+    
 
     
     --register chat commands
