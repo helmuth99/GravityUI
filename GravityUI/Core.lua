@@ -16,6 +16,7 @@ local realm = GetRealmName()
 local DevTool = DevTool
 private.g.cName = name
 private.g.cRealm = realm
+private.g.font = "Interface\\Addons\\CronixUIMedia\\Media\\font\\Cronix.ttf"
 
 
 if not private.pages then

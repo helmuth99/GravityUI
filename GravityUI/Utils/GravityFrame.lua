@@ -139,10 +139,10 @@ local methods = {
 Constructor
 -------------------------------------------------------------------------------]]
 local FrameBackdrop = {
-	bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
-	edgeFile = nil,
-	tile = true, tileSize = 32, edgeSize = 32,
-	insets = { left = 8, right = 8, top = 8, bottom = 8 }
+    bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
+    edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
+    tile = true, tileSize = 32, edgeSize = 12,
+    insets = { left =0, right = 0, top = 0, bottom = 0 }
 }
 
 local function Constructor()
@@ -156,6 +156,7 @@ local function Constructor()
 	frame:SetFrameLevel(100)
 	frame:SetBackdrop(FrameBackdrop)
 	frame:SetBackdropColor(0, 0, 0, 1)
+	frame:SetBackdropBorderColor(0.52941176470588, 0.8078431372549, 0.92156862745098)
     frame:SetSize(800, 400)
 
 	
@@ -172,12 +173,12 @@ local function Constructor()
 	-- Title Area
 	
 
-	local title = CreateFrame("Frame", nil, frame)
+	local title = CreateFrame("Frame", nil, frame,"BackdropTemplate")
     title:EnableMouse(true)
     title:SetScript("OnMouseDown", Title_OnMouseDown)
     title:SetScript("OnMouseUp", MoverSizer_OnMouseUp)
-    title:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, -14)
-    title:SetPoint("TOPRIGHT", frame, "TOPRIGHT", 0, -14)
+    title:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, 0)
+    title:SetPoint("TOPRIGHT", frame, "TOPRIGHT", 0, 0)
     title:SetHeight(24)
 
 	local titletext = title:CreateFontString(nil, "OVERLAY", "GameFontNormal")

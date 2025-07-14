@@ -33,25 +33,25 @@ function GravityUI:CreateInlineGroup()
 end
 
 function GravityUI:CreateInlineGroupTitel(tText, dText)
-    local frame = GravityUI:CreateInlineGroup()
+   --[[  local frame = GravityUI:CreateInlineGroup()
     frame:SetFullWidth(true)
-    frame:SetLayout("List")
+    frame:SetLayout("List") ]]
 
-    frame.title = AceGUI:Create("Label")
+    --[[frame.title = AceGUI:Create("Label")
     frame.title:SetFullWidth(true)
     frame.title:SetHeight(50)
     frame.title:SetFont("Fonts\\FRIZQT__.TTF", 28, "OUTLINE")
     frame.title:SetJustifyH("CENTER")
     frame.title:SetJustifyH("CENTER")
     frame.title:SetText(tText)
-    frame:AddChild(frame.title)
-
+    frame:AddChild(frame.title)]]--
+--[[ 
     frame.description = AceGUI:Create("Label")
     frame.description:SetFullWidth(true)
     frame.description:SetJustifyH("LEFT")
     frame.description:SetFontObject("GameFontHighlight")
     frame.description:SetText(dText)
-    frame:AddChild(frame.description)
+    frame:AddChild(frame.description) ]]
 
-    return frame
+    return 
 end

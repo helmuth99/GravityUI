@@ -3,7 +3,7 @@
 ## Notes: Installs the GravityUI
 ## IconTexture: Interface\AddOns\CronixUI_installer\CRONIX.blp
 ## Author: Helimeister, Cronix
-## RequiredDeps:  
+## RequiredDeps: CronixUIMedia
 ## OptionalDeps: 
 ## Version: @project-version@
 ## DefaultState: enabled
@@ -17,6 +17,7 @@ embeds.xml
 Utils/GravityFrame.lua
 Utils/GravityInlineGroup.lua
 Utils/StyledFrames.lua
+Utils/GravityLabel.lua
 
 
 #frames
@@ -39,6 +40,7 @@ Register/Leatrix_Plus.lua
 Register/Prat-3.0.lua
 Register/Dominos.lua
 Register/Weakaura.lua
+Register/MRT.lua
 
 #dumps/ElvUI-dump.lua
 #dumps/Plater-dump.lua

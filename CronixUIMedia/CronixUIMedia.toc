@@ -1,7 +1,7 @@
 ## Interface: 110002
 ## Title: |cff00ccffCronixUI Media|r
 ## Notes: Media for CronixUI Installer
-## Version: @project-version@
+## Version: v1.1.4
 ## IconTexture: Interface\AddOns\CronixUIMedia\CRONIX.blp
 ## Author: Helimeister, Cronix
 ## DefaultState: Enable

@@ -15,6 +15,7 @@ LSM:Register("border", "SeerahScalloped", [[Interface\Addons\CronixUIMedia\Media
 -- -----
 --   FONT
 -- -----
+LSM:Register("font", "Cronix-Big", [[Interface\Addons\CronixUIMedia\Media\font\Cronix-Big.ttf]]) 
 LSM:Register("font", "Cronix-Bold", [[Interface\Addons\CronixUIMedia\Media\font\Cronix-Bold.ttf]]) 
 LSM:Register("font", "Cronix-Light", [[Interface\Addons\CronixUIMedia\Media\font\Cronix-Light.ttf]]) 
 LSM:Register("font", "Cronix-Regular", [[Interface\Addons\CronixUIMedia\Media\font\Cronix-Regular.ttf]]) 
@@ -180,5 +181,7 @@ LSM:Register("sound", "Zone", [[Interface\Addons\CronixUIMedia\Media\sound\Zone.
 -- -----
 --   STATUSBAR
 -- -----
-LSM:Register("statusbar", "Cronix", [[Interface\Addons\CronixUIMedia\Media\statusbar\Cronix.tga]]) 
+LSM:Register("statusbar", "Cronix", [[Interface\Addons\CronixUIMedia\Media\statusbar\Cronix.tga]])
+LSM:Register("statusbar", "Cronix Gardient", [[Interface\Addons\CronixUIMedia\Media\statusbar\Cronix-Gardient.tga]])  
 LSM:Register("statusbar", "Melli6px", [[Interface\Addons\CronixUIMedia\Media\statusbar\Melli6px.tga]]) 
+
