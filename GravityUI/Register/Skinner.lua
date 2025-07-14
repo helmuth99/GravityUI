@@ -9,7 +9,7 @@ importText = importText Text that will be on the button
 }
 ]]
 local addonName = "Skinner"
-local importText = "import"
+local importText = "Import"
 local data = {
     ["MirrorTimers"] = {
         ["glaze"] = false,
@@ -133,8 +133,8 @@ local function install()
     end
 end
 
-private.Addons[addonName] = {
+table.insert(private.Addons, {
     name = addonName,
     import = install,
     importText = importText
-}
+})

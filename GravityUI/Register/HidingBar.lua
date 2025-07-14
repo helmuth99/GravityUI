@@ -9,7 +9,7 @@ importText = importText Text that will be on the button
 }
 ]]
 local addonName = "HiddingBar"
-local importText = "import\n !!GLOBAL OVERWRITE!!"
+local importText = "Import \n!!GLOBAL OVERWRITE!!"
 local data = {
     ["tstmp"] = 1752278464,
     ["profiles"] = {
@@ -302,8 +302,8 @@ local function import()
     end
 end
 
-private.Addons[addonName] = {
+table.insert(private.Addons, {
     name = addonName,
     import = import,
     importText = importText
-}
+})

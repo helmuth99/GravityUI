@@ -140,9 +140,15 @@ Constructor
 -------------------------------------------------------------------------------]]
 local FrameBackdrop = {
     bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
-    edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
-    tile = true, tileSize = 32, edgeSize = 12,
-    insets = { left =0, right = 0, top = 0, bottom = 0 }
+    edgeFile = "Interface\\Addons\\CronixUIMedia\\Media\\border\\SeerahScalloped.tga]",
+    tile = true, tileSize = 32, edgeSize = 1,
+    insets = { left = 0, right = 0, top = 0, bottom = 0 }
+}
+local TitleBackdrop = {
+    bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
+    edgeFile = "Interface\\Addons\\CronixUIMedia\\Media\\border\\SeerahScalloped.tga]",
+    tile = true, tileSize = 32, edgeSize = 1,
+    insets = { left = 0, right = 0, top = 0, bottom = 0 }
 }
 
 local function Constructor()
@@ -156,7 +162,7 @@ local function Constructor()
 	frame:SetFrameLevel(100)
 	frame:SetBackdrop(FrameBackdrop)
 	frame:SetBackdropColor(0, 0, 0, 1)
-	frame:SetBackdropBorderColor(0.52941176470588, 0.8078431372549, 0.92156862745098)
+	frame:SetBackdropBorderColor(0.11764705882353, 0.56470588235294, 1)
     frame:SetSize(800, 400)
 
 	
@@ -167,8 +173,12 @@ local function Constructor()
 
 	-- ❌ Close Button (Top-Right)
 	local closebutton = CreateFrame("Button", nil, frame, "UIPanelCloseButton")
-	closebutton:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -5, -5)
+	closebutton:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -3, -3)
 	closebutton:SetScript("OnClick", Button_OnClick)
+	closebutton:SetNormalTexture("Interface\\AddOns\\CronixUIMedia\\Media\\buttons\\close.tga")
+	closebutton:SetPushedTexture("Interface\\AddOns\\CronixUIMedia\\Media\\buttons\\close.tga")
+	closebutton:SetHighlightTexture("Interface\\AddOns\\CronixUIMedia\\Media\\buttons\\close.tga")
+	closebutton:SetDisabledTexture("Interface\\AddOns\\CronixUIMedia\\Media\\buttons\\close.tga")
 
 	-- Title Area
 	
@@ -177,12 +187,23 @@ local function Constructor()
     title:EnableMouse(true)
     title:SetScript("OnMouseDown", Title_OnMouseDown)
     title:SetScript("OnMouseUp", MoverSizer_OnMouseUp)
-    title:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, 0)
-    title:SetPoint("TOPRIGHT", frame, "TOPRIGHT", 0, 0)
-    title:SetHeight(24)
+    title:SetPoint("TOPLEFT", frame, "TOPLEFT", 1, -1)
+    title:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -1, -1)
+	title:SetToplevel(true)
+	title:SetFrameStrata("FULLSCREEN_DIALOG")
+	title:SetFrameLevel(110)
+	title:SetBackdrop(TitleBackdrop)
+	title:SetBackdropColor(0, 0, 0, 1)
+	title:SetBackdropBorderColor(0, 0, 0, 1)
+    title:SetHeight(26)
 
 	local titletext = title:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    titletext:SetPoint("TOP", title, "TOP", 0, 0)
+    titletext:SetPoint("TOPLEFT", title, "TOPLEFT", 0, 0)
+	titletext:SetPoint("BOTTOMRIGHT", title, "BOTTOMRIGHT", 0, 0)
+	titletext:SetJustifyV("MIDDLE")
+	titletext:SetJustifyH("CENTER")
+	titletext:SetTextColor(1,1,1,1)
+	titletext:SetFont("Interface\\Addons\\CronixUIMedia\\Media\\font\\Cronix.ttf", 20, "OUTLINE")
 
 	-- Resizers
 	local sizer_se = CreateFrame("Frame", nil, frame)

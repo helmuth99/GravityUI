@@ -18,6 +18,7 @@ Utils/GravityFrame.lua
 Utils/GravityInlineGroup.lua
 Utils/StyledFrames.lua
 Utils/GravityLabel.lua
+Utils/GravitySimpleGroup.lua
 
 
 #frames
@@ -27,33 +28,21 @@ Pages/WeakauraFrame.lua
 
 
 #registers check Cell.lua to check for convention
-Register/Cell.lua
-Register/Plater.lua
-Register/BigWigs.lua
-Register/Details.lua
-Register/OmniCD.lua
-Register/Skinner.lua
-Register/HidingBar.lua
-Register/WarpDeplete.lua
-Register/Baganator.lua
-Register/Leatrix_Plus.lua
-Register/Prat-3.0.lua
-Register/Dominos.lua
 Register/Weakaura.lua
+Register/EditMode.lua
+Register/Cell.lua
+Register/Dominos.lua
+Register/Prat-3.0.lua
+Register/Details.lua
+Register/Plater.lua
+Register/Leatrix_Plus.lua
+Register/Baganator.lua
+Register/WarpDeplete.lua
+Register/BigWigs.lua
 Register/MRT.lua
-
-#dumps/ElvUI-dump.lua
-#dumps/Plater-dump.lua
-#dumps/Weakaura-dump.lua
-#dumps/MRT-dump.lua
-#dumps/BigWigs-dump.lua
-#dumps/WarpDeplete-dump.lua
-#dumps/OmniCD-dump.lua
-#dumps/HidingBar-dump.lua
-#dumps/Details-dump.lua
-#dumps/Cell-dump.lua
-#dumps/Baganator-dump.lua
-
+Register/OmniCD.lua
+Register/HidingBar.lua
+Register/Skinner.lua
 
 #Media wip enable when moving shared media into addon
 #SharedMedia/SharedMedia.lua

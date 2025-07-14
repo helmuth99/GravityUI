@@ -5,7 +5,7 @@ local AceGUI = LibStub and LibStub("AceGUI-3.0", true)
 
 --settings
 
-local titleText = "GravityUI"
+local titleText = "GRAVITY UI powered by |cff00ccffCronix UI|r"
 local descriptionText =
 "\nSupported Addon Profiles in Gravity UI \n \nBelow are the addon profiles supported by Gravity UI. Once you've installed the corresponding addon, you can proceed to import its profile."
 local itemHeight = 40
@@ -27,7 +27,7 @@ function private.pages:Home(frame)
     topWrapper:SetLayout("Table")
     topWrapper:SetUserData("table", {
         columns = { 0.30, 0.70 }, -- 70% and 30% width columns
-        space = 0               -- No spacing between columns
+        space = 0                 -- No spacing between columns
     })
     page:AddChild(topWrapper)
 
@@ -61,19 +61,20 @@ function private.pages:Home(frame)
     group:SetAutoAdjustHeight(false)
     group:SetLayout("Table")
     group:SetUserData("table", {
-        columns = { 0.7, 0.3 },     -- 70% and 30% width columns
-        space = 0                   -- No spacing between columns
+        columns = { 0.68, 0.32 }, -- 70% and 30% width columns
+        space = 0                 -- No spacing between columns
     })
 
 
     -- Left (stretch)
     local leftLabel = AceGUI:Create("GravityLabel")
     leftLabel:SetText("Addon")
-    leftLabel:SetRelativeWidth(0.68) -- 70% of line
-    leftLabel:SetFont(private.g.font, 18, "OUTLINE")
+    -- 70% of line
+    leftLabel:SetFont(private.g.font, 20, "OUTLINE")
     leftLabel:SetHeight(itemHeight)
+    leftLabel:SetJustifyV("MIDDLE")
 
-    useDevTool(leftLabel, "leftLabel")
+
 
 
     group:AddChild(leftLabel)
@@ -81,27 +82,44 @@ function private.pages:Home(frame)
     -- Right (fixed)
     local rightLabel = AceGUI:Create("GravityLabel")
     rightLabel:SetText("Import")
-    rightLabel:SetRelativeWidth(0.32) -- 30% of line
-    rightLabel:SetFont(private.g.font, 18, "OUTLINE")
+    -- 30% of line
+    rightLabel:SetFont(private.g.font, 20, "OUTLINE")
     rightLabel:SetHeight(itemHeight)
-    useDevTool(rightLabel, "rightLabel")
+    rightLabel:SetJustifyV("MIDDLE")
     group:AddChild(rightLabel)
 
-
+    local ScrollBackdrop = {
+        bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
+        edgeFile = "Interface\\Addons\\CronixUIMedia\\Media\\border\\SeerahScalloped.tga]",
+        tile = true,
+        tileSize = 32,
+        edgeSize = 1,
+        insets = { left = 0, right = 0, top = 0, bottom = 0 }
+    }
     local scrollFrameContainer = GravityUI:CreateInlineGroup()
+    scrollFrameContainer.titletext:SetHeight(0)
+    scrollFrameContainer.frame:SetBackdrop(ScrollBackdrop)
+    scrollFrameContainer.frame:SetBackdropColor(0, 0, 0, 0.6)
+    scrollFrameContainer.frame:SetBackdropBorderColor(0, 0, 0, 1)
     scrollFrameContainer:SetFullWidth(true)
     scrollFrameContainer:SetHeight(300)
     scrollFrameContainer:SetLayout("Fill")
+    scrollFrameContainer.frame:SetPoint("TOPLEFT", group.frame, "BOTTOMLEFT", 0, 0)
+    scrollFrameContainer.frame:SetPoint("BOTTOMRIGHT", frame.frame, "BOTTOMRIGHT", 0, 0)
+
     frame:AddChild(scrollFrameContainer)
 
     local scrollFrame = AceGUI:Create("ScrollFrame")
     scrollFrame:SetLayout("List")
-
+    scrollFrame.frame:SetPoint("TOP", scrollFrameContainer.frame, "TOP", 0, 0)
     scrollFrameContainer:AddChild(scrollFrame)
 
     --put it into  a scrollframe
-    for i, v in pairs(private.Addons) do
-        local igroup = AceGUI:Create("SimpleGroup")
+    for i, v in ipairs(private.Addons) do
+        local igroup = AceGUI:Create("GravitySimpleGroup")
+        igroup.frame:SetBackdrop(ScrollBackdrop)
+        igroup.frame:SetBackdropColor(0, 0, 0, 0)
+        igroup.frame:SetBackdropBorderColor(0, 0, 0, 0.6)
         igroup:SetHeight(itemHeight)
         igroup:SetFullWidth(true)
         igroup:SetLayout("Table")
@@ -123,6 +141,8 @@ function private.pages:Home(frame)
         button:SetRelativeWidth(0.3)
         button:SetHeight(itemHeight)
         button:SetText("Import")
+        button.text:SetFont(private.g.font, 14, "OUTLINE")
+        button.text:SetTextColor(1, 1, 1) -- White text
 
         button:SetUserData("cell", { colspan = 1 })
 
@@ -131,26 +151,90 @@ function private.pages:Home(frame)
         if buttonFrame.Left then buttonFrame.Left:Hide() end
         if buttonFrame.Middle then buttonFrame.Middle:Hide() end
         if buttonFrame.Right then buttonFrame.Right:Hide() end
-        button.text:SetTextColor(1, 1, 1) -- White text
+        local tex = buttonFrame:GetHighlightTexture()
+        if tex then
+            tex:Hide()
+            tex:SetAlpha(0)
+            tex:SetTexture(nil) -- This removes the image but keeps the texture object
+        end
+
+
         local bg = buttonFrame:CreateTexture(nil, "BACKGROUND")
         bg:SetAllPoints()
         bg:SetColorTexture(0.1, 0.5, 0.1, 0.8) -- solid dark gray
 
-        if C_AddOns.IsAddOnLoaded(v.name) then
+        if C_AddOns.IsAddOnLoaded(v.name) or v.overwrite then
             button:SetText(v.importText)
-            bg:SetColorTexture(0.1, 0.5, 0.1, 0.8)
+            bg:SetColorTexture(private.g.blue())
             button:SetCallback("OnClick", function(widget, event)
                 v:import()
-                button:SetText("imported")
+                button:SetText("Imported")
                 GravityUI.db.global.InstalledAddons[v.name] = true
+                bg:SetColorTexture(0.1, 0.5, 0.1, 0.8)
+                GravityUI.db.global.reload = true
             end)
         else
-            button:SetText("|cffff0000Addon not loaded|r")
+            button:SetText("Addon not loaded")
             bg:SetColorTexture(0.5, 0.1, 0.1, 0.8)
             button:SetDisabled(true)
         end
 
+        local borderColor = {0,0,0,1} -- blue, fully opaque
+        local borderThickness = 1
+
+        -- Top border
+        local borderTop = buttonFrame:CreateTexture(nil, "OVERLAY")
+        borderTop:SetColorTexture(unpack(borderColor))
+        borderTop:SetHeight(borderThickness)
+        borderTop:SetPoint("TOPLEFT", buttonFrame, "TOPLEFT", 0, 0)
+        borderTop:SetPoint("TOPRIGHT", buttonFrame, "TOPRIGHT", 0, 0)
+
+        -- Bottom border
+        local borderBottom = buttonFrame:CreateTexture(nil, "OVERLAY")
+        borderBottom:SetColorTexture(unpack(borderColor))
+        borderBottom:SetHeight(borderThickness)
+        borderBottom:SetPoint("BOTTOMLEFT", buttonFrame, "BOTTOMLEFT", 0, 0)
+        borderBottom:SetPoint("BOTTOMRIGHT", buttonFrame, "BOTTOMRIGHT", 0, 0)
+
+        -- Left border
+        local borderLeft = buttonFrame:CreateTexture(nil, "OVERLAY")
+        borderLeft:SetColorTexture(unpack(borderColor))
+        borderLeft:SetWidth(borderThickness)
+        borderLeft:SetPoint("TOPLEFT", buttonFrame, "TOPLEFT", 0, 0)
+        borderLeft:SetPoint("BOTTOMLEFT", buttonFrame, "BOTTOMLEFT", 0, 0)
+
+        -- Right border
+        local borderRight = buttonFrame:CreateTexture(nil, "OVERLAY")
+        borderRight:SetColorTexture(unpack(borderColor))
+        borderRight:SetWidth(borderThickness)
+        borderRight:SetPoint("TOPRIGHT", buttonFrame, "TOPRIGHT", 0, 0)
+        borderRight:SetPoint("BOTTOMRIGHT", buttonFrame, "BOTTOMRIGHT", 0, 0)
+
         igroup:AddChild(button)
         scrollFrame:AddChild(igroup)
     end
+
+
+    --Styling
+    local scrollbar = scrollFrame.scrollbar
+
+    -- Try to set the track/rail texture
+    if not scrollbar.Track then
+        local track = scrollbar:CreateTexture(nil, "BACKGROUND")
+        track:SetAllPoints()
+        track:SetTexture("Interface\\AddOns\\GravityUI\\Media\\Scrollbar\\bar.tga")
+        scrollbar.Track = track
+    end
+    scrollbar.ThumbTexture:SetTexture("Interface\\AddOns\\GravityUI\\Media\\Scrollbar\\button.tga")
+
+    scrollbar.ScrollDownButton:SetNormalTexture("Interface\\AddOns\\GravityUI\\Media\\Scrollbar\\down.tga")
+    scrollbar.ScrollDownButton:SetPushedTexture("Interface\\AddOns\\GravityUI\\Media\\Scrollbar\\down.tga")
+    scrollbar.ScrollDownButton:SetHighlightTexture("Interface\\AddOns\\GravityUI\\Media\\Scrollbar\\down.tga")
+    scrollbar.ScrollDownButton:SetDisabledTexture("Interface\\AddOns\\GravityUI\\Media\\Scrollbar\\down.tga")
+
+
+    scrollbar.ScrollUpButton:SetNormalTexture("Interface\\AddOns\\GravityUI\\Media\\Scrollbar\\up.tga")
+    scrollbar.ScrollUpButton:SetPushedTexture("Interface\\AddOns\\GravityUI\\Media\\Scrollbar\\up.tga")
+    scrollbar.ScrollUpButton:SetHighlightTexture("Interface\\AddOns\\GravityUI\\Media\\Scrollbar\\up.tga")
+    scrollbar.ScrollUpButton:SetDisabledTexture("Interface\\AddOns\\GravityUI\\Media\\Scrollbar\\up.tga")
 end

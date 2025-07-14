@@ -48,7 +48,7 @@ local WAStrings = {
 }
 
 local addonName = "WeakAuras"
-local importText = "open page"
+local importText = "Open page"
 local function frame()
     if private.g.mainFrame then
         private.pages:CreateWeakauraFrame(WAStrings,private.g.mainFrame.frame)
@@ -56,8 +56,8 @@ local function frame()
     
 end
 
-private.Addons[addonName] ={
+table.insert(private.Addons, {
     name = addonName,
     import = frame,
     importText = importText
-}
+})

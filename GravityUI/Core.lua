@@ -17,6 +17,7 @@ local DevTool = DevTool
 private.g.cName = name
 private.g.cRealm = realm
 private.g.font = "Interface\\Addons\\CronixUIMedia\\Media\\font\\Cronix.ttf"
+private.g.blue = function() return 0.11764705882353, 0.56470588235294, 1 end
 
 
 if not private.pages then
@@ -38,13 +39,18 @@ end
 local GravityUI = LibStub("AceAddon-3.0"):NewAddon(private.g.name, "AceConsole-3.0")
 private.GravityUI = GravityUI
 
-
+local function ShouldReload()
+    if GravityUI.db.global.reload then
+        ReloadUI()
+    end
+end
 function GravityUI:ShowFrame()
     if not private.g.mainFrame then
         local frame = GravityUI:CreateFrame()
         private.pages:Home(frame)
-        frame:SetTitle("GravityUI Installer")
+        frame:SetTitle("GRAVITY UI powered by |cff00ccffCronix UI|r")
         private.g.mainFrame = frame
+        frame:SetCallback("OnClose", function(widget) ShouldReload() end)
         return
     end
     if private.g.mainFrame:IsShown() then
@@ -82,6 +88,8 @@ function GravityUI:OnInitialize()
     --register chat commands
     self:RegisterChatCommand("gui", "HandleSlash")
     self:RegisterChatCommand("GUI", "HandleSlash")
+    self:RegisterChatCommand("cui", "HandleSlash")
+    self:RegisterChatCommand("CUI", "HandleSlash")
 end
 
 function GravityUI:HandleSlash()
