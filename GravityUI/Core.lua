@@ -14,6 +14,8 @@ local StopMusic = StopMusic
 local name = UnitName("PLAYER")
 local realm = GetRealmName()
 local DevTool = DevTool
+private.g.cName = name
+private.g.cRealm = realm
 
 
 if not private.pages then

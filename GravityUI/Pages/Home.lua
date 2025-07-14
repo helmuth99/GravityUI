@@ -28,14 +28,16 @@ function private.pages:Home(frame)
 
     -- Left (stretch)
     local leftLabel = AceGUI:Create("Label")
-    leftLabel:SetText("This text takes up the remaining space.")
+    leftLabel:SetText("Addon")
     leftLabel:SetRelativeWidth(0.7) -- 70% of line
+    leftLabel:SetFont("Fonts\\FRIZQT__.TTF", 18, "OUTLINE")
     group:AddChild(leftLabel)
 
     -- Right (fixed)
     local rightLabel = AceGUI:Create("Label")
     rightLabel:SetText("Import")
     rightLabel:SetRelativeWidth(0.3) -- 30% of line
+    rightLabel:SetFont("Fonts\\FRIZQT__.TTF", 18, "OUTLINE")
     group:AddChild(rightLabel)
 
     frame:AddChild(group)
@@ -93,6 +95,8 @@ function private.pages:Home(frame)
             bg:SetColorTexture(0.1, 0.5, 0.1, 0.8)
             button:SetCallback("OnClick", function(widget, event)
                 v:import()
+                button:SetText("imported")
+                GravityUI.db.global.InstalledAddons[v.name] = true
             end)
         else
             button:SetText("|cffff0000Addon not loaded|r")

@@ -4,8 +4,10 @@
 !.github/**
 !.gitignore
 !GravityUI
+GravityUI/dumps
 !GravityUI/**
 !CronixUIMedia
 !CronixUIMedia/**
 !README.md
 !.pkgmeta
+

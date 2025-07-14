@@ -16,13 +16,12 @@ embeds.xml
 
 Utils/GravityFrame.lua
 Utils/GravityInlineGroup.lua
-
-Utils/Paginator.lua
 Utils/StyledFrames.lua
+
 
 #frames
 Pages/Home.lua
-
+Pages/WeakauraFrame.lua
 #Utils/WeakauraFrame.lua
 
 
@@ -32,6 +31,15 @@ Register/Plater.lua
 Register/BigWigs.lua
 Register/Details.lua
 Register/OmniCD.lua
+Register/Skinner.lua
+Register/HidingBar.lua
+Register/WarpDeplete.lua
+Register/Baganator.lua
+Register/Leatrix_Plus.lua
+Register/Prat-3.0.lua
+Register/Dominos.lua
+Register/Weakaura.lua
+
 #dumps/ElvUI-dump.lua
 #dumps/Plater-dump.lua
 #dumps/Weakaura-dump.lua

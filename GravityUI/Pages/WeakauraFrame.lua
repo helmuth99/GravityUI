@@ -5,8 +5,8 @@ local addon, private = ...
 local LibDeflate = LibStub:GetLibrary("LibDeflate")
 local LibSerializer = LibStub("LibSerialize")
 local AceGUI = LibStub("AceGUI-3.0")
-local E, L, V, P, G = unpack(ElvUI)
-local S = E:GetModule('Skins')
+--refrence to pages
+private.pages.weakauraFrame = nil
 
 
 ---@param importString string
@@ -72,8 +72,6 @@ local function CreateEntry(WATable)
             importBtn:SetBackdropColor(0.216, 0.714, 1, 1)
         end)
     end)
-    S:HandleButton(importBtn)
-
     return entry
 end
 
@@ -91,23 +89,29 @@ local function Button_OnClick(frame)
     frame:GetParent():Hide()
 end
 
-function private:CreateWeakauraFrame()
-    if _G.CronixUIWeakauraFrame then
-        _G.CronixUIWeakauraFrame:Show()
+function private.pages:CreateWeakauraFrame(WAStrings,parent)
+    if private.pages.weakauraFrame then
+        private.pages.weakauraFrame:Show()
         return
     end
-    local frame = CreateFrame("Frame", "CronixUIWeakauraFrame", _G.PluginInstallFrame, "BackdropTemplate")
+    local frame = CreateFrame("Frame", "CronixUIWeakauraFrame", parent, "BackdropTemplate")
 
-    --local frame = CreateFrame("Frame", "CronixUIWeakauraFrame", _G.PluginInstallFrame)
+    frame:SetBackdrop({
+        bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background", -- or use a plain white/black texture
+        edgeFile = nil, -- No border
+        tile = true,
+        tileSize = 16,
+        edgeSize = 0,
+        insets = { left = 0, right = 0, top = 0, bottom = 0 }
+    })
+    frame:SetBackdropColor(0, 0, 0, 1) -- r, g, b, alpha (0.7 = 70% opacity)
 
 
-
-    frame:SetPoint("RIGHT", _G.PluginInstallFrame, "LEFT", 0, 0)
-    frame:SetHeight(_G.PluginInstallFrame:GetHeight())
+    frame:SetPoint("RIGHT", parent, "LEFT", 0, 0)
+    frame:SetHeight(parent:GetHeight())
     frame:SetWidth(500)
     frame:SetFrameStrata("TOOLTIP")
     frame:SetFrameLevel(10)
-    frame:SetTemplate('Transparent')
 
     local titleFrame = CreateFrame("Frame", nil, frame)
     titleFrame:SetPoint("TOP", frame, "TOP", 0, -20)
@@ -120,7 +124,7 @@ function private:CreateWeakauraFrame()
     closebutton:SetWidth(100)
     closebutton:SetText(CLOSE)
     closebutton:SetNormalFontObject("GameFontHighlight")
-    S:HandleButton(closebutton)
+    
 
 
     local title = titleFrame:CreateFontString(nil, "OVERLAY")
@@ -166,9 +170,9 @@ function private:CreateWeakauraFrame()
 
     -- This will be populated in the loop below
     local entries = {}
-    local WAString = private:GetWeakauraString();
+    
 
-    for i, v in ipairs(WAString) do
+    for i, v in ipairs(WAStrings) do
         local WaTable = private:decodeWAPacket(v)
         local entry = CreateEntry(WaTable)
         entry:SetSize(scrollChild:GetWidth(), entryHeight)
