@@ -10,7 +10,7 @@ importText = importText Text that will be on the button
 ]]
 local addonName = "Dominos"
 local importText = "Import"
-local data =  {
+local data = {
     ["frames"] = {
         {
             ["point"] = "BOTTOM",
@@ -30,7 +30,7 @@ local data =  {
             ["padH"] = 2,
             ["fadeInDelay"] = false,
             ["pages"] = {
-                ["DEATHKNIGHT"] = {
+                ["WARRIOR"] = {
                     ["page2"] = 1,
                     ["page5"] = 4,
                     ["page4"] = 3,
@@ -46,7 +46,7 @@ local data =  {
             ["scale"] = 0.8,
             ["y"] = 69,
             ["pages"] = {
-                ["DEATHKNIGHT"] = {
+                ["WARRIOR"] = {
                 },
             },
             ["unit"] = "none",
@@ -68,7 +68,7 @@ local data =  {
             ["scale"] = 0.8,
             ["y"] = 200.0001220703125,
             ["pages"] = {
-                ["DEATHKNIGHT"] = {
+                ["WARRIOR"] = {
                 },
             },
             ["unit"] = "none",
@@ -90,7 +90,7 @@ local data =  {
             ["scale"] = 0.8,
             ["y"] = 249.0001068115234,
             ["pages"] = {
-                ["DEATHKNIGHT"] = {
+                ["WARRIOR"] = {
                 },
             },
             ["unit"] = "none",
@@ -110,7 +110,7 @@ local data =  {
         {
             ["columns"] = 6,
             ["pages"] = {
-                ["DEATHKNIGHT"] = {
+                ["WARRIOR"] = {
                 },
             },
             ["scale"] = 0.7,
@@ -129,7 +129,7 @@ local data =  {
         {
             ["columns"] = 6,
             ["pages"] = {
-                ["DEATHKNIGHT"] = {
+                ["WARRIOR"] = {
                 },
             },
             ["scale"] = 0.7,
@@ -161,14 +161,14 @@ local data =  {
             ["padH"] = 2,
             ["rowOffset"] = -1,
             ["pages"] = {
-                ["DEATHKNIGHT"] = {
+                ["WARRIOR"] = {
                 },
             },
             ["rowSpacing"] = 0,
         },
         {
             ["pages"] = {
-                ["DEATHKNIGHT"] = {
+                ["WARRIOR"] = {
                 },
             },
             ["point"] = "BOTTOMLEFT",
@@ -204,7 +204,7 @@ local data =  {
             ["padH"] = 2,
             ["isBottomToTop"] = true,
             ["pages"] = {
-                ["DEATHKNIGHT"] = {
+                ["WARRIOR"] = {
                 },
             },
             ["x"] = -343.7040176391602,
@@ -212,7 +212,7 @@ local data =  {
         {
             ["point"] = "BOTTOMRIGHT",
             ["pages"] = {
-                ["DEATHKNIGHT"] = {
+                ["WARRIOR"] = {
                 },
             },
             ["scale"] = 0.75,
@@ -231,7 +231,7 @@ local data =  {
         {
             ["point"] = "TOPLEFT",
             ["pages"] = {
-                ["DEATHKNIGHT"] = {
+                ["WARRIOR"] = {
                 },
             },
             ["y"] = -155.0000228881836,
@@ -257,7 +257,7 @@ local data =  {
             ["unit"] = "none",
             ["padW"] = 2,
             ["pages"] = {
-                ["DEATHKNIGHT"] = {
+                ["WARRIOR"] = {
                 },
             },
             ["anchor"] = {
@@ -278,7 +278,7 @@ local data =  {
             ["unit"] = "none",
             ["padW"] = 2,
             ["pages"] = {
-                ["DEATHKNIGHT"] = {
+                ["WARRIOR"] = {
                 },
             },
             ["anchor"] = {
@@ -299,7 +299,7 @@ local data =  {
             ["unit"] = "none",
             ["padW"] = 2,
             ["pages"] = {
-                ["DEATHKNIGHT"] = {
+                ["WARRIOR"] = {
                 },
             },
             ["padH"] = 2,
@@ -602,16 +602,25 @@ local data =  {
 
 local function install()
     if DominosDB then
-        DominosDB["char"][private.g.cName .. " - " .. private.g.cRealm] = {
-            ["bindingsVersion"] = 3,
+        DominosDB["char"] = {
+            [private.g.cName .. " - " .. private.g.cRealm] = {
+                ["bindingsVersion"] = 3,
+            }
         }
-        DominosDB["namespaces"]["ProgressBars"]["char"][private.g.cName .. " - " .. private.g.cRealm] =  {
-            ["bars"] = {
-                ["exp"] = {
-                    ["mode"] = "xp",
-                },
-            },
+       
+        DominosDB["namespaces"]["ProgressBars"] = {
+            ["char"] = {
+                [private.g.cName .. " - " .. private.g.cRealm] =
+                {
+                    ["bars"] = {
+                        ["exp"] = {
+                            ["mode"] = "xp",
+                        },
+                    },
+                }
+            }
         }
+
         DominosDB["profiles"][private.g.name] = data
         DominosDB["profileKeys"][private.g.cName .. " - " .. private.g.cRealm] = private.g.name
     end
