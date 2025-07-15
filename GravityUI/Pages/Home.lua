@@ -218,23 +218,58 @@ function private.pages:Home(frame)
     --Styling
     local scrollbar = scrollFrame.scrollbar
 
+    --centering scrollbar
+    scrollbar:SetPoint("TOPLEFT", scrollFrame.scrollframe, "TOPRIGHT", 3, -16)
+	scrollbar:SetPoint("BOTTOMLEFT", scrollFrame.scrollframe, "BOTTOMRIGHT", 3, 16)
+
     -- Try to set the track/rail texture
     if not scrollbar.Track then
         local track = scrollbar:CreateTexture(nil, "BACKGROUND")
         track:SetAllPoints()
         track:SetTexture("Interface\\AddOns\\GravityUI\\Media\\Scrollbar\\bar.tga")
         scrollbar.Track = track
+        scrollbar.Track:SetTexCoord(0, 1, 0, 1) -- or (0.08, 0.92, 0.08, 0.92) if needed
     end
     scrollbar.ThumbTexture:SetTexture("Interface\\AddOns\\GravityUI\\Media\\Scrollbar\\button.tga")
+    
+    if scrollbar.ThumbTexture then
+        scrollbar.ThumbTexture:SetTexCoord(0, 1, 0, 1) -- or (0.08, 0.92, 0.08, 0.92) if needed
+    end
+   
 
     scrollbar.ScrollDownButton:SetNormalTexture("Interface\\AddOns\\GravityUI\\Media\\Scrollbar\\down.tga")
     scrollbar.ScrollDownButton:SetPushedTexture("Interface\\AddOns\\GravityUI\\Media\\Scrollbar\\down.tga")
     scrollbar.ScrollDownButton:SetHighlightTexture("Interface\\AddOns\\GravityUI\\Media\\Scrollbar\\down.tga")
     scrollbar.ScrollDownButton:SetDisabledTexture("Interface\\AddOns\\GravityUI\\Media\\Scrollbar\\down.tga")
 
+    -- For Down Button
+    local downNormal = scrollbar.ScrollDownButton:GetNormalTexture()
+    if downNormal then downNormal:SetAllPoints(); downNormal:SetTexCoord(0, 1, 0, 1) end
+
+    local downPushed = scrollbar.ScrollDownButton:GetPushedTexture()
+    if downPushed then downPushed:SetAllPoints(); downPushed:SetTexCoord(0, 1, 0, 1) end
+
+    local downHighlight = scrollbar.ScrollDownButton:GetHighlightTexture()
+    if downHighlight then downHighlight:SetAllPoints(); downHighlight:SetTexCoord(0, 1, 0, 1) end
+
+    local downDisabled = scrollbar.ScrollDownButton:GetDisabledTexture()
+    if downDisabled then downDisabled:SetAllPoints(); downDisabled:SetTexCoord(0, 1, 0, 1) end
 
     scrollbar.ScrollUpButton:SetNormalTexture("Interface\\AddOns\\GravityUI\\Media\\Scrollbar\\up.tga")
     scrollbar.ScrollUpButton:SetPushedTexture("Interface\\AddOns\\GravityUI\\Media\\Scrollbar\\up.tga")
     scrollbar.ScrollUpButton:SetHighlightTexture("Interface\\AddOns\\GravityUI\\Media\\Scrollbar\\up.tga")
     scrollbar.ScrollUpButton:SetDisabledTexture("Interface\\AddOns\\GravityUI\\Media\\Scrollbar\\up.tga")
+
+    -- For Up Button
+    local upNormal = scrollbar.ScrollUpButton:GetNormalTexture()
+    if upNormal then upNormal:SetAllPoints(); upNormal:SetTexCoord(0, 1, 0, 1) end
+
+    local upPushed = scrollbar.ScrollUpButton:GetPushedTexture()
+    if upPushed then upPushed:SetAllPoints(); upPushed:SetTexCoord(0, 1, 0, 1) end
+
+    local upHighlight = scrollbar.ScrollUpButton:GetHighlightTexture()
+    if upHighlight then upHighlight:SetAllPoints(); upHighlight:SetTexCoord(0, 1, 0, 1) end
+
+    local upDisabled = scrollbar.ScrollUpButton:GetDisabledTexture()
+    if upDisabled then upDisabled:SetAllPoints(); upDisabled:SetTexCoord(0, 1, 0, 1) end
 end

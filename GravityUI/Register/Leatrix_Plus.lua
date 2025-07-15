@@ -271,11 +271,9 @@ local data = {
 
 local function install()
     if LeaPlusDB then
+        LeaPlusDB = data
         ChatFrame1EditBox:SetText("/ltp nosave")
         ChatEdit_SendText(ChatFrame1EditBox, 0)
-        LeaPlusDB = data
-        ReloadUI()
-
     end
 end
 

@@ -62,8 +62,9 @@ local data = {
         ["bank"] = true,
     },
     ["icon_corners_auto_insert_applied"] = {
-        ["battle_pet_level"] = true,
         ["bag_type"] = true,
+        ["battle_pet_level"] = true,
+        ["can_i_mog_it"] = true,
         ["keystone_level"] = true,
     },
     ["show_recents_tabs_main_view"] = false,
@@ -132,7 +133,7 @@ local data = {
         "__end",
         "default_other",
     },
-    ["current_skin"] = "blizzard",
+    ["current_skin"] = "dark",
     ["hide_boe_on_common"] = true,
     ["bank_view_type"] = "category",
     ["icon_grey_junk"] = true,
@@ -148,6 +149,7 @@ local data = {
         "junk",
     },
     ["icon_top_right_corner_array"] = {
+        "can_i_mog_it",
     },
     ["icon_bottom_right_corner_array"] = {
         "quantity",
@@ -276,7 +278,7 @@ local data = {
     ["icon_mark_unusable"] = false,
     ["character_select_position"] = {
         "RIGHT",
-        "Baganator_CategoryViewBackpackViewFrameblizzard",
+        "Baganator_CategoryViewBackpackViewFramedark",
         "LEFT",
         0,
         0,
@@ -287,8 +289,8 @@ local data = {
     ["category_default_import"] = 2,
     ["bag_view_position"] = {
         "BOTTOMRIGHT",
-        -7.4453125,
-        5.000270843505859,
+        -706.7044677734375,
+        346.3336181640625,
     },
     ["recent_timeout"] = 15,
     ["bag_icon_size"] = 36,
@@ -532,16 +534,9 @@ local data = {
         },
     },
     ["recent_characters_main_view"] = {
-        "Cronîx-Blackhand",
-        "Cronìx-Blackhand",
-        "Crônix-Blackhand",
-        "Evonix-Blackhand",
-        "Givemeloot-Eredar",
-        "Givemeloot-Blackhand",
-        "Bláckstar-Kel'Thuzad",
-        "Cròníx-Onyxia",
-        "Cròníx-Blackhand",
-        "Cronolie-Blackhand",
+        "Heligarona-Blackhand",
+        "Heligaronaa-TarrenMill",
+        "Tsetalsdjfla-TarrenMill",
     },
     ["debug_keywords"] = false,
     ["sort_ignore_bank_slots_count"] = {
@@ -590,7 +585,7 @@ local data = {
     },
     ["currency_panel_position"] = {
         "RIGHT",
-        "Baganator_CategoryViewBackpackViewFrameblizzard",
+        "Baganator_CategoryViewBackpackViewFramedark",
         "LEFT",
         0,
         0,
