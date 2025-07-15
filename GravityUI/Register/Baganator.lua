@@ -624,8 +624,21 @@ local function install()
     local name = UnitName("PLAYER")
     local realm = GetRealmName()
     if BAGANATOR_CURRENT_PROFILE and BAGANATOR_CONFIG then
-        BAGANATOR_CONFIG["sort_ignore_bank_slots_count"][name .. "-" .. realm] = 0
-        BAGANATOR_CONFIG["sort_ignore_slots_count_2"][name .. "-" .. realm] = 0
+        if  BAGANATOR_CONFIG["sort_ignore_bank_slots_count"] then
+            BAGANATOR_CONFIG["sort_ignore_bank_slots_count"][name .. "-" .. realm] = 0
+        else
+            BAGANATOR_CONFIG["sort_ignore_bank_slots_count"] = {
+                [name .. "-" .. realm] = 0
+            }
+        end
+        if BAGANATOR_CONFIG["sort_ignore_slots_count_2"] then
+            BAGANATOR_CONFIG["sort_ignore_slots_count_2"][name .. "-" .. realm] = 0
+        else
+            BAGANATOR_CONFIG["sort_ignore_slots_count_2"] = {
+                [name .. "-" .. realm] = 0
+            }   
+        end
+        
         BAGANATOR_CONFIG["Profiles"][private.g.name]  = data
         --Needs to be set 
         BAGANATOR_CURRENT_PROFILE = private.g.name
