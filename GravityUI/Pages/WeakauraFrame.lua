@@ -69,7 +69,7 @@ local function CreateEntry(WATable)
     importBtn:SetScript("OnClick", function()
         WeakAuras.Import(WATable, nil, function()
             importBtn:SetText("Imported")
-            importBtn:SetBackdropColor(0.216, 0.714, 1, 1)
+           -- importBtn:SetBackdropColor(0.216, 0.714, 1, 1)
         end)
     end)
     return entry
