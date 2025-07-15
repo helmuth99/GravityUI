@@ -8,7 +8,7 @@ import = importLink this needs to be a function
 importText = importText Text that will be on the button
 }
 ]]
-local addonName = "HiddingBar"
+local addonName = "HidingBar"
 local importText = "Import \n!!GLOBAL OVERWRITE!!"
 local data = {
     ["tstmp"] = 1752278464,
