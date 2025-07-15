@@ -33,7 +33,7 @@ Prat 3.0 (Chat)
 Details (Damage Meter) 
 Plater (Nameplates) 
 WeakAuras (WeakAuras)
-Leatrix Plus (Many functions for Interface "minimap") 
+Leatrix Plus (Many functions for Interface "minimap")  Currently the import is getting blocked. We are working on a fix. Fast and ugly fix is /ltp > Interface > Enhanced Minimap. 
 
 **[nice to have]**
 Baganator + Syndicator (Bags) 
@@ -48,9 +48,10 @@ HidingBar (Minimap Buttons hide in a bar)
 CronixUI Media (Fonts, Textures, Bars) (included)
 Skinner (UI Overhaul "dark windows") 
 
+We strongly recommend installing the addon Masque and the Masque-ElvUIesque Skin for the action bar.
+
 **[raid + dungeons]**
 Method Raid Tools (Raid)
-
 
 **Shoutout:**
 Special thank to [Hijack](https://wago.io/p/iamhijack) for building and letting us use his awesome class Weakauras.
