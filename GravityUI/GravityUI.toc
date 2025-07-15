@@ -4,7 +4,7 @@
 ## IconTexture: Interface\AddOns\GravityUI\Media\GRAVITY_UI_Icon.blp
 ## Author: Helimeister, Cronix
 ## RequiredDeps: CronixUIMedia
-## OptionalDeps: Cell, Dominos, Prat-3.0, Details, Plater, WeakAuras, Leatrix_Plus, Baganator, BigWigs, HidingBar, MRT, OmniCD, Skinner, WarpDeplete, WeakAuras,
+## OptionalDeps: Cell, Dominos, Prat-3.0, Details, Plater, WeakAuras, Leatrix_Plus, Baganator, BigWigs, HidingBar, MRT, OmniCD, Skinner, WarpDeplete, WeakAuras, Cell_UnitFrames
 ## Version: @project-version@
 ## DefaultState: enabled
 ## SavedVariables: GravityUIDB
@@ -31,6 +31,7 @@ Pages/WeakauraFrame.lua
 Register/Weakaura.lua
 Register/EditMode.lua
 Register/Cell.lua
+Register/Cell_UnitFrames.lua
 Register/Dominos.lua
 Register/Prat-3.0.lua
 Register/Details.lua

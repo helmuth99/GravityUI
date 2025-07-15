@@ -26,7 +26,8 @@ To open the installer manuelly use any of these chat commands: /cui, /CUI, /GUI,
 CronixUI uses the following addons:
 
 **[important]**
-Cell (Unit- Group- Raidframes) 
+Cell (Group- Raidframes) 
+Cell_UnitFrame (Unitframes)
 Dominos (ActionBars + Group Loot) 
 Prat 3.0 (Chat) 
 Details (Damage Meter) 

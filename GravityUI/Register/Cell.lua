@@ -26,11 +26,6 @@ local importLink = function()
     local version, data = string.match(importString, "^!CELL:(%d+):ALL!(.+)$")
     version = tonumber(version)
     
-    useDevTool(version, "version")       
-    useDevTool(data, "import data before")-- deserialize
-    useDevTool(Cell.MIN_VERSION, "MIN_VERSION")
-    useDevTool(Cell.versionNum, "Cell.versionNum")
-    
     if version and data then
         if version >= Cell.MIN_VERSION and version <= Cell.versionNum then
             local success
