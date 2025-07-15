@@ -1,5 +1,5 @@
 local addon, private = ...
-
+local LeaPlusDB = LeaPlusDB
 
 -- the following convention is applied
 --[[ save private.Addons[addonName] = {
@@ -9,7 +9,7 @@ importText = importText Text that will be on the button
 }
 ]]
 local addonName = "Leatrix_Plus"
-local importText = "Import \n!!Global Overwrite!!"
+local importText = "BROKEN/Not Working"
 local data = {
     ["MuteOttuks"] = "Off",
     ["WidgetTopR"] = "TOP",
@@ -271,7 +271,11 @@ local data = {
 
 local function install()
     if LeaPlusDB then
+        ChatFrame1EditBox:SetText("/ltp nosave")
+        ChatEdit_SendText(ChatFrame1EditBox, 0)
         LeaPlusDB = data
+        ReloadUI()
+
     end
 end
 
