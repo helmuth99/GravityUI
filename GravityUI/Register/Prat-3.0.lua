@@ -171,7 +171,12 @@ local data =  {
 local function install()
     if Prat3DB then
         for k, v in pairs(data) do
-            Prat3DB[k]["profiles"][private.g.name] =  v["profiles"]["Cronix UI"]
+            if Prat3DB["namespaces"][k] then
+                Prat3DB["namespaces"][k]["profiles"][private.g.name] =  v["profiles"]["Cronix UI"] 
+            else
+                Prat3DB["namespaces"][k] =  v
+            end
+           
         end
         Prat3DB["profileKeys"][private.g.cName .. " - " .. private.g.cRealm] = private.g.name
         Prat3DB["profiles"][private.g.name]= {
