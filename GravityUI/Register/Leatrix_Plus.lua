@@ -10,7 +10,7 @@ importTwink = Twinkinstallation Process
 }
 ]]
 local addonName = "Leatrix_Plus"
-local importText = "BROKEN/Not Working"
+local importText = "Import\n !!Global Overwrite!!"
 local data = {
     ["MuteOttuks"] = "Off",
     ["WidgetTopR"] = "TOP",
@@ -272,9 +272,13 @@ local data = {
 
 local function install()
     if LeaPlusDB then
+        SlashCmdList["Leatrix_Plus"]("nosave")
+        for key, val in pairs(data) do
+            if LeaPlusDB[key] then
+                LeaPlusDB[key] = val
+            end 
+        end
         LeaPlusDB = data
-        ChatFrame1EditBox:SetText("/ltp nosave")
-        ChatEdit_SendText(ChatFrame1EditBox, 0)
     end
 end
 
