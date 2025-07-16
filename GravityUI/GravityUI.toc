@@ -11,8 +11,9 @@
 ## X-Curse-Project-ID: 1102290
 ## X-Wago-ID: 96E7e8Gg
 
-Core.lua
 embeds.xml
+Core.lua
+
 
 Utils/GravityFrame.lua
 Utils/GravityInlineGroup.lua
