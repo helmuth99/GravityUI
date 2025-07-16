@@ -1,4 +1,4 @@
-## Interface: 110002, 110100, 110107
+## Interface: 110002, 110100, 110107, 110200
 ## Title: |cff00ccffGravityUI|r
 ## Notes: Installs the GravityUI
 ## IconTexture: Interface\AddOns\GravityUI\Media\GRAVITY_UI_Icon.blp
