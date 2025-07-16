@@ -473,5 +473,5 @@ table.insert(private.Addons, {
     name = addonName,
     import = import,
     importText = importText,
-    importTwink = importTwink
+    importTwink = nil
 })

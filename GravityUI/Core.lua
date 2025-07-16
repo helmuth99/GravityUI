@@ -129,7 +129,7 @@ function GravityUI:OnInitialize()
 end
 
 function GravityUI:HandleSlash(msg)
-    if msg == "twink" then
+    if msg == "twink" or  msg == "alt"  then
         GravityUI:ShowTwinkFrame()
     else
         GravityUI:ShowFrame()

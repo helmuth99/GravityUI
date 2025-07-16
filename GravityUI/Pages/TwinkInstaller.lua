@@ -309,6 +309,8 @@ function private.pages:TwinkHome(frame)
     leftButton:SetFullWidth(true)
     leftButton:SetHeight(itemHeight)
     leftButton:SetText("Express Installation")
+    leftButton.text:SetFont(private.g.font, 14, "OUTLINE")
+    leftButton.text:SetTextColor(1, 1, 1) -- White text
     StyleButton(leftButton.frame)
     buttonWrapper:AddChild(leftButton)
 
@@ -316,6 +318,8 @@ function private.pages:TwinkHome(frame)
     rightButton:SetFullWidth(true)
     rightButton:SetHeight(itemHeight)
     rightButton:SetText("Manuel Installation")
+    rightButton.text:SetFont(private.g.font, 14, "OUTLINE")
+    rightButton.text:SetTextColor(1, 1, 1) -- White text
     StyleButton(rightButton.frame)
     buttonWrapper:AddChild(rightButton)
 

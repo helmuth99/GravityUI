@@ -132,5 +132,5 @@ table.insert(private.Addons, {
     name = addonName,
     import = importLink,
     importText = importText,
-    importTwink = function() return end
+    importTwink = nil
 })

@@ -61,9 +61,16 @@ local function frame()
     
 end
 
+local function frameTwink()
+    if private.g.twinkFrame then
+        private.pages:CreateWeakauraFrame(WAStrings,private.g.twinkFrame.frame)
+    end
+    
+end
+
 table.insert(private.Addons, {
     name = addonName,
     import = frame,
     importText = importText,
-	importTwink = frame
+	importTwink = frameTwink
 })
