@@ -24,6 +24,7 @@ Utils/GravitySimpleGroup.lua
 #frames
 Pages/Home.lua
 Pages/WeakauraFrame.lua
+Pages/TwinkInstaller.lua
 #Utils/WeakauraFrame.lua
 
 

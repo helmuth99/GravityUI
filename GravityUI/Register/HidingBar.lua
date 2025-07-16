@@ -6,6 +6,7 @@ local addon, private = ...
 name = addonName
 import = importLink this needs to be a function
 importText = importText Text that will be on the button
+importTwink = Twinkinstallation Process 
 }
 ]]
 local addonName = "HidingBar"
@@ -305,5 +306,6 @@ end
 table.insert(private.Addons, {
     name = addonName,
     import = import,
-    importText = importText
+    importText = importText,
+    importTwink = function() return end
 })

@@ -1,10 +1,11 @@
 local addon, private = ...
 
 -- the following convention is applied
---[[ save private.Addons[addonName] = {
+--[[ save private.Addons[addonname] = {
 name = addonName
 import = importLink this needs to be a function
 importText = importText Text that will be on the button
+importTwink = Twinkinstallation Process 
 }
 ]]
 
@@ -63,5 +64,6 @@ end
 table.insert(private.Addons, {
     name = addonName,
     import = frame,
-    importText = importText
+    importText = importText,
+	importTwink = frame
 })

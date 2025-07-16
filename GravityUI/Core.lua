@@ -3,6 +3,7 @@ local Version = C_AddOns.GetAddOnMetadata(addon, "Version")
 private.g = {}
 private.g.name = addon
 private.g.mainFrame = nil
+private.g.mainFrame = nil
 private.GravityUI = nil  --will be set after init of LibStub
 private.AceGUI = LibStub("AceGUI-3.0")
 --private.AddonList = {"Cell", "Dominos", "Prat 3.0", "Details", "Plater", "WeakAuras", "LeatrixPlus", "Bagantor", "WarpDeplete", "BigWigs", "OmniCD", "HidingBar", "Skinner"}
@@ -40,11 +41,15 @@ local GravityUI = LibStub("AceAddon-3.0"):NewAddon(private.g.name, "AceConsole-3
 private.GravityUI = GravityUI
 
 local function ShouldReload()
+    GravityUI.db.char[private.g.cName .. "-" .. private.g.cRealm] = true
     if GravityUI.db.global.reload then
         ReloadUI()
     end
 end
 function GravityUI:ShowFrame()
+    if private.g.twinkFrame then
+        private.g.twinkFrame:Hide()
+    end
     if not private.g.mainFrame then
         local frame = GravityUI:CreateFrame()
         private.pages:Home(frame)
@@ -61,6 +66,28 @@ function GravityUI:ShowFrame()
         private.g.mainFrame:Show()
     end
 end
+
+function GravityUI:ShowTwinkFrame()
+    if private.g.mainFrame then
+        private.g.mainFrame:Hide()
+    end
+    if not private.g.twinkFrame then
+        local frame = GravityUI:CreateFrame()
+        private.pages:TwinkHome(frame)
+        frame:SetTitle("GRAVITY UI powered by |cff00ccffCronix UI|r")
+        private.g.twinkFrame = frame
+        frame:SetCallback("OnClose", function(widget) 
+            ShouldReload() 
+            end)
+        return
+    end
+    if private.g.twinkFrame:IsShown() then
+        private.g.twinkFrame:Hide()
+    else
+        private.g.twinkFrame:Show()
+    end
+end
+
 
 
 function GravityUI:OnInitialize()
@@ -81,10 +108,11 @@ function GravityUI:OnInitialize()
     if not GravityUI.db.global.Version or GravityUI.db.global.Version == 0 then --this was set by a reload we still need to fix this
 		GravityUI:ShowFrame()
         GravityUI.db.global.Version = Version
+        
 	end
 
     if not GravityUI.db.char or not GravityUI.db.char[private.g.cName .. "-" .. private.g.cRealm] then
-        GravityUI.db.char[private.g.cName .. "-" .. private.g.cRealm] = true
+        GravityUI:ShowTwinkFrame()
     end
 
     if GravityUI.db.global.reload then
@@ -100,6 +128,10 @@ function GravityUI:OnInitialize()
     self:RegisterChatCommand("CUI", "HandleSlash")
 end
 
-function GravityUI:HandleSlash()
-    GravityUI:ShowFrame()
+function GravityUI:HandleSlash(msg)
+    if msg == "twink" then
+        GravityUI:ShowTwinkFrame()
+    else
+        GravityUI:ShowFrame()
+    end
 end

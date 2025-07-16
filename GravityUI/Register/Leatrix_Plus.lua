@@ -2,10 +2,11 @@ local addon, private = ...
 local LeaPlusDB = LeaPlusDB
 
 -- the following convention is applied
---[[ save private.Addons[addonName] = {
+--[[ save private.Addons[addonname] = {
 name = addonName
 import = importLink this needs to be a function
 importText = importText Text that will be on the button
+importTwink = Twinkinstallation Process 
 }
 ]]
 local addonName = "Leatrix_Plus"
@@ -280,5 +281,6 @@ end
 table.insert(private.Addons, {
     name = addonName,
     import = install,
-    importText = importText
+    importText = importText,
+    importTwink = nil
 })

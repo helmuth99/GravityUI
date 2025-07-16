@@ -5,6 +5,7 @@ local addon, private = ...
 name = addonName
 import = importLink this needs to be a function
 importText = importText Text that will be on the button
+importTwink = Twinkinstallation Process 
 }
 ]]
 
@@ -17,5 +18,12 @@ table.insert(private.Addons, {
     import = function()
         return BigWigsAPI.RegisterProfile(private.g.name, importString, private.g.name)
     end,
-    importText = importText
+    importText = importText,
+    importTwink = function()
+        local name = UnitName("PLAYER")
+        local realm = GetRealmName()
+        if BigWigs3DB then
+            BigWigs3DB["profileKeys"][name .. " - " .. realm] = private.g.name
+        end  
+    end
 })

@@ -6,6 +6,7 @@ local addon, private = ...
 name = addonName
 import = importLink this needs to be a function
 importText = importText Text that will be on the button
+importTwink = Twinkinstallation Process 
 }
 ]]
 local importText = "Import"
@@ -17,8 +18,6 @@ local importString =
 local Serializer = LibStub:GetLibrary("LibSerialize")
 local LibDeflate = LibStub:GetLibrary("LibDeflate")
 local importLink = function()
-    
-
     local F = Cell.funcs
 
     local importString = importString
@@ -35,8 +34,6 @@ local importLink = function()
             data = LibDeflate:DecodeForPrint(data)                                    -- decode
             success, data = pcall(LibDeflate.DecompressDeflate, LibDeflate, data)     -- decompress
             success, data = Serializer:Deserialize(data)    
-            useDevTool(success, "success")                          -- deserialize
-            useDevTool(data, "import data")
             if success and data then
                 imported = data
                 -- raid debuffs
@@ -129,11 +126,11 @@ local importLink = function()
             end
         end
     end
-
 end
 
 table.insert(private.Addons, {
     name = addonName,
     import = importLink,
-    importText = importText
+    importText = importText,
+    importTwink = function() return end
 })

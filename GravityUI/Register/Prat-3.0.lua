@@ -2,10 +2,11 @@ local addon, private = ...
 
 
 -- the following convention is applied
---[[ save private.Addons[addonName] = {
+--[[ save private.Addons[addonname] = {
 name = addonName
 import = importLink this needs to be a function
 importText = importText Text that will be on the button
+importTwink = Twinkinstallation Process 
 }
 ]]
 local addonName = "Prat-3.0"
@@ -202,8 +203,23 @@ local function install()
 
 end
 
+local function importTwink()
+    if Prat3DB then
+        for k, v in pairs(data) do
+            if Prat3DB["namespaces"][k] then
+                Prat3DB["namespaces"][k]["profiles"][private.g.name] =  v["profiles"]["Cronix UI"] 
+            else
+                Prat3DB["namespaces"][k] =  v
+            end
+           
+        end
+        Prat3DB["profileKeys"][private.g.cName .. " - " .. private.g.cRealm] = private.g.name
+    end
+end
+
 table.insert(private.Addons, {
     name = addonName,
     import = install,
-    importText = importText
+    importText = importText,
+    importTwink = importTwink
 })

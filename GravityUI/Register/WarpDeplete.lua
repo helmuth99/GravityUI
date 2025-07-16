@@ -1,13 +1,14 @@
 local addon, private = ...
 
-
 -- the following convention is applied
 --[[ save private.Addons[addonname] = {
 name = addonName
 import = importLink this needs to be a function
 importText = importText Text that will be on the button
+importTwink = Twinkinstallation Process 
 }
 ]]
+local a
 local addonName = "WarpDeplete"
 local importText = "Import"
 local data = {
@@ -56,9 +57,17 @@ local function install()
     end
 end
 
+local function importTwink()
+    if WarpDepleteDB then
+        local name = private.g.cName
+        local realm = private.g.cRealm
+        WarpDepleteDB["profileKeys"][name .. " - " .. realm] = private.g.name
+    end
+end
 
 table.insert(private.Addons, {
     name = addonName,
     import = install,
-    importText = importText
+    importText = importText,
+    importTwink = importTwink
 })

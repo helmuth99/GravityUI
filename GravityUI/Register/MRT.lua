@@ -6,6 +6,7 @@ local addon, private = ...
 name = addonName
 import = importLink this needs to be a function
 importText = importText Text that will be on the button
+importTwink = Twinkinstallation Process 
 }
 ]]
 local addonName = "MRT"
@@ -18,7 +19,6 @@ local function import()
     local headerLen = importString:sub(1, 4) == "EXRT" and 6 or 5
     local header = importString:sub(1, headerLen)
     if GMRT then
-        useDevTool(GMRT.A, "MRT")
         GMRT.A.Profiles:TextToProfile(importString:sub(headerLen + 1), header:sub(headerLen, headerLen) == "0")
         local name = UnitName("PLAYER")
         local realm = GetRealmName()
@@ -26,3 +26,18 @@ local function import()
     end
 end
 
+local function importTwink()
+    if GMRT then
+        local name = UnitName("PLAYER")
+        local realm = GetRealmName()
+        VMRT["ProfileKeys"][name .. "-" .. realm] = "Cronix UI" --danke cronix  : >>>>>>>
+    end
+end
+
+
+table.insert(private.Addons, {
+    name = addonName,
+    import = import,
+    importText = importText,
+    importTwink = importTwink
+})

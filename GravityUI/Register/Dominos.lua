@@ -1,13 +1,13 @@
 local addon, private = ...
-
-
 -- the following convention is applied
---[[ save private.Addons[addonName] = {
+--[[ save private.Addons[addonname] = {
 name = addonName
 import = importLink this needs to be a function
 importText = importText Text that will be on the button
+importTwink = Twinkinstallation Process 
 }
 ]]
+
 local addonName = "Dominos"
 local importText = "Import"
 local data = {
@@ -626,8 +626,33 @@ local function install()
     end
 end
 
+
+local function importTwink()
+    if DominosDB then
+        DominosDB["char"] = {
+            [private.g.cName .. " - " .. private.g.cRealm] = {
+                ["bindingsVersion"] = 3,
+            }
+        }
+       
+        DominosDB["namespaces"]["ProgressBars"] = {
+            ["char"] = {
+                [private.g.cName .. " - " .. private.g.cRealm] =
+                {
+                    ["bars"] = {
+                        ["exp"] = {
+                            ["mode"] = "xp",
+                        },
+                    },
+                }
+            }
+        }
+        DominosDB["profileKeys"][private.g.cName .. " - " .. private.g.cRealm] = private.g.name
+    end
+end
 table.insert(private.Addons, {
     name = addonName,
     import = install,
-    importText = importText
+    importText = importText,
+    importTwink = importTwink
 })

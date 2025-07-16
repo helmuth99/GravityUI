@@ -2,10 +2,11 @@ local addon, private = ...
 
 
 -- the following convention is applied
---[[ save private.Addons[addonName] = {
+--[[ save private.Addons[addonname] = {
 name = addonName
 import = importLink this needs to be a function
 importText = importText Text that will be on the button
+importTwink = Twinkinstallation Process 
 }
 ]]
 local addonName = "Cell_UnitFrames"
@@ -464,8 +465,13 @@ local function import()
     end
 end
 
+local function  importTwink()
+    return
+end
+
 table.insert(private.Addons, {
     name = addonName,
     import = import,
-    importText = importText
+    importText = importText,
+    importTwink = importTwink
 })

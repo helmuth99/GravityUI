@@ -6,6 +6,7 @@ local addon, private = ...
 name = addonName
 import = importLink this needs to be a function
 importText = importText Text that will be on the button
+importTwink = Twinkinstallation Process 
 }
 ]]
 local addonName = "OmniCD"
@@ -16,7 +17,6 @@ local importString =
 table.insert(private.Addons, {
     name = addonName,
     import = function ()
-    useDevTool(_G.OmniCD, "OmniCD table")
         if OmniCD then
             local profileType, profileKey, profileData = OmniCD[1].ProfileSharing:Decode(importString)
             if profileType then
@@ -25,5 +25,11 @@ table.insert(private.Addons, {
            
         end
     end,
-    importText = importText
+    importText = importText,
+    
+    importTwink = function()
+        if OmniCDDB then 
+            OmniCDDB["profileKeys"][private.g.cName .. " - " .. private.g.cRealm] = "Cronix UI"
+        end
+    end
 })

@@ -5,6 +5,7 @@ local addon, private = ...
 name = addonName
 import = importLink this needs to be a function
 importText = importText Text that will be on the button
+importTwink = Twinkinstallation Process 
 }
 ]]
 
@@ -20,9 +21,24 @@ local function import()
     EditModeManagerFrame:Hide()
 end
 
+local function importTwink()
+    local layoutInfo = C_EditMode.GetLayouts()
+    local index
+    for i, layout in ipairs(layoutInfo.layouts) do
+        
+        if layout.layoutName == private.g.name then
+            index =  layout.systems["systemIndex"]
+            break
+        end
+    end
+    print(index)
+    C_EditMode.SetActiveLayout(index)
+end
+
 table.insert(private.Addons, {
     name = addonName,
     import = import,
     importText = importText,
-    overwrite = overwrite
+    overwrite = overwrite,
+    importTwink = import
 })

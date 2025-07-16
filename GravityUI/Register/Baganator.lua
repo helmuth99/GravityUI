@@ -6,6 +6,7 @@ local addon, private = ...
 name = addonName
 import = importLink this needs to be a function
 importText = importText Text that will be on the button
+importTwink = Twinkinstallation Process 
 }
 ]]
 local addonName = "Baganator"
@@ -641,10 +642,32 @@ local function install()
    
 end
 
+local function InstallTwinks()
+    local name = UnitName("PLAYER")
+    local realm = GetRealmName()
+    if BAGANATOR_CURRENT_PROFILE and BAGANATOR_CONFIG then
+        if  BAGANATOR_CONFIG["sort_ignore_bank_slots_count"] then
+            BAGANATOR_CONFIG["sort_ignore_bank_slots_count"][name .. "-" .. realm] = 0
+        else
+            BAGANATOR_CONFIG["sort_ignore_bank_slots_count"] = {
+                [name .. "-" .. realm] = 0
+            }
+        end
+        if BAGANATOR_CONFIG["sort_ignore_slots_count_2"] then
+            BAGANATOR_CONFIG["sort_ignore_slots_count_2"][name .. "-" .. realm] = 0
+        else
+            BAGANATOR_CONFIG["sort_ignore_slots_count_2"] = {
+                [name .. "-" .. realm] = 0
+            }   
+        end
+    end
+        BAGANATOR_CURRENT_PROFILE = private.g.name
+end
 
 
 table.insert(private.Addons, {
     name = addonName,
     import = install,
-    importText = importText
+    importText = importText,
+    importTwink = InstallTwinks
 })
