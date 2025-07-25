@@ -33,7 +33,8 @@ Prat 3.0 (Chat)
 Details (Damage Meter) 
 Plater (Nameplates) 
 WeakAuras (WeakAuras)
-Leatrix Plus (Many functions for Interface "minimap")  Currently the import is getting blocked. We are working on a fix. Fast and ugly fix is /ltp > Interface > Enhanced Minimap. 
+Leatrix Plus (Many functions for Interface "minimap") 
+
 
 **[nice to have]**
 Baganator + Syndicator (Bags) 
@@ -47,6 +48,7 @@ HidingBar (Minimap Buttons hide in a bar)
 **[design]**
 CronixUI Media (Fonts, Textures, Bars) (included)
 Skinner (UI Overhaul "dark windows") 
+Masque + Masque - ElvUIesque Skin (Actionbar design)
 
 We strongly recommend installing the addon Masque and the Masque-ElvUIesque Skin for the action bar.
 

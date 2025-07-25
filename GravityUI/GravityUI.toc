@@ -4,7 +4,7 @@
 ## IconTexture: Interface\AddOns\GravityUI\Media\GRAVITY_UI_Icon.blp
 ## Author: Helimeister, Cronix
 ## RequiredDeps: CronixUIMedia
-## OptionalDeps: Cell, Dominos, Prat-3.0, Details, Plater, WeakAuras, Leatrix_Plus, Baganator, BigWigs, HidingBar, MRT, OmniCD, Skinner, WarpDeplete, WeakAuras, Cell_UnitFrames
+## OptionalDeps: Cell, Dominos, Prat-3.0, Details, Plater, WeakAuras, Leatrix_Plus, Baganator, BigWigs, HidingBar, MRT, OmniCD, Skinner, WarpDeplete, WeakAuras, Cell_UnitFrames, Masque_ElvUIesque
 ## Version: @project-version@
 ## DefaultState: enabled
 ## SavedVariables: GravityUIDB
@@ -46,6 +46,7 @@ Register/MRT.lua
 Register/OmniCD.lua
 Register/HidingBar.lua
 Register/Skinner.lua
+Register/Masque_ElvUIesque.lua
 
 #Media wip enable when moving shared media into addon
 #SharedMedia/SharedMedia.lua
