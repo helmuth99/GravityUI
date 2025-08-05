@@ -12,10 +12,10 @@ importTwink = Twinkinstallation Process
 local addonName = "Baganator"
 local importText = "Import"
 local data = {
-    ["guild_view_width"] = 16,
+    ["guild_view_width"] = 14,
     ["empty_slot_background"] = true,
     ["junk_plugin"] = "poor_quality",
-    ["reduce_spacing"] = true,
+    ["reduce_spacing"] = false,
     ["bag_view_type"] = "category",
     ["automatic_categories_added"] = {
         ["default_miscellaneous"] = true,
@@ -63,9 +63,8 @@ local data = {
         ["bank"] = true,
     },
     ["icon_corners_auto_insert_applied"] = {
-        ["bag_type"] = true,
         ["battle_pet_level"] = true,
-        ["can_i_mog_it"] = true,
+        ["bag_type"] = true,
         ["keystone_level"] = true,
     },
     ["show_recents_tabs_main_view"] = false,
@@ -134,7 +133,7 @@ local data = {
         "__end",
         "default_other",
     },
-    ["current_skin"] = "dark",
+    ["current_skin"] = "blizzard",
     ["hide_boe_on_common"] = true,
     ["bank_view_type"] = "category",
     ["icon_grey_junk"] = true,
@@ -150,22 +149,16 @@ local data = {
         "junk",
     },
     ["icon_top_right_corner_array"] = {
-        "can_i_mog_it",
     },
     ["icon_bottom_right_corner_array"] = {
         "quantity",
     },
     ["bank_view_position"] = {
         "BOTTOMLEFT",
-        27.33331298828125,
-        169.22216796875,
+        5.999975681304932,
+        307.4441833496094,
     },
     ["sort_start_at_bottom"] = false,
-    ["guild_view_position_2"] = {
-        "TOPLEFT",
-        49.99991226196289,
-        -112.9259626600494,
-    },
     ["custom_categories"] = {
         ["23"] = {
             ["name"] = "Weapons",
@@ -187,13 +180,13 @@ local data = {
             ["name"] = "Ring",
             ["search"] = "#finger",
         },
+        ["8"] = {
+            ["name"] = "Trinkets",
+            ["search"] = "#trinket",
+        },
         ["15"] = {
             ["name"] = "Gems",
             ["search"] = "#gem",
-        },
-        ["24"] = {
-            ["name"] = "BoA",
-            ["search"] = "boa",
         },
         ["9"] = {
             ["name"] = "Quest",
@@ -243,9 +236,9 @@ local data = {
             ["name"] = "BoE",
             ["search"] = "boe",
         },
-        ["8"] = {
-            ["name"] = "Trinkets",
-            ["search"] = "#trinket",
+        ["24"] = {
+            ["name"] = "BoA",
+            ["search"] = "boa",
         },
         ["16"] = {
             ["name"] = "Toys",
@@ -272,33 +265,42 @@ local data = {
             ["search"] = "",
         },
     },
+    ["icon_mark_unusable"] = false,
+    ["guild_current_tab"] = 2,
+    ["guild_view_position_2"] = {
+        "TOPLEFT",
+        150.4443664550781,
+        -143.148193359375,
+    },
+    ["lock_frames"] = false,
     ["debug_timers"] = false,
     ["seen_welcome"] = 1,
     ["hide_special_container"] = {
     },
-    ["icon_mark_unusable"] = false,
+    ["category_sort_method"] = "item-level",
     ["character_select_position"] = {
         "RIGHT",
-        "Baganator_CategoryViewBackpackViewFramedark",
+        "Baganator_CategoryViewBackpackViewFrameblizzard",
         "LEFT",
         0,
         0,
     },
-    ["guild_current_tab"] = 6,
+    ["bag_icon_size"] = 36,
     ["category_horizontal_spacing_2"] = 0.3,
-    ["lock_frames"] = false,
+    ["currencies_tracked_imported"] = {
+    },
     ["category_default_import"] = 2,
     ["bag_view_position"] = {
         "BOTTOMRIGHT",
-        -706.7044677734375,
-        346.3336181640625,
+        -5.66845703125,
+        67.22264099121094,
     },
-    ["recent_timeout"] = 15,
-    ["bag_icon_size"] = 36,
-    ["currencies_tracked_imported"] = {
+    ["character_bank_current_tab"] = 1,
+    ["upgrade_plugin_ignored"] = {
     },
-    ["debug_categories"] = false,
     ["category_horizontal_spacing"] = 0.15,
+    ["debug_categories"] = false,
+    ["upgrade_plugin"] = "none",
     ["category_modifications"] = {
         ["default_miscellaneous"] = {
             ["addedItems"] = {
@@ -317,10 +319,10 @@ local data = {
                 ["i:109076"] = true,
                 ["i:64402"] = true,
                 ["i:65274"] = true,
-                ["i:109253"] = true,
-                ["i:64400"] = true,
                 ["i:221903"] = true,
                 ["i:111820"] = true,
+                ["i:109253"] = true,
+                ["i:64400"] = true,
                 ["i:221949"] = true,
                 ["i:49040"] = true,
                 ["i:203722"] = true,
@@ -364,11 +366,11 @@ local data = {
                 ["i:220756"] = true,
             },
         },
+        ["24"] = {
+            ["priority"] = 3,
+        },
         ["8"] = {
             ["priority"] = 0,
-        },
-        ["15"] = {
-            ["priority"] = -1,
         },
         ["9"] = {
             ["priority"] = -1,
@@ -407,15 +409,15 @@ local data = {
                 ["i:86143"] = true,
                 ["i:98114"] = true,
                 ["i:127755"] = true,
-                ["i:116418"] = true,
                 ["i:116374"] = true,
+                ["i:116418"] = true,
                 ["i:92683"] = true,
-                ["i:116424"] = true,
+                ["i:122457"] = true,
                 ["i:98715"] = true,
                 ["i:116421"] = true,
                 ["i:116420"] = true,
                 ["i:89906"] = true,
-                ["i:122457"] = true,
+                ["i:116424"] = true,
                 ["i:116429"] = true,
                 ["i:71153"] = true,
                 ["i:163036"] = true,
@@ -447,8 +449,8 @@ local data = {
         ["14"] = {
             ["priority"] = 3,
         },
-        ["24"] = {
-            ["priority"] = 3,
+        ["15"] = {
+            ["priority"] = -1,
         },
         ["16"] = {
             ["addedItems"] = {
@@ -489,15 +491,7 @@ local data = {
             ["priority"] = -1,
         },
     },
-    ["saved_searches"] = {
-    },
-    ["guild_view_position"] = {
-        "LEFT",
-        583.5559692382812,
-        150.0554809570313,
-    },
-    ["guild_bank_sort_method"] = "unset",
-    ["warband_bank_view_width"] = 16,
+    ["category_migration"] = 5,
     ["category_section_toggled"] = {
         ["1"] = false,
         ["Main"] = false,
@@ -505,57 +499,16 @@ local data = {
         ["Equipment"] = false,
         ["General"] = false,
     },
+    ["guild_bank_sort_method"] = "unset",
+    ["warband_bank_view_width"] = 16,
+    ["guild_view_position"] = {
+        "LEFT",
+        583.5559692382812,
+        150.0554809570313,
+    },
     ["add_to_category_buttons_2"] = "drag+alt",
     ["view_type"] = "unset",
-    ["bank_current_tab"] = 2,
-    ["icon_text_quality_colors"] = true,
-    ["bag_empty_space_at_top"] = false,
-    ["icon_text_font_size"] = 14,
-    ["upgrade_plugin"] = "none",
-    ["sort_ignore_slots_count_2"] = {
-        ["Cronîx-Blackhand"] = 0,
-    },
-    ["view_alpha"] = 1,
-    ["bag_view_width"] = 16,
-    ["setting_anchors"] = false,
-    ["skins"] = {
-        ["blizzard"] = {
-            ["view_transparency"] = 0,
-            ["no_frame_borders"] = false,
-            ["empty_slot_background"] = false,
-        },
-        ["elvui"] = {
-            ["use_bag_font"] = false,
-        },
-        ["dark"] = {
-            ["view_transparency"] = 0.3,
-            ["square_icons"] = false,
-            ["no_frame_borders"] = false,
-            ["empty_slot_background"] = false,
-        },
-    },
-    ["recent_characters_main_view"] = {
-        "Heligarona-Blackhand",
-        "Heligaronaa-TarrenMill",
-        "Tsetalsdjfla-TarrenMill",
-    },
-    ["debug_keywords"] = false,
-    ["sort_ignore_bank_slots_count"] = {
-        ["Cronîx-Blackhand"] = 0,
-    },
-    ["auto_sort_on_open"] = false,
-    ["category_group_empty_slots"] = true,
-    ["show_buttons_on_alt"] = false,
-    ["disabled_skins"] = {
-    },
-    ["sort_ignore_slots_at_end"] = false,
-    ["guild_view_dialog_position"] = {
-        "TOP",
-        "UIParent",
-        "TOP",
-        -206.8886413574219,
-        -154.9445037841797,
-    },
+    ["bank_current_tab"] = 1,
     ["currencies_tracked"] = {
         ["Cronìx-Blackhand"] = {
         },
@@ -574,28 +527,63 @@ local data = {
         ["Bláckstar-Kel'Thuzad"] = {
         },
     },
+    ["show_buttons_on_alt"] = false,
+    ["icon_text_font_size"] = 14,
+    ["sort_ignore_slots_count_2"] = {
+        ["Cronîx-Blackhand"] = 0,
+    },
+    ["setting_anchors"] = false,
+    ["disabled_skins"] = {
+    },
+    ["bag_view_width"] = 16,
+    ["sort_ignore_bank_slots_count"] = {
+        ["Cronîx-Blackhand"] = 0,
+    },
+    ["recent_characters_main_view"] = {
+        "Cronîx-Blackhand",
+        "Cronìx-Blackhand",
+        "Crônix-Blackhand",
+        "Cròníx-Blackhand",
+    },
+    ["skins"] = {
+        ["blizzard"] = {
+            ["view_transparency"] = 0,
+            ["no_frame_borders"] = true,
+            ["empty_slot_background"] = true,
+        },
+        ["elvui"] = {
+            ["use_bag_font"] = false,
+        },
+        ["dark"] = {
+            ["view_transparency"] = 0.3,
+            ["square_icons"] = false,
+            ["no_frame_borders"] = false,
+            ["empty_slot_background"] = false,
+        },
+    },
+    ["debug_keywords"] = false,
+    ["category_group_empty_slots"] = true,
+    ["auto_sort_on_open"] = false,
+    ["view_alpha"] = 1,
+    ["sort_ignore_slots_at_end"] = false,
+    ["bag_empty_space_at_top"] = false,
+    ["icon_text_quality_colors"] = true,
+    ["guild_view_dialog_position"] = {
+        "TOP",
+        "UIParent",
+        "TOP",
+        -61.11101913452148,
+        -171.8333740234375,
+    },
+    ["saved_searches"] = {
+    },
     ["bank_only_view_position"] = {
         "LEFT",
         549.7777099609375,
         20.44439697265625,
     },
-    ["category_migration"] = 5,
-    ["show_sort_button_2"] = true,
     ["bag_view_show_bag_slots"] = false,
-    ["upgrade_plugin_ignored"] = {
-    },
-    ["currency_panel_position"] = {
-        "RIGHT",
-        "Baganator_CategoryViewBackpackViewFramedark",
-        "LEFT",
-        0,
-        0,
-    },
-    ["icon_equipment_set_border"] = true,
-    ["icon_context_fading"] = true,
-    ["category_sort_method"] = "item-level",
-    ["currency_headers_collapsed"] = {
-    },
+    ["show_sort_button_2"] = true,
     ["category_sections"] = {
         ["1"] = {
             ["name"] = "General",
@@ -613,6 +601,20 @@ local data = {
             ["name"] = "Stuff",
         },
     },
+    ["icon_context_fading"] = true,
+    ["currency_panel_position"] = {
+        "RIGHT",
+        "Baganator_CategoryViewBackpackViewFrameblizzard",
+        "LEFT",
+        0,
+        0,
+    },
+    ["icon_equipment_set_border"] = true,
+    ["recent_timeout"] = 15,
+    ["new_items_flashing"] = true,
+    ["currency_headers_collapsed"] = {
+    },
+    ["character_bank_view_width"] = 14,
 }
 
 local function install() 
