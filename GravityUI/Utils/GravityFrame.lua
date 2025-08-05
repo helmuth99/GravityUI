@@ -140,13 +140,13 @@ Constructor
 -------------------------------------------------------------------------------]]
 local FrameBackdrop = {
     bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
-    edgeFile = "Interface\\Addons\\CronixUIMedia\\Media\\border\\SeerahScalloped.tga]",
+    edgeFile = "Interface\\Addons\\GravityUIMedia\\Media\\border\\SeerahScalloped.tga]",
     tile = true, tileSize = 32, edgeSize = 1,
     insets = { left = 0, right = 0, top = 0, bottom = 0 }
 }
 local TitleBackdrop = {
     bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
-    edgeFile = "Interface\\Addons\\CronixUIMedia\\Media\\border\\SeerahScalloped.tga]",
+    edgeFile = "Interface\\Addons\\GravityUIMedia\\Media\\border\\SeerahScalloped.tga]",
     tile = true, tileSize = 32, edgeSize = 1,
     insets = { left = 0, right = 0, top = 0, bottom = 0 }
 }
@@ -175,10 +175,10 @@ local function Constructor()
 	local closebutton = CreateFrame("Button", nil, frame, "UIPanelCloseButton")
 	closebutton:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -3, -3)
 	closebutton:SetScript("OnClick", Button_OnClick)
-	closebutton:SetNormalTexture("Interface\\AddOns\\CronixUIMedia\\Media\\buttons\\close.tga")
-	closebutton:SetPushedTexture("Interface\\AddOns\\CronixUIMedia\\Media\\buttons\\close.tga")
-	closebutton:SetHighlightTexture("Interface\\AddOns\\CronixUIMedia\\Media\\buttons\\close.tga")
-	closebutton:SetDisabledTexture("Interface\\AddOns\\CronixUIMedia\\Media\\buttons\\close.tga")
+	closebutton:SetNormalTexture("Interface\\AddOns\\GravityUIMedia\\Media\\buttons\\close.tga")
+	closebutton:SetPushedTexture("Interface\\AddOns\\GravityUIMedia\\Media\\buttons\\close.tga")
+	closebutton:SetHighlightTexture("Interface\\AddOns\\GravityUIMedia\\Media\\buttons\\close.tga")
+	closebutton:SetDisabledTexture("Interface\\AddOns\\GravityUIMedia\\Media\\buttons\\close.tga")
 
 	-- Title Area
 	
@@ -203,7 +203,7 @@ local function Constructor()
 	titletext:SetJustifyV("MIDDLE")
 	titletext:SetJustifyH("CENTER")
 	titletext:SetTextColor(1,1,1,1)
-	titletext:SetFont("Interface\\Addons\\CronixUIMedia\\Media\\font\\Cronix.ttf", 20, "OUTLINE")
+	titletext:SetFont("Interface\\Addons\\GravityUIMedia\\Media\\font\\Cronix.ttf", 20, "OUTLINE")
 
 	-- Resizers
 	local sizer_se = CreateFrame("Frame", nil, frame)

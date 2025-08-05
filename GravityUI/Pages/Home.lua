@@ -90,7 +90,7 @@ function private.pages:Home(frame)
 
     local ScrollBackdrop = {
         bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
-        edgeFile = "Interface\\Addons\\CronixUIMedia\\Media\\border\\SeerahScalloped.tga]",
+        edgeFile = "Interface\\Addons\\GravityUIMedia\\Media\\border\\SeerahScalloped.tga]",
         tile = true,
         tileSize = 32,
         edgeSize = 1,

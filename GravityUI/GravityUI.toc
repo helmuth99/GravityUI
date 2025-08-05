@@ -3,7 +3,7 @@
 ## Notes: Installs the GravityUI
 ## IconTexture: Interface\AddOns\GravityUI\Media\GRAVITY_UI_Icon.blp
 ## Author: Helimeister, Cronix
-## RequiredDeps: CronixUIMedia
+## RequiredDeps: GravityUIMedia
 ## OptionalDeps: Cell, Dominos, Prat-3.0, Details, Plater, WeakAuras, Leatrix_Plus, Baganator, BigWigs, HidingBar, MRT, OmniCD, Skinner, WarpDeplete, WeakAuras, Cell_UnitFrames, Masque_ElvUIesque
 ## Version: @project-version@
 ## DefaultState: enabled

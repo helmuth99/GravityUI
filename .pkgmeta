@@ -11,4 +11,4 @@ ignore:
 
 move-folders:
   GravityUI/GravityUI: GravityUI
-  GravityUI/CronixUIMedia: CronixUIMedia
+  GravityUI/GravityUIMedia: GravityUIMedia

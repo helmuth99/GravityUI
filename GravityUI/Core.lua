@@ -17,7 +17,7 @@ local realm = GetRealmName()
 local DevTool = DevTool
 private.g.cName = name
 private.g.cRealm = realm
-private.g.font = "Interface\\Addons\\CronixUIMedia\\Media\\font\\Cronix.ttf"
+private.g.font = "Interface\\Addons\\GravityUIMedia\\Media\\font\\Cronix.ttf"
 private.g.blue = function() return 0.11764705882353, 0.56470588235294, 1 end
 
 
