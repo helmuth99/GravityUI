@@ -48,7 +48,7 @@ HidingBar (Minimap Buttons hide in a bar)
 **[design]**
 CronixUI Media (Fonts, Textures, Bars) (included)
 Skinner (UI Overhaul "dark windows") 
-Masque + Masque - ElvUIesque Skin (Actionbar design)
+Masque +  [Masque - ElvUI](https://www.curseforge.com/wow/addons/masque-elvui)(Actionbar design)
 
 We strongly recommend installing the addon Masque and the Masque-ElvUIesque Skin for the action bar.
 
