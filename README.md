@@ -50,10 +50,11 @@ CronixUI Media (Fonts, Textures, Bars) (included)
 Skinner (UI Overhaul "dark windows") 
 Masque +  [Masque - ElvUI](https://www.curseforge.com/wow/addons/masque-elvui)(Actionbar design)
 
-We strongly recommend installing the addon Masque and the Masque-ElvUIesque Skin for the action bar.
-
 **[raid + dungeons]**
 Method Raid Tools (Raid)
+
+**[extra]**
+We recommend installing the addon [idTip](https://www.curseforge.com/wow/addons/idtip). It is not required for the installer, but enhances the tooltip informations.
 
 **Shoutout:**
 Special thank to [Hijack](https://wago.io/p/iamhijack) for building and letting us use his awesome class Weakauras.
