@@ -6,8 +6,8 @@
 !GravityUI
 GravityUI/dumps
 !GravityUI/**
-!CronixUIMedia
-!CronixUIMedia/**
+!GravityUIMedia
+!GravityUIMedia/**
 !README.md
 !.pkgmeta
 
