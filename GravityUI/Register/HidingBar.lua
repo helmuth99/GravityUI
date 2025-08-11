@@ -12,7 +12,7 @@ importTwink = Twinkinstallation Process
 local addonName = "HidingBar"
 local importText = "Import \n!!GLOBAL OVERWRITE!!"
 local data = {
-    ["tstmp"] = 1754420999,
+    ["tstmp"] = 1754879805,
     ["profiles"] = {
         {
             ["isDefault"] = true,
@@ -24,35 +24,35 @@ local data = {
                     },
                     ["BtWQuestsMinimapButton"] = {
                         true,
-                        ["tstmp"] = 1754420999,
+                        ["tstmp"] = 1754879805,
                     },
                     ["LibDBIcon10_KeystoneGroupList"] = {
                         true,
-                        ["tstmp"] = 1754409943,
+                        ["tstmp"] = 1754852213,
                     },
                     ["LibDBIcon10_VocalRaidAssistant"] = {
                         true,
-                        ["tstmp"] = 1754420999,
+                        ["tstmp"] = 1754879805,
                     },
                     ["LibDBIcon10_MythicDungeonTools"] = {
-                        ["tstmp"] = 1754420999,
+                        ["tstmp"] = 1754879805,
                     },
                     ["LibDBIcon10_BugSack"] = {
-                        ["tstmp"] = 1754420999,
+                        ["tstmp"] = 1754879805,
                     },
                     ["LibDBIcon10_Socialite"] = {
                         ["tstmp"] = 1748255535,
                     },
                     ["LibDBIcon10_Details"] = {
                         true,
-                        ["tstmp"] = 1754420999,
+                        ["tstmp"] = 1754879805,
                     },
                     ["LibDBIcon10_Latency"] = {
                         ["tstmp"] = 1748479760,
                     },
                     ["LibDBIcon10_MethodRaidTools"] = {
                         true,
-                        ["tstmp"] = 1754420999,
+                        ["tstmp"] = 1754879805,
                     },
                     ["LibDBIcon10_Guild"] = {
                         ["tstmp"] = 1748258624,
@@ -72,32 +72,36 @@ local data = {
                     },
                     ["LibDBIcon10_RaiderIO"] = {
                         true,
-                        ["tstmp"] = 1754420999,
+                        ["tstmp"] = 1754879805,
                     },
                     ["AddonCompartmentFrame"] = {
                         true,
-                        ["tstmp"] = 1754420999,
+                        ["tstmp"] = 1754879805,
+                    },
+                    ["LibDBIcon10_AlterEgo"] = {
+                        true,
+                        ["tstmp"] = 1754879805,
                     },
                     ["_G.ExpansionLandingPageMinimapButton"] = {
-                        ["tstmp"] = 1754420999,
+                        ["tstmp"] = 1754879805,
+                    },
+                    ["LibDBIcon10_Plater"] = {
+                        true,
+                        ["tstmp"] = 1754879805,
+                    },
+                    ["LibDBIcon10_Durability"] = {
+                        ["tstmp"] = 1748479772,
                     },
                     ["LibDBIcon10_FPS"] = {
                         ["tstmp"] = 1748479749,
                     },
-                    ["MinimapButton_D4Lib_LibDBIcon_MoveAny"] = {
-                        ["tstmp"] = 1748940699,
-                    },
-                    ["LibDBIcon10_Plater"] = {
-                        true,
-                        ["tstmp"] = 1754420999,
-                    },
                     ["LibDBIcon10_Leatrix_Plus"] = {
                         false,
-                        ["tstmp"] = 1754420999,
+                        ["tstmp"] = 1754879805,
                     },
                     ["LibDBIcon10_Masque"] = {
                         true,
-                        ["tstmp"] = 1754420999,
+                        ["tstmp"] = 1754879805,
                     },
                     ["LibDBIcon10_ClassSpecs"] = {
                         ["tstmp"] = 1748480849,
@@ -108,23 +112,23 @@ local data = {
                     ["LibDBIcon10_SylingTracker"] = {
                         ["tstmp"] = 1747421324,
                     },
+                    ["LibDBIcon10_BigWigs"] = {
+                        true,
+                        ["tstmp"] = 1754879805,
+                    },
                     ["LibDBIcon10_AutoQueueWA"] = {
                         true,
                         ["tstmp"] = 1752443888,
                     },
-                    ["LibDBIcon10_BigWigs"] = {
-                        true,
-                        ["tstmp"] = 1754420999,
-                    },
                     ["LibDBIcon10_NSRT"] = {
                         true,
-                        ["tstmp"] = 1754420999,
+                        ["tstmp"] = 1754879805,
                     },
                     ["LibDBIcon10_Volume"] = {
                         ["tstmp"] = 1748258624,
                     },
                     ["LibDBIcon10_Dominos"] = {
-                        ["tstmp"] = 1754420999,
+                        ["tstmp"] = 1754879805,
                     },
                     ["LibDBIcon10_Equipment"] = {
                         ["tstmp"] = 1748258624,
@@ -138,20 +142,20 @@ local data = {
                     },
                     ["LibDBIcon10_SimulationCraft"] = {
                         true,
-                        ["tstmp"] = 1754420999,
+                        ["tstmp"] = 1754879805,
                     },
                     ["LibDBIcon10_Gold"] = {
                         ["tstmp"] = 1748258624,
                     },
                     ["LibDBIcon10_WeakAuras"] = {
                         true,
-                        ["tstmp"] = 1754420999,
+                        ["tstmp"] = 1754879805,
                     },
                     ["LibDBIcon10_GPS"] = {
                         ["tstmp"] = 1748258624,
                     },
-                    ["LibDBIcon10_Durability"] = {
-                        ["tstmp"] = 1748479772,
+                    ["MinimapButton_D4Lib_LibDBIcon_MoveAny"] = {
+                        ["tstmp"] = 1748940699,
                     },
                     ["LibDBIcon10_TipTac"] = {
                         true,
@@ -159,25 +163,34 @@ local data = {
                     },
                 },
                 ["btnSettings"] = {
-                    ["SylingTracker"] = {
-                        ["tstmp"] = 1747421324,
+                    ["HidingBar"] = {
+                        true,
+                        ["tstmp"] = 1754879805,
+                    },
+                    ["AlterEgo"] = {
+                        ["tstmp"] = 1754879805,
+                    },
+                    ["Prat"] = {
+                        ["tstmp"] = 1754879805,
+                    },
+                    ["WeakAuras"] = {
+                        ["tstmp"] = 1754879805,
+                    },
+                    ["MRT"] = {
+                        ["tstmp"] = 1754879805,
+                    },
+                    ["NSRT"] = {
+                        ["tstmp"] = 1754879805,
                     },
                     ["Raven"] = {
                         ["tstmp"] = 1749060648,
                     },
-                    ["HidingBar"] = {
-                        true,
-                        ["tstmp"] = 1754420999,
-                    },
                     ["BigWigs"] = {
-                        ["tstmp"] = 1754420999,
-                    },
-                    ["RaiderIO"] = {
-                        ["tstmp"] = 1754420999,
+                        ["tstmp"] = 1754879805,
                     },
                     ["BtWQuests"] = {
                         true,
-                        ["tstmp"] = 1754420999,
+                        ["tstmp"] = 1754879805,
                     },
                     ["Bartender4"] = {
                         ["tstmp"] = 1750200829,
@@ -186,28 +199,22 @@ local data = {
                         ["tstmp"] = 1747930734,
                     },
                     ["Dominos"] = {
-                        ["tstmp"] = 1754420999,
-                    },
-                    ["NSRT"] = {
-                        ["tstmp"] = 1754420999,
+                        ["tstmp"] = 1754879805,
                     },
                     ["Masque"] = {
-                        ["tstmp"] = 1754420999,
+                        ["tstmp"] = 1754879805,
                     },
-                    ["Prat"] = {
-                        ["tstmp"] = 1754420999,
-                    },
-                    ["VocalRaidAssistant"] = {
-                        ["tstmp"] = 1754420999,
+                    ["RaiderIO"] = {
+                        ["tstmp"] = 1754879805,
                     },
                     ["TipTac"] = {
                         ["tstmp"] = 1747441096,
                     },
-                    ["WeakAuras"] = {
-                        ["tstmp"] = 1754420999,
+                    ["SylingTracker"] = {
+                        ["tstmp"] = 1747421324,
                     },
-                    ["MRT"] = {
-                        ["tstmp"] = 1754420999,
+                    ["VocalRaidAssistant"] = {
+                        ["tstmp"] = 1754879805,
                     },
                 },
                 ["grabMinimap"] = true,
@@ -227,7 +234,7 @@ local data = {
                 {
                     ["isDefault"] = true,
                     ["config"] = {
-                        ["lineWidth"] = 4,
+                        ["lineWidth"] = 5,
                         ["secondPosition"] = 0,
                         ["hideHandler"] = 0,
                         ["lineBorderColor"] = {
@@ -255,27 +262,27 @@ local data = {
                             0.7333333333333333,
                             1,
                         },
-                        ["position"] = 606.8668087826882,
+                        ["position"] = 604.2999367833108,
                         ["mbtnPosition"] = 2,
                         ["lineBorderEdge"] = false,
-                        ["lineBorderOffset"] = 1,
+                        ["lineBorderOffset"] = 0,
                         ["showHandler"] = 2,
                         ["expand"] = 2,
-                        ["borderEdge"] = "1 Pixel",
+                        ["borderEdge"] = false,
                         ["bgColor"] = {
                             0.1,
                             0.1,
                             0.1,
                             0.7,
                         },
-                        ["borderSize"] = 12,
+                        ["borderSize"] = 1,
                         ["gapSize"] = 1,
                         ["interceptTooltip"] = true,
                         ["buttonDirection"] = {
                             ["V"] = 0,
                             ["H"] = 0,
                         },
-                        ["borderOffset"] = 4,
+                        ["borderOffset"] = 0,
                         ["omb"] = {
                             ["distanceToBar"] = 0,
                             ["hide"] = true,
@@ -285,14 +292,14 @@ local data = {
                             ["canGrabbed"] = false,
                             ["size"] = 31,
                         },
-                        ["buttonSize"] = 34,
+                        ["buttonSize"] = 36,
                         ["frameStrata"] = 2,
                         ["lineBorderSize"] = 2,
                         ["fadeOpacity"] = 0.2,
                         ["orientation"] = 0,
                         ["barOffset"] = 2,
                         ["hideDelay"] = 0.75,
-                        ["rangeBetweenBtns"] = 0,
+                        ["rangeBetweenBtns"] = 4,
                     },
                     ["name"] = "Bar 1",
                 },
