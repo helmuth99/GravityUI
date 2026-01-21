@@ -8,7 +8,5 @@ ignore:
   - .gitignore
   - .github/*
 
-
 move-folders:
   GravityUI/GravityUI: GravityUI
-  GravityUI/GravityUIMedia: GravityUIMedia
