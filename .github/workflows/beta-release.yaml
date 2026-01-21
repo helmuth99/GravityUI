@@ -4,8 +4,6 @@ on:
   push:
     tags:
       - "v*-Alpha"
-    branches:
-      - beta
 
 jobs:
   beta-release:
@@ -21,15 +19,26 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Verify tag format
+      - name: Verify tag is on beta branch
         run: |
           TAG_NAME=${GITHUB_REF#refs/tags/}
           echo "Tag name: $TAG_NAME"
+
+          # Check if tag format is correct
           if [[ ! $TAG_NAME =~ ^v.*-Alpha$ ]]; then
             echo "Error: Tag must start with 'v' and end with '-Alpha'"
             exit 1
           fi
           echo "Tag format is valid"
+
+          # Check if tag is on beta branch
+          BRANCHES=$(git branch -r --contains $TAG_NAME)
+          echo "Branches containing this tag: $BRANCHES"
+          if [[ ! $BRANCHES =~ origin/beta ]]; then
+            echo "Error: Tag must be on the beta branch"
+            exit 1
+          fi
+          echo "Tag is on beta branch"
 
       - name: Package and release
         uses: BigWigsMods/packager@v2

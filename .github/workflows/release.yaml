@@ -3,22 +3,22 @@ name: Release Workflow
 on:
   push:
     tags:
-      - "v*" 
+      - "vvvvv*"
 
 jobs:
-    release:
-        runs-on: ubuntu-latest
-        env:
-            GITHUB_OAUTH: ${{ secrets.DEPLOY_KEY }}
-            WAGO_API_TOKEN: ${{ secrets.WAGO_API_TOKEN }}
-            CF_API_KEY: ${{secrets.CURSEFORGE_TOKEN}}
+  release:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_OAUTH: ${{ secrets.DEPLOY_KEY }}
+      WAGO_API_TOKEN: ${{ secrets.WAGO_API_TOKEN }}
+      CF_API_KEY: ${{secrets.CURSEFORGE_TOKEN}}
 
-        steps:
-            - name: Clone project
-              uses: actions/checkout@v3
-              with:
-                  fetch-depth: 0
-            - name: Package and release
-              uses: BigWigsMods/packager@v2 
-              with:
-                args: -n "{package-name}-{project-version}"   
+    steps:
+      - name: Clone project
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Package and release
+        uses: BigWigsMods/packager@v2
+        with:
+          args: -n "{package-name}-{project-version}"
