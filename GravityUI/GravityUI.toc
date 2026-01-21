@@ -1,51 +1,18 @@
-## Interface: 110002, 110100, 110107, 110200
-## Title: |cff00ccffGravityUI|r
-## Notes: Installs the GravityUI
-## IconTexture: Interface\AddOns\GravityUI\Media\GRAVITY_UI_Icon.blp
-## Author: Helimeister, Cronix
-## RequiredDeps: GravityUIMedia
-## OptionalDeps: Cell, Dominos, Prat-3.0, Details, Plater, WeakAuras, Leatrix_Plus, Baganator, BigWigs, HidingBar, MRT, OmniCD, Skinner, WarpDeplete, WeakAuras, Cell_UnitFrames, Masque_ElvUIesque
-## Version: @project-version@
-## DefaultState: enabled
-## SavedVariables: GravityUIDB
-## X-Curse-Project-ID: 1102290
-## X-Wago-ID: 96E7e8Gg
+## Interface: 120000, 120001
+## Title: |cFF30D1FFGravity UI|r
+## IconTexture: Interface\AddOns\GravityUI\assets\GRAVITY_UI_Icon.blp
+## AddonCompartmentFunc: GravityUI_CompartmentClick
+## AddonCompartmentFuncOnEnter: GravityUI_CompartmentOnEnter
+## AddonCompartmentFuncOnLeave: GravityUI_CompartmentOnLeave
+## Notes: Installer for |cFF30D1FFGravity|r UI
+## Author: Gravity
+## Version: 1.53
+## DefaultState: Enabled
+## LoadOnDemand: 0
+## SavedVariables: GravityUI_DB, GravityUIDB
 
-embeds.xml
-Core.lua
+## X-Contributors: Gravity
+## X-License: GPLv3
+## X-Website: https://Gravity-Guild.eu
 
-
-Utils/GravityFrame.lua
-Utils/GravityInlineGroup.lua
-Utils/StyledFrames.lua
-Utils/GravityLabel.lua
-Utils/GravitySimpleGroup.lua
-
-
-#frames
-Pages/Home.lua
-Pages/WeakauraFrame.lua
-Pages/TwinkInstaller.lua
-
-
-#registers check Cell.lua to check for convention
-Register/Weakaura.lua
-Register/EditMode.lua
-Register/Cell.lua
-Register/Cell_UnitFrames.lua
-Register/Dominos.lua
-Register/Prat-3.0.lua
-Register/Details.lua
-Register/Plater.lua
-Register/Leatrix_Plus.lua
-Register/Baganator.lua
-Register/WarpDeplete.lua
-Register/BigWigs.lua
-Register/MRT.lua
-Register/OmniCD.lua
-Register/HidingBar.lua
-Register/Skinner.lua
-Register/Masque_ElvUIesque.lua
-
-#Media wip enable when moving shared media into addon
-#SharedMedia/SharedMedia.lua
+load.xml

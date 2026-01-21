@@ -1,0 +1,11 @@
+-- Edit Mode String for GravityUI
+-- Gravity's personal Edit Mode layout string
+
+GravityUI.imports = GravityUI.imports or {}
+
+GravityUI.imports.EditMode = {
+    name = "Gravity Edit Mode String",
+    description = "Gravity's personal Edit Mode layout",
+    -- ⚠️ PASTE YOUR EDIT MODE STRING BELOW between the [[ ]]
+    data = [[2 43 0 0 0 0 0 UIParent 821.9 -1093.0 -1 ##$$%/&&'%)$+$,$ 0 1 0 2 8 MainActionBar 0.0 -4.0 -1 ##$%%/&%'%(#,$ 0 2 0 0 6 MainActionBar 0.0 -4.0 -1 ##$%%/&%'%(#,$ 0 3 0 0 0 UIParent 821.9 -1013.0 -1 ##$$%/&&'%(#,$ 0 4 0 0 0 UIParent 821.9 -973.0 -1 ##$$%/&&'%(#,$ 0 5 0 8 8 UIParent -260.3 227.2 -1 #$$%%/&&'%(#,$ 0 6 0 6 6 UIParent 487.6 33.7 -1 #$$%%/&&'%(#,$ 0 7 0 8 2 MainActionBar 0.0 4.0 -1 ##$$%/&&'%(#,$ 0 10 0 7 7 UIParent -59.0 222.0 -1 ##$$&('% 0 11 0 7 7 UIParent -330.7 262.0 -1 ##$%&('%,# 0 12 1 6 0 MainActionBar 0.0 5.0 -1 ##$$&('% 1 -1 1 4 4 UIParent 0.0 0.0 -1 ##$#%# 2 -1 0 2 2 UIParent -3.5 0.0 -1 ##$#%( 3 0 1 8 7 UIParent -300.0 250.0 -1 $#3# 3 1 1 6 7 UIParent 300.0 250.0 -1 %#3# 3 2 1 3 5 TargetFrame -10.0 0.0 -1 %#&#3# 3 3 1 0 2 CompactRaidFrameManager 0.0 -7.0 -1 '#(#)#-#.#/#1$3# 3 4 0 0 0 UIParent 2.0 -712.7 -1 ,#-;.//#0&1$2( 3 5 1 5 5 UIParent 0.0 0.0 -1 &#*$3# 3 6 1 5 5 UIParent 0.0 0.0 -1 -#.#/#4& 3 7 1 4 4 UIParent 0.0 0.0 -1 3# 4 -1 0 0 0 UIParent 951.7 -922.7 -1 # 5 -1 0 7 7 UIParent 352.0 94.8 -1 # 6 0 0 2 2 UIParent -265.0 -7.1 -1 ##$#%#&.())( 6 1 0 2 2 UIParent -278.6 -218.8 -1 ##$#%#',(+)) 7 -1 0 0 0 UIParent -0.0 0.0 -1 # 8 -1 0 0 0 UIParent 14.7 -944.0 -1 #'$^%%&2 9 -1 0 6 0 GameTooltipDefaultContainer 0.0 4.0 -1 # 10 -1 0 1 1 UIParent 692.0 -902.0 -1 # 11 -1 0 8 8 UIParent -260.8 8.9 -1 # 12 -1 0 1 1 UIParent 928.0 -302.0 -1 #%$#%# 13 -1 0 0 0 UIParent 1401.2 -1150.0 -1 ##$#%)&- 14 -1 0 6 6 UIParent 486.5 0.5 -1 ##$$%# 15 0 0 7 7 UIParent -20.0 2.0 -1 # 15 1 0 7 7 UIParent 0.9 238.2 -1 # 16 -1 0 5 5 UIParent -279.6 258.7 -1 #( 17 -1 1 1 1 UIParent 0.0 -100.0 -1 ## 18 -1 0 7 7 UIParent 526.0 122.0 -1 #- 19 -1 1 7 7 UIParent 0.0 0.0 -1 ## 20 0 0 1 1 UIParent 0.0 -802.0 -1 ##$/%$&('%(-($)#+$,$-$ 20 1 0 4 4 UIParent 0.0 -260.0 -1 ##$*%$&('%(-($)#+$,$-$ 20 2 0 1 1 UIParent 0.0 -722.0 -1 ##$$%$&('((-($)#+$,$-$ 20 3 0 7 7 UIParent 0.0 422.0 -1 #$$$%#&('((-($)#*#+$,$-$]],
+}

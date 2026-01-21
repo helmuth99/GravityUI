@@ -1,0 +1,7 @@
+<Bindings>
+  <Binding name="GravityUI_TOGGLE_OPTIONS" category="GravityUI">
+    if GravityUI and GravityUI.GUI then
+      GravityUI.GUI:Toggle()
+    end
+  </Binding>
+</Bindings>
