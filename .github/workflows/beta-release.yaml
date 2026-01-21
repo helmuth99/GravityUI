@@ -1,0 +1,37 @@
+name: Beta Release Workflow
+
+on:
+  push:
+    tags:
+      - "v*-Alpha"
+    branches:
+      - beta
+
+jobs:
+  beta-release:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_OAUTH: ${{ secrets.DEPLOY_KEY }}
+      WAGO_API_TOKEN: ${{ secrets.WAGO_API_TOKEN }}
+      CF_API_KEY: ${{secrets.CURSEFORGE_TOKEN}}
+
+    steps:
+      - name: Clone project
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Verify tag format
+        run: |
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+          echo "Tag name: $TAG_NAME"
+          if [[ ! $TAG_NAME =~ ^v.*-Alpha$ ]]; then
+            echo "Error: Tag must start with 'v' and end with '-Alpha'"
+            exit 1
+          fi
+          echo "Tag format is valid"
+
+      - name: Package and release
+        uses: BigWigsMods/packager@v2
+        with:
+          args: -n "{package-name}-{project-version}"
