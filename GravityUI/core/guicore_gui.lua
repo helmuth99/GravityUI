@@ -3309,6 +3309,7 @@ function GUI:CreateMainFrame()
     local version = sidebar:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     SetFont(version, 11, "", C.textMuted)
     local versionText = C_AddOns.GetAddOnMetadata(ADDON_NAME, "Version") or "Unknown"
+    versionText = versionText:gsub("%-Alpha$", "")
     version:SetText("" .. versionText)
     version:SetPoint("TOPLEFT", title, "BOTTOMRIGHT", -29, -8)
     
