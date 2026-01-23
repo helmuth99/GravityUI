@@ -13861,6 +13861,16 @@ local function CreateImportExportPage(parent)
     local subTabs = GUI:CreateSubTabs(parent, {
         {name = "Import/Export", builder = BuildImportExportTab},
         {name = "Gravity's Strings", builder = BuildGravityStringsTab},
+        {name = "Express Installer", fn = function() 
+            if GUI.InstallAddonsProfiles then
+                GUI:InstallAddonsProfiles()
+            end 
+        end},
+        {name = "Twink installer", fn = function() 
+            if GUI.TwinkInstaller then
+                GUI:TwinkInstaller()
+            end 
+        end},
     })
     subTabs:SetPoint("TOPLEFT", 5, -5)
     subTabs:SetPoint("TOPRIGHT", -5, -5)
@@ -14513,18 +14523,18 @@ function GUI:InitializeOptions()
 	-- spacer:SetAlpha(0) -- Macht den Button unsichtbar
 	-- spacer:SetHeight(20) -- Hier die Höhe des Abstands festlegen
 
-    -- GUI:AddActionButton(frame, "Express Installer", function()
-       -- if GUI:InstallAddonsProfiles() then
-            -- GUI:InstallAddonsProfiles()
-       -- end 
-    -- end)
+    --[[ GUI:AddActionButton(frame, "Express Installer", function()
+    if GUI:InstallAddonsProfiles() then
+            GUI:InstallAddonsProfiles()
+    end 
+    end)
 
-    -- GUI:AddActionButton(frame, "Twink Installer", function()
-       -- if GUI:TwinkInstaller() then
-            -- GUI:TwinkInstaller()
-       -- end 
-    -- end)
-    -- Mark that all tabs have been added (for search indexing)
+    GUI:AddActionButton(frame, "Twink Installer", function()
+        if GUI:TwinkInstaller() then
+            GUI:TwinkInstaller()
+        end 
+    end)
+    -- Mark that all tabs have been added (for search indexing) ]]
     GUI._allTabsAdded = true
 
     return frame

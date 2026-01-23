@@ -821,6 +821,7 @@ function GUI:CreateSubTabs(parent, tabs)
         if tabInfo.builder then
             tabInfo.builder(content)
         end
+        
     end
 
     -- Layout function
@@ -890,7 +891,13 @@ function GUI:CreateSubTabs(parent, tabs)
     
     -- Button click handlers
     for i, btn in ipairs(tabButtons) do
-        btn:SetScript("OnClick", function() SelectSubTab(i) end)
+        
+        if tabs[i].fn then
+            btn:SetScript("OnClick", function() tabs[i].fn() end)
+        else
+            btn:SetScript("OnClick", function() SelectSubTab(i) end)
+        end
+        --temp solution for installer end
         btn:SetScript("OnEnter", function(self)
             if container.selectedTab ~= i then
                 self.text:SetTextColor(unpack(C.textBright))
@@ -3302,7 +3309,7 @@ function GUI:CreateMainFrame()
     local version = sidebar:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     SetFont(version, 11, "", C.textMuted)
     local versionText = C_AddOns.GetAddOnMetadata(ADDON_NAME, "Version") or "Unknown"
-    version:SetText("v" .. versionText)
+    version:SetText("" .. versionText)
     version:SetPoint("TOPLEFT", title, "BOTTOMRIGHT", -29, -8)
     
     ---------------------------------------------------------------------------
@@ -3320,7 +3327,7 @@ function GUI:CreateMainFrame()
     
     -- Close Button (Top Right)
     local close = CreateFrame("Button", nil, topBar)
-    close:SetSize(32, 32)
+    close:SetSize(16, 16)
     close:SetPoint("TOPRIGHT", -10, -10)
     
     -- Normal texture
@@ -3755,6 +3762,12 @@ function GUI:SelectTab(frame, index)
                 page.createFunc(page.frame)
                 page.built = true
             end
+        else
+            -- Reset anchor points when reusing an existing frame
+            -- This fixes spacing issues when switching tabs after using search
+            page.frame:ClearAllPoints()
+            page.frame:SetPoint("TOPLEFT", frame.topBar, "BOTTOMLEFT", 0, -5)
+            page.frame:SetPoint("BOTTOMRIGHT", 0, 0)
         end
         page.frame:Show()
         
