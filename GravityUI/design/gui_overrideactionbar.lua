@@ -1,7 +1,7 @@
 local addonName, ns = ...
 
 ---------------------------------------------------------------------------
--- OVERRIDE ACTION BAR SKINNING (Compact ElvUI-style)
+-- OVERRIDE ACTION BAR SKINNING (Compact style)
 ---------------------------------------------------------------------------
 
 local FONT_FLAGS = "OUTLINE"
@@ -258,6 +258,19 @@ local function SkinOverrideActionBar()
     end
 
     bar.guiSkinned = true
+
+    -- BUG-005: Reset MicroMenu to normal position after skinning
+    -- Blizzard's UpdateMicroButtons() positions MicroMenu using hardcoded offsets (x=648+)
+    -- based on the default bar size. After gui resizes the bar to ~332px, those offsets
+    -- place MicroMenu outside the visible bar area. Reset it to its normal container.
+    -- Use C_Timer.After(0) to avoid taint from secure code execution
+    if MicroMenu and MicroMenu.ResetMicroMenuPosition then
+        C_Timer.After(0, function()
+            if not InCombatLockdown() then
+                MicroMenu:ResetMicroMenuPosition()
+            end
+        end)
+    end
 end
 
 -- Refresh colors
@@ -321,6 +334,22 @@ local function SetupOverrideBarHooks()
     -- If already visible, skin now
     if bar:IsShown() then
         C_Timer.After(0.15, SkinOverrideActionBar)
+    end
+
+    -- BUG-005: Hook UpdateMicroButtons to reset MicroMenu position persistently
+    -- Blizzard calls this in OnShow and UpdateSkin, which can re-position MicroMenu
+    -- after gui's initial skinning. This hook ensures MicroMenu stays in normal position.
+    -- Use C_Timer.After(0) to break taint chain from secure Blizzard code
+    if bar.UpdateMicroButtons then
+        hooksecurefunc(bar, "UpdateMicroButtons", function()
+            if bar.guiSkinned and MicroMenu and MicroMenu.ResetMicroMenuPosition then
+                C_Timer.After(0, function()
+                    if not InCombatLockdown() then
+                        MicroMenu:ResetMicroMenuPosition()
+                    end
+                end)
+            end
+        end)
     end
 
     bar.guiHooked = true

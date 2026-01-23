@@ -15,12 +15,12 @@ local function GetSettings()
         guiCore.db.profile.uiHider = {
             hideObjectiveTrackerAlways = false,
             hideObjectiveTrackerInstanceTypes = {
-                mythicPlus = true,
+                mythicPlus = false,
                 mythicDungeon = false,
                 normalDungeon = false,
                 heroicDungeon = false,
                 followerDungeon = false,
-                raid = true,
+                raid = false,
                 pvp = false,
                 arena = false,
             },
@@ -80,14 +80,14 @@ local function GetSettings()
         end
         uiHider.hideObjectiveTrackerInInstances = nil  -- Remove old key
     elseif not uiHider.hideObjectiveTrackerInstanceTypes then
-        -- Fresh install: default M+ and raids enabled
+        -- Fresh install: all instance types disabled by default
         uiHider.hideObjectiveTrackerInstanceTypes = {
-            mythicPlus = true,
+            mythicPlus = false,
             mythicDungeon = false,
             normalDungeon = false,
             heroicDungeon = false,
             followerDungeon = false,
-            raid = true,
+            raid = false,
             pvp = false,
             arena = false,
         }
@@ -251,27 +251,33 @@ local function ApplyHideSettings()
             CompactRaidFrameManager:Hide()
             CompactRaidFrameManager:EnableMouse(false)  -- Prevent hidden frame from blocking clicks
             -- Hook Show() to prevent it from reappearing when joining groups, etc.
+            -- BUG-008: Wrap in C_Timer.After(0) to break taint chain from secure Blizzard code
             if not CompactRaidFrameManager._gui_ShowHooked then
                 CompactRaidFrameManager._gui_ShowHooked = true
                 hooksecurefunc(CompactRaidFrameManager, "Show", function(self)
-                    if InCombatLockdown() then return end  -- Can't modify protected frames in combat
-                    local s = GetSettings()
-                    if s and s.hideRaidFrameManager then
-                        self:Hide()
-                        self:EnableMouse(false)  -- Prevent hidden frame from blocking clicks
-                    end
+                    C_Timer.After(0, function()
+                        if InCombatLockdown() then return end
+                        local s = GetSettings()
+                        if s and s.hideRaidFrameManager then
+                            self:Hide()
+                            self:EnableMouse(false)
+                        end
+                    end)
                 end)
             end
             -- Hook SetShown() to catch permission-change visibility updates
+            -- BUG-008: Wrap in C_Timer.After(0) to break taint chain from secure Blizzard code
             if not CompactRaidFrameManager._gui_SetShownHooked then
                 CompactRaidFrameManager._gui_SetShownHooked = true
                 hooksecurefunc(CompactRaidFrameManager, "SetShown", function(self, shown)
-                    if InCombatLockdown() then return end  -- Can't modify protected frames in combat
-                    local s = GetSettings()
-                    if s and s.hideRaidFrameManager and shown then
-                        self:Hide()
-                        self:EnableMouse(false)  -- Prevent hidden frame from blocking clicks
-                    end
+                    C_Timer.After(0, function()
+                        if InCombatLockdown() then return end
+                        local s = GetSettings()
+                        if s and s.hideRaidFrameManager and shown then
+                            self:Hide()
+                            self:EnableMouse(false)
+                        end
+                    end)
                 end)
             end
         else
@@ -582,33 +588,24 @@ eventFrame:SetScript("OnEvent", function(self, event, addon)
     end
 
     -- Handle raid permission/role changes - re-hide CompactRaidFrameManager
+    -- BUG-008: Wrap in C_Timer.After(0) to break taint chain from secure event context
     if event == "GROUP_ROSTER_UPDATE" or event == "PLAYER_ROLES_ASSIGNED" then
         if settings and settings.hideRaidFrameManager and CompactRaidFrameManager then
-            if not InCombatLockdown() then
-                CompactRaidFrameManager:Hide()
-                CompactRaidFrameManager:EnableMouse(false)  -- Prevent hidden frame from blocking clicks
-            end
+            C_Timer.After(0, function()
+                if not InCombatLockdown() then
+                    CompactRaidFrameManager:Hide()
+                    CompactRaidFrameManager:EnableMouse(false)
+                end
+            end)
         end
         return
     end
 
-    -- Refresh Objective Tracker if instance-based hiding is enabled
-    if settings and settings.hideObjectiveTrackerInstanceTypes then
-        if ObjectiveTrackerFrame then
-            local shouldHide = ShouldHideInCurrentInstance(settings.hideObjectiveTrackerInstanceTypes)
-
-            if shouldHide then
-                ObjectiveTrackerFrame:Hide()
-                ObjectiveTrackerFrame:EnableMouse(false)  -- Prevent hidden frame from blocking clicks
-            else
-                -- Only show if "always hide" is not enabled
-                if not settings.hideObjectiveTrackerAlways then
-                    ObjectiveTrackerFrame:Show()
-                    ObjectiveTrackerFrame:EnableMouse(true)  -- Restore mouse when shown
-                end
-            end
-        end
-    end
+    -- Refresh all hide settings when entering new zones/instances
+    -- This ensures hooks are properly set up for ObjectiveTrackerFrame and other elements									 
+    if settings then
+        ApplyHideSettings()																					
+    end  
 end)
 
 -- Export to gui namespace
@@ -620,4 +617,3 @@ gui.UIHider = {
 _G.GravityUI_RefreshUIHider = function()
     ApplyHideSettings()
 end
-

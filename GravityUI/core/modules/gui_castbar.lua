@@ -7,7 +7,7 @@
 local ADDON_NAME, ns = ...
 local guiCore = ns.Addon
 local LSM = LibStub("LibSharedMedia-3.0")
-local IsSecretValue = function(v) return ns.Utils and ns.Utils.IsSecretValue and ns.Utils.IsSecretValue(v) or false end																													   
+local IsSecretValue = function(v) return ns.Utils and ns.Utils.IsSecretValue and ns.Utils.IsSecretValue(v) or false end
 
 ---------------------------------------------------------------------------
 -- MODULE TABLE
@@ -83,7 +83,7 @@ local function SafeToNumber(v)
     return nil
 end
 
----------------------------------------------------------------------------																	   
+---------------------------------------------------------------------------
 -- CONSTANTS
 ---------------------------------------------------------------------------
 gui_Castbar.STAGE_COLORS = {
@@ -91,7 +91,7 @@ gui_Castbar.STAGE_COLORS = {
     {0.55, 0.20, 0.24, 1},   -- Stage 2: Dark Red/Pink
     {0.58, 0.45, 0.18, 1},   -- Stage 3: Dark Yellow/Orange
     {0.27, 0.50, 0.21, 1},   -- Stage 4: Dark Green
-    {0.45, 0.20, 0.50, 1},   -- Stage 5: Dark Purple													
+    {0.45, 0.20, 0.50, 1},   -- Stage 5: Dark Purple
 }
 
 gui_Castbar.STAGE_FILL_COLORS = {
@@ -99,12 +99,13 @@ gui_Castbar.STAGE_FILL_COLORS = {
     {0.91, 0.35, 0.40, 1},   -- Stage 2: Bright Red/Pink
     {0.95, 0.75, 0.30, 1},   -- Stage 3: Bright Yellow/Orange
     {0.45, 0.82, 0.35, 1},   -- Stage 4: Bright Green
-    {0.75, 0.40, 0.85, 1},   -- Stage 5: Bright Purple													  
+    {0.75, 0.40, 0.85, 1},   -- Stage 5: Bright Purple
 }
 
 -- Local references for internal use
 local STAGE_COLORS = gui_Castbar.STAGE_COLORS
 local STAGE_FILL_COLORS = gui_Castbar.STAGE_FILL_COLORS
+
 ---------------------------------------------------------------------------
 -- SETTINGS HELPERS
 ---------------------------------------------------------------------------
@@ -180,7 +181,7 @@ local function InitializeDefaultSettings(castSettings)
                 castSettings.empoweredFillColors[i] = {STAGE_FILL_COLORS[i][1], STAGE_FILL_COLORS[i][2], STAGE_FILL_COLORS[i][3], STAGE_FILL_COLORS[i][4]}
             end
         end
-    end 
+    end
 end
 
 local function GetSizingValues(castSettings)
@@ -243,21 +244,21 @@ local function CreateIcon(anchorFrame, iconSize, iconBorderSize, iconBorderColor
     local iconFrame = CreateFrame("Frame", nil, anchorFrame)
     iconFrame:SetSize(iconSize, iconSize)
     iconFrame:SetPoint("TOPLEFT", anchorFrame, "TOPLEFT", 0, 0)
-    
+
     -- Border fills the iconFrame (background layer)
     local border = iconFrame:CreateTexture(nil, "BACKGROUND", nil, -8)
     local r, g, b, a = GetSafeColor(iconBorderColor, {0, 0, 0, 1})
     border:SetColorTexture(r, g, b, a)
-    border:SetAllPoints(iconFrame)																							 
+    border:SetAllPoints(iconFrame)
     iconFrame.border = border
 
     -- Icon texture is inset by borderSize so border shows around it
     local iconTexture = iconFrame:CreateTexture(nil, "ARTWORK")
     iconTexture:SetPoint("TOPLEFT", iconFrame, "TOPLEFT", iconBorderSize, -iconBorderSize)
-    iconTexture:SetPoint("BOTTOMRIGHT", iconFrame, "BOTTOMRIGHT", -iconBorderSize, iconBorderSize)																						  
+    iconTexture:SetPoint("BOTTOMRIGHT", iconFrame, "BOTTOMRIGHT", -iconBorderSize, iconBorderSize)
     iconTexture:SetTexCoord(0.08, 0.92, 0.08, 0.92)
     iconFrame.texture = iconTexture
-    
+
     anchorFrame.icon = iconFrame
     anchorFrame.iconTexture = iconTexture
     anchorFrame.iconBorder = border
@@ -319,7 +320,7 @@ local function ApplyCastColor(statusBar, notInterruptible, customColor)
         isNotInterruptible = true
     end
 
-    if isNotInterruptible then						  
+    if isNotInterruptible then
         local r, g, b, a = GetSafeColor(NOT_INTERRUPTIBLE_COLOR)
         statusBar:SetStatusBarColor(r, g, b, a)
     else
@@ -339,7 +340,7 @@ local function PositionCastbarByAnchor(anchorFrame, castSettings, unitFrame, bar
     if anchor == "essential" then
         local offsetX = Scale(castSettings.offsetX or 0)
         local offsetY = math.floor(Scale(castSettings.offsetY or -25) + 0.5)
-        local widthAdj = Scale(castSettings.widthAdjustment or 0)													 
+        local widthAdj = Scale(castSettings.widthAdjustment or 0)
         local viewer = _G["EssentialCooldownViewer"]
         if viewer then
             anchorFrame:SetPoint("TOPLEFT", viewer, "BOTTOMLEFT", offsetX - widthAdj, offsetY)
@@ -350,7 +351,7 @@ local function PositionCastbarByAnchor(anchorFrame, castSettings, unitFrame, bar
     elseif anchor == "utility" then
         local offsetX = Scale(castSettings.offsetX or 0)
         local offsetY = math.floor(Scale(castSettings.offsetY or -25) + 0.5)
-        local widthAdj = Scale(castSettings.widthAdjustment or 0)												 
+        local widthAdj = Scale(castSettings.widthAdjustment or 0)
         local viewer = _G["UtilityCooldownViewer"]
         if viewer then
             anchorFrame:SetPoint("TOPLEFT", viewer, "BOTTOMLEFT", offsetX - widthAdj, offsetY)
@@ -399,33 +400,33 @@ local function UpdateIconPosition(anchorFrame, castSettings, iconSize, iconScale
     local iconFrame = anchorFrame.icon
     local iconTexture = anchorFrame.iconTexture
     local iconBorder = anchorFrame.iconBorder
-    
+
     if not ShouldShowIcon(anchorFrame, castSettings) or not iconFrame then
         if iconFrame then iconFrame:Hide() end
         return false
     end
-    
+
     local baseIconSize = iconSize * iconScale
     iconFrame:SetSize(baseIconSize, baseIconSize)
     iconFrame:ClearAllPoints()
     local iconAnchor = castSettings.iconAnchor or "TOPLEFT"
     iconFrame:SetPoint(iconAnchor, anchorFrame, iconAnchor, 0, 0)
-    
+
     local textureToUse = anchorFrame.currentIconTexture or anchorFrame.previewIconTexture
     if textureToUse and iconTexture then
         iconTexture:SetTexture(textureToUse)
         -- Inset texture by borderSize so border shows around it
         iconTexture:ClearAllPoints()
         iconTexture:SetPoint("TOPLEFT", iconFrame, "TOPLEFT", iconBorderSize, -iconBorderSize)
-        iconTexture:SetPoint("BOTTOMRIGHT", iconFrame, "BOTTOMRIGHT", -iconBorderSize, iconBorderSize)																								  
+        iconTexture:SetPoint("BOTTOMRIGHT", iconFrame, "BOTTOMRIGHT", -iconBorderSize, iconBorderSize)
         if ShouldShowIcon(anchorFrame, castSettings) then
             iconFrame:Show()
         else
-        iconFrame:Hide()
-        return false
-    end
-    
-    if iconBorder then
+            iconFrame:Hide()
+            return false
+        end
+
+        if iconBorder then
             local r, g, b, a = GetSafeColor(castSettings.iconBorderColor, {0, 0, 0, 1})
             iconBorder:SetColorTexture(r, g, b, a)
             iconBorder:ClearAllPoints()
@@ -441,13 +442,13 @@ end
 local function UpdateStatusBarPosition(anchorFrame, castSettings, barHeight, iconSize, iconScale, borderSize)
     local statusBar = anchorFrame.statusBar
     local border = statusBar and statusBar.Border
-    
+
     if not statusBar then return end
-    
+
     statusBar:SetHeight(barHeight)
     statusBar:ClearAllPoints()
-    
-    -- Inset statusBar by borderSize so border is visible around it (like unit frames)																					  
+
+    -- Inset statusBar by borderSize so border is visible around it (like unit frames)
     if ShouldShowIcon(anchorFrame, castSettings) then
         local iconSizePx = iconSize * iconScale
         local iconSpacing = Scale(castSettings.iconSpacing or 0)
@@ -474,18 +475,18 @@ local function UpdateStatusBarPosition(anchorFrame, castSettings, barHeight, ico
         border:SetPoint("BOTTOMRIGHT", anchorFrame, "BOTTOMRIGHT", 0, 0)
 
         -- Only show border if borderSize > 0 (edgeSize=0 causes WoW to use texture's natural size)
-        if borderSize > 0 then							  
-        border:SetBackdrop({
-            edgeFile = "Interface\\Buttons\\WHITE8x8",
-            edgeSize = borderSize,
-        })
-        local r, g, b, a = GetSafeColor(castSettings.borderColor, {0, 0, 0, 1})
-        border:SetBackdropBorderColor(r, g, b, a)
-        border:Show()
+        if borderSize > 0 then
+            border:SetBackdrop({
+                edgeFile = "Interface\\Buttons\\WHITE8x8",
+                edgeSize = borderSize,
+            })
+            local r, g, b, a = GetSafeColor(castSettings.borderColor, {0, 0, 0, 1})
+            border:SetBackdropBorderColor(r, g, b, a)
+            border:Show()
         else
             border:SetBackdrop(nil)
             border:Hide()
-        end   
+        end
     end
 end
 
@@ -530,6 +531,7 @@ local function UpdateCastbarElements(anchorFrame, unitKey, castSettings)
     if showTimeText and currentCastSettings.hideTimeTextOnEmpowered and anchorFrame.isEmpowered then
         showTimeText = false
     end
+
     UpdateTextPosition(
         anchorFrame.timeText, anchorFrame.statusBar,
         currentCastSettings.timeTextAnchor or "RIGHT",
@@ -568,11 +570,11 @@ end
 ---------------------------------------------------------------------------
 local function ClearEmpoweredState(bar)
     if not bar then return end
-    
+
     bar.isEmpowered = false
     bar.numStages = 0
     bar.stagePositions = nil
-    bar.isInHoldPhase = nil				   
+    bar.isInHoldPhase = nil
     
     for _, stage in ipairs(bar.empoweredStages or {}) do
         if stage then stage:Hide() end
@@ -585,14 +587,14 @@ local function ClearEmpoweredState(bar)
     end
     
     if bar.bgBar then bar.bgBar:Show() end
-    
+
     if bar.statusBar then
         ApplyCastColor(bar.statusBar, false, bar.customColor)
     end
 
     if bar.empoweredLevelText then
         bar.empoweredLevelText:SetText("")
-    end   
+    end
 end
 
 ---------------------------------------------------------------------------
@@ -688,7 +690,7 @@ local function SimulateCast(castbar, castSettings, unitKey, bossIndex)
                 castSettings.offsetY = offsetY
                 -- Also save to freeOffset for mode switching (drag only works in "none" mode)
                 castSettings.freeOffsetX = offsetX
-                castSettings.freeOffsetY = offsetY										  
+                castSettings.freeOffsetY = offsetY
                 self:ClearAllPoints()
                 self:SetPoint("CENTER", UIParent, "CENTER", offsetX, offsetY)
             end
@@ -765,7 +767,7 @@ local function UpdateEmpoweredStages(bar, numStages)
         local stagePositions
         if numStages >= 5 then
             stagePositions = {0, 0.15, 0.32, 0.50, 0.68, 0.85, 1.0}
-        elseif numStages == 4 then		  
+        elseif numStages == 4 then
             stagePositions = {0, 0.18, 0.42, 0.63, 0.84, 1.0}
         elseif numStages == 3 then
             stagePositions = {0, 0.25, 0.50, 0.75, 1.0}
@@ -788,7 +790,7 @@ local function UpdateEmpoweredStages(bar, numStages)
             local startPos = stagePositions[i] * barWidth
             local endPos = stagePositions[i + 1] * barWidth
             local width = endPos - startPos
-            
+
             -- Get cast settings for color overrides
             local castSettings = GetCastSettings(bar.unitKey)
             local stageColor = STAGE_COLORS[i] or STAGE_COLORS[1]
@@ -796,7 +798,7 @@ local function UpdateEmpoweredStages(bar, numStages)
                 stageColor = castSettings.empoweredStageColors[i]
             end
 
-            overlay:SetColorTexture(unpack(stageColor))								   
+            overlay:SetColorTexture(unpack(stageColor))
             overlay:SetSize(width, barHeight)
             overlay:ClearAllPoints()
             overlay:SetPoint("LEFT", bar.statusBar, "LEFT", startPos, 0)
@@ -829,10 +831,10 @@ end
 
 local function UpdateEmpoweredFillColor(bar, progress, duration)
     if not bar.isEmpowered or not bar.stagePositions then return end
-    
+
     local progressPercent = progress / duration
     local currentStage = 1
-    
+
     for i = 2, #bar.stagePositions do
         if progressPercent >= bar.stagePositions[i] then
             currentStage = i
@@ -840,7 +842,7 @@ local function UpdateEmpoweredFillColor(bar, progress, duration)
             break
         end
     end
-    
+
     -- Get cast settings for color overrides
     local castSettings = GetCastSettings(bar.unitKey)
     local fillColors = STAGE_FILL_COLORS
@@ -908,6 +910,7 @@ function gui_Castbar:GetEmpoweredLevel()
 
     return currentStage, maxStages, true
 end
+
 ---------------------------------------------------------------------------
 -- TEXT HELPERS
 ---------------------------------------------------------------------------
@@ -962,7 +965,7 @@ function gui_Castbar:CreateCastbar(unitFrame, unit, unitKey)
     
     local anchorFrame = CreateAnchorFrame(nil, UIParent)
     anchorFrame:SetSize(1, barHeight)
-    
+
     -- Apply HUD layer priority
     local guiCore = _G.GravityUI and _G.GravityUI.guiCore
     local hudLayering = guiCore and guiCore.db and guiCore.db.profile and guiCore.db.profile.hudLayering
@@ -978,6 +981,7 @@ function gui_Castbar:CreateCastbar(unitFrame, unit, unitKey)
         local frameLevel = guiCore:GetHUDFrameLevel(layerPriority)
         anchorFrame:SetFrameLevel(frameLevel)
     end
+
     CreateIcon(anchorFrame, iconSize, iconBorderSize, castSettings.iconBorderColor)
     local statusBar = CreateStatusBar(anchorFrame)
     
@@ -988,15 +992,16 @@ function gui_Castbar:CreateCastbar(unitFrame, unit, unitKey)
     
     local spellText = CreateTextElement(statusBar, fontSize)
     anchorFrame.spellText = spellText
-    
+
     local timeText = CreateTextElement(statusBar, fontSize)
     anchorFrame.timeText = timeText
-    
+
     -- Empowered level text (player only)
     if unitKey == "player" then
         local empoweredLevelText = CreateTextElement(statusBar, fontSize)
         anchorFrame.empoweredLevelText = empoweredLevelText
     end
+
     anchorFrame.UpdateCastbarElements = function(self)
         UpdateCastbarElements(self, unitKey, castSettings)
     end
@@ -1009,7 +1014,7 @@ function gui_Castbar:CreateCastbar(unitFrame, unit, unitKey)
     ApplyBarColor(statusBar, barColor)
     ApplyBackgroundColor(bgBar, castSettings.bgColor)
     statusBar:SetStatusBarTexture(GetTexturePath(castSettings.texture))
-    
+
     -- Store unit info
     anchorFrame.unit = unit
     anchorFrame.unitKey = unitKey
@@ -1046,7 +1051,9 @@ local function GetCastInfo(castbar, unit)
 
     if not spellName then
         spellName, text, texture, startTimeMS, endTimeMS, _, notInterruptible, _, _, channelStages = UnitChannelInfo(unit)
-        isChanneled = true
+        if spellName then
+            isChanneled = true
+        end
     end
 
     -- Get duration object for engine-driven animation (Midnight 12.0+)
@@ -1138,37 +1145,37 @@ local function UpdateCastbarVisuals(castbar, castSettings, unitKey, texture, tex
     -- Get current settings
     local currentSettings = GetUnitSettings(unitKey)
     local currentCastSettings = currentSettings and currentSettings.castbar or castSettings
-    
+
     -- Update status bar texture
     if castbar.statusBar then
         castbar.statusBar:SetStatusBarTexture(GetTexturePath(currentCastSettings.texture))
     end
-    
+
     -- Icon texture is already set in Cast function before this is called
     -- This function just updates other visual elements
-    
+
     -- Update spell text
     UpdateSpellText(castbar, text, spellName, castSettings, unit)
-    
+
     -- Never use reverse fill - drain effect achieved via progress calculation
     local isEmpowered = castbar.isEmpowered
     castbar.statusBar:SetReverseFill(false)
-    
+
     -- Set initial bar value and time text
     -- Only calculate progress if we have timing values (non-timer-driven mode)
     -- For timer-driven mode, SetTimerDuration already set up the bar
-    if startTime and endTime then								 
-    local now = GetTime()
-    local duration = endTime - startTime
-    local channelFillForward = currentCastSettings and currentCastSettings.channelFillForward
-    local shouldDrain = isChanneled and not isEmpowered and not channelFillForward
-    local progress = shouldDrain and (endTime - now) or (now - startTime)
-    
-    if duration > 0 then
-        castbar.statusBar:SetMinMaxValues(0, duration)
-        castbar.statusBar:SetValue(math.max(0, math.min(duration, progress)))
-    end
-    	
+    if startTime and endTime then
+        local now = GetTime()
+        local duration = endTime - startTime
+        local channelFillForward = currentCastSettings and currentCastSettings.channelFillForward
+        local shouldDrain = isChanneled and not isEmpowered and not channelFillForward
+        local progress = shouldDrain and (endTime - now) or (now - startTime)
+
+        if duration > 0 then
+            castbar.statusBar:SetMinMaxValues(0, duration)
+            castbar.statusBar:SetValue(math.max(0, math.min(duration, progress)))
+        end
+
         -- Set initial time text
         if castbar.timeText then
             local remaining = endTime - now
@@ -1179,6 +1186,7 @@ local function UpdateCastbarVisuals(castbar, castSettings, unitKey, texture, tex
     -- Set color using helper (always apply, regardless of timer mode)
     ApplyCastColor(castbar.statusBar, notInterruptible, castbar.customColor)
 end
+
 -- Update empowered cast state
 local function UpdateEmpoweredState(castbar, isPlayer, isEmpowered, numStages)
     if isPlayer then
@@ -1197,10 +1205,11 @@ local function HandleNoCast(castbar, castSettings, isPlayer, onUpdateHandler)
             if isPlayer then
                 ClearEmpoweredState(castbar)
             end
-            
+
             -- Clear timer-driven state
             castbar.timerDriven = false
             castbar.durationObj = nil
+
             local settings = GetUnitSettings(castbar.unitKey)
             if settings and settings.castbar and settings.castbar.previewMode then
                 -- Show preview simulation
@@ -1229,7 +1238,7 @@ function gui_Castbar:SetupCastbar(castbar, unit, unitKey, castSettings)
         -- Check if actually casting (real cast takes priority)
         local spellName = UnitCastingInfo(self.unit)
         local channelName = UnitChannelInfo(self.unit)
-        
+
         -- Continue showing castbar during empowered hold phase even when API returns nil
         local isInEmpoweredHold = isPlayer and self.isEmpowered and self.startTime and self.endTime
 
@@ -1240,17 +1249,17 @@ function gui_Castbar:SetupCastbar(castbar, unit, unitKey, castSettings)
             if self.timerDriven and not isPlayer then
                 -- Engine is driving the animation via SetTimerDuration
                 -- Just update time text by reading remaining time
-																						  
+
                 local remaining = nil
-																									 
+
                 -- Method 1: Try duration object GetRemainingDuration first
                 if self.durationObj then
-                    local getter = self.durationObj.GetRemainingDuration or self.durationObj.GetRemaining															 
+                    local getter = self.durationObj.GetRemainingDuration or self.durationObj.GetRemaining
                     if getter then
                         local okRem, rem = pcall(getter, self.durationObj)
                         if okRem and rem ~= nil then
                             remaining = SafeToNumber(rem)
-                        end										  
+                        end
                     end
                 end
 
@@ -1292,11 +1301,11 @@ function gui_Castbar:SetupCastbar(castbar, unit, unitKey, castSettings)
                 -- Update time text (throttled) - only if we have valid remaining
                 if remaining ~= nil then
                     UpdateThrottledText(self, elapsed, self.timeText, remaining)
-                end	   
+                end
                 return
             end
 
-            -- Normal mode: calculate progress from stored timing values																
+            -- Normal mode: calculate progress from stored timing values
             local startTime, endTime
             if isPlayer then
                 startTime = self.startTime
@@ -1311,13 +1320,13 @@ function gui_Castbar:SetupCastbar(castbar, unit, unitKey, castSettings)
                 startTime = self.castStartTime / 1000
                 endTime = self.castEndTime / 1000
             end
-            
+
             if not startTime or not endTime then
                 self:SetScript("OnUpdate", nil)
                 self:Hide()
                 return
             end
-            
+
             local now = GetTime()
             if now >= endTime then
                 if isPlayer then
@@ -1327,10 +1336,10 @@ function gui_Castbar:SetupCastbar(castbar, unit, unitKey, castSettings)
                 self:Hide()
                 return
             end
-            
+
             local duration = endTime - startTime
             if duration <= 0 then duration = 0.001 end
-            
+
             -- Never use reverse fill - drain effect achieved via progress calculation
             self.statusBar:SetReverseFill(false)
 
@@ -1338,7 +1347,7 @@ function gui_Castbar:SetupCastbar(castbar, unit, unitKey, castSettings)
             local channelFillForward = castSettings and castSettings.channelFillForward
             local shouldDrain = self.isChanneled and not self.isEmpowered and not channelFillForward
             local progress = shouldDrain and remaining or (now - startTime)
-													 											  																			   														  			   
+
             self.statusBar:SetMinMaxValues(0, duration)
             self.statusBar:SetValue(progress)
 
@@ -1395,7 +1404,7 @@ function gui_Castbar:SetupCastbar(castbar, unit, unitKey, castSettings)
                 if UpdateThrottledText(self, elapsed, self.timeText, remaining) and remaining > 0 and isPlayer then
                     UpdateTimeTextColor(self, self.unit)
                 end
-            end  
+            end
         elseif self.isPreviewSimulation then
             -- Preview simulation - use preview data
             if not self.previewStartTime or not self.previewEndTime then
@@ -1423,7 +1432,7 @@ function gui_Castbar:SetupCastbar(castbar, unit, unitKey, castSettings)
             self:Hide()
         end
     end
-    
+
     -- Store OnUpdate handler reference
     castbar.castbarOnUpdate = CastBar_OnUpdate
     
@@ -1448,7 +1457,7 @@ function gui_Castbar:SetupCastbar(castbar, unit, unitKey, castSettings)
                 if startTimeMS and endTimeMS then
                     local success
                     success, startTime, endTime = pcall(function()
-                        return startTimeMS / 1000, endTimeMS / 1000								  
+                        return startTimeMS / 1000, endTimeMS / 1000
                     end)
                     canShowCast = success
                 end
@@ -1472,21 +1481,21 @@ function gui_Castbar:SetupCastbar(castbar, unit, unitKey, castSettings)
                 end
             end
         end
-																		   
+
         if canShowCast then
             -- Clear preview simulation if active
             if self.isPreviewSimulation then
                 ClearPreviewSimulation(self)
             end
-			
-            -- Store cast state																					  
+
+            -- Store cast state
             self.isChanneled = isChanneled
             self.isEmpowered = isEmpowered
             self.numStages = numStages or 0
             self.notInterruptible = notInterruptible
             self.timerDriven = useTimerDriven
             self.durationObj = durationObj
-            self._assumeCountdown = nil  -- Reset countdown detection for new cast																				  
+            self._assumeCountdown = nil  -- Reset countdown detection for new cast
 
             if useTimerDriven then
                 -- Engine-driven animation for non-player units with secret timing
@@ -1495,7 +1504,7 @@ function gui_Castbar:SetupCastbar(castbar, unit, unitKey, castSettings)
                     -- Determine direction: 0=fill (casts), 1=drain (channels that should drain)
                     local channelFillForward = castSettings and castSettings.channelFillForward
                     local direction = (isChanneled and not channelFillForward) and 1 or 0
-                    local ok = pcall(self.statusBar.SetTimerDuration, self.statusBar, durationObj, direction)
+                    local ok = pcall(self.statusBar.SetTimerDuration, self.statusBar, durationObj, 0, direction)
                     if not ok then
                         -- Fallback: try without direction parameter
                         pcall(self.statusBar.SetTimerDuration, self.statusBar, durationObj)
@@ -1551,31 +1560,43 @@ function gui_Castbar:SetupCastbar(castbar, unit, unitKey, castSettings)
         UNIT_SPELLCAST_START = function(self, spellID) self:Cast(spellID, false) end,
         UNIT_SPELLCAST_CHANNEL_START = function(self, spellID) self:Cast(spellID, false) end,
         
-        -- Cast end events (clear empowered state for player)
+        -- Cast end events - hide immediately without re-querying APIs
         UNIT_SPELLCAST_STOP = function(self, spellID)
             if isPlayer then ClearEmpoweredState(self) end
-            self:Cast(spellID, false)
+            self.timerDriven = false
+            self.durationObj = nil
+            self:SetScript("OnUpdate", nil)
+            self:Hide()
         end,
         UNIT_SPELLCAST_CHANNEL_STOP = function(self, spellID)
             if isPlayer then ClearEmpoweredState(self) end
-            self:Cast(spellID, false)
+            self.timerDriven = false
+            self.durationObj = nil
+            self:SetScript("OnUpdate", nil)
+            self:Hide()
         end,
         UNIT_SPELLCAST_FAILED = function(self, spellID)
             if isPlayer then ClearEmpoweredState(self) end
-            self:Cast(spellID, false)
+            self.timerDriven = false
+            self.durationObj = nil
+            self:SetScript("OnUpdate", nil)
+            self:Hide()
         end,
         UNIT_SPELLCAST_INTERRUPTED = function(self, spellID)
             if isPlayer then ClearEmpoweredState(self) end
-            self:Cast(spellID, false)
+            self.timerDriven = false
+            self.durationObj = nil
+            self:SetScript("OnUpdate", nil)
+            self:Hide()
         end,
         
         -- Interruptible state changes
         UNIT_SPELLCAST_INTERRUPTIBLE = function(self)
-            self.notInterruptible = false										 
+            self.notInterruptible = false
             ApplyCastColor(self.statusBar, false, self.customColor)
         end,
         UNIT_SPELLCAST_NOT_INTERRUPTIBLE = function(self)
-            self.notInterruptible = true										
+            self.notInterruptible = true
             ApplyCastColor(self.statusBar, true, self.customColor)
         end,
     }
@@ -1589,17 +1610,17 @@ function gui_Castbar:SetupCastbar(castbar, unit, unitKey, castSettings)
             self:Cast(spellID, true)
         end
         eventHandlers.UNIT_SPELLCAST_EMPOWER_STOP = function(self, spellID)
-            local name = UnitCastingInfo(self.unit)		  
+            local name = UnitCastingInfo(self.unit)
             if name then
                 -- Another cast started, transition to it
                 ClearEmpoweredState(self)
-                self:Cast(spellID, false)				   
+                self:Cast(spellID, false)
             else
                 -- Cast ended (cancelled, interrupted, or completed) - hide immediately
                 ClearEmpoweredState(self)
                 self:SetScript("OnUpdate", nil)
-                self:Hide()					   
-            end										 
+                self:Hide()
+            end
         end
     end
     
@@ -1677,13 +1698,13 @@ function gui_Castbar:SetupBossCastbar(castbar, unit, bossIndex, castSettings)
             self.statusBar:SetReverseFill(false)
 
             local remaining = self.endTime - now
-            local channelFillForward = castSettings and castSettings.channelFillForward			
+            local channelFillForward = castSettings and castSettings.channelFillForward
             local shouldDrain = self.isChanneled and not self.isEmpowered and not channelFillForward
             local progress = shouldDrain and remaining or (now - self.startTime)
-            
+
             self.statusBar:SetMinMaxValues(0, duration)
             self.statusBar:SetValue(progress)
-            
+
             if self.isEmpowered then
                 UpdateEmpoweredFillColor(self, progress, duration)
             end
@@ -1759,8 +1780,8 @@ function gui_Castbar:SetupBossCastbar(castbar, unit, bossIndex, castSettings)
             local success, startTime, endTime = pcall(function()
                 return startTimeMS / 1000, endTimeMS / 1000
             end)
-            if not success then return end									  
-            
+            if not success then return end
+
             if isEmpowered and GetUnitEmpowerHoldAtMaxTime then
                 local ok, adjustedEndTime = pcall(function()
                     local ht = GetUnitEmpowerHoldAtMaxTime(self.unit)
@@ -1802,11 +1823,11 @@ function gui_Castbar:SetupBossCastbar(castbar, unit, bossIndex, castSettings)
             end
             
             UpdateSpellText(self, text, spellName, castSettings, self.unit)
-            
+
             self.statusBar:SetReverseFill(false)
-            
+
             ApplyCastColor(self.statusBar, notInterruptible, self.customColor)
-            
+
             if isEmpowered and numStages and numStages > 0 then
                 UpdateEmpoweredStages(self, numStages)
             else
@@ -1828,7 +1849,7 @@ function gui_Castbar:SetupBossCastbar(castbar, unit, bossIndex, castSettings)
                     ClearEmpoweredState(self)
                     local settings = GetUnitSettings(self.unitKey)
                     local gui_UF = gui_Castbar.unitFramesModule
-                    local bossFramePreviewActive = gui_UF and gui_UF.previewMode and gui_UF.previewMode["boss" .. bossIndex]																							
+                    local bossFramePreviewActive = gui_UF and gui_UF.previewMode and gui_UF.previewMode["boss" .. bossIndex]
                     if settings and settings.castbar and settings.castbar.previewMode and bossFramePreviewActive then
                         -- Show preview simulation
                         SimulateCast(self, castSettings, self.unitKey, bossIndex)
@@ -1845,7 +1866,7 @@ function gui_Castbar:SetupBossCastbar(castbar, unit, bossIndex, castSettings)
             end)
         end
     end
-    
+
     -- Register events
     castbar:RegisterUnitEvent("UNIT_SPELLCAST_START", unit)
     castbar:RegisterUnitEvent("UNIT_SPELLCAST_STOP", unit)
@@ -1869,24 +1890,24 @@ function gui_Castbar:SetupBossCastbar(castbar, unit, bossIndex, castSettings)
         elseif event == "UNIT_SPELLCAST_EMPOWER_STOP" then
             local name = UnitCastingInfo(self.unit)
             if name then
-                -- Another cast started, transition to it														 
+                -- Another cast started, transition to it
                 ClearEmpoweredState(self)
                 self:Cast(spellID, false)
-            else				
+            else
                 -- Cast ended (cancelled, interrupted, or completed) - hide immediately
                 ClearEmpoweredState(self)
                 self:SetScript("OnUpdate", nil)
                 self:Hide()
-            end				
+            end
         elseif event == "UNIT_SPELLCAST_STOP" or event == "UNIT_SPELLCAST_CHANNEL_STOP"
             or event == "UNIT_SPELLCAST_FAILED" or event == "UNIT_SPELLCAST_INTERRUPTED" then
             ClearEmpoweredState(self)
             self:Cast(spellID, false)
         elseif event == "UNIT_SPELLCAST_INTERRUPTIBLE" then
-            self.notInterruptible = false										 
+            self.notInterruptible = false
             ApplyCastColor(self.statusBar, false, self.customColor)
         elseif event == "UNIT_SPELLCAST_NOT_INTERRUPTIBLE" then
-            self.notInterruptible = true										
+            self.notInterruptible = true
             ApplyCastColor(self.statusBar, true, self.customColor)
         end
     end)
@@ -1951,10 +1972,10 @@ function gui_Castbar:CreateBossCastbar(unitFrame, unit, bossIndex)
     ApplyBarColor(statusBar, barColor)
     ApplyBackgroundColor(bgBar, castSettings.bgColor)
     statusBar:SetStatusBarTexture(GetTexturePath(castSettings.texture))
-    
+
     -- Update element positions
     UpdateCastbarElements(anchorFrame, "boss", castSettings)
-    
+
     -- Store unit info
     anchorFrame.unit = unit
     anchorFrame.unitKey = "boss"
@@ -2001,10 +2022,10 @@ function gui_Castbar:CreateBossCastbar(unitFrame, unit, bossIndex)
             else
                 progress = (now - self.startTime) / duration
             end
-            
+
             self.statusBar:SetMinMaxValues(0, 1)
             self.statusBar:SetValue(math.max(0, math.min(1, progress)))
-            
+
             local remaining = self.endTime - now
             if self.timeText then
                 self.timeText:SetText(string.format("%.1f", remaining))
@@ -2049,9 +2070,11 @@ function gui_Castbar:CreateBossCastbar(unitFrame, unit, bossIndex)
         
         if not spellName then
             spellName, text, texture, startTimeMS, endTimeMS, _, notInterruptible = UnitChannelInfo(self.unit)
-            isChanneled = true
+            if spellName then
+                isChanneled = true
+            end
         end
-        
+
         -- If actually casting, show real cast (preview is hidden during real casts)
         if spellName and startTimeMS and endTimeMS then
             -- Use pcall to handle Midnight secret values (pass type checks but fail arithmetic)
@@ -2064,7 +2087,7 @@ function gui_Castbar:CreateBossCastbar(unitFrame, unit, bossIndex)
             if self.isPreviewSimulation then
                 ClearPreviewSimulation(self)
             end
-																							
+
             local now = GetTime()
             self.startTime = startTime
             self.endTime = endTime
@@ -2077,7 +2100,7 @@ function gui_Castbar:CreateBossCastbar(unitFrame, unit, bossIndex)
                     self.startTime = now
                     self.endTime = now + dur
                 end
-            end			   
+            end
             
             -- Ensure status bar has texture
             local currentSettings = GetUnitSettings(self.unitKey)
@@ -2099,11 +2122,11 @@ function gui_Castbar:CreateBossCastbar(unitFrame, unit, bossIndex)
             end
             
             UpdateSpellText(self, text, spellName, castSettings, self.unit)
-            
+
             self.statusBar:SetReverseFill(false)
-            
+
             ApplyCastColor(self.statusBar, notInterruptible, self.customColor)
-            
+
             -- Start OnUpdate handler
             self:SetScript("OnUpdate", BossCastBar_OnUpdate)
             self:Show()
@@ -2157,7 +2180,7 @@ function gui_Castbar:CreateBossCastbar(unitFrame, unit, bossIndex)
             ApplyCastColor(self.statusBar, true, self.customColor)
         end
     end)
-    
+
     -- Apply preview if enabled AND boss frame preview is active
     local gui_UF = gui_Castbar.unitFramesModule
     local bossFramePreviewActive = gui_UF and gui_UF.previewMode and gui_UF.previewMode["boss" .. bossIndex]
@@ -2168,7 +2191,7 @@ function gui_Castbar:CreateBossCastbar(unitFrame, unit, bossIndex)
             anchorFrame:SetScript("OnUpdate", anchorFrame.bossOnUpdate)
         end
     end
-    
+
     return anchorFrame
 end
 

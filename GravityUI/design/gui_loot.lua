@@ -1,16 +1,18 @@
 --- GravityUI Loot & Roll Frames
---- Custom loot window and roll frames with GUI styling
+--- Custom loot window and roll frames with gui styling
 --- Replaces Blizzard's LootFrame and GroupLootFrame
 
 local ADDON_NAME, ns = ...
 local guiCore = ns.Addon
 local LSM = LibStub("LibSharedMedia-3.0")
 
+local tinsert, tremove = tinsert, tremove
+
 -- Module reference
 local Loot = {}
 guiCore.Loot = Loot
 
--- Helper to get theme colors from GUI skin system
+-- Helper to get theme colors from gui skin system
 local function GetThemeColors()
     local gui = _G.GravityUI
     if gui and gui.GetSkinColor and gui.GetSkinBgColor then
@@ -24,7 +26,7 @@ end
 
 -- Constants
 local MAX_LOOT_SLOTS = 10
-local MAX_ROLL_FRAMES = 4
+local MAX_ROLL_FRAMES = 8  -- Increased from 4 to handle more simultaneous raid drops
 local SLOT_HEIGHT = 32
 local SLOT_WIDTH = 230
 local SLOT_SPACING = 2
@@ -53,6 +55,11 @@ local lootFrame = nil
 local rollFramePool = {}
 local activeRolls = {}
 local rollAnchor = nil
+local waitingRolls = {}  -- Queue for rolls when all frames are busy
+
+-- Forward declarations (needed for mutual references)
+local ProcessRollQueue
+local StartRoll
 
 ---=================================================================================
 --- UTILITY FUNCTIONS
@@ -98,7 +105,7 @@ end
 local function CreateLootSlot(parent, index)
     local bgColor, borderColor, textColor = GetThemeColors()
 
-    local slot = CreateFrame("Button", "GUI_LootSlot"..index, parent)
+    local slot = CreateFrame("Button", "gui_LootSlot"..index, parent)
     slot:SetSize(SLOT_WIDTH, SLOT_HEIGHT)
     slot:SetPoint("TOP", parent, "TOP", 0, -HEADER_HEIGHT - ((index-1) * (SLOT_HEIGHT + SLOT_SPACING)))
 
@@ -184,7 +191,7 @@ local function CreateLootWindow()
     frame:EnableMouse(true)
     frame:Hide()
 
-    -- GUI backdrop
+    -- gui backdrop
     frame:SetBackdrop({
         bgFile = "Interface\\Buttons\\WHITE8x8",
         edgeFile = "Interface\\Buttons\\WHITE8x8",
@@ -373,10 +380,8 @@ local function CreateRollButton(parent, rollType, rollValue, texture)
             frame.rollID = nil
             frame.timer:SetScript("OnUpdate", nil)
             activeRolls[rollID] = nil
-            -- Defer repositioning since RepositionAllRolls is defined later
-            C_Timer.After(0, function()
-                if RepositionAllRolls then RepositionAllRolls() end
-            end)
+            -- Defer repositioning and queue processing
+            C_Timer.After(0, ProcessRollQueue)
         end
     end)
 
@@ -495,6 +500,23 @@ local function CreateRollFrame(index)
 end
 
 local function GetAvailableRollFrame()
+    local db = GetDB()
+    local maxVisible = (db.lootRoll and db.lootRoll.maxFrames) or 4
+
+    -- Count currently visible frames
+    local visibleCount = 0
+    for i = 1, MAX_ROLL_FRAMES do
+        if rollFramePool[i] and rollFramePool[i]:IsShown() then
+            visibleCount = visibleCount + 1
+        end
+    end
+
+    -- If at max visible, return nil to trigger queue
+    if visibleCount >= maxVisible then
+        return nil
+    end
+
+    -- Find an available frame from the pool
     for i = 1, MAX_ROLL_FRAMES do
         if not rollFramePool[i] then
             rollFramePool[i] = CreateRollFrame(i)
@@ -545,15 +567,35 @@ local function RepositionAllRolls()
     end
 end
 
-local function StartRoll(rollID, rollTime, lootHandle)
+-- Process the waiting queue when a roll frame becomes available
+ProcessRollQueue = function()
+    RepositionAllRolls()
+    if #waitingRolls > 0 then
+        local nextRoll = tremove(waitingRolls, 1)
+        -- Validate the roll is still valid before starting
+        local texture = GetLootRollItemInfo(nextRoll.rollID)
+        if texture then
+            StartRoll(nextRoll.rollID, nextRoll.rollTime)
+        elseif #waitingRolls > 0 then
+            -- Roll was cancelled/expired, try next in queue
+            ProcessRollQueue()
+        end
+    end
+end
+
+StartRoll = function(rollID, rollTime, lootHandle)
     local db = GetDB()
     if not db.lootRoll or not db.lootRoll.enabled then return end
 
-    local frame = GetAvailableRollFrame()
-    if not frame then return end
-
     local texture, name, count, quality, bop, canNeed, canGreed, canDE, reason, deReason, _, _, canTransmog = GetLootRollItemInfo(rollID)
     if not texture then return end
+
+    local frame = GetAvailableRollFrame()
+    if not frame then
+        -- All frames busy - queue this roll for later
+        tinsert(waitingRolls, { rollID = rollID, rollTime = rollTime })
+        return
+    end
 
     -- Reset frame state from previous roll
     frame:SetAlpha(1)
@@ -639,13 +681,23 @@ local function StartRoll(rollID, rollTime, lootHandle)
 end
 
 local function CancelRoll(rollID)
+    -- Check if roll is in the waiting queue and remove it
+    for i = #waitingRolls, 1, -1 do
+        if waitingRolls[i].rollID == rollID then
+            tremove(waitingRolls, i)
+            return
+        end
+    end
+
+    -- Check active rolls
     local frame = activeRolls[rollID]
     if frame then
         frame:Hide()
         frame.rollID = nil
         frame.timer:SetScript("OnUpdate", nil)
         activeRolls[rollID] = nil
-        RepositionAllRolls()
+        -- Use C_Timer to defer repositioning and queue processing
+        C_Timer.After(0, ProcessRollQueue)
     end
 end
 
@@ -699,7 +751,7 @@ local function SkinLootHistoryElement(button)
             if item.PushedTexture then item.PushedTexture:SetAlpha(0) end
             if item.HighlightTexture then item.HighlightTexture:SetAlpha(0) end
 
-            -- Create GUI-style icon border
+            -- Create gui-style icon border
             if not item.guiBorder then
                 item.guiBorder = CreateFrame("Frame", nil, item, "BackdropTemplate")
                 item.guiBorder:SetPoint("TOPLEFT", icon, "TOPLEFT", -1, 1)
@@ -750,7 +802,7 @@ local function SkinGroupLootHistoryFrame()
         HistoryFrame.Bg:SetAlpha(0)
     end
 
-    -- Apply GUI backdrop
+    -- Apply gui backdrop
     if not HistoryFrame.guiBackdrop then
         HistoryFrame.guiBackdrop = CreateFrame("Frame", nil, HistoryFrame, "BackdropTemplate")
         HistoryFrame.guiBackdrop:SetAllPoints()
@@ -875,7 +927,7 @@ function Loot:ApplyLootHistoryTheme()
         return
     end
 
-    -- Enabled - apply GUI skin
+    -- Enabled - apply gui skin
     if not HistoryFrame.guiBackdrop then return end
 
     local bgColor, borderColor, textColor = GetThemeColors()
@@ -980,10 +1032,6 @@ end
 function Loot:Initialize()
     local db = GetDB()
 
-    -- #125: Force disable loot roll frames until fixed - overrides saved settings
-    if db.lootRoll then
-        db.lootRoll.enabled = false
-    end
     -- Create frames
     if not lootFrame then
         lootFrame = CreateLootWindow()
@@ -1254,12 +1302,16 @@ function Loot:IsLootPreviewActive()
     return lootPreviewActive
 end
 
--- Preview test items
+-- Preview test items (8 total to match MAX_ROLL_FRAMES)
 local PREVIEW_ROLL_ITEMS = {
     { texture = "Interface\\Icons\\INV_Sword_39", name = "Blade of Eternal Night", quality = 4, timer = 0.85 },
-    { texture = "Interface\\Icons\\INV_Helmet_25", name = "Crown of the Fallen King", quality = 4, timer = 0.6 },
-    { texture = "Interface\\Icons\\INV_Chest_Chain_15", name = "Burnished Chestguard", quality = 3, timer = 0.4 },
-    { texture = "Interface\\Icons\\INV_Boots_Plate_08", name = "Boots of Striding", quality = 2, timer = 0.2 },
+    { texture = "Interface\\Icons\\INV_Helmet_25", name = "Crown of the Fallen King", quality = 4, timer = 0.7 },
+    { texture = "Interface\\Icons\\INV_Chest_Chain_15", name = "Burnished Chestguard", quality = 3, timer = 0.55 },
+    { texture = "Interface\\Icons\\INV_Boots_Plate_08", name = "Boots of Striding", quality = 3, timer = 0.4 },
+    { texture = "Interface\\Icons\\INV_Gauntlets_29", name = "Gauntlets of the Ancients", quality = 4, timer = 0.3 },
+    { texture = "Interface\\Icons\\INV_Belt_13", name = "Girdle of Fortitude", quality = 2, timer = 0.25 },
+    { texture = "Interface\\Icons\\INV_Misc_Cape_18", name = "Cloak of Shadows", quality = 3, timer = 0.15 },
+    { texture = "Interface\\Icons\\INV_Jewelry_Ring_36", name = "Band of Eternal Champions", quality = 4, timer = 0.1 },
 }
 
 -- Show preview for roll frame (stays until hidden)
@@ -1271,6 +1323,7 @@ function Loot:ShowRollPreview()
     local db = GetDB()
     local growDirection = (db.lootRoll and db.lootRoll.growDirection) or "DOWN"
     local spacing = (db.lootRoll and db.lootRoll.spacing) or 4
+    local maxFrames = (db.lootRoll and db.lootRoll.maxFrames) or 4
 
     -- Position anchor from saved settings
     if db.lootRoll and db.lootRoll.position and db.lootRoll.position.point then
@@ -1283,8 +1336,12 @@ function Loot:ShowRollPreview()
 
     local bgColor, borderColor, textColor = GetThemeColors()
 
-    -- Create multiple preview frames
-    for i, item in ipairs(PREVIEW_ROLL_ITEMS) do
+    -- Store current maxFrames for HideRollPreview
+    self._previewMaxFrames = maxFrames
+
+    -- Create preview frames up to maxFrames setting
+    for i = 1, maxFrames do
+        local item = PREVIEW_ROLL_ITEMS[i] or PREVIEW_ROLL_ITEMS[1]  -- Cycle through if needed
         -- Ensure frame exists in pool
         if not rollFramePool[i] then
             rollFramePool[i] = CreateRollFrame(i)
@@ -1333,7 +1390,8 @@ function Loot:ShowRollPreview()
                     rollAnchor:SetPoint(point, UIParent, relPoint, x, y + ROLL_FRAME_HEIGHT)
                 end
                 -- Reposition other frames relative to new anchor
-                for j = 2, #PREVIEW_ROLL_ITEMS do
+                local previewCount = Loot._previewMaxFrames or 4
+                for j = 2, previewCount do
                     if rollFramePool[j] then
                         rollFramePool[j]:ClearAllPoints()
                         if growDirection == "UP" then
@@ -1361,8 +1419,8 @@ end
 
 -- Hide roll preview
 function Loot:HideRollPreview()
-    -- Hide all preview frames
-    for i = 1, #PREVIEW_ROLL_ITEMS do
+    -- Hide all preview frames (up to MAX_ROLL_FRAMES since we could show that many)
+    for i = 1, MAX_ROLL_FRAMES do
         if rollFramePool[i] then
             rollFramePool[i]:Hide()
             -- Remove drag handlers from first frame
@@ -1374,6 +1432,7 @@ function Loot:HideRollPreview()
             end
         end
     end
+    self._previewMaxFrames = nil
     rollPreviewActive = false
 end
 
@@ -1396,10 +1455,10 @@ function Loot:ToggleMovers()
         self:EnableEditMode()
     end
 end
-local EDIT_BORDER_COLOR = { 0.2, 0.8, 0.8, 1 }  -- Cyan/teal to match GUI style
+local EDIT_BORDER_COLOR = { 0.2, 0.8, 0.8, 1 }  -- Cyan/teal to match gui style
 local EDIT_BORDER_SIZE = 2
 
--- Create border highlight around a frame (matching GUI player frame style)
+-- Create border highlight around a frame (matching gui player frame style)
 local function CreateEditModeBorder(frame)
     if frame.editBorder then return frame.editBorder end
 
@@ -1469,7 +1528,7 @@ function Loot:EnableEditMode()
             local label = lootFrame:CreateFontString(nil, "OVERLAY")
             label:SetFont(LSM:Fetch("font", GetGeneralFont()), 10, "OUTLINE")
             label:SetPoint("BOTTOM", lootFrame, "TOP", 0, 4)
-            label:SetText("GUI Loot Window")
+            label:SetText("gui Loot Window")
             label:SetTextColor(0.2, 0.8, 0.8)  -- Match border color
             lootFrame.editLabel = label
         end
@@ -1486,7 +1545,7 @@ function Loot:EnableEditMode()
             local label = rollFrame:CreateFontString(nil, "OVERLAY")
             label:SetFont(LSM:Fetch("font", GetGeneralFont()), 10, "OUTLINE")
             label:SetPoint("BOTTOM", rollFrame, "TOP", 0, 4)
-            label:SetText("GUI Roll Frame")
+            label:SetText("gui Roll Frame")
             label:SetTextColor(0.2, 0.8, 0.8)  -- Match border color
             rollFrame.editLabel = label
         end
@@ -1537,11 +1596,11 @@ end
 --- MODULE INITIALIZATION HOOK
 ---=================================================================================
 
--- Initialize when GUICore is enabled
+-- Initialize when guiCore is enabled
 local initFrame = CreateFrame("Frame")
 initFrame:RegisterEvent("PLAYER_LOGIN")
 initFrame:SetScript("OnEvent", function(self, event)
-    -- Defer initialization to let GUICore load first
+    -- Defer initialization to let guiCore load first
     C_Timer.After(0.5, function()
         local db = GetDB()
         if db.loot or db.lootRoll then

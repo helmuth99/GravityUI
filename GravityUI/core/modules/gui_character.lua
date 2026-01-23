@@ -34,12 +34,12 @@ local EQUIPMENT_SLOTS = {
 
 -- Color palette (GravityUI brand colors)
 local C = {
-    bg = { 0.133, 0.137, 0.149, 0.97 },        -- Deep Cool Grey
-    bgLight = { 0.137, 0.137, 0.137, 1 },      -- Dark Slate
-    accent = { 0, 0.74901960784314, 1, 1 },         -- Soft Blue
-    text = { 0.953, 0.957, 0.965, 1 },         -- Off-White
+    bg = { 0.117, 0.121, 0.133, 1 },        -- Deep Cool Grey
+    bgLight = { 0.122, 0.161, 0.216, 1 },      -- Dark Slate
+    accent = { 0, 0.749, 1, 1 },    -- Soft Blue
+    text = { 0.9, 0.92, 0.95, 1 },         -- Off-White
     textMuted = { 0.6, 0.65, 0.7, 1 },         -- Grey
-    border = { 0.2, 0.25, 0.3, 1 },            -- Cool Grey
+    border = { 0.2, 0.23, 0.28, 1 },            -- Cool Grey
 
     -- Stat bar colors
     health = { 0.937, 0.267, 0.267, 1 },       -- Soft Red
@@ -889,6 +889,86 @@ local function HideBlizzardDecorations()
         if CharacterStatsPane.ClassBackground then
             CharacterStatsPane.ClassBackground:Hide()
         end
+    end
+    
+    -- CRITICAL FIX: Wrap TextStatusBar methods to protect against secret values
+    -- This prevents "attempt to compare a secret value" crashes when CharacterFrame opens
+    local function MakeTextStatusBarSafe(statusBar)
+        if not statusBar or statusBar._guiSecretValueProtected then return end
+        statusBar._guiSecretValueProtected = true
+        
+        -- Store original methods
+        local originalUpdateTextStringWithValues = statusBar.UpdateTextStringWithValues
+        local originalUpdateTextString = statusBar.UpdateTextString
+        local originalShowStatusBarText = statusBar.ShowStatusBarText
+        
+        -- Wrap UpdateTextStringWithValues to check for secret values
+        statusBar.UpdateTextStringWithValues = function(self, textString, value, valueMin, valueMax)
+            -- Check if any values are secret using issecretvalue (if it exists)
+            if type(issecretvalue) == "function" then
+                if issecretvalue(value) or issecretvalue(valueMin) or issecretvalue(valueMax) then
+                    -- Secret value detected - skip update to prevent crash
+                    return
+                end
+            end
+            -- Safe to call original
+            return originalUpdateTextStringWithValues(self, textString, value, valueMin, valueMax)
+        end
+        
+        -- Wrap UpdateTextString
+        statusBar.UpdateTextString = function(self, textString)
+            -- Get current values safely
+            local ok, value, valueMin, valueMax = pcall(function()
+                return self:GetValue(), self:GetMinMaxValues()
+            end)
+            if not ok then return end
+            
+            -- Check for secret values
+            if type(issecretvalue) == "function" then
+                if issecretvalue(value) or issecretvalue(valueMin) or issecretvalue(valueMax) then
+                    return
+                end
+            end
+            -- Safe to call original
+            return originalUpdateTextString(self, textString)
+        end
+        
+        -- Wrap ShowStatusBarText
+        statusBar.ShowStatusBarText = function(self)
+            -- Get current values safely
+            local ok, value, valueMin, valueMax = pcall(function()
+                return self:GetValue(), self:GetMinMaxValues()
+            end)
+            if not ok then return end
+            
+            -- Check for secret values
+            if type(issecretvalue) == "function" then
+                if issecretvalue(value) or issecretvalue(valueMin) or issecretvalue(valueMax) then
+                    return
+                end
+            end
+            -- Safe to call original
+            return originalShowStatusBarText(self)
+        end
+    end
+    
+    -- Apply protection to all Blizzard unit frame health/mana bars
+    -- This must run in HideBlizzardDecorations which is called when CharacterFrame first shows
+    if PlayerFrame then
+        if PlayerFrame.healthbar then MakeTextStatusBarSafe(PlayerFrame.healthbar) end
+        if PlayerFrame.manabar then MakeTextStatusBarSafe(PlayerFrame.manabar) end
+    end
+    if PetFrame then
+        if PetFrame.healthbar then MakeTextStatusBarSafe(PetFrame.healthbar) end
+        if PetFrame.manabar then MakeTextStatusBarSafe(PetFrame.manabar) end
+    end
+    if TargetFrame then
+        if TargetFrame.healthbar then MakeTextStatusBarSafe(TargetFrame.healthbar) end
+        if TargetFrame.manabar then MakeTextStatusBarSafe(TargetFrame.manabar) end
+    end
+    if FocusFrame then
+        if FocusFrame.healthbar then MakeTextStatusBarSafe(FocusFrame.healthbar) end
+        if FocusFrame.manabar then MakeTextStatusBarSafe(FocusFrame.manabar) end
     end
 
     -- PaperDoll inner borders
@@ -2444,11 +2524,24 @@ local function HookCharacterFrame()
     CharacterFrame:HookScript("OnShow", function()
         -- Delay check to allow tab frames to initialize their visibility
         C_Timer.After(0.01, function()
-            if PaperDollFrame and PaperDollFrame:IsShown() then
+            -- Check if we are on the first tab (Character Tab)
+            -- checking PaperDollFrame:IsShown() can be unreliable on first show
+            local selectedTab = PanelTemplates_GetSelectedTab(CharacterFrame) or 1
+            local isCharacterTab = (selectedTab == 1)
+            
+            if isCharacterTab then
                 -- Character tab is active - apply custom layout
                 ApplyCharacterPaneLayout()
                 InitializeCharacterOverlays()
                 ScheduleUpdate()
+                
+                -- FORCE APPLY SCALE: Ensure scale is set even if ApplyCharacterPaneLayout returned early
+                local settings = GetSettings()
+                if settings and settings.enabled then
+                    local BASE_SCALE = 1.30
+                    local scaleMultiplier = settings.panelScale or 1.0
+                    CharacterFrame:SetScale(BASE_SCALE * scaleMultiplier)
+                end
             else
                 -- Opening Currency/Reputation directly via hotkey - hide custom elements and reset scale
                 -- Only hide our customBg if skinning module isn't handling it
@@ -2748,6 +2841,13 @@ local function HookCharacterFrame()
                 local BASE_SCALE = 1.30
                 local scaleMultiplier = settings.panelScale or 1.0
                 CharacterFrame:SetScale(BASE_SCALE * scaleMultiplier)
+				
+				-- Ensure layout is applied (creates statsPanel if needed)
+                -- This handles the case where Currency/Rep tab was opened first
+                if not layoutApplied then
+                    ApplyCharacterPaneLayout()
+                    InitializeCharacterOverlays()
+                end
 
                 -- Handle background based on skinning state
                 if IsSkinningHandlingBackground() then

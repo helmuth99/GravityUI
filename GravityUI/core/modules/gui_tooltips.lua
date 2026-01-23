@@ -21,14 +21,28 @@ local WorldFrame = WorldFrame
 ---------------------------------------------------------------------------
 -- Mouse Focus Detection
 -- Gets topmost frame under mouse cursor (API compatibility wrapper)
+-- PERFORMANCE: Cached to prevent repeated GetMouseFoci() calls with @mouseover macros
 ---------------------------------------------------------------------------
+local cachedMouseFrame = nil
+local cachedMouseFrameTime = 0
+local MOUSE_FRAME_CACHE_TTL = 0.2  -- 200ms cache (was 100ms)
+
 local function GetTopMouseFrame()
+    local now = GetTime()
+    -- Return cached result if still valid
+    if cachedMouseFrame ~= nil and (now - cachedMouseFrameTime) < MOUSE_FRAME_CACHE_TTL then
+        return cachedMouseFrame
+    end
+
+    -- Expensive API call - cache the result
     if GetMouseFoci then
         local frames = GetMouseFoci()
-        return frames and frames[1]
+        cachedMouseFrame = frames and frames[1]
     else
-        return GetMouseFocus and GetMouseFocus()
+        cachedMouseFrame = GetMouseFocus and GetMouseFocus()
     end
+    cachedMouseFrameTime = now
+    return cachedMouseFrame
 end
 
 -- Check if a UI frame is blocking mouse from the 3D world
@@ -47,8 +61,13 @@ end
 local cachedSettings = nil
 local originalSetDefaultAnchor = nil
 
+-- PERFORMANCE: Pending state for debouncing (prevents spam with @mouseover macros)
+local pendingSetUnit = nil
+
+
 -- Frames below this alpha are considered "faded out" and tooltips will be suppressed
 local FADED_ALPHA_THRESHOLD = 0.5
+
 ---------------------------------------------------------------------------
 -- Get settings from database (cached for performance)
 ---------------------------------------------------------------------------
@@ -99,6 +118,7 @@ local function GetTooltipContext(owner)
     if owner.__customTrackerIcon then
         return "customTrackers"
     end
+
     local name = owner:GetName() or ""
 
     -- Abilities: Check for action button patterns
@@ -111,6 +131,16 @@ local function GetTooltipContext(owner)
        strmatch(name, "BT4Button") or           -- Bartender4
        strmatch(name, "DominosActionButton") or -- Dominos
        strmatch(name, "ElvUI_Bar") then         -- ElvUI
+
+        -- Check if this action button contains an item (trinket, equipment, etc)
+        local actionSlot = owner:GetAttribute("action")
+        if actionSlot then
+            local actionType, actionID = GetActionInfo(actionSlot)
+            if actionType == "item" then
+                return "items"
+            end
+        end
+
         return "abilities"
     end
 
@@ -217,6 +247,8 @@ local function SetupTooltipHook()
         -- Check visibility for this context (handles combat + modifier key logic)
         if not ShouldShowTooltip(context) then
             tooltip:Hide()
+            tooltip:SetOwner(UIParent, "ANCHOR_NONE")
+            tooltip:ClearLines()
             return
         end
 
@@ -228,48 +260,64 @@ local function SetupTooltipHook()
     end)
 
     -- Hook SetUnit to suppress tooltips when a UI frame blocks the mouse
+    -- PERFORMANCE: Debounced to prevent spam with @mouseover macros (max 20 calls/sec)
     hooksecurefunc(GameTooltip, "SetUnit", function(tooltip, unit)
         local settings = GetSettings()
         if not settings or not settings.enabled then return end
 
-        -- If owner is UIParent (world tooltip) and a UI frame is blocking the mouse
-        if tooltip:GetOwner() == UIParent and IsFrameBlockingMouse() then
-            tooltip:Hide()
-            return
+        -- Debounce: Only process once per 100ms to prevent CPU spikes with @mouseover macros
+        if pendingSetUnit then return end
+        pendingSetUnit = C_Timer.After(0.1, function()
+            pendingSetUnit = nil
+            -- If owner is UIParent (world tooltip) and a UI frame is blocking the mouse
+            if tooltip:GetOwner() == UIParent and IsFrameBlockingMouse() then
+                tooltip:Hide()
+            end
+        end)
+    end)
+
+    -- Apply class color to player names in tooltips (WoW 10.0+)
+    TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Unit, function(tooltip)
+        if tooltip ~= GameTooltip then return end
+
+        local settings = GetSettings()
+        if not settings or not settings.enabled or not settings.classColorName then return end
+
+        local _, unit = tooltip:GetUnit()
+        if not unit then return end
+
+        -- Wrap UnitIsPlayer in pcall to handle protected "secret" unit values
+        -- During instanced combat, unit can be a protected value that causes taint errors
+        local okPlayer, isPlayer = pcall(UnitIsPlayer, unit)
+        if not okPlayer or not isPlayer then return end
+
+        local okClass, _, class = pcall(UnitClass, unit)
+        if not okClass or not class then return end
+
+        local classColor = class and RAID_CLASS_COLORS[class]
+        if classColor then
+            local nameLine = GameTooltipTextLeft1
+            if nameLine and nameLine:GetText() then
+                nameLine:SetTextColor(classColor.r, classColor.g, classColor.b)
+            end
         end
     end)
 
-    -- -- Apply class color to player names in tooltips (WoW 10.0+)
-    -- TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Unit, function(tooltip)
-        -- if tooltip ~= GameTooltip then return end
+    -- Hide tooltip health bar based on settings
+    TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Unit, function(tooltip)
+        if tooltip ~= GameTooltip then return end
 
-        -- local settings = GetSettings()
-        -- if not settings or not settings.enabled or not settings.classColorName then return end
+        local settings = GetSettings()
+        if not settings or not settings.enabled then return end
 
-        -- local _, unit = tooltip:GetUnit()
-        -- if not unit then return end
+        local hideBar = settings.hideHealthBar
 
-        -- -- Wrap UnitIsPlayer in pcall to handle protected "secret" unit values
-        -- -- During instanced combat, unit can be a protected value that causes taint errors
-        -- local okPlayer, isPlayer = pcall(UnitIsPlayer, unit)
-        -- if not okPlayer or not isPlayer then return end
-																					  
-					  
-				  
-			  
-		   
+        if GameTooltipStatusBar then
+            GameTooltipStatusBar:SetShown(not hideBar)
+            GameTooltipStatusBar:SetAlpha(hideBar and 0 or 1)
+        end
+    end)
 
-        -- local okClass, _, class = pcall(UnitClass, unit)
-        -- if not okClass or not class then return end
-
-        -- local classColor = class and RAID_CLASS_COLORS[class]
-        -- if classColor then
-            -- local nameLine = GameTooltipTextLeft1
-            -- if nameLine and nameLine:GetText() then
-                -- nameLine:SetTextColor(classColor.r, classColor.g, classColor.b)
-            -- end
-        -- end
-    -- end)
     -- Hook SetSpellByID to suppress CDM and Custom Tracker tooltips
     -- These icons use SetSpellByID which bypasses GameTooltip_SetDefaultAnchor
     hooksecurefunc(GameTooltip, "SetSpellByID", function(tooltip, spellID)
@@ -277,7 +325,7 @@ local function SetupTooltipHook()
         if not settings or not settings.enabled then return end
 
         local owner = tooltip:GetOwner()
-														   
+
         -- Suppress tooltip if owner frame is faded out (e.g., CDM hidden when mounted)
         if owner and owner.GetEffectiveAlpha and owner:GetEffectiveAlpha() < FADED_ALPHA_THRESHOLD then
             tooltip:Hide()
@@ -306,6 +354,7 @@ local function SetupTooltipHook()
             tooltip:Hide()
             return
         end
+
         local context = GetTooltipContext(owner)
 
         -- Apply visibility rules to Custom Trackers context
@@ -313,7 +362,69 @@ local function SetupTooltipHook()
             if not ShouldShowTooltip("customTrackers") then
                 tooltip:Hide()
             end
-        end	   
+        end
+    end)
+
+    -- Hook GameTooltip_Hide as safety net for combat tooltip issues
+    -- Runs after original function - if tooltip still visible during combat, force hide
+    hooksecurefunc("GameTooltip_Hide", function()
+        if InCombatLockdown() and GameTooltip:IsVisible() then
+            GameTooltip:Hide()
+        end
+    end)
+
+    -- Tooltip sticking monitor - fixes Midnight 12.0+ combat tooltip issue
+    -- PERFORMANCE: Only runs during combat (event-driven start/stop)
+    -- Only active when hideInCombat is DISABLED (when ON, the hook handles it)
+    local tooltipMonitor = CreateFrame("Frame")
+    local monitorElapsed = 0
+
+    local function TooltipMonitorOnUpdate(self, delta)
+        monitorElapsed = monitorElapsed + delta
+        if monitorElapsed < 0.25 then return end  -- 250ms throttle (4 FPS) - was 100ms
+        monitorElapsed = 0
+
+        local settings = GetSettings()
+        if not settings or not settings.enabled then return end
+        if settings.hideInCombat then return end  -- Hook handles this case
+
+        if not GameTooltip:IsVisible() then return end
+
+        local owner = GameTooltip:GetOwner()
+        if not owner then return end
+
+        local mouseFrame = GetTopMouseFrame()
+        if not mouseFrame then return end
+
+        -- Check if mouse is over owner or child of owner
+        local isOverOwner = false
+        local checkFrame = mouseFrame
+        while checkFrame do
+            if checkFrame == owner then
+                isOverOwner = true
+                break
+            end
+            checkFrame = checkFrame:GetParent()
+        end
+
+        -- If mouse moved away from owner, hide stuck tooltip
+        if not isOverOwner then
+            GameTooltip:Hide()
+        end
+    end
+
+    -- Event-driven: Only run OnUpdate during combat
+    tooltipMonitor:RegisterEvent("PLAYER_REGEN_DISABLED")
+    tooltipMonitor:RegisterEvent("PLAYER_REGEN_ENABLED")
+    tooltipMonitor:SetScript("OnEvent", function(self, event)
+        if event == "PLAYER_REGEN_DISABLED" then
+            -- Entering combat - start monitoring
+            monitorElapsed = 0
+            self:SetScript("OnUpdate", TooltipMonitorOnUpdate)
+        else
+            -- Leaving combat - stop monitoring (zero CPU outside combat)
+            self:SetScript("OnUpdate", nil)
+        end
     end)
 end
 
@@ -338,18 +449,37 @@ local function OnModifierStateChanged()
 end
 
 ---------------------------------------------------------------------------
+-- Combat State Handler
+-- Hides tooltips immediately when entering combat (if hideInCombat enabled)
+---------------------------------------------------------------------------
+local function OnCombatStateChanged(inCombat)
+    local settings = GetSettings()
+    if not settings or not settings.enabled or not settings.hideInCombat then return end
+
+    if inCombat then
+        -- Entering combat - hide tooltip immediately if no combat key override
+        if not settings.combatKey or settings.combatKey == "NONE" or not IsModifierActive(settings.combatKey) then
+            GameTooltip:Hide()
+        end
+    end
+    -- Leaving combat - nothing special needed, tooltips will show normally
+end
+
+---------------------------------------------------------------------------
 -- Event Frame
 ---------------------------------------------------------------------------
 local eventFrame = CreateFrame("Frame")
 eventFrame:RegisterEvent("PLAYER_LOGIN")
 eventFrame:RegisterEvent("MODIFIER_STATE_CHANGED")
+eventFrame:RegisterEvent("PLAYER_REGEN_DISABLED")
+eventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
 
 eventFrame:SetScript("OnEvent", function(self, event, ...)
     if event == "PLAYER_LOGIN" then
         -- Delay hook setup to ensure database is ready
-        C_Timer.After(0.5, function()												  									
+        C_Timer.After(0.5, function()
             SetupTooltipHook()
-			   
+
             -- Wrap MoneyFrame functions in pcall to suppress Blizzard secret value bug
             if MoneyFrame_Update then
                 local originalMoneyFrameUpdate = MoneyFrame_Update
@@ -364,16 +494,22 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
                 end
             end
 
-            -- -- Wrap GameTooltip:SetSpellByID in pcall to suppress Blizzard PTRFeedback secret value bug
-            -- if GameTooltip and GameTooltip.SetSpellByID then
-                -- local originalSetSpellByID = GameTooltip.SetSpellByID
-                -- GameTooltip.SetSpellByID = function(...)
-                    -- pcall(originalSetSpellByID, ...)
-                -- end
-            -- end
+            -- Wrap GameTooltip:SetSpellByID in pcall to suppress Blizzard PTRFeedback secret value bug
+            if GameTooltip and GameTooltip.SetSpellByID then
+                local originalSetSpellByID = GameTooltip.SetSpellByID
+                GameTooltip.SetSpellByID = function(...)
+                    pcall(originalSetSpellByID, ...)
+                end
+            end
         end)
-    elseif event == "MODIFIER_STATE_CHANGED" then									  
+    elseif event == "MODIFIER_STATE_CHANGED" then
         OnModifierStateChanged()
+    elseif event == "PLAYER_REGEN_DISABLED" then
+        -- Entering combat
+        OnCombatStateChanged(true)
+    elseif event == "PLAYER_REGEN_ENABLED" then
+        -- Leaving combat
+        OnCombatStateChanged(false)
     end
 end)
 

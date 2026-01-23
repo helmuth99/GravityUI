@@ -11,7 +11,12 @@ local guiCore = ns.Addon
 local LSM = LibStub("LibSharedMedia-3.0")
 
 -- Enable CDM immediately when file loads (before any events fire)
-pcall(function() SetCVar("cooldownViewerEnabled", 1) end)
+--pcall(function() SetCVar("cooldownViewerEnabled", 1) end)
+pcall(function() SetCVar("alwaysCompareItems", "0") end) -- disables the automatic item comparison tooltips
+
+-- HIDE FRAMES IMMEDIATELY TO PREVENT FLASH ON LOAD
+if _G.EssentialCooldownViewer then _G.EssentialCooldownViewer:SetAlpha(0) end
+if _G.UtilityCooldownViewer then _G.UtilityCooldownViewer:SetAlpha(0) end
 
 ---------------------------------------------------------------------------
 -- HELPER: Get font from general settings
@@ -260,10 +265,10 @@ local function SkinIcon(icon, size, aspectRatioCrop, zoom, borderSize, borderCol
     local aspectRatio = aspectRatioCrop or 1.0
     local width = size
     local height = size / aspectRatio
-
+    
     -- Set icon frame size
     icon:SetSize(width, height)
-
+    
     -- Border (BACKGROUND texture approach)
     borderSize = borderSize or 0
     if borderSize > 0 then
@@ -271,7 +276,7 @@ local function SkinIcon(icon, size, aspectRatioCrop, zoom, borderSize, borderCol
             icon._ncdmBorder = icon:CreateTexture(nil, "BACKGROUND", nil, -8)
         end
         local bc = borderColorTable or {0, 0, 0, 1}
-        icon._ncdmBorder:SetColorTexture(bc[1], bc[2], bc[3], bc[4])
+        icon._ncdmBorder:SetColorTexture(bc[1], bc[2], bc[3], bc[4])														
 
         icon._ncdmBorder:ClearAllPoints()
         icon._ncdmBorder:SetPoint("TOPLEFT", icon, "TOPLEFT", -borderSize, borderSize)
@@ -327,7 +332,7 @@ local function SkinIcon(icon, size, aspectRatioCrop, zoom, borderSize, borderCol
     ApplyTexCoord(icon)
 
     -- Hook for mouseover detection (handles dynamically created icons)
-    icon:EnableMouse(true)  -- Ensure icon receives mouse events
+    icon:EnableMouse(true)  -- Ensure icon receives mouse events																
     HookFrameForMouseover(icon)
 
     return true  -- Successfully skinned
@@ -394,7 +399,7 @@ local function QueueIconForSkinning(icon, size, aspectRatioCrop, zoom, borderSiz
         aspectRatioCrop = aspectRatioCrop,
         zoom = zoom,
         borderSize = borderSize,
-        borderColorTable = borderColorTable or {0, 0, 0, 1},
+        borderColorTable = borderColorTable or {0, 0, 0, 1},											
         durationSize = durationSize,
         stackSize = stackSize,
         durationOffsetX = durationOffsetX or 0,
@@ -489,7 +494,7 @@ local function ApplyIconTextSizes(icon, durationSize, stackSize, durationOffsetX
         end
 
         if not foundFS then
-            foundFS = icon.Count or icon.count
+            foundFS = icon.Count or icon.count				
         end
 
         if not foundFS and icon.GetChildren then
@@ -499,7 +504,7 @@ local function ApplyIconTextSizes(icon, durationSize, stackSize, durationOffsetX
                         local fs = child.Current or child.Count or child.count
                         if fs and fs.SetFont then
                             foundFS = fs
-                            break
+                            break														 
                         end
                     end
                 end
@@ -520,7 +525,7 @@ local function ApplyIconTextSizes(icon, durationSize, stackSize, durationOffsetX
                 if parentFrame and parentFrame.SetFrameLevel and icon.GetFrameLevel then
                     local iconLevel = icon:GetFrameLevel() or 0
                     local currentLevel = parentFrame:GetFrameLevel() or 0
-                    parentFrame:SetFrameLevel(math.max(currentLevel, iconLevel + 10))
+                    parentFrame:SetFrameLevel(math.max(currentLevel, iconLevel + 10))														 
                 end
             end)
         end
@@ -579,6 +584,9 @@ local function LayoutViewer(viewerName, trackerKey)
         local frameLevel = guiCore:GetHUDFrameLevel(layerPriority)
         viewer:SetFrameLevel(frameLevel)
     end
+	
+    -- Restore alpha now that we are taking control
+    if viewer:GetAlpha() < 1 then viewer:SetAlpha(1) end
 
     -- Check for vertical layout mode
     local layoutDirection = settings.layoutDirection or "HORIZONTAL"
@@ -626,7 +634,7 @@ local function LayoutViewer(viewerName, trackerKey)
                 count = settings[rowKey].iconCount,
                 size = settings[rowKey].iconSize or 50,
                 borderSize = settings[rowKey].borderSize or 2,
-                borderColorTable = settings[rowKey].borderColorTable or {0, 0, 0, 1},
+                borderColorTable = settings[rowKey].borderColorTable or {0, 0, 0, 1},													 
                 aspectRatioCrop = settings[rowKey].aspectRatioCrop or 1.0,
                 zoom = settings[rowKey].zoom or 0,
                 padding = settings[rowKey].padding or 0,
@@ -642,11 +650,11 @@ local function LayoutViewer(viewerName, trackerKey)
                 stackOffsetY = settings[rowKey].stackOffsetY or 0,
                 stackTextColor = settings[rowKey].stackTextColor or {1, 1, 1, 1},
                 stackAnchor = settings[rowKey].stackAnchor or "BOTTOMRIGHT",
-                opacity = settings[rowKey].opacity or 1.0,
+                opacity = settings[rowKey].opacity or 1.0,									  
             })
         end
     end
-
+    
     -- Calculate potential row widths based on SETTINGS (not actual icons)
     -- Used by power bars and castbars that lock to CDM
     local potentialRow1Width = 0
@@ -663,7 +671,7 @@ local function LayoutViewer(viewerName, trackerKey)
         local padding = rows[#rows].padding or 0
         potentialBottomRowWidth = (iconCount * iconWidth) + ((iconCount - 1) * padding)
     end
-
+	
     if #rows == 0 then
         NCDM.applying[trackerKey] = false
         viewer.__cdmLayoutRunning = nil
@@ -819,7 +827,7 @@ local function LayoutViewer(viewerName, trackerKey)
 
             -- Apply row opacity
             local opacity = rowConfig.opacity or 1.0
-            icon:SetAlpha(opacity)
+            icon:SetAlpha(opacity)							  
         end
 
         if isVertical then
@@ -880,8 +888,8 @@ local function LayoutViewer(viewerName, trackerKey)
                 end
             end)
         end
-    end
-
+    end 
+   
     -- Update locked power bars, castbars, and unit frames after layout completes
     -- Debounced to prevent spam during rapid layout changes
     if not viewer.__cdmUpdatePending then
@@ -915,7 +923,7 @@ local function LayoutViewer(viewerName, trackerKey)
             end
             -- Update keybind text on CDM icons
             if _G.GravityUI_UpdateViewerKeybinds then
-                _G.GravityUI_UpdateViewerKeybinds(viewerName)
+                _G.GravityUI_UpdateViewerKeybinds(viewerName)															
             end
         end)
     end
@@ -1116,7 +1124,7 @@ end
 -- PUBLIC: Force refresh all layouts
 ---------------------------------------------------------------------------
 local function RefreshAll()
-    UpdateCooldownViewerCVar()
+    UpdateCooldownViewerCVar()							  
     NCDM.applying["essential"] = false
     NCDM.applying["utility"] = false
 
@@ -1209,17 +1217,29 @@ _G.GravityUI_ApplyUtilityAnchor = ApplyUtilityAnchor
 local function ForceLoadCDM()
     local settingsFrame = _G["CooldownViewerSettings"]
     if settingsFrame then
-        -- Make frame invisible during initialization to prevent flash
-        settingsFrame:SetAlpha(0)
+        local oldAlpha = settingsFrame:GetAlpha()
+        
+        -- Mute sound during open
+        local originalPlaySound = _G.PlaySound
+        if originalPlaySound then _G.PlaySound = function() end end
+        
+        settingsFrame:SetAlpha(0) -- Make invisible while forcing load
         settingsFrame:Show()
         settingsFrame:Raise()
         
+        if originalPlaySound then _G.PlaySound = originalPlaySound end
+        
         -- Close it after a short delay
         C_Timer.After(1.5, function()
-            if settingsFrame and settingsFrame:IsShown() then
+            if settingsFrame then
+                -- Mute sound during close
+                local originalPlaySound = _G.PlaySound
+                if originalPlaySound then _G.PlaySound = function() end end
+                
                 settingsFrame:Hide()
-                -- Restore alpha for when user manually opens it later
-                settingsFrame:SetAlpha(1)
+                settingsFrame:SetAlpha(oldAlpha or 1) -- Restore visibility
+                
+                if originalPlaySound then _G.PlaySound = originalPlaySound end
             end
         end)
     end
@@ -1335,7 +1355,7 @@ local CDMVisibility = {
     mouseOver = false,
     mouseoverDetector = nil,
     hoverCount = 0,
-    leaveTimer = nil,
+    leaveTimer = nil,					 
 }
 
 -- Get CDM frames (viewers + power bars)
@@ -1356,16 +1376,21 @@ local function GetCDMFrames()
         table.insert(frames, _G.BuffBarCooldownViewer)
     end
 
-    -- GravityUI power bars - always include in CDM visibility control
-    -- (standalone mode only affects positioning, not visibility)
-    if guiCore then																						   
-        if guiCore.powerBar then
+    -- GravityUI power bars (exclude if standalone mode is enabled)
+    if guiCore then
+        local db = guiCore.db and guiCore.db.profile
+        local vis = db and db.cdmVisibility
+        local hideWhenMountedEnabled = vis and vis.hideWhenMounted
+
+        -- Include power bars if: hideWhenMounted is enabled (overrides all), OR not in standalone mode																	   
+        if guiCore.powerBar and (hideWhenMountedEnabled or not (db and db.powerBar and db.powerBar.standaloneMode)) then
             table.insert(frames, guiCore.powerBar)
         end
-        if guiCore.secondaryPowerBar then
+        if guiCore.secondaryPowerBar and (hideWhenMountedEnabled or not (db and db.secondaryPowerBar and db.secondaryPowerBar.standaloneMode)) then
             table.insert(frames, guiCore.secondaryPowerBar)
         end
     end
+
     return frames
 end
 
@@ -1421,7 +1446,7 @@ local function OnCDMFadeUpdate(self, elapsed)
     if progress >= 1 then
         CDMVisibility.isFading = false
         CDMVisibility.currentlyHidden = (CDMVisibility.fadeTargetAlpha < 1)
-        self:SetScript("OnUpdate", nil)
+        self:SetScript("OnUpdate", nil)													 
     end
 end
 
@@ -1435,7 +1460,7 @@ local function StartCDMFade(targetAlpha)
 
     -- Skip if already at target
     if math.abs(currentAlpha - targetAlpha) < 0.01 then
-        CDMVisibility.currentlyHidden = (targetAlpha < 1)
+        CDMVisibility.currentlyHidden = (targetAlpha < 1)														 
         return
     end
 
@@ -1455,10 +1480,10 @@ end
 local function UpdateCDMVisibility()
     local shouldShow = ShouldCDMBeVisible()
     local vis = GetCDMVisibilitySettings()
-
+													  
     if shouldShow then
         StartCDMFade(1)  -- Fade in
-    else
+    else										  
         StartCDMFade(vis and vis.fadeOutAlpha or 0)  -- Fade to configured alpha
     end
 end
@@ -1478,7 +1503,7 @@ HookFrameForMouseover = function(frame)
             CDMVisibility.leaveTimer:Cancel()
             CDMVisibility.leaveTimer = nil
         end
-
+										  
         CDMVisibility.hoverCount = CDMVisibility.hoverCount + 1
         if CDMVisibility.hoverCount == 1 then
             CDMVisibility.mouseOver = true
@@ -1509,7 +1534,7 @@ HookFrameForMouseover = function(frame)
             end)
         end
     end)
-end
+end  
 
 -- Setup CDM mouseover detector
 local function SetupCDMMouseoverDetector()
@@ -1527,7 +1552,7 @@ local function SetupCDMMouseoverDetector()
         CDMVisibility.leaveTimer:Cancel()
         CDMVisibility.leaveTimer = nil
     end
-
+	
     CDMVisibility.mouseOver = false
     CDMVisibility.hoverCount = 0  -- Reset counter
 
@@ -1710,8 +1735,8 @@ local function UpdateUnitframesVisibility()
         for unitKey, castbar in pairs(_G.GravityUI_Castbars) do
             if castbar then
                 castbar:SetAlpha(targetAlpha)
-            end
-        end
+            end	   
+        end	   
     end
 
     if shouldShow then
@@ -1787,7 +1812,7 @@ visibilityEventFrame:RegisterEvent("GROUP_LEFT")
 visibilityEventFrame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
 visibilityEventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 visibilityEventFrame:RegisterEvent("PLAYER_MOUNT_DISPLAY_CHANGED")
-visibilityEventFrame:RegisterEvent("UPDATE_SHAPESHIFT_FORM")
+visibilityEventFrame:RegisterEvent("UPDATE_SHAPESHIFT_FORM")														
 
 visibilityEventFrame:SetScript("OnEvent", function(self, event, ...)
     if event == "PLAYER_LOGIN" then

@@ -84,7 +84,7 @@ local function GetBuffSettings()
         aspectRatioCrop = 1.0,
         zoom = 0,
         padding = 0,
-        opacity = 1.0,					  
+        opacity = 1.0,
     }
 end
 
@@ -97,103 +97,27 @@ local function GetTrackedBarSettings()
     return {
         enabled = true,
         barHeight = 24,
+        barWidth = 200,
         texture = "Gravity v5",
         useClassColor = true,
         barColor = {0.204, 0.827, 0.6, 1},
-        barOpacity = 1.0,					   
-        borderSize = 1,					   
-        bgColor = {0, 0, 0, 1},							   
+        barOpacity = 1.0,
+        borderSize = 1,
+        bgColor = {0, 0, 0, 1},
         bgOpacity = 0.7,
         textSize = 12,
         spacing = 4,
         growUp = true,
-        hideText = false,						 
+        hideText = false,
+        -- Vertical bar settings
+        orientation = "horizontal",
+        fillDirection = "up",
+        iconPosition = "top",
+        showTextOnVertical = false,
     }
 end
 
 ---------------------------------------------------------------------------
--- HEIGHT COMPENSATION: Fixes buff bar position shift after /reload
--- CENTER-anchored frames shift when height changes; we compensate
----------------------------------------------------------------------------
-
--- Save position to database (persists across reloads)
-local function SaveBarPositionToDB()
-    local db = GetDB()
-    if not db then return end
-    if not BuffBarCooldownViewer then return end
-
-    local point, relativeTo, relPoint, x, y = BuffBarCooldownViewer:GetPoint(1)
-    if not point then return end
-
-    local width, height = BuffBarCooldownViewer:GetSize()
-    local relName = relativeTo and relativeTo:GetName() or "UIParent"
-
-    -- Store in database for persistence
-    db.buffBarSavedPosition = {
-        point = point,
-        relativeToName = relName,
-        relPoint = relPoint,
-        x = x,
-        y = y,
-        width = width,
-        height = height,
-    }
-end
-
--- Load position from database and apply height compensation
-local function ApplyHeightCompensationFromDB()
-    local db = GetDB()
-    if not db or not db.buffBarSavedPosition then return end
-    if not BuffBarCooldownViewer then return end
-    if InCombatLockdown() then return end
-
-    local saved = db.buffBarSavedPosition
-    local currentWidth, currentHeight = BuffBarCooldownViewer:GetSize()
-
-    if not currentHeight or currentHeight == 0 then return end
-
-    -- Get tracked bar settings to check growth direction
-    local settings = GetTrackedBarSettings()
-    local growUp = (settings.growUp ~= false)  -- Default is true (upward)
-
-    local savedHeight = saved.height or currentHeight
-    local heightDiff = currentHeight - savedHeight  -- POSITIVE when taller
-    local yCompensation = heightDiff / 2
-
-    -- Only apply if there's a significant height difference (> 1 pixel)
-    if math.abs(heightDiff) > 1 then
-        local relativeTo = _G[saved.relativeToName] or UIParent
-
-        -- Adjust compensation direction based on growth direction
-        -- Frame uses BOTTOM anchor, so BOTTOM edge is positioned by y coordinate
-        local adjustedY
-        if growUp then
-            -- Grow Upward: BOTTOM edge stays fixed, use half compensation
-            adjustedY = saved.y + yCompensation
-        else
-            -- Grow Downward: TOP edge stays fixed
-            -- With BOTTOM anchor: new_y = saved.y - heightDiff
-            adjustedY = saved.y - heightDiff
-        end
-
-        BuffBarCooldownViewer:ClearAllPoints()
-        BuffBarCooldownViewer:SetPoint(saved.point, relativeTo, saved.relPoint,
-                                       saved.x, adjustedY)
-    end
-end
-
--- Hook for edit mode exit to save position
-local function OnEditModeExitForBars()
-    -- Defer to let Blizzard finish saving the new position
-    C_Timer.After(0.15, function()
-        -- SAVE the NEW position to database (so it persists across reloads)
-        if BuffBarCooldownViewer then
-            SaveBarPositionToDB()
-        end
-    end)
-end
-
----------------------------------------------------------------------------																   
 -- FORWARD DECLARATIONS
 ---------------------------------------------------------------------------
 
@@ -264,10 +188,10 @@ local function GetBuffIconFrames()
         return (a.layoutIndex or 0) < (b.layoutIndex or 0)
     end)
 
-    -- Only keep visible icons
+    -- Only keep visible icons that have been fully initialized (have cooldownID)
     local visible = {}
     for _, icon in ipairs(all) do
-        if icon:IsShown() then
+        if icon:IsShown() and icon.cooldownID then
             table.insert(visible, icon)
         end
     end
@@ -364,12 +288,16 @@ local function DisableAtlasBorder(tex)
     if tex.SetAtlas and not tex._guiAtlasDisabled then
         tex._guiAtlasDisabled = true
         hooksecurefunc(tex, "SetAtlas", function(self)
-            -- Must also clear the atlas, not just texture/alpha
-            pcall(function()
-                self:SetAtlas(nil)
-                self:SetTexture(nil)
-                self:SetAlpha(0)
-                self:Hide()
+            C_Timer.After(0, function()
+                -- Safety check in case texture was released before timer fires
+                if not self or (self.IsForbidden and self:IsForbidden()) then return end
+                -- Must also clear the atlas, not just texture/alpha
+                pcall(function()
+                    self:SetAtlas(nil)
+                    self:SetTexture(nil)
+                    self:SetAlpha(0)
+                    self:Hide()
+                end)
             end)
         end)
     end
@@ -523,7 +451,7 @@ local function ApplyIconStyle(icon, settings)
         -- Show cooldown swipe based on showBuffIconSwipe setting (opt-in, default OFF)
         local guiCore = _G.GravityUI and _G.GravityUI.guiCore
         local showBuffIconSwipe = guiCore and guiCore.db and guiCore.db.profile.cooldownSwipe
-            and guiCore.db.profile.cooldownSwipe.showBuffIconSwipe or false														   
+            and guiCore.db.profile.cooldownSwipe.showBuffIconSwipe or false
         if cooldown.SetDrawSwipe then
             cooldown:SetDrawSwipe(showBuffIconSwipe)
         end
@@ -629,7 +557,7 @@ local function ApplyIconStyle(icon, settings)
 
     -- Apply opacity
     local opacity = settings.opacity or 1.0
-    icon:SetAlpha(opacity)						  
+    icon:SetAlpha(opacity)
 end
 
 ---------------------------------------------------------------------------
@@ -651,7 +579,25 @@ local function ApplyBarStyle(frame, settings)
     local bgOpacity = settings.bgOpacity or 0.7
     local textSize = settings.textSize or 12
     local hideIcon = settings.hideIcon
-    local hideText = settings.hideText								  
+    local hideText = settings.hideText
+
+    -- Vertical bar settings
+    local orientation = settings.orientation or "horizontal"
+    local isVertical = (orientation == "vertical")
+    local fillDirection = settings.fillDirection or "up"
+    local iconPosition = settings.iconPosition or "top"
+    local showTextOnVertical = settings.showTextOnVertical or false
+
+    -- For vertical bars: swap width/height conceptually
+    -- "Bar Height" setting becomes bar width, "Bar Width" becomes bar height
+    local frameWidth, frameHeight
+    if isVertical then
+        frameWidth = barHeight   -- Height setting becomes width
+        frameHeight = barWidth   -- Width setting becomes height
+    else
+        frameWidth = barWidth
+        frameHeight = barHeight
+    end
 
     -- Get the StatusBar child (usually frame.Bar)
     local statusBar = frame.Bar
@@ -685,11 +631,22 @@ local function ApplyBarStyle(frame, settings)
     DisableAtlasBorder(frame.BuffBorder)
     DisableAtlasBorder(frame.TempEnchantBorder)
 
-    -- 2. Set bar dimensions (height and width)
+    -- 2. Set bar dimensions (swapped for vertical orientation)
     pcall(function()
-        frame:SetHeight(barHeight)
-        frame:SetWidth(barWidth)
-        if statusBar then statusBar:SetHeight(barHeight) end
+        frame:SetHeight(frameHeight)
+        frame:SetWidth(frameWidth)
+        if statusBar then
+            statusBar:SetHeight(frameHeight)
+            statusBar:SetWidth(frameWidth)
+            -- Set StatusBar orientation
+            if statusBar.SetOrientation then
+                statusBar:SetOrientation(isVertical and "VERTICAL" or "HORIZONTAL")
+            end
+            -- Set fill direction for vertical bars
+            if isVertical and statusBar.SetReverseFill then
+                statusBar:SetReverseFill(fillDirection == "down")
+            end
+        end
     end)
 
     -- 3. Handle icon visibility and styling
@@ -712,7 +669,9 @@ local function ApplyBarStyle(frame, settings)
                 DisableAtlasBorder(iconContainer.BuffBorder)
                 DisableAtlasBorder(iconContainer.TempEnchantBorder)
 
-                iconContainer:SetSize(barHeight, barHeight)
+                -- Icon size: use the smaller dimension for vertical bars
+                local iconSize = isVertical and frameWidth or frameHeight
+                iconContainer:SetSize(iconSize, iconSize)
 
             -- Get the actual icon texture inside the container
             local iconTexture = iconContainer.Icon or iconContainer.icon or iconContainer.texture
@@ -801,20 +760,44 @@ local function ApplyBarStyle(frame, settings)
         end  -- end else (not hideIcon)
     end
 
-    -- 3b. Reposition statusBar based on icon visibility
+    -- 3b. Reposition statusBar and icon based on orientation and visibility
     if statusBar then
         pcall(function()
             statusBar:ClearAllPoints()
-            if hideIcon or not iconContainer then
-                -- No icon: bar fills entire frame width
-                statusBar:SetPoint("LEFT", frame, "LEFT", 0, 0)
+
+            if isVertical then
+                -- VERTICAL: Icon at top or bottom, bar fills remaining space
+                if hideIcon or not iconContainer then
+                    -- No icon: bar fills entire frame
+                    statusBar:SetAllPoints(frame)
+                else
+                    -- Position icon based on iconPosition setting
+                    iconContainer:ClearAllPoints()
+                    if iconPosition == "bottom" then
+                        iconContainer:SetPoint("BOTTOM", frame, "BOTTOM", 0, 0)
+                        statusBar:SetPoint("TOP", frame, "TOP", 0, 0)
+                        statusBar:SetPoint("LEFT", frame, "LEFT", 0, 0)
+                        statusBar:SetPoint("RIGHT", frame, "RIGHT", 0, 0)
+                        statusBar:SetPoint("BOTTOM", iconContainer, "TOP", 0, 0)
+                    else -- "top" (default)
+                        iconContainer:SetPoint("TOP", frame, "TOP", 0, 0)
+                        statusBar:SetPoint("BOTTOM", frame, "BOTTOM", 0, 0)
+                        statusBar:SetPoint("LEFT", frame, "LEFT", 0, 0)
+                        statusBar:SetPoint("RIGHT", frame, "RIGHT", 0, 0)
+                        statusBar:SetPoint("TOP", iconContainer, "BOTTOM", 0, 0)
+                    end
+                end
             else
-                -- With icon: bar starts after icon
-                statusBar:SetPoint("LEFT", iconContainer, "RIGHT", 0, 0)
+                -- HORIZONTAL: Original behavior
+                if hideIcon or not iconContainer then
+                    statusBar:SetPoint("LEFT", frame, "LEFT", 0, 0)
+                else
+                    statusBar:SetPoint("LEFT", iconContainer, "RIGHT", 0, 0)
+                end
+                statusBar:SetPoint("TOP", frame, "TOP", 0, 0)
+                statusBar:SetPoint("BOTTOM", frame, "BOTTOM", 0, 0)
+                statusBar:SetPoint("RIGHT", frame, "RIGHT", 0, 0)
             end
-            statusBar:SetPoint("TOP", frame, "TOP", 0, 0)
-            statusBar:SetPoint("BOTTOM", frame, "BOTTOM", 0, 0)
-            statusBar:SetPoint("RIGHT", frame, "RIGHT", 0, 0)
         end)
     end
 
@@ -826,7 +809,7 @@ local function ApplyBarStyle(frame, settings)
         end
     end
 
-    -- 5. Apply bar color (class or custom)
+    -- 5. Apply bar color (class or custom) with opacity
     if statusBar and statusBar.SetStatusBarColor then
         pcall(function()
             if useClassColor then
@@ -849,7 +832,7 @@ local function ApplyBarStyle(frame, settings)
     end
     -- Apply background color from settings
     local bgR, bgG, bgB = bgColor[1] or 0, bgColor[2] or 0, bgColor[3] or 0
-    frame._trackedBg:SetColorTexture(bgR, bgG, bgB, 1)											  
+    frame._trackedBg:SetColorTexture(bgR, bgG, bgB, 1)
     if statusBar then
         frame._trackedBg:ClearAllPoints()
         frame._trackedBg:SetAllPoints(statusBar)
@@ -914,20 +897,21 @@ local function ApplyBarStyle(frame, settings)
         end
     end
 
-    -- 8. Apply text size to duration/name text
+    -- 8. Apply text size to duration/name text (hide if hideText enabled or vertical without showTextOnVertical)
     local generalFont = GetGeneralFont()
     local generalOutline = GetGeneralFontOutline()
+    local showText = not hideText and (not isVertical or showTextOnVertical)
 
     if frame.GetRegions then
         for _, region in ipairs({frame:GetRegions()}) do
             if region and region:GetObjectType() == "FontString" then
                 pcall(function()
-                    if hideText then
-                        region:SetAlpha(0)
-                    else
-                        region:SetAlpha(1)
+                    if showText then
                         region:SetFont(generalFont, textSize, generalOutline)
-                    end	   
+                        region:SetAlpha(1)
+                    else
+                        region:SetAlpha(0)
+                    end
                 end)
             end
         end
@@ -937,12 +921,12 @@ local function ApplyBarStyle(frame, settings)
         for _, region in ipairs({statusBar:GetRegions()}) do
             if region and region:GetObjectType() == "FontString" then
                 pcall(function()
-                    if hideText then
-                        region:SetAlpha(0)
-                    else
-                        region:SetAlpha(1)
+                    if showText then
                         region:SetFont(generalFont, textSize, generalOutline)
-                    end   
+                        region:SetAlpha(1)
+                    else
+                        region:SetAlpha(0)
+                    end
                 end)
             end
         end
@@ -981,6 +965,7 @@ LayoutBuffIcons = function()
         local frameLevel = guiCore:GetHUDFrameLevel(layerPriority)
         BuffIconCooldownViewer:SetFrameLevel(frameLevel)
     end
+
     local icons = GetBuffIconFrames()
     local currentCount = #icons
 
@@ -1151,6 +1136,7 @@ LayoutBuffBars = function()
     -- Set strata to MEDIUM to match power bars, then apply frame level
     BuffBarCooldownViewer:SetFrameStrata("MEDIUM")
     BuffBarCooldownViewer:SetFrameLevel(frameLevel)
+
     local bars = GetBuffBarFrames()
     local count = #bars
     if count == 0 then
@@ -1175,43 +1161,132 @@ LayoutBuffBars = function()
     local spacing = stylingEnabled and settings.spacing or (BuffBarCooldownViewer.childYPadding or 0)
     local growFromBottom = (not stylingEnabled) or (settings.growUp ~= false)
 
-    if not barHeight or barHeight == 0 then
+    -- Vertical bar support
+    local orientation = stylingEnabled and settings.orientation or "horizontal"
+    local isVertical = (orientation == "vertical")
+
+    -- CRITICAL: Tell Blizzard's GridLayoutFrameMixin which layout direction to use
+    -- When isHorizontal=true, Blizzard positions bars up/down (Y-axis)
+    -- When isHorizontal=false, Blizzard positions bars left/right (X-axis)
+    -- This prevents Blizzard's Layout() from overriding gui's positioning with wrong axis
+    -- FEAT-007: Remove combat lockdown check - setting frame properties is safe during combat
+    BuffBarCooldownViewer.isHorizontal = not isVertical
+    -- Also update direction flags to match gui's growth direction
+    if isVertical then
+        BuffBarCooldownViewer.layoutFramesGoingRight = growFromBottom  -- growUp becomes growRight
+        BuffBarCooldownViewer.layoutFramesGoingUp = false
+    else
+        BuffBarCooldownViewer.layoutFramesGoingRight = true
+        BuffBarCooldownViewer.layoutFramesGoingUp = growFromBottom
+    end
+
+    -- For vertical bars, swap dimensions (height setting becomes width)
+    local effectiveBarWidth, effectiveBarHeight
+    if isVertical then
+        effectiveBarWidth = barHeight  -- Height setting becomes bar width
+        effectiveBarHeight = stylingEnabled and settings.barWidth or 200  -- Width setting becomes bar height
+    else
+        effectiveBarWidth = barWidth
+        effectiveBarHeight = barHeight
+    end
+
+    if not effectiveBarHeight or effectiveBarHeight == 0 then
         isBarLayoutRunning = false
         return
     end
 
     barState.lastCount = count
-    barState.lastBarWidth = barWidth
-    barState.lastBarHeight = barHeight
+    barState.lastBarWidth = effectiveBarWidth
+    barState.lastBarHeight = effectiveBarHeight
     barState.lastSpacing = spacing
 
-    -- Total height of the stack
-    local totalHeight = (count * barHeight) + ((count - 1) * spacing)
-    totalHeight = roundPixel(totalHeight)
-
-    -- PASS 1: Clear all points
-    for _, bar in ipairs(bars) do
-        bar:ClearAllPoints()
+    -- Total size of the stack (height for horizontal bars, width for vertical)
+    local totalSize
+    if isVertical then
+        totalSize = (count * effectiveBarWidth) + ((count - 1) * spacing)
+    else
+        totalSize = (count * effectiveBarHeight) + ((count - 1) * spacing)
     end
+    totalSize = roundPixel(totalSize)
 
-    -- PASS 2: Position and optionally style each bar
+    -- POSITION VERIFICATION: Check if bars are already in correct positions (within 2px tolerance)
+    -- This mirrors the icon layout's self-correcting behavior - if Blizzard moves a bar,
+    -- we detect it and snap it back immediately
+    local needsReposition = false
     for index, bar in ipairs(bars) do
         local offsetIndex = index - 1
-        local y
 
-        if growFromBottom then
-            -- Grow Upwards: Anchored to BOTTOM of container
-            y = offsetIndex * (barHeight + spacing)
-            y = roundPixel(y)
-            bar:SetPoint("BOTTOM", BuffBarCooldownViewer, "BOTTOM", 0, y)
+        if isVertical then
+            -- Check X position for vertical layout
+            local expectedX
+            if growFromBottom then
+                expectedX = roundPixel(offsetIndex * (effectiveBarWidth + spacing))
+            else
+                expectedX = roundPixel(-offsetIndex * (effectiveBarWidth + spacing))
+            end
+            local point, _, _, xOfs = bar:GetPoint(1)
+            if not point or abs((xOfs or 0) - expectedX) > 2 then
+                needsReposition = true
+                break
+            end
         else
-            -- Grow Downwards: Anchored to TOP of container
-            y = -offsetIndex * (barHeight + spacing)
-            y = roundPixel(y)
-            bar:SetPoint("TOP", BuffBarCooldownViewer, "TOP", 0, y)
+            -- Check Y position for horizontal layout
+            local expectedY
+            if growFromBottom then
+                expectedY = roundPixel(offsetIndex * (effectiveBarHeight + spacing))
+            else
+                expectedY = roundPixel(-offsetIndex * (effectiveBarHeight + spacing))
+            end
+            local point, _, _, _, yOfs = bar:GetPoint(1)
+            if not point or abs((yOfs or 0) - expectedY) > 2 then
+                needsReposition = true
+                break
+            end
+        end
+    end
+
+    if needsReposition then
+        -- PASS 1: Clear all points
+        for _, bar in ipairs(bars) do
+            bar:ClearAllPoints()
         end
 
-        -- Apply visual styling if enabled
+        -- PASS 2: Position each bar
+        for index, bar in ipairs(bars) do
+            local offsetIndex = index - 1
+
+            if isVertical then
+                -- VERTICAL BARS: Stack horizontally (left/right)
+                local x
+                if growFromBottom then
+                    -- Grow Right: bar 1 at LEFT edge, stacks rightward
+                    x = offsetIndex * (effectiveBarWidth + spacing)
+                    x = roundPixel(x)
+                    bar:SetPoint("LEFT", BuffBarCooldownViewer, "LEFT", x, 0)
+                else
+                    -- Grow Left: bar 1 at RIGHT edge, stacks leftward
+                    x = -offsetIndex * (effectiveBarWidth + spacing)
+                    x = roundPixel(x)
+                    bar:SetPoint("RIGHT", BuffBarCooldownViewer, "RIGHT", x, 0)
+                end
+            else
+                -- HORIZONTAL BARS: Stack vertically (up/down)
+                local y
+                if growFromBottom then
+                    y = offsetIndex * (effectiveBarHeight + spacing)
+                    y = roundPixel(y)
+                    bar:SetPoint("BOTTOM", BuffBarCooldownViewer, "BOTTOM", 0, y)
+                else
+                    y = -offsetIndex * (effectiveBarHeight + spacing)
+                    y = roundPixel(y)
+                    bar:SetPoint("TOP", BuffBarCooldownViewer, "TOP", 0, y)
+                end
+            end
+        end
+    end
+
+    -- Apply visual styling and frame strata/level to each bar (always, regardless of reposition)
+    for _, bar in ipairs(bars) do
         if stylingEnabled then
             ApplyBarStyle(bar, settings)
         end
@@ -1226,19 +1301,48 @@ LayoutBuffBars = function()
             bar.Icon:SetFrameStrata("MEDIUM")
             bar.Icon:SetFrameLevel(frameLevel + 1)
         end
-    end  
+    end
+
+    -- Update container dimensions to prevent Blizzard's Layout() from resizing and causing drift
+    -- Both vertical and horizontal set ONE dimension fixed, letting bars overflow the other dimension
+    -- This prevents CENTER-anchor drift because container size never changes with bar count
+    if isVertical then
+        SuppressLayout()
+
+        -- Only set HEIGHT, leave width alone so bars overflow horizontally
+        local currentWidth = BuffBarCooldownViewer:GetWidth()
+        BuffBarCooldownViewer:SetSize(currentWidth, roundPixel(effectiveBarHeight))
+
+        -- Ensure isHorizontal flag stays correct for subsequent Layout() calls
+        BuffBarCooldownViewer.isHorizontal = false
+
+        UnsuppressLayout()
+    else
+        -- HORIZONTAL BARS: Fix BOTH dimensions to single bar size
+        -- Unlike vertical (which only fixes HEIGHT), horizontal needs both because
+        -- bars anchor to BOTTOM/TOP edges - if HEIGHT changes, those edges move
+        SuppressLayout()
+
+        -- Set both dimensions to single bar size - bars overflow, edges stay fixed
+        BuffBarCooldownViewer:SetSize(roundPixel(effectiveBarWidth), roundPixel(effectiveBarHeight))
+
+        -- Ensure Blizzard's Layout() uses correct flags
+        BuffBarCooldownViewer.isHorizontal = true
+        BuffBarCooldownViewer.layoutFramesGoingUp = growFromBottom
+
+        UnsuppressLayout()
+    end
 
     isBarLayoutRunning = false
 end
 
 ---------------------------------------------------------------------------
 -- CHANGE DETECTION (called from OnUpdate hooks on viewers)
--- Hash-based detection: only layout when count OR settings actually change
--- This prevents unnecessary layouts during rapid buff changes
+-- Icons: Hash-based detection for count/settings changes
+-- Bars: Position verification (hash removed - bars now self-correct via position checks)
 ---------------------------------------------------------------------------
 
 local lastIconHash = ""
-local lastBarHash = ""
 
 -- Build hash of icon count + settings to detect actual changes
 local function BuildIconHash(count, settings)
@@ -1284,32 +1388,11 @@ local function CheckBarChanges()
     if not BuffBarCooldownViewer then return end
     if isBarLayoutRunning then return end  -- Skip if already laying out
 
-    local bars = GetBuffBarFrames()
-    local count = #bars
-
-    -- Get tracked bar settings for hash
-    local settings = GetTrackedBarSettings()
-
-    -- Build hash including count AND settings
-    local hash = string.format("%d_%s_%s_%d_%s_%s_%d_%s_%d_%d_%s",
-        count,
-        tostring(settings.enabled),
-        tostring(settings.hideIcon),
-        settings.barHeight or 24,
-        settings.texture or "Gravity v5",
-        tostring(settings.useClassColor),
-        settings.borderSize or 1,
-        tostring(settings.bgOpacity or 0.7),
-        settings.textSize or 12,
-        settings.spacing or 4,
-        tostring(settings.growUp)
-    )
-
-    -- Check if anything changed
-    if hash ~= lastBarHash then
-        lastBarHash = hash
-        LayoutBuffBars()  -- Direct call, no deferral
-    end
+    -- Always call LayoutBuffBars - it now has internal position verification
+    -- that will skip repositioning if all bars are already in correct positions.
+    -- This ensures we catch any position drift caused by Blizzard's Layout()
+    -- even when count/settings haven't changed.
+    LayoutBuffBars()
 end
 
 ---------------------------------------------------------------------------
@@ -1373,10 +1456,27 @@ local function Initialize()
     if initialized then return end
     initialized = true
 
+    -- CRITICAL: Set isHorizontal IMMEDIATELY at login, before combat can start
+    -- This prevents Blizzard's Layout() from using wrong axis if first buff appears during combat
+    if BuffBarCooldownViewer and not InCombatLockdown() then
+        local settings = GetTrackedBarSettings()
+        local isVertical = (settings.orientation == "vertical")
+        local growFromBottom = (settings.growUp ~= false)
+
+        BuffBarCooldownViewer.isHorizontal = not isVertical
+        if isVertical then
+            BuffBarCooldownViewer.layoutFramesGoingRight = growFromBottom
+            BuffBarCooldownViewer.layoutFramesGoingUp = false
+        else
+            BuffBarCooldownViewer.layoutFramesGoingRight = true
+            BuffBarCooldownViewer.layoutFramesGoingUp = growFromBottom
+        end
+    end
+
     -- Force populate buff icons first (teaches the viewer what spells to show)
     ForcePopulateBuffIcons()
 
-    -- OnUpdate polling at 0.05s (20 FPS) - hash-based detection prevents unnecessary layouts
+    -- OnUpdate polling at 0.05s (20 FPS) - works alongside UNIT_AURA event detection
     if BuffIconCooldownViewer and not BuffIconCooldownViewer.__guiOnUpdateHooked then
         BuffIconCooldownViewer.__guiOnUpdateHooked = true
         BuffIconCooldownViewer.__guiElapsed = 0
@@ -1435,14 +1535,28 @@ local function Initialize()
 
     if BuffBarCooldownViewer and BuffBarCooldownViewer.Layout then
         hooksecurefunc(BuffBarCooldownViewer, "Layout", function()
+            if IsLayoutSuppressed() then return end
             if isBarLayoutRunning then return end
-            LayoutBuffBars()  -- Direct call
+            LayoutBuffBars()
         end)
     end
 
-    -- Hook edit mode exit to save buff bar position for height compensation
-    if EditModeManagerFrame then
-        EditModeManagerFrame:HookScript("OnHide", OnEditModeExitForBars)
+    -- FEAT-007: Hook RefreshLayout to correct isHorizontal after Blizzard sets it
+    -- Blizzard's RefreshLayout() sets isHorizontal based on IsHorizontal() (always true for BuffBar)
+    -- then calls Layout(). We hook RefreshLayout to fix isHorizontal right before Layout() runs.
+    -- Using hooksecurefunc is safer than replacing methods - avoids breaking Blizzard's code paths.
+    if BuffBarCooldownViewer and BuffBarCooldownViewer.RefreshLayout then
+        hooksecurefunc(BuffBarCooldownViewer, "RefreshLayout", function(self)
+            local settings = GetTrackedBarSettings()
+            if settings.enabled and settings.orientation == "vertical" then
+                -- Blizzard just set isHorizontal=true, we need to fix it
+                -- But RefreshLayout already called Layout(), so we just ensure
+                -- the flag is correct for any subsequent Layout() calls
+                self.isHorizontal = false
+                self.layoutFramesGoingRight = settings.growUp ~= false  -- growUp becomes growRight
+                self.layoutFramesGoingUp = false
+            end
+        end)
     end
 
     ---------------------------------------------------------------------------
@@ -1472,7 +1586,7 @@ local function Initialize()
                 end
             end
         end)
-    end   
+    end
 
     -- Initial layouts (after force populate)
     C_Timer.After(0.3, function()
@@ -1503,10 +1617,6 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
                 LayoutBuffIcons()  -- Direct calls
                 LayoutBuffBars()
             end)
-            -- Apply height compensation after layouts complete (1.5 + 0.3 = 1.8s)
-            C_Timer.After(1.8, function()
-                ApplyHeightCompensationFromDB()
-            end)			
         end
     elseif event == "PLAYER_REGEN_ENABLED" then
         -- After combat ends, try to populate if we haven't yet
@@ -1539,8 +1649,24 @@ function gui_BuffBar.Refresh()
     iconState.isInitialized = false
     iconState.lastCount = 0
     barState.lastCount = 0
-    lastIconHash = ""  -- Force hash recalculation
-    lastBarHash = ""
+    lastIconHash = ""  -- Force hash recalculation for icons
+
+    -- Update isHorizontal when settings change (e.g., orientation toggle)
+    -- Must be done outside combat to take effect
+    if BuffBarCooldownViewer and not InCombatLockdown() then
+        local settings = GetTrackedBarSettings()
+        local isVertical = (settings.orientation == "vertical")
+        local growFromBottom = (settings.growUp ~= false)
+
+        BuffBarCooldownViewer.isHorizontal = not isVertical
+        if isVertical then
+            BuffBarCooldownViewer.layoutFramesGoingRight = growFromBottom
+            BuffBarCooldownViewer.layoutFramesGoingUp = false
+        else
+            BuffBarCooldownViewer.layoutFramesGoingRight = true
+            BuffBarCooldownViewer.layoutFramesGoingUp = growFromBottom
+        end
+    end
 
     LayoutBuffIcons()
     LayoutBuffBars()

@@ -6,12 +6,10 @@
 ## AddonCompartmentFuncOnLeave: GravityUI_CompartmentOnLeave
 ## Notes: Installer for |cFF30D1FFGravity|r UI
 ## Author: Gravity
-## Version: @project-version@
+## Version: 1.56
 ## DefaultState: Enabled
 ## LoadOnDemand: 0
 ## SavedVariables: GravityUI_DB, GravityUIDB
-## X-Curse-Project-ID: 1102290
-## X-Wago-ID: 96E7e8Gg
 
 ## X-Contributors: Gravity
 ## X-License: GPLv3

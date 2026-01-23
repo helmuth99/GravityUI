@@ -270,56 +270,9 @@ local function BuildCastbarOptions(tabContent, unitKey, y, PAD, FORM_ROW, Refres
         y = y - FORM_ROW
 
         -- Castbar preview row (form style)
-        local castPreviewContainer = CreateFrame("Frame", nil, tabContent)
-        castPreviewContainer:SetHeight(FORM_ROW)
-        castPreviewContainer:SetPoint("TOPLEFT", PAD, y)
-        castPreviewContainer:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
-
-        local castPreviewLabel = castPreviewContainer:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-        castPreviewLabel:SetPoint("LEFT", 0, 0)
-        castPreviewLabel:SetText("Castbar Preview")
-        castPreviewLabel:SetTextColor(C.text[1], C.text[2], C.text[3], 1)
-
-        -- Toggle track (pill-shaped, matches CreateFormToggle)
-        local castPreviewTrack = CreateFrame("Button", nil, castPreviewContainer, "BackdropTemplate")
-        castPreviewTrack:SetSize(40, 20)
-        castPreviewTrack:SetPoint("LEFT", castPreviewContainer, "LEFT", 200, 0)
-        castPreviewTrack:SetBackdrop({bgFile = "Interface\\Buttons\\WHITE8x8", edgeFile = "Interface\\Buttons\\WHITE8x8", edgeSize = 1})
-
-        -- Thumb (sliding circle)
-        local castPreviewThumb = CreateFrame("Frame", nil, castPreviewTrack, "BackdropTemplate")
-        castPreviewThumb:SetSize(16, 16)
-        castPreviewThumb:SetBackdrop({bgFile = "Interface\\Buttons\\WHITE8x8", edgeFile = "Interface\\Buttons\\WHITE8x8", edgeSize = 1})
-        castPreviewThumb:SetBackdropColor(0.95, 0.95, 0.95, 1)
-        castPreviewThumb:SetBackdropBorderColor(0.85, 0.85, 0.85, 1)
-        castPreviewThumb:SetFrameLevel(castPreviewTrack:GetFrameLevel() + 1)
-
-        -- Initialize preview state in database (doesn't persist across reloads)
-        if castDB.previewMode == nil then
-            castDB.previewMode = false
-        end
-
-        local function UpdateCastPreviewToggle(on)
-            if on then
-                castPreviewTrack:SetBackdropColor(C.accent[1], C.accent[2], C.accent[3], 1)
-                castPreviewTrack:SetBackdropBorderColor(C.accent[1]*0.8, C.accent[2]*0.8, C.accent[3]*0.8, 1)
-                castPreviewThumb:ClearAllPoints()
-                castPreviewThumb:SetPoint("RIGHT", castPreviewTrack, "RIGHT", -2, 0)
-            else
-                castPreviewTrack:SetBackdropColor(0.15, 0.18, 0.22, 1)
-                castPreviewTrack:SetBackdropBorderColor(0.12, 0.14, 0.18, 1)
-                castPreviewThumb:ClearAllPoints()
-                castPreviewThumb:SetPoint("LEFT", castPreviewTrack, "LEFT", 2, 0)
-            end
-        end
-        UpdateCastPreviewToggle(castDB.previewMode)
-
-        castPreviewTrack:SetScript("OnClick", function()
-            castDB.previewMode = not castDB.previewMode
-            UpdateCastPreviewToggle(castDB.previewMode)
-            -- Refresh to recreate castbar with/without preview content
-            RefreshUnit()
-        end)
+        local castPreviewToggle = GUI:CreateFormToggle(tabContent, "Castbar Preview", "previewMode", castDB, RefreshUnit)
+        castPreviewToggle:SetPoint("TOPLEFT", PAD, y)
+        castPreviewToggle:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
         y = y - FORM_ROW
 
         -- Quick Snap buttons row (one-time snap)

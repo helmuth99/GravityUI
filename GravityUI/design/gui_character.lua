@@ -353,7 +353,9 @@ local function SetupCharacterFrameSkinning()
                 -- Check if character pane customization will handle extension
                 local guiCore = _G.GravityUI and _G.GravityUI.guiCore
                 local charSettings = guiCore and guiCore.db and guiCore.db.profile and guiCore.db.profile.character
+                -- Default to true if setting not found (matches gui_character.lua defaults)
                 local charPaneEnabled = charSettings and charSettings.enabled
+                if charPaneEnabled == nil then charPaneEnabled = true end
 
                 if not charPaneEnabled then
                     -- Character pane disabled - skinning handles bg at normal size
@@ -366,7 +368,9 @@ local function SetupCharacterFrameSkinning()
         if PaperDollFrame:IsShown() then
             local guiCore = _G.GravityUI and _G.GravityUI.guiCore
             local charSettings = guiCore and guiCore.db and guiCore.db.profile and guiCore.db.profile.character
+            -- Default to true if setting not found (matches gui_character.lua defaults)
             local charPaneEnabled = charSettings and charSettings.enabled
+            if charPaneEnabled == nil then charPaneEnabled = true end
             if not charPaneEnabled then
                 SetCharacterFrameBgExtended(false)
             end
@@ -437,7 +441,7 @@ local function RefreshCharacterFrameColors()
 end
 
 ---------------------------------------------------------------------------
--- EquiPMENT MANAGER SKINNING
+-- EQUIPMENT MANAGER SKINNING
 ---------------------------------------------------------------------------
 
 -- Skin individual equipment set entry

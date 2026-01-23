@@ -198,13 +198,16 @@ local function CreateScrollableContent(parent)
 
     local scrollBar = scrollFrame.ScrollBar
     if scrollBar then
-        scrollBar:SetPoint("TOPLEFT", scrollFrame, "TOPRIGHT", 4, -16)
-        scrollBar:SetPoint("BOTTOMLEFT", scrollFrame, "BOTTOMRIGHT", 4, 16)
+        scrollBar:SetPoint("TOPRIGHT", scrollFrame, "TOPRIGHT", 18, -18)
+        scrollBar:SetPoint("BOTTOMRIGHT", scrollFrame, "BOTTOMRIGHT", 18, 18)
+        scrollBar:SetWidth(12)
+        scrollBar:EnableMouse(true)
 
         -- Style the thumb (safe operation)
         local thumb = scrollBar:GetThumbTexture()
         if thumb then
-            thumb:SetColorTexture(0.35, 0.45, 0.5, 0.8)  -- Subtle grey-blue
+            thumb:SetColorTexture(0.3, 0.6, 0.9, 0.7)  -- Slightly brighter blue for better visibility
+            thumb:SetWidth(12)
         end
 
         -- Hide arrow buttons (modern best practice)
@@ -359,464 +362,1951 @@ end
 ---------------------------------------------------------------------------
 -- PAGE: Gravity Extras
 ---------------------------------------------------------------------------
-local function CreateGravityExtrasPage(parent)
-        local y = -10
-        local FORM_ROW = 32
-		local scroll, tabContent = CreateScrollableContent(parent)
-		local db = GetDB()
-		
-		-- local GOKU_TEXTURES = {
-			-- { text = "Standard Goku", value = "Interface\\AddOns\\GravityUI\\assets\\media\\goku.tga" },
-			-- { text = "Pedro", value = "Interface\\AddOns\\GravityUI\\assets\\media\\pedro.tga" },
-			-- { text = "Edolie", value = "Interface\\AddOns\\GravityUI\\assets\\media\\feral.tga" },			
-			-- -- Hier kannst du neue Dateien hinzufügen, nachdem du sie in den Ordner kopiert hast
-		-- }
+---------------------------------------------------------------------------
+-- EXTRAS SUB-TABS
+---------------------------------------------------------------------------
 
-		-- local GOKU_SOUNDS = {
-			-- { text = "Kamehameha", value = "Interface\\AddOns\\GravityUI\\assets\\media\\Kamehameha.ogg" },
-			-- { text = "Pedro", value = "Interface\\AddOns\\GravityUI\\assets\\media\\pedrolust.ogg" },
-			-- { text = "Anime Lied", value = "Interface\\AddOns\\GravityUI\\assets\\media\\cancion.ogg" },
-		-- }
-		
-		-- -- SonGoku Animation Section
-        -- GUI:SetSearchSection("SonGoku Animation")
-        -- local songokuHeader = GUI:CreateSectionHeader(tabContent, "SonGoku Animation")
-        -- songokuHeader:SetPoint("TOPLEFT", PADDING, y)
-        -- y = y - songokuHeader.gap
 
-        -- local songokuDesc = GUI:CreateLabel(tabContent,
-            -- "Displays an animated Goku sprite when bloodlust-type buffs are active (Bloodlust, Heroism, Time Warp, etc.).",
-            -- 11, C.textMuted)
-        -- songokuDesc:SetPoint("TOPLEFT", PADDING, y)
-        -- songokuDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-        -- songokuDesc:SetJustifyH("LEFT")
-        -- songokuDesc:SetWordWrap(true)
-        -- songokuDesc:SetHeight(15)
-        -- y = y - 25
 
-        -- -- Preview/Test buttons
-        -- local previewStartBtn = GUI:CreateButton(tabContent, "Preview Animation", 140, 28, function()
-            -- if _G.GravityUI_StartSonGoku then _G.GravityUI_StartSonGoku() end
-        -- end)
-        -- previewStartBtn:SetPoint("TOPLEFT", PADDING, y)
-        -- previewStartBtn:SetPoint("RIGHT", tabContent, "CENTER", -5, 0)
+local function BuildCombatTimerTab(tabContent)
+    local y = -25
+    local FORM_ROW = 32
+    local db = GetDB()
+    local PADDING = 15
 
-        -- local previewStopBtn = GUI:CreateButton(tabContent, "Stop Animation", 140, 28, function()
-            -- if _G.GravityUI_StopSonGoku then _G.GravityUI_StopSonGoku() end
-        -- end)
-        -- previewStopBtn:SetPoint("LEFT", tabContent, "CENTER", 5, 0)
-        -- previewStopBtn:SetPoint("TOP", previewStartBtn, "TOP", 0, 0)
-        -- previewStopBtn:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-        -- y = y - 38
+    -- Set search context for auto-registration
+    GUI:SetSearchContext({tabIndex = 2, tabName = "Extras", subTabIndex = 3, subTabName = "Combat Timer"})
 
-        -- local songokuDB = db.songoku
-        -- if songokuDB then
-            -- local songokuCheck = GUI:CreateFormCheckbox(tabContent, "Enable SonGoku Animation", "enabled", songokuDB, function(val)
-                -- if _G.GravityUI_RefreshSonGoku then _G.GravityUI_RefreshSonGoku() end
-            -- end)
-            -- songokuCheck:SetPoint("TOPLEFT", PADDING, y)
-            -- songokuCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-            -- y = y - FORM_ROW
+    local combatTimerHeader = GUI:CreateSectionHeader(tabContent, "Combat Timer")
+    combatTimerHeader:SetPoint("TOPLEFT", PADDING, y)
+    y = y - combatTimerHeader.gap
 
-            -- local soundCheck = GUI:CreateFormCheckbox(tabContent, "Play Sound Effect", "playSound", songokuDB, function(val)
-                -- if _G.GravityUI_RefreshSonGoku then _G.GravityUI_RefreshSonGoku() end
-            -- end)
-            -- soundCheck:SetPoint("TOPLEFT", PADDING, y)
-            -- soundCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-            -- y = y - FORM_ROW
-			
-			-- local textureDropdown = GUI:CreateFormDropdown(tabContent, "Select Character Texture", GOKU_TEXTURES, "texturePath", songokuDB, function()
-                -- -- Das hier aktualisiert die Textur sofort im Spiel
-                -- local gokuFrame = _G.GravityUI_GokuFrame
-                -- if gokuFrame and gokuFrame.texture then
-                    -- gokuFrame.texture:SetTexture(songokuDB.texturePath)
-                -- end
-                -- if _G.GravityUI_RefreshSonGoku then _G.GravityUI_RefreshSonGoku() end
-            -- end)
-            -- textureDropdown:SetPoint("TOPLEFT", PADDING, y)
-            -- textureDropdown:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-            -- y = y - FORM_ROW
+    local combatTimerDesc = GUI:CreateLabel(tabContent,
+        "Displays elapsed combat time. Timer resets each time you leave combat.",
+        11, C.textMuted)
+    combatTimerDesc:SetPoint("TOPLEFT", PADDING, y)
+    combatTimerDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+    combatTimerDesc:SetJustifyH("LEFT")
+    combatTimerDesc:SetWordWrap(true)
+    combatTimerDesc:SetHeight(15)
+    y = y - 25
 
-            -- -- Dropdown für den Sound (.ogg)
-            -- local soundDropdown = GUI:CreateFormDropdown(tabContent, "Select Sound Effect", GOKU_SOUNDS, "soundPath", songokuDB, function()
-                -- if _G.GravityUI_RefreshSonGoku then _G.GravityUI_RefreshSonGoku() end
-            -- end)
-            -- soundDropdown:SetPoint("TOPLEFT", PADDING, y)
-            -- soundDropdown:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-            -- y = y - FORM_ROW
-
-            -- local widthSlider = GUI:CreateFormSlider(tabContent, "Animation Width", 64, 512, 1, "width", songokuDB, function()
-                -- if _G.GravityUI_RefreshSonGoku then _G.GravityUI_RefreshSonGoku() end
-            -- end)
-            -- widthSlider:SetPoint("TOPLEFT", PADDING, y)
-            -- widthSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-            -- y = y - FORM_ROW
-
-            -- local heightSlider = GUI:CreateFormSlider(tabContent, "Animation Height", 64, 512, 1, "height", songokuDB, function()
-                -- if _G.GravityUI_RefreshSonGoku then _G.GravityUI_RefreshSonGoku() end
-            -- end)
-            -- heightSlider:SetPoint("TOPLEFT", PADDING, y)
-            -- heightSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-            -- y = y - FORM_ROW
-
-            -- local xOffsetSlider = GUI:CreateFormSlider(tabContent, "X Position Offset", -2000, 2000, 1, "xOffset", songokuDB, function()
-                -- if _G.GravityUI_RefreshSonGoku then _G.GravityUI_RefreshSonGoku() end
-            -- end)
-            -- xOffsetSlider:SetPoint("TOPLEFT", PADDING, y)
-            -- xOffsetSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-            -- y = y - FORM_ROW
-
-            -- local yOffsetSlider = GUI:CreateFormSlider(tabContent, "Y Position Offset", -2000, 2000, 1, "yOffset", songokuDB, function()
-                -- if _G.GravityUI_RefreshSonGoku then _G.GravityUI_RefreshSonGoku() end
-            -- end)
-            -- yOffsetSlider:SetPoint("TOPLEFT", PADDING, y)
-            -- yOffsetSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-            -- y = y - FORM_ROW
-
-            -- local anchorFrameOptions = {
-                -- {value = "UIParent", text = "Screen (UIParent)"},
-                -- {value = "gui_Player.healthBar", text = "Player Health Bar"},
-            -- }
-            -- local anchorFrameDropdown = GUI:CreateFormDropdown(tabContent, "Anchor To", anchorFrameOptions, "anchorFrame", songokuDB, function()
-                -- if _G.GravityUI_RefreshSonGoku then _G.GravityUI_RefreshSonGoku() end
-            -- end)
-            -- anchorFrameDropdown:SetPoint("TOPLEFT", PADDING, y)
-            -- anchorFrameDropdown:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-            -- y = y - FORM_ROW
-
-            -- local anchorFramePointOptions = NINE_POINT_ANCHOR_OPTIONS
-            -- local anchorFramePointDropdown = GUI:CreateFormDropdown(tabContent, "Target Anchor Point", anchorFramePointOptions, "anchorFramePoint", songokuDB, function()
-                -- if _G.GravityUI_RefreshSonGoku then _G.GravityUI_RefreshSonGoku() end
-            -- end)
-            -- anchorFramePointDropdown:SetPoint("TOPLEFT", PADDING, y)
-            -- anchorFramePointDropdown:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-            -- y = y - FORM_ROW
-
-            -- local anchorOptions = NINE_POINT_ANCHOR_OPTIONS
-            -- local anchorDropdown = GUI:CreateFormDropdown(tabContent, "Goku Anchor Point", anchorOptions, "anchorPoint", songokuDB, function()
-                -- if _G.GravityUI_RefreshSonGoku then _G.GravityUI_RefreshSonGoku() end
-            -- end)
-            -- anchorDropdown:SetPoint("TOPLEFT", PADDING, y)
-            -- anchorDropdown:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-            -- y = y - FORM_ROW
-        -- end
-
-		-- y = y - 10
-
-        -- Combat Timer Section
-        local combatTimerHeader = GUI:CreateSectionHeader(tabContent, "Combat Timer")
-        combatTimerHeader:SetPoint("TOPLEFT", PADDING, y)
-        y = y - combatTimerHeader.gap
-
-        local combatTimerDesc = GUI:CreateLabel(tabContent,
-            "Displays elapsed combat time. Timer resets each time you leave combat.",
-            11, C.textMuted)
-        combatTimerDesc:SetPoint("TOPLEFT", PADDING, y)
-        combatTimerDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-        combatTimerDesc:SetJustifyH("LEFT")
-        combatTimerDesc:SetWordWrap(true)
-        combatTimerDesc:SetHeight(15)
-        y = y - 25
-
-        local combatTimerDB = db.combatTimer
-        if combatTimerDB then
-            local combatTimerCheck = GUI:CreateFormCheckbox(tabContent, "Enable Combat Timer", "enabled", combatTimerDB, function(val)
-                if _G.GravityUI_RefreshCombatTimer then _G.GravityUI_RefreshCombatTimer() end
-            end)
-            combatTimerCheck:SetPoint("TOPLEFT", PADDING, y)
-            combatTimerCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-            y = y - FORM_ROW
-
-            -- Encounters-only mode toggle
-            local encountersOnlyCheck = GUI:CreateFormCheckbox(tabContent, "Only Show In Encounters", "onlyShowInEncounters", combatTimerDB, function(val)
-                if _G.GravityUI_RefreshCombatTimer then _G.GravityUI_RefreshCombatTimer() end
-            end)
-            encountersOnlyCheck:SetPoint("TOPLEFT", PADDING, y)
-            encountersOnlyCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-            y = y - FORM_ROW
-
-            -- Preview toggle
-            local previewState = { enabled = _G.GravityUI_IsCombatTimerPreviewMode and _G.GravityUI_IsCombatTimerPreviewMode() or false }
-            local previewCheck = GUI:CreateFormCheckbox(tabContent, "Preview Combat Timer", "enabled", previewState, function(val)
-                if _G.GravityUI_ToggleCombatTimerPreview then
-                    _G.GravityUI_ToggleCombatTimerPreview(val)
-                end
-            end)
-            previewCheck:SetPoint("TOPLEFT", PADDING, y)
-            previewCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-            y = y - FORM_ROW
-
-            -- Frame size settings
-            local timerWidthSlider = GUI:CreateFormSlider(tabContent, "Frame Width", 40, 200, 1, "width", combatTimerDB, function()
-                if _G.GravityUI_RefreshCombatTimer then _G.GravityUI_RefreshCombatTimer() end
-            end)
-            timerWidthSlider:SetPoint("TOPLEFT", PADDING, y)
-            timerWidthSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-            y = y - FORM_ROW
-
-            local timerHeightSlider = GUI:CreateFormSlider(tabContent, "Frame Height", 20, 100, 1, "height", combatTimerDB, function()
-                if _G.GravityUI_RefreshCombatTimer then _G.GravityUI_RefreshCombatTimer() end
-            end)
-            timerHeightSlider:SetPoint("TOPLEFT", PADDING, y)
-            timerHeightSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-            y = y - FORM_ROW
-
-            local timerFontSizeSlider = GUI:CreateFormSlider(tabContent, "Font Size", 12, 32, 1, "fontSize", combatTimerDB, function()
-                if _G.GravityUI_RefreshCombatTimer then _G.GravityUI_RefreshCombatTimer() end
-            end)
-            timerFontSizeSlider:SetPoint("TOPLEFT", PADDING, y)
-            timerFontSizeSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-            y = y - FORM_ROW
-
-            local timerXOffsetSlider = GUI:CreateFormSlider(tabContent, "X Position Offset", -2000, 2000, 1, "xOffset", combatTimerDB, function()
-                if _G.GravityUI_RefreshCombatTimer then _G.GravityUI_RefreshCombatTimer() end
-            end)
-            timerXOffsetSlider:SetPoint("TOPLEFT", PADDING, y)
-            timerXOffsetSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-            y = y - FORM_ROW
-
-            local timerYOffsetSlider = GUI:CreateFormSlider(tabContent, "Y Position Offset", -2000, 2000, 1, "yOffset", combatTimerDB, function()
-                if _G.GravityUI_RefreshCombatTimer then _G.GravityUI_RefreshCombatTimer() end
-            end)
-            timerYOffsetSlider:SetPoint("TOPLEFT", PADDING, y)
-            timerYOffsetSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-            y = y - FORM_ROW
-
-            -- Text color with class color toggle
-            local timerColorPicker  -- Forward declare
-
-            local useClassColorTextCheck = GUI:CreateFormCheckbox(tabContent, "Use Class Color for Text", "useClassColorText", combatTimerDB, function(val)
-                if _G.GravityUI_RefreshCombatTimer then _G.GravityUI_RefreshCombatTimer() end
-                -- Enable/disable text color picker based on toggle
-                if timerColorPicker and timerColorPicker.SetEnabled then
-                    timerColorPicker:SetEnabled(not val)
-                end
-            end)
-            useClassColorTextCheck:SetPoint("TOPLEFT", PADDING, y)
-            useClassColorTextCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-            y = y - FORM_ROW
-
-            timerColorPicker = GUI:CreateFormColorPicker(tabContent, "Timer Text Color", "textColor", combatTimerDB, function()
-                if _G.GravityUI_RefreshCombatTimer then _G.GravityUI_RefreshCombatTimer() end
-            end)
-            timerColorPicker:SetPoint("TOPLEFT", PADDING, y)
-            timerColorPicker:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-            -- Initial state based on setting
-            if timerColorPicker.SetEnabled then
-                timerColorPicker:SetEnabled(not combatTimerDB.useClassColorText)
-            end
-            y = y - FORM_ROW
-
-            -- Font selection with custom toggle
-            -- Create font dropdown first, then the toggle (so toggle callback can reference it)
-            local fontList = GetFontList()
-            local timerFontDropdown  -- Forward declare
-
-            local useCustomFontCheck = GUI:CreateFormCheckbox(tabContent, "Use Custom Font", "useCustomFont", combatTimerDB, function(val)
-                if _G.GravityUI_RefreshCombatTimer then _G.GravityUI_RefreshCombatTimer() end
-                -- Enable/disable font dropdown based on toggle
-                if timerFontDropdown and timerFontDropdown.SetEnabled then
-                    timerFontDropdown:SetEnabled(val)
-                end
-            end)
-            useCustomFontCheck:SetPoint("TOPLEFT", PADDING, y)
-            useCustomFontCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-            y = y - FORM_ROW
-
-            timerFontDropdown = GUI:CreateFormDropdown(tabContent, "Font", fontList, "font", combatTimerDB, function()
-                if _G.GravityUI_RefreshCombatTimer then _G.GravityUI_RefreshCombatTimer() end
-            end)
-            timerFontDropdown:SetPoint("TOPLEFT", PADDING, y)
-            timerFontDropdown:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-            -- Limit dropdown height to 8 items (scrollable)
-            if timerFontDropdown.menuFrame then
-                timerFontDropdown.menuFrame:SetClipsChildren(true)
-            end
-            -- Initial state based on setting
-            if timerFontDropdown.SetEnabled then
-                timerFontDropdown:SetEnabled(combatTimerDB.useCustomFont == true)
-            end
-            y = y - FORM_ROW
-
-            -- Backdrop settings
-            local backdropCheck = GUI:CreateFormCheckbox(tabContent, "Show Backdrop", "showBackdrop", combatTimerDB, function(val)
-                if _G.GravityUI_RefreshCombatTimer then _G.GravityUI_RefreshCombatTimer() end
-            end)
-            backdropCheck:SetPoint("TOPLEFT", PADDING, y)
-            backdropCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-            y = y - FORM_ROW
-
-            local backdropColorPicker = GUI:CreateFormColorPicker(tabContent, "Backdrop Color", "backdropColor", combatTimerDB, function()
-                if _G.GravityUI_RefreshCombatTimer then _G.GravityUI_RefreshCombatTimer() end
-            end)
-            backdropColorPicker:SetPoint("TOPLEFT", PADDING, y)
-            backdropColorPicker:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-            y = y - FORM_ROW
-
-            -- Border settings
-            -- Forward declare border controls so hide toggle can reference them
-            local borderSizeSlider, borderTextureDropdown, useClassColorCheck, borderColorPicker
-
-            -- Helper to update all border control states
-            local function UpdateBorderControlsEnabled(enabled)
-                if borderSizeSlider and borderSizeSlider.SetEnabled then borderSizeSlider:SetEnabled(enabled) end
-                if borderTextureDropdown and borderTextureDropdown.SetEnabled then borderTextureDropdown:SetEnabled(enabled) end
-                if useClassColorCheck and useClassColorCheck.SetEnabled then useClassColorCheck:SetEnabled(enabled) end
-                -- Border color picker is enabled if borders are shown AND class color is not used
-                if borderColorPicker and borderColorPicker.SetEnabled then 
-                    borderColorPicker:SetEnabled(enabled and not combatTimerDB.useClassColorBorder)
-                end
-            end
-
-            -- Hide Border toggle
-            local hideBorderCheck = GUI:CreateFormCheckbox(tabContent, "Hide Border", "hideBorder", combatTimerDB, function(val)
-                if _G.GravityUI_RefreshCombatTimer then _G.GravityUI_RefreshCombatTimer() end
-                UpdateBorderControlsEnabled(not val)
-            end)
-            hideBorderCheck:SetPoint("TOPLEFT", PADDING, y)
-            hideBorderCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-            y = y - FORM_ROW
-
-            borderSizeSlider = GUI:CreateFormSlider(tabContent, "Border Size", 0, 5, 1, "borderSize", combatTimerDB, function()
-                if _G.GravityUI_RefreshCombatTimer then _G.GravityUI_RefreshCombatTimer() end
-            end)
-            borderSizeSlider:SetPoint("TOPLEFT", PADDING, y)
-            borderSizeSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-            y = y - FORM_ROW
-
-            local borderList = GetBorderList()
-            borderTextureDropdown = GUI:CreateFormDropdown(tabContent, "Border Texture", borderList, "borderTexture", combatTimerDB, function()
-                if _G.GravityUI_RefreshCombatTimer then _G.GravityUI_RefreshCombatTimer() end
-            end)
-            borderTextureDropdown:SetPoint("TOPLEFT", PADDING, y)
-            borderTextureDropdown:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-            y = y - FORM_ROW
-
-            -- Class color border toggle
-            useClassColorCheck = GUI:CreateFormCheckbox(tabContent, "Use Class Color for Border", "useClassColorBorder", combatTimerDB, function(val)
-                if _G.GravityUI_RefreshCombatTimer then _G.GravityUI_RefreshCombatTimer() end
-                -- Enable/disable border color picker based on toggle (only if borders are shown)
-                if borderColorPicker and borderColorPicker.SetEnabled then
-                    borderColorPicker:SetEnabled(not val and not combatTimerDB.hideBorder)
-                end
-            end)
-            useClassColorCheck:SetPoint("TOPLEFT", PADDING, y)
-            useClassColorCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-            y = y - FORM_ROW
-
-            borderColorPicker = GUI:CreateFormColorPicker(tabContent, "Border Color", "borderColor", combatTimerDB, function()
-                if _G.GravityUI_RefreshCombatTimer then _G.GravityUI_RefreshCombatTimer() end
-            end)
-            borderColorPicker:SetPoint("TOPLEFT", PADDING, y)
-            borderColorPicker:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-            y = y - FORM_ROW
-
-            -- Set initial enabled states based on current settings
-            local bordersVisible = not combatTimerDB.hideBorder
-            UpdateBorderControlsEnabled(bordersVisible)
-        end
-
-		y = y - 10
-
-		-- Delte Fix Section
-		local deletefixHeader = GUI:CreateSectionHeader(tabContent, "Delete Fix")
-        deletefixHeader:SetPoint("TOPLEFT", PADDING, y)
-        y = y - deletefixHeader.gap
-
-		if not db.DeleteFix then db.DeleteFix = { enableDeleteFix = false } end
-
-        local deletefixDesc = GUI:CreateLabel(tabContent, "Insert delete automatically.", 11, C.textMuted)
-        deletefixDesc:SetPoint("TOPLEFT", PADDING, y)
-        deletefixDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-        deletefixDesc:SetJustifyH("LEFT")
-        deletefixDesc:SetWordWrap(true)
-        deletefixDesc:SetHeight(15)
+    local combatTimerDB = db.combatTimer
+    if combatTimerDB then
+        local combatTimerCheck = GUI:CreateFormCheckbox(tabContent, "Enable Combat Timer", "enabled", combatTimerDB, function(val)
+            if _G.GravityUI_RefreshCombatTimer then _G.GravityUI_RefreshCombatTimer() end
+        end)
+        combatTimerCheck:SetPoint("TOPLEFT", PADDING, y)
+        combatTimerCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
         y = y - FORM_ROW
 
-        local deletefixDB = db.DeleteFix
-        if deletefixDB then
-            local deletefixCheck = GUI:CreateFormCheckbox(tabContent, "Enable Delete Fix", "enableDeleteFix", deletefixDB, function(val)
+        -- Encounters-only mode toggle
+        local encountersOnlyCheck = GUI:CreateFormCheckbox(tabContent, "Only Show In Encounters", "onlyShowInEncounters", combatTimerDB, function(val)
+            if _G.GravityUI_RefreshCombatTimer then _G.GravityUI_RefreshCombatTimer() end
         end)
-            deletefixCheck:SetPoint("TOPLEFT", PADDING, y)
-            deletefixCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+        encountersOnlyCheck:SetPoint("TOPLEFT", PADDING, y)
+        encountersOnlyCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+        y = y - FORM_ROW
+
+        -- Preview toggle
+        local previewState = { enabled = _G.GravityUI_IsCombatTimerPreviewMode and _G.GravityUI_IsCombatTimerPreviewMode() or false }
+        local previewCheck = GUI:CreateFormCheckbox(tabContent, "Preview Combat Timer", "enabled", previewState, function(val)
+            if _G.GravityUI_ToggleCombatTimerPreview then
+                _G.GravityUI_ToggleCombatTimerPreview(val)
+            end
+        end)
+        previewCheck:SetPoint("TOPLEFT", PADDING, y)
+        previewCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+        y = y - FORM_ROW
+
+        -- Frame size settings
+        local timerWidthSlider = GUI:CreateFormSlider(tabContent, "Frame Width", 40, 200, 1, "width", combatTimerDB, function()
+            if _G.GravityUI_RefreshCombatTimer then _G.GravityUI_RefreshCombatTimer() end
+        end)
+        timerWidthSlider:SetPoint("TOPLEFT", PADDING, y)
+        timerWidthSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+        y = y - FORM_ROW
+
+        local timerHeightSlider = GUI:CreateFormSlider(tabContent, "Frame Height", 20, 100, 1, "height", combatTimerDB, function()
+            if _G.GravityUI_RefreshCombatTimer then _G.GravityUI_RefreshCombatTimer() end
+        end)
+        timerHeightSlider:SetPoint("TOPLEFT", PADDING, y)
+        timerHeightSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+        y = y - FORM_ROW
+
+        local timerFontSizeSlider = GUI:CreateFormSlider(tabContent, "Font Size", 12, 32, 1, "fontSize", combatTimerDB, function()
+            if _G.GravityUI_RefreshCombatTimer then _G.GravityUI_RefreshCombatTimer() end
+        end)
+        timerFontSizeSlider:SetPoint("TOPLEFT", PADDING, y)
+        timerFontSizeSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+        y = y - FORM_ROW
+
+        local timerXOffsetSlider = GUI:CreateFormSlider(tabContent, "X Position Offset", -2000, 2000, 1, "xOffset", combatTimerDB, function()
+            if _G.GravityUI_RefreshCombatTimer then _G.GravityUI_RefreshCombatTimer() end
+        end)
+        timerXOffsetSlider:SetPoint("TOPLEFT", PADDING, y)
+        timerXOffsetSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+        y = y - FORM_ROW
+
+        local timerYOffsetSlider = GUI:CreateFormSlider(tabContent, "Y Position Offset", -2000, 2000, 1, "yOffset", combatTimerDB, function()
+            if _G.GravityUI_RefreshCombatTimer then _G.GravityUI_RefreshCombatTimer() end
+        end)
+        timerYOffsetSlider:SetPoint("TOPLEFT", PADDING, y)
+        timerYOffsetSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+        y = y - FORM_ROW
+
+        -- Text color with class color toggle
+        local timerColorPicker  -- Forward declare
+
+        local useClassColorTextCheck = GUI:CreateFormCheckbox(tabContent, "Use Class Color for Text", "useClassColorText", combatTimerDB, function(val)
+            if _G.GravityUI_RefreshCombatTimer then _G.GravityUI_RefreshCombatTimer() end
+            -- Enable/disable text color picker based on toggle
+            if timerColorPicker and timerColorPicker.SetEnabled then
+                timerColorPicker:SetEnabled(not val)
+            end
+        end)
+        useClassColorTextCheck:SetPoint("TOPLEFT", PADDING, y)
+        useClassColorTextCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+        y = y - FORM_ROW
+
+        timerColorPicker = GUI:CreateFormColorPicker(tabContent, "Timer Text Color", "textColor", combatTimerDB, function()
+            if _G.GravityUI_RefreshCombatTimer then _G.GravityUI_RefreshCombatTimer() end
+        end)
+        timerColorPicker:SetPoint("TOPLEFT", PADDING, y)
+        timerColorPicker:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+        -- Initial state based on setting
+        if timerColorPicker.SetEnabled then
+            timerColorPicker:SetEnabled(not combatTimerDB.useClassColorText)
+        end
+        y = y - FORM_ROW
+
+        -- Font selection with custom toggle
+        local fontList = GetFontList()
+        local timerFontDropdown  -- Forward declare
+
+        local useCustomFontCheck = GUI:CreateFormCheckbox(tabContent, "Use Custom Font", "useCustomFont", combatTimerDB, function(val)
+            if _G.GravityUI_RefreshCombatTimer then _G.GravityUI_RefreshCombatTimer() end
+            -- Enable/disable font dropdown based on toggle
+            if timerFontDropdown and timerFontDropdown.SetEnabled then
+                timerFontDropdown:SetEnabled(val)
+            end
+        end)
+        useCustomFontCheck:SetPoint("TOPLEFT", PADDING, y)
+        useCustomFontCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+        y = y - FORM_ROW
+
+        timerFontDropdown = GUI:CreateFormDropdown(tabContent, "Font", fontList, "font", combatTimerDB, function()
+            if _G.GravityUI_RefreshCombatTimer then _G.GravityUI_RefreshCombatTimer() end
+        end)
+        timerFontDropdown:SetPoint("TOPLEFT", PADDING, y)
+        timerFontDropdown:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+        -- Limit dropdown height to 8 items (scrollable)
+        if timerFontDropdown.menuFrame then
+            timerFontDropdown.menuFrame:SetClipsChildren(true)
+        end
+        -- Initial state based on setting
+        if timerFontDropdown.SetEnabled then
+            timerFontDropdown:SetEnabled(combatTimerDB.useCustomFont == true)
+        end
+        y = y - FORM_ROW
+
+        -- Backdrop settings
+        local backdropCheck = GUI:CreateFormCheckbox(tabContent, "Show Backdrop", "showBackdrop", combatTimerDB, function(val)
+            if _G.GravityUI_RefreshCombatTimer then _G.GravityUI_RefreshCombatTimer() end
+        end)
+        backdropCheck:SetPoint("TOPLEFT", PADDING, y)
+        backdropCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+        y = y - FORM_ROW
+
+        local backdropColorPicker = GUI:CreateFormColorPicker(tabContent, "Backdrop Color", "backdropColor", combatTimerDB, function()
+            if _G.GravityUI_RefreshCombatTimer then _G.GravityUI_RefreshCombatTimer() end
+        end)
+        backdropColorPicker:SetPoint("TOPLEFT", PADDING, y)
+        backdropColorPicker:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+        y = y - FORM_ROW
+
+        -- Border settings
+        local borderSizeSlider, borderTextureDropdown, useClassColorCheck, borderColorPicker
+
+        local function UpdateBorderControlsEnabled(enabled)
+            if borderSizeSlider and borderSizeSlider.SetEnabled then borderSizeSlider:SetEnabled(enabled) end
+            if borderTextureDropdown and borderTextureDropdown.SetEnabled then borderTextureDropdown:SetEnabled(enabled) end
+            if useClassColorCheck and useClassColorCheck.SetEnabled then useClassColorCheck:SetEnabled(enabled) end
+            if borderColorPicker and borderColorPicker.SetEnabled then 
+                borderColorPicker:SetEnabled(enabled and not combatTimerDB.useClassColorBorder)
+            end
+        end
+
+        local hideBorderCheck = GUI:CreateFormCheckbox(tabContent, "Hide Border", "hideBorder", combatTimerDB, function(val)
+            if _G.GravityUI_RefreshCombatTimer then _G.GravityUI_RefreshCombatTimer() end
+            UpdateBorderControlsEnabled(not val)
+        end)
+        hideBorderCheck:SetPoint("TOPLEFT", PADDING, y)
+        hideBorderCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+        y = y - FORM_ROW
+
+        borderSizeSlider = GUI:CreateFormSlider(tabContent, "Border Size", 0, 5, 1, "borderSize", combatTimerDB, function()
+            if _G.GravityUI_RefreshCombatTimer then _G.GravityUI_RefreshCombatTimer() end
+        end)
+        borderSizeSlider:SetPoint("TOPLEFT", PADDING, y)
+        borderSizeSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+        y = y - FORM_ROW
+
+        local borderList = GetBorderList()
+        borderTextureDropdown = GUI:CreateFormDropdown(tabContent, "Border Texture", borderList, "borderTexture", combatTimerDB, function()
+            if _G.GravityUI_RefreshCombatTimer then _G.GravityUI_RefreshCombatTimer() end
+        end)
+        borderTextureDropdown:SetPoint("TOPLEFT", PADDING, y)
+        borderTextureDropdown:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+        y = y - FORM_ROW
+
+        useClassColorCheck = GUI:CreateFormCheckbox(tabContent, "Use Class Color for Border", "useClassColorBorder", combatTimerDB, function(val)
+            if _G.GravityUI_RefreshCombatTimer then _G.GravityUI_RefreshCombatTimer() end
+            if borderColorPicker and borderColorPicker.SetEnabled then
+                borderColorPicker:SetEnabled(not val and not combatTimerDB.hideBorder)
+            end
+        end)
+        useClassColorCheck:SetPoint("TOPLEFT", PADDING, y)
+        useClassColorCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+        y = y - FORM_ROW
+
+        borderColorPicker = GUI:CreateFormColorPicker(tabContent, "Border Color", "borderColor", combatTimerDB, function()
+            if _G.GravityUI_RefreshCombatTimer then _G.GravityUI_RefreshCombatTimer() end
+        end)
+        borderColorPicker:SetPoint("TOPLEFT", PADDING, y)
+        borderColorPicker:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+        y = y - FORM_ROW
+
+        local bordersVisible = not combatTimerDB.hideBorder
+        UpdateBorderControlsEnabled(bordersVisible)
+    end
+    tabContent:SetHeight(math.abs(y) + 20)
+end
+
+local function BuildDeleteFixTab(tabContent)
+    local y = -25
+    local FORM_ROW = 32
+    local db = GetDB()
+    local PADDING = 15
+
+    -- Set search context
+    GUI:SetSearchContext({tabIndex = 2, tabName = "Extras", subTabIndex = 4, subTabName = "Delete Fix"})
+
+    -- Delete Fix Section
+    local deletefixHeader = GUI:CreateSectionHeader(tabContent, "Delete Fix")
+    deletefixHeader:SetPoint("TOPLEFT", PADDING, y)
+    y = y - deletefixHeader.gap
+
+    if not db.DeleteFix then db.DeleteFix = { enableDeleteFix = false } end
+
+    local deletefixDesc = GUI:CreateLabel(tabContent, "Insert delete automatically.", 11, C.textMuted)
+    deletefixDesc:SetPoint("TOPLEFT", PADDING, y)
+    deletefixDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+    deletefixDesc:SetJustifyH("LEFT")
+    deletefixDesc:SetWordWrap(true)
+    deletefixDesc:SetHeight(15)
+    y = y - FORM_ROW
+
+    local deletefixDB = db.DeleteFix
+    if deletefixDB then
+        local deletefixCheck = GUI:CreateFormCheckbox(tabContent, "Enable Delete Fix", "enableDeleteFix", deletefixDB, function(val)
+        end)
+        deletefixCheck:SetPoint("TOPLEFT", PADDING, y)
+        deletefixCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+        y = y - FORM_ROW
+    end
+
+    tabContent:SetHeight(math.abs(y) + 20)
+end
+
+local function BuildRaidMarksTab(tabContent)
+    local y = -25
+    local FORM_ROW = 32
+    local db = GetDB()
+    local PADDING = 15
+
+    -- Set search context
+    GUI:SetSearchContext({tabIndex = 2, tabName = "Extras", subTabIndex = 5, subTabName = "World Marks Bar"})
+
+    -- RAID MARKER SECTION
+    local marksHeader = GUI:CreateSectionHeader(tabContent, "World Marks Bar")
+    marksHeader:SetPoint("TOPLEFT", PADDING, y)
+    y = y - marksHeader.gap
+
+    if not db.marks then 
+        db.marks = { enabled = false, mouseover = false, size = 24, spacing = 4, offsetX = 0, offsetY = 100 }
+    end
+    local marksDB = db.marks
+
+    local marksDesc = GUI:CreateLabel(tabContent, "Customize your World Marks Bar. INFO: you need to /reload after enable or disable.", 11, C.textMuted)
+    marksDesc:SetPoint("TOPLEFT", PADDING, y)
+    marksDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+    marksDesc:SetJustifyH("LEFT")
+    marksDesc:SetWordWrap(true)
+    marksDesc:SetHeight(15)
+    y = y - FORM_ROW
+
+    if marksDB then
+        -- Checkbox: Enable
+        local marksCheck = GUI:CreateFormCheckbox(tabContent, "Enable Player/Worldmarker Bar", "enabled", marksDB, function(val)
+            if _G.GravityUI_RefreshMarks then _G.GravityUI_RefreshMarks() end
+        end)
+        marksCheck:SetPoint("TOPLEFT", PADDING, y)
+        marksCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+        y = y - FORM_ROW
+
+        -- Checkbox: Mouseover
+        local marksMouse = GUI:CreateFormCheckbox(tabContent, "Show on Mouseover only", "mouseover", marksDB, function(val)
+            if _G.GravityUI_RefreshMarks then _G.GravityUI_RefreshMarks() end
+        end)
+        marksMouse:SetPoint("TOPLEFT", PADDING, y)
+        marksMouse:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+        y = y - FORM_ROW
+        
+        -- Size
+        local marksSize = GUI:CreateFormSlider(tabContent, "Size", 10, 50, 1, "size", marksDB, function()
+            if _G.GravityUI_RefreshMarks then _G.GravityUI_RefreshMarks() end
+        end)
+        marksSize:SetPoint("TOPLEFT", PADDING, y)
+        marksSize:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+        y = y - FORM_ROW
+        
+        -- Spacing
+        local marksSpacing = GUI:CreateFormSlider(tabContent, "Spacing", 0, 20, 1, "spacing", marksDB, function()
+            if _G.GravityUI_RefreshMarks then _G.GravityUI_RefreshMarks() end
+        end)
+        marksSpacing:SetPoint("TOPLEFT", PADDING, y)
+        marksSpacing:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+        y = y - FORM_ROW
+
+        -- Slider: X Offset
+        local marksXOffsetSlider = GUI:CreateFormSlider(tabContent, "X Position Offset", -2000, 2000, 1, "offsetX", marksDB, function()
+            if _G.GravityUI_RefreshMarks then _G.GravityUI_RefreshMarks() end
+        end)
+        marksXOffsetSlider:SetPoint("TOPLEFT", PADDING, y)
+        marksXOffsetSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+        y = y - FORM_ROW
+
+        -- Slider: Y Offset
+        local marksYOffsetSlider = GUI:CreateFormSlider(tabContent, "Y Position Offset", -2000, 2000, 1, "offsetY", marksDB, function()
+            if _G.GravityUI_RefreshMarks then _G.GravityUI_RefreshMarks() end
+        end)
+        marksYOffsetSlider:SetPoint("TOPLEFT", PADDING, y)
+        marksYOffsetSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+        y = y - FORM_ROW
+    end
+    tabContent:SetHeight(math.abs(y) + 20)
+end
+
+local function BuildQuickSalvageTab(tabContent)
+    local y = -25
+    local FORM_ROW = 32
+    local db = GetDB()
+    local PADDING = 15
+
+    -- Set search context for auto-registration
+    GUI:SetSearchContext({tabIndex = 2, tabName = "Extras", subTabIndex = 6, subTabName = "Quick Salvage"})
+
+    -- Quick Salvage Section
+    local quickSalvageHeader = GUI:CreateSectionHeader(tabContent, "Quick Salvage")
+    quickSalvageHeader:SetPoint("TOPLEFT", PADDING, y)
+    y = y - quickSalvageHeader.gap
+
+    local quickSalvageDesc = GUI:CreateLabel(tabContent,
+        "Mill, prospect, or disenchant items with a single click using a modifier key. Requires the corresponding profession.",
+        11, C.textMuted)
+    quickSalvageDesc:SetPoint("TOPLEFT", PADDING, y)
+    quickSalvageDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+    quickSalvageDesc:SetJustifyH("LEFT")
+    quickSalvageDesc:SetWordWrap(true)
+    quickSalvageDesc:SetHeight(20)
+    y = y - 30
+
+    -- Ensure quickSalvage settings exist
+    if not db.general.quickSalvage then
+        db.general.quickSalvage = { enabled = false, modifier = "ALT" }
+    end
+    local qsDB = db.general.quickSalvage
+
+    local qsEnableCheck = GUI:CreateFormCheckbox(tabContent, "Enable Quick Salvage", "enabled", qsDB, function()
+        if _G.GravityUI_RefreshQuickSalvage then _G.GravityUI_RefreshQuickSalvage() end
+    end)
+    qsEnableCheck:SetPoint("TOPLEFT", PADDING, y)
+    qsEnableCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+    y = y - FORM_ROW
+
+    local modifierOptions = {
+        {value = "ALT", text = "Alt"},
+        {value = "ALTCTRL", text = "Alt + Ctrl"},
+        {value = "ALTSHIFT", text = "Alt + Shift"},
+    }
+    local qsModifierDropdown = GUI:CreateFormDropdown(tabContent, "Modifier Key", modifierOptions, "modifier", qsDB, function()
+        if _G.GravityUI_RefreshQuickSalvage then _G.GravityUI_RefreshQuickSalvage() end
+    end)
+    qsModifierDropdown:SetPoint("TOPLEFT", PADDING, y)
+    qsModifierDropdown:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+    y = y - FORM_ROW
+
+    local qsActionsDesc = GUI:CreateLabel(tabContent,
+        "Milling: Herbs (5+ stack)  |  Prospecting: Ores (5+ stack)  |  Disenchanting: Green+ gear",
+        11, C.textMuted)
+    qsActionsDesc:SetPoint("TOPLEFT", PADDING, y)
+    qsActionsDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+    qsActionsDesc:SetJustifyH("LEFT")
+    qsActionsDesc:SetWordWrap(true)
+    qsActionsDesc:SetHeight(20)
+    y = y - 30
+
+    tabContent:SetHeight(math.abs(y) + 20)
+end
+
+local function BuildBuffsConsumablesTab(tabContent)
+    local y = -25
+    local FORM_ROW = 32
+    local db = GetDB()
+    local PADDING = 15
+
+    -- Set search context for auto-registration
+    GUI:SetSearchContext({tabIndex = 2, tabName = "Extras", subTabIndex = 7, subTabName = "Buffs & Consumable"})
+
+    -- Consumable Check Section
+    local consumableHeader = GUI:CreateSectionHeader(tabContent, "Consumable Check")
+    consumableHeader:SetPoint("TOPLEFT", PADDING, y)
+    y = y - consumableHeader.gap
+
+    -- Initialize defaults - master toggle
+    if db.general.consumableCheckEnabled == nil then db.general.consumableCheckEnabled = true end
+
+    local consumableEnableCheck = GUI:CreateFormCheckbox(tabContent, "Enable Consumable Check", "consumableCheckEnabled", db.general, nil)
+    consumableEnableCheck:SetPoint("TOPLEFT", PADDING, y)
+    consumableEnableCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+    y = y - FORM_ROW
+
+    local consumableDesc = GUI:CreateLabel(tabContent, "Display consumable status icons when triggered by events below.", 11, C.textMuted)
+    consumableDesc:SetPoint("TOPLEFT", PADDING, y + 4)
+    consumableDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+    consumableDesc:SetJustifyH("LEFT")
+    y = y - 20
+
+    -- Trigger Options subsection
+    local triggerLabel = GUI:CreateLabel(tabContent, "Show On:", 12, C.text)
+    triggerLabel:SetPoint("TOPLEFT", PADDING + 10, y)
+    y = y - 20
+
+    -- Initialize trigger defaults
+    if db.general.consumableOnReadyCheck == nil then db.general.consumableOnReadyCheck = true end
+    if db.general.consumableOnDungeon == nil then db.general.consumableOnDungeon = false end
+    if db.general.consumableOnRaid == nil then db.general.consumableOnRaid = false end
+    if db.general.consumableOnResurrect == nil then db.general.consumableOnResurrect = false end
+
+    local triggerReadyCheck = GUI:CreateFormCheckbox(tabContent, "Ready Check", "consumableOnReadyCheck", db.general, nil)
+    triggerReadyCheck:SetPoint("TOPLEFT", PADDING + 20, y)
+    triggerReadyCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+    y = y - FORM_ROW
+
+    local triggerDungeon = GUI:CreateFormCheckbox(tabContent, "Dungeon Entrance", "consumableOnDungeon", db.general, nil)
+    triggerDungeon:SetPoint("TOPLEFT", PADDING + 20, y)
+    triggerDungeon:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+    y = y - FORM_ROW
+
+    local triggerRaid = GUI:CreateFormCheckbox(tabContent, "Raid Entrance", "consumableOnRaid", db.general, nil)
+    triggerRaid:SetPoint("TOPLEFT", PADDING + 20, y)
+    triggerRaid:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+    y = y - FORM_ROW
+
+    local triggerResurrect = GUI:CreateFormCheckbox(tabContent, "Instanced Resurrect", "consumableOnResurrect", db.general, nil)
+    triggerResurrect:SetPoint("TOPLEFT", PADDING + 20, y)
+    triggerResurrect:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+    y = y - FORM_ROW
+
+    local resurrectDesc = GUI:CreateLabel(tabContent, "Shows when resurrected in a dungeon or raid with missing buffs.", 11, C.textMuted)
+    resurrectDesc:SetPoint("TOPLEFT", PADDING, y + 4)
+    resurrectDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+    resurrectDesc:SetJustifyH("LEFT")
+    y = y - 20
+
+    -- Buffs to Check subsection
+    local buffsLabel = GUI:CreateLabel(tabContent, "Buffs to Check:", 12, C.text)
+    buffsLabel:SetPoint("TOPLEFT", PADDING + 10, y)
+    y = y - 20
+
+    -- Initialize buff defaults
+    if db.general.consumableFood == nil then db.general.consumableFood = true end
+    if db.general.consumableFlask == nil then db.general.consumableFlask = true end
+    if db.general.consumableOilMH == nil then db.general.consumableOilMH = true end
+    if db.general.consumableOilOH == nil then db.general.consumableOilOH = true end
+    if db.general.consumableRune == nil then db.general.consumableRune = true end
+    if db.general.consumableHealthstone == nil then db.general.consumableHealthstone = true end
+
+    local consumableFoodCheck = GUI:CreateFormCheckbox(tabContent, "Food Buff", "consumableFood", db.general, nil)
+    consumableFoodCheck:SetPoint("TOPLEFT", PADDING + 20, y)
+    consumableFoodCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+    y = y - FORM_ROW
+
+    local consumableFlaskCheck = GUI:CreateFormCheckbox(tabContent, "Flask Buff", "consumableFlask", db.general, nil)
+    consumableFlaskCheck:SetPoint("TOPLEFT", PADDING + 20, y)
+    consumableFlaskCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+    y = y - FORM_ROW
+
+    local consumableOilMHCheck = GUI:CreateFormCheckbox(tabContent, "Weapon Oil (Main Hand)", "consumableOilMH", db.general, nil)
+    consumableOilMHCheck:SetPoint("TOPLEFT", PADDING + 20, y)
+    consumableOilMHCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+    y = y - FORM_ROW
+
+    local consumableOilOHCheck = GUI:CreateFormCheckbox(tabContent, "Weapon Oil (Off Hand)", "consumableOilOH", db.general, nil)
+    consumableOilOHCheck:SetPoint("TOPLEFT", PADDING + 20, y)
+    consumableOilOHCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+    y = y - FORM_ROW
+
+    local consumableRuneCheck = GUI:CreateFormCheckbox(tabContent, "Augment Rune", "consumableRune", db.general, nil)
+    consumableRuneCheck:SetPoint("TOPLEFT", PADDING + 20, y)
+    consumableRuneCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+    y = y - FORM_ROW
+
+    local consumableHSCheck = GUI:CreateFormCheckbox(tabContent, "Healthstones", "consumableHealthstone", db.general, nil)
+    consumableHSCheck:SetPoint("TOPLEFT", PADDING + 20, y)
+    consumableHSCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+    y = y - FORM_ROW
+
+    local consumableHSDesc = GUI:CreateLabel(tabContent, "Only shows when a Warlock is in the group.", 11, C.textMuted)
+    consumableHSDesc:SetPoint("TOPLEFT", PADDING, y + 4)
+    consumableHSDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+    consumableHSDesc:SetJustifyH("LEFT")
+    y = y - 20
+
+    y = y - 10
+
+    -- Expiration Warning section
+    local expirationHeader = GUI:CreateLabel(tabContent, "Expiration Warning", 12, C.textAccent)
+    expirationHeader:SetPoint("TOPLEFT", PADDING, y)
+    y = y - 20
+
+    if db.general.consumableExpirationWarning == nil then db.general.consumableExpirationWarning = false end
+
+    local expirationCheck = GUI:CreateFormCheckbox(tabContent, "Warn When Buffs Expiring", "consumableExpirationWarning", db.general, nil)
+    expirationCheck:SetPoint("TOPLEFT", PADDING, y)
+    expirationCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+    y = y - FORM_ROW
+
+    local expirationDesc = GUI:CreateLabel(tabContent, "Show consumables window when food/flask/rune is about to expire (instanced content only).", 11, C.textMuted)
+    expirationDesc:SetPoint("TOPLEFT", PADDING, y + 4)
+    expirationDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+    expirationDesc:SetJustifyH("LEFT")
+    expirationDesc:SetWordWrap(true)
+    expirationDesc:SetHeight(28)
+    y = y - 32
+
+    if db.general.consumableExpirationThreshold == nil then db.general.consumableExpirationThreshold = 300 end
+
+    local thresholdSlider = GUI:CreateFormSlider(tabContent, "Warning Threshold (seconds)", 60, 600, 30, "consumableExpirationThreshold", db.general, nil)
+    thresholdSlider:SetPoint("TOPLEFT", PADDING, y)
+    thresholdSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+    y = y - FORM_ROW
+
+    local thresholdDesc = GUI:CreateLabel(tabContent, "Show warning when buff has less than this time remaining (60-600 seconds, default 300 = 5 min).", 11, C.textMuted)
+    thresholdDesc:SetPoint("TOPLEFT", PADDING, y + 4)
+    thresholdDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+    thresholdDesc:SetJustifyH("LEFT")
+    thresholdDesc:SetWordWrap(true)
+    thresholdDesc:SetHeight(28)
+    y = y - 32
+    -- Refresh function for live preview (preserves position - for icon size)
+    local function RefreshConsumables()
+        if _G.GravityUI_RefreshConsumables then
+            _G.GravityUI_RefreshConsumables()
+        end
+    end
+
+    -- Reposition function for offset changes (repositions relative to ReadyCheck)
+    local function RepositionConsumables()
+        if _G.GravityUI_RepositionConsumables then
+            _G.GravityUI_RepositionConsumables()
+        end
+    end
+
+    -- Positioning section
+    local positionHeader = GUI:CreateLabel(tabContent, "Positioning", 12, C.textAccent)
+    positionHeader:SetPoint("TOPLEFT", PADDING, y)
+    y = y - 20
+
+    -- Anchor mode toggle
+    if db.general.consumableAnchorMode == nil then db.general.consumableAnchorMode = true end
+
+    -- Forward declare for callback reference
+    local iconOffsetSlider
+
+    local anchorModeCheck = GUI:CreateFormCheckbox(tabContent, "Anchor to Ready Check", "consumableAnchorMode", db.general, function()
+        -- Update icon offset slider state based on anchor mode
+        if iconOffsetSlider then
+            iconOffsetSlider:SetEnabled(db.general.consumableAnchorMode)											  
+        end			   
+        RepositionConsumables()
+    end)
+    anchorModeCheck:SetPoint("TOPLEFT", PADDING, y)
+    anchorModeCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+    y = y - FORM_ROW
+
+    local anchorModeDesc = GUI:CreateLabel(tabContent, "When enabled, icons anchor above the Ready Check frame. When disabled, use the mover to position freely.", 11, C.textMuted)
+    anchorModeDesc:SetPoint("TOPLEFT", PADDING, y + 4)
+    anchorModeDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+    anchorModeDesc:SetJustifyH("LEFT")
+    anchorModeDesc:SetWordWrap(true)
+    anchorModeDesc:SetHeight(28)
+    y = y - 32
+
+    -- Show Mover button
+    local moverButton = GUI:CreateButton(tabContent, "Show Mover", 120, 24)
+    moverButton:SetPoint("TOPLEFT", PADDING, y)
+    moverButton:SetScript("OnClick", function()
+        if _G.gui_ToggleConsumablesMover then
+            _G.gui_ToggleConsumablesMover()
+        end
+    end)
+    y = y - 30
+
+    local moverDesc = GUI:CreateLabel(tabContent, "Drag the mover to set free position (only used when 'Anchor to Ready Check' is off).", 11, C.textMuted)
+    moverDesc:SetPoint("TOPLEFT", PADDING, y + 4)
+    moverDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+    moverDesc:SetJustifyH("LEFT")
+    moverDesc:SetWordWrap(true)
+    moverDesc:SetHeight(28)
+    y = y - 32
+    -- Icon offset slider
+    if db.general.consumableIconOffset == nil then db.general.consumableIconOffset = 5 end
+
+    iconOffsetSlider = GUI:CreateFormSlider(tabContent, "Icon Offset", -10, 30, 1, "consumableIconOffset", db.general, RepositionConsumables)
+    iconOffsetSlider:SetPoint("TOPLEFT", PADDING, y)
+    iconOffsetSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+    -- Disable slider if not in anchor mode
+    iconOffsetSlider:SetEnabled(db.general.consumableAnchorMode)				
+    y = y - FORM_ROW
+
+    local iconOffsetDesc = GUI:CreateLabel(tabContent, "Distance (pixels) between icons and ready check frame (anchor mode only).", 11, C.textMuted)
+    iconOffsetDesc:SetPoint("TOPLEFT", PADDING, y + 4)
+    iconOffsetDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+    iconOffsetDesc:SetJustifyH("LEFT")
+    y = y - 16
+
+    -- Icon size slider
+    if db.general.consumableIconSize == nil then db.general.consumableIconSize = 40 end
+
+    local iconSizeSlider = GUI:CreateFormSlider(tabContent, "Icon Size", 24, 64, 2, "consumableIconSize", db.general, RefreshConsumables)
+    iconSizeSlider:SetPoint("TOPLEFT", PADDING, y)
+    iconSizeSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+    y = y - FORM_ROW
+
+    local iconSizeDesc = GUI:CreateLabel(tabContent, "Size of consumable icons (pixels).", 11, C.textMuted)
+    iconSizeDesc:SetPoint("TOPLEFT", PADDING, y + 4)
+    iconSizeDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+    iconSizeDesc:SetJustifyH("LEFT")
+    y = y - 16
+
+    y = y - 10
+
+    -- Missing Raid Buffs Section
+    local raidBuffsHeader = GUI:CreateSectionHeader(tabContent, "Missing Raid Buffs")
+    raidBuffsHeader:SetPoint("TOPLEFT", PADDING, y)
+    y = y - raidBuffsHeader.gap
+
+    local raidBuffsDesc = GUI:CreateLabel(tabContent, "Display missing raid buffs when a buff-providing class is in your group. Shows out of combat only.", 11, C.textMuted)
+    raidBuffsDesc:SetPoint("TOPLEFT", PADDING, y)
+    raidBuffsDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+    raidBuffsDesc:SetJustifyH("LEFT")
+    raidBuffsDesc:SetWordWrap(true)
+    raidBuffsDesc:SetHeight(20)
+    y = y - 30
+
+    -- Ensure raidBuffs settings exist
+    if not db.raidBuffs then
+        db.raidBuffs = { enabled = true, showOnlyInGroup = true, showOnlyInInstance = false, providerMode = false, hideLabelBar = false, iconSize = 32, labelFontSize = 12, labelTextColor = nil, position = nil }
+    end
+    local rbDB = db.raidBuffs
+
+    -- Refresh function for live preview
+    local function RefreshRaidBuffs()
+        if ns.RaidBuffs and ns.RaidBuffs.ForceUpdate then
+            ns.RaidBuffs:ForceUpdate()
+        end
+    end
+
+    local rbEnableCheck = GUI:CreateFormCheckbox(tabContent, "Enable Missing Raid Buffs", "enabled", rbDB, RefreshRaidBuffs)
+    rbEnableCheck:SetPoint("TOPLEFT", PADDING, y)
+    rbEnableCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+    y = y - FORM_ROW
+
+    local rbGroupOnlyCheck = GUI:CreateFormCheckbox(tabContent, "Show Only When In Group", "showOnlyInGroup", rbDB, RefreshRaidBuffs)
+    rbGroupOnlyCheck:SetPoint("TOPLEFT", PADDING, y)
+    rbGroupOnlyCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+    y = y - FORM_ROW
+
+    local rbInstanceOnlyCheck = GUI:CreateFormCheckbox(tabContent, "Show Only In Instance", "showOnlyInInstance", rbDB, RefreshRaidBuffs)
+    rbInstanceOnlyCheck:SetPoint("TOPLEFT", PADDING, y)
+    rbInstanceOnlyCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+    y = y - FORM_ROW
+
+    local instanceOnlyDesc = GUI:CreateLabel(tabContent, "Hide when forming groups in cities, show only when zoned into dungeon/raid.", 11, C.textMuted)
+    instanceOnlyDesc:SetPoint("TOPLEFT", PADDING, y + 4)
+    instanceOnlyDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+    instanceOnlyDesc:SetJustifyH("LEFT")
+    y = y - 20
+    local rbProviderCheck = GUI:CreateFormCheckbox(tabContent, "Also Show Buffs You Can Provide", "providerMode", rbDB, RefreshRaidBuffs)
+    rbProviderCheck:SetPoint("TOPLEFT", PADDING, y)
+    rbProviderCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+    y = y - FORM_ROW
+
+    local providerDesc = GUI:CreateLabel(tabContent, "When enabled, also shows buffs you can cast that party members are missing.", 11, C.textMuted)
+    providerDesc:SetPoint("TOPLEFT", PADDING, y + 4)
+    providerDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+    providerDesc:SetJustifyH("LEFT")
+    y = y - 20
+
+    local rbHideLabelCheck = GUI:CreateFormCheckbox(tabContent, "Hide Label Bar", "hideLabelBar", rbDB, RefreshRaidBuffs)
+    rbHideLabelCheck:SetPoint("TOPLEFT", PADDING, y)
+    rbHideLabelCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+    y = y - FORM_ROW
+    
+    local rbIconSizeSlider = GUI:CreateFormSlider(tabContent, "Icon Size", 20, 64, 2, "iconSize", rbDB, RefreshRaidBuffs)
+    rbIconSizeSlider:SetPoint("TOPLEFT", PADDING, y)
+    rbIconSizeSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+    y = y - FORM_ROW
+
+    local rbFontSizeSlider = GUI:CreateFormSlider(tabContent, "Label Font Size", 10, 32, 1, "labelFontSize", rbDB, RefreshRaidBuffs)
+    rbFontSizeSlider:SetPoint("TOPLEFT", PADDING, y)
+    rbFontSizeSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+    y = y - FORM_ROW
+
+    local rbTextColorPicker = GUI:CreateFormColorPicker(tabContent, "Label Text Color", "labelTextColor", rbDB, RefreshRaidBuffs)
+    rbTextColorPicker:SetPoint("TOPLEFT", PADDING, y)
+    rbTextColorPicker:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+    y = y - FORM_ROW
+
+    -- Disable color picker when label bar is hidden (color is irrelevant)
+    local function UpdateColorPickerState()
+        local isHidden = rbDB.hideLabelBar
+        if rbTextColorPicker.SetEnabled then
+            rbTextColorPicker:SetEnabled(not isHidden)
+        end
+        -- Visual feedback: dim the control when disabled
+        rbTextColorPicker:SetAlpha(isHidden and 0.5 or 1.0)
+    end
+    rbHideLabelCheck.track:HookScript("OnClick", UpdateColorPickerState)
+    UpdateColorPickerState()  -- Set initial state
+    -- Preview toggle button
+    local previewBtn = GUI:CreateButton(tabContent, "Toggle Preview", 120, 24)
+    previewBtn:SetPoint("TOPLEFT", PADDING, y)
+    tabContent:SetHeight(math.abs(y) + 50)
+end
+
+local function BuildCombatStatusTab(tabContent)
+    local y = -25
+    local FORM_ROW = 32
+    local db = GetDB()
+    local PADDING = 15
+
+    -- Set search context for auto-registration
+    GUI:SetSearchContext({tabIndex = 2, tabName = "Extras", subTabIndex = 8, subTabName = "Combat Status"})
+
+    -- Combat Status Text Indicator Section
+    local combatTextHeader = GUI:CreateSectionHeader(tabContent, "Combat Status Text Indicator")
+    combatTextHeader:SetPoint("TOPLEFT", PADDING, y)
+    y = y - combatTextHeader.gap
+
+    local combatTextDesc = GUI:CreateLabel(tabContent,
+        "Displays '+Combat' or '-Combat' text on screen when entering or leaving combat. Useful for Shadowmeld skips.",
+        11, C.textMuted)
+    combatTextDesc:SetPoint("TOPLEFT", PADDING, y)
+    combatTextDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+    combatTextDesc:SetJustifyH("LEFT")
+    combatTextDesc:SetWordWrap(true)
+    combatTextDesc:SetHeight(15)
+    y = y - 25
+
+    -- Preview buttons
+    local previewEnterBtn = GUI:CreateButton(tabContent, "Preview +Combat", 140, 28, function()
+        if _G.GravityUI_PreviewCombatText then _G.GravityUI_PreviewCombatText("+Combat") end
+    end)
+    previewEnterBtn:SetPoint("TOPLEFT", PADDING, y)
+    previewEnterBtn:SetPoint("RIGHT", tabContent, "CENTER", -5, 0)
+
+    local previewLeaveBtn = GUI:CreateButton(tabContent, "Preview -Combat", 140, 28, function()
+        if _G.GravityUI_PreviewCombatText then _G.GravityUI_PreviewCombatText("-Combat") end
+    end)
+    previewLeaveBtn:SetPoint("LEFT", tabContent, "CENTER", 5, 0)
+    previewLeaveBtn:SetPoint("TOP", previewEnterBtn, "TOP", 0, 0)
+    previewLeaveBtn:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+    y = y - 38
+
+    local combatTextDB = db.combatText
+    if combatTextDB then
+        local combatTextCheck = GUI:CreateFormCheckbox(tabContent, "Enable Combat Text", "enabled", combatTextDB, function(val)
+            if _G.GravityUI_RefreshCombatText then _G.GravityUI_RefreshCombatText() end
+        end)
+        combatTextCheck:SetPoint("TOPLEFT", PADDING, y)
+        combatTextCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+        y = y - FORM_ROW
+
+        local displayTimeSlider = GUI:CreateFormSlider(tabContent, "Display Time (sec)", 0.3, 3.0, 0.1, "displayTime", combatTextDB, function()
+            if _G.GravityUI_RefreshCombatText then _G.GravityUI_RefreshCombatText() end
+        end)
+        displayTimeSlider:SetPoint("TOPLEFT", PADDING, y)
+        displayTimeSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+        y = y - FORM_ROW
+
+        local fadeTimeSlider = GUI:CreateFormSlider(tabContent, "Fade Duration (sec)", 0.1, 1.0, 0.05, "fadeTime", combatTextDB, function()
+            if _G.GravityUI_RefreshCombatText then _G.GravityUI_RefreshCombatText() end
+        end)
+        fadeTimeSlider:SetPoint("TOPLEFT", PADDING, y)
+        fadeTimeSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+        y = y - FORM_ROW
+
+        local fontSizeSlider = GUI:CreateFormSlider(tabContent, "Font Size", 12, 48, 1, "fontSize", combatTextDB, function()
+            if _G.GravityUI_RefreshCombatText then _G.GravityUI_RefreshCombatText() end
+        end)
+        fontSizeSlider:SetPoint("TOPLEFT", PADDING, y)
+        fontSizeSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+        y = y - FORM_ROW
+
+        local xOffsetSlider = GUI:CreateFormSlider(tabContent, "X Position Offset", -2000, 2000, 1, "xOffset", combatTextDB, function()
+            if _G.GravityUI_RefreshCombatText then _G.GravityUI_RefreshCombatText() end
+        end)
+        xOffsetSlider:SetPoint("TOPLEFT", PADDING, y)
+        xOffsetSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+        y = y - FORM_ROW
+
+        local yOffsetSlider = GUI:CreateFormSlider(tabContent, "Y Position Offset", -2000, 2000, 1, "yOffset", combatTextDB, function()
+            if _G.GravityUI_RefreshCombatText then _G.GravityUI_RefreshCombatText() end
+        end)
+        yOffsetSlider:SetPoint("TOPLEFT", PADDING, y)
+        yOffsetSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+        y = y - FORM_ROW
+
+        local enterColorPicker = GUI:CreateFormColorPicker(tabContent, "+Combat Text Color", "enterCombatColor", combatTextDB, function()
+            if _G.GravityUI_RefreshCombatText then _G.GravityUI_RefreshCombatText() end
+        end)
+        enterColorPicker:SetPoint("TOPLEFT", PADDING, y)
+        enterColorPicker:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+        y = y - FORM_ROW
+
+        local leaveColorPicker = GUI:CreateFormColorPicker(tabContent, "-Combat Text Color", "leaveCombatColor", combatTextDB, function()
+            if _G.GravityUI_RefreshCombatText then _G.GravityUI_RefreshCombatText() end
+        end)
+        leaveColorPicker:SetPoint("TOPLEFT", PADDING, y)
+        leaveColorPicker:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+        y = y - FORM_ROW
+    end
+
+    tabContent:SetHeight(math.abs(y) + 50)
+end
+
+local function BuildMPlusTeleportTab(tabContent)
+    local y = -25
+    local FORM_ROW = 32
+    local db = GetDB()
+    local PADDING = 15
+
+    -- Set search context for auto-registration
+    GUI:SetSearchContext({tabIndex = 2, tabName = "Extras", subTabIndex = 9, subTabName = "M+ Teleport"})
+
+    -- M+ Dungeons Section
+    local mplusHeader = GUI:CreateSectionHeader(tabContent, "M+ Teleport")
+    mplusHeader:SetPoint("TOPLEFT", PADDING, y)
+    y = y - mplusHeader.gap
+
+    local mplusDesc = GUI:CreateLabel(tabContent,
+        "Click dungeon icons in the M+ tab to teleport (requires +20 achievement for that dungeon).",
+        11, C.textMuted)
+    mplusDesc:SetPoint("TOPLEFT", PADDING, y)
+    mplusDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+    mplusDesc:SetJustifyH("LEFT")
+    mplusDesc:SetWordWrap(true)
+    mplusDesc:SetHeight(20)
+    y = y - 30
+
+    if db.general.mplusTeleportEnabled == nil then db.general.mplusTeleportEnabled = true end
+    local teleportCheck = GUI:CreateFormCheckbox(tabContent, "Click-to-Teleport on M+ Tab", "mplusTeleportEnabled", db.general, nil)
+    teleportCheck:SetPoint("TOPLEFT", PADDING, y)
+    teleportCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+    y = y - FORM_ROW
+
+    if db.general.keyTrackerEnabled == nil then db.general.keyTrackerEnabled = true end
+    local keyTrackerCheck = GUI:CreateFormCheckbox(tabContent, "Show Party Keys on M+ Tab", "keyTrackerEnabled", db.general, nil)
+    keyTrackerCheck:SetPoint("TOPLEFT", PADDING, y)
+    keyTrackerCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+    y = y - FORM_ROW
+
+    if db.general.keyTrackerFontSize == nil then db.general.keyTrackerFontSize = 9 end
+    local fontSizeSlider = GUI:CreateFormSlider(tabContent, "Key Tracker Font Size", 7, 12, 1, "keyTrackerFontSize", db.general, function()
+        if _G.GravityUI_RefreshKeyTrackerFonts then
+            _G.GravityUI_RefreshKeyTrackerFonts()
+        end
+    end)
+    fontSizeSlider:SetPoint("TOPLEFT", PADDING, y)
+    fontSizeSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+    y = y - FORM_ROW
+
+    tabContent:SetHeight(math.abs(y) + 50)
+end
+
+
+
+-- Build Autohide sub-tab
+local function BuildAutohideTab(tabContent)
+    local y = -25
+    local PAD = 10
+    local FORM_ROW = 32
+    local db = GetDB()
+
+    GUI:SetSearchContext({tabIndex = 2, tabName = "Extras", subTabIndex = 1, subTabName = "Autohide"})
+    GUI:SetSearchSection("Autohide Settings")
+                                                                                                                                                                                
+    if db then
+        if not db.uiHider then db.uiHider = {} end
+
+        -- ═══════════════════════════════════════════════════════════════
+        -- SECTION: Objective Tracker
+        -- ═══════════════════════════════════════════════════════════════
+        local objHeader = GUI:CreateSectionHeader(tabContent, "Objective Tracker")
+        objHeader:SetPoint("TOPLEFT", PAD, y)
+        y = y - objHeader.gap
+
+        local checkAlways = GUI:CreateFormCheckbox(tabContent, "Hide Always", "hideObjectiveTrackerAlways", db.uiHider, RefreshUIHider)
+        checkAlways:SetPoint("TOPLEFT", PAD, y)
+        checkAlways:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+        y = y - FORM_ROW
+
+        -- Ensure instance types table exists
+        if not db.uiHider.hideObjectiveTrackerInstanceTypes then
+            db.uiHider.hideObjectiveTrackerInstanceTypes = {
+                mythicPlus = false,
+                mythicDungeon = false,
+                normalDungeon = false,
+                heroicDungeon = false,
+                followerDungeon = false,
+                raid = false,
+                pvp = false,
+                arena = false,
+            }
+        end
+
+        local instanceTypes = {
+            {key = "mythicPlus", label = "Hide in Mythic+"},
+            {key = "mythicDungeon", label = "Hide in Mythic Dungeons"},
+            {key = "heroicDungeon", label = "Hide in Heroic Dungeons"},
+            {key = "normalDungeon", label = "Hide in Normal Dungeons"},
+            {key = "followerDungeon", label = "Hide in Follower Dungeons"},
+            {key = "raid", label = "Hide in Raids"},
+            {key = "pvp", label = "Hide in Battlegrounds"},
+            {key = "arena", label = "Hide in Arenas"},
+        }
+
+        for _, instanceType in ipairs(instanceTypes) do
+            local checkInstance = GUI:CreateFormCheckbox(tabContent, instanceType.label, instanceType.key, db.uiHider.hideObjectiveTrackerInstanceTypes, RefreshUIHider)
+            checkInstance:SetPoint("TOPLEFT", PAD, y)
+            checkInstance:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
             y = y - FORM_ROW
         end
 
-		y = y - 10
-		
-		-- RAID MARKER SECTION
-		local marksHeader = GUI:CreateSectionHeader(tabContent, "World Marks Bar")
-		marksHeader:SetPoint("TOPLEFT", PADDING, y)
-		y = y - marksHeader.gap
+        -- ═══════════════════════════════════════════════════════════════
+        -- SECTION: Frames & Buttons
+        -- ═══════════════════════════════════════════════════════════════
+        local framesHeader = GUI:CreateSectionHeader(tabContent, "Frames & Buttons")
+        framesHeader:SetPoint("TOPLEFT", PAD, y)
+        y = y - framesHeader.gap
 
-		if not db.marks then 
-			db.marks = { enabled = false, mouseover = false, size = 24, spacing = 4, offsetX = 0, offsetY = 100 }
-		end
-		local marksDB = db.marks
+        local frameOptions = {
+            {key = "hideRaidFrameManager", label = "Hide Compact Raid Frame Manager"},
+            {key = "hideBuffCollapseButton", label = "Hide Buff Frame Collapse Button"},
+            {key = "hideTalkingHead", label = "Hide Talking Head Frame"},
+            {key = "muteTalkingHead", label = "Mute Talking Head Voice"},
+            {key = "hideWorldMapBlackout", label = "Hide World Map Blackout"},
+        }
 
-		local marksDesc = GUI:CreateLabel(tabContent, "Customize your World Marks Bar. INFO: you need to /reload after enable or disable.", 11, C.textMuted)
-		marksDesc:SetPoint("TOPLEFT", PADDING, y)
-		marksDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-		marksDesc:SetJustifyH("LEFT")
-		marksDesc:SetWordWrap(true)
-		marksDesc:SetHeight(15)
-		y = y - FORM_ROW
+        for _, opt in ipairs(frameOptions) do
+            local check = GUI:CreateFormCheckbox(tabContent, opt.label, opt.key, db.uiHider, RefreshUIHider)
+            check:SetPoint("TOPLEFT", PAD, y)
+            check:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+            y = y - FORM_ROW
+        end
 
-		if marksDB then
-			-- Checkbox: Enable
-			local marksCheck = GUI:CreateFormCheckbox(tabContent, "Enable Player/Worldmarker Bar", "enabled", marksDB, function(val)
-				if _G.GravityUI_RefreshMarks then _G.GravityUI_RefreshMarks() end
-			end)
-			marksCheck:SetPoint("TOPLEFT", PADDING, y)
-			marksCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-			y = y - FORM_ROW
+        -- ═══════════════════════════════════════════════════════════════
+        -- SECTION: Nameplates
+        -- ═══════════════════════════════════════════════════════════════
+        local nameplatesHeader = GUI:CreateSectionHeader(tabContent, "Nameplates")
+        nameplatesHeader:SetPoint("TOPLEFT", PAD, y)
+        y = y - nameplatesHeader.gap
 
-			-- Checkbox: Mouseover
-			local marksMouse = GUI:CreateFormCheckbox(tabContent, "Show on Mouseover only", "mouseover", marksDB, function(val)
-				if _G.GravityUI_RefreshMarks then _G.GravityUI_RefreshMarks() end
-			end)
-			marksMouse:SetPoint("TOPLEFT", PADDING, y)
-			marksMouse:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-			y = y - FORM_ROW
-			
-			-- Size
-			local marksSize = GUI:CreateFormSlider(tabContent, "Size", 10, 50, 1, "size", marksDB, function()
-				if _G.GravityUI_RefreshMarks then _G.GravityUI_RefreshMarks() end
-			end)
-			marksSize:SetPoint("TOPLEFT", PADDING, y)
-			marksSize:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-			y = y - FORM_ROW
-			
-			-- Spacing
-			local marksSpacing = GUI:CreateFormSlider(tabContent, "Spacing", 0, 20, 1, "spacing", marksDB, function()
-				if _G.GravityUI_RefreshMarks then _G.GravityUI_RefreshMarks() end
-			end)
-			marksSpacing:SetPoint("TOPLEFT", PADDING, y)
-			marksSpacing:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-			y = y - FORM_ROW
+        local nameplateOptions = {
+            {key = "hideFriendlyPlayerNameplates", label = "Hide Friendly Player Nameplates"},
+            {key = "hideFriendlyNPCNameplates", label = "Hide Friendly NPC Nameplates"},
+        }
 
-			-- Slider: X Offset
-			local marksXOffsetSlider = GUI:CreateFormSlider(tabContent, "X Position Offset", -2000, 2000, 1, "offsetX", marksDB, function()
-				if _G.GravityUI_RefreshMarks then _G.GravityUI_RefreshMarks() end
-			end)
-			marksXOffsetSlider:SetPoint("TOPLEFT", PADDING, y)
-			marksXOffsetSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-			y = y - FORM_ROW
+        for _, opt in ipairs(nameplateOptions) do
+            local check = GUI:CreateFormCheckbox(tabContent, opt.label, opt.key, db.uiHider, RefreshUIHider)
+            check:SetPoint("TOPLEFT", PAD, y)
+            check:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+            y = y - FORM_ROW
+        end
 
-			-- Slider: Y Offset
-			local marksYOffsetSlider = GUI:CreateFormSlider(tabContent, "Y Position Offset", -2000, 2000, 1, "offsetY", marksDB, function()
-				if _G.GravityUI_RefreshMarks then _G.GravityUI_RefreshMarks() end
-			end)
-			marksYOffsetSlider:SetPoint("TOPLEFT", PADDING, y)
-			marksYOffsetSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-			y = y - FORM_ROW
-		end
-			
-		-- Weitere Extras
-		y = y - 10
-		
+        -- ═══════════════════════════════════════════════════════════════
+        -- SECTION: Status Bars
+        -- ═══════════════════════════════════════════════════════════════
+        local barsHeader = GUI:CreateSectionHeader(tabContent, "Status Bars")
+        barsHeader:SetPoint("TOPLEFT", PAD, y)
+        y = y - barsHeader.gap
+
+        local barOptions = {
+            {key = "hideExperienceBar", label = "Hide Experience Bar (XP)"},
+            {key = "hideReputationBar", label = "Hide Reputation Bar"},
+        }
+
+        for _, opt in ipairs(barOptions) do
+            local check = GUI:CreateFormCheckbox(tabContent, opt.label, opt.key, db.uiHider, RefreshUIHider)
+            check:SetPoint("TOPLEFT", PAD, y)
+            check:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+            y = y - FORM_ROW
+        end
+
+        -- ═══════════════════════════════════════════════════════════════
+        -- SECTION: Combat & Messages
+        -- ═══════════════════════════════════════════════════════════════
+        local combatHeader = GUI:CreateSectionHeader(tabContent, "Combat & Messages")
+        combatHeader:SetPoint("TOPLEFT", PAD, y)
+        y = y - combatHeader.gap
+
+        local combatOptions = {
+            {key = "hideErrorMessages", label = "Hide Error Messages (Red Text)"},                                                                               
+        }
+
+        for _, opt in ipairs(combatOptions) do
+            local check = GUI:CreateFormCheckbox(tabContent, opt.label, opt.key, db.uiHider, RefreshUIHider)
+            check:SetPoint("TOPLEFT", PAD, y)
+            check:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+            y = y - FORM_ROW
+        end
+    end
+
+    tabContent:SetHeight(math.abs(y) + 50)
 end
 
+-- Build Skinning sub-tab
+local function BuildSkinningTab(tabContent)
+    local y = -25
+    local PAD = 10
+    local FORM_ROW = 32
+    local db = GetDB()
+
+    GUI:SetSearchContext({tabIndex = 2, tabName = "Extras", subTabIndex = 2, subTabName = "Styling"})
+
+    if db and db.general then
+        local general = db.general
+
+        -- Initialize defaults
+        if general.skinUseClassColor == nil then general.skinUseClassColor = true end
+        if general.skinCustomColor == nil then general.skinCustomColor = {0.2, 1.0, 0.6, 1} end
+        if general.skinKeystoneFrame == nil then general.skinKeystoneFrame = true end
+
+        -- ═══════════════════════════════════════════════════════════════
+        -- CHOOSE DEFAULT COLOR SECTION
+        -- ═══════════════════════════════════════════════════════════════
+        GUI:SetSearchSection("Choose Default Color")
+
+        local colorHeader = GUI:CreateSectionHeader(tabContent, "Choose Default Color")
+        colorHeader:SetPoint("TOPLEFT", PAD, y)
+        y = y - colorHeader.gap
+
+        local customColorPicker  -- Forward declare for closure
+
+        -- Helper to refresh all skinned frames when colors change
+        local function RefreshAllSkinning()
+            if _G.GravityUI_RefreshKeystoneColors then
+                _G.GravityUI_RefreshKeystoneColors()
+            end
+            if _G.GravityUI_RefreshAlertColors then
+                _G.GravityUI_RefreshAlertColors()
+            end
+            if _G.GravityUI_RefreshLootColors then
+                _G.GravityUI_RefreshLootColors()
+            end
+            if _G.GravityUI_RefreshMPlusTimerColors then
+                _G.GravityUI_RefreshMPlusTimerColors()
+            end
+            if _G.GravityUI_RefreshCharacterFrameColors then
+                _G.GravityUI_RefreshCharacterFrameColors()
+            end
+            if _G.GravityUI_RefreshInspectColors then
+                _G.GravityUI_RefreshInspectColors()
+            end
+            if _G.GravityUI_RefreshPowerBarAltColors then
+                _G.GravityUI_RefreshPowerBarAltColors()
+            end
+            if _G.GravityUI_RefreshGameMenuColors then
+                _G.GravityUI_RefreshGameMenuColors()                                   
+            end
+            if _G.GravityUI_RefreshOverrideActionBarColors then
+                _G.GravityUI_RefreshOverrideActionBarColors()
+            end
+            if _G.GravityUI_RefreshObjectiveTrackerColors then
+                _G.GravityUI_RefreshObjectiveTrackerColors()
+            end
+            if _G.GravityUI_RefreshInstanceFramesColors then
+                _G.GravityUI_RefreshInstanceFramesColors()
+            end
+            if _G.GravityUI_RefreshReadyCheckColors then
+                _G.GravityUI_RefreshReadyCheckColors()                                     
+            end                         
+        end
+
+        local useClassColorCheck = GUI:CreateFormCheckbox(tabContent, "Use Class Colors", "skinUseClassColor", general, function()
+            if customColorPicker then
+                customColorPicker:SetEnabled(not general.skinUseClassColor)
+            end
+            RefreshAllSkinning()
+        end)
+        useClassColorCheck:SetPoint("TOPLEFT", PAD, y)
+        useClassColorCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+        y = y - FORM_ROW
+
+        customColorPicker = GUI:CreateFormColorPicker(tabContent, "Custom Color", "skinCustomColor", general, RefreshAllSkinning, { noAlpha = true })
+        customColorPicker:SetPoint("TOPLEFT", PAD, y)
+        customColorPicker:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+        customColorPicker:SetEnabled(not general.skinUseClassColor)  -- Initial state
+        y = y - FORM_ROW
+
+        y = y - 10  -- Extra padding before background color
+
+        -- Background color (with alpha for transparency)
+        if general.skinBgColor == nil then general.skinBgColor = { 0.05, 0.05, 0.05, 0.95 } end
+
+        local bgColorPicker = GUI:CreateFormColorPicker(tabContent, "Background Color", "skinBgColor", general, RefreshAllSkinning, { hasAlpha = true })
+        bgColorPicker:SetPoint("TOPLEFT", PAD, y)
+        bgColorPicker:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+        y = y - FORM_ROW
+
+        y = y - 10  -- Extra padding before next section
+
+        -- ═══════════════════════════════════════════════════════════════
+        -- GAME MENU SECTION
+        -- ═══════════════════════════════════════════════════════════════
+        GUI:SetSearchSection("Game Menu")
+
+        if general.skinGameMenu == nil then general.skinGameMenu = false end
+        if general.addGravityUIButton == nil then general.addGravityUIButton = false end
+        if general.gameMenuFontSize == nil then general.gameMenuFontSize = 14 end
+
+        local gameMenuHeader = GUI:CreateSectionHeader(tabContent, "Game Menu")
+        gameMenuHeader:SetPoint("TOPLEFT", PAD, y)
+        y = y - gameMenuHeader.gap
+
+        local gameMenuDesc = GUI:CreateLabel(tabContent, "Customize the ESC menu appearance and add a Quick access button.", 11, C.textMuted)
+        gameMenuDesc:SetPoint("TOPLEFT", PAD, y)
+        gameMenuDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+        gameMenuDesc:SetJustifyH("LEFT")
+        gameMenuDesc:SetWordWrap(true)
+        gameMenuDesc:SetHeight(20)
+        y = y - 28
+
+        local gameMenuCheck = GUI:CreateFormCheckbox(tabContent, "Skin Game Menu", "skinGameMenu", general, function()
+            GUI:ShowConfirmation({
+                title = "Reload UI?",
+                message = "Skinning changes require a reload to take effect.",
+                acceptText = "Reload",
+                cancelText = "Later",
+                onAccept = function() GravityUI:SafeReload() end,
+            })
+        end)
+        gameMenuCheck:SetPoint("TOPLEFT", PAD, y)
+        gameMenuCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+        y = y - FORM_ROW
+
+        local addGUIButtonCheck = GUI:CreateFormCheckbox(tabContent, "Add Gravity UI Button", "addGravityUIButton", general, function()
+            GUI:ShowConfirmation({
+                title = "Reload UI?",
+                message = "Button changes require a reload to take effect.",
+                acceptText = "Reload",
+                cancelText = "Later",
+                onAccept = function() GravityUI:SafeReload() end,
+            })
+        end)
+        addGUIButtonCheck:SetPoint("TOPLEFT", PAD, y)
+        addGUIButtonCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+        y = y - FORM_ROW
+
+        local gameMenuFontSlider = GUI:CreateFormSlider(tabContent, "Button Font Size", 8, 18, 1, "gameMenuFontSize", general, function()
+            if _G.GravityUI_RefreshGameMenuFontSize then
+                _G.GravityUI_RefreshGameMenuFontSize()
+            end
+        end)
+        gameMenuFontSlider:SetPoint("TOPLEFT", PAD, y)
+        gameMenuFontSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+        y = y - FORM_ROW
+
+        y = y - 10  -- Extra padding before next section
+        
+        -- ═══════════════════════════════════════════════════════════════
+        -- CHATBUBBLE CUSTOMIZATION SECTION
+        -- ═══════════════════════════════════════════════════════════════
+        GUI:SetSearchSection("Chat Bubble Customization")
+        local chatbbubbleHeader = GUI:CreateSectionHeader(tabContent, "Chat Bubble Customization")
+        chatbbubbleHeader:SetPoint("TOPLEFT", PADDING, y)
+        y = y - chatbbubbleHeader.gap
+
+        local chatbubbleDesc = GUI:CreateLabel(tabContent, " Chatbubbles uses the Global Font from General Tab.", 11, C.textMuted)
+        chatbubbleDesc:SetPoint("TOPLEFT", PAD, y)
+        chatbubbleDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+        chatbubbleDesc:SetJustifyH("LEFT")
+        chatbubbleDesc:SetWordWrap(true)
+        chatbubbleDesc:SetHeight(20)
+        y = y - 28
+
+        -- Hilfsfunktion für den Refresh
+        local function RefreshCB()
+            if _G.GravityUI_RefreshChatBubbles then _G.GravityUI_RefreshChatBubbles() end
+        end
+
+        -- Slider für die Schriftgröße
+        -- Wir nutzen "CreateFormSlider" passend zum Rest deiner Datei
+        local cbSizeSlider = GUI:CreateFormSlider(tabContent, "Chat Bubble Font Size", 4, 32, 1, "chatBubbleFontSize", db.general, RefreshCB)
+        cbSizeSlider:SetPoint("TOPLEFT", PADDING, y)
+        cbSizeSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+        y = y - FORM_ROW
+        
+        -- Checkbox für die Outline
+        local cbOutlineCheck = GUI:CreateFormCheckbox(tabContent, "Enable Font Outline", "chatBubbleFontOutlineActive", db.general, function(v)
+            -- Wir speichern "OUTLINE" oder leer in die DB, damit die Logik in der .lua einfacher ist
+            db.general.chatBubbleFontOutline = v and "OUTLINE" or ""
+            RefreshCB()
+        end)
+        cbOutlineCheck:SetPoint("TOPLEFT", PADDING, y)
+        cbOutlineCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+        y = y - FORM_ROW
+        
+        y = y - 10  -- Extra padding before next section
+
+        -- ═══════════════════════════════════════════════════════════════
+        -- READY CHECK FRAME SECTION
+        -- ═══════════════════════════════════════════════════════════════
+        GUI:SetSearchSection("Ready Check Frame")
+
+        if general.skinReadyCheck == nil then general.skinReadyCheck = true end
+
+        local readyCheckHeader = GUI:CreateSectionHeader(tabContent, "Ready Check Frame")
+        readyCheckHeader:SetPoint("TOPLEFT", PAD, y)
+        y = y - readyCheckHeader.gap
+
+        local readyCheckDesc = GUI:CreateLabel(tabContent, "Skin the ready check popup with GUI styling.", 11, C.textMuted)
+        readyCheckDesc:SetPoint("TOPLEFT", PAD, y)
+        readyCheckDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+        readyCheckDesc:SetJustifyH("LEFT")
+        readyCheckDesc:SetWordWrap(true)
+        readyCheckDesc:SetHeight(20)
+        y = y - 28
+
+        local skinReadyCheckCheck = GUI:CreateFormCheckbox(tabContent, "Skin Ready Check Frame", "skinReadyCheck", general, function()
+            GUI:ShowConfirmation({
+                title = "Reload UI?",
+                message = "Skinning changes require a reload to take effect.",
+                acceptText = "Reload",
+                cancelText = "Later",
+                onAccept = function() GravityUI:SafeReload() end,
+            })
+        end)
+        skinReadyCheckCheck:SetPoint("TOPLEFT", PAD, y)
+        skinReadyCheckCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+        y = y - FORM_ROW
+
+        -- Move/Reset buttons for Ready Check frame position
+        local rcMoveBtn = GUI:CreateButton(tabContent, "Toggle Mover", 140, 28, function()
+            if _G.GravityUI_ToggleReadyCheckMover then
+                _G.GravityUI_ToggleReadyCheckMover()
+            end
+        end)
+        rcMoveBtn:SetPoint("TOPLEFT", PAD, y)
+
+        local rcResetBtn = GUI:CreateButton(tabContent, "Reset Position", 140, 28, function()
+            if _G.GravityUI_ResetReadyCheckPosition then
+                _G.GravityUI_ResetReadyCheckPosition()
+                print("|cFF56D1FF[GUI]|r Ready Check position reset to default.")
+            end
+        end)
+        rcResetBtn:SetPoint("LEFT", rcMoveBtn, "RIGHT", 10, 0)
+        y = y - 36
+        y = y - 10  -- Extra padding before next section
+
+        -- ═══════════════════════════════════════════════════════════════                                                                                                                         
+        -- KEYSTONE FRAME SECTION
+        -- ═══════════════════════════════════════════════════════════════
+        GUI:SetSearchSection("Keystone Frame")
+
+        local header = GUI:CreateSectionHeader(tabContent, "Keystone Frame")
+        header:SetPoint("TOPLEFT", PAD, y)
+        y = y - header.gap
+
+        local desc = GUI:CreateLabel(tabContent, "Skin the M+ keystone insertion window with GUI styling.", 11, C.textMuted)
+        desc:SetPoint("TOPLEFT", PAD, y)
+        desc:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+        desc:SetJustifyH("LEFT")
+        desc:SetWordWrap(true)
+        desc:SetHeight(20)
+        y = y - 28
+
+        local skinCheck = GUI:CreateFormCheckbox(tabContent, "Skin Keystone Window", "skinKeystoneFrame", general, function()
+            GUI:ShowConfirmation({
+                title = "Reload UI?",
+                message = "Skinning changes require a reload to take effect.",
+                acceptText = "Reload",
+                cancelText = "Later",
+                onAccept = function() GravityUI:SafeReload() end,
+            })
+        end)
+        skinCheck:SetPoint("TOPLEFT", PAD, y)
+        skinCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+        y = y - FORM_ROW
+
+        y = y - 10  -- Extra padding before next section
+
+        -- ═══════════════════════════════════════════════════════════════
+        -- ENCOUNTER POWER BAR SECTION
+        -- ═══════════════════════════════════════════════════════════════
+        GUI:SetSearchSection("Encounter Power Bar")
+
+        if general.skinPowerBarAlt == nil then general.skinPowerBarAlt = true end
+
+        local powerBarHeader = GUI:CreateSectionHeader(tabContent, "Encounter Power Bar")
+        powerBarHeader:SetPoint("TOPLEFT", PAD, y)
+        y = y - powerBarHeader.gap
+
+        local powerBarDesc = GUI:CreateLabel(tabContent, "Skin the encounter/quest-specific power bar (Atramedes sound, Darkmoon games, etc.).", 11, C.textMuted)
+        powerBarDesc:SetPoint("TOPLEFT", PAD, y)
+        powerBarDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+        powerBarDesc:SetJustifyH("LEFT")
+        powerBarDesc:SetWordWrap(true)
+        powerBarDesc:SetHeight(20)
+        y = y - 28
+
+        local powerBarAltCheck = GUI:CreateFormCheckbox(tabContent, "Skin Encounter Power Bar", "skinPowerBarAlt", general, function()
+            GUI:ShowConfirmation({
+                title = "Reload UI?",
+                message = "Skinning changes require a reload to take effect.",
+                acceptText = "Reload",
+                cancelText = "Later",
+                onAccept = function() GravityUI:SafeReload() end,
+            })
+        end)
+        powerBarAltCheck:SetPoint("TOPLEFT", PAD, y)
+        powerBarAltCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+        y = y - FORM_ROW
+
+        local powerBarMoverBtn = GUI:CreateButton(tabContent, "Toggle Position Mover", 160, 28, function()
+            if _G.GravityUI_TogglePowerBarAltMover then
+                _G.GravityUI_TogglePowerBarAltMover()
+            end
+        end)
+        powerBarMoverBtn:SetPoint("TOPLEFT", PAD, y)
+        y = y - 36
+        y = y - 10  -- Extra padding before next section
+
+        -- ═══════════════════════════════════════════════════════════════
+        -- ALERT FRAMES SECTION
+        -- ═══════════════════════════════════════════════════════════════
+        GUI:SetSearchSection("Alert Frames")
+
+        if general.skinAlerts == nil then general.skinAlerts = true end
+
+        local alertHeader = GUI:CreateSectionHeader(tabContent, "Alert Frames")
+        alertHeader:SetPoint("TOPLEFT", PAD, y)
+        y = y - alertHeader.gap
+
+        local alertDesc = GUI:CreateLabel(tabContent, "Style loot alerts, achievements, mounts, toys, and other popup frames.", 11, C.textMuted)
+        alertDesc:SetPoint("TOPLEFT", PAD, y)
+        alertDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+        alertDesc:SetJustifyH("LEFT")
+        alertDesc:SetWordWrap(true)
+        alertDesc:SetHeight(20)
+        y = y - 28
+
+        local alertCheck = GUI:CreateFormCheckbox(tabContent, "Skin Alert Frames", "skinAlerts", general, function()
+            GUI:ShowConfirmation({
+                title = "Reload UI?",
+                message = "Skinning changes require a reload to take effect.",
+                acceptText = "Reload",
+                cancelText = "Later",
+                onAccept = function() GravityUI:SafeReload() end,
+            })
+        end)
+        alertCheck:SetPoint("TOPLEFT", PAD, y)
+        alertCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+        y = y - FORM_ROW
+
+        -- Toggle movers button
+        local moverBtn = GUI:CreateButton(tabContent, "Toggle Position Movers", 200, 28, function()
+            local guiCore = _G.GravityUI and _G.GravityUI.guiCore
+            if guiCore and guiCore.Alerts then
+                guiCore.Alerts:ToggleMovers()
+            end
+        end)
+        moverBtn:SetPoint("TOPLEFT", PAD, y)
+        y = y - 40
+
+        local moverInfo = GUI:CreateLabel(tabContent, "Drag the mover frames to reposition alerts and toasts.", 10, C.textMuted)
+        moverInfo:SetPoint("TOPLEFT", PAD, y)
+        moverInfo:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+        moverInfo:SetJustifyH("LEFT")
+        y = y - 25
+
+        y = y - 10  -- Extra padding before next section
+
+        -- ═══════════════════════════════════════════════════════════════
+        -- LOOT WINDOW SECTION
+        -- ═══════════════════════════════════════════════════════════════
+        GUI:SetSearchSection("Loot Window")
+
+        -- Get loot settings from profile root (not general)
+        -- Ensure tables and individual keys exist
+        if not db.loot then db.loot = {} end
+        if db.loot.enabled == nil then db.loot.enabled = true end
+        if db.loot.lootUnderMouse == nil then db.loot.lootUnderMouse = false end
+        if db.loot.showTransmogMarker == nil then db.loot.showTransmogMarker = true end
+
+        if not db.lootRoll then db.lootRoll = {} end
+        if db.lootRoll.enabled == nil then db.lootRoll.enabled = false end  -- #125: disabled until fixed
+        if db.lootRoll.growDirection == nil then db.lootRoll.growDirection = "DOWN" end
+        if db.lootRoll.spacing == nil then db.lootRoll.spacing = 4 end
+
+        if not db.lootResults then db.lootResults = {} end
+        if db.lootResults.enabled == nil then db.lootResults.enabled = true end
+
+        local lootDB = db.loot
+        local lootRollDB = db.lootRoll
+        local lootResultsDB = db.lootResults
+
+        local lootHeader = GUI:CreateSectionHeader(tabContent, "Loot Window")
+        lootHeader:SetPoint("TOPLEFT", PAD, y)
+        y = y - lootHeader.gap
+
+        local lootDesc = GUI:CreateLabel(tabContent, "Replace Blizzard's loot window with a custom GUI-styled frame.", 11, C.textMuted)
+        lootDesc:SetPoint("TOPLEFT", PAD, y)
+        lootDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+        lootDesc:SetJustifyH("LEFT")
+        lootDesc:SetWordWrap(true)
+        lootDesc:SetHeight(20)
+        y = y - 28
+
+        local lootCheck = GUI:CreateFormCheckbox(tabContent, "Skin Loot Window", "enabled", lootDB, function()
+            GUI:ShowConfirmation({
+                title = "Reload UI?",
+                message = "Skinning changes require a reload to take effect.",
+                acceptText = "Reload",
+                cancelText = "Later",
+                onAccept = function() GravityUI:SafeReload() end,
+            })
+        end)
+        lootCheck:SetPoint("TOPLEFT", PAD, y)
+        lootCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+        y = y - FORM_ROW
+
+        local lootUnderMouseCheck = GUI:CreateFormCheckbox(tabContent, "Loot Under Mouse", "lootUnderMouse", lootDB)
+        lootUnderMouseCheck:SetPoint("TOPLEFT", PAD, y)
+        lootUnderMouseCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+        y = y - FORM_ROW
+
+        local transmogCheck = GUI:CreateFormCheckbox(tabContent, "Show Transmog Markers", "showTransmogMarker", lootDB)
+        transmogCheck:SetPoint("TOPLEFT", PAD, y)
+        transmogCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+        y = y - FORM_ROW
+
+        y = y - 10  -- Extra padding before next section
+
+        --[[
+        -- ═══════════════════════════════════════════════════════════════
+        -- ROLL FRAMES SECTION
+        -- ═══════════════════════════════════════════════════════════════
+        GUI:SetSearchSection("Roll Frames")
+
+        local rollHeader = GUI:CreateSectionHeader(tabContent, "Roll Frames")
+        rollHeader:SetPoint("TOPLEFT", PAD, y)
+        y = y - rollHeader.gap
+
+        -- #125: Temporarily disabled due to bugs with multiple loot items
+        local rollDesc = GUI:CreateLabel(tabContent, "|cffff6666TEMPORARILY DISABLED|r - Custom roll frames are disabled while we fix issues with raid loot. Blizzard default frames will be used.", 11, C.textMuted)
+        rollDesc:SetPoint("TOPLEFT", PAD, y)
+        rollDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+        rollDesc:SetJustifyH("LEFT")
+        rollDesc:SetWordWrap(true)
+        rollDesc:SetHeight(40)                                       
+        y = y - 50
+        ]]
+
+        y = y - 10  -- Extra padding before next section
+
+        -- ═══════════════════════════════════════════════════════════════
+        -- LOOT HISTORY SECTION
+        -- ═══════════════════════════════════════════════════════════════
+        GUI:SetSearchSection("Loot History")
+
+        local historyHeader = GUI:CreateSectionHeader(tabContent, "Loot History")
+        historyHeader:SetPoint("TOPLEFT", PAD, y)
+        y = y - historyHeader.gap
+
+        local historyDesc = GUI:CreateLabel(tabContent, "Apply GUI styling to the loot roll results panel.", 11, C.textMuted)
+        historyDesc:SetPoint("TOPLEFT", PAD, y)
+        historyDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+        historyDesc:SetJustifyH("LEFT")
+        historyDesc:SetWordWrap(true)
+        historyDesc:SetHeight(20)
+        y = y - 28
+
+        local historyCheck = GUI:CreateFormCheckbox(tabContent, "Skin Loot History", "enabled", lootResultsDB, function()
+            GUI:ShowConfirmation({
+                title = "Reload UI?",
+                message = "Skinning changes require a reload to take effect.",
+                acceptText = "Reload",
+                cancelText = "Later",
+                onAccept = function() GravityUI:SafeReload() end,
+            })
+        end)
+        historyCheck:SetPoint("TOPLEFT", PAD, y)
+        historyCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+        y = y - FORM_ROW
+
+        y = y - 10  -- Extra padding before next section
+
+        --[[
+        -- ═══════════════════════════════════════════════════════════════
+        -- GUI M+ TIMER SECTION
+        -- ═══════════════════════════════════════════════════════════════
+        GUI:SetSearchSection("GUI M+ Timer")
+
+        local mplusTimer = db.mplusTimer
+        if not mplusTimer then
+            db.mplusTimer = {
+                enabled = false,
+                layoutMode = "full",
+                showTimer = true,
+                showBorder = true,
+                showDeaths = true,
+                showAffixes = true,
+                showObjectives = true,
+                scale = 1.0,                                
+            }
+            mplusTimer = db.mplusTimer
+        end
+        -- Ensure new fields exist for existing profiles
+        if mplusTimer.layoutMode == nil then mplusTimer.layoutMode = "full" end
+        if mplusTimer.showTimer == nil then mplusTimer.showTimer = true end
+        if mplusTimer.showBorder == nil then mplusTimer.showBorder = true end
+        if mplusTimer.scale == nil then mplusTimer.scale = 1.0 end                                                          
+
+        local guiMplusHeader = GUI:CreateSectionHeader(tabContent, "GUI M+ Timer")
+        guiMplusHeader:SetPoint("TOPLEFT", PAD, y)
+        y = y - guiMplusHeader.gap
+
+        local guiMplusDesc = GUI:CreateLabel(tabContent, "Custom M+ timer with GUI styling. Replaces the Blizzard timer with a clean, compact frame.", 11, C.textMuted)
+        guiMplusDesc:SetPoint("TOPLEFT", PAD, y)
+        guiMplusDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+        guiMplusDesc:SetJustifyH("LEFT")
+        guiMplusDesc:SetWordWrap(true)
+        guiMplusDesc:SetHeight(20)
+        y = y - 24
+
+        local guiMplusNote = GUI:CreateLabel(tabContent, "Disabled by default — most M+ players prefer dedicated timer addons. Enable for an all-in-one solution.", 10, {1.0, 0.75, 0.2, 1})
+        guiMplusNote:SetPoint("TOPLEFT", PAD, y)
+        guiMplusNote:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+        guiMplusNote:SetJustifyH("LEFT")
+        guiMplusNote:SetWordWrap(true)
+        guiMplusNote:SetHeight(20)
+        y = y - 28
+
+        local guiMplusCheck = GUI:CreateFormCheckbox(tabContent, "Enable GUI M+ Timer", "enabled", mplusTimer, function()
+            GUI:ShowConfirmation({
+                title = "Reload UI?",
+                message = "Timer changes require a reload to take effect.",
+                acceptText = "Reload",
+                cancelText = "Later",
+                onAccept = function() GravityUI:SafeReload() end,
+            })
+        end)
+        guiMplusCheck:SetPoint("TOPLEFT", PAD, y)
+        guiMplusCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+        y = y - FORM_ROW
+
+        -- Layout mode dropdown
+        local layoutOptions = {
+            { text = "Compact", value = "compact" },
+            { text = "Full", value = "full" },
+            { text = "Sleek", value = "sleek" },
+        }
+        local layoutDropdown = GUI:CreateFormDropdown(tabContent, "Layout Mode", layoutOptions, "layoutMode", mplusTimer, function()
+            local MPlusTimer = _G.GravityUI_MPlusTimer
+            if MPlusTimer and MPlusTimer.UpdateLayout then
+                MPlusTimer:UpdateLayout()
+            end
+            if _G.GravityUI_ApplyMPlusTimerSkin then
+                _G.GravityUI_ApplyMPlusTimerSkin()
+            end
+        end)
+        layoutDropdown:SetPoint("TOPLEFT", PAD, y)
+        layoutDropdown:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+        y = y - FORM_ROW
+
+        -- Scale slider
+        local scaleSlider = GUI:CreateFormSlider(tabContent, "Timer Scale", 0.5, 2.0, 0.05, "scale", mplusTimer, function()
+            local MPlusTimer = _G.GravityUI_MPlusTimer
+            if MPlusTimer and MPlusTimer.ApplyScale then
+                MPlusTimer:ApplyScale()
+            end
+        end, { deferOnDrag = true })
+        scaleSlider:SetPoint("TOPLEFT", PAD, y)
+        scaleSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+        y = y - FORM_ROW
+        -- Show Timer checkbox (full mode only)
+        local guiMplusTimerCheck = GUI:CreateFormCheckbox(tabContent, "Show Timer Text (Full mode)", "showTimer", mplusTimer, function()
+            local MPlusTimer = _G.GravityUI_MPlusTimer
+            if MPlusTimer and MPlusTimer.UpdateLayout then
+                MPlusTimer:UpdateLayout()
+            end
+        end)
+        guiMplusTimerCheck:SetPoint("TOPLEFT", PAD, y)
+        guiMplusTimerCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+        y = y - FORM_ROW
+
+        -- Show Border checkbox
+        local guiMplusBorderCheck = GUI:CreateFormCheckbox(tabContent, "Show Border", "showBorder", mplusTimer, function()
+            if _G.GravityUI_ApplyMPlusTimerSkin then
+                _G.GravityUI_ApplyMPlusTimerSkin()
+            end
+        end)
+        guiMplusBorderCheck:SetPoint("TOPLEFT", PAD, y)
+        guiMplusBorderCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+        y = y - FORM_ROW
+
+        local guiMplusDeathsCheck = GUI:CreateFormCheckbox(tabContent, "Show Deaths", "showDeaths", mplusTimer, function()
+            local MPlusTimer = _G.GravityUI_MPlusTimer
+            if MPlusTimer and MPlusTimer.UpdateLayout then
+                MPlusTimer:UpdateLayout()
+            end
+        end)
+        guiMplusDeathsCheck:SetPoint("TOPLEFT", PAD, y)
+        guiMplusDeathsCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+        y = y - FORM_ROW
+
+        local guiMplusAffixCheck = GUI:CreateFormCheckbox(tabContent, "Show Affixes", "showAffixes", mplusTimer, function()
+            local MPlusTimer = _G.GravityUI_MPlusTimer
+            if MPlusTimer and MPlusTimer.UpdateLayout then
+                MPlusTimer:UpdateLayout()
+            end
+        end)
+        guiMplusAffixCheck:SetPoint("TOPLEFT", PAD, y)
+        guiMplusAffixCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+        y = y - FORM_ROW
+
+        local guiMplusObjCheck = GUI:CreateFormCheckbox(tabContent, "Show Objectives", "showObjectives", mplusTimer, function()
+            local MPlusTimer = _G.GravityUI_MPlusTimer
+            if MPlusTimer and MPlusTimer.UpdateLayout then
+                MPlusTimer:UpdateLayout()
+            end
+        end)
+        guiMplusObjCheck:SetPoint("TOPLEFT", PAD, y)
+        guiMplusObjCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+        y = y - FORM_ROW
+
+        -- Demo mode button
+        local guiMplusDemoBtn = GUI:CreateButton(tabContent, "Toggle Demo Mode", 200, 28, function()
+            local MPlusTimer = _G.GravityUI_MPlusTimer
+            if MPlusTimer then
+                MPlusTimer:ToggleDemoMode()
+            end
+        end)
+        guiMplusDemoBtn:SetPoint("TOPLEFT", PAD, y)
+        y = y - 40
+
+        local guiMplusDemoInfo = GUI:CreateLabel(tabContent, "Demo mode shows a preview timer for testing.", 10, C.textMuted)
+        guiMplusDemoInfo:SetPoint("TOPLEFT", PAD, y)
+        guiMplusDemoInfo:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+        guiMplusDemoInfo:SetJustifyH("LEFT")
+        y = y - 25
+        ]]
+
+        -- ═══════════════════════════════════════════════════════════════
+        -- REPUTATION/CURRENCY SECTION
+        -- ═══════════════════════════════════════════════════════════════
+        GUI:SetSearchSection("Reputation/Currency")
+
+        if general.skinCharacterFrame == nil then general.skinCharacterFrame = true end
+
+        local charFrameHeader = GUI:CreateSectionHeader(tabContent, "Reputation/Currency")
+        charFrameHeader:SetPoint("TOPLEFT", PAD, y)
+        y = y - charFrameHeader.gap
+
+        local charFrameDesc = GUI:CreateLabel(tabContent, "Apply dark themed styling to the Reputation and Currency tabs with accent-colored borders.", 11, C.textMuted)
+        charFrameDesc:SetPoint("TOPLEFT", PAD, y)
+        charFrameDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+        charFrameDesc:SetJustifyH("LEFT")
+        charFrameDesc:SetWordWrap(true)
+        charFrameDesc:SetHeight(20)
+        y = y - 28
+
+        local charFrameCheck = GUI:CreateFormCheckbox(tabContent, "Skin Reputation/Currency", "skinCharacterFrame", general, function()
+            GUI:ShowConfirmation({
+                title = "Reload UI?",
+                message = "Skinning changes require a reload to take effect.",
+                acceptText = "Reload",
+                cancelText = "Later",
+                onAccept = function() GravityUI:SafeReload() end,
+            })
+        end)
+        charFrameCheck:SetPoint("TOPLEFT", PAD, y)
+        charFrameCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+        y = y - FORM_ROW
+
+        y = y - 10  -- Extra padding before next section
+
+        -- ═══════════════════════════════════════════════════════════════
+        -- INSPECT FRAME SECTION
+        -- ═══════════════════════════════════════════════════════════════
+        GUI:SetSearchSection("Inspect Frame")
+
+        if general.skinInspectFrame == nil then general.skinInspectFrame = true end
+
+        local inspectFrameHeader = GUI:CreateSectionHeader(tabContent, "Inspect Frame")
+        inspectFrameHeader:SetPoint("TOPLEFT", PAD, y)
+        y = y - inspectFrameHeader.gap
+
+        local inspectFrameDesc = GUI:CreateLabel(tabContent, "Skin the Inspect Frame to match Character Frame styling.", 11, C.textMuted)
+        inspectFrameDesc:SetPoint("TOPLEFT", PAD, y)
+        inspectFrameDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+        inspectFrameDesc:SetJustifyH("LEFT")
+        inspectFrameDesc:SetWordWrap(true)
+        inspectFrameDesc:SetHeight(20)
+        y = y - 28
+
+        local inspectFrameCheck = GUI:CreateFormCheckbox(tabContent, "Skin Inspect Frame", "skinInspectFrame", general, function()
+            GUI:ShowConfirmation({
+                title = "Reload UI?",
+                message = "Skinning changes require a reload to take effect.",
+                acceptText = "Reload",
+                cancelText = "Later",
+                onAccept = function() GravityUI:SafeReload() end,
+            })
+        end)
+        inspectFrameCheck:SetPoint("TOPLEFT", PAD, y)
+        inspectFrameCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+        y = y - FORM_ROW
+        
+        y = y - 10  -- Extra padding before next section
+
+        -- ═══════════════════════════════════════════════════════════════
+        -- OVERRIDE ACTION BAR SECTION
+        -- ═══════════════════════════════════════════════════════════════
+        GUI:SetSearchSection("Override Action Bar")
+
+        if general.skinOverrideActionBar == nil then general.skinOverrideActionBar = false end
+
+        local overrideBarHeader = GUI:CreateSectionHeader(tabContent, "Override Action Bar")
+        overrideBarHeader:SetPoint("TOPLEFT", PAD, y)
+        y = y - overrideBarHeader.gap
+
+        local overrideBarDesc = GUI:CreateLabel(tabContent, "Skin the vehicle/override action bar (dragonriding, possession, etc.).", 11, C.textMuted)
+        overrideBarDesc:SetPoint("TOPLEFT", PAD, y)
+        overrideBarDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+        overrideBarDesc:SetJustifyH("LEFT")
+        overrideBarDesc:SetWordWrap(true)
+        overrideBarDesc:SetHeight(20)
+        y = y - 28
+
+        local overrideBarCheck = GUI:CreateFormCheckbox(tabContent, "Skin Override Action Bar", "skinOverrideActionBar", general, function()
+            GUI:ShowConfirmation({
+                title = "Reload UI?",
+                message = "Skinning changes require a reload to take effect.",
+                acceptText = "Reload",
+                cancelText = "Later",
+                onAccept = function() GravityUI:SafeReload() end,
+            })
+        end)
+        overrideBarCheck:SetPoint("TOPLEFT", PAD, y)
+        overrideBarCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+        y = y - FORM_ROW
+
+        y = y - 10  -- Extra padding before next section
+
+        -- ═══════════════════════════════════════════════════════════════
+        -- OBJECTIVE TRACKER SECTION
+        -- ═══════════════════════════════════════════════════════════════
+        GUI:SetSearchSection("Objective Tracker")
+
+        if general.skinObjectiveTracker == nil then general.skinObjectiveTracker = false end
+
+        local objTrackerHeader = GUI:CreateSectionHeader(tabContent, "Objective Tracker")
+        objTrackerHeader:SetPoint("TOPLEFT", PAD, y)
+        y = y - objTrackerHeader.gap
+
+        local objTrackerWip = GUI:CreateLabel(tabContent, "Work-in-progress: Enable only if you want to test. Still being polished.", 11, {1, 0.6, 0.2, 1})
+        objTrackerWip:SetPoint("TOPLEFT", PAD, y)
+        objTrackerWip:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+        objTrackerWip:SetJustifyH("LEFT")
+        y = y - 18
+        local objTrackerDesc = GUI:CreateLabel(tabContent, "Apply GUI styling to quest objectives, achievement tracking, and bonus objectives.", 11, C.textMuted)
+        objTrackerDesc:SetPoint("TOPLEFT", PAD, y)
+        objTrackerDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+        objTrackerDesc:SetJustifyH("LEFT")
+        objTrackerDesc:SetWordWrap(true)
+        objTrackerDesc:SetHeight(20)
+        y = y - 28
+
+        local objTrackerCheck = GUI:CreateFormCheckbox(tabContent, "Skin Objective Tracker", "skinObjectiveTracker", general, function()
+            GUI:ShowConfirmation({
+                title = "Reload UI?",
+                message = "Skinning changes require a reload to take effect.",
+                acceptText = "Reload",
+                cancelText = "Later",
+                onAccept = function() GravityUI:SafeReload() end,
+            })
+        end)
+
+        objTrackerCheck:SetPoint("TOPLEFT", PAD, y)
+        objTrackerCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+        y = y - FORM_ROW
+
+        if general.objectiveTrackerHeight == nil then general.objectiveTrackerHeight = 600 end
+        local objTrackerHeightSlider = GUI:CreateFormSlider(tabContent, "Max Height", 200, 1000, 10,
+            "objectiveTrackerHeight", general, function()
+                if _G.GravityUI_RefreshObjectiveTracker then _G.GravityUI_RefreshObjectiveTracker() end
+            end)
+        objTrackerHeightSlider:SetPoint("TOPLEFT", PAD, y)
+        objTrackerHeightSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+        y = y - FORM_ROW
+
+        if general.objectiveTrackerModuleFontSize == nil then general.objectiveTrackerModuleFontSize = 12 end
+        local objTrackerModuleFontSlider = GUI:CreateFormSlider(tabContent, "Module Header Font (QUESTS, etc.)", 6, 18, 1,
+            "objectiveTrackerModuleFontSize", general, function()
+                if _G.GravityUI_RefreshObjectiveTracker then _G.GravityUI_RefreshObjectiveTracker() end
+            end)
+        objTrackerModuleFontSlider:SetPoint("TOPLEFT", PAD, y)
+        objTrackerModuleFontSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+        y = y - FORM_ROW
+
+        if general.objectiveTrackerTitleFontSize == nil then general.objectiveTrackerTitleFontSize = 10 end
+        local objTrackerTitleFontSlider = GUI:CreateFormSlider(tabContent, "Quest/Achievement Title Font", 6, 18, 1,
+            "objectiveTrackerTitleFontSize", general, function()
+                if _G.GravityUI_RefreshObjectiveTracker then _G.GravityUI_RefreshObjectiveTracker() end
+            end)
+        objTrackerTitleFontSlider:SetPoint("TOPLEFT", PAD, y)
+        objTrackerTitleFontSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+        y = y - FORM_ROW
+
+        if general.objectiveTrackerTextFontSize == nil then general.objectiveTrackerTextFontSize = 10 end
+        local objTrackerTextFontSlider = GUI:CreateFormSlider(tabContent, "Objective Text Font", 6, 18, 1,
+            "objectiveTrackerTextFontSize", general, function()
+                if _G.GravityUI_RefreshObjectiveTracker then _G.GravityUI_RefreshObjectiveTracker() end
+            end)
+        objTrackerTextFontSlider:SetPoint("TOPLEFT", PAD, y)
+        objTrackerTextFontSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+        y = y - FORM_ROW
+
+        if general.objectiveTrackerWidth == nil then general.objectiveTrackerWidth = 260 end
+        local objTrackerWidthSlider = GUI:CreateFormSlider(tabContent, "Max Width", 150, 400, 10,
+            "objectiveTrackerWidth", general, function()
+                if _G.GravityUI_RefreshObjectiveTracker then _G.GravityUI_RefreshObjectiveTracker() end
+            end)
+        objTrackerWidthSlider:SetPoint("TOPLEFT", PAD, y)
+        objTrackerWidthSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+        y = y - FORM_ROW
+
+        if general.hideObjectiveTrackerBorder == nil then general.hideObjectiveTrackerBorder = false end
+        local hideBorderCheck = GUI:CreateFormCheckbox(tabContent, "Hide Border", "hideObjectiveTrackerBorder", general, function()
+            if _G.GravityUI_RefreshObjectiveTracker then _G.GravityUI_RefreshObjectiveTracker() end
+        end)
+        hideBorderCheck:SetPoint("TOPLEFT", PAD, y)
+        hideBorderCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+        y = y - FORM_ROW
+
+        if general.objectiveTrackerModuleColor == nil then general.objectiveTrackerModuleColor = { 1.0, 0.82, 0.0, 1.0 } end
+        local moduleColorPicker = GUI:CreateFormColorPicker(tabContent, "Module Header Color (QUESTS, etc.)", "objectiveTrackerModuleColor", general, function()
+            if _G.GravityUI_RefreshObjectiveTracker then _G.GravityUI_RefreshObjectiveTracker() end
+        end)
+        moduleColorPicker:SetPoint("TOPLEFT", PAD, y)
+        moduleColorPicker:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+        y = y - FORM_ROW
+
+        if general.objectiveTrackerTitleColor == nil then general.objectiveTrackerTitleColor = { 1.0, 1.0, 1.0, 1.0 } end
+        local titleColorPicker = GUI:CreateFormColorPicker(tabContent, "Quest/Achievement Title Color", "objectiveTrackerTitleColor", general, function()
+            if _G.GravityUI_RefreshObjectiveTracker then _G.GravityUI_RefreshObjectiveTracker() end
+        end)
+        titleColorPicker:SetPoint("TOPLEFT", PAD, y)
+        titleColorPicker:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+        y = y - FORM_ROW
+
+        if general.objectiveTrackerTextColor == nil then general.objectiveTrackerTextColor = { 0.8, 0.8, 0.8, 1.0 } end
+        local textColorPicker = GUI:CreateFormColorPicker(tabContent, "Objective Text Color", "objectiveTrackerTextColor", general, function()
+            if _G.GravityUI_RefreshObjectiveTracker then _G.GravityUI_RefreshObjectiveTracker() end
+        end)
+        textColorPicker:SetPoint("TOPLEFT", PAD, y)
+        textColorPicker:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+        y = y - FORM_ROW
+
+        -- Note: Background opacity is controlled via Edit Mode's built-in opacity slider
+        y = y - 10  -- Extra padding before next section
+
+        -- ═══════════════════════════════════════════════════════════════
+        -- INSTANCE FRAMES SECTION
+        -- ═══════════════════════════════════════════════════════════════
+        GUI:SetSearchSection("Instance Frames")
+
+        if general.skinInstanceFrames == nil then general.skinInstanceFrames = false end
+
+        local instanceHeader = GUI:CreateSectionHeader(tabContent, "Instance Frames")
+        instanceHeader:SetPoint("TOPLEFT", PAD, y)
+        y = y - instanceHeader.gap
+
+        local instanceWip = GUI:CreateLabel(tabContent, "Work-in-progress: Enable only if you want to test. Still being polished.", 11, {1, 0.6, 0.2, 1})
+        instanceWip:SetPoint("TOPLEFT", PAD, y)
+        instanceWip:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+        instanceWip:SetJustifyH("LEFT")
+        y = y - 18
+        local instanceDesc = GUI:CreateLabel(tabContent, "Skin the Dungeons & Raids window, PVP queue, and M+ Dungeons tab.", 11, C.textMuted)
+        instanceDesc:SetPoint("TOPLEFT", PAD, y)
+        instanceDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+        instanceDesc:SetJustifyH("LEFT")
+        instanceDesc:SetWordWrap(true)
+        instanceDesc:SetHeight(20)
+        y = y - 28
+
+        local instanceCheck = GUI:CreateFormCheckbox(tabContent, "Skin Instance Frames", "skinInstanceFrames", general, function()
+            GUI:ShowConfirmation({
+                title = "Reload UI?",
+                message = "Skinning changes require a reload to take effect.",
+                acceptText = "Reload",
+                cancelText = "Later",
+                onAccept = function() GravityUI:SafeReload() end,
+            })
+        end)
+        instanceCheck:SetPoint("TOPLEFT", PAD, y)
+        instanceCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+        y = y - FORM_ROW
+        
+        y = y - 20
+    end
+
+    tabContent:SetHeight(math.abs(y) + 50)
+end
+
+
+---------------------------------------------------------------------------
+-- PAGE: Gravity Extras
+---------------------------------------------------------------------------
+local function CreateGravityExtrasPage(parent)
+    local tabs = {
+        { name = "Autohide", builder = BuildAutohideTab },
+        { name = "Styling", builder = BuildSkinningTab },
+        { name = "Combat Timer", builder = BuildCombatTimerTab },
+        { name = "Delete Fix",   builder = BuildDeleteFixTab },
+        { name = "World Marks",  builder = BuildRaidMarksTab },
+        { name = "Quick Salvage", builder = BuildQuickSalvageTab },
+        { name = "Buffs & Consumable", builder = BuildBuffsConsumablesTab },
+        { name = "Combat Status", builder = BuildCombatStatusTab },
+        { name = "M+ Teleport", builder = BuildMPlusTeleportTab },
+    }
+    GUI:CreateSubTabs(parent, tabs)
+end
 
 ---------------------------------------------------------------------------
 -- PAGE: Main & QoL
@@ -989,15 +2479,6 @@ local function CreateGeneralQoLPage(parent)
                 "Hover over any preset for details. 1440p+ is Gravity's personal setting.",
                 11, C.textMuted)
             presetSummary:SetPoint("TOPLEFT", PADDING, y)
-            y = y - 20
-
-            -- Big picture advice
-            local bigPicture = GUI:CreateLabel(tabContent,
-                "UI scale is highly personal—it depends on your monitor size, resolution, and preference. If you already have a scale you like from years of playing WoW, stick with it. These presets are just common values people tend to use.",
-                11, C.textMuted)
-            bigPicture:SetPoint("TOPLEFT", PADDING, y)
-            bigPicture:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-            bigPicture:SetJustifyH("LEFT")
             y = y - 36
         end	   
 
@@ -1108,96 +2589,57 @@ local function CreateGeneralQoLPage(parent)
 
         y = y - 22
 
-        -- Combat Status Text Indicator Section
-        local combatTextHeader = GUI:CreateSectionHeader(tabContent, "Combat Status Text Indicator")
-        combatTextHeader:SetPoint("TOPLEFT", PADDING, y)
-        y = y - combatTextHeader.gap
+        y = y - 10
 
-        local combatTextDesc = GUI:CreateLabel(tabContent,
-            "Displays '+Combat' or '-Combat' text on screen when entering or leaving combat. Useful for Shadowmeld skips.",
-            11, C.textMuted)
-        combatTextDesc:SetPoint("TOPLEFT", PADDING, y)
-        combatTextDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-        combatTextDesc:SetJustifyH("LEFT")
-        combatTextDesc:SetWordWrap(true)
-        combatTextDesc:SetHeight(15)
-        y = y - 25
+        -- Others Section
+        y = y - 10
 
-        -- Preview buttons
-        local previewEnterBtn = GUI:CreateButton(tabContent, "Preview +Combat", 140, 28, function()
-            if _G.GravityUI_PreviewCombatText then _G.GravityUI_PreviewCombatText("+Combat") end
-        end)
-        previewEnterBtn:SetPoint("TOPLEFT", PADDING, y)
-        previewEnterBtn:SetPoint("RIGHT", tabContent, "CENTER", -5, 0)
+        -- Others Section
+        local othersHeader = GUI:CreateSectionHeader(tabContent, "Others")
+        othersHeader:SetPoint("TOPLEFT", PADDING, y)
+        y = y - othersHeader.gap
 
-        local previewLeaveBtn = GUI:CreateButton(tabContent, "Preview -Combat", 140, 28, function()
-            if _G.GravityUI_PreviewCombatText then _G.GravityUI_PreviewCombatText("-Combat") end
-        end)
-        previewLeaveBtn:SetPoint("LEFT", tabContent, "CENTER", 5, 0)
-        previewLeaveBtn:SetPoint("TOP", previewEnterBtn, "TOP", 0, 0)
-        previewLeaveBtn:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-        y = y - 38
-
-        local combatTextDB = db.combatText
-        if combatTextDB then
-            local combatTextCheck = GUI:CreateFormCheckbox(tabContent, "Enable Combat Text", "enabled", combatTextDB, function(val)
-                if _G.GravityUI_RefreshCombatText then _G.GravityUI_RefreshCombatText() end
+        local minimapBtnDB = db.minimapButton
+        if minimapBtnDB then
+            local showMinimapIconCheck = GUI:CreateFormCheckbox(tabContent, "Hide GUI Minimap Icon", "hide", minimapBtnDB, function(dbVal)
+                local LibDBIcon = LibStub("LibDBIcon-1.0", true)
+                if LibDBIcon then
+                    if dbVal then
+                        LibDBIcon:Hide("GravityUI")
+                    else
+                        LibDBIcon:Show("GravityUI")
+                    end
+                end
             end)
-            combatTextCheck:SetPoint("TOPLEFT", PADDING, y)
-            combatTextCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-            y = y - FORM_ROW
-
-            local displayTimeSlider = GUI:CreateFormSlider(tabContent, "Display Time (sec)", 0.3, 3.0, 0.1, "displayTime", combatTextDB, function()
-                if _G.GravityUI_RefreshCombatText then _G.GravityUI_RefreshCombatText() end
-            end)
-            displayTimeSlider:SetPoint("TOPLEFT", PADDING, y)
-            displayTimeSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-            y = y - FORM_ROW
-
-            local fadeTimeSlider = GUI:CreateFormSlider(tabContent, "Fade Duration (sec)", 0.1, 1.0, 0.05, "fadeTime", combatTextDB, function()
-                if _G.GravityUI_RefreshCombatText then _G.GravityUI_RefreshCombatText() end
-            end)
-            fadeTimeSlider:SetPoint("TOPLEFT", PADDING, y)
-            fadeTimeSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-            y = y - FORM_ROW
-
-            local fontSizeSlider = GUI:CreateFormSlider(tabContent, "Font Size", 12, 48, 1, "fontSize", combatTextDB, function()
-                if _G.GravityUI_RefreshCombatText then _G.GravityUI_RefreshCombatText() end
-            end)
-            fontSizeSlider:SetPoint("TOPLEFT", PADDING, y)
-            fontSizeSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-            y = y - FORM_ROW
-
-            local xOffsetSlider = GUI:CreateFormSlider(tabContent, "X Position Offset", -2000, 2000, 1, "xOffset", combatTextDB, function()
-                if _G.GravityUI_RefreshCombatText then _G.GravityUI_RefreshCombatText() end
-            end)
-            xOffsetSlider:SetPoint("TOPLEFT", PADDING, y)
-            xOffsetSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-            y = y - FORM_ROW
-
-            local yOffsetSlider = GUI:CreateFormSlider(tabContent, "Y Position Offset", -2000, 2000, 1, "yOffset", combatTextDB, function()
-                if _G.GravityUI_RefreshCombatText then _G.GravityUI_RefreshCombatText() end
-            end)
-            yOffsetSlider:SetPoint("TOPLEFT", PADDING, y)
-            yOffsetSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-            y = y - FORM_ROW
-
-            local enterColorPicker = GUI:CreateFormColorPicker(tabContent, "+Combat Text Color", "enterCombatColor", combatTextDB, function()
-                if _G.GravityUI_RefreshCombatText then _G.GravityUI_RefreshCombatText() end
-            end)
-            enterColorPicker:SetPoint("TOPLEFT", PADDING, y)
-            enterColorPicker:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-            y = y - FORM_ROW
-
-            local leaveColorPicker = GUI:CreateFormColorPicker(tabContent, "-Combat Text Color", "leaveCombatColor", combatTextDB, function()
-                if _G.GravityUI_RefreshCombatText then _G.GravityUI_RefreshCombatText() end
-            end)
-            leaveColorPicker:SetPoint("TOPLEFT", PADDING, y)
-            leaveColorPicker:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+            showMinimapIconCheck:SetPoint("TOPLEFT", PADDING, y)
+            showMinimapIconCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
             y = y - FORM_ROW
         end
 
-        y = y - 10
+        local panelAlphaSlider = GUI:CreateFormSlider(tabContent, "GUI Panel Transparency", 0.3, 1.0, 0.01, "configPanelAlpha", db, function(val)
+            local mainFrame = GUI.MainFrame
+            if mainFrame then
+                local bgColor = GUI.Colors.bg
+                mainFrame:SetBackdropColor(bgColor[1], bgColor[2], bgColor[3], val)
+            end
+        end)
+        panelAlphaSlider:SetPoint("TOPLEFT", PADDING, y)
+        panelAlphaSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+        y = y - FORM_ROW
+
+        tabContent:SetHeight(math.abs(y) + 50)
+    end
+
+    -- =====================================================
+    -- SUB-TAB: AUTOMATION
+    -- =====================================================
+    local function BuildAutomationTab(tabContent)
+        local y = -10
+        local FORM_ROW = 32
+        local db = GetDB()
+
+        -- Set search context for auto-registration
+        GUI:SetSearchContext({tabIndex = 1, tabName = "Main & QoL", subTabIndex = 2, subTabName = "Automation"})
 
         -- Automation Section
         local autoHeader = GUI:CreateSectionHeader(tabContent, "Automation")
@@ -1213,6 +2655,7 @@ local function CreateGeneralQoLPage(parent)
         combatLogCheck:SetPoint("TOPLEFT", PADDING, y)
         combatLogCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
         y = y - FORM_ROW
+
         local sellJunkCheck = GUI:CreateFormCheckbox(tabContent, "Sell Gray Items", "sellJunk", db.general, nil)
         sellJunkCheck:SetPoint("TOPLEFT", PADDING, y)
         sellJunkCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
@@ -1275,472 +2718,14 @@ local function CreateGeneralQoLPage(parent)
         fastLootDesc:SetJustifyH("LEFT")
         y = y - 16
 
-        local autoGossipCheck = GUI:CreateFormCheckbox(tabContent, "Auto-Select Single Gossip Option", "autoSelectGossip", db.general, nil)
+        local autoGossipCheck = GUI:CreateFormCheckbox(tabContent, "Auto-Select Single Gossip Option", "autoSelectGossip", db.general, nil, {keywords = {"conversations", "cutscene"}})
         autoGossipCheck:SetPoint("TOPLEFT", PADDING, y)
         autoGossipCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
         y = y - FORM_ROW
 
-        y = y - 10
-
-        -- Consumable Check Section
-        local consumableHeader = GUI:CreateSectionHeader(tabContent, "Consumable Check")
-        consumableHeader:SetPoint("TOPLEFT", PADDING, y)
-        y = y - consumableHeader.gap
-
-        -- Initialize defaults - master toggle
-        if db.general.consumableCheckEnabled == nil then db.general.consumableCheckEnabled = true end
-
-        local consumableEnableCheck = GUI:CreateFormCheckbox(tabContent, "Enable Consumable Check", "consumableCheckEnabled", db.general, nil)
-        consumableEnableCheck:SetPoint("TOPLEFT", PADDING, y)
-        consumableEnableCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-        y = y - FORM_ROW
-
-        local consumableDesc = GUI:CreateLabel(tabContent, "Display consumable status icons when triggered by events below.", 11, C.textMuted)
-        consumableDesc:SetPoint("TOPLEFT", PADDING, y + 4)
-        consumableDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-        consumableDesc:SetJustifyH("LEFT")
-        y = y - 20
-
-        -- Trigger Options subsection
-        local triggerLabel = GUI:CreateLabel(tabContent, "Show On:", 12, C.text)
-        triggerLabel:SetPoint("TOPLEFT", PADDING + 10, y)
-        y = y - 20
-
-        -- Initialize trigger defaults
-        if db.general.consumableOnReadyCheck == nil then db.general.consumableOnReadyCheck = true end
-        if db.general.consumableOnDungeon == nil then db.general.consumableOnDungeon = false end
-        if db.general.consumableOnRaid == nil then db.general.consumableOnRaid = false end
-        if db.general.consumableOnResurrect == nil then db.general.consumableOnResurrect = false end
-
-        local triggerReadyCheck = GUI:CreateFormCheckbox(tabContent, "Ready Check", "consumableOnReadyCheck", db.general, nil)
-        triggerReadyCheck:SetPoint("TOPLEFT", PADDING + 20, y)
-        triggerReadyCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-        y = y - FORM_ROW
-
-        local triggerDungeon = GUI:CreateFormCheckbox(tabContent, "Dungeon Entrance", "consumableOnDungeon", db.general, nil)
-        triggerDungeon:SetPoint("TOPLEFT", PADDING + 20, y)
-        triggerDungeon:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-        y = y - FORM_ROW
-
-        local triggerRaid = GUI:CreateFormCheckbox(tabContent, "Raid Entrance", "consumableOnRaid", db.general, nil)
-        triggerRaid:SetPoint("TOPLEFT", PADDING + 20, y)
-        triggerRaid:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-        y = y - FORM_ROW
-
-        local triggerResurrect = GUI:CreateFormCheckbox(tabContent, "Instanced Resurrect", "consumableOnResurrect", db.general, nil)
-        triggerResurrect:SetPoint("TOPLEFT", PADDING + 20, y)
-        triggerResurrect:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-        y = y - FORM_ROW
-
-        local resurrectDesc = GUI:CreateLabel(tabContent, "Shows when resurrected in a dungeon or raid with missing buffs.", 11, C.textMuted)
-        resurrectDesc:SetPoint("TOPLEFT", PADDING, y + 4)
-        resurrectDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-        resurrectDesc:SetJustifyH("LEFT")
-        y = y - 20
-
-        -- Buffs to Check subsection
-        local buffsLabel = GUI:CreateLabel(tabContent, "Buffs to Check:", 12, C.text)
-        buffsLabel:SetPoint("TOPLEFT", PADDING + 10, y)
-        y = y - 20
-
-        -- Initialize buff defaults
-        if db.general.consumableFood == nil then db.general.consumableFood = true end
-        if db.general.consumableFlask == nil then db.general.consumableFlask = true end
-        if db.general.consumableOilMH == nil then db.general.consumableOilMH = true end
-        if db.general.consumableOilOH == nil then db.general.consumableOilOH = true end
-        if db.general.consumableRune == nil then db.general.consumableRune = true end
-        if db.general.consumableHealthstone == nil then db.general.consumableHealthstone = true end
-
-        local consumableFoodCheck = GUI:CreateFormCheckbox(tabContent, "Food Buff", "consumableFood", db.general, nil)
-        consumableFoodCheck:SetPoint("TOPLEFT", PADDING + 20, y)
-        consumableFoodCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-        y = y - FORM_ROW
-
-        local consumableFlaskCheck = GUI:CreateFormCheckbox(tabContent, "Flask Buff", "consumableFlask", db.general, nil)
-        consumableFlaskCheck:SetPoint("TOPLEFT", PADDING + 20, y)
-        consumableFlaskCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-        y = y - FORM_ROW
-
-        local consumableOilMHCheck = GUI:CreateFormCheckbox(tabContent, "Weapon Oil (Main Hand)", "consumableOilMH", db.general, nil)
-        consumableOilMHCheck:SetPoint("TOPLEFT", PADDING + 20, y)
-        consumableOilMHCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-        y = y - FORM_ROW
-
-        local consumableOilOHCheck = GUI:CreateFormCheckbox(tabContent, "Weapon Oil (Off Hand)", "consumableOilOH", db.general, nil)
-        consumableOilOHCheck:SetPoint("TOPLEFT", PADDING + 20, y)
-        consumableOilOHCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-        y = y - FORM_ROW
-
-        local consumableRuneCheck = GUI:CreateFormCheckbox(tabContent, "Augment Rune", "consumableRune", db.general, nil)
-        consumableRuneCheck:SetPoint("TOPLEFT", PADDING + 20, y)
-        consumableRuneCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-        y = y - FORM_ROW
-
-        local consumableHSCheck = GUI:CreateFormCheckbox(tabContent, "Healthstones", "consumableHealthstone", db.general, nil)
-        consumableHSCheck:SetPoint("TOPLEFT", PADDING + 20, y)
-        consumableHSCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-        y = y - FORM_ROW
-
-        local consumableHSDesc = GUI:CreateLabel(tabContent, "Only shows when a Warlock is in the group.", 11, C.textMuted)
-        consumableHSDesc:SetPoint("TOPLEFT", PADDING, y + 4)
-        consumableHSDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-        consumableHSDesc:SetJustifyH("LEFT")
-        y = y - 20
-
-        y = y - 10
-
-        -- Expiration Warning section
-        local expirationHeader = GUI:CreateLabel(tabContent, "Expiration Warning", 12, C.textAccent)
-        expirationHeader:SetPoint("TOPLEFT", PADDING, y)
-        y = y - 20
-
-        if db.general.consumableExpirationWarning == nil then db.general.consumableExpirationWarning = false end
-
-        local expirationCheck = GUI:CreateFormCheckbox(tabContent, "Warn When Buffs Expiring", "consumableExpirationWarning", db.general, nil)
-        expirationCheck:SetPoint("TOPLEFT", PADDING, y)
-        expirationCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-        y = y - FORM_ROW
-
-        local expirationDesc = GUI:CreateLabel(tabContent, "Show consumables window when food/flask/rune is about to expire (instanced content only).", 11, C.textMuted)
-        expirationDesc:SetPoint("TOPLEFT", PADDING, y + 4)
-        expirationDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-        expirationDesc:SetJustifyH("LEFT")
-        expirationDesc:SetWordWrap(true)
-        expirationDesc:SetHeight(28)
-        y = y - 32
-
-        if db.general.consumableExpirationThreshold == nil then db.general.consumableExpirationThreshold = 300 end
-
-        local thresholdSlider = GUI:CreateFormSlider(tabContent, "Warning Threshold (seconds)", 60, 600, 30, "consumableExpirationThreshold", db.general, nil)
-        thresholdSlider:SetPoint("TOPLEFT", PADDING, y)
-        thresholdSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-        y = y - FORM_ROW
-
-        local thresholdDesc = GUI:CreateLabel(tabContent, "Show warning when buff has less than this time remaining (60-600 seconds, default 300 = 5 min).", 11, C.textMuted)
-        thresholdDesc:SetPoint("TOPLEFT", PADDING, y + 4)
-        thresholdDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-        thresholdDesc:SetJustifyH("LEFT")
-        thresholdDesc:SetWordWrap(true)
-        thresholdDesc:SetHeight(28)
-        y = y - 32
-        -- Refresh function for live preview (preserves position - for icon size)
-        local function RefreshConsumables()
-            if _G.GravityUI_RefreshConsumables then
-                _G.GravityUI_RefreshConsumables()
-            end
-        end
-
-        -- Reposition function for offset changes (repositions relative to ReadyCheck)
-        local function RepositionConsumables()
-            if _G.GravityUI_RepositionConsumables then
-                _G.GravityUI_RepositionConsumables()
-            end
-        end
-
-        -- Positioning section
-        local positionHeader = GUI:CreateLabel(tabContent, "Positioning", 12, C.textAccent)
-        positionHeader:SetPoint("TOPLEFT", PADDING, y)
-        y = y - 20
-
-        -- Anchor mode toggle
-        if db.general.consumableAnchorMode == nil then db.general.consumableAnchorMode = true end
-
-        -- Forward declare for callback reference
-        local iconOffsetSlider
-
-        local anchorModeCheck = GUI:CreateFormCheckbox(tabContent, "Anchor to Ready Check", "consumableAnchorMode", db.general, function()
-            -- Update icon offset slider state based on anchor mode
-            if iconOffsetSlider then
-                iconOffsetSlider:SetEnabled(db.general.consumableAnchorMode)											  
-            end			   
-            RepositionConsumables()
-        end)
-        anchorModeCheck:SetPoint("TOPLEFT", PADDING, y)
-        anchorModeCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-        y = y - FORM_ROW
-
-        local anchorModeDesc = GUI:CreateLabel(tabContent, "When enabled, icons anchor above the Ready Check frame. When disabled, use the mover to position freely.", 11, C.textMuted)
-        anchorModeDesc:SetPoint("TOPLEFT", PADDING, y + 4)
-        anchorModeDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-        anchorModeDesc:SetJustifyH("LEFT")
-        anchorModeDesc:SetWordWrap(true)
-        anchorModeDesc:SetHeight(28)
-        y = y - 32
-
-        -- Show Mover button
-        local moverButton = GUI:CreateButton(tabContent, "Show Mover", 120, 24)
-        moverButton:SetPoint("TOPLEFT", PADDING, y)
-        moverButton:SetScript("OnClick", function()
-            if _G.gui_ToggleConsumablesMover then
-                _G.gui_ToggleConsumablesMover()
-            end
-        end)
-        y = y - 30
-
-        local moverDesc = GUI:CreateLabel(tabContent, "Drag the mover to set free position (only used when 'Anchor to Ready Check' is off).", 11, C.textMuted)
-        moverDesc:SetPoint("TOPLEFT", PADDING, y + 4)
-        moverDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-        moverDesc:SetJustifyH("LEFT")
-        moverDesc:SetWordWrap(true)
-        moverDesc:SetHeight(28)
-        y = y - 32
-        -- Icon offset slider
-        if db.general.consumableIconOffset == nil then db.general.consumableIconOffset = 5 end
-
-        iconOffsetSlider = GUI:CreateFormSlider(tabContent, "Icon Offset", -10, 30, 1, "consumableIconOffset", db.general, RepositionConsumables)
-        iconOffsetSlider:SetPoint("TOPLEFT", PADDING, y)
-        iconOffsetSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-        -- Disable slider if not in anchor mode
-        iconOffsetSlider:SetEnabled(db.general.consumableAnchorMode)				
-        y = y - FORM_ROW
-
-        local iconOffsetDesc = GUI:CreateLabel(tabContent, "Distance (pixels) between icons and ready check frame (anchor mode only).", 11, C.textMuted)
-        iconOffsetDesc:SetPoint("TOPLEFT", PADDING, y + 4)
-        iconOffsetDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-        iconOffsetDesc:SetJustifyH("LEFT")
-        y = y - 16
-
-        -- Icon size slider
-        if db.general.consumableIconSize == nil then db.general.consumableIconSize = 40 end
-
-        local iconSizeSlider = GUI:CreateFormSlider(tabContent, "Icon Size", 24, 64, 2, "consumableIconSize", db.general, RefreshConsumables)
-        iconSizeSlider:SetPoint("TOPLEFT", PADDING, y)
-        iconSizeSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-        y = y - FORM_ROW
-
-        local iconSizeDesc = GUI:CreateLabel(tabContent, "Size of consumable icons (pixels).", 11, C.textMuted)
-        iconSizeDesc:SetPoint("TOPLEFT", PADDING, y + 4)
-        iconSizeDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-        iconSizeDesc:SetJustifyH("LEFT")
-        y = y - 16
-
-        y = y - 10
-
-        -- Missing Raid Buffs Section
-        local raidBuffsHeader = GUI:CreateSectionHeader(tabContent, "Missing Raid Buffs")
-        raidBuffsHeader:SetPoint("TOPLEFT", PADDING, y)
-        y = y - raidBuffsHeader.gap
-
-        local raidBuffsDesc = GUI:CreateLabel(tabContent, "Display missing raid buffs when a buff-providing class is in your group. Shows out of combat only.", 11, C.textMuted)
-        raidBuffsDesc:SetPoint("TOPLEFT", PADDING, y)
-        raidBuffsDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-        raidBuffsDesc:SetJustifyH("LEFT")
-        raidBuffsDesc:SetWordWrap(true)
-        raidBuffsDesc:SetHeight(20)
-        y = y - 30
-
-        -- Ensure raidBuffs settings exist
-        if not db.raidBuffs then
-db.raidBuffs = { enabled = true, showOnlyInGroup = true, showOnlyInInstance = false, providerMode = false, hideLabelBar = false, iconSize = 32, labelFontSize = 12, labelTextColor = nil, position = nil }
-        end
-        local rbDB = db.raidBuffs
-
-        -- Refresh function for live preview
-        local function RefreshRaidBuffs()
-            if ns.RaidBuffs and ns.RaidBuffs.ForceUpdate then
-                ns.RaidBuffs:ForceUpdate()
-            end
-        end
-
-        local rbEnableCheck = GUI:CreateFormCheckbox(tabContent, "Enable Missing Raid Buffs", "enabled", rbDB, RefreshRaidBuffs)
-        rbEnableCheck:SetPoint("TOPLEFT", PADDING, y)
-        rbEnableCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-        y = y - FORM_ROW
-
-        local rbGroupOnlyCheck = GUI:CreateFormCheckbox(tabContent, "Show Only When In Group", "showOnlyInGroup", rbDB, RefreshRaidBuffs)
-        rbGroupOnlyCheck:SetPoint("TOPLEFT", PADDING, y)
-        rbGroupOnlyCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-        y = y - FORM_ROW
-
-        local rbInstanceOnlyCheck = GUI:CreateFormCheckbox(tabContent, "Show Only In Instance", "showOnlyInInstance", rbDB, RefreshRaidBuffs)
-        rbInstanceOnlyCheck:SetPoint("TOPLEFT", PADDING, y)
-        rbInstanceOnlyCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-        y = y - FORM_ROW
-
-        local instanceOnlyDesc = GUI:CreateLabel(tabContent, "Hide when forming groups in cities, show only when zoned into dungeon/raid.", 11, C.textMuted)
-        instanceOnlyDesc:SetPoint("TOPLEFT", PADDING, y + 4)
-        instanceOnlyDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-        instanceOnlyDesc:SetJustifyH("LEFT")
-        y = y - 20
-        local rbProviderCheck = GUI:CreateFormCheckbox(tabContent, "Also Show Buffs You Can Provide", "providerMode", rbDB, RefreshRaidBuffs)
-        rbProviderCheck:SetPoint("TOPLEFT", PADDING, y)
-        rbProviderCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-        y = y - FORM_ROW
-
-        local providerDesc = GUI:CreateLabel(tabContent, "When enabled, also shows buffs you can cast that party members are missing.", 11, C.textMuted)
-        providerDesc:SetPoint("TOPLEFT", PADDING, y + 4)
-        providerDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-        providerDesc:SetJustifyH("LEFT")
-        y = y - 20
-
-        local rbHideLabelCheck = GUI:CreateFormCheckbox(tabContent, "Hide Label Bar", "hideLabelBar", rbDB, RefreshRaidBuffs)
-        rbHideLabelCheck:SetPoint("TOPLEFT", PADDING, y)
-        rbHideLabelCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-        y = y - FORM_ROW
-		
-        local rbIconSizeSlider = GUI:CreateFormSlider(tabContent, "Icon Size", 20, 64, 2, "iconSize", rbDB, RefreshRaidBuffs)
-        rbIconSizeSlider:SetPoint("TOPLEFT", PADDING, y)
-        rbIconSizeSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-        y = y - FORM_ROW
-
-        local rbFontSizeSlider = GUI:CreateFormSlider(tabContent, "Label Font Size", 10, 32, 1, "labelFontSize", rbDB, RefreshRaidBuffs)
-        rbFontSizeSlider:SetPoint("TOPLEFT", PADDING, y)
-        rbFontSizeSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-        y = y - FORM_ROW
-
-        local rbTextColorPicker = GUI:CreateFormColorPicker(tabContent, "Label Text Color", "labelTextColor", rbDB, RefreshRaidBuffs)
-        rbTextColorPicker:SetPoint("TOPLEFT", PADDING, y)
-        rbTextColorPicker:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-        y = y - FORM_ROW
-
-        -- Disable color picker when label bar is hidden (color is irrelevant)
-        local function UpdateColorPickerState()
-            local isHidden = rbDB.hideLabelBar
-            if rbTextColorPicker.SetEnabled then
-                rbTextColorPicker:SetEnabled(not isHidden)
-            end
-            -- Visual feedback: dim the control when disabled
-            rbTextColorPicker:SetAlpha(isHidden and 0.5 or 1.0)
-        end
-        rbHideLabelCheck.track:HookScript("OnClick", UpdateColorPickerState)
-        UpdateColorPickerState()  -- Set initial state
-        -- Preview toggle button
-        local previewBtn = GUI:CreateButton(tabContent, "Toggle Preview", 120, 24)
-        previewBtn:SetPoint("TOPLEFT", PADDING, y)
-        previewBtn:SetScript("OnClick", function()
-            if _G.GravityUI_ToggleRaidBuffsPreview then
-                local isPreview = _G.GravityUI_ToggleRaidBuffsPreview()
-                previewBtn:SetText(isPreview and "Hide Preview" or "Toggle Preview")
-            end
-        end)
-        y = y - 35
-
-        y = y - 10
-        -- Quick Salvage Section
-        local quickSalvageHeader = GUI:CreateSectionHeader(tabContent, "Quick Salvage")
-        quickSalvageHeader:SetPoint("TOPLEFT", PADDING, y)
-        y = y - quickSalvageHeader.gap
-
-        local quickSalvageDesc = GUI:CreateLabel(tabContent,
-            "Mill, prospect, or disenchant items with a single click using a modifier key. Requires the corresponding profession.",
-            11, C.textMuted)
-        quickSalvageDesc:SetPoint("TOPLEFT", PADDING, y)
-        quickSalvageDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-        quickSalvageDesc:SetJustifyH("LEFT")
-        quickSalvageDesc:SetWordWrap(true)
-        quickSalvageDesc:SetHeight(20)
-        y = y - 30
-
-        -- Ensure quickSalvage settings exist
-        if not db.general.quickSalvage then
-            db.general.quickSalvage = { enabled = false, modifier = "ALT" }
-        end
-        local qsDB = db.general.quickSalvage
-
-        local qsEnableCheck = GUI:CreateFormCheckbox(tabContent, "Enable Quick Salvage", "enabled", qsDB, function()
-            if _G.GravityUI_RefreshQuickSalvage then _G.GravityUI_RefreshQuickSalvage() end
-        end)
-        qsEnableCheck:SetPoint("TOPLEFT", PADDING, y)
-        qsEnableCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-        y = y - FORM_ROW
-
-        local modifierOptions = {
-            {value = "ALT", text = "Alt"},
-            {value = "ALTCTRL", text = "Alt + Ctrl"},
-            {value = "ALTSHIFT", text = "Alt + Shift"},
-        }
-        local qsModifierDropdown = GUI:CreateFormDropdown(tabContent, "Modifier Key", modifierOptions, "modifier", qsDB, function()
-            if _G.GravityUI_RefreshQuickSalvage then _G.GravityUI_RefreshQuickSalvage() end
-        end)
-        qsModifierDropdown:SetPoint("TOPLEFT", PADDING, y)
-        qsModifierDropdown:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-        y = y - FORM_ROW
-
-        local qsActionsDesc = GUI:CreateLabel(tabContent,
-            "Milling: Herbs (5+ stack)  |  Prospecting: Ores (5+ stack)  |  Disenchanting: Green+ gear",
-            11, C.textMuted)
-        qsActionsDesc:SetPoint("TOPLEFT", PADDING, y)
-        qsActionsDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-        qsActionsDesc:SetJustifyH("LEFT")
-        qsActionsDesc:SetWordWrap(true)
-        qsActionsDesc:SetHeight(20)
-        y = y - 30
-
-        y = y - 10
-
-        -- M+ Dungeons Section
-        local mplusHeader = GUI:CreateSectionHeader(tabContent, "M+ Dungeons")
-        mplusHeader:SetPoint("TOPLEFT", PADDING, y)
-        y = y - mplusHeader.gap
-
-        local mplusDesc = GUI:CreateLabel(tabContent,
-            "Click dungeon icons in the M+ tab to teleport (requires +20 achievement for that dungeon).",
-            11, C.textMuted)
-        mplusDesc:SetPoint("TOPLEFT", PADDING, y)
-        mplusDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-        mplusDesc:SetJustifyH("LEFT")
-        mplusDesc:SetWordWrap(true)
-        mplusDesc:SetHeight(20)
-        y = y - 30
-
-        if db.general.mplusTeleportEnabled == nil then db.general.mplusTeleportEnabled = true end
-        local teleportCheck = GUI:CreateFormCheckbox(tabContent, "Click-to-Teleport on M+ Tab", "mplusTeleportEnabled", db.general, nil)
-        teleportCheck:SetPoint("TOPLEFT", PADDING, y)
-        teleportCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-        y = y - FORM_ROW
-
-        if db.general.keyTrackerEnabled == nil then db.general.keyTrackerEnabled = true end
-        local keyTrackerCheck = GUI:CreateFormCheckbox(tabContent, "Show Party Keys on M+ Tab", "keyTrackerEnabled", db.general, nil)
-        keyTrackerCheck:SetPoint("TOPLEFT", PADDING, y)
-        keyTrackerCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-        y = y - FORM_ROW
-
-        if db.general.keyTrackerFontSize == nil then db.general.keyTrackerFontSize = 9 end
-        local fontSizeSlider = GUI:CreateFormSlider(tabContent, "Key Tracker Font Size", 7, 12, 1, "keyTrackerFontSize", db.general, function()
-            if _G.GravityUI_RefreshKeyTrackerFonts then
-                _G.GravityUI_RefreshKeyTrackerFonts()
-            end
-        end)
-        fontSizeSlider:SetPoint("TOPLEFT", PADDING, y)
-        fontSizeSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-        y = y - FORM_ROW
-        y = y - 10
-
-        -- Others Section
-        local othersHeader = GUI:CreateSectionHeader(tabContent, "Others")
-        othersHeader:SetPoint("TOPLEFT", PADDING, y)
-        y = y - othersHeader.gap
-
-        local minimapBtnDB = db.minimapButton
-        if minimapBtnDB then
-            local showMinimapIconCheck = GUI:CreateFormCheckbox(tabContent, "Hide GUI Minimap Icon", "hide", minimapBtnDB, function(dbVal)
-                local LibDBIcon = LibStub("LibDBIcon-1.0", true)
-                if LibDBIcon then
-                    if dbVal then
-                        LibDBIcon:Hide("GravityUI")
-                    else
-                        LibDBIcon:Show("GravityUI")
-                    end
-                end
-            end)
-            showMinimapIconCheck:SetPoint("TOPLEFT", PADDING, y)
-            showMinimapIconCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-            y = y - FORM_ROW
-        end
-
-        local panelAlphaSlider = GUI:CreateFormSlider(tabContent, "GUI Panel Transparency", 0.3, 1.0, 0.01, "configPanelAlpha", db, function(val)
-            local mainFrame = GUI.MainFrame
-            if mainFrame then
-                local bgColor = GUI.Colors.bg
-                mainFrame:SetBackdropColor(bgColor[1], bgColor[2], bgColor[3], val)
-            end
-        end)
-        panelAlphaSlider:SetPoint("TOPLEFT", PADDING, y)
-        panelAlphaSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-        y = y - FORM_ROW
-
         tabContent:SetHeight(math.abs(y) + 50)
     end
+
 
     -- =====================================================
     -- SUB-TAB: HUD VISIBILITY
@@ -1750,7 +2735,7 @@ db.raidBuffs = { enabled = true, showOnlyInGroup = true, showOnlyInInstance = fa
         local FORM_ROW = 32
 
         -- Set search context for auto-registration
-        GUI:SetSearchContext({tabIndex = 1, tabName = "Main & QoL", subTabIndex = 2, subTabName = "HUD Visibility"})
+        GUI:SetSearchContext({tabIndex = 1, tabName = "Main & QoL", subTabIndex = 3, subTabName = "HUD Visibility"})
 
         -- Ensure cdmVisibility settings exist
         if not db.cdmVisibility then db.cdmVisibility = {} end
@@ -2010,7 +2995,7 @@ db.raidBuffs = { enabled = true, showOnlyInGroup = true, showOnlyInInstance = fa
             end
         end
 
-        local ctHeader = GUI:CreateSectionHeader(tabContent, "Custom Items/Spells/Buffs Bars")
+        local ctHeader = GUI:CreateSectionHeader(tabContent, "Custom Items/Spells Bars")
         ctHeader:SetPoint("TOPLEFT", PADDING, y)
         y = y - ctHeader.gap
 
@@ -2110,6 +3095,233 @@ db.raidBuffs = { enabled = true, showOnlyInGroup = true, showOnlyInInstance = fa
     end
 
     -- =====================================================
+    -- SUB-TAB: HUD LAYERING
+    -- =====================================================
+    local function BuildHUDLayeringTab(tabContent)
+        local y = -15
+        local FORM_ROW = 32
+
+        -- Set search context for auto-registration
+        GUI:SetSearchContext({tabIndex = 1, tabName = "Main & QoL", subTabIndex = 4, subTabName = "HUD Layering"})
+
+        local guiCore = _G.GravityUI and _G.GravityUI.guiCore
+        local db = guiCore and guiCore.db and guiCore.db.profile
+                                                                                                      
+        -- Helper to get hudLayering table (with fallback initialization)
+        local function GetLayeringDB()
+            if not db then return nil end
+            if not db.hudLayering then
+                db.hudLayering = {
+                    essential = 5, utility = 5, buffIcon = 5,
+                    primaryPowerBar = 7, secondaryPowerBar = 6,
+                    playerFrame = 4, targetFrame = 4, totFrame = 3, petFrame = 3, focusFrame = 4, bossFrames = 4,
+                    playerCastbar = 5, targetCastbar = 5,
+                    playerIndicators = 5,  -- Player frame indicator icons (rested, combat, stance)                                                               
+                    customBars = 5,
+                    skyridingHUD = 5,                                 
+                }
+            end
+            return db.hudLayering
+        end
+
+        -- Refresh functions for each component type
+        local function RefreshCDM()
+            if NCDM and NCDM.ApplySettings then
+                NCDM:ApplySettings("essential")
+                NCDM:ApplySettings("utility")                                                               
+            end
+            if _G.GravityUI_RefreshBuffBar then
+                _G.GravityUI_RefreshBuffBar()
+            end                                                                    
+        end
+
+        local function RefreshPowerBars()
+            if guiCore and guiCore.UpdatePowerBar then
+                guiCore:UpdatePowerBar()
+            end
+            if guiCore and guiCore.UpdateSecondaryPowerBar then
+                guiCore:UpdateSecondaryPowerBar()
+            end
+        end
+
+        local function RefreshUnitFrames()
+            if _G.GravityUI_RefreshUnitFrames then
+                _G.GravityUI_RefreshUnitFrames()
+            end
+        end
+
+        local function RefreshCastbars()
+            if _G.GravityUI_RefreshCastbars then
+                _G.GravityUI_RefreshCastbars()
+            end
+        end
+
+        local function RefreshCustomTrackers()
+            if _G.GravityUI_RefreshCustomTrackers then
+                _G.GravityUI_RefreshCustomTrackers()
+            end
+        end
+
+        local function RefreshSkyriding()
+            if _G.GravityUI_RefreshSkyriding then
+                _G.GravityUI_RefreshSkyriding()                                  
+            end
+        end
+
+        -- Header description
+        local info = GUI:CreateLabel(tabContent, "Control which HUD elements appear above others. Higher values render on top of lower values.", 11, C.textMuted)
+        info:SetPoint("TOPLEFT", PADDING, y)
+        info:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+        info:SetJustifyH("LEFT")
+        y = y - 28
+
+        local layeringDB = GetLayeringDB()
+        if not layeringDB then
+            local errorLabel = GUI:CreateLabel(tabContent, "Database not loaded. Please reload UI.", 12, {1, 0.3, 0.3, 1})
+            errorLabel:SetPoint("TOPLEFT", PADDING, y)
+            return
+        end
+
+        -- =====================================================
+        -- COOLDOWN DISPLAY MANAGER SECTION
+        -- =====================================================
+        local cdmHeader = GUI:CreateSectionHeader(tabContent, "Cooldown Display Manager")
+        cdmHeader:SetPoint("TOPLEFT", PADDING, y)
+        y = y - cdmHeader.gap
+
+        local essentialSlider = GUI:CreateFormSlider(tabContent, "Essential Viewer", 0, 10, 1, "essential", layeringDB, RefreshCDM)
+        essentialSlider:SetPoint("TOPLEFT", PADDING, y)
+        essentialSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+        y = y - FORM_ROW
+
+        local utilitySlider = GUI:CreateFormSlider(tabContent, "Utility Viewer", 0, 10, 1, "utility", layeringDB, RefreshCDM)
+        utilitySlider:SetPoint("TOPLEFT", PADDING, y)
+        utilitySlider:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+        y = y - FORM_ROW
+
+        local buffIconSlider = GUI:CreateFormSlider(tabContent, "Buff Icon Viewer", 0, 10, 1, "buffIcon", layeringDB, RefreshCDM)
+        buffIconSlider:SetPoint("TOPLEFT", PADDING, y)
+        buffIconSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+        y = y - FORM_ROW
+
+        local buffBarSlider = GUI:CreateFormSlider(tabContent, "Buff Bar Viewer", 0, 10, 1, "buffBar", layeringDB, RefreshCDM)
+        buffBarSlider:SetPoint("TOPLEFT", PADDING, y)
+        buffBarSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+        y = y - FORM_ROW
+        y = y - 10
+
+        -- =====================================================
+        -- POWER BARS SECTION
+        -- =====================================================
+        local powerHeader = GUI:CreateSectionHeader(tabContent, "Power Bars")
+        powerHeader:SetPoint("TOPLEFT", PADDING, y)
+        y = y - powerHeader.gap
+
+        local primaryPowerSlider = GUI:CreateFormSlider(tabContent, "Primary Power Bar", 0, 10, 1, "primaryPowerBar", layeringDB, RefreshPowerBars)
+        primaryPowerSlider:SetPoint("TOPLEFT", PADDING, y)
+        primaryPowerSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+        y = y - FORM_ROW
+
+        local secondaryPowerSlider = GUI:CreateFormSlider(tabContent, "Secondary Power Bar", 0, 10, 1, "secondaryPowerBar", layeringDB, RefreshPowerBars)
+        secondaryPowerSlider:SetPoint("TOPLEFT", PADDING, y)
+        secondaryPowerSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+        y = y - FORM_ROW
+
+        y = y - 10
+
+        -- =====================================================
+        -- UNIT FRAMES SECTION
+        -- =====================================================
+        local ufHeader = GUI:CreateSectionHeader(tabContent, "Unit Frames")
+        ufHeader:SetPoint("TOPLEFT", PADDING, y)
+        y = y - ufHeader.gap
+
+        local playerFrameSlider = GUI:CreateFormSlider(tabContent, "Player Frame", 0, 10, 1, "playerFrame", layeringDB, RefreshUnitFrames)
+        playerFrameSlider:SetPoint("TOPLEFT", PADDING, y)
+        playerFrameSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+        y = y - FORM_ROW
+
+        local playerIndicatorsSlider = GUI:CreateFormSlider(tabContent, "Player Status Indicators", 0, 10, 1, "playerIndicators", layeringDB, RefreshUnitFrames)
+        playerIndicatorsSlider:SetPoint("TOPLEFT", PADDING, y)
+        playerIndicatorsSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+        y = y - FORM_ROW
+
+        local targetFrameSlider = GUI:CreateFormSlider(tabContent, "Target Frame", 0, 10, 1, "targetFrame", layeringDB, RefreshUnitFrames)
+        targetFrameSlider:SetPoint("TOPLEFT", PADDING, y)
+        targetFrameSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+        y = y - FORM_ROW
+
+        local totFrameSlider = GUI:CreateFormSlider(tabContent, "Target of Target", 0, 10, 1, "totFrame", layeringDB, RefreshUnitFrames)
+        totFrameSlider:SetPoint("TOPLEFT", PADDING, y)
+        totFrameSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+        y = y - FORM_ROW
+
+        local petFrameSlider = GUI:CreateFormSlider(tabContent, "Pet Frame", 0, 10, 1, "petFrame", layeringDB, RefreshUnitFrames)
+        petFrameSlider:SetPoint("TOPLEFT", PADDING, y)
+        petFrameSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+        y = y - FORM_ROW
+
+        local focusFrameSlider = GUI:CreateFormSlider(tabContent, "Focus Frame", 0, 10, 1, "focusFrame", layeringDB, RefreshUnitFrames)
+        focusFrameSlider:SetPoint("TOPLEFT", PADDING, y)
+        focusFrameSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+        y = y - FORM_ROW
+
+        local bossFramesSlider = GUI:CreateFormSlider(tabContent, "Boss Frames", 0, 10, 1, "bossFrames", layeringDB, RefreshUnitFrames)
+        bossFramesSlider:SetPoint("TOPLEFT", PADDING, y)
+        bossFramesSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+        y = y - FORM_ROW
+
+        y = y - 10
+
+        -- =====================================================
+        -- CASTBARS SECTION
+        -- =====================================================
+        local castbarHeader = GUI:CreateSectionHeader(tabContent, "Castbars")
+        castbarHeader:SetPoint("TOPLEFT", PADDING, y)
+        y = y - castbarHeader.gap
+
+        local playerCastbarSlider = GUI:CreateFormSlider(tabContent, "Player Castbar", 0, 10, 1, "playerCastbar", layeringDB, RefreshCastbars)
+        playerCastbarSlider:SetPoint("TOPLEFT", PADDING, y)
+        playerCastbarSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+        y = y - FORM_ROW
+
+        local targetCastbarSlider = GUI:CreateFormSlider(tabContent, "Target Castbar", 0, 10, 1, "targetCastbar", layeringDB, RefreshCastbars)
+        targetCastbarSlider:SetPoint("TOPLEFT", PADDING, y)
+        targetCastbarSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+        y = y - FORM_ROW
+
+        y = y - 10
+
+        -- =====================================================
+        -- CUSTOM TRACKERS SECTION
+        -- =====================================================
+        local customHeader = GUI:CreateSectionHeader(tabContent, "Custom Trackers")
+        customHeader:SetPoint("TOPLEFT", PADDING, y)
+        y = y - customHeader.gap
+
+        local customBarsSlider = GUI:CreateFormSlider(tabContent, "Custom Items/Spells Bar", 0, 10, 1, "customBars", layeringDB, RefreshCustomTrackers)
+        customBarsSlider:SetPoint("TOPLEFT", PADDING, y)
+        customBarsSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+        y = y - FORM_ROW
+
+        y = y - 10
+
+        -- =====================================================
+        -- SKYRIDING SECTION
+        -- =====================================================
+        local skyridingHeader = GUI:CreateSectionHeader(tabContent, "Skyriding")
+        skyridingHeader:SetPoint("TOPLEFT", PADDING, y)
+        y = y - skyridingHeader.gap
+
+        local skyridingSlider = GUI:CreateFormSlider(tabContent, "Skyriding HUD", 0, 10, 1, "skyridingHUD", layeringDB, RefreshSkyriding)
+        skyridingSlider:SetPoint("TOPLEFT", PADDING, y)
+        skyridingSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
+        y = y - FORM_ROW
+
+        tabContent:SetHeight(math.abs(y) + 50)
+    end
+
+    -- =====================================================
     -- SUB-TAB: CURSOR & CROSSHAIR
     -- =====================================================
     local function BuildCrosshairTab(tabContent)
@@ -2117,7 +3329,7 @@ db.raidBuffs = { enabled = true, showOnlyInGroup = true, showOnlyInInstance = fa
         local FORM_ROW = 32
 
         -- Set search context for auto-registration
-        GUI:SetSearchContext({tabIndex = 1, tabName = "Main & QoL", subTabIndex = 3, subTabName = "Cursor & Crosshair"})
+        GUI:SetSearchContext({tabIndex = 1, tabName = "Main & QoL", subTabIndex = 5, subTabName = "Cursor & Crosshair"})
 
         -- ========== CURSOR RING SECTION (before crosshair) ==========
         local cursorHeader = GUI:CreateSectionHeader(tabContent, "Cursor Ring")
@@ -2368,7 +3580,7 @@ db.raidBuffs = { enabled = true, showOnlyInGroup = true, showOnlyInInstance = fa
         local FORM_ROW = 32
 
         -- Set search context for auto-registration
-        GUI:SetSearchContext({tabIndex = 1, tabName = "Main & QoL", subTabIndex = 4, subTabName = "Buff & Debuff"})
+        GUI:SetSearchContext({tabIndex = 1, tabName = "Main & QoL", subTabIndex = 6, subTabName = "Buff & Debuff"})
 
         -- Section Header
         local header = GUI:CreateSectionHeader(tabContent, "Buff & Debuff Borders")
@@ -2447,7 +3659,7 @@ db.raidBuffs = { enabled = true, showOnlyInGroup = true, showOnlyInInstance = fa
         local FORM_ROW = 32
 
         -- Set search context for auto-registration
-        GUI:SetSearchContext({tabIndex = 1, tabName = "Main & QoL", subTabIndex = 5, subTabName = "Chat"})
+        GUI:SetSearchContext({tabIndex = 1, tabName = "Main & QoL", subTabIndex = 7, subTabName = "Chat"})
 
         -- Refresh callback
         local function RefreshChat()
@@ -2648,7 +3860,7 @@ db.raidBuffs = { enabled = true, showOnlyInGroup = true, showOnlyInInstance = fa
         local FORM_ROW = 32
 
         -- Set search context for auto-registration
-        GUI:SetSearchContext({tabIndex = 1, tabName = "Main & QoL", subTabIndex = 6, subTabName = "Tooltip"})
+        GUI:SetSearchContext({tabIndex = 1, tabName = "Main & QoL", subTabIndex = 8, subTabName = "Tooltip"})
 
         -- Refresh callback
         local function RefreshTooltips()
@@ -2761,7 +3973,7 @@ db.raidBuffs = { enabled = true, showOnlyInGroup = true, showOnlyInInstance = fa
             cdmDropdown:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
             y = y - FORM_ROW
 
-            local customTrackersDropdown = GUI:CreateFormDropdown(tabContent, "Custom Items/Spells/Buffs", visibilityOptions, "customTrackers", tooltip.visibility, RefreshTooltips)
+            local customTrackersDropdown = GUI:CreateFormDropdown(tabContent, "Custom Items/Spells", visibilityOptions, "customTrackers", tooltip.visibility, RefreshTooltips)
             customTrackersDropdown:SetPoint("TOPLEFT", PADDING, y)
             customTrackersDropdown:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
             y = y - FORM_ROW					
@@ -2877,7 +4089,7 @@ db.raidBuffs = { enabled = true, showOnlyInGroup = true, showOnlyInInstance = fa
         local y = -10
 
         -- Set search context for auto-registration
-        GUI:SetSearchContext({tabIndex = 1, tabName = "Main & QoL", subTabIndex = 7, subTabName = "Character Pane"})
+        GUI:SetSearchContext({tabIndex = 1, tabName = "Main & QoL", subTabIndex = 9, subTabName = "Character Pane"})
 
         local char = db and db.character
         if not char then return end
@@ -2979,7 +4191,7 @@ db.raidBuffs = { enabled = true, showOnlyInGroup = true, showOnlyInInstance = fa
         local FORM_ROW = 32
 
         -- Set search context for auto-registration
-        GUI:SetSearchContext({tabIndex = 1, tabName = "Main & QoL", subTabIndex = 8, subTabName = "Dragonriding"})
+        GUI:SetSearchContext({tabIndex = 1, tabName = "Main & QoL", subTabIndex = 10, subTabName = "Dragonriding"})
 
         -- Refresh callback
         local function RefreshSkyriding()
@@ -3253,7 +4465,9 @@ db.raidBuffs = { enabled = true, showOnlyInGroup = true, showOnlyInInstance = fa
     -- =====================================================
     local subTabs = GUI:CreateSubTabs(parent, {
         {name = "General", builder = BuildGeneralTab},
+        {name = "Automation", builder = BuildAutomationTab},
         {name = "HUD Visibility", builder = BuildHUDVisibilityTab},
+        {name = "HUD Layering", builder = BuildHUDLayeringTab},
         {name = "Cursor & Crosshair", builder = BuildCrosshairTab},
         {name = "Buff & Debuff", builder = BuildBuffDebuffTab},
         {name = "Chat", builder = BuildChatTab},
@@ -3268,1056 +4482,6 @@ db.raidBuffs = { enabled = true, showOnlyInGroup = true, showOnlyInInstance = fa
 end
 
 ---------------------------------------------------------------------------
--- PAGE: Autohide & Skinning (with sub-tabs)
----------------------------------------------------------------------------
-local function CreateAutohidesPage(parent)
-    local db = GetDB()
-
-    -- Build Autohide sub-tab
-    local function BuildAutohideTab(tabContent)
-        local y = -10
-        local PAD = 10
-        local FORM_ROW = 32
-
-        GUI:SetSearchContext({tabIndex = 5, tabName = "Autohide & Skinning", subTabIndex = 1, subTabName = "Autohide"})
-        GUI:SetSearchSection("Autohide Settings")
-				  																																 																																					  
-        if db then
-            if not db.uiHider then db.uiHider = {} end
-
-            -- ═══════════════════════════════════════════════════════════════
-            -- SECTION: Objective Tracker
-            -- ═══════════════════════════════════════════════════════════════
-            local objHeader = GUI:CreateSectionHeader(tabContent, "Objective Tracker")
-            objHeader:SetPoint("TOPLEFT", PAD, y)
-            y = y - objHeader.gap
-
-            local checkAlways = GUI:CreateFormCheckbox(tabContent, "Hide Always", "hideObjectiveTrackerAlways", db.uiHider, RefreshUIHider)
-            checkAlways:SetPoint("TOPLEFT", PAD, y)
-            checkAlways:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
-            y = y - FORM_ROW
-
-            -- Ensure instance types table exists
-            if not db.uiHider.hideObjectiveTrackerInstanceTypes then
-                db.uiHider.hideObjectiveTrackerInstanceTypes = {
-                    mythicPlus = true,
-                    mythicDungeon = false,
-                    normalDungeon = false,
-                    heroicDungeon = false,
-                    followerDungeon = false,
-                    raid = true,
-                    pvp = false,
-                    arena = false,
-                }
-            end
-
-            local instanceTypes = {
-                {key = "mythicPlus", label = "Hide in Mythic+"},
-                {key = "mythicDungeon", label = "Hide in Mythic Dungeons"},
-                {key = "heroicDungeon", label = "Hide in Heroic Dungeons"},
-                {key = "normalDungeon", label = "Hide in Normal Dungeons"},
-                {key = "followerDungeon", label = "Hide in Follower Dungeons"},
-                {key = "raid", label = "Hide in Raids"},
-                {key = "pvp", label = "Hide in Battlegrounds"},
-                {key = "arena", label = "Hide in Arenas"},
-            }
-
-            for _, instanceType in ipairs(instanceTypes) do
-                local checkInstance = GUI:CreateFormCheckbox(tabContent, instanceType.label, instanceType.key, db.uiHider.hideObjectiveTrackerInstanceTypes, RefreshUIHider)
-                checkInstance:SetPoint("TOPLEFT", PAD, y)
-                checkInstance:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
-                y = y - FORM_ROW
-            end
-
-            -- ═══════════════════════════════════════════════════════════════
-            -- SECTION: Frames & Buttons
-            -- ═══════════════════════════════════════════════════════════════
-            local framesHeader = GUI:CreateSectionHeader(tabContent, "Frames & Buttons")
-            framesHeader:SetPoint("TOPLEFT", PAD, y)
-            y = y - framesHeader.gap
-
-            local frameOptions = {
-                {key = "hideRaidFrameManager", label = "Hide Compact Raid Frame Manager"},
-                {key = "hideBuffCollapseButton", label = "Hide Buff Frame Collapse Button"},
-                {key = "hideTalkingHead", label = "Hide Talking Head Frame"},
-                {key = "muteTalkingHead", label = "Mute Talking Head Voice"},
-                {key = "hideWorldMapBlackout", label = "Hide World Map Blackout"},
-            }
-
-            for _, opt in ipairs(frameOptions) do
-                local check = GUI:CreateFormCheckbox(tabContent, opt.label, opt.key, db.uiHider, RefreshUIHider)
-                check:SetPoint("TOPLEFT", PAD, y)
-                check:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
-                y = y - FORM_ROW
-            end
-
-            -- ═══════════════════════════════════════════════════════════════
-            -- SECTION: Nameplates
-            -- ═══════════════════════════════════════════════════════════════
-            local nameplatesHeader = GUI:CreateSectionHeader(tabContent, "Nameplates")
-            nameplatesHeader:SetPoint("TOPLEFT", PAD, y)
-            y = y - nameplatesHeader.gap
-
-            local nameplateOptions = {
-                {key = "hideFriendlyPlayerNameplates", label = "Hide Friendly Player Nameplates"},
-                {key = "hideFriendlyNPCNameplates", label = "Hide Friendly NPC Nameplates"},
-            }
-
-            for _, opt in ipairs(nameplateOptions) do
-                local check = GUI:CreateFormCheckbox(tabContent, opt.label, opt.key, db.uiHider, RefreshUIHider)
-                check:SetPoint("TOPLEFT", PAD, y)
-                check:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
-                y = y - FORM_ROW
-            end
-
-            -- ═══════════════════════════════════════════════════════════════
-            -- SECTION: Status Bars
-            -- ═══════════════════════════════════════════════════════════════
-            local barsHeader = GUI:CreateSectionHeader(tabContent, "Status Bars")
-            barsHeader:SetPoint("TOPLEFT", PAD, y)
-            y = y - barsHeader.gap
-
-            local barOptions = {
-                {key = "hideExperienceBar", label = "Hide Experience Bar (XP)"},
-                {key = "hideReputationBar", label = "Hide Reputation Bar"},
-            }
-
-            for _, opt in ipairs(barOptions) do
-                local check = GUI:CreateFormCheckbox(tabContent, opt.label, opt.key, db.uiHider, RefreshUIHider)
-                check:SetPoint("TOPLEFT", PAD, y)
-                check:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
-                y = y - FORM_ROW
-            end
-
-            -- ═══════════════════════════════════════════════════════════════
-            -- SECTION: Combat & Messages
-            -- ═══════════════════════════════════════════════════════════════
-            local combatHeader = GUI:CreateSectionHeader(tabContent, "Combat & Messages")
-            combatHeader:SetPoint("TOPLEFT", PAD, y)
-            y = y - combatHeader.gap
-
-            local combatOptions = {
-                {key = "hideErrorMessages", label = "Hide Error Messages (Red Text)"},																			  
-            }
-
-            for _, opt in ipairs(combatOptions) do
-                local check = GUI:CreateFormCheckbox(tabContent, opt.label, opt.key, db.uiHider, RefreshUIHider)
-                check:SetPoint("TOPLEFT", PAD, y)
-                check:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
-                y = y - FORM_ROW
-            end
-        end
-
-        tabContent:SetHeight(math.abs(y) + 50)
-    end
-
-    -- Build Skinning sub-tab
-    local function BuildSkinningTab(tabContent)
-        local y = -10
-        local PAD = 10
-        local FORM_ROW = 32
-
-        GUI:SetSearchContext({tabIndex = 5, tabName = "Autohide & Skinning", subTabIndex = 2, subTabName = "Skinning"})
-
-        if db and db.general then
-            local general = db.general
-
-            -- Initialize defaults
-            if general.skinUseClassColor == nil then general.skinUseClassColor = true end
-            if general.skinCustomColor == nil then general.skinCustomColor = {0.2, 1.0, 0.6, 1} end
-            if general.skinKeystoneFrame == nil then general.skinKeystoneFrame = true end
-
-            -- ═══════════════════════════════════════════════════════════════
-            -- CHOOSE DEFAULT COLOR SECTION
-            -- ═══════════════════════════════════════════════════════════════
-            GUI:SetSearchSection("Choose Default Color")
-
-            local colorHeader = GUI:CreateSectionHeader(tabContent, "Choose Default Color")
-            colorHeader:SetPoint("TOPLEFT", PAD, y)
-            y = y - colorHeader.gap
-
-            local customColorPicker  -- Forward declare for closure
-
-            -- Helper to refresh all skinned frames when colors change
-            local function RefreshAllSkinning()
-                if _G.GravityUI_RefreshKeystoneColors then
-                    _G.GravityUI_RefreshKeystoneColors()
-                end
-                if _G.GravityUI_RefreshAlertColors then
-                    _G.GravityUI_RefreshAlertColors()
-                end
-                if _G.GravityUI_RefreshLootColors then
-                    _G.GravityUI_RefreshLootColors()
-                end
-                if _G.GravityUI_RefreshMPlusTimerColors then
-                    _G.GravityUI_RefreshMPlusTimerColors()
-                end
-                if _G.GravityUI_RefreshCharacterFrameColors then
-                    _G.GravityUI_RefreshCharacterFrameColors()
-                end
-                if _G.GravityUI_RefreshInspectColors then
-                    _G.GravityUI_RefreshInspectColors()
-                end
-                if _G.GravityUI_RefreshPowerBarAltColors then
-                    _G.GravityUI_RefreshPowerBarAltColors()
-                end
-                if _G.GravityUI_RefreshGameMenuColors then
-                    _G.GravityUI_RefreshGameMenuColors()								   
-                end
-                if _G.GravityUI_RefreshOverrideActionBarColors then
-                    _G.GravityUI_RefreshOverrideActionBarColors()
-                end
-                if _G.GravityUI_RefreshObjectiveTrackerColors then
-                    _G.GravityUI_RefreshObjectiveTrackerColors()
-                end
-                if _G.GravityUI_RefreshInstanceFramesColors then
-                    _G.GravityUI_RefreshInstanceFramesColors()
-                end
-                if _G.GravityUI_RefreshReadyCheckColors then
-                    _G.GravityUI_RefreshReadyCheckColors()									 
-                end							
-            end
-
-            local useClassColorCheck = GUI:CreateFormCheckbox(tabContent, "Use Class Colors", "skinUseClassColor", general, function()
-                if customColorPicker then
-                    customColorPicker:SetEnabled(not general.skinUseClassColor)
-                end
-                RefreshAllSkinning()
-            end)
-            useClassColorCheck:SetPoint("TOPLEFT", PAD, y)
-            useClassColorCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
-            y = y - FORM_ROW
-
-            customColorPicker = GUI:CreateFormColorPicker(tabContent, "Custom Color", "skinCustomColor", general, RefreshAllSkinning, { noAlpha = true })
-            customColorPicker:SetPoint("TOPLEFT", PAD, y)
-            customColorPicker:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
-            customColorPicker:SetEnabled(not general.skinUseClassColor)  -- Initial state
-            y = y - FORM_ROW
-
-            y = y - 10  -- Extra padding before background color
-
-            -- Background color (with alpha for transparency)
-            if general.skinBgColor == nil then general.skinBgColor = { 0.05, 0.05, 0.05, 0.95 } end
-
-            local bgColorPicker = GUI:CreateFormColorPicker(tabContent, "Background Color", "skinBgColor", general, RefreshAllSkinning, { hasAlpha = true })
-            bgColorPicker:SetPoint("TOPLEFT", PAD, y)
-            bgColorPicker:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
-            y = y - FORM_ROW
-
-            y = y - 10  -- Extra padding before next section
-
-            -- ═══════════════════════════════════════════════════════════════
-            -- GAME MENU SECTION
-            -- ═══════════════════════════════════════════════════════════════
-            GUI:SetSearchSection("Game Menu")
-
-            if general.skinGameMenu == nil then general.skinGameMenu = false end
-            if general.addGravityUIButton == nil then general.addGravityUIButton = false end
-			if general.gameMenuFontSize == nil then general.gameMenuFontSize = 14 end
-
-            local gameMenuHeader = GUI:CreateSectionHeader(tabContent, "Game Menu")
-            gameMenuHeader:SetPoint("TOPLEFT", PAD, y)
-            y = y - gameMenuHeader.gap
-
-            local gameMenuDesc = GUI:CreateLabel(tabContent, "Customize the ESC menu appearance and add a Quick access button.", 11, C.textMuted)
-            gameMenuDesc:SetPoint("TOPLEFT", PAD, y)
-            gameMenuDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
-            gameMenuDesc:SetJustifyH("LEFT")
-            gameMenuDesc:SetWordWrap(true)
-            gameMenuDesc:SetHeight(20)
-            y = y - 28
-
-            local gameMenuCheck = GUI:CreateFormCheckbox(tabContent, "Skin Game Menu", "skinGameMenu", general, function()
-                GUI:ShowConfirmation({
-                    title = "Reload UI?",
-                    message = "Skinning changes require a reload to take effect.",
-                    acceptText = "Reload",
-                    cancelText = "Later",
-                    onAccept = function() GravityUI:SafeReload() end,
-                })
-            end)
-            gameMenuCheck:SetPoint("TOPLEFT", PAD, y)
-            gameMenuCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
-            y = y - FORM_ROW
-
-            local addGUIButtonCheck = GUI:CreateFormCheckbox(tabContent, "Add Gravity UI Button", "addGravityUIButton", general, function()
-                GUI:ShowConfirmation({
-                    title = "Reload UI?",
-                    message = "Button changes require a reload to take effect.",
-                    acceptText = "Reload",
-                    cancelText = "Later",
-                    onAccept = function() GravityUI:SafeReload() end,
-                })
-            end)
-            addGUIButtonCheck:SetPoint("TOPLEFT", PAD, y)
-            addGUIButtonCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
-            y = y - FORM_ROW
-
-            local gameMenuFontSlider = GUI:CreateFormSlider(tabContent, "Button Font Size", 8, 18, 1, "gameMenuFontSize", general, function()
-                if _G.GravityUI_RefreshGameMenuFontSize then
-                    _G.GravityUI_RefreshGameMenuFontSize()
-                end
-            end)
-            gameMenuFontSlider:SetPoint("TOPLEFT", PAD, y)
-            gameMenuFontSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
-            y = y - FORM_ROW
-
-            y = y - 10  -- Extra padding before next section
-			
-			-- ═══════════════════════════════════════════════════════════════
-            -- CHATBUBBLE CUSTOMIZATION SECTION
-            -- ═══════════════════════════════════════════════════════════════
-            GUI:SetSearchSection("Chat Bubble Customization")
-            local chatbbubbleHeader = GUI:CreateSectionHeader(tabContent, "Chat Bubble Customization")
-            chatbbubbleHeader:SetPoint("TOPLEFT", PADDING, y)
-            y = y - chatbbubbleHeader.gap
-
-			local chatbubbleDesc = GUI:CreateLabel(tabContent, " Chatbubbles uses the Global Font from General Tab.", 11, C.textMuted)
-            chatbubbleDesc:SetPoint("TOPLEFT", PAD, y)
-            chatbubbleDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
-            chatbubbleDesc:SetJustifyH("LEFT")
-            chatbubbleDesc:SetWordWrap(true)
-            chatbubbleDesc:SetHeight(20)
-			y = y - 28
-
-            -- Hilfsfunktion für den Refresh
-            local function RefreshCB()
-                if _G.GravityUI_RefreshChatBubbles then _G.GravityUI_RefreshChatBubbles() end
-            end
-
-            -- Slider für die Schriftgröße
-            -- Wir nutzen "CreateFormSlider" passend zum Rest deiner Datei
-            local cbSizeSlider = GUI:CreateFormSlider(tabContent, "Chat Bubble Font Size", 4, 32, 1, "chatBubbleFontSize", db.general, RefreshCB)
-            cbSizeSlider:SetPoint("TOPLEFT", PADDING, y)
-            cbSizeSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-            y = y - FORM_ROW
-            
-            -- Checkbox für die Outline
-            local cbOutlineCheck = GUI:CreateFormCheckbox(tabContent, "Enable Font Outline", "chatBubbleFontOutlineActive", db.general, function(v)
-                -- Wir speichern "OUTLINE" oder leer in die DB, damit die Logik in der .lua einfacher ist
-                db.general.chatBubbleFontOutline = v and "OUTLINE" or ""
-                RefreshCB()
-            end)
-            cbOutlineCheck:SetPoint("TOPLEFT", PADDING, y)
-            cbOutlineCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PADDING, 0)
-            y = y - FORM_ROW
-			
-			y = y - 10  -- Extra padding before next section
-
-            -- ═══════════════════════════════════════════════════════════════
-            -- READY CHECK FRAME SECTION
-            -- ═══════════════════════════════════════════════════════════════
-            GUI:SetSearchSection("Ready Check Frame")
-
-            if general.skinReadyCheck == nil then general.skinReadyCheck = true end
-
-            local readyCheckHeader = GUI:CreateSectionHeader(tabContent, "Ready Check Frame")
-            readyCheckHeader:SetPoint("TOPLEFT", PAD, y)
-            y = y - readyCheckHeader.gap
-
-            local readyCheckDesc = GUI:CreateLabel(tabContent, "Skin the ready check popup with GUI styling.", 11, C.textMuted)
-            readyCheckDesc:SetPoint("TOPLEFT", PAD, y)
-            readyCheckDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
-            readyCheckDesc:SetJustifyH("LEFT")
-            readyCheckDesc:SetWordWrap(true)
-            readyCheckDesc:SetHeight(20)
-            y = y - 28
-
-            local skinReadyCheckCheck = GUI:CreateFormCheckbox(tabContent, "Skin Ready Check Frame", "skinReadyCheck", general, function()
-                GUI:ShowConfirmation({
-                    title = "Reload UI?",
-                    message = "Skinning changes require a reload to take effect.",
-                    acceptText = "Reload",
-                    cancelText = "Later",
-                    onAccept = function() GravityUI:SafeReload() end,
-                })
-            end)
-            skinReadyCheckCheck:SetPoint("TOPLEFT", PAD, y)
-            skinReadyCheckCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
-            y = y - FORM_ROW
-
-            -- Move/Reset buttons for Ready Check frame position
-            local rcMoveBtn = GUI:CreateButton(tabContent, "Toggle Mover", 140, 28, function()
-                if _G.GravityUI_ToggleReadyCheckMover then
-                    _G.GravityUI_ToggleReadyCheckMover()
-                end
-            end)
-            rcMoveBtn:SetPoint("TOPLEFT", PAD, y)
-
-            local rcResetBtn = GUI:CreateButton(tabContent, "Reset Position", 140, 28, function()
-                if _G.GravityUI_ResetReadyCheckPosition then
-                    _G.GravityUI_ResetReadyCheckPosition()
-                    print("|cFF56D1FF[GUI]|r Ready Check position reset to default.")
-                end
-            end)
-            rcResetBtn:SetPoint("LEFT", rcMoveBtn, "RIGHT", 10, 0)
-            y = y - 36
-            y = y - 10  -- Extra padding before next section
-
-            -- ═══════════════════════════════════════════════════════════════																																														
-            -- KEYSTONE FRAME SECTION
-            -- ═══════════════════════════════════════════════════════════════
-            GUI:SetSearchSection("Keystone Frame")
-
-            local header = GUI:CreateSectionHeader(tabContent, "Keystone Frame")
-            header:SetPoint("TOPLEFT", PAD, y)
-            y = y - header.gap
-
-            local desc = GUI:CreateLabel(tabContent, "Skin the M+ keystone insertion window with GUI styling.", 11, C.textMuted)
-            desc:SetPoint("TOPLEFT", PAD, y)
-            desc:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
-            desc:SetJustifyH("LEFT")
-            desc:SetWordWrap(true)
-            desc:SetHeight(20)
-            y = y - 28
-
-            local skinCheck = GUI:CreateFormCheckbox(tabContent, "Skin Keystone Window", "skinKeystoneFrame", general, function()
-                GUI:ShowConfirmation({
-                    title = "Reload UI?",
-                    message = "Skinning changes require a reload to take effect.",
-                    acceptText = "Reload",
-                    cancelText = "Later",
-                    onAccept = function() GravityUI:SafeReload() end,
-                })
-            end)
-            skinCheck:SetPoint("TOPLEFT", PAD, y)
-            skinCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
-            y = y - FORM_ROW
-
-            y = y - 10  -- Extra padding before next section
-
-            -- ═══════════════════════════════════════════════════════════════
-            -- ENCOUNTER POWER BAR SECTION
-            -- ═══════════════════════════════════════════════════════════════
-            GUI:SetSearchSection("Encounter Power Bar")
-
-            if general.skinPowerBarAlt == nil then general.skinPowerBarAlt = true end
-
-            local powerBarHeader = GUI:CreateSectionHeader(tabContent, "Encounter Power Bar")
-            powerBarHeader:SetPoint("TOPLEFT", PAD, y)
-            y = y - powerBarHeader.gap
-
-            local powerBarDesc = GUI:CreateLabel(tabContent, "Skin the encounter/quest-specific power bar (Atramedes sound, Darkmoon games, etc.).", 11, C.textMuted)
-            powerBarDesc:SetPoint("TOPLEFT", PAD, y)
-            powerBarDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
-            powerBarDesc:SetJustifyH("LEFT")
-            powerBarDesc:SetWordWrap(true)
-            powerBarDesc:SetHeight(20)
-            y = y - 28
-
-            local powerBarAltCheck = GUI:CreateFormCheckbox(tabContent, "Skin Encounter Power Bar", "skinPowerBarAlt", general, function()
-                GUI:ShowConfirmation({
-                    title = "Reload UI?",
-                    message = "Skinning changes require a reload to take effect.",
-                    acceptText = "Reload",
-                    cancelText = "Later",
-                    onAccept = function() GravityUI:SafeReload() end,
-                })
-            end)
-            powerBarAltCheck:SetPoint("TOPLEFT", PAD, y)
-            powerBarAltCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
-            y = y - FORM_ROW
-
-            local powerBarMoverBtn = GUI:CreateButton(tabContent, "Toggle Position Mover", 160, 28, function()
-                if _G.GravityUI_TogglePowerBarAltMover then
-                    _G.GravityUI_TogglePowerBarAltMover()
-                end
-            end)
-            powerBarMoverBtn:SetPoint("TOPLEFT", PAD, y)
-            y = y - 36
-            y = y - 10  -- Extra padding before next section
-
-            -- ═══════════════════════════════════════════════════════════════
-            -- ALERT FRAMES SECTION
-            -- ═══════════════════════════════════════════════════════════════
-            GUI:SetSearchSection("Alert Frames")
-
-            if general.skinAlerts == nil then general.skinAlerts = true end
-
-            local alertHeader = GUI:CreateSectionHeader(tabContent, "Alert Frames")
-            alertHeader:SetPoint("TOPLEFT", PAD, y)
-            y = y - alertHeader.gap
-
-            local alertDesc = GUI:CreateLabel(tabContent, "Style loot alerts, achievements, mounts, toys, and other popup frames.", 11, C.textMuted)
-            alertDesc:SetPoint("TOPLEFT", PAD, y)
-            alertDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
-            alertDesc:SetJustifyH("LEFT")
-            alertDesc:SetWordWrap(true)
-            alertDesc:SetHeight(20)
-            y = y - 28
-
-            local alertCheck = GUI:CreateFormCheckbox(tabContent, "Skin Alert Frames", "skinAlerts", general, function()
-                GUI:ShowConfirmation({
-                    title = "Reload UI?",
-                    message = "Skinning changes require a reload to take effect.",
-                    acceptText = "Reload",
-                    cancelText = "Later",
-                    onAccept = function() GravityUI:SafeReload() end,
-                })
-            end)
-            alertCheck:SetPoint("TOPLEFT", PAD, y)
-            alertCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
-            y = y - FORM_ROW
-
-            -- Toggle movers button
-            local moverBtn = GUI:CreateButton(tabContent, "Toggle Position Movers", 200, 28, function()
-                local guiCore = _G.GravityUI and _G.GravityUI.guiCore
-                if guiCore and guiCore.Alerts then
-                    guiCore.Alerts:ToggleMovers()
-                end
-            end)
-            moverBtn:SetPoint("TOPLEFT", PAD, y)
-            y = y - 40
-
-            local moverInfo = GUI:CreateLabel(tabContent, "Drag the mover frames to reposition alerts and toasts.", 10, C.textMuted)
-            moverInfo:SetPoint("TOPLEFT", PAD, y)
-            moverInfo:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
-            moverInfo:SetJustifyH("LEFT")
-            y = y - 25
-
-            y = y - 10  -- Extra padding before next section
-
-            -- ═══════════════════════════════════════════════════════════════
-            -- LOOT WINDOW SECTION
-            -- ═══════════════════════════════════════════════════════════════
-            GUI:SetSearchSection("Loot Window")
-
-            -- Get loot settings from profile root (not general)
-            -- Ensure tables and individual keys exist
-            if not db.loot then db.loot = {} end
-            if db.loot.enabled == nil then db.loot.enabled = true end
-            if db.loot.lootUnderMouse == nil then db.loot.lootUnderMouse = false end
-            if db.loot.showTransmogMarker == nil then db.loot.showTransmogMarker = true end
-
-            if not db.lootRoll then db.lootRoll = {} end
-            if db.lootRoll.enabled == nil then db.lootRoll.enabled = false end  -- #125: disabled until fixed
-            if db.lootRoll.growDirection == nil then db.lootRoll.growDirection = "DOWN" end
-            if db.lootRoll.spacing == nil then db.lootRoll.spacing = 4 end
-
-            if not db.lootResults then db.lootResults = {} end
-            if db.lootResults.enabled == nil then db.lootResults.enabled = true end
-
-            local lootDB = db.loot
-            local lootRollDB = db.lootRoll
-            local lootResultsDB = db.lootResults
-
-            local lootHeader = GUI:CreateSectionHeader(tabContent, "Loot Window")
-            lootHeader:SetPoint("TOPLEFT", PAD, y)
-            y = y - lootHeader.gap
-
-            local lootDesc = GUI:CreateLabel(tabContent, "Replace Blizzard's loot window with a custom GUI-styled frame.", 11, C.textMuted)
-            lootDesc:SetPoint("TOPLEFT", PAD, y)
-            lootDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
-            lootDesc:SetJustifyH("LEFT")
-            lootDesc:SetWordWrap(true)
-            lootDesc:SetHeight(20)
-            y = y - 28
-
-            local lootCheck = GUI:CreateFormCheckbox(tabContent, "Skin Loot Window", "enabled", lootDB, function()
-                GUI:ShowConfirmation({
-                    title = "Reload UI?",
-                    message = "Skinning changes require a reload to take effect.",
-                    acceptText = "Reload",
-                    cancelText = "Later",
-                    onAccept = function() GravityUI:SafeReload() end,
-                })
-            end)
-            lootCheck:SetPoint("TOPLEFT", PAD, y)
-            lootCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
-            y = y - FORM_ROW
-
-            local lootUnderMouseCheck = GUI:CreateFormCheckbox(tabContent, "Loot Under Mouse", "lootUnderMouse", lootDB)
-            lootUnderMouseCheck:SetPoint("TOPLEFT", PAD, y)
-            lootUnderMouseCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
-            y = y - FORM_ROW
-
-            local transmogCheck = GUI:CreateFormCheckbox(tabContent, "Show Transmog Markers", "showTransmogMarker", lootDB)
-            transmogCheck:SetPoint("TOPLEFT", PAD, y)
-            transmogCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
-            y = y - FORM_ROW
-
-            y = y - 10  -- Extra padding before next section
-
-            -- ═══════════════════════════════════════════════════════════════
-            -- ROLL FRAMES SECTION
-            -- ═══════════════════════════════════════════════════════════════
-            GUI:SetSearchSection("Roll Frames")
-
-            local rollHeader = GUI:CreateSectionHeader(tabContent, "Roll Frames")
-            rollHeader:SetPoint("TOPLEFT", PAD, y)
-            y = y - rollHeader.gap
-
-            -- #125: Temporarily disabled due to bugs with multiple loot items
-            local rollDesc = GUI:CreateLabel(tabContent, "|cffff6666TEMPORARILY DISABLED|r - Custom roll frames are disabled while we fix issues with raid loot. Blizzard default frames will be used.", 11, C.textMuted)
-            rollDesc:SetPoint("TOPLEFT", PAD, y)
-            rollDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
-            rollDesc:SetJustifyH("LEFT")
-            rollDesc:SetWordWrap(true)
-            rollDesc:SetHeight(40)										 
-            y = y - 50
-
-            y = y - 10  -- Extra padding before next section
-
-            -- ═══════════════════════════════════════════════════════════════
-            -- LOOT HISTORY SECTION
-            -- ═══════════════════════════════════════════════════════════════
-            GUI:SetSearchSection("Loot History")
-
-            local historyHeader = GUI:CreateSectionHeader(tabContent, "Loot History")
-            historyHeader:SetPoint("TOPLEFT", PAD, y)
-            y = y - historyHeader.gap
-
-            local historyDesc = GUI:CreateLabel(tabContent, "Apply GUI styling to the loot roll results panel.", 11, C.textMuted)
-            historyDesc:SetPoint("TOPLEFT", PAD, y)
-            historyDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
-            historyDesc:SetJustifyH("LEFT")
-            historyDesc:SetWordWrap(true)
-            historyDesc:SetHeight(20)
-            y = y - 28
-
-            local historyCheck = GUI:CreateFormCheckbox(tabContent, "Skin Loot History", "enabled", lootResultsDB, function()
-                GUI:ShowConfirmation({
-                    title = "Reload UI?",
-                    message = "Skinning changes require a reload to take effect.",
-                    acceptText = "Reload",
-                    cancelText = "Later",
-                    onAccept = function() GravityUI:SafeReload() end,
-                })
-            end)
-            historyCheck:SetPoint("TOPLEFT", PAD, y)
-            historyCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
-            y = y - FORM_ROW
-
-            y = y - 10  -- Extra padding before next section
-
-            -- ═══════════════════════════════════════════════════════════════
-            -- GUI M+ TIMER SECTION
-            -- ═══════════════════════════════════════════════════════════════
-            GUI:SetSearchSection("GUI M+ Timer")
-
-            local mplusTimer = db.mplusTimer
-            if not mplusTimer then
-                db.mplusTimer = {
-                    enabled = false,
-                    layoutMode = "full",
-                    showTimer = true,
-                    showBorder = true,
-                    showDeaths = true,
-                    showAffixes = true,
-                    showObjectives = true,
-                    scale = 1.0,								
-                }
-                mplusTimer = db.mplusTimer
-            end
-            -- Ensure new fields exist for existing profiles
-            if mplusTimer.layoutMode == nil then mplusTimer.layoutMode = "full" end
-            if mplusTimer.showTimer == nil then mplusTimer.showTimer = true end
-            if mplusTimer.showBorder == nil then mplusTimer.showBorder = true end
-			if mplusTimer.scale == nil then mplusTimer.scale = 1.0 end														  
-
-            local guiMplusHeader = GUI:CreateSectionHeader(tabContent, "GUI M+ Timer")
-            guiMplusHeader:SetPoint("TOPLEFT", PAD, y)
-            y = y - guiMplusHeader.gap
-
-            local guiMplusDesc = GUI:CreateLabel(tabContent, "Custom M+ timer with GUI styling. Replaces the Blizzard timer with a clean, compact frame.", 11, C.textMuted)
-            guiMplusDesc:SetPoint("TOPLEFT", PAD, y)
-            guiMplusDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
-            guiMplusDesc:SetJustifyH("LEFT")
-            guiMplusDesc:SetWordWrap(true)
-            guiMplusDesc:SetHeight(20)
-            y = y - 24
-
-            local guiMplusNote = GUI:CreateLabel(tabContent, "Disabled by default — most M+ players prefer dedicated timer addons. Enable for an all-in-one solution.", 10, {1.0, 0.75, 0.2, 1})
-            guiMplusNote:SetPoint("TOPLEFT", PAD, y)
-            guiMplusNote:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
-            guiMplusNote:SetJustifyH("LEFT")
-            guiMplusNote:SetWordWrap(true)
-            guiMplusNote:SetHeight(20)
-            y = y - 28
-
-            local guiMplusCheck = GUI:CreateFormCheckbox(tabContent, "Enable GUI M+ Timer", "enabled", mplusTimer, function()
-                GUI:ShowConfirmation({
-                    title = "Reload UI?",
-                    message = "Timer changes require a reload to take effect.",
-                    acceptText = "Reload",
-                    cancelText = "Later",
-                    onAccept = function() GravityUI:SafeReload() end,
-                })
-            end)
-            guiMplusCheck:SetPoint("TOPLEFT", PAD, y)
-            guiMplusCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
-            y = y - FORM_ROW
-
-            -- Layout mode dropdown
-            local layoutOptions = {
-                { text = "Compact", value = "compact" },
-                { text = "Full", value = "full" },
-                { text = "Sleek", value = "sleek" },
-            }
-            local layoutDropdown = GUI:CreateFormDropdown(tabContent, "Layout Mode", layoutOptions, "layoutMode", mplusTimer, function()
-                local MPlusTimer = _G.GravityUI_MPlusTimer
-                if MPlusTimer and MPlusTimer.UpdateLayout then
-                    MPlusTimer:UpdateLayout()
-                end
-                if _G.GravityUI_ApplyMPlusTimerSkin then
-                    _G.GravityUI_ApplyMPlusTimerSkin()
-                end
-            end)
-            layoutDropdown:SetPoint("TOPLEFT", PAD, y)
-            layoutDropdown:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
-            y = y - FORM_ROW
-
-            -- Scale slider
-            local scaleSlider = GUI:CreateFormSlider(tabContent, "Timer Scale", 0.5, 2.0, 0.05, "scale", mplusTimer, function()
-                local MPlusTimer = _G.GravityUI_MPlusTimer
-                if MPlusTimer and MPlusTimer.ApplyScale then
-                    MPlusTimer:ApplyScale()
-                end
-            end, { deferOnDrag = true })
-            scaleSlider:SetPoint("TOPLEFT", PAD, y)
-            scaleSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
-            y = y - FORM_ROW
-            -- Show Timer checkbox (full mode only)
-            local guiMplusTimerCheck = GUI:CreateFormCheckbox(tabContent, "Show Timer Text (Full mode)", "showTimer", mplusTimer, function()
-                local MPlusTimer = _G.GravityUI_MPlusTimer
-                if MPlusTimer and MPlusTimer.UpdateLayout then
-                    MPlusTimer:UpdateLayout()
-                end
-            end)
-            guiMplusTimerCheck:SetPoint("TOPLEFT", PAD, y)
-            guiMplusTimerCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
-            y = y - FORM_ROW
-
-            -- Show Border checkbox
-            local guiMplusBorderCheck = GUI:CreateFormCheckbox(tabContent, "Show Border", "showBorder", mplusTimer, function()
-                if _G.GravityUI_ApplyMPlusTimerSkin then
-                    _G.GravityUI_ApplyMPlusTimerSkin()
-                end
-            end)
-            guiMplusBorderCheck:SetPoint("TOPLEFT", PAD, y)
-            guiMplusBorderCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
-            y = y - FORM_ROW
-
-            local guiMplusDeathsCheck = GUI:CreateFormCheckbox(tabContent, "Show Deaths", "showDeaths", mplusTimer, function()
-                local MPlusTimer = _G.GravityUI_MPlusTimer
-                if MPlusTimer and MPlusTimer.UpdateLayout then
-                    MPlusTimer:UpdateLayout()
-                end
-            end)
-            guiMplusDeathsCheck:SetPoint("TOPLEFT", PAD, y)
-            guiMplusDeathsCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
-            y = y - FORM_ROW
-
-            local guiMplusAffixCheck = GUI:CreateFormCheckbox(tabContent, "Show Affixes", "showAffixes", mplusTimer, function()
-                local MPlusTimer = _G.GravityUI_MPlusTimer
-                if MPlusTimer and MPlusTimer.UpdateLayout then
-                    MPlusTimer:UpdateLayout()
-                end
-            end)
-            guiMplusAffixCheck:SetPoint("TOPLEFT", PAD, y)
-            guiMplusAffixCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
-            y = y - FORM_ROW
-
-            local guiMplusObjCheck = GUI:CreateFormCheckbox(tabContent, "Show Objectives", "showObjectives", mplusTimer, function()
-                local MPlusTimer = _G.GravityUI_MPlusTimer
-                if MPlusTimer and MPlusTimer.UpdateLayout then
-                    MPlusTimer:UpdateLayout()
-                end
-            end)
-            guiMplusObjCheck:SetPoint("TOPLEFT", PAD, y)
-            guiMplusObjCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
-            y = y - FORM_ROW
-
-            -- Demo mode button
-            local guiMplusDemoBtn = GUI:CreateButton(tabContent, "Toggle Demo Mode", 200, 28, function()
-                local MPlusTimer = _G.GravityUI_MPlusTimer
-                if MPlusTimer then
-                    MPlusTimer:ToggleDemoMode()
-                end
-            end)
-            guiMplusDemoBtn:SetPoint("TOPLEFT", PAD, y)
-            y = y - 40
-
-            local guiMplusDemoInfo = GUI:CreateLabel(tabContent, "Demo mode shows a preview timer for testing.", 10, C.textMuted)
-            guiMplusDemoInfo:SetPoint("TOPLEFT", PAD, y)
-            guiMplusDemoInfo:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
-            guiMplusDemoInfo:SetJustifyH("LEFT")
-            y = y - 25
-
-            -- ═══════════════════════════════════════════════════════════════
-            -- REPUTATION/CURRENCY SECTION
-            -- ═══════════════════════════════════════════════════════════════
-            GUI:SetSearchSection("Reputation/Currency")
-
-            if general.skinCharacterFrame == nil then general.skinCharacterFrame = true end
-
-            local charFrameHeader = GUI:CreateSectionHeader(tabContent, "Reputation/Currency")
-            charFrameHeader:SetPoint("TOPLEFT", PAD, y)
-            y = y - charFrameHeader.gap
-
-            local charFrameDesc = GUI:CreateLabel(tabContent, "Apply dark themed styling to the Reputation and Currency tabs with accent-colored borders.", 11, C.textMuted)
-            charFrameDesc:SetPoint("TOPLEFT", PAD, y)
-            charFrameDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
-            charFrameDesc:SetJustifyH("LEFT")
-            charFrameDesc:SetWordWrap(true)
-            charFrameDesc:SetHeight(20)
-            y = y - 28
-
-            local charFrameCheck = GUI:CreateFormCheckbox(tabContent, "Skin Reputation/Currency", "skinCharacterFrame", general, function()
-                GUI:ShowConfirmation({
-                    title = "Reload UI?",
-                    message = "Skinning changes require a reload to take effect.",
-                    acceptText = "Reload",
-                    cancelText = "Later",
-                    onAccept = function() GravityUI:SafeReload() end,
-                })
-            end)
-            charFrameCheck:SetPoint("TOPLEFT", PAD, y)
-            charFrameCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
-            y = y - FORM_ROW
-
-            y = y - 10  -- Extra padding before next section
-
-            -- ═══════════════════════════════════════════════════════════════
-            -- INSPECT FRAME SECTION
-            -- ═══════════════════════════════════════════════════════════════
-            GUI:SetSearchSection("Inspect Frame")
-
-            if general.skinInspectFrame == nil then general.skinInspectFrame = true end
-
-            local inspectFrameHeader = GUI:CreateSectionHeader(tabContent, "Inspect Frame")
-            inspectFrameHeader:SetPoint("TOPLEFT", PAD, y)
-            y = y - inspectFrameHeader.gap
-
-            local inspectFrameDesc = GUI:CreateLabel(tabContent, "Skin the Inspect Frame to match Character Frame styling.", 11, C.textMuted)
-            inspectFrameDesc:SetPoint("TOPLEFT", PAD, y)
-            inspectFrameDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
-            inspectFrameDesc:SetJustifyH("LEFT")
-            inspectFrameDesc:SetWordWrap(true)
-            inspectFrameDesc:SetHeight(20)
-            y = y - 28
-
-            local inspectFrameCheck = GUI:CreateFormCheckbox(tabContent, "Skin Inspect Frame", "skinInspectFrame", general, function()
-                GUI:ShowConfirmation({
-                    title = "Reload UI?",
-                    message = "Skinning changes require a reload to take effect.",
-                    acceptText = "Reload",
-                    cancelText = "Later",
-                    onAccept = function() GravityUI:SafeReload() end,
-                })
-            end)
-            inspectFrameCheck:SetPoint("TOPLEFT", PAD, y)
-            inspectFrameCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
-            y = y - FORM_ROW
-			
-            y = y - 10  -- Extra padding before next section
-
-            -- ═══════════════════════════════════════════════════════════════
-            -- OVERRIDE ACTION BAR SECTION
-            -- ═══════════════════════════════════════════════════════════════
-            GUI:SetSearchSection("Override Action Bar")
-
-            if general.skinOverrideActionBar == nil then general.skinOverrideActionBar = false end
-
-            local overrideBarHeader = GUI:CreateSectionHeader(tabContent, "Override Action Bar")
-            overrideBarHeader:SetPoint("TOPLEFT", PAD, y)
-            y = y - overrideBarHeader.gap
-
-            local overrideBarDesc = GUI:CreateLabel(tabContent, "Skin the vehicle/override action bar (dragonriding, possession, etc.).", 11, C.textMuted)
-            overrideBarDesc:SetPoint("TOPLEFT", PAD, y)
-            overrideBarDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
-            overrideBarDesc:SetJustifyH("LEFT")
-            overrideBarDesc:SetWordWrap(true)
-            overrideBarDesc:SetHeight(20)
-            y = y - 28
-
-            local overrideBarCheck = GUI:CreateFormCheckbox(tabContent, "Skin Override Action Bar", "skinOverrideActionBar", general, function()
-                GUI:ShowConfirmation({
-                    title = "Reload UI?",
-                    message = "Skinning changes require a reload to take effect.",
-                    acceptText = "Reload",
-                    cancelText = "Later",
-                    onAccept = function() GravityUI:SafeReload() end,
-                })
-            end)
-            overrideBarCheck:SetPoint("TOPLEFT", PAD, y)
-            overrideBarCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
-            y = y - FORM_ROW
-
-            y = y - 10  -- Extra padding before next section
-
-            -- ═══════════════════════════════════════════════════════════════
-            -- OBJECTIVE TRACKER SECTION
-            -- ═══════════════════════════════════════════════════════════════
-            GUI:SetSearchSection("Objective Tracker")
-
-            if general.skinObjectiveTracker == nil then general.skinObjectiveTracker = false end
-
-            local objTrackerHeader = GUI:CreateSectionHeader(tabContent, "Objective Tracker")
-            objTrackerHeader:SetPoint("TOPLEFT", PAD, y)
-            y = y - objTrackerHeader.gap
-
-            local objTrackerWip = GUI:CreateLabel(tabContent, "Work-in-progress: Enable only if you want to test. Still being polished.", 11, {1, 0.6, 0.2, 1})
-            objTrackerWip:SetPoint("TOPLEFT", PAD, y)
-            objTrackerWip:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
-            objTrackerWip:SetJustifyH("LEFT")
-            y = y - 18
-            local objTrackerDesc = GUI:CreateLabel(tabContent, "Apply GUI styling to quest objectives, achievement tracking, and bonus objectives.", 11, C.textMuted)
-            objTrackerDesc:SetPoint("TOPLEFT", PAD, y)
-            objTrackerDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
-            objTrackerDesc:SetJustifyH("LEFT")
-            objTrackerDesc:SetWordWrap(true)
-            objTrackerDesc:SetHeight(20)
-            y = y - 28
-
-            local objTrackerCheck = GUI:CreateFormCheckbox(tabContent, "Skin Objective Tracker", "skinObjectiveTracker", general, function()
-                GUI:ShowConfirmation({
-                    title = "Reload UI?",
-                    message = "Skinning changes require a reload to take effect.",
-                    acceptText = "Reload",
-                    cancelText = "Later",
-                    onAccept = function() GravityUI:SafeReload() end,
-                })
-            end)
-
-            objTrackerCheck:SetPoint("TOPLEFT", PAD, y)
-            objTrackerCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
-            y = y - FORM_ROW
-
-            if general.objectiveTrackerHeight == nil then general.objectiveTrackerHeight = 600 end
-            local objTrackerHeightSlider = GUI:CreateFormSlider(tabContent, "Max Height", 200, 1000, 10,
-                "objectiveTrackerHeight", general, function()
-                    if _G.GravityUI_RefreshObjectiveTracker then _G.GravityUI_RefreshObjectiveTracker() end
-                end)
-            objTrackerHeightSlider:SetPoint("TOPLEFT", PAD, y)
-            objTrackerHeightSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
-            y = y - FORM_ROW
-
-            if general.objectiveTrackerModuleFontSize == nil then general.objectiveTrackerModuleFontSize = 12 end
-            local objTrackerModuleFontSlider = GUI:CreateFormSlider(tabContent, "Module Header Font (QUESTS, etc.)", 6, 18, 1,
-                "objectiveTrackerModuleFontSize", general, function()
-                    if _G.GravityUI_RefreshObjectiveTracker then _G.GravityUI_RefreshObjectiveTracker() end
-                end)
-            objTrackerModuleFontSlider:SetPoint("TOPLEFT", PAD, y)
-            objTrackerModuleFontSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
-            y = y - FORM_ROW
-
-            if general.objectiveTrackerTitleFontSize == nil then general.objectiveTrackerTitleFontSize = 10 end
-            local objTrackerTitleFontSlider = GUI:CreateFormSlider(tabContent, "Quest/Achievement Title Font", 6, 18, 1,
-                "objectiveTrackerTitleFontSize", general, function()
-                    if _G.GravityUI_RefreshObjectiveTracker then _G.GravityUI_RefreshObjectiveTracker() end
-                end)
-            objTrackerTitleFontSlider:SetPoint("TOPLEFT", PAD, y)
-            objTrackerTitleFontSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
-            y = y - FORM_ROW
-
-            if general.objectiveTrackerTextFontSize == nil then general.objectiveTrackerTextFontSize = 10 end
-            local objTrackerTextFontSlider = GUI:CreateFormSlider(tabContent, "Objective Text Font", 6, 18, 1,
-                "objectiveTrackerTextFontSize", general, function()
-                    if _G.GravityUI_RefreshObjectiveTracker then _G.GravityUI_RefreshObjectiveTracker() end
-                end)
-            objTrackerTextFontSlider:SetPoint("TOPLEFT", PAD, y)
-            objTrackerTextFontSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
-            y = y - FORM_ROW
-
-            if general.objectiveTrackerWidth == nil then general.objectiveTrackerWidth = 260 end
-            local objTrackerWidthSlider = GUI:CreateFormSlider(tabContent, "Max Width", 150, 400, 10,
-                "objectiveTrackerWidth", general, function()
-                    if _G.GravityUI_RefreshObjectiveTracker then _G.GravityUI_RefreshObjectiveTracker() end
-                end)
-            objTrackerWidthSlider:SetPoint("TOPLEFT", PAD, y)
-            objTrackerWidthSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
-            y = y - FORM_ROW
-
-            if general.hideObjectiveTrackerBorder == nil then general.hideObjectiveTrackerBorder = false end
-            local hideBorderCheck = GUI:CreateFormCheckbox(tabContent, "Hide Border", "hideObjectiveTrackerBorder", general, function()
-                if _G.GravityUI_RefreshObjectiveTracker then _G.GravityUI_RefreshObjectiveTracker() end
-            end)
-            hideBorderCheck:SetPoint("TOPLEFT", PAD, y)
-            hideBorderCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
-            y = y - FORM_ROW
-
-            if general.objectiveTrackerModuleColor == nil then general.objectiveTrackerModuleColor = { 1.0, 0.82, 0.0, 1.0 } end
-            local moduleColorPicker = GUI:CreateFormColorPicker(tabContent, "Module Header Color (QUESTS, etc.)", "objectiveTrackerModuleColor", general, function()
-                if _G.GravityUI_RefreshObjectiveTracker then _G.GravityUI_RefreshObjectiveTracker() end
-            end)
-            moduleColorPicker:SetPoint("TOPLEFT", PAD, y)
-            moduleColorPicker:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
-            y = y - FORM_ROW
-
-            if general.objectiveTrackerTitleColor == nil then general.objectiveTrackerTitleColor = { 1.0, 1.0, 1.0, 1.0 } end
-            local titleColorPicker = GUI:CreateFormColorPicker(tabContent, "Quest/Achievement Title Color", "objectiveTrackerTitleColor", general, function()
-                if _G.GravityUI_RefreshObjectiveTracker then _G.GravityUI_RefreshObjectiveTracker() end
-            end)
-            titleColorPicker:SetPoint("TOPLEFT", PAD, y)
-            titleColorPicker:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
-            y = y - FORM_ROW
-
-            if general.objectiveTrackerTextColor == nil then general.objectiveTrackerTextColor = { 0.8, 0.8, 0.8, 1.0 } end
-            local textColorPicker = GUI:CreateFormColorPicker(tabContent, "Objective Text Color", "objectiveTrackerTextColor", general, function()
-                if _G.GravityUI_RefreshObjectiveTracker then _G.GravityUI_RefreshObjectiveTracker() end
-            end)
-            textColorPicker:SetPoint("TOPLEFT", PAD, y)
-            textColorPicker:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
-            y = y - FORM_ROW
-
-            -- Note: Background opacity is controlled via Edit Mode's built-in opacity slider
-            y = y - 10  -- Extra padding before next section
-
-            -- ═══════════════════════════════════════════════════════════════
-            -- INSTANCE FRAMES SECTION
-            -- ═══════════════════════════════════════════════════════════════
-            GUI:SetSearchSection("Instance Frames")
-
-            if general.skinInstanceFrames == nil then general.skinInstanceFrames = false end
-
-            local instanceHeader = GUI:CreateSectionHeader(tabContent, "Instance Frames")
-            instanceHeader:SetPoint("TOPLEFT", PAD, y)
-            y = y - instanceHeader.gap
-
-            local instanceWip = GUI:CreateLabel(tabContent, "Work-in-progress: Enable only if you want to test. Still being polished.", 11, {1, 0.6, 0.2, 1})
-            instanceWip:SetPoint("TOPLEFT", PAD, y)
-            instanceWip:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
-            instanceWip:SetJustifyH("LEFT")
-            y = y - 18
-            local instanceDesc = GUI:CreateLabel(tabContent, "Skin the Dungeons & Raids window, PVP queue, and M+ Dungeons tab.", 11, C.textMuted)
-            instanceDesc:SetPoint("TOPLEFT", PAD, y)
-            instanceDesc:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
-            instanceDesc:SetJustifyH("LEFT")
-            instanceDesc:SetWordWrap(true)
-            instanceDesc:SetHeight(20)
-            y = y - 28
-
-            local instanceCheck = GUI:CreateFormCheckbox(tabContent, "Skin Instance Frames", "skinInstanceFrames", general, function()
-                GUI:ShowConfirmation({
-                    title = "Reload UI?",
-                    message = "Skinning changes require a reload to take effect.",
-                    acceptText = "Reload",
-                    cancelText = "Later",
-                    onAccept = function() GravityUI:SafeReload() end,
-                })
-            end)
-            instanceCheck:SetPoint("TOPLEFT", PAD, y)
-            instanceCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
-            y = y - FORM_ROW
-			
-            y = y - 20
-        end
-
-        tabContent:SetHeight(math.abs(y) + 50)
-    end
-
-    -- Create sub-tabs
-    local subTabs = GUI:CreateSubTabs(parent, {
-        {name = "Autohide", builder = BuildAutohideTab},
-        {name = "Skinning", builder = BuildSkinningTab},
-    })
-    subTabs:SetPoint("TOPLEFT", 5, -5)
-    subTabs:SetPoint("TOPRIGHT", -5, -5)
-    subTabs:SetHeight(600)
-end
-
----------------------------------------------------------------------------
 -- PAGE: Minimap & Datatext (with sub-tabs like old GUI)
 ---------------------------------------------------------------------------
 local function CreateMinimapPage(parent)
@@ -4325,12 +4489,12 @@ local function CreateMinimapPage(parent)
     
     -- Build Minimap sub-tab
     local function BuildMinimapTab(tabContent)
-        local y = -10
+        local y = -25
         local PAD = 10
         local FORM_ROW = 32
 
         -- Set search context for auto-registration
-        GUI:SetSearchContext({tabIndex = 3, tabName = "Minimap & Datatext", subTabIndex = 1, subTabName = "Minimap"})
+        GUI:SetSearchContext({tabIndex = 4, tabName = "Minimap & Datatext", subTabIndex = 1, subTabName = "Minimap"})
 
         -- Early return if database not ready
         if not db then
@@ -4569,7 +4733,7 @@ local function CreateMinimapPage(parent)
         local FORM_ROW = 32
 
         -- Set search context for auto-registration
-        GUI:SetSearchContext({tabIndex = 3, tabName = "Minimap & Datatext", subTabIndex = 2, subTabName = "Datatext"})
+        GUI:SetSearchContext({tabIndex = 4, tabName = "Minimap & Datatext", subTabIndex = 2, subTabName = "Datatext"})
 
         -- Early return if database not ready
         if not db then
@@ -5637,7 +5801,7 @@ local function CreateCDMSetupPage(parent)
         local y = tabContent._currentY
 
         -- Set search context for auto-registration
-        GUI:SetSearchContext({tabIndex = 6, tabName = "CDM Settings", subTabIndex = 1, subTabName = "Essential"})
+        GUI:SetSearchContext({tabIndex = 6, tabName = "CDM Settings", subTabIndex = 1, subTabName = "General Settings"})
 
         if db and db.ncdm and db.ncdm.essential then
             local ess = db.ncdm.essential
@@ -5962,6 +6126,7 @@ local function CreateCDMSetupPage(parent)
         if trackedData.enabled == nil then trackedData.enabled = true end
         if trackedData.hideIcon == nil then trackedData.hideIcon = false end
         if trackedData.barHeight == nil then trackedData.barHeight = 24 end
+		if trackedData.barWidth == nil then trackedData.barWidth = 200 end
         if trackedData.texture == nil then trackedData.texture = "Gravity v5" end
         if trackedData.useClassColor == nil then trackedData.useClassColor = true end
         if trackedData.barColor == nil then trackedData.barColor = {0.204, 0.827, 0.6, 1} end
@@ -5973,6 +6138,11 @@ local function CreateCDMSetupPage(parent)
         if trackedData.spacing == nil then trackedData.spacing = 4 end
         if trackedData.growUp == nil then trackedData.growUp = true end
         if trackedData.hideText == nil then trackedData.hideText = false end														
+        -- Vertical bar settings
+        if trackedData.orientation == nil then trackedData.orientation = "horizontal" end
+        if trackedData.fillDirection == nil then trackedData.fillDirection = "up" end
+        if trackedData.iconPosition == nil then trackedData.iconPosition = "top" end
+        if trackedData.showTextOnVertical == nil then trackedData.showTextOnVertical = false end
 
         y = y - 10 -- Extra spacing before new section
 
@@ -6019,14 +6189,108 @@ local function CreateCDMSetupPage(parent)
         textureDropdown:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
         y = y - FORM_ROW
 
-        -- Growth Direction
-        local growthDropdown = GUI:CreateFormDropdown(tabContent, "Growth Direction", {
-            {value = true, text = "Up"},
-            {value = false, text = "Down"},
+        -- Forward reference for orientation change callback
+        local updateVerticalStates
+
+        -- Bar Orientation
+        local orientationDropdown = GUI:CreateFormDropdown(tabContent, "Bar Orientation", {
+            {value = "horizontal", text = "Horizontal"},
+            {value = "vertical", text = "Vertical"},
+        }, "orientation", trackedData, function()
+            RefreshBuff()
+            if updateVerticalStates then updateVerticalStates() end
+            GUI:ShowConfirmation({
+                title = "Reload Required",
+                message = "Changing bar orientation requires a UI reload to take full effect.",
+                acceptText = "Reload Now",
+                cancelText = "Later",
+                isDestructive = false,
+                onAccept = function()
+                    GravityUI:SafeReload()
+                end,
+            })
+        end)
+        orientationDropdown:SetPoint("TOPLEFT", PAD, y)
+        orientationDropdown:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+        y = y - FORM_ROW
+
+        -- Stack Direction (renamed from Growth Direction, context-dependent)
+        local growthDropdown = GUI:CreateFormDropdown(tabContent, "Stack Direction", {
+            {value = true, text = "Up / Right"},
+            {value = false, text = "Down / Left"},
         }, "growUp", trackedData, RefreshBuff)
         growthDropdown:SetPoint("TOPLEFT", PAD, y)
         growthDropdown:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
         y = y - FORM_ROW
+
+        local stackTip = GUI:CreateLabel(tabContent, "Up/Down for horizontal bars, Right/Left for vertical bars.", 11, C.textMuted)
+        stackTip:SetPoint("TOPLEFT", PAD, y)
+        stackTip:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+        stackTip:SetJustifyH("LEFT")
+        y = y - 20
+
+        -- Fill Direction (Vertical only)
+        local fillDropdown = GUI:CreateFormDropdown(tabContent, "Fill Direction (Vertical)", {
+            {value = "up", text = "Fill Up"},
+            {value = "down", text = "Fill Down"},
+        }, "fillDirection", trackedData, RefreshBuff)
+        fillDropdown:SetPoint("TOPLEFT", PAD, y)
+        fillDropdown:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+        y = y - FORM_ROW
+
+        local fillTip = GUI:CreateLabel(tabContent, "Direction the progress bar fills as buff duration decreases.", 11, C.textMuted)
+        fillTip:SetPoint("TOPLEFT", PAD, y)
+        fillTip:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+        fillTip:SetJustifyH("LEFT")
+        y = y - 20
+
+        -- Icon Position (Vertical only)
+        local iconPosDropdown = GUI:CreateFormDropdown(tabContent, "Icon Position (Vertical)", {
+            {value = "top", text = "Top"},
+            {value = "bottom", text = "Bottom"},
+        }, "iconPosition", trackedData, RefreshBuff)
+        iconPosDropdown:SetPoint("TOPLEFT", PAD, y)
+        iconPosDropdown:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+        y = y - FORM_ROW
+
+        local iconPosTip = GUI:CreateLabel(tabContent, "Where the spell icon appears on vertical bars.", 11, C.textMuted)
+        iconPosTip:SetPoint("TOPLEFT", PAD, y)
+        iconPosTip:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+        iconPosTip:SetJustifyH("LEFT")
+        y = y - 20
+
+        -- Show Text (Vertical only)
+        local showTextCheck = GUI:CreateFormCheckbox(tabContent, "Show Text (Vertical)", "showTextOnVertical", trackedData, RefreshBuff)
+        showTextCheck:SetPoint("TOPLEFT", PAD, y)
+        showTextCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+        y = y - FORM_ROW
+
+        local textTip = GUI:CreateLabel(tabContent, "Text hidden by default on vertical bars. Enable for bars 48+ pixels wide.", 11, C.textMuted)
+        textTip:SetPoint("TOPLEFT", PAD, y)
+        textTip:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+        textTip:SetJustifyH("LEFT")
+        y = y - 20
+
+        -- UX: Dim vertical-only options when horizontal, swap height/width labels
+        -- Assign to forward reference so orientation dropdown onChange can call it
+        updateVerticalStates = function()
+            local isVertical = trackedData.orientation == "vertical"
+            local alpha = isVertical and 1.0 or 0.4
+            fillDropdown:SetAlpha(alpha)
+            iconPosDropdown:SetAlpha(alpha)
+            showTextCheck:SetAlpha(alpha)
+            -- Swap height/width labels based on orientation
+            if heightSlider.label and widthSlider.label then
+                if isVertical then
+                    heightSlider.label:SetText("Bar Width")
+                    widthSlider.label:SetText("Bar Length")
+                else
+                    heightSlider.label:SetText("Bar Height")
+                    widthSlider.label:SetText("Bar Width")
+                end
+            end
+        end
+        updateVerticalStates()  -- Initial state
 
         -- Use Class Color
         local classColorCheck = GUI:CreateFormCheckbox(tabContent, "Use Class Color", "useClassColor", trackedData, RefreshBuff)
@@ -6217,6 +6481,12 @@ local function CreateCDMSetupPage(parent)
         standaloneSecondary:SetPoint("TOPLEFT", PAD, y)
         standaloneSecondary:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
         y = y - FORM_ROW
+
+		local secondaryImptText = GUI:CreateLabel(tabContent, "IMPORTANT: If you choose NOT to display a Primary Bar, and ONLY want a Secondary Bar, toggle this ON. Else it will not show.", 11, C.warning)
+        secondaryImptText:SetPoint("TOPLEFT", PAD, y)
+        secondaryImptText:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
+        secondaryImptText:SetJustifyH("LEFT")
+        y = y - 25
 
         local standaloneDesc = GUI:CreateLabel(tabContent, "Standalone Mode: Bar won't fade or hide with CDM visibility. Use if you don't use Essential/Utility cooldown displays.", 11, C.textMuted)
         standaloneDesc:SetPoint("TOPLEFT", PAD, y)
@@ -8437,7 +8707,7 @@ local function CreateCDKeybindsPage(parent)
         ctKeybindHeader:SetPoint("TOPLEFT", PADDING, y)
         y = y - ctKeybindHeader.gap
 
-        local ctKeybindInfo = GUI:CreateLabel(content, "Shows keybinds on Custom Item/Spell bar icons. Settings apply globally to all custom tracker bars.", 11, C.textMuted)
+        local ctKeybindInfo = GUI:CreateLabel(content, "Shows keybinds on Custom Items/Spells bar. Settings apply globally to all custom tracker bars.", 11, C.textMuted)
         ctKeybindInfo:SetPoint("TOPLEFT", PADDING, y)
         ctKeybindInfo:SetPoint("RIGHT", content, "RIGHT", -PADDING, 0)
         ctKeybindInfo:SetJustifyH("LEFT")
@@ -8691,7 +8961,7 @@ local function CreateCustomTrackersPage(parent)
     local db = GetDB()
 
     -- Set search context for auto-registration
-    GUI:SetSearchContext({tabIndex = 9, tabName = "Custom Items/Spells/Buffs"})
+    GUI:SetSearchContext({tabIndex = 9, tabName = "Custom Items/Spells"})
 
     -- Ensure customTrackers.bars exists
     if not db.customTrackers then
@@ -8853,7 +9123,7 @@ local function CreateCustomTrackersPage(parent)
     -- Build tab content for a single tracker bar
     ---------------------------------------------------------------------------
     local function BuildTrackerBarTab(tabContent, barConfig, barIndex, subTabsRef)
-        GUI:SetSearchContext({tabIndex = 9, tabName = "Custom Items/Spells/Buffs", subTabIndex = barIndex + 1, subTabName = barConfig.name or ("Bar " .. barIndex)})
+        GUI:SetSearchContext({tabIndex = 9, tabName = "Custom Items/Spells", subTabIndex = barIndex + 1, subTabName = barConfig.name or ("Bar " .. barIndex)})
         local y = -10
         local entryListFrame  -- Forward declaration for refresh callback
 
@@ -10117,7 +10387,7 @@ local function CreateCustomTrackersPage(parent)
     table.insert(tabDefs, {
         name = "Setup Custom Buff Tracking",
         builder = function(tabContent)
-            GUI:SetSearchContext({tabIndex = 9, tabName = "Custom Items/Spells/Buffs", subTabIndex = 1, subTabName = "Spell Scanner"})
+            GUI:SetSearchContext({tabIndex = 9, tabName = "Custom Items/Spells", subTabIndex = 1, subTabName = "Spell Scanner"})
             local y = -10
             local scanner = gui.SpellScanner
             local scannedListFrame  -- Forward declaration for refresh
@@ -10518,13 +10788,13 @@ local function CreateUnitFramesPage(parent)
     
     -- Build the General tab content
     local function BuildGeneralTab(tabContent)
-        local y = -10
+        local y = -25
         local PAD = 10
         local FORM_ROW = 32
         local ufdb = GetUFDB()
 
         -- Set search context for auto-registration
-        GUI:SetSearchContext({tabIndex = 2, tabName = "Unitframes", subTabIndex = 1, subTabName = "General"})
+        GUI:SetSearchContext({tabIndex = 3, tabName = "Unitframes", subTabIndex = 1, subTabName = "General"})
 
         if not ufdb then
             local info = GUI:CreateLabel(tabContent, "Unit frame settings not available - database not loaded", 12, C.textMuted)
@@ -10813,7 +11083,7 @@ local function CreateUnitFramesPage(parent)
     
     -- Build unit-specific tab content (Player, Target, etc.)
     local function BuildUnitTab(tabContent, unitKey)
-        local y = -10
+        local y = -25
         local PAD = 10
         local FORM_ROW = 32
         local ufdb = GetUFDB()
@@ -10828,7 +11098,7 @@ local function CreateUnitFramesPage(parent)
             boss = {index = 7, name = "Boss"},
         }
         local subTabInfo = unitSubTabs[unitKey] or {index = 2, name = unitKey}
-        GUI:SetSearchContext({tabIndex = 2, tabName = "Unitframes", subTabIndex = subTabInfo.index, subTabName = subTabInfo.name})
+        GUI:SetSearchContext({tabIndex = 3, tabName = "Unitframes", subTabIndex = subTabInfo.index, subTabName = subTabInfo.name})
 
         if not ufdb or not ufdb[unitKey] then
             local info = GUI:CreateLabel(tabContent, "Unit frame settings not available for " .. unitKey, 12, C.textMuted)
@@ -10865,56 +11135,16 @@ local function CreateUnitFramesPage(parent)
         end
 
         -- Preview button row (form style)
-        local previewContainer = CreateFrame("Frame", nil, tabContent)
-        previewContainer:SetHeight(FORM_ROW)
-        previewContainer:SetPoint("TOPLEFT", PAD, y)
-        previewContainer:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
-
-        local previewLabel = previewContainer:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-        previewLabel:SetPoint("LEFT", 0, 0)
-        previewLabel:SetText("Frame Preview")
-        previewLabel:SetTextColor(C.text[1], C.text[2], C.text[3], 1)
-
-        -- Toggle track (pill-shaped, matches CreateFormToggle)
-        local previewTrack = CreateFrame("Button", nil, previewContainer, "BackdropTemplate")
-        previewTrack:SetSize(40, 20)
-        previewTrack:SetPoint("LEFT", previewContainer, "LEFT", 200, 0)
-        previewTrack:SetBackdrop({bgFile = "Interface\\Buttons\\WHITE8x8", edgeFile = "Interface\\Buttons\\WHITE8x8", edgeSize = 1})
-
-        -- Thumb (sliding circle)
-        local previewThumb = CreateFrame("Frame", nil, previewTrack, "BackdropTemplate")
-        previewThumb:SetSize(16, 16)
-        previewThumb:SetBackdrop({bgFile = "Interface\\Buttons\\WHITE8x8", edgeFile = "Interface\\Buttons\\WHITE8x8", edgeSize = 1})
-        previewThumb:SetBackdropColor(0.95, 0.95, 0.95, 1)
-        previewThumb:SetBackdropBorderColor(0.85, 0.85, 0.85, 1)
-        previewThumb:SetFrameLevel(previewTrack:GetFrameLevel() + 1)
-
-        -- Initialize state (preview defaults to off when panel opens)
-        local isPreviewOn = false
-        local function UpdatePreviewToggle(on)
-            if on then
-                previewTrack:SetBackdropColor(C.accent[1], C.accent[2], C.accent[3], 1)
-                previewTrack:SetBackdropBorderColor(C.accent[1]*0.8, C.accent[2]*0.8, C.accent[3]*0.8, 1)
-                previewThumb:ClearAllPoints()
-                previewThumb:SetPoint("RIGHT", previewTrack, "RIGHT", -2, 0)
-            else
-                previewTrack:SetBackdropColor(0.15, 0.18, 0.22, 1)
-                previewTrack:SetBackdropBorderColor(0.12, 0.14, 0.18, 1)
-                previewThumb:ClearAllPoints()
-                previewThumb:SetPoint("LEFT", previewTrack, "LEFT", 2, 0)
-            end
-        end
-        UpdatePreviewToggle(isPreviewOn)
-
-        previewTrack:SetScript("OnClick", function()
-            isPreviewOn = not isPreviewOn
-            UpdatePreviewToggle(isPreviewOn)
-            if isPreviewOn then
+        -- Uses standardized toggle
+        local previewToggle = GUI:CreateFormToggle(tabContent, "Frame Preview", nil, nil, function(val)
+            if val then
                 if _G.GravityUI_ShowUnitFramePreview then _G.GravityUI_ShowUnitFramePreview(unitKey) end
             else
                 if _G.GravityUI_HideUnitFramePreview then _G.GravityUI_HideUnitFramePreview(unitKey) end
             end
         end)
+        previewToggle:SetPoint("TOPLEFT", PAD, y)
+        previewToggle:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
         y = y - FORM_ROW
 
         -- Enable checkbox (requires reload)
@@ -11527,48 +11757,8 @@ local function CreateUnitFramesPage(parent)
                 y = y - FORM_ROW
             end
             -- Debuff Preview toggle (pill-shaped, matches Castbar Preview style)
-            local debuffPreviewContainer = CreateFrame("Frame", nil, tabContent)
-            debuffPreviewContainer:SetHeight(FORM_ROW)
-            debuffPreviewContainer:SetPoint("TOPLEFT", PAD, y)
-            debuffPreviewContainer:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
-
-            local debuffPreviewLabel = debuffPreviewContainer:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-            debuffPreviewLabel:SetPoint("LEFT", 0, 0)
-            debuffPreviewLabel:SetText("Debuff Preview")
-            debuffPreviewLabel:SetTextColor(C.text[1], C.text[2], C.text[3], 1)
-
-            local debuffPreviewTrack = CreateFrame("Button", nil, debuffPreviewContainer, "BackdropTemplate")
-            debuffPreviewTrack:SetSize(40, 20)
-            debuffPreviewTrack:SetPoint("LEFT", debuffPreviewContainer, "LEFT", 200, 0)
-            debuffPreviewTrack:SetBackdrop({bgFile = "Interface\\Buttons\\WHITE8x8", edgeFile = "Interface\\Buttons\\WHITE8x8", edgeSize = 1})
-
-            local debuffPreviewThumb = CreateFrame("Frame", nil, debuffPreviewTrack, "BackdropTemplate")
-            debuffPreviewThumb:SetSize(16, 16)
-            debuffPreviewThumb:SetBackdrop({bgFile = "Interface\\Buttons\\WHITE8x8", edgeFile = "Interface\\Buttons\\WHITE8x8", edgeSize = 1})
-            debuffPreviewThumb:SetBackdropColor(0.95, 0.95, 0.95, 1)
-            debuffPreviewThumb:SetBackdropBorderColor(0.85, 0.85, 0.85, 1)
-            debuffPreviewThumb:SetFrameLevel(debuffPreviewTrack:GetFrameLevel() + 1)
-
-            local isDebuffPreviewOn = false
-            local function UpdateDebuffPreviewToggle(on)
-                if on then
-                    debuffPreviewTrack:SetBackdropColor(C.accent[1], C.accent[2], C.accent[3], 1)
-                    debuffPreviewTrack:SetBackdropBorderColor(C.accent[1]*0.8, C.accent[2]*0.8, C.accent[3]*0.8, 1)
-                    debuffPreviewThumb:ClearAllPoints()
-                    debuffPreviewThumb:SetPoint("RIGHT", debuffPreviewTrack, "RIGHT", -2, 0)
-                else
-                    debuffPreviewTrack:SetBackdropColor(0.15, 0.18, 0.22, 1)
-                    debuffPreviewTrack:SetBackdropBorderColor(0.12, 0.14, 0.18, 1)
-                    debuffPreviewThumb:ClearAllPoints()
-                    debuffPreviewThumb:SetPoint("LEFT", debuffPreviewTrack, "LEFT", 2, 0)
-                end
-            end
-            UpdateDebuffPreviewToggle(isDebuffPreviewOn)
-
-            debuffPreviewTrack:SetScript("OnClick", function()
-                isDebuffPreviewOn = not isDebuffPreviewOn
-                UpdateDebuffPreviewToggle(isDebuffPreviewOn)
-                if isDebuffPreviewOn then
+            local debuffPreviewToggle = GUI:CreateFormToggle(tabContent, "Debuff Preview", nil, nil, function(val)
+                if val then
                     if _G.GravityUI_ShowAuraPreview then
                         _G.GravityUI_ShowAuraPreview(unitKey, "debuff")
                     end
@@ -11578,6 +11768,8 @@ local function CreateUnitFramesPage(parent)
                     end
                 end
             end)
+            debuffPreviewToggle:SetPoint("TOPLEFT", PAD, y)
+            debuffPreviewToggle:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
             y = y - FORM_ROW
             local auraIconSize = GUI:CreateFormSlider(tabContent, "Icon Size", 12, 50, 1, "iconSize", auraDB, RefreshAuras)
             auraIconSize:SetPoint("TOPLEFT", PAD, y)
@@ -11708,48 +11900,8 @@ local function CreateUnitFramesPage(parent)
             buffHideSwipe:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
             y = y - FORM_ROW
             -- Buff Preview toggle (pill-shaped, matches Castbar Preview style)
-            local buffPreviewContainer = CreateFrame("Frame", nil, tabContent)
-            buffPreviewContainer:SetHeight(FORM_ROW)
-            buffPreviewContainer:SetPoint("TOPLEFT", PAD, y)
-            buffPreviewContainer:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
-
-            local buffPreviewLabel = buffPreviewContainer:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-            buffPreviewLabel:SetPoint("LEFT", 0, 0)
-            buffPreviewLabel:SetText("Buff Preview")
-            buffPreviewLabel:SetTextColor(C.text[1], C.text[2], C.text[3], 1)
-
-            local buffPreviewTrack = CreateFrame("Button", nil, buffPreviewContainer, "BackdropTemplate")
-            buffPreviewTrack:SetSize(40, 20)
-            buffPreviewTrack:SetPoint("LEFT", buffPreviewContainer, "LEFT", 200, 0)
-            buffPreviewTrack:SetBackdrop({bgFile = "Interface\\Buttons\\WHITE8x8", edgeFile = "Interface\\Buttons\\WHITE8x8", edgeSize = 1})
-
-            local buffPreviewThumb = CreateFrame("Frame", nil, buffPreviewTrack, "BackdropTemplate")
-            buffPreviewThumb:SetSize(16, 16)
-            buffPreviewThumb:SetBackdrop({bgFile = "Interface\\Buttons\\WHITE8x8", edgeFile = "Interface\\Buttons\\WHITE8x8", edgeSize = 1})
-            buffPreviewThumb:SetBackdropColor(0.95, 0.95, 0.95, 1)
-            buffPreviewThumb:SetBackdropBorderColor(0.85, 0.85, 0.85, 1)
-            buffPreviewThumb:SetFrameLevel(buffPreviewTrack:GetFrameLevel() + 1)
-
-            local isBuffPreviewOn = false
-            local function UpdateBuffPreviewToggle(on)
-                if on then
-                    buffPreviewTrack:SetBackdropColor(C.accent[1], C.accent[2], C.accent[3], 1)
-                    buffPreviewTrack:SetBackdropBorderColor(C.accent[1]*0.8, C.accent[2]*0.8, C.accent[3]*0.8, 1)
-                    buffPreviewThumb:ClearAllPoints()
-                    buffPreviewThumb:SetPoint("RIGHT", buffPreviewTrack, "RIGHT", -2, 0)
-                else
-                    buffPreviewTrack:SetBackdropColor(0.15, 0.18, 0.22, 1)
-                    buffPreviewTrack:SetBackdropBorderColor(0.12, 0.14, 0.18, 1)
-                    buffPreviewThumb:ClearAllPoints()
-                    buffPreviewThumb:SetPoint("LEFT", buffPreviewTrack, "LEFT", 2, 0)
-                end
-            end
-            UpdateBuffPreviewToggle(isBuffPreviewOn)
-
-            buffPreviewTrack:SetScript("OnClick", function()
-                isBuffPreviewOn = not isBuffPreviewOn
-                UpdateBuffPreviewToggle(isBuffPreviewOn)
-                if isBuffPreviewOn then
+            local buffPreviewToggle = GUI:CreateFormToggle(tabContent, "Buff Preview", nil, nil, function(val)
+                if val then
                     if _G.GravityUI_ShowAuraPreview then
                         _G.GravityUI_ShowAuraPreview(unitKey, "buff")
                     end
@@ -11759,6 +11911,8 @@ local function CreateUnitFramesPage(parent)
                     end
                 end
             end)
+            buffPreviewToggle:SetPoint("TOPLEFT", PAD, y)
+            buffPreviewToggle:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
             y = y - FORM_ROW
             local buffIconSize = GUI:CreateFormSlider(tabContent, "Icon Size", 12, 50, 1, "buffIconSize", auraDB, RefreshAuras)
             buffIconSize:SetPoint("TOPLEFT", PAD, y)
@@ -12336,7 +12490,7 @@ local function CreateActionBarsPage(parent)
         local FORM_ROW = 32
 
         -- Set search context for widget auto-registration
-        GUI:SetSearchContext({tabIndex = 4, tabName = "Action Bars", subTabIndex = 2, subTabName = "Mouseover Hide"})
+        GUI:SetSearchContext({tabIndex = 5, tabName = "Action Bars", subTabIndex = 2, subTabName = "Mouseover Hide"})
 
         ---------------------------------------------------------
         -- Warning: Enable Blizzard Action Bars
@@ -12473,7 +12627,7 @@ local function CreateActionBarsPage(parent)
         local FORM_ROW = 32
 
         -- Set search context for auto-registration
-        GUI:SetSearchContext({tabIndex = 4, tabName = "Action Bars", subTabIndex = 1, subTabName = "Master Settings"})
+        GUI:SetSearchContext({tabIndex = 5, tabName = "Action Bars", subTabIndex = 1, subTabName = "Master Settings"})
 
         -- 9-point anchor options for text positioning
         local anchorOptions = {
@@ -12827,7 +12981,7 @@ local function CreateActionBarsPage(parent)
     ---------------------------------------------------------
     local function BuildPerBarOverridesTab(tabContent)
         -- Set search context for widget auto-registration
-        GUI:SetSearchContext({tabIndex = 4, tabName = "Action Bars", subTabIndex = 3, subTabName = "Per-Bar Overrides"})
+        GUI:SetSearchContext({tabIndex = 5, tabName = "Action Bars", subTabIndex = 3, subTabName = "Per-Bar Overrides"})
 
         -- Use tabContent directly - parent Action Bars page already has scroll
         local content = tabContent
@@ -13248,7 +13402,7 @@ local function CreateActionBarsPage(parent)
         local FORM_ROW = 32
 
         -- Set search context
-        GUI:SetSearchContext({tabIndex = 4, tabName = "Action Bars", subTabIndex = 4, subTabName = "Extra Buttons"})
+        GUI:SetSearchContext({tabIndex = 5, tabName = "Action Bars", subTabIndex = 4, subTabName = "Extra Buttons"})
 
         -- Refresh callback
         local function RefreshExtraButtons()
@@ -13472,7 +13626,7 @@ end
 local function BuildImportExportTab(tabContent)													   
     local y = -10
     local PAD = 10
-    GUI:SetSearchContext({tabIndex = 13, tabName = "GUI Import/Export", subTabIndex = 1, subTabName = "Import/Export"})
+    GUI:SetSearchContext({tabIndex = 10, tabName = "GUI Import/Export", subTabIndex = 1, subTabName = "Import/Export"})
     local info = GUI:CreateLabel(tabContent, "Import and export GravityUI profiles", 11, C.textMuted)
     info:SetPoint("TOPLEFT", PAD, y)
     info:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
@@ -13634,7 +13788,7 @@ local function BuildGravityStringsTab(tabContent)
     local BOX_HEIGHT = 70
     local PLACEHOLDER = "--- Click 'SELECT ALL' to load string  ---"
 
-    GUI:SetSearchContext({tabIndex = 13, tabName = "GUI Import/Export", subTabIndex = 2, subTabName = "Gravity's Strings"})
+    GUI:SetSearchContext({tabIndex = 10, tabName = "GUI Import/Export", subTabIndex = 2, subTabName = "Gravity's Strings"})
 
     local info = GUI:CreateLabel(tabContent, "Gravity's personal import strings - select all and copy", 11, C.textMuted)
     info:SetPoint("TOPLEFT", PAD, y)
@@ -13714,7 +13868,7 @@ local function CreateImportExportPage(parent)
 end
 
 ---------------------------------------------------------------------------
--- PAGE: Spec Profiles (Autoswap)
+-- PAGE: Profiles (Autoswap)
 ---------------------------------------------------------------------------
 local function CreateSpecProfilesPage(parent)
     local scroll, content = CreateScrollableContent(parent)
@@ -14255,13 +14409,7 @@ local function CreateSearchPage(tabContent)
     local PAD = 15
     local y = -10
 
-    -- Search input at top
-    local searchBox = GUI:CreateSearchBox(tabContent)
-    searchBox:SetSize(tabContent:GetWidth() - (PAD * 2), 28)
-    searchBox:SetPoint("TOPLEFT", PAD, y)
-    y = y - 40
-
-    -- Results scroll area below
+    -- Results scroll area (starts higher up now)
     local scrollFrame = CreateFrame("ScrollFrame", nil, tabContent, "UIPanelScrollFrameTemplate")
     scrollFrame:SetPoint("TOPLEFT", PAD, y)
     scrollFrame:SetPoint("BOTTOMRIGHT", -30, 10)
@@ -14280,246 +14428,19 @@ local function CreateSearchPage(tabContent)
     -- Initial empty state
     GUI:RenderSearchResults(resultsContent, nil, nil)
 							  							   												 												   							   																											  
-    -- Wire up search callbacks
-    searchBox.onSearch = function(text)
+    -- Expose search methodology
+    tabContent.ExecuteSearch = function(text)
         local results = GUI:ExecuteSearch(text)
         GUI:RenderSearchResults(resultsContent, results, text)
     end
 
-    searchBox.onClear = function()
+    tabContent.ClearSearch = function()
         GUI:RenderSearchResults(resultsContent, nil, nil)
     end
 
-    tabContent.searchBox = searchBox
-    tabContent.resultsContent = resultsContent					
+    tabContent.resultsContent = resultsContent
 end
 
----------------------------------------------------------------------------
--- HUD LAYERING PAGE
----------------------------------------------------------------------------
-local function CreateHUDLayeringPage(parent)
-    local scroll, content = CreateScrollableContent(parent)
-    local y = -15
-    local PAD = PADDING
-    local FORM_ROW = 32
-
-    local guiCore = _G.GravityUI and _G.GravityUI.guiCore
-    local db = guiCore and guiCore.db and guiCore.db.profile
-													 										  
-    -- Helper to get hudLayering table (with fallback initialization)
-    local function GetLayeringDB()
-        if not db then return nil end
-        if not db.hudLayering then
-            db.hudLayering = {
-                essential = 5, utility = 5, buffIcon = 5,
-                primaryPowerBar = 7, secondaryPowerBar = 6,
-                playerFrame = 4, targetFrame = 4, totFrame = 3, petFrame = 3, focusFrame = 4, bossFrames = 4,
-                playerCastbar = 5, targetCastbar = 5,
-                playerIndicators = 5,  -- Player frame indicator icons (rested, combat, stance)															   
-                customBars = 5,
-                skyridingHUD = 5,								 
-            }
-        end
-        return db.hudLayering
-    end
-
-    -- Refresh functions for each component type
-    local function RefreshCDM()
-        if NCDM and NCDM.ApplySettings then
-            NCDM:ApplySettings("essential")
-            NCDM:ApplySettings("utility")															   
-        end
-        if _G.GravityUI_RefreshBuffBar then
-            _G.GravityUI_RefreshBuffBar()
-        end																	 
-    end
-
-    local function RefreshPowerBars()
-        if guiCore and guiCore.UpdatePowerBar then
-            guiCore:UpdatePowerBar()
-        end
-        if guiCore and guiCore.UpdateSecondaryPowerBar then
-            guiCore:UpdateSecondaryPowerBar()
-        end
-    end
-
-    local function RefreshUnitFrames()
-        if _G.GravityUI_RefreshUnitFrames then
-            _G.GravityUI_RefreshUnitFrames()
-        end
-    end
-
-    local function RefreshCastbars()
-        if _G.GravityUI_RefreshCastbars then
-            _G.GravityUI_RefreshCastbars()
-        end
-    end
-
-    local function RefreshCustomTrackers()
-        if _G.GravityUI_RefreshCustomTrackers then
-            _G.GravityUI_RefreshCustomTrackers()
-        end
-    end
-
-    local function RefreshSkyriding()
-        if _G.GravityUI_RefreshSkyriding then
-            _G.GravityUI_RefreshSkyriding()								  
-        end
-    end
-
-    -- Header description
-    local info = GUI:CreateLabel(content, "Control which HUD elements appear above others. Higher values render on top of lower values.", 11, C.textMuted)
-    info:SetPoint("TOPLEFT", PAD, y)
-    info:SetPoint("RIGHT", content, "RIGHT", -PAD, 0)
-    info:SetJustifyH("LEFT")
-    y = y - 28
-
-    local layeringDB = GetLayeringDB()
-    if not layeringDB then
-        local errorLabel = GUI:CreateLabel(content, "Database not loaded. Please reload UI.", 12, {1, 0.3, 0.3, 1})
-        errorLabel:SetPoint("TOPLEFT", PAD, y)
-        return scroll
-    end
-
-    -- =====================================================
-    -- COOLDOWN DISPLAY MANAGER SECTION
-    -- =====================================================
-    local cdmHeader = GUI:CreateSectionHeader(content, "Cooldown Display Manager")
-    cdmHeader:SetPoint("TOPLEFT", PAD, y)
-    y = y - cdmHeader.gap
-
-    local essentialSlider = GUI:CreateFormSlider(content, "Essential Viewer", 0, 10, 1, "essential", layeringDB, RefreshCDM)
-    essentialSlider:SetPoint("TOPLEFT", PAD, y)
-    essentialSlider:SetPoint("RIGHT", content, "RIGHT", -PAD, 0)
-    y = y - FORM_ROW
-
-    local utilitySlider = GUI:CreateFormSlider(content, "Utility Viewer", 0, 10, 1, "utility", layeringDB, RefreshCDM)
-    utilitySlider:SetPoint("TOPLEFT", PAD, y)
-    utilitySlider:SetPoint("RIGHT", content, "RIGHT", -PAD, 0)
-    y = y - FORM_ROW
-
-    local buffIconSlider = GUI:CreateFormSlider(content, "Buff Icon Viewer", 0, 10, 1, "buffIcon", layeringDB, RefreshCDM)
-    buffIconSlider:SetPoint("TOPLEFT", PAD, y)
-    buffIconSlider:SetPoint("RIGHT", content, "RIGHT", -PAD, 0)
-    y = y - FORM_ROW
-
-    local buffBarSlider = GUI:CreateFormSlider(content, "Buff Bar Viewer", 0, 10, 1, "buffBar", layeringDB, RefreshCDM)
-    buffBarSlider:SetPoint("TOPLEFT", PAD, y)
-    buffBarSlider:SetPoint("RIGHT", content, "RIGHT", -PAD, 0)
-    y = y - FORM_ROW
-    y = y - 10  -- Section spacing
-																					  																						 												   			  
-    -- =====================================================
-    -- POWER BARS SECTION
-    -- =====================================================
-    local powerHeader = GUI:CreateSectionHeader(content, "Power Bars")
-    powerHeader:SetPoint("TOPLEFT", PAD, y)
-    y = y - powerHeader.gap
-
-    local primaryPowerSlider = GUI:CreateFormSlider(content, "Primary Power Bar", 0, 10, 1, "primaryPowerBar", layeringDB, RefreshPowerBars)
-    primaryPowerSlider:SetPoint("TOPLEFT", PAD, y)
-    primaryPowerSlider:SetPoint("RIGHT", content, "RIGHT", -PAD, 0)
-    y = y - FORM_ROW
-
-    local secondaryPowerSlider = GUI:CreateFormSlider(content, "Secondary Power Bar", 0, 10, 1, "secondaryPowerBar", layeringDB, RefreshPowerBars)
-    secondaryPowerSlider:SetPoint("TOPLEFT", PAD, y)
-    secondaryPowerSlider:SetPoint("RIGHT", content, "RIGHT", -PAD, 0)
-    y = y - FORM_ROW
-
-    y = y - 10  -- Section spacing
-																				  																							  																							 														   			  
-    -- =====================================================
-    -- UNIT FRAMES SECTION
-    -- =====================================================
-    local ufHeader = GUI:CreateSectionHeader(content, "Unit Frames")
-    ufHeader:SetPoint("TOPLEFT", PAD, y)
-    y = y - ufHeader.gap
-
-    local playerFrameSlider = GUI:CreateFormSlider(content, "Player Frame", 0, 10, 1, "playerFrame", layeringDB, RefreshUnitFrames)
-    playerFrameSlider:SetPoint("TOPLEFT", PAD, y)
-    playerFrameSlider:SetPoint("RIGHT", content, "RIGHT", -PAD, 0)
-    y = y - FORM_ROW
-
-    local playerIndicatorsSlider = GUI:CreateFormSlider(content, "Player Status Indicators", 0, 10, 1, "playerIndicators", layeringDB, RefreshUnitFrames)
-    playerIndicatorsSlider:SetPoint("TOPLEFT", PAD, y)
-    playerIndicatorsSlider:SetPoint("RIGHT", content, "RIGHT", -PAD, 0)
-    y = y - FORM_ROW
-    local targetFrameSlider = GUI:CreateFormSlider(content, "Target Frame", 0, 10, 1, "targetFrame", layeringDB, RefreshUnitFrames)
-    targetFrameSlider:SetPoint("TOPLEFT", PAD, y)
-    targetFrameSlider:SetPoint("RIGHT", content, "RIGHT", -PAD, 0)
-    y = y - FORM_ROW
-
-    local totFrameSlider = GUI:CreateFormSlider(content, "Target of Target", 0, 10, 1, "totFrame", layeringDB, RefreshUnitFrames)
-    totFrameSlider:SetPoint("TOPLEFT", PAD, y)
-    totFrameSlider:SetPoint("RIGHT", content, "RIGHT", -PAD, 0)
-    y = y - FORM_ROW
-
-    local petFrameSlider = GUI:CreateFormSlider(content, "Pet Frame", 0, 10, 1, "petFrame", layeringDB, RefreshUnitFrames)													
-    petFrameSlider:SetPoint("TOPLEFT", PAD, y)
-    petFrameSlider:SetPoint("RIGHT", content, "RIGHT", -PAD, 0)
-    y = y - FORM_ROW
-
-    local focusFrameSlider = GUI:CreateFormSlider(content, "Focus Frame", 0, 10, 1, "focusFrame", layeringDB, RefreshUnitFrames)
-    focusFrameSlider:SetPoint("TOPLEFT", PAD, y)
-    focusFrameSlider:SetPoint("RIGHT", content, "RIGHT", -PAD, 0)
-    y = y - FORM_ROW
-
-    local bossFramesSlider = GUI:CreateFormSlider(content, "Boss Frames", 0, 10, 1, "bossFrames", layeringDB, RefreshUnitFrames)																																															   
-    bossFramesSlider:SetPoint("TOPLEFT", PAD, y)
-    bossFramesSlider:SetPoint("RIGHT", content, "RIGHT", -PAD, 0)
-    y = y - FORM_ROW
-
-    y = y - 10  -- Section spacing
-																																										 	   																																																						 																						  																						  																									  																									 																   			  
-    -- =====================================================
-    -- CASTBARS SECTION
-    -- =====================================================
-    local castbarHeader = GUI:CreateSectionHeader(content, "Castbars")
-    castbarHeader:SetPoint("TOPLEFT", PAD, y)
-    y = y - castbarHeader.gap
-
-    local playerCastbarSlider = GUI:CreateFormSlider(content, "Player Castbar", 0, 10, 1, "playerCastbar", layeringDB, RefreshCastbars)
-    playerCastbarSlider:SetPoint("TOPLEFT", PAD, y)
-    playerCastbarSlider:SetPoint("RIGHT", content, "RIGHT", -PAD, 0)
-    y = y - FORM_ROW
-
-    local targetCastbarSlider = GUI:CreateFormSlider(content, "Target Castbar", 0, 10, 1, "targetCastbar", layeringDB, RefreshCastbars)
-    targetCastbarSlider:SetPoint("TOPLEFT", PAD, y)
-    targetCastbarSlider:SetPoint("RIGHT", content, "RIGHT", -PAD, 0)
-    y = y - FORM_ROW
-
-    y = y - 10  -- Section spacing
-																		   									 									   																							  													 			  
-    -- =====================================================
-    -- CUSTOM TRACKERS SECTION
-    -- =====================================================
-    local customHeader = GUI:CreateSectionHeader(content, "Custom Trackers")
-    customHeader:SetPoint("TOPLEFT", PAD, y)
-    y = y - customHeader.gap
-
-    local customBarsSlider = GUI:CreateFormSlider(content, "Custom Item/Spell Bars", 0, 10, 1, "customBars", layeringDB, RefreshCustomTrackers)
-    customBarsSlider:SetPoint("TOPLEFT", PAD, y)
-    customBarsSlider:SetPoint("RIGHT", content, "RIGHT", -PAD, 0)
-    y = y - FORM_ROW
-
-    y = y - 10  -- Section spacing
-
-    -- =====================================================
-    -- SKYRIDING SECTION
-    -- =====================================================
-    local skyridingHeader = GUI:CreateSectionHeader(content, "Skyriding")
-    skyridingHeader:SetPoint("TOPLEFT", PAD, y)
-    y = y - skyridingHeader.gap
-
-    local skyridingSlider = GUI:CreateFormSlider(content, "Skyriding HUD", 0, 10, 1, "skyridingHUD", layeringDB, RefreshSkyriding)
-    skyridingSlider:SetPoint("TOPLEFT", PAD, y)
-    skyridingSlider:SetPoint("RIGHT", content, "RIGHT", -PAD, 0)
-    y = y - FORM_ROW
-    -- Set content height																							 														   			  	
-    content:SetHeight(math.abs(y) + 20)
-   
-    return scroll															  
-end
  
 ---------------------------------------------------------------------------
 -- INITIALIZE OPTIONS - Main tabs
@@ -14528,26 +14449,50 @@ function GUI:InitializeOptions()
     local frame = self:CreateMainFrame()
 
     -- Row 1: Core UI Elements
-    GUI:AddTab(frame, "Main & QoL", CreateGeneralQoLPage)
+    GUI:AddTab(frame, "Main", CreateGeneralQoLPage)
+	GUI:AddTab(frame, "Extras", CreateGravityExtrasPage)
     GUI:AddTab(frame, "Unitframes", CreateUnitFramesPage)
     GUI:AddTab(frame, "Minimap & Datatext", CreateMinimapPage)
     GUI:AddTab(frame, "Action Bars", CreateActionBarsPage)
-    GUI:AddTab(frame, "Autohide & Skinning", CreateAutohidesPage)
 
     -- Row 2: Cooldown System (CDM cluster)
     GUI:AddTab(frame, "CDM Settings", CreateCDMSetupPage)
     GUI:AddTab(frame, "CDM Effects", CreateCDEffectsPage)
     GUI:AddTab(frame, "CDM Keybinds", CreateCDKeybindsPage)
-    GUI:AddTab(frame, "Custom Items/Spells/Buffs", CreateCustomTrackersPage)
-
+    GUI:AddTab(frame, "Custom Items/Spells", CreateCustomTrackersPage)
 
     -- Row 3: Utilities + Action Buttons
-	GUI:AddTab(frame, "Extras", CreateGravityExtrasPage)
-	GUI:AddTab(frame, "HUD Layering", CreateHUDLayeringPage)
     GUI:AddTab(frame, "Gravity UI Import/Export", CreateImportExportPage)
-    GUI:AddTab(frame, "Spec Profiles", CreateSpecProfilesPage)
-    GUI:AddTab(frame, "Search", CreateSearchPage)
-    GUI._searchTabIndex = #frame.tabs  -- Store Search tab index for ForceLoadAllTabs trigger
+    GUI:AddTab(frame, "Profiles", CreateSpecProfilesPage)
+    
+    -- Register Search Page (Hidden from sidebar)
+    local searchIndex = 99
+    frame.pages[searchIndex] = {
+        createFunc = CreateSearchPage,
+        frame = nil
+    }
+    GUI._searchTabIndex = searchIndex
+
+    -- Configure Global Search Box
+    if frame.globalSearchBox then
+        frame.globalSearchBox.onSearch = function(text)
+            GUI:SelectTab(frame, searchIndex)
+            local searchPage = frame.pages[searchIndex]
+            if searchPage and searchPage.frame then
+                if searchPage.frame.ExecuteSearch then
+                    searchPage.frame.ExecuteSearch(text)
+                end
+            end
+        end
+        frame.globalSearchBox.onClear = function()
+            local searchPage = frame.pages[searchIndex]
+            if searchPage and searchPage.frame then
+                if searchPage.frame.ClearSearch then
+                    searchPage.frame.ClearSearch()
+                end
+            end
+        end
+    end
 
     GUI:AddActionButton(frame, "Cooldown Settings", function()
         if CooldownViewerSettings then

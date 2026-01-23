@@ -2796,6 +2796,68 @@ Datatexts:Register("playerspec", {
         -- Store activeLoadoutID on frame to avoid scope issues with multiple instances
         frame.activeLoadoutID = nil
 
+        -- TalentLoadoutManager integration
+        local TLM = TalentLoadoutManagerAPI
+        local hasTLM = TLM and TLM.GlobalAPI and TLM.CharacterAPI and TLM.Event
+
+        -- Get active loadout info (TLM-aware)
+        local function GetActiveLoadoutInfo(specID)
+            if hasTLM then
+                local info = TLM.CharacterAPI:GetActiveLoadoutInfo()
+                if info then
+                    frame.activeLoadoutID = info.id
+                    return info
+                end
+            end
+            return nil
+        end
+
+        -- Get all loadouts for spec (TLM-aware)
+        local function GetAllLoadouts(specID)
+            if hasTLM then
+                return TLM.GlobalAPI:GetLoadouts(specID) or {}
+            end
+            -- Fallback to Blizzard API
+            local loadouts = {}
+            local builds = C_ClassTalents.GetConfigIDsBySpecID(specID)
+            if builds then
+                for _, configID in ipairs(builds) do
+                    local configInfo = C_Traits.GetConfigInfo(configID)
+                    if configInfo and configInfo.name then
+                        table.insert(loadouts, {
+                            id = configID,
+                            name = configInfo.name,
+                            displayName = configInfo.name,
+                            isBlizzardLoadout = true,
+                        })
+                    end
+                end
+            end
+            return loadouts
+        end
+
+        -- Load a loadout (TLM-aware)
+        local function LoadLoadout(loadoutID)
+            if hasTLM then
+                TLM.CharacterAPI:LoadLoadout(loadoutID, true)
+                return
+            end
+            -- Fallback to Blizzard API
+            if not _G.PlayerSpellsFrame then
+                if _G.PlayerSpellsFrame_LoadUI then
+                    _G.PlayerSpellsFrame_LoadUI()
+                else
+                    return
+                end
+            end
+            local targetID = loadoutID
+            if _G.PlayerSpellsFrame and _G.PlayerSpellsFrame.TalentsFrame then
+                _G.PlayerSpellsFrame.TalentsFrame:LoadConfigByPredicate(function(_, cID)
+                    return cID == targetID
+                end)
+            end
+        end
+
         local function GetLoadoutName(specID)
             if not PlayerUtil.CanUseClassTalents() then return nil end
 
@@ -2805,6 +2867,13 @@ Datatexts:Register("playerspec", {
                 return "Starter Build"
             end
 
+            -- Try TLM first
+            local activeInfo = GetActiveLoadoutInfo(specID)
+            if activeInfo then
+                return activeInfo.displayName or activeInfo.name
+            end
+
+            -- Fallback to Blizzard API
             local configID = C_ClassTalents.GetLastSelectedSavedConfigID(specID)
             if configID then
                 frame.activeLoadoutID = configID
@@ -2861,6 +2930,8 @@ Datatexts:Register("playerspec", {
 
         frame.Update = Update
 
+        frame.Update = Update
+
         -- Events
         frame:RegisterEvent("PLAYER_ENTERING_WORLD")
         frame:RegisterEvent("PLAYER_TALENT_UPDATE")
@@ -2878,6 +2949,19 @@ Datatexts:Register("playerspec", {
                 Update()
             end
         end)
+
+        -- TalentLoadoutManager event registration (uses CallbackRegistryMixin)
+        if hasTLM and TLM.RegisterCallback then
+            TLM:RegisterCallback(TLM.Event.LoadoutListUpdated, function()
+                C_Timer.After(0.1, Update)
+            end, frame)
+            TLM:RegisterCallback(TLM.Event.LoadoutUpdated, function()
+                C_Timer.After(0.1, Update)
+            end, frame)
+            TLM:RegisterCallback(TLM.Event.CustomLoadoutApplied, function()
+                C_Timer.After(0.1, Update)
+            end, frame)
+        end
 
         -- Tooltip
         slotFrame:EnableMouse(true)
@@ -2910,10 +2994,11 @@ Datatexts:Register("playerspec", {
             if currentSpec and PlayerUtil.CanUseClassTalents() then
                 local specID = GetSpecializationInfo(currentSpec)
                 if specID then
-                    local builds = C_ClassTalents.GetConfigIDsBySpecID(specID)
-                    if builds and #builds > 0 then
+                    local loadouts = GetAllLoadouts(specID)
+                    if #loadouts > 0 or C_ClassTalents.GetHasStarterBuild() then
                         GameTooltip:AddLine(" ")
-                        GameTooltip:AddLine("Loadouts", ar, ag, ab)
+                        local headerText = hasTLM and "Loadouts (TLM)" or "Loadouts"
+                        GameTooltip:AddLine(headerText, ar, ag, ab)
 
                         -- Starter build
                         if C_ClassTalents.GetHasStarterBuild() then
@@ -2922,13 +3007,17 @@ Datatexts:Register("playerspec", {
                             GameTooltip:AddLine("|cff0070DD" .. "Starter Build" .. "|r" .. status, 1, 1, 1)
                         end
 
-                        for _, configID in ipairs(builds) do
-                            local configInfo = C_Traits.GetConfigInfo(configID)
-                            if configInfo and configInfo.name then
-                                local isActive = (configID == frame.activeLoadoutID)
-                                local status = isActive and " " .. activeColor .. "(Active)|r" or ""
-                                GameTooltip:AddLine(configInfo.name .. status, 1, 1, 1)
+                        for _, loadout in ipairs(loadouts) do
+																			   
+																  
+                            local isActive = (loadout.id == frame.activeLoadoutID)
+                            local status = isActive and " " .. activeColor .. "(Active)|r" or ""
+                            local name = loadout.displayName or loadout.name or "Unknown"
+                            -- Mark custom TLM loadouts (explicit == false, nil means unknown)
+                            if loadout.isBlizzardLoadout == false then
+                                name = activeColor .. "[TLM]|r " .. name
                             end
+                            GameTooltip:AddLine(name .. status, 1, 1, 1)
                         end
                     end
                 end
@@ -2970,6 +3059,7 @@ Datatexts:Register("playerspec", {
             -- Get configured accent color for active indicators in menus
             local vr, vg, vb = GetValueColor()
             local activeMarker = format(" |cff%02x%02x%02x*|r", vr, vg, vb)
+            local accentColor = format("|cff%02x%02x%02x", vr, vg, vb)
 
             if button == "LeftButton" then
                 if IsShiftKeyDown() then
@@ -2983,7 +3073,8 @@ Datatexts:Register("playerspec", {
                     if not specID or not PlayerUtil.CanUseClassTalents() then return end
 
                     MenuUtil.CreateContextMenu(self, function(_, root)
-                        root:CreateTitle("Switch Loadout")
+                        local titleText = hasTLM and "Switch Loadout (TLM)" or "Switch Loadout"
+                        root:CreateTitle(titleText)
 
                         -- Starter build
                         if C_ClassTalents.GetHasStarterBuild() then
@@ -3005,30 +3096,20 @@ Datatexts:Register("playerspec", {
                             end)
                         end
 
-                        local builds = C_ClassTalents.GetConfigIDsBySpecID(specID)
-                        if builds then
-                            for _, configID in ipairs(builds) do
-                                local configInfo = C_Traits.GetConfigInfo(configID)
-                                if configInfo and configInfo.name then
-                                    local isActive = (configID == frame.activeLoadoutID)
-                                    root:CreateButton(configInfo.name .. (isActive and activeMarker or ""), function()
-                                        if not _G.PlayerSpellsFrame then
-                                            if _G.PlayerSpellsFrame_LoadUI then
-                                                _G.PlayerSpellsFrame_LoadUI()
-                                            else
-                                                return
-                                            end
-                                        end
-                                        local targetID = configID
-                                        if _G.PlayerSpellsFrame and _G.PlayerSpellsFrame.TalentsFrame then
-                                            _G.PlayerSpellsFrame.TalentsFrame:LoadConfigByPredicate(function(_, cID)
-                                                return cID == targetID
-                                            end)
-                                        end
-                                    end)
-                                end
+                        local loadouts = GetAllLoadouts(specID)
+									  
+                        for _, loadout in ipairs(loadouts) do														  
+                            local isActive = (loadout.id == frame.activeLoadoutID)
+                            local name = loadout.displayName or loadout.name or "Unknown"
+                            -- Mark custom TLM loadouts (explicit == false, nil means unknown)
+                            if loadout.isBlizzardLoadout == false then
+                                name = accentColor .. "[TLM]|r " .. name					
                             end
-                        end
+                            local loadoutID = loadout.id
+                            root:CreateButton(name .. (isActive and activeMarker or ""), function()
+                                LoadLoadout(loadoutID)
+                            end)
+                        end						   
                     end)
                 else
                     -- Spec menu
@@ -3088,6 +3169,13 @@ Datatexts:Register("playerspec", {
 
     OnDisable = function(frame)
         frame:UnregisterAllEvents()
+        -- Unregister TalentLoadoutManager callbacks if available
+        local TLM = TalentLoadoutManagerAPI
+        if TLM and TLM.UnregisterCallback and TLM.Event then
+            TLM:UnregisterCallback(TLM.Event.LoadoutListUpdated, frame)
+            TLM:UnregisterCallback(TLM.Event.LoadoutUpdated, frame)
+            TLM:UnregisterCallback(TLM.Event.CustomLoadoutApplied, frame)
+        end
     end,
 })
 

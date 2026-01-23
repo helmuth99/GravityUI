@@ -704,7 +704,7 @@ local defaults = {
                 textSize = 14,
                 spacing = 2,
                 growUp = true,  -- true = grow upward, false = grow downward
-                orientation = "vertical",
+                orientation = "horizontal",
                 fillDirection = "UP",
                 iconPosition = "top",
                 showTextOnVertical = false,
@@ -744,7 +744,7 @@ local defaults = {
             showOnMouseover = false,
             fadeDuration = 0.2,
             fadeOutAlpha = 0,
-            hideWhenMounted = true,
+            hideWhenMounted = false,
         },
 
         -- Unitframes Visibility (player, target, focus, pet, tot, boss)
@@ -758,7 +758,7 @@ local defaults = {
             fadeDuration = 0.2,
             fadeOutAlpha = 0,
             alwaysShowCastbars = false,  -- When true, castbars ignore UF visibility
-            hideWhenMounted = true,
+            hideWhenMounted = false,
         },
 
         -- Custom Trackers Visibility (all custom item/spell bars)
@@ -771,7 +771,7 @@ local defaults = {
             showOnMouseover = false,
             fadeDuration = 0.2,
             fadeOutAlpha = 0,
-            hideWhenMounted = true,
+            hideWhenMounted = false,
         },
 
         viewers = {
@@ -950,7 +950,7 @@ local defaults = {
         secondaryPowerBar = {
             enabled       = true,
             autoAttach    = false,
-            standaloneMode = true,  -- Stay visible when primary is hidden
+            standaloneMode = false,  -- Stay visible when primary is hidden
             attachTo      = "EssentialCooldownViewer",
             height        = 8,
             borderSize    = 1,
@@ -1466,7 +1466,7 @@ local defaults = {
                     widthAdjustment = 0,		
                     fontSize = 14,
                     color = {0.404, 1, 0.984, 1},  -- Cyan color from your profile
-                    anchor = "essential",
+                    anchor = "none",
                     texture = "Gravity v5",
                     bgColor = {0.149, 0.149, 0.149, 1},
                     borderSize = 1,
@@ -2664,12 +2664,12 @@ local defaults = {
        uiHider = {
             hideObjectiveTrackerAlways = false,  -- Hide Objective Tracker always
             hideObjectiveTrackerInstanceTypes = {
-                mythicPlus = true,
+                mythicPlus = false,
                 mythicDungeon = false,
                 normalDungeon = false,
                 heroicDungeon = false,
                 followerDungeon = false,
-                raid = true,
+                raid = false,
                 pvp = false,
                 arena = false,
             },		  
@@ -4567,6 +4567,10 @@ function guiCore:RefreshAll()
     if self.ApplyGlobalFont then
         self:ApplyGlobalFont()
     end
+    -- Refresh skyriding HUD fonts
+    if _G.GravityUI_RefreshSkyriding then
+        _G.GravityUI_RefreshSkyriding()
+    end
 end
 
 -- ============================================================================
@@ -4700,21 +4704,47 @@ function guiCore:ApplyGlobalFont()
 
         -- Hook chat frame font size changes
         if FCF_SetChatWindowFontSize then
-            hooksecurefunc("FCF_SetChatWindowFontSize", function(chatFrame)
+            hooksecurefunc("FCF_SetChatWindowFontSize", function(chatFrame, fontSize)
                 if not guiCore.db.profile.general.applyGlobalFontToBlizzard then return end
                 local fp = GetGlobalFontPath()
-                if chatFrame then
-                    ApplyFontToFrameRecursive(chatFrame, fp)
+                if chatFrame and chatFrame.SetFont then
+                    -- Apply global font directly to ScrollingMessageFrame (not just children)
+                    local _, size, flags = chatFrame:GetFont()
+                    chatFrame:SetFont(fp, fontSize or size or 14, flags or "")
                 end
             end)
         end
+
+        -- Event handler for chat window resets (font persistence across new messages)
+        local chatFontEventFrame = CreateFrame("Frame")
+        chatFontEventFrame:RegisterEvent("UPDATE_CHAT_WINDOWS")
+        chatFontEventFrame:RegisterEvent("UPDATE_FLOATING_CHAT_WINDOWS")
+        chatFontEventFrame:SetScript("OnEvent", function()
+            if not guiCore.db or not guiCore.db.profile then return end
+            if not guiCore.db.profile.general.applyGlobalFontToBlizzard then return end
+            C_Timer.After(0.05, function()
+                local fp = GetGlobalFontPath()
+                for i = 1, NUM_CHAT_WINDOWS do
+                    local chatFrame = _G["ChatFrame" .. i]
+                    if chatFrame and chatFrame.SetFont then
+                        local _, size, flags = chatFrame:GetFont()
+                        if size then
+                            chatFrame:SetFont(fp, size, flags or "")
+                        end
+                    end
+                end
+            end)
+        end)
     end
 
-    -- Apply to existing chat frames
+    -- Apply to existing chat frames (SetFont on the frame itself for new message persistence)
     for i = 1, NUM_CHAT_WINDOWS do
         local chatFrame = _G["ChatFrame" .. i]
-        if chatFrame then
-            ApplyFontToFrameRecursive(chatFrame, fontPath)
+        if chatFrame and chatFrame.SetFont then
+            local _, size, flags = chatFrame:GetFont()
+            if size then
+                chatFrame:SetFont(fontPath, size, flags or "")
+            end
         end
     end
 

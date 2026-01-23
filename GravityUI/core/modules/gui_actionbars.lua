@@ -179,7 +179,7 @@ local function AddKeybindMethods(button, barKey)
     button._guiBindingCommand = bindingCommand
     button._guiKeybindMethods = true
 
-    -- Reguired method: Returns current keybind text
+    -- Required method: Returns current keybind text
     function button:GetHotkey()
         local key = GetBindingKey(self._guiBindingCommand)
         if key then
@@ -520,8 +520,13 @@ local function HookExtraButtonPositioning()
     local extraSettings = GetExtraButtonDB("extraActionButton")
     local zoneSettings = GetExtraButtonDB("zoneAbility")
     local guiManagingFrames = (extraSettings and extraSettings.enabled) or (zoneSettings and zoneSettings.enabled)
+    -- BUG-008: Use C_Timer.After(0) and combat check to avoid taint propagation to secure frame manager
     if guiManagingFrames and UIParentBottomManagedFrameContainer and ExtraAbilityContainer then
-        UIParentBottomManagedFrameContainer.showingFrames[ExtraAbilityContainer] = nil
+        C_Timer.After(0, function()
+            if not InCombatLockdown() and UIParentBottomManagedFrameContainer.showingFrames then
+                UIParentBottomManagedFrameContainer.showingFrames[ExtraAbilityContainer] = nil
+            end
+        end)
     end
 end
 
@@ -691,19 +696,19 @@ local function SkinButton(button, settings)
     end
 
     -- Create or update Normal overlay (border frame texture)
-    if settings.showBorders ~= false then										 
-    if not button._guiNormal then
-        button._guiNormal = button:CreateTexture(nil, "OVERLAY", nil, 1)
-        button._guiNormal:SetTexture(TEXTURES.normal)
-        button._guiNormal:SetVertexColor(0, 0, 0, 1)
-    end
-    button._guiNormal:SetSize(iconSize, iconSize)
-    button._guiNormal:ClearAllPoints()
-    button._guiNormal:SetAllPoints(button)
-    button._guiNormal:Show()
+    if settings.showBorders ~= false then
+        if not button._guiNormal then
+            button._guiNormal = button:CreateTexture(nil, "OVERLAY", nil, 1)
+            button._guiNormal:SetTexture(TEXTURES.normal)
+            button._guiNormal:SetVertexColor(0, 0, 0, 1)
+        end
+        button._guiNormal:SetSize(iconSize, iconSize)
+        button._guiNormal:ClearAllPoints()
+        button._guiNormal:SetAllPoints(button)
+        button._guiNormal:Show()
     elseif button._guiNormal then
         button._guiNormal:Hide()
-    end   
+    end
 
     -- Create or update Gloss overlay (ADD blend shine)
     if settings.showGloss then
@@ -841,8 +846,12 @@ local function UpdateKeybindText(button, settings)
 
     hotkey:SetFont(fontPath, settings.keybindFontSize or 11, outline)
 
-    local color = settings.keybindColor or {1, 1, 1, 1}
-    hotkey:SetTextColor(color[1], color[2], color[3], color[4] or 1)
+    local color = settings.keybindColor
+    local r = color and color[1] or 1
+    local g = color and color[2] or 1
+    local b = color and color[3] or 1
+    local a = color and color[4] or 1
+    hotkey:SetTextColor(r, g, b, a)
 
     -- Reposition with configurable anchor and offsets
     hotkey:ClearAllPoints()
@@ -876,8 +885,12 @@ local function UpdateMacroText(button, settings)
 
     name:SetFont(fontPath, settings.macroNameFontSize or 10, outline)
 
-    local color = settings.macroNameColor or {1, 1, 1, 1}
-    name:SetTextColor(color[1], color[2], color[3], color[4] or 1)
+    local color = settings.macroNameColor
+    local r = color and color[1] or 1
+    local g = color and color[2] or 1
+    local b = color and color[3] or 1
+    local a = color and color[4] or 1
+    name:SetTextColor(r, g, b, a)
 
     -- Reposition with configurable anchor and offsets
     name:ClearAllPoints()
@@ -911,8 +924,12 @@ local function UpdateCountText(button, settings)
 
     count:SetFont(fontPath, settings.countFontSize or 14, outline)
 
-    local color = settings.countColor or {1, 1, 1, 1}
-    count:SetTextColor(color[1], color[2], color[3], color[4] or 1)
+    local color = settings.countColor
+    local r = color and color[1] or 1
+    local g = color and color[2] or 1
+    local b = color and color[3] or 1
+    local a = color and color[4] or 1
+    count:SetTextColor(r, g, b, a)
 
     -- Reposition with configurable anchor and offsets
     count:ClearAllPoints()
@@ -940,10 +957,16 @@ end
 -- Update empty slot visibility for a single button
 local function UpdateEmptySlotVisibility(button, settings)
     if not settings then return end
+
+    -- Get the bar's current fade alpha (respects mouseover hide)
+    local barKey = GetBarKeyFromButton(button)
+    local fadeState = barKey and ActionBars.fadeState and ActionBars.fadeState[barKey]
+    local targetAlpha = fadeState and fadeState.currentAlpha or 1
+
     if not settings.hideEmptySlots then
-        -- Restore visibility if setting is off
+        -- Restore visibility if setting is off (respect fade state)
         if button._guiHiddenEmpty then
-            button:SetAlpha(1)
+            button:SetAlpha(targetAlpha)
             button._guiHiddenEmpty = nil
         end
         return
@@ -953,7 +976,7 @@ local function UpdateEmptySlotVisibility(button, settings)
     if button.action then
         local hasAction = SafeHasAction(button.action)
         if hasAction then
-            button:SetAlpha(1)
+            button:SetAlpha(targetAlpha)
             button._guiHiddenEmpty = nil
         else
             button:SetAlpha(0)
@@ -1055,8 +1078,12 @@ local function UpdateButtonUsability(button, settings)
     if settings.rangeIndicator then
         local inRange = SafeIsActionInRange(button.action)
         if inRange == false then  -- false = out of range, nil = no range check needed
-            local c = settings.rangeColor or {0.8, 0.1, 0.1, 1}
-            icon:SetVertexColor(c[1], c[2], c[3], c[4] or 1)
+            local c = settings.rangeColor
+            local r = c and c[1] or 0.8
+            local g = c and c[2] or 0.1
+            local b = c and c[3] or 0.1
+            local a = c and c[4] or 1
+            icon:SetVertexColor(r, g, b, a)
             icon:SetDesaturated(false)
             button._guiTinted = "range"
             return
@@ -1069,8 +1096,12 @@ local function UpdateButtonUsability(button, settings)
 
         if notEnoughMana then
             -- Out of mana/resources - blue tint
-            local c = settings.manaColor or {0.5, 0.5, 1.0, 1}
-            icon:SetVertexColor(c[1], c[2], c[3], c[4] or 1)
+            local c = settings.manaColor
+            local r = c and c[1] or 0.5
+            local g = c and c[2] or 0.5
+            local b = c and c[3] or 1.0
+            local a = c and c[4] or 1
+            icon:SetVertexColor(r, g, b, a)
             icon:SetDesaturated(false)
             button._guiTinted = "mana"
             return
@@ -1080,8 +1111,12 @@ local function UpdateButtonUsability(button, settings)
                 icon:SetDesaturated(true)
                 icon:SetVertexColor(0.6, 0.6, 0.6, 1)  -- Slight brightness reduction with desaturation
             else
-                local c = settings.usabilityColor or {0.4, 0.4, 0.4, 1}
-                icon:SetVertexColor(c[1], c[2], c[3], c[4] or 1)
+                local c = settings.usabilityColor
+                local r = c and c[1] or 0.4
+                local g = c and c[2] or 0.4
+                local b = c and c[3] or 0.4
+                local a = c and c[4] or 1
+                icon:SetVertexColor(r, g, b, a)
                 icon:SetDesaturated(false)
             end
             button._guiTinted = "unusable"
@@ -1238,8 +1273,16 @@ end
 -- Apply alpha to all buttons in a bar
 local function SetBarAlpha(barKey, alpha)
     local buttons = GetBarButtons(barKey)
+    local settings = GetGlobalSettings()
+    local hideEmptyEnabled = settings and settings.hideEmptySlots
+
     for _, button in ipairs(buttons) do
-        button:SetAlpha(alpha)
+        -- Respect hide empty slots setting - keep empty buttons hidden
+        if hideEmptyEnabled and button._guiHiddenEmpty then
+            button:SetAlpha(0)
+        else
+            button:SetAlpha(alpha)
+        end
     end
 
     local barFrame = GetBarFrame(barKey)
@@ -1413,6 +1456,7 @@ local function FadeLinkedBarDirect(barKey)
         end
     end)
 end
+
 -- Handle mouse entering the bar area (event-based, no polling)
 local function OnBarMouseEnter(barKey)
     local state = GetBarFadeState(barKey)
@@ -1439,6 +1483,7 @@ local function OnBarMouseEnter(barKey)
             end
         end
     end
+
     -- Cancel any pending fade-out
     if state.delayTimer then
         state.delayTimer:Cancel()
@@ -1497,6 +1542,7 @@ local function OnBarMouseLeave(barKey)
             end
             return  -- Skip normal single-bar fade logic
         end
+
         state.isMouseOver = false
 
         -- Get fade out alpha
@@ -1944,6 +1990,7 @@ end
 
 -- Call setup after a short delay to ensure EditModeManagerFrame exists
 C_Timer.After(1, SetupEditModeHooks)
+
 ---------------------------------------------------------------------------
 -- EXPOSE MODULE
 ---------------------------------------------------------------------------

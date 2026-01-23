@@ -16,7 +16,7 @@ local copyButtons = {}          -- Track copy buttons per chat frame
 
 -- Localized table functions for performance
 local tinsert = table.insert
-local tconcat = table.concat						
+local tconcat = table.concat
 
 -- Blizzard texture names to strip for glass effect
 local CHAT_FRAME_TEXTURES = {
@@ -43,9 +43,9 @@ local EDITBOX_TEXTURES = {
 
 -- gui Color palette for popup styling
 local gui_COLORS = {
-    bg = {0.133, 0.137, 0.149, 0.97},
-    accent = {0, 0.74901960784314, 1},
-    text = {0, 0.74901960784314, 1},
+    bg = {0.067, 0.094, 0.153, 0.97},
+    accent = {0.204, 0.827, 0.6, 1},
+    text = {0.953, 0.957, 0.965, 1},
 }
 
 ---------------------------------------------------------------------------
@@ -252,7 +252,7 @@ local function CreateCopyPopup()
     -- Add to special frames so ESC closes it
     if not tContains(UISpecialFrames, "GravityUI_ChatCopyPopup") then
         tinsert(UISpecialFrames, "GravityUI_ChatCopyPopup")
-    end  
+    end
 
     return urlPopup
 end
@@ -280,7 +280,7 @@ local function SetupURLClickHandler()
         if url then
             ShowCopyPopup(url)
             return true
-        end		   
+        end
     end)
 end
 
@@ -290,7 +290,8 @@ end
 
 -- Check if message contains protected/secure content
 local function IsMessageProtected(message)
-    if not message then return false end
+    -- BUG-009: Secret values are truthy but can't be indexed - check type first
+    if not message or type(message) ~= "string" then return false end
     -- Secret values use |K...|k pattern
     if message:find("|K") then return true end
     return false
@@ -298,7 +299,8 @@ end
 
 -- Strip textures, icons, and hyperlink formatting from message
 local function CleanMessage(message)
-    if not message then return "" end
+    -- BUG-009: Secret values are truthy but can't be indexed - check type first
+    if not message or type(message) ~= "string" then return "" end
 
     local cleaned = message
     -- Remove texture escapes |T...|t
@@ -442,7 +444,7 @@ end
 ---------------------------------------------------------------------------
 
 local COPY_BUTTON_IDLE_ALPHA = 0.35
-															  
+
 -- Create or get the copy button for a chat frame
 local function GetOrCreateCopyButton(chatFrame)
     local frameName = chatFrame:GetName()
@@ -450,7 +452,7 @@ local function GetOrCreateCopyButton(chatFrame)
 
     -- Return existing button
     if copyButtons[chatFrame] then
-        return copyButtons[chatFrame]			  
+        return copyButtons[chatFrame]
     end
 
     local button = CreateFrame("Button", frameName .. "GravityCopyButton", chatFrame)
@@ -571,7 +573,7 @@ local function ApplyCopyButtonMode(chatFrame)
     end
 end
 
--- Hide copy button			   
+-- Hide copy button
 local function HideCopyButton(chatFrame)
     if copyButtons[chatFrame] then
         copyButtons[chatFrame]:Hide()
@@ -1017,10 +1019,10 @@ local function SkinChatFrame(chatFrame)
     -- Apply message padding
     ApplyMessagePadding(chatFrame)
 
-    -- Apply copy button based on mode							   
+    -- Apply copy button based on mode
     ApplyCopyButtonMode(chatFrame)
 end
-   
+
 ---------------------------------------------------------------------------
 -- Skin all existing chat frames
 ---------------------------------------------------------------------------
@@ -1055,10 +1057,37 @@ local function HookNewChatWindows()
         end)
     end
 
-    -- Hook tab clicks to update selection state colors
+    -- Hook tab clicks to update selection state colors AND editbox backdrop
     hooksecurefunc("FCF_Tab_OnClick", function(self)
+        local tabID = self:GetID()
         C_Timer.After(0.05, function()
             RefreshAllTabColors()
+
+            local chatFrame = _G["ChatFrame" .. tabID]
+            local settings = GetSettings()
+
+            if chatFrame and settings and settings.editBox and settings.editBox.positionTop then
+                -- Use ChatFrame1's backdrop as the SINGLE shared backdrop for top position mode
+                -- Parent to UIParent so it stays visible when ChatFrame1 is hidden
+                -- (WoW hides ChatFrame1 when other tabs are selected)
+                local sharedBackdrop = ChatFrame1.__guiEditBoxBackdrop
+                if sharedBackdrop then
+                    sharedBackdrop:SetParent(UIParent)
+                    sharedBackdrop:ClearAllPoints()
+                    sharedBackdrop:SetFrameLevel(ChatFrame1:GetFrameLevel() + 10)
+                    sharedBackdrop:SetPoint("BOTTOMLEFT", ChatFrame1, "TOPLEFT", -8, 0)
+                    sharedBackdrop:SetPoint("BOTTOMRIGHT", ChatFrame1, "TOPRIGHT", 8, 0)
+                    sharedBackdrop:SetHeight(24)
+
+                    -- Update ChatFrame1EditBox's reference (it's always the active editbox)
+                    ChatFrame1EditBox.__guiChatBackdrop = sharedBackdrop
+
+                    -- If editbox has focus, show the backdrop
+                    if ChatFrame1EditBox:HasFocus() then
+                        sharedBackdrop:Show()
+                    end
+                end
+            end
         end)
     end)
 end
@@ -1102,7 +1131,7 @@ local function RefreshAll()
             HideCopyButton(chatFrame)
         else
             ApplyCopyButtonMode(chatFrame)
-        end	   
+        end
     end
 
     -- Re-apply all styling if enabled
