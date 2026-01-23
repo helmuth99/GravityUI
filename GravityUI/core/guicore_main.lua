@@ -34,7 +34,7 @@ end
 guiCore.__pendingReload = false
 guiCore.__reloadEventFrame = nil
 
--- Safe reload function - queues if in combat, reloads immediately if not
+-- Safe reload function - queues if in combat, reloads immediately if not in combat
 function guiCore:SafeReload()
     if InCombatLockdown() then
         if not self.__pendingReload then
