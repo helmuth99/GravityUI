@@ -1,8 +1,8 @@
---[[
-    gui Unit Frames - New Implementation
-    Creates secure unit frames for Player, Target, ToT, Pet, Focus, Boss
-    Features: Dark mode, class colors, power bars, castbars, preview mode
-]]
+-------------------------------------------------------------------------------
+-- gui Unit Frames - Neue Implementierung
+-- Erstellt sichere Unit Frames für Player, Target, ToT, Pet, Focus, Boss
+-- Features: Dark Mode, Klassenfarben, Power Bars, Castbars, Vorschaumodus
+-------------------------------------------------------------------------------
 
 local ADDON_NAME, ns = ...
 local guiCore = ns.Addon

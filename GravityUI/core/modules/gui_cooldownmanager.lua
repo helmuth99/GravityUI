@@ -1,33 +1,33 @@
 -- cooldownmanager.lua
--- Clean Cooldown Manager functionality integrated into GravityUI
--- Removes padding from cooldown icons and handles icon layout
--- Note: Swipe visibility is handled by cooldownswipe.lua
+-- Saubere Cooldown-Manager-Funktionalität integriert in GravityUI
+-- Entfernt Padding von Cooldown-Icons und verwaltet Icon-Layout
+-- Hinweis: Swipe-Sichtbarkeit wird von cooldownswipe.lua verwaltet
 
 local _, gui = ...
 
--- Local variables
+-- Lokale Variablen
 local viewerPending = {}
 local updateBucket = {}
 
--- Core function to remove padding and apply modifications
+-- Kernfunktion zum Entfernen von Padding und Anwenden von Modifikationen
 local function RemovePadding(viewer)
-    -- Don't apply modifications in edit mode
+    -- Wende keine Modifikationen im Edit-Modus an
     if EditModeManagerFrame and EditModeManagerFrame:IsEditModeActive() then
         return
     end
     
-    -- Don't interfere if layout is currently being applied
+    -- Greife nicht ein falls Layout gerade angewendet wird
     if viewer._layoutApplying then
         return
     end
     
     local children = {viewer:GetChildren()}
     
-    -- Get the visible icons (because they're fully dynamic)
+    -- Hole die sichtbaren Icons (weil sie vollständig dynamisch sind)
     local visibleChildren = {}
     for _, child in ipairs(children) do
         if child:IsShown() then
-            -- Store original position for sorting
+            -- Speichere ursprüngliche Position zum Sortieren
             local point, relativeTo, relativePoint, x, y = child:GetPoint(1)
             child.originalX = x or 0
             child.originalY = y or 0
@@ -37,10 +37,10 @@ local function RemovePadding(viewer)
     
     if #visibleChildren == 0 then return end
     
-    -- Sort by original position to maintain Blizzard's order
+    -- Sortiere nach ursprünglicher Position um Blizzard-Reihenfolge beizubehalten
     local isHorizontal = viewer.isHorizontal
     if isHorizontal then
-        -- Sort left to right, then top to bottom
+        -- Sortiere links nach rechts, dann oben nach unten
         table.sort(visibleChildren, function(a, b)
             if math.abs(a.originalY - b.originalY) < 1 then
                 return a.originalX < b.originalX
@@ -48,7 +48,7 @@ local function RemovePadding(viewer)
             return a.originalY > b.originalY
         end)
     else
-        -- Sort top to bottom, then left to right
+        -- Sortiere oben nach unten, dann links nach rechts
         table.sort(visibleChildren, function(a, b)
             if math.abs(a.originalX - b.originalX) < 1 then
                 return a.originalY > b.originalY
@@ -57,14 +57,14 @@ local function RemovePadding(viewer)
         end)
     end
     
-    -- Get layout settings from the viewer
+    -- Hole Layout-Einstellungen vom Viewer
     local stride = viewer.stride or #visibleChildren
 
-    -- CONFIGURATION OPTIONS:
-    local overlap = -3 -- Icons overlap slightly to hide transparent borders
-    local iconScale = 1.15 -- Scale for icons
+    -- KONFIGURATIONSOPTIONEN:
+    local overlap = -3 -- Icons überlappen leicht, um transparente Ränder zu verstecken
+    local iconScale = 1.15 -- Skalierung für Icons
     
-    -- Scale the icons to overlap and hide the transparent borders baked into the textures
+    -- Skaliere die Icons zum Überlappen und Verstecken der transparenten Ränder in den Texturen
     for _, child in ipairs(visibleChildren) do
         if child.Icon then
             child.Icon:ClearAllPoints()
@@ -72,14 +72,14 @@ local function RemovePadding(viewer)
             child.Icon:SetSize(child:GetWidth() * iconScale, child:GetHeight() * iconScale)
         end
         
-        -- Swipe visibility is now handled by cooldownswipe.lua
+        -- Swipe-Sichtbarkeit wird nun von cooldownswipe.lua verwaltet
     end
     
-    -- Reposition buttons respecting orientation and stride
+    -- Positioniere Buttons neu unter Beachtung von Orientierung und Stride
     local buttonWidth = visibleChildren[1]:GetWidth()
     local buttonHeight = visibleChildren[1]:GetHeight()
     
-    -- Calculate grid dimensions
+    -- Berechne Grid-Dimensionen
     local numIcons = #visibleChildren
     local totalWidth, totalHeight
     
@@ -95,29 +95,29 @@ local function RemovePadding(viewer)
         totalHeight = rows * buttonHeight + (rows - 1) * overlap
     end
     
-    -- Calculate offsets to center the grid
+    -- Berechne Offsets um Grid zu zentrieren
     local startX = -totalWidth / 2
     local startY = totalHeight / 2
     
     if isHorizontal then
-        -- Horizontal layout with wrapping
+        -- Horizontales Layout mit Wrapping
         for i, child in ipairs(visibleChildren) do
             local index = i - 1
 			local row = math.floor(index / stride)
 			local col = index % stride
 
-			-- Determine number of icons in this row
+			-- Bestimme Anzahl der Icons in dieser Reihe
 			local rowStart = row * stride + 1
 			local rowEnd = math.min(rowStart + stride - 1, numIcons)
 			local iconsInRow = rowEnd - rowStart + 1
 
-			-- Compute the actual width of this row
+			-- Berechne die tatsächliche Breite dieser Reihe
 			local rowWidth = iconsInRow * buttonWidth + (iconsInRow - 1) * overlap
 
-			-- Center this row
+			-- Zentriere diese Reihe
 			local rowStartX = -rowWidth / 2
 
-			-- Column offset inside centered row
+			-- Spalten-Offset innerhalb zentrierter Reihe
 			local xOffset = rowStartX + col * (buttonWidth + overlap)
 			local yOffset = startY - row * (buttonHeight + overlap)
 
@@ -125,7 +125,7 @@ local function RemovePadding(viewer)
 			child:SetPoint("CENTER", viewer, "CENTER", xOffset + buttonWidth/2, yOffset - buttonHeight/2)
         end
     else
-        -- Vertical layout with wrapping
+        -- Vertikales Layout mit Wrapping
         for i, child in ipairs(visibleChildren) do
             local row = (i - 1) % stride
             local col = math.floor((i - 1) / stride)
@@ -139,10 +139,10 @@ local function RemovePadding(viewer)
     end
 end
 
--- Pending flag to coalesce multiple schedule calls into one timer
+-- Pending-Flag um mehrere Schedule-Aufrufe zu einem Timer zu konsolidieren
 local updatePending = false
 
--- Schedule an update to apply the modifications after Blizzard is done
+-- Plane ein Update um Modifikationen nach Blizzard anzuwenden
 local function ScheduleUpdate(viewer)
     updateBucket[viewer] = true
     if updatePending then return end
@@ -156,10 +156,10 @@ local function ScheduleUpdate(viewer)
     end)
 end
 
--- Swipe visibility is now handled centrally by cooldownswipe.lua
--- This file only handles icon layout (padding removal, scaling, positioning)
+-- Swipe-Sichtbarkeit wird nun zentral von cooldownswipe.lua verwaltet
+-- Diese Datei verwaltet nur Icon-Layout (Padding-Entfernung, Skalierung, Positionierung)
 
--- Export function to gui namespace
+-- Exportiere Funktion zu gui-Namespace
 gui.CooldownManager = {
     RemovePadding = RemovePadding,
     ScheduleUpdate = ScheduleUpdate,

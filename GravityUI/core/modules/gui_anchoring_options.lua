@@ -1,8 +1,8 @@
---[[
-    gui Anchoring Options Module
-    Reusable UI components for anchoring and snapping options
-    Provides anchor dropdown, snap buttons, and offset controls
-]]
+-------------------------------------------------------------------------------
+-- gui Anchoring Options Module
+-- Wiederverwendbare UI-Komponenten für Anchoring und Snapping-Optionen
+-- Bietet Anchor-Dropdown, Snap-Buttons und Offset-Controls
+-------------------------------------------------------------------------------
 
 local ADDON_NAME, ns = ...
 

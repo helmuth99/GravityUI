@@ -1,24 +1,24 @@
 ---------------------------------------------------------------------------
--- GravityUI Combat Timer
--- Displays elapsed time in combat (resets on combat exit)
+-- GravityUI Kampf-Timer
+-- Zeigt verstrichene Zeit im Kampf (setzt beim Kampf-Ende zurück)
 ---------------------------------------------------------------------------
 local ADDON_NAME, ns = ...
 local gui = ns.gui or {}
 ns.gui = gui
 
 ---------------------------------------------------------------------------
--- State tracking
+-- Status-Tracking
 ---------------------------------------------------------------------------
 local CombatTimerState = {
     combatStartTime = 0,
     timerFrame = nil,
     isInCombat = false,
     isPreviewMode = false,
-    isInEncounter = false,  -- Track boss encounter state														 
+    isInEncounter = false,  -- Tracke Boss-Encounter-State														 
 }
 
 ---------------------------------------------------------------------------
--- Get settings from database
+-- Hole Einstellungen von Datenbank
 ---------------------------------------------------------------------------
 local function GetSettings()
     local guiCore = _G.GravityUI and _G.GravityUI.guiCore
@@ -29,7 +29,7 @@ local function GetSettings()
 end
 
 ---------------------------------------------------------------------------
--- Backdrop template for modern WoW API
+-- Backdrop-Template für moderne WoW-API
 ---------------------------------------------------------------------------
 local LSM = LibStub("LibSharedMedia-3.0", true)
 
@@ -37,7 +37,7 @@ local function GetBackdropInfo(borderTextureName, borderSize)
     local edgeFile = nil
     local edgeSize = 0
 
-    -- Use LSM border texture if specified and not "None"
+    -- Nutze LSM Border-Textur falls angegeben und nicht "None"
     if borderTextureName and borderTextureName ~= "None" and LSM then
         edgeFile = LSM:Fetch("border", borderTextureName)
         edgeSize = borderSize or 1
@@ -54,14 +54,14 @@ local function GetBackdropInfo(borderTextureName, borderSize)
 end
 
 ---------------------------------------------------------------------------
--- Create uniform border lines (for solid "None" border)
+-- Erstelle einheitliche Rand-Linien (für soliden "None"-Rand)
 ---------------------------------------------------------------------------
 local function CreateBorderLines(frame)
     if frame.borderLines then return frame.borderLines end
 
     local borders = {}
 
-    -- Use OVERLAY layer to render on top of backdrop, avoiding blend artifacts
+    -- Nutze OVERLAY-Layer zum Rendern über Backdrop, verhindert Blend-Artefakte
     borders.top = frame:CreateTexture(nil, "OVERLAY")
     borders.top:SetColorTexture(0, 0, 0, 1)
     borders.top:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, 0)
@@ -90,7 +90,7 @@ local function UpdateBorderLines(frame, size, r, g, b, a, hide)
     local borders = frame.borderLines
     if not borders then return end
 
-    -- Hide all if requested or size is 0
+    -- Verstecke alle falls angefordert oder Größe ist 0
     if hide or size <= 0 then
         for _, line in pairs(borders) do
             line:Hide()
@@ -98,7 +98,7 @@ local function UpdateBorderLines(frame, size, r, g, b, a, hide)
         return
     end
 
-    -- Set size and color
+    -- Setze Größe und Farbe
     borders.top:SetHeight(size)
     borders.bottom:SetHeight(size)
     borders.left:SetWidth(size)
@@ -115,7 +115,7 @@ local function UpdateBorderLines(frame, size, r, g, b, a, hide)
 end
 
 ---------------------------------------------------------------------------
--- Get font path from LibSharedMedia
+-- Hole Font-Pfad von LibSharedMedia
 ---------------------------------------------------------------------------
 local function GetFontPath(fontName)
     if LSM and fontName then
@@ -126,7 +126,7 @@ local function GetFontPath(fontName)
 end
 
 ---------------------------------------------------------------------------
--- Create the timer frame (one-time setup)
+-- Erstelle den Timer-Frame (einmalige Einrichtung)
 ---------------------------------------------------------------------------
 local function CreateTimerFrame()
     if CombatTimerState.timerFrame then return end
@@ -137,11 +137,11 @@ local function CreateTimerFrame()
     frame:SetFrameStrata("HIGH")
     frame:SetFrameLevel(50)
 
-    -- Set up backdrop (background only)
+    -- Richte Backdrop ein (nur Hintergrund)
     frame:SetBackdrop(GetBackdropInfo())
     frame:SetBackdropColor(0, 0, 0, 0.6)
 
-    -- Create manual border lines for uniform edges
+    -- Erstelle manuelle Rand-Linien für einheitliche Kanten
     CreateBorderLines(frame)
     UpdateBorderLines(frame, 1, 0, 0, 0, 1)
     local text = frame:CreateFontString(nil, "OVERLAY")
@@ -158,7 +158,7 @@ local function CreateTimerFrame()
 end
 
 ---------------------------------------------------------------------------
--- Format elapsed time as MM:SS or MM:SS
+-- Formatiere verstrichene Zeit als MM:SS
 ---------------------------------------------------------------------------
 local function FormatTime(seconds)
     local mins = math.floor(seconds / 60)
@@ -167,7 +167,7 @@ local function FormatTime(seconds)
 end
 
 ---------------------------------------------------------------------------
--- OnUpdate handler for timer
+-- OnUpdate-Handler für Timer
 ---------------------------------------------------------------------------
 local function OnTimerUpdate(self, elapsed)
     if not CombatTimerState.isInCombat then return end
@@ -181,7 +181,7 @@ local function OnTimerUpdate(self, elapsed)
 end
 
 ---------------------------------------------------------------------------
--- Get global addon font setting
+-- Hole globale Addon-Font-Einstellung
 ---------------------------------------------------------------------------
 local function GetGlobalFont()
     local guiCore = _G.GravityUI and _G.GravityUI.guiCore
@@ -192,7 +192,7 @@ local function GetGlobalFont()
 end
 
 ---------------------------------------------------------------------------
--- Get player class color
+-- Hole Spieler-Klassen-Farbe
 ---------------------------------------------------------------------------
 local function GetClassColor()
     local _, class = UnitClass("player")
@@ -200,11 +200,11 @@ local function GetClassColor()
         local c = RAID_CLASS_COLORS[class]
         return {c.r, c.g, c.b, 1}
     end
-    return {1, 1, 1, 1}  -- Fallback to white
+    return {1, 1, 1, 1}  -- Fallback auf Weiß
 end
 
 ---------------------------------------------------------------------------
--- Update timer appearance from settings
+-- Aktualisiere Timer-Erscheinung von Einstellungen
 ---------------------------------------------------------------------------
 local function UpdateTimerAppearance()
     if not CombatTimerState.timerFrame then
@@ -213,27 +213,27 @@ local function UpdateTimerAppearance()
 
     local settings = GetSettings()
     if not settings then return end
-    local align = settings.align or "LEFT" -- "LEFT", "CENTER" or "RIGHT" from DB
+    local align = settings.align or "LEFT" -- "LEFT", "CENTER" oder "RIGHT" von DB
     local frame = CombatTimerState.timerFrame
 
-    -- Update size
+    -- Aktualisiere Größe
     local width = settings.width or 80
     local height = settings.height or 30
     frame:SetSize(width, height)
 
-    -- Update position
+    -- Aktualisiere Position
     local xOffset = settings.xOffset or 0
     local yOffset = settings.yOffset or -150
     frame:ClearAllPoints()
     frame:SetPoint("CENTER", UIParent, "CENTER", xOffset, yOffset)
 
-    -- Update font (using LSM) - check if using custom font or global
+    -- Aktualisiere Font (nutze LSM) - prüfe ob eigener Font oder globaler genutzt wird
     local fontSize = settings.fontSize or 16
     local fontName = settings.useCustomFont and settings.font or GetGlobalFont()
     local fontPath = GetFontPath(fontName)
     frame.text:SetFont(fontPath, fontSize, "OUTLINE")
 
-    -- Update text color (use class color or custom color)
+    -- Aktualisiere Text-Farbe (nutze Klassen-Farbe oder eigene Farbe)
     local textColor
     if settings.useClassColorText then
         textColor = GetClassColor()
@@ -242,7 +242,7 @@ local function UpdateTimerAppearance()
     end
     frame.text:SetTextColor(textColor[1], textColor[2], textColor[3], textColor[4] or 1)
 
-    -- Update backdrop and border
+    -- Aktualisiere Backdrop und Rand
     local showBackdrop = settings.showBackdrop
     if showBackdrop == nil then showBackdrop = true end
 
@@ -250,7 +250,7 @@ local function UpdateTimerAppearance()
     local borderTexture = settings.borderTexture or "None"
     local useLSMBorder = borderTexture ~= "None" and borderSize > 0
 
-    -- Get border color
+    -- Hole Rand-Farbe
     local borderColor
     if settings.useClassColorBorder then
         borderColor = GetClassColor()
@@ -258,8 +258,8 @@ local function UpdateTimerAppearance()
         borderColor = settings.borderColor or {0, 0, 0, 1}
     end
 
-    -- Set up backdrop with or without LSM border
-    -- Skip LSM border if hideBorder is enabled
+    -- Richte Backdrop mit oder ohne LSM-Rand ein
+    -- Überspringe LSM-Rand falls hideBorder aktiviert ist
     local hideBorder = settings.hideBorder
     local effectiveUseLSMBorder = useLSMBorder and not hideBorder
 																	    
@@ -280,30 +280,30 @@ local function UpdateTimerAppearance()
         frame:SetBackdrop(nil)
     end
 
-    -- Update manual border lines (only used when no LSM border is selected)
-    -- Hide all borders if hideBorder is enabled
+    -- Aktualisiere manuelle Rand-Linien (nur genutzt wenn kein LSM-Rand ausgewählt)
+    -- Verstecke alle Ränder falls hideBorder aktiviert ist
     local hideBorder = settings.hideBorder
-    CreateBorderLines(frame)  -- Ensure borders exist
+    CreateBorderLines(frame)  -- Stelle sicher dass Ränder existieren
     UpdateBorderLines(frame, borderSize, borderColor[1], borderColor[2], borderColor[3], borderColor[4] or 1, useLSMBorder or hideBorder)
 
-    -- Ensure text is always centered
+    -- Stelle sicher dass Text immer zentriert ist
     frame.text:ClearAllPoints()
     frame.text:SetPoint("CENTER", frame, "CENTER", 0, 1)
 end
 
 ---------------------------------------------------------------------------
--- Combat start handler
+-- Kampf-Start-Handler
 ---------------------------------------------------------------------------
 local function OnCombatStart()
     local settings = GetSettings()
     if not settings or not settings.enabled then return end
 
-    -- Don't start combat timer if we're in preview mode
+    -- Starte keinen Kampf-Timer wenn wir im Preview-Modus sind
     if CombatTimerState.isPreviewMode then return end
 
-    -- If encounters-only mode is enabled and we're not in an encounter, don't show
+    -- Falls Nur-Encounter-Modus aktiviert ist und wir nicht in einem Encounter sind, nicht zeigen
     if settings.onlyShowInEncounters and not CombatTimerState.isInEncounter then
-        CombatTimerState.isInCombat = true  -- Track combat state but don't show timer
+        CombatTimerState.isInCombat = true  -- Tracke Kampf-State aber zeige Timer nicht
         return
     end
     CreateTimerFrame()
@@ -320,10 +320,10 @@ local function OnCombatStart()
 end
 
 ---------------------------------------------------------------------------
--- Combat end handler
+-- Kampf-Ende-Handler
 ---------------------------------------------------------------------------
 local function OnCombatEnd()
-    -- Don't hide if in preview mode
+    -- Verstecke nicht falls im Preview-Modus
     if CombatTimerState.isPreviewMode then return end
 
     CombatTimerState.isInCombat = false
@@ -335,7 +335,7 @@ local function OnCombatEnd()
 end
 
 ---------------------------------------------------------------------------
--- Encounter start handler (boss encounters)
+-- Encounter-Start-Handler (Boss-Encounters)
 ---------------------------------------------------------------------------
 local function OnEncounterStart()
     local settings = GetSettings()
@@ -343,10 +343,10 @@ local function OnEncounterStart()
 
     CombatTimerState.isInEncounter = true
 
-    -- Don't interfere with preview mode
+    -- Störe Preview-Modus nicht
     if CombatTimerState.isPreviewMode then return end
 
-    -- If encounters-only mode and we're in combat but timer not shown, show it now
+    -- Falls Nur-Encounter-Modus und wir im Kampf sind aber Timer nicht gezeigt, zeige ihn jetzt
     if settings.onlyShowInEncounters and CombatTimerState.isInCombat then
         CreateTimerFrame()
         UpdateTimerAppearance()
@@ -362,7 +362,7 @@ local function OnEncounterStart()
 end
 
 ---------------------------------------------------------------------------
--- Encounter end handler
+-- Encounter-Ende-Handler
 ---------------------------------------------------------------------------
 local function OnEncounterEnd()
     CombatTimerState.isInEncounter = false
@@ -370,11 +370,11 @@ local function OnEncounterEnd()
     local settings = GetSettings()
     if not settings then return end
 
-    -- Don't hide if in preview mode
+    -- Verstecke nicht falls im Preview-Modus
     if CombatTimerState.isPreviewMode then return end
 
-    -- If encounters-only mode is enabled, hide the timer when encounter ends
-    -- (even if still in combat)
+    -- Falls Nur-Encounter-Modus aktiviert ist, verstecke Timer wenn Encounter endet
+    -- (selbst wenn noch im Kampf)
     if settings.onlyShowInEncounters and CombatTimerState.timerFrame then														 
         CombatTimerState.timerFrame:SetScript("OnUpdate", nil)
         CombatTimerState.timerFrame:Hide()
@@ -382,12 +382,12 @@ local function OnEncounterEnd()
 end
 
 ---------------------------------------------------------------------------
--- Refresh function (called when settings change)
+-- Refresh-Funktion (aufgerufen wenn Einstellungen sich ändern)
 ---------------------------------------------------------------------------
 local function RefreshCombatTimer()
     local settings = GetSettings()
 
-    -- If disabled and not in preview mode, hide the timer
+    -- Falls deaktiviert und nicht im Preview-Modus, verstecke Timer
     if (not settings or not settings.enabled) and not CombatTimerState.isPreviewMode then
         CombatTimerState.isInCombat = false
         if CombatTimerState.timerFrame then
@@ -397,13 +397,13 @@ local function RefreshCombatTimer()
         return
     end
 
-    -- Update appearance if settings changed
+    -- Aktualisiere Erscheinung falls Einstellungen sich geändert haben
     UpdateTimerAppearance()
 
-    -- If currently in combat (and not preview), make sure it's visible
+    -- Falls aktuell im Kampf (und nicht Preview), stelle sicher dass sichtbar
     if InCombatLockdown() and CombatTimerState.timerFrame and not CombatTimerState.isPreviewMode then
         if not CombatTimerState.isInCombat then
-            -- Entered combat while feature was disabled, start now
+            -- Kampf betreten während Feature deaktiviert war, starte jetzt
             CombatTimerState.combatStartTime = GetTime()
             CombatTimerState.isInCombat = true
             CombatTimerState.timerFrame.text:SetText("0:00")
@@ -414,7 +414,7 @@ local function RefreshCombatTimer()
 end
 
 ---------------------------------------------------------------------------
--- Toggle preview mode (for options panel)
+-- Toggle Preview-Modus (für Options-Panel)
 ---------------------------------------------------------------------------
 local function TogglePreview(enable)
     CreateTimerFrame()
@@ -423,16 +423,16 @@ local function TogglePreview(enable)
     CombatTimerState.isPreviewMode = enable
 
     if enable then
-        -- Show preview
+        -- Zeige Preview
         UpdateTimerAppearance()
         CombatTimerState.timerFrame.text:SetText("01:23")
         CombatTimerState.timerFrame:Show()
-        CombatTimerState.timerFrame:SetScript("OnUpdate", nil)  -- No counting in preview
+        CombatTimerState.timerFrame:SetScript("OnUpdate", nil)  -- Kein Zählen im Preview
     else
-        -- Hide preview (unless actually in combat with feature enabled)
+        -- Verstecke Preview (außer tatsächlich im Kampf mit aktiviertem Feature)
         local settings = GetSettings()
         if settings and settings.enabled and InCombatLockdown() then
-            -- Don't hide, we're in combat with feature enabled
+            -- Nicht verstecken, wir sind im Kampf mit aktiviertem Feature
             CombatTimerState.isInCombat = true
             CombatTimerState.combatStartTime = GetTime()
             CombatTimerState.timerFrame.text:SetText("0:00")
@@ -449,7 +449,7 @@ local function IsPreviewMode()
 end
 
 ---------------------------------------------------------------------------
--- Initialize
+-- Initialisierung
 ---------------------------------------------------------------------------
 local eventFrame = CreateFrame("Frame")
 eventFrame:RegisterEvent("PLAYER_LOGIN")
@@ -474,7 +474,7 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
 end)
 
 ---------------------------------------------------------------------------
--- Global functions for GUI
+-- Globale Funktionen für GUI
 ---------------------------------------------------------------------------
 _G.GravityUI_RefreshCombatTimer = RefreshCombatTimer
 _G.GravityUI_ToggleCombatTimerPreview = TogglePreview

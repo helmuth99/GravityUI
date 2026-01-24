@@ -1,8 +1,8 @@
---[[
-    GravityUI Options Pages
-    Top-down flow layout for the /gui GUI
-    Single scrollable content area per tab
-]]
+-------------------------------------------------------------------------------
+-- GravityUI Options Pages
+-- Top-down Flow-Layout für die /gui GUI
+-- Einzelner scrollbarer Inhaltsbereich pro Tab
+-------------------------------------------------------------------------------
 
 local ADDON_NAME, ns = ...
 local gui = GravityUI
@@ -8979,8 +8979,16 @@ local function CreateCustomTrackersPage(parent)
     -- Helper: Calculate offset relative to gui_Player frame's top-left corner
     -- Returns screen-center offsets that position a bar relative to player frame
     ---------------------------------------------------------------------------
-    local function CalculatePlayerRelativeOffset(playerOffsetX, playerOffsetY)
-        local playerFrame = _G.gui_Player
+    local function CalculatePlayerRelativeOffset(playerOffsetX, playerOffsetY, config)
+        local playerFrame
+        if config and config.playerFrameSource and config.playerFrameSource ~= "auto" then
+            playerFrame = _G[config.playerFrameSource]
+        end
+
+        if not playerFrame then
+            playerFrame = _G.gui_Player or _G.UUF_Player
+        end
+
         if not playerFrame then
             -- Fallback: use default screen-center offsets
             return -406, -152
@@ -9004,7 +9012,6 @@ local function CreateCustomTrackersPage(parent)
 
         return offsetX, offsetY
     end
-
     ---------------------------------------------------------------------------
     -- Helper: Create drop zone for adding items/spells via drag-and-drop
     ---------------------------------------------------------------------------
@@ -9670,6 +9677,26 @@ local function CreateCustomTrackersPage(parent)
             end
         end
 
+        local playerFrameOptions = {
+            {value = "auto", text = "Auto (Standard - gui/UUF)"},
+            {value = "gui_Player", text = "gui_Player"},
+            {value = "UUF_Player", text = "UUF_Player"},
+        }
+        local playerFrameDropdown = GUI:CreateFormDropdown(lowerContainer, "Player Frame Source", playerFrameOptions, "playerFrameSource", barConfig, RefreshThisBar)
+        playerFrameDropdown:SetPoint("TOPLEFT", 0, y)
+        playerFrameDropdown:SetPoint("RIGHT", lowerContainer, "RIGHT", -PAD, 0)
+        y = y - FORM_ROW
+
+        local targetFrameOptions = {
+            {value = "auto", text = "Auto (Standard - gui/UUF)"},
+            {value = "gui_Target", text = "gui_Target"},
+            {value = "UUF_Target", text = "UUF_Target"},
+        }
+        local targetFrameDropdown = GUI:CreateFormDropdown(lowerContainer, "Target Frame Source", targetFrameOptions, "targetFrameSource", barConfig, RefreshThisBar)
+        targetFrameDropdown:SetPoint("TOPLEFT", 0, y)
+        targetFrameDropdown:SetPoint("RIGHT", lowerContainer, "RIGHT", -PAD, 0)
+        y = y - FORM_ROW
+
         -- Lock to Player Frame section									   
         local btnGap = 4
         local rowGap = 4
@@ -9726,9 +9753,16 @@ local function CreateCustomTrackersPage(parent)
                 if xOffsetSlider and xOffsetSlider.SetValue then xOffsetSlider.SetValue(barConfig.offsetX, true) end
                 if yOffsetSlider and yOffsetSlider.SetValue then yOffsetSlider.SetValue(barConfig.offsetY, true) end			   
             else
-                local playerFrame = _G["gui_Player"]
+                local playerFrame
+                local playerFrameSource = barConfig.playerFrameSource or "auto"
+                if playerFrameSource == "auto" then
+                    playerFrame = _G["gui_Player"] or _G["UUF_Player"]
+                else
+                    playerFrame = _G[playerFrameSource]
+                end
+
                 if not playerFrame then
-                    print("|cffff6666[GUI]|r Player frame not found")
+                    print("|cffff6666[GUI]|r Player frame (" .. playerFrameSource .. ") not found")
                     return
                 end
                 if barConfig.lockedToTarget then
@@ -9854,10 +9888,16 @@ local function CreateCustomTrackersPage(parent)
                 barConfig.targetLockPosition = nil
                 if xOffsetSlider and xOffsetSlider.SetValue then xOffsetSlider.SetValue(barConfig.offsetX, true) end
                 if yOffsetSlider and yOffsetSlider.SetValue then yOffsetSlider.SetValue(barConfig.offsetY, true) end				   
-            else						
-                local targetFrame = _G["gui_Target"]
+                local targetFrame
+                local targetFrameSource = barConfig.targetFrameSource or "auto"
+                if targetFrameSource == "auto" then
+                    targetFrame = _G["gui_Target"] or _G["UUF_Target"]
+                else
+                    targetFrame = _G[targetFrameSource]
+                end
+
                 if not targetFrame then
-                    print("|cffff6666[GUI]|r Target frame not found")
+                    print("|cffff6666[GUI]|r Target frame (" .. targetFrameSource .. ") not found")
                     return
                 end
                 if barConfig.lockedToPlayer then

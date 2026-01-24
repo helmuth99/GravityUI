@@ -1,8 +1,8 @@
---[[
-    gui Custom Trackers
-    User-configurable icon bars for tracking spells, items, trinkets, consumables
-    Drag-and-drop spell/item input
-]]
+-------------------------------------------------------------------------------
+-- gui Custom Trackers
+-- Benutzerdefinierte Icon-Leisten für Spells, Items, Schmuckstücke, Verbrauchsgüter
+-- Drag-and-Drop Spell/Item Eingabe
+-------------------------------------------------------------------------------
 
 local ADDON_NAME, ns = ...
 local gui = GravityUI  -- Use global addon table, not ns.Addon (which is guiCore)
@@ -86,7 +86,17 @@ local function PositionBar(bar)
 
     -- LOCKED TO PLAYER: reparent and use relative positioning
     if config.lockedToPlayer then
-        local playerFrame = _G["gui_Player"]
+        local playerFrame
+        local source = config.playerFrameSource or "auto"
+        if source ~= "auto" then
+            playerFrame = _G[source]
+        end
+        
+        -- Fallback to default detection (Standard)
+        if not playerFrame then
+            playerFrame = _G["gui_Player"] or _G["UUF_Player"]
+        end
+
         if playerFrame then
             bar:SetParent(playerFrame)
             bar:SetFrameLevel(playerFrame:GetFrameLevel() + 10)
@@ -116,7 +126,17 @@ local function PositionBar(bar)
 
     -- LOCKED TO TARGET: reparent and use relative positioning
     if config.lockedToTarget then
-        local targetFrame = _G["gui_Target"]
+        local targetFrame
+        local source = config.targetFrameSource or "auto"
+        if source ~= "auto" then
+            targetFrame = _G[source]
+        end
+
+        -- Fallback to default detection (Standard)
+        if not targetFrame then
+            targetFrame = _G["gui_Target"] or _G["UUF_Target"]
+        end
+
         if targetFrame then
             bar:SetParent(targetFrame)
             bar:SetFrameLevel(targetFrame:GetFrameLevel() + 10)

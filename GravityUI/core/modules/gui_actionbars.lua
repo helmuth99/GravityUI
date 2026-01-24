@@ -1,7 +1,7 @@
---[[
-    gui Action Bars - Button Skinning and Fade System
-    Hooks Blizzard action buttons for visual customization
-]]
+-------------------------------------------------------------------------------
+-- gui Action Bars - Button Skinning und Fade System
+-- Hooks Blizzard Action Buttons für visuelle Anpassung
+-------------------------------------------------------------------------------
 
 local ADDON_NAME, ns = ...
 local LSM = LibStub("LibSharedMedia-3.0")
@@ -16,24 +16,24 @@ local IS_MIDNIGHT = select(4, GetBuildInfo()) >= 120000
 -- CONSTANTS
 ---------------------------------------------------------------------------
 
--- In-housed textures (self-contained, no external dependencies)
+-- Intern gehostete Texturen (eigenständig, keine externen Abhängigkeiten)
 local TEXTURE_PATH = [[Interface\AddOns\GravityUI\assets\iconskin\]]
 local TEXTURES = {
-    normal = TEXTURE_PATH .. "Normal",       -- Black border frame
-    gloss = TEXTURE_PATH .. "Gloss",         -- ADD blend shine
-    highlight = TEXTURE_PATH .. "Highlight", -- Hover state
-    pushed = TEXTURE_PATH .. "Pushed",       -- Click state
-    checked = TEXTURE_PATH .. "Checked",     -- Selected state
-    flash = TEXTURE_PATH .. "Flash",         -- Ready flash
+    normal = TEXTURE_PATH .. "Normal",       -- Schwarzer Rand-Frame
+    gloss = TEXTURE_PATH .. "Gloss",         -- ADD Blend Glänzen
+    highlight = TEXTURE_PATH .. "Highlight", -- Hover-Status
+    pushed = TEXTURE_PATH .. "Pushed",       -- Klick-Status
+    checked = TEXTURE_PATH .. "Checked",     -- Ausgewählter Status
+    flash = TEXTURE_PATH .. "Flash",         -- Bereit-Flash
 }
 
--- Icon texture coordinates (crop transparent edges)
+-- Icon-Textur-Koordinaten (schneide transparente Ränder ab)
 local ICON_TEXCOORD = {0.07, 0.93, 0.07, 0.93}
 
--- Blizzard's range indicator placeholder (to detect and hide)
+-- Blizzards Reichweiten-Indikator Platzhalter (zum Erkennen und Verstecken)
 local RANGE_INDICATOR = RANGE_INDICATOR or "●"
 
--- Bar frame name mappings
+-- Bar Frame Namen-Zuordnungen
 local BAR_FRAMES = {
     bar1 = "MainMenuBar",
     bar2 = "MultiBarBottomLeft",
@@ -45,14 +45,14 @@ local BAR_FRAMES = {
     bar8 = "MultiBar7",
     pet = "PetActionBar",
     stance = "StanceBar",
-    -- Non-standard bars (special handling in GetBarButtons)
+    -- Nicht-Standard Bars (spezielle Behandlung in GetBarButtons)
     microbar = "MicroMenuContainer",
     bags = "BagsBar",
-    extraActionButton = "ExtraActionBarFrame",  -- Boss encounters, quests
-    zoneAbility = "ZoneAbilityFrame",          -- Garrison, covenant, zone powers
+    extraActionButton = "ExtraActionBarFrame",  -- Boss-Begegnungen, Quests
+    zoneAbility = "ZoneAbilityFrame",          -- Garnison, Pakt, Zonen-Kräfte
 }
 
--- Button name patterns for each bar
+-- Button-Namen Muster für jede Bar
 local BUTTON_PATTERNS = {
     bar1 = "ActionButton%d",
     bar2 = "MultiBarBottomLeftButton%d",
@@ -66,13 +66,13 @@ local BUTTON_PATTERNS = {
     stance = "StanceButton%d",
 }
 
--- Button counts per bar
+-- Button-Anzahl pro Bar
 local BUTTON_COUNTS = {
     bar1 = 12, bar2 = 12, bar3 = 12, bar4 = 12, bar5 = 12,
     bar6 = 12, bar7 = 12, bar8 = 12, pet = 10, stance = 10,
 }
 
--- Binding command prefixes for LibKeyBound integration
+-- Binding Command Präfixe für LibKeyBound Integration
 local BINDING_COMMANDS = {
     bar1 = "ACTIONBUTTON",           -- ACTIONBUTTON1-12
     bar2 = "MULTIACTIONBAR1BUTTON",  -- MULTIACTIONBAR1BUTTON1-12
@@ -92,25 +92,25 @@ local BINDING_COMMANDS = {
 
 local ActionBars = {
     initialized = false,
-    skinnedButtons = {},        -- Track which buttons have been skinned
-    fadeState = {},             -- Per-bar fade state tracking
-    fadeFrame = nil,            -- OnUpdate frame for smooth fading
+    skinnedButtons = {},        -- Verfolge welche Buttons geskinned wurden
+    fadeState = {},             -- Pro-Bar Fade-Status Verfolgung
+    fadeFrame = nil,            -- OnUpdate Frame für sanftes Fading
 }
 
 ---------------------------------------------------------------------------
 -- HELPER FUNCTIONS
 ---------------------------------------------------------------------------
 
--- Safe wrapper for HasAction which may return secret values in Midnight
+-- Sicherer Wrapper für HasAction welches secret values in Midnight zurückgeben kann
 local function SafeHasAction(action)
     if IS_MIDNIGHT then
         local ok, result = pcall(function()
             local has = HasAction(action)
-            -- Force comparison to detect secrets
+            -- Erzwinge Vergleich um Secrets zu erkennen
             if has then return true end
             return false
         end)
-        if not ok then return true end  -- Secret value, treat as having action
+        if not ok then return true end  -- Secret Value, behandle als hat Action
         return result
     else
         return HasAction(action)
@@ -140,7 +140,7 @@ local function GetFadeSettings()
     return db and db.fade
 end
 
--- Determine bar key from button name
+-- Bestimme Bar-Key vom Button-Namen
 local function GetBarKeyFromButton(button)
     local name = button and button:GetName()
     if not name then return nil end
@@ -158,14 +158,14 @@ local function GetBarKeyFromButton(button)
     return nil
 end
 
--- Get button index from button name
+-- Hole Button-Index vom Button-Namen
 local function GetButtonIndex(button)
     local name = button and button:GetName()
     if not name then return nil end
     return tonumber(name:match("%d+$"))
 end
 
--- Add LibKeyBound methods to a button for mousewheel binding support
+-- Füge LibKeyBound Methoden zu einem Button hinzu für Mausrad-Binding Unterstützung
 local function AddKeybindMethods(button, barKey)
     if not button or button._guiKeybindMethods then return end
 
@@ -179,7 +179,7 @@ local function AddKeybindMethods(button, barKey)
     button._guiBindingCommand = bindingCommand
     button._guiKeybindMethods = true
 
-    -- Required method: Returns current keybind text
+    -- Erforderliche Methode: Gibt aktuellen Keybind-Text zurück
     function button:GetHotkey()
         local key = GetBindingKey(self._guiBindingCommand)
         if key then
@@ -189,13 +189,13 @@ local function AddKeybindMethods(button, barKey)
         return nil
     end
 
-    -- Required method: Binds a key to this button
+    -- Erforderliche Methode: Bindet eine Taste zu diesem Button
     function button:SetKey(key)
         if InCombatLockdown() then return end
         SetBinding(key, self._guiBindingCommand)
     end
 
-    -- Optional method: Returns all bindings as comma-separated string
+    -- Optionale Methode: Gibt alle Bindings als Komma-separierter String zurück
     function button:GetBindings()
         local keys = {}
         for i = 1, select("#", GetBindingKey(self._guiBindingCommand)) do
@@ -207,7 +207,7 @@ local function AddKeybindMethods(button, barKey)
         return #keys > 0 and table.concat(keys, ", ") or nil
     end
 
-    -- Optional method: Clears all bindings from this button
+    -- Optionale Methode: Löscht alle Bindings von diesem Button
     function button:ClearBindings()
         if InCombatLockdown() then return end
         while GetBindingKey(self._guiBindingCommand) do
@@ -215,31 +215,31 @@ local function AddKeybindMethods(button, barKey)
         end
     end
 
-    -- Optional method: Returns display name for what we're binding
+    -- Optionale Methode: Gibt Anzeigenamen zurück für das was wir binden
     function button:GetActionName()
         return self._guiBindingCommand
     end
 end
 
--- Get effective settings for a bar (merges global with per-bar overrides)
+-- Hole effektive Einstellungen für eine Bar (merged global mit Pro-Bar Overrides)
 local function GetEffectiveSettings(barKey)
     local global = GetGlobalSettings()
     if not global then return nil end
 
     local barSettings = GetBarSettings(barKey)
 
-    -- If overrides are disabled or bar doesn't support overrides, use global
+    -- Wenn Overrides deaktiviert sind oder Bar keine Overrides unterstützt, nutze global
     if not barSettings or not barSettings.overrideEnabled then
         return global
     end
 
-    -- Merge: global as base, bar-specific overrides non-nil values
+    -- Merge: global als Basis, bar-spezifische Overrides für nicht-nil Werte
     local effective = {}
     for key, value in pairs(global) do
         effective[key] = value
     end
 
-    -- Override with bar-specific values (only if not nil)
+    -- Überschreibe mit bar-spezifischen Werten (nur wenn nicht nil)
     local overrideKeys = {
         "iconZoom", "showBackdrop", "backdropAlpha", "showGloss", "glossAlpha",
         "showKeybinds", "hideEmptyKeybinds", "keybindFontSize", "keybindColor",

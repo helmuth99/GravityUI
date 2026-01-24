@@ -1,12 +1,12 @@
 -- cooldowneffects.lua
--- Hides intrusive Blizzard cooldown effects and glows
+-- Versteckt aufdringliche Blizzard-Cooldown-Effekte und Glows
 -- Features:
--- 1. Hides Blizzard Red/Flash Effects (Pandemic, ProcStartFlipbook, Finish)
--- 2. Hides ALL Overlay Glows (golden proc glows, spell activation alerts, etc.)
+-- 1. Versteckt Blizzard Rot/Flash-Effekte (Pandemic, ProcStartFlipbook, Finish)
+-- 2. Versteckt ALLE Overlay-Glows (goldene Proc-Glows, Spell-Activation-Alerts, etc.)
 
 local _, gui = ...
 
--- Get settings from AceDB
+-- Hole Einstellungen aus AceDB
 local function GetSettings()
     local guiCore = _G.GravityUI and _G.GravityUI.guiCore
     if not guiCore or not guiCore.db or not guiCore.db.profile then
@@ -32,11 +32,11 @@ local function HideCooldownEffects(child)
             frame:Hide()
             frame:SetAlpha(0)
             
-            -- Hook to keep it hidden
+            -- Hooke um versteckt zu halten
             if not frame._GravityUI_NoShow then
                 frame._GravityUI_NoShow = true
                 
-                -- Hook Show to prevent it from showing
+                -- Hooke Show um Anzeige zu verhindern
                 if frame.Show then
                     hooksecurefunc(frame, "Show", function(self)
                         self:Hide()
@@ -44,7 +44,7 @@ local function HideCooldownEffects(child)
                     end)
                 end
                 
-                -- Also hook parent OnShow
+                -- Hooke auch Parent OnShow
                 if child.HookScript then
                     child:HookScript("OnShow", function(self)
                         local f = self[frameName]
@@ -66,28 +66,28 @@ end
 local function HideBlizzardGlows(button)
     if not button then return end
     
-    -- ALWAYS hide Blizzard's glows - our custom glow uses LibCustomGlow which is separate
-    -- Don't call ActionButton_HideOverlayGlow as it may interfere with proc detection
+    -- Verstecke IMMER Blizzards Glows - unser Custom-Glow nutzt LibCustomGlow welches separat ist
+    -- Rufe nicht ActionButton_HideOverlayGlow auf da es mit Proc-Erkennung interferieren könnte
     
-    -- Hide the SpellActivationAlert overlay (the golden swirl glow frame)
+    -- Verstecke das SpellActivationAlert-Overlay (der goldene Swirl-Glow-Frame)
     if button.SpellActivationAlert then
         button.SpellActivationAlert:Hide()
         button.SpellActivationAlert:SetAlpha(0)
     end
     
-    -- Hide OverlayGlow frame if it exists (Blizzard's default)
+    -- Verstecke OverlayGlow-Frame falls es existiert (Blizzards Standard)
     if button.OverlayGlow then
         button.OverlayGlow:Hide()
         button.OverlayGlow:SetAlpha(0)
     end
     
-    -- Hide _ButtonGlow (Blizzard's button glow frame, NOT our LibCustomGlow frames)
+    -- Verstecke _ButtonGlow (Blizzards Button-Glow-Frame, NICHT unsere LibCustomGlow-Frames)
     if button._ButtonGlow then
         button._ButtonGlow:Hide()
     end
 end
 
--- Alias for backwards compatibility
+-- Alias für Rückwärtskompatibilität
 local HideAllGlows = HideBlizzardGlows
 
 -- ======================================================
@@ -96,14 +96,14 @@ local HideAllGlows = HideBlizzardGlows
 local viewers = {
     "EssentialCooldownViewer",
     "UtilityCooldownViewer"
-    -- BuffIconCooldownViewer is NOT included - we want glows/effects on buff icons
+    -- BuffIconCooldownViewer ist NICHT enthalten - wir wollen Glows/Effekte auf Buff-Icons
 }
 
 local function ProcessViewer(viewerName)
     local viewer = _G[viewerName]
     if not viewer then return end
     
-    -- Check if we should hide effects for this viewer
+    -- Prüfe ob wir Effekte für diesen Viewer verstecken sollen
     local settings = GetSettings()
     local shouldHide = false
     if viewerName == "EssentialCooldownViewer" then
@@ -112,40 +112,40 @@ local function ProcessViewer(viewerName)
         shouldHide = settings.hideUtility
     end
     
-    if not shouldHide then return end -- Don't process if effects should be shown
+    if not shouldHide then return end -- Verarbeite nicht falls Effekte angezeigt werden sollen
     
     local function ProcessIcons()
         local children = {viewer:GetChildren()}
         for _, child in ipairs(children) do
             if child:IsShown() then
-                -- Hide red/flash effects
+                -- Verstecke Rot/Flash-Effekte
                 HideCooldownEffects(child)
                 
-                -- Hide ALL glows (not just Epidemic)
+                -- Verstecke ALLE Glows (nicht nur Epidemic)
                 pcall(HideAllGlows, child)
                 
-                -- Mark as processed (no OnUpdate hook needed - we handle glows via hooksecurefunc)
+                -- Markiere als verarbeitet (kein OnUpdate-Hook nötig - wir verwalten Glows via hooksecurefunc)
                     child._GravityUI_EffectsHidden = true
             end
         end
     end
     
-    -- Process immediately
+    -- Verarbeite sofort
     ProcessIcons()
     
-    -- Hook Layout to reprocess when viewer updates
+    -- Hooke Layout um neu zu verarbeiten wenn Viewer aktualisiert
     if viewer.Layout and not viewer._GravityUI_EffectsHooked then
         viewer._GravityUI_EffectsHooked = true
         hooksecurefunc(viewer, "Layout", function()
-            C_Timer.After(0.15, ProcessIcons)  -- 150ms debounce for CPU efficiency
+            C_Timer.After(0.15, ProcessIcons)  -- 150ms Debounce für CPU-Effizienz
         end)
     end
     
-    -- Hook OnShow
+    -- Hooke OnShow
     if not viewer._GravityUI_EffectsShowHooked then
         viewer._GravityUI_EffectsShowHooked = true
         viewer:HookScript("OnShow", function()
-            C_Timer.After(0.15, ProcessIcons)  -- 150ms debounce for CPU efficiency
+            C_Timer.After(0.15, ProcessIcons)  -- 150ms Debounce für CPU-Effizienz
         end)
     end
 end
@@ -202,7 +202,7 @@ local function HookAllGlows()
         end)
     end
     
-    -- Also hide any glows that might already be showing
+    -- Verstecke auch Glows die möglicherweise bereits angezeigt werden
     HideExistingBlizzardGlows()
 end
 
@@ -231,12 +231,12 @@ eventFrame:RegisterEvent("PLAYER_LOGIN")
 eventFrame:SetScript("OnEvent", function(self, event, arg)
     if event == "ADDON_LOADED" and arg == "Blizzard_CooldownManager" then
         EnsureGlowHooks()
-        -- Consolidated timer: apply settings and hide glows together
+        -- Konsolidierter Timer: wende Einstellungen an und verstecke Glows zusammen
         C_Timer.After(0.5, function()
             ApplyToAllViewers()
             HideExistingBlizzardGlows()
         end)
-        C_Timer.After(1, HideExistingBlizzardGlows) -- Final cleanup for late procs
+        C_Timer.After(1, HideExistingBlizzardGlows) -- Finale Bereinigung für späte Procs
     elseif event == "PLAYER_ENTERING_WORLD" then
         C_Timer.After(0.5, function()
             ApplyToAllViewers()
@@ -257,7 +257,7 @@ gui.CooldownEffects = {
     ApplyToAllViewers = ApplyToAllViewers,
 }
 
--- Global function for config panel to call
+-- Globale Funktion für Config-Panel-Aufruf
 _G.GravityUI_RefreshCooldownEffects = function()
     ApplyToAllViewers()
 end

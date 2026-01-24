@@ -1,9 +1,9 @@
---- GravityUI Perfect Pixel System
---- Provides pixel-perfect UI scaling and calculations
+--- GravityUI Perfect-Pixel-System
+--- Bietet pixelgenaue UI-Skalierung und Berechnungen
 
 local ADDON_NAME, ns = ...
 
--- Get guiCore - must load after guicore_main.lua
+-- Hole guiCore - muss nach guicore_main.lua laden
 local guiCore = ns.Addon or (GravityUI and GravityUI.guiCore)
 
 if not guiCore then
@@ -20,7 +20,7 @@ local GetScreenHeight = GetScreenHeight
 local InCombatLockdown = InCombatLockdown
 local GetPhysicalScreenSize = GetPhysicalScreenSize
 
--- Refresh global FX scenes (prevents taint from RefreshModelScene)
+-- Aktualisiere globale FX-Szenen (verhindert Taint von RefreshModelScene)
 function guiCore:RefreshGlobalFX()
     if _G.GlobalFXDialogModelScene then
         _G.GlobalFXDialogModelScene:Hide()
@@ -80,7 +80,7 @@ end
 -- Apply UI scale to UIParent
 function guiCore:UIScale()
     if InCombatLockdown() then
-        -- Defer scale change until out of combat
+        -- Verschiebe Skalierungsänderung bis außerhalb des Kampfes
         if not self._UIScalePending then
             self._UIScalePending = true
             self:RegisterEvent('PLAYER_REGEN_ENABLED', function()
@@ -98,7 +98,7 @@ function guiCore:UIScale()
         -- Use pcall to catch protected states not detected by InCombatLockdown
         local success = pcall(function() UIParent:SetScale(uiScale) end)
         if not success then
-            -- Protected state detected - defer to combat end
+            -- Protected State erkannt - verschiebe bis zum Kampfende
             if not self._UIScalePending then
                 self._UIScalePending = true
                 self:RegisterEvent('PLAYER_REGEN_ENABLED', function()
@@ -125,7 +125,7 @@ function guiCore:UIScale()
             width, height = guiCore.screenWidth, guiCore.screenHeight
         end
 
-        -- Refresh GlobalFX if in Retail
+        -- Aktualisiere GlobalFX falls in Retail
         if WOW_PROJECT_ID == WOW_PROJECT_MAINLINE and _G.GlobalFXDialogModelScene then
             guiCore:RefreshGlobalFX()
         end
@@ -163,20 +163,20 @@ end
 
 -- Initialize the pixel perfect system
 function guiCore:InitializePixelPerfect()
-    -- Initialize physical screen size and perfect scale
+    -- Initialisiere physische Bildschirmgröße und perfekte Skalierung
     self.physicalWidth, self.physicalHeight = GetPhysicalScreenSize()
     self.resolution = format('%dx%d', self.physicalWidth, self.physicalHeight)
     self.perfect = 768 / self.physicalHeight
     
-    -- Initialize multiplier (will be 1.0 until db is ready)
+    -- Initialisiere Multiplikator (wird 1.0 sein bis db bereit ist)
     self.mult = 1.0
     
-    -- Calculate initial multiplier if db is ready
+    -- Berechne initialen Multiplikator falls db bereit ist
     if self.db and self.db.profile then
         self:UIMult()
     end
     
-    -- Register for UI scale changes
+    -- Registriere für UI-Skalierungsänderungen
     self:RegisterEvent('UI_SCALE_CHANGED', 'PixelScaleChanged')
 end
 
@@ -201,14 +201,14 @@ function guiCore:ApplyUIScale()
         if savedScale and savedScale > 0 then
             scaleToApply = savedScale
         else
-            -- No saved scale - use smart default based on resolution
+            -- Keine gespeicherte Skalierung - verwende smarte Standardwerte basierend auf Auflösung
             scaleToApply = self:GetSmartDefaultScale()
             self.db.profile.general.uiScale = scaleToApply										 
         end
 
         -- Use pcall to catch protected states not detected by InCombatLockdown
         if InCombatLockdown() then
-            -- Defer to combat end
+            -- Verschiebe bis zum Kampfende
             if not self._UIScalePending then
                 self._UIScalePending = true
                 self:RegisterEvent('PLAYER_REGEN_ENABLED', function()
@@ -222,7 +222,7 @@ function guiCore:ApplyUIScale()
 
         local success = pcall(function() UIParent:SetScale(scaleToApply) end)
         if not success then
-            -- Protected state detected - defer to combat end
+            -- Protected State erkannt - verschiebe bis zum Kampfende
             if not self._UIScalePending then
                 self._UIScalePending = true
                 self:RegisterEvent('PLAYER_REGEN_ENABLED', function()
@@ -234,7 +234,7 @@ function guiCore:ApplyUIScale()
             return
         end
     end
-    -- Update pixel perfect calculations
+    -- Aktualisiere Pixel-Perfect-Berechnungen
     if self.UIMult and self.UIScale then
         self:UIMult()
         self:UIScale()

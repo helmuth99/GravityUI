@@ -1,14 +1,14 @@
 local addonName, ns = ...
 
 ---------------------------------------------------------------------------
--- gui KEY TRACKER MODULE
--- Shows party keystones on PVEFrame (Group Finder)
--- Requires LibOpenRaid for keystone sharing between party members
+-- gui KEY TRACKER MODUL
+-- Zeigt Party-Keystones auf PVEFrame (Gruppensuche)
+-- Benötigt LibOpenRaid für Keystone-Sharing zwischen Gruppenmitgliedern
 ---------------------------------------------------------------------------
 
 local openRaidLib = LibStub and LibStub:GetLibrary("LibOpenRaid-1.0", true)
 if not openRaidLib then
-    -- LibOpenRaid not available, module disabled
+    -- LibOpenRaid nicht verfügbar, Modul deaktiviert
     return
 end
 
@@ -34,21 +34,21 @@ local HEADER_HEIGHT = BUTTON_SIZE + (ENTRY_PADDING_Y * 2)
 local ENTRY_HEIGHT = BUTTON_SIZE + ENTRY_SPACING
 local FRAME_WIDTH = 170
 
--- Font size setting access
+-- Schriftgröße-Einstellungs-Zugriff
 local function GetFontSize()
     local guiCore = _G.GravityUI and _G.GravityUI.guiCore
     local settings = guiCore and guiCore.db and guiCore.db.profile and guiCore.db.profile.general
     return settings and settings.keyTrackerFontSize or 9
 end
 
--- Timer delays (seconds)
+-- Timer-Verzögerungen (Sekunden)
 local INITIAL_REQUEST_DELAY = 3
 local GROUP_CHANGE_DELAY = 2
 local UPDATE_DELAY = 1
 local VISIBILITY_DELAY = 0.1
 local INITIAL_KEYSTONE_REQUEST_DELAY = 5
 
--- Skinning colors (retrieved dynamically)
+-- Skinning-Farben (dynamisch abgerufen)
 local function GetSkinColors()
     local gui = _G.GravityUI
     if gui and gui.GetSkinColor and gui.GetSkinBgColor then
@@ -56,7 +56,7 @@ local function GetSkinColors()
         local bgr, bgg, bgb, bga = gui:GetSkinBgColor()
         return sr, sg, sb, sa, bgr, bgg, bgb, bga
     end
-    -- Fallback colors
+    -- Fallback-Farben
     return 0.2, 0.8, 0.6, 1, 0.067, 0.094, 0.153, 0.95
 end
 
@@ -65,7 +65,7 @@ end
 ---------------------------------------------------------------------------
 
 local function GetDungeonInfo(mapID)
-    -- Defensive nil check
+    -- Defensive nil-Prüfung
     if not mapID then
         return "Interface\\Icons\\INV_Misc_QuestionMark", "???", nil
     end
@@ -73,7 +73,7 @@ local function GetDungeonInfo(mapID)
     if _G.gui_DungeonData then
         local data = _G.gui_DungeonData.GetDungeonData(mapID)
         if data then
-            -- Get icon from C_ChallengeMode
+            -- Hole Icon von C_ChallengeMode
             local _, _, _, icon = C_ChallengeMode.GetMapUIInfo(mapID)
             return icon, data.short, data.spellID
         end
@@ -84,9 +84,9 @@ local function GetDungeonInfo(mapID)
     return icon, short, nil
 end
 
--- Get key level color - uses shared function if available
+-- Hole Key-Level-Farbe - nutzt geteilte Funktion falls verfügbar
 local function GetKeyColor(level)
-    -- Try shared dungeon data module first
+    -- Versuche geteiltes Dungeon-Daten-Modul zuerst
     if _G.gui_DungeonData and _G.gui_DungeonData.GetKeyColor then
         return _G.gui_DungeonData.GetKeyColor(level)
     end
@@ -99,11 +99,11 @@ local function GetKeyColor(level)
     return 1, 1, 1                                 -- White for 2-4
 end
 
--- Get M+ score and color for a unit
+-- Hole M+ Score und Farbe für eine Einheit
 local function GetPlayerScoreInfo(unit)
     local score, color = 0, { r = 1, g = 1, b = 1 }
 
-    -- Try RaiderIO first
+    -- Versuche RaiderIO zuerst
     if RaiderIO and RaiderIO.GetProfile then
         local profile = RaiderIO.GetProfile(unit)
         if profile and profile.mythicKeystoneProfile and profile.mythicKeystoneProfile.currentScore then
@@ -116,7 +116,7 @@ local function GetPlayerScoreInfo(unit)
         end
     end
 
-    -- Fallback to Blizzard API
+    -- Fallback auf Blizzard-API
     local ratingInfo = C_PlayerInfo.GetPlayerMythicPlusRatingSummary(unit)
     if ratingInfo and ratingInfo.currentSeasonScore and ratingInfo.currentSeasonScore > 0 then
         score = math.floor(ratingInfo.currentSeasonScore)
@@ -134,7 +134,7 @@ end
 -- FRAME CREATION
 ---------------------------------------------------------------------------
 
--- Create frame parented to UIParent initially, will reparent when PVEFrame loads
+-- Erstelle Frame parented zu UIParent initial, wird zu PVEFrame reparented wenn geladen
 local KeyTrackerFrame = CreateFrame("Frame", "GUIKeyTrackerFrame", UIParent, "BackdropTemplate")
 KeyTrackerFrame:SetFrameStrata("HIGH")
 KeyTrackerFrame:SetSize(FRAME_WIDTH, HEADER_HEIGHT)
@@ -149,18 +149,18 @@ KeyTrackerFrame:RegisterForDrag("LeftButton")
 KeyTrackerFrame:SetClampedToScreen(true)
 KeyTrackerFrame:Hide()
 
--- Title
+-- Titel
 local title = KeyTrackerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
 title:SetPoint("TOP", KeyTrackerFrame, "TOP", 0, -2)
 title:SetFont(title:GetFont(), 9, "OUTLINE")
 
--- Update title color with skin
+-- Aktualisiere Titel-Farbe mit Skin
 local function UpdateTitleColor()
     local sr, sg, sb = GetSkinColors()
     title:SetText("|cff" .. string.format("%02x%02x%02x", sr*255, sg*255, sb*255) .. "Party Keys|r")
 end
 
--- Apply skin colors (consolidated - called after gui is loaded)
+-- Wende Skin-Farben an (konsolidiert - aufgerufen nachdem gui geladen ist)
 local function ApplySkinColors()
     local sr, sg, sb, sa, bgr, bgg, bgb, bga = GetSkinColors()
     KeyTrackerFrame:SetBackdropColor(bgr, bgg, bgb, bga)
@@ -168,14 +168,14 @@ local function ApplySkinColors()
     UpdateTitleColor()
 end
 
--- Expose refresh function for live color updates
+-- Exponiere Refresh-Funktion für Live-Farb-Updates
 _G.GravityUI_RefreshKeyTrackerColors = ApplySkinColors
 
--- Function to position frame (attached to PVEFrame bottom right)
+-- Funktion zum Positionieren des Frames (an PVEFrame unten rechts angeheftet)
 local function PositionKeyTracker()
     KeyTrackerFrame:ClearAllPoints()
     if PVEFrame then
-        -- Position attached to bottom right corner (like the tabs)
+        -- Positioniere an unterer rechter Ecke (wie die Tabs)
         KeyTrackerFrame:SetPoint("TOPRIGHT", PVEFrame, "BOTTOMRIGHT", 0, 0)
     end
 end
@@ -189,7 +189,7 @@ KeyTrackerFrame:SetScript("OnDragStop", function(self)
     self:StopMovingOrSizing()
 end)
 
--- Tooltip for key tracker panel
+-- Tooltip für Key-Tracker-Panel
 KeyTrackerFrame:SetScript("OnEnter", function(self)
     GameTooltip:SetOwner(self, "ANCHOR_TOP")
     GameTooltip:AddLine("Party Keys", 1, 1, 1)
@@ -217,7 +217,7 @@ local function CreateKeystoneButton(parent, yOffset)
     button.icon:SetAllPoints()
     button.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
 
-    -- Cooldown overlay
+    -- Cooldown-Overlay
     button.cooldownOverlay = button:CreateTexture(nil, "ARTWORK", nil, 1)
     button.cooldownOverlay:SetAllPoints()
     button.cooldownOverlay:SetColorTexture(0, 0, 0, 0.6)
@@ -230,25 +230,25 @@ local function CreateKeystoneButton(parent, yOffset)
 
     local fontSize = GetFontSize()
 
-    -- Key level text (centered on icon)
+    -- Key-Level-Text (zentriert auf Icon)
     button.keyLevel = button:CreateFontString(nil, "OVERLAY")
     button.keyLevel:SetPoint("CENTER", button, "CENTER", 0, 0)
     button.keyLevel:SetFont(STANDARD_TEXT_FONT, fontSize + 1, "OUTLINE")
 
-    -- Dungeon short name (right of icon)
+    -- Dungeon-Kurzname (rechts vom Icon)
     button.dungeonName = parent:CreateFontString(nil, "OVERLAY")
     button.dungeonName:SetPoint("LEFT", button, "RIGHT", 4, 0)
     button.dungeonName:SetFont(STANDARD_TEXT_FONT, fontSize, "OUTLINE")
     button.dungeonName:SetJustifyH("LEFT")
-    button.dungeonName:SetWidth(40)  -- Fixed width for alignment
+    button.dungeonName:SetWidth(40)  -- Feste Breite zur Ausrichtung
 
-    -- Player name (right of dungeon name)
+    -- Spieler-Name (rechts vom Dungeon-Namen)
     button.playerName = parent:CreateFontString(nil, "OVERLAY")
     button.playerName:SetPoint("LEFT", button.dungeonName, "RIGHT", 4, 0)
     button.playerName:SetFont(STANDARD_TEXT_FONT, fontSize, "OUTLINE")
     button.playerName:SetJustifyH("LEFT")
 
-    -- Score (right side, same row as button)
+    -- Score (rechte Seite, gleiche Zeile wie Button)
     button.score = parent:CreateFontString(nil, "OVERLAY")
     button.score:SetPoint("RIGHT", parent, "RIGHT", -ENTRY_PADDING_X, 0)
     button.score:SetPoint("TOP", button, "TOP", 0, 0)
@@ -257,7 +257,7 @@ local function CreateKeystoneButton(parent, yOffset)
     button.score:SetJustifyH("RIGHT")
     button.score:SetJustifyV("MIDDLE")
 
-    -- Leader icon
+    -- Leader-Icon
     button.leaderIcon = button:CreateTexture(nil, "OVERLAY")
     button.leaderIcon:SetSize(10, 10)
     button.leaderIcon:SetPoint("TOPLEFT", button, "TOPLEFT", -2, 2)
@@ -267,15 +267,15 @@ local function CreateKeystoneButton(parent, yOffset)
     return button
 end
 
--- Create buttons (player + up to 4 party members)
+-- Erstelle Buttons (Spieler + bis zu 4 Gruppen-mitglieder)
 local TITLE_HEIGHT = 12
 local keystoneButtons = {}
-keystoneButtons[0] = CreateKeystoneButton(KeyTrackerFrame, -TITLE_HEIGHT) -- Player button (after title)
+keystoneButtons[0] = CreateKeystoneButton(KeyTrackerFrame, -TITLE_HEIGHT) -- Spieler-Button (nach Titel)
 for i = 1, 4 do
     keystoneButtons[i] = CreateKeystoneButton(KeyTrackerFrame, -TITLE_HEIGHT - (i * ENTRY_HEIGHT))
 end
 
--- Update all button fonts (called when settings change or on refresh)
+-- Aktualisiere alle Button-Fonts (aufgerufen wenn Einstellungen sich ändern oder bei Refresh)
 local function UpdateAllButtonFonts()
     local fontSize = GetFontSize()
     for i = 0, 4 do
@@ -289,7 +289,7 @@ local function UpdateAllButtonFonts()
     end
 end
 
--- Expose for live font size updates from options
+-- Exponiere für Live-Schriftgrößen-Updates von Optionen
 _G.GravityUI_RefreshKeyTrackerFonts = UpdateAllButtonFonts
 
 ---------------------------------------------------------------------------
@@ -300,7 +300,7 @@ local function UpdateButtonCooldown(button)
     if InCombatLockdown() then return end
     if button.spellID then
         local cooldownInfo = C_Spell.GetSpellCooldown(button.spellID)
-        -- Use pcall to handle secret values in Midnight (startTime/duration can be protected)
+        -- Nutze pcall um Secret Values in Midnight zu handhaben (startTime/duration können geschützt sein)
         local success, showCooldown = pcall(function()
             return cooldownInfo and cooldownInfo.startTime > 0 and cooldownInfo.duration > 5
         end)
@@ -341,7 +341,7 @@ local function UpdateButton(button, keystoneInfo, unitName, unit, isLeader)
             button.score:SetText("")
         end
 
-        -- Teleport spell
+        -- Teleport-Spell
         if spellID and IsSpellKnown(spellID) then
             button:SetAttribute("type", "spell")
             button:SetAttribute("spell", spellID)
@@ -353,7 +353,7 @@ local function UpdateButton(button, keystoneInfo, unitName, unit, isLeader)
         end
     end
 
-    -- Leader icon
+    -- Leader-Icon
     if isLeader and not IsInRaid() then
         button.leaderIcon:Show()
     else
@@ -362,7 +362,7 @@ local function UpdateButton(button, keystoneInfo, unitName, unit, isLeader)
 
     UpdateButtonCooldown(button)
     button:Show()
-    -- Also show font strings (they're parented to the frame, not the button)
+    -- Zeige auch FontStrings (sie sind am Frame, nicht am Button geparented)
     if button.dungeonName then button.dungeonName:Show() end
     if button.playerName then button.playerName:Show() end
     if button.score then button.score:Show() end
@@ -371,7 +371,7 @@ end
 local function HideButton(button)
     if InCombatLockdown() then return end
     button:Hide()
-    -- Also hide font strings (they're parented to the frame, not the button)
+    -- Verstecke auch FontStrings (sie sind am Frame, nicht am Button geparented)
     if button.dungeonName then button.dungeonName:Hide() end
     if button.playerName then button.playerName:Hide() end
     if button.score then button.score:Hide() end
@@ -383,12 +383,12 @@ end
 local function UpdateAllKeystones()
     if InCombatLockdown() or not IsEnabled() then return end
 
-    -- Hide all buttons first
+    -- Verstecke alle Buttons zuerst
     for i = 0, 4 do
         HideButton(keystoneButtons[i])
     end
 
-    -- In raid, don't show party keys
+    -- Im Raid, zeige keine Party-Keys
     if IsInRaid() then
         KeyTrackerFrame:SetHeight(HEADER_HEIGHT)
         return
@@ -397,7 +397,7 @@ local function UpdateAllKeystones()
     local allKeystoneInfo = openRaidLib.GetAllKeystonesInfo()										   
     local buttonIndex = 0
 
-    -- Check player's key first
+    -- Prüfe Spieler-Key zuerst
     local myKeystoneInfo = openRaidLib.GetKeystoneInfo("player")
     if myKeystoneInfo and myKeystoneInfo.level and myKeystoneInfo.level > 0 then
         local isLeader = UnitIsGroupLeader("player")
@@ -405,7 +405,7 @@ local function UpdateAllKeystones()
         buttonIndex = buttonIndex + 1
     end
 
-    -- Check party members' keys (only show those with keys)
+    -- Prüfe Party-Mitglieder-Keys (zeige nur die mit Keys)
     local numMembers = GetNumGroupMembers()
     for i = 1, numMembers - 1 do
         local unitId = "party" .. i
@@ -419,7 +419,7 @@ local function UpdateAllKeystones()
 
             local keystoneInfo = allKeystoneInfo[fullName] or allKeystoneInfo[unitName]
 													  
-            -- Only show if they have a key
+            -- Zeige nur wenn sie einen Key haben
             if keystoneInfo and keystoneInfo.level and keystoneInfo.level > 0 then
                 local isLeader = UnitIsGroupLeader(unitId)
                 UpdateButton(keystoneButtons[buttonIndex], keystoneInfo, fullName, unitId, isLeader)
@@ -428,7 +428,7 @@ local function UpdateAllKeystones()
         end
     end
 
-    -- Resize frame based on number of entries with keys
+    -- Skaliere Frame basierend auf Anzahl der Einträge mit Keys
     if buttonIndex > 0 then
         KeyTrackerFrame:SetHeight(TITLE_HEIGHT + (buttonIndex * ENTRY_HEIGHT) + ENTRY_PADDING_Y)
     else
@@ -474,7 +474,7 @@ local function UpdateVisibility()
         return
     end
 
-    -- Check if anyone has a key (player or party)
+    -- Prüfe ob jemand einen Key hat (Spieler oder Party)
     local anyoneHasKey = false
     local myKeystoneInfo = openRaidLib.GetKeystoneInfo("player")
     if myKeystoneInfo and myKeystoneInfo.level and myKeystoneInfo.level > 0 then
@@ -491,12 +491,12 @@ local function UpdateVisibility()
         end
     end
 
-    -- Hide if nobody has a key
+    -- Verstecke wenn niemand einen Key hat
     if not anyoneHasKey then
         KeyTrackerFrame:Hide()
         return
     end
-    -- Show when PVEFrame is visible (any tab)
+    -- Zeige wenn PVEFrame sichtbar ist (jeder Tab)
     if PVEFrame and PVEFrame:IsShown() then
         KeyTrackerFrame:Show()
         UpdateAll()
@@ -506,7 +506,7 @@ local function UpdateVisibility()
 end
 
 ---------------------------------------------------------------------------
--- PVEFRAME HOOKS (LoadOnDemand safe)
+-- PVEFRAME HOOKS (LoadOnDemand-sicher)
 ---------------------------------------------------------------------------
 
 local pveFrameHooked = false
@@ -549,7 +549,7 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
             PositionKeyTracker()
         end
     elseif event == "PLAYER_ENTERING_WORLD" then
-        -- Try to hook if PVEFrame already loaded
+        -- Versuche zu hooken wenn PVEFrame bereits geladen
         SetupPVEFrameHooks()
         PositionKeyTracker()
         ApplySkinColors()
@@ -586,7 +586,7 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
     end
 end)
 
--- LibOpenRaid callback (with combat lockdown check)
+-- LibOpenRaid-Callback (mit Combat-Lockdown-Prüfung)
 if openRaidLib then
     openRaidLib.RegisterCallback(addonName, "KeystoneUpdate", function()
         C_Timer.After(UPDATE_DELAY, function()
@@ -597,7 +597,7 @@ if openRaidLib then
     end)
 end
 
--- Right-click to refresh
+-- Rechtsklick zum Auffrischen
 KeyTrackerFrame:SetScript("OnMouseUp", function(self, button)
     if button == "RightButton" and not InCombatLockdown() then
         RequestKeystones()
@@ -605,11 +605,11 @@ KeyTrackerFrame:SetScript("OnMouseUp", function(self, button)
     end
 end)
 
--- Initial setup (in case PVEFrame already exists)
+-- Initial Setup (falls PVEFrame bereits existiert)
 SetupPVEFrameHooks()
 PositionKeyTracker()
 
--- Initial request
+-- Initiale Anfrage
 C_Timer.After(INITIAL_KEYSTONE_REQUEST_DELAY, function()
     if not InCombatLockdown() then
         RequestKeystones()

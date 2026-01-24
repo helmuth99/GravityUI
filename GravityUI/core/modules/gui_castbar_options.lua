@@ -1,30 +1,30 @@
---[[
-    GravityUI Castbar Options
-    Extracted from gui_options.lua for better organization
-    Builds the castbar options section for unit frame tabs
-]]
+-------------------------------------------------------------------------------
+-- GravityUI Castbar Options
+-- Extrahiert aus gui_options.lua für bessere Organisation
+-- Erstellt den Castbar-Options-Bereich für Unit Frame Tabs
+-------------------------------------------------------------------------------
 
 local ADDON_NAME, ns = ...
 local gui = GravityUI
 local GUI = gui.GUI
 local C = GUI.Colors
 
--- Reference to main options file for helper functions
+-- Referenz zur Haupt-Options-Datei für Hilfsfunktionen
 local mainOptions = ns.gui_Options or {}
 
 ---------------------------------------------------------------------------
--- BUILD CASTBAR OPTIONS SECTION
--- Parameters:
---   tabContent: The parent frame to add widgets to
---   unitKey: The unit key ("player", "target", etc.)
---   y: Current y position (will be updated and returned)
---   PAD: Padding constant
---   FORM_ROW: Form row height constant
---   RefreshUnit: Callback function to refresh the unit frame
---   GetTextureList: Function to get texture list
---   NINE_POINT_ANCHOR_OPTIONS: Constant for anchor options
---   GetUFDB: Function to get unit frames database
---   GetDB: Function to get main database
+-- ERSTELLE CASTBAR OPTIONS SEKTION
+-- Parameter:
+--   tabContent: Der Parent-Frame dem Widgets hinzugefügt werden
+--   unitKey: Der Unit-Key ("player", "target", usw.)
+--   y: Aktuelle Y-Position (wird aktualisiert und zurückgegeben)
+--   PAD: Padding-Konstante
+--   FORM_ROW: Formular-Zeilenhöhen-Konstante
+--   RefreshUnit: Callback-Funktion um den Unit-Frame zu aktualisieren
+--   GetTextureList: Funktion um Textur-Liste zu erhalten
+--   NINE_POINT_ANCHOR_OPTIONS: Konstante für Anchor-Optionen
+--   GetUFDB: Funktion um Unit Frames Datenbank zu erhalten
+--   GetDB: Funktion um Haupt-Datenbank zu erhalten
 ---------------------------------------------------------------------------
 local function BuildCastbarOptions(tabContent, unitKey, y, PAD, FORM_ROW, RefreshUnit, GetTextureList, NINE_POINT_ANCHOR_OPTIONS, GetUFDB, GetDB)
     local ufdb = GetUFDB()
@@ -35,7 +35,7 @@ local function BuildCastbarOptions(tabContent, unitKey, y, PAD, FORM_ROW, Refres
     local unitDB = ufdb[unitKey]
     local db = GetDB()
     
-    -- CASTBAR section (for player, target, targettarget, focus, pet, boss)
+    -- CASTBAR Sektion (für player, target, targettarget, focus, pet, boss)
    if unitKey == "player" or unitKey == "target" or unitKey == "targettarget" or unitKey == "focus" or unitKey == "pet" or unitKey == "boss" then
         local castbarHeader = GUI:CreateSectionHeader(tabContent, "Castbar")
         castbarHeader:SetPoint("TOPLEFT", PAD, y)
@@ -67,7 +67,7 @@ local function BuildCastbarOptions(tabContent, unitKey, y, PAD, FORM_ROW, Refres
         if castDB.useClassColor == nil then
             castDB.useClassColor = false
         end
-        -- Migrate from old lock flags to anchor field
+        -- Migriere von alten Lock-Flags zum Anchor-Feld
         if not castDB.anchor then
             if castDB.lockedToEssential then
                 castDB.anchor = "essential"
@@ -78,13 +78,13 @@ local function BuildCastbarOptions(tabContent, unitKey, y, PAD, FORM_ROW, Refres
             else
                 castDB.anchor = "none"
             end
-            -- Clear old lock flags
+            -- Lösche alte Lock-Flags
             castDB.lockedToEssential = nil
             castDB.lockedToUtility = nil
             castDB.lockedToFrame = nil
         end
 
-        -- Initialize separate offset storage for free vs locked modes
+        -- Initialisiere separate Offset-Speicherung für freie vs. gelockte Modi
         if castDB.freeOffsetX == nil then castDB.freeOffsetX = 0 end
         if castDB.freeOffsetY == nil then castDB.freeOffsetY = 0 end
         if castDB.lockedOffsetX == nil then castDB.lockedOffsetX = 0 end
@@ -118,7 +118,7 @@ local function BuildCastbarOptions(tabContent, unitKey, y, PAD, FORM_ROW, Refres
         castShowIcon:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
         y = y - FORM_ROW
 
-        -- Use Class Color toggle (player only)
+        -- Use Class Color Toggle (nur Player)
         local castWidgetRefs = {}
         if unitKey == "player" then
             local castUseClassColor = GUI:CreateFormCheckbox(tabContent, "Use Class Color", "useClassColor", castDB, function()
@@ -165,7 +165,7 @@ local function BuildCastbarOptions(tabContent, unitKey, y, PAD, FORM_ROW, Refres
         positioningLabel:SetJustifyH("LEFT")
         y = y - 20
 
-        -- Anchor selection dropdown
+        -- Anchor-Auswahl Dropdown
         local anchorOptions = {
             {value = "none", text = "None"}
         }
@@ -175,15 +175,15 @@ local function BuildCastbarOptions(tabContent, unitKey, y, PAD, FORM_ROW, Refres
             table.insert(anchorOptions, {value = "utility", text = "Utility Cooldowns"})
         end
         
-        -- Initialize anchor if not set
+        -- Initialisiere Anchor falls nicht gesetzt
         if not castDB.anchor then
             castDB.anchor = "none"
         end
         
-        -- Create slider references first (needed for UpdateCastbarSliders)
+        -- Erstelle Slider-Referenzen zuerst (benötigt für UpdateCastbarSliders)
         local castWidthSlider, castWidthAdjSlider, castHeightSlider, castOffsetXSlider, castOffsetYSlider, anchorDropdown
         
-        -- Helper to update all sliders and anchor label (defined early so it can be used in callbacks)
+        -- Hilfsfunktion um alle Slider und Anchor-Label zu aktualisieren (früh definiert für Callbacks)
         local function UpdateCastbarSliders()
             if castWidthSlider and castWidthSlider.SetValue then
                 castWidthSlider.SetValue(castDB.width or 250)
@@ -198,13 +198,13 @@ local function BuildCastbarOptions(tabContent, unitKey, y, PAD, FORM_ROW, Refres
                 castOffsetYSlider.SetValue(castDB.offsetY or 0)
             end
 
-            -- Update dropdown selection
+            -- Aktualisiere Dropdown-Auswahl
             if anchorDropdown and anchorDropdown.SetValue then
                 anchorDropdown.SetValue(castDB.anchor or "none", true)
             end
             
-            -- Disable width slider when auto-resize anchor is set (width controlled by anchors)
-            -- Only enable width slider when anchor is "none" (manual positioning)
+            -- Deaktiviere Width-Slider wenn Auto-Resize Anchor gesetzt ist (Breite wird durch Anchors kontrolliert)
+            -- Aktiviere Width-Slider nur wenn Anchor "none" ist (manuelle Positionierung)
             if castWidthSlider then
                 if castDB.anchor == "none" then
                     castWidthSlider:SetEnabled(true)
@@ -213,54 +213,54 @@ local function BuildCastbarOptions(tabContent, unitKey, y, PAD, FORM_ROW, Refres
                 end
             end
             
-            -- Width Adjustment slider is the opposite: enabled when locked to a frame
+            -- Width Adjustment Slider ist das Gegenteil: aktiviert wenn an Frame gelockt
             if castWidthAdjSlider then
                 local isLocked = (castDB.anchor == "essential" or castDB.anchor == "utility" or castDB.anchor == "unitframe")
                 castWidthAdjSlider:SetEnabled(isLocked)
             end
             
-            -- Enable X/Y offset sliders for all anchor modes
-            -- "none" mode: offset from screen center (absolute positioning)
-            -- locked modes: offset from anchor (relative positioning)
+            -- Aktiviere X/Y Offset-Slider für alle Anchor-Modi
+            -- "none" Modus: Offset vom Bildschirm-Zentrum (absolute Positionierung)
+            -- Gelockte Modi: Offset vom Anchor (relative Positionierung)
             if castOffsetXSlider and castOffsetYSlider then					
                 castOffsetXSlider:SetEnabled(true)
                 castOffsetYSlider:SetEnabled(true)
             end
         end
 		         
-        -- Track previous anchor to swap offsets when mode changes
+        -- Verfolge vorherigen Anchor um Offsets beim Moduswechsel zu tauschen
         local prevAnchor = castDB.anchor or "none"
 
         anchorDropdown = GUI:CreateFormDropdown(tabContent, "Autoresize + Lock To", anchorOptions, "anchor", castDB, function()
-            -- Clear all lock flags when anchor changes
+            -- Lösche alle Lock-Flags wenn Anchor sich ändert
             castDB.lockedToFrame = false
             castDB.lockedToEssential = false
             castDB.lockedToUtility = false
-            -- Clear width to allow anchors to control sizing (only for essential/utility)
+            -- Lösche Breite damit Anchors die Größe kontrollieren (nur für essential/utility)
             if castDB.anchor == "essential" or castDB.anchor == "utility" then
                 castDB.width = 0
             end
 
-            -- Swap offsets between free (none) and locked modes
+            -- Tausche Offsets zwischen frei (none) und gelockten Modi
             local wasNone = (prevAnchor == "none")
             local isNone = (castDB.anchor == "none")
 
             if wasNone and not isNone then
-                -- Switching FROM none TO locked: save free offsets, load locked offsets
+                -- Wechsel VON none ZU gelockt: speichere freie Offsets, lade gelockte Offsets
                 castDB.freeOffsetX = castDB.offsetX or 0
                 castDB.freeOffsetY = castDB.offsetY or 0
                 castDB.offsetX = castDB.lockedOffsetX or 0
                 castDB.offsetY = castDB.lockedOffsetY or -25
             elseif not wasNone and isNone then
-                -- Switching FROM locked TO none: save locked offsets, load free offsets
+                -- Wechsel VON gelockt ZU none: speichere gelockte Offsets, lade freie Offsets
                 castDB.lockedOffsetX = castDB.offsetX or 0
                 castDB.lockedOffsetY = castDB.offsetY or 0
                 castDB.offsetX = castDB.freeOffsetX or 0
                 castDB.offsetY = castDB.freeOffsetY or 0
             end
-            -- If locked→locked (e.g. essential→utility), keep current offsets
+            -- Wenn gelockt→gelockt (z.B. essential→utility), behalte aktuelle Offsets
 
-            -- Update previous anchor for next change
+            -- Aktualisiere vorherigen Anchor für nächste Änderung
             prevAnchor = castDB.anchor
             UpdateCastbarSliders()
             RefreshUnit()
@@ -269,13 +269,13 @@ local function BuildCastbarOptions(tabContent, unitKey, y, PAD, FORM_ROW, Refres
         anchorDropdown:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
         y = y - FORM_ROW
 
-        -- Castbar preview row (form style)
+        -- Castbar Preview-Reihe (Formular-Stil)
         local castPreviewToggle = GUI:CreateFormToggle(tabContent, "Castbar Preview", "previewMode", castDB, RefreshUnit)
         castPreviewToggle:SetPoint("TOPLEFT", PAD, y)
         castPreviewToggle:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
         y = y - FORM_ROW
 
-        -- Quick Snap buttons row (one-time snap)
+        -- Quick Snap Buttons-Reihe (einmalig Snap)
         local snapContainer = CreateFrame("Frame", nil, tabContent)
         snapContainer:SetHeight(FORM_ROW)
         snapContainer:SetPoint("TOPLEFT", PAD, y)
@@ -286,7 +286,7 @@ local function BuildCastbarOptions(tabContent, unitKey, y, PAD, FORM_ROW, Refres
         snapLabel:SetText("Quick Snap")
         snapLabel:SetTextColor(C.text[1], C.text[2], C.text[3], 1)
 
-        -- Snap to Frame button
+        -- Snap to Frame Button
         local snapFrameBtn = CreateFrame("Button", nil, snapContainer, "BackdropTemplate")
         snapFrameBtn:SetSize(100, 24)
         snapFrameBtn:SetPoint("LEFT", snapContainer, "LEFT", 200, 0)
@@ -302,7 +302,7 @@ local function BuildCastbarOptions(tabContent, unitKey, y, PAD, FORM_ROW, Refres
 
         local snapEssentialBtn, snapUtilityBtn
         if unitKey == "player" then
-            -- Snap to Essential button
+            -- Snap to Essential Button
             snapEssentialBtn = CreateFrame("Button", nil, snapContainer, "BackdropTemplate")
             snapEssentialBtn:SetSize(100, 24)
             snapEssentialBtn:SetPoint("LEFT", snapFrameBtn, "RIGHT", 8, 0)
@@ -316,7 +316,7 @@ local function BuildCastbarOptions(tabContent, unitKey, y, PAD, FORM_ROW, Refres
             snapEssentialBtn:SetScript("OnEnter", function(self) self:SetBackdropBorderColor(C.accent[1], C.accent[2], C.accent[3], 1) end)
             snapEssentialBtn:SetScript("OnLeave", function(self) self:SetBackdropBorderColor(C.border[1], C.border[2], C.border[3], 1) end)
 
-            -- Snap to Utility button
+            -- Snap to Utility Button
             snapUtilityBtn = CreateFrame("Button", nil, snapContainer, "BackdropTemplate")
             snapUtilityBtn:SetSize(100, 24)
             snapUtilityBtn:SetPoint("LEFT", snapEssentialBtn, "RIGHT", 8, 0)
@@ -332,7 +332,7 @@ local function BuildCastbarOptions(tabContent, unitKey, y, PAD, FORM_ROW, Refres
         end
         y = y - FORM_ROW
 
-        -- Copy Settings From dropdown
+        -- Kopiere Einstellungen Von Dropdown
         local castbarCopyOptions = {}
         local castbarUnits = {
             {key = "player", text = "Player"},
@@ -353,7 +353,7 @@ local function BuildCastbarOptions(tabContent, unitKey, y, PAD, FORM_ROW, Refres
         castCopyRow:SetPoint("TOPLEFT", PAD, y)
         castCopyRow:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
 
-        -- Helper to copy castbar settings from one unit to another
+        -- Hilfsfunktion zum Kopieren von Castbar-Einstellungen von einer Unit zur anderen
         local function CopyCastbarSettings(sourceDB, targetDB)
             if not sourceDB or not targetDB then return end
             local keys = {"width", "height", "offsetX", "offsetY", "fontSize", "borderSize", "maxLength", "texture", "showIcon", "enabled", "anchor", "iconAnchor", "iconSpacing", "spellTextAnchor", "spellTextOffsetX", "spellTextOffsetY", "timeTextAnchor", "timeTextOffsetX", "timeTextOffsetY", "showSpellText", "showTimeText", "useClassColor", "empoweredStageColors", "empoweredFillColors"}
@@ -412,7 +412,7 @@ local function BuildCastbarOptions(tabContent, unitKey, y, PAD, FORM_ROW, Refres
         castCopyDropdown:SetPoint("RIGHT", castCopyApplyBtn, "LEFT", -8, 0)
         y = y - FORM_ROW
 
-        -- Quick Snap button click handlers (one-time snap, no lock)
+        -- Quick Snap Button Click-Handler (einmalig Snap, kein Lock)
         snapFrameBtn:SetScript("OnClick", function()
             castDB.anchor = "unitframe"
             castDB.offsetX = 0
@@ -430,7 +430,7 @@ local function BuildCastbarOptions(tabContent, unitKey, y, PAD, FORM_ROW, Refres
                     castDB.anchor = "essential"
                     castDB.offsetX = 0
                     castDB.offsetY = 0
-                    castDB.width = 0  -- Clear width to allow dual anchors to control sizing
+                    castDB.width = 0  -- Lösche Breite damit Dual-Anchors die Größe kontrollieren
 
                     UpdateCastbarSliders()
                     RefreshUnit()
@@ -447,7 +447,7 @@ local function BuildCastbarOptions(tabContent, unitKey, y, PAD, FORM_ROW, Refres
                     castDB.anchor = "utility"
                     castDB.offsetX = 0
                     castDB.offsetY = 0
-                    castDB.width = 0  -- Clear width to allow dual anchors to control sizing
+                    castDB.width = 0  -- Lösche Breite damit Dual-Anchors die Größe kontrollieren
 
                     UpdateCastbarSliders()
                     RefreshUnit()
@@ -462,12 +462,12 @@ local function BuildCastbarOptions(tabContent, unitKey, y, PAD, FORM_ROW, Refres
         castWidthSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
         y = y - FORM_ROW
 
-        -- Width Adjustment On Lock: fine-tune width when locked to anchor (enabled only when locked)
+        -- Width Adjustment On Lock: Feinabstimmung der Breite wenn an Anchor gelockt (nur aktiviert wenn gelockt)
         castWidthAdjSlider = GUI:CreateFormSlider(tabContent, "Width Adjustment On Lock", -500, 500, 1, "widthAdjustment", castDB, RefreshUnit)
         castWidthAdjSlider:SetPoint("TOPLEFT", PAD, y)
         castWidthAdjSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
         y = y - FORM_ROW
-        -- Set initial enabled state (will be updated by UpdateCastbarSliders)
+        -- Setze initialen aktiviert-Status (wird von UpdateCastbarSliders aktualisiert)
         local isLocked = (castDB.anchor == "essential" or castDB.anchor == "utility" or castDB.anchor == "unitframe")
         castWidthAdjSlider:SetEnabled(isLocked)
         castHeightSlider = GUI:CreateFormSlider(tabContent, "Bar Height", 4, 40, 1, "height", castDB, RefreshUnit)
@@ -490,7 +490,7 @@ local function BuildCastbarOptions(tabContent, unitKey, y, PAD, FORM_ROW, Refres
         castOffsetYSlider:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)
         y = y - FORM_ROW
 
-        -- Channel fill direction toggle
+        -- Channel Füll-Richtung Toggle
         local channelFillCheck = GUI:CreateFormCheckbox(tabContent, "Channel spells fill forward", "channelFillForward", castDB, RefreshUnit)
         channelFillCheck:SetPoint("TOPLEFT", PAD, y)
         channelFillCheck:SetPoint("RIGHT", tabContent, "RIGHT", -PAD, 0)

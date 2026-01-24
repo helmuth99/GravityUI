@@ -3,13 +3,13 @@
 ---------------------------------------------------------------------------
 local _, gui = ...
 
--- Die Logik für das automatische Ausfüllen
+-- Logik für das automatische Ausfüllen des DELETE_ITEM_CONFIRM_STRING
 local function OnDeleteEvent(self, event)
-    -- Zugriff auf deine AceDB-Einstellungen über den guiCore
+    -- Zugriff auf AceDB-Einstellungen über guiCore
     local guiCore = _G.GravityUI and _G.GravityUI.guiCore
     local db = guiCore and guiCore.db.profile
     
-    -- Nur ausführen, wenn der Regler in den Optionen AN ist (Standard: true)
+    -- Nur ausführen, wenn DeleteFix in den Optionen aktiviert ist (Standard: true)
     if not db or not db.DeleteFix or db.DeleteFix.enableDeleteFix == false then return end
 
     if StaticPopupDialogs["DELETE_ITEM"] then
@@ -19,7 +19,7 @@ local function OnDeleteEvent(self, event)
     end
 end
 
--- Event-Frame registrieren
+-- Event-Frame für DELETE_ITEM_CONFIRM registrieren
 local f = CreateFrame("Frame")
 f:RegisterEvent("DELETE_ITEM_CONFIRM")
 f:SetScript("OnEvent", OnDeleteEvent)

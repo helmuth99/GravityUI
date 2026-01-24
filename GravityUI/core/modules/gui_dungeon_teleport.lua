@@ -2,8 +2,8 @@ local addonName, ns = ...
 
 ---------------------------------------------------------------------------
 -- M+ DUNGEON TELEPORT MODULE
--- Feature: Click-to-teleport on M+ tab dungeon icons
--- Uses shared dungeon data from gui_dungeon_data.lua
+-- Feature: Klick-zum-Teleportieren bei M+-Tab-Dungeon-Icons
+-- Nutzt gemeinsame Dungeon-Daten von gui_dungeon_data.lua
 ---------------------------------------------------------------------------
 
 ---------------------------------------------------------------------------
@@ -24,14 +24,14 @@ local function CreateSecureOverlay(dungeonIcon)
     if not dungeonIcon or not dungeonIcon.mapID then return end
     if InCombatLockdown() then return end
 
-    -- Get teleport spell from shared dungeon data
+    -- Hole Teleport-Spell von gemeinsamen Dungeon-Daten
     local spellID = _G.gui_DungeonData and _G.gui_DungeonData.GetTeleportSpellID(dungeonIcon.mapID)
     if not spellID then return end
 
-    -- Check if overlay already exists
+    -- Prüfe ob Overlay bereits existiert
     if dungeonIcon.guiTeleportOverlay then return end
 
-    -- Create secure button overlay
+    -- Erstelle Secure-Button-Overlay
     local overlay = CreateFrame("Button", nil, dungeonIcon, "SecureActionButtonTemplate")
     overlay:SetAllPoints(dungeonIcon)
     overlay:SetFrameLevel(dungeonIcon:GetFrameLevel() + 10)
@@ -40,24 +40,24 @@ local function CreateSecureOverlay(dungeonIcon)
     overlay:SetAttribute("spell", spellID)
     overlay:RegisterForClicks("AnyUp", "AnyDown")
 
-    -- Store reference
+    -- Speichere Referenz
     overlay.spellID = spellID
     overlay.dungeonIcon = dungeonIcon
 
-    -- Create highlight texture for hover effect
+    -- Erstelle Highlight-Textur für Hover-Effekt
     local highlight = overlay:CreateTexture(nil, "OVERLAY")
     highlight:SetAllPoints()
-    highlight:SetColorTexture(0.3, 1, 0.5, 0.3)  -- Green tint when spell known
+    highlight:SetColorTexture(0.3, 1, 0.5, 0.3)  -- Grüner Farbton wenn Spell bekannt
     highlight:Hide()
     overlay.highlight = highlight
 
-    -- Visual indicator on hover
+    -- Visueller Indikator bei Hover
     overlay:SetScript("OnEnter", function(self)
-        -- Show highlight if spell is known
+        -- Zeige Highlight falls Spell bekannt ist
         if IsSpellKnown(spellID) then
             highlight:Show()
         end
-        -- Trigger original tooltip
+        -- Trigger ursprünglichen Tooltip
         if dungeonIcon.OnEnter then
             dungeonIcon:OnEnter()
         end
@@ -86,7 +86,7 @@ end
 
 local function OnChallengesFrameUpdate()
     if not IsEnabled() then return end
-    -- Delay slightly to ensure icons have their mapID set
+    -- Verzögere leicht um sicherzustellen dass Icons ihre mapID haben
     C_Timer.After(0.1, HookDungeonIcons)
 end
 
@@ -108,7 +108,7 @@ initFrame:SetScript("OnEvent", function(self, event, arg1)
     end
 end)
 
--- Handle case where Blizzard_ChallengesUI is already loaded
+-- Behandle Fall wo Blizzard_ChallengesUI bereits geladen ist
 if C_AddOns.IsAddOnLoaded("Blizzard_ChallengesUI") then
     if not hooked and ChallengesFrame then
         hooksecurefunc(ChallengesFrame, "Update", OnChallengesFrameUpdate)

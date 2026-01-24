@@ -3,8 +3,8 @@ local guiCore = ns.Addon
 local IsSecretValue = function(v) return ns.Utils and ns.Utils.IsSecretValue and ns.Utils.IsSecretValue(v) or false end																													   
 
 ---------------------------------------------------------------------------
--- gui Missing Raid Buffs Display
--- Shows missing raid buffs when a buff-providing class is in group
+-- gui Fehlende Raid-Buffs Anzeige
+-- Zeigt fehlende Raid-Buffs wenn eine Buff-gebende Klasse in der Gruppe ist
 ---------------------------------------------------------------------------
 
 local gui_RaidBuffs = {}
@@ -20,13 +20,13 @@ local FRAME_PADDING = 6
 local UPDATE_THROTTLE = 0.5
 local MAX_AURA_INDEX = 40  -- WoW maximum buff slots
 
--- Raid buffs configuration
--- spellId: Primary spell ID for icon lookup (can be single ID or table of IDs)
--- name: Buff name for fallback detection (catches talent variants)
--- stat: What the buff provides (for tooltip)
--- providerClass: Which class provides this buff
--- range: Range in yards for checking if provider/target is reachable
--- NOTE: Name-based fallback catches talent-modified buffs with different spell IDs																			   
+-- Raid-Buffs-Konfiguration
+-- spellId: Primäre Spell-ID für Icon-Lookup (kann einzelne ID oder Tabelle von IDs sein)
+-- name: Buff-Name für Fallback-Erkennung (erkennt Talent-Varianten)
+-- stat: Was der Buff bietet (für Tooltip)
+-- providerClass: Welche Klasse diesen Buff bietet
+-- range: Reichweite in Yards zum Prüfen ob Provider/Target erreichbar ist
+-- HINWEIS: Name-basierter Fallback erkennt Talent-geänderte Buffs mit anderen Spell-IDs																			   
 local RAID_BUFFS = {
     {
         spellId = 21562,
@@ -57,7 +57,7 @@ local RAID_BUFFS = {
         range = 40,
     },
     {
-        -- 381748 is the buff that appears on players, 364342 is the ability
+        -- 381748 ist der Buff der auf Spielern erscheint, 364342 ist die Fähigkeit
         spellId = 381748,
         name = "Blessing of the Bronze",
         stat = "Movement Speed",
@@ -73,14 +73,14 @@ local RAID_BUFFS = {
     },
 }
 
--- Get spell icon dynamically (handles expansion differences)
+-- Hole Spell-Icon dynamisch (behandelt Erweiterungs-Unterschiede)
 local function GetBuffIcon(spellId)
     if C_Spell and C_Spell.GetSpellTexture then
         return C_Spell.GetSpellTexture(spellId)
     elseif GetSpellTexture then
         return GetSpellTexture(spellId)
     end
-    return 134400  -- Question mark fallback
+    return 134400  -- Fragezeichen-Fallback
 end
 
 ---------------------------------------------------------------------------
@@ -92,7 +92,7 @@ local buffIcons = {}
 local lastUpdate = 0
 local groupClasses = {}
 local previewMode = false
-local previewBuffs = nil  -- Cached preview buffs (don't reshuffle on every update)
+local previewBuffs = nil  -- Gecachte Preview-Buffs (nicht bei jedem Update neu mischen)
 
 ---------------------------------------------------------------------------
 -- DATABASE ACCESS
@@ -105,12 +105,12 @@ local function GetSettings()
     return {
         enabled = true,
         showOnlyInGroup = true,
-        showOnlyInInstance = false,  -- Only show in dungeon/raid instances																		   
+        showOnlyInInstance = false,  -- Nur in Dungeon/Raid-Instanzen zeigen																		   
         providerMode = false,
-        hideLabelBar = false,        -- Hide the "Missing Buffs" label bar
+        hideLabelBar = false,        -- Verstecke die "Missing Buffs" Label-Leiste
         iconSize = 32,
         labelFontSize = 12,
-        labelTextColor = nil,        -- nil = white, otherwise {r, g, b, a}
+        labelTextColor = nil,        -- nil = weiß, sonst {r, g, b, a}
         position = nil,
     }
 end
@@ -119,7 +119,7 @@ end
 -- HELPER FUNCTIONS
 ---------------------------------------------------------------------------
 
--- Safe value check - returns nil if secret value, otherwise returns the value
+-- Sichere Wert-Prüfung - gibt nil zurück wenn Secret Value, sonst gibt Wert zurück
 local function SafeBooleanCheck(value)								   
     if IsSecretValue(value) then
         return nil
@@ -127,13 +127,13 @@ local function SafeBooleanCheck(value)
     return value					
 end
    
--- Check if unit is within a specific range (in yards)
--- Uses UnitDistanceSquared for accurate distance, falls back to other methods
+-- Prüfe ob Einheit in spezifischer Reichweite ist (in Yards)
+-- Nutzt UnitDistanceSquared für genaue Distanz, fällt zurück auf andere Methoden
 local function IsUnitInRange(unit, rangeYards)
-    rangeYards = rangeYards or 40  -- Default to 40 yards
+    rangeYards = rangeYards or 40  -- Standard auf 40 Yards
     local rangeSquared = rangeYards * rangeYards
 
-    -- Method 1: UnitDistanceSquared - most accurate for custom ranges
+    -- Methode 1: UnitDistanceSquared - genaueste für eigene Reichweiten
     if UnitDistanceSquared then
         local ok, distSq = pcall(UnitDistanceSquared, unit)
         if ok and distSq then
@@ -144,7 +144,7 @@ local function IsUnitInRange(unit, rangeYards)
         end
     end
 
-    -- Method 2: CheckInteractDistance (1 = inspect, ~28 yards) - fallback for short range
+    -- Methode 2: CheckInteractDistance (1 = inspizieren, ~28 Yards) - Fallback für kurze Reichweite
     if rangeYards <= 30 then
         local ok2, canInteract = pcall(CheckInteractDistance, unit, 1)
         if ok2 and canInteract ~= nil then
@@ -155,14 +155,14 @@ local function IsUnitInRange(unit, rangeYards)
         end
     end
 
-    -- Method 3: UnitInRange (~28 yards) - fallback
+    -- Methode 3: UnitInRange (~28 Yards) - Fallback
     local ok, inRange, checkedRange = pcall(UnitInRange, unit)
     if ok then
         local safeChecked = SafeBooleanCheck(checkedRange)
         if safeChecked then
             local safeInRange = SafeBooleanCheck(inRange)
             if safeInRange ~= nil then
-                -- UnitInRange is ~28 yards, if checking longer range assume in range if UnitInRange returns true
+                -- UnitInRange ist ~28 Yards, falls längere Reichweite geprüft wird annehmen in Reichweite wenn UnitInRange true zurückgibt
                 if rangeYards > 28 and safeInRange then
                     return true
                 end
@@ -171,19 +171,19 @@ local function IsUnitInRange(unit, rangeYards)
         end
     end
 
-    -- Can't determine range, assume in range
+    -- Kann Reichweite nicht bestimmen, annehmen in Reichweite
     return true
 end
 
--- Safe unit check for Midnight beta (multiple APIs return secret values)
--- Returns true if unit is valid, alive, connected, and in range
+-- Sichere Einheiten-Prüfung für Midnight Beta (mehrere APIs geben Secret Values zurück)
+-- Gibt true zurück wenn Einheit gültig, lebendig, verbunden und in Reichweite
 local function IsUnitAvailable(unit, rangeYards)
-    -- Check each condition separately, handling secret values
+    -- Prüfe jede Bedingung separat, handhabe Secret Values
     local exists = SafeBooleanCheck(UnitExists(unit))
     if not exists then return false end
 
     local dead = SafeBooleanCheck(UnitIsDeadOrGhost(unit))
-    if dead == nil or dead then return false end  -- nil = secret, treat as unavailable
+    if dead == nil or dead then return false end  -- nil = Secret, behandle als nicht verfügbar
 
     local connected = SafeBooleanCheck(UnitIsConnected(unit))
     if connected == nil or not connected then return false end
@@ -191,7 +191,7 @@ local function IsUnitAvailable(unit, rangeYards)
     return IsUnitInRange(unit, rangeYards)
 end
 
--- Safe wrapper for UnitClass (handles potential secret values in Midnight)
+-- Sicherer Wrapper für UnitClass (behandelt potentielle Secret Values in Midnight)
 local function SafeUnitClass(unit)
     local ok, localized, class = pcall(UnitClass, unit)
     if ok and class and type(class) == "string" then
@@ -200,13 +200,13 @@ local function SafeUnitClass(unit)
     return nil
 end
 
--- Safe aura field access for Midnight Beta
--- In 12.x Beta, aura data fields can be "secret values" that error on access
--- BUG-006: Also validate the value can be used in comparisons
+-- Sicherer Aura-Feld-Zugriff für Midnight Beta
+-- In 12.x Beta können Aura-Daten-Felder "Secret Values" sein die bei Zugriff Error werfen
+-- BUG-006: Validiere auch dass Wert in Vergleichen genutzt werden kann
 local function SafeGetAuraField(auraData, fieldName)
     local success, value = pcall(function() return auraData[fieldName] end)
     if not success then return nil end
-    -- Validate the value can be used in comparisons (secret values fail == operations)
+    -- Validiere dass Wert in Vergleichen genutzt werden kann (Secret Values scheitern bei ==-Operationen)
     local compareOk = pcall(function() return value == value end)
     if not compareOk then return nil end
     return value
@@ -215,13 +215,13 @@ end
 local function ScanGroupClasses()
     wipe(groupClasses)
 
-    -- Always include player
+    -- Immer Spieler einschließen
     local playerClass = SafeUnitClass("player")
     if playerClass then
         groupClasses[playerClass] = true
     end
 
-    -- Scan all group members for their classes (no range check - just need to know what classes exist)
+    -- Scanne alle Gruppenmitglieder nach ihren Klassen (keine Reichweiten-Prüfung - müssen nur wissen welche Klassen existieren)
     if IsInRaid() then
         for i = 1, GetNumGroupMembers() do
             local unit = "raid" .. i
@@ -249,19 +249,19 @@ local function ScanGroupClasses()
     end
 end
 
--- Check if a unit has a buff by spell ID, with name-based fallback
--- Uses 3-method approach for maximum compatibility across WoW versions
+-- Prüfe ob eine Einheit einen Buff nach Spell-ID hat, mit Name-basiertem Fallback
+-- Nutzt 3-Methoden-Ansatz für maximale Kompatibilität über WoW-Versionen
 local function UnitHasBuff(unit, spellId, spellName)
     if not unit then return false end
     local exists = SafeBooleanCheck(UnitExists(unit))
     if not exists then return false end
 
-    -- Method 1: AuraUtil.ForEachAura (most reliable)
+    -- Methode 1: AuraUtil.ForEachAura (zuverlässigste)
     if AuraUtil and AuraUtil.ForEachAura then
         local found = false
         AuraUtil.ForEachAura(unit, "HELPFUL", nil, function(auraData)
             if auraData then
-                -- Use safe field access for Midnight Beta (12.x) secret values
+                -- Nutze sicheren Feld-Zugriff für Midnight Beta (12.x) Secret Values
                 local auraSpellId = SafeGetAuraField(auraData, "spellId")
                 local auraName = SafeGetAuraField(auraData, "name")													 
                 if auraSpellId and auraSpellId == spellId then
@@ -275,18 +275,18 @@ local function UnitHasBuff(unit, spellId, spellName)
         if found then return true end
     end
 
-    -- Method 2: GetAuraDataBySpellName
+    -- Methode 2: GetAuraDataBySpellName
     if spellName and C_UnitAuras and C_UnitAuras.GetAuraDataBySpellName then
         local success, auraData = pcall(C_UnitAuras.GetAuraDataBySpellName, unit, spellName, "HELPFUL")
         if success and auraData then return true end                                         
     end
 
-    -- Method 3: GetAuraDataByIndex iteration
+    -- Methode 3: GetAuraDataByIndex-Iteration
     if C_UnitAuras and C_UnitAuras.GetAuraDataByIndex then
         for i = 1, MAX_AURA_INDEX do
             local success, auraData = pcall(C_UnitAuras.GetAuraDataByIndex, unit, i, "HELPFUL")
             if not success or not auraData then break end
-            -- Use safe field access for Midnight Beta (12.x) secret values
+            -- Nutze sicheren Feld-Zugriff für Midnight Beta (12.x) Secret Values
             local auraSpellId = SafeGetAuraField(auraData, "spellId")
             local auraName = SafeGetAuraField(auraData, "name")																
             if auraSpellId and auraSpellId == spellId then
@@ -300,18 +300,18 @@ local function UnitHasBuff(unit, spellId, spellName)
     return false
 end
 
--- Check if player has a buff (convenience wrapper)
+-- Prüfe ob Spieler einen Buff hat (Convenience-Wrapper)
 local function PlayerHasBuff(spellId, spellName)
     return UnitHasBuff("player", spellId, spellName)
 end
--- Check if any available group member is missing a specific buff
+-- Prüfe ob ein verfügbares Gruppenmitglied einen spezifischen Buff vermisst
 local function AnyGroupMemberMissingBuff(spellId, spellName, rangeYards)
-    -- Check player first
+    -- Prüfe Spieler zuerst
     if not PlayerHasBuff(spellId, spellName) then
         return true
     end
 
-    -- Check party/raid members
+    -- Prüfe Party/Raid-Mitglieder
     if IsInRaid() then
         for i = 1, GetNumGroupMembers() do
             local unit = "raid" .. i
@@ -336,12 +336,12 @@ local function AnyGroupMemberMissingBuff(spellId, spellName, rangeYards)
     return false
 end
 
--- Get player's class
+-- Hole Spieler-Klasse
 local function GetPlayerClass()
     return SafeUnitClass("player")
 end
 
--- Check if any unit of a given class is in range (for receiving buffs from them)
+-- Prüfe ob eine Einheit einer gegebenen Klasse in Reichweite ist (zum Empfangen von Buffs von ihnen)
 local function IsProviderClassInRange(providerClass, rangeYards)
     if IsInRaid() then
         for i = 1, GetNumGroupMembers() do
@@ -370,40 +370,40 @@ local function GetMissingBuffs()
     local missing = {}
     local settings = GetSettings()
 
-    -- Preview mode: return cached preview buffs (generated once when preview enabled)
+    -- Preview-Modus: gebe gecachte Preview-Buffs zurück (einmal generiert wenn Preview aktiviert)
     if previewMode and previewBuffs then
         return previewBuffs
     end
 
-    -- Check if we should only show in group
+    -- Prüfe ob wir nur in Gruppe zeigen sollen
     if settings.showOnlyInGroup and not IsInGroup() then
         return missing
     end
 
-    -- Check if we should only show in instance
+    -- Prüfe ob wir nur in Instanz zeigen sollen
     if settings.showOnlyInInstance and not ns.Utils.IsInInstancedContent() then
         return missing
     end
-    -- Only show out of combat (always enforced)
+    -- Nur außerhalb Kampf zeigen (immer erzwungen)
     if InCombatLockdown() then
         return missing
     end
 
-    -- Disable during M+ keystones - aura data is protected during challenge mode
+    -- Deaktiviere während M+-Keystones - Aura-Daten sind geschützt während Challenge-Modus
     if C_ChallengeMode and C_ChallengeMode.IsChallengeModeActive and C_ChallengeMode.IsChallengeModeActive() then
         return missing
     end
-    -- Scan group composition
+    -- Scanne Gruppen-Zusammensetzung
     ScanGroupClasses()
 
     local playerClass = GetPlayerClass()
 
-    -- Check each raid buff
+    -- Prüfe jeden Raid-Buff
     for _, buff in ipairs(RAID_BUFFS) do
         local dominated = false
         local buffRange = buff.range or 40
 
-        -- Always show buffs YOU are missing when provider is in group AND in range
+        -- Zeige immer Buffs die DU vermisst wenn Provider in Gruppe UND in Reichweite
         if groupClasses[buff.providerClass] and not PlayerHasBuff(buff.spellId, buff.name) then
             if IsProviderClassInRange(buff.providerClass, buffRange) then
                 table.insert(missing, buff)
@@ -411,8 +411,8 @@ local function GetMissingBuffs()
             end
         end
 
-        -- Provider mode ALSO shows buffs YOU can provide that anyone else is missing
-        -- (but don't duplicate if we already added it above)
+        -- Provider-Modus zeigt AUCH Buffs die DU bereitstellen kannst die jemandem fehlen
+        -- (aber nicht duplizieren wenn wir es bereits oben hinzugefügt haben)
         if settings.providerMode and not dominated then
             if buff.providerClass == playerClass and AnyGroupMemberMissingBuff(buff.spellId, buff.name, buffRange) then
                 table.insert(missing, buff)
@@ -431,7 +431,7 @@ local function CreateBuffIcon(parent, index)
     local button = CreateFrame("Button", nil, parent, "BackdropTemplate")
     button:SetSize(ICON_SIZE, ICON_SIZE)
 
-    -- Background/border using backdrop
+    -- Hintergrund/Rand mit Backdrop
     button:SetBackdrop({
         bgFile = "Interface\\Buttons\\WHITE8x8",
         edgeFile = "Interface\\Buttons\\WHITE8x8",
@@ -440,7 +440,7 @@ local function CreateBuffIcon(parent, index)
     })
     button:SetBackdropColor(0, 0, 0, 0.8)
 
-    -- Icon texture (inset by 1px for border)
+    -- Icon-Textur (eingerückt um 1px für Rand)
     button.icon = button:CreateTexture(nil, "ARTWORK")
     button.icon:SetPoint("TOPLEFT", 1, -1)
     button.icon:SetPoint("BOTTOMRIGHT", -1, 1)
@@ -468,7 +468,7 @@ end
 local function CreateMainFrame()
     if mainFrame then return mainFrame end
 
-    -- Main container (invisible, just for positioning and dragging)
+    -- Haupt-Container (unsichtbar, nur für Positionierung und Ziehen)
     mainFrame = CreateFrame("Frame", "GravityUI_MissingRaidBuffs", UIParent)
     mainFrame:SetSize(200, 70)
     mainFrame:SetPoint("TOP", UIParent, "TOP", 0, -200)
@@ -484,7 +484,7 @@ local function CreateMainFrame()
     end)
     mainFrame:SetScript("OnDragStop", function(self)
         self:StopMovingOrSizing()
-        -- Save position
+        -- Speichere Position
         local settings = GetSettings()
         if settings then
             local point, _, relPoint, x, y = self:GetPoint()
@@ -492,12 +492,12 @@ local function CreateMainFrame()
         end
     end)
 
-    -- Container for buff icons (icons go here)
+    -- Container für Buff-Icons (Icons gehen hier rein)
     mainFrame.iconContainer = CreateFrame("Frame", nil, mainFrame)
     mainFrame.iconContainer:SetPoint("TOP", mainFrame, "TOP", 0, 0)
     mainFrame.iconContainer:SetSize(200, ICON_SIZE)
 
-    -- Label bar below icons (skinned background with text)
+    -- Label-Leiste unter Icons (geskinnter Hintergrund mit Text)
     mainFrame.labelBar = CreateFrame("Frame", nil, mainFrame, "BackdropTemplate")
     mainFrame.labelBar:SetPoint("TOP", mainFrame.iconContainer, "BOTTOM", 0, -2)
     mainFrame.labelBar:SetSize(100, 18)
@@ -509,13 +509,13 @@ local function CreateMainFrame()
     })
     mainFrame.labelBar:SetBackdropColor(0.05, 0.05, 0.05, 0.95)
 
-    -- Label text
+    -- Label-Text
     mainFrame.labelBar.text = mainFrame.labelBar:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     mainFrame.labelBar.text:SetPoint("CENTER", 0, 0)
     mainFrame.labelBar.text:SetFont(STANDARD_TEXT_FONT, 10, "OUTLINE")
     mainFrame.labelBar.text:SetText("Missing Buffs")
 
-    -- Pre-create icon slots
+    -- Erstelle Icon-Slots vor
     for i = 1, #RAID_BUFFS do
         buffIcons[i] = CreateBuffIcon(mainFrame.iconContainer, i)
         buffIcons[i]:Hide()
@@ -544,23 +544,23 @@ local function ApplySkin()
         bgr, bgg, bgb, bga = gui:GetSkinBgColor()
     end
 
-    -- Apply skin to label bar
+    -- Wende Skin auf Label-Leiste an
     if mainFrame.labelBar then
         mainFrame.labelBar:SetBackdropColor(bgr, bgg, bgb, bga)
         mainFrame.labelBar:SetBackdropBorderColor(sr, sg, sb, sa)
         if mainFrame.labelBar.text then
-            -- Use custom text color if set, otherwise default to white for readability
+            -- Nutze eigene Text-Farbe falls gesetzt, sonst Standard weiß für Lesbarkeit
             local settings = GetSettings()
             local textColor = settings.labelTextColor
             if textColor then
                 mainFrame.labelBar.text:SetTextColor(textColor[1], textColor[2], textColor[3], 1)
             else
-                mainFrame.labelBar.text:SetTextColor(1, 1, 1, 1)  -- White default
+                mainFrame.labelBar.text:SetTextColor(1, 1, 1, 1)  -- Weiß-Standard
             end
         end
     end   
 
-    -- Apply border color to icons
+    -- Wende Rand-Farbe auf Icons an
     for _, icon in ipairs(buffIcons) do
         icon:SetBackdropBorderColor(sr, sg, sb, sa)
         icon:SetBackdropColor(0, 0, 0, 0.8)
@@ -570,7 +570,7 @@ local function ApplySkin()
     mainFrame.guiBgColor = { bgr, bgg, bgb, bga }
 end
 
--- Expose refresh function for live color updates
+-- Exponiere Refresh-Funktion für Live-Farb-Updates
 function gui_RaidBuffs:RefreshColors()
     ApplySkin()
 end
@@ -602,7 +602,7 @@ local function UpdateDisplay()
         return
     end
 
-    -- Position icons
+    -- Positioniere Icons
     local iconSize = settings.iconSize or ICON_SIZE
     local totalWidth = (#missing * iconSize) + ((#missing - 1) * ICON_SPACING)
     local startX = -totalWidth / 2 + iconSize / 2
@@ -621,7 +621,7 @@ local function UpdateDisplay()
         end
     end
 
-    -- Update label font size and calculate bar height
+    -- Aktualisiere Label-Schriftgröße und berechne Leisten-Höhe
     local fontSize = settings.labelFontSize or 12
     local labelBarHeight = fontSize + 8  -- Font size + padding
     local labelBarGap = 2
@@ -629,16 +629,16 @@ local function UpdateDisplay()
     mainFrame.labelBar.text:SetFont(STANDARD_TEXT_FONT, fontSize, "OUTLINE")
     mainFrame.labelBar.text:SetText("Missing Buffs")
 
-    -- Resize frames (minimum width based on both icons and text)
+    -- Skaliere Frames (Mindestbreite basierend auf Icons und Text)
     local hideLabelBar = settings.hideLabelBar
-    local minIconsWidth = (3 * iconSize) + (2 * ICON_SPACING)  -- 3 icons minimum
-    local minTextWidth = fontSize * 8 + 10  -- Approximate text width + padding
+    local minIconsWidth = (3 * iconSize) + (2 * ICON_SPACING)  -- 3 Icons Minimum
+    local minTextWidth = fontSize * 8 + 10  -- Ungefähre Text-Breite + Abstand
     local minWidth = math.max(minIconsWidth, minTextWidth)
     local frameWidth = math.max(totalWidth, hideLabelBar and 0 or minWidth)
 
     mainFrame.iconContainer:SetSize(frameWidth, iconSize)
 
-    -- Show/hide label bar based on setting
+    -- Zeige/verstecke Label-Leiste basierend auf Einstellung
     if hideLabelBar then
         mainFrame.labelBar:Hide()
         mainFrame:SetSize(totalWidth, iconSize)
@@ -648,7 +648,7 @@ local function UpdateDisplay()
         mainFrame:SetSize(frameWidth, iconSize + labelBarGap + labelBarHeight)
     end   
 
-    -- Restore saved position
+    -- Stelle gespeicherte Position wieder her
     if settings.position then
         mainFrame:ClearAllPoints()
         mainFrame:SetPoint(settings.position.point, UIParent, settings.position.relPoint, settings.position.x, settings.position.y)
@@ -670,13 +670,13 @@ end
 
 local eventFrame = CreateFrame("Frame")
 
--- Forward declaration for range check functions (defined after event handling)
+-- Vorwärtsdeklaration für Reichweiten-Prüf-Funktionen (definiert nach Event-Handling)
 local StartRangeCheck, StopRangeCheck
 
 local function OnEvent(self, event, ...)
     local settings = GetSettings()
 
-    -- Handle range check ticker start/stop regardless of enabled state
+    -- Handhabe Reichweiten-Prüf-Ticker Start/Stopp unabhängig vom Aktiviert-Status
     if event == "PLAYER_LOGIN" or event == "GROUP_ROSTER_UPDATE" then
         if settings and settings.enabled and IsInGroup() then
             if StartRangeCheck then StartRangeCheck() end
@@ -696,10 +696,10 @@ local function OnEvent(self, event, ...)
     elseif event == "UNIT_AURA" then
         local unit = ...
         if unit == "player" then
-            -- Player aura changes use short throttle to prevent spam during buff/debuff application
+            -- Spieler-Aura-Änderungen nutzen kurzen Throttle um Spam während Buff/Debuff-Anwendung zu verhindern
             ThrottledUpdate()
         elseif unit and settings.providerMode and (unit:match("^party") or unit:match("^raid")) then
-            -- In provider mode, also update when party/raid members' auras change
+            -- Im Provider-Modus auch aktualisieren wenn sich Party/Raid-Mitglieder-Auren ändern
             ThrottledUpdate()
         end
     elseif event == "PLAYER_REGEN_ENABLED" or event == "PLAYER_REGEN_DISABLED" then
@@ -707,13 +707,13 @@ local function OnEvent(self, event, ...)
     elseif event == "ZONE_CHANGED_NEW_AREA" then
         C_Timer.After(1, UpdateDisplay)
     elseif event == "UNIT_FLAGS" then
-        -- Triggers when unit dies or resurrects
+        -- Triggert wenn Einheit stirbt oder wiederbelebt wird
         local unit = ...
         if unit and (unit:match("^party") or unit:match("^raid")) then
             ThrottledUpdate()
         end
     elseif event == "PLAYER_DEAD" or event == "PLAYER_UNGHOST" then
-        -- Player death/resurrect
+        -- Spieler-Tod/Wiederbelebung
         ThrottledUpdate()
     end
 end
@@ -729,7 +729,7 @@ eventFrame:RegisterEvent("PLAYER_DEAD")
 eventFrame:RegisterEvent("PLAYER_UNGHOST")
 eventFrame:SetScript("OnEvent", OnEvent)
 
--- Periodic range check (every 5 seconds when out of combat and in group)
+-- Periodische Reichweiten-Prüfung (alle 5 Sekunden wenn außerhalb Kampf und in Gruppe)
 local rangeCheckTicker
 
 StopRangeCheck = function()

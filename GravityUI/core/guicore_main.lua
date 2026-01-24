@@ -1,54 +1,55 @@
---- GravityUI Core - Main Integration Module
---- Integrated from guiCore v1.18 with proper AceDB support
---- All branding changed to GravityUI
+-------------------------------------------------------------------------------
+-- GravityUI Core - Main Integration Module
+-- Integriert von guiCore v1.18 mit AceDB Support
+-------------------------------------------------------------------------------
 
 local ADDON_NAME, ns = ...
 local gui = GravityUI
 local ADDON_NAME = "GravityUI"
 
--- Create guiCore as an Ace3 module within GravityUI
+-- Erstelle guiCore als Ace3-Modul innerhalb von GravityUI
 local guiCore = gui:NewModule("guiCore", "AceConsole-3.0", "AceEvent-3.0")
 gui.guiCore = guiCore
 
--- Expose guiCore to namespace for other files
+-- Mache guiCore für andere Dateien im Namespace verfügbar
 ns.Addon = guiCore
 
--- Shared utility functions
+-- Gemeinsame Hilfsfunktionen
 ns.Utils = {}
 
--- Check if player is in instanced content (dungeon or raid)
+-- Prüft ob Spieler in instanziertem Content ist (Dungeon oder Raid)
 function ns.Utils.IsInInstancedContent()
     local inInstance, instanceType = IsInInstance()
     return inInstance and (instanceType == "party" or instanceType == "raid")
 end 
 
--- Check if a value is a "secret value" (12.x returns these from some unit APIs in instanced content)
--- issecretvalue() only exists in 12.x, so we check for its existence first for 11.x compatibility
+-- Prüft ob ein Wert ein "secret value" ist (12.x gibt diese von manchen Unit-APIs in Instanzen zurück)
+-- issecretvalue() existiert nur in 12.x, daher prüfen wir zuerst auf Existenz für 11.x Kompatibilität
 function ns.Utils.IsSecretValue(value)
     if type(issecretvalue) == "function" then
         return issecretvalue(value)
     end
     return false
 end
--- Global pending reload system
+-- Globales anstehendes Reload-System
 guiCore.__pendingReload = false
 guiCore.__reloadEventFrame = nil
 
--- Safe reload function - queues if in combat, reloads immediately if not in combat
+-- Sichere Reload-Funktion - reiht sich ein wenn im Kampf, lädt sofort neu wenn nicht im Kampf
 function guiCore:SafeReload()
     if InCombatLockdown() then
         if not self.__pendingReload then
             self.__pendingReload = true
             print("|cFF30D1FFGravity UI:|r Reload queued - will execute when combat ends.")
 
-            -- Create event frame if needed
+            -- Erstelle Event-Frame falls nötig
             if not self.__reloadEventFrame then
                 self.__reloadEventFrame = CreateFrame("Frame")
                 self.__reloadEventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
                 self.__reloadEventFrame:SetScript("OnEvent", function(frame, event)
                     if event == "PLAYER_REGEN_ENABLED" and guiCore.__pendingReload then
                         guiCore.__pendingReload = false
-                        -- Show popup with reload button (user click = allowed)
+                        -- Zeige Popup mit Reload-Button (User-Klick = erlaubt)
                         guiCore:ShowReloadPopup()
                     end
                 end)
@@ -59,9 +60,9 @@ function guiCore:SafeReload()
     end
 end
 
--- Show reload popup after combat ends (user must click to reload)
+-- Zeige Reload-Popup nach Kampfende (User muss klicken um zu reloaden)
 function guiCore:ShowReloadPopup()
-    -- Use GravityUI's existing confirmation dialog
+    -- Nutze GravityUIs existierenden Bestätigungs-Dialog
     if GravityUI and GravityUI.GUI and GravityUI.GUI.ShowConfirmation then
         GravityUI.GUI:ShowConfirmation({
             title = "Reload Ready",
@@ -71,17 +72,17 @@ function guiCore:ShowReloadPopup()
             onAccept = function() ReloadUI() end,
         })
     else
-        -- Fallback: print message if GUI not available
+        -- Fallback: Zeige Nachricht wenn GUI nicht verfügbar
         print("|cFF30D1FFGravity UI:|r Combat ended. Type /reload to reload.")
     end
 end
 
--- Global safe reload function on GravityUI object
+-- Globale sichere Reload-Funktion am GravityUI-Objekt
 function gui:SafeReload()
     if self.guiCore then
         self.guiCore:SafeReload()
     else
-        -- Fallback if guiCore not loaded
+        -- Fallback wenn guiCore nicht geladen
         if InCombatLockdown() then
             print("|cFF30D1FFGravity UI:|r Cannot reload during combat.")
         else
@@ -97,11 +98,11 @@ local AceSerializer = LibStub("AceSerializer-3.0", true)
 local LibDeflate    = LibStub("LibDeflate", true)
 local LibDualSpec   = LibStub("LibDualSpec-1.0", true)
 
--- Texture registration handled in media.lua
+-- Textur-Registrierung erfolgt in media.lua
 
----=================================================================================
---- PROFILE IMPORT/EXPORT
----=================================================================================
+-------------------------------------------------------------------------------
+-- PROFILE IMPORT/EXPORT
+-------------------------------------------------------------------------------
 
 function guiCore:ExportProfileToString()
     if not self.db or not self.db.profile then
@@ -141,9 +142,9 @@ function guiCore:ImportProfileFromString(str)
     end
 
     str = str:gsub("%s+", "")
-    str = str:gsub("^gui1:", "")  -- GravityUI prefix
-    str = str:gsub("^gui1:", "")  -- Strip gui1 prefix
-    str = str:gsub("^GUI1:", "")  -- Backwards compatibility	
+    str = str:gsub("^gui1:", "")  -- GravityUI Präfix
+    str = str:gsub("^gui1:", "")  -- Entferne gui1 Präfix
+    str = str:gsub("^GUI1:", "")  -- Rückwärtskompatibilität	
     str = str:gsub("^CDM1:", "")  -- Backwards compatibility
 	str = str:gsub("^qui1:", "")  -- Backwards compatibility
 	str = str:gsub("^QUI1:", "")  -- Backwards compatibility	
@@ -178,25 +179,25 @@ function guiCore:ImportProfileFromString(str)
     return true
 end
 
----=================================================================================
---- HUD LAYERING UTILITY
----=================================================================================
+-------------------------------------------------------------------------------
+-- HUD LAYERING UTILITY
+-------------------------------------------------------------------------------
 
--- Convert layer priority (0-10) to frame level
--- Base 100, step 20 = range 100-300
--- Higher priority = rendered on top of lower priority elements
+-- Konvertiert Layer-Priorität (0-10) zu Frame-Level
+-- Basis 100, Schritt 20 = Bereich 100-300
+-- Höhere Priorität = wird über niedrigeren Prioritäts-Elementen gerendert
 function guiCore:GetHUDFrameLevel(priority)
     return 100 + (priority or 5) * 20
 end
 
----=================================================================================																				
---- SAFE BACKDROP UTILITY (Combat/Secret Value Protection)
----=================================================================================
+-------------------------------------------------------------------------------
+-- SAFE BACKDROP UTILITY (Combat/Secret Value Protection)
+-------------------------------------------------------------------------------
 
--- Global SafeSetBackdrop function that defers SetBackdrop calls when frame dimensions
--- are secret values (Midnight 12.0 protection) or when in combat lockdown.
--- This prevents the "attempt to perform arithmetic on a secret value" error that occurs
--- when Blizzard's Backdrop.lua tries to use GetWidth()/GetHeight() during protected contexts.
+-- Globale SafeSetBackdrop Funktion die SetBackdrop-Aufrufe verzögert wenn Frame-Dimensionen
+-- secret values sind (Midnight 12.0 Schutz) oder wenn im Kampf-Lockdown.
+-- Dies verhindert den "attempt to perform arithmetic on a secret value" Fehler der auftritt
+-- wenn Blizzards Backdrop.lua versucht GetWidth()/GetHeight() während geschützten Kontexten zu nutzen.
 --
 -- @param frame The frame to set backdrop on (must have BackdropTemplate mixed in)
 -- @param backdropInfo The backdrop info table, or nil to remove backdrop

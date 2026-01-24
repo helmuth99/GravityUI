@@ -57,7 +57,7 @@ local function CreateMarksBar()
     frame:SetBackdropColor(0, 0, 0, 0.6)
     frame:SetBackdropBorderColor(0, 0, 0, 1)
 
-    -- Mouseover Logik
+    -- Mouseover-Logik
     local function UpdateAlpha(alpha)
         if db.mouseover then frame:SetAlpha(alpha) else frame:SetAlpha(1) end
     end
@@ -66,7 +66,7 @@ local function CreateMarksBar()
     frame:SetScript("OnLeave", function() if not frame:IsMouseOver() then UpdateAlpha(0) end end)
     UpdateAlpha(0)
 
-    -- Button Erstellung
+    -- Button-Erstellung
     for i = 1, 9 do
         -- WICHTIG: "SecureActionButtonTemplate" ist zwingend erforderlich
         local btn = CreateFrame("Button", "GravityUIMarkerBtn"..i, frame, "SecureActionButtonTemplate")
@@ -91,19 +91,19 @@ if i < 9 then
 			-- Der Befehl /tm X setzt die Markierung X oder entfernt sie, wenn sie schon da ist.
 			btn:SetAttribute("macrotext", "/tm [nomod:shift] " .. i .. "\n/wm [mod:shift] " .. wmID)
         else
-            -- Clear Button (X) bleibt wie von dir gewünscht
+            -- Clear-Button (X) bleibt wie gewünscht
             tex:SetTexture("Interface\\Buttons\\UI-GroupLoot-Pass-Up")
             btn:SetAttribute("macrotext", "/tm [target=player,nomod:shift] 0\n/tm [nomod:shift] 0\n/clearraidmarkers [nomod:shift]\n/cwm [mod:shift] all")
         end
 
         btn:SetPoint("LEFT", frame, "LEFT", db.spacing + ((i-1) * (db.size + db.spacing)), 0)
         
-        -- Mouseover-Sync für die Buttons
+        -- Mouseover-Synchronisation für die Buttons
         btn:HookScript("OnEnter", function() UpdateAlpha(1) end)
         btn:HookScript("OnLeave", function() if not frame:IsMouseOver() then UpdateAlpha(0) end end)
     end
 
-    -- Anchoring Support
+    -- Anchoring-Unterstützung
     if gui.gui_Anchoring then
         gui.gui_Anchoring:RegisterAnchorTarget("Raid Marks", frame, {
             category = "Extras",

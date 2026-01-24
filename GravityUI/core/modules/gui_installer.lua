@@ -16,15 +16,15 @@ local function ImportEditModeLayout(str)
        DevTool:AddData(EditModeManagerFrame, "editmodeframe")
     end
     
-    -- Show Edit Mode (required for import to work)
+    -- Zeige Edit-Mode (erforderlich damit Import funktioniert)
     EditModeManagerFrame:Show()
     
-    -- Import the layout
+    -- Importiere das Layout
     EditModeManagerFrame:ImportLayout(layoutInfo, Enum.EditModeLayoutType.Character, ADDON_NAME)
     
-    -- IMPORTANT: We cannot close Edit Mode programmatically without causing taint
-    -- The taint propagates to party frames and causes errors with "secret values"
-    -- The user must close it manually by pressing ESC or clicking the X button
+    -- WICHTIG: Wir können Edit-Mode nicht programmatisch schließen ohne Taint zu verursachen
+    -- Das Taint propagiert zu Party-Frames und verursacht Fehler mit "secret values"
+    -- Der Benutzer muss es manuell schließen durch Drücken von ESC oder Klicken auf das X
 end
 
 function GUI:InstallAddonsProfiles()
@@ -40,7 +40,7 @@ function GUI:InstallAddonsProfiles()
             ImportEditModeLayout(GravityUI.imports.EditMode.data)
             db.installer.editmode = true
 
-            -- Show instructions to the user
+            -- Zeige Anweisungen für den Benutzer
             GravityUI:Print("|cff00BFFFEdit Mode layout imported!|r")
             GravityUI:Print("|cffFFFF00Please press ESC or click the X button to close Edit Mode.|r")
             GravityUI:Print("|cff888888(Closing automatically would cause UI errors)|r")

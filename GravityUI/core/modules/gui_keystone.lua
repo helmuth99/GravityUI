@@ -1,13 +1,13 @@
 local addonName, ns = ...
 
--- Fallback for NUM_BAG_FRAMES if not defined
+-- Fallback für NUM_BAG_FRAMES falls nicht definiert
 local NUM_BAG_FRAMES = NUM_BAG_FRAMES or 4
 
 ---------------------------------------------------------------------------
 -- AUTO-INSERT KEYSTONE
 ---------------------------------------------------------------------------
 
--- Get settings from database
+-- Hole Einstellungen aus Datenbank
 local function GetSettings()
     local guiCore = _G.GravityUI and _G.GravityUI.guiCore
     if guiCore and guiCore.db and guiCore.db.profile and guiCore.db.profile.general then
@@ -16,7 +16,7 @@ local function GetSettings()
     return nil
 end
 
--- Find keystone in player's bags
+-- Finde Keystone in Spielertaschen
 local function FindKeystoneInBags()
     for bag = 0, NUM_BAG_FRAMES do
         local slots = C_Container.GetContainerNumSlots(bag)
@@ -33,7 +33,7 @@ local function FindKeystoneInBags()
     return nil, nil
 end
 
--- Insert keystone into M+ UI
+-- Füge Keystone in M+-UI ein
 local function InsertKeystone()
     local settings = GetSettings()
     if not settings or not settings.autoInsertKey then return end
@@ -47,7 +47,7 @@ local function InsertKeystone()
     end
 end
 
--- Hook when Blizzard's M+ UI loads
+-- Hooke wenn Blizzards M+-UI lädt
 local frame = CreateFrame("Frame")
 frame:RegisterEvent("ADDON_LOADED")
 frame:SetScript("OnEvent", function(self, event, addon)

@@ -1,27 +1,27 @@
 local addonName, ns = ...
 
 ---------------------------------------------------------------------------
--- SHARED DUNGEON DATA
--- Central source of truth for dungeon short names and teleport spells
--- Used by: gui_datatexts.lua, gui_dungeon_teleport.lua, gui_mplus_timer.lua
+-- GETEILTE DUNGEON-DATEN
+-- Zentrale Quelle der Wahrheit für Dungeon-Kurznamen und Teleport-Spells
+-- Genutzt von: gui_datatexts.lua, gui_dungeon_teleport.lua, gui_mplus_timer.lua
 --
--- ARCHITECTURE:
--- - NAME_TO_SHORT: dungeon name -> abbreviation (expansion-agnostic)
--- - MAPID_TO_SPELL: mapID -> teleport spellID (expansion-specific)
--- - GetShortName uses C_ChallengeMode.GetMapUIInfo(mapID) to get the dungeon
---   name, then looks up the abbreviation. This handles Blizzard remapping
---   mapIDs between expansions automatically.
+-- ARCHITEKTUR:
+-- - NAME_TO_SHORT: Dungeon-Name -> Abkürzung (erweiterungs-agnostisch)
+-- - MAPID_TO_SPELL: mapID -> Teleport-SpellID (erweiterungs-spezifisch)
+-- - GetShortName nutzt C_ChallengeMode.GetMapUIInfo(mapID) um den Dungeon-
+--   Namen zu holen, schaut dann die Abkürzung nach. Das behandelt Blizzards
+--   Neuabbildung von mapIDs zwischen Erweiterungen automatisch.
 ---------------------------------------------------------------------------
 
--- Faction-specific spells
+-- Fraktions-spezifische Spells
 local factionGroup = UnitFactionGroup("player")
 local SIEGE_SPELL = factionGroup == "Horde" and 464256 or 445418
 local MOTHERLODE_SPELL = factionGroup == "Horde" and 467555 or 467553
 
 ---------------------------------------------------------------------------
--- NAME TO SHORT ABBREVIATION
--- Keyed by dungeon name (from C_ChallengeMode.GetMapUIInfo)
--- This table is expansion-agnostic - names don't change with mapID remaps
+-- NAME ZU KURZ-ABKÜRZUNG
+-- Bereitgestellt nach Dungeon-Name (von C_ChallengeMode.GetMapUIInfo)
+-- Diese Tabelle ist erweiterungs-agnostisch - Namen ändern sich nicht mit mapID-Neuabbildungen
 ---------------------------------------------------------------------------
 local NAME_TO_SHORT = {
     -- Wrath of the Lich King
@@ -131,9 +131,9 @@ local NAME_TO_SHORT = {
 }
 
 ---------------------------------------------------------------------------
--- MAPID TO TELEPORT SPELL
--- Teleport spells are tied to specific mapIDs
--- This table needs updating when Blizzard adds new dungeons or changes IDs
+-- MAPID ZU TELEPORT-SPELL
+-- Teleport-Spells sind an spezifische mapIDs gebunden
+-- Diese Tabelle muss aktualisiert werden wenn Blizzard neue Dungeons hinzufügt oder IDs ändert
 ---------------------------------------------------------------------------
 local MAPID_TO_SPELL = {
     -- Wrath
@@ -150,7 +150,7 @@ local MAPID_TO_SPELL = {
     [77] = 131231,    -- Scarlet Halls
     [78] = 131229,    -- Scarlet Monastery
 
-    -- WoD (mapID -> spellID mappings match retail)
+    -- WoD (mapID -> spellID Zuordnungen entsprechen Retail)
     [161] = 159895,   -- Bloodmaul Slag Mines
     [163] = 159897,   -- Auchindoun
     [164] = 159898,   -- Skyreach
@@ -226,7 +226,7 @@ local MAPID_TO_SPELL = {
     [558] = 1254572,  -- Magisters' Terrace
     [559] = 1254563,  -- Nexus-Point Xenas
     [560] = 1255247,  -- Maisara Caverns
-    -- Legacy datamined mapIDs (compatibility)
+    -- Legacy-Datamined mapIDs (Kompatibilität)
     [15808] = 1254840,
     [15829] = 1254572,
     [16573] = 1254563,
@@ -237,17 +237,17 @@ local MAPID_TO_SPELL = {
 -- ACCESSOR FUNCTIONS
 ---------------------------------------------------------------------------
 
--- Get short name for a dungeon mapID
+-- Hole Kurznamen für eine Dungeon-mapID
 local function GetShortName(mapID)
-    -- Get dungeon name from WoW API (handles expansion-specific mapID remaps)
+    -- Hole Dungeon-Name von WoW-API (behandelt erweiterungs-spezifische mapID-Neuabbildungen)
     local name = C_ChallengeMode.GetMapUIInfo(mapID)
     if name then
-        -- Look up short name by dungeon name
+        -- Schlage Kurznamen nach Dungeon-Name nach
         local short = NAME_TO_SHORT[name]
         if short then
             return short
         end
-        -- Fallback: auto-abbreviate from name
+        -- Fallback: Auto-Abkürzung vom Namen
         local firstWord = name:match("^(%S+)")
         if firstWord and #firstWord <= 6 then
             return firstWord:upper()
@@ -257,12 +257,12 @@ local function GetShortName(mapID)
     return "???"
 end
 
--- Get teleport spell ID for a dungeon mapID
+-- Hole Teleport-Spell-ID für eine Dungeon-mapID
 local function GetTeleportSpellID(mapID)
     return MAPID_TO_SPELL[mapID]
 end
 
--- Get full dungeon data for a mapID (legacy compatibility)
+-- Hole vollständige Dungeon-Daten für eine mapID (Legacy-Kompatibilität)
 local function GetDungeonData(mapID)
     local name = C_ChallengeMode.GetMapUIInfo(mapID)
     if name then
@@ -274,19 +274,19 @@ local function GetDungeonData(mapID)
     return nil
 end
 
--- Check if a dungeon has a teleport spell
+-- Prüfe ob ein Dungeon einen Teleport-Spell hat
 local function HasTeleport(mapID)
     return MAPID_TO_SPELL[mapID] ~= nil
 end
 
--- Get key level color (shared utility)
+-- Hole Key-Level-Farbe (geteiltes Utility)
 local function GetKeyColor(level)
     if not level or level == 0 then return 0.7, 0.7, 0.7 end
-    if level >= 12 then return 1, 0.5, 0 end      -- Orange for 12+
-    if level >= 10 then return 0.64, 0.21, 0.93 end -- Purple for 10-11
-    if level >= 7 then return 0, 0.44, 0.87 end   -- Blue for 7-9
-    if level >= 5 then return 0.12, 0.75, 0.26 end -- Green for 5-6
-    return 1, 1, 1                                 -- White for 2-4
+    if level >= 12 then return 1, 0.5, 0 end      -- Orange für 12+
+    if level >= 10 then return 0.64, 0.21, 0.93 end -- Lila für 10-11
+    if level >= 7 then return 0, 0.44, 0.87 end   -- Blau für 7-9
+    if level >= 5 then  return 0.12, 0.75, 0.26 end -- Grün für 5-6
+    return 1, 1, 1                                 -- Weiß für 2-4
 end
 
 ---------------------------------------------------------------------------
@@ -303,5 +303,5 @@ ns.DungeonData = {
     GetKeyColor = GetKeyColor,
 }
 
--- Also expose globally for cross-file access
+-- Auch global exponieren für dateiübergreifenden Zugriff
 _G.gui_DungeonData = ns.DungeonData

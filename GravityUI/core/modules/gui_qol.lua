@@ -22,7 +22,7 @@ local function OnMerchantShow()
     local settings = GetSettings()
     if not settings then return end
 
-    -- Sell gray items
+    -- Verkaufe graue Gegenstände
     if settings.sellJunk then
         for bag = 0, 4 do
             for slot = 1, C_Container.GetContainerNumSlots(bag) do
@@ -34,7 +34,7 @@ local function OnMerchantShow()
         end
     end
 
-    -- Auto repair (dropdown: "off", "personal", "guild")
+    -- Auto-Reparatur (Dropdown: "off", "personal", "guild")
     local repairMode = settings.autoRepair
     if repairMode and repairMode ~= "off" and CanMerchantRepair() then
         local repairCost = GetRepairAllCost()
@@ -65,9 +65,9 @@ end
 
 local function IsFriendOrBNet(name)
     if not name then return false end
-    -- Check regular friends
+    -- Prüfe normale Freunde
     if C_FriendList.IsFriend(name) then return true end
-    -- Check BattleNet friends (by iterating through them)
+    -- Prüfe BattleNet-Freunde (durch Iteration)
     local numBNetTotal = BNGetNumFriends()
     for i = 1, numBNetTotal do
         local accountInfo = C_BattleNet.GetFriendAccountInfo(i)
@@ -148,7 +148,7 @@ local function OnQuestComplete()
     if not settings or not settings.autoTurnInQuest then return end
     if ShouldPauseQuest(settings) then return end
 
-    -- If multiple reward choices exist, let player decide
+    -- Falls mehrere Belohnungs-Optionen existieren, lasse Spieler entscheiden
     local numChoices = GetNumQuestChoices()
     if numChoices > 1 then return end
 
@@ -165,23 +165,23 @@ local function OnGossipShow()
     local settings = GetSettings()
     if not settings or not settings.autoSelectGossip then return end
 
-    -- Shift bypass: let user manually interact (reuse quest shift setting)
+    -- Shift-Bypass: Lasse User manuell interagieren (nutze Quest-Shift-Einstellung)
     if settings.questHoldShift and IsShiftKeyDown() then return end
 
-    -- Get available quests (pickups) and active quests (turnins)
+    -- Hole verfügbare Quests (neue) und aktive Quests (Abgaben)
     local availableQuests = C_GossipInfo.GetAvailableQuests()
     local numActiveQuests = C_GossipInfo.GetNumActiveQuests()
 
-    -- If quest options exist, don't auto-select gossip
+    -- Falls Quest-Optionen existieren, wähle kein Gossip automatisch aus
     if (availableQuests and #availableQuests > 0) or (numActiveQuests and numActiveQuests > 0) then
         return
     end
 
-    -- Get pure gossip options
+    -- Hole reine Gossip-Optionen
     local options = C_GossipInfo.GetOptions()
     if not options or #options == 0 then return end
 
-    -- Count valid options to ensure we truly have only one choice
+    -- Zähle gültige Optionen um sicherzustellen dass wir wirklich nur eine Wahl haben
     local validOptions = {}
     for _, option in pairs(options) do
         if option.gossipOptionID then
@@ -189,7 +189,7 @@ local function OnGossipShow()
         end
     end
 
-    -- ONLY auto-select when there is exactly 1 option
+    -- Wähle NUR automatisch aus wenn es genau 1 Option gibt
     if #validOptions == 1 then
         local option = validOptions[1]
         local optionID = option.gossipOptionID
@@ -202,8 +202,8 @@ local function OnGossipShow()
             print(string.format("|cFF30D1FFGravityUI:|r %s", optionName))
         end   
     end
-    -- If there are multiple options, do NOTHING - let the player choose
-    -- This prevents auto-skipping dialogue/cutscene choices
+    -- Falls es mehrere Optionen gibt, tue NICHTS - lasse den Spieler wählen
+    -- Dies verhindert Auto-Überspringen von Dialog/Zwischensequenz-Entscheidungen
 end
 
 local function OnGossipClosed()
@@ -230,7 +230,7 @@ local function CheckRemainingLoot()
     local settings = GetSettings()
     if not settings or not settings.fastAutoLoot then return end
 
-    -- Check if any items still remain (handles stuck loot bug)
+    -- Prüfe ob irgendwelche Gegenstände noch verbleiben (behandelt festhängenden Loot-Bug)
     local numItems = GetNumLootItems()
     for slotIndex = 1, numItems do
         if LootSlotHasItem(slotIndex) then
@@ -244,14 +244,14 @@ local function OnLootReady()
     local settings = GetSettings()
     if not settings or not settings.fastAutoLoot then return end
 
-    -- Auto-enable WoW's auto-loot if our setting is on (lazy init on first loot)
+    -- Aktiviere WoW's Auto-Loot automatisch falls unsere Einstellung an ist (lazy init beim ersten Loot)
     if not GetCVarBool("autoLootDefault") then
         SetCVar("autoLootDefault", "1")
     end
 
     TryLootAll()
 
-    -- Schedule check for stuck items
+    -- Plane Prüfung für festhängende Gegenstände
     if not lootRetryPending then
         lootRetryPending = true
         C_Timer.After(0.1, CheckRemainingLoot)
@@ -268,7 +268,7 @@ local function OnChallengeModeStart()
     local settings = GetSettings()
     if not settings or not settings.autoCombatLog then return end
 
-    -- Remember if user already had logging enabled (don't disable their manual logging)
+    -- Merke ob User bereits Logging aktiviert hatte (deaktiviere nicht sein manuelles Logging)
     wasLoggingBeforeChallenge = LoggingCombat()
 
     if not wasLoggingBeforeChallenge then
@@ -281,7 +281,7 @@ local function OnChallengeModeEnd()
     local settings = GetSettings()
     if not settings or not settings.autoCombatLog then return end
 
-    -- Only stop if WE started it (don't disable user's manual logging)
+    -- Stoppe nur falls WIR es gestartet haben (deaktiviere nicht manuelles Logging des Users)
     if not wasLoggingBeforeChallenge and LoggingCombat() then
         LoggingCombat(false)
         print("|cFF30D1FFGravityUI:|r Combat logging stopped")
@@ -289,7 +289,7 @@ local function OnChallengeModeEnd()
     wasLoggingBeforeChallenge = false
 end
 
--- Handle reconnect: if in active M+ and setting enabled, resume logging
+-- Behandle Reconnect: falls in aktivem M+ und Einstellung aktiviert, setze Logging fort
 local function CheckResumeLogging()
     local settings = GetSettings()
     if not settings or not settings.autoCombatLog then return end

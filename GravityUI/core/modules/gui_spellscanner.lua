@@ -1,9 +1,9 @@
 -- gui_spellscanner.lua
--- Spell Scanner System for Combat-Safe Buff Detection
+-- Spell-Scanner-System für kampfsichere Buff-Erkennung
 --
--- Scans spell/item → buff mappings out of combat
--- Detects active states via UNIT_SPELLCAST_SUCCEEDED (works everywhere)
--- Enables accurate tracking of trinkets, potions, and class abilities during combat
+-- Scannt Spell/Item → Buff-Zuordnungen außerhalb des Kampfes
+-- Erkennt aktive Zustände via UNIT_SPELLCAST_SUCCEEDED (überall funktionierend)
+-- Ermöglicht genaues Tracking von Schmuckstücken, Tränken und Klassen-Fähigkeiten im Kampf
 
 local ADDON_NAME, _ = ...
 local gui = GravityUI
@@ -14,22 +14,22 @@ local gui = GravityUI
 local SpellScanner = {}
 gui.SpellScanner = SpellScanner
 
--- Runtime state: currently active buffs
--- Structure: { [spellID] = { startTime, duration, expirationTime, source, sourceId } }
+-- Laufzeit-Status: aktuell aktive Buffs
+-- Struktur: { [spellID] = { startTime, duration, expirationTime, source, sourceId } }
 SpellScanner.activeBuffs = {}
 
--- Pending scanning: spells cast in combat that we'll try to scan after
--- Structure: { [spellID] = { timestamp, itemID (optional) } }
+-- Wartende Scans: im Kampf gewirkte Sprüche, die wir nach dem Kampf scannen
+-- Struktur: { [spellID] = { timestamp, itemID (optional) } }
 SpellScanner.pendingScanning = {}
 
--- Scan mode toggle (explicit /guiscan)
+-- Scan-Modus umschalten (explizit /guiscan)
 SpellScanner.scanMode = false
 
--- Auto-scan: try to scan unknown spells when cast out of combat (off by default)
--- Stored in database for persistence
+-- Auto-Scan: versuche unbekannte Sprüche zu scannen wenn außerhalb Kampf gewirkt (Standard aus)
+-- In Datenbank für Persistenz gespeichert
 SpellScanner.autoScan = false
 
--- Callback for UI refresh when spell is scanned (set by options panel)
+-- Callback für UI-Aktualisierung wenn Spell gescannt wurde (gesetzt vom Options-Panel)
 SpellScanner.onScanCallback = nil
 
 ---------------------------------------------------------------------------
@@ -46,7 +46,7 @@ local function GetDB()
                 autoScan = false,  -- Auto-scan setting (off by default)
             }
         end
-        -- Load autoScan from DB into runtime state
+        -- Lade autoScan aus DB in Laufzeit-Status
         if gui.db.global.spellScanner.autoScan ~= nil then
             SpellScanner.autoScan = gui.db.global.spellScanner.autoScan
         end
@@ -106,7 +106,7 @@ end
 
 local function ScanSpellFromBuffs(castSpellID, itemID)
     if InCombatLockdown() then
-        -- Queue for post-combat scanning
+        -- Warteschlange für Scan nach Kampf
         SpellScanner.pendingScanning[castSpellID] = {
             timestamp = GetTime(),
             itemID = itemID,
@@ -114,12 +114,12 @@ local function ScanSpellFromBuffs(castSpellID, itemID)
         return false
     end
 
-    -- Already scanned?
+    -- Bereits gescannt?
     if GetScannedSpell(castSpellID) then
         return true
     end
 
-    -- Scan player buffs for recently applied ones
+    -- Scanne Spieler-Buffs nach kürzlich angewendeten
     local now = GetTime()
     local bestMatch = nil
 
@@ -127,14 +127,14 @@ local function ScanSpellFromBuffs(castSpellID, itemID)
         local aura = C_UnitAuras.GetAuraDataByIndex("player", i, "HELPFUL")
         if not aura then break end
 
-        -- Secret values in Midnight: reading doesn't error, but comparisons/arithmetic do
+        -- Secret Values in Midnight: Lesen wirft keinen Error, aber Vergleiche/Arithmetik schon
         local spellId = aura.spellId
         local duration = aura.duration
         local expirationTime = aura.expirationTime
         local icon = aura.icon
         local name = aura.name
 
-        -- Calculate how recently this buff was applied - wrap arithmetic in pcall
+        -- Berechne wie kürzlich dieser Buff angewendet wurde - umhülle Arithmetik mit pcall
         local buffAge = 999
         pcall(function()
             if expirationTime and duration and duration > 0 then
@@ -142,8 +142,8 @@ local function ScanSpellFromBuffs(castSpellID, itemID)
             end
         end)
 
-        -- Look for buffs applied in last 2 seconds with meaningful duration (>= 3s)
-        -- Wrap comparison in pcall
+        -- Suche nach Buffs die in den letzten 2 Sekunden angewendet wurden mit aussagekräftiger Dauer (>= 3s)
+        -- Umhülle Vergleich mit pcall
         local isRecentBuff = false
         pcall(function()
             isRecentBuff = buffAge < 2 and duration and duration >= 3
@@ -164,7 +164,7 @@ local function ScanSpellFromBuffs(castSpellID, itemID)
     end
 
     if bestMatch then
-        -- Save the mapping
+        -- Speichere die Zuordnung
         local success = SaveScannedSpell(castSpellID, {
             buffSpellID = bestMatch.spellId,
             duration = bestMatch.duration,
@@ -173,7 +173,7 @@ local function ScanSpellFromBuffs(castSpellID, itemID)
         })
 
         if success then
-            -- Also save item mapping if this was an item use
+            -- Speichere auch Item-Zuordnung falls dies eine Item-Nutzung war
             if itemID then
                 SaveScannedItem(itemID, {
                     useSpellID = castSpellID,
@@ -184,7 +184,7 @@ local function ScanSpellFromBuffs(castSpellID, itemID)
                 })
             end
 
-            -- Immediately activate the buff
+            -- Aktiviere den Buff sofort
             SpellScanner.activeBuffs[castSpellID] = {
                 startTime = bestMatch.expirationTime - bestMatch.duration,
                 duration = bestMatch.duration,
@@ -193,13 +193,13 @@ local function ScanSpellFromBuffs(castSpellID, itemID)
                 sourceId = itemID or castSpellID,
             }
 
-            -- Notify user in scan mode
+            -- Benachrichtige User im Scan-Modus
             if SpellScanner.scanMode then
                 print(string.format("|cff00ff00GravityUI:|r Scanned: %s = %.1fs",
                     bestMatch.name, bestMatch.duration))
             end
 
-            -- Trigger UI refresh callback if registered
+            -- Triggere UI-Aktualisierungs-Callback falls registriert
             if SpellScanner.onScanCallback then
                 SpellScanner.onScanCallback()
             end
@@ -216,7 +216,7 @@ local function ProcessPendingScanning()
     if not next(SpellScanner.pendingScanning) then return end
 
     for spellID, data in pairs(SpellScanner.pendingScanning) do
-        -- Try to scan this spell now
+        -- Versuche diesen Spell jetzt zu scannen
         ScanSpellFromBuffs(spellID, data.itemID)
         SpellScanner.pendingScanning[spellID] = nil
     end
@@ -230,11 +230,11 @@ local function OnSpellCastSucceeded(unit, castGUID, spellID)
     if unit ~= "player" then return end
     if not spellID or spellID <= 0 then return end
 
-    -- Check if this spell is already scanned
+    -- Prüfe ob dieser Spell bereits gescannt ist
     local data = GetScannedSpell(spellID)
 
     if data then
-        -- Known spell: activate buff tracking (if we have valid duration data)
+        -- Bekannter Spell: aktiviere Buff-Tracking (falls wir gültige Dauer-Daten haben)
         local duration = data.duration
         if duration and type(duration) == "number" and duration > 0 then
             local now = GetTime()
@@ -246,20 +246,20 @@ local function OnSpellCastSucceeded(unit, castGUID, spellID)
                 sourceId = spellID,
             }
         end
-        -- Even without duration data, we treat this as "known" and skip further scanning																		 
+        -- Auch ohne Dauer-Daten behandeln wir dies als "bekannt" und überspringen weitere Scans																		 
         return
     end
 
-    -- Unknown spell: try to scan if enabled
+    -- Unbekannter Spell: versuche zu scannen falls aktiviert
     if SpellScanner.scanMode or SpellScanner.autoScan then
         if InCombatLockdown() then
-            -- Queue for post-combat scanning
+            -- Warteschlange für Scan nach Kampf
             SpellScanner.pendingScanning[spellID] = {
                 timestamp = GetTime(),
                 itemID = nil,
             }
         else
-            -- Scan immediately (with small delay for buff to appear)
+            -- Scanne sofort (mit kleiner Verzögerung damit Buff erscheint)
             C_Timer.After(0.3, function()
                 ScanSpellFromBuffs(spellID, nil)
             end)
@@ -284,8 +284,8 @@ end
 -- PUBLIC API (for Custom Trackers)
 ---------------------------------------------------------------------------
 
--- Check if a spell's buff is currently active
--- Returns: isActive, expirationTime, duration
+-- Prüfe ob ein Spell-Buff aktuell aktiv ist
+-- Rückgabe: isActive, expirationTime, duration
 function SpellScanner.IsSpellActive(spellID)
     if not spellID then return false end
 
@@ -294,8 +294,8 @@ function SpellScanner.IsSpellActive(spellID)
         return true, buff.expirationTime, buff.duration
     end
 
-    -- Also check if this is a known spell with buff still applied
-    -- (handles cases where we missed the cast event)
+    -- Prüfe auch ob dies ein bekannter Spell mit noch angewendetem Buff ist
+    -- (behandelt Fälle wo wir das Cast-Event verpasst haben)
     local data = GetScannedSpell(spellID)
     if data and data.buffSpellID and not InCombatLockdown() then
         local ok, aura = pcall(C_UnitAuras.GetPlayerAuraBySpellID, data.buffSpellID)
@@ -307,8 +307,8 @@ function SpellScanner.IsSpellActive(spellID)
     return false
 end
 
--- Check if an item's buff is currently active
--- Returns: isActive, expirationTime, duration
+-- Prüfe ob ein Item-Buff aktuell aktiv ist
+-- Rückgabe: isActive, expirationTime, duration
 function SpellScanner.IsItemActive(itemID)
     if not itemID then return false end
 
@@ -320,24 +320,24 @@ function SpellScanner.IsItemActive(itemID)
     return false
 end
 
--- Check if a spellID has been scanned
+-- Prüfe ob eine spellID gescannt wurde
 function SpellScanner.IsSpellScanned(spellID)
     return GetScannedSpell(spellID) ~= nil
 end
 
--- Get scanned duration for a spell (or nil if not scanned)
+-- Hole gescannte Dauer für einen Spell (oder nil falls nicht gescannt)
 function SpellScanner.GetScannedDuration(spellID)
     local data = GetScannedSpell(spellID)
     return data and data.duration or nil
 end
 
--- Toggle scan mode
+-- Schalte Scan-Modus um
 function SpellScanner.ToggleScanMode()
     SpellScanner.scanMode = not SpellScanner.scanMode
     return SpellScanner.scanMode
 end
 
--- Toggle auto-scan and persist to DB
+-- Schalte Auto-Scan um und persistiere in DB
 function SpellScanner.ToggleAutoScan()
     SpellScanner.autoScan = not SpellScanner.autoScan
     local db = GetDB()
@@ -347,7 +347,7 @@ function SpellScanner.ToggleAutoScan()
     return SpellScanner.autoScan
 end
 
--- Set auto-scan and persist to DB
+-- Setze Auto-Scan und persistiere in DB
 function SpellScanner.SetAutoScan(enabled)
     SpellScanner.autoScan = enabled
     local db = GetDB()
@@ -356,7 +356,7 @@ function SpellScanner.SetAutoScan(enabled)
     end
 end
 
--- Manual trigger to scan a spell (for testing)
+-- Manueller Trigger zum Scannen eines Spells (zum Testen)
 function SpellScanner.ScanSpell(spellID, itemID)
     return ScanSpellFromBuffs(spellID, itemID)
 end
@@ -372,11 +372,11 @@ eventFrame:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
 
 eventFrame:SetScript("OnEvent", function(self, event, arg1, arg2, arg3)
     if event == "PLAYER_LOGIN" then
-        -- Initialize database
+        -- Initialisiere Datenbank
         GetDB()
 
     elseif event == "PLAYER_REGEN_ENABLED" then
-        -- Process pending scanning after combat
+        -- Verarbeite wartende Scans nach Kampf
         C_Timer.After(0.3, ProcessPendingScanning)
 
     elseif event == "UNIT_SPELLCAST_SUCCEEDED" then
@@ -384,7 +384,7 @@ eventFrame:SetScript("OnEvent", function(self, event, arg1, arg2, arg3)
     end
 end)
 
--- Periodic cleanup of expired buffs (stored reference for potential cancellation)
+-- Periodische Bereinigung abgelaufener Buffs (gespeicherte Referenz für mögliche Abbruch)
 SpellScanner.cleanupTicker = C_Timer.NewTicker(1, CleanupExpiredBuffs)
 
 ---------------------------------------------------------------------------

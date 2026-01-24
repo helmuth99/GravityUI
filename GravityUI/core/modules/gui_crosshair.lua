@@ -8,10 +8,10 @@ ns.gui = gui
 
 local crosshairFrame, horizLine, vertLine, horizBorder, vertBorder
 
--- Separate frame for range checking (always visible so OnUpdate runs even when crosshair is hidden)
+-- Separater Frame für Reichweiten-Prüfung (immer sichtbar damit OnUpdate auch bei verstecktem Crosshair läuft)
 local rangeCheckFrame
 
--- Range tracking state
+-- Reichweiten-Tracking-Status
 local isOutOfRange = false
 local rangeCheckElapsed = 0
 local RANGE_CHECK_INTERVAL = 0.1  -- Check range 10 times per second
@@ -33,8 +33,8 @@ end
 -- Uses action bar scanning with IsActionInRange for 12.x PTR compatibility
 ---------------------------------------------------------------------------
 
--- Melee abilities to scan for on action bars (module scope to avoid recreation)
--- ALL abilities must be 5-yard melee range for accurate detection
+-- Nahkampf-Fähigkeiten zum Scannen auf Aktionsleisten (Modul-Scope um Neuerstellung zu vermeiden)
+-- ALLE Fähigkeiten müssen 5-Yard-Nahkampf-Reichweite sein für genaue Erkennung
 local MELEE_RANGE_ABILITIES = {
     -- Melee Interrupts (5 yards only)
     96231,  -- Paladin: Rebuke
@@ -66,57 +66,57 @@ local MELEE_RANGE_ABILITIES = {
 }
 
 local function IsOutOfMeleeRange()
-    -- No target = not out of range (use normal color)
+    -- Kein Ziel = nicht außerhalb Reichweite (verwende normale Farbe)
     if not UnitExists("target") then
         return false
     end
 
-    -- Must be an attackable target
+    -- Muss ein angreifbares Ziel sein
     if not UnitCanAttack("player", "target") then
         return false
     end
 
-    -- Dead targets don't count
+    -- Tote Ziele zählen nicht
     if UnitIsDeadOrGhost("target") then
         return false
     end
 
-    -- Priority 1: Scan action bar for a melee ability and use IsActionInRange
-    -- This is the method that works on action bars in 12.x PTR
+    -- Priorität 1: Scanne Aktionsleiste nach Nahkampf-Fähigkeit und nutze IsActionInRange
+    -- Dies ist die Methode, die auf Aktionsleisten im 12.x PTR funktioniert
     if IsActionInRange then
-        -- Scan for melee abilities with range data
-        -- Check both direct spells AND macros that cast spells (subType == "spell")
+        -- Scanne nach Nahkampf-Fähigkeiten mit Reichweitendaten
+        -- Prüfe sowohl direkte Zauber ALS AUCH Makros, die Zauber wirken (subType == "spell")
         for slot = 1, 180 do
             local actionType, id, subType = GetActionInfo(slot)
-            -- Match direct spells OR macros that cast a spell
+            -- Direkte Zauber ODER Makros, die einen Zauber wirken, abgleichen
             if id and (actionType == "spell" or (actionType == "macro" and subType == "spell")) then
                 for _, abilityID in ipairs(MELEE_RANGE_ABILITIES) do
                     if id == abilityID then
                         local inRange = IsActionInRange(slot)
                         if inRange == true then
-                            return false  -- In range
+                            return false  -- In Reichweite
                         elseif inRange == false then
-                            return true   -- Out of range
+                            return true   -- Außerhalb Reichweite
                         end
-                        -- nil = no range data for this slot, continue scanning
+                        -- nil = keine Reichweitendaten für diesen Slot, Scan fortsetzen
                     end
                 end
             end
         end
     end
 
-    -- Priority 2: Try legacy IsSpellInRange with spell name (11.x retail)
+    -- Priorität 2: Versuche Legacy IsSpellInRange mit Zauber-Namen (11.x Retail)
     if IsSpellInRange then
         local attackInRange = IsSpellInRange("Attack", "target")
         if attackInRange == 1 then
-            return false  -- In melee range
+            return false  -- In Nahkampfreichweite
         elseif attackInRange == 0 then
-            return true   -- Out of melee range
+            return true   -- Außerhalb Nahkampfreichweite
         end
-        -- nil = not available, fall through
+        -- nil = nicht verfügbar, weiter prüfen
     end
 
-    -- Priority 3: Try C_Spell.IsSpellInRange with melee abilities (11.x retail fallback)
+    -- Priorität 3: Versuche C_Spell.IsSpellInRange mit Nahkampf-Fähigkeiten (11.x Retail Fallback)
     if C_Spell and C_Spell.IsSpellInRange then
         for _, spellID in ipairs(MELEE_RANGE_ABILITIES) do
             local spellKnown = IsSpellKnown and IsSpellKnown(spellID)
@@ -127,13 +127,13 @@ local function IsOutOfMeleeRange()
                 elseif inRange == false then
                     return true
                 end
-                -- nil = melee spells don't have range on 12.x, fall through
+                -- nil = Nahkampfzauber haben in 12.x keine Reichweite, weiter prüfen
             end
         end
     end
 
-    -- Priority 4: CheckInteractDistance index 3 (~10 yards)
-    -- Fallback - not ideal but better than nothing
+    -- Priorität 4: CheckInteractDistance Index 3 (~10 Yards)
+    -- Fallback - nicht ideal, aber besser als nichts
     local inRange = CheckInteractDistance("target", 3)
     if inRange ~= nil then
         return not inRange
@@ -143,7 +143,7 @@ local function IsOutOfMeleeRange()
 end
 
 ---------------------------------------------------------------------------
--- Apply crosshair color based on range state
+-- Crosshair-Farbe basierend auf Reichweitenstatus anwenden
 ---------------------------------------------------------------------------
 local function ApplyCrosshairColor(settings, outOfRange)
     if not horizLine or not vertLine then return end
@@ -151,14 +151,14 @@ local function ApplyCrosshairColor(settings, outOfRange)
     local r, g, b, a
     
     if outOfRange and settings.changeColorOnRange then
-        -- Use out-of-range color
+        -- Verwende Außer-Reichweite-Farbe
         local oorColor = settings.outOfRangeColor or { 1, 0.2, 0.2, 1 }
         r = oorColor[1] or 1
         g = oorColor[2] or 0.2
         b = oorColor[3] or 0.2
         a = oorColor[4] or 1
     else
-        -- Use normal color
+        -- Verwende normale Farbe
         r = settings.r or 1
         g = settings.g or 0.949
         b = settings.b or 0
@@ -170,7 +170,7 @@ local function ApplyCrosshairColor(settings, outOfRange)
 end
 
 ---------------------------------------------------------------------------
--- Range check OnUpdate handler
+-- Reichweitenprüfung OnUpdate Handler
 ---------------------------------------------------------------------------
 local function OnRangeUpdate(self, elapsed)
     rangeCheckElapsed = rangeCheckElapsed + elapsed
@@ -179,21 +179,21 @@ local function OnRangeUpdate(self, elapsed)
 
     local settings = GetSettings()
     if not settings or not settings.enabled or not settings.changeColorOnRange then
-        -- Feature disabled, stop checking
+        -- Feature deaktiviert, stoppe Prüfung
         self:SetScript("OnUpdate", nil)
         return
     end
 
     local inCombat = InCombatLockdown()
 
-    -- Check if we should only track range in combat
+    -- Prüfe ob wir Reichweite nur im Kampf tracken sollen
     if settings.rangeColorInCombatOnly and not inCombat then
-        -- Not in combat and combat-only is enabled, use normal color
+        -- Nicht im Kampf und "nur im Kampf" ist aktiviert, verwende normale Farbe
         if isOutOfRange then
             isOutOfRange = false
             ApplyCrosshairColor(settings, false)
         end
-        -- If hideUntilOutOfRange, hide the crosshair when not in combat
+        -- Falls hideUntilOutOfRange, verstecke Crosshair wenn nicht im Kampf
         if settings.hideUntilOutOfRange and crosshairFrame then
             crosshairFrame:Hide()
         end
@@ -206,7 +206,7 @@ local function OnRangeUpdate(self, elapsed)
         ApplyCrosshairColor(settings, isOutOfRange)
     end
     
-    -- Handle hideUntilOutOfRange visibility
+    -- Behandle hideUntilOutOfRange-Sichtbarkeit
     if settings.hideUntilOutOfRange and crosshairFrame then
         if inCombat and isOutOfRange then
             crosshairFrame:Show()
@@ -217,28 +217,28 @@ local function OnRangeUpdate(self, elapsed)
 end
 
 ---------------------------------------------------------------------------
--- Start or stop range checking based on settings
+-- Reichweitenprüfung basierend auf Einstellungen starten oder stoppen
 ---------------------------------------------------------------------------
 local function UpdateRangeChecking()
     if not crosshairFrame then return end
     
-    -- Create the range check frame if needed (separate frame so OnUpdate runs even when crosshair is hidden)
+    -- Erstelle den Reichweiten-Prüf-Frame falls nötig (separater Frame damit OnUpdate auch bei verstecktem Crosshair läuft)
     if not rangeCheckFrame then
         rangeCheckFrame = CreateFrame("Frame", "GravityUI_CrosshairRangeCheck", UIParent)
         rangeCheckFrame:SetSize(1, 1)
         rangeCheckFrame:SetPoint("CENTER")
-        rangeCheckFrame:Show()  -- Always visible
+        rangeCheckFrame:Show()  -- Immer sichtbar
     end
     
     local settings = GetSettings()
     if settings and settings.enabled and settings.changeColorOnRange then
-        -- Enable range checking on the always-visible frame
+        -- Aktiviere Reichweiten-Prüfung auf dem immer-sichtbaren Frame
         rangeCheckElapsed = 0
         rangeCheckFrame:SetScript("OnUpdate", OnRangeUpdate)
         
         local inCombat = InCombatLockdown()
         
-        -- Immediately check range (respecting combat-only setting)
+        -- Sofortige Reichweiten-Prüfung (beachte Nur-Kampf-Einstellung)
         if settings.rangeColorInCombatOnly and not inCombat then
             isOutOfRange = false
             ApplyCrosshairColor(settings, false)
@@ -247,7 +247,7 @@ local function UpdateRangeChecking()
             ApplyCrosshairColor(settings, isOutOfRange)
         end
         
-        -- Handle hideUntilOutOfRange initial visibility
+        -- Behandle hideUntilOutOfRange initiale Sichtbarkeit
         if settings.hideUntilOutOfRange then
             if inCombat and isOutOfRange then
                 crosshairFrame:Show()
@@ -256,7 +256,7 @@ local function UpdateRangeChecking()
             end
         end
     else
-        -- Disable range checking
+        -- Deaktiviere Reichweiten-Prüfung
         if rangeCheckFrame then
             rangeCheckFrame:SetScript("OnUpdate", nil)
         end
@@ -265,7 +265,7 @@ local function UpdateRangeChecking()
 end
 
 ---------------------------------------------------------------------------
--- Create the crosshair frame and textures
+-- Crosshair-Frame und Texturen erstellen
 ---------------------------------------------------------------------------
 local function CreateCrosshair()
     if crosshairFrame then return end
@@ -275,7 +275,7 @@ local function CreateCrosshair()
     crosshairFrame:SetSize(1, 1)
     crosshairFrame:SetFrameStrata("HIGH")
     
-    -- Border textures (drawn behind main lines)
+    -- Rand-Texturen (hinter Hauptlinien gezeichnet)
     horizBorder = crosshairFrame:CreateTexture(nil, "BACKGROUND")
     horizBorder:SetPoint("CENTER", crosshairFrame)
     horizBorder:SetColorTexture(0, 0, 0, 1)
@@ -284,20 +284,20 @@ local function CreateCrosshair()
     vertBorder:SetPoint("CENTER", crosshairFrame)
     vertBorder:SetColorTexture(0, 0, 0, 1)
     
-    -- Main crosshair lines (drawn above borders)
+    -- Haupt-Crosshair-Linien (oberhalb Rand gezeichnet)
     horizLine = crosshairFrame:CreateTexture(nil, "ARTWORK")
     horizLine:SetPoint("CENTER", crosshairFrame)
-    horizLine:SetColorTexture(1, 0.949, 0, 1)  -- Default yellow
+    horizLine:SetColorTexture(1, 0.949, 0, 1)  -- Standard Gelb
     
     vertLine = crosshairFrame:CreateTexture(nil, "ARTWORK")
     vertLine:SetPoint("CENTER", crosshairFrame)
-    vertLine:SetColorTexture(1, 0.949, 0, 1)  -- Default yellow
+    vertLine:SetColorTexture(1, 0.949, 0, 1)  -- Standard Gelb
     
     crosshairFrame:Hide()
 end
 
 ---------------------------------------------------------------------------
--- Update crosshair appearance from settings
+-- Crosshair-Aussehen aus den Einstellungen aktualisieren
 ---------------------------------------------------------------------------
 local function UpdateCrosshair()
     if not crosshairFrame then
@@ -310,7 +310,7 @@ local function UpdateCrosshair()
         return
     end
     
-    -- Get settings with defaults
+    -- Hole Einstellungen mit Standardwerten
     local enabled = settings.enabled
     local size = settings.size or 12
     local thickness = settings.thickness or 3
@@ -324,22 +324,22 @@ local function UpdateCrosshair()
     local strata = settings.strata or "HIGH"
     local onlyInCombat = settings.onlyInCombat
     
-    -- Apply strata and position
+    -- Wende Strata und Position an
     crosshairFrame:SetFrameStrata(strata)
     crosshairFrame:ClearAllPoints()
     crosshairFrame:SetPoint("CENTER", UIParent, "CENTER", offsetX, offsetY)
     
-    -- Size the border textures (slightly larger than main lines)
+    -- Skaliere die Rand-Texturen (etwas größer als Hauptlinien)
     horizBorder:SetSize((size * 2) + borderSize * 2, thickness + borderSize * 2)
     vertBorder:SetSize(thickness + borderSize * 2, (size * 2) + borderSize * 2)
     horizBorder:SetColorTexture(borderR, borderG, borderB, borderA)
     vertBorder:SetColorTexture(borderR, borderG, borderB, borderA)
     
-    -- Size the main crosshair lines
+    -- Skaliere die Haupt-Crosshair-Linien
     horizLine:SetSize(size * 2, thickness)
     vertLine:SetSize(thickness, size * 2)
     
-    -- Apply color based on range state (if feature enabled)
+    -- Wende Farbe basierend auf Reichweiten-Status an (falls Feature aktiviert)
     if settings.changeColorOnRange then
         isOutOfRange = IsOutOfMeleeRange()
         ApplyCrosshairColor(settings, isOutOfRange)
@@ -353,7 +353,7 @@ local function UpdateCrosshair()
         vertLine:SetColorTexture(r, g, b, a)
     end
     
-    -- Show/hide based on settings
+    -- Zeige/verstecke basierend auf Einstellungen
     if not enabled then
         crosshairFrame:Hide()
         crosshairFrame:SetScript("OnUpdate", nil)
@@ -363,7 +363,7 @@ local function UpdateCrosshair()
         crosshairFrame:Show()
     end
     
-    -- Update range checking state
+    -- Aktualisiere Reichweiten-Prüf-Status
     UpdateRangeChecking()
 end
 
@@ -396,7 +396,7 @@ end
 local function OnTargetChanged()
     local settings = GetSettings()
     if settings and settings.enabled and settings.changeColorOnRange then
-        -- Immediately update color when target changes
+        -- Sofortige Farb-Aktualisierung wenn Ziel sich ändert
         isOutOfRange = IsOutOfMeleeRange()
         ApplyCrosshairColor(settings, isOutOfRange)
     end

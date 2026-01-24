@@ -1,8 +1,8 @@
---[[
-    gui Castbar Module
-    Extracted from gui_unitframes.lua for better organization
-    Handles castbar creation and management for player, target, focus, and boss units
-]]
+-------------------------------------------------------------------------------
+-- gui Castbar Module
+-- Extrahiert aus gui_unitframes.lua für bessere Organisation
+-- Verwaltet Castbar-Erstellung für Player, Target, Focus und Boss Units
+-------------------------------------------------------------------------------
 
 local ADDON_NAME, ns = ...
 local guiCore = ns.Addon

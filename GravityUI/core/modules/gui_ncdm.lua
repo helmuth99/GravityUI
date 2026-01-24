@@ -1,10 +1,9 @@
---[[
-    gui NCDM - New Cooldown Display Manager
-    Hooks Blizzard's EssentialCooldownViewer and UtilityCooldownViewer
-    and re-layouts icons based on per-row configuration.
-    
-    Uses OnUpdate rescan approach to keep icons properly styled.
-]]
+-------------------------------------------------------------------------------
+-- gui NCDM - New Cooldown Display Manager
+-- Hooks Blizzards EssentialCooldownViewer und UtilityCooldownViewer  
+-- und layoutet Icons basierend auf Per-Row Konfiguration
+-- Nutzt OnUpdate Rescan-Ansatz um Icons korrekt zu stylen
+-------------------------------------------------------------------------------
 
 local ADDON_NAME, ns = ...
 local guiCore = ns.Addon

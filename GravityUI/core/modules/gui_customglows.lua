@@ -1,20 +1,20 @@
 -- customglows.lua
--- Custom glow effects for Essential and Utility cooldown viewers
--- Uses Blizzard's SpellActivationAlert system for proper sizing
--- Falls back to LibCustomGlow for additional glow styles
+-- Eigene Glow-Effekte für Essential- und Utility-Cooldown-Viewer
+-- Nutzt Blizzards SpellActivationAlert-System für korrekte Größe
+-- Fällt zurück auf LibCustomGlow für zusätzliche Glow-Stile
 
 local _, gui = ...
 
--- Get LibCustomGlow for fallback styles
+-- Hole LibCustomGlow für Fallback-Stile
 local LCG = LibStub and LibStub("LibCustomGlow-1.0", true)
 
--- Get IsSpellOverlayed API for reliable glow state detection
+-- Hole IsSpellOverlayed API für zuverlässige Glow-State-Erkennung
 local IsSpellOverlayed = C_SpellActivationOverlay and C_SpellActivationOverlay.IsSpellOverlayed
 
--- Track which icons currently have active glows
+-- Tracke welche Icons aktuell aktive Glows haben
 local activeGlowIcons = {}  -- [icon] = true
 
--- Glow templates for proc effects
+-- Glow-Templates für Proc-Effekte
 local GlowTemplates = {
     LoopGlow = {
         {
@@ -36,7 +36,7 @@ local GlowTemplates = {
 }
 
 -- ======================================================
--- Settings Access
+-- Einstellungs-Zugriff
 -- ======================================================
 local function GetSettings()
     local guiCore = _G.GravityUI and _G.GravityUI.guiCore
@@ -55,7 +55,7 @@ local function GetEffectsSettings()
 end
 
 -- ======================================================
--- Determine viewer type from icon
+-- Bestimme Viewer-Typ vom Icon
 -- ======================================================
 local function GetViewerType(icon)
     if not icon then return nil end
@@ -76,7 +76,7 @@ local function GetViewerType(icon)
 end
 
 -- ======================================================
--- Get settings for viewer type
+-- Hole Einstellungen für Viewer-Typ
 -- ======================================================
 local function GetViewerSettings(viewerType)
     local settings = GetSettings()
@@ -122,7 +122,7 @@ local function GetViewerSettings(viewerType)
 end
 
 -- ======================================================
--- Customize Blizzard's SpellActivationAlert
+-- Passe Blizzards SpellActivationAlert an
 -- ======================================================
 local function CustomizeBlizzardGlow(button, viewerSettings)
     if not button then return false end
@@ -130,23 +130,23 @@ local function CustomizeBlizzardGlow(button, viewerSettings)
     local region = button.SpellActivationAlert
     if not region then return false end
     
-    -- Get the loop flipbook texture
+    -- Hole das Loop-Flipbook-Texture
     local loopFlipbook = region.ProcLoopFlipbook
     if not loopFlipbook then return false end
     
-    -- Apply custom color
+    -- Wende eigene Farbe an
     local color = viewerSettings.color or {0.95, 0.95, 0.32, 1}
-    loopFlipbook:SetDesaturated(true)  -- Desaturate first so color applies properly
+    loopFlipbook:SetDesaturated(true)  -- Entsättige zuerst damit Farbe korrekt angewandt wird
     loopFlipbook:SetVertexColor(color[1], color[2], color[3], color[4] or 1)
     
-    -- Also color the start flipbook if it exists
+    -- Färbe auch das Start-Flipbook falls es existiert
     local startFlipbook = region.ProcStartFlipbook
     if startFlipbook then
         startFlipbook:SetDesaturated(true)
         startFlipbook:SetVertexColor(color[1], color[2], color[3], color[4] or 1)
     end
     
-    -- Mark as customized
+    -- Markiere als angepasst
     button._guiCustomGlowActive = true
     activeGlowIcons[button] = true
     

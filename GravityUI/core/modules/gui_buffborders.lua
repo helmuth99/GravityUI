@@ -1,15 +1,15 @@
 -- buffborders.lua
--- Adds configurable black borders around buff/debuff icons in the top right
+-- Fügt konfigurierbare schwarze Ränder um Buff/Debuff-Icons oben rechts hinzu
 
 local _, gui = ...
 
--- Get settings from AceDB
+-- Hole Einstellungen aus AceDB
 local function GetSettings()
     local guiCore = _G.GravityUI and _G.GravityUI.guiCore
     if not guiCore or not guiCore.db or not guiCore.db.profile then
         return nil
     end
-    -- Ensure buffBorders table exists
+    -- Stelle sicher dass buffBorders-Tabelle existiert
     if not guiCore.db.profile.buffBorders then
         guiCore.db.profile.buffBorders = {
             enableBuffs = true,
@@ -24,20 +24,20 @@ local function GetSettings()
     return guiCore.db.profile.buffBorders
 end
 
--- Border colors
-local BORDER_COLOR_BUFF = {0, 0, 0, 1}        -- Black for buffs
-local BORDER_COLOR_DEBUFF = {0.5, 0, 0, 1}    -- Dark red for debuffs
+-- Rand-Farben
+local BORDER_COLOR_BUFF = {0, 0, 0, 1}        -- Schwarz für Buffs
+local BORDER_COLOR_DEBUFF = {0.5, 0, 0, 1}    -- Dunkelrot für Debuffs
 
--- Track which buttons we've already bordered
+-- Verfolge welche Buttons wir bereits umrandet haben
 local borderedButtons = {}
 
--- Add border to a single buff/debuff button
+-- Füge Rand zu einem einzelnen Buff/Debuff-Button hinzu
 local function AddBorderToButton(button, isBuff)
     if not button or borderedButtons[button] then
         return
     end
     
-    -- Check if borders are enabled for this type
+    -- Prüfe ob Ränder für diesen Typ aktiviert sind
     local settings = GetSettings()
     if not settings then return end
     if isBuff and not settings.enableBuffs then
@@ -47,53 +47,53 @@ local function AddBorderToButton(button, isBuff)
         return
     end
     
-    -- Find the icon texture (the actual square icon, not the full button frame)
+    -- Finde die Icon-Textur (das eigentliche quadratische Icon, nicht der volle Button-Frame)
     local icon = button.Icon or button.icon
     if not icon then
         return
     end
 
-    -- Validate button is a proper frame that supports CreateTexture
-    -- (Boss fight frames may have Icon but not be valid Frame objects)
+    -- Validiere dass Button ein korrekter Frame ist der CreateTexture unterstützt
+    -- (Boss-Fight-Frames können Icon haben, aber keine gültigen Frame-Objekte sein)
     if not button.CreateTexture or type(button.CreateTexture) ~= "function" then
         return
     end
     
     local borderSize = settings.borderSize or 2
     
-    -- Choose border color based on buff/debuff
+    -- Wähle Rand-Farbe basierend auf Buff/Debuff
     local borderColor = isBuff and BORDER_COLOR_BUFF or BORDER_COLOR_DEBUFF
     
-    -- Create 4 separate edge textures for clean borders around the ICON only
+    -- Erstelle 4 separate Kanten-Texturen für saubere Ränder nur um das ICON
     if not button.GravityBorderTop then
-        -- Top border
+        -- Oberer Rand
         button.GravityBorderTop = button:CreateTexture(nil, "OVERLAY", nil, 7)
         button.GravityBorderTop:SetPoint("TOPLEFT", icon, "TOPLEFT", 0, 0)
         button.GravityBorderTop:SetPoint("TOPRIGHT", icon, "TOPRIGHT", 0, 0)
         
-        -- Bottom border
+        -- Unterer Rand
         button.GravityBorderBottom = button:CreateTexture(nil, "OVERLAY", nil, 7)
         button.GravityBorderBottom:SetPoint("BOTTOMLEFT", icon, "BOTTOMLEFT", 0, 0)
         button.GravityBorderBottom:SetPoint("BOTTOMRIGHT", icon, "BOTTOMRIGHT", 0, 0)
         
-        -- Left border
+        -- Linker Rand
         button.GravityBorderLeft = button:CreateTexture(nil, "OVERLAY", nil, 7)
         button.GravityBorderLeft:SetPoint("TOPLEFT", icon, "TOPLEFT", 0, 0)
         button.GravityBorderLeft:SetPoint("BOTTOMLEFT", icon, "BOTTOMLEFT", 0, 0)
         
-        -- Right border
+        -- Rechter Rand
         button.GravityBorderRight = button:CreateTexture(nil, "OVERLAY", nil, 7)
         button.GravityBorderRight:SetPoint("TOPRIGHT", icon, "TOPRIGHT", 0, 0)
         button.GravityBorderRight:SetPoint("BOTTOMRIGHT", icon, "BOTTOMRIGHT", 0, 0)
     end
     
-    -- Update border color based on type
+    -- Aktualisiere Rand-Farbe basierend auf Typ
     button.GravityBorderTop:SetColorTexture(borderColor[1], borderColor[2], borderColor[3], borderColor[4])
     button.GravityBorderBottom:SetColorTexture(borderColor[1], borderColor[2], borderColor[3], borderColor[4])
     button.GravityBorderLeft:SetColorTexture(borderColor[1], borderColor[2], borderColor[3], borderColor[4])
     button.GravityBorderRight:SetColorTexture(borderColor[1], borderColor[2], borderColor[3], borderColor[4])
     
-    -- Update border size
+    -- Aktualisiere Rand-Größe
     button.GravityBorderTop:SetHeight(borderSize)
     button.GravityBorderBottom:SetHeight(borderSize)
     button.GravityBorderLeft:SetWidth(borderSize)
@@ -107,7 +107,7 @@ local function AddBorderToButton(button, isBuff)
     borderedButtons[button] = true
 end
 
--- Hide borders on a button
+-- Verstecke Ränder auf einem Button
 local function HideBorderOnButton(button)
     if button.GravityBorderTop then button.GravityBorderTop:Hide() end
     if button.GravityBorderBottom then button.GravityBorderBottom:Hide() end
@@ -115,14 +115,14 @@ local function HideBorderOnButton(button)
     if button.GravityBorderRight then button.GravityBorderRight:Hide() end
 end
 
--- Apply font settings to duration text
+-- Wende Schrift-Einstellungen auf Dauer-Text an
 local function ApplyFontSettings(button)
     if not button then return end
 
     local settings = GetSettings()
     if not settings then return end
 
-    -- Get font and outline from general settings
+    -- Hole Schriftart und Outline aus generellen Einstellungen
     local LSM = LibStub("LibSharedMedia-3.0", true)
     local generalFont = "Fonts\\FRIZQT__.TTF"
     local generalOutline = "OUTLINE"
@@ -136,7 +136,7 @@ local function ApplyFontSettings(button)
         generalOutline = general.fontOutline or "OUTLINE"
     end
 
-    -- Duration text (timer showing remaining time)
+    -- Dauer-Text (Timer zeigt verbleibende Zeit)
     local duration = button.Duration or button.duration
     if duration and duration.SetFont then
         local fontSize = settings.fontSize or 12
@@ -144,14 +144,14 @@ local function ApplyFontSettings(button)
     end
 end
 
--- Process all aura buttons in a container
+-- Verarbeite alle Aura-Buttons in einem Container
 local function ProcessAuraContainer(container, isBuff)
     if not container then return end
     
-    -- Get all child frames
+    -- Hole alle Child-Frames
     local frames = {container:GetChildren()}
     for _, frame in ipairs(frames) do
-        -- Check if this looks like an aura button
+        -- Prüfe ob dies wie ein Aura-Button aussieht
         if frame.Icon or frame.icon then
             AddBorderToButton(frame, isBuff)
             ApplyFontSettings(frame)
@@ -159,19 +159,19 @@ local function ProcessAuraContainer(container, isBuff)
     end
 end
 
--- Hide/show entire BuffFrame or DebuffFrame based on settings
+-- Verstecke/zeige gesamten BuffFrame oder DebuffFrame basierend auf Einstellungen
 local function ApplyFrameHiding()
     local settings = GetSettings()
     if not settings then return end
 
-    -- BuffFrame hiding (simple Hide + Show hook, no EnableMouse)
+    -- BuffFrame-Verstecken (einfaches Hide + Show Hook, kein EnableMouse)
     if BuffFrame then
         if settings.hideBuffFrame then
             BuffFrame:Hide()
         else
             BuffFrame:Show()
         end
-        -- Hook Show() once to prevent Blizzard from re-showing
+        -- Hook Show() einmalig um zu verhindern dass Blizzard erneut zeigt
         if not BuffFrame._gui_ShowHooked then
             BuffFrame._gui_ShowHooked = true
             hooksecurefunc(BuffFrame, "Show", function(self)
@@ -183,14 +183,14 @@ local function ApplyFrameHiding()
         end
     end
 
-    -- DebuffFrame hiding (simple Hide + Show hook, no EnableMouse)
+    -- DebuffFrame-Verstecken (einfaches Hide + Show Hook, kein EnableMouse)
     if DebuffFrame then
         if settings.hideDebuffFrame then
             DebuffFrame:Hide()
         else
             DebuffFrame:Show()
         end
-        -- Hook Show() once to prevent Blizzard from re-showing
+        -- Hook Show() einmalig um zu verhindern dass Blizzard erneut zeigt
         if not DebuffFrame._gui_ShowHooked then
             DebuffFrame._gui_ShowHooked = true
             hooksecurefunc(DebuffFrame, "Show", function(self)
@@ -203,21 +203,21 @@ local function ApplyFrameHiding()
     end
 end
 
--- Main function to process all buff/debuff frames
+-- Hauptfunktion zum Verarbeiten aller Buff/Debuff-Frames
 local function ApplyBuffBorders()
-    -- Apply frame hiding first
+    -- Wende Frame-Verstecken zuerst an
     ApplyFrameHiding()
-    -- Process BuffFrame containers (top right buffs)
+    -- Verarbeite BuffFrame-Container (Buffs oben rechts)
     if BuffFrame and BuffFrame.AuraContainer then
         ProcessAuraContainer(BuffFrame.AuraContainer, true) -- true = buff
     end
     
-    -- Process DebuffFrame if it exists separately
+    -- Verarbeite DebuffFrame falls es separat existiert
     if DebuffFrame and DebuffFrame.AuraContainer then
         ProcessAuraContainer(DebuffFrame.AuraContainer, false) -- false = debuff
     end
     
-    -- Process temporary enchant frames (treat as buffs)
+    -- Verarbeite Temporary-Enchant-Frames (behandle als Buffs)
     if TemporaryEnchantFrame then
         local frames = {TemporaryEnchantFrame:GetChildren()}
         for _, frame in ipairs(frames) do
@@ -227,74 +227,74 @@ local function ApplyBuffBorders()
     end
 end
 
--- Debounce state for buff border updates (shared across all hooks)
+-- Debounce-Status für Buff-Border-Updates (gemeinsam über alle Hooks)
 local buffBorderPending = false
 
--- Schedule a debounced buff border update
--- Only one timer runs at a time, no matter how many hooks fire
+-- Plane ein gedrosseltes Buff-Border-Update
+-- Nur ein Timer läuft gleichzeitig, egal wie viele Hooks feuern
 local function ScheduleBuffBorders()
     if buffBorderPending then return end
     buffBorderPending = true
-    C_Timer.After(0.15, function()  -- 150ms debounce for CPU efficiency
+    C_Timer.After(0.15, function()  -- 150ms Debounce für CPU-Effizienz
         buffBorderPending = false
         ApplyBuffBorders()
     end)
 end
 
--- Hook into aura update functions
+-- Hook in Aura-Update-Funktionen
 local function HookAuraUpdates()
-    -- Hook BuffFrame updates
+    -- Hook BuffFrame-Updates
     if BuffFrame and BuffFrame.Update then
         hooksecurefunc(BuffFrame, "Update", ScheduleBuffBorders)
     end
 
-    -- Hook AuraContainer updates if it exists (buffs)
+    -- Hook AuraContainer-Updates falls es existiert (Buffs)
     if BuffFrame and BuffFrame.AuraContainer and BuffFrame.AuraContainer.Update then
         hooksecurefunc(BuffFrame.AuraContainer, "Update", ScheduleBuffBorders)
     end
 
-    -- Hook DebuffFrame updates
+    -- Hook DebuffFrame-Updates
     if DebuffFrame and DebuffFrame.Update then
         hooksecurefunc(DebuffFrame, "Update", ScheduleBuffBorders)
     end
 
-    -- Hook DebuffFrame.AuraContainer updates if it exists
+    -- Hook DebuffFrame.AuraContainer-Updates falls es existiert
     if DebuffFrame and DebuffFrame.AuraContainer and DebuffFrame.AuraContainer.Update then
         hooksecurefunc(DebuffFrame.AuraContainer, "Update", ScheduleBuffBorders)
     end
 
-    -- Hook the global aura update function if available
+    -- Hook die globale Aura-Update-Funktion falls verfügbar
     if type(AuraButton_Update) == "function" then
         hooksecurefunc("AuraButton_Update", ScheduleBuffBorders)
     end
 end
 
--- Performance: Removed redundant 1-second polling loop
--- UNIT_AURA event and AuraButton_Update hook already handle all buff border updates
+-- Performance: Redundante 1-Sekunden-Polling-Schleife entfernt
+-- UNIT_AURA-Event und AuraButton_Update-Hook verwalten bereits alle Buff-Border-Updates
 
--- Initialize (UNIT_AURA handles dynamic updates)
--- Note: Initial application is now called from guicore_main.lua OnEnable() to ensure AceDB is ready
+-- Initialisierung (UNIT_AURA verwaltet dynamische Updates)
+-- Hinweis: Erstanwendung wird nun von guicore_main.lua OnEnable() aufgerufen um sicherzustellen dass AceDB bereit ist
 local eventFrame = CreateFrame("Frame")
 eventFrame:RegisterEvent("UNIT_AURA")
 
 eventFrame:SetScript("OnEvent", function(self, event, arg)
     if event == "UNIT_AURA" and arg == "player" then
-        ScheduleBuffBorders()  -- Use shared debounce
+        ScheduleBuffBorders()  -- Verwende gemeinsame Drosselung
     end
 end)
 
--- Hook aura updates on first load
+-- Hook Aura-Updates beim ersten Laden
 C_Timer.After(2, HookAuraUpdates)
 
--- Export to gui namespace
+-- Exportiere zu gui-Namespace
 gui.BuffBorders = {
     Apply = ApplyBuffBorders,
     AddBorder = AddBorderToButton,
 }
 
--- Global function for config panel to call
+-- Globale Funktion für Config-Panel-Aufruf
 _G.GravityUI_RefreshBuffBorders = function()
-    borderedButtons = {}  -- Clear cache to force re-border
+    borderedButtons = {}  -- Leere Cache um Neu-Umrandung zu erzwingen
     ApplyBuffBorders()
 end
 

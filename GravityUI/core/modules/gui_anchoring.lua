@@ -1,8 +1,8 @@
---[[
-    gui Anchoring Module
-    Unified anchoring system for castbars, unit frames, and custom frames
-    Supports 9-point anchoring with X/Y offsets and dynamic anchor target registration
-]]
+-------------------------------------------------------------------------------
+-- gui Anchoring Module
+-- Einheitliches Anchoring-System für Castbars, Unit Frames und Custom Frames
+-- Unterstützt 9-Punkt Anchoring mit X/Y Offsets und dynamischer Anchor-Ziel-Registrierung
+-------------------------------------------------------------------------------
 
 local ADDON_NAME, ns = ...
 local guiCore = ns.Addon
@@ -13,13 +13,13 @@ local guiCore = ns.Addon
 local gui_Anchoring = {}
 ns.gui_Anchoring = gui_Anchoring
 
--- Anchor target registry: { name = { frame = frame, options = {...} } }
+-- Anchor Target Registry: { name = { frame = frame, options = {...} } }
 gui_Anchoring.anchorTargets = {}
 
--- Category registry: { categoryName = { order = number } }
+-- Kategorie Registry: { categoryName = { order = number } }
 gui_Anchoring.categories = {}
 
--- Anchored frame registry: { frame = { anchorTarget = name, anchorPoint = point, offsetX = x, offsetY = y, parentFrame = frame } }
+-- Verankerte Frame Registry: { frame = { anchor Target = name, anchorPoint = point, offsetX = x, offsetY = y, parentFrame = frame } }
 gui_Anchoring.anchoredFrames = {}
 
 local Helpers = {}
@@ -31,7 +31,7 @@ function gui_Anchoring:SetHelpers(helpers)
     Helpers = helpers or {}
 end
 
--- Helper function wrappers (with fallbacks)
+-- Hilfsfunktions-Wrapper (mit Fallbacks)
 local function Scale(x)
     return Helpers.Scale and Helpers.Scale(x) or (guiCore and guiCore.Scale and guiCore:Scale(x) or x)
 end
@@ -39,8 +39,8 @@ end
 ---------------------------------------------------------------------------
 -- ANCHOR TARGET REGISTRY
 ---------------------------------------------------------------------------
--- Register a frame as an anchor target with a custom name
--- options can include: displayName, category, categoryOrder (for category sorting), order (for item sorting within category), and other custom properties
+-- Registriere einen Frame als Anchor Target mit einem benutzerdefinierten Namen
+-- options kann enthalten: displayName, category, categoryOrder (für Kategoriesortierung), order (für Item-Sortierung innerhalb Kategorie), und andere benutzerdefinierte Eigenschaften
 function gui_Anchoring:RegisterAnchorTarget(name, frame, options)
     if not name or not frame then
         return false
@@ -52,7 +52,7 @@ function gui_Anchoring:RegisterAnchorTarget(name, frame, options)
         options = options
     }
     
-    -- Register category with its order if provided
+    -- Registriere Kategorie mit ihrer Reihenfolge falls angegeben
     local category = options.category
     if category then
         if not self.categories[category] then
@@ -65,18 +65,18 @@ function gui_Anchoring:RegisterAnchorTarget(name, frame, options)
     return true
 end
 
--- Unregister an anchor target
+-- Deregistriere ein Anchor Target
 function gui_Anchoring:UnregisterAnchorTarget(name)
     if not name then return false end
     self.anchorTargets[name] = nil
     return true
 end
 
--- Get an anchor target by name
+-- Hole ein Anchor Target nach Namen
 function gui_Anchoring:GetAnchorTarget(name)
     if not name then return nil end
     
-    -- Check registry only
+    -- Prüfe nur Registry
     local registered = self.anchorTargets[name]
     if registered then
         return registered.frame
@@ -85,17 +85,17 @@ function gui_Anchoring:GetAnchorTarget(name)
     return nil
 end
 
--- Get list of registered anchor targets for options dropdowns
--- Parameters:
---   include: optional table of anchor values to include (if provided, only these are included)
---   exclude: optional table of anchor values to exclude (if provided, these are filtered out)
---   excludeSelf: optional anchor target name to exclude (prevents self-anchoring)
--- Returns array of {value = name, text = displayName}
+-- Hole Liste von registrierten Anchor Targets für Options-Dropdowns
+-- Parameter:
+--   include: optionale Tabelle von Anchor-Werten zum Einschließen (falls angegeben, nur diese werden eingeschlossen)
+--   exclude: optionale Tabelle von Anchor-Werten zum Ausschließen (falls angegeben, diese werden herausgefiltert)
+--   excludeSelf: optionaler Anchor Target Name zum Ausschließen (verhindert Selbst-Verankerung)
+-- Gibt Array zurück von {value = name, text = displayName}
 function gui_Anchoring:GetAnchorTargetList(include, exclude, excludeSelf)
     include = include or {}
     exclude = exclude or {}
     
-    -- Convert include/exclude to lookup tables for faster checking
+    -- Konvertiere include/exclude zu Lookup-Tabellen für schnellere Prüfung
     local includeLookup = {}
     local excludeLookup = {}
     

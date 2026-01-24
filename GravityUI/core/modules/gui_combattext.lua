@@ -1,13 +1,13 @@
 ---------------------------------------------------------------------------
 -- GravityUI Combat Text Indicator
--- Displays +Combat or -Combat when entering/leaving combat
+-- Zeigt +Combat oder -Combat beim Betreten/Verlassen des Kampfes an
 ---------------------------------------------------------------------------
 local ADDON_NAME, ns = ...
 local gui = ns.gui or {}
 ns.gui = gui
 
 ---------------------------------------------------------------------------
--- State tracking for fade animation
+-- Status-Tracking für Fade-Animation
 ---------------------------------------------------------------------------
 local CombatTextState = {
     fadeStart = 0,
@@ -19,7 +19,7 @@ local CombatTextState = {
 }
 
 ---------------------------------------------------------------------------
--- Get settings from database
+-- Hole Einstellungen aus der Datenbank
 ---------------------------------------------------------------------------
 local function GetSettings()
     local guiCore = _G.GravityUI and _G.GravityUI.guiCore
@@ -30,7 +30,7 @@ local function GetSettings()
 end
 
 ---------------------------------------------------------------------------
--- Create the text frame (one-time setup)
+-- Erstelle das Text-Frame (einmalige Initialisierung)
 ---------------------------------------------------------------------------
 local function CreateTextFrame()
     if CombatTextState.textFrame then return end
@@ -44,7 +44,7 @@ local function CreateTextFrame()
     local text = frame:CreateFontString(nil, "OVERLAY")
     text:SetPoint("CENTER", frame, "CENTER", 0, 0)
     text:SetFont("Fonts\\FRIZQT__.TTF", 24, "OUTLINE")
-    text:SetTextColor(0, 0.74901960784314, 1, 1)  -- gui blue accent
+    text:SetTextColor(0, 0.74901960784314, 1, 1)  -- GravityUI Blauton-Akzent
     text:SetJustifyH("CENTER")
     frame.text = text
 
@@ -53,7 +53,7 @@ local function CreateTextFrame()
 end
 
 ---------------------------------------------------------------------------
--- OnUpdate handler for fade animation
+-- OnUpdate-Handler für Fade-Animation
 ---------------------------------------------------------------------------
 local function OnFadeUpdate(self, elapsed)
     local settings = GetSettings()
@@ -62,7 +62,7 @@ local function OnFadeUpdate(self, elapsed)
     local now = GetTime()
     local progress = math.min((now - CombatTextState.fadeStart) / duration, 1)
 
-    -- Linear interpolation
+    -- Lineare Interpolation
     local alpha = CombatTextState.fadeStartAlpha +
         (CombatTextState.fadeTargetAlpha - CombatTextState.fadeStartAlpha) * progress
 
@@ -70,7 +70,7 @@ local function OnFadeUpdate(self, elapsed)
         CombatTextState.textFrame:SetAlpha(alpha)
     end
 
-    -- Check if fade complete
+    -- Prüfe ob Fade abgeschlossen ist
     if progress >= 1 then
         if CombatTextState.textFrame then
             CombatTextState.textFrame:Hide()
@@ -80,7 +80,7 @@ local function OnFadeUpdate(self, elapsed)
 end
 
 ---------------------------------------------------------------------------
--- Start fade animation
+-- Starte Fade-Animation
 ---------------------------------------------------------------------------
 local function StartFade()
     if not CombatTextState.textFrame then return end
@@ -91,7 +91,7 @@ local function StartFade()
     CombatTextState.fadeStartAlpha = currentAlpha
     CombatTextState.fadeTargetAlpha = 0
 
-    -- Create fade frame if needed
+    -- Erstelle Fade-Frame falls benötigt
     if not CombatTextState.fadeFrame then
         CombatTextState.fadeFrame = CreateFrame("Frame")
     end
@@ -99,39 +99,39 @@ local function StartFade()
 end
 
 ---------------------------------------------------------------------------
--- Show combat text with message
+-- Zeige Combat-Text mit Nachricht an
 ---------------------------------------------------------------------------
 local function ShowCombatText(message)
     local settings = GetSettings()
     if not settings or not settings.enabled then return end
 
-    -- Create frame if needed
+    -- Erstelle Frame falls benötigt
     CreateTextFrame()
 
     if not CombatTextState.textFrame then return end
 
-    -- Cancel any pending display timer
+    -- Breche ausstehende Display-Timer ab
     if CombatTextState.displayTimer then
         CombatTextState.displayTimer:Cancel()
         CombatTextState.displayTimer = nil
     end
 
-    -- Stop any ongoing fade
+    -- Stoppe laufende Fade-Animation
     if CombatTextState.fadeFrame then
         CombatTextState.fadeFrame:SetScript("OnUpdate", nil)
     end
 
-    -- Update position
+    -- Aktualisiere Position
     local xOffset = settings.xOffset or 0
     local yOffset = settings.yOffset or 100
     CombatTextState.textFrame:ClearAllPoints()
     CombatTextState.textFrame:SetPoint("CENTER", UIParent, "CENTER", xOffset, yOffset)
 
-    -- Update font size
+    -- Aktualisiere Schriftgröße
     local fontSize = settings.fontSize or 24
     CombatTextState.textFrame.text:SetFont("Fonts\\FRIZQT__.TTF", fontSize, "OUTLINE")
 
-    -- Determine and apply color based on message
+    -- Bestimme und setze Farbe basierend auf Nachricht
     local color
     if message == "+Combat" then
         color = settings.enterCombatColor or {0.204, 0.827, 0.6, 1}
@@ -140,12 +140,12 @@ local function ShowCombatText(message)
     end
     CombatTextState.textFrame.text:SetTextColor(color[1], color[2], color[3], color[4] or 1)
 
-    -- Set text and show
+    -- Setze Text und zeige an
     CombatTextState.textFrame.text:SetText(message)
     CombatTextState.textFrame:SetAlpha(1)
     CombatTextState.textFrame:Show()
 
-    -- Schedule fade after display time
+    -- Plane Fade-Animation nach Anzeigezeit
     local displayTime = settings.displayTime or 0.8
     CombatTextState.displayTimer = C_Timer.NewTimer(displayTime, function()
         StartFade()
@@ -154,7 +154,7 @@ local function ShowCombatText(message)
 end
 
 ---------------------------------------------------------------------------
--- Combat event handlers
+-- Kampf-Event-Handler
 ---------------------------------------------------------------------------
 local function OnCombatStart()
     ShowCombatText("+Combat")
@@ -165,12 +165,12 @@ local function OnCombatEnd()
 end
 
 ---------------------------------------------------------------------------
--- Refresh function (called when settings change)
+-- Refresh-Funktion (wird bei Einstellungsänderungen aufgerufen)
 ---------------------------------------------------------------------------
 local function RefreshCombatText()
     local settings = GetSettings()
 
-    -- If disabled, hide any visible text
+    -- Bei Deaktivierung, verstecke sichtbaren Text
     if not settings or not settings.enabled then
         if CombatTextState.displayTimer then
             CombatTextState.displayTimer:Cancel()
@@ -186,7 +186,7 @@ local function RefreshCombatText()
 end
 
 ---------------------------------------------------------------------------
--- Initialize
+-- Initialisierung
 ---------------------------------------------------------------------------
 local eventFrame = CreateFrame("Frame")
 eventFrame:RegisterEvent("PLAYER_LOGIN")
@@ -205,45 +205,45 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
 end)
 
 ---------------------------------------------------------------------------
--- Global refresh function for GUI
+-- Globale Refresh-Funktion für GUI
 ---------------------------------------------------------------------------
 _G.GravityUI_RefreshCombatText = RefreshCombatText
 
 ---------------------------------------------------------------------------
--- Global preview function for options panel
+-- Globale Preview-Funktion für Options-Panel
 ---------------------------------------------------------------------------
 _G.GravityUI_PreviewCombatText = function(message)
-    -- Temporarily bypass enabled check for preview
+    -- Umgehe Aktivierungs-Prüfung temporär für Preview
     local settings = GetSettings()
     if not settings then return end
 
-    -- Create frame if needed
+    -- Erstelle Frame falls benötigt
     CreateTextFrame()
 
     if not CombatTextState.textFrame then return end
 
-    -- Cancel any pending display timer
+    -- Breche ausstehende Display-Timer ab
     if CombatTextState.displayTimer then
         CombatTextState.displayTimer:Cancel()
         CombatTextState.displayTimer = nil
     end
 
-    -- Stop any ongoing fade
+    -- Stoppe laufende Fade-Animation
     if CombatTextState.fadeFrame then
         CombatTextState.fadeFrame:SetScript("OnUpdate", nil)
     end
 
-    -- Update position
+    -- Aktualisiere Position
     local xOffset = settings.xOffset or 0
     local yOffset = settings.yOffset or 100
     CombatTextState.textFrame:ClearAllPoints()
     CombatTextState.textFrame:SetPoint("CENTER", UIParent, "CENTER", xOffset, yOffset)
 
-    -- Update font size
+    -- Aktualisiere Schriftgröße
     local fontSize = settings.fontSize or 24
     CombatTextState.textFrame.text:SetFont("Fonts\\FRIZQT__.TTF", fontSize, "OUTLINE")
 
-    -- Determine and apply color based on message
+    -- Bestimme und setze Farbe basierend auf Nachricht
     local color
     if message == "+Combat" then
         color = settings.enterCombatColor or {0.204, 0.827, 0.6, 1}
@@ -252,12 +252,12 @@ _G.GravityUI_PreviewCombatText = function(message)
     end
     CombatTextState.textFrame.text:SetTextColor(color[1], color[2], color[3], color[4] or 1)
 
-    -- Set text and show
+    -- Setze Text und zeige an
     CombatTextState.textFrame.text:SetText(message or "+Combat")
     CombatTextState.textFrame:SetAlpha(1)
     CombatTextState.textFrame:Show()
 
-    -- Schedule fade after display time
+    -- Plane Fade-Animation nach Anzeigezeit
     local displayTime = settings.displayTime or 0.8
     CombatTextState.displayTimer = C_Timer.NewTimer(displayTime, function()
         StartFade()

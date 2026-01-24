@@ -1,21 +1,21 @@
--- GravityUI Media Registration
--- This file handles the registration of fonts and textures with LibSharedMedia
+-- GravityUI Media-Registrierung
+-- Diese Datei verwaltet die Registrierung von Schriftarten und Texturen bei LibSharedMedia
 
 local LSM = LibStub("LibSharedMedia-3.0")
 
--- Media types from LibSharedMedia
+-- Media-Typen von LibSharedMedia
 local MediaType = LSM.MediaType
 local FONT = MediaType.FONT
 local STATUSBAR = MediaType.STATUSBAR
 local BACKGROUND = MediaType.BACKGROUND
 local BORDER = MediaType.BORDER
 
--- Register media synchronously (LSM:Register is lightweight - just table entries)
--- Register the Gravity font (used as the main UI font)
+-- Registriere Medien synchron (LSM:Register ist leichtgewichtig - nur Tabelleneinträge)
+-- Registriere die Gravity-Schriftart (verwendet als Haupt-UI-Schriftart)
     local GravityFontPath = "Interface\\AddOns\\GravityUI\\assets\\Gravity.ttf"
     LSM:Register(FONT, "Gravity", GravityFontPath)
 
-    -- Register Gravity fonts
+    -- Registriere Gravity-Schriftarten
     LSM:Register(FONT, "Gravity Big", "Interface\\AddOns\\GravityUI\\assets\\Gravity-Big.ttf")
     LSM:Register(FONT, "Gravity Bold", "Interface\\AddOns\\GravityUI\\assets\\Gravity-Bold.ttf")
     LSM:Register(FONT, "Gravity Light", "Interface\\AddOns\\GravityUI\\assets\\Gravity-Light.ttf")
@@ -130,7 +130,7 @@ function GravityUI:CheckMediaRegistration()
     local GravityTextureRegistered = LSM:IsValid(BACKGROUND, "Gravity")
     local GravityReverseTextureRegistered = LSM:IsValid(BACKGROUND, "Gravity Normal")
     
-    -- Silent check - only print if there's a failure
+    -- Stille Prüfung - nur ausgeben falls ein Fehler vorliegt
     if not (GravityFontRegistered and logoTextureRegistered and GravityTextureRegistered and GravityReverseTextureRegistered) then
         GravityUI:Print("Media registration failed:")
         if not GravityFontRegistered then GravityUI:Print("- Gravity font not registered") end
@@ -140,7 +140,7 @@ function GravityUI:CheckMediaRegistration()
     end
 end
 
--- Register any additional fonts or textures here
--- Example:
+-- Registriere zusätzliche Schriftarten oder Texturen hier
+-- Beispiel:
 -- LSM:Register(FONT, "MyCustomFont", "Interface\\AddOns\\GravityUI\\assets\\mycustomfont.ttf")
 -- LSM:Register(STATUSBAR, "MyCustomTexture", "Interface\\AddOns\\GravityUI\\assets\\mycustomtexture.tga") 
