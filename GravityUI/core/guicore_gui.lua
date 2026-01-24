@@ -3311,7 +3311,7 @@ function GUI:CreateMainFrame()
     local versionText = C_AddOns.GetAddOnMetadata(ADDON_NAME, "Version") or "Unknown"
     versionText = versionText:gsub("%-Alpha$", "")
     version:SetText("" .. versionText)
-    version:SetPoint("TOPLEFT", title, "BOTTOMRIGHT", -29, -8)
+    version:SetPoint("TOPLEFT", title, "BOTTOMRIGHT", -32, -8)
     
     ---------------------------------------------------------------------------
     -- CONTENT AREA (Right side)
