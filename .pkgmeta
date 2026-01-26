@@ -10,3 +10,13 @@ ignore:
 
 move-folders:
   GravityUI/GravityUI: GravityUI
+
+required-dependencies:
+  - unhaltedunitframes
+
+optional-dependencies:
+  - bettercooldownmanager
+  - big-wigs
+  - details
+  - platynator
+  - danders-frames
