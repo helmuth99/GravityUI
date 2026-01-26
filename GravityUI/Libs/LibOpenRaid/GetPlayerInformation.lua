@@ -98,7 +98,7 @@ local IsShadowlands = function()
     end
 end
 
--- Helper function to detect Midnight secret values
+-- Helper function to detect modern retail secret values
 -- Secret values pass type() checks but fail on comparison/arithmetic
 local function issecretvalue(value)
     if value == nil then return false end

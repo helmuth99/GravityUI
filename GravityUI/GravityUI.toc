@@ -1,20 +1,82 @@
 ## Interface: 120000, 120001
-## Title: |cFF30D1FFGravity UI|r
-## IconTexture: Interface\AddOns\GravityUI\assets\GRAVITY_UI_Icon.blp
+## Title: |cFF30D1FFGravityUI|r
+## IconTexture: Interface/AddOns/GravityUI/assets/GRAVITY_UI_Icon.png
 ## AddonCompartmentFunc: GravityUI_CompartmentClick
 ## AddonCompartmentFuncOnEnter: GravityUI_CompartmentOnEnter
 ## AddonCompartmentFuncOnLeave: GravityUI_CompartmentOnLeave
-## Notes: Installer for |cFF30D1FFGravity|r UI
+## Notes: Modern UI configuration addon for World of Warcraft
 ## Author: Gravity
 ## Version: @project-version@
 ## DefaultState: Enabled
 ## LoadOnDemand: 0
-## SavedVariables: GravityUI_DB, GravityUIDB
+## SavedVariables: GravityUI_DB
+## X-License: GPLv3
+## X-Website: https://Gravity-Guild.eu
 ## X-Curse-Project-ID: 1102290
 ## X-Wago-ID: 96E7e8Gg
 
-## X-Contributors: Gravity
-## X-License: GPLv3
-## X-Website: https://Gravity-Guild.eu
+# External Libraries
+Libs\LibStub\LibStub.lua
+Libs\CallbackHandler-1.0\CallbackHandler-1.0.lua
+Libs\AceAddon-3.0\AceAddon-3.0.lua
+Libs\AceEvent-3.0\AceEvent-3.0.lua
+Libs\AceConsole-3.0\AceConsole-3.0.lua
+Libs\AceDB-3.0\AceDB-3.0.lua
+Libs\LibSharedMedia-3.0\LibSharedMedia-3.0.lua
 
-load.xml
+# Core
+core\constants.lua
+core\defaults.lua
+core\media.lua
+core\character.lua
+core\inspect.lua
+core\init.lua
+core\profiles_logic.lua
+
+# Framework
+core\framework.lua
+core\window.lua
+
+# Utilities
+core/utils.lua
+core/dungeondata.lua
+core/automation.lua
+core/quicksalvage.lua
+core/styling.lua
+core/alerts.lua
+core/loot.lua
+core/objectives.lua
+core/instanceframes.lua
+core/readycheck.lua
+core/raidbuffs.lua
+
+core/combattimer.lua
+core/mplusteleport.lua
+core/worldmarks.lua
+core/autohide.lua
+core\buffborders.lua
+core\chat.lua
+core\datatexts.lua
+core\datapanels.lua
+core\minimap.lua
+core\actionbars.lua
+core\tooltip.lua
+core\installer.lua
+
+# Pages
+pages\main.lua
+pages\minimap.lua
+pages\actionbars.lua
+pages\datapanels.lua
+pages\uiimprovements.lua
+pages\screenindicators.lua
+pages\styling.lua
+pages\profiles.lua
+
+# Special Features
+core\buttons.lua
+core\skyriding.lua
+core\screenindicators.lua
+
+# Strings
+strings\strings.xml

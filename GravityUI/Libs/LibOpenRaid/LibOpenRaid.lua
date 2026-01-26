@@ -52,7 +52,7 @@ local isExpansion_Dragonflight = function()
 	end
 end
 
---don't load if it's not retail, emergencial patch due to classic and bcc stuff not transposed yet
+--don't load if it's not modern WoW or Retail, emergencial patch due to classic and bcc stuff not transposed yet
 if (WOW_PROJECT_ID ~= WOW_PROJECT_MAINLINE and not isExpansion_Dragonflight()) then
     return
 end
@@ -82,7 +82,7 @@ end
     --locals
     local unpack = table.unpack or _G.unpack
 
-    -- Helper function to detect Midnight secret values
+    -- Helper function to detect modern retail secret values
     -- Secret values pass type() checks but fail on comparison/arithmetic
     local function issecretvalue(value)
         if value == nil then return false end
@@ -3591,13 +3591,13 @@ local createLocalCooldownTracker = function()
             local bUnitIsThePlayer = UnitIsUnit(unitId, "player")
             if (not bUnitIsThePlayer) then
                 --get the caster name and check if it's a unit in the group
-                --use pcall to handle secret values from nameplate units in Midnight
+                --use pcall to handle secret values from nameplate units in modern retail
                 local success, casterName = pcall(GetUnitName, unitId, true)
                 if (success and casterName) then
                     local unitInGroup = UnitInParty(unitId) or UnitInRaid(unitId)
                     if (unitInGroup) then
                         --check if the library has the spell in the list of cooldowns
-                        --use pcall to prevent "table index is secret" errors in Midnight
+                        --use pcall to prevent "table index is secret" errors in modern retail
                         --secret values pass all type checks but fail as table indices
                         local success, spellData = pcall(function() return allCooldownsFromLib[spellId] end)
                         if (not success) then
