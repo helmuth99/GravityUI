@@ -7,6 +7,16 @@ ns.Alerts = {}
 local Alerts = ns.Alerts
 
 -------------------------------------------------------------------------------
+-- POLYFILLS
+-------------------------------------------------------------------------------
+if not AchievementShield_SetPoints then
+    function AchievementShield_SetPoints(shieldPoints, points)
+        if not shieldPoints then return end
+        shieldPoints:SetText(points)
+    end
+end
+
+-------------------------------------------------------------------------------
 -- CONSTANTS & HELPERS
 -------------------------------------------------------------------------------
 local ICON_TEX_COORDS = { 0.08, 0.92, 0.08, 0.92 }
