@@ -1587,6 +1587,11 @@ local function ReleaseToPool(frame)
     frame:SetParent(nil)
     frame:ClearAllPoints()
     
+    -- Clear tooltip properties to prevent "ghost" tooltips when reused
+    frame.tooltip = nil
+    frame.tooltip2 = nil
+    frame.tooltip3 = nil
+    
     if frame.bar then
         table.insert(statBarPool, frame)
     else
@@ -2168,8 +2173,8 @@ local function UpdateStatsPanel(panel, unit)
         if stat.statKey == "CRIT" then
             local statName = STAT_CRITICAL_STRIKE
             row.tooltip = HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, statName)..FONT_COLOR_CODE_CLOSE
-            if GetSecondaryBonus and GetCombatRating then
-                local extraCritChance = GetSecondaryBonus(CR_CRIT_MELEE, percentValue)
+            if GetCombatRating and GetCombatRatingBonus then
+                local extraCritChance = GetCombatRatingBonus(CR_CRIT_MELEE)
                 local extraCritRating = GetCombatRating(CR_CRIT_MELEE)
                 if GetCritChanceProvidesParryEffect and GetCritChanceProvidesParryEffect() and GetCombatRatingBonusForCombatRatingValue then
                     row.tooltip2 = format(CR_CRIT_PARRY_RATING_TOOLTIP, BreakUpLargeNumbers(extraCritRating), extraCritChance, GetCombatRatingBonusForCombatRatingValue(CR_PARRY, extraCritRating))
@@ -2180,31 +2185,53 @@ local function UpdateStatsPanel(panel, unit)
         elseif stat.statKey == "HASTE" then
             local statName = STAT_HASTE
             row.tooltip = HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, statName)..FONT_COLOR_CODE_CLOSE
-            local _, class = UnitClass(unit)
-            row.tooltip2 = _G["STAT_HASTE_"..class.."_TOOLTIP"]
-            if not row.tooltip2 then
-                row.tooltip2 = STAT_HASTE_TOOLTIP
-            end
-            if GetCombatRating and GetSecondaryBonus then
+            
+            if GetCombatRating and GetCombatRatingBonus then
                 local hasteRating = GetCombatRating(CR_HASTE_MELEE)
-                local hasteBonus = GetSecondaryBonus(CR_HASTE_MELEE, percentValue)
-                row.tooltip2 = row.tooltip2 .. format(STAT_HASTE_BASE_TOOLTIP, BreakUpLargeNumbers(hasteRating), hasteBonus)
+                local hasteBonus = GetCombatRatingBonus(CR_HASTE_MELEE)
+                local _, unitClass = UnitClass(unit)
+                local hasteTooltipText = _G["STAT_HASTE_"..unitClass.."_TOOLTIP"] or STAT_HASTE_TOOLTIP
+                -- Strip any existing newlines to prevent double/triple gaps
+                hasteTooltipText = hasteTooltipText:gsub("|n", ""):gsub("\n", "")
+                local hasteValues = format(STAT_HASTE_BASE_TOOLTIP, BreakUpLargeNumbers(hasteRating), hasteBonus)
+                hasteValues = hasteValues:gsub("|n", ""):gsub("\n", "")
+                
+                row.tooltip2 = hasteTooltipText .. "|n|n" .. hasteValues
             end
         elseif stat.statKey == "MASTERY" then
-            -- Mastery uses a custom OnEnter function, but we'll set basic tooltip
             local statName = STAT_MASTERY
             row.tooltip = HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, statName)..FONT_COLOR_CODE_CLOSE
-            if GetMasteryEffect and GetSecondaryBonus then
-                local mastery, bonusCoeff = GetMasteryEffect()
-                local masteryBonus = GetSecondaryBonus(CR_MASTERY, mastery, bonusCoeff)
-                row.tooltip2 = format(STAT_MASTERY_TOOLTIP, BreakUpLargeNumbers(ratingValue), masteryBonus)
+            if GetMasteryEffect and GetCombatRating and GetCombatRatingBonus then
+                local masteryRating = GetCombatRating(CR_MASTERY)
+                local masteryBonus = GetCombatRatingBonus(CR_MASTERY)
+                
+                local description = ""
+                local spec = GetSpecialization()
+                if spec then
+                    local masterySpells = C_SpecializationInfo.GetSpecializationMasterySpells(spec)
+                    if masterySpells and masterySpells[1] then
+                        description = C_Spell.GetSpellDescription(masterySpells[1]) or ""
+                    end
+                end
+                
+                -- Strip any existing newlines to prevent double/triple gaps
+                description = description:gsub("|n", ""):gsub("\n", "")
+                local masteryValues = format(STAT_MASTERY_TOOLTIP, BreakUpLargeNumbers(masteryRating), masteryBonus)
+                masteryValues = masteryValues:gsub("|n", ""):gsub("\n", "")
+                
+                if description ~= "" then
+                    row.tooltip2 = description .. "|n|n" .. masteryValues
+                else
+                    row.tooltip2 = masteryValues
+                end
             end
         elseif stat.statKey == "VERSATILITY" then
             local statName = STAT_VERSATILITY
             row.tooltip = HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, statName)..FONT_COLOR_CODE_CLOSE
-            if GetCombatRatingBonus and GetVersatilityBonus then
-                local versatilityDamageBonus = GetCombatRatingBonus(CR_VERSATILITY_DAMAGE_DONE) + (GetVersatilityBonus and GetVersatilityBonus(CR_VERSATILITY_DAMAGE_DONE) or 0)
-                local versatilityDamageTakenReduction = GetCombatRatingBonus(CR_VERSATILITY_DAMAGE_TAKEN) + (GetVersatilityBonus and GetVersatilityBonus(CR_VERSATILITY_DAMAGE_TAKEN) or 0)
+            if GetCombatRatingBonus and GetCombatRating then
+                local versatilityDamageBonus = GetCombatRatingBonus(CR_VERSATILITY_DAMAGE_DONE)
+                local versatilityDamageTakenReduction = GetCombatRatingBonus(CR_VERSATILITY_DAMAGE_TAKEN)
+                local ratingValue = GetCombatRating(CR_VERSATILITY_DAMAGE_DONE)
                 row.tooltip2 = format(CR_VERSATILITY_TOOLTIP, versatilityDamageBonus, versatilityDamageTakenReduction, BreakUpLargeNumbers(ratingValue), versatilityDamageBonus, versatilityDamageTakenReduction)
             end
         end

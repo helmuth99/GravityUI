@@ -48,8 +48,12 @@ local DOT_TEXTURE = "Interface/AddOns/GravityUI/assets/cursor/gui_reticle_dot"
 ---------------------------------------------------------------------------
 -- Helpers
 ---------------------------------------------------------------------------
+local cachedSettings
 local function GetSettings()
-    return ns.db.profile.skyriding
+    if not cachedSettings then
+        cachedSettings = ns.db and ns.db.profile and ns.db.profile.skyriding
+    end
+    return cachedSettings
 end
 
 local function GetFontPath()
@@ -591,6 +595,7 @@ end
 -- ApplySettings
 ---------------------------------------------------------------------------
 local function ApplySettings()
+    cachedSettings = nil
     local settings = GetSettings()
     if not skyridingFrame then ns.CreateSkyridingFrame() end
     if not settings then 

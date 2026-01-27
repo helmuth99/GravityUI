@@ -1100,28 +1100,35 @@ local function CreateMinimapButton()
     button:RegisterForDrag("LeftButton")
     button:SetMovable(true)
     
+    -- Background (Dark Shadow)
+    local bg = button:CreateTexture(nil, "BACKGROUND")
+    bg:SetSize(25, 25)
+    bg:SetPoint("CENTER", 0, 0)
+    bg:SetTexture("Interface\\CharacterFrame\\TempPortraitAlphaMask") -- Use mask as a solid dark circle
+    bg:SetVertexColor(0, 0, 0, 0.8)
+    
     -- Icon
     local icon = button:CreateTexture(nil, "ARTWORK")
-    icon:SetSize(20, 20)
+    icon:SetSize(22, 22)
     icon:SetPoint("CENTER", 0, 0)
     icon:SetTexture(ns.ICON_PATH or [[Interface\Icons\INV_Misc_QuestionMark]])
     
     -- Mask (Make it round)
     local mask = button:CreateMaskTexture()
-    mask:SetSize(20, 20)
+    mask:SetSize(22, 22)
     mask:SetPoint("CENTER", 0, 0)
     mask:SetTexture("Interface\\CharacterFrame\\TempPortraitAlphaMask", "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
     icon:AddMaskTexture(mask)
     
-    -- Border
-    local border = button:CreateTexture(nil, "OVERLAY")
-    border:SetSize(52, 52)
-    border:SetPoint("CENTER", 0, 0)
-    border:SetTexture([[Interface\Minimap\MiniMap-TrackingBorder]])
+    -- Border (The gold ring) - Removed as requested
+    -- local border = button:CreateTexture(nil, "OVERLAY")
+    -- border:SetSize(54, 54)
+    -- border:SetPoint("CENTER", 0, 1)
+    -- border:SetTexture([[Interface\Minimap\MiniMap-TrackingBorder]])
     
     -- Highlight
     local highlight = button:CreateTexture(nil, "HIGHLIGHT")
-    highlight:SetSize(32, 32)
+    highlight:SetSize(28, 28)
     highlight:SetPoint("CENTER", 0, 0)
     highlight:SetTexture([[Interface\Minimap\UI-Minimap-ZoomButton-Highlight]])
     highlight:SetBlendMode("ADD")

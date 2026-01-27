@@ -315,6 +315,48 @@ local function BuildSpecialButtons(parent)
     content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
 end
 
+-- 4. BCDM Keybindings
+local function BuildBCDMKeybinds(parent)
+    local scroll, content = GUI:CreateScrollableContent(parent)
+    scroll:SetAllPoints()
+    local db = ns.GetDB(); if not db then return end
+    local abs = db.actionbars
+    local bcdm = abs.bcdm
+    if not bcdm then -- safe init if defaults failed or old profile
+        bcdm = { enabled = true, fontSize = 12, anchor = "TOPRIGHT", offsetX = 0, offsetY = 0, color = {1,1,1,1} }
+        abs.bcdm = bcdm
+    end
+
+    content.rowCount = 0
+    local refresh = function() if ns.RefreshBCDMKeybinds then ns.RefreshBCDMKeybinds() end end
+
+    local header = GUI:CreateSectionHeader(content, "Cooldown Manager Keybindings")
+    header:SetPoint("TOPLEFT", 10, -10)
+    header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
+    content.rowCount = 2.0
+
+    AddRow(content, "Enable BCDM Keybinds", "checkbox", "enabled", bcdm, refresh)
+    
+    local note = content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    note:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT + 5))
+    note:SetWidth(GUI.CONTENT_WIDTH - 40)
+    note:SetJustifyH("LEFT")
+    note:SetTextColor(unpack(GUI.Colors.textMuted))
+    note:SetText("Requires 'BetterCooldownManager' addon. Maps your Action Bar keybinds to the cooldown icons.")
+    content.rowCount = content.rowCount + 1.2
+    
+    CreateSubLabel(content, "Text Appearance")
+    AddRow(content, "Font Size", "slider", 8, 32, "fontSize", bcdm, refresh, 1)
+    AddRow(content, "Text Color", "color", "color", bcdm, refresh)
+    
+    CreateSubLabel(content, "Text Position")
+    AddRow(content, "Anchor Point", "dropdown", anchorOptions, "anchor", bcdm, refresh)
+    AddRow(content, "X-Offset", "slider", -20, 20, "offsetX", bcdm, refresh, 1)
+    AddRow(content, "Y-Offset", "slider", -20, 20, "offsetY", bcdm, refresh, 1)
+
+    content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
+end
+
 -- ═══════════════════════════════════════════════════════════════
 -- MAIN PAGE
 -- ═══════════════════════════════════════════════════════════════
@@ -335,6 +377,7 @@ ns.GUI:RegisterPage("actionbars", {
             { name = "Action Bars Settings", builder = BuildActionBarsSettings },
             { name = "Mouseover Settings", builder = BuildMouseoverSettings },
             { name = "Special Buttons", builder = BuildSpecialButtons },
+            { name = "BCDM Keybindings", builder = BuildBCDMKeybinds },
         })
         subTabs:SetPoint("TOPLEFT", 10, -10)
         subTabs:SetPoint("TOPRIGHT", -10, 0)

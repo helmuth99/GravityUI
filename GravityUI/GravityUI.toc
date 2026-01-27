@@ -60,6 +60,7 @@ core\datatexts.lua
 core\datapanels.lua
 core\minimap.lua
 core\actionbars.lua
+core\bcdm_keybinds.lua
 core\tooltip.lua
 core\installer.lua
 

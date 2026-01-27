@@ -10,37 +10,8 @@ local MINUTE_SECONDS = 60
 
 -- Helpers
 local function GetValueColor()
-    -- Default fallback (Gravity Blue)
-    local r, g, b = 0, 0.749, 1
-    
-    if ns.GetDB then
-        local db = ns.GetDB()
-        local general = db.general or (db.profile and db.profile.general)
-        local mh = db.minimap or (db.profile and db.profile.minimap)
-        local dt = mh and mh.datatext
-        
-        -- 1. Check if we should use CUSTOM FONT COLOR (Specific override)
-        local useTheme = true
-        if dt and dt.useThemeColor ~= nil then useTheme = dt.useThemeColor end
-        
-        if not useTheme and dt and dt.fontColor then
-            return dt.fontColor[1], dt.fontColor[2], dt.fontColor[3]
-        end
-        
-        -- 2. "Theme Color" Logic (Global Setting)
-        -- If Main Class Color is enabled -> Theme is Class Color
-        if general and general.useClassColorTheme then
-            local _, class = UnitClass("player")
-            local c = RAID_CLASS_COLORS[class]
-            if c then return c.r, c.g, c.b end
-        end
-        
-        -- If Main Class Color is disabled -> Use configured Theme Color
-        if general and general.themeColor then
-            return general.themeColor[1], general.themeColor[2], general.themeColor[3]
-        end
-    end
-    
+    -- Use the optimized global accent color
+    local r, g, b = ns.GetAccentColor()
     return r, g, b
 end
 
@@ -349,7 +320,6 @@ end
 DT.Types.gold = {
     Update = function(slot, config)
         local money = GetMoney() or 0
-        SaveGold()
         local r, g, b = GetValueColor()
         local label = GetLabel("Gold: ", "G: ", config.shortLabel, config.noLabel)
         return string.format("%s|cff%02x%02x%02x%s|r", label, r*255, g*255, b*255, FormatGold(money))
@@ -982,3 +952,18 @@ function DT:HandleOnClick(slotFrame, button, config)
     end
 end
 
+-- ============================================================================
+-- INITIALIZATION & EVENT HANDLING
+-- ============================================================================
+local dtEvents = CreateFrame("Frame")
+dtEvents:RegisterEvent("PLAYER_MONEY")
+dtEvents:RegisterEvent("PLAYER_ENTERING_WORLD")
+dtEvents:RegisterEvent("PLAYER_TRADE_MONEY")
+dtEvents:RegisterEvent("SEND_MAIL_MONEY_CHANGED")
+dtEvents:RegisterEvent("SEND_MAIL_COD_CHANGED")
+
+dtEvents:SetScript("OnEvent", function(self, event)
+    if event == "PLAYER_MONEY" or event == "PLAYER_ENTERING_WORLD" or event == "PLAYER_TRADE_MONEY" then
+        SaveGold()
+    end
+end)

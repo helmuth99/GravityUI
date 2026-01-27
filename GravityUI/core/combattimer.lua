@@ -121,11 +121,12 @@ local function FormatTime(seconds)
     return string.format("%02d:%02d", mins, secs)
 end
 
-local function OnUpdate(self, elapsed)
+local function UpdateTimerDisplay()
     if not CombatTimerState.isInCombat then return end
-    
     local elapsedCombatTime = GetTime() - CombatTimerState.combatStartTime
-    self.text:SetText(FormatTime(elapsedCombatTime))
+    if CombatTimerState.timerFrame and CombatTimerState.timerFrame.text then
+        CombatTimerState.timerFrame.text:SetText(FormatTime(elapsedCombatTime))
+    end
 end
 
 local function StartTimer()
@@ -140,14 +141,20 @@ local function StartTimer()
     CombatTimerState.isInCombat = true
     frame.text:SetText("00:00")
     frame:Show()
-    frame:SetScript("OnUpdate", OnUpdate)
+
+    -- Efficiency: Use a 1-second ticker instead of OnUpdate
+    if CombatTimerState.ticker then CombatTimerState.ticker:Cancel() end
+    CombatTimerState.ticker = C_Timer.NewTicker(1, UpdateTimerDisplay)
 end
 
 local function StopTimer()
     CombatTimerState.isInCombat = false
+    if CombatTimerState.ticker then
+        CombatTimerState.ticker:Cancel()
+        CombatTimerState.ticker = nil
+    end
     if CombatTimerState.timerFrame then
         CombatTimerState.timerFrame:Hide()
-        CombatTimerState.timerFrame:SetScript("OnUpdate", nil)
     end
 end
 
@@ -186,11 +193,11 @@ end)
 function CombatTimer.TogglePreview(show)
     CombatTimerState.isPreviewMode = show
     if show then
+        if CombatTimerState.ticker then CombatTimerState.ticker:Cancel(); CombatTimerState.ticker = nil end
         local frame = CreateTimerFrame()
         UpdateAppearance()
         frame.text:SetText("01:23")
         frame:Show()
-        frame:SetScript("OnUpdate", nil)
     else
         if not InCombatLockdown() then
             StopTimer()
@@ -199,7 +206,9 @@ function CombatTimer.TogglePreview(show)
             local settings = GetSettings()
             if settings and settings.enabled then
                 UpdateAppearance()
-                CombatTimerState.timerFrame:SetScript("OnUpdate", OnUpdate)
+                if not CombatTimerState.ticker then
+                    CombatTimerState.ticker = C_Timer.NewTicker(1, UpdateTimerDisplay)
+                end
             else
                 StopTimer()
             end

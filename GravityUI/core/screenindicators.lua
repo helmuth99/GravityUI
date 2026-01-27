@@ -62,14 +62,21 @@ local rangeCheckFrame
 local cachedMeleeSlot = nil -- Optimization: Cache the slot ID of the melee ability
 
 -- Cached settings
+local cachedCursorSettings, cachedCrosshairSettings
 local function GetCursorSettings()
-    local db = ns.GetDB()
-    return db and db.screenindicators and db.screenindicators.cursor
+    if not cachedCursorSettings then
+        local db = ns.GetDB()
+        cachedCursorSettings = db and db.screenindicators and db.screenindicators.cursor
+    end
+    return cachedCursorSettings
 end
 
 local function GetCrosshairSettings()
-    local db = ns.GetDB()
-    return db and db.screenindicators and db.screenindicators.crosshair
+    if not cachedCrosshairSettings then
+        local db = ns.GetDB()
+        cachedCrosshairSettings = db and db.screenindicators and db.screenindicators.crosshair
+    end
+    return cachedCrosshairSettings
 end
 
 ---------------------------------------------------------------------------
@@ -547,6 +554,10 @@ end
 ---------------------------------------------------------------------------
 
 function Screen.Refresh()
+    -- Invalidate caches
+    cachedCursorSettings = nil
+    cachedCrosshairSettings = nil
+
     local cS = GetCursorSettings()
     if cS and cS.enabled then
         CreateCursorFrame()

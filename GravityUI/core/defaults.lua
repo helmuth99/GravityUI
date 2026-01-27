@@ -1062,6 +1062,14 @@ ns.Defaults = {
         },
         bar7_vis = true,
         bar6_vis = true,
+        bcdm = {
+            enabled = true,
+            fontSize = 12,
+            anchor = "TOPRIGHT",
+            offsetX = 0,
+            offsetY = 0,
+            color = {1, 1, 1, 1},
+        },
     },
     skyriding =     {
         secondWindHeight = 20,

@@ -12,9 +12,18 @@ ns.Addon = Addon
 ns.db = nil
 ns.trackedFonts = {}
 
--- Get current profile settings
+-- Database caching
+local dbCache = nil
 function ns.GetDB()
-    return ns.db and ns.db.profile
+    if not dbCache and ns.db then
+        dbCache = ns.db.profile
+    end
+    return dbCache
+end
+
+function ns.InvalidateCache()
+    dbCache = nil
+    ns.accentCache = nil
 end
 
 -- Get AceDB object for profile management
@@ -29,21 +38,33 @@ function ns.ResetDB()
     end
 end
 
--- Get accent color (with class color option)
+-- Get accent color (with class color option and caching)
+ns.accentCache = nil
 function ns.GetAccentColor()
+    if ns.accentCache then
+        return unpack(ns.accentCache)
+    end
+
     local db = ns.GetDB()
+    local r, g, b, a = 0, 0.749, 1, 1 -- Default fallback
+
     if db and db.general and db.general.useClassColorTheme then
         local _, class = UnitClass("player")
         local color = class and C_ClassColor.GetClassColor(class)
         if color then
-            return color.r, color.g, color.b, 1
+            r, g, b, a = color.r, color.g, color.b, 1
         end
+    elseif db and db.general and db.general.themeColor then
+        local tc = db.general.themeColor
+        if tc[1] then
+            r, g, b, a = tc[1], tc[2], tc[3], tc[4] or 1
+        end
+    else
+        r, g, b, a = unpack(ns.DEFAULT_ACCENT or {0, 0.749, 1, 1})
     end
-    local tc = db and db.general and db.general.themeColor
-    if tc and tc[1] then
-        return tc[1], tc[2], tc[3], tc[4] or 1
-    end
-    return unpack(ns.DEFAULT_ACCENT or {0, 0.749, 1, 1})
+
+    ns.accentCache = {r, g, b, a}
+    return r, g, b, a
 end
 
 -- Get theme background color
@@ -59,6 +80,8 @@ end
 
 -- Refresh accent colors throughout UI
 function ns.RefreshAccentColors()
+    ns.InvalidateCache()
+    
     if ns.GUI and ns.GUI.RefreshColors then
         ns.GUI:RefreshColors()
     end
@@ -117,8 +140,8 @@ function Addon:OnInitialize()
     -- Register slash commands
     self:RegisterChatCommand("gui", "SlashCommandOpen")
     self:RegisterChatCommand("gravityui", "SlashCommandOpen")
-    self:RegisterChatCommand("rlui", "SlashCommandReload")
     self:RegisterChatCommand("rl", "SlashCommandReload")
+    self:RegisterChatCommand("kb", "SlashCommandKeybind")
     
     print("|cFF30D1FFGravityUI|r loaded. Type |cFFFFFF00/gui|r to open settings.")
     print("|cFF30D1FFGravityUI|r using profile: |cFF00BFFF" .. ns.db:GetCurrentProfile() .. "|r")
@@ -172,6 +195,21 @@ function Addon:SlashCommandReload()
     ReloadUI()
 end
 
+-- Toggle Quick Keybind Mode
+function Addon:SlashCommandKeybind()
+    if not C_AddOns.IsAddOnLoaded("Blizzard_QuickKeybind") then
+        C_AddOns.LoadAddOn("Blizzard_QuickKeybind")
+    end
+    
+    if QuickKeybindFrame then
+        if QuickKeybindFrame:IsShown() then
+            QuickKeybindFrame:Hide()
+        else
+            QuickKeybindFrame:Show()
+        end
+    end
+end
+
 -- Event handler
 
 -- Event handler
@@ -204,6 +242,11 @@ function Addon:PLAYER_ENTERING_WORLD(event, isInitialLogin, isReloadingUi)
     -- Initialize Instance Frames
     if ns.InstanceFrames and ns.InstanceFrames.Initialize then
         ns.InstanceFrames:Initialize()
+    end
+
+    -- Initialize BCDM Keybinds
+    if ns.BCDM_Keybinds and ns.BCDM_Keybinds.Init then
+        ns.BCDM_Keybinds:Init()
     end
     
 
