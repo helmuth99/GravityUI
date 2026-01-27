@@ -56,7 +56,7 @@ ns.Defaults = {
         loot = {
             enabled = true,
             position = nil,
-            lootUnderMouse = true,
+            lootUnderMouse = false,
             showTransmogMarkers = true,
         },
         lootRoll = {
@@ -150,6 +150,7 @@ ns.Defaults = {
             headerTextSize = 14,
             showEnchants = true,
             enabled = true,
+            useThemeBackground = false,
             panelBgColor =             {
                 [1] = 0.1294117718935,
                 [2] = 0.1294117718935,
@@ -541,6 +542,7 @@ ns.Defaults = {
             offsetX = -1,
         },
         enabled = true,
+        rotate = false,
         showZoomButtons = false,
         showCalendar = false,
         zoneExpanded = true,
@@ -582,6 +584,10 @@ ns.Defaults = {
             scale = 1,
         },
         useClassColorBorder = false,
+        button = {
+            hide = true,
+            minimapPos = 220,
+        },
         dungeonEye =         {
             enabled = true,
             corner = "BOTTOMLEFT",

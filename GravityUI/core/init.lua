@@ -68,6 +68,7 @@ function ns.RefreshAccentColors()
     if ns.RefreshSkyriding then ns.RefreshSkyriding() end
     if ns.RefreshScreenIndicators then ns.RefreshScreenIndicators() end
     if ns.RefreshCombatTimer then ns.RefreshCombatTimer() end
+    if ns.Character and ns.Character.RefreshBackground then ns.Character.RefreshBackground() end
 end
 
 -- Get global font settings
@@ -93,10 +94,11 @@ function Addon:OnInitialize()
         LibDualSpec:EnhanceDatabase(ns.db, "GravityUI")
     end
     -- Force reset if minimap is missing (migration helper)
-    if not ns.db.profile.minimap or not ns.db.profile.minimap.datatext then
-        print("|cFF30D1FFGravityUI:|r Detecting missing Minimap settings... Resetting profile to apply defaults.")
-        ns.db:ResetProfile()
-    end
+    -- (Removed reset logic to prevent settings loss)
+    -- if not ns.db.profile.minimap or not ns.db.profile.minimap.datatext then
+    --     print("|cFF30D1FFGravityUI:|r Detecting missing Minimap settings... Resetting profile to apply defaults.")
+    --     ns.db:ResetProfile()
+    -- end
 
     -- Reset temporary states
     if ns.db.profile.minimap and ns.db.profile.minimap.dungeonEye then

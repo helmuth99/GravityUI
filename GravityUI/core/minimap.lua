@@ -111,7 +111,7 @@ end
 
 local function GetButtonDB()
     local s = GetSettings()
-    return s and s.button or { hide = false, minimapPos = 220 }
+    return s and s.button or { hide = true, minimapPos = 220 }
 end
 
 local function GetClassColor()
@@ -966,7 +966,8 @@ local function UpdateDatatextPanel()
             slot:SetPoint("LEFT", datatextFrame, "LEFT", (i-1)*slotWidth, 0)
             
             -- Apply Font
-            slot.text:SetFont(ns.FONT_PATH or "Interface/AddOns/GravityUI/assets/Gravity.ttf", dtSettings.fontSize or 12, "OUTLINE")
+            local font, outline = ns.GetFont()
+            slot.text:SetFont(font, dtSettings.fontSize or 12, outline)
             
             -- Apply Offsets
             -- Since we anchored LEFT, we can assume the text is centered in the slot.
@@ -984,6 +985,33 @@ end
 -- DUNGEON EYE
 -- ═══════════════════════════════════════════════════════════════
 
+local isUpdatingEye = false
+local queueStatusHooked = false
+
+local function EnforceDungeonEyePosition()
+    if isUpdatingEye then return end
+    local s = GetSettings()
+    if not s or not s.enabled or not s.dungeonEye or not s.dungeonEye.enabled then return end
+    
+    local eye = s.dungeonEye
+    if QueueStatusButton then
+         isUpdatingEye = true
+         QueueStatusButton:ClearAllPoints()
+         local anchor = eye.corner or "BOTTOMLEFT"
+         QueueStatusButton:SetPoint(anchor, Minimap, anchor, eye.offsetX or 0, eye.offsetY or 0)
+         
+         -- Ensure parent is managed (stick to Minimap)
+         if QueueStatusButton:GetParent() ~= Minimap then
+             QueueStatusButton:SetParent(Minimap)
+         end
+         
+         QueueStatusButton:SetFrameStrata("MEDIUM")
+         QueueStatusButton:SetFrameLevel(Minimap:GetFrameLevel() + 10)
+         QueueStatusButton:SetScale(eye.scale or 1.0)
+         isUpdatingEye = false
+    end
+end
+
 local function UpdateDungeonEye()
     local s = GetSettings()
     if not s or not s.enabled then return end
@@ -991,17 +1019,22 @@ local function UpdateDungeonEye()
     
     if QueueStatusButton then
         if eye.enabled then
-             -- Force parent and strata to ensure it sticks to Minimap
-             QueueStatusButton:SetParent(Minimap)
-             QueueStatusButton:SetFrameStrata("MEDIUM")
-             QueueStatusButton:SetFrameLevel(Minimap:GetFrameLevel() + 10)
-             QueueStatusButton:SetScale(eye.scale or 1.0)
+             -- Hook once to prevent external moves
+             if not queueStatusHooked then
+                 hooksecurefunc(QueueStatusButton, "SetPoint", EnforceDungeonEyePosition)
+                 hooksecurefunc(QueueStatusButton, "SetParent", function() 
+                    if not isUpdatingEye then EnforceDungeonEyePosition() end
+                 end)
+                 hooksecurefunc(QueueStatusButton, "Show", EnforceDungeonEyePosition)
+                 queueStatusHooked = true
+             end
+
+             -- Apply Position Immediately
+             EnforceDungeonEyePosition()
              
              if eye.preview then
                  QueueStatusButton:Show()
                  QueueStatusButton:SetAlpha(1)
-                 
-                 -- Force a visual for preview
                  if not QueueStatusButton.previewTex then
                      QueueStatusButton.previewTex = QueueStatusButton:CreateTexture(nil, "OVERLAY")
                      QueueStatusButton.previewTex:SetAllPoints()
@@ -1012,20 +1045,17 @@ local function UpdateDungeonEye()
                  -- Preview is OFF.
                  if QueueStatusButton.previewTex then QueueStatusButton.previewTex:Hide() end
                  
-                 -- We MUST hide it initially to clear the forced preview state.
-                 -- If the player is actually in a queue, WoW's events (LFG_UPDATE etc.) will re-show it automatically.
-                 QueueStatusButton:Hide()
-                 
-                 -- Attempt to trigger a natural update if available (safe call)
+                 -- We hide it to clear the forced preview, then let QueueStatusFrame.Update decides if it should be shown
+                 if QueueStatusButton:IsShown() and not C_LFGList.HasActiveEntryInfo() and not IsInGroup() and not QueueStatusFrame:IsShown() then
+                      -- Crude check, better to just rely on system update
+                      QueueStatusButton:Hide()
+                 end
+
+                 -- Trigger natural update
                  if QueueStatusFrame and QueueStatusFrame.Update then
                      pcall(QueueStatusFrame.Update, QueueStatusFrame)
                  end
              end
-             
-             -- Position MUST be applied last to override internal OnShow logic
-             QueueStatusButton:ClearAllPoints()
-             local anchor = eye.corner or "BOTTOMLEFT"
-             QueueStatusButton:SetPoint(anchor, Minimap, anchor, eye.offsetX or 0, eye.offsetY or 0)
         else
              QueueStatusButton:Hide()
         end
@@ -1184,6 +1214,14 @@ function ns.RefreshMinimap()
     UpdateMinimapSize()
     SetupMinimapDragging()
     SetupAutoZoom() -- Apply Auto Zoom settings
+
+    if s.rotate then
+        SetCVar("rotateMinimap", "1")
+        if Minimap.SetRotates then Minimap:SetRotates(true) end
+    else
+        SetCVar("rotateMinimap", "0")
+        if Minimap.SetRotates then Minimap:SetRotates(false) end
+    end
     
     -- Force Alway Show Elements (Disable Fade)
     if MinimapCluster then

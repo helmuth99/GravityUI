@@ -61,6 +61,8 @@ local function SkinPVEFrame()
             StripTextures(tab)
             if not tab.guiBackdrop then
                 tab.guiBackdrop = CreateFrame("Frame", nil, tab, "BackdropTemplate")
+                -- Ensure backdrop is behind the text
+                tab.guiBackdrop:SetFrameLevel(math.max(0, tab:GetFrameLevel() - 1))
                 tab.guiBackdrop:SetPoint("TOPLEFT", 3, -3)
                 tab.guiBackdrop:SetPoint("BOTTOMRIGHT", -3, 0)
                 tab.guiBackdrop:SetBackdrop({
@@ -70,6 +72,14 @@ local function SkinPVEFrame()
                 })
                 tab.guiBackdrop:SetBackdropColor(0.05, 0.05, 0.05, 0.9)
                 tab.guiBackdrop:SetBackdropBorderColor(sr, sg, sb, sa)
+            end
+            
+            -- Fix Text Color
+            if tab.GetFontString then
+                local fs = tab:GetFontString()
+                if fs then
+                    fs:SetTextColor(1, 1, 1, 1)
+                end
             end
         end
     end

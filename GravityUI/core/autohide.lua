@@ -418,5 +418,9 @@ eventFrame:SetScript("OnEvent", function(self, event, addon)
         return
     end
 
-    ApplyHideSettings()
+    if event == "PLAYER_ENTERING_WORLD" then
+        C_Timer.After(2, ApplyHideSettings)
+    else
+        ApplyHideSettings()
+    end
 end)

@@ -372,6 +372,9 @@ closeButton:SetScript("OnLeave", function(self)
     self.text:SetTextColor(0.8, 0.8, 0.8, 1)
 end)
 closeButton:SetScript("OnClick", function()
+    if InCombatLockdown() then
+        return
+    end
     ConsumablesFrame:Hide()
 end)
 

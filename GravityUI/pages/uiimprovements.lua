@@ -418,6 +418,7 @@ local function BuildCharacter(parent)
         if CharacterFrame then CharacterFrame:SetScale(1.30 * val) end
         if ns.Inspect and ns.Inspect.UpdateInspectFrame then ns.Inspect.UpdateInspectFrame() end
     end, 0.05)
+    AddRow(content, "Use Theme Color for Background", "checkbox", "useThemeBackground", dbChar, function() if ns.Character and ns.Character.RefreshBackground then ns.Character.RefreshBackground() end end)
     AddRow(content, "Background Color", "color", "panelBgColor", dbChar, function() if ns.Character and ns.Character.RefreshBackground then ns.Character.RefreshBackground() end end)
     AddRow(content, "Background Opacity", "slider", 0, 100, "panelOpacity", dbChar, function() if ns.Character and ns.Character.RefreshBackground then ns.Character.RefreshBackground() end end, 1)
     content.rowCount = content.rowCount + 0.5

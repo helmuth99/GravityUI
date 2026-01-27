@@ -1165,7 +1165,15 @@ local function CreateCustomBackground()
         local sr, sg, sb, sa = C.border[1], C.border[2], C.border[3], 1
         local bgr, bgg, bgb, bga
         
-        if customColor then
+        if settings.useThemeBackground then
+            -- Use theme background color
+            if ns.GetThemeBgColor then
+                bgr, bgg, bgb = ns.GetThemeBgColor()
+                bga = opacity
+            else
+                bgr, bgg, bgb, bga = C.bg[1], C.bg[2], C.bg[3], opacity
+            end
+        elseif customColor then
             bgr, bgg, bgb, bga = customColor[1], customColor[2], customColor[3], opacity
         else
             -- Fallback defaults

@@ -237,7 +237,7 @@ local function OnLootOpened()
         local scale = UIParent:GetEffectiveScale()
         lootFrame:ClearAllPoints()
         lootFrame:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", x/scale, y/scale)
-    elseif db.loot.position then
+    elseif db.loot.position and db.loot.position.point then
         local p = db.loot.position
         lootFrame:ClearAllPoints()
         lootFrame:SetPoint(p.point, UIParent, p.relPoint, p.x, p.y)
@@ -288,7 +288,7 @@ function Loot:ToggleMover()
         
         -- Apply Position
         local db = GetDB()
-        if db and db.loot and db.loot.position then
+        if db and db.loot and db.loot.position and db.loot.position.point then
             local p = db.loot.position
             lootFrame:ClearAllPoints()
             lootFrame:SetPoint(p.point, UIParent, p.relPoint, p.x, p.y)

@@ -21,6 +21,7 @@ LSM:Register(FONT, "Gravity Expressway", assetPath .. "Gravity-Expressway.TTF")
 LSM:Register(FONT, "Gravity Light", assetPath .. "Gravity-Light.ttf")
 LSM:Register(FONT, "Gravity Regular", assetPath .. "Gravity-Regular.ttf")
 LSM:Register(FONT, "Gravity Thin", assetPath .. "Gravity-Thin.ttf")
+LSM:Register(FONT, "Gravity Gotham", assetPath .. "Gravity-Gotham.ttf")
 
 -- ═══════════════════════════════════════════════════════════════
 -- TEXTURES REGISTRATION
