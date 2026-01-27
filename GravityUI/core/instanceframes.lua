@@ -10,7 +10,19 @@ local InstanceFrames = ns.InstanceFrames
 -- HELPERS
 -------------------------------------------------------------------------------
 local function GetAccent()
+    local db = ns.db.profile.styling.instanceFrames
+    if db and db.disableThemeColorBorder then
+        return unpack(db.customBorderColor)
+    end
     return ns.GetAccentColor()
+end
+
+local function GetThemeBg()
+    local db = ns.db.profile.styling.instanceFrames
+    if db and db.disableThemeColorBackground then
+        return unpack(db.customBackgroundColor)
+    end
+    return ns.GetThemeBgColor()
 end
 
 local function GetFont()
@@ -32,7 +44,7 @@ end
 
 local function SkinPVEFrame()
     local f = PVEFrame
-    if not f or f.guiSkinned then return end
+    if not f then return end
 
     local sr, sg, sb, sa = GetAccent()
     
@@ -50,9 +62,11 @@ local function SkinPVEFrame()
             edgeSize = 1,
             insets = { left = 1, right = 1, top = 1, bottom = 1 }
         })
-        f.guiBackdrop:SetBackdropColor(0.05, 0.05, 0.05, 0.95)
-        f.guiBackdrop:SetBackdropBorderColor(sr, sg, sb, sa)
     end
+    
+    local bgr, bgg, bgb, bga = GetThemeBg()
+    f.guiBackdrop:SetBackdropColor(bgr, bgg, bgb, bga)
+    f.guiBackdrop:SetBackdropBorderColor(sr, sg, sb, sa)
 
     -- Tabs
     for i = 1, 4 do
@@ -70,9 +84,11 @@ local function SkinPVEFrame()
                     edgeFile = "Interface\\Buttons\\WHITE8x8",
                     edgeSize = 1,
                 })
-                tab.guiBackdrop:SetBackdropColor(0.05, 0.05, 0.05, 0.9)
-                tab.guiBackdrop:SetBackdropBorderColor(sr, sg, sb, sa)
             end
+            
+            local bgr, bgg, bgb, bga = GetThemeBg()
+            tab.guiBackdrop:SetBackdropColor(bgr, bgg, bgb, bga)
+            tab.guiBackdrop:SetBackdropBorderColor(sr, sg, sb, sa)
             
             -- Fix Text Color
             if tab.GetFontString then

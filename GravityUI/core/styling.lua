@@ -63,9 +63,35 @@ local function GetGameMenuColors()
     
     local theme = ns.db.profile.general.themeColor
     local sr, sg, sb, sa = theme[1], theme[2], theme[3], theme[4]
+    
     local bgr, bgg, bgb, bga = 0.05, 0.05, 0.05, 0.95
     
+    -- Check Background Override
+    if db.gamemenu.disableThemeColorBackground then
+        local c = db.gamemenu.customBackgroundColor
+        if c then bgr, bgg, bgb, bga = c[1], c[2], c[3], c[4] end
+    else
+        -- Use Theme Background if enabled in General
+        local themeBg = ns.db.profile.general.themeBgColor
+        if themeBg then bgr, bgg, bgb, bga = themeBg[1], themeBg[2], themeBg[3], themeBg[4] end
+    end
+    
     return sr, sg, sb, sa, bgr, bgg, bgb, bga
+end
+
+local function GetGameMenuFontColor()
+    local db = GetDB()
+    if not db or not db.gamemenu then return 0.9, 0.9, 0.9, 1 end
+    
+    if db.gamemenu.disableThemeColorFont then
+        local c = db.gamemenu.customFontColor
+        if c then return c[1], c[2], c[3], c[4] end
+    else
+        -- Use Theme Accent (Primary Color)
+        local t = ns.db.profile.general.themeColor
+        if t then return t[1], t[2], t[3], t[4] end
+    end
+    return 0.9, 0.9, 0.9, 1
 end
 
 -- Helper: Style Button (Updated to allow refreshing)
@@ -119,7 +145,9 @@ local function StyleGameMenuButton(button, sr, sg, sb, sa, bgr, bgg, bgb, bga)
         local fontSize = (db and db.gamemenu and db.gamemenu.buttonFontSize) or 14
         local fontPath = GetFontPath()
         text:SetFont(fontPath, fontSize, "OUTLINE")
-        text:SetTextColor(0.9, 0.9, 0.9, 1)
+        
+        local fr, fg, fb, fa = GetGameMenuFontColor()
+        text:SetTextColor(fr, fg, fb, fa)
     end
     
     button.guiSkinColor = { sr, sg, sb, sa }
@@ -437,6 +465,37 @@ function Styling:SkinReadyCheck()
 
     local sr, sg, sb, sa = ns.GetAccentColor()
     local bgr, bgg, bgb, bga = 0.05, 0.05, 0.05, 0.95
+    
+    -- Custom Background Logic
+    if db.readyCheck and db.readyCheck.disableThemeColorBackground then
+        local c = db.readyCheck.customBackgroundColor
+        if c then bgr, bgg, bgb, bga = c[1], c[2], c[3], c[4] end
+    else
+        -- Theme Background if enabled generally? Or just dark?
+        -- GameMenu logic was: use themeBgColor if useThemeColorBackground is true.
+        -- Here we default to dark (0.05) above.
+        -- If we want to align with Game Menu, we should probably check general.themeBgColor too.
+        -- Let's stick to the subtle dark default for Ready Check unless user explicitly uses Global Theme BG? 
+        -- User request was "like Game Menu".
+        -- Game Menu defaults to Theme Background.
+        -- Let's make Ready Check default to Theme Background too if not disabled?
+        -- Actually, existing code just used 0.05.
+        -- Let's upgrade it to use Theme Background Check if available
+        local themeBg = ns.db.profile.general.themeBgColor
+        if themeBg then bgr, bgg, bgb, bga = themeBg[1], themeBg[2], themeBg[3], themeBg[4] end
+    end
+    
+    -- Custom Font Logic (Title + Text)
+    local titleR, titleG, titleB, titleA = sr, sg, sb, 1
+    local textR, textG, textB, textA = 0.9, 0.9, 0.9, 1
+    
+    if db.readyCheck and db.readyCheck.disableThemeColorFont then
+        local c = db.readyCheck.customFontColor
+        if c then 
+            titleR, titleG, titleB, titleA = c[1], c[2], c[3], c[4] 
+            textR, textG, textB, textA = c[1], c[2], c[3], c[4] -- Apply to both?
+        end
+    end
 
     HideBlizzardReadyCheckDecorations()
 
@@ -476,7 +535,7 @@ function Styling:SkinReadyCheck()
         text:ClearAllPoints()
         text:SetPoint("TOP", targetFrame, "TOP", 0, -30)
         text:SetFont(GetFontPath(), 12, "OUTLINE")
-        text:SetTextColor(0.9, 0.9, 0.9, 1)
+        text:SetTextColor(textR, textG, textB, textA)
     end
 
     -- Custom Title
@@ -486,7 +545,7 @@ function Styling:SkinReadyCheck()
         frame.guiTitle:SetFont(GetFontPath(), 13, "OUTLINE")
     end
     frame.guiTitle:SetText("Ready Check")
-    frame.guiTitle:SetTextColor(sr, sg, sb, 1)
+    frame.guiTitle:SetTextColor(titleR, titleG, titleB, titleA)
 
     -- Re-hide and restore position on show
     frame:HookScript("OnShow", function(self)
@@ -645,6 +704,25 @@ function Styling:SkinKeystone()
 
     local sr, sg, sb, sa = ns.GetAccentColor()
     local bgr, bgg, bgb, bga = 0.05, 0.05, 0.05, 0.95
+    
+    if db.keystone.disableThemeColorBackground then
+        local c = db.keystone.customBackgroundColor
+        if c then bgr, bgg, bgb, bga = c[1], c[2], c[3], c[4] end
+    else
+        local themeBg = ns.db.profile.general.themeBgColor
+        if themeBg then bgr, bgg, bgb, bga = themeBg[1], themeBg[2], themeBg[3], themeBg[4] end
+    end
+    
+    local titleR, titleG, titleB, titleA = sr, sg, sb, sa
+    local textR, textG, textB, textA = 0.9, 0.9, 0.9, 1
+    
+    if db.keystone.disableThemeColorFont then
+        local c = db.keystone.customFontColor
+        if c then 
+            titleR, titleG, titleB, titleA = c[1], c[2], c[3], c[4]
+            textR, textG, textB, textA = c[1], c[2], c[3], c[4]
+        end
+    end
 
     SkinKeystone_CreateguiBackdrop(keystoneFrame, sr, sg, sb, sa, bgr, bgg, bgb, bga)
 
@@ -655,11 +733,18 @@ function Styling:SkinKeystone()
 
     if keystoneFrame.DungeonName then
         keystoneFrame.DungeonName:SetFont(fontPath, 22, "OUTLINE")
-        keystoneFrame.DungeonName:SetTextColor(0.9, 0.9, 0.9, 1)
+        keystoneFrame.DungeonName:SetTextColor(titleR, titleG, titleB, titleA)
     end
     if keystoneFrame.TimeLimit then
         keystoneFrame.TimeLimit:SetFont(fontPath, 16, "OUTLINE")
-        keystoneFrame.TimeLimit:SetTextColor(0.6, 0.6, 0.6, 1)
+        -- Keep TimeLimit dim unless overridden? 
+        -- User asked for Font Color override. Usually implies main text.
+        -- Let's apply it if custom. Otherwise default matches standard styling (0.6)
+        if db.keystone.disableThemeColorFont then
+             keystoneFrame.TimeLimit:SetTextColor(textR, textG, textB, textA)
+        else
+             keystoneFrame.TimeLimit:SetTextColor(0.6, 0.6, 0.6, 1)
+        end
     end
     if keystoneFrame.Instructions then
         keystoneFrame.Instructions:SetFont(fontPath, 11, "OUTLINE")

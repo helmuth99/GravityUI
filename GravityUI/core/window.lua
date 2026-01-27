@@ -18,7 +18,7 @@ local function CreateMainWindow()
     local frame = CreateFrame("Frame", "GravityUIFrame", UIParent, "BackdropTemplate")
     frame:SetSize(900, 650)
     frame:SetPoint("CENTER")
-    frame:SetFrameStrata("DIALOG")
+    frame:SetFrameStrata("HIGH") -- Changed from DIALOG to HIGH to play nicer with other windows
     frame:SetFrameLevel(100)
     frame:EnableMouse(true)
     frame:SetMovable(true)
@@ -42,7 +42,18 @@ local function CreateMainWindow()
     frame:SetScript("OnDragStop", function(self) self:StopMovingOrSizing() end)
     
     -- ESC to close
-    table.insert(UISpecialFrames, "GravityUIFrame")
+    -- Removed from UISpecialFrames to prevent conflicts with other addons triggering global close events
+    -- table.insert(UISpecialFrames, "GravityUIFrame")
+    
+    frame:SetPropagateKeyboardInput(true)
+    frame:SetScript("OnKeyDown", function(self, key)
+        if key == "ESCAPE" then
+            self:SetPropagateKeyboardInput(false)
+            self:Hide()
+        else
+            self:SetPropagateKeyboardInput(true)
+        end
+    end)
     
     GUI.MainFrame = frame
     
@@ -215,6 +226,9 @@ function CreateButtonBar(parent)
         end
     end)
     instBtn:SetPoint("LEFT", 20, 0)
+    -- Matching User Image: Dark Teal Background, Bright Cyan Border
+    instBtn:SetBackdropColor(0, 0.3, 0.4, 0.9)
+    instBtn:SetBackdropBorderColor(0, 0.75, 1, 1)
     
     -- Cooldown Settings Button
     local cdmBtn = GUI:CreateButton(buttonBar, "Cooldown Settings", 160, 32, function()
@@ -239,6 +253,102 @@ function CreateButtonBar(parent)
         end
     end)
     editBtn:SetPoint("LEFT", cdmBtn, "RIGHT", 10, 0)
+    
+    -- Helper to open addon config
+    local function OpenAddonConfig(name, slashCmd)
+        if not C_AddOns.IsAddOnLoaded(name) then return false end
+        
+        -- Try specific slash commands
+        if slashCmd then
+            if type(slashCmd) == "table" then
+                for _, cmd in ipairs(slashCmd) do
+                    if SlashCmdList[cmd] then
+                        SlashCmdList[cmd]("")
+                        return true
+                    end
+                end
+            elseif SlashCmdList[slashCmd] then
+                SlashCmdList[slashCmd]("")
+                return true
+            end
+        end
+
+        -- Generic AceConfig fallback (some addons register this way)
+        local LibStub = _G.LibStub
+        if LibStub then
+            local AceConfigDialog = LibStub("AceConfigDialog-3.0", true)
+            if AceConfigDialog and AceConfigDialog.Open then
+                 -- Try generic open
+                 if AceConfigDialog:Open(name) then return true end
+            end
+        end
+
+        print("|cFF30D1FFGravityUI:|r Loaded " .. name .. " but could not open config automatically.")
+        return true
+    end
+
+    -- Party / Raid Button
+    local prBtn = GUI:CreateButton(buttonBar, "Party / Raid", 120, 32, function()
+        local opened = false
+        
+        -- DandersFrames
+        if not opened and OpenAddonConfig("DandersFrames", "DANDERSFRAMES") then opened = true end
+        
+        -- Grid2
+        if not opened and OpenAddonConfig("Grid2", "GRID2") then opened = true end
+        
+        -- Cell
+        if not opened and OpenAddonConfig("Cell", "CELL") then opened = true end
+
+        if not opened then
+            print("|cFF30D1FFGravityUI:|r No supported Party/Raid addon loaded (DandersFrames, Grid2, Cell).")
+        end
+    end)
+    prBtn:SetPoint("RIGHT", -20, 0)
+    -- Matching User Image: Dark Teal Background, Bright Cyan Border
+    prBtn:SetBackdropColor(0, 0.3, 0.4, 0.9) -- Dark Teal
+    prBtn:SetBackdropBorderColor(0, 0.75, 1, 1) -- Bright Cyan
+    
+    -- Unitframes Button
+    local ufBtn = GUI:CreateButton(buttonBar, "Unitframes", 120, 32, function()
+        local opened = false
+        
+        -- Unhalted UnitFrames
+        if not opened and OpenAddonConfig("UnhaltedUnitFrames", "UUF") then opened = true end
+        
+        -- MidnightSimpleUnitframes
+        if not opened and OpenAddonConfig("MidnightSimpleUnitframes", "MSUF") then opened = true end
+         
+        if not opened then
+             print("|cFF30D1FFGravityUI:|r No supported Unitframes addon loaded (Unhalted, Midnight).")
+        end
+    end)
+    ufBtn:SetPoint("RIGHT", prBtn, "LEFT", -10, 0)
+    -- Matching User Image: Dark Teal Background, Bright Cyan Border
+    ufBtn:SetBackdropColor(0, 0.3, 0.4, 0.9) -- Dark Teal
+    ufBtn:SetBackdropBorderColor(0, 0.75, 1, 1) -- Bright Cyan
+    
+    -- CDM Button (Better Cooldown Manager, Centered Cooldown Manager, Arc UI)
+    local cdmAddonBtn = GUI:CreateButton(buttonBar, "CDM", 120, 32, function()
+        local opened = false
+        
+        -- Better Cooldown Manager (BCDM)
+        if not opened and OpenAddonConfig("BetterCooldownManager", "BCDM") then opened = true end
+        
+        -- Centered Cooldown Manager
+        if not opened and OpenAddonConfig("CenteredCooldownManager", "CCM") then opened = true end
+        
+        -- Arc UI
+        if not opened and OpenAddonConfig("ArcUI", "ARCUI") then opened = true end
+         
+        if not opened then
+             print("|cFF30D1FFGravityUI:|r No supported CDM addon loaded (BetterCooldownManager, CenteredCooldownManager, ArcUI).")
+        end
+    end)
+    cdmAddonBtn:SetPoint("RIGHT", ufBtn, "LEFT", -10, 0)
+    -- Matching User Image styling
+    cdmAddonBtn:SetBackdropColor(0, 0.3, 0.4, 0.9)
+    cdmAddonBtn:SetBackdropBorderColor(0, 0.75, 1, 1)
     
     parent.buttonBar = buttonBar
 end

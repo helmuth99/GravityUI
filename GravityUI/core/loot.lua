@@ -113,6 +113,56 @@ local function CreateLootSlot(parent, index)
     return slot
 end
 
+local function UpdateLootFrameStyling(f)
+    if not f then return end
+    local db = GetDB()
+    if not db or not db.loot then return end
+    
+    local sr, sg, sb, sa = GetAccent()
+    local bgr, bgg, bgb, bga = ns.GetThemeBgColor()
+    if db.loot.disableThemeColorBackground then
+        bgr, bgg, bgb, bga = unpack(db.loot.customBackgroundColor)
+    end
+    
+    f:SetBackdropColor(bgr, bgg, bgb, bga)
+    f:SetBackdropBorderColor(sr, sg, sb, sa)
+    
+    local tr, tg, tb, ta = sr, sg, sb, sa -- Default to Theme Color
+    if db.loot.disableThemeColorFont then
+        tr, tg, tb, ta = unpack(db.loot.customFontColor)
+    end
+    if f.header then f.header:SetTextColor(tr, tg, tb, ta) end
+end
+
+function Loot:RefreshStyling()
+    if lootFrame then
+        UpdateLootFrameStyling(lootFrame)
+    end
+end
+
+function Loot:RefreshHistoryStyling()
+    local f = _G.GroupLootHistoryFrame
+    if f and f.guiBackdrop then
+        local db = GetDB()
+        if not db or not db.lootResults then return end
+        
+        local sr, sg, sb, sa = GetAccent()
+        local bgr, bgg, bgb, bga = ns.GetThemeBgColor()
+        if db.lootResults.disableThemeColorBackground then
+            bgr, bgg, bgb, bga = unpack(db.lootResults.customBackgroundColor)
+        end
+        f.guiBackdrop:SetBackdropColor(bgr, bgg, bgb, bga)
+        f.guiBackdrop:SetBackdropBorderColor(sr, sg, sb, sa)
+        
+        if f.ScrollBox then
+            f.ScrollBox:ForEachFrame(function(frame)
+                frame.guiSkinned = false -- Force re-skin
+                SkinLootHistoryElement(frame)
+            end)
+        end
+    end
+end
+
 local function CreateLootWindow()
     local f = CreateFrame("Frame", "GravityUI_LootFrame", UIParent, "BackdropTemplate")
     f:SetSize(250, 200)
@@ -123,16 +173,15 @@ local function CreateLootWindow()
     f:EnableMouse(true)
     f:Hide()
 
-    local sr, sg, sb, sa = GetAccent()
     f:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8", edgeFile = "Interface\\Buttons\\WHITE8x8", edgeSize = 1 })
-    f:SetBackdropColor(0.05, 0.05, 0.05, 0.95)
-    f:SetBackdropBorderColor(sr, sg, sb, sa)
 
     f.header = f:CreateFontString(nil, "OVERLAY")
     table.insert(ns.trackedFonts, f.header) -- Track for global font changes
     f.header:SetFont(GetFont())
     f.header:SetPoint("TOP", 0, -8)
     f.header:SetText("Loot")
+
+    UpdateLootFrameStyling(f)
 
     f:RegisterForDrag("LeftButton")
     f:SetScript("OnDragStart", function(self) if self._previewMode or IsShiftKeyDown() then self:StartMoving() end end)
@@ -162,15 +211,23 @@ end
 local function SkinLootHistoryElement(frame)
     if not frame or frame.guiSkinned then return end
     
+    local db = GetDB()
     local sr, sg, sb, sa = GetAccent()
     local font, size, outline = GetFont()
     
+    local tr, tg, tb, ta = sr, sg, sb, sa -- Default to Theme Color
+    local customFont = db and db.lootResults and db.lootResults.disableThemeColorFont
+    if customFont then
+        tr, tg, tb, ta = unpack(db.lootResults.customFontColor)
+    end
+
     if frame.Name then
         frame.Name:SetFont(font, 12, outline)
     end
     
     if frame.WinnerName then
         frame.WinnerName:SetFont(font, 12, outline)
+        frame.WinnerName:SetTextColor(tr, tg, tb, ta)
     end
     
     if frame.Icon then
@@ -191,6 +248,7 @@ local function SkinGroupLootHistoryFrame()
     local f = _G.GroupLootHistoryFrame
     if not f or f.guiSkinned then return end
     
+    local db = GetDB()
     local sr, sg, sb, sa = GetAccent()
     
     if f.NineSlice then f.NineSlice:SetAlpha(0) end
@@ -205,7 +263,12 @@ local function SkinGroupLootHistoryFrame()
             edgeFile = "Interface\\Buttons\\WHITE8x8",
             edgeSize = 1,
         })
-        f.guiBackdrop:SetBackdropColor(0.05, 0.05, 0.05, 0.95)
+        
+        local bgr, bgg, bgb, bga = ns.GetThemeBgColor()
+        if db and db.lootResults and db.lootResults.disableThemeColorBackground then
+            bgr, bgg, bgb, bga = unpack(db.lootResults.customBackgroundColor)
+        end
+        f.guiBackdrop:SetBackdropColor(bgr, bgg, bgb, bga)
         f.guiBackdrop:SetBackdropBorderColor(sr, sg, sb, sa)
     end
 

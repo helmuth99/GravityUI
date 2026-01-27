@@ -315,7 +315,7 @@ local function BuildSpecialButtons(parent)
     content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
 end
 
--- 4. BCDM Keybindings
+-- 4. BCDM Keybindings (Renamed to generic "Keybindings" in UI)
 local function BuildBCDMKeybinds(parent)
     local scroll, content = GUI:CreateScrollableContent(parent)
     scroll:SetAllPoints()
@@ -335,14 +335,14 @@ local function BuildBCDMKeybinds(parent)
     header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
     content.rowCount = 2.0
 
-    AddRow(content, "Enable BCDM Keybinds", "checkbox", "enabled", bcdm, refresh)
+    AddRow(content, "Enable Keybinds on CDM", "checkbox", "enabled", bcdm, refresh)
     
     local note = content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     note:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT + 5))
     note:SetWidth(GUI.CONTENT_WIDTH - 40)
     note:SetJustifyH("LEFT")
     note:SetTextColor(unpack(GUI.Colors.textMuted))
-    note:SetText("Requires 'BetterCooldownManager' addon. Maps your Action Bar keybinds to the cooldown icons.")
+    note:SetText("Maps your Action Bar keybinds to the cooldown icons.")
     content.rowCount = content.rowCount + 1.2
     
     CreateSubLabel(content, "Text Appearance")
@@ -377,7 +377,7 @@ ns.GUI:RegisterPage("actionbars", {
             { name = "Action Bars Settings", builder = BuildActionBarsSettings },
             { name = "Mouseover Settings", builder = BuildMouseoverSettings },
             { name = "Special Buttons", builder = BuildSpecialButtons },
-            { name = "BCDM Keybindings", builder = BuildBCDMKeybinds },
+            { name = "Keybindings", builder = BuildBCDMKeybinds },
         })
         subTabs:SetPoint("TOPLEFT", 10, -10)
         subTabs:SetPoint("TOPRIGHT", -10, 0)

@@ -286,6 +286,19 @@ local function BuildChat(parent)
 
     local function RefreshChat() if ns.Chat and ns.Chat.Refresh then ns.Chat.Refresh() end end
     local dbChat = dbUI.chat or {}
+    
+    AddRow(content, "Enable GUI Chatbox", "checkbox", "enabled", dbChat, function(v)
+        RefreshChat()
+    end)
+    local masterNote = content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    masterNote:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT+5)))
+    masterNote:SetWidth(GUI.CONTENT_WIDTH - 40)
+    masterNote:SetJustifyH("LEFT")
+    masterNote:SetText("Disabling this will leave Chat at WoW defaults. |cffff0000Requires /rl to fully disable.|r")
+    masterNote:SetTextColor(unpack(C.textMuted))
+    content.rowCount = content.rowCount + 0.8
+    content.rowCount = content.rowCount + 0.5
+
     -- defaults
     if not dbChat.glass then dbChat.glass = {enabled=true, bgAlpha=0.25, bgColor={0,0,0,1}} end
     if not dbChat.timestamps then dbChat.timestamps = {enabled=true, format="24h", color={0.6,0.6,0.6,1}} end

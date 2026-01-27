@@ -34,13 +34,31 @@ ns.Defaults = {
         consumableOnRaid = true,
         consumableOnResurrect = false,
         skinReadyCheck = true,
+        readyCheck = {
+            enable = true, -- Using this alongside skinReadyCheck or instead? best to keep skinReadyCheck for now or alias it. 
+            -- Actually, let's just put the color options here.
+            disableThemeColorBackground = false,
+            customBackgroundColor = { 0.1, 0.1, 0.1, 0.95 },
+            disableThemeColorFont = false,
+            customFontColor = { 1, 1, 1, 1 },
+        },
         gamemenu = {
             enabled = true,
             showGravityButton = true,
             buttonFontSize = 14,
+            useThemeColorBackground = nil, -- Removed
+            disableThemeColorBackground = false,
+            customBackgroundColor = { 0.1, 0.1, 0.1, 0.95 },
+            useThemeColorFont = nil, -- Removed
+            disableThemeColorFont = false,
+            customFontColor = { 1, 1, 1, 1 },
         },
         keystone = {
             enabled = true, -- Toggles the skinning
+            disableThemeColorBackground = false,
+            customBackgroundColor = { 0.1, 0.1, 0.1, 0.95 },
+            disableThemeColorFont = false,
+            customFontColor = { 1, 1, 1, 1 },
         },
         powerBar = {
             enabled = true,
@@ -52,12 +70,22 @@ ns.Defaults = {
             alertGrowDirection = "UP",
             toastPosition = nil,
             toastGrowDirection = "DOWN",
+            alertYOffset = 0,
+            toastYOffset = 0,
+            disableThemeColorBackground = false,
+            customBackgroundColor = { 0.1, 0.1, 0.1, 0.95 },
+            disableThemeColorFont = false,
+            customFontColor = { 1, 1, 1, 1 },
         },
         loot = {
             enabled = true,
             position = nil,
             lootUnderMouse = false,
             showTransmogMarkers = true,
+            disableThemeColorBackground = false,
+            customBackgroundColor = { 0.1, 0.1, 0.1, 0.95 },
+            disableThemeColorFont = false,
+            customFontColor = { 1, 1, 1, 1 },
         },
         lootRoll = {
             enabled = true,
@@ -68,6 +96,10 @@ ns.Defaults = {
         },
         lootResults = {
             enabled = true,
+            disableThemeColorBackground = false,
+            customBackgroundColor = { 0.1, 0.1, 0.1, 0.95 },
+            disableThemeColorFont = false,
+            customFontColor = { 1, 1, 1, 1 },
         },
         character = {
             enabled = false,
@@ -86,6 +118,10 @@ ns.Defaults = {
         },
         instanceFrames = {
             enabled = true,
+            disableThemeColorBackground = false,
+            customBackgroundColor = { 0.1, 0.1, 0.1, 0.95 },
+            disableThemeColorBorder = false,
+            customBorderColor = { 1, 1, 1, 1 },
         },
     },
     raidBuffs = {
@@ -286,6 +322,7 @@ ns.Defaults = {
         automationExpanded = true,
         spellQueueWindow = 120,
         chat =         {
+            enabled = true,
             glass =             {
                 bgColor =                 {
                     [1] = 0,
@@ -1063,7 +1100,7 @@ ns.Defaults = {
         bar7_vis = true,
         bar6_vis = true,
         bcdm = {
-            enabled = true,
+            enabled = false,
             fontSize = 12,
             anchor = "TOPRIGHT",
             offsetX = 0,

@@ -42,6 +42,50 @@ local function BuildGameMenuPanel(parent)
     btnSize:SetPoint("TOPLEFT", PAD, yOffset)
     yOffset = yOffset - 50
     
+    -- Background Color Customization
+    local bgPicker -- Forward declare
+    local bgCheck = GUI:CreateCheckbox(content, "Don't Use Theme Color for Background", "disableThemeColorBackground", ns.db.profile.styling.gamemenu, function(value)
+        if bgPicker then
+            if value then bgPicker:Show() else bgPicker:Hide() end
+        end
+        if ns.Styling and ns.Styling.SkinGameMenu then ns.Styling:SkinGameMenu() end
+    end)
+    bgCheck:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - 30
+    
+    bgPicker = GUI:CreateColorPicker(content, "Background Color", "customBackgroundColor", ns.db.profile.styling.gamemenu, function()
+        if ns.Styling and ns.Styling.SkinGameMenu then ns.Styling:SkinGameMenu() end
+    end)
+    bgPicker:SetPoint("TOPLEFT", PAD + 20, yOffset)
+    yOffset = yOffset - 40
+    
+    -- Initialize Visibility
+    if not ns.db.profile.styling.gamemenu.disableThemeColorBackground then
+        bgPicker:Hide()
+    end
+    
+    -- Font Color Customization
+    local fontPicker -- Forward declare
+    local fontCheck = GUI:CreateCheckbox(content, "Don't Use Theme Color for Font", "disableThemeColorFont", ns.db.profile.styling.gamemenu, function(value)
+        if fontPicker then
+            if value then fontPicker:Show() else fontPicker:Hide() end
+        end
+        if ns.Styling and ns.Styling.SkinGameMenu then ns.Styling:SkinGameMenu() end
+    end)
+    fontCheck:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - 30
+    
+    fontPicker = GUI:CreateColorPicker(content, "Font Color", "customFontColor", ns.db.profile.styling.gamemenu, function()
+        if ns.Styling and ns.Styling.SkinGameMenu then ns.Styling:SkinGameMenu() end
+    end)
+    fontPicker:SetPoint("TOPLEFT", PAD + 20, yOffset)
+    yOffset = yOffset - 40
+    
+    -- Initialize Visibility
+    if not ns.db.profile.styling.gamemenu.disableThemeColorFont then
+        fontPicker:Hide()
+    end
+    
     local note = GUI:CreateLabel(content, "Note: Requires UI Reload to fully apply/remove.", 12, C.textMuted)
     GUI:SetFont(note, 12, "OUTLINE")
     note:SetPoint("TOPLEFT", PAD, yOffset)
@@ -127,6 +171,51 @@ local function BuildReadyCheckPanel(parent)
     local extraNote = GUI:CreateLabel(content, "Skin the ready check popup with GUI styling.", 12, C.textMuted)
     extraNote:SetPoint("TOPLEFT", skinCheck, "BOTTOMLEFT", 26, -4)
     yOffset = yOffset - 50
+
+    -- Background Color Customization
+    local bgPicker -- Forward declare
+    local bgCheck = GUI:CreateCheckbox(content, "Don't Use Theme Color for Background", "disableThemeColorBackground", ns.db.profile.styling.readyCheck, function(value)
+        if bgPicker then
+            if value then bgPicker:Show() else bgPicker:Hide() end
+        end
+        if ns.Styling and ns.Styling.SkinReadyCheck then ns.Styling:SkinReadyCheck() end
+    end)
+    bgCheck:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - 30
+    
+    bgPicker = GUI:CreateColorPicker(content, "Background Color", "customBackgroundColor", ns.db.profile.styling.readyCheck, function()
+        if ns.Styling and ns.Styling.SkinReadyCheck then ns.Styling:SkinReadyCheck() end
+    end)
+    bgPicker:SetPoint("TOPLEFT", PAD + 20, yOffset)
+    yOffset = yOffset - 40
+    
+    -- Initialize Visibility
+    if not ns.db.profile.styling.readyCheck.disableThemeColorBackground then
+        bgPicker:Hide()
+    end
+    
+    -- Font Color Customization
+    local fontPicker -- Forward declare
+    local fontCheck = GUI:CreateCheckbox(content, "Don't Use Theme Color for Font", "disableThemeColorFont", ns.db.profile.styling.readyCheck, function(value)
+        if fontPicker then
+            if value then fontPicker:Show() else fontPicker:Hide() end
+        end
+        if ns.Styling and ns.Styling.SkinReadyCheck then ns.Styling:SkinReadyCheck() end
+    end)
+    fontCheck:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - 30
+    
+    fontPicker = GUI:CreateColorPicker(content, "Font Color", "customFontColor", ns.db.profile.styling.readyCheck, function()
+        if ns.Styling and ns.Styling.SkinReadyCheck then ns.Styling:SkinReadyCheck() end
+    end)
+    fontPicker:SetPoint("TOPLEFT", PAD + 20, yOffset)
+    yOffset = yOffset - 40
+    
+    -- Initialize Visibility
+    if not ns.db.profile.styling.readyCheck.disableThemeColorFont then
+        fontPicker:Hide()
+    end
+    yOffset = yOffset - 10
 
     local moveBtn = GUI:CreateButton(content, "Toggle Mover", 160, 24, function()
         if ns.Styling and ns.Styling.ToggleReadyCheckMover then
@@ -353,8 +442,52 @@ local function BuildKeystonePanel(parent)
         end
     end)
     enable:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - 40
     
-    yOffset = yOffset - 50
+    -- Background Color Customization
+    local bgPicker -- Forward declare
+    local bgCheck = GUI:CreateCheckbox(content, "Don't Use Theme Color for Background", "disableThemeColorBackground", ns.db.profile.styling.keystone, function(value)
+        if bgPicker then
+            if value then bgPicker:Show() else bgPicker:Hide() end
+        end
+        if ns.Styling and ns.Styling.SkinKeystone then ns.Styling:SkinKeystone() end
+    end)
+    bgCheck:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - 30
+    
+    bgPicker = GUI:CreateColorPicker(content, "Background Color", "customBackgroundColor", ns.db.profile.styling.keystone, function()
+        if ns.Styling and ns.Styling.SkinKeystone then ns.Styling:SkinKeystone() end
+    end)
+    bgPicker:SetPoint("TOPLEFT", PAD + 20, yOffset)
+    yOffset = yOffset - 40
+    
+    -- Initialize Visibility
+    if not ns.db.profile.styling.keystone.disableThemeColorBackground then
+        bgPicker:Hide()
+    end
+    
+    -- Font Color Customization
+    local fontPicker -- Forward declare
+    local fontCheck = GUI:CreateCheckbox(content, "Don't Use Theme Color for Font", "disableThemeColorFont", ns.db.profile.styling.keystone, function(value)
+        if fontPicker then
+            if value then fontPicker:Show() else fontPicker:Hide() end
+        end
+        if ns.Styling and ns.Styling.SkinKeystone then ns.Styling:SkinKeystone() end
+    end)
+    fontCheck:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - 30
+    
+    fontPicker = GUI:CreateColorPicker(content, "Font Color", "customFontColor", ns.db.profile.styling.keystone, function()
+        if ns.Styling and ns.Styling.SkinKeystone then ns.Styling:SkinKeystone() end
+    end)
+    fontPicker:SetPoint("TOPLEFT", PAD + 20, yOffset)
+    yOffset = yOffset - 40
+    
+    -- Initialize Visibility
+    if not ns.db.profile.styling.keystone.disableThemeColorFont then
+        fontPicker:Hide()
+    end
+    
     content:SetHeight(math.abs(yOffset) + 20)
 end
 
@@ -431,7 +564,53 @@ local function BuildAlertsPanel(parent)
     local note = GUI:CreateLabel(content, "Skins Blizzard alert frames (Achievements, Loot, etc.) and allows custom positioning.", 12, C.textMuted)
     note:SetPoint("TOPLEFT", enable, "BOTTOMLEFT", 26, -4)
     note:SetWidth(600)
-    yOffset = yOffset - 50
+    yOffset = yOffset - 40
+    
+    -- Background Color Customization
+    local bgPicker -- Forward declare
+    local bgCheck = GUI:CreateCheckbox(content, "Don't Use Theme Color for Background", "disableThemeColorBackground", db, function(value)
+        if bgPicker then
+            if value then bgPicker:Show() else bgPicker:Hide() end
+        end
+        if ns.Alerts and ns.Alerts.Initialize then ns.Alerts:Initialize() end
+    end)
+    bgCheck:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - 30
+    
+    bgPicker = GUI:CreateColorPicker(content, "Background Color", "customBackgroundColor", db, function()
+        if ns.Alerts and ns.Alerts.Initialize then ns.Alerts:Initialize() end
+    end)
+    bgPicker:SetPoint("TOPLEFT", PAD + 20, yOffset)
+    yOffset = yOffset - 40
+    
+    -- Initialize Visibility
+    if not db.disableThemeColorBackground then
+        bgPicker:Hide()
+    end
+    
+    -- Font Color Customization
+    local fontPicker -- Forward declare
+    local fontCheck = GUI:CreateCheckbox(content, "Don't Use Theme Color for Font", "disableThemeColorFont", db, function(value)
+        if fontPicker then
+            if value then fontPicker:Show() else fontPicker:Hide() end
+        end
+        if ns.Alerts and ns.Alerts.Initialize then ns.Alerts:Initialize() end
+    end)
+    fontCheck:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - 30
+    
+    fontPicker = GUI:CreateColorPicker(content, "Font Color", "customFontColor", db, function()
+        if ns.Alerts and ns.Alerts.Initialize then ns.Alerts:Initialize() end
+    end)
+    fontPicker:SetPoint("TOPLEFT", PAD + 20, yOffset)
+    yOffset = yOffset - 40
+    
+    -- Initialize Visibility
+    if not db.disableThemeColorFont then
+        fontPicker:Hide()
+    end
+    
+    yOffset = yOffset - 10
     
     local moverBtn = GUI:CreateButton(content, "Toggle Movers", 140, 24, function()
         if ns.Alerts and ns.Alerts.ToggleMovers then
@@ -446,6 +625,14 @@ local function BuildAlertsPanel(parent)
         end
     end)
     resetBtn:SetPoint("LEFT", moverBtn, "RIGHT", 10, 0)
+    
+    local testBtn = GUI:CreateButton(content, "Test Alerts", 140, 24, function()
+        if ns.Alerts and ns.Alerts.Test then
+            ns.Alerts:Test()
+        end
+    end)
+    testBtn:SetPoint("LEFT", resetBtn, "RIGHT", 10, 0)
+    
     yOffset = yOffset - 50
 
     local growOptions = {
@@ -467,6 +654,22 @@ local function BuildAlertsPanel(parent)
         end
     end)
     toastGrow:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - 50
+
+    local alertOffset = GUI:CreateSlider(content, "Alert Y-Offset", -400, 400, "alertYOffset", db, function(value)
+        if AlertFrame and AlertFrame.UpdateAnchors then
+            AlertFrame:UpdateAnchors()
+        end
+    end, 1)
+    alertOffset:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - 50
+
+    local toastOffset = GUI:CreateSlider(content, "Toast Y-Offset", -400, 400, "toastYOffset", db, function(value)
+        if EventToastManagerFrame and EventToastManagerFrame.UpdateAnchor then
+            EventToastManagerFrame:UpdateAnchor()
+        end
+    end, 1)
+    toastOffset:SetPoint("TOPLEFT", PAD, yOffset)
     yOffset = yOffset - 50
     
     content:SetHeight(math.abs(yOffset) + 20)
@@ -510,6 +713,52 @@ local function BuildLootPanel(parent)
     transmog:SetPoint("TOPLEFT", PAD, yOffset)
     yOffset = yOffset - 40
 
+    -- Background Color Customization
+    local bgPicker1 -- Forward declare
+    local bgCheck1 = GUI:CreateCheckbox(content, "Don't Use Theme Color for Background", "disableThemeColorBackground", db.loot, function(value)
+        if bgPicker1 then
+            if value then bgPicker1:Show() else bgPicker1:Hide() end
+        end
+        if ns.Loot and ns.Loot.RefreshStyling then ns.Loot.RefreshStyling() end
+    end)
+    bgCheck1:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - 30
+    
+    bgPicker1 = GUI:CreateColorPicker(content, "Background Color", "customBackgroundColor", db.loot, function()
+        if ns.Loot and ns.Loot.RefreshStyling then ns.Loot.RefreshStyling() end
+    end)
+    bgPicker1:SetPoint("TOPLEFT", PAD + 20, yOffset)
+    yOffset = yOffset - 40
+    
+    -- Initialize Visibility
+    if not db.loot.disableThemeColorBackground then
+        bgPicker1:Hide()
+    end
+    
+    -- Font Color Customization
+    local fontPicker1 -- Forward declare
+    local fontCheck1 = GUI:CreateCheckbox(content, "Don't Use Theme Color for Font", "disableThemeColorFont", db.loot, function(value)
+        if fontPicker1 then
+            if value then fontPicker1:Show() else fontPicker1:Hide() end
+        end
+        if ns.Loot and ns.Loot.RefreshStyling then ns.Loot.RefreshStyling() end
+    end)
+    fontCheck1:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - 30
+    
+    fontPicker1 = GUI:CreateColorPicker(content, "Font Color", "customFontColor", db.loot, function()
+        if ns.Loot and ns.Loot.RefreshStyling then ns.Loot.RefreshStyling() end
+    end)
+    fontPicker1:SetPoint("TOPLEFT", PAD + 20, yOffset)
+    yOffset = yOffset - 40
+    
+    -- Initialize Visibility
+    if not db.loot.disableThemeColorFont then
+        fontPicker1:Hide()
+    end
+
+    yOffset = yOffset - 10
+
     local moveBtn = GUI:CreateButton(content, "Toggle Mover", 160, 24, function()
         if ns.Loot and ns.Loot.ToggleMover then
              ns.Loot:ToggleMover()
@@ -536,7 +785,53 @@ local function BuildLootPanel(parent)
     
     local skinHistory = GUI:CreateCheckbox(content, "Skin Loot History", "enabled", db.lootResults)
     skinHistory:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - 40
+
+    -- Background Color Customization
+    local bgPicker2 -- Forward declare
+    local bgCheck2 = GUI:CreateCheckbox(content, "Don't Use Theme Color for Background", "disableThemeColorBackground", db.lootResults, function(value)
+        if bgPicker2 then
+            if value then bgPicker2:Show() else bgPicker2:Hide() end
+        end
+        -- History skinning might only apply on reload or new frames, but we'll call any refresh available
+        if ns.Loot and ns.Loot.RefreshHistoryStyling then ns.Loot.RefreshHistoryStyling() end
+    end)
+    bgCheck2:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - 30
     
+    bgPicker2 = GUI:CreateColorPicker(content, "Background Color", "customBackgroundColor", db.lootResults, function()
+        if ns.Loot and ns.Loot.RefreshHistoryStyling then ns.Loot.RefreshHistoryStyling() end
+    end)
+    bgPicker2:SetPoint("TOPLEFT", PAD + 20, yOffset)
+    yOffset = yOffset - 40
+    
+    -- Initialize Visibility
+    if not db.lootResults.disableThemeColorBackground then
+        bgPicker2:Hide()
+    end
+    
+    -- Font Color Customization
+    local fontPicker2 -- Forward declare
+    local fontCheck2 = GUI:CreateCheckbox(content, "Don't Use Theme Color for Font", "disableThemeColorFont", db.lootResults, function(value)
+        if fontPicker2 then
+            if value then fontPicker2:Show() else fontPicker2:Hide() end
+        end
+        if ns.Loot and ns.Loot.RefreshHistoryStyling then ns.Loot.RefreshHistoryStyling() end
+    end)
+    fontCheck2:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - 30
+    
+    fontPicker2 = GUI:CreateColorPicker(content, "Font Color", "customFontColor", db.lootResults, function()
+        if ns.Loot and ns.Loot.RefreshHistoryStyling then ns.Loot.RefreshHistoryStyling() end
+    end)
+    fontPicker2:SetPoint("TOPLEFT", PAD + 20, yOffset)
+    yOffset = yOffset - 40
+    
+    -- Initialize Visibility
+    if not db.lootResults.disableThemeColorFont then
+        fontPicker2:Hide()
+    end
+
     yOffset = yOffset - 60
     content:SetHeight(math.abs(yOffset) + 20)
 end
@@ -673,7 +968,54 @@ local function BuildInstancePanel(parent)
     note:SetPoint("TOPLEFT", enable, "BOTTOMLEFT", 26, -4)
     note:SetWidth(600)
     
-    yOffset = yOffset - 70
+    yOffset = yOffset - 40
+    
+    local db = ns.db.profile.styling.instanceFrames
+    
+    -- Background Color Customization
+    local bgPicker -- Forward declare
+    local bgCheck = GUI:CreateCheckbox(content, "Don't Use Theme Color for Background", "disableThemeColorBackground", db, function(value)
+        if bgPicker then
+            if value then bgPicker:Show() else bgPicker:Hide() end
+        end
+        if ns.InstanceFrames and ns.InstanceFrames.Initialize then ns.InstanceFrames:Initialize() end
+    end)
+    bgCheck:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - 30
+    
+    bgPicker = GUI:CreateColorPicker(content, "Background Color", "customBackgroundColor", db, function()
+        if ns.InstanceFrames and ns.InstanceFrames.Initialize then ns.InstanceFrames:Initialize() end
+    end)
+    bgPicker:SetPoint("TOPLEFT", PAD + 20, yOffset)
+    yOffset = yOffset - 40
+    
+    -- Initialize Background Visibility
+    if not db.disableThemeColorBackground then
+        bgPicker:Hide()
+    end
+    
+    -- Border Color Customization
+    local borderPicker -- Forward declare
+    local borderCheck = GUI:CreateCheckbox(content, "Don't Use Theme Color for Border", "disableThemeColorBorder", db, function(value)
+        if borderPicker then
+            if value then borderPicker:Show() else borderPicker:Hide() end
+        end
+        if ns.InstanceFrames and ns.InstanceFrames.Initialize then ns.InstanceFrames:Initialize() end
+    end)
+    borderCheck:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - 30
+    
+    borderPicker = GUI:CreateColorPicker(content, "Border Color", "customBorderColor", db, function()
+        if ns.InstanceFrames and ns.InstanceFrames.Initialize then ns.InstanceFrames:Initialize() end
+    end)
+    borderPicker:SetPoint("TOPLEFT", PAD + 20, yOffset)
+    yOffset = yOffset - 40
+    
+    -- Initialize Border Visibility
+    if not db.disableThemeColorBorder then
+        borderPicker:Hide()
+    end
+    
     content:SetHeight(math.abs(yOffset) + 20)
 end
 

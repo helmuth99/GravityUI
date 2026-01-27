@@ -32,7 +32,25 @@ local function CreateTimerFrame()
     frame:SetSize(80, 30)
     frame:SetFrameStrata("HIGH")
     frame:SetMovable(true)
-    frame:EnableMouse(false) -- Allow clicking through in combat unless in configuration/preview
+    frame:RegisterForDrag("LeftButton")
+    frame:EnableMouse(false)
+
+    frame:SetScript("OnDragStart", function(self) self:StartMoving() end)
+    frame:SetScript("OnDragStop", function(self)
+        self:StopMovingOrSizing()
+        local centerX, centerY = self:GetCenter()
+        local screenCenterX, screenCenterY = UIParent:GetCenter()
+        if centerX and screenCenterX then
+            local x = math.floor(centerX - screenCenterX + 0.5)
+            local y = math.floor(centerY - screenCenterY + 0.5)
+            local settings = GetSettings()
+            if settings then
+                settings.xOffset = x
+                settings.yOffset = y
+                if ns.GUI and ns.GUI.Refresh then ns.GUI:Refresh() end
+            end
+        end
+    end)
 
     local text = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     text:SetPoint("CENTER", 0, 0)
@@ -109,6 +127,19 @@ local function UpdateAppearance()
         end
     else
         frame:SetBackdrop(nil)
+    end
+
+    -- Preview Highlight
+    if CombatTimerState.isPreviewMode then
+        if not settings.showBackdrop then
+            frame:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8", edgeFile = "Interface\\Buttons\\WHITE8x8", edgeSize = 1 })
+            local r, g, b = ns.GetAccentColor()
+            frame:SetBackdropBorderColor(r, g, b, 1)
+            frame:SetBackdropColor(r, g, b, 0.2)
+        else
+            -- If user HAS a backdrop, maybe just a subtle glow or nothing to keep it clean
+            -- We already checked showBackdrop above, so we have the user's colors.
+        end
     end
 end
 
@@ -192,13 +223,16 @@ end)
 ---------------------------------------------------------------------------
 function CombatTimer.TogglePreview(show)
     CombatTimerState.isPreviewMode = show
+    local frame = CombatTimerState.timerFrame or CreateTimerFrame()
+    
     if show then
         if CombatTimerState.ticker then CombatTimerState.ticker:Cancel(); CombatTimerState.ticker = nil end
-        local frame = CreateTimerFrame()
+        frame:EnableMouse(true)
         UpdateAppearance()
         frame.text:SetText("01:23")
         frame:Show()
     else
+        frame:EnableMouse(false)
         if not InCombatLockdown() then
             StopTimer()
         else

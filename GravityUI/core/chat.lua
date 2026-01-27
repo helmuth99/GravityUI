@@ -871,7 +871,7 @@ end
 
 function ns.Chat.Refresh()
     local settings = GetSettings()
-    if not settings then return end
+    if not settings or settings.enabled == false then return end
 
     -- Run global cleanup first
     GlobalCleanup()
@@ -909,6 +909,9 @@ function ns.Chat.Refresh()
 end
 
 function ns.Chat.Init()
+    local settings = GetSettings()
+    if settings and settings.enabled == false then return end
+
     SetupURLClickHandler()
     
     -- Ensure newly created or modified windows are styled

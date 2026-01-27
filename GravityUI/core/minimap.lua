@@ -40,7 +40,54 @@ local function GetSettings()
     return db.minimap
 end
 
-local function UpdateElement(frame, config, shouldShow, isPreview)
+local function GetClampedPosition(frame, point, offsetX, offsetY)
+    if not frame then return offsetX, offsetY end
+    
+    local mWidth, mHeight = Minimap:GetWidth(), Minimap:GetHeight()
+    
+    -- Calculate Bounds relative to Minimap Center
+    -- (We use raw Width/Height because SetPoint logic allows us to work in local parent coords)
+    
+    -- Half dimensions
+    -- Note: We generally assume scale is handled by the Parent/Child relationship in SetPoint
+    -- If frame has a different scale, we might need adjustments, but usually matching scale is best.
+    -- For safety, we use simple dimensions here.
+    
+    local halfMW = mWidth / 2
+    local halfMH = mHeight / 2
+    local halfFW = frame:GetWidth() / 2
+    local halfFH = frame:GetHeight() / 2
+    
+    -- Max allowed distance from Center
+    local maxDistX = math.max(0, halfMW - halfFW)
+    local maxDistY = math.max(0, halfMH - halfFH)
+    
+    -- Determine Anchor's position relative to Center
+    -- e.g. TOPRIGHT anchor is at (+halfMW, +halfMH)
+    local anchorX, anchorY = 0, 0
+    
+    if point:find("LEFT") then anchorX = -halfMW
+    elseif point:find("RIGHT") then anchorX = halfMW end
+    
+    if point:find("TOP") then anchorY = halfMH
+    elseif point:find("BOTTOM") then anchorY = -halfMH end
+    
+    -- Target Position relative to Center = AnchorPos + Offset
+    local targetX = anchorX + offsetX
+    local targetY = anchorY + offsetY
+    
+    -- Clamp Target Position
+    if targetX > maxDistX then targetX = maxDistX
+    elseif targetX < -maxDistX then targetX = -maxDistX end
+    
+    if targetY > maxDistY then targetY = maxDistY
+    elseif targetY < -maxDistY then targetY = -maxDistY end
+    
+    -- Convert back to Offset: NewOffset = ClampedTarget - AnchorPos
+    return (targetX - anchorX), (targetY - anchorY)
+end
+
+local function UpdateElement(frame, config, shouldShow, isPreview, noForceShow)
     if not frame then return end
     
     local show = shouldShow or isPreview
@@ -57,12 +104,24 @@ local function UpdateElement(frame, config, shouldShow, isPreview)
         if config then
             frame:ClearAllPoints()
             if frame:GetParent() ~= Minimap then frame:SetParent(Minimap) end
-            frame:SetPoint(config.point or "TOPRIGHT", Minimap, config.point or "TOPRIGHT", config.offsetX or 0, config.offsetY or 0)
+            
+            local pt = config.point or "TOPRIGHT"
+            local ox = config.offsetX or 0
+            local oy = config.offsetY or 0
+            
+            -- Apply Clamping
+            ox, oy = GetClampedPosition(frame, pt, ox, oy)
+            
+            frame:SetPoint(pt, Minimap, pt, ox, oy)
             frame:SetScale(config.scale or 1.0)
         end
         
         -- If hidden, we don't need to force show it here because Blizzard might not have created it yet (e.g. AddonCompartment)
-        if show and not frame:IsShown() then frame:Show() end
+        if show and not frame:IsShown() then 
+            if not noForceShow or isPreview then
+                frame:Show() 
+            end
+        end
     else
         frame:Hide()
     end
@@ -542,53 +601,96 @@ local function SavePreviewPosition(key, frame)
         settings[key] = config
     end
     
-    -- Robust Offset Calculation (Monitor Pixels)
-    -- We calculate absolute screen coordinates to handle all scaling differences.
+    -- Robust Anchor Calculation (Smart Anchoring)
+    -- Find the closest anchor point on the Minimap to the Frame's center
     
     local mEffScale = Minimap:GetEffectiveScale()
     local fEffScale = frame:GetEffectiveScale()
     
     local fx, fy = frame:GetCenter()
     local mx, my = Minimap:GetCenter()
+    local mWidth, mHeight = Minimap:GetWidth(), Minimap:GetHeight()
     
     if not fx or not mx then return end
     
-    -- 1. Calculate Absolute Screen Coordinates (Pixels from Bottom-Left)
+    -- Calculate positions of all 9 anchor points on the Minimap (in screen pixels)
+    -- We assume Minimap's Center is (mx, my) * mEffScale
+    
+    local anchors = {
+        {point="CENTER",      x=0,      y=0},
+        {point="TOP",         x=0,      y=mHeight/2},
+        {point="BOTTOM",      x=0,      y=-mHeight/2},
+        {point="LEFT",        x=-mWidth/2, y=0},
+        {point="RIGHT",       x=mWidth/2,  y=0},
+        {point="TOPLEFT",     x=-mWidth/2, y=mHeight/2},
+        {point="TOPRIGHT",    x=mWidth/2,  y=mHeight/2},
+        {point="BOTTOMLEFT",  x=-mWidth/2, y=-mHeight/2},
+        {point="BOTTOMRIGHT", x=mWidth/2,  y=-mHeight/2},
+    }
+    
+    -- Current Frame Center in screen/absolute pixels rel to Minimap Center
+    -- diffX_screen = (fx * fScale) - (mx * mScale)
+    -- Actually straightforward: Frame Center Screen - Minimap Center Screen
     local screen_fx = fx * fEffScale
     local screen_fy = fy * fEffScale
     local screen_mx = mx * mEffScale
     local screen_my = my * mEffScale
     
-    -- 2. Calculate Screen Coordinates of the desired anchor points (TOPRIGHT)
-    local screen_fTR_x = screen_fx + (frame:GetWidth() * fEffScale / 2)
-    local screen_fTR_y = screen_fy + (frame:GetHeight() * fEffScale / 2)
+    local relX_screen = screen_fx - screen_mx
+    local relY_screen = screen_fy - screen_my
     
-    local screen_mTR_x = screen_mx + (Minimap:GetWidth() * mEffScale / 2)
-    local screen_mTR_y = screen_my + (Minimap:GetHeight() * mEffScale / 2)
+    -- Constraint / Clamping Logic
+    -- Determine bounds in screen pixels (Minimap Half Width - Frame Half Width)
+    -- This ensures the Frame is fully kept inside the Minimap
+    local halfMW_screen = (mWidth * mEffScale) / 2
+    local halfMH_screen = (mHeight * mEffScale) / 2
+    local halfFW_screen = (frame:GetWidth() * fEffScale) / 2
+    local halfFH_screen = (frame:GetHeight() * fEffScale) / 2
     
-    -- 3. Calculate Delta in Screen Pixels
-    local screen_dx = screen_fTR_x - screen_mTR_x
-    local screen_dy = screen_fTR_y - screen_mTR_y
+    -- Calculate bounds (allow margin of error, but generally keep it inside)
+    local maxDiffX = math.max(0, halfMW_screen - halfFW_screen)
+    local maxDiffY = math.max(0, halfMH_screen - halfFH_screen)
     
-    -- 4. Convert Delta to Parent's Local Coordinate Space
-    -- SetPoint(..., x, y) uses the Parent's Effective Scale to convert x/y to screen pixels.
-    -- So x_screen = x_local * mEffScale
-    -- x_local = x_screen / mEffScale
+    -- Clamp relative position
+    if relX_screen > maxDiffX then relX_screen = maxDiffX
+    elseif relX_screen < -maxDiffX then relX_screen = -maxDiffX end
     
-    local offX = screen_dx / mEffScale
-    local offY = screen_dy / mEffScale
+    if relY_screen > maxDiffY then relY_screen = maxDiffY
+    elseif relY_screen < -maxDiffY then relY_screen = -maxDiffY end
     
-    -- Round to nearest 0.5 for cleaner legacy saving
-    offX = math.floor(offX * 2 + 0.5) / 2
-    offY = math.floor(offY * 2 + 0.5) / 2
+    -- Find best anchor
+    local bestAnchor = "CENTER"
+    local bestDistSq = 9999999999
+    local bestOffsetX, bestOffsetY = 0, 0
     
-    -- Clamp to slider range (-500 to 500) to ensure reachability
-    if offX > 500 then offX = 500 elseif offX < -500 then offX = -500 end
-    if offY > 500 then offY = 500 elseif offY < -500 then offY = -500 end
+    for _, anchor in ipairs(anchors) do
+        -- Anchor position in screen pixels relatives to Minimap Center
+        local anchorX_screen = anchor.x * mEffScale
+        local anchorY_screen = anchor.y * mEffScale
+        
+        -- Distance from frame center to this anchor
+        local dx = relX_screen - anchorX_screen
+        local dy = relY_screen - anchorY_screen
+        local distSq = (dx*dx) + (dy*dy)
+        
+        if distSq < bestDistSq then
+            bestDistSq = distSq
+            bestAnchor = anchor.point
+            -- Convert screen delta back to Minimap local scale for storage
+            -- The SetPoint will be: SetPoint(point, Minimap, point, offX, offY)
+            -- So offX should be in Minimap's scale logic (since parent is Minimap)
+            bestOffsetX = dx / mEffScale
+            bestOffsetY = dy / mEffScale
+        end
+    end
+    
+    -- Round to nearest 0.5
+    local offX = math.floor(bestOffsetX * 2 + 0.5) / 2
+    local offY = math.floor(bestOffsetY * 2 + 0.5) / 2
     
     config.offsetX = offX
     config.offsetY = offY
-    config.point = "TOPRIGHT"
+    config.point = bestAnchor
     
     -- Force immediate update
     C_Timer.After(0.05, function() ns.RefreshMinimap() end)
@@ -699,7 +801,8 @@ local function UpdateButtonVisibility()
     
     -- Mail (IndicatorFrame)
     if MinimapCluster.IndicatorFrame and MinimapCluster.IndicatorFrame.MailFrame then
-         UpdateElement(MinimapCluster.IndicatorFrame.MailFrame, s.mailConfig, s.showMail, preview)
+         -- Pass noForceShow=true so we don't show empty mail icon
+         UpdateElement(MinimapCluster.IndicatorFrame.MailFrame, s.mailConfig, s.showMail, preview, true)
     end
     
     -- Crafting
@@ -708,7 +811,8 @@ local function UpdateButtonVisibility()
     if not craftingFrame and MinimapCluster.CraftingOrderFrame then craftingFrame = MinimapCluster.CraftingOrderFrame end
     
     if craftingFrame then
-        UpdateElement(craftingFrame, s.craftingConfig, s.showCraftingOrder, preview)
+         -- Pass noForceShow=true so we don't show empty crafting icon
+        UpdateElement(craftingFrame, s.craftingConfig, s.showCraftingOrder, preview, true)
     end
     
     -- Hook Minimap OnEnter to prevent Blizzard from showing Zoom buttons if we want them hidden
