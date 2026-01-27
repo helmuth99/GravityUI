@@ -29,6 +29,7 @@ end
 -- Tickers
 local clockTicker = nil
 local coordsTicker = nil
+local dtTicker = nil
 
 -- ═══════════════════════════════════════════════════════════════
 -- HELPER FUNCTIONS
@@ -1085,6 +1086,15 @@ local function UpdateDatatextPanel()
     end
 end
 
+local function UpdateDatatexts()
+    if not datatextFrame or not datatextFrame:IsShown() then return end
+    for i, slot in ipairs(datatextFrame.slots) do
+        if slot:IsShown() and slot.config then
+            UpdateSlotContent(slot, slot.config)
+        end
+    end
+end
+
 -- ═══════════════════════════════════════════════════════════════
 -- DUNGEON EYE
 -- ═══════════════════════════════════════════════════════════════
@@ -1173,9 +1183,11 @@ end
 local function StartTickers()
     if clockTicker then clockTicker:Cancel() end
     if coordsTicker then coordsTicker:Cancel() end
+    if dtTicker then dtTicker:Cancel() end
     
     clockTicker = C_Timer.NewTicker(1, UpdateClockTime)
     coordsTicker = C_Timer.NewTicker(1, UpdateCoordsPosition)
+    dtTicker = C_Timer.NewTicker(1, UpdateDatatexts)
 end
 
 -- ═══════════════════════════════════════════════════════════════
@@ -1281,6 +1293,7 @@ end
 local function StopTickers()
     if clockTicker then clockTicker:Cancel(); clockTicker = nil end
     if coordsTicker then coordsTicker:Cancel(); coordsTicker = nil end
+    if dtTicker then dtTicker:Cancel(); dtTicker = nil end
 end
 
 local function HideCustomElements()
