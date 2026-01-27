@@ -2324,10 +2324,12 @@ local function UpdateStatsPanel(panel, unit)
 
     local leech = SafeGetStat(GetLifesteal)
     local speed = SafeGetStat(GetSpeed)
+    local avoidance = SafeGetStat(GetAvoidance)
 
     local generalStats = {
         { label = "Leech", value = FormatPercent(leech), statKey = "LIFESTEAL" },
         { label = "Speed", value = FormatPercent(speed), statKey = "SPEED" },
+        { label = "Avoidance", value = FormatPercent(avoidance), statKey = "AVOIDANCE" },
     }
 
     for _, stat in ipairs(generalStats) do
@@ -2344,7 +2346,10 @@ local function UpdateStatsPanel(panel, unit)
             local speedValue = GetSpeed()
             row.tooltip = HIGHLIGHT_FONT_COLOR_CODE .. format(PAPERDOLLFRAME_TOOLTIP_FORMAT, STAT_SPEED) .. " " .. format("%.2F%%", speedValue) .. FONT_COLOR_CODE_CLOSE
             row.tooltip2 = format(CR_SPEED_TOOLTIP, BreakUpLargeNumbers(GetCombatRating(CR_SPEED)), GetCombatRatingBonus(CR_SPEED))
-
+        elseif stat.statKey == "AVOIDANCE" then
+             local avoidance = GetAvoidance()
+             row.tooltip = HIGHLIGHT_FONT_COLOR_CODE .. format(PAPERDOLLFRAME_TOOLTIP_FORMAT, STAT_AVOIDANCE) .. " " .. format("%.2F%%", avoidance) .. FONT_COLOR_CODE_CLOSE
+             row.tooltip2 = format(CR_AVOIDANCE_TOOLTIP, BreakUpLargeNumbers(GetCombatRating(CR_AVOIDANCE)), GetCombatRatingBonus(CR_AVOIDANCE))
         end
         y = y - ROW_HEIGHT
     end

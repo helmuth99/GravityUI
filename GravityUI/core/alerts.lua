@@ -136,6 +136,7 @@ local function SkinLootWonAlert(frame)
         local sr, sg, sb, sa = ns.GetAccentColor()
         local bgr, bgg, bgb, bga = 0.05, 0.05, 0.05, 0.95
         local bg = CreateFrame("Frame", nil, frame, "BackdropTemplate")
+        bg:SetFrameLevel(math.max(0, frame:GetFrameLevel() - 1))
         bg:SetPoint("TOPLEFT", lootItem.Icon.guiBorder, "TOPLEFT", -4, 4)
         bg:SetPoint("BOTTOMRIGHT", lootItem.Icon.guiBorder, "BOTTOMRIGHT", 180, -4)
         bg:SetBackdrop({

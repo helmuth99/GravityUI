@@ -126,7 +126,7 @@ local function UnitHasBuff(unit, spellId, buffName)
     for i = 1, MAX_AURA_INDEX do
         local aura = C_UnitAuras.GetAuraDataByIndex(unit, i, "HELPFUL")
         if not aura then break end
-        if aura.spellId == spellId or (buffName and aura.name == buffName) then
+        if (type(aura.spellId) == "number" and aura.spellId == spellId) or (buffName and aura.name == buffName) then
             return true
         end
     end
