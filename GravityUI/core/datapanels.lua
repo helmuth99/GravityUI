@@ -246,12 +246,67 @@ function DP:RefreshAll()
     end
 end
 
+local DEFAULT_CUSTOM_PANELS = {
+    ["Panel 1"] = {
+        name = "Durability", enabled = true, numSlots = 1, width = 250, height = 24,
+        point = "BOTTOMRIGHT", relativePoint = "BOTTOMRIGHT", x = -8, y = 71,
+        fontSize = 12, bgOpacity = 50, borderSize = 0, locked = true,
+        useThemeColor = true, useThemeColorBorder = true,
+        slots = { [1] = { content = "durability", shortLabel = true } }
+    },
+    ["Panel 2"] = {
+        name = "Spec/Loot", enabled = true, numSlots = 1, width = 250, height = 24,
+        point = "BOTTOMRIGHT", relativePoint = "BOTTOMRIGHT", x = -8, y = 47,
+        fontSize = 12, bgOpacity = 50, borderSize = 0, locked = true,
+        slots = { [1] = { content = "spec" } }
+    },
+    ["Panel 3"] = {
+        name = "Gold", enabled = true, numSlots = 1, width = 250, height = 24,
+        point = "BOTTOMRIGHT", relativePoint = "BOTTOMRIGHT", x = -8, y = 23,
+        fontSize = 12, bgOpacity = 50, borderSize = 0, locked = true,
+        slots = { [1] = { content = "gold" } }
+    },
+    ["Panel 4"] = {
+        name = "FPS/MS", enabled = true, numSlots = 2, width = 120, height = 24,
+        point = "TOPRIGHT", relativePoint = "TOPRIGHT", x = -76, y = -244,
+        fontSize = 12, bgOpacity = 0, borderSize = 0, locked = true,
+        slots = { [1] = { content = "fps" }, [2] = { content = "ms" } }
+    },
+}
+
 -- Auto-refresh on a timer for text updates
 local ticker
 function DP:Init()
     local db = ns.GetDB()
-    if not db then return end
+    if not db or not db.datapanels then return end
     
+    -- One-time initialization of default panels into user profile
+    if db.datapanels.initialized == false then
+        for id, config in pairs(DEFAULT_CUSTOM_PANELS) do
+            if not db.datapanels.custom[id] then
+                -- Deep copy logic (manual for this simple structure)
+                local newCfg = {}
+                for k, v in pairs(config) do
+                    if type(v) == "table" then
+                        newCfg[k] = {}
+                        for k2, v2 in pairs(v) do
+                            if type(v2) == "table" then
+                                newCfg[k][k2] = {}
+                                for k3, v3 in pairs(v2) do newCfg[k][k2][k3] = v3 end
+                            else
+                                newCfg[k][k2] = v2
+                            end
+                        end
+                    else
+                        newCfg[k] = v
+                    end
+                end
+                db.datapanels.custom[id] = newCfg
+            end
+        end
+        db.datapanels.initialized = true
+    end
+
     DP:RefreshAll()
     
     if ticker then ticker:Cancel() end

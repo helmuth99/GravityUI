@@ -738,130 +738,8 @@ ns.Defaults = {
     datapanels =     {
         extraExpanded = true,
         minimapExpanded = true,
-        custom =         {
-            ["Panel 1"] =             {
-                fontSize = 12,
-                fontColor =                 {
-                    [1] = 1,
-                    [2] = 1,
-                    [3] = 1,
-                    [4] = 1,
-                },
-                slots =                 {
-                    [1] =                     {
-                        content = "durability",
-                        shortLabel = true,
-                    },
-                    [2] =                     {
-                        content = "gold",
-                        shortLabel = true,
-                    },
-                    [3] =                     {
-                        content = "",
-                    },
-                },
-                borderSize = 0,
-                hideLabel = false,
-                bgOpacity = 50,
-                locked = true,
-                enabled = true,
-                useThemeColorBorder = true,
-                point = "BOTTOMRIGHT",
-                width = 250,
-                y = 71,
-                x = -8,
-                name = "Durability",
-                useThemeColor = true,
-                height = 24,
-                borderColor =                 {
-                    [1] = 0,
-                    [2] = 0.75,
-                    [3] = 1,
-                    [4] = 1,
-                },
-                numSlots = 1,
-                relativePoint = "BOTTOMRIGHT",
-            },
-            ["Panel 2"] =             {
-                enabled = true,
-                fontSize = 12,
-                point = "BOTTOMRIGHT",
-                height = 24,
-                slots =                 {
-                    [1] =                     {
-                        content = "spec",
-                    },
-                    [2] =                     {
-                        content = "",
-                    },
-                    [3] =                     {
-                        content = "",
-                    },
-                },
-                width = 250,
-                y = 47,
-                borderSize = 0,
-                name = "Spec/Loot",
-                bgOpacity = 50,
-                locked = true,
-                x = -8,
-                numSlots = 1,
-                relativePoint = "BOTTOMRIGHT",
-            },
-            ["Panel 3"] =             {
-                enabled = true,
-                fontSize = 12,
-                point = "BOTTOMRIGHT",
-                relativePoint = "BOTTOMRIGHT",
-                locked = true,
-                slots =                 {
-                    [1] =                     {
-                        content = "gold",
-                    },
-                    [2] =                     {
-                        content = "",
-                    },
-                    [3] =                     {
-                        content = "",
-                    },
-                },
-                width = 250,
-                y = 23,
-                borderSize = 0,
-                name = "Gold",
-                bgOpacity = 50,
-                height = 24,
-                x = -8,
-                numSlots = 1,
-                hideLabel = false,
-            },
-            ["Panel 4"] =             {
-                enabled = true,
-                fontSize = 12,
-                point = "TOPRIGHT",
-                height = 24,
-                slots =                 {
-                    [1] =                     {
-                        content = "fps",
-                    },
-                    [2] =                     {
-                        content = "ms",
-                    },
-                    [3] =                     {
-                        content = "",
-                    },
-                },
-                width = 120,
-                y = -244,
-                borderSize = 0,
-                name = "FPS/MS",
-                bgOpacity = 0,
-                locked = true,
-                x = -76,
-                numSlots = 2,
-                relativePoint = "TOPRIGHT",
-            },
-        },
+        initialized = false,
+        custom = {},
         customExpanded = true,
     },
     screenindicators =     {
@@ -1106,6 +984,24 @@ ns.Defaults = {
             offsetX = 0,
             offsetY = 0,
             color = {1, 1, 1, 1},
+            bars = {
+                essential = true,
+                utility = true,
+                custom = true,
+                additionalCustom = true,
+                trinket = true,
+                item = true,
+                itemSpell = true,
+            },
+            barStyles = {
+                essential = { fontSize = 12, color = {1, 1, 1, 1} },
+                utility = { fontSize = 12, color = {1, 1, 1, 1} },
+                custom = { fontSize = 12, color = {1, 1, 1, 1} },
+                additionalCustom = { fontSize = 12, color = {1, 1, 1, 1} },
+                trinket = { fontSize = 12, color = {1, 1, 1, 1} },
+                item = { fontSize = 12, color = {1, 1, 1, 1} },
+                itemSpell = { fontSize = 12, color = {1, 1, 1, 1} },
+            }
         },
     },
     skyriding =     {
