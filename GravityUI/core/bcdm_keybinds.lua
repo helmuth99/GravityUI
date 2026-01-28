@@ -275,10 +275,14 @@ function Module:UpdateFrame(frame)
         
         if not bind and type(spellId) == "number" then
             local successInfo, spellInfo = pcall(C_Spell.GetSpellInfo, spellId)
-            if successInfo and spellInfo and spellInfo.name then
-                local nameLower = spellInfo.name:lower()
-                local successBind, b2 = pcall(function() return spellKeybinds[nameLower] end)
-                if successBind then bind = b2 end
+            if successInfo and spellInfo then 
+                -- Wrap name access, it can be secret
+                local successName, spellName = pcall(function() return spellInfo.name end)
+                if successName and spellName then
+                    local nameLower = spellName:lower()
+                    local successBind, b2 = pcall(function() return spellKeybinds[nameLower] end)
+                    if successBind then bind = b2 end
+                end
             end
         end
 

@@ -148,7 +148,8 @@ local function SkinProgressBar(tracker, key)
      
      if bar.Icon then
           -- Icon skinning logic could go here
-          bar.Icon:SetTexCoord(0.1, 0.9, 0.1, 0.9)
+          -- Wrap in pcall because some icons (like Bonus Objectives) have masks avoiding SetTexCoord failure
+          pcall(function() bar.Icon:SetTexCoord(0.1, 0.9, 0.1, 0.9) end)
      end
      
      -- Use Theme Color for Progress
