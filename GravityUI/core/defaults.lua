@@ -111,6 +111,7 @@ ns.Defaults = {
             customBackgroundColor = { 0.1, 0.1, 0.1, 0.95 },
             disableThemeColorFont = false,
             customFontColor = { 1, 1, 1, 1 },
+            size = nil,
         },
         character = {
             enabled = false,
@@ -141,7 +142,6 @@ ns.Defaults = {
                 width = 4,
                 height = 10, -- Reduced to 10 as requested
                 widthMode = "FIXED", 
-                heightMode = "FIXED",
                 heightMode = "DYNAMIC", -- FIXED / DYNAMIC
                 offsetX = -10,
                 offsetY = 0,

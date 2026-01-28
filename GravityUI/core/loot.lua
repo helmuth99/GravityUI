@@ -249,6 +249,16 @@ local function SkinLootHistoryElement(frame)
     frame.guiSkinned = true
 end
 
+local function UpdateLootHistorySize()
+    local f = _G.GroupLootHistoryFrame
+    if not f then return end
+    
+    local db = GetDB()
+    if db and db.lootResults and db.lootResults.size then
+        f:SetSize(db.lootResults.size.width, db.lootResults.size.height)
+    end
+end
+
 local function SkinGroupLootHistoryFrame()
     local f = _G.GroupLootHistoryFrame
     if not f or f.guiSkinned then return end
@@ -276,6 +286,39 @@ local function SkinGroupLootHistoryFrame()
         f.guiBackdrop:SetBackdropColor(bgr, bgg, bgb, bga)
         f.guiBackdrop:SetBackdropBorderColor(sr, sg, sb, sa)
     end
+
+    -- Make Resizable
+    f:SetResizable(true)
+    f:SetResizeBounds(200, 100, 800, 1000)
+    
+    -- Resize Grip
+    if not f.guiResizeGrip then
+        local grip = CreateFrame("Button", nil, f)
+        grip:SetSize(16, 16)
+        grip:SetPoint("BOTTOMRIGHT", -1, 1)
+        grip:SetNormalTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Up")
+        grip:SetHighlightTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Highlight")
+        grip:SetPushedTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Down")
+        
+        grip:SetScript("OnMouseDown", function() 
+            f:StartSizing("BOTTOMRIGHT")
+            f.isResizing = true 
+        end)
+        grip:SetScript("OnMouseUp", function() 
+            f:StopMovingOrSizing()
+            f.isResizing = false
+            
+            -- Save Size
+            local db = GetDB()
+            if db and db.lootResults then
+                db.lootResults.size = { width = f:GetWidth(), height = f:GetHeight() }
+            end
+        end)
+        f.guiResizeGrip = grip
+    end
+    
+    -- Restore saved size
+    UpdateLootHistorySize()
 
     if f.ScrollBox then
         hooksecurefunc(f.ScrollBox, "Update", function(box)
