@@ -24,9 +24,9 @@ function WorldMarks.Refresh()
     
     local settings = GetSettings()
     if not settings then return end
-
-    local padding = settings.spacing -- Assuming padding is equal to spacing for now
     
+    local padding = settings.spacing -- Assuming padding is equal to spacing for layout calculations
+
     -- Calculate Width/Height
     -- Width = (9 buttons * size) + (8 spaces) + (2 padding)
     local width = (9 * settings.size) + (8 * settings.spacing) + (padding * 2)

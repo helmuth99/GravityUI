@@ -143,40 +143,31 @@ local function ApplyHideSettings()
     
     -- Compact Raid Frame Manager
     if CompactRaidFrameManager then
-        if not InCombatLockdown() then
-            if settings.hideRaidFrameManager then
-                CompactRaidFrameManager:Hide()
-                CompactRaidFrameManager:EnableMouse(false)
-                
-                if not CompactRaidFrameManager._gui_ShowHooked then
-                    CompactRaidFrameManager._gui_ShowHooked = true
-                    hooksecurefunc(CompactRaidFrameManager, "Show", function(self)
-                        C_Timer.After(0, function()
-                            if InCombatLockdown() then return end
-                            local s = GetSettings()
-                            if s and s.hideRaidFrameManager then
-                                self:Hide()
-                                self:EnableMouse(false)
-                            end
-                        end)
-                    end)
-                end
-                if not CompactRaidFrameManager._gui_SetShownHooked then
-                    CompactRaidFrameManager._gui_SetShownHooked = true
-                    hooksecurefunc(CompactRaidFrameManager, "SetShown", function(self, shown)
-                        C_Timer.After(0, function()
-                            if InCombatLockdown() then return end
-                            local s = GetSettings()
-                            if s and s.hideRaidFrameManager and shown then
-                                self:Hide()
-                                self:EnableMouse(false)
-                            end
-                        end)
-                    end)
-                end
-            else
-                CompactRaidFrameManager:Show()
-                CompactRaidFrameManager:EnableMouse(true)
+        if settings.hideRaidFrameManager then
+             -- Agressive Disable: Unregister events so it doesn't wake up
+             CompactRaidFrameManager:UnregisterAllEvents()
+             CompactRaidFrameManager:Hide()
+             CompactRaidFrameManager:EnableMouse(false)
+             
+             -- Also hook Show just in case external addons try to show it
+             if not CompactRaidFrameManager._gui_ShowHooked then
+                 CompactRaidFrameManager._gui_ShowHooked = true
+                 hooksecurefunc(CompactRaidFrameManager, "Show", function(self)
+                     local s = GetSettings()
+                     if s and s.hideRaidFrameManager then
+                         self:Hide()
+                         self:EnableMouse(false)
+                     end
+                 end)
+             end
+        else
+            -- Restore events if re-enabled (basic set)
+            if not InCombatLockdown() then
+                 CompactRaidFrameManager:RegisterEvent("GROUP_ROSTER_UPDATE")
+                 CompactRaidFrameManager:RegisterEvent("PLAYER_ENTERING_WORLD")
+                 -- Add others if needed, but these are the main ones that cause it to show
+                 CompactRaidFrameManager:Show()
+                 CompactRaidFrameManager:EnableMouse(true)
             end
         end
     end
@@ -407,14 +398,14 @@ eventFrame:SetScript("OnEvent", function(self, event, addon)
     end
 
     if event == "GROUP_ROSTER_UPDATE" or event == "PLAYER_ROLES_ASSIGNED" then
-        if settings and settings.hideRaidFrameManager and CompactRaidFrameManager then
-            C_Timer.After(0, function()
-                if not InCombatLockdown() then
-                    CompactRaidFrameManager:Hide()
-                    CompactRaidFrameManager:EnableMouse(false)
-                end
-            end)
-        end
+        -- Throttle roster updates
+         if self.rosterUpdatePending then return end
+         self.rosterUpdatePending = true
+         C_Timer.After(0.5, function()
+             self.rosterUpdatePending = false
+             if InCombatLockdown() then return end
+             ApplyHideSettings()
+         end)
         return
     end
 

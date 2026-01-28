@@ -417,6 +417,12 @@ eventFrame:SetScript("OnEvent", function(self, event)
     if event == "PLAYER_LOGIN" then
         C_Timer.After(2, UpdateDisplay)
     else
-        C_Timer.After(0.5, UpdateDisplay)
+        -- Throttle updates
+        if self.updatePending then return end
+        self.updatePending = true
+        C_Timer.After(0.5, function()
+             self.updatePending = false
+             UpdateDisplay()
+        end)
     end
 end)
