@@ -131,7 +131,7 @@ function CreateTopBar(parent)
     -- Version
     local version = topBar:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     GUI:SetFont(version, 11, "", C.textMuted)
-    version:SetText("v" .. ns.VERSION)
+    version:SetText("" .. ns.VERSION)
     version:SetPoint("LEFT", title, "RIGHT", 8, 0)
     
     -- Close button

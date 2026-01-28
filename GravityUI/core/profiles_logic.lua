@@ -54,9 +54,6 @@ function Addon:ImportProfileFromString(str)
     str = str:gsub("^gui1:", "")  -- Update prefix
     str = str:gsub("^gui1:", "")   -- Heritage GravityUI prefix
     str = str:gsub("^GUI1:", "")
-    str = str:gsub("^CDM1:", "")
-    str = str:gsub("^qui1:", "")
-    str = str:gsub("^QUI1:", "")
 
     local compressed = LibDeflate:DecodeForPrint(str)
     if not compressed then
