@@ -120,7 +120,7 @@ function CreateTopBar(parent)
     local logo = topBar:CreateTexture(nil, "OVERLAY")
     logo:SetSize(22, 22)
     logo:SetPoint("LEFT", 15, 0)
-    logo:SetTexture("Interface\\AddOns\\GravityUI\\assets\\GRAVITY_UI_Icon.blp")
+    logo:SetTexture(ns.ICON_PATH)
     
     -- Title
     local title = topBar:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")

@@ -1227,7 +1227,7 @@ local function CreateMinimapButton()
     local icon = button:CreateTexture(nil, "ARTWORK")
     icon:SetSize(22, 22)
     icon:SetPoint("CENTER", 0, 0)
-    icon:SetTexture("Interface\\AddOns\\GravityUI\\assets\\GRAVITY_UI_Icon.blp")
+    icon:SetTexture(ns.ICON_PATH)
     
     -- Mask (Make it round)
     local mask = button:CreateMaskTexture()

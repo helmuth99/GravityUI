@@ -52,5 +52,5 @@ RegisterTexture("Gravity v6 Inverse", "Gravity_v6inverse.tga")
 RegisterTexture("Square", "Square.tga")
 
 -- Special Assets
-LSM:Register(BACKGROUND, "Gravity Logo", assetPath .. "GravityLogo.png")
+
 LSM:Register(STATUSBAR, "GUI Stripes", assetPath .. "absorb_stripe.tga")

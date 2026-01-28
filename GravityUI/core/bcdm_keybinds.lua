@@ -101,7 +101,7 @@ local function ScanActionBars(force)
             
             if key then
                 key = key:gsub("SHIFT", "S"):gsub("CTRL", "C"):gsub("ALT", "A")
-                key = key:gsub("MOUSEWHEELUP", "MwU"):gsub("MOUSEWHEELDOWN", "MwD")
+                key = key:gsub("MOUSEWHEELUP", "WU"):gsub("MOUSEWHEELDOWN", "WD")
                 key = key:gsub("BUTTON3", "M3"):gsub("BUTTON4", "M4"):gsub("BUTTON5", "M5")
                 key = key:gsub("SPACE", "Spc"):gsub("%-", "")
             end

@@ -6,9 +6,11 @@ local C = ns.Colors
 ns.Objectives = {}
 local Objectives = ns.Objectives
 
--------------------------------------------------------------------------------
--- CONSTANTS
--------------------------------------------------------------------------------
+-- LibSharedMedia
+local LSM = LibStub("LibSharedMedia-3.0", true)
+local LCG = LibStub("LibCustomGlow-1.0", true)
+
+-- Constants
 local FONT_FLAGS = "OUTLINE"
 
 local trackerModules = {
@@ -24,12 +26,6 @@ local trackerModules = {
     "WorldQuestObjectiveTracker",
 }
 
--- Debounce flag
-local pendingBackdropUpdate = false
-
--- Get LibCustomGlow
-local LCG = LibStub("LibCustomGlow-1.0", true)
-
 -------------------------------------------------------------------------------
 -- HELPERS
 -------------------------------------------------------------------------------
@@ -41,26 +37,43 @@ local function GetSettings()
     return nil
 end
 
-local function GetColors()
-    local sr, sg, sb, sa = ns.GetAccentColor()
-    local br, bg, bb, ba = ns.GetThemeBgColor()
-    -- Ensure alpha defaults if nil
-    return sr, sg, sb, sa, br, bg, bb, (ba or 0.95)
-end
-
 local function GetFontPath()
     local path = ns.GetFont()
-    return path or "Fonts\\FRIZQT__.TTF"
+    return path or STANDARD_TEXT_FONT
+end
+
+-- COLOR LOGIC:
+-- 1. Global Use Class Color -> Class Color
+-- 2. Else -> Primary Theme Color
+-- 3. SPECIFIC OVERRIDE: If "Use Theme Color" in Objectives is OFF, use Custom Color.
+local function GetObjectiveThemeColor()
+    local settings = GetSettings()
+    
+    -- If "Use Theme Color" is enabled in Objectives settings, we follow global rules
+    if settings.cosmeticBar.useThemeColor then
+        -- Returns (r, g, b, a) based on Global Class Color or Global Theme Color
+        return ns.GetAccentColor()
+    else
+        -- User wants specific custom color for objectives
+        local c = settings.cosmeticBar.color
+        return c[1], c[2], c[3], c[4] or 1
+    end
+end
+
+local function GetBackdropColor()
+    local c = ns.db.profile.general.themeBgColor
+    local settings = GetSettings()
+    local alpha = (settings and settings.backgroundOpacity) or 0.8
+    return c[1], c[2], c[3], alpha
 end
 
 local function SafeSetTextColor(fontString, colorTable)
     if not fontString or not colorTable then return end
-    if type(colorTable) ~= "table" or #colorTable < 3 then return end
     fontString:SetTextColor(colorTable[1] or 1, colorTable[2] or 1, colorTable[3] or 1, colorTable[4] or 1)
 end
 
 -------------------------------------------------------------------------------
--- STYLE FUNCTIONS (Ported from GravityUI_old)
+-- CORE STYLING
 -------------------------------------------------------------------------------
 
 local function KillNineSlice(nineSlice)
@@ -69,502 +82,663 @@ local function KillNineSlice(nineSlice)
     nineSlice:SetAlpha(0)
     for _, region in ipairs({nineSlice:GetRegions()}) do
         if region:IsObjectType("Texture") then
-            region:SetTexture(nil)
-            region:SetAtlas(nil)
-            region:Hide()
-        end
-    end
-    local parts = {"TopLeftCorner", "TopRightCorner", "BottomLeftCorner", "BottomRightCorner",
-                   "TopEdge", "BottomEdge", "LeftEdge", "RightEdge", "Center"}
-    for _, part in ipairs(parts) do
-        local tex = nineSlice[part]
-        if tex then
-            tex:SetTexture(nil)
-            tex:SetAtlas(nil)
-            tex:Hide()
+            region:SetTexture(nil); region:SetAtlas(nil); region:Hide()
         end
     end
 end
 
 local function StyleQuestPOIIcon(button)
-    if not button or button.guiStyled then return end
+    if not button then return end
+    
+    -- Hide Backgrounds/Borders
     if button.NormalTexture then button.NormalTexture:SetAlpha(0) end
     if button.PushedTexture then button.PushedTexture:SetAlpha(0) end
-    if button.HighlightTexture then button.HighlightTexture:SetAlpha(0.3) end
+    if button.HighlightTexture then button.HighlightTexture:SetAlpha(0) end 
+    if button.Border then button.Border:SetAlpha(0) end
+    if button.IconBorder then button.IconBorder:SetAlpha(0) end
     
-    if LCG and LCG.PixelGlow_Stop then
-        LCG.PixelGlow_Stop(button, "_guiQuestGlow")
+    -- Helper to apply style safely
+    local function ApplyStyle()
+        -- Scale
+        if button:GetScale() ~= 0.65 then
+            button:SetScale(0.65)
+        end
+        
+        -- Position
+        -- Target X: -10px (Flush left)
+        -- We try to set it relative to Parent TOPLEFT to force flush left
+        local parent = button:GetParent()
+        if parent then
+            -- Check if we are already there to avoid spamming SetPoint
+            local p, r, rp, x, y = button:GetPoint(1)
+            if x ~= -10 then
+                 button:ClearAllPoints()
+                 button:SetPoint("TOPLEFT", parent, "TOPLEFT", -10, 0)
+            end
+        end
     end
-    button.guiStyled = true
-end
-
-local function StyleCompletionCheck(check)
-    if not check or check.guiStyled then return end
-    local sr, sg, sb = ns.GetAccentColor()
-    check:SetAtlas("checkmark-minimal")
-    check:SetDesaturated(true)
-    check:SetVertexColor(sr, sg, sb)
-    check.guiStyled = true
+    
+    -- Apply immediately
+    ApplyStyle()
+    
+    -- Re-apply one frame later to override Blizzard layout
+    C_Timer.After(0.01, ApplyStyle)
+    
+    -- Hook OnShow (safely, no recursive hooksecurefunc on SetPoint)
+    if not button.guiHookedShow then
+        button:HookScript("OnShow", function()
+             C_Timer.After(0.01, ApplyStyle)
+        end)
+        button.guiHookedShow = true
+    end
 end
 
 local function HandleQuestBlockIcons(tracker, block)
     if not block then return end
-    local itemButton = block.ItemButton or block.itemButton
-    if itemButton then StyleQuestPOIIcon(itemButton) end
-    
-    local check = block.currentLine and block.currentLine.Check
-    if check then StyleCompletionCheck(check) end
+    if block.ItemButton then StyleQuestPOIIcon(block.ItemButton) end
+    if block.itemButton then StyleQuestPOIIcon(block.itemButton) end
 end
 
-local function SkinTrackerHeader(header)
-    if not header then return end
-    if header.Background then
-        header.Background:SetAtlas(nil)
-        header.Background:SetAlpha(0)
-    end
-    if header.Text then
-        header.Text:ClearAllPoints()
-        header.Text:SetPoint("LEFT", header, "LEFT", -7, 0)
-        header.Text:SetJustifyH("LEFT")
-    end
+local function SkinProgressBar(tracker, key)
+     local progressBar = tracker.usedProgressBars[key]
+     if not progressBar or not progressBar.Bar or progressBar.guiStyled then return end
+     
+     local bar = progressBar.Bar
+     bar:SetStatusBarTexture(LSM:Fetch("statusbar", "Gravity"))
+     
+     if bar.Icon then
+          -- Icon skinning logic could go here
+          bar.Icon:SetTexCoord(0.1, 0.9, 0.1, 0.9)
+     end
+     
+     -- Use Theme Color for Progress
+     local r, g, b = GetObjectiveThemeColor()
+     bar:SetStatusBarColor(r, g, b)
+     
+     if bar.Label then
+         bar.Label:SetFont(GetFontPath(), 12, "OUTLINE")
+         bar.Label:ClearAllPoints()
+         bar.Label:SetPoint("CENTER", bar, 0, 1)
+     end
+     
+    progressBar.guiStyled = true
 end
 
-local function UpdateMinimizeButtonAtlas(btn, collapsed)
-    if not btn then return end
-    local normalTex = btn:GetNormalTexture()
-    local pushedTex = btn:GetPushedTexture()
-    if collapsed then
-        if normalTex then normalTex:SetAtlas("ui-questtrackerbutton-secondary-expand") end
-        if pushedTex then pushedTex:SetAtlas("ui-questtrackerbutton-secondary-expand-pressed") end
-    else
-        if normalTex then normalTex:SetAtlas("ui-questtrackerbutton-secondary-collapse") end
-        if pushedTex then pushedTex:SetAtlas("ui-questtrackerbutton-secondary-collapse-pressed") end
-    end
-end
-
-local function SyncBlizzardHeight()
-    local TrackerFrame = _G.ObjectiveTrackerFrame
-    if not TrackerFrame then return end
-    local settings = GetSettings()
-    local maxHeight = settings and settings.height or 600
-    TrackerFrame.editModeHeight = maxHeight
-    if TrackerFrame.UpdateHeight then TrackerFrame:UpdateHeight() end
-end
-
-local function HideScenarioStageArtwork()
-    local scenario = _G.ScenarioObjectiveTracker
-    if not scenario then return end
-    local stageBlock = scenario.StageBlock
-    if not stageBlock then return end
+local function HandleBlockHeader(block)
+    if not block or not block.HeaderText then return end
     
-    if stageBlock.NormalBG then stageBlock.NormalBG:Hide(); stageBlock.NormalBG:SetAlpha(0) end
-    if stageBlock.FinalBG then stageBlock.FinalBG:Hide(); stageBlock.FinalBG:SetAlpha(0) end
-    if stageBlock.GlowTexture then stageBlock.GlowTexture:Hide(); stageBlock.GlowTexture:SetAlpha(0) end
-    
-    if stageBlock.Stage then
-        stageBlock.Stage:ClearAllPoints()
-        stageBlock.Stage:SetPoint("TOPLEFT", stageBlock, "TOPLEFT", 0, -5)
-        if stageBlock.Name then
-            stageBlock.Name:ClearAllPoints()
-            stageBlock.Name:SetPoint("TOPLEFT", stageBlock.Stage, "BOTTOMLEFT", 0, -2)
-        end
-    end
-end
-
-local function IsScenarioActive()
-    local scenario = _G.ScenarioObjectiveTracker
-    if not scenario or not scenario:IsShown() then return false end
-    if scenario.GetContentsHeight then
-        local height = scenario:GetContentsHeight()
-        if height and height > 0 then return true end
-    end
-    return false
-end
-
-local function ApplyMaxWidth(settings)
-    local TrackerFrame = _G.ObjectiveTrackerFrame
-    if not TrackerFrame then return end
-    
-    local maxWidth
-    if IsScenarioActive() then
-        maxWidth = 260
-    else
-        maxWidth = settings and settings.width or 260
-    end
-    TrackerFrame:SetWidth(maxWidth)
-    
-    if TrackerFrame.Header then
-        TrackerFrame.Header:SetWidth(maxWidth)
-        local minBtn = TrackerFrame.Header.MinimizeButton
-        if minBtn then
-            minBtn:ClearAllPoints()
-            minBtn:SetPoint("RIGHT", TrackerFrame.Header, "RIGHT", 0, 0)
-            minBtn:SetSize(16, 16)
-            if not minBtn.guiHighlightSet and minBtn:GetHighlightTexture() then
-                minBtn:GetHighlightTexture():SetAtlas("ui-questtrackerbutton-yellow-highlight")
-                minBtn.guiHighlightSet = true
-            end
-        end
-        
-        if TrackerFrame.Header.SetCollapsed and not TrackerFrame.Header.guiSetCollapsedHooked then
-            hooksecurefunc(TrackerFrame.Header, "SetCollapsed", function(self, collapsed)
-                UpdateMinimizeButtonAtlas(self.MinimizeButton, collapsed)
-            end)
-            TrackerFrame.Header.guiSetCollapsedHooked = true
-            local isCollapsed = false
-            if type(TrackerFrame.IsCollapsed) == "function" then
-                isCollapsed = TrackerFrame:IsCollapsed()
-            end
-            UpdateMinimizeButtonAtlas(minBtn, isCollapsed)
-        end
-    end
-    
-    for _, trackerName in ipairs(trackerModules) do
-        local tracker = _G[trackerName]
-        if tracker then
-            tracker:SetWidth(maxWidth)
-            if tracker.Header then tracker.Header:SetWidth(maxWidth) end
-        end
-    end
-    
-    HideScenarioStageArtwork()
-end
-
-local function UpdateBackdropAnchors()
-    local TrackerFrame = _G.ObjectiveTrackerFrame
-    if not TrackerFrame or not TrackerFrame.guiBackdrop then return end
-    
-    local settings = GetSettings()
-    if not settings or not settings.enabled then
-        TrackerFrame.guiBackdrop:Hide()
-        return
-    end
-    
-    local maxHeight = settings and settings.height or 600
-    
-    local bottomModule = nil
-    local lowestBottom = math.huge
-    
-    for _, trackerName in ipairs(trackerModules) do
-        local tracker = _G[trackerName]
-        if tracker and tracker:IsShown() then
-            local hasContent = false
-            if tracker.GetContentsHeight then
-                local contentHeight = tracker:GetContentsHeight()
-                hasContent = contentHeight and contentHeight > 0
-            end
-            if not hasContent then
-                local frameHeight = tracker:GetHeight()
-                hasContent = frameHeight and frameHeight > 1
-            end
-            
-            if hasContent then
-                local bottom = tracker:GetBottom()
-                if bottom and bottom < lowestBottom then
-                    lowestBottom = bottom
-                    bottomModule = tracker
-                end
-            end
-        end
-    end
-    
-    TrackerFrame.guiBackdrop:ClearAllPoints()
-    TrackerFrame.guiBackdrop:SetPoint("TOPLEFT", TrackerFrame, "TOPLEFT", -15, 0)
-    TrackerFrame.guiBackdrop:SetPoint("TOPRIGHT", TrackerFrame, "TOPRIGHT", 10, 0)
-    
-    if bottomModule then
-        local trackerTop = TrackerFrame:GetTop()
-        local contentHeight = 0
-        if trackerTop and lowestBottom and trackerTop > lowestBottom then
-            contentHeight = trackerTop - lowestBottom + 15
-        end
-        
-        if contentHeight > maxHeight then
-            TrackerFrame.guiBackdrop:SetHeight(maxHeight)
-        else
-            TrackerFrame.guiBackdrop:SetPoint("BOTTOM", bottomModule, "BOTTOM", 0, -15)
-        end
-        TrackerFrame.guiBackdrop:Show()
-    else
-        TrackerFrame.guiBackdrop:Hide()
-    end
-end
-
-local function HidePOIButtonGlows()
-    for _, trackerName in ipairs(trackerModules) do
-        local tracker = _G[trackerName]
-        if tracker and tracker.usedBlocks then
-            for template, blocks in pairs(tracker.usedBlocks) do
-                if type(blocks) == "table" then
-                    for id, block in pairs(blocks) do
-                        if block.poiButton and block.poiButton.Glow then
-                            block.poiButton.Glow:Hide()
-                            block.poiButton.Glow:SetAlpha(0)
-                            if not block.poiButton.Glow.guiHooked then
-                                hooksecurefunc(block.poiButton.Glow, "Show", function(self) self:Hide() end)
-                                block.poiButton.Glow.guiHooked = true
-                            end
-                        end
-                        if LCG and LCG.PixelGlow_Stop and block.poiButton then
-                            LCG.PixelGlow_Stop(block.poiButton, "_guiQuestGlow")
-                        end
-                        local itemButton = block.ItemButton or block.itemButton
-                        if LCG and LCG.PixelGlow_Stop and itemButton then
-                            LCG.PixelGlow_Stop(itemButton, "_guiQuestGlow")
-                        end
-                    end
-                end
-            end
-        end
-    end
-end
-
-local function ScheduleBackdropUpdate()
-    -- Only debounced update
-    if pendingBackdropUpdate then return end
-    pendingBackdropUpdate = true
-    C_Timer.After(0.15, function()
-        pendingBackdropUpdate = false
-        UpdateBackdropAnchors()
-        HidePOIButtonGlows()
-    end)
-end
-
-local function ApplyguiBackdrop(trackerFrame, sr, sg, sb, sa, bgr, bgg, bgb, bga)
-    if not trackerFrame then return end
-    
-    KillNineSlice(trackerFrame.NineSlice)
-    
-    if trackerFrame.SetBackgroundAlpha and not trackerFrame.guiBackgroundHooked then
-        hooksecurefunc(trackerFrame, "SetBackgroundAlpha", function(self, alpha)
-            if self.NineSlice then
-                self.NineSlice:Hide()
-                self.NineSlice:SetAlpha(0)
-            end
-            if self.guiBackdrop then
-                local _, _, _, _, currBgR, currBgG, currBgB = GetColors()
-                self.guiBackdrop:SetBackdropColor(currBgR, currBgG, currBgB, alpha)
-            end
-        end)
-        trackerFrame.guiBackgroundHooked = true
-    end
-    
-    local manager = _G.ObjectiveTrackerManager
-    local opacity
-    if manager and manager.backgroundAlpha ~= nil then
-        opacity = manager.backgroundAlpha
-    else
-        opacity = bga or 0.95
-    end
-    
-    if not trackerFrame.guiBackdrop then
-        trackerFrame.guiBackdrop = CreateFrame("Frame", nil, trackerFrame, "BackdropTemplate")
-        trackerFrame.guiBackdrop:SetFrameLevel(math.max(trackerFrame:GetFrameLevel() - 1, 0))
-        trackerFrame.guiBackdrop:EnableMouse(false)
-    end
-    
-    local settings = GetSettings()
-    local hideBorder = settings and settings.hideBorder
-    
-    trackerFrame.guiBackdrop:SetBackdrop({
-        bgFile = "Interface\\Buttons\\WHITE8x8",
-        edgeFile = "Interface\\Buttons\\WHITE8x8",
-        edgeSize = hideBorder and 0 or 1,
-        insets = { left = 1, right = 1, top = 1, bottom = 1 }
-    })
-    trackerFrame.guiBackdrop:SetBackdropColor(bgr, bgg, bgb, opacity)
-    if hideBorder then
-        trackerFrame.guiBackdrop:SetBackdropBorderColor(0, 0, 0, 0)
-    else
-        trackerFrame.guiBackdrop:SetBackdropBorderColor(sr, sg, sb, sa)
-    end
-    
-    UpdateBackdropAnchors()
-end
-
--- Font Styling
-local function StyleLine(line, fontPath, textFontSize, textColor)
-    if not line then return end
-    if line.Text then
-        line.Text:SetFont(fontPath, textFontSize, FONT_FLAGS)
-        SafeSetTextColor(line.Text, textColor)
-    end
-    if line.Dash then
-        line.Dash:SetFont(fontPath, textFontSize, FONT_FLAGS)
-        SafeSetTextColor(line.Dash, textColor)
-    end
-end
-
-local function StyleBlock(block, fontPath, titleFontSize, textFontSize, titleColor, textColor)
-    if not block then return end
-    if titleFontSize > 0 and block.HeaderText then
-        block.HeaderText:SetFont(fontPath, titleFontSize, FONT_FLAGS)
-        SafeSetTextColor(block.HeaderText, titleColor)
-    end
-    if textFontSize > 0 and block.usedLines then
-        for _, line in pairs(block.usedLines) do
-            StyleLine(line, fontPath, textFontSize, textColor)
-        end
-    end
-end
-
-local function ApplyFontStyles(moduleFontSize, titleFontSize, textFontSize, moduleColor, titleColor, textColor)
-    local fontPath = GetFontPath()
-    
-    for _, trackerName in ipairs(trackerModules) do
-        local tracker = _G[trackerName]
-        if tracker then
-            if moduleFontSize > 0 and tracker.Header and tracker.Header.Text then
-                tracker.Header.Text:SetFont(fontPath, moduleFontSize, FONT_FLAGS)
-                SafeSetTextColor(tracker.Header.Text, moduleColor)
-            end
-            if tracker.usedBlocks then
-                for template, blocks in pairs(tracker.usedBlocks) do
-                    for blockID, block in pairs(blocks) do
-                        StyleBlock(block, fontPath, titleFontSize, textFontSize, titleColor, textColor)
-                    end
-                end
-            end
-        end
-    end
-    
-    local TrackerFrame = _G.ObjectiveTrackerFrame
-    if TrackerFrame and TrackerFrame.Header and TrackerFrame.Header.Text then
-        if moduleFontSize > 0 then
-            TrackerFrame.Header.Text:SetFont(fontPath, moduleFontSize, FONT_FLAGS)
-            SafeSetTextColor(TrackerFrame.Header.Text, moduleColor)
-        end
-    end
-end
-
-local function HookLineCreation()
     local settings = GetSettings()
     if not settings then return end
-    local textFontSize = settings.textFontSize or 0
     
-    if ObjectiveTrackerBlockMixin and ObjectiveTrackerBlockMixin.AddObjective and not ObjectiveTrackerBlockMixin.guiAddObjectiveHooked then
-        hooksecurefunc(ObjectiveTrackerBlockMixin, "AddObjective", function(self, objectiveKey)
-            local line = self.usedLines and self.usedLines[objectiveKey]
-            if line then
-                local db = GetSettings()
-                local size = db and db.textFontSize or 12
-                local color = db and db.textColor
-                if size > 0 then
-                    StyleLine(line, GetFontPath(), size, color)
-                end
-            end
-        end)
-        ObjectiveTrackerBlockMixin.guiAddObjectiveHooked = true
+    local text = block.HeaderText
+    text:SetFont(GetFontPath(), settings.titleFontSize or 13, FONT_FLAGS)
+    
+    -- Color
+    local r, g, b, a = 1, 1, 1, 1
+    -- Logic: User requested to REMOVE "Use Theme Color" for Titles. Always use custom color.
+    local c = settings.titleColor
+    if c then r, g, b, a = c[1], c[2], c[3], c[4] or 1 end
+    
+    text:SetTextColor(r, g, b, a)
+    
+    -- Width / Wrapping
+    -- Explicitly set width to force wrapping inside the container
+    if settings.width then
+        -- 20px left, 10px right padding = 30px
+        text:SetWidth(settings.width - 30)
+        text:SetWordWrap(true)
     end
     
-    if ObjectiveTrackerBlockMixin and ObjectiveTrackerBlockMixin.SetHeader and not ObjectiveTrackerBlockMixin.guiSetHeaderHooked then
-        hooksecurefunc(ObjectiveTrackerBlockMixin, "SetHeader", function(self)
-            local db = GetSettings()
-            local size = db and db.titleFontSize or 13
-            local color = db and db.titleColor
-            if size > 0 and self.HeaderText then
-                self.HeaderText:SetFont(GetFontPath(), size, FONT_FLAGS)
-                SafeSetTextColor(self.HeaderText, color)
-            end
+    -- Force height to fit font changes if needed
+    text:SetHeight(text:GetStringHeight() + 2)
+    
+    -- Lock Color to prevent hover changes (Yellow highlight)
+    if not text.guiHookedColor then
+        block.guiTargetColor = {r, g, b, a}
+        hooksecurefunc(text, "SetTextColor", function(self, newR, newG, newB)
+             if self.guiLocked then return end
+             
+             -- Compare with target
+             local t = block.guiTargetColor
+             -- Simple check: if not roughly equal, reset
+             if not (math.abs(newR - t[1]) < 0.01 and math.abs(newG - t[2]) < 0.01) then
+                 self.guiLocked = true
+                 self:SetTextColor(t[1], t[2], t[3], t[4])
+                 self.guiLocked = false
+             end
         end)
-        ObjectiveTrackerBlockMixin.guiSetHeaderHooked = true
+        text.guiHookedColor = true
+    else
+        -- Update target color if settings changed
+        block.guiTargetColor = {r, g, b, a}
+        -- Re-apply immediately
+        text.guiLocked = true
+        text:SetTextColor(r, g, b, a)
+        text.guiLocked = false
+    end
+end
+
+-- Hook existing block handling
+local function HandleBlockAdd(tracker, block)
+    if not block then return end
+    
+    -- Gravity Cache: Store block for dynamic resizing
+    if not tracker.gravityCache then tracker.gravityCache = {} end
+    tracker.gravityCache[block] = true
+    
+    HandleQuestBlockIcons(tracker, block)
+    HandleBlockHeader(block)
+end
+
+-------------------------------------------------------------------------------
+-- COSMETIC BAR
+-------------------------------------------------------------------------------
+local function CreateCosmeticBar(header)
+    if not header or not header.Text then return end
+    local settings = GetSettings()
+    if not settings.cosmeticBar.enable then 
+        if header.guiCosmeticBar then header.guiCosmeticBar:Hide() end
+        return 
+    end
+
+    if not header.guiCosmeticBar then
+        local bar = header:CreateTexture(nil, "ARTWORK")
+        header.guiCosmeticBar = bar
+    end
+    
+    local bar = header.guiCosmeticBar
+    local cfg = settings.cosmeticBar
+    
+    -- Texture
+    local tex = LSM:Fetch("statusbar", cfg.texture) or "Interface\\Buttons\\WHITE8x8"
+    bar:SetTexture(tex)
+    
+    -- Color
+    local r, g, b = GetObjectiveThemeColor()
+    bar:SetVertexColor(r, g, b)
+    
+    -- Size
+    local width, height = cfg.width, cfg.height
+    if cfg.widthMode == "DYNAMIC" then
+        width = width + header.Text:GetStringWidth()
+    end
+    if cfg.heightMode == "DYNAMIC" then
+        height = height + header.Text:GetStringHeight()
+    end
+    
+    bar:SetSize(math.max(width, 1), math.max(height, 1))
+    
+    -- Position
+    bar:ClearAllPoints()
+    bar:SetPoint("RIGHT", header.Text, "LEFT", cfg.offsetX, cfg.offsetY)
+    
+    bar:Show()
+end
+
+-------------------------------------------------------------------------------
+-- COLORFUL PROGRESSION
+-------------------------------------------------------------------------------
+local function GetProgressColor(progress)
+    if progress >= 1 then
+        return 0, 1, 0 -- Green
+    elseif progress >= 0.5 then
+        return 1, 1, 0 -- Yellow
+    else
+        return 1, 0, 0 -- Red
+    end
+end
+
+local function ColorizeProgressText(text)
+    local settings = GetSettings()
+    if not settings.colorfulProgress and not settings.percentage then return end
+    
+    local raw = text:GetText()
+    if not raw then return end
+    
+    -- Strip existing percentage if present (prevent duplication)
+    raw = raw:gsub(" %[%d+%%%]$", "")
+    -- Strip existing color codes if present (prevent nesting)
+    raw = raw:gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", "")
+    
+    local current, required, details = raw:match("^(%d+)/(%d+) (.+)")
+    if not current then
+        details, current, required = raw:match("(.+): (%d+)/(%d+)$")
+    end
+    
+    if not (current and required and details) then return end
+    
+    local curNum, reqNum = tonumber(current), tonumber(required)
+    if not curNum or not reqNum or reqNum == 0 then return end
+    
+    local progress = curNum / reqNum
+    
+    -- Color the numbers
+    local progressText = current .. "/" .. required
+    if settings.colorfulProgress then
+        local r, g, b = GetProgressColor(progress)
+        progressText = string.format("|cff%02x%02x%02x%s|r", r*255, g*255, b*255, progressText)
+    end
+    
+    local result = progressText .. " " .. details
+    
+    if settings.percentage then
+         local percent = math.floor(progress * 100)
+         local percentStr = string.format(" [%d%%]", percent)
+         if settings.colorfulProgress then
+             local r, g, b = GetProgressColor(progress)
+             percentStr = string.format("|cff%02x%02x%02x%s|r", r*255, g*255, b*255, percentStr)
+         end
+         result = result .. percentStr
+    end
+    
+    text:SetText(result)
+end
+
+-------------------------------------------------------------------------------
+-- MODULE HOOKS
+-------------------------------------------------------------------------------
+local function ApplyLineStyle(line)
+    if not line or not line.Text then return end
+    
+    -- Apply Font
+    local settings = GetSettings()
+    if not settings then return end
+    
+    line.Text:SetFont(GetFontPath(), settings.textFontSize or 12, FONT_FLAGS)
+    -- Color Logic
+    local r, g, b, a = 0.75, 0.75, 0.75, 1
+    if not settings.disableThemeColorForObjectives then
+        r, g, b, a = GetObjectiveThemeColor()
+    else
+        local col = settings.textColor
+        if col then r, g, b, a = col[1], col[2], col[3], col[4] end
+    end
+    line.Text:SetTextColor(r, g, b, a)
+    
+    -- Width / Wrapping for Objectives
+    -- Explicitly set width
+    if settings.width then
+        -- 20px padding (standardized)
+        line.Text:SetWidth(settings.width - 20)
+        line.Text:SetWordWrap(true)
+    end
+    
+    -- Colorful Progression
+    ColorizeProgressText(line.Text)
+    
+    -- Handle Dash & Text Cleaning
+    if settings.removeDashes then
+        if line.Dash then
+            line.Dash:Hide()
+            line.Dash:SetText("")
+        end
+        if line.Icon then line.Icon:Hide() end -- Some trackers use Icon instead of Dash
+        
+        if text and text:find("^%- ") then
+             line.Text:SetText(text:gsub("^%- ", ""))
+        end
+    end
+    
+    -- Fix Height Overlap: Ensure the Line Frame expands to fit the wrapped Text
+    local textHeight = line.Text:GetStringHeight()
+    if textHeight > 10 then -- Sanity check
+        line:SetHeight(textHeight + 4) -- +4 padding
+    end
+end
+
+local function UpdateMinimizeButton(header, collapsed)
+    local button = header.MinimizeButton
+    if not button then return end
+    
+    button:ClearAllPoints()
+    button:SetPoint("RIGHT", header, "RIGHT", -5, 0)
+    button:SetSize(16, 16)
+    button:SetAlpha(1)
+    button:Show()
+    button:SetFrameLevel(header:GetFrameLevel() + 20)
+    
+    -- Create textures if not present
+    if not button.guiTex then
+        button:SetNormalTexture(0)
+        button:SetPushedTexture(0)
+        button:SetHighlightTexture(0)
+        
+        local tex = button:CreateTexture(nil, "OVERLAY")
+        tex:SetAllPoints()
+        button.guiTex = tex
+    end
+    
+    local tex = button.guiTex
+    tex:Show()
+    tex:ClearAllPoints()
+    tex:SetAllPoints()
+    tex:SetTexture(nil) -- Reset
+    
+    if collapsed then
+        -- Collapsed -> Show Plus to Expand
+        tex:SetTexture("Interface\\Buttons\\UI-PlusButton-Up")
+    else
+        -- Expanded -> Show Minus to Collapse
+        tex:SetTexture("Interface\\Buttons\\UI-MinusButton-Up")
+    end
+    
+    -- Reset Vertex Color (Textures have their own color)
+    tex:SetVertexColor(1, 1, 1, 1)
+end
+
+local function SkinTrackerHeader(header, stateSource)
+    if not header then return end
+    
+    -- Minimize Button
+    if header.MinimizeButton then
+        -- Default source if not provided
+        local source = stateSource or header
+        
+        -- Helper to check state safely
+        local function GetCollapsedState()
+            if source.IsCollapsed then return source:IsCollapsed() end
+            if source.isCollapsed ~= nil then return source.isCollapsed end
+            return false
+        end
+        
+        UpdateMinimizeButton(header, GetCollapsedState())
+        
+        if not header.MinimizeButton.guiHooked then
+            -- Hook parent/header SetCollapsed if available (this might be on header or source)
+            if source.SetCollapsed then
+                hooksecurefunc(source, "SetCollapsed", function(self, collapsed)
+                     -- Double check state just in case 'collapsed' arg isn't reliable
+                    UpdateMinimizeButton(header, collapsed)
+                end)
+            end
+            
+            -- Also hook OnClick to catch manual toggles
+            header.MinimizeButton:HookScript("OnClick", function(self)
+                -- Defer slightly to let state update
+                C_Timer.After(0.05, function() 
+                    UpdateMinimizeButton(header, GetCollapsedState())
+                end)
+            end)
+            
+            -- Hook OnShow
+            header.MinimizeButton:HookScript("OnShow", function(self)
+                UpdateMinimizeButton(header, GetCollapsedState())
+            end)
+            
+            header.MinimizeButton.guiHooked = true
+            
+            -- Force an initial update slightly after load
+            C_Timer.After(0.5, function() 
+                 UpdateMinimizeButton(header, GetCollapsedState())
+            end)
+        end
+    end
+    
+    -- Hide Blizzard Backgrounds
+    if header.Background then header.Background:Hide(); header.Background:SetAlpha(0) end
+    if header.Line then header.Line:Hide(); header.Line:SetAlpha(0) end -- Some headers have a line
+    
+    -- Adjust Text Position if needed
+    if header.Text then
+        header.Text:ClearAllPoints()
+        header.Text:SetPoint("LEFT", header, "LEFT", 20, 0) -- Adjusted to 20 for standard alignment
+    end
+end
+
+local function HookModuleUpdate(tracker)
+    if not tracker.Header then return end
+    
+    -- Pass 'tracker' as the source for IsCollapsed state
+    SkinTrackerHeader(tracker.Header, tracker)
+    
+    -- Style Header Text
+    local settings = GetSettings()
+    if settings then
+        local hText = tracker.Header.Text
+        if hText then
+            hText:SetFont(GetFontPath(), settings.moduleFontSize or 14, FONT_FLAGS)
+            
+            -- Color Logic: Same as ForceUpdateContent
+            local r, g, b = 1, 0.82, 0
+            if not settings.disableThemeColorForHeaders then
+                r, g, b = GetObjectiveThemeColor()
+            elseif settings.moduleColor then
+                local col = settings.moduleColor
+                r, g, b = col[1], col[2], col[3]
+            end
+            hText:SetTextColor(r, g, b, 1)
+        end
+    end
+
+    -- Cosmetic Bar
+    CreateCosmeticBar(tracker.Header)
+    
+    -- Iterate Blocks/Lines and Re-Apply Styles (Fixes "Revert to Standard" on update)
+    if tracker.gravityCache then
+         local currentWidth = 245 -- Fallback
+         if _G.ObjectiveTrackerFrame then currentWidth = _G.ObjectiveTrackerFrame:GetWidth() end
+         
+         for block in pairs(tracker.gravityCache) do
+              if block and block.IsShown and block:IsShown() then
+                   -- Apply Header Style
+                   HandleBlockHeader(block)
+                   
+                   -- Apply Line Style
+                   local linePool = block.lines
+                   if linePool then
+                        if linePool.EnumerateActive then
+                             for line in linePool:EnumerateActive() do ApplyLineStyle(line) end
+                        else
+                             for _, line in pairs(linePool) do ApplyLineStyle(line) end
+                        end
+                   end
+                   if block.usedLines then
+                        for _, line in pairs(block.usedLines) do ApplyLineStyle(line) end
+                   end
+              end
+         end
     end
 end
 
 -------------------------------------------------------------------------------
 -- INITIALIZATION
 -------------------------------------------------------------------------------
-
 function Objectives:Initialize()
     local settings = GetSettings()
-    if not settings or not settings.enabled then 
-        if ObjectiveTrackerFrame and ObjectiveTrackerFrame.guiBackdrop then
-            ObjectiveTrackerFrame.guiBackdrop:Hide()
-        end
-        return 
-    end
-
+    if not settings or not settings.enabled then return end
+    
     local TrackerFrame = _G.ObjectiveTrackerFrame
     if not TrackerFrame then return end
-
-    local sr, sg, sb, sa, bgr, bgg, bgb, bga = GetColors()
-
-    SyncBlizzardHeight()
-    ApplyMaxWidth(settings)
-    ApplyguiBackdrop(TrackerFrame, sr, sg, sb, sa, bgr, bgg, bgb, bga)
-
-    local moduleFontSize = settings.moduleFontSize or 14
-    local titleFontSize = settings.titleFontSize or 13
-    local textFontSize = settings.textFontSize or 12
-    local moduleColor = settings.moduleColor
-    local titleColor = settings.titleColor
-    local textColor = settings.textColor
     
-    ApplyFontStyles(moduleFontSize, titleFontSize, textFontSize, moduleColor, titleColor, textColor)
-    HookLineCreation()
-
+    local TrackerFrame = _G.ObjectiveTrackerFrame
+    if not TrackerFrame then return end
+    
+    -- Initial Update
     if TrackerFrame.Header then
-        SkinTrackerHeader(TrackerFrame.Header)
+        SkinTrackerHeader(TrackerFrame.Header, TrackerFrame)
     end
+    
+    -- Force Tracker Width
+    if settings.width then
+        TrackerFrame:SetWidth(settings.width)
+    end
+    
+    -- START: Dynamic Update Logic
+    local function ForceUpdateContent()
+         local settings = GetSettings()
+         local currentWidth = TrackerFrame:GetWidth() 
+         
+         -- Use settings width if available and valid
+         if settings.width and type(settings.width) == "number" then 
+             currentWidth = settings.width 
+         end
+         
+         -- Debug: Print width
+         -- print("GravityUI Debug: Resize Width =", currentWidth)
+         
+         -- Update FRAME HEIGHT
+         if settings.height then
+             TrackerFrame:SetHeight(settings.height)
+         end
+         
+         -- Iterate Modules (via Frame, safer)
+         local modules = TrackerFrame.modules
+         if modules then
+             for i, tracker in ipairs(modules) do
+                 if tracker then
+                      
+                      -- Header Text Styling
+                      if tracker.Header and tracker.Header.Text then
+                           tracker.Header.Text:SetWidth(currentWidth - 30)
+                           -- Font
+                           if settings.moduleFontSize then
+                               tracker.Header.Text:SetFont(GetFontPath(), settings.moduleFontSize, FONT_FLAGS)
+                           end
+                           -- Color
+                           local r, g, b = 1, 0.82, 0
+                           if not settings.disableThemeColorForHeaders then
+                               r, g, b = GetObjectiveThemeColor()
+                           elseif settings.moduleColor then
+                               local c = settings.moduleColor
+                               r, g, b = c[1], c[2], c[3]
+                           end
+                           tracker.Header.Text:SetTextColor(r, g, b, 1)
+                      end
+                      
+                      -- Blocks from Gravity Cache
+                      if tracker.gravityCache then
+                           for block in pairs(tracker.gravityCache) do
+                                if block and block.IsShown and block:IsShown() then
+                                    -- Block Header (Quest Title)
+                                    if block.HeaderText then
+                                         block.HeaderText:SetWidth(currentWidth - 30)
+                                         -- Update Style (Font/Color)
+                                         HandleBlockHeader(block) 
+                                    end
+                                    
+                                    -- Lines
+                                    -- Lines
+                                    local function StyleLine(line)
+                                          ApplyLineStyle(line)
+                                    end
+                                    
+                                    -- Check both possible locations
+                                    local linePool = block.lines
+                                    if linePool then
+                                         if linePool.EnumerateActive then
+                                              for line in linePool:EnumerateActive() do StyleLine(line) end
+                                         else
+                                              for _, line in pairs(linePool) do StyleLine(line) end
+                                         end
+                                    end
+                                    
+                                    if block.usedLines then
+                                         for _, line in pairs(block.usedLines) do StyleLine(line) end
+                                    end
+                                end
+                           end
+                      end
+                      
+                      -- Update Cosmetic Bar
+                      CreateCosmeticBar(tracker.Header)
+                 end
+             end
+         end
+    end
+    
+    -- Hook OnSizeChanged to handle dynamic resizing
+    TrackerFrame:SetScript("OnSizeChanged", function(self)
+         -- Remove silent pcall to see errors, or print them
+         local status, err = pcall(ForceUpdateContent)
+         if not status then 
+             print("GravityUI Error in OnSizeChanged:", err)
+         end
+    end)
+    
+    -- Apply Initial Height
+    if settings.height then
+        TrackerFrame:SetHeight(settings.height)
+    end
+    -- END: Dynamic Update Logic
+    
+    -- Initialize Styling for All Trackers
     for _, name in ipairs(trackerModules) do
         local tracker = _G[name]
-        if tracker then SkinTrackerHeader(tracker.Header) end
-    end
-
-    -- Hooks
-    if TrackerFrame.Update and not TrackerFrame.guiUpdateHooked then
-        hooksecurefunc(TrackerFrame, "Update", ScheduleBackdropUpdate)
-        TrackerFrame.guiUpdateHooked = true
-    end
-    if TrackerFrame.SetCollapsed and not TrackerFrame.guiCollapseHooked then
-        hooksecurefunc(TrackerFrame, "SetCollapsed", ScheduleBackdropUpdate)
-        TrackerFrame.guiCollapseHooked = true
-    end
-
-    for _, trackerName in ipairs(trackerModules) do
-        local tracker = _G[trackerName]
-        if tracker and not tracker.guiCollapseHooked then
-            if tracker.Header and tracker.Header.MinimizeButton then
-                tracker.Header.MinimizeButton:HookScript("OnClick", ScheduleBackdropUpdate)
+        if tracker then
+            -- Initial Update
+            HookModuleUpdate(tracker)
+            
+            -- Hook Updates
+            hooksecurefunc(tracker, "Update", function() HookModuleUpdate(tracker) end)
+            
+            -- Hook Bar Skinning
+            if tracker.GetProgressBar then
+                hooksecurefunc(tracker, "GetProgressBar", SkinProgressBar)
             end
-            if tracker.SetCollapsed then
-                hooksecurefunc(tracker, "SetCollapsed", ScheduleBackdropUpdate)
+            
+            -- Hook Block Adds
+            if tracker.AddBlock and not tracker.guiHookedAddBlock then
+                hooksecurefunc(tracker, "AddBlock", HandleBlockAdd)
+                tracker.guiHookedAddBlock = true
             end
-            if tracker.LayoutContents then
-                hooksecurefunc(tracker, "LayoutContents", ScheduleBackdropUpdate)
+            
+            -- Proactive Cache Population: Catch blocks that already exist
+            if not tracker.gravityCache then tracker.gravityCache = {} end
+            if tracker.usedBlocks then
+                for _, block in pairs(tracker.usedBlocks) do
+                    tracker.gravityCache[block] = true
+                    -- Apply styling immediately to be safe
+                    HandleBlockAdd(tracker, block)
+                end
             end
-            if tracker.AddBlock and not tracker.guiAddBlockHooked then
-                hooksecurefunc(tracker, "AddBlock", HandleQuestBlockIcons)
-                tracker.guiAddBlockHooked = true
-            end
-            tracker.guiCollapseHooked = true
         end
     end
-
-    if not TrackerFrame.guiSizeChangedHooked then
-        TrackerFrame:HookScript("OnSizeChanged", UpdateBackdropAnchors)
-        TrackerFrame.guiSizeChangedHooked = true
-    end
-
-    local manager = _G.ObjectiveTrackerManager
-    if manager and manager.SetOpacity and not manager.guiOpacityHooked then
-        hooksecurefunc(manager, "SetOpacity", function(self, opacityPercent)
-            local alpha = (opacityPercent or 0) / 100
-            local _, _, _, _, currBgR, currBgG, currBgB = GetColors()
-            if TrackerFrame.guiBackdrop then
-                TrackerFrame.guiBackdrop:SetBackdropColor(currBgR, currBgG, currBgB, alpha)
+    
+    -- Hook Line Creation for Text Styling
+    if ObjectiveTrackerBlockMixin and ObjectiveTrackerBlockMixin.AddObjective and not ObjectiveTrackerBlockMixin.guiHookedLines then
+        hooksecurefunc(ObjectiveTrackerBlockMixin, "AddObjective", function(self, objectiveKey)
+            local line = self.usedLines and self.usedLines[objectiveKey]
+            if line then
+                ApplyLineStyle(line)
             end
         end)
-        manager.guiOpacityHooked = true
+        ObjectiveTrackerBlockMixin.guiHookedLines = true
     end
-
-    C_Timer.After(0.5, HidePOIButtonGlows)
-    TrackerFrame.guiSkinned = true
+    
+    -- Backdrop Logic (Simplified from previous)
+    if not TrackerFrame.guiBackdrop and settings.backdrop and settings.backdrop.enable then
+        local bg = CreateFrame("Frame", nil, TrackerFrame, "BackdropTemplate")
+        bg:SetFrameLevel(0)
+        bg:SetPoint("TOPLEFT", -20, 10)
+        bg:SetPoint("BOTTOMRIGHT", 20, -10)
+        
+        bg:SetBackdrop({
+            bgFile = "Interface\\Buttons\\WHITE8x8",
+            edgeFile = "Interface\\Buttons\\WHITE8x8",
+            edgeSize = 1,
+            insets = { left = 1, right = 1, top = 1, bottom = 1 }
+        })
+        
+        local r, g, b, a = GetBackdropColor()
+        bg:SetBackdropColor(r, g, b, a)
+        
+        -- Border Color (Theme)
+        local br, bg_b, bb = GetObjectiveThemeColor()
+        if settings.hideBorder then
+            bg:SetBackdropBorderColor(0,0,0,0)
+        else
+            bg:SetBackdropBorderColor(br, bg_b, bb, 1)
+        end
+        
+        TrackerFrame.guiBackdrop = bg
+    end
+    
+    -- Force Initial Update to apply Fonts/Colors immediately
+    ForceUpdateContent()
 end
 
 function Objectives:Refresh()
     self:Initialize()
 end
 
--- Export for external refresh
 _G.GravityUI_RefreshObjectiveTracker = function() Objectives:Refresh() end

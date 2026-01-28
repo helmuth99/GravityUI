@@ -1701,6 +1701,8 @@ local function RefreshCharacterPanelFonts()
         end
     end
 
+
+
     -- Unified slot text size for all 3 lines (same font, size, and outline)
     local slotTextSize = settings.slotTextSize or 10
     local FONT_FLAGS = "OUTLINE"  -- Thin black outline for readability
@@ -1911,6 +1913,42 @@ local function CreateStatBar(parent, yOffset, color)
 end
 
 ---------------------------------------------------------------------------
+-- STATIC STAT DEFINITIONS
+---------------------------------------------------------------------------
+local PRIMARY_STATS_DEF = {
+    { label = "Strength", statIndex = 1 },
+    { label = "Agility", statIndex = 2 },
+    { label = "Stamina", statIndex = 3 },
+    { label = "Intellect", statIndex = 4 },
+}
+
+local SECONDARY_STATS_DEF = {
+    { label = "Crit", statKey = "CRIT", percentFunc = GetCritChance, ratingFunc = function() return GetCombatRating(CR_CRIT_MELEE) end, color = C.crit },
+    { label = "Haste", statKey = "HASTE", percentFunc = GetHaste, ratingFunc = function() return GetCombatRating(CR_HASTE_MELEE) end, color = C.haste },
+    { label = "Mastery", statKey = "MASTERY", percentFunc = GetMasteryEffect, ratingFunc = function() return GetCombatRating(CR_MASTERY) end, color = C.mastery },
+    { label = "Versatility", statKey = "VERSATILITY", percentFunc = function() return GetCombatRatingBonus(CR_VERSATILITY_DAMAGE_DONE) end, ratingFunc = function() return GetCombatRating(CR_VERSATILITY_DAMAGE_DONE) end, color = C.versatility },
+}
+
+local ATTACK_STATS_DEF = {
+    { label = "Attack Power", format = FormatNumber, statKey = "ATTACK_POWER" },
+    { label = "Spell Power", format = FormatNumber, statKey = "SPELLPOWER" },
+    { label = "Attack Speed", format = function(v) return string.format("%.2fs", v or 0) end, statKey = "ATTACK_SPEED" },
+}
+
+local DEFENSE_STATS_DEF = {
+    { label = "Armor", statKey = "ARMOR" },
+    { label = "Dodge", statKey = "DODGE" },
+    { label = "Parry", statKey = "PARRY" },
+    { label = "Block", statKey = "BLOCK" },
+}
+
+local GENERAL_STATS_DEF = {
+    { label = "Leech", statKey = "LIFESTEAL" },
+    { label = "Speed", statKey = "SPEED" },
+    { label = "Avoidance", statKey = "AVOIDANCE" },
+}
+
+---------------------------------------------------------------------------
 -- Update stats panel content
 ---------------------------------------------------------------------------
 local function UpdateStatsPanel(panel, unit)
@@ -2026,14 +2064,7 @@ local function UpdateStatsPanel(panel, unit)
     y = y - headerHeight
 
     -- Primary stats vary by class, but we show all and let WoW hide irrelevant ones
-    local stats = {
-        { label = "Strength", statIndex = 1, func = function() return UnitStat(unit, 1) end },
-        { label = "Agility", statIndex = 2, func = function() return UnitStat(unit, 2) end },
-        { label = "Stamina", statIndex = 3, func = function() return UnitStat(unit, 3) end },
-        { label = "Intellect", statIndex = 4, func = function() return UnitStat(unit, 4) end },
-    }
-
-    for _, stat in ipairs(stats) do
+    for _, stat in ipairs(PRIMARY_STATS_DEF) do
         -- Use pcall directly to capture all return values (SafeGetStat only returns one)
         local ok, statValue, effectiveStat, posBuff, negBuff = pcall(UnitStat, unit, stat.statIndex)
         if not ok then effectiveStat = 0 end
@@ -2143,16 +2174,9 @@ local function UpdateStatsPanel(panel, unit)
     _, headerHeight = CreateSectionHeader(scrollChild, "Secondary", y)
     y = y - headerHeight
 
-    local secondaryStats = {
-        { label = "Crit", statKey = "CRIT", percentFunc = GetCritChance, ratingFunc = function() return GetCombatRating(CR_CRIT_MELEE) end, color = C.crit },
-        { label = "Haste", statKey = "HASTE", percentFunc = GetHaste, ratingFunc = function() return GetCombatRating(CR_HASTE_MELEE) end, color = C.haste },
-        { label = "Mastery", statKey = "MASTERY", percentFunc = GetMasteryEffect, ratingFunc = function() return GetCombatRating(CR_MASTERY) end, color = C.mastery },
-        { label = "Versatility", statKey = "VERSATILITY", percentFunc = function() return GetCombatRatingBonus(CR_VERSATILITY_DAMAGE_DONE) end, ratingFunc = function() return GetCombatRating(CR_VERSATILITY_DAMAGE_DONE) end, color = C.versatility },
-    }
-
     local statFormat = settings.secondaryStatFormat or "percent"
 
-    for _, stat in ipairs(secondaryStats) do
+    for _, stat in ipairs(SECONDARY_STATS_DEF) do
         local percentValue = SafeGetStat(stat.percentFunc)
         local ratingValue = SafeGetStat(stat.ratingFunc)
         row = CreateStatBar(scrollChild, y, stat.color)
@@ -2244,14 +2268,15 @@ local function UpdateStatsPanel(panel, unit)
     _, headerHeight = CreateSectionHeader(scrollChild, "Attack", y)
     y = y - headerHeight
 
-    local attackStats = {
-        { label = "Attack Power", func = function() return UnitAttackPower(unit) end, format = FormatNumber, statKey = "ATTACK_POWER" },
-        { label = "Spell Power", func = function() return GetSpellBonusDamage(2) end, format = FormatNumber, statKey = "SPELLPOWER" },  -- 2 = Holy, generic spell power
-        { label = "Attack Speed", func = function() return UnitAttackSpeed(unit) end, format = function(v) return string.format("%.2fs", v or 0) end, statKey = "ATTACK_SPEED" },
-    }
-
-    for _, stat in ipairs(attackStats) do
-        local value = SafeGetStat(stat.func)
+    for _, stat in ipairs(ATTACK_STATS_DEF) do
+        local value
+        if stat.statKey == "ATTACK_POWER" then
+            value = SafeGetStat(UnitAttackPower, unit)
+        elseif stat.statKey == "SPELLPOWER" then
+            value = SafeGetStat(GetSpellBonusDamage, 2)
+        elseif stat.statKey == "ATTACK_SPEED" then
+            value = SafeGetStat(UnitAttackSpeed, unit)
+        end
         if value and value > 0 then
             row = CreateStatRow(scrollChild, y)
             row.label:SetText(stat.label)
@@ -2292,17 +2317,17 @@ local function UpdateStatsPanel(panel, unit)
     local parry = SafeGetStat(GetParryChance)
     local block = SafeGetStat(GetBlockChance)
 
-    local defenseStats = {
-        { label = "Armor", value = FormatNumber(effectiveArmor or 0), statKey = "ARMOR" },
-        { label = "Dodge", value = FormatPercent(dodge), statKey = "DODGE" },
-        { label = "Parry", value = FormatPercent(parry), statKey = "PARRY" },
-        { label = "Block", value = FormatPercent(block), statKey = "BLOCK" },
+    local defenseValues = {
+        ARMOR = FormatNumber(effectiveArmor or 0),
+        DODGE = FormatPercent(dodge),
+        PARRY = FormatPercent(parry),
+        BLOCK = FormatPercent(block),
     }
 
-    for _, stat in ipairs(defenseStats) do
+    for _, stat in ipairs(DEFENSE_STATS_DEF) do
         row = CreateStatRow(scrollChild, y)
         row.label:SetText(stat.label)
-        row.value:SetText(stat.value)
+        row.value:SetText(defenseValues[stat.statKey] or "-")
         
         -- Set tooltips (Blizzard format)
         if stat.statKey == "ARMOR" then
@@ -2353,16 +2378,16 @@ local function UpdateStatsPanel(panel, unit)
     local speed = SafeGetStat(GetSpeed)
     local avoidance = SafeGetStat(GetAvoidance)
 
-    local generalStats = {
-        { label = "Leech", value = FormatPercent(leech), statKey = "LIFESTEAL" },
-        { label = "Speed", value = FormatPercent(speed), statKey = "SPEED" },
-        { label = "Avoidance", value = FormatPercent(avoidance), statKey = "AVOIDANCE" },
+    local generalValues = {
+        LIFESTEAL = FormatPercent(leech),
+        SPEED = FormatPercent(speed),
+        AVOIDANCE = FormatPercent(avoidance),
     }
 
-    for _, stat in ipairs(generalStats) do
+    for _, stat in ipairs(GENERAL_STATS_DEF) do
         row = CreateStatRow(scrollChild, y)
         row.label:SetText(stat.label)
-        row.value:SetText(stat.value)
+        row.value:SetText(generalValues[stat.statKey] or "-")
         
         -- Set tooltips (Blizzard format)
         if stat.statKey == "LIFESTEAL" then

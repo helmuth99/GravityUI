@@ -775,7 +775,7 @@ local function BuildObjectivesPanel(parent)
     textFontSlider:SetPoint("TOPLEFT", PAD, yOffset)
     yOffset = yOffset - 50
     
-    local widthSlider = GUI:CreateSlider(content, "Max Width", 200, 400, "width", db, function(v)
+    local widthSlider = GUI:CreateSlider(content, "Max Width", 245, 400, "width", db, function(v)
         if ns.Objectives and ns.Objectives.Refresh then ns.Objectives:Refresh() end
     end, 1)
     widthSlider:SetPoint("TOPLEFT", PAD, yOffset)
@@ -786,13 +786,34 @@ local function BuildObjectivesPanel(parent)
     end)
     hideBorder:SetPoint("TOPLEFT", PAD, yOffset)
     yOffset = yOffset - 45
+    
+    local opacitySlider = GUI:CreateSlider(content, "Background Opacity", 0, 1, "backgroundOpacity", db, function(v)
+        if ns.Objectives and ns.Objectives.Refresh then ns.Objectives:Refresh() end
+    end, 0.1)
+    opacitySlider:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - 50
 
-    local moduleColor = GUI:CreateColorPicker(content, "Module Header Color (QUESTS, etc.)", "moduleColor", db, function()
+    local moduleColor -- Forward declare
+    local moduleCheck = GUI:CreateCheckbox(content, "Don't Use Theme Color for Header Color", "disableThemeColorForHeaders", db, function(value)
+        if moduleColor then
+             if value then moduleColor:Show() else moduleColor:Hide() end
+        end
+        if ns.Objectives and ns.Objectives.Refresh then ns.Objectives:Refresh() end
+    end)
+    moduleCheck:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - 30
+
+    moduleColor = GUI:CreateColorPicker(content, "Module Header Color (QUESTS, etc.)", "moduleColor", db, function()
         if ns.Objectives and ns.Objectives.Refresh then ns.Objectives:Refresh() end
     end)
     moduleColor:SetPoint("TOPLEFT", PAD, yOffset)
     moduleColor:SetWidth(400)
     yOffset = yOffset - 40
+    
+    -- Initialize Visibility
+    if not db.disableThemeColorForHeaders then
+        moduleColor:Hide()
+    end
 
     local titleColor = GUI:CreateColorPicker(content, "Quest/Achievement Title Color", "titleColor", db, function()
         if ns.Objectives and ns.Objectives.Refresh then ns.Objectives:Refresh() end
@@ -800,13 +821,34 @@ local function BuildObjectivesPanel(parent)
     titleColor:SetPoint("TOPLEFT", PAD, yOffset)
     titleColor:SetWidth(400)
     yOffset = yOffset - 40
+    
+    local colorProgress = GUI:CreateCheckbox(content, "Colorful Progress (Red -> Green)", "colorfulProgress", db, function()
+        if ns.Objectives and ns.Objectives.Refresh then ns.Objectives:Refresh() end
+    end)
+    colorProgress:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - 30
 
-    local textColor = GUI:CreateColorPicker(content, "Objective Text Color", "textColor", db, function()
+    local textColor -- Forward declare
+    local textCheck = GUI:CreateCheckbox(content, "Don't Use Theme Color for Objective Text", "disableThemeColorForObjectives", db, function(value)
+        if textColor then
+             if value then textColor:Show() else textColor:Hide() end
+        end
+        if ns.Objectives and ns.Objectives.Refresh then ns.Objectives:Refresh() end
+    end)
+    textCheck:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - 30
+
+    textColor = GUI:CreateColorPicker(content, "Objective Text Color", "textColor", db, function()
         if ns.Objectives and ns.Objectives.Refresh then ns.Objectives:Refresh() end
     end)
     textColor:SetPoint("TOPLEFT", PAD, yOffset)
     textColor:SetWidth(400)
     yOffset = yOffset - 40
+    
+    -- Initialize Visibility
+    if not db.disableThemeColorForObjectives then
+        textColor:Hide()
+    end
     
     content:SetHeight(math.abs(yOffset) + 20)
 end

@@ -120,12 +120,47 @@ ns.Defaults = {
             width = 260,
             height = 410,
             hideBorder = true,
+            backgroundOpacity = 0.8, -- New: Opacity setting
             moduleFontSize = 14,
             titleFontSize = 13,
             textFontSize = 12,
             moduleColor = { 1, 0.82, 0, 1 },
+            disableThemeColorForHeaders = false, -- Default: Use Theme Color (enabled). Disable = false.
             titleColor = { 1, 1, 1, 1 },
+            -- useThemeColorForTitles removed as requested
+            disableThemeColorForObjectives = false, -- New: Default to Theme Color
             textColor = { 0.75, 0.75, 0.75, 1 },
+            
+            -- New Styling
+            colorfulProgress = true,
+            percentage = true,
+            
+            -- Cosmetic Bar
+            cosmeticBar = {
+                enable = true,
+                width = 4,
+                height = 10, -- Reduced to 10 as requested
+                widthMode = "FIXED", 
+                heightMode = "FIXED",
+                heightMode = "DYNAMIC", -- FIXED / DYNAMIC
+                offsetX = -10,
+                offsetY = 0,
+                texture = "Gravity", -- LSM texture
+                border = "NONE", -- NONE / SHADOW
+                borderAlpha = 1,
+                useThemeColor = true, -- If true, uses Theme Color (Class or Custom based on Globals)
+                color = { 1, 0.82, 0, 1 }, -- Custom fallback if Theme Color is disabled HERE
+            },
+            
+            -- Custom Backdrop
+            backdrop = {
+                enable = true,
+                transparent = true,
+                topLeftOffsetX = 0,
+                topLeftOffsetY = 0,
+                bottomRightOffsetX = 0,
+                bottomRightOffsetY = 0,
+            },
         },
         instanceFrames = {
             enabled = true,
@@ -161,6 +196,7 @@ ns.Defaults = {
             enabled = true,
             mouseover = true,
             hideBorder = false,
+            removeDashes = true, -- New: Clean up lines
             offsetX = 936,
             spacing = 2,
             useThemeColorBorder = true,
