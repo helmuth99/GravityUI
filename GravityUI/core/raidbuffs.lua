@@ -126,8 +126,27 @@ local function UnitHasBuff(unit, spellId, buffName)
     for i = 1, MAX_AURA_INDEX do
         local aura = C_UnitAuras.GetAuraDataByIndex(unit, i, "HELPFUL")
         if not aura then break end
-        if (type(aura.spellId) == "number" and aura.spellId == spellId) or (buffName and aura.name == buffName) then
+        
+        -- Secure check: spellId (Wrap comparison entirely)
+        -- We must ensure ONLY a boolean returns, never the secret value itself
+        local success, match = pcall(function() 
+            if aura.spellId == spellId then return true end
+            return false
+        end)
+        
+        if success and match == true then
             return true
+        end
+        
+        -- Secure check: name
+        if buffName then
+             local successName, nameMatch = pcall(function() 
+                if aura.name == buffName then return true end
+                return false
+             end)
+             if successName and nameMatch == true then
+                 return true
+             end
         end
     end
     return false

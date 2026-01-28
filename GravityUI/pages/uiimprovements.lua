@@ -637,6 +637,7 @@ local function BuildWorldMarks(parent)
     local dbMarks = dbUI.marks
     
     AddRow(content, "Enable Marks Bar", "checkbox", "enabled", dbMarks, RefreshMarks)
+    AddRow(content, "Enable Ready Check & Pull Bar", "checkbox", "showTimerBar", dbMarks, RefreshMarks)
     AddRow(content, "Show on Mouseover Only", "checkbox", "mouseover", dbMarks, RefreshMarks)
     AddRow(content, "Button Size", "slider", 10, 60, "size", dbMarks, RefreshMarks, 1)
     AddRow(content, "Spacing", "slider", 0, 20, "spacing", dbMarks, RefreshMarks, 1)

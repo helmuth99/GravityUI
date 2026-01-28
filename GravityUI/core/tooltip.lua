@@ -301,15 +301,8 @@ local function InitHooks()
         TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Spell, GeneralPostCall)
     end
 
-    -- Safety wrappers
-    if MoneyFrame_Update then
-        local orig = MoneyFrame_Update
-        MoneyFrame_Update = function(...) pcall(orig, ...) end
-    end
-    if SetTooltipMoney then
-        local orig = SetTooltipMoney
-        SetTooltipMoney = function(...) pcall(orig, ...) end
-    end
+    -- Safety wrappers removed to prevent Ping System Taint.
+    -- Overwriting globals like MoneyFrame_Update causes insecure execution paths.
 end
 
 ---------------------------------------------------------------------------

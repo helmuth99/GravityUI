@@ -210,6 +210,7 @@ end
 
 local function SkinLootHistoryElement(frame)
     if not frame or frame.guiSkinned then return end
+    if frame.IsForbidden and frame:IsForbidden() then return end
     
     local db = GetDB()
     local sr, sg, sb, sa = GetAccent()
@@ -222,23 +223,27 @@ local function SkinLootHistoryElement(frame)
     end
 
     if frame.Name then
-        frame.Name:SetFont(font, 12, outline)
+        pcall(function() frame.Name:SetFont(font, 12, outline) end)
     end
     
     if frame.WinnerName then
-        frame.WinnerName:SetFont(font, 12, outline)
-        frame.WinnerName:SetTextColor(tr, tg, tb, ta)
+        pcall(function() 
+            frame.WinnerName:SetFont(font, 12, outline)
+            frame.WinnerName:SetTextColor(tr, tg, tb, ta)
+        end)
     end
     
     if frame.Icon then
-        frame.Icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
-        if not frame.iconBorder then
-            frame.iconBorder = CreateFrame("Frame", nil, frame, "BackdropTemplate")
-            frame.iconBorder:SetPoint("TOPLEFT", frame.icon, -1, 1)
-            frame.iconBorder:SetPoint("BOTTOMRIGHT", frame.icon, 1, -1)
-            frame.iconBorder:SetBackdrop({ edgeFile = "Interface\\Buttons\\WHITE8x8", edgeSize = 1 })
-            frame.iconBorder:SetBackdropBorderColor(sr, sg, sb, 1)
-        end
+        pcall(function()
+            frame.Icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+            if not frame.iconBorder then
+                frame.iconBorder = CreateFrame("Frame", nil, frame, "BackdropTemplate")
+                frame.iconBorder:SetPoint("TOPLEFT", frame.icon, -1, 1)
+                frame.iconBorder:SetPoint("BOTTOMRIGHT", frame.icon, 1, -1)
+                frame.iconBorder:SetBackdrop({ edgeFile = "Interface\\Buttons\\WHITE8x8", edgeSize = 1 })
+                frame.iconBorder:SetBackdropBorderColor(sr, sg, sb, 1)
+            end
+        end)
     end
     
     frame.guiSkinned = true
@@ -274,7 +279,11 @@ local function SkinGroupLootHistoryFrame()
 
     if f.ScrollBox then
         hooksecurefunc(f.ScrollBox, "Update", function(box)
-            box:ForEachFrame(SkinLootHistoryElement)
+            if not box or (box.IsForbidden and box:IsForbidden()) then return end
+            -- Using pcall here to prevent crash if ForEachFrame hits a restricted internal frame
+            pcall(function() 
+                box:ForEachFrame(SkinLootHistoryElement)
+            end)
         end)
     end
     

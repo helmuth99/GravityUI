@@ -548,6 +548,17 @@ end
 -- Initialize Extra Buttons (Art, Scale, Position)
 -- Made global for scoping (or move definition up) - Moving up is cleaner, but for now declaring local above Refresh
 InitializeExtraButtons = function()
+    -- Safety: Cannot modify protected frames (ExtraAbilityContainer) in combat
+    if InCombatLockdown() then
+        local f = CreateFrame("Frame")
+        f:RegisterEvent("PLAYER_REGEN_ENABLED")
+        f:SetScript("OnEvent", function(self)
+            InitializeExtraButtons()
+            self:UnregisterAllEvents()
+        end)
+        return
+    end
+
     local db = GetDB()
     if not db or not db.enabled then return end
     
@@ -557,7 +568,9 @@ InitializeExtraButtons = function()
         local frame = ExtraAbilityContainer
         
         -- Scale
-        if settings.scale then frame:SetScale(settings.scale) end
+        if settings.scale then 
+            pcall(function() frame:SetScale(settings.scale) end)
+        end
         
         -- Position
         if settings.position then
@@ -589,7 +602,9 @@ InitializeExtraButtons = function()
         local settings = db.bars.zoneAbility
         
         -- Scale
-        if settings.scale then zoneFrame:SetScale(settings.scale) end
+        if settings.scale then 
+            pcall(function() zoneFrame:SetScale(settings.scale) end)
+        end
         
         -- Position
         if settings.position then

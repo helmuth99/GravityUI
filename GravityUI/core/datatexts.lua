@@ -406,8 +406,8 @@ DT.Types.gold = {
                 for key, data in pairs(db.global.goldData) do
                     local money = type(data) == "table" and data.money or data
                     local class = type(data) == "table" and data.class or nil
-                    local cr, cg, cb = GetClassColor(class)
-                    local colorCode = string.format("|cff%02x%02x%02x", cr*255, cg*255, cb*255)
+                    local c = GetClassColor(class)
+                    local colorCode = string.format("|cff%02x%02x%02x", c.r*255, c.g*255, c.b*255)
                     local btn = root:CreateButton(colorCode .. key .. "|r - " .. FormatGold(money), function()
                         db.global.goldData[key] = nil
                         print("|cff30D1FFGravityUI:|r Removed gold data for " .. key)

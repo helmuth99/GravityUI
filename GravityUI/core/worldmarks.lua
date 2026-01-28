@@ -24,9 +24,28 @@ function WorldMarks.Refresh()
     
     local settings = GetSettings()
     if not settings then return end
+
+    local padding = settings.spacing -- Assuming padding is equal to spacing for now
     
-    local width = (settings.size * 9) + (settings.spacing * 10)
-    local height = settings.size + (settings.spacing * 2)
+    -- Calculate Width/Height
+    -- Width = (9 buttons * size) + (8 spaces) + (2 padding)
+    local width = (9 * settings.size) + (8 * settings.spacing) + (padding * 2)
+    
+    -- Height depends on showTimerBar
+    -- Base: (size) + (2 padding)
+    -- If timer bar: (size * 2) + (spacing) + (2 padding)
+    local height = settings.size + (padding * 2)
+    local showTimerBar = true
+    if settings.showTimerBar ~= nil then showTimerBar = settings.showTimerBar end
+
+    -- Height depends on showTimerBar
+    -- Base: (size) + (2 padding)
+    -- If timer bar: (size * 2) + (spacing) + (2 padding)
+    local height = settings.size + (padding * 2)
+    if showTimerBar then
+         height = (settings.size * 2) + settings.spacing + (padding * 2)
+    end
+    
     frame:SetSize(width, height)
     
     frame:ClearAllPoints()
@@ -45,13 +64,59 @@ function WorldMarks.Refresh()
     end
 
     -- Update Buttons
-    for i = 1, 9 do
+    for i = 1, 11 do
         local btn = frame.buttons[i]
         if btn then
-            btn:SetSize(settings.size, settings.size)
-            local xOffset = settings.spacing + ((i-1) * (settings.size + settings.spacing))
-            btn:ClearAllPoints()
-            btn:SetPoint("LEFT", frame, "LEFT", xOffset, 0)
+            -- Hide/Show Row 2 buttons based on settings.showTimerBar
+            if i >= 10 then
+                if showTimerBar then
+                    btn:Show()
+                else
+                    btn:Hide()
+                end
+            end
+
+            if i <= 9 then
+                -- Row 1: Markers (Square)
+                btn:SetSize(settings.size, settings.size)
+                btn:ClearAllPoints()
+                local xOffset = padding + ((i-1) * (settings.size + settings.spacing))
+                btn:SetPoint("TOPLEFT", frame, "TOPLEFT", xOffset, -padding)
+                
+                if btn.text then btn.text:Hide() end
+                if btn.icon then btn.icon:Show() end
+            else
+                -- Row 2: Tools (Wide Buttons)
+                local totalRow1Width = (9 * settings.size) + (8 * settings.spacing)
+                local btnWidth = (totalRow1Width - settings.spacing) / 2
+                
+                btn:SetSize(btnWidth, settings.size)
+                btn:ClearAllPoints()
+                
+                -- yOffset = padding (top) + row1 height (size) + spacing
+                local yOffset = -(padding + settings.size + settings.spacing)
+                
+                if i == 10 then
+                    btn:SetPoint("TOPLEFT", frame, "TOPLEFT", padding, yOffset)
+                elseif i == 11 then
+                    btn:SetPoint("LEFT", frame.buttons[10], "RIGHT", settings.spacing, 0)
+                end
+                
+                if btn.text then btn.text:Show() end
+                if btn.icon then btn.icon:Hide() end
+                
+                -- Ensure backdrop for visibility
+                if not btn:GetBackdrop() then
+                    Mixin(btn, BackdropTemplateMixin)
+                    btn:SetBackdrop({
+                         bgFile = "Interface\\Buttons\\WHITE8x8",
+                         edgeFile = "Interface\\Buttons\\WHITE8x8",
+                         edgeSize = 1,
+                    })
+                end
+                btn:SetBackdropColor(0.1, 0.1, 0.1, 0.9)
+                btn:SetBackdropBorderColor(0, 0, 0, 1)
+            end
         end
     end
     
@@ -111,31 +176,84 @@ local function CreateMarksBar()
     frame:SetScript("OnLeave", function() if not frame:IsMouseOver() then UpdateAlpha(0) end end)
 
     -- Button Creation
-    for i = 1, 9 do
-        local btn = CreateFrame("Button", "GravityUIMarkerBtn"..i, frame, "SecureActionButtonTemplate")
+    for i = 1, 11 do
+        local btn = CreateFrame("Button", "GravityUIMarkerBtn"..i, frame, "SecureActionButtonTemplate, BackdropTemplate")
         btn:RegisterForClicks("AnyUp", "AnyDown") 
         btn:SetAttribute("type", "macro") 
 
-        local tex = btn:CreateTexture(nil, "ARTWORK")
-        tex:SetPoint("TOPLEFT", 2, -2)
-        tex:SetPoint("BOTTOMRIGHT", -2, 2)
+        -- Icon Texture (std name 'icon' for easier handling)
+        btn.icon = btn:CreateTexture(nil, "ARTWORK")
+        btn.icon:SetPoint("TOPLEFT", 2, -2)
+        btn.icon:SetPoint("BOTTOMRIGHT", -2, 2)
+        
+        -- Text Label (for wide buttons)
+        btn.text = btn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        btn.text:SetPoint("CENTER", 0, 0)
+        btn.text:Hide()
         
         if i < 9 then
-            tex:SetTexture("Interface\\TargetingFrame\\UI-RaidTargetingIcons")
-            SetRaidTargetIconTexture(tex, i)
-            
-            -- Worldmarker mapping (Legacy mapping)
+            btn.icon:SetTexture("Interface\\TargetingFrame\\UI-RaidTargetingIcons")
+            SetRaidTargetIconTexture(btn.icon, i)
             local wmMap = { [1]=5, [2]=6, [3]=3, [4]=2, [5]=7, [6]=1, [7]=4, [8]=8 }
             local wmID = wmMap[i] or i
-            
-            -- [nomod:shift] = Target Mark, [mod:shift] = World Mark
             btn:SetAttribute("macrotext", "/tm [nomod:shift] " .. i .. "\n/wm [mod:shift] " .. wmID)
-        else
+        elseif i == 9 then
             -- Clear Button
-            tex:SetTexture("Interface\\Buttons\\UI-GroupLoot-Pass-Up")
+            btn.icon:SetTexture("Interface\\Buttons\\UI-GroupLoot-Pass-Up")
             btn:SetAttribute("macrotext", "/tm [target=player,nomod:shift] 0\n/tm [nomod:shift] 0\n/clearraidmarkers [nomod:shift]\n/cwm [mod:shift] all")
+        elseif i == 10 then
+            -- Ready Check
+            btn:SetAttribute("macrotext", "/readycheck")
+            btn.text:SetText("Ready Check")
+            btn.text:Show()
+            btn.icon:Hide()
+        elseif i == 11 then
+            -- Pull Timer
+            -- Default check
+            local settings = GetSettings()
+            if not settings.pullTimer then settings.pullTimer = 10 end
+            
+            local function UpdatePullButton(val)
+                if InCombatLockdown() then return end
+                btn:SetAttribute("type1", "macro")
+                btn:SetAttribute("macrotext1", "/pull " .. val)
+                btn.text:SetText("Pull " .. val)
+            end
+            
+            UpdatePullButton(settings.pullTimer)
+            
+            btn.text:Show()
+            btn.icon:Hide()
+            
+            -- Tooltip + Menu
+            btn:SetScript("OnEnter", function(self) 
+                if frame:GetAlpha() > 0 then
+                    GameTooltip:SetOwner(self, "ANCHOR_TOP")
+                    GameTooltip:AddLine("Left-Click: Start Pull")
+                    GameTooltip:AddLine("Right-Click: Set Duration", 1, 1, 1)
+                    GameTooltip:Show()
+                end
+                UpdateAlpha(1)
+            end)
+            btn:SetScript("OnLeave", function() GameTooltip:Hide() if not frame:IsMouseOver() then UpdateAlpha(0) end end)
+            
+            btn:SetScript("OnMouseUp", function(self, button)
+                if button == "RightButton" and not InCombatLockdown() then
+                    MenuUtil.CreateContextMenu(self, function(_, root)
+                        root:CreateTitle("Pull Timer Duration")
+                        local options = {5, 8, 10, 15}
+                        for _, v in ipairs(options) do
+                            root:CreateButton(v .. " seconds", function()
+                                settings.pullTimer = v
+                                UpdatePullButton(v)
+                            end)
+                        end
+                    end)
+                end
+            end)
         end
         
+        -- Alpha hover only for icon buttons usually, but let's apply to all for consistency with bar
         btn:HookScript("OnEnter", function() UpdateAlpha(1) end)
         btn:HookScript("OnLeave", function() if not frame:IsMouseOver() then UpdateAlpha(0) end end)
         

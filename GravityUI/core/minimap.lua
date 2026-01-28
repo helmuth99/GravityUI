@@ -59,9 +59,10 @@ local function GetClampedPosition(frame, point, offsetX, offsetY)
     local halfFW = frame:GetWidth() / 2
     local halfFH = frame:GetHeight() / 2
     
-    -- Max allowed distance from Center
-    local maxDistX = math.max(0, halfMW - halfFW)
-    local maxDistY = math.max(0, halfMH - halfFH)
+    -- Max allowed distance from Center (Relaxed to allow edge positioning)
+    -- Allow the frame to go slightly outside (halfFW + 10 padding)
+    local maxDistX = halfMW + 10
+    local maxDistY = halfMH + 10
     
     -- Determine Anchor's position relative to Center
     -- e.g. TOPRIGHT anchor is at (+halfMW, +halfMH)
@@ -648,9 +649,9 @@ local function SavePreviewPosition(key, frame)
     local halfFW_screen = (frame:GetWidth() * fEffScale) / 2
     local halfFH_screen = (frame:GetHeight() * fEffScale) / 2
     
-    -- Calculate bounds (allow margin of error, but generally keep it inside)
-    local maxDiffX = math.max(0, halfMW_screen - halfFW_screen)
-    local maxDiffY = math.max(0, halfMH_screen - halfFH_screen)
+    -- Calculate bounds (Relaxed)
+    local maxDiffX = halfMW_screen + 10
+    local maxDiffY = halfMH_screen + 10
     
     -- Clamp relative position
     if relX_screen > maxDiffX then relX_screen = maxDiffX

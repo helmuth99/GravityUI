@@ -279,9 +279,11 @@ function Module:UpdateFrame(frame)
                 -- Wrap name access, it can be secret
                 local successName, spellName = pcall(function() return spellInfo.name end)
                 if successName and spellName then
-                    local nameLower = spellName:lower()
-                    local successBind, b2 = pcall(function() return spellKeybinds[nameLower] end)
-                    if successBind then bind = b2 end
+                    local successLower, nameLower = pcall(function() return spellName:lower() end)
+                    if successLower and nameLower then
+                        local successBind, b2 = pcall(function() return spellKeybinds[nameLower] end)
+                        if successBind then bind = b2 end
+                    end
                 end
             end
         end
@@ -289,16 +291,24 @@ function Module:UpdateFrame(frame)
         if not bind and type(spellId) == "number" then
             local successItem, itemName = pcall(GetItemInfo, spellId)
             if successItem and itemName then
-                local nameLower = itemName:lower()
-                local successBind, b3 = pcall(function() return spellKeybinds[nameLower] end)
-                if successBind then 
-                    bind = b3 
-                else
+                local successLower, nameLower = pcall(function() return itemName:lower() end)
+                local usedName = false
+                if successLower and nameLower then
+                     local successBind, b3 = pcall(function() return spellKeybinds[nameLower] end)
+                     if successBind then 
+                         bind = b3 
+                         usedName = true
+                     end
+                end
+                
+                if not usedName then
                     local successItemSpell, itemSpell = pcall(GetItemSpell, spellId)
                     if successItemSpell and itemSpell then
-                        local itemSpellLower = itemSpell:lower()
-                        local successBind4, b4 = pcall(function() return spellKeybinds[itemSpellLower] end)
-                        if successBind4 then bind = b4 end
+                        local successLower2, itemSpellLower = pcall(function() return itemSpell:lower() end)
+                        if successLower2 and itemSpellLower then
+                             local successBind4, b4 = pcall(function() return spellKeybinds[itemSpellLower] end)
+                             if successBind4 then bind = b4 end
+                        end
                     end
                 end
             end

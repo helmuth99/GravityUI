@@ -196,6 +196,7 @@ ns.Defaults = {
             enabled = true,
             mouseover = true,
             hideBorder = false,
+            showTimerBar = true, -- New: Ready Check / Pull Bar
             removeDashes = true, -- New: Clean up lines
             offsetX = 936,
             spacing = 2,
