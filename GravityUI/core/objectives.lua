@@ -219,7 +219,47 @@ local function HandleBlockHeader(block)
     end
 end
 
+-- Helper to recalculate Block Height based on wrapped lines
+local function LayoutBlock(block)
+    if not block then return end
+    
+    local height = 0
+    
+    -- 1. Header
+    if block.HeaderText and block.HeaderText:IsShown() then
+        height = height + block.HeaderText:GetStringHeight() + 4 -- Header Padding
+    end
+    
+    -- 2. Lines
+    local function AddLine(line)
+        if line and line:IsShown() then
+             height = height + line:GetHeight() + 2 -- Line Spacing
+        end
+    end
+    
+    local linePool = block.lines
+    if linePool then
+         if linePool.EnumerateActive then
+              for line in linePool:EnumerateActive() do AddLine(line) end
+         else
+              for _, line in pairs(linePool) do AddLine(line) end
+         end
+    end
+    
+    if block.usedLines then
+         for _, line in pairs(block.usedLines) do AddLine(line) end
+    end
+    
+    -- 3. Padding
+    height = height + 5
+    
+    -- 4. Apply
+    if height < 20 then height = 20 end
+    block:SetHeight(height)
+end
+
 -- Hook existing block handling
+
 local function HandleBlockAdd(tracker, block)
     if not block then return end
     
@@ -536,6 +576,8 @@ local function HookModuleUpdate(tracker)
                    if block.usedLines then
                         for _, line in pairs(block.usedLines) do ApplyLineStyle(line) end
                    end
+                   
+                   LayoutBlock(block)
               end
          end
     end
@@ -636,6 +678,8 @@ function Objectives:Initialize()
                                     if block.usedLines then
                                          for _, line in pairs(block.usedLines) do StyleLine(line) end
                                     end
+                                    
+                                    LayoutBlock(block)
                                 end
                            end
                       end
@@ -701,6 +745,7 @@ function Objectives:Initialize()
             local line = self.usedLines and self.usedLines[objectiveKey]
             if line then
                 ApplyLineStyle(line)
+                LayoutBlock(self)
             end
         end)
         ObjectiveTrackerBlockMixin.guiHookedLines = true
