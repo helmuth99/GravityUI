@@ -827,6 +827,16 @@ local function BuildObjectivesPanel(parent)
     end)
     colorProgress:SetPoint("TOPLEFT", PAD, yOffset)
     yOffset = yOffset - 30
+    
+    local percentageCheck = GUI:CreateCheckbox(content, "Show Percentage", "percentage", db, function()
+        if ns.Objectives and ns.Objectives.Refresh then ns.Objectives:Refresh() end
+    end)
+    percentageCheck:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - 30
+    
+    local percentageNote = GUI:CreateLabel(content, "Displays the progress percentage (e.g. [50%]) next to the objective text.", 12, C.textMuted)
+    percentageNote:SetPoint("TOPLEFT", percentageCheck, "BOTTOMLEFT", 26, -4)
+    yOffset = yOffset - 40
 
     local textColor -- Forward declare
     local textCheck = GUI:CreateCheckbox(content, "Don't Use Theme Color for Objective Text", "disableThemeColorForObjectives", db, function(value)
