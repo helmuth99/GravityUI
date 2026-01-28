@@ -24,8 +24,9 @@ local function ImportEditModeLayout(str, twink)
     
     -- Import the layout as account-wide (global) so it works on all characters
     if not LayoutInstalled() or twink then
-        EditModeManagerFrame:ImportLayout(layoutInfo, Enum.EditModeLayoutType.Character, ADDON_NAME)
+        EditModeManagerFrame:ImportLayout(layoutInfo, Enum.EditModeLayoutType.Account, ADDON_NAME)
     end
+    EditModeManagerFrame:Hide()
     
     -- Note: We can't close edit mode automatically without causing taints
 end
@@ -122,8 +123,20 @@ function GUI:TwinkInstaller()
             if not db then return end
             
             -- Find and activate the previously imported Edit Mode layout
-            if _G.GravityUI and _G.GravityUI.imports and _G.GravityUI.imports.EditMode then
-                ImportEditModeLayout(_G.GravityUI.imports.EditMode.data, true)
+            local layoutInfo = C_EditMode.GetLayouts()
+            local index
+           
+            for i, layout in ipairs(layoutInfo.layouts) do
+                if layout.layoutName == ADDON_NAME and layout.layoutType == 1 then
+                    index = i + 2
+                    break
+                end
+            end
+
+            if db.installer and db.installer.editmode and index then
+                EditModeManagerFrame:Show()
+                C_EditMode.SetActiveLayout(index)
+                EditModeManagerFrame:Hide()
             end
 
             --UUF
@@ -163,7 +176,7 @@ function GUI:TwinkInstaller()
             end
 
 
-            Addon:SafeReload()
+            --Addon:SafeReload()
         end,
         onCancel = function() end,
         isDestructive = true,
