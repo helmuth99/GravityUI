@@ -137,6 +137,7 @@ end
 local function UpdatePanelSlots(frame, config)
     -- Update Size
     frame:SetSize(config.width or 200, config.height or 22)
+    frame:ClearAllPoints()
     frame:SetPoint(config.point or "CENTER", UIParent, config.relativePoint or "CENTER", config.x or 0, config.y or 0)
     
     -- Update Border & Backdrop (Call after size is set)
@@ -320,4 +321,4 @@ function DP:Init()
 end
 
 -- Export to ns for initialization
-ns.RefreshDatapanels = function() DP:RefreshAll() end
+ns.RefreshDatapanels = function() DP:Init() end

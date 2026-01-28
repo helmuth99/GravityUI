@@ -235,6 +235,11 @@ local function UpdateBackdropAnchors()
     if not TrackerFrame or not TrackerFrame.guiBackdrop then return end
     
     local settings = GetSettings()
+    if not settings or not settings.enabled then
+        TrackerFrame.guiBackdrop:Hide()
+        return
+    end
+    
     local maxHeight = settings and settings.height or 600
     
     local bottomModule = nil

@@ -98,7 +98,9 @@ function ns.RefreshAccentColors()
     if ns.Alerts and ns.Alerts.Initialize then ns.Alerts:Initialize() end -- Alerts re-init resets colors
     if ns.Loot and ns.Loot.RefreshStyling then ns.Loot:RefreshStyling() end
     if ns.Loot and ns.Loot.RefreshHistoryStyling then ns.Loot:RefreshHistoryStyling() end
+    if ns.Loot and ns.Loot.RefreshHistoryStyling then ns.Loot:RefreshHistoryStyling() end
     if ns.InstanceFrames and ns.InstanceFrames.Initialize then ns.InstanceFrames:Initialize() end
+    if ns.Objectives and ns.Objectives.Initialize then ns.Objectives:Initialize() end
 end
 
 -- Get global font settings
@@ -138,6 +140,10 @@ function Addon:OnInitialize()
     -- Register for profile change events
     for _, event in ipairs({"OnProfileChanged", "OnProfileCopied", "OnProfileReset"}) do
         ns.db.RegisterCallback(ns, event, function()
+            -- Refresh in-game UI elements (Minimap, Datapanels, Colors, local changes)
+            ns.RefreshAccentColors()
+            
+            -- Refresh GUI if open
             if ns.GUI and ns.GUI.RefreshAll then
                 ns.GUI:RefreshAll()
             end

@@ -601,14 +601,7 @@ function Styling:RefreshReadyCheck()
     if frame.guiTitle then frame.guiTitle:SetTextColor(titleR, titleG, titleB, titleA) end
 
     -- Existing refresh logic
-    if GravityUI_RepositionConsumables then
-        GravityUI_RepositionConsumables()
-    end
-    if gui_ConsumablesFrame and gui_ConsumablesFrame:IsShown() then
-        if GravityUI_RefreshConsumables then
-             GravityUI_RefreshConsumables()
-        end
-    end
+
 end
 
 -------------------------------------------------------------------------------

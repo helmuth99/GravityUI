@@ -28,11 +28,7 @@ ns.Defaults = {
             fontSize = 8,
             fontOutline = "OUTLINE",
         },
-        consumableCheckEnabled = true,
-        consumableOnReadyCheck = true,
-        consumableOnDungeon = true,
-        consumableOnRaid = true,
-        consumableOnResurrect = false,
+
         skinReadyCheck = true,
         readyCheck = {
             enable = true, -- Using this alongside skinReadyCheck or instead? best to keep skinReadyCheck for now or alias it. 

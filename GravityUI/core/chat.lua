@@ -714,7 +714,8 @@ local function StyleEditBox(chatFrame)
          if not editBox.__guiTopModeHooked then
             editBox.__guiTopModeHooked = true
             editBox:HookScript("OnEditFocusGained", function() 
-                if settings.editBox.enabled then backdrop:Show() end
+                local s = GetSettings()
+                if s and s.editBox and s.editBox.enabled then backdrop:Show() end
             end)
             editBox:HookScript("OnEditFocusLost", function() backdrop:Hide() end)
         end
@@ -744,7 +745,8 @@ local function StyleEditBox(chatFrame)
         if not editBox.__guiFocusModeHooked then
             editBox.__guiFocusModeHooked = true
             editBox:HookScript("OnEditFocusGained", function() 
-                if settings.editBox.enabled then backdrop:Show() end
+                local s = GetSettings()
+                if s and s.editBox and s.editBox.enabled then backdrop:Show() end
             end)
             editBox:HookScript("OnEditFocusLost", function() backdrop:Hide() end)
         end

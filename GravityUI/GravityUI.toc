@@ -41,7 +41,6 @@ core\alerts.lua
 core\loot.lua
 core\objectives.lua
 core\instanceframes.lua
-core\readycheck.lua
 core\raidbuffs.lua
 
 core\combattimer.lua
