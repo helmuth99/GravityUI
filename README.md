@@ -94,3 +94,4 @@ GravityUI setzt auf ein **modernes, dunkles Design** ("Blue Condition Theme") mi
 ---
 
 **Viel Spaß beim Spielen! 🎮**
+

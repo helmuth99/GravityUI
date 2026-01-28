@@ -53,6 +53,11 @@ local MELEE_RANGE_ABILITIES = {
     22568,  -- Ferocious Bite
     33917,  -- Mangle
     6807,   -- Maul
+    17364,  -- Shaman: Stormstrike
+    7389,   -- Shaman: Primal Strike
+    60103,  -- Shaman: Lava Lash
+    186270, -- Hunter: Raptor Strike
+    190984, -- Hunter: Mongoose Bite
 }
 
 -- References

@@ -17,9 +17,9 @@ required-dependencies:
   - bettercooldownmanager
   - big-wigs
   - details
+  - plater-nameplates
 
 optional-dependencies:
   - platynator
-  - plater
   - blizzmove
   - hidingbar
