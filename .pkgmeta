@@ -13,10 +13,13 @@ move-folders:
 
 required-dependencies:
   - unhaltedunitframes
-
-optional-dependencies:
+  - danders-frames
   - bettercooldownmanager
   - big-wigs
   - details
+
+optional-dependencies:
   - platynator
-  - danders-frames
+  - plater
+  - blizzmove
+  - hidingbar

@@ -253,7 +253,12 @@ function Module:UpdateFrame(frame)
     end
 
     local name = frame:GetName()
-    local spellId = frame.spellID or frame.spellId or (frame.GetSpellID and frame:GetSpellID())
+    local spellId = frame.spellID or frame.spellId
+    if not spellId and frame.GetSpellID then
+        local success, id = pcall(frame.GetSpellID, frame)
+        if success then spellId = id end
+    end
+    
     if not spellId and frame.icon then
         spellId = frame.icon.spellID or frame.icon.spellId
     end
@@ -263,22 +268,33 @@ function Module:UpdateFrame(frame)
     end
 
     local bind = nil
-    if spellId and type(spellId) == "number" then
-        bind = spellKeybinds[spellId]
-        if not bind then
-            local spellInfo = C_Spell.GetSpellInfo(spellId)
-            if spellInfo and spellInfo.name then
-                bind = spellKeybinds[spellInfo.name:lower()]
+    if spellId then
+        -- Safe indexing with pcall to avoid "table index is secret"
+        local success, b = pcall(function() return spellKeybinds[spellId] end)
+        if success then bind = b end
+        
+        if not bind and type(spellId) == "number" then
+            local successInfo, spellInfo = pcall(C_Spell.GetSpellInfo, spellId)
+            if successInfo and spellInfo and spellInfo.name then
+                local nameLower = spellInfo.name:lower()
+                local successBind, b2 = pcall(function() return spellKeybinds[nameLower] end)
+                if successBind then bind = b2 end
             end
         end
-        if not bind then
-            local itemName = GetItemInfo(spellId)
-            if itemName then
-                bind = spellKeybinds[itemName:lower()]
-                if not bind then
-                    local itemSpell = GetItemSpell(spellId)
-                    if itemSpell then
-                        bind = spellKeybinds[itemSpell:lower()]
+
+        if not bind and type(spellId) == "number" then
+            local successItem, itemName = pcall(GetItemInfo, spellId)
+            if successItem and itemName then
+                local nameLower = itemName:lower()
+                local successBind, b3 = pcall(function() return spellKeybinds[nameLower] end)
+                if successBind then 
+                    bind = b3 
+                else
+                    local successItemSpell, itemSpell = pcall(GetItemSpell, spellId)
+                    if successItemSpell and itemSpell then
+                        local itemSpellLower = itemSpell:lower()
+                        local successBind4, b4 = pcall(function() return spellKeybinds[itemSpellLower] end)
+                        if successBind4 then bind = b4 end
                     end
                 end
             end

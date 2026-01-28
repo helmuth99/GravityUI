@@ -116,17 +116,21 @@ function CreateTopBar(parent)
     })
     topBar:SetBackdropColor(C.bgLight[1], C.bgLight[2], C.bgLight[3], 1)
     
+    -- Logo
+    local logo = topBar:CreateTexture(nil, "OVERLAY")
+    logo:SetSize(22, 22)
+    logo:SetPoint("LEFT", 15, 0)
+    logo:SetTexture("Interface\\AddOns\\GravityUI\\assets\\GRAVITY_UI_Icon.blp")
+    
     -- Title
-    local title = topBar:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    GUI:SetFont(title, 18, "OUTLINE")
-    title:SetTextColor(C.accentLight[1], C.accentLight[2], C.accentLight[3], 1)
+    local title = topBar:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    GUI:SetFont(title, 16, "OUTLINE", C.text)
     title:SetText("GravityUI")
-    title:SetPoint("LEFT", 20, 0)
+    title:SetPoint("LEFT", logo, "RIGHT", 8, 0)
     
     -- Version
     local version = topBar:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    GUI:SetFont(version, 11, "OUTLINE")
-    version:SetTextColor(C.textMuted[1], C.textMuted[2], C.textMuted[3], 1)
+    GUI:SetFont(version, 11, "", C.textMuted)
     version:SetText("v" .. ns.VERSION)
     version:SetPoint("LEFT", title, "RIGHT", 8, 0)
     
@@ -163,6 +167,73 @@ function CreateTopBar(parent)
         closeText:SetTextColor(C.text[1], C.text[2], C.text[3], 1)
     end)
     
+    -- Search Bar
+    local searchContainer = CreateFrame("Frame", nil, topBar, "BackdropTemplate")
+    searchContainer:SetSize(220, 28)
+    searchContainer:SetPoint("RIGHT", closeBtn, "LEFT", -15, 0)
+    
+    GUI:CreateBackdrop(searchContainer, C.bg, C.border)
+    
+    local searchIcon = searchContainer:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    GUI:SetFont(searchIcon, 12, "", C.textMuted) -- Same color as placeholder, no outline
+    searchIcon:SetText(">")
+    searchIcon:SetPoint("LEFT", 10, 0)
+    
+    local searchBox = CreateFrame("EditBox", nil, searchContainer)
+    searchBox:SetPoint("LEFT", searchIcon, "RIGHT", 5, 0)
+    searchBox:SetPoint("RIGHT", -25, 0) -- Leave space for clear btn
+    searchBox:SetHeight(20)
+    searchBox:SetAutoFocus(false)
+    GUI:SetFont(searchBox, 11, "", C.textBright)
+    
+    local searchPlaceholder = searchContainer:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    GUI:SetFont(searchPlaceholder, 11, "", C.textMuted)
+    searchPlaceholder:SetText("Search settings...")
+    searchPlaceholder:SetPoint("LEFT", searchBox, "LEFT", 0, 0)
+    
+    -- Clear button (X)
+    local clearBtn = CreateFrame("Button", nil, searchContainer)
+    clearBtn:SetSize(20, 20)
+    clearBtn:SetPoint("RIGHT", -4, 0)
+    clearBtn:Hide()
+    
+    local clearText = clearBtn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    GUI:SetFont(clearText, 12, "OUTLINE")
+    clearText:SetText("×")
+    clearText:SetTextColor(C.textMuted[1], C.textMuted[2], C.textMuted[3], 1)
+    clearText:SetPoint("CENTER")
+    
+    clearBtn:SetScript("OnEnter", function() clearText:SetTextColor(C.accent[1], C.accent[2], C.accent[3], 1) end)
+    clearBtn:SetScript("OnLeave", function() clearText:SetTextColor(C.textMuted[1], C.textMuted[2], C.textMuted[3], 1) end)
+    clearBtn:SetScript("OnClick", function()
+        searchBox:SetText("")
+        searchBox:ClearFocus()
+        GUI:UpdateSearchResults("")
+    end)
+    
+    searchBox:SetScript("OnEditFocusGained", function() searchPlaceholder:Hide() end)
+    searchBox:SetScript("OnEditFocusLost", function(self) 
+        if self:GetText() == "" then searchPlaceholder:Show() end
+    end)
+    
+    searchBox:SetScript("OnTextChanged", function(self)
+        local text = self:GetText()
+        if text ~= "" then 
+            clearBtn:Show()
+            searchPlaceholder:Hide()
+        else 
+            clearBtn:Hide()
+            if not self:HasFocus() then searchPlaceholder:Show() end
+        end
+        GUI:UpdateSearchResults(text)
+    end)
+    
+    searchBox:SetScript("OnEscapePressed", function(self)
+        self:SetText("")
+        self:ClearFocus()
+    end)
+    
+    topBar.searchBox = searchBox
     parent.topBar = topBar
 end
 
@@ -365,7 +436,7 @@ local function CreateSidebarButtons()
     
     for i, pageId in ipairs(GUI.pageOrder) do
         local opts = GUI.pages[pageId]
-        if not opts.showIf or opts.showIf() then
+        if not opts.hideFromSidebar and (not opts.showIf or opts.showIf()) then
             buttonIndex = buttonIndex + 1
             
             local btn = CreateFrame("Button", nil, frame.sidebar, "BackdropTemplate")
@@ -457,7 +528,16 @@ local function BuildPageFrame(opts)
     frame:Hide()
     
     if opts.OnBuild then
+        -- Set search context if we are building for indexing
+        if GUI.currentSearchContext then
+            GUI:SetSearchContext(GUI.currentSearchContext.pageId, 0)
+        end
+        
         opts.OnBuild(content)
+        
+        if GUI.currentSearchContext then
+            GUI:ClearSearchContext()
+        end
     end
     
     return frame
@@ -466,29 +546,57 @@ end
 ---------------------------------------------------------------------------
 -- SHOW PAGE
 ---------------------------------------------------------------------------
+local function HideAllPages()
+    for _, opts in pairs(GUI.pages) do
+        if opts.frame then
+            opts.frame:Hide()
+        end
+    end
+end
+
 function GUI:ShowPage(index)
     if not self.MainFrame then return end
     
-    -- Hide current page
-    local currentPageId = self.pageOrder[self.currentPageIndex]
-    if currentPageId then
-        local currentOpts = self.pages[currentPageId]
-        if currentOpts and currentOpts.frame then
-            currentOpts.frame:Hide()
+    -- Handle string ID or Index
+    local pageId = type(index) == "string" and index or self.pageOrder[index]
+    if not pageId then return end
+    
+    -- Correct numeric index if string ID was used
+    if type(index) == "string" then
+        for i, id in ipairs(self.pageOrder) do
+            if id == index then index = i; break end
         end
     end
     
-    -- Show new page
-    local pageId = self.pageOrder[index]
-    if not pageId then return end
+    -- Don't switch if already on it
+    if self.currentPageId == pageId then return end
     
+    -- Handle Search state return
+    if pageId == "search" then
+        if self.currentPageId ~= "search" then
+            self.preSearchPageId = self.currentPageId
+            self.preSearchPageIndex = self.currentPageIndex
+        end
+    end
+    
+    -- Hide ALL pages to prevent overlap
+    HideAllPages()
+    
+    -- Show new page
     local opts = self.pages[pageId]
+    if not opts then return end
+    
     if not opts.frame then
         opts.frame = BuildPageFrame(opts)
     end
     
     opts.frame:Show()
     self.currentPageIndex = index
+    self.currentPageId = pageId
+    
+    if opts.OnShow then
+        opts.OnShow(opts.frame:GetScrollChild())
+    end
     
     UpdateButtonSelection()
 end
@@ -500,6 +608,7 @@ function GUI:Toggle()
     if not self.MainFrame then
         CreateMainWindow()
         CreateSidebarButtons()
+        self:BuildSearchIndex()
         self:ShowPage(1)
     end
     
@@ -517,6 +626,7 @@ function GUI:Show()
     if not self.MainFrame then
         CreateMainWindow()
         CreateSidebarButtons()
+        self:BuildSearchIndex()
         self:ShowPage(1)
     end
     
@@ -529,5 +639,107 @@ end
 function GUI:Hide()
     if self.MainFrame then
         self.MainFrame:Hide()
+        self:CloseSearchResults()
+    end
+end
+
+---------------------------------------------------------------------------
+-- SEARCH FUNCTIONALITY
+---------------------------------------------------------------------------
+local searchResultsFrame = nil
+
+function GUI:UpdateSearchResults(query)
+    query = query:lower():trim()
+    
+    if query == "" then
+        -- Return to previous page if we were on search page
+        if self.currentPageId == "search" and self.preSearchPageId then
+            self:ShowPage(self.preSearchPageId)
+        end
+        return
+    end
+    
+    if #query < 2 then return end
+    
+    if self.UpdateSearchResultsPage then
+        self:UpdateSearchResultsPage(query)
+    end
+end
+
+local function FlashWidget(widget)
+    if not widget then return end
+    
+    if not widget.flashFrame then
+        widget.flashFrame = CreateFrame("Frame", nil, widget, "BackdropTemplate")
+        widget.flashFrame:SetAllPoints(widget)
+        widget.flashFrame:SetFrameLevel(widget:GetFrameLevel() + 10)
+        GUI:CreateBackdrop(widget.flashFrame, {1, 1, 1, 0.4}, C.accent)
+    end
+    
+    local flash = widget.flashFrame
+    flash:Show()
+    flash:SetAlpha(1)
+    
+    local elapsed = 0
+    flash:SetScript("OnUpdate", function(self, e)
+        elapsed = elapsed + e
+        if elapsed > 1 then
+            self:Hide()
+            self:SetScript("OnUpdate", nil)
+        else
+            self:SetAlpha(1 - elapsed)
+        end
+    end)
+end
+
+function GUI:NavigateToItem(item)
+    if not item then return end
+    
+    -- 1. Switch Page
+    self:ShowPage(item.pageId)
+    
+    -- 2. Switch Tab (if applicable)
+    local page = self.pages[item.pageId]
+    if page and item.tabIndex and item.tabIndex > 0 and page.subTabs then
+        if page.subTabs.tabButtons and page.subTabs.tabButtons[item.tabIndex] then
+            page.subTabs.tabButtons[item.tabIndex]:Click()
+        end
+    end
+    
+    -- 3. Scroll to widget (delayed to allow build/layout)
+    C_Timer.After(0.1, function()
+        if item.widget and item.widget:IsVisible() then
+            local scrollFrame = page.frame
+            if scrollFrame and scrollFrame.GetVerticalScrollRange then
+                local content = scrollFrame:GetScrollChild()
+                local widgetY = item.widget:GetTop()
+                local contentY = content:GetTop()
+                
+                if widgetY and contentY then
+                    local scrollPos = contentY - widgetY - 20
+                    scrollFrame:SetVerticalScroll(math.max(0, scrollPos))
+                end
+            end
+            
+            FlashWidget(item.widget)
+        end
+    end)
+end
+
+function GUI:SelectFirstSearchResult()
+    -- Page-based search handles selection via button clicks
+end
+
+function GUI:BuildSearchIndex()
+    if #self.searchIndex > 0 then return end
+    
+    -- Force build all pages to trigger widget registration
+    for i, pageId in ipairs(self.pageOrder) do
+        local opts = self.pages[pageId]
+        if not opts.frame and not opts.hideFromSearch then
+            self:SetSearchContext(pageId, 0)
+            opts.frame = BuildPageFrame(opts)
+            self:ClearSearchContext()
+        end
     end
 end

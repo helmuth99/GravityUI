@@ -30,12 +30,17 @@ Ein modernes, feature-reiches UI-Konfigurations-Addon für World of Warcraft.
 7.  **Screen Indicators**: Vignette-Effekte und visuelle Indikatoren für Spielereignisse.
 8.  **Profiles**: Vollständige Profilverwaltung (Erstellen, Löschen, Kopieren, Umschalten) basierend auf AceDB.
 
-### Spezielle Module
+### Spezielle Highlights
+
+-   **Intelligente Suche**: Eine dedizierte Suchseite mit Breadcrumbs hilft dabei, jede Einstellung sofort zu finden.
+-   **Zentraler Installer**: Ein-Klick-Profile für Top-Addons wie **Details**, **Plater**, **BigWigs**, **BCDM** und mehr.
+-   **Einheitliches Branding**: Konsistentes Look-and-Feel inklusive GravityUI-Logo im Fenster und auf der Minimap.
+
+### Zusätzliche Module
 
 -   **Skyriding**: Angepasste UI-Elemente für das Drachenreiten/Himmelsreiten.
 -   **Chat & Tooltip**: Verbesserte Darstellung und Funktionalität für Chat und Tooltips.
--   **Loot & Objectives**: Optimierte Fenster für Beute und Questziele.
--   **Ready Check & Raid Buffs**: Nützliche Tools für Gruppen- und Raid-Inhalte.
+-   **Loot & Objectives**: Optimierten Fenster für Beute und Questziele.
 
 ## 📁 Struktur
 
@@ -50,23 +55,23 @@ GravityUI/
 │   ├── window.lua      # Hauptfenster-Logik
 │   ├── styling.lua     # Globales UI-Styling
 │   ├── datatexts.lua   # Datatext-System
-│   └── ...             # Weitere Funktionsmodule
+│   └── installer.lua   # Multi-Addon Profile Installer
 ├── pages/
 │   ├── main.lua        # Einstellungsseite: Hauptmenü
+│   ├── search.lua      # Dedizierte Suchergebnis-Seite (Neu!)
 │   ├── styling.lua     # Einstellungsseite: UI Styling
-│   ├── actionbars.lua  # Einstellungsseite: Action Bars
+│   ├── profiles.lua    # Profilverwaltung & Import/Export
 │   └── ...             # Weitere Konfigurationsseiten
-├── strings/            # Lokalisierung (strings.xml)
-├── Libs/               # Enthaltene Bibliotheken (Ace3, etc.)
-└── assets/             # Icons, Fonts & Texturen
+├── Libs/               # Konsolidierte Bibliotheken via libs.xml
+└── assets/             # GravityUI Logo, Fonts & Texturen
 ```
 
 ## 🚀 Erste Schritte
 
 1.  Logge dich in World of Warcraft ein.
 2.  Öffne das Interface mit `/gui`.
-3.  Nutze den **Installer** (falls verfügbar) oder passe die Optionen unter **Quick Settings** an.
-4.  Erstelle ein eigenes Profil unter **Profiles**, um deine Einstellungen zu sichern.
+3.  Nutze den **Express Installer** unter "Profiles > Installers" für eine schnelle Einrichtung.
+4.  Nutze die **Suchleiste** oben rechts, um bestimmte Optionen schnell zu finden.
 
 ## 🎨 Design-Philosophie
 
@@ -83,11 +88,9 @@ GravityUI setzt auf ein **modernes, dunkles Design** ("Blue Condition Theme") mi
 
 ### Support
 
-1.  Nutze `/console scriptErrors 1` um Fehler anzuzeigen.
-2.  Melde Probleme über die Website oder den Discord.
-3.  Stelle sicher, dass alle Abhängigkeiten im `Libs`-Ordner vorhanden sind.
+1.  Melde Probleme über die Website oder den Discord.
+2.  Stelle sicher, dass alle Abhängigkeiten im `Libs`-Ordner vorhanden sind.
 
 ---
 
 **Viel Spaß beim Spielen! 🎮**
-

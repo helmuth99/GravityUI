@@ -92,6 +92,13 @@ function ns.RefreshAccentColors()
     if ns.RefreshScreenIndicators then ns.RefreshScreenIndicators() end
     if ns.RefreshCombatTimer then ns.RefreshCombatTimer() end
     if ns.Character and ns.Character.RefreshBackground then ns.Character.RefreshBackground() end
+    
+    -- New refresh calls for UI Styling
+    if ns.Styling and ns.Styling.Refresh then ns.Styling:Refresh() end
+    if ns.Alerts and ns.Alerts.Initialize then ns.Alerts:Initialize() end -- Alerts re-init resets colors
+    if ns.Loot and ns.Loot.RefreshStyling then ns.Loot:RefreshStyling() end
+    if ns.Loot and ns.Loot.RefreshHistoryStyling then ns.Loot:RefreshHistoryStyling() end
+    if ns.InstanceFrames and ns.InstanceFrames.Initialize then ns.InstanceFrames:Initialize() end
 end
 
 -- Get global font settings

@@ -61,8 +61,7 @@ local function GetGameMenuColors()
     local db = GetDB()
     if not db or not db.gamemenu then return 0.2, 0.2, 0.2, 1, 0.05, 0.05, 0.05, 0.95 end
     
-    local theme = ns.db.profile.general.themeColor
-    local sr, sg, sb, sa = theme[1], theme[2], theme[3], theme[4]
+    local sr, sg, sb, sa = ns.GetAccentColor()
     
     local bgr, bgg, bgb, bga = 0.05, 0.05, 0.05, 0.95
     
@@ -86,10 +85,8 @@ local function GetGameMenuFontColor()
     if db.gamemenu.disableThemeColorFont then
         local c = db.gamemenu.customFontColor
         if c then return c[1], c[2], c[3], c[4] end
-    else
         -- Use Theme Accent (Primary Color)
-        local t = ns.db.profile.general.themeColor
-        if t then return t[1], t[2], t[3], t[4] end
+        return ns.GetAccentColor()
     end
     return 0.9, 0.9, 0.9, 1
 end
@@ -266,6 +263,12 @@ function Styling:SkinGameMenu()
     end
     
     if GameMenuFrame.MarkDirty then GameMenuFrame:MarkDirty() end
+end
+
+function Styling:RefreshGameMenu()
+    if GameMenuFrame and GameMenuFrame:IsShown() then
+        Styling:SkinGameMenu()
+    end
 end
 
 -- One-time Hook
@@ -472,17 +475,7 @@ function Styling:SkinReadyCheck()
         if c then bgr, bgg, bgb, bga = c[1], c[2], c[3], c[4] end
     else
         -- Theme Background if enabled generally? Or just dark?
-        -- GameMenu logic was: use themeBgColor if useThemeColorBackground is true.
-        -- Here we default to dark (0.05) above.
-        -- If we want to align with Game Menu, we should probably check general.themeBgColor too.
-        -- Let's stick to the subtle dark default for Ready Check unless user explicitly uses Global Theme BG? 
-        -- User request was "like Game Menu".
-        -- Game Menu defaults to Theme Background.
-        -- Let's make Ready Check default to Theme Background too if not disabled?
-        -- Actually, existing code just used 0.05.
-        -- Let's upgrade it to use Theme Background Check if available
-        local themeBg = ns.db.profile.general.themeBgColor
-        if themeBg then bgr, bgg, bgb, bga = themeBg[1], themeBg[2], themeBg[3], themeBg[4] end
+        bgr, bgg, bgb, bga = ns.GetThemeBgColor()
     end
     
     -- Custom Font Logic (Title + Text)
@@ -570,14 +563,47 @@ function Styling:SkinReadyCheck()
     frame.guiSkinned = true
 end
 
--------------------------------------------------------------------------------
--- READY CHECK REFRESH
--------------------------------------------------------------------------------
 function Styling:RefreshReadyCheck()
+    local frame = _G.ReadyCheckFrame
+    if not frame or not frame.guiSkinned then return end
+
+    local sr, sg, sb, sa = ns.GetAccentColor()
+    local bgr, bgg, bgb, bga = ns.GetThemeBgColor()
+    
+    local db = GetDB()
+    if db and db.readyCheck and db.readyCheck.disableThemeColorBackground then
+        local c = db.readyCheck.customBackgroundColor
+        if c then bgr, bgg, bgb, bga = c[1], c[2], c[3], c[4] end
+    end
+
+    if frame.guiBackdrop then
+        frame.guiBackdrop:SetBackdropColor(bgr, bgg, bgb, bga)
+        frame.guiBackdrop:SetBackdropBorderColor(sr, sg, sb, sa)
+    end
+    
+    -- Refresh buttons
+    for _, btn in ipairs({_G.ReadyCheckFrameYesButton, _G.ReadyCheckFrameNoButton}) do
+        if btn and btn.guiBackdrop then
+            local btnBgr = math.min(bgr + 0.07, 1)
+            local btnBgg = math.min(bgg + 0.07, 1)
+            local btnBgb = math.min(bgb + 0.07, 1)
+            btn.guiBackdrop:SetBackdropColor(btnBgr, btnBgg, btnBgb, bga)
+            btn.guiBackdrop:SetBackdropBorderColor(sr, sg, sb, 1)
+        end
+    end
+    
+    -- Refresh Title
+    local titleR, titleG, titleB, titleA = sr, sg, sb, 1
+    if db and db.readyCheck and db.readyCheck.disableThemeColorFont then
+        local c = db.readyCheck.customFontColor
+        if c then titleR, titleG, titleB, titleA = c[1], c[2], c[3], c[4] end
+    end
+    if frame.guiTitle then frame.guiTitle:SetTextColor(titleR, titleG, titleB, titleA) end
+
+    -- Existing refresh logic
     if GravityUI_RepositionConsumables then
         GravityUI_RepositionConsumables()
     end
-    -- Trigger re-initialization to catch size changes
     if gui_ConsumablesFrame and gui_ConsumablesFrame:IsShown() then
         if GravityUI_RefreshConsumables then
              GravityUI_RefreshConsumables()
@@ -709,8 +735,7 @@ function Styling:SkinKeystone()
         local c = db.keystone.customBackgroundColor
         if c then bgr, bgg, bgb, bga = c[1], c[2], c[3], c[4] end
     else
-        local themeBg = ns.db.profile.general.themeBgColor
-        if themeBg then bgr, bgg, bgb, bga = themeBg[1], themeBg[2], themeBg[3], themeBg[4] end
+        bgr, bgg, bgb, bga = ns.GetThemeBgColor()
     end
     
     local titleR, titleG, titleB, titleA = sr, sg, sb, sa
@@ -1042,6 +1067,47 @@ end
 -- hooksecurefunc(ns, "UpdateGlobalFont", function()
 --     Styling:SkinChatBubbles()
 -- end)
+
+function Styling:RefreshKeystone()
+    local frame = _G.ChallengesKeystoneFrame
+    if not frame or not frame.guiSkinned then return end
+
+    local sr, sg, sb, sa = ns.GetAccentColor()
+    local bgr, bgg, bgb, bga = ns.GetThemeBgColor()
+    
+    local db = GetDB()
+    if db and db.keystone and db.keystone.disableThemeColorBackground then
+        local c = db.keystone.customBackgroundColor
+        if c then bgr, bgg, bgb, bga = c[1], c[2], c[3], c[4] end
+    end
+
+    if frame.guiBackdrop then
+        frame.guiBackdrop:SetBackdropColor(bgr, bgg, bgb, bga)
+        frame.guiBackdrop:SetBackdropBorderColor(sr, sg, sb, sa)
+    end
+    
+    -- Refresh Start Button
+    if frame.StartButton and frame.StartButton.guiBackdrop then
+        local btnBgR, btnBgG, btnBgB = math.min(bgr + 0.07, 1), math.min(bgg + 0.07, 1), math.min(bgb + 0.07, 1)
+        frame.StartButton.guiBackdrop:SetBackdropColor(btnBgR, btnBgG, btnBgB, 1)
+        frame.StartButton.guiBackdrop:SetBackdropBorderColor(sr, sg, sb, sa)
+        frame.StartButton.guiSkinColor = { sr, sg, sb, sa }
+    end
+    
+    -- Refresh Title
+    local titleR, titleG, titleB, titleA = sr, sg, sb, sa
+    if db and db.keystone and db.keystone.disableThemeColorFont then
+        local c = db.keystone.customFontColor
+        if c then titleR, titleG, titleB, titleA = c[1], c[2], c[3], c[4] end
+    end
+    if frame.DungeonName then frame.DungeonName:SetTextColor(titleR, titleG, titleB, titleA) end
+end
+
+function Styling:Refresh()
+    Styling:RefreshGameMenu()
+    Styling:RefreshReadyCheck()
+    Styling:RefreshKeystone()
+end
 
 -- Make global for external access
 GUI.Styling = Styling

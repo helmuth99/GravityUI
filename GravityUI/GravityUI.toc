@@ -1,6 +1,6 @@
 ## Interface: 120000, 120001
 ## Title: |cFF30D1FFGravityUI|r
-## IconTexture: Interface/AddOns/GravityUI/assets/GRAVITY_UI_Icon.png
+## IconTexture: Interface\AddOns\GravityUI\assets\GRAVITY_UI_Icon.blp
 ## AddonCompartmentFunc: GravityUI_CompartmentClick
 ## AddonCompartmentFuncOnEnter: GravityUI_CompartmentOnEnter
 ## AddonCompartmentFuncOnLeave: GravityUI_CompartmentOnLeave
@@ -16,13 +16,7 @@
 ## X-Wago-ID: 96E7e8Gg
 
 # External Libraries
-Libs\LibStub\LibStub.lua
-Libs\CallbackHandler-1.0\CallbackHandler-1.0.lua
-Libs\AceAddon-3.0\AceAddon-3.0.lua
-Libs\AceEvent-3.0\AceEvent-3.0.lua
-Libs\AceConsole-3.0\AceConsole-3.0.lua
-Libs\AceDB-3.0\AceDB-3.0.lua
-Libs\LibSharedMedia-3.0\LibSharedMedia-3.0.lua
+Libs\libs.xml
 
 # Core
 core\constants.lua
@@ -38,22 +32,22 @@ core\framework.lua
 core\window.lua
 
 # Utilities
-core/utils.lua
-core/dungeondata.lua
-core/automation.lua
-core/quicksalvage.lua
-core/styling.lua
-core/alerts.lua
-core/loot.lua
-core/objectives.lua
-core/instanceframes.lua
-core/readycheck.lua
-core/raidbuffs.lua
+core\utils.lua
+core\dungeondata.lua
+core\automation.lua
+core\quicksalvage.lua
+core\styling.lua
+core\alerts.lua
+core\loot.lua
+core\objectives.lua
+core\instanceframes.lua
+core\readycheck.lua
+core\raidbuffs.lua
 
-core/combattimer.lua
-core/mplusteleport.lua
-core/worldmarks.lua
-core/autohide.lua
+core\combattimer.lua
+core\mplusteleport.lua
+core\worldmarks.lua
+core\autohide.lua
 core\buffborders.lua
 core\chat.lua
 core\datatexts.lua
@@ -72,6 +66,7 @@ pages\datapanels.lua
 pages\uiimprovements.lua
 pages\screenindicators.lua
 pages\styling.lua
+pages\search.lua
 pages\profiles.lua
 
 # Special Features

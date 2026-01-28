@@ -48,6 +48,41 @@ GUI.CONTENT_WIDTH = 700
 GUI.pages = {}
 GUI.pageOrder = {}
 
+-- Search Index
+GUI.searchIndex = {}
+GUI.currentSearchContext = nil -- { pageId = "", tabIndex = 0 }
+
+function GUI:SetSearchContext(pageId, tabIndex)
+    self.currentSearchContext = { pageId = pageId, tabIndex = tabIndex }
+end
+
+function GUI:ClearSearchContext()
+    self.currentSearchContext = nil
+end
+
+function GUI:RegisterInSearchIndex(text, widget)
+    if not self.currentSearchContext or not text or text == "" then return end
+    
+    local pageId = self.currentSearchContext.pageId
+    local tabIndex = self.currentSearchContext.tabIndex
+    local page = self.pages[pageId]
+    
+    local tabName
+    if tabIndex and tabIndex > 0 and page and page.lastSubTabsData then
+        tabName = page.lastSubTabsData[tabIndex] and page.lastSubTabsData[tabIndex].name
+    end
+    
+    table.insert(self.searchIndex, {
+        text = text:lower(),
+        displayText = text,
+        widget = widget,
+        pageId = pageId,
+        pageTitle = page and page.title or pageId,
+        tabIndex = tabIndex,
+        tabName = tabName
+    })
+end
+
 ---------------------------------------------------------------------------
 -- LOCAL HELPERS (Must be defined before use)
 ---------------------------------------------------------------------------
@@ -79,6 +114,28 @@ end
 
 function GUI:CreateBackdrop(frame, ...) 
     CreateBackdrop(frame, ...) 
+end
+
+function GUI:ClearPageContent(content)
+    if not content then return end
+    
+    -- Clear regions (FontStrings, Textures)
+    local regions = {content:GetRegions()}
+    for _, region in ipairs(regions) do
+        if not region.isStepHeader then
+            region:Hide()
+            if region.SetText then region:SetText("") end
+        end
+    end
+    
+    -- Clear children (Frames)
+    local children = {content:GetChildren()}
+    for _, child in ipairs(children) do
+        if not child.isStepHeader then
+            child:Hide()
+            child:SetParent(nil)
+        end
+    end
 end
 
 ---------------------------------------------------------------------------
@@ -178,9 +235,15 @@ function GUI:CreateLabel(parent, text, size, color, anchor, x, y)
     SetFont(label, size or 12, "", color or C.text)
     label:SetText(text or "")
     
+    if parent.isStepHeader and not text then -- Only inherit if text is nil (static elements)
+        label.isStepHeader = true
+    end
+    
     if anchor then
         label:SetPoint(anchor, parent, anchor, x or 0, y or 0)
     end
+    
+    self:RegisterInSearchIndex(text, label)
     
     return label
 end
@@ -209,6 +272,8 @@ function GUI:CreateInfoBox(parent, text, width)
     label:SetJustifyH("LEFT")
     label:SetText(text)
     frame.label = label
+    
+    self:RegisterInSearchIndex(text, frame)
     
     -- Dynamic Height
     frame:SetHeight(label:GetStringHeight() + 24)
@@ -242,6 +307,8 @@ function GUI:CreateButton(parent, text, width, height, onClick)
     btnText:SetPoint("CENTER", 0, 0)
     btnText:SetText(text or "Button")
     btn.text = btnText
+    
+    self:RegisterInSearchIndex(text, btn)
     
     btn:SetScript("OnEnter", function(self)
         self:SetBackdropBorderColor(C.accent[1], C.accent[2], C.accent[3], 1)
@@ -281,6 +348,13 @@ function GUI:CreateSectionHeader(parent, text)
     SetFont(header, 13, "", C.sectionHeader)
     header:SetText(text or "Section")
     header:SetPoint("TOPLEFT", container, "TOPLEFT", 0, -topMargin)
+    
+    if parent.isStepHeader and not text then -- Only inherit if text is nil (static elements like headers in search)
+        header.isStepHeader = true
+        container.isStepHeader = true
+    end
+    
+    self:RegisterInSearchIndex(text, container)
     
     container.text = header
     container.parent = parent
@@ -345,6 +419,8 @@ function GUI:CreateCheckbox(parent, label, dbKey, dbTable, onChange)
     container.switch = switch
     container.thumb = thumb
     container.label = text
+    
+    self:RegisterInSearchIndex(label, container)
     
     -- Get/Set value
     local function GetValue()
@@ -463,6 +539,8 @@ function GUI:CreateSlider(parent, label, min, max, dbKey, dbTable, onChange, ste
     container.label = labelText
     container.editBox = editBox
     
+    self:RegisterInSearchIndex(label, container)
+    
     -- Get/Set value
     local function GetValue()
         if dbTable and dbKey then
@@ -574,6 +652,8 @@ function GUI:CreateColorPicker(parent, label, dbKey, dbTable, onChange)
     text:SetText(label or "Color")
     text:SetPoint("LEFT", 0, 0)
     
+    self:RegisterInSearchIndex(label, container)
+    
     local button = CreateFrame("Button", nil, container, "BackdropTemplate")
     button:SetSize(24, 24)
     button:SetPoint("RIGHT", 0, 0)
@@ -647,6 +727,8 @@ function GUI:CreateInput(parent, label, dbKey, dbTable, onChange)
     
     container.editBox = editBox
     container.label = labelText
+    
+    self:RegisterInSearchIndex(label, container)
     
     local function GetValue()
         if dbTable and dbKey then
@@ -758,6 +840,8 @@ function GUI:CreateDropdown(parent, label, items, dbKey, dbTable, onChange)
     container.dropdown = dropdown
     container.selectedText = selectedText
     container.label = labelText
+    
+    self:RegisterInSearchIndex(label, container)
     
     -- Get/Set value
     local currentValue = nil
@@ -1045,6 +1129,8 @@ function GUI:CreateCollapsibleHeader(parent, text, defaultExpanded)
     headerText:SetText(text or "Section")
     headerText:SetPoint("LEFT", arrow, "RIGHT", 6, 0)
     
+    self:RegisterInSearchIndex(text, container)
+    
     -- Underline (always visible)
     local underline = container:CreateTexture(nil, "ARTWORK")
     underline:SetHeight(2)
@@ -1130,6 +1216,14 @@ function GUI:CreateSubTabs(parent, tabs)
     local tabButtons = {}
     local tabContents = {}
     
+    -- Store for indexing context
+    if GUI.currentSearchContext then
+        local page = GUI.pages[GUI.currentSearchContext.pageId]
+        if page then
+            page.lastSubTabsData = tabs
+        end
+    end
+    
     -- Store for layout update
     container.tabButtons = tabButtons
     
@@ -1164,7 +1258,17 @@ function GUI:CreateSubTabs(parent, tabs)
         tabContents[i] = contentFrame
         
         if tabInfo.builder then
+            -- Set search context for the tab
+            if GUI.currentSearchContext then
+                GUI:SetSearchContext(GUI.currentSearchContext.pageId, i)
+            end
+            
             tabInfo.builder(contentFrame)
+            
+            -- Restore page-level context (no tab)
+            if GUI.currentSearchContext then
+                GUI:SetSearchContext(GUI.currentSearchContext.pageId, 0)
+            end
         end
         
         btn:SetScript("OnClick", function()
