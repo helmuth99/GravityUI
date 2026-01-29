@@ -90,6 +90,19 @@ local function ScanActionBars(force)
         { start = 169,ending = 180, prefix = "MULTIACTIONBAR7BUTTON" },
     }
 
+    -- Helper for safe table assignment
+    local function SafeSet(key, value)
+        if not key or not value then return end
+        pcall(function() spellKeybinds[key] = value end)
+    end
+
+    -- Helper for safe name lowercasing
+    local function SafeLower(str)
+        if not str then return nil end
+        local success, res = pcall(string.lower, str)
+        return success and res or nil
+    end
+
     for _, config in ipairs(barConfigs) do
         for i = 0, (config.ending - config.start) do
             local slot = config.start + i
@@ -108,33 +121,42 @@ local function ScanActionBars(force)
 
             if actionType == "spell" and id then
                  bindId = id
-                 local info = C_Spell.GetSpellInfo(id)
-                 if info then name = info.name end
+                 local success, info = pcall(C_Spell.GetSpellInfo, id)
+                 if success and info then 
+                     -- Protected name access
+                     local nSuccess, nVal = pcall(function() return info.name end)
+                     if nSuccess then name = nVal end
+                 end
             elseif actionType == "macro" and id then
-                 local mname, _, body = GetMacroInfo(id)
-                 if mname and key then spellKeybinds[mname:lower()] = key end
+                 local success, mname, _, body = pcall(GetMacroInfo, id)
+                 if success and mname and key then 
+                    SafeSet(SafeLower(mname), key)
+                 end
                  
                  local mid = GetMacroSpell(id)
                  local mitem, mlink = GetMacroItem(id)
                  
                  if mid then
                      bindId = mid
-                     local info = C_Spell.GetSpellInfo(mid)
-                     if info then name = info.name end
+                     local sOk, info = pcall(C_Spell.GetSpellInfo, mid)
+                     if sOk and info then 
+                         local nOk, nVal = pcall(function() return info.name end)
+                         if nOk then name = nVal end
+                     end
                  elseif mlink then
                      local itemId = mlink:match("item:(%d+)")
                      if itemId then
                         bindId = tonumber(itemId)
-                        local itemName = GetItemInfo(itemId)
-                        if itemName then 
+                        local iOk, itemName = pcall(GetItemInfo, itemId)
+                        if iOk and itemName then 
                             name = itemName 
-                            if key then spellKeybinds[name:lower()] = key end
+                            if key then SafeSet(SafeLower(name), key) end
                         end
-                        local itemSpell = GetItemSpell(itemId)
-                        if itemSpell and key then spellKeybinds[itemSpell:lower()] = key end
+                        local sOk, itemSpell = pcall(GetItemSpell, itemId)
+                        if sOk and itemSpell and key then SafeSet(SafeLower(itemSpell), key) end
                      end
                  elseif body then
-                      -- Fallback: Parse macro text
+                      -- Fallback: Parse macro text (mostly safe as it's string parsing, but careful with results)
                       local tooltips = body:match("#showtooltip%s+([^\n]+)")
                       if not tooltips then
                            for line in body:gmatch("[^\r\n]+") do
@@ -167,65 +189,70 @@ local function ScanActionBars(force)
                                        local itemId = GetInventoryItemID("player", slotId)
                                        if itemId then
                                            bindId = itemId
-                                           local itemName = GetItemInfo(itemId)
-                                           if itemName then
+                                           local iOk, itemName = pcall(GetItemInfo, itemId)
+                                           if iOk and itemName then
                                                name = itemName
-                                               if key then spellKeybinds[name:lower()] = key end
+                                               if key then SafeSet(SafeLower(name), key) end
                                            end
-                                           local itemSpell = GetItemSpell(itemId)
-                                           if itemSpell and key then
-                                               spellKeybinds[itemSpell:lower()] = key 
+                                           local sOk, itemSpell = pcall(GetItemSpell, itemId)
+                                           if sOk and itemSpell and key then
+                                               SafeSet(SafeLower(itemSpell), key)
                                                if not name then name = itemSpell end
                                            end
                                        end
                                    else
                                        bindId = slotId
-                                       local sInfo = C_Spell.GetSpellInfo(slotId)
-                                       if sInfo then 
-                                           name = sInfo.name 
-                                           if key then spellKeybinds[name:lower()] = key end
+                                       local sOk, sInfo = pcall(C_Spell.GetSpellInfo, slotId)
+                                       if sOk and sInfo then 
+                                           local nOk, nVal = pcall(function() return sInfo.name end)
+                                           if nOk then 
+                                               name = nVal 
+                                               if key then SafeSet(SafeLower(name), key) end
+                                           end
                                        end
                                    end
                                else
                                    name = cleanName
                                    bindId = "macro_"..name 
-                                   if key then spellKeybinds[name:lower()] = key end
+                                   if key then SafeSet(SafeLower(name), key) end
                                end
                            end
                       end
                  else
-                      local fallbackInfo = C_Spell.GetSpellInfo(id)
-                      if fallbackInfo then
+                      -- Try generic spell lookup for macro ID? Usually not needed if mid/mlink failed
+                      local sOk, fallbackInfo = pcall(C_Spell.GetSpellInfo, id)
+                      if sOk and fallbackInfo then
                           bindId = id
-                          name = fallbackInfo.name
+                          local nOk, nVal = pcall(function() return fallbackInfo.name end)
+                          if nOk then name = nVal end
                       end
                  end
             elseif actionType == "item" and id then
                  bindId = id
-                 local itemName = GetItemInfo(id)
-                 name = itemName
+                 local iOk, itemName = pcall(GetItemInfo, id)
+                 if iOk then name = itemName end
             end
 
             if bindId and key then
-                spellKeybinds[bindId] = key
+                SafeSet(bindId, key)
                 if name then
-                    spellKeybinds[name:lower()] = key
+                    SafeSet(SafeLower(name), key)
                 end
                 
                 if type(bindId) == "number" then
-                     spellKeybinds[bindId] = key
+                     SafeSet(bindId, key)
                 end
 
                 if actionType == "item" or (type(bindId) == "number" and not name) then
                     local checkId = (type(bindId) == "number") and bindId or id
                     if checkId then
-                        local itemSpell = GetItemSpell(checkId)
-                        if itemSpell then
-                            spellKeybinds[itemSpell:lower()] = key
+                        local sOk, itemSpell = pcall(GetItemSpell, checkId)
+                        if sOk and itemSpell then
+                            SafeSet(SafeLower(itemSpell), key)
                         end
-                        local itemName = GetItemInfo(checkId)
-                        if itemName then
-                            spellKeybinds[itemName:lower()] = key
+                        local iOk, itemName = pcall(GetItemInfo, checkId)
+                        if iOk and itemName then
+                             SafeSet(SafeLower(itemName), key)
                         end
                     end
                 end
@@ -239,8 +266,11 @@ function Module:UpdateFrame(frame)
     if not frame then return end
     local settings = GetSettings()
     if not settings then return end
+    
+    -- Main toggle must be ON for scanning/data to work
     if not settings.enabled then 
         if frame.gravityKeybind then frame.gravityKeybind:Hide() end
+        frame.gravityKeybindData = nil
         return 
     end
 
@@ -250,6 +280,7 @@ function Module:UpdateFrame(frame)
     local barKey = pName and barToSettingsKey[pName]
     if not barKey or not (settings.bars and settings.bars[barKey]) then
         if frame.gravityKeybind then frame.gravityKeybind:Hide() end
+        frame.gravityKeybindData = nil
         return
     end
 
@@ -316,6 +347,9 @@ function Module:UpdateFrame(frame)
         end
     end
 
+    -- Store data regardless of visibility setting
+    frame.gravityKeybindData = bind
+
     local parentObj = frame
     if frame.icon and type(frame.icon) == "table" and frame.icon.IsObjectType and frame.icon:IsObjectType("Frame") then
         parentObj = frame.icon
@@ -330,7 +364,11 @@ function Module:UpdateFrame(frame)
     end
 
     frame.gravityKeybind:SetDrawLayer("OVERLAY", 7)
-    if bind then
+    
+    local utils = settings.utils
+    local hideText = utils and utils.hideKeybindText
+
+    if bind and not hideText then
        local barStyle = settings.barStyles and settings.barStyles[barKey]
        local fontSize = barStyle and barStyle.fontSize or settings.fontSize
        local color = barStyle and barStyle.color or settings.color
@@ -512,6 +550,7 @@ function Module:Refresh()
     self:DiscoverFrames()
     self:ApplyKeybinds()
     self:UpdateCentering() -- Add centering update to refresh
+    if self.UpdateUtils then self:UpdateUtils() end
 end
 
 function Module:Init()
@@ -612,5 +651,157 @@ SlashCmdList["GRAVITYUIGUICDMDEBUG"] = function()
     end
 end
 
+-- ═══════════════════════════════════════════════════════════════
+-- UTILS: BUTTON GLOW
+-- ═══════════════════════════════════════════════════════════════
+
+
+
+
+
+local Listener = CreateFrame("Frame", "GravityUI_CDM_Input", UIParent)
+Listener:Hide()
+Listener:SetFrameStrata("TOOLTIP") -- Listen above most other frames
+Module.glowingFrames = {} -- Active glows
+
+function Module:ToggleGlow(frame, show, rawKey, reqMods)
+    if not frame then return end
+    
+    -- Lazy Create
+    if not frame.gravityGlow then
+        frame.gravityGlow = frame:CreateTexture(nil, "OVERLAY")
+        frame.gravityGlow:SetTexture("Interface\\Buttons\\CheckButtonHilight")
+        frame.gravityGlow:SetBlendMode("ADD")
+        frame.gravityGlow:SetAllPoints(frame)
+    end
+    
+    if show then
+        local db = ns.GetDB().actionbars.guicdm.utils
+        if db and db.buttonGlowColor then
+            frame.gravityGlow:SetVertexColor(unpack(db.buttonGlowColor))
+        else
+            frame.gravityGlow:SetVertexColor(1, 1, 0, 1)
+        end
+        frame.gravityGlow:Show()
+        frame.glowRawKey = rawKey
+        frame.glowReqMods = reqMods
+        Module.glowingFrames[frame] = true
+    else
+        frame.gravityGlow:Hide()
+        frame.glowRawKey = nil
+        frame.glowReqMods = nil
+        Module.glowingFrames[frame] = nil
+    end
+end
+
+function Module:ProcessPress(dispKey, rawKey)
+    if not Module.knownFrames then return end
+
+    local s = IsShiftKeyDown()
+    local c = IsControlKeyDown()
+    local a = IsAltKeyDown()
+    
+    local prefix = ""
+    if s then prefix = prefix .. "S" end
+    if c then prefix = prefix .. "C" end
+    if a then prefix = prefix .. "A" end
+    
+    local fullKey = prefix .. dispKey
+
+    for frame in pairs(Module.knownFrames) do
+        if frame and frame:IsVisible() then
+            -- Check stored data instead of visible fontstring
+            local text = frame.gravityKeybindData
+            if text then
+                text = text:gsub("^%s+", ""):gsub("%s+$", "")
+                if text == fullKey then
+                    self:ToggleGlow(frame, true, rawKey, {s=s, c=c, a=a})
+                end
+            end
+        end
+    end
+end
+
+local throttle = 0
+local function OnUpdate(self, elapsed)
+    throttle = throttle + elapsed
+    if throttle < 0.05 then return end
+    throttle = 0
+    
+    if not next(Module.glowingFrames) then return end
+    
+    local s = IsShiftKeyDown()
+    local c = IsControlKeyDown()
+    local a = IsAltKeyDown()
+    
+    for frame in pairs(Module.glowingFrames) do
+        local valid = true
+        
+        -- Check Key State via Game API (using RAW key)
+        if not IsKeyDown(frame.glowRawKey) then
+            valid = false
+        else
+            -- Check Mods
+            local r = frame.glowReqMods
+            if r and (s ~= r.s or c ~= r.c or a ~= r.a) then
+                valid = false
+            end
+        end
+        
+        if not valid then
+            Module:ToggleGlow(frame, false)
+        end
+    end
+end
+
+
+local function OnInput(key, down)
+    local db = ns.GetDB().actionbars.guicdm.utils
+    if not db or not db.buttonGlow then return end
+    if not down then return end 
+    
+    -- originalKey for IsKeyDown check
+    local originalKey = key:upper()
+    
+    -- dispKey for Text Match
+    local dispKey = originalKey
+    dispKey = dispKey:gsub("MOUSEWHEELUP", "WU"):gsub("MOUSEWHEELDOWN", "WD")
+    dispKey = dispKey:gsub("BUTTON3", "M3"):gsub("BUTTON4", "M4"):gsub("BUTTON5", "M5")
+    dispKey = dispKey:gsub("SPACE", "Spc")
+    
+    local isMod = (originalKey == "LSHIFT" or originalKey == "RSHIFT" or originalKey == "LCTRL" or originalKey == "RCTRL" or originalKey == "LALT" or originalKey == "RALT")
+    
+    if not isMod then
+        Module:ProcessPress(dispKey, originalKey)
+    end
+end
+
+Listener:SetPropagateKeyboardInput(true)
+Listener:SetScript("OnKeyDown", function(self, key) OnInput(key, true) end)
+Listener:SetScript("OnUpdate", OnUpdate)
+
+function Module:UpdateUtils()
+    local db = ns.GetDB().actionbars.guicdm.utils
+    
+    -- 1. Refresh frames to apply "Hide Keybind Text" setting immediately
+    self:ApplyKeybinds()
+    
+    -- 2. Toggle Input Listener
+    if db and db.buttonGlow then
+        Listener:Show()
+    else
+        Listener:Hide()
+        wipe(Module.glowingFrames)
+        -- Cleanup glows
+         for frame in pairs(Module.knownFrames) do
+            Module:ToggleGlow(frame, false)
+        end
+    end
+end
+
 -- Export
-ns.RefreshGUICDMKeybinds = function() Module:Refresh() end
+ns.RefreshGUICDMKeybinds = function() 
+    Module:Refresh() 
+    Module:UpdateUtils()
+end
+

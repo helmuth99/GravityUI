@@ -205,6 +205,50 @@ local function BuildCDMCentering(parent)
     content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
 end
 
+-- 3. Utils (Button Glow)
+local function BuildUtils(parent)
+    local scroll, content = GUI:CreateScrollableContent(parent)
+    scroll:SetAllPoints()
+    local db = ns.GetDB(); if not db then return end
+    local utils = db.actionbars.guicdm.utils
+    if not utils then
+        utils = { buttonGlow = false }
+        db.actionbars.guicdm.utils = utils
+    end
+
+    content.rowCount = 0
+    local refresh = function() 
+        if ns.GUICDM_Keybinds and ns.GUICDM_Keybinds.UpdateUtils then
+            ns.GUICDM_Keybinds:UpdateUtils()
+        end
+    end
+    
+    local header = GUI:CreateSectionHeader(content, "CD Utils")
+    header:SetPoint("TOPLEFT", 10, -10)
+    header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
+    content.rowCount = 2.0
+    
+    AddRow(content, "Enable Button Glow on Keybind Press", "checkbox", "buttonGlow", utils, refresh)
+    
+    local info = content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    info:SetPoint("TOPLEFT", 20, -content.rowCount * (ROW_HEIGHT + 5) + 5) -- Indented slightly
+    info:SetText("Note: Keybindings and the specific bar (Essential, Utility, etc.) must be enabled for this to work.")
+    info:SetTextColor(1, 0.8, 0, 1) -- Yellow/Orange warning
+    content.rowCount = content.rowCount + 0.6
+    
+    AddRow(content, "Hide Keybind Text (Glow still works)", "checkbox", "hideKeybindText", utils, refresh)
+    AddRow(content, "Glow Color", "color", "buttonGlowColor", utils, refresh)
+    
+    local note = content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    note:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT + 5))
+    note:SetWidth(GUI.CONTENT_WIDTH - 40)
+    note:SetJustifyH("LEFT")
+    note:SetTextColor(unpack(GUI.Colors.textMuted))
+    note:SetText("Shows a highlight on BCDM icons when their keybind is pressed.")
+    content.rowCount = content.rowCount + 1.2
+    
+    content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
+end
 
 -- ═══════════════════════════════════════════════════════════════
 -- MAIN PAGE REGISTER
@@ -226,6 +270,7 @@ ns.GUI:RegisterPage("cdmutils", {
         local subTabs = GUI:CreateSubTabs(scrollFrame, {
             { name = "Keybindings", builder = BuildGUICDMKeybinds },
             { name = "CDM Centering", builder = BuildCDMCentering },
+            { name = "Utils", builder = BuildUtils },
         })
         subTabs:SetPoint("TOPLEFT", 10, -10)
         subTabs:SetPoint("TOPRIGHT", -10, 0)
