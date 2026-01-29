@@ -933,6 +933,15 @@ GUI:RegisterPage("Styling", {
         local scrollFrame = content:GetParent()
         content:Hide()
         
+        -- Fix: Hide the outer scrollbar
+        scrollFrame:EnableMouseWheel(false)
+        for _, child in ipairs({scrollFrame:GetChildren()}) do
+            if child:IsObjectType("Slider") then
+                child:Hide()
+                child.Show = function() end -- Prevent re-showing
+            end
+        end
+        
         -- Create SubTabs
         local subTabs = GUI:CreateSubTabs(scrollFrame, {
             { name = "Game Menu", builder = BuildGameMenuPanel },
