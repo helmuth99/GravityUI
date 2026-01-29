@@ -4,6 +4,63 @@ local C = GUI.Colors
 
 -- Initialize styling database structure if missing is handled in core/defaults.lua now
 
+local ROW_HEIGHT = 30
+local LABEL_WIDTH = 220
+local WIDGET_WIDTH = 250
+
+local function CreateStylingRow(container, labelText, widgetType, arg1, arg2, arg3, arg4, arg5, arg6)
+    local row = CreateFrame("Frame", nil, container)
+    row:SetSize(GUI.CONTENT_WIDTH - 20, ROW_HEIGHT)
+    
+    -- Label
+    local label = row:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    GUI:SetFont(label, 12, "OUTLINE")
+    label:SetJustifyH("LEFT")
+    label:SetSize(LABEL_WIDTH, ROW_HEIGHT)
+    label:SetPoint("LEFT", 0, 0)
+    label:SetText(labelText)
+    label:SetTextColor(unpack(GUI.Colors.text))
+    
+    -- Widget
+    local widget
+    if widgetType == "checkbox" then
+        widget = GUI:CreateCheckbox(row, "", arg1, arg2, arg3)
+        widget:SetPoint("LEFT", label, "RIGHT", 10, 0)
+        
+    elseif widgetType == "slider" then
+        widget = GUI:CreateSlider(row, "", arg1, arg2, arg3, arg4, arg5, arg6)
+        widget:SetHeight(ROW_HEIGHT)
+        widget:SetWidth(220)
+        widget:SetPoint("LEFT", label, "RIGHT", 10, 0)
+        
+        if widget.editBox then
+            widget.editBox:ClearAllPoints()
+            widget.editBox:SetPoint("RIGHT", widget, "RIGHT", 0, 0)
+        end
+        if widget.slider then
+            widget.slider:ClearAllPoints()
+            widget.slider:SetPoint("LEFT", widget, "LEFT", 0, 0)
+            widget.slider:SetPoint("RIGHT", widget.editBox, "LEFT", -10, 0)
+        end
+        
+    elseif widgetType == "dropdown" then
+        widget = GUI:CreateDropdown(row, "", arg1, arg2, arg3, arg4)
+        widget:SetPoint("LEFT", label, "RIGHT", 10, 0)
+        widget:SetWidth(WIDGET_WIDTH)
+        if widget.dropdown then
+            widget.dropdown:ClearAllPoints()
+            widget.dropdown:SetPoint("LEFT", widget, "LEFT", 0, 0)
+            widget.dropdown:SetPoint("RIGHT", widget, "RIGHT", 0, 0)
+        end
+        
+    elseif widgetType == "color" then
+         widget = GUI:CreateColorPicker(row, "", arg1, arg2, arg3)
+         widget:SetPoint("LEFT", label, "RIGHT", 10, 0)
+    end
+    
+    return row, widget
+end
+
 -- ═══════════════════════════════════════════════════════════════
 -- BUILDER: GAME MENU (Tab 1)
 -- ═══════════════════════════════════════════════════════════════
@@ -18,72 +75,66 @@ local function BuildGameMenuPanel(parent)
     header:SetPoint("TOPLEFT", PAD, yOffset)
     yOffset = yOffset - header.gap
     
-    local toggle = GUI:CreateCheckbox(content, "Enable Game Menu Skinning", "enabled", ns.db.profile.styling.gamemenu, function(value)
-        if ns.Styling and ns.Styling.SkinGameMenu then
-            ns.Styling:SkinGameMenu()
-        end
+    local row1 = CreateStylingRow(content, "Enable Game Menu Skinning", "checkbox", "enabled", ns.db.profile.styling.gamemenu, function()
+        if ns.Styling and ns.Styling.SkinGameMenu then ns.Styling:SkinGameMenu() end
     end)
-    toggle:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - 30
+    row1:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
 
-    local showBtn = GUI:CreateCheckbox(content, "Show Gravity UI Button", "showGravityButton", ns.db.profile.styling.gamemenu, function(value)
-        if ns.Styling and ns.Styling.SkinGameMenu then
-            ns.Styling:SkinGameMenu()
-        end
+    local row2 = CreateStylingRow(content, "Show Gravity UI Button", "checkbox", "showGravityButton", ns.db.profile.styling.gamemenu, function()
+        if ns.Styling and ns.Styling.SkinGameMenu then ns.Styling:SkinGameMenu() end
     end)
-    showBtn:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - 30
+    row2:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
     
-    local btnSize = GUI:CreateSlider(content, "Button Font Size", 8, 24, "buttonFontSize", ns.db.profile.styling.gamemenu, function(value)
-        if ns.Styling and ns.Styling.SkinGameMenu then
-            ns.Styling:SkinGameMenu()
-        end
+    local row3 = CreateStylingRow(content, "Button Font Size", "slider", 8, 24, "buttonFontSize", ns.db.profile.styling.gamemenu, function()
+        if ns.Styling and ns.Styling.SkinGameMenu then ns.Styling:SkinGameMenu() end
     end, 1)
-    btnSize:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - 50
+    row3:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
     
     -- Background Color Customization
-    local bgPicker -- Forward declare
-    local bgCheck = GUI:CreateCheckbox(content, "Don't Use Theme Color for Background", "disableThemeColorBackground", ns.db.profile.styling.gamemenu, function(value)
-        if bgPicker then
-            if value then bgPicker:Show() else bgPicker:Hide() end
+    local bgPickerRow -- Forward declare
+    local row4 = CreateStylingRow(content, "Don't Use Theme for BG", "checkbox", "disableThemeColorBackground", ns.db.profile.styling.gamemenu, function(value)
+        if bgPickerRow then
+            if value then bgPickerRow:Show() else bgPickerRow:Hide() end
         end
         if ns.Styling and ns.Styling.SkinGameMenu then ns.Styling:SkinGameMenu() end
     end)
-    bgCheck:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - 30
+    row4:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
     
-    bgPicker = GUI:CreateColorPicker(content, "Background Color", "customBackgroundColor", ns.db.profile.styling.gamemenu, function()
+    bgPickerRow = CreateStylingRow(content, "Background Color", "color", "customBackgroundColor", ns.db.profile.styling.gamemenu, function()
         if ns.Styling and ns.Styling.SkinGameMenu then ns.Styling:SkinGameMenu() end
     end)
-    bgPicker:SetPoint("TOPLEFT", PAD + 20, yOffset)
-    yOffset = yOffset - 40
+    bgPickerRow:SetPoint("TOPLEFT", PAD, yOffset) -- Indenting not strictly needed if label is distinct, but let's keep consistent left align
+    yOffset = yOffset - ROW_HEIGHT - 5
     
     -- Initialize Visibility
     if not ns.db.profile.styling.gamemenu.disableThemeColorBackground then
-        bgPicker:Hide()
+        bgPickerRow:Hide()
     end
     
     -- Font Color Customization
-    local fontPicker -- Forward declare
-    local fontCheck = GUI:CreateCheckbox(content, "Don't Use Theme Color for Font", "disableThemeColorFont", ns.db.profile.styling.gamemenu, function(value)
-        if fontPicker then
-            if value then fontPicker:Show() else fontPicker:Hide() end
+    local fontPickerRow -- Forward declare
+    local row6 = CreateStylingRow(content, "Don't Use Theme for Font", "checkbox", "disableThemeColorFont", ns.db.profile.styling.gamemenu, function(value)
+        if fontPickerRow then
+            if value then fontPickerRow:Show() else fontPickerRow:Hide() end
         end
         if ns.Styling and ns.Styling.SkinGameMenu then ns.Styling:SkinGameMenu() end
     end)
-    fontCheck:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - 30
+    row6:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
     
-    fontPicker = GUI:CreateColorPicker(content, "Font Color", "customFontColor", ns.db.profile.styling.gamemenu, function()
+    fontPickerRow = CreateStylingRow(content, "Font Color", "color", "customFontColor", ns.db.profile.styling.gamemenu, function()
         if ns.Styling and ns.Styling.SkinGameMenu then ns.Styling:SkinGameMenu() end
     end)
-    fontPicker:SetPoint("TOPLEFT", PAD + 20, yOffset)
-    yOffset = yOffset - 40
+    fontPickerRow:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
     
     -- Initialize Visibility
     if not ns.db.profile.styling.gamemenu.disableThemeColorFont then
-        fontPicker:Hide()
+        fontPickerRow:Hide()
     end
     
     local note = GUI:CreateLabel(content, "Note: Requires UI Reload to fully apply/remove.", 12, C.textMuted)
@@ -108,22 +159,17 @@ local function BuildChatBubblesPanel(parent)
     header:SetPoint("TOPLEFT", PAD, yOffset)
     yOffset = yOffset - header.gap
     
-    local toggle = GUI:CreateCheckbox(content, "Enable Chat Bubble Skinning", "enabled", ns.db.profile.styling.chatBubbles, function(value)
-        if ns.Styling and ns.Styling.SkinChatBubbles then
-            ns.Styling:SkinChatBubbles()
-        end
+    local row1 = CreateStylingRow(content, "Enable Chat Bubble Skinning", "checkbox", "enabled", ns.db.profile.styling.chatBubbles, function()
+        if ns.Styling and ns.Styling.SkinChatBubbles then ns.Styling:SkinChatBubbles() end
     end)
-    toggle:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - 40
+    row1:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
     
-    local fontSize = GUI:CreateSlider(content, "Font Size", 1, 32, "fontSize", ns.db.profile.styling.chatBubbles, function(value)
-        if ns.Styling and ns.Styling.SkinChatBubbles then
-            ns.Styling:SkinChatBubbles()
-        end
+    local row2 = CreateStylingRow(content, "Font Size", "slider", 1, 32, "fontSize", ns.db.profile.styling.chatBubbles, function()
+        if ns.Styling and ns.Styling.SkinChatBubbles then ns.Styling:SkinChatBubbles() end
     end, 1)
-    fontSize:SetPoint("TOPLEFT", PAD, yOffset)
-    fontSize:SetWidth(400)
-    yOffset = yOffset - 50
+    row2:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
     
     local outlineOptions = {
         { text = "None", value = "NONE" },
@@ -132,14 +178,11 @@ local function BuildChatBubblesPanel(parent)
         { text = "Monochrome", value = "MONOCHROME" },
     }
     
-    local fontOutline = GUI:CreateDropdown(content, "Font Outline", outlineOptions, "fontOutline", ns.db.profile.styling.chatBubbles, function(value)
-        if ns.Styling and ns.Styling.SkinChatBubbles then
-            ns.Styling:SkinChatBubbles()
-        end
+    local row3 = CreateStylingRow(content, "Font Outline", "dropdown", outlineOptions, "fontOutline", ns.db.profile.styling.chatBubbles, function()
+        if ns.Styling and ns.Styling.SkinChatBubbles then ns.Styling:SkinChatBubbles() end
     end)
-    fontOutline:SetPoint("TOPLEFT", PAD, yOffset)
-    fontOutline:SetWidth(400)
-    yOffset = yOffset - 50
+    row3:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
     
     content:SetHeight(math.abs(yOffset) + 20)
 end
@@ -161,78 +204,69 @@ local function BuildReadyCheckPanel(parent)
     header:SetPoint("TOPLEFT", PAD, yOffset)
     yOffset = yOffset - header.gap
     
-    local skinCheck = GUI:CreateCheckbox(content, "Skin Ready Check Frame", "skinReadyCheck", db, function(value)
-        if ns.Styling and ns.Styling.SkinReadyCheck then
-            ns.Styling:SkinReadyCheck()
-        end
+    local row1 = CreateStylingRow(content, "Skin Ready Check Frame", "checkbox", "skinReadyCheck", db, function()
+        if ns.Styling and ns.Styling.SkinReadyCheck then ns.Styling:SkinReadyCheck() end
     end)
-    skinCheck:SetPoint("TOPLEFT", PAD, yOffset)
+    row1:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
     
     local extraNote = GUI:CreateLabel(content, "Skin the ready check popup with GUI styling.", 12, C.textMuted)
-    extraNote:SetPoint("TOPLEFT", skinCheck, "BOTTOMLEFT", 26, -4)
-    yOffset = yOffset - 50
+    extraNote:SetPoint("TOPLEFT", row1, "BOTTOMLEFT", 0, -4)
+    yOffset = yOffset - 25
 
     -- Background Color Customization
-    local bgPicker -- Forward declare
-    local bgCheck = GUI:CreateCheckbox(content, "Don't Use Theme Color for Background", "disableThemeColorBackground", ns.db.profile.styling.readyCheck, function(value)
-        if bgPicker then
-            if value then bgPicker:Show() else bgPicker:Hide() end
+    local bgPickerRow -- Forward declare
+    local rowBg = CreateStylingRow(content, "Don't Use Theme for BG", "checkbox", "disableThemeColorBackground", ns.db.profile.styling.readyCheck, function(value)
+        if bgPickerRow then
+            if value then bgPickerRow:Show() else bgPickerRow:Hide() end
         end
         if ns.Styling and ns.Styling.SkinReadyCheck then ns.Styling:SkinReadyCheck() end
     end)
-    bgCheck:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - 30
+    rowBg:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
     
-    bgPicker = GUI:CreateColorPicker(content, "Background Color", "customBackgroundColor", ns.db.profile.styling.readyCheck, function()
+    bgPickerRow = CreateStylingRow(content, "Background Color", "color", "customBackgroundColor", ns.db.profile.styling.readyCheck, function()
         if ns.Styling and ns.Styling.SkinReadyCheck then ns.Styling:SkinReadyCheck() end
     end)
-    bgPicker:SetPoint("TOPLEFT", PAD + 20, yOffset)
-    yOffset = yOffset - 40
+    bgPickerRow:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
     
-    -- Initialize Visibility
     if not ns.db.profile.styling.readyCheck.disableThemeColorBackground then
-        bgPicker:Hide()
+        bgPickerRow:Hide()
     end
     
     -- Font Color Customization
-    local fontPicker -- Forward declare
-    local fontCheck = GUI:CreateCheckbox(content, "Don't Use Theme Color for Font", "disableThemeColorFont", ns.db.profile.styling.readyCheck, function(value)
-        if fontPicker then
-            if value then fontPicker:Show() else fontPicker:Hide() end
+    local fontPickerRow -- Forward declare
+    local rowFn = CreateStylingRow(content, "Don't Use Theme for Font", "checkbox", "disableThemeColorFont", ns.db.profile.styling.readyCheck, function(value)
+        if fontPickerRow then
+            if value then fontPickerRow:Show() else fontPickerRow:Hide() end
         end
         if ns.Styling and ns.Styling.SkinReadyCheck then ns.Styling:SkinReadyCheck() end
     end)
-    fontCheck:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - 30
+    rowFn:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
     
-    fontPicker = GUI:CreateColorPicker(content, "Font Color", "customFontColor", ns.db.profile.styling.readyCheck, function()
+    fontPickerRow = CreateStylingRow(content, "Font Color", "color", "customFontColor", ns.db.profile.styling.readyCheck, function()
         if ns.Styling and ns.Styling.SkinReadyCheck then ns.Styling:SkinReadyCheck() end
     end)
-    fontPicker:SetPoint("TOPLEFT", PAD + 20, yOffset)
-    yOffset = yOffset - 40
+    fontPickerRow:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
     
-    -- Initialize Visibility
     if not ns.db.profile.styling.readyCheck.disableThemeColorFont then
-        fontPicker:Hide()
+        fontPickerRow:Hide()
     end
-    yOffset = yOffset - 10
+    yOffset = yOffset - 5
 
     local moveBtn = GUI:CreateButton(content, "Toggle Mover", 160, 24, function()
-        if ns.Styling and ns.Styling.ToggleReadyCheckMover then
-             ns.Styling:ToggleReadyCheckMover()
-        end
+        if ns.Styling and ns.Styling.ToggleReadyCheckMover then ns.Styling:ToggleReadyCheckMover() end
     end)
     moveBtn:SetPoint("TOPLEFT", PAD, yOffset)
     
     local resetBtn = GUI:CreateButton(content, "Reset Position", 160, 24, function()
-        if ns.Styling and ns.Styling.ResetReadyCheckPosition then
-             ns.Styling:ResetReadyCheckPosition()
-        end
+        if ns.Styling and ns.Styling.ResetReadyCheckPosition then ns.Styling:ResetReadyCheckPosition() end
     end)
     resetBtn:SetPoint("LEFT", moveBtn, "RIGHT", 10, 0)
-    yOffset = yOffset - 50
-    
-
+    yOffset = yOffset - 40
     
     -- 3. MISSING RAID BUFFS
     local header3 = GUI:CreateSectionHeader(content, "Missing Raid Buffs")
@@ -243,49 +277,47 @@ local function BuildReadyCheckPanel(parent)
     note3:SetPoint("TOPLEFT", PAD, yOffset)
     yOffset = yOffset - 30
     
-    local enableRB = GUI:CreateCheckbox(content, "Enable Missing Raid Buffs", "enabled", rbDb, function(v) 
+    local rbr1 = CreateStylingRow(content, "Enable Missing Raid Buffs", "checkbox", "enabled", rbDb, function() 
         if ns.RaidBuffs then ns.RaidBuffs:Refresh() end 
     end)
-    enableRB:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - 30
+    rbr1:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
     
-    local showGroup = GUI:CreateCheckbox(content, "Show Only When In Group", "showOnlyInGroup", rbDb, function(v) 
+    local rbr2 = CreateStylingRow(content, "Show Only When In Group", "checkbox", "showOnlyInGroup", rbDb, function() 
         if ns.RaidBuffs then ns.RaidBuffs:Refresh() end 
     end)
-    showGroup:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - 30
+    rbr2:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
     
-    local showInst = GUI:CreateCheckbox(content, "Show Only In Instance", "showOnlyInInstance", rbDb, function(v) 
+    local rbr3 = CreateStylingRow(content, "Show Only In Instance", "checkbox", "showOnlyInInstance", rbDb, function() 
         if ns.RaidBuffs then ns.RaidBuffs:Refresh() end 
     end)
-    showInst:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - 30
+    rbr3:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
     
-    local provMode = GUI:CreateCheckbox(content, "Also Show Buffs You Can Provide", "providerMode", rbDb, function(v) 
+    local rbr4 = CreateStylingRow(content, "Also Show Buffs You Can Provide", "checkbox", "providerMode", rbDb, function() 
         if ns.RaidBuffs then ns.RaidBuffs:Refresh() end 
     end)
-    provMode:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - 30
+    rbr4:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
     
-    local hideLbl = GUI:CreateCheckbox(content, "Hide Label Bar", "hideLabelBar", rbDb, function(v) 
+    local rbr5 = CreateStylingRow(content, "Hide Label Bar", "checkbox", "hideLabelBar", rbDb, function() 
         if ns.RaidBuffs then ns.RaidBuffs:Refresh() end 
     end)
-    hideLbl:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - 40
+    rbr5:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
 
-    local rbIconSize = GUI:CreateSlider(content, "Icon Size", 16, 64, "iconSize", rbDb, function(v) 
+    local rbr6 = CreateStylingRow(content, "Icon Size", "slider", 16, 64, "iconSize", rbDb, function() 
         if ns.RaidBuffs then ns.RaidBuffs:Refresh() end 
     end)
-    rbIconSize:SetPoint("TOPLEFT", PAD, yOffset)
-    rbIconSize:SetWidth(400)
-    yOffset = yOffset - 50
+    rbr6:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
     
-    local rbFontSize = GUI:CreateSlider(content, "Label Font Size", 8, 24, "labelFontSize", rbDb, function(v) 
+    local rbr7 = CreateStylingRow(content, "Label Font Size", "slider", 8, 24, "labelFontSize", rbDb, function() 
         if ns.RaidBuffs then ns.RaidBuffs:Refresh() end 
     end)
-    rbFontSize:SetPoint("TOPLEFT", PAD, yOffset)
-    rbFontSize:SetWidth(400)
-    yOffset = yOffset - 50
+    rbr7:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
     
     -- Checkbox toggle preview
     local prevBtn = GUI:CreateButton(content, "Toggle Preview", 140, 24, function()
@@ -293,10 +325,8 @@ local function BuildReadyCheckPanel(parent)
     end)
     prevBtn:SetPoint("TOPLEFT", PAD, yOffset)
     
-    content:SetHeight(math.abs(yOffset) + 20)
+    content:SetHeight(math.abs(yOffset) + 40)
 end
-
-
 
 -- ═══════════════════════════════════════════════════════════════
 -- BUILDER: KEYSTONE (Tab 4)
@@ -316,62 +346,56 @@ local function BuildKeystonePanel(parent)
     note:SetPoint("TOPLEFT", PAD, yOffset)
     yOffset = yOffset - 30
     
-    local enable = GUI:CreateCheckbox(content, "Skin Keystone Window", "enabled", ns.db.profile.styling.keystone, function(v)
-        if ns.Styling and ns.Styling.SkinKeystone then
-             ns.Styling:SkinKeystone()
-        end
+    local row1 = CreateStylingRow(content, "Skin Keystone Window", "checkbox", "enabled", ns.db.profile.styling.keystone, function()
+        if ns.Styling and ns.Styling.SkinKeystone then ns.Styling:SkinKeystone() end
     end)
-    enable:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - 40
+    row1:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
     
     -- Background Color Customization
-    local bgPicker -- Forward declare
-    local bgCheck = GUI:CreateCheckbox(content, "Don't Use Theme Color for Background", "disableThemeColorBackground", ns.db.profile.styling.keystone, function(value)
-        if bgPicker then
-            if value then bgPicker:Show() else bgPicker:Hide() end
+    local bgPickerRow -- Forward declare
+    local rowBg = CreateStylingRow(content, "Don't Use Theme for BG", "checkbox", "disableThemeColorBackground", ns.db.profile.styling.keystone, function(value)
+        if bgPickerRow then
+            if value then bgPickerRow:Show() else bgPickerRow:Hide() end
         end
         if ns.Styling and ns.Styling.SkinKeystone then ns.Styling:SkinKeystone() end
     end)
-    bgCheck:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - 30
+    rowBg:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
     
-    bgPicker = GUI:CreateColorPicker(content, "Background Color", "customBackgroundColor", ns.db.profile.styling.keystone, function()
+    bgPickerRow = CreateStylingRow(content, "Background Color", "color", "customBackgroundColor", ns.db.profile.styling.keystone, function()
         if ns.Styling and ns.Styling.SkinKeystone then ns.Styling:SkinKeystone() end
     end)
-    bgPicker:SetPoint("TOPLEFT", PAD + 20, yOffset)
-    yOffset = yOffset - 40
+    bgPickerRow:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
     
-    -- Initialize Visibility
     if not ns.db.profile.styling.keystone.disableThemeColorBackground then
-        bgPicker:Hide()
+        bgPickerRow:Hide()
     end
     
     -- Font Color Customization
-    local fontPicker -- Forward declare
-    local fontCheck = GUI:CreateCheckbox(content, "Don't Use Theme Color for Font", "disableThemeColorFont", ns.db.profile.styling.keystone, function(value)
-        if fontPicker then
-            if value then fontPicker:Show() else fontPicker:Hide() end
+    local fontPickerRow -- Forward declare
+    local rowFn = CreateStylingRow(content, "Don't Use Theme for Font", "checkbox", "disableThemeColorFont", ns.db.profile.styling.keystone, function(value)
+        if fontPickerRow then
+            if value then fontPickerRow:Show() else fontPickerRow:Hide() end
         end
         if ns.Styling and ns.Styling.SkinKeystone then ns.Styling:SkinKeystone() end
     end)
-    fontCheck:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - 30
+    rowFn:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
     
-    fontPicker = GUI:CreateColorPicker(content, "Font Color", "customFontColor", ns.db.profile.styling.keystone, function()
+    fontPickerRow = CreateStylingRow(content, "Font Color", "color", "customFontColor", ns.db.profile.styling.keystone, function()
         if ns.Styling and ns.Styling.SkinKeystone then ns.Styling:SkinKeystone() end
     end)
-    fontPicker:SetPoint("TOPLEFT", PAD + 20, yOffset)
-    yOffset = yOffset - 40
+    fontPickerRow:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
     
-    -- Initialize Visibility
     if not ns.db.profile.styling.keystone.disableThemeColorFont then
-        fontPicker:Hide()
+        fontPickerRow:Hide()
     end
     
     content:SetHeight(math.abs(yOffset) + 20)
 end
-
-
 
 -- ═══════════════════════════════════════════════════════════════
 -- BUILDER: POWER BAR (Tab 5)
@@ -387,37 +411,30 @@ local function BuildPowerBarPanel(parent)
     header:SetPoint("TOPLEFT", PAD, yOffset)
     yOffset = yOffset - header.gap
     
-    local enable = GUI:CreateCheckbox(content, "Enable Skinning", "enabled", ns.db.profile.styling.powerBar, function(v)
-        if ns.Styling and ns.Styling.SkinPowerBar then
-             ns.Styling:SkinPowerBar()
-        end
+    local row1 = CreateStylingRow(content, "Enable Skinning", "checkbox", "enabled", ns.db.profile.styling.powerBar, function()
+        if ns.Styling and ns.Styling.SkinPowerBar then ns.Styling:SkinPowerBar() end
     end)
-    enable:SetPoint("TOPLEFT", PAD, yOffset)
+    row1:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
     
     local note = GUI:CreateLabel(content, "Replaces the encounter/quest power bar (e.g. Boss mechanics) with a styled version.", 12, C.textMuted)
-    note:SetPoint("TOPLEFT", enable, "BOTTOMLEFT", 26, -4)
+    note:SetPoint("TOPLEFT", row1, "BOTTOMLEFT", 0, -4)
     note:SetWidth(600)
-    yOffset = yOffset - 50
+    yOffset = yOffset - 40
     
     local moverBtn = GUI:CreateButton(content, "Toggle Mover", 140, 24, function()
-        if ns.Styling and ns.Styling.TogglePowerBarMover then
-            ns.Styling:TogglePowerBarMover()
-        end
+        if ns.Styling and ns.Styling.TogglePowerBarMover then ns.Styling:TogglePowerBarMover() end
     end)
     moverBtn:SetPoint("TOPLEFT", PAD, yOffset)
     
     local resetBtn = GUI:CreateButton(content, "Reset Position", 140, 24, function()
-        if ns.Styling and ns.Styling.ResetPowerBarPosition then
-            ns.Styling:ResetPowerBarPosition()
-        end
+        if ns.Styling and ns.Styling.ResetPowerBarPosition then ns.Styling:ResetPowerBarPosition() end
     end)
     resetBtn:SetPoint("LEFT", moverBtn, "RIGHT", 10, 0)
     
     yOffset = yOffset - 50
     content:SetHeight(math.abs(yOffset) + 20)
 end
-
-
 
 -- ═══════════════════════════════════════════════════════════════
 -- BUILDER: ALERTS (Tab 6)
@@ -434,128 +451,107 @@ local function BuildAlertsPanel(parent)
     header:SetPoint("TOPLEFT", PAD, yOffset)
     yOffset = yOffset - header.gap
     
-    local enable = GUI:CreateCheckbox(content, "Enable Skinning", "enabled", db, function(v)
-        if ns.Alerts and ns.Alerts.Initialize then
-             ns.Alerts:Initialize()
-        end
+    local row1 = CreateStylingRow(content, "Enable Skinning", "checkbox", "enabled", db, function()
+        if ns.Alerts and ns.Alerts.Initialize then ns.Alerts:Initialize() end
     end)
-    enable:SetPoint("TOPLEFT", PAD, yOffset)
+    row1:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
     
     local note = GUI:CreateLabel(content, "Skins Blizzard alert frames (Achievements, Loot, etc.) and allows custom positioning.", 12, C.textMuted)
-    note:SetPoint("TOPLEFT", enable, "BOTTOMLEFT", 26, -4)
+    note:SetPoint("TOPLEFT", row1, "BOTTOMLEFT", 0, -4)
     note:SetWidth(600)
     yOffset = yOffset - 40
     
     -- Background Color Customization
-    local bgPicker -- Forward declare
-    local bgCheck = GUI:CreateCheckbox(content, "Don't Use Theme Color for Background", "disableThemeColorBackground", db, function(value)
-        if bgPicker then
-            if value then bgPicker:Show() else bgPicker:Hide() end
+    local bgPickerRow -- Forward declare
+    local rowBg = CreateStylingRow(content, "Don't Use Theme for BG", "checkbox", "disableThemeColorBackground", db, function(value)
+        if bgPickerRow then
+            if value then bgPickerRow:Show() else bgPickerRow:Hide() end
         end
         if ns.Alerts and ns.Alerts.Initialize then ns.Alerts:Initialize() end
     end)
-    bgCheck:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - 30
+    rowBg:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
     
-    bgPicker = GUI:CreateColorPicker(content, "Background Color", "customBackgroundColor", db, function()
+    bgPickerRow = CreateStylingRow(content, "Background Color", "color", "customBackgroundColor", db, function()
         if ns.Alerts and ns.Alerts.Initialize then ns.Alerts:Initialize() end
     end)
-    bgPicker:SetPoint("TOPLEFT", PAD + 20, yOffset)
-    yOffset = yOffset - 40
+    bgPickerRow:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
     
-    -- Initialize Visibility
     if not db.disableThemeColorBackground then
-        bgPicker:Hide()
+        bgPickerRow:Hide()
     end
     
     -- Font Color Customization
-    local fontPicker -- Forward declare
-    local fontCheck = GUI:CreateCheckbox(content, "Don't Use Theme Color for Font", "disableThemeColorFont", db, function(value)
-        if fontPicker then
-            if value then fontPicker:Show() else fontPicker:Hide() end
+    local fontPickerRow -- Forward declare
+    local rowFn = CreateStylingRow(content, "Don't Use Theme for Font", "checkbox", "disableThemeColorFont", db, function(value)
+        if fontPickerRow then
+            if value then fontPickerRow:Show() else fontPickerRow:Hide() end
         end
         if ns.Alerts and ns.Alerts.Initialize then ns.Alerts:Initialize() end
     end)
-    fontCheck:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - 30
+    rowFn:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
     
-    fontPicker = GUI:CreateColorPicker(content, "Font Color", "customFontColor", db, function()
+    fontPickerRow = CreateStylingRow(content, "Font Color", "color", "customFontColor", db, function()
         if ns.Alerts and ns.Alerts.Initialize then ns.Alerts:Initialize() end
     end)
-    fontPicker:SetPoint("TOPLEFT", PAD + 20, yOffset)
-    yOffset = yOffset - 40
+    fontPickerRow:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
     
-    -- Initialize Visibility
     if not db.disableThemeColorFont then
-        fontPicker:Hide()
+        fontPickerRow:Hide()
     end
-    
-    yOffset = yOffset - 10
+    yOffset = yOffset - 5
     
     local moverBtn = GUI:CreateButton(content, "Toggle Movers", 140, 24, function()
-        if ns.Alerts and ns.Alerts.ToggleMovers then
-            ns.Alerts:ToggleMovers()
-        end
+        if ns.Alerts and ns.Alerts.ToggleMovers then ns.Alerts:ToggleMovers() end
     end)
     moverBtn:SetPoint("TOPLEFT", PAD, yOffset)
     
     local resetBtn = GUI:CreateButton(content, "Reset Positions", 140, 24, function()
-        if ns.Alerts and ns.Alerts.ResetPositions then
-            ns.Alerts:ResetPositions()
-        end
+        if ns.Alerts and ns.Alerts.ResetPositions then ns.Alerts:ResetPositions() end
     end)
     resetBtn:SetPoint("LEFT", moverBtn, "RIGHT", 10, 0)
     
     local testBtn = GUI:CreateButton(content, "Test Alerts", 140, 24, function()
-        if ns.Alerts and ns.Alerts.Test then
-            ns.Alerts:Test()
-        end
+        if ns.Alerts and ns.Alerts.Test then ns.Alerts:Test() end
     end)
     testBtn:SetPoint("LEFT", resetBtn, "RIGHT", 10, 0)
-    
-    yOffset = yOffset - 50
+    yOffset = yOffset - 40
 
     local growOptions = {
         { text = "Grow Up", value = "UP" },
         { text = "Grow Down", value = "DOWN" },
     }
 
-    local alertGrow = GUI:CreateDropdown(content, "Alert Frame Growth", growOptions, "alertGrowDirection", db, function()
-        if AlertFrame and AlertFrame.UpdateAnchors then
-            AlertFrame:UpdateAnchors()
-        end
+    local rowGrow1 = CreateStylingRow(content, "Alert Frame Growth", "dropdown", growOptions, "alertGrowDirection", db, function()
+        if AlertFrame and AlertFrame.UpdateAnchors then AlertFrame:UpdateAnchors() end
     end)
-    alertGrow:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - 50
+    rowGrow1:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
 
-    local toastGrow = GUI:CreateDropdown(content, "Event Toast Growth", growOptions, "toastGrowDirection", db, function()
-        if EventToastManagerFrame and EventToastManagerFrame.UpdateAnchor then
-            EventToastManagerFrame:UpdateAnchor()
-        end
+    local rowGrow2 = CreateStylingRow(content, "Event Toast Growth", "dropdown", growOptions, "toastGrowDirection", db, function()
+        if EventToastManagerFrame and EventToastManagerFrame.UpdateAnchor then EventToastManagerFrame:UpdateAnchor() end
     end)
-    toastGrow:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - 50
+    rowGrow2:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
 
-    local alertOffset = GUI:CreateSlider(content, "Alert Y-Offset", -400, 400, "alertYOffset", db, function(value)
-        if AlertFrame and AlertFrame.UpdateAnchors then
-            AlertFrame:UpdateAnchors()
-        end
+    local rowOff1 = CreateStylingRow(content, "Alert Y-Offset", "slider", -400, 400, "alertYOffset", db, function()
+        if AlertFrame and AlertFrame.UpdateAnchors then AlertFrame:UpdateAnchors() end
     end, 1)
-    alertOffset:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - 50
+    rowOff1:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
 
-    local toastOffset = GUI:CreateSlider(content, "Toast Y-Offset", -400, 400, "toastYOffset", db, function(value)
-        if EventToastManagerFrame and EventToastManagerFrame.UpdateAnchor then
-            EventToastManagerFrame:UpdateAnchor()
-        end
+    local rowOff2 = CreateStylingRow(content, "Toast Y-Offset", "slider", -400, 400, "toastYOffset", db, function()
+        if EventToastManagerFrame and EventToastManagerFrame.UpdateAnchor then EventToastManagerFrame:UpdateAnchor() end
     end, 1)
-    toastOffset:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - 50
+    rowOff2:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
     
     content:SetHeight(math.abs(yOffset) + 20)
 end
-
-
 
 -- ═══════════════════════════════════════════════════════════════
 -- BUILDER: LOOT (Tab 7)
@@ -577,79 +573,71 @@ local function BuildLootPanel(parent)
     desc1:SetPoint("TOPLEFT", PAD, yOffset)
     yOffset = yOffset - 35
     
-    local skinLoot = GUI:CreateCheckbox(content, "Skin Loot Window", "enabled", db.loot, function(v)
-        if ns.Loot and ns.Loot.Initialize then
-             ns.Loot:Initialize()
-        end
+    local row1 = CreateStylingRow(content, "Skin Loot Window", "checkbox", "enabled", db.loot, function()
+        if ns.Loot and ns.Loot.Initialize then ns.Loot:Initialize() end
     end)
-    skinLoot:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - 40
+    row1:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
     
-    local underMouse = GUI:CreateCheckbox(content, "Loot Under Mouse", "lootUnderMouse", db.loot)
-    underMouse:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - 40
+    local row2 = CreateStylingRow(content, "Loot Under Mouse", "checkbox", "lootUnderMouse", db.loot)
+    row2:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
     
-    local transmog = GUI:CreateCheckbox(content, "Show Transmog Markers", "showTransmogMarkers", db.loot)
-    transmog:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - 40
+    local row3 = CreateStylingRow(content, "Show Transmog Markers", "checkbox", "showTransmogMarkers", db.loot)
+    row3:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
 
     -- Background Color Customization
-    local bgPicker1 -- Forward declare
-    local bgCheck1 = GUI:CreateCheckbox(content, "Don't Use Theme Color for Background", "disableThemeColorBackground", db.loot, function(value)
-        if bgPicker1 then
-            if value then bgPicker1:Show() else bgPicker1:Hide() end
+    local bgPickerRow -- Forward declare
+    local rowBg = CreateStylingRow(content, "Don't Use Theme for BG", "checkbox", "disableThemeColorBackground", db.loot, function(value)
+        if bgPickerRow then
+            if value then bgPickerRow:Show() else bgPickerRow:Hide() end
         end
         if ns.Loot and ns.Loot.RefreshStyling then ns.Loot.RefreshStyling() end
     end)
-    bgCheck1:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - 30
+    rowBg:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
     
-    bgPicker1 = GUI:CreateColorPicker(content, "Background Color", "customBackgroundColor", db.loot, function()
+    bgPickerRow = CreateStylingRow(content, "Background Color", "color", "customBackgroundColor", db.loot, function()
         if ns.Loot and ns.Loot.RefreshStyling then ns.Loot.RefreshStyling() end
     end)
-    bgPicker1:SetPoint("TOPLEFT", PAD + 20, yOffset)
-    yOffset = yOffset - 40
+    bgPickerRow:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
     
-    -- Initialize Visibility
     if not db.loot.disableThemeColorBackground then
-        bgPicker1:Hide()
+        bgPickerRow:Hide()
     end
     
     -- Font Color Customization
-    local fontPicker1 -- Forward declare
-    local fontCheck1 = GUI:CreateCheckbox(content, "Don't Use Theme Color for Font", "disableThemeColorFont", db.loot, function(value)
-        if fontPicker1 then
-            if value then fontPicker1:Show() else fontPicker1:Hide() end
+    local fontPickerRow -- Forward declare
+    local rowFn = CreateStylingRow(content, "Don't Use Theme for Font", "checkbox", "disableThemeColorFont", db.loot, function(value)
+        if fontPickerRow then
+            if value then fontPickerRow:Show() else fontPickerRow:Hide() end
         end
         if ns.Loot and ns.Loot.RefreshStyling then ns.Loot.RefreshStyling() end
     end)
-    fontCheck1:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - 30
+    rowFn:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
     
-    fontPicker1 = GUI:CreateColorPicker(content, "Font Color", "customFontColor", db.loot, function()
+    fontPickerRow = CreateStylingRow(content, "Font Color", "color", "customFontColor", db.loot, function()
         if ns.Loot and ns.Loot.RefreshStyling then ns.Loot.RefreshStyling() end
     end)
-    fontPicker1:SetPoint("TOPLEFT", PAD + 20, yOffset)
-    yOffset = yOffset - 40
+    fontPickerRow:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
     
-    -- Initialize Visibility
     if not db.loot.disableThemeColorFont then
-        fontPicker1:Hide()
+        fontPickerRow:Hide()
     end
 
     yOffset = yOffset - 10
 
     local moveBtn = GUI:CreateButton(content, "Toggle Mover", 160, 24, function()
-        if ns.Loot and ns.Loot.ToggleMover then
-             ns.Loot:ToggleMover()
-        end
+        if ns.Loot and ns.Loot.ToggleMover then ns.Loot:ToggleMover() end
     end)
     moveBtn:SetPoint("TOPLEFT", PAD, yOffset)
     
     local resetBtn = GUI:CreateButton(content, "Reset Position", 160, 24, function()
-        if ns.Loot and ns.Loot.ResetPosition then
-             ns.Loot:ResetPosition()
-        end
+        if ns.Loot and ns.Loot.ResetPosition then ns.Loot:ResetPosition() end
     end)
     resetBtn:SetPoint("LEFT", moveBtn, "RIGHT", 10, 0)
     yOffset = yOffset - 50
@@ -663,64 +651,55 @@ local function BuildLootPanel(parent)
     desc2:SetPoint("TOPLEFT", PAD, yOffset)
     yOffset = yOffset - 35
     
-    local skinHistory = GUI:CreateCheckbox(content, "Skin Loot History", "enabled", db.lootResults)
-    skinHistory:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - 40
+    local rowH1 = CreateStylingRow(content, "Skin Loot History", "checkbox", "enabled", db.lootResults)
+    rowH1:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
 
-    -- Background Color Customization
-    local bgPicker2 -- Forward declare
-    local bgCheck2 = GUI:CreateCheckbox(content, "Don't Use Theme Color for Background", "disableThemeColorBackground", db.lootResults, function(value)
-        if bgPicker2 then
-            if value then bgPicker2:Show() else bgPicker2:Hide() end
+    -- Background Color
+    local bgPickerRow2 -- Forward declare
+    local rowBg2 = CreateStylingRow(content, "Don't Use Theme for BG", "checkbox", "disableThemeColorBackground", db.lootResults, function(value)
+        if bgPickerRow2 then
+            if value then bgPickerRow2:Show() else bgPickerRow2:Hide() end
         end
-        -- History skinning might only apply on reload or new frames, but we'll call any refresh available
         if ns.Loot and ns.Loot.RefreshHistoryStyling then ns.Loot.RefreshHistoryStyling() end
     end)
-    bgCheck2:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - 30
+    rowBg2:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
     
-    bgPicker2 = GUI:CreateColorPicker(content, "Background Color", "customBackgroundColor", db.lootResults, function()
+    bgPickerRow2 = CreateStylingRow(content, "Background Color", "color", "customBackgroundColor", db.lootResults, function()
         if ns.Loot and ns.Loot.RefreshHistoryStyling then ns.Loot.RefreshHistoryStyling() end
     end)
-    bgPicker2:SetPoint("TOPLEFT", PAD + 20, yOffset)
-    yOffset = yOffset - 40
+    bgPickerRow2:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
     
-    -- Initialize Visibility
     if not db.lootResults.disableThemeColorBackground then
-        bgPicker2:Hide()
+        bgPickerRow2:Hide()
     end
     
-    -- Font Color Customization
-    local fontPicker2 -- Forward declare
-    local fontCheck2 = GUI:CreateCheckbox(content, "Don't Use Theme Color for Font", "disableThemeColorFont", db.lootResults, function(value)
-        if fontPicker2 then
-            if value then fontPicker2:Show() else fontPicker2:Hide() end
+    -- Font Color
+    local fontPickerRow2 -- Forward declare
+    local rowFn2 = CreateStylingRow(content, "Don't Use Theme for Font", "checkbox", "disableThemeColorFont", db.lootResults, function(value)
+        if fontPickerRow2 then
+            if value then fontPickerRow2:Show() else fontPickerRow2:Hide() end
         end
         if ns.Loot and ns.Loot.RefreshHistoryStyling then ns.Loot.RefreshHistoryStyling() end
     end)
-    fontCheck2:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - 30
+    rowFn2:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
     
-    fontPicker2 = GUI:CreateColorPicker(content, "Font Color", "customFontColor", db.lootResults, function()
+    fontPickerRow2 = CreateStylingRow(content, "Font Color", "color", "customFontColor", db.lootResults, function()
         if ns.Loot and ns.Loot.RefreshHistoryStyling then ns.Loot.RefreshHistoryStyling() end
     end)
-    fontPicker2:SetPoint("TOPLEFT", PAD + 20, yOffset)
-    yOffset = yOffset - 40
+    fontPickerRow2:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
     
-    -- Initialize Visibility
     if not db.lootResults.disableThemeColorFont then
-        fontPicker2:Hide()
+        fontPickerRow2:Hide()
     end
 
     yOffset = yOffset - 60
     content:SetHeight(math.abs(yOffset) + 20)
 end
-
-
-
-
-
-
 
 -- ═══════════════════════════════════════════════════════════════
 -- BUILDER: OBJECTIVES (Tab 9)
@@ -745,124 +724,120 @@ local function BuildObjectivesPanel(parent)
     desc:SetPoint("TOPLEFT", PAD, yOffset)
     yOffset = yOffset - 35
     
-    local enable = GUI:CreateCheckbox(content, "Skin Objective Tracker", "enabled", db, function(v)
+    local row1 = CreateStylingRow(content, "Skin Objective Tracker", "checkbox", "enabled", db, function()
         if ns.Objectives and ns.Objectives.Refresh then ns.Objectives:Refresh() end
     end)
-    enable:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - 40
+    row1:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
     
-    local heightSlider = GUI:CreateSlider(content, "Max Height", 200, 1000, "height", db, function(v)
+    local row2 = CreateStylingRow(content, "Max Height", "slider", 200, 1000, "height", db, function()
         if ns.Objectives and ns.Objectives.Refresh then ns.Objectives:Refresh() end
     end, 10)
-    heightSlider:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - 50
+    row2:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
     
-    local moduleFontSlider = GUI:CreateSlider(content, "Module Header Font (QUESTS, etc.)", 8, 24, "moduleFontSize", db, function(v)
+    local row3 = CreateStylingRow(content, "Module Header Font", "slider", 8, 24, "moduleFontSize", db, function()
         if ns.Objectives and ns.Objectives.Refresh then ns.Objectives:Refresh() end
     end, 1)
-    moduleFontSlider:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - 50
+    row3:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
 
-    local titleFontSlider = GUI:CreateSlider(content, "Quest/Achievement Title Font", 8, 24, "titleFontSize", db, function(v)
+    local row4 = CreateStylingRow(content, "Title Font Size", "slider", 8, 24, "titleFontSize", db, function()
         if ns.Objectives and ns.Objectives.Refresh then ns.Objectives:Refresh() end
     end, 1)
-    titleFontSlider:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - 50
+    row4:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
 
-    local textFontSlider = GUI:CreateSlider(content, "Objective Text Font", 8, 24, "textFontSize", db, function(v)
+    local row5 = CreateStylingRow(content, "Text Font Size", "slider", 8, 24, "textFontSize", db, function()
         if ns.Objectives and ns.Objectives.Refresh then ns.Objectives:Refresh() end
     end, 1)
-    textFontSlider:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - 50
+    row5:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
     
-    local widthSlider = GUI:CreateSlider(content, "Max Width", 245, 400, "width", db, function(v)
+    local row6 = CreateStylingRow(content, "Max Width", "slider", 245, 400, "width", db, function()
         if ns.Objectives and ns.Objectives.Refresh then ns.Objectives:Refresh() end
     end, 1)
-    widthSlider:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - 50
+    row6:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
     
-    local hideBorder = GUI:CreateCheckbox(content, "Hide Border", "hideBorder", db, function(v)
+    local row7 = CreateStylingRow(content, "Hide Border", "checkbox", "hideBorder", db, function()
         if ns.Objectives and ns.Objectives.Refresh then ns.Objectives:Refresh() end
     end)
-    hideBorder:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - 45
+    row7:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
     
-    local opacitySlider = GUI:CreateSlider(content, "Background Opacity", 0, 1, "backgroundOpacity", db, function(v)
+    local row8 = CreateStylingRow(content, "Background Opacity", "slider", 0, 1, "backgroundOpacity", db, function()
         if ns.Objectives and ns.Objectives.Refresh then ns.Objectives:Refresh() end
     end, 0.1)
-    opacitySlider:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - 50
+    row8:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
 
-    local moduleColor -- Forward declare
-    local moduleCheck = GUI:CreateCheckbox(content, "Don't Use Theme Color for Header Color", "disableThemeColorForHeaders", db, function(value)
-        if moduleColor then
-             if value then moduleColor:Show() else moduleColor:Hide() end
+    -- Module Header Color
+    local moduleColorRow -- Forward declare
+    local rowMC = CreateStylingRow(content, "Don't Use Theme for Headers", "checkbox", "disableThemeColorForHeaders", db, function(value)
+        if moduleColorRow then
+             if value then moduleColorRow:Show() else moduleColorRow:Hide() end
         end
         if ns.Objectives and ns.Objectives.Refresh then ns.Objectives:Refresh() end
     end)
-    moduleCheck:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - 30
+    rowMC:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
 
-    moduleColor = GUI:CreateColorPicker(content, "Module Header Color (QUESTS, etc.)", "moduleColor", db, function()
+    moduleColorRow = CreateStylingRow(content, "Module Header Color", "color", "moduleColor", db, function()
         if ns.Objectives and ns.Objectives.Refresh then ns.Objectives:Refresh() end
     end)
-    moduleColor:SetPoint("TOPLEFT", PAD, yOffset)
-    moduleColor:SetWidth(400)
-    yOffset = yOffset - 40
+    moduleColorRow:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
     
-    -- Initialize Visibility
     if not db.disableThemeColorForHeaders then
-        moduleColor:Hide()
+        moduleColorRow:Hide()
     end
 
-    local titleColor = GUI:CreateColorPicker(content, "Quest/Achievement Title Color", "titleColor", db, function()
+    local rowTC = CreateStylingRow(content, "Quest Title Color", "color", "titleColor", db, function()
         if ns.Objectives and ns.Objectives.Refresh then ns.Objectives:Refresh() end
     end)
-    titleColor:SetPoint("TOPLEFT", PAD, yOffset)
-    titleColor:SetWidth(400)
-    yOffset = yOffset - 40
+    rowTC:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
     
-    local colorProgress = GUI:CreateCheckbox(content, "Colorful Progress (Red -> Green)", "colorfulProgress", db, function()
+    local rowCP = CreateStylingRow(content, "Colorful Progress (Red->Green)", "checkbox", "colorfulProgress", db, function()
         if ns.Objectives and ns.Objectives.Refresh then ns.Objectives:Refresh() end
     end)
-    colorProgress:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - 30
+    rowCP:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
     
-    local percentageCheck = GUI:CreateCheckbox(content, "Show Percentage", "percentage", db, function()
+    local rowPc = CreateStylingRow(content, "Show Percentage", "checkbox", "percentage", db, function()
         if ns.Objectives and ns.Objectives.Refresh then ns.Objectives:Refresh() end
     end)
-    percentageCheck:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - 30
+    rowPc:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
     
     local percentageNote = GUI:CreateLabel(content, "Displays the progress percentage (e.g. [50%]) next to the objective text.", 12, C.textMuted)
-    percentageNote:SetPoint("TOPLEFT", percentageCheck, "BOTTOMLEFT", 26, -4)
+    percentageNote:SetPoint("TOPLEFT", rowPc, "BOTTOMLEFT", 0, -4)
     yOffset = yOffset - 40
 
-    local textColor -- Forward declare
-    local textCheck = GUI:CreateCheckbox(content, "Don't Use Theme Color for Objective Text", "disableThemeColorForObjectives", db, function(value)
-        if textColor then
-             if value then textColor:Show() else textColor:Hide() end
+    -- Text Color
+    local textColorRow -- Forward declare
+    local rowTx = CreateStylingRow(content, "Don't Use Theme for Text", "checkbox", "disableThemeColorForObjectives", db, function(value)
+        if textColorRow then
+             if value then textColorRow:Show() else textColorRow:Hide() end
         end
         if ns.Objectives and ns.Objectives.Refresh then ns.Objectives:Refresh() end
     end)
-    textCheck:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - 30
+    rowTx:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
 
-    textColor = GUI:CreateColorPicker(content, "Objective Text Color", "textColor", db, function()
+    textColorRow = CreateStylingRow(content, "Objective Text Color", "color", "textColor", db, function()
         if ns.Objectives and ns.Objectives.Refresh then ns.Objectives:Refresh() end
     end)
-    textColor:SetPoint("TOPLEFT", PAD, yOffset)
-    textColor:SetWidth(400)
-    yOffset = yOffset - 40
+    textColorRow:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
     
-    -- Initialize Visibility
     if not db.disableThemeColorForObjectives then
-        textColor:Hide()
+        textColorRow:Hide()
     end
     
     content:SetHeight(math.abs(yOffset) + 20)
 end
-
 
 -- ═══════════════════════════════════════════════════════════════
 -- BUILDER: WIP PANELS (Placeholder)
@@ -889,15 +864,14 @@ local function BuildInstancePanel(parent)
     header:SetPoint("TOPLEFT", PAD, yOffset)
     yOffset = yOffset - header.gap
     
-    local enable = GUI:CreateCheckbox(content, "Enable Custom Instance Frame Styling", "enabled", ns.db.profile.styling.instanceFrames, function(v)
-        if ns.InstanceFrames and ns.InstanceFrames.Initialize then
-             ns.InstanceFrames:Initialize()
-        end
+    local row1 = CreateStylingRow(content, "Enable Custom Instance Styling", "checkbox", "enabled", ns.db.profile.styling.instanceFrames, function()
+        if ns.InstanceFrames and ns.InstanceFrames.Initialize then ns.InstanceFrames:Initialize() end
     end)
-    enable:SetPoint("TOPLEFT", PAD, yOffset)
+    row1:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
     
     local note = GUI:CreateLabel(content, "Skins the PVE Frame (Dungeon Finder, Raid Finder, Premade Groups) and Mythic+ frames.", 12, C.textMuted)
-    note:SetPoint("TOPLEFT", enable, "BOTTOMLEFT", 26, -4)
+    note:SetPoint("TOPLEFT", row1, "BOTTOMLEFT", 0, -4)
     note:SetWidth(600)
     
     yOffset = yOffset - 40
@@ -905,52 +879,49 @@ local function BuildInstancePanel(parent)
     local db = ns.db.profile.styling.instanceFrames
     
     -- Background Color Customization
-    local bgPicker -- Forward declare
-    local bgCheck = GUI:CreateCheckbox(content, "Don't Use Theme Color for Background", "disableThemeColorBackground", db, function(value)
-        if bgPicker then
-            if value then bgPicker:Show() else bgPicker:Hide() end
+    local bgPickerRow -- Forward declare
+    local rowBg = CreateStylingRow(content, "Don't Use Theme for BG", "checkbox", "disableThemeColorBackground", db, function(value)
+        if bgPickerRow then
+            if value then bgPickerRow:Show() else bgPickerRow:Hide() end
         end
         if ns.InstanceFrames and ns.InstanceFrames.Initialize then ns.InstanceFrames:Initialize() end
     end)
-    bgCheck:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - 30
+    rowBg:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
     
-    bgPicker = GUI:CreateColorPicker(content, "Background Color", "customBackgroundColor", db, function()
+    bgPickerRow = CreateStylingRow(content, "Background Color", "color", "customBackgroundColor", db, function()
         if ns.InstanceFrames and ns.InstanceFrames.Initialize then ns.InstanceFrames:Initialize() end
     end)
-    bgPicker:SetPoint("TOPLEFT", PAD + 20, yOffset)
-    yOffset = yOffset - 40
+    bgPickerRow:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
     
-    -- Initialize Background Visibility
     if not db.disableThemeColorBackground then
-        bgPicker:Hide()
+        bgPickerRow:Hide()
     end
     
     -- Border Color Customization
-    local borderPicker -- Forward declare
-    local borderCheck = GUI:CreateCheckbox(content, "Don't Use Theme Color for Border", "disableThemeColorBorder", db, function(value)
-        if borderPicker then
-            if value then borderPicker:Show() else borderPicker:Hide() end
+    local borderPickerRow -- Forward declare
+    local rowBr = CreateStylingRow(content, "Don't Use Theme for Border", "checkbox", "disableThemeColorBorder", db, function(value)
+        if borderPickerRow then
+            if value then borderPickerRow:Show() else borderPickerRow:Hide() end
         end
         if ns.InstanceFrames and ns.InstanceFrames.Initialize then ns.InstanceFrames:Initialize() end
     end)
-    borderCheck:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - 30
+    rowBr:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
     
-    borderPicker = GUI:CreateColorPicker(content, "Border Color", "customBorderColor", db, function()
+    borderPickerRow = CreateStylingRow(content, "Border Color", "color", "customBorderColor", db, function()
         if ns.InstanceFrames and ns.InstanceFrames.Initialize then ns.InstanceFrames:Initialize() end
     end)
-    borderPicker:SetPoint("TOPLEFT", PAD + 20, yOffset)
-    yOffset = yOffset - 40
+    borderPickerRow:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
     
-    -- Initialize Border Visibility
     if not db.disableThemeColorBorder then
-        borderPicker:Hide()
+        borderPickerRow:Hide()
     end
     
     content:SetHeight(math.abs(yOffset) + 20)
 end
-
 
 -- ═══════════════════════════════════════════════════════════════
 -- MAIN STYLING PAGE

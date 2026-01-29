@@ -18,6 +18,7 @@ required-dependencies:
   - big-wigs
   - details
   - plater-nameplates
+  - blizzmove
 
 optional-dependencies:
-  - blizzmove
+
