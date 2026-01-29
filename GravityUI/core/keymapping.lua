@@ -1,10 +1,10 @@
 local ADDON_NAME, ns = ...
 
 -- ═══════════════════════════════════════════════════════════════
--- BCDM KEYBINDS MODULE
+-- GUICDM KEYBINDS MODULE
 -- ═══════════════════════════════════════════════════════════════
-ns.BCDM_Keybinds = {}
-local Module = ns.BCDM_Keybinds
+ns.GUICDM_Keybinds = {}
+local Module = ns.GUICDM_Keybinds
 
 -- Cache
 local spellKeybinds = {} -- [spellID/Name] = "KeybindText"
@@ -28,7 +28,7 @@ local barToSettingsKey = {
 -- ═══════════════════════════════════════════════════════════════
 
 local function GetSettings()
-    return ns.db.profile.actionbars.bcdm
+    return ns.db.profile.actionbars.guicdm
 end
 
 local function GetFontPath()
@@ -238,6 +238,7 @@ end
 function Module:UpdateFrame(frame)
     if not frame then return end
     local settings = GetSettings()
+    if not settings then return end
     if not settings.enabled then 
         if frame.gravityKeybind then frame.gravityKeybind:Hide() end
         return 
@@ -370,15 +371,171 @@ function Module:ApplyKeybinds()
     end
 end
 
+-- ═══════════════════════════════════════════════════════════════
+-- CDM CENTERING LOGIC
+-- ═══════════════════════════════════════════════════════════════
+local centeringGuard = false
+
+function Module:UpdateFrameLayout(frameName, shouldCenter)
+    local frame = _G[frameName]
+    if not frame then return end
+    
+    -- Collect and group children by row (Y-coordinate)
+    local children = { frame:GetChildren() }
+    local rows = {}
+    local tolerance = 5 -- Y-pixel tolerance to be in same row
+    
+    for _, child in ipairs(children) do
+        if child:IsShown() and child:GetWidth() > 0 then
+            local _, _, _, _, y = child:GetPoint()
+            -- Try to find existing row
+            local inserted = false
+            if y then -- verify y is valid
+                for _, row in ipairs(rows) do
+                    if math.abs(row.y - y) <= tolerance then
+                        table.insert(row.buttons, child)
+                        -- Update average Y
+                        row.y = (row.y + y) / 2
+                        inserted = true
+                        break
+                    end
+                end
+                if not inserted then
+                    table.insert(rows, { y = y, buttons = {child} })
+                end
+            end
+        end
+    end
+    
+    -- Need at least 2 rows to have something to align relative to the first
+    if #rows < 2 then return end
+    
+    -- Sort rows by valid Y
+    table.sort(rows, function(a, b) return a.y > b.y end) -- Top first
+    
+    -- Helper to get bounds
+    local function GetRowBounds(row)
+        local minL, maxR
+        for _, btn in ipairs(row.buttons) do
+            local l = btn:GetLeft()
+            local r = btn:GetRight()
+            if l and r then
+                if not minL or l < minL then minL = l end
+                if not maxR or r > maxR then maxR = r end
+            end
+        end
+        return minL, maxR
+    end
+    
+    local r1Min, r1Max = GetRowBounds(rows[1])
+    if not r1Min or not r1Max then return end
+    
+    local r1Center = (r1Min + r1Max) / 2
+    local r1Left = r1Min
+    
+    -- Align Row 2+ relative to Row 1
+    for i = 2, #rows do
+        local row = rows[i]
+        local rMin, rMax = GetRowBounds(row)
+        if rMin and rMax then
+            local diff = 0
+            
+            if shouldCenter then
+                -- Center Alignment
+                local currentCenter = (rMin + rMax) / 2
+                diff = r1Center - currentCenter
+            else
+                -- Left Alignment (Reset)
+                -- We align the row's Left edge to Row 1's Left edge
+                -- This assumes BCDM default is left-aligned grid
+                diff = r1Left - rMin 
+            end
+            
+            -- Apply if significant
+            if math.abs(diff) > 0.5 then
+                for _, btn in ipairs(row.buttons) do
+                    local p, rel, rp, x, y = btn:GetPoint()
+                    if p then
+                         btn:SetPoint(p, rel, rp, x + diff, y)
+                    end
+                end
+            end
+        end
+    end
+end
+
+function Module:UpdateCentering()
+    if centeringGuard then return end
+    centeringGuard = true
+    
+    local cdm = ns.db.profile.actionbars.cdmCentering
+    if not cdm then 
+        centeringGuard = false
+        return 
+    end
+    
+    -- Master Switch
+    local masterEnabled = cdm.enabled
+    
+    -- Safe pcall to avoid breaking if logic fails
+    pcall(function()
+        -- Update both frames
+        -- If master is OFF, we pass false to force Reset/LeftAlign
+        -- If master is ON, we look at specific bar setting
+        self:UpdateFrameLayout("EssentialCooldownViewer", masterEnabled and cdm.essential)
+        self:UpdateFrameLayout("UtilityCooldownViewer", masterEnabled and cdm.utility)
+    end)
+    
+    centeringGuard = false
+end
+
+local hookedFrames = {}
+local function HookFrameForCentering(frameName)
+    if hookedFrames[frameName] then return end
+    local frame = _G[frameName]
+    if frame then
+        -- Hook layout updates
+        -- Using OnSizeChanged is usually reliable for auto-growing container
+        frame:HookScript("OnSizeChanged", function() 
+             if ns.db and ns.db.profile.actionbars.cdmCentering.enabled then
+                 -- Defer slightly to ensure layout is done
+                 C_Timer.After(0.05, function() Module:UpdateCentering() end)
+             end
+        end)
+        hookedFrames[frameName] = true
+    end
+end
+
+
 function Module:Refresh()
     ScanActionBars()
     self:DiscoverFrames()
     self:ApplyKeybinds()
+    self:UpdateCentering() -- Add centering update to refresh
 end
 
 function Module:Init()
-    if HOOK_SET then return end
+    local db = GetSettings()
     
+    -- Register Options
+    if ns.RegisterModuleOptions then
+        ns.RegisterModuleOptions("GUICDM_Keybinds", {
+            type = "group",
+            name = "CDM Keybinds",
+            args = {
+                 -- (Options are handled by custom GUI page now)
+            }
+        })
+    end
+
+    -- Hook frames for centering
+    C_Timer.After(1, function() -- Wait for BCDM to load
+        HookFrameForCentering("EssentialCooldownViewer")
+        HookFrameForCentering("UtilityCooldownViewer")
+        Module:UpdateCentering() -- Initial pass
+    end)
+
+    -- Hook ActionBars (Existing logic)
     local f = CreateFrame("Frame")
     f:RegisterEvent("PLAYER_ENTERING_WORLD")
     f:RegisterEvent("ACTIONBAR_SLOT_CHANGED")
@@ -409,20 +566,20 @@ function Module:Init()
 end
 
 -- Debug Command
-SLASH_GRAVITYUIBCDMDEBUG1 = "/gravityuibcdmdebug"
-SlashCmdList["GRAVITYUIBCDMDEBUG"] = function()
-    ns.db.profile.debugBCDM = not ns.db.profile.debugBCDM
-    local state = ns.db.profile.debugBCDM and "ENABLED" or "DISABLED"
-    print("|cFF30D1FFGravityUI BCDM Debug:|r " .. state)
+SLASH_GRAVITYUIGUICDMDEBUG1 = "/gravityuiguicdmdebug"
+SlashCmdList["GRAVITYUIGUICDMDEBUG"] = function()
+    ns.db.profile.debugGUICDM = not ns.db.profile.debugGUICDM
+    local state = ns.db.profile.debugGUICDM and "ENABLED" or "DISABLED"
+    print("|cFF30D1FFGravityUI GUICDM Debug:|r " .. state)
     
-    if ns.db.profile.debugBCDM then
+    if ns.db.profile.debugGUICDM then
         local count = 0
         local ids = {}
         for k, v in pairs(spellKeybinds) do 
             count = count + 1 
             if type(k) == "number" then table.insert(ids, k) end
         end
-        print("|cFF30D1FFGravityUI BCDM:|r " .. count .. " keybinds cached. (" .. #ids .. " by ID)")
+        print("|cFF30D1FFGravityUI GUICDM:|r " .. count .. " keybinds cached. (" .. #ids .. " by ID)")
         
         print("Checking Containers:")
         for containerName, settingKey in pairs(barToSettingsKey) do
@@ -456,4 +613,4 @@ SlashCmdList["GRAVITYUIBCDMDEBUG"] = function()
 end
 
 -- Export
-ns.RefreshBCDMKeybinds = function() Module:Refresh() end
+ns.RefreshGUICDMKeybinds = function() Module:Refresh() end

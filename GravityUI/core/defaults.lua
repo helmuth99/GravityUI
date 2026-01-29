@@ -211,6 +211,7 @@ ns.Defaults = {
             size = 26,
         },
         combatExpanded = true,
+        -- combatFont removed
         character =         {
             inspectEnabled = true,
             statsTextColor =             {
@@ -1025,36 +1026,40 @@ ns.Defaults = {
             },
             bar4 =             {
                 alwaysShow = true,
-                overrideEnabled = false,
             },
         },
         bar7_vis = true,
         bar6_vis = true,
-        bcdm = {
+        guicdm = {
             enabled = true,
-            fontSize = 8,
+            fontSize = 12,
             anchor = "TOPRIGHT",
-            offsetX = -1,
-            offsetY = -1,
-            color = { 0.69411766529083, 0.69411766529083, 0.69411766529083 },
+            offsetX = 0,
+            offsetY = 0,
+            color = {1, 1, 1, 1},
             bars = {
                 essential = true,
                 utility = true,
-                custom = false,
-                additionalCustom = false,
-                trinket = false,
-                item = false,
-                itemSpell = false,
+                custom = true,
+                additionalCustom = true,
+                trinket = true,
+                item = true,
+                itemSpell = true,
             },
             barStyles = {
-                essential = { fontSize = 12, color = { 0.78039222955704, 0.78039222955704, 0.78039222955704 } },
-                utility = { fontSize = 10, color = { 0.78039222955704, 0.78039222955704, 0.78039222955704 } },
+                essential = { fontSize = 12, color = {1, 1, 1, 1} },
+                utility = { fontSize = 12, color = {1, 1, 1, 1} },
                 custom = { fontSize = 12, color = {1, 1, 1, 1} },
                 additionalCustom = { fontSize = 12, color = {1, 1, 1, 1} },
                 trinket = { fontSize = 12, color = {1, 1, 1, 1} },
                 item = { fontSize = 12, color = {1, 1, 1, 1} },
                 itemSpell = { fontSize = 12, color = {1, 1, 1, 1} },
-            }
+            },
+        },
+        cdmCentering = {
+            enabled = true,
+            essential = true,
+            utility = true,
         },
     },
     skyriding =     {

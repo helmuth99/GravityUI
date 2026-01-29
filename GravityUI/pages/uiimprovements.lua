@@ -234,6 +234,8 @@ local function BuildCombat(parent)
     if dbUI.spellQueueWindow == nil then dbUI.spellQueueWindow = tonumber(GetCVar("SpellQueueWindow")) or 400 end
     AddRow(content, "Spell Queue Window (ms)", "slider", 0, 400, "spellQueueWindow", dbUI, function(val) SetCVar("SpellQueueWindow", tostring(val)) end, 10)
     
+    -- Combat Text Font Removed
+    
     content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
 end
 

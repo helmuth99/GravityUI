@@ -20,6 +20,4 @@ required-dependencies:
   - plater-nameplates
 
 optional-dependencies:
-  - platynator
   - blizzmove
-  - hidingbar

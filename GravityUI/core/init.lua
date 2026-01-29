@@ -162,9 +162,27 @@ function Addon:OnInitialize()
     -- Character panel module auto-initializes via event registration
 end
 
+-- Refresh functions
+ns.RefreshEverything = function()
+    if ns.Styling then ns.Styling:Refresh() end
+    if ns.Media then ns.Media:Update() end
+    
+    -- Modules
+    if ns.Modules then
+        for _, module in pairs(ns.Modules) do
+            if module.Refresh then
+                module:Refresh()
+            end
+        end
+    end
+end
+
 -- AceAddon callback - runs after OnInitialize
 function Addon:OnEnable()
     self:RegisterEvent("PLAYER_ENTERING_WORLD")
+    
+    -- Initial Updates
+    ns.RefreshEverything()
 end
 
 -- Slash command handler
@@ -257,9 +275,9 @@ function Addon:PLAYER_ENTERING_WORLD(event, isInitialLogin, isReloadingUi)
         ns.InstanceFrames:Initialize()
     end
 
-    -- Initialize BCDM Keybinds
-    if ns.BCDM_Keybinds and ns.BCDM_Keybinds.Init then
-        ns.BCDM_Keybinds:Init()
+    -- Initialize GUICDM Keybinds
+    if ns.GUICDM_Keybinds and ns.GUICDM_Keybinds.Init then
+        ns.GUICDM_Keybinds:Init()
     end
     
 

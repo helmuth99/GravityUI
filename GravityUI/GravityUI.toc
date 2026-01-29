@@ -53,7 +53,7 @@ core\datatexts.lua
 core\datapanels.lua
 core\minimap.lua
 core\actionbars.lua
-core\bcdm_keybinds.lua
+core\keymapping.lua
 core\tooltip.lua
 core\installer.lua
 
@@ -61,6 +61,7 @@ core\installer.lua
 pages\main.lua
 pages\minimap.lua
 pages\actionbars.lua
+pages\cdmutils.lua
 pages\datapanels.lua
 pages\uiimprovements.lua
 pages\screenindicators.lua

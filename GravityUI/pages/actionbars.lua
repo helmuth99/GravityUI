@@ -315,78 +315,6 @@ local function BuildSpecialButtons(parent)
     content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
 end
 
--- 4. BCDM Keybindings (Renamed to generic "Keybindings" in UI)
-local function BuildBCDMKeybinds(parent)
-    local scroll, content = GUI:CreateScrollableContent(parent)
-    scroll:SetAllPoints()
-    local db = ns.GetDB(); if not db then return end
-    local abs = db.actionbars
-    local bcdm = abs.bcdm
-    if not bcdm then -- safe init if defaults failed or old profile
-        bcdm = { enabled = true, fontSize = 12, anchor = "TOPRIGHT", offsetX = 0, offsetY = 0, color = {1,1,1,1} }
-        abs.bcdm = bcdm
-    end
-    if not bcdm.barStyles then
-        bcdm.barStyles = {
-            essential = { fontSize = 12, color = {1, 1, 1, 1} },
-            utility = { fontSize = 12, color = {1, 1, 1, 1} },
-            custom = { fontSize = 12, color = {1, 1, 1, 1} },
-            additionalCustom = { fontSize = 12, color = {1, 1, 1, 1} },
-            trinket = { fontSize = 12, color = {1, 1, 1, 1} },
-            item = { fontSize = 12, color = {1, 1, 1, 1} },
-            itemSpell = { fontSize = 12, color = {1, 1, 1, 1} },
-        }
-    end
-
-    content.rowCount = 0
-    local refresh = function() if ns.RefreshBCDMKeybinds then ns.RefreshBCDMKeybinds() end end
-
-    local header = GUI:CreateSectionHeader(content, "Cooldown Manager Keybindings")
-    header:SetPoint("TOPLEFT", 10, -10)
-    header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
-    content.rowCount = 2.0
-
-    AddRow(content, "Enable Keybinds on CDM", "checkbox", "enabled", bcdm, refresh)
-    
-    local note = content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    note:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT + 5))
-    note:SetWidth(GUI.CONTENT_WIDTH - 40)
-    note:SetJustifyH("LEFT")
-    note:SetTextColor(unpack(GUI.Colors.textMuted))
-    note:SetText("Maps your Action Bar keybinds to the cooldown icons.")
-    content.rowCount = content.rowCount + 1.2
-    
-    CreateSubLabel(content, "Global Appearance (Fallback)")
-    AddRow(content, "Global Font Size", "slider", 8, 32, "fontSize", bcdm, refresh, 1)
-    AddRow(content, "Global Text Color", "color", "color", bcdm, refresh)
-    
-    CreateSubLabel(content, "Global Position")
-    AddRow(content, "Anchor Point", "dropdown", anchorOptions, "anchor", bcdm, refresh)
-    AddRow(content, "X-Offset", "slider", -20, 20, "offsetX", bcdm, refresh, 1)
-    AddRow(content, "Y-Offset", "slider", -20, 20, "offsetY", bcdm, refresh, 1)
-
-    local barList = {
-        { key = "essential", label = "Essential Bar" },
-        { key = "utility", label = "Utility Bar" },
-        { key = "custom", label = "Custom Bar" },
-        { key = "additionalCustom", label = "Additional Custom Bar" },
-        { key = "trinket", label = "Trinket Bar" },
-        { key = "item", label = "Item Bar" },
-        { key = "itemSpell", label = "Item Spell Bar" },
-    }
-
-    for _, barInfo in ipairs(barList) do
-        CreateSubLabel(content, barInfo.label)
-        local barStyle = bcdm.barStyles[barInfo.key]
-        AddRow(content, "Enable on " .. barInfo.label, "checkbox", barInfo.key, bcdm.bars, refresh)
-        AddRow(content, "Font Size", "slider", 8, 32, "fontSize", barStyle, refresh, 1)
-        AddRow(content, "Text Color", "color", "color", barStyle, refresh)
-        content.rowCount = content.rowCount + 0.5
-    end
-
-    content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
-end
-
 -- ═══════════════════════════════════════════════════════════════
 -- MAIN PAGE
 -- ═══════════════════════════════════════════════════════════════
@@ -407,7 +335,6 @@ ns.GUI:RegisterPage("actionbars", {
             { name = "Action Bars Settings", builder = BuildActionBarsSettings },
             { name = "Mouseover Settings", builder = BuildMouseoverSettings },
             { name = "Special Buttons", builder = BuildSpecialButtons },
-            { name = "Keybindings", builder = BuildBCDMKeybinds },
         })
         subTabs:SetPoint("TOPLEFT", 10, -10)
         subTabs:SetPoint("TOPRIGHT", -10, 0)

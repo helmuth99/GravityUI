@@ -108,7 +108,7 @@ local function BuildCursor(parent)
     
     local reticleStyles = {{value="dot", text="Dot"},{value="cross", text="Crosshair (Atlas)"},{value="chevron", text="Chevron (Atlas)"},{value="diamond", text="Diamond (Atlas)"}}
     AddRow(content, "Reticle Style", "dropdown", reticleStyles, "reticleStyle", c, refresh)
-    AddRow(content, "Reticle Size", "slider", 4, 40, "reticleSize", c, refresh, 1)
+    AddRow(content, "Reticle Size", "slider", 1, 40, "reticleSize", c, refresh, 1)
     
     content.rowCount = content.rowCount + 0.3
     
