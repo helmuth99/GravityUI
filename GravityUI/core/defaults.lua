@@ -118,41 +118,39 @@ ns.Defaults = {
         },
         objectives = {
             enabled = true,
-            width = 260,
+            -- UI Settings
+            width = 235, -- Standard Blizzard width approx
             height = 410,
             hideBorder = true,
-            backgroundOpacity = 0, -- New: Opacity setting
-            moduleFontSize = 14,
-            titleFontSize = 13,
-            textFontSize = 12,
-            moduleColor = { 1, 0.82, 0, 1 },
-            disableThemeColorForHeaders = false, -- Default: Use Theme Color (enabled). Disable = false.
-            titleColor = { 1, 1, 1, 1 },
-            -- useThemeColorForTitles removed as requested
-            disableThemeColorForObjectives = true, -- New: Default to Theme Color
-            textColor = { 0.75, 0.75, 0.75, 1 },
             
-            -- New Styling
-            colorfulProgress = false,
-            percentage = false,
+            -- Skinning Settings
+            objectiveTrackerSkinning = true, -- Master Enable
+            backgroundOpacity = 0.8,
+            
+            -- Background Color
+            disableThemeColorForBackground = false, -- Default: Use Theme
+            customBackgroundColor = { 0, 0.5, 1, 1 },
+            
+            -- Header Font Color
+            disableThemeColorForHeaderFont = false, -- Default: Use Theme
+            customHeaderFontColor = { 1, 1, 1, 1 },
             
             -- Cosmetic Bar
             cosmeticBar = {
                 enable = true,
                 width = 4,
-                height = 10, -- Reduced to 10 as requested
+                height = 10,
                 widthMode = "FIXED", 
-                heightMode = "DYNAMIC", -- FIXED / DYNAMIC
+                heightMode = "DYNAMIC",
                 offsetX = -10,
                 offsetY = 0,
-                texture = "Gravity", -- LSM texture
-                border = "NONE", -- NONE / SHADOW
+                texture = "Gravity",
+                border = "NONE",
                 borderAlpha = 1,
-                useThemeColor = true, -- If true, uses Theme Color (Class or Custom based on Globals)
-                color = { 1, 0.82, 0, 1 }, -- Custom fallback if Theme Color is disabled HERE
+                disableThemeColor = false,
+                color = { 1, 0.82, 0, 1 },
             },
             
-            -- Custom Backdrop
             backdrop = {
                 enable = true,
                 transparent = true,
@@ -638,6 +636,7 @@ ns.Defaults = {
         showCalendar = false,
         zoneExpanded = true,
         showPing = true,
+        hideQuestBlobs = true,
         difficultyConfig =         {
             scale = 1,
             offsetY = -0.5,

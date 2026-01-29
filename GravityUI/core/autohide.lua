@@ -144,10 +144,16 @@ local function ApplyHideSettings()
     -- Compact Raid Frame Manager
     if CompactRaidFrameManager then
         if settings.hideRaidFrameManager then
-             -- Agressive Disable: Unregister events so it doesn't wake up
-             CompactRaidFrameManager:UnregisterAllEvents()
-             CompactRaidFrameManager:Hide()
-             CompactRaidFrameManager:EnableMouse(false)
+             if not InCombatLockdown() then
+                 CompactRaidFrameManager:UnregisterAllEvents()
+                 CompactRaidFrameManager:Hide()
+             else
+                 -- Queue for OOC
+                 ns.QueueOOCAction(function()
+                     CompactRaidFrameManager:UnregisterAllEvents()
+                     CompactRaidFrameManager:Hide()
+                 end)
+             end
              
              -- Also hook Show just in case external addons try to show it
              if not CompactRaidFrameManager._gui_ShowHooked then
@@ -155,8 +161,9 @@ local function ApplyHideSettings()
                  hooksecurefunc(CompactRaidFrameManager, "Show", function(self)
                      local s = GetSettings()
                      if s and s.hideRaidFrameManager then
-                         self:Hide()
-                         self:EnableMouse(false)
+                         if not InCombatLockdown() then
+                             self:Hide()
+                         end
                      end
                  end)
              end
@@ -165,9 +172,7 @@ local function ApplyHideSettings()
             if not InCombatLockdown() then
                  CompactRaidFrameManager:RegisterEvent("GROUP_ROSTER_UPDATE")
                  CompactRaidFrameManager:RegisterEvent("PLAYER_ENTERING_WORLD")
-                 -- Add others if needed, but these are the main ones that cause it to show
                  CompactRaidFrameManager:Show()
-                 CompactRaidFrameManager:EnableMouse(true)
             end
         end
     end
@@ -410,8 +415,12 @@ eventFrame:SetScript("OnEvent", function(self, event, addon)
     end
 
     if event == "PLAYER_ENTERING_WORLD" then
-        C_Timer.After(2, ApplyHideSettings)
+        C_Timer.After(2, function()
+             if not InCombatLockdown() then ApplyHideSettings() end
+        end)
     else
-        ApplyHideSettings()
+        if not InCombatLockdown() then
+             ApplyHideSettings()
+        end
     end
 end)

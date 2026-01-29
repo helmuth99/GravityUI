@@ -716,126 +716,94 @@ local function BuildObjectivesPanel(parent)
     header:SetPoint("TOPLEFT", PAD, yOffset)
     yOffset = yOffset - header.gap
     
-    local wipNote = GUI:CreateLabel(content, "Work-in-progress: Enable only if you want to test. Still being polished.", 12, C.warning)
-    wipNote:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - 25
-    
-    local desc = GUI:CreateLabel(content, "Apply GUI styling to quest objectives, achievement tracking, and bonus objectives.", 12, C.textMuted)
+    local desc = GUI:CreateLabel(content, "Skin the default Blizzard Objective Tracker to match GravityUI.", 12, C.textMuted)
     desc:SetPoint("TOPLEFT", PAD, yOffset)
     yOffset = yOffset - 35
     
-    local row1 = CreateStylingRow(content, "Skin Objective Tracker", "checkbox", "enabled", db, function()
+    local row1 = CreateStylingRow(content, "Enable Styling", "checkbox", "objectiveTrackerSkinning", db, function()
         if ns.Objectives and ns.Objectives.Refresh then ns.Objectives:Refresh() end
     end)
     row1:SetPoint("TOPLEFT", PAD, yOffset)
     yOffset = yOffset - ROW_HEIGHT - 5
     
-    local row2 = CreateStylingRow(content, "Max Height", "slider", 200, 1000, "height", db, function()
+    local rowWidth = CreateStylingRow(content, "Header Width", "slider", 180, 400, "width", db, function()
         if ns.Objectives and ns.Objectives.Refresh then ns.Objectives:Refresh() end
-    end, 10)
-    row2:SetPoint("TOPLEFT", PAD, yOffset)
+    end, 1)
+    rowWidth:SetPoint("TOPLEFT", PAD, yOffset)
     yOffset = yOffset - ROW_HEIGHT - 5
     
-    local row3 = CreateStylingRow(content, "Module Header Font", "slider", 8, 24, "moduleFontSize", db, function()
-        if ns.Objectives and ns.Objectives.Refresh then ns.Objectives:Refresh() end
-    end, 1)
-    row3:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - ROW_HEIGHT - 5
-
-    local row4 = CreateStylingRow(content, "Title Font Size", "slider", 8, 24, "titleFontSize", db, function()
-        if ns.Objectives and ns.Objectives.Refresh then ns.Objectives:Refresh() end
-    end, 1)
-    row4:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - ROW_HEIGHT - 5
-
-    local row5 = CreateStylingRow(content, "Text Font Size", "slider", 8, 24, "textFontSize", db, function()
-        if ns.Objectives and ns.Objectives.Refresh then ns.Objectives:Refresh() end
-    end, 1)
-    row5:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - ROW_HEIGHT - 5
-    
-    local row6 = CreateStylingRow(content, "Max Width", "slider", 245, 400, "width", db, function()
-        if ns.Objectives and ns.Objectives.Refresh then ns.Objectives:Refresh() end
-    end, 1)
-    row6:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - ROW_HEIGHT - 5
-    
-    local row7 = CreateStylingRow(content, "Hide Border", "checkbox", "hideBorder", db, function()
+    -- Background Color
+    local bgPickerRow -- Forward declare
+    local rowBg = CreateStylingRow(content, "Don't Use Theme for BG", "checkbox", "disableThemeColorForBackground", db, function(value)
+        if bgPickerRow then
+            if value then bgPickerRow:Show() else bgPickerRow:Hide() end
+        end
         if ns.Objectives and ns.Objectives.Refresh then ns.Objectives:Refresh() end
     end)
-    row7:SetPoint("TOPLEFT", PAD, yOffset)
+    rowBg:SetPoint("TOPLEFT", PAD, yOffset)
     yOffset = yOffset - ROW_HEIGHT - 5
     
-    local row8 = CreateStylingRow(content, "Background Opacity", "slider", 0, 1, "backgroundOpacity", db, function()
+    bgPickerRow = CreateStylingRow(content, "Background Color", "color", "customBackgroundColor", db, function()
+        if ns.Objectives and ns.Objectives.Refresh then ns.Objectives:Refresh() end
+    end)
+    bgPickerRow:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
+    
+    if not db.disableThemeColorForBackground then
+        bgPickerRow:Hide()
+    end
+
+    local rowOpacity = CreateStylingRow(content, "Background Opacity", "slider", 0, 1, "backgroundOpacity", db, function()
         if ns.Objectives and ns.Objectives.Refresh then ns.Objectives:Refresh() end
     end, 0.1)
-    row8:SetPoint("TOPLEFT", PAD, yOffset)
+    rowOpacity:SetPoint("TOPLEFT", PAD, yOffset)
     yOffset = yOffset - ROW_HEIGHT - 5
-
-    -- Module Header Color
-    local moduleColorRow -- Forward declare
-    local rowMC = CreateStylingRow(content, "Don't Use Theme for Headers", "checkbox", "disableThemeColorForHeaders", db, function(value)
-        if moduleColorRow then
-             if value then moduleColorRow:Show() else moduleColorRow:Hide() end
+    
+    -- Font Color
+    local fontPickerRow -- Forward declare
+    local rowFont = CreateStylingRow(content, "Don't Use Theme for Headers", "checkbox", "disableThemeColorForHeaderFont", db, function(value)
+        if fontPickerRow then
+             if value then fontPickerRow:Show() else fontPickerRow:Hide() end
         end
         if ns.Objectives and ns.Objectives.Refresh then ns.Objectives:Refresh() end
     end)
-    rowMC:SetPoint("TOPLEFT", PAD, yOffset)
+    rowFont:SetPoint("TOPLEFT", PAD, yOffset)
     yOffset = yOffset - ROW_HEIGHT - 5
 
-    moduleColorRow = CreateStylingRow(content, "Module Header Color", "color", "moduleColor", db, function()
+    fontPickerRow = CreateStylingRow(content, "Header Text Color", "color", "customHeaderFontColor", db, function()
         if ns.Objectives and ns.Objectives.Refresh then ns.Objectives:Refresh() end
     end)
-    moduleColorRow:SetPoint("TOPLEFT", PAD, yOffset)
+    fontPickerRow:SetPoint("TOPLEFT", PAD, yOffset)
     yOffset = yOffset - ROW_HEIGHT - 5
     
-    if not db.disableThemeColorForHeaders then
-        moduleColorRow:Hide()
+    if not db.disableThemeColorForHeaderFont then
+        fontPickerRow:Hide()
     end
+    
 
-    local rowTC = CreateStylingRow(content, "Quest Title Color", "color", "titleColor", db, function()
+
+    -- Cosmetic Bar Color
+    local barPickerRow -- Forward declare
+    local rowBar = CreateStylingRow(content, "Don't Use Theme for Cosmetic Bar", "checkbox", "disableThemeColor", db.cosmeticBar, function(value)
+        if barPickerRow then
+             if value then barPickerRow:Show() else barPickerRow:Hide() end
+        end
         if ns.Objectives and ns.Objectives.Refresh then ns.Objectives:Refresh() end
     end)
-    rowTC:SetPoint("TOPLEFT", PAD, yOffset)
+    rowBar:SetPoint("TOPLEFT", PAD, yOffset)
     yOffset = yOffset - ROW_HEIGHT - 5
-    
-    local rowCP = CreateStylingRow(content, "Colorful Progress (Red->Green)", "checkbox", "colorfulProgress", db, function()
+
+    barPickerRow = CreateStylingRow(content, "Cosmetic Bar Color", "color", "color", db.cosmeticBar, function()
         if ns.Objectives and ns.Objectives.Refresh then ns.Objectives:Refresh() end
     end)
-    rowCP:SetPoint("TOPLEFT", PAD, yOffset)
+    barPickerRow:SetPoint("TOPLEFT", PAD, yOffset)
     yOffset = yOffset - ROW_HEIGHT - 5
     
-    local rowPc = CreateStylingRow(content, "Show Percentage", "checkbox", "percentage", db, function()
-        if ns.Objectives and ns.Objectives.Refresh then ns.Objectives:Refresh() end
-    end)
-    rowPc:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - ROW_HEIGHT - 5
-    
-    local percentageNote = GUI:CreateLabel(content, "Displays the progress percentage (e.g. [50%]) next to the objective text.", 12, C.textMuted)
-    percentageNote:SetPoint("TOPLEFT", rowPc, "BOTTOMLEFT", 0, -4)
-    yOffset = yOffset - 40
+    if not db.cosmeticBar.disableThemeColor then
+        barPickerRow:Hide()
+    end
 
     -- Text Color
-    local textColorRow -- Forward declare
-    local rowTx = CreateStylingRow(content, "Don't Use Theme for Text", "checkbox", "disableThemeColorForObjectives", db, function(value)
-        if textColorRow then
-             if value then textColorRow:Show() else textColorRow:Hide() end
-        end
-        if ns.Objectives and ns.Objectives.Refresh then ns.Objectives:Refresh() end
-    end)
-    rowTx:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - ROW_HEIGHT - 5
-
-    textColorRow = CreateStylingRow(content, "Objective Text Color", "color", "textColor", db, function()
-        if ns.Objectives and ns.Objectives.Refresh then ns.Objectives:Refresh() end
-    end)
-    textColorRow:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - ROW_HEIGHT - 5
-    
-    if not db.disableThemeColorForObjectives then
-        textColorRow:Hide()
-    end
-    
     content:SetHeight(math.abs(yOffset) + 20)
 end
 
@@ -932,15 +900,6 @@ GUI:RegisterPage("Styling", {
         -- Hide default scrollframe parent (since we use SubTabs which create their own content areas)
         local scrollFrame = content:GetParent()
         content:Hide()
-        
-        -- Fix: Hide the outer scrollbar
-        scrollFrame:EnableMouseWheel(false)
-        for _, child in ipairs({scrollFrame:GetChildren()}) do
-            if child:IsObjectType("Slider") then
-                child:Hide()
-                child.Show = function() end -- Prevent re-showing
-            end
-        end
         
         -- Create SubTabs
         local subTabs = GUI:CreateSubTabs(scrollFrame, {

@@ -167,16 +167,44 @@ local gossipClicked = {}
 
 local function OnGossipShow()
     local settings = GetSettings()
-    if not settings or not settings.autoSelectGossip then return end
+    if not settings then return end
 
     -- Shift-Bypass
     if settings.questHoldShift and IsShiftKeyDown() then return end
 
-    -- Check for available quests
-    local availableQuests = C_GossipInfo.GetAvailableQuests()
-    local numActiveQuests = C_GossipInfo.GetNumActiveQuests()
+    -- 1. Auto Turn-In (Active Quests)
+    if settings.autoTurnInQuest then
+        local activeQuests = C_GossipInfo.GetActiveQuests()
+        if activeQuests then
+            for _, quest in ipairs(activeQuests) do
+                if quest.isComplete then
+                    C_GossipInfo.SelectActiveQuest(quest.questID)
+                    return
+                end
+            end
+        end
+    end
 
-    if (availableQuests and #availableQuests > 0) or (numActiveQuests and numActiveQuests > 0) then
+    -- 2. Auto Accept (Available Quests)
+    if settings.autoAcceptQuest then
+        local availableQuests = C_GossipInfo.GetAvailableQuests()
+        if availableQuests then
+            for _, quest in ipairs(availableQuests) do
+                C_GossipInfo.SelectAvailableQuest(quest.questID)
+                return
+            end
+        end
+    end
+
+    -- 3. Auto Select Gossip (Only if enabled)
+    if not settings.autoSelectGossip then return end
+
+    -- SAFETY: Don't auto-select gossip if there are ANY quests (Active or Available)
+    -- This prevents skipping quest pickup/turn-in if automation above didn't handle it (e.g. turned off)
+    local availableQuests = C_GossipInfo.GetAvailableQuests()
+    local activeQuests = C_GossipInfo.GetActiveQuests() -- Using GetActiveQuests table check for consistency
+    
+    if (availableQuests and #availableQuests > 0) or (activeQuests and #activeQuests > 0) then
         return
     end
 

@@ -190,8 +190,10 @@ local function SetMinimapShape(shape)
         if mask then mask:SetTexture("Interface\\BUTTONS\\WHITE8X8") end
         _G.GetMinimapShape = function() return "SQUARE" end
     else
-        Minimap:SetMaskTexture("Interface\\MINIMAP\\UI-Minimap-Background")
-        if mask then mask:SetTexture("Interface\\MINIMAP\\UI-Minimap-Background") end
+        -- Use a cleaner circle mask (TempPortraitAlphaMask is standard for round portraits)
+        local roundMask = "Interface\\CharacterFrame\\TempPortraitAlphaMask"
+        Minimap:SetMaskTexture(roundMask)
+        if mask then mask:SetTexture(roundMask) end
         _G.GetMinimapShape = function() return "ROUND" end
     end
     
@@ -1345,7 +1347,38 @@ function ns.RefreshMinimap()
         if Minimap.SetRotates then Minimap:SetRotates(true) end
     else
         SetCVar("rotateMinimap", "0")
-        if Minimap.SetRotates then Minimap:SetRotates(false) end
+        if Minimap.SetRotates then Minimap.SetRotates(false) end
+    end
+    
+    -- Quest Blobs
+    if s.hideQuestBlobs then
+        SetCVar("minimapShowQuestBlobs", "0")
+        
+        -- Advanced Hiding: Try to set Scalars or hide specific Frames
+        if Minimap.SetQuestBlobRingScalar then Minimap:SetQuestBlobRingScalar(0) end
+        if Minimap.SetArchBlobRingScalar then Minimap:SetArchBlobRingScalar(0) end
+        
+        -- Hide the Blob Frame itself if accessible (Retail)
+        if MinimapCluster and MinimapCluster.QuestBlobFrame then
+            MinimapCluster.QuestBlobFrame:Hide()
+            MinimapCluster.QuestBlobFrame:SetAlpha(0)
+        end
+        if _G.MinimapQuestBlobFrame then
+            _G.MinimapQuestBlobFrame:Hide()
+            _G.MinimapQuestBlobFrame:SetAlpha(0)
+        end
+        
+        -- Also hide the compass texture (yellow arrow ring) if part of it
+        -- But be careful not to hide tracking blips.
+    else
+        SetCVar("minimapShowQuestBlobs", "1")
+        if Minimap.SetQuestBlobRingScalar then Minimap:SetQuestBlobRingScalar(1) end
+        if Minimap.SetArchBlobRingScalar then Minimap:SetArchBlobRingScalar(1) end
+        
+        if MinimapCluster and MinimapCluster.QuestBlobFrame then
+            MinimapCluster.QuestBlobFrame:Show()
+            MinimapCluster.QuestBlobFrame:SetAlpha(1)
+        end
     end
     
     -- Force Alway Show Elements (Disable Fade)

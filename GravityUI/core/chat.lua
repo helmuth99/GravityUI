@@ -328,14 +328,19 @@ end
 
 local function CleanMessage(message)
     if not message or type(message) ~= "string" then return "" end
-    local cleaned = message
-    cleaned = cleaned:gsub("|T[^|]*|t", "")
-    cleaned = cleaned:gsub("|A[^|]*|a", "")
-    cleaned = cleaned:gsub("|TInterface\\TargetingFrame\\UI%-RaidTargetingIcon_(%d):[^|]*|t", "{rt%1}")
-    cleaned = cleaned:gsub("|H[^|]*|h%[?([^%]|]*)%]?|h", "%1")
-    cleaned = cleaned:gsub("|c%x%x%x%x%x%x%x%x", "")
-    cleaned = cleaned:gsub("|r", "")
-    return cleaned
+    
+    local success, result = pcall(function()
+        local cleaned = message
+        cleaned = cleaned:gsub("|T[^|]*|t", "")
+        cleaned = cleaned:gsub("|A[^|]*|a", "")
+        cleaned = cleaned:gsub("|TInterface\\TargetingFrame\\UI%-RaidTargetingIcon_(%d):[^|]*|t", "{rt%1}")
+        cleaned = cleaned:gsub("|H[^|]*|h%[?([^%]|]*)%]?|h", "%1")
+        cleaned = cleaned:gsub("|c%x%x%x%x%x%x%x%x", "")
+        cleaned = cleaned:gsub("|r", "")
+        return cleaned
+    end)
+    
+    if success then return result else return "" end
 end
 
 local function GetChatLines(chatFrame)

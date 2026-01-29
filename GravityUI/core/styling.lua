@@ -830,25 +830,52 @@ local function UpdateAltPowerBar(self)
     -- Simplified version for TWW
     local barInfo = GetUnitPowerBarInfo("player")
     if barInfo then
+        -- Enforce Theme Color on every update
+        local sr, sg, sb, sa = ns.GetAccentColor()
+        self:SetStatusBarColor(sr, sg, sb)
+        if self.backdrop then
+             self.backdrop:SetBackdropBorderColor(sr, sg, sb, sa)
+        end
+
         local powerName, powerTooltip = GetUnitPowerBarStrings("player")
         local power = UnitPower("player", Enum.PowerType.Alternate or 10)
         local maxPower = UnitPowerMax("player", Enum.PowerType.Alternate or 10)
         
         local perc = 0
+        local isSecret = false
         if maxPower and maxPower > 0 then
-            perc = math.floor((power or 0) / maxPower * 100)
+            -- Use pcall to avoid "arithmetic on a secret value" errors
+            -- If this fails, 'power' is a Secret Value (protected)
+            local success, result = pcall(function() return math.floor((power or 0) / maxPower * 100) end)
+            if success then
+                perc = result
+            else
+                isSecret = true
+            end
         end
 
         self.powerName = powerName
         self.powerTooltip = powerTooltip
         
-        self:SetMinMaxValues(barInfo.minPower or 0, maxPower or 0)
-        self:SetValue(power or 0)
+        -- Safe updates for MinMax/Value
+        pcall(function() self:SetMinMaxValues(barInfo.minPower or 0, maxPower or 0) end)
+        pcall(function() self:SetValue(power or 0) end)
 
-        if powerName then
-            self.text:SetText(string.format("%s: %d%%", powerName, perc))
+        if isSecret then
+             -- Fallback for Secret Values: Use SetFormattedText to let C handle the secret number display
+             -- We cannot calculate percentage in Lua, so we show Absolute Values
+             local safe = pcall(function() 
+                 self.text:SetFormattedText("%s: %d / %d", powerName or "Power", power or 0, maxPower or 0)
+             end)
+             if not safe and powerName then
+                 self.text:SetText(powerName) 
+             end
         else
-            self.text:SetText(string.format("%d%%", perc))
+             if powerName then
+                 self.text:SetText(string.format("%s: %d%%", powerName, perc))
+             else
+                 self.text:SetText(string.format("%d%%", perc))
+             end
         end
         self:Show()
     else
@@ -996,6 +1023,19 @@ function Styling:SkinPowerBar()
     UpdateAltPowerBar(altPowerBar)
 end
 
+function Styling:RefreshPowerBar()
+    if not altPowerBar then return end
+    -- Trigger an update which now enforces color
+    UpdateAltPowerBar(altPowerBar)
+    
+    -- Also update mover text/backdrop if visible
+    if powerBarMover then
+        local sr, sg, sb, sa = ns.GetAccentColor()
+        powerBarMover:SetBackdropColor(sr, sg, sb, 0.3)
+        powerBarMover:SetBackdropBorderColor(sr, sg, sb, 1)
+    end
+end
+
 -------------------------------------------------------------------------------
 -- ALERT FRAMES
 -------------------------------------------------------------------------------
@@ -1100,6 +1140,7 @@ function Styling:Refresh()
     Styling:RefreshGameMenu()
     Styling:RefreshReadyCheck()
     Styling:RefreshKeystone()
+    Styling:RefreshPowerBar()
 end
 
 -- Make global for external access
