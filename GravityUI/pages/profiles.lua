@@ -459,79 +459,139 @@ local function BuildGravityStringsTab(parent)
     scroll:SetAllPoints()
     
     local PAD = 10
+    local y = -10
     
     local topLabel = GUI:CreateLabel(content, "Pre-configured strings for supported addons.", 11, C.textMuted)
-    topLabel:SetPoint("TOPLEFT", PAD, -10)
+    topLabel:SetPoint("TOPLEFT", PAD, y)
+    y = y - 30
+
+    -- 1. Source Profile Dropdown
+    local availableProfiles = GUI.Installer and GUI.Installer:GetSourceProfiles() or {}
+    local defaultSource = "Cronix"
+    -- Check if Cronix exists, if not pick first
+    local hasDefault = false
+    for _, v in ipairs(availableProfiles) do if v == defaultSource then hasDefault = true break end end
+    if not hasDefault and #availableProfiles > 0 then defaultSource = availableProfiles[1] end
     
-    local imports = _G.GravityUI and _G.GravityUI.imports
-    if not imports then
-        GUI:CreateLabel(content, "No import strings found.", 12, {1,0,0,1}):SetPoint("TOPLEFT", PAD, -40)
-        return
-    end
+    local selectedSource = defaultSource
+    local sourceWrapper = { selected = selectedSource }
+    local stringsContainer -- Forward declare
+
+    local sourceDropdown 
+    sourceDropdown = GUI:CreateDropdown(content, "GravityUI Profile", 
+        (function() 
+            local list = {}; 
+            for _,v in ipairs(availableProfiles) do table.insert(list, {text=v, value=v}) end; 
+            return list 
+        end)(), 
+        "selected", sourceWrapper, function(val)
+            selectedSource = val
+            if stringsContainer and stringsContainer.Rebuild then stringsContainer:Rebuild(val) end
+        end
+    )
+    sourceDropdown:SetPoint("TOPLEFT", PAD, y)
+    sourceDropdown:SetPoint("RIGHT", content, "RIGHT", -PAD, 0)
+    sourceDropdown.label:ClearAllPoints()
+    sourceDropdown.label:SetPoint("LEFT", 0, 0)
+    sourceDropdown.label:SetSize(100, 30)
+    sourceDropdown.dropdown:ClearAllPoints()
+    sourceDropdown.dropdown:SetPoint("LEFT", 110, 0)
+    sourceDropdown.dropdown:SetPoint("RIGHT", 0, 0)
     
-    -- List of major addons/features
-    local keys = {
-        "EditMode", 
-        "Details", 
-        "Plater", 
-        "BigWigs", 
-        "DandersFrames", 
-        "Platynator",
-        "BCDM",       -- New
-        "UUF",        -- New
-        "GUIPROFILE"  -- Renamed/New
-    }
-    
+    y = y - 40
+
+    -- 2. Container for Strings
+    stringsContainer = CreateFrame("Frame", nil, content)
+    stringsContainer:SetPoint("TOPLEFT", PAD, y)
+    stringsContainer:SetPoint("RIGHT", -PAD, 0)
+    stringsContainer:SetHeight(10) -- Will autosize
+
     local headers = {}
-    
-    local function RefreshLayout()
-        local totalH = 40
+
+    function stringsContainer:Rebuild(sourceName)
+        -- Clear existing headers
+        for _, h in ipairs(headers) do 
+            h:Hide() 
+            h:SetParent(nil) 
+        end
+        headers = {}
+        
+        -- Resolve imports
+        local imports
+        if sourceName and _G.GravityUI and _G.GravityUI.profiles and _G.GravityUI.profiles[sourceName] then
+            imports = _G.GravityUI.profiles[sourceName].imports
+        else
+            imports = _G.GravityUI and _G.GravityUI.imports
+        end
+        
+        if not imports then
+            -- Maybe show a "No Data" label?
+            return 
+        end
+
+        -- List of keys
+        local keys = {
+            "EditMode", "Details", "Plater", "BigWigs", "DandersFrames", 
+            "Platynator", "BCDM", "UUF", "GravityUI"
+        }
+        
+        local lastHeader = nil
+        for _, key in ipairs(keys) do
+            local data = imports[key]
+            -- Fallback for legacy key GUIPROFILE
+            if not data and key == "GravityUI" then data = imports["GUIPROFILE"] end
+
+            if data then
+                local header = GUI:CreateCollapsibleHeader(stringsContainer, data.name or key, false)
+                if lastHeader then
+                    header:SetPoint("TOPLEFT", lastHeader, "BOTTOMLEFT", 0, -10)
+                else
+                    header:SetPoint("TOPLEFT", 0, 0)
+                end
+                header:SetPoint("RIGHT", 0, 0)
+                
+                header.OnToggle = function(expanded)
+                    if expanded and not header.hasLoadedData then
+                        local box = GUI:CreateScrollableTextBox(header.content, 100, data.data, true)
+                        box:SetPoint("TOPLEFT", 5, -5)
+                        box:SetPoint("RIGHT", -25, 0)
+                        
+                        local copy = GUI:CreateButton(header.content, "Select String", 120, 20, function()
+                            box.editBox:SetFocus()
+                            box.editBox:HighlightText()
+                        end)
+                        copy:SetPoint("TOPRIGHT", box, "BOTTOMRIGHT", 0, -5)
+                        
+                        header.content:SetHeight(135)
+                        header.hasLoadedData = true
+                        header:SetHeight(30 + 135)
+                    end
+                    stringsContainer:RefreshLayout()
+                end
+                
+                table.insert(headers, header)
+                lastHeader = header
+            end
+        end
+        stringsContainer:RefreshLayout()
+    end
+
+    function stringsContainer:RefreshLayout()
+        local totalH = 0
         for i, h in ipairs(headers) do
             totalH = totalH + h:GetHeight() + 10
         end
-        content:SetHeight(totalH + 40)
+        stringsContainer:SetHeight(totalH)
+        content:SetHeight(math.abs(y) + totalH + 50)
     end
 
-    local lastHeader = topLabel
-    for _, key in ipairs(keys) do
-        local data = imports[key]
-        if data then
-            local header = GUI:CreateCollapsibleHeader(content, data.name or key, false)
-            header:SetPoint("TOPLEFT", lastHeader, "BOTTOMLEFT", (lastHeader == topLabel) and 0 or 0, (lastHeader == topLabel) and -20 or -10)
-            header:SetPoint("RIGHT", content, "RIGHT", -PAD-20, 0)
-            
-            header.OnToggle = function(expanded)
-                -- Lazy Load: Create content only when expanded for the first time
-                if expanded and not header.hasLoadedData then
-                    local box = GUI:CreateScrollableTextBox(header.content, 100, data.data, true)
-                    box:SetPoint("TOPLEFT", 5, -5)
-                    box:SetPoint("RIGHT", -25, 0)
-                    
-                    local copy = GUI:CreateButton(header.content, "Select String", 120, 20, function()
-                        box.editBox:SetFocus()
-                        box.editBox:HighlightText()
-                    end)
-                    copy:SetPoint("TOPRIGHT", box, "BOTTOMRIGHT", 0, -5)
-                    
-                    -- Set content height correctly
-                    header.content:SetHeight(135)
-                    header.hasLoadedData = true
-                    
-                    -- Update header height manually since framework calc happened before content existed
-                    header:SetHeight(30 + 135)
-                end
-                
-                RefreshLayout()
-            end
-            
-            table.insert(headers, header)
-            lastHeader = header
-        end
-    end
-    
-    RefreshLayout()
+    -- Initial Build
+    stringsContainer:Rebuild(selectedSource)
 end
 
+---------------------------------------------------------------------------
+-- TAB: Installer
+---------------------------------------------------------------------------
 ---------------------------------------------------------------------------
 -- TAB: Installer
 ---------------------------------------------------------------------------
@@ -541,35 +601,351 @@ local function BuildInstallerTab(parent)
 
     local y = -10
     local PAD = 10
+    local FORM_ROW = 30
     
-    GUI:CreateLabel(content, "Quickly setup supported addons with Gravity configurations.", 11, C.textMuted):SetPoint("TOPLEFT", PAD, y)
-    y = y - 40
+    -- Get available source profiles
+    local availableProfiles = GUI.Installer:GetSourceProfiles()
+    if #availableProfiles == 0 then
+        table.insert(availableProfiles, "GravityUI") -- Default fallback
+    end
     
-    local expressHeader = GUI:CreateSectionHeader(content, "New Setup: Express Installer")
-    expressHeader:SetPoint("TOPLEFT", PAD, y)
-    y = y - expressHeader.gap
+    local selectedSource = availableProfiles[1] or "GravityUI"
+    -- Prefer "Cronix" if available as default (User Request)
+    for _, v in ipairs(availableProfiles) do
+        if v == "Cronix" then selectedSource = "Cronix" break end
+    end
+
+    -- 1. STATUS SECTION
+    local statusHeader = GUI:CreateSectionHeader(content, "System Status")
+    statusHeader:SetPoint("TOPLEFT", PAD, y)
+    y = y - statusHeader.gap
+
+    local statusFrame = CreateFrame("Frame", nil, content)
+    statusFrame:SetSize(1, 1) 
+    statusFrame:SetPoint("TOPLEFT", PAD, y)
+    statusFrame:SetPoint("RIGHT", -PAD, y)
     
-    GUI:CreateLabel(content, "Overwrites current configurations with Gravity's defaults.", 11):SetPoint("TOPLEFT", PAD, y)
+    local statusText = statusFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlightLarge")
+    statusText:SetPoint("TOP", 0, 0)
+    statusText:SetText("Checking...")
+    
+    -- Sub-details container
+    local detailsFrame = CreateFrame("Frame", nil, statusFrame)
+    detailsFrame:SetPoint("TOPLEFT", 0, -25)
+    detailsFrame:SetPoint("RIGHT", 0, 0)
+    detailsFrame:SetHeight(10)
+
+    -- Checkbox States
+    local selectionState = {} 
+    -- Initialize selectionState? We can do it on first status update or just check defaults
+    -- Default behavior: Check Everything that is loaded.
+
+    local function UpdateStatus()
+        local isReady, report = GUI.Installer:GetSystemStatus("GravityUI")
+        
+        -- Main Header
+        if isReady then
+            statusText:SetText("|cFF00FF00System Fully Configured|r") 
+        else
+            statusText:SetText("|cFFFF0000Configuration Mismatch|r")
+        end
+        
+        
+        -- Show Global Metadata (Account-Wide) if available
+        -- This shows "Who did the last setup", even if current char is mismatched.
+        -- Use GetAceDB() because GetDB() returns the profile (no global)
+        local rawDB = ns.GetAceDB()
+        local globalDB = rawDB and rawDB.global
+        local metaDisplayed = false
+        
+        if globalDB and globalDB.installer and globalDB.installer.setupBy then
+            local meta = "|cFF888888Setup by: " .. globalDB.installer.setupBy
+            if globalDB.installer.setupDate then meta = meta .. " (" .. globalDB.installer.setupDate .. ")" end
+            meta = meta .. "|r"
+            
+            if not statusFrame.metaText then
+                statusFrame.metaText = statusFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+                statusFrame.metaText:SetPoint("TOP", statusText, "BOTTOM", 0, -5)
+            end
+            statusFrame.metaText:SetText(meta)
+            statusFrame.metaText:Show()
+            metaDisplayed = true
+        else
+            if statusFrame.metaText then statusFrame.metaText:Hide() end
+        end
+        
+        -- Adjust Details Frame position based on metadata visibility
+        if metaDisplayed then
+             detailsFrame:SetPoint("TOPLEFT", 0, -50)
+        else
+             detailsFrame:SetPoint("TOPLEFT", 0, -35)
+        end
+        
+        -- Details
+        local dy = 0
+        for _, child in ipairs({detailsFrame:GetChildren()}) do child:Hide() end
+        
+        for _, item in ipairs(report) do
+            -- Create/Reuse Checkbox Container or Row
+            -- We need a Checkbox on Left, Text on Right.
+            
+            -- Ideally we reuse frames or create new ones properly.
+            -- Using a hash-based retrieval for reusing by addon name would be best but simple create works for low item count (~10)
+            
+            local row = detailsFrame[item.label] 
+            if not row then
+                row = CreateFrame("Frame", nil, detailsFrame)
+                row:SetHeight(18)
+                
+                -- Create temporary state object for this checkbox to ensure it initializes Checked
+                local cbState = { checked = true }
+                
+                -- FORCE unchecked if not loaded
+                if not item.loaded then
+                    selectionState[item.label] = false
+                    cbState.checked = false
+                end
+                
+                if selectionState[item.label] ~= nil then cbState.checked = selectionState[item.label] end
+                
+                -- Capture label for closure
+                local labelText = item.label
+                
+                -- GUI:CreateCheckbox(parent, label, key, table, callback)
+                row.cb = GUI:CreateCheckbox(row, "", "checked", cbState, function(val) 
+                     selectionState[labelText] = val 
+                     if row.UpdateColor then row:UpdateColor() end
+                end)
+                row.cb:SetPoint("LEFT", 0, 0)
+                row.cb:SetSize(350, 24) 
+                
+                -- We use the framework's label
+                row.text = row.cb.label 
+                
+                detailsFrame[item.label] = row
+            end
+            
+            -- Re-Attach Color Update logic to row for reuse (FRESH CLOSURE)
+            row.UpdateColor = function(self)
+                local isChecked = selectionState[item.label]
+                if not self.text then return end
+                
+                if item.loaded == false then
+                     self.text:SetTextColor(0.5, 0.5, 0.5, 1)
+                     return
+                end
+                
+                if not isChecked then
+                     self.text:SetTextColor(0.5, 0.5, 0.5, 1)
+                else
+                     if item.match then
+                         self.text:SetTextColor(0, 1, 0, 1)
+                     else
+                         self.text:SetTextColor(1, 0, 0, 1)
+                     end
+                end
+            end
+            
+            -- Handle Loaded State
+            if item.loaded == false then
+                 -- Not Loaded: Disable Checkbox and force Unchecked
+                 if row.cb.Disable then row.cb:Disable() end
+                 -- selectionState already forced false above
+                 
+                 -- Update Text
+                 row.text:SetText(item.label .. ": |cFF888888Not Loaded|r")
+                 -- Force gray color (UpdateRowColor handles it)
+                 if row.cb.label then row.cb.label:SetTextColor(0.5, 0.5, 0.5, 1) end
+            else
+                 -- Loaded: Enable
+                 if row.cb.Enable then row.cb:Enable() end
+                 -- Initialize state if nil
+                 if selectionState[item.label] == nil then selectionState[item.label] = true end
+                 
+                 -- Update Text Content
+                 local contentText = item.label .. ": " .. (item.current or "Unknown")
+                 if not item.match then contentText = contentText .. " (Expected: GravityUI)" end
+                 row.text:SetText(contentText)
+                 
+                 -- Ensure checkbox visual matches state (might trigger callback)
+                 if row.cb.SetValue then row.cb:SetValue(selectionState[item.label], false) end
+            end
+            
+            row:UpdateColor()
+            
+            row:ClearAllPoints()
+            row:SetPoint("TOPLEFT", 10, dy)
+            row:SetPoint("RIGHT", -10, dy)
+            row:Show()
+
+            
+            -- Initialize state in our master table if missing
+            if selectionState[item.label] == nil then selectionState[item.label] = true end
+            
+            -- Force visual update if needed (though binding above handles it usually)
+            -- If the row was reused, we might need to update the checkbox?
+            -- Since we don't have a reliable SetChecked on the wrapper usually...
+            -- We just rely on the fact that we re-bind it or it's a new frame. 
+            -- But we are caching 'row'. So reused rows might have stale state if we don't update 'cbState'.
+            -- Actually, we passed 'cbState' during creation. Changing it now won't update the widget if it doesn't watch the table.
+            -- Best approach without deep widget knowledge: Re-create structure or recreate widget?
+            -- Or just assume the user won't toggle 100 times in a way that breaks reuse order (which is stable: by addon label).
+            -- We ARE reusing by label (detailsFrame[item.label]), so the checkbox stays with the addon. 
+            -- So the state should persist correctly as long as selectionState is source of truth.
+            -- We just need to make sure visuals match selectionState.
+            -- GUI Checkboxes usually update from table on Show? Or only on init?
+            -- Let's try to set the checked value if the method exists.
+            if row.cb.SetChecked then row.cb:SetChecked(selectionState[item.label]) end
+
+
+            
+            dy = dy - 24 -- Increased spacing for larger rows
+        end
+        detailsFrame:SetHeight(math.abs(dy))
+        
+        local totalH = 35 + math.abs(dy)
+        return totalH 
+    end
+    
+    local statusH = UpdateStatus()
+    y = y - statusH - 20
+    
+    
+    -- Helper to build allowList
+    local function GetAllowList()
+        local list = {}
+        -- Iterate the registry to find names matching our labels
+        for _, addon in ipairs(GUI.Installer.registry) do
+            -- If selectionState[addon.label] is true (or nil->true default)
+            local s = selectionState[addon.label]
+            if s == nil then s = true end
+            
+            if s then
+                list[addon.name] = true
+            end
+        end
+        return list
+    end
+
+    -- 2. SETUP CONTROLS
+    local setupHeader = GUI:CreateSectionHeader(content, "Setup & Synchronization")
+    setupHeader:SetPoint("TOPLEFT", PAD, y)
+    y = y - setupHeader.gap
+
+    -- ACTION 1: FRESH INSTALL
+    local freshLabel = GUI:CreateLabel(content, "Fresh Installation (Recommended)", 12, C.accent)
+    freshLabel:SetPoint("TOPLEFT", PAD, y)
     y = y - 20
     
-    local expressBtn = GUI:CreateButton(content, "Run Express Installer", 200, 30, function()
-        GUI:InstallAddonsProfiles()
+    local freshDesc = GUI:CreateLabel(content, "Import 'GravityUI' settings and overwrite configuration for:", 11, C.textMuted)
+    freshDesc:SetPoint("TOPLEFT", PAD, y)
+    y = y - 15
+    local addonListObj = GUI:CreateLabel(content, "Details, Plater, BigWigs, etc.", 11, {1,1,1})
+    addonListObj:SetPoint("TOPLEFT", PAD, y)
+    y = y - 35
+
+    -- Source Selection Dropdown
+    local sourceWrapper = { selected = selectedSource }
+    local sourceDropdown 
+    sourceDropdown = GUI:CreateDropdown(content, "GravityUI Profile", 
+        (function() 
+            local list = {}; 
+            for _,v in ipairs(availableProfiles) do table.insert(list, {text=v, value=v}) end; 
+            return list 
+        end)(), 
+        "selected", sourceWrapper, function(val)
+            selectedSource = val
+            -- Button Update if needed, though mostly static now
+        end
+    )
+    sourceDropdown:SetPoint("TOPLEFT", PAD, y)
+    sourceDropdown:SetPoint("RIGHT", content, "RIGHT", -PAD, 0)
+    sourceDropdown.label:ClearAllPoints()
+    sourceDropdown.label:SetPoint("LEFT", 0, 0)
+    sourceDropdown.label:SetSize(150, 30)
+    sourceDropdown.dropdown:ClearAllPoints()
+    sourceDropdown.dropdown:SetPoint("LEFT", 160, 0)
+    sourceDropdown.dropdown:SetPoint("RIGHT", 0, 0)
+    
+    y = y - 45
+
+    -- Forward declaration for Sync Button updates
+    local syncBtn 
+    local function UpdateSyncState()
+        if not syncBtn then return end
+        
+        local rawDB = ns.GetAceDB()
+        local globalDB = rawDB and rawDB.global
+        local hasSetup = globalDB and globalDB.installer and globalDB.installer.setupDate
+        
+        if hasSetup then
+            syncBtn:SetEnabled(true)
+            syncBtn:SetText("Sync to 'GravityUI' (Selected)")
+        else
+            syncBtn:SetEnabled(false)
+            syncBtn:SetText("Requires Fresh Install First")
+        end
+    end
+
+    local installBtn -- Forward declare
+    installBtn = GUI:CreateButton(content, "Install GravityUI (Recommended)", 220, 30, function()
+        -- Confirm
+        GUI:ShowConfirmation({
+            title = "Fresh Install?",
+            message = "Import data from '"..selectedSource.."' and |cFFFF0000OVERWRITE|r profile 'GravityUI'?\n\nAny existing configuration in 'GravityUI' will be reset.",
+            isDestructive = true,
+            acceptText = "INSTALL",
+            onAccept = function()
+                GUI.Installer:Install("GravityUI", selectedSource, GetAllowList())
+                -- Update UI
+                UpdateStatus()
+                UpdateSyncState()
+            end
+        })
     end)
-    expressBtn:SetPoint("TOPLEFT", PAD, y)
+    -- Align button with the dropdown input for cleaner look
+    installBtn:SetPoint("TOPLEFT", PAD + 160, y) 
+    
     y = y - 60
-    
-    local twinkHeader = GUI:CreateSectionHeader(content, "Twink Setup: Sync Profiles")
-    twinkHeader:SetPoint("TOPLEFT", PAD, y)
-    y = y - twinkHeader.gap
-    
-    GUI:CreateLabel(content, "Switches existing addon profiles to 'GravityUI' without overwriting data.", 11):SetPoint("TOPLEFT", PAD, y)
+
+    -- ACTION 2: SYNC (Twink)
+    local syncLabel = GUI:CreateLabel(content, "Sync Existing Profile", 12, C.accent)
+    syncLabel:SetPoint("TOPLEFT", PAD, y)
     y = y - 20
     
-    local twinkBtn = GUI:CreateButton(content, "Run Twink Installer", 200, 30, function()
-        GUI:TwinkInstaller()
-    end)
-    twinkBtn:SetPoint("TOPLEFT", PAD, y)
+    local syncDesc = GUI:CreateLabel(content, "Switch SELECTED addons to use GravityUI profile without overwriting data.", 11, C.textMuted)
+    syncDesc:SetPoint("TOPLEFT", PAD, y)
+    y = y - 25
+
+    -- Check if system is configured (profiles exist)
+    local canSync = GUI.Installer:IsConfigured("GravityUI")
     
+    syncBtn = GUI:CreateButton(content, "Sync to 'GravityUI' (Selected)", 220, 30, function()
+        GUI.Installer:Synchronize("GravityUI", GetAllowList())
+        -- Update status immediately
+        UpdateStatus() 
+        UpdateSyncState()
+    end)
+    -- Align with Install button
+    syncBtn:SetPoint("TOPLEFT", PAD + 160, y)
+    
+    -- Initial State Check
+    UpdateSyncState()
+    
+    -- Logic change: Always enable Sync button, but maybe warn if missing?
+    -- User wanted it clickable even if not fully configured, to sync partials.
+    -- "Make Sync Button "Clickable" only if Full Config is found" -> This was the OLD task.
+    -- New request implies flexibility. 
+    -- If I allow selective sync, checking strict global config is counter-intuitive.
+    -- So I will ENABLE it always.
+    
+    -- if not canSync then
+    --     syncBtn:SetEnabled(false)
+    --     syncBtn:SetText("Profile 'GravityUI' not found")
+    --     syncBtn.tooltip = "You must perform a Fresh Install at least once to create the 'GravityUI' profiles data."
+    -- end
+
+
     content:SetHeight(math.abs(y) + 50)
 end
 

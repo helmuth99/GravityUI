@@ -3,9 +3,9 @@
 
 GravityUI.imports = GravityUI.imports or {}
 
-GravityUI.imports.BigWigs = {
-    name = "Gravity BigWigs String",
-    description = "Gravity's personal BigWigs configuration",
-    -- ⚠️ PASTE YOUR BigWigs STRING BELOW between the [[ ]]
+GravityUI.profiles["Cronix"].imports.BigWigs = {
+    name = "Cronix BigWigs String",
+    description = "Cronix's personal BigWigs configuration",
+    -- ⚠️ PASTE YOUR BIGWIGS STRING BELOW between the [[ ]]
     data = [[BW2:dVa9j+NEFI+B605AASiLQFpthXRIIK7JIaFVEjuJN3acjZ3dpZzYb53RjT2WZ5xcaHev5A+A7kBAQ0EJBX8AHR2iR4gWSApuC5jxx8RJxEi7nsx7897v/d6H/e04AsZQCGPKMMc0Zl9YECXz6udt13PG8q/xSHt9FNM0QkTJeh3H8xw7F7f+tUtLXUpoyr7pJVmaELi5O/39Ol8NtdNnJJOCnz6T6/O701+LjWaEKUC8lWhqp/srVBdovRUQQpc3mtD5oTjs0RTFIdxo/7Qa6rCbQnCj1XyVG6dE6wLnOA7Zd32acYJj6DtTzzJHxuCaxtzFn8BrtiRkmiSQ+ojBZnCNAuA4grvTvx/mayQVbBpTf57SCNY5gz1xfYQisPopWmC+Ou5QEuRGD051f474ehhglhC0kqZfGEoTzi6iYZjS5TRZojRg60HGAPsiX5sznyDGfMn6RnmWwJvvGojgMO51jZFnTM6iLULHp1nMA7qMi2w9MyWwfP9lO9XaodaeaZNoxefYH5OMKZbO8osXFPtgGXFIMJt/eNyOVh6OGUexD0NYsSr08xHl9NhFMTueQJgRlJ7X1do1cJd1Qb8Wp507NOLAFc9g1MHhJQ6Z8CmsRTvmcvS3mlgX9eNaXq7ergscPodUz0TF0FjdFaVTcONylPLcp618WjQOdwI96JKXWo+u3qxruHO6bBMyFnmFlK0PhSUAEeC64LYDIY7vuTtId+vggGuZ7Fen9dMBDsDDnMDanKG0yPFXtth2kP9YlJEI67bRaDz/6PnqD3nswRPuzpEoCHms9cujnM1BZeFWdNVvXK6Fpslbhig2xITzYEfUX4hQBSvdzuUHE1VoasA8GyRqgBTJLx8nzU+HwmpVa9+/td+SJlQON84CMzwj0EGphSPM75l5qXuid4yJ2R94JjxJBoDDOX/Dkn1Sudcto+c5ypAstSzZ6LLpNgNx5xIHfN78eaw0JsBkKWx0aWXT54KWLIVR1b+jfCRKjly+ItCT5TY1+yxBvghCs4qRWSBpNofFz8LJL72w8i6MbtRs6Je2y5CELAetX2NCNrYCJmN9xd3jQabkxXqnqzF236p2Uue+q+zYGeE4IRjSu9M/i+G4dWLTBWzOZ4iLWhJMqNyc2EGWIknotu0GYoAhgSVYj8VAS0NgIxrDVj6c0TSAqpZEmVk+FdNP1IYRhLDWpb/mOyPJsw4McekAdoKxSrv55CjyPJXcXanslqAa+fHHB8fejna3sNZQBfm0fKOVj9aPR9rJYGqOUQoxPyvgywwZLiU4uJBIvaIeegKfm4hXkqkf/fVeqSrJ1twaF1Wzvnx1VNGnekjJnIoVM5aNJKIurDnX1wx4w67E7hInsJ5WlCwQJpL9Ld9eDMtJTZJPM13iUMmrj+D9brs4gLg1Pa5kCvX0QFvWZ0Mn1H+81iMagHbV3MeqbpuSyhryneypNO03iCW6bvvdMhTdO1aJ3JksR9rDlqkSufcZ87QopOL/g9YDpXeuZldV9l//70dC831bacvA7x304MFb31gcvEX/Aw==]],
 }

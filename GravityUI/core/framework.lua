@@ -480,6 +480,26 @@ function GUI:CreateCheckbox(parent, label, dbKey, dbTable, onChange)
     container.GetValue = GetValue
     container.SetValue = SetValue
     
+    -- Add Enable/Disable/SetChecked methods for consistency
+    container.Enable = function()
+        container.disabled = false
+        switch:EnableMouse(true)
+        switch:SetAlpha(1)
+        if container.label then container.label:SetAlpha(1) end
+    end
+    
+    container.Disable = function()
+        container.disabled = true
+        switch:EnableMouse(false)
+        switch:SetAlpha(0.5)
+        if container.label then container.label:SetAlpha(0.5) end
+    end
+    
+    container.SetChecked = function(self, val)
+        if self.disabled then return end
+        SetValue(val)
+    end
+    
     return container
 end
 
