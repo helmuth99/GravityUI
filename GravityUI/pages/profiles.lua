@@ -881,7 +881,7 @@ local function BuildInstallerTab(parent)
         
         if hasSetup then
             syncBtn:SetEnabled(true)
-            syncBtn:SetText("Sync to 'GravityUI' (Selected)")
+            syncBtn:SetText("Sync to 'GravityUI' (Alt/Twink)")
         else
             syncBtn:SetEnabled(false)
             syncBtn:SetText("Requires Fresh Install First")
@@ -914,7 +914,7 @@ local function BuildInstallerTab(parent)
     syncLabel:SetPoint("TOPLEFT", PAD, y)
     y = y - 20
     
-    local syncDesc = GUI:CreateLabel(content, "Switch Addon Profiles to use GravityUI Profile without overwriting data.", 11, C.textMuted)
+    local syncDesc = GUI:CreateLabel(content, "Switch Addon Profiles to use GravityUI Profiles without overwriting data.", 11, C.textMuted)
     syncDesc:SetPoint("TOPLEFT", PAD, y)
     y = y - 25
 
