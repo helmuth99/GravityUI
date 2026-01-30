@@ -307,7 +307,7 @@ local function BuildAceDBProfilesTab(parent)
         if val and val ~= "" then
             if val == db:GetCurrentProfile() then
                 print("|cffff0000GravityUI:|r Cannot delete active profile.")
-                deleteDropdown:SetValue("")
+                deleteDropdown.SetValue("")
                 return
             end
             GUI:ShowConfirmation({
@@ -319,11 +319,11 @@ local function BuildAceDBProfilesTab(parent)
                     db:DeleteProfile(val)
                     RefreshProfileDisplay()
                     deleteWrapper.selected = ""
-                    if deleteDropdown then deleteDropdown:SetValue("") end
+                    if deleteDropdown then deleteDropdown.SetValue("") end
                 end,
                 onCancel = function()
                     deleteWrapper.selected = ""
-                    if deleteDropdown then deleteDropdown:SetValue("") end
+                    if deleteDropdown then deleteDropdown.SetValue("") end
                 end
             })
         end
@@ -641,7 +641,8 @@ local function BuildInstallerTab(parent)
     -- Default behavior: Check Everything that is loaded.
 
     local function UpdateStatus()
-        local isReady, report = GUI.Installer:GetSystemStatus("GravityUI")
+        local targetProfile = "GravityUI" 
+        local isReady, report = GUI.Installer:GetSystemStatus(targetProfile)
         
         -- Main Header
         if isReady then
@@ -764,7 +765,7 @@ local function BuildInstallerTab(parent)
                  
                  -- Update Text Content
                  local contentText = item.label .. ": " .. (item.current or "Unknown")
-                 if not item.match then contentText = contentText .. " (Expected: GravityUI)" end
+                 if not item.match then contentText = contentText .. " (Expected: " .. targetProfile .. ")" end
                  row.text:SetText(contentText)
                  
                  -- Ensure checkbox visual matches state (might trigger callback)

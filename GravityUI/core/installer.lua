@@ -49,74 +49,7 @@ Installer.registry = {
         end
     },
 
-    {
-        name = "EditMode",
-        label = "Edit Mode",
-        isCore = true,
-        Check = function() return C_EditMode and C_EditMode.GetLayouts end,
-        GetProfile = function()
-            local layoutInfo = C_EditMode.GetLayouts()
-            if layoutInfo and layoutInfo.activeLayout then
-                -- layoutInfo.activeLayout is the ID/Index
-                -- 1. Try exact ID match if identifiers exist
-                for _, layout in ipairs(layoutInfo.layouts) do
-                    local id = layout.layoutIdentifier or layout.layoutID or layout.id
-                    if id and id == layoutInfo.activeLayout then
-                        return layout.layoutName
-                    end
-                end
-                
-                -- 2. Fallback: Assumption of 2 presets (Modern, Classic) offsetting the custom list
-                -- This matches the observation: Active=4, GravityUI is Index 2. (2+2=4)
-                local assumedIndex = layoutInfo.activeLayout - 2
-                if assumedIndex > 0 and layoutInfo.layouts[assumedIndex] then
-                    return layoutInfo.layouts[assumedIndex].layoutName
-                end
-                
-                return "Unknown ID: " .. tostring(layoutInfo.activeLayout)
-            end
-            return nil
-        end,
-        SetProfile = function(self, profileName)
-            local layoutInfo = C_EditMode.GetLayouts()
-            
-            for i, layout in ipairs(layoutInfo.layouts) do
-                if layout.layoutName == profileName then
-                    EditModeManagerFrame:Show()
-                    
-                    if layout.layoutIdentifier then
-                         C_EditMode.SetActiveLayout(layout.layoutIdentifier)
-                    else 
-                         -- Fallback to heuristic
-                        C_EditMode.SetActiveLayout(i + 2)
-                    end
-                    
-                    EditModeManagerFrame:Hide()
-                    return true
-                end
-            end
-            return false
-        end,
-        Import = function(self, data, profileName)
-            local layoutInfo = C_EditMode.ConvertStringToLayoutInfo(data)
-            EditModeManagerFrame:Show()
-            -- logic to check if exists?
-            -- EditModeManagerFrame:ImportLayout(layoutInfo, Enum.EditModeLayoutType.Account, profileName)
-            -- We just try to import. Edit Mode might error if duplicate name?
-            -- Safe execution:
-            pcall(function() EditModeManagerFrame:ImportLayout(layoutInfo, Enum.EditModeLayoutType.Account, profileName) end)
-            EditModeManagerFrame:Hide()
-        end,
-        HasProfile = function(self, profileName)
-            local layoutInfo = C_EditMode.GetLayouts()
-            if layoutInfo and layoutInfo.layouts then
-                for _, layout in ipairs(layoutInfo.layouts) do
-                    if layout.layoutName == profileName then return true end
-                end
-            end
-            return false
-        end
-    },
+
     {
         name = "Details",
         label = "Details!",
@@ -135,10 +68,24 @@ Installer.registry = {
             return nil
         end, -- Details often stores current profile in root or db
         SetProfile = function(self, profileName)
-             if _G.Details then _G.Details:ApplyProfile(profileName) return true end
+             if _G.Details then 
+                 -- Try ApplyProfile
+                 local res = _G.Details:ApplyProfile(profileName) 
+                 
+                 -- If it failed (returned false), it likely means profile doesn't exist
+                 if not res then
+                     -- Use ImportProfile with set_as_current=true to force creation
+                     -- We use an empty table as data, hoping it creates a default profile
+                     local created = _G.Details:ImportProfile({}, profileName, true, false, true)
+                     return created
+                 end
+                 return res
+             end
         end,
         Import = function(self, data, profileName)
-            if _G.Details then _G.Details:ImportProfile(data, profileName, true, false, true) end
+            if _G.Details then 
+                local res = _G.Details:ImportProfile(data, profileName, true, false, true) 
+            end
         end,
         HasProfile = function(self, profileName)
              if _G.Details and _G.Details.GetProfileList then
@@ -207,10 +154,168 @@ Installer.registry = {
         Check = function() return _G.DandersFrames_IsReady and _G.DandersFrames_IsReady() end,
         GetProfile = function() return _G.DandersFramesDB_v2 and _G.DandersFramesDB_v2.currentProfile end,
         SetProfile = function(self, profileName)
-             if _G.DandersFramesDB_v2 then _G.DandersFramesDB_v2.currentProfile = profileName return true end
+
+             if _G.DandersFramesDB_v2 then 
+                 -- Ensure profile exists in storage (if it uses a profiles table)
+                 -- Assuming DandersFramesDB_v2 might have a 'profiles' key?
+                 -- Without source code, we assume 'currentProfile' switch is enough OR we need to init the table.
+                 -- Safer: If DandersFramesDB_v2.profiles exists, use it.
+                 if _G.DandersFramesDB_v2.profiles and type(_G.DandersFramesDB_v2.profiles) == "table" then
+                      if not _G.DandersFramesDB_v2.profiles[profileName] then
+                          -- Create copy of current or default?
+                          _G.DandersFramesDB_v2.profiles[profileName] = {} 
+                      end
+                 end
+                 
+                 _G.DandersFramesDB_v2.currentProfile = profileName 
+                 
+                 -- FORCE UPDATE? Danders might need an update call
+                 if _G.DandersFrames_Update then _G.DandersFrames_Update() end
+                 
+                 return true 
+             end
         end,
         Import = function(self, data, profileName)
-            if _G.DandersFrames_Import then _G.DandersFrames_Import(data, profileName) end
+            local success = false
+            
+            -- Helper: Decode data if it's a string
+            local decodedData = nil
+            if type(data) == "string" and string.find(data, "^!DFP1!") then
+                local LibDeflate = LibStub:GetLibrary("LibDeflate", true)
+                local LibAceSerializer = LibStub:GetLibrary("AceSerializer-3.0", true)
+                
+                if LibDeflate then
+                    local compressed = LibDeflate:DecodeForPrint(string.sub(data, 7)) -- Remove !DFP1! prefix
+                    if compressed then
+                        local serialized = LibDeflate:DecompressDeflate(compressed)
+                        -- Try Zlib if Deflate fails
+                        if not serialized then serialized = LibDeflate:DecompressZlib(compressed) end
+                        
+                        if serialized then
+                            -- Try AceSerializer
+                             if LibAceSerializer then 
+                                local ok, res = LibAceSerializer:Deserialize(serialized)
+                                if ok then decodedData = res end
+                            end
+
+                            if not decodedData then
+                                local LibSerialize = LibStub:GetLibrary("LibSerialize", true)
+                                if LibSerialize then
+                                    local ok, res = LibSerialize:Deserialize(serialized)
+                                    if ok then decodedData = res end
+                                end
+                            end
+                             -- DECODE STRATEGY 3: Json (Internal?)
+                             -- Sometimes simple tables.
+                        else
+                             print("[GUI Debug] Danders: Decompress failed.")
+                        end
+                    else
+                         print("[GUI Debug] Danders: DecodeForPrint failed.")
+                    end
+                else
+                    print("[GUI Debug] Danders: LibDeflate missing.")
+                end
+            elseif type(data) == "table" then
+                print("[GUI Debug] Danders: Data is already a table.")
+                decodedData = data
+            end
+            
+            -- Use decodedData if available, otherwise fallback to raw string (maybe Apply handles string??)
+            local finalData = decodedData or data 
+
+            -- TRY 1: Internal Method (ApplyImportedProfile)
+            if _G.DandersFrames and _G.DandersFrames.ApplyImportedProfile then
+                local options = nil
+                -- Try to DETECT categories first
+                if _G.DandersFrames.DetectImportedCategories then
+                     local ok, res = pcall(_G.DandersFrames.DetectImportedCategories, _G.DandersFrames, finalData)
+                     if ok then 
+                         if type(res) == "table" then
+                             -- Check if table is empty
+                             local hasKeys = false
+                             for k,v in pairs(res) do hasKeys = true break end
+                             
+                             if hasKeys then
+                                 options = res
+                             else
+                                 options = nil -- Trigger fallback
+                             end
+                         end
+                     end
+                end
+                
+                -- Fallback Options if Detection Failed OR Returned Empty
+                if not options then
+                     options = {
+                        -- Standard Case
+                        ["Position"] = true, ["Frame Layout"] = true, ["Bars"] = true,
+                        ["Auras"] = true, ["Text"] = true, ["Icons"] = true,
+                        ["Other"] = true, ["Party"] = true, ["Raid"] = true,
+                        ["Create New Profile"] = false, ["Name"] = profileName,
+                        
+                        -- Lowercase (Just in case)
+                        ["position"] = true, ["frame layout"] = true, ["bars"] = true,
+                        ["auras"] = true, ["text"] = true, ["icons"] = true,
+                        ["other"] = true, ["party"] = true, ["raid"] = true,
+                        ["create new profile"] = false, ["name"] = profileName,
+                        
+                        -- Variable Case (Common variations)
+                        ["Positions"] = true, ["Layout"] = true, ["Bar"] = true,
+                        ["Aura"] = true, ["Icon"] = true,
+                        
+                        -- Keys found in Actual Data (The "Golden" Keys)
+                        ["frameTypes"] = true, ["profileName"] = true, 
+                        ["exportedBy"] = true, ["version"] = true
+                    }
+                end
+                
+                -- Call Apply with Options
+                local ok, err = pcall(_G.DandersFrames.ApplyImportedProfile, _G.DandersFrames, finalData, options)
+                if ok then 
+                    success = true
+                else
+                    print("[GUI Debug] Danders Apply failed: " .. tostring(err))
+                end
+            end
+            
+            -- STRATEGY 2: DIRECT DB INJECTION (The "Nuclear Option")
+            -- If Apply failed OR if we want to be sure, we write directly to the DB.
+            if decodedData and _G.DandersFramesDB_v2 and _G.DandersFramesDB_v2.profiles then
+                 -- 1. Ensure profile table exists
+                 if not _G.DandersFramesDB_v2.profiles[profileName] then
+                      _G.DandersFramesDB_v2.profiles[profileName] = {}
+                 end
+                 
+                 -- 2. Merge/Overwrite Data
+                 local target = _G.DandersFramesDB_v2.profiles[profileName]
+                 for k, v in pairs(decodedData) do
+                     if k ~= "profileName" and k ~= "exportedBy" and k ~= "exportTime" then
+                        target[k] = v
+                     end
+                 end
+                 
+                 -- 3. Force Update
+                 if _G.DandersFrames_IsReady then _G.DandersFramesDB_v2.currentProfile = profileName end
+                 
+                 -- Bruteforce Refresh methods
+                 if _G.DandersFrames.FullProfileRefresh then pcall(_G.DandersFrames.FullProfileRefresh, _G.DandersFrames) end
+                 if _G.DandersFrames_Update then pcall(_G.DandersFrames_Update) end
+                 if _G.DandersFrames.Update then pcall(_G.DandersFrames.Update, _G.DandersFrames) end
+                 
+                 success = true
+            end
+
+            -- TRY 2: Legacy Global (DandersFrames_Import)
+            if not success and _G.DandersFrames_Import then 
+                local ok, err = pcall(_G.DandersFrames_Import, data, profileName)
+                if ok then success = true end
+                
+                -- Fallback: Just Data
+                if not ok then
+                    pcall(_G.DandersFrames_Import, data)
+                end
+            end
         end
     },
     {
@@ -314,7 +419,111 @@ Installer.registry = {
              if SetAceProfileInGlobal("UnhaltedUnitFramesDB", profileName) then return true end
         end,
         Import = function(self, data, profileName)
-             if _G.UUFG and _G.UUFG.ImportUUF then _G.UUFG:ImportUUF(data, profileName) end
+             print("[GUI Debug] UUF Import specific profile: " .. tostring(profileName))
+             
+             -- Ensure profile is set before import (just in case)
+             if _G.UUF and _G.UUF.db then 
+                 _G.UUF.db:SetProfile(profileName)
+             elseif _G.UUF and _G.UUF.SetProfile then
+                 _G.UUF:SetProfile(profileName)
+             end
+
+             -- TRY Global UUF object
+             if _G.UUF and _G.UUF.ImportProfile then
+                  print("[GUI Debug] UUF calling ImportProfile...")
+                  local ok, err = pcall(_G.UUF.ImportProfile, _G.UUF, data)
+                  if ok then
+                      print("[GUI Debug] UUF Import Success. Calling Update...")
+                      if _G.UUF.ThrottledUpdateAll then pcall(_G.UUF.ThrottledUpdateAll, _G.UUF) end
+                      if _G.UUF.UpdateLayout then pcall(_G.UUF.UpdateLayout, _G.UUF) end
+                  else
+                      print("[GUI Debug] UUF Import Error: " .. tostring(err))
+                  end
+                  return
+             end
+             
+             -- Fallback to UUFG global
+             if _G.UUFG and _G.UUFG.ImportUUF then 
+                 -- Attempt 1: (data, profileName) using DOT syntax
+                 local ok, err = pcall(_G.UUFG.ImportUUF, data, profileName)
+                 if ok then 
+                     if _G.UUF and _G.UUF.ThrottledUpdateAll then pcall(_G.UUF.ThrottledUpdateAll, _G.UUF) end
+                     return 
+                 end
+                 
+                 -- Attempt 2: Swapped (profileName, data)
+                 local ok2, err2 = pcall(_G.UUFG.ImportUUF, profileName, data)
+                 if ok2 then return end
+
+                 -- Attempt 3: Just Data
+                 pcall(_G.UUFG.ImportUUF, data)
+                 if _G.UUF and _G.UUF.ThrottledUpdateAll then pcall(_G.UUF.ThrottledUpdateAll, _G.UUF) end
+             end
+             
+             -- STRATEGY: Direct DB Injection (Nuclear Option for UUF)
+             -- Step 1: Decode if string
+             if type(data) == "string" then
+                 local LibDeflate = LibStub("LibDeflate", true)
+                 if LibDeflate then
+                      -- Fix Prefix: !UUF_
+                      local clean = data
+                      if string.find(data, "^!UUF_") then
+                          clean = string.sub(data, 6) -- Strip !UUF_ (5 chars)
+                      elseif string.find(data, "^!UUF!") then
+                          clean = string.sub(data, 6) -- Strip !UUF! (5 chars)
+                      end
+                      
+                      local decoded = LibDeflate:DecodeForPrint(clean)
+                      if decoded then
+                          local decompressed = LibDeflate:DecompressDeflate(decoded)
+                          if decompressed then
+                              local AceSerializer = LibStub("AceSerializer-3.0", true)
+                              if AceSerializer then
+                                   local ok, res = AceSerializer:Deserialize(decompressed)
+                                   if ok then 
+                                       
+                                       data = res -- Promoted to table!
+                                   end
+                              end
+                              
+                              if type(data) == "string" then -- deserialization failed or not tried
+                                  local LibSerialize = LibStub("LibSerialize", true)
+                                  if LibSerialize then
+                                      local ok, res = LibSerialize:Deserialize(decompressed)
+                                      if ok then 
+                                          data = res 
+                                      end
+                                  end
+                               end
+                           end
+                       end
+                  end
+             end
+
+             -- Step 2: Inject if table
+             if data and type(data) == "table" then
+                  -- Unwrap if coming from export that includes container
+                  if data.profile then 
+                      data = data.profile 
+                  end
+                  
+                  if _G.UUFDB and _G.UUFDB.profiles then
+                       if not _G.UUFDB.profiles[profileName] then _G.UUFDB.profiles[profileName] = {} end
+                       local target = _G.UUFDB.profiles[profileName]
+                       -- Merge
+                       for k,v in pairs(data) do target[k] = v end
+
+                       
+                       -- Force Update
+                       if _G.UUF then 
+                           if _G.UUF.db then _G.UUF.db:SetProfile(profileName) end
+                           if _G.UUF.UpdateLayout then pcall(_G.UUF.UpdateLayout, _G.UUF) end
+                           if _G.UUF.ThrottledUpdateAll then pcall(_G.UUF.ThrottledUpdateAll, _G.UUF) end
+                       end
+                  end
+             end
+             
+
         end,
         HasProfile = function(self, profileName)
              if _G.UUF and _G.UUF.db then -- Global check
@@ -338,13 +547,81 @@ Installer.registry = {
              -- If we can't find addon, we return false.
         end
     },
+    {
+        name = "EditMode",
+        label = "Edit Mode",
+        isCore = true,
+        Check = function() return C_EditMode and C_EditMode.GetLayouts end,
+        GetProfile = function()
+            local layoutInfo = C_EditMode.GetLayouts()
+            if layoutInfo and layoutInfo.activeLayout then
+                for _, layout in ipairs(layoutInfo.layouts) do
+                    local id = layout.layoutIdentifier or layout.layoutID or layout.id
+                    if id and id == layoutInfo.activeLayout then
+                        return layout.layoutName
+                    end
+                end
+                local assumedIndex = layoutInfo.activeLayout - 2
+                if assumedIndex > 0 and layoutInfo.layouts[assumedIndex] then
+                    return layoutInfo.layouts[assumedIndex].layoutName
+                end
+                return "Unknown ID: " .. tostring(layoutInfo.activeLayout)
+            end
+            return nil
+        end,
+        SetProfile = function(self, profileName)
+            local layoutInfo = C_EditMode.GetLayouts()
+            
+            for i, layout in ipairs(layoutInfo.layouts) do
+                if layout.layoutName == profileName then
+                    -- EditModeManagerFrame:Show() -- REMOVED to prevent Taint
+                    
+                    if layout.layoutIdentifier then
+                         C_EditMode.SetActiveLayout(layout.layoutIdentifier)
+                    else 
+                         -- Fallback to heuristic
+                        C_EditMode.SetActiveLayout(i + 2)
+                    end
+                    
+                    -- EditModeManagerFrame:Hide() -- REMOVED to prevent Taint
+                    return true
+                end
+            end
+            return false
+        end,
+        Import = function(self, data, profileName)
+            if InCombatLockdown() then return end
+            -- Attempt Safe Import
+             local layoutInfo = C_EditMode.ConvertStringToLayoutInfo(data)
+             -- EditModeManagerFrame:Show() -- REMOVED
+             pcall(function() EditModeManagerFrame:ImportLayout(layoutInfo, Enum.EditModeLayoutType.Account, profileName) end)
+        end,
+        HasProfile = function(self, profileName)
+            local layoutInfo = C_EditMode.GetLayouts()
+            if layoutInfo and layoutInfo.layouts then
+                for _, layout in ipairs(layoutInfo.layouts) do
+                    if layout.layoutName == profileName then return true end
+                end
+            end
+            return false
+        end
+    },
 }
 
 -- Returns the system status
 -- @param targetProfile (string) The profile name to check against (default: ADDON_NAME)
 -- @return status (boolean) true if all loaded addons match the target profile
 -- @return report (table) list of {name, status, error}
+-- Returns the system status
+-- @param targetProfile (string) The profile name to check against (default: ADDON_NAME)
+-- @return status (boolean) true if all loaded addons match the target profile
+-- @return report (table) list of {name, status, error}
+-- Returns the system status
+-- @param targetProfile (string) The profile name to check against (default: ADDON_NAME)
+-- @return status (boolean) true if all loaded addons match the target profile
+-- @return report (table) list of {name, status, error}
 function Installer:GetSystemStatus(targetProfile)
+    -- targetProfile = "testUI" -- TEST MODE FORCE
     targetProfile = targetProfile or ADDON_NAME
     local allGood = true
     local report = {}
@@ -356,6 +633,8 @@ function Installer:GetSystemStatus(targetProfile)
             -- Safe check profile
             local ok, current = pcall(addon.GetProfile, addon)
             if not ok then current = "Error" end
+            
+
             
             local match = (current == targetProfile)
             if not match then allGood = false end
@@ -433,6 +712,7 @@ end
 
 -- Checks if all supported addons have the target profile available to switch to
 function Installer:IsConfigured(targetProfile)
+    -- targetProfile = "testUI" -- TEST MODE FORCE
     targetProfile = targetProfile or ADDON_NAME
     local allHave = true
     
@@ -492,8 +772,9 @@ end
 
 -- Full Install (Import + Sync)
 function Installer:Install(targetProfile, sourceProfileName, allowList)
+    -- targetProfile = "testUI" -- TEST MODE FORCE
+    -- print("|cFF00FF00[TEST MODE]|r Installing to profile: " .. targetProfile)
     targetProfile = targetProfile or ADDON_NAME
-    
     -- Determine Import Source
     local imports
     if sourceProfileName and _G.GravityUI and _G.GravityUI.profiles and _G.GravityUI.profiles[sourceProfileName] then
@@ -516,14 +797,19 @@ function Installer:Install(targetProfile, sourceProfileName, allowList)
         local isAllowed = (not allowList) or (allowList[addon.name])
         
         if isAllowed and addon.Check() then
-            -- 1. Import Data (if available and addon loaded)
-            local key = addon.name -- matches Import key keys usually
+            -- 1. Set Profile (Create/Switch FIRST)
+            pcall(addon.SetProfile, addon, targetProfile)
+            
+            -- 2. Import Data (if available and addon loaded)
+            local key = addon.name 
+            
             if imports[key] then
-                 pcall(addon.Import, addon, imports[key].data, targetProfile)
+                 local ok, err = pcall(addon.Import, addon, imports[key].data, targetProfile)
+                 if not ok then
+                     print("|cffff0000GravityUI:|r Error importing " .. key .. ": " .. tostring(err))
+                 end
             end
             
-            -- 2. Set Profile
-            pcall(addon.SetProfile, addon, targetProfile)
             if db then db.installer[string.lower(addon.name)] = true end
         end
     end

@@ -186,6 +186,17 @@ end
 ---------------------------------------------------------------------------
 -- Get item level for a slot (tooltip-first approach for accuracy)
 ---------------------------------------------------------------------------
+---------------------------------------------------------------------------
+-- Get item level for a slot (tooltip-first approach for accuracy)
+---------------------------------------------------------------------------
+-- Pre-calculate pattern
+local ILVL_PATTERN
+if ITEM_LEVEL then
+    ILVL_PATTERN = ITEM_LEVEL:gsub("%%d", "(%%d+)")
+else
+    ILVL_PATTERN = "Item Level (%d+)"
+end
+
 local function GetSlotItemLevel(unit, slotId)
     local itemLink = GetInventoryItemLink(unit, slotId)
     if not itemLink then return nil end
@@ -213,15 +224,9 @@ local function GetSlotItemLevel(unit, slotId)
         local tooltipData = C_TooltipInfo.GetInventoryItem(unit, slotId)
         if tooltipData and tooltipData.lines then
             -- Use localized ITEM_LEVEL global or fallback pattern
-            local pattern
-            if ITEM_LEVEL then
-                pattern = ITEM_LEVEL:gsub("%%d", "(%%d+)")
-            else
-                pattern = "Item Level (%d+)"  -- Fallback for English
-            end
             for _, line in ipairs(tooltipData.lines) do
                 local text = line.leftText or ""
-                local tooltipIlvl = text:match(pattern)
+                local tooltipIlvl = text:match(ILVL_PATTERN)
                 if tooltipIlvl then
                     local parsed = tonumber(tooltipIlvl)
                     if parsed then
@@ -239,10 +244,11 @@ end
 ---------------------------------------------------------------------------
 -- Get item quality for a slot
 ---------------------------------------------------------------------------
+---------------------------------------------------------------------------
+-- Get item quality for a slot
+---------------------------------------------------------------------------
 local function GetSlotItemQuality(unit, slotId)
-    local ok, quality = pcall(function()
-        return GetInventoryItemQuality(unit, slotId)
-    end)
+    local ok, quality = pcall(GetInventoryItemQuality, unit, slotId)
     if ok then
         return quality
     end
@@ -252,6 +258,17 @@ end
 ---------------------------------------------------------------------------
 -- Get enchant text for a slot (returns actual enchant name)
 ---------------------------------------------------------------------------
+---------------------------------------------------------------------------
+-- Get enchant text for a slot (returns actual enchant name)
+---------------------------------------------------------------------------
+-- Pre-calculate Enchant Pattern
+local ENCHANT_PATTERN
+if ENCHANTED_TOOLTIP_LINE then
+    ENCHANT_PATTERN = ENCHANTED_TOOLTIP_LINE:gsub("%%s", "(.+)")
+else
+    ENCHANT_PATTERN = "Enchanted:%s*(.+)" -- Fallback
+end
+
 local function GetEnchantText(unit, slotId)
     local itemLink = GetInventoryItemLink(unit, slotId)
     if not itemLink then return nil, nil end  -- No item
@@ -280,14 +297,10 @@ local function GetEnchantText(unit, slotId)
             for _, line in ipairs(tooltipData.lines) do
                 local text = line.leftText or ""
                 -- Try to match "Enchanted: X" pattern using WoW's localized constant
-                local enchant
-                if ENCHANTED_TOOLTIP_LINE then
-                    -- Use localized pattern: "Enchanted: %s"
-                    local pattern = ENCHANTED_TOOLTIP_LINE:gsub("%%s", "(.+)")
-                    enchant = text:match(pattern)
-                end
+                local enchant = text:match(ENCHANT_PATTERN)
+                
                 -- Fallback pattern matching
-                if not enchant then
+                if not enchant and not ENCHANTED_TOOLTIP_LINE then
                     enchant = text:match("Enchanted:%s*(.+)")
                 end
                 if enchant then

@@ -119,36 +119,49 @@ local function ScanGroupClasses()
     end
 end
 
-local function UnitHasBuff(unit, spellId, buffName)
-    if not unit then return false end
-    
-    -- Iterate auras
-    for i = 1, MAX_AURA_INDEX do
-        local aura = C_UnitAuras.GetAuraDataByIndex(unit, i, "HELPFUL")
-        if not aura then break end
-        
-        -- Secure check: spellId (Wrap comparison entirely)
-        -- We must ensure ONLY a boolean returns, never the secret value itself
-        local success, match = pcall(function() 
-            if aura.spellId == spellId then return true end
-            return false
-        end)
-        
-        if success and match == true then
-            return true
-        end
-        
-        -- Secure check: name
-        if buffName then
-             local successName, nameMatch = pcall(function() 
-                if aura.name == buffName then return true end
-                return false
-             end)
-             if successName and nameMatch == true then
-                 return true
-             end
+-- Localized Name Cache
+local localizedNames = {}
+
+-- Initialize Cache
+local function InitCache()
+    for _, buff in ipairs(RAID_BUFFS) do
+        local info = C_Spell.GetSpellInfo(buff.spellId)
+        if info and info.name then
+            localizedNames[buff.spellId] = info.name
+        else
+            localizedNames[buff.spellId] = buff.name -- Fallback
         end
     end
+end
+
+local function UnitHasBuff(unit, spellId, fallbackName)
+    if not unit then return false end
+    
+    -- Ensure cache is populated
+    if not localizedNames[spellId] then
+        local info = C_Spell.GetSpellInfo(spellId)
+        if info and info.name then
+            localizedNames[spellId] = info.name
+        else
+            localizedNames[spellId] = fallbackName
+        end
+    end
+    
+    local name = localizedNames[spellId]
+    if not name then return false end
+
+    -- Fast Lookup by Name (O(1) in C)
+    local aura = C_UnitAuras.GetAuraDataBySpellName(unit, name, "HELPFUL")
+    if aura then
+        -- Optional: Verify SpellID to be 100% sure (handling shared names)
+        if aura.spellId == spellId then
+            return true
+        end
+        -- If name matches but ID differs, it might be a variant (e.g. diff rank). 
+        -- Usually name match is sufficient for raid buffs.
+        return true
+    end
+    
     return false
 end
 
@@ -415,6 +428,7 @@ eventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
 eventFrame:RegisterEvent("PLAYER_REGEN_DISABLED")
 eventFrame:SetScript("OnEvent", function(self, event)
     if event == "PLAYER_LOGIN" then
+        InitCache()
         C_Timer.After(2, UpdateDisplay)
     else
         -- Throttle updates

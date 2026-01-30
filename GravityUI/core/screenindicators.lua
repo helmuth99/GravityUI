@@ -34,30 +34,31 @@ local RETICLE_OPTIONS = {
 }
 
 -- Melee Range check spells for various classes
+-- Melee Range check spells for various classes (Hash Set for O(1) lookup)
 local MELEE_RANGE_ABILITIES = {
-    96231,  -- Paladin: Rebuke
-    6552,   -- Warrior: Pummel
-    1766,   -- Rogue: Kick
-    116705, -- Monk: Spear Hand Strike
-    183752, -- Demon Hunter: Disrupt
-    228478, -- Soul Cleave
-    263642, -- Fracture
-    49143,  -- Frost Strike
-    85948,  -- Festering Strike
-    206930, -- Heart Strike
-    100780, -- Tiger Palm
-    100784, -- Blackout Kick
-    107428, -- Rising Sun Kick
-    5221,   -- Shred
-    3252,   -- Shred (alt)
-    22568,  -- Ferocious Bite
-    33917,  -- Mangle
-    6807,   -- Maul
-    17364,  -- Shaman: Stormstrike
-    7389,   -- Shaman: Primal Strike
-    60103,  -- Shaman: Lava Lash
-    186270, -- Hunter: Raptor Strike
-    190984, -- Hunter: Mongoose Bite
+    [96231] = true,  -- Paladin: Rebuke
+    [6552] = true,   -- Warrior: Pummel
+    [1766] = true,   -- Rogue: Kick
+    [116705] = true, -- Monk: Spear Hand Strike
+    [183752] = true, -- Demon Hunter: Disrupt
+    [228478] = true, -- Soul Cleave
+    [263642] = true, -- Fracture
+    [49143] = true,  -- Frost Strike
+    [85948] = true,  -- Festering Strike
+    [206930] = true, -- Heart Strike
+    [100780] = true, -- Tiger Palm
+    [100784] = true, -- Blackout Kick
+    [107428] = true, -- Rising Sun Kick
+    [5221] = true,   -- Shred
+    [3252] = true,   -- Shred (alt)
+    [22568] = true,  -- Ferocious Bite
+    [33917] = true,  -- Mangle
+    [6807] = true,   -- Maul
+    [17364] = true,  -- Shaman: Stormstrike
+    [7389] = true,   -- Shaman: Primal Strike
+    [60103] = true,  -- Shaman: Lava Lash
+    [186270] = true, -- Hunter: Raptor Strike
+    [190984] = true, -- Hunter: Mongoose Bite
 }
 
 -- References
@@ -256,13 +257,9 @@ local function UpdateMeleeSlotCache()
     cachedMeleeSlot = nil
     for slot = 1, 180 do
         local actionType, id = GetActionInfo(slot)
-        if id and actionType == "spell" then
-            for _, abilityID in ipairs(MELEE_RANGE_ABILITIES) do
-                if id == abilityID then
-                    cachedMeleeSlot = slot
-                    return
-                end
-            end
+        if id and actionType == "spell" and MELEE_RANGE_ABILITIES[id] then
+            cachedMeleeSlot = slot
+            return
         end
     end
 end

@@ -336,6 +336,11 @@ end
 ---------------------------------------------------------------------------
 -- Helper: Enchant Detection
 ---------------------------------------------------------------------------
+-- Pre-calculate Enchant Patterns
+local ENCHANTED_PREFIX = "^Enchanted:"
+local ENCHANT_PREFIX = "^Enchant:"
+local SCOPE_PREFIX = "^Scope:"
+
 local function GetEnchantText(unit, slotId)
     local itemLink = GetInventoryItemLink(unit, slotId)
     if not itemLink then return nil, false end
@@ -359,7 +364,7 @@ local function GetEnchantText(unit, slotId)
             if line.leftText then 
                 local text = line.leftText
                 -- Detect "Enchanted: +Stat" or just "+Stat" or "Scope"
-                if text:match("^Enchanted:") or text:match("^Enchant:") or text:match("^Scope:") then
+                if text:match(ENCHANTED_PREFIX) or text:match(ENCHANT_PREFIX) or text:match(SCOPE_PREFIX) then
                      local enchant = text:gsub("Enchanted: ", ""):gsub("Enchant: ", ""):gsub("Scope: ", "")
                      return enchant, true
                 end
@@ -477,15 +482,18 @@ local function UpdateSlotOverlay(overlay, unit)
 end
 
 
+local UPGRADE_TRACK_PATTERN = "Upgrade Level:%s*(.+)%s+(%d+)%s*/%s*(%d+)"
+local UPGRADE_TRACK_PATTERN_ALT = ": (.+)%s+(%d+)%s*/%s*(%d+)"
+
 local function GetUpgradeTrack(unit, slotId)
     if not C_TooltipInfo or not C_TooltipInfo.GetInventoryItem then return nil, nil, nil end
     local tooltipData = C_TooltipInfo.GetInventoryItem(unit, slotId)
     if not tooltipData or not tooltipData.lines then return nil, nil, nil end
     for _, line in ipairs(tooltipData.lines) do
         local text = line.leftText or ""
-        local track, current, max = text:match("Upgrade Level:%s*(.+)%s+(%d+)%s*/%s*(%d+)")
+        local track, current, max = text:match(UPGRADE_TRACK_PATTERN)
         if track then return track, current, max end
-        track, current, max = text:match(": (.+)%s+(%d+)%s*/%s*(%d+)")
+        track, current, max = text:match(UPGRADE_TRACK_PATTERN_ALT)
         if track then return track, current, max end
     end
     return nil, nil, nil

@@ -409,3 +409,90 @@ SlashCmdList["GUIEXPORT"] = function(msg)
     -- Forward to standard handler
     Addon:SlashCommandOpen(msg)
 end
+
+SLASH_GUITESTCLEANUP1 = "/guitestcleanup"
+SlashCmdList["GUITESTCLEANUP"] = function()
+    local profile = "testUI"
+    print("|cFFFF0000[GravityUI]|r Cleaning up '" .. profile .. "' profiles...")
+    
+    local db = ns.GetDB()
+    if db then db.installer = db.installer or {} end
+    
+    -- Iterate registry from Installer (requires access, assumed global ns.GUI.Installer)
+    if ns.GUI and ns.GUI.Installer and ns.GUI.Installer.registry then
+        for _, addon in ipairs(ns.GUI.Installer.registry) do
+            if addon.Check() then
+                -- Try to delete profile
+                -- Note: Most addons don't have a standardized DeleteProfile in the registry, 
+                -- so we might need to rely on the underlying DB object if available.
+                local deleted = false
+                
+                -- Attempt to find the DB object
+                local dbObj = nil
+                if addon.name == "GravityUI" then dbObj = ns.db 
+                elseif addon.name == "Details" and _G.Details then dbObj = _G.Details.db -- Details handles profiles differently though
+                elseif addon.name == "Plater" and _G.Plater then dbObj = _G.Plater.db
+                elseif addon.name == "BigWigs" and _G.BigWigs3DB then -- BigWigs manual key deletion
+                     if _G.BigWigs3DB.profiles then _G.BigWigs3DB.profiles[profile] = nil deleted = true end
+                elseif addon.name == "BCDM" and _G.BCDM then dbObj = _G.BCDM.db
+                elseif addon.name == "UUF" and _G.UUF then dbObj = _G.UUF.db
+                end
+                
+                if dbObj and dbObj.DeleteProfile then
+                    dbObj:DeleteProfile(profile)
+                    deleted = true
+                end
+                
+                if deleted then
+                    print(" - Deleted from " .. addon.label)
+                else
+                    print(" - Could not delete from " .. addon.label .. " (Manual deletion required)")
+                end
+            end
+        end
+    end
+    print("Cleanup complete. Reloading UI...")
+    C_Timer.After(2, ReloadUI)
+end
+
+SLASH_GUISCAN1 = "/guiscan"
+SlashCmdList["GUISCAN"] = function()
+    -- Global Scan
+    print("=== GravityUI Global Scan ===")
+    local found = 0
+    for k, v in pairs(_G) do
+        if type(k) == "string" then
+            local lower = string.lower(k)
+            if string.find(lower, "danders") or string.find(lower, "uuf") or string.find(lower, "unhalted") then
+                print("Key: " .. k .. " (" .. type(v) .. ")")
+                found = found + 1
+            end
+        end
+    end
+    print("Scan complete. Found " .. found .. " keys.")
+end
+
+SLASH_GUIDEEP1 = "/guideep"
+SlashCmdList["GUIDEEP"] = function()
+    print("=== Deep Scan: DandersFrames & UUFG ===")
+    
+    local function ScanTable(name, tbl)
+        if not tbl or type(tbl) ~= "table" then
+            print(name .. " is not a table or not found.")
+            return
+        end
+        print("Scanning " .. name .. ":")
+        local count = 0
+        for k, v in pairs(tbl) do
+            if type(v) == "function" or (type(k)=="string" and (string.find(string.lower(k), "import") or string.find(string.lower(k), "profile"))) then
+                print("  ." .. tostring(k) .. " (" .. type(v) .. ")")
+                count = count + 1
+            end
+        end
+        print("  Found " .. count .. " relevant keys.")
+    end
+
+    ScanTable("DandersFrames", _G.DandersFrames)
+    ScanTable("UUFG", _G.UUFG)
+    ScanTable("UUF", _G.UUF)
+end
