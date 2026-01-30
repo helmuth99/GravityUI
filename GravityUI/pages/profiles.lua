@@ -834,21 +834,21 @@ local function BuildInstallerTab(parent)
     y = y - setupHeader.gap
 
     -- ACTION 1: FRESH INSTALL
-    local freshLabel = GUI:CreateLabel(content, "Fresh Installation (Recommended)", 12, C.accent)
+    local freshLabel = GUI:CreateLabel(content, "Fresh Installation (Express Installation)", 12, C.accent)
     freshLabel:SetPoint("TOPLEFT", PAD, y)
     y = y - 20
     
-    local freshDesc = GUI:CreateLabel(content, "Import 'GravityUI' settings and overwrite configuration for:", 11, C.textMuted)
+    local freshDesc = GUI:CreateLabel(content, "Import 'GravityUI' selected Gravity Profile settings and overwrite configuration for:", 11, C.textMuted)
     freshDesc:SetPoint("TOPLEFT", PAD, y)
     y = y - 15
-    local addonListObj = GUI:CreateLabel(content, "Details, Plater, BigWigs, etc.", 11, {1,1,1})
+    local addonListObj = GUI:CreateLabel(content, "The selected Addons from above (checked / unchecked)", 11, {1,1,1})
     addonListObj:SetPoint("TOPLEFT", PAD, y)
     y = y - 35
 
     -- Source Selection Dropdown
     local sourceWrapper = { selected = selectedSource }
     local sourceDropdown 
-    sourceDropdown = GUI:CreateDropdown(content, "GravityUI Profile", 
+    sourceDropdown = GUI:CreateDropdown(content, "GravityUI Profile Config:", 
         (function() 
             local list = {}; 
             for _,v in ipairs(availableProfiles) do table.insert(list, {text=v, value=v}) end; 
@@ -889,7 +889,7 @@ local function BuildInstallerTab(parent)
     end
 
     local installBtn -- Forward declare
-    installBtn = GUI:CreateButton(content, "Install GravityUI (Recommended)", 220, 30, function()
+    installBtn = GUI:CreateButton(content, "Install GravityUI (Fresh Install)", 220, 30, function()
         -- Confirm
         GUI:ShowConfirmation({
             title = "Fresh Install?",
@@ -910,18 +910,18 @@ local function BuildInstallerTab(parent)
     y = y - 60
 
     -- ACTION 2: SYNC (Twink)
-    local syncLabel = GUI:CreateLabel(content, "Sync Existing Profile", 12, C.accent)
+    local syncLabel = GUI:CreateLabel(content, "Sync Existing Profile (Alt / Twink Installation)", 12, C.accent)
     syncLabel:SetPoint("TOPLEFT", PAD, y)
     y = y - 20
     
-    local syncDesc = GUI:CreateLabel(content, "Switch SELECTED addons to use GravityUI profile without overwriting data.", 11, C.textMuted)
+    local syncDesc = GUI:CreateLabel(content, "Switch Addon Profiles to use GravityUI Profile without overwriting data.", 11, C.textMuted)
     syncDesc:SetPoint("TOPLEFT", PAD, y)
     y = y - 25
 
     -- Check if system is configured (profiles exist)
     local canSync = GUI.Installer:IsConfigured("GravityUI")
     
-    syncBtn = GUI:CreateButton(content, "Sync to 'GravityUI' (Selected)", 220, 30, function()
+    syncBtn = GUI:CreateButton(content, "Sync to 'GravityUI' (Alt/Twink)", 220, 30, function()
         GUI.Installer:Synchronize("GravityUI", GetAllowList())
         -- Update status immediately
         UpdateStatus() 
