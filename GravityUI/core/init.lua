@@ -162,8 +162,21 @@ function Addon:OnInitialize()
     -- Character panel module auto-initializes via event registration
 end
 
+-- Apply UI Scale from DB
+function ns.ApplyUIScale()
+    local db = ns.GetDB()
+    if db and db.general and db.general.uiScale then
+        pcall(function()
+            if math.abs(UIParent:GetScale() - db.general.uiScale) > 0.001 then
+                UIParent:SetScale(db.general.uiScale)
+            end
+        end)
+    end
+end
+
 -- Refresh functions
 ns.RefreshEverything = function()
+    ns.ApplyUIScale()
     if ns.Styling then ns.Styling:Refresh() end
     if ns.Media then ns.Media:Update() end
     
