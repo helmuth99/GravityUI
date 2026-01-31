@@ -14,7 +14,7 @@ local function CreateStylingRow(container, labelText, widgetType, arg1, arg2, ar
     
     -- Label
     local label = row:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    GUI:SetFont(label, 12, "OUTLINE")
+    GUI:SetFont(label, 12, "")
     label:SetJustifyH("LEFT")
     label:SetSize(LABEL_WIDTH, ROW_HEIGHT)
     label:SetPoint("LEFT", 0, 0)
@@ -74,6 +74,7 @@ local function BuildGameMenuPanel(parent)
     local header = GUI:CreateSectionHeader(content, "Game Menu Skinning")
     header:SetPoint("TOPLEFT", PAD, yOffset)
     yOffset = yOffset - header.gap
+    yOffset = yOffset - 10
     
     local row1 = CreateStylingRow(content, "Enable Game Menu Skinning", "checkbox", "enabled", ns.db.profile.styling.gamemenu, function()
         if ns.Styling and ns.Styling.SkinGameMenu then ns.Styling:SkinGameMenu() end
@@ -138,7 +139,7 @@ local function BuildGameMenuPanel(parent)
     end
     
     local note = GUI:CreateLabel(content, "Note: Requires UI Reload to fully apply/remove.", 12, C.textMuted)
-    GUI:SetFont(note, 12, "OUTLINE")
+    GUI:SetFont(note, 12, "")
     note:SetPoint("TOPLEFT", PAD, yOffset)
     yOffset = yOffset - 20
     
@@ -158,6 +159,7 @@ local function BuildChatBubblesPanel(parent)
     local header = GUI:CreateSectionHeader(content, "Chat Bubbles")
     header:SetPoint("TOPLEFT", PAD, yOffset)
     yOffset = yOffset - header.gap
+    yOffset = yOffset - 10
     
     local row1 = CreateStylingRow(content, "Enable Chat Bubble Skinning", "checkbox", "enabled", ns.db.profile.styling.chatBubbles, function()
         if ns.Styling and ns.Styling.SkinChatBubbles then ns.Styling:SkinChatBubbles() end
@@ -203,6 +205,7 @@ local function BuildReadyCheckPanel(parent)
     local header = GUI:CreateSectionHeader(content, "Ready Check Frame")
     header:SetPoint("TOPLEFT", PAD, yOffset)
     yOffset = yOffset - header.gap
+    yOffset = yOffset - 10
     
     local row1 = CreateStylingRow(content, "Skin Ready Check Frame", "checkbox", "skinReadyCheck", db, function()
         if ns.Styling and ns.Styling.SkinReadyCheck then ns.Styling:SkinReadyCheck() end
@@ -210,9 +213,7 @@ local function BuildReadyCheckPanel(parent)
     row1:SetPoint("TOPLEFT", PAD, yOffset)
     yOffset = yOffset - ROW_HEIGHT - 5
     
-    local extraNote = GUI:CreateLabel(content, "Skin the ready check popup with GUI styling.", 12, C.textMuted)
-    extraNote:SetPoint("TOPLEFT", row1, "BOTTOMLEFT", 0, -4)
-    yOffset = yOffset - 25
+    yOffset = yOffset - 5
 
     -- Background Color Customization
     local bgPickerRow -- Forward declare
@@ -272,10 +273,9 @@ local function BuildReadyCheckPanel(parent)
     local header3 = GUI:CreateSectionHeader(content, "Missing Raid Buffs")
     header3:SetPoint("TOPLEFT", PAD, yOffset)
     yOffset = yOffset - header3.gap
+    yOffset = yOffset - 10
     
-    local note3 = GUI:CreateLabel(content, "Display missing raid buffs when a buff-providing class is in your group.", 12, C.textMuted)
-    note3:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - 30
+
     
     local rbr1 = CreateStylingRow(content, "Enable Missing Raid Buffs", "checkbox", "enabled", rbDb, function() 
         if ns.RaidBuffs then ns.RaidBuffs:Refresh() end 
@@ -341,10 +341,9 @@ local function BuildKeystonePanel(parent)
     local header = GUI:CreateSectionHeader(content, "Keystone Frame")
     header:SetPoint("TOPLEFT", PAD, yOffset)
     yOffset = yOffset - header.gap
+    yOffset = yOffset - 10
     
-    local note = GUI:CreateLabel(content, "Skin the M+ keystone insertion window with GUI styling.", 12, C.textMuted)
-    note:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - 30
+
     
     local row1 = CreateStylingRow(content, "Skin Keystone Window", "checkbox", "enabled", ns.db.profile.styling.keystone, function()
         if ns.Styling and ns.Styling.SkinKeystone then ns.Styling:SkinKeystone() end
@@ -410,6 +409,11 @@ local function BuildPowerBarPanel(parent)
     local header = GUI:CreateSectionHeader(content, "Encounter Power Bar")
     header:SetPoint("TOPLEFT", PAD, yOffset)
     yOffset = yOffset - header.gap
+    yOffset = yOffset - 10
+    
+    local infoBox = GUI:CreateInfoBox(content, "Replaces the encounter/quest power bar (e.g. Boss mechanics) with a styled version.")
+    infoBox:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - infoBox:GetHeight() - 10
     
     local row1 = CreateStylingRow(content, "Enable Skinning", "checkbox", "enabled", ns.db.profile.styling.powerBar, function()
         if ns.Styling and ns.Styling.SkinPowerBar then ns.Styling:SkinPowerBar() end
@@ -417,10 +421,7 @@ local function BuildPowerBarPanel(parent)
     row1:SetPoint("TOPLEFT", PAD, yOffset)
     yOffset = yOffset - ROW_HEIGHT - 5
     
-    local note = GUI:CreateLabel(content, "Replaces the encounter/quest power bar (e.g. Boss mechanics) with a styled version.", 12, C.textMuted)
-    note:SetPoint("TOPLEFT", row1, "BOTTOMLEFT", 0, -4)
-    note:SetWidth(600)
-    yOffset = yOffset - 40
+
     
     local moverBtn = GUI:CreateButton(content, "Toggle Mover", 140, 24, function()
         if ns.Styling and ns.Styling.TogglePowerBarMover then ns.Styling:TogglePowerBarMover() end
@@ -450,6 +451,11 @@ local function BuildAlertsPanel(parent)
     local header = GUI:CreateSectionHeader(content, "Alert Frames & Toasts")
     header:SetPoint("TOPLEFT", PAD, yOffset)
     yOffset = yOffset - header.gap
+    yOffset = yOffset - 10
+    
+    local infoBox = GUI:CreateInfoBox(content, "Skins Blizzard alert frames (Achievements, Loot, etc.) and allows custom positioning.")
+    infoBox:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - infoBox:GetHeight() - 10
     
     local row1 = CreateStylingRow(content, "Enable Skinning", "checkbox", "enabled", db, function()
         if ns.Alerts and ns.Alerts.Initialize then ns.Alerts:Initialize() end
@@ -457,10 +463,7 @@ local function BuildAlertsPanel(parent)
     row1:SetPoint("TOPLEFT", PAD, yOffset)
     yOffset = yOffset - ROW_HEIGHT - 5
     
-    local note = GUI:CreateLabel(content, "Skins Blizzard alert frames (Achievements, Loot, etc.) and allows custom positioning.", 12, C.textMuted)
-    note:SetPoint("TOPLEFT", row1, "BOTTOMLEFT", 0, -4)
-    note:SetWidth(600)
-    yOffset = yOffset - 40
+
     
     -- Background Color Customization
     local bgPickerRow -- Forward declare
@@ -568,10 +571,12 @@ local function BuildLootPanel(parent)
     local header = GUI:CreateSectionHeader(content, "Loot Window")
     header:SetPoint("TOPLEFT", PAD, yOffset)
     yOffset = yOffset - header.gap
+    yOffset = yOffset - 10
     
-    local desc1 = GUI:CreateLabel(content, "Replace Blizzard's loot window with a custom GUI-styled frame.", 12, C.textMuted)
-    desc1:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - 35
+    
+    local infoBox1 = GUI:CreateInfoBox(content, "Replace Blizzard's loot window with a custom GUI-styled frame.")
+    infoBox1:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - infoBox1:GetHeight() - 10
     
     local row1 = CreateStylingRow(content, "Skin Loot Window", "checkbox", "enabled", db.loot, function()
         if ns.Loot and ns.Loot.Initialize then ns.Loot:Initialize() end
@@ -646,10 +651,12 @@ local function BuildLootPanel(parent)
     local header2 = GUI:CreateSectionHeader(content, "Loot History")
     header2:SetPoint("TOPLEFT", PAD, yOffset)
     yOffset = yOffset - header2.gap
+    yOffset = yOffset - 10
     
-    local desc2 = GUI:CreateLabel(content, "Apply GUI styling to the loot roll results panel.", 12, C.textMuted)
-    desc2:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - 35
+    
+    local infoBox2 = GUI:CreateInfoBox(content, "Apply GUI styling to the loot roll results panel.")
+    infoBox2:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - infoBox2:GetHeight() - 10
     
     local rowH1 = CreateStylingRow(content, "Skin Loot History", "checkbox", "enabled", db.lootResults)
     rowH1:SetPoint("TOPLEFT", PAD, yOffset)
@@ -715,10 +722,12 @@ local function BuildObjectivesPanel(parent)
     local header = GUI:CreateSectionHeader(content, "Objective Tracker")
     header:SetPoint("TOPLEFT", PAD, yOffset)
     yOffset = yOffset - header.gap
+    yOffset = yOffset - 10
     
-    local desc = GUI:CreateLabel(content, "Skin the default Blizzard Objective Tracker to match GravityUI.", 12, C.textMuted)
-    desc:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - 35
+    
+    local infoBox = GUI:CreateInfoBox(content, "Skin the default Blizzard Objective Tracker to match GravityUI.")
+    infoBox:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - infoBox:GetHeight() - 10
     
     local row1 = CreateStylingRow(content, "Enable Styling", "checkbox", "objectiveTrackerSkinning", db, function()
         if ns.Objectives and ns.Objectives.Refresh then ns.Objectives:Refresh() end
@@ -831,6 +840,11 @@ local function BuildInstancePanel(parent)
     local header = GUI:CreateSectionHeader(content, "Instance Frames")
     header:SetPoint("TOPLEFT", PAD, yOffset)
     yOffset = yOffset - header.gap
+    yOffset = yOffset - 10
+    
+    local infoBox = GUI:CreateInfoBox(content, "Skins the PVE Frame (Dungeon Finder, Raid Finder, Premade Groups) and Mythic+ frames.")
+    infoBox:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - infoBox:GetHeight() - 10
     
     local row1 = CreateStylingRow(content, "Enable Custom Instance Styling", "checkbox", "enabled", ns.db.profile.styling.instanceFrames, function()
         if ns.InstanceFrames and ns.InstanceFrames.Initialize then ns.InstanceFrames:Initialize() end
@@ -838,11 +852,9 @@ local function BuildInstancePanel(parent)
     row1:SetPoint("TOPLEFT", PAD, yOffset)
     yOffset = yOffset - ROW_HEIGHT - 5
     
-    local note = GUI:CreateLabel(content, "Skins the PVE Frame (Dungeon Finder, Raid Finder, Premade Groups) and Mythic+ frames.", 12, C.textMuted)
-    note:SetPoint("TOPLEFT", row1, "BOTTOMLEFT", 0, -4)
-    note:SetWidth(600)
+
     
-    yOffset = yOffset - 40
+
     
     local db = ns.db.profile.styling.instanceFrames
     
@@ -900,6 +912,11 @@ GUI:RegisterPage("Styling", {
         -- Hide default scrollframe parent (since we use SubTabs which create their own content areas)
         local scrollFrame = content:GetParent()
         content:Hide()
+        
+        if scrollFrame.ScrollBar then
+            scrollFrame.ScrollBar:Hide()
+            scrollFrame.ScrollBar:HookScript("OnShow", function(self) self:Hide() end)
+        end
         
         -- Create SubTabs
         local subTabs = GUI:CreateSubTabs(scrollFrame, {

@@ -201,12 +201,18 @@ local function ApplyStyle(tooltip)
     end)
 
     -- Healthbar
-    if tooltip.HealthBar then
-        tooltip.HealthBar:SetAlpha(settings.hideHealthBar and 0 or 1)
-    end
-    if GameTooltipStatusBar and settings.hideHealthBar then
-        GameTooltipStatusBar:SetAlpha(0)
-    end
+    pcall(function()
+        if tooltip.HealthBar and not tooltip.HealthBar:IsForbidden() then
+            if settings.hideHealthBar then
+                tooltip.HealthBar:SetAlpha(0)
+            else
+                tooltip.HealthBar:SetAlpha(1)
+            end
+        end
+        if GameTooltipStatusBar and not GameTooltipStatusBar:IsForbidden() and settings.hideHealthBar then
+            GameTooltipStatusBar:SetAlpha(0)
+        end
+    end)
 
     -- Font Size
     if settings.fontSize then

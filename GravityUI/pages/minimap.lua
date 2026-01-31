@@ -29,7 +29,7 @@ local function BuildSettingsTab(parent)
         
         -- Label
         local label = row:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-        GUI:SetFont(label, 12, "OUTLINE")
+        GUI:SetFont(label, 12, "")
         label:SetJustifyH("LEFT")
         label:SetSize(LABEL_WIDTH, ROW_HEIGHT)
         label:SetPoint("LEFT", 0, 0)
@@ -183,7 +183,7 @@ local function BuildElementsTab(parent)
         
         -- Label
         local label = row:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-        GUI:SetFont(label, 12, "OUTLINE")
+        GUI:SetFont(label, 12, "")
         label:SetJustifyH("LEFT")
         label:SetSize(LABEL_WIDTH, ROW_HEIGHT)
         label:SetPoint("LEFT", 0, 0)
@@ -307,7 +307,7 @@ local function BuildElementsTab(parent)
         
         -- Label
         local l = posContainer:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-        GUI:SetFont(l, 13, "OUTLINE", C.accentLight)
+        GUI:SetFont(l, 13, "", C.accentLight)
         l:SetPoint("TOPLEFT", 10, posY)
         l:SetText(label)
         posY = posY - 20

@@ -16,7 +16,7 @@ local function CreatePropertyRow(parent, labelText, widgetType, arg1, arg2, arg3
     row:SetSize(GUI.CONTENT_WIDTH - 20, ROW_HEIGHT)
     
     local label = row:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    GUI:SetFont(label, 12, "OUTLINE")
+    GUI:SetFont(label, 12, "")
     label:SetJustifyH("LEFT")
     label:SetSize(LABEL_WIDTH, ROW_HEIGHT)
     label:SetPoint("LEFT", 0, 0)
@@ -71,7 +71,7 @@ local function CreateSubLabel(container, text)
     sh:SetPoint("TOPLEFT", 10, -10 - (count * (ROW_HEIGHT + 5)))
     sh:SetText(text)
     sh:SetTextColor(unpack(GUI.Colors.accent))
-    GUI:SetFont(sh, 12, "OUTLINE")
+    GUI:SetFont(sh, 12, "")
     container.rowCount = count + 1
 end
 
@@ -92,7 +92,7 @@ local function BuildCursor(parent)
     local header = GUI:CreateSectionHeader(content, "Cursor Settings")
     header:SetPoint("TOPLEFT", 10, -10)
     header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
-    content.rowCount = 2.0
+    content.rowCount = 1.3
 
     CreateSubLabel(content, "Enable & Logic")
     AddRow(content, "Enable Cursor Ring", "checkbox", "enabled", c, refresh)
@@ -141,7 +141,7 @@ local function BuildCrosshair(parent)
     local header = GUI:CreateSectionHeader(content, "Crosshair Settings")
     header:SetPoint("TOPLEFT", 10, -10)
     header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
-    content.rowCount = 2.0
+    content.rowCount = 1.3
 
     CreateSubLabel(content, "Enable & Core Settings")
     AddRow(content, "Enable Crosshair", "checkbox", "enabled", ch, refresh)
@@ -150,7 +150,7 @@ local function BuildCrosshair(parent)
     
     content.rowCount = content.rowCount + 0.3
     
-    CreateSubLabel(content, "Appearance")
+    CreateSubLabel(content, "Size & Scale")
     AddRow(content, "Size", "slider", 2, 50, "size", ch, refresh, 1)
     AddRow(content, "Thickness", "slider", 1, 10, "thickness", ch, refresh, 1)
     AddRow(content, "Border Size", "slider", 0, 5, "borderSize", ch, refresh, 1)
@@ -185,7 +185,7 @@ local function BuildCombatStatus(parent)
     local header = GUI:CreateSectionHeader(content, "Combat Status Indicator")
     header:SetPoint("TOPLEFT", 10, -10)
     header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
-    content.rowCount = 2.0
+    content.rowCount = 1.3
 
     CreateSubLabel(content, "Enable & Preview")
     AddRow(content, "Enable Indicator", "checkbox", "enabled", cs, refresh)
@@ -235,7 +235,7 @@ local function BuildPet(parent)
     local header = GUI:CreateSectionHeader(content, "Pet Info Settings")
     header:SetPoint("TOPLEFT", 10, -10)
     header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
-    content.rowCount = 2.0
+    content.rowCount = 1.3
 
     CreateSubLabel(content, "Enable & Preview")
     AddRow(content, "Enable Pet Warnings", "checkbox", "enabled", ps, refresh)

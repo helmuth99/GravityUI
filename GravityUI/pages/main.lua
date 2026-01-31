@@ -193,12 +193,13 @@ ns.GUI:RegisterPage("main", {
         -- Assuming user reverted framework.lua, the override IS present.
         -- So we do NOT set RIGHT manually here to avoid conflicts.
         yOffset = yOffset - welcomeHeader.gap
+        yOffset = yOffset - 10
         
         local welcomeText = GUI:CreateLabel(content, 
             "A modern, feature-rich UI configuration addon for World of Warcraft.\n" ..
             "Use the menu on the left to navigate through different settings.",
             12, C.text)
-        GUI:SetFont(welcomeText, 12, "OUTLINE")
+        GUI:SetFont(welcomeText, 12, "")
         welcomeText:SetPoint("TOPLEFT", PADDING, yOffset)
         welcomeText:SetWidth(640)
         welcomeText:SetJustifyH("LEFT")
@@ -210,6 +211,11 @@ ns.GUI:RegisterPage("main", {
         local themeHeader = GUI:CreateSectionHeader(content, "Theme Color")
         themeHeader:SetPoint("TOPLEFT", PADDING, yOffset)
         yOffset = yOffset - themeHeader.gap
+        yOffset = yOffset - 10
+        
+        local themeInfo = GUI:CreateInfoBox(content, "Theme Color is used for styling modules in GravityUI.")
+        themeInfo:SetPoint("TOPLEFT", PADDING, yOffset)
+        yOffset = yOffset - themeInfo:GetHeight() - 10 -- Dynamic Spacing
         
         -- Theme Color Pickers
         if GUI.CreateColorPicker then
@@ -240,6 +246,7 @@ ns.GUI:RegisterPage("main", {
         local uiScaleHeader = GUI:CreateSectionHeader(content, "UI Scale")
         uiScaleHeader:SetPoint("TOPLEFT", PADDING, yOffset)
         yOffset = yOffset - uiScaleHeader.gap
+        yOffset = yOffset - 10
         
         -- UI Scale Slider
         if db.general.uiScale == nil then db.general.uiScale = 0.64 end
@@ -255,6 +262,12 @@ ns.GUI:RegisterPage("main", {
         local presetLabel = GUI:CreateLabel(content, "Quick UI Scale Presets:", 12, C.text)
         presetLabel:SetPoint("TOPLEFT", PADDING, yOffset)
         yOffset = yOffset - 25
+        
+        -- Info text (Moved & Converted to InfoBox)
+        local presetInfo = GUI:CreateInfoBox(content, 
+            "Hover over any preset for details. 1440p+ is Gravity's personal setting.")
+        presetInfo:SetPoint("TOPLEFT", PADDING, yOffset)
+        yOffset = yOffset - presetInfo:GetHeight() - 10 -- Dynamic Spacing
         
         -- Preset Button Functions
         local function ApplyPreset(val, name)
@@ -323,15 +336,7 @@ ns.GUI:RegisterPage("main", {
         
         yOffset = yOffset - 32
         
-        -- Info text
-        local presetInfo = GUI:CreateLabel(content, 
-            "Hover over any preset for details. 1440p+ is Gravity's personal setting.",
-            11, C.textMuted)
-        GUI:SetFont(presetInfo, 11, "OUTLINE")
-        presetInfo:SetPoint("TOPLEFT", PADDING, yOffset)
-        presetInfo:SetPoint("RIGHT", content, "RIGHT", -PADDING, 0)
-        presetInfo:SetJustifyH("LEFT")
-        yOffset = yOffset - 25
+
         yOffset = yOffset - 10 -- Extra spacer
         
         -- ═══════════════════════════════════════════════════════════════
@@ -340,6 +345,7 @@ ns.GUI:RegisterPage("main", {
         local fontHeader = GUI:CreateSectionHeader(content, "Default Font Settings")
         fontHeader:SetPoint("TOPLEFT", PADDING, yOffset)
         yOffset = yOffset - fontHeader.gap
+        yOffset = yOffset - 10
         
         local fontInfo = GUI:CreateInfoBox(content, 
             "|cff00BFFFInfo:|r These settings apply throughout the UI, including the Minimap and all Datapanels.\n" ..
@@ -385,19 +391,14 @@ ns.GUI:RegisterPage("main", {
         local fpsHeader = GUI:CreateSectionHeader(content, "Gravity Recommended FPS Settings")
         fpsHeader:SetPoint("TOPLEFT", PADDING, yOffset)
         yOffset = yOffset - fpsHeader.gap
+        yOffset = yOffset - 10
 
-        local fpsDesc = GUI:CreateLabel(content,
+        local fpsDesc = GUI:CreateInfoBox(content,
             "Apply Gravity's optimized graphics settings for competitive play. " ..
             "Your current settings are automatically saved when you click Apply - use 'Restore Previous Settings' to revert anytime. " ..
-            "Caution: Clicking Apply again will overwrite your backup with these settings.",
-            11, C.textMuted)
-        GUI:SetFont(fpsDesc, 11, "OUTLINE")
+            "Caution: Clicking Apply again will overwrite your backup with these settings.")
         fpsDesc:SetPoint("TOPLEFT", PADDING, yOffset)
-        fpsDesc:SetPoint("RIGHT", content, "RIGHT", -PADDING, 0)
-        fpsDesc:SetJustifyH("LEFT")
-        fpsDesc:SetWordWrap(true)
-        fpsDesc:SetHeight(45)
-        yOffset = yOffset - 55
+        yOffset = yOffset - fpsDesc:GetHeight() - 10
 
         local restoreFpsBtn
         local fpsStatusText
@@ -440,7 +441,7 @@ ns.GUI:RegisterPage("main", {
         yOffset = yOffset - 38
 
         fpsStatusText = GUI:CreateLabel(content, "", 11, C.accent)
-        GUI:SetFont(fpsStatusText, 11, "OUTLINE")
+        GUI:SetFont(fpsStatusText, 11, "")
         fpsStatusText:SetPoint("TOPLEFT", PADDING, yOffset)
         
         UpdateFPSStatus()

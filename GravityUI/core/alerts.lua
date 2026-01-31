@@ -487,7 +487,18 @@ function Alerts:Initialize()
     if not db or not db.enabled then return end
     
     Alerts:CreateHolders()
-
+    
+    -- Prevent repeated hooking on refresh
+    if self.initialized then 
+        -- Just update anchors if needed
+        if alertHolder and AlertFrame then
+            AlertFrame:ClearAllPoints()
+            AlertFrame:SetPoint("TOP", alertHolder, "TOP")
+        end
+        return 
+    end
+    self.initialized = true
+    
     if AchievementAlertSystem then hooksecurefunc(AchievementAlertSystem, "setUpFunction", SkinAchievementAlert) end
     if DungeonCompletionAlertSystem then hooksecurefunc(DungeonCompletionAlertSystem, "setUpFunction", SkinDungeonCompletionAlert) end
     if LootAlertSystem then hooksecurefunc(LootAlertSystem, "setUpFunction", SkinLootWonAlert) end
@@ -498,9 +509,14 @@ function Alerts:Initialize()
         
         -- Aggressive container anchoring
         hooksecurefunc(AlertFrame, "SetPoint", function(self, point, relTo, relPoint, x, y)
-            if alertHolder and (not relTo or relTo ~= alertHolder) then
+             -- Safety check to prevent recursion if our setpoint triggers this hook again internally (unlikely with securehook but possible with dirty chains)
+             if self.isSettingPoint then return end
+             
+             if alertHolder and (not relTo or relTo ~= alertHolder) then
+                self.isSettingPoint = true
                 self:ClearAllPoints()
                 self:SetPoint("TOP", alertHolder, "TOP")
+                self.isSettingPoint = false
             end
         end)
         

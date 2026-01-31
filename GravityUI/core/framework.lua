@@ -11,26 +11,40 @@ local GlobalColors = ns.Colors
 
 -- Static Framework Palette (Gravity Blue Branding)
 -- This ensures the options UI stays consistent regardless of user's UnitFrame theme choices
+-- Static Framework Palette (Gravity Glassmorphic 2026)
+-- This ensures the options UI stays consistent regardless of user's UnitFrame theme choices
 local C = {
-    bg = {0.117, 0.121, 0.133, 1},
-    bgLight = {0.122, 0.161, 0.216, 1},
-    bgDark = {0.04, 0.05, 0.08, 1},
-    accent = {0, 0.749, 1, 1},
-    accentLight = {0.529, 0.808, 0.980, 1},
+    -- Glassmorphic Backgrounds
+    bg = {0.11, 0.11, 0.13, 0.98}, -- Charcoal Dark Gray (Main Shell)
+    bgGlass = {0.11, 0.11, 0.13, 0.98}, -- Added missing key
+    bgLight = {0.15, 0.15, 0.18, 1}, -- Solid Widgets (Buttons)
+    bgDark = {0.07, 0.07, 0.09, 1}, -- Inset Panels
+    
+    -- Branding
+    accent = {0, 0.6, 1, 1}, -- Gravity Blue (Dynamic)
+    accentLight = {0.4, 0.8, 1, 1}, -- Highlight
+    
+    -- Typography
     text = {0.9, 0.92, 0.95, 1},
     textMuted = {0.6, 0.65, 0.7, 1},
-    border = {0.2, 0.23, 0.28, 1},
-    borderAccent = {0, 0.749, 1, 1},
-    sectionHeader = {0.529, 0.808, 0.980, 1},
-    warning = {0.961, 0.620, 0.043, 1},
-    toggleOff = {0.15, 0.15, 0.15, 1},
-    toggleThumb = {0.9, 0.9, 0.9, 1},
-    sliderTrack = {0.15, 0.15, 0.15, 1},
-    sliderThumb = {0, 0.749, 1, 1},
     textBright = {1, 1, 1, 1},
+    
+    -- UI Elements
+    border = {0, 0, 0, 1}, -- Flat / Subtle
+    borderAccent = {0, 0.6, 1, 1},
+    sectionHeader = {0, 0.6, 1, 1},
+    
+    -- Functional Colors
+    warning = {0.96, 0.62, 0.04, 1},
+    toggleOff = {0.2, 0.2, 0.2, 1},
+    toggleThumb = {0.9, 0.9, 0.9, 1},
+    sliderTrack = {0.1, 0.1, 0.1, 1},
+    sliderThumb = {0, 0.6, 1, 1},
+    
+    -- Interactive States
     tabHover = {0.2, 0.25, 0.3, 0.5},
-    tabSelected = {0, 0.749, 1, 0.2},
-    tabSelectedText = {0.529, 0.808, 0.980, 1},
+    tabSelected = {0.15, 0.15, 0.18, 0.3},
+    tabSelectedText = {0.4, 0.8, 1, 1},
 }
 GUI.Colors = C
 
@@ -97,23 +111,95 @@ end
 
 function GUI:SetFont(...) SetFont(...) end
 
--- Helper: Create backdrop
+-- Helper: Create Standard Backdrop (Flat)
 local function CreateBackdrop(frame, bgColor, borderColor)
-    if not frame or not frame.SetBackdrop then return end
+    if not frame then return end
+    
+    if not frame.SetBackdrop then
+        Mixin(frame, BackdropTemplateMixin)
+    end
     
     local defaultBg = bgColor or C.bg
     
     frame:SetBackdrop({
         bgFile = "Interface\\Buttons\\WHITE8x8",
-        edgeFile = "Interface\\Buttons\\WHITE8x8",
-        edgeSize = 1,
+        edgeFile = nil, -- Flat Design (No 3D borders)
+        edgeSize = 0,
     })
+    
     frame:SetBackdropColor(unpack(defaultBg))
-    frame:SetBackdropBorderColor(unpack(borderColor or C.border))
+    
+    -- Simulate 1px border using an inset frame if borderColor is provided
+    if borderColor then
+        if not frame.border then
+            frame.border = CreateFrame("Frame", nil, frame, "BackdropTemplate")
+            frame.border:SetPoint("TOPLEFT", -1, 1)
+            frame.border:SetPoint("BOTTOMRIGHT", 1, -1)
+            frame.border:SetFrameLevel(frame:GetFrameLevel()) -- Same level, allow sorting
+            frame.border:SetBackdrop({
+                edgeFile = "Interface\\Buttons\\WHITE8x8",
+                edgeSize = 1,
+            })
+            frame.border:SetBackdropBorderColor(unpack(borderColor))
+        else
+            frame.border:SetBackdropBorderColor(unpack(borderColor))
+        end
+    end
 end
 
 function GUI:CreateBackdrop(frame, ...) 
     CreateBackdrop(frame, ...) 
+end
+
+-- Helper: Glass Backdrop (Semi-Transparent + Shadow)
+function GUI:CreateGlassBackdrop(frame)
+    CreateBackdrop(frame, C.bgGlass, C.border)
+    
+    -- Add Depth Shadow
+    if not frame.shadow then
+        frame.shadow = frame:CreateTexture(nil, "BACKGROUND", nil, -8)
+        frame.shadow:SetPoint("TOPLEFT", -4, 4)
+        frame.shadow:SetPoint("BOTTOMRIGHT", 4, -4)
+        frame.shadow:SetColorTexture(0, 0, 0, 0.5)
+        
+        -- Optional: Use a real shadow asset if available, but pure color with inset works for "Glass" feel
+    end
+end
+    
+---------------------------------------------------------------------------
+-- DYNAMIC THEMING
+---------------------------------------------------------------------------
+function GUI:UpdateThemeColors()
+    local db = ns.db and ns.db.profile
+    if not db then return end
+    
+    local r, g, b = 0, 0.6, 1 -- Default Blue
+    
+    -- 1. Class Color Priority
+    if db.general and db.general.useClassColorTheme then
+        local _, class = UnitClass("player")
+        if class then
+            local c = C_ClassColor.GetClassColor(class)
+            if c then r, g, b = c.r, c.g, c.b end
+        end
+    -- 2. Theme Color Priority
+    elseif db.general and db.general.themeColor then
+        local c = db.general.themeColor
+        r, g, b = c[1], c[2], c[3]
+    end
+    
+    -- Update Palette
+    C.accent = {r, g, b, 1}
+    C.accentLight = {math.min(r*1.3, 1), math.min(g*1.3, 1), math.min(b*1.3, 1), 1}
+    C.borderAccent = {r, g, b, 1}
+    C.sectionHeader = {r, g, b, 1}
+    C.tabSelectedText = {r, g, b, 1}
+    C.sliderThumb = {r, g, b, 1}
+    
+    -- Update Recursive
+    if self.MainFrame and self.MainFrame.RefreshColors then
+        self.MainFrame:RefreshColors()
+    end
 end
 
 function GUI:ClearPageContent(content)
@@ -171,7 +257,13 @@ function GUI:CreateScrollableTextBox(parent, height, initialText, readOnly)
     local container = CreateFrame("Frame", nil, parent, "BackdropTemplate")
     container:SetHeight(height)
     
-    self:CreateBackdrop(container, {0.05, 0.05, 0.05, 0.8}, C.border)
+    container:SetBackdrop({
+        bgFile = "Interface\\Buttons\\WHITE8x8",
+        edgeFile = "Interface\\Buttons\\WHITE8x8",
+        edgeSize = 1,
+    })
+    container:SetBackdropColor(0.15, 0.15, 0.15, 1)
+    container:SetBackdropBorderColor(C.border[1], C.border[2], C.border[3], 1)
     
     local scroll = CreateFrame("ScrollFrame", nil, container, "UIPanelScrollFrameTemplate")
     scroll:SetPoint("TOPLEFT", 8, -8)
@@ -251,26 +343,102 @@ end
 ---------------------------------------------------------------------------
 -- WIDGET: INFO BOX
 ---------------------------------------------------------------------------
-function GUI:CreateInfoBox(parent, text, width)
+function GUI:CreateInfoBox(parent, text, width, styleOverride)
     if parent._hasContent ~= nil then
         parent._hasContent = true
     end
 
     local frame = CreateFrame("Frame", nil, parent, "BackdropTemplate")
-    frame:SetWidth(width or (GUI.CONTENT_WIDTH - 20))
+    -- Use CONTENT_WIDTH if available for perfect alignment, otherwise safe fallback
+    -- Use CONTENT_WIDTH if available for perfect alignment, otherwise safe fallback
+    local defaultWidth = (GUI.CONTENT_WIDTH and (GUI.CONTENT_WIDTH - 20)) or 660
+    frame:SetWidth(width or defaultWidth)
     
-    -- Subdued Blue Condition Theme
-    local bg = {0, 0.75, 1, 0.05}
-    local border = {0, 0.75, 1, 0.2}
-    CreateBackdrop(frame, bg, border)
+    -- Defaults
+    local bgFile = "Interface\\Buttons\\WHITE8x8"
+    local edgeFile = nil -- Default: No Border
+    local edgeSize = 0
+    local bgColor = {0.15, 0.15, 0.15, 1}
+    local borderColor = C.border
+    
+    -- Style Overrides
+    if styleOverride and styleOverride.noBorder then
+        edgeFile = nil
+        edgeSize = 0
+    end
+    
+    -- Modern Gradient Background
+    -- Create texture layer for the gradient instead of using flat BackdropColor
+    if not frame.bgTexture then
+        frame.bgTexture = frame:CreateTexture(nil, "BACKGROUND")
+        frame.bgTexture:SetAllPoints()
+        frame.bgTexture:SetTexture("Interface\\Buttons\\WHITE8x8")
+    end
+
+    -- Apply Gradient: Dark -> Transparent
+    -- Start with solid dark gray/black and fade to transparent on the right
+    local r, g, b = unpack(bgColor)
+    -- Use 0.6 alpha for start, fade to SAME COLOR transparent (r,g,b,0) to avoid blackness
+    frame.bgTexture:SetGradient("HORIZONTAL", CreateColor(r, g, b, 0.6), CreateColor(r, g, b, 0)) 
+    
+    frame:SetBackdrop({
+        bgFile = nil, 
+        edgeFile = edgeFile,
+        edgeSize = edgeSize,
+    })
+    frame:SetBackdropColor(0, 0, 0, 0) -- Ensure backdrop is purely transparent so it doesnt show through 
+    
+    frame:SetBackdrop({
+        bgFile = nil, -- Disable backdrop bg to let texture show
+        edgeFile = edgeFile,
+        edgeSize = edgeSize,
+    })
+    -- frame:SetBackdropColor(unpack(bgColor)) -- Handled by gradient texture now
+
+    if edgeFile then
+         frame:SetBackdropBorderColor(borderColor[1], borderColor[2], borderColor[3], 1)
+    end
     
     local label = parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    SetFont(label, 12, "OUTLINE")
+    SetFont(label, 12, "")
     label:SetParent(frame)
     label:SetPoint("TOPLEFT", 12, -12)
-    label:SetWidth(frame:GetWidth() - 24)
+    label:SetWidth(frame:GetWidth() - 100) -- Reduce text width so it doesn't overlap the faded out part
     label:SetJustifyH("LEFT")
-    label:SetText(text)
+    
+    -- Standardize Text (Strip "Note:" or "Info:" prefixes if present)
+    text = text:gsub("^|c%x%x%x%x%x%x%x%xNote:|r%s*", "")
+    text = text:gsub("^Note:%s*", "")
+    text = text:gsub("^|c%x%x%x%x%x%x%x%xInfo:|r%s*", "")
+    text = text:gsub("^Info:%s*", "")
+
+    -- Color Configuration
+    local prefixColor = "|cffaaaaaa" -- Default Light Gray
+    local bodyColor = "|cff88ccff" -- Default Light Blue
+    local prefix = "Info:"
+    
+    if styleOverride then
+        if styleOverride.prefixColorStr then prefixColor = styleOverride.prefixColorStr end
+        if styleOverride.bodyColorStr then bodyColor = styleOverride.bodyColorStr end
+        if styleOverride.useNote then prefix = "Note:" end
+    end
+
+    -- Format Text
+    
+    -- Colorize internal "Note:" to match prefix color (break body color, gray note, resume body color)
+    -- We assume 'text' is wrapped in bodyColor below, so we need to:
+    -- 1. Close the current bodyColor tag (|r)
+    -- 2. Open prefixColor for "Note:"
+    -- 3. Close prefixColor (|r)
+    -- 4. Re-open bodyColor for following text
+    
+    -- The pattern needs to match potential existing colors or just raw text.
+    -- Simple approach: Replace "Note:" with the sequence
+    text = text:gsub("Note:", "|r" .. prefixColor .. "Note:|r" .. bodyColor)
+
+    -- "Info:" (Prefix) | Body Text
+    label:SetText(prefixColor .. prefix .. "|r " .. bodyColor .. text .. "|r")
+    
     frame.label = label
     
     self:RegisterInSearchIndex(text, frame)
@@ -279,7 +447,11 @@ function GUI:CreateInfoBox(parent, text, width)
     frame:SetHeight(label:GetStringHeight() + 24)
     
     frame.SetText = function(self, newText)
-        self.label:SetText(newText)
+        -- Keep prefix logic simple for updates or re-apply based on stored settings? 
+        -- For now, just set raw text, or re-apply styling if we stored it. 
+        -- Simplest is just set the label text directly assume it's pre-formatted or just raw.
+        -- Let's stick to the formatted update:
+        self.label:SetText(prefixColor .. prefix .. "|r " .. bodyColor .. newText .. "|r")
         self:SetHeight(self.label:GetStringHeight() + 24)
     end
     
@@ -310,13 +482,31 @@ function GUI:CreateButton(parent, text, width, height, onClick)
     
     self:RegisterInSearchIndex(text, btn)
     
+    -- Glow Hover
+    local glow = btn:CreateTexture(nil, "OVERLAY")
+    glow:SetAllPoints()
+    glow:SetColorTexture(C.accent[1], C.accent[2], C.accent[3], 0.1)
+    glow:SetAlpha(0)
+    btn.glow = glow
+    
     btn:SetScript("OnEnter", function(self)
+        -- Animate Glow
+        UIFrameFadeIn(self.glow, 0.1, 0, 0.2)
+        -- Border Highlight
         self:SetBackdropBorderColor(C.accent[1], C.accent[2], C.accent[3], 1)
     end)
     
     btn:SetScript("OnLeave", function(self)
+        UIFrameFadeOut(self.glow, 0.2, 0.2, 0)
+        
         self:SetBackdropBorderColor(C.border[1], C.border[2], C.border[3], 1)
     end)
+    
+    btn.RefreshColors = function(self)
+        if self.glow then
+            self.glow:SetColorTexture(C.accent[1], C.accent[2], C.accent[3], 0.1)
+        end
+    end
     
     if onClick then
         btn:SetScript("OnClick", onClick)
@@ -332,56 +522,7 @@ end
 ---------------------------------------------------------------------------
 -- WIDGET: SECTION HEADER
 ---------------------------------------------------------------------------
-function GUI:CreateSectionHeader(parent, text)
-    local isFirstElement = (parent._hasContent == false)
-    if parent._hasContent ~= nil then
-        parent._hasContent = true
-    end
-    
-    local topMargin = isFirstElement and 0 or 12
-    local containerHeight = isFirstElement and 18 or 30
-    
-    local container = CreateFrame("Frame", nil, parent)
-    container:SetHeight(containerHeight)
-    
-    local header = container:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    SetFont(header, 13, "", C.sectionHeader)
-    header:SetText(text or "Section")
-    header:SetPoint("TOPLEFT", container, "TOPLEFT", 0, -topMargin)
-    
-    if parent.isStepHeader and not text then -- Only inherit if text is nil (static elements like headers in search)
-        header.isStepHeader = true
-        container.isStepHeader = true
-    end
-    
-    self:RegisterInSearchIndex(text, container)
-    
-    container.text = header
-    container.parent = parent
-    container.gap = isFirstElement and 34 or 46
-    
-    container.SetText = function(self, newText)
-        header:SetText(newText)
-    end
-    
-    local originalSetPoint = container.SetPoint
-    container.SetPoint = function(self, point, ...)
-        originalSetPoint(self, point, ...)
-        if point == "TOPLEFT" then
-            originalSetPoint(self, "RIGHT", parent, "RIGHT", -10, 0)
-            if not container.underline then
-                local underline = container:CreateTexture(nil, "ARTWORK")
-                underline:SetHeight(2)
-                underline:SetPoint("TOPLEFT", header, "BOTTOMLEFT", 0, -2)
-                underline:SetPoint("RIGHT", container, "RIGHT", 0, 0)
-                underline:SetColorTexture(C.accent[1], C.accent[2], C.accent[3], 0.6)
-                container.underline = underline
-            end
-        end
-    end
-    
-    return container
-end
+
 
 ---------------------------------------------------------------------------
 -- WIDGET: CHECKBOX (Toggle Switch Style)
@@ -439,7 +580,7 @@ function GUI:CreateCheckbox(parent, label, dbKey, dbTable, onChange)
         if val then
             thumb:ClearAllPoints()
             thumb:SetPoint("RIGHT", switch, "RIGHT", -2, 0)
-            switch:SetBackdropColor(C.accent[1], C.accent[2], C.accent[3], 0.5)
+            switch:SetBackdropColor(C.accent[1], C.accent[2], C.accent[3], 1) -- Solid Active (Matches Slider)
         else
             thumb:ClearAllPoints()
             thumb:SetPoint("LEFT", switch, "LEFT", 2, 0)
@@ -451,12 +592,18 @@ function GUI:CreateCheckbox(parent, label, dbKey, dbTable, onChange)
         end
     end
     
+    container.RefreshColors = function(self)
+        if GetValue() then
+             switch:SetBackdropColor(C.accent[1], C.accent[2], C.accent[3], 1)
+        end
+    end
+    
     -- Initialize (without triggering callback)
     local initVal = GetValue()
     if initVal then
         thumb:ClearAllPoints()
         thumb:SetPoint("RIGHT", switch, "RIGHT", -2, 0)
-        switch:SetBackdropColor(C.accent[1], C.accent[2], C.accent[3], 0.5)
+        switch:SetBackdropColor(C.accent[1], C.accent[2], C.accent[3], 1)
     else
         thumb:ClearAllPoints()
         thumb:SetPoint("LEFT", switch, "LEFT", 2, 0)
@@ -529,7 +676,13 @@ function GUI:CreateSlider(parent, label, min, max, dbKey, dbTable, onChange, ste
     editBox:SetTextInsets(3, 3, 0, 0)
     
     -- Square 1px border styling
-    CreateBackdrop(editBox, {0.1, 0.1, 0.1, 0.8}, C.border)
+    editBox:SetBackdrop({
+        bgFile = "Interface\\Buttons\\WHITE8x8",
+        edgeFile = "Interface\\Buttons\\WHITE8x8",
+        edgeSize = 1,
+    })
+    editBox:SetBackdropColor(0.15, 0.15, 0.15, 1)
+    editBox:SetBackdropBorderColor(C.border[1], C.border[2], C.border[3], 1)
     
     -- Slider
     local slider = CreateFrame("Slider", nil, container, "BackdropTemplate")
@@ -547,7 +700,13 @@ function GUI:CreateSlider(parent, label, min, max, dbKey, dbTable, onChange, ste
     slider:SetObeyStepOnDrag(true)
     
     -- Track
-    CreateBackdrop(slider, C.sliderTrack, C.border)
+    slider:SetBackdrop({
+        bgFile = "Interface\\Buttons\\WHITE8x8",
+        edgeFile = "Interface\\Buttons\\WHITE8x8",
+        edgeSize = 1,
+    })
+    slider:SetBackdropColor(0.15, 0.15, 0.15, 1)
+    slider:SetBackdropBorderColor(C.border[1], C.border[2], C.border[3], 1)
     
     -- Thumb
     local thumb = slider:CreateTexture(nil, "OVERLAY")
@@ -743,7 +902,13 @@ function GUI:CreateInput(parent, label, dbKey, dbTable, onChange)
     editBox:SetFontObject(GameFontHighlightSmall)
     editBox:SetTextInsets(8, 8, 0, 0)
     
-    CreateBackdrop(editBox, C.bgDark, C.border)
+    editBox:SetBackdrop({
+        bgFile = "Interface\\Buttons\\WHITE8x8",
+        edgeFile = "Interface\\Buttons\\WHITE8x8",
+        edgeSize = 1,
+    })
+    editBox:SetBackdropColor(0.15, 0.15, 0.15, 1)
+    editBox:SetBackdropBorderColor(C.border[1], C.border[2], C.border[3], 1)
     
     container.editBox = editBox
     container.label = labelText
@@ -842,7 +1007,13 @@ function GUI:CreateDropdown(parent, label, items, dbKey, dbTable, onChange)
     dropdown:SetSize(200, 24)
     dropdown:SetPoint("TOPLEFT", 0, -18)
     
-    CreateBackdrop(dropdown, C.bgDark, C.border)
+    dropdown:SetBackdrop({
+        bgFile = "Interface\\Buttons\\WHITE8x8",
+        edgeFile = "Interface\\Buttons\\WHITE8x8",
+        edgeSize = 1,
+    })
+    dropdown:SetBackdropColor(0.15, 0.15, 0.15, 1)
+    dropdown:SetBackdropBorderColor(C.border[1], C.border[2], C.border[3], 1)
     
     -- Selected text
     local selectedText = dropdown:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -1125,6 +1296,42 @@ function GUI:CreateColorPicker(parent, label, dbKey, dbTable, onChange)
 end
 
 ---------------------------------------------------------------------------
+-- WIDGET: SECTION HEADER (Standard Text + Underline)
+---------------------------------------------------------------------------
+function GUI:CreateSectionHeader(parent, text)
+    local container = CreateFrame("Frame", nil, parent)
+    container:SetSize(GUI.CONTENT_WIDTH - 20, 30)
+    
+    local headerText = container:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    SetFont(headerText, 14, "", C.sectionHeader) -- Uses Theme Color (Gravity Blue)
+    headerText:SetText(text or "Header")
+    headerText:SetPoint("BOTTOMLEFT", 0, 5)
+    
+    local underline = container:CreateTexture(nil, "ARTWORK")
+    underline:SetHeight(2)
+    underline:SetPoint("TOPLEFT", headerText, "BOTTOMLEFT", 0, -2)
+    underline:SetPoint("RIGHT", container, "RIGHT", 0, 0)
+    underline:SetTexture("Interface\\Buttons\\WHITE8x8")
+    underline:SetGradient("HORIZONTAL", CreateColor(C.accent[1], C.accent[2], C.accent[3], 1), CreateColor(C.accent[1], C.accent[2], C.accent[3], 0))
+    
+    -- Register for search
+    self:RegisterInSearchIndex(text, container)
+    
+    -- Expose properties
+    container.text = headerText
+    container.underline = underline
+    container.gap = 34 -- Standard gap for layout calculations
+    
+    -- Helper to update colors dynamically (if needed, though C.sectionHeader is static-ish)
+    container.RefreshColors = function()
+        headerText:SetTextColor(unpack(C.sectionHeader))
+        underline:SetGradient("HORIZONTAL", CreateColor(C.accent[1], C.accent[2], C.accent[3], 1), CreateColor(C.accent[1], C.accent[2], C.accent[3], 0))
+    end
+    
+    return container
+end
+
+---------------------------------------------------------------------------
 -- WIDGET: COLLAPSIBLE HEADER
 ---------------------------------------------------------------------------
 function GUI:CreateCollapsibleHeader(parent, text, defaultExpanded)
@@ -1156,7 +1363,7 @@ function GUI:CreateCollapsibleHeader(parent, text, defaultExpanded)
     underline:SetHeight(2)
     underline:SetPoint("TOPLEFT", headerText, "BOTTOMLEFT", 0, -2)
     underline:SetPoint("RIGHT", container, "RIGHT", 0, 0)
-    underline:SetColorTexture(C.accent[1], C.accent[2], C.accent[3], 0.6)
+    underline:SetColorTexture(C.accent[1], C.accent[2], C.accent[3], 1)
     
     -- Content container (holds the collapsible content)
     local content = CreateFrame("Frame", nil, container)
@@ -1256,7 +1463,7 @@ function GUI:CreateSubTabs(parent, tabs)
         btn:SetHeight(BUTTON_HEIGHT)
         
         local text = btn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-        SetFont(text, 12, "OUTLINE", C.text)
+        SetFont(text, 12, "", C.text)
         text:SetText(tabInfo.name)
         text:SetPoint("CENTER", 0, 0)
         btn.text = text
@@ -1269,7 +1476,7 @@ function GUI:CreateSubTabs(parent, tabs)
             edgeFile = "Interface\\Buttons\\WHITE8x8",
             edgeSize = 1,
         })
-        btn:SetBackdropColor(0.1, 0.1, 0.1, 0.5)
+        btn:SetBackdropColor(0.15, 0.15, 0.15, 1)
         btn:SetBackdropBorderColor(C.border[1], C.border[2], C.border[3], 1)
         
         local contentFrame = CreateFrame("Frame", nil, parent)
@@ -1299,7 +1506,7 @@ function GUI:CreateSubTabs(parent, tabs)
                     otherBtn:SetBackdropBorderColor(C.accent[1], C.accent[2], C.accent[3], 1)
                     tabContents[j]:Show()
                 else
-                    otherBtn:SetBackdropColor(0.1, 0.1, 0.1, 0.5)
+                    otherBtn:SetBackdropColor(0.15, 0.15, 0.15, 1)
                     otherBtn:SetBackdropBorderColor(C.border[1], C.border[2], C.border[3], 1)
                     tabContents[j]:Hide()
                 end

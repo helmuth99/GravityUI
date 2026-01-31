@@ -18,11 +18,9 @@ local function BuildAceDBProfilesTab(parent)
 
     local db = ns.GetAceDB()
 
-    local info = GUI:CreateLabel(content, "Manage profiles and auto-switch based on specialization.", 11, C.textMuted)
-    info:SetPoint("TOPLEFT", PAD, y)
-    info:SetPoint("RIGHT", content, "RIGHT", -PAD, 0)
-    info:SetJustifyH("LEFT")
-    y = y - 28
+    local infoBox = GUI:CreateInfoBox(content, "|cffFFCC00Info:|r Manage profiles and auto-switch based on specialization.")
+    infoBox:SetPoint("TOPLEFT", PAD, y)
+    y = y - infoBox:GetHeight() - 10
     
     -- =====================================================
     -- CURRENT PROFILE SECTION
@@ -30,6 +28,7 @@ local function BuildAceDBProfilesTab(parent)
     local currentHeader = GUI:CreateSectionHeader(content, "Current Profile")
     currentHeader:SetPoint("TOPLEFT", PAD, y)
     y = y - currentHeader.gap
+    y = y - 10
 
     -- Forward declare profileDropdown so refresh function can reference it
     local profileDropdown
@@ -136,95 +135,35 @@ local function BuildAceDBProfilesTab(parent)
     local selectHeader = GUI:CreateSectionHeader(content, "Switch Profile")
     selectHeader:SetPoint("TOPLEFT", PAD, y)
     y = y - selectHeader.gap
+    y = y - 10
     
-    local profileDropdownContainer = CreateFrame("Frame", nil, content)
-    profileDropdownContainer:SetHeight(FORM_ROW)
-    profileDropdownContainer:SetPoint("TOPLEFT", PAD, y)
-    profileDropdownContainer:SetPoint("RIGHT", content, "RIGHT", -PAD, 0)
-
-    local profileDropdownLabel = profileDropdownContainer:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    profileDropdownLabel:SetPoint("LEFT", 0, 0)
-    profileDropdownLabel:SetText("Select Profile")
-    GUI:SetFont(profileDropdownLabel, 12)
-    profileDropdownLabel:SetTextColor(C.text[1], C.text[2], C.text[3], 1)
-
-    local CHEVRON_ZONE_WIDTH = 28
-    local CHEVRON_BG_ALPHA = 0.15
-
-    profileDropdown = CreateFrame("Button", nil, profileDropdownContainer, "BackdropTemplate")
-    profileDropdown:SetHeight(24)
-    profileDropdown:SetPoint("LEFT", profileDropdownContainer, "LEFT", 200, 0)
-    profileDropdown:SetPoint("RIGHT", profileDropdownContainer, "RIGHT", 0, 0)
-    GUI:CreateBackdrop(profileDropdown, {0.08, 0.08, 0.08, 1}, {0.35, 0.35, 0.35, 1})
-
-    local chevronZone = CreateFrame("Frame", nil, profileDropdown, "BackdropTemplate")
-    chevronZone:SetWidth(CHEVRON_ZONE_WIDTH)
-    chevronZone:SetPoint("TOPRIGHT", profileDropdown, "TOPRIGHT", -1, -1)
-    chevronZone:SetPoint("BOTTOMRIGHT", profileDropdown, "BOTTOMRIGHT", -1, 1)
-    chevronZone:SetBackdrop({bgFile = "Interface\\Buttons\\WHITE8x8"})
-    chevronZone:SetBackdropColor(C.accent[1], C.accent[2], C.accent[3], CHEVRON_BG_ALPHA)
-
-    local profileDropdownText = profileDropdown:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    GUI:SetFont(profileDropdownText, 11)
-    profileDropdownText:SetPoint("LEFT", 8, 0)
-    profileDropdownText:SetTextColor(C.text[1], C.text[2], C.text[3], 1)
-    profileDropdownText:SetText(db and db:GetCurrentProfile() or "Default")
-
-    function profileDropdown:RefreshText(val)
-        profileDropdownText:SetText(val)
-    end
-
-    local profileMenu = CreateFrame("Frame", nil, profileDropdown, "BackdropTemplate")
-    profileMenu:SetPoint("TOPLEFT", profileDropdown, "BOTTOMLEFT", 0, -2)
-    profileMenu:SetPoint("TOPRIGHT", profileDropdown, "BOTTOMRIGHT", 0, -2)
-    GUI:CreateBackdrop(profileMenu, {0.1, 0.1, 0.1, 0.98}, {0.3, 0.3, 0.3, 1})
-    profileMenu:SetFrameStrata("TOOLTIP")
-    profileMenu:Hide()
+    local profileDropdown
+    -- Wrapper to hold current selection status
+    local profileWrapper = { selected = db and db:GetCurrentProfile() or "Default" }
     
-    local function BuildProfileMenu()
-        for _, child in ipairs({profileMenu:GetChildren()}) do
-            child:Hide()
-            child:SetParent(nil)
+    profileDropdown = GUI:CreateDropdown(content, "Select Profile", cachedProfileList, "selected", profileWrapper, function(val)
+        if val and val ~= db:GetCurrentProfile() then
+            db:SetProfile(val)
+            RefreshProfileDisplay()
+            -- Close menu is handled by dropdown logic
         end
-        if not db then return end
-        
-        -- Use cached list for menu building
-        local itemHeight = 22
-        profileMenu:SetHeight(#cachedProfileList * itemHeight + 4)
-        
-        for i, itemData in ipairs(cachedProfileList) do
-            local profileName = itemData.value
-            local item = CreateFrame("Button", nil, profileMenu, "BackdropTemplate")
-            item:SetHeight(itemHeight)
-            item:SetPoint("TOPLEFT", 2, -2 - (i-1) * itemHeight)
-            item:SetPoint("TOPRIGHT", -2, -2 - (i-1) * itemHeight)
-            item:SetBackdrop({bgFile = "Interface\\Buttons\\WHITE8x8"})
-            item:SetBackdropColor(0,0,0,0)
-            local itemText = item:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-            GUI:SetFont(itemText, 11)
-            itemText:SetPoint("LEFT", 6, 0)
-            itemText:SetText(profileName)
-            
-            if profileName == db:GetCurrentProfile() then
-                itemText:SetTextColor(C.accent[1], C.accent[2], C.accent[3], 1)
-            else
-                itemText:SetTextColor(C.text[1], C.text[2], C.text[3], 1)
-            end
-            
-            item:SetScript("OnEnter", function(self) self:SetBackdropColor(C.accent[1], C.accent[2], C.accent[3], 0.3) end)
-            item:SetScript("OnLeave", function(self) self:SetBackdropColor(0,0,0,0) end)
-            item:SetScript("OnClick", function()
-                db:SetProfile(profileName)
-                RefreshProfileDisplay()
-                profileMenu:Hide()
-            end)
-        end
-    end
-
-    profileDropdown:SetScript("OnClick", function()
-        if profileMenu:IsShown() then profileMenu:Hide() else BuildProfileMenu(); profileMenu:Show() end
     end)
-
+    profileDropdown:SetPoint("TOPLEFT", PAD, y)
+    profileDropdown:SetPoint("RIGHT", content, "RIGHT", -PAD, 0)
+    
+    -- Layout adjustments for standard dropdown
+    profileDropdown.label:ClearAllPoints()
+    profileDropdown.label:SetPoint("LEFT", 0, 0)
+    profileDropdown.label:SetSize(200, FORM_ROW)
+    profileDropdown.dropdown:ClearAllPoints()
+    profileDropdown.dropdown:SetPoint("LEFT", 200, 0)
+    profileDropdown.dropdown:SetPoint("RIGHT", 0, 0)
+    
+    -- Hook for RefreshProfileDisplay to update the dropdown text externally
+    profileDropdown.RefreshText = function(self, val)
+         self:SetValue(val)
+    end
+    
     y = y - FORM_ROW - 10
 
     -- =====================================================
@@ -233,44 +172,33 @@ local function BuildAceDBProfilesTab(parent)
     local newHeader = GUI:CreateSectionHeader(content, "Create New Profile")
     newHeader:SetPoint("TOPLEFT", PAD, y)
     y = y - newHeader.gap
+    y = y - 10
 
-    local newProfileContainer = CreateFrame("Frame", nil, content)
-    newProfileContainer:SetHeight(FORM_ROW)
-    newProfileContainer:SetPoint("TOPLEFT", PAD, y)
-    newProfileContainer:SetPoint("RIGHT", content, "RIGHT", -PAD, 0)
-
-    local newProfileLabel = newProfileContainer:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    newProfileLabel:SetPoint("LEFT", 0, 0)
-    newProfileLabel:SetText("Profile Name")
-    GUI:SetFont(newProfileLabel, 12)
-    newProfileLabel:SetTextColor(C.text[1], C.text[2], C.text[3], 1)
-
-    local newProfileBoxBg = CreateFrame("Frame", nil, newProfileContainer, "BackdropTemplate")
-    newProfileBoxBg:SetPoint("LEFT", newProfileContainer, "LEFT", 200, 0)
-    newProfileBoxBg:SetSize(200, 24)
-    GUI:CreateBackdrop(newProfileBoxBg, {0.08, 0.08, 0.08, 1}, {0.35, 0.35, 0.35, 1})
-
-    local newProfileBox = CreateFrame("EditBox", nil, newProfileBoxBg)
-    newProfileBox:SetPoint("LEFT", 8, 0)
-    newProfileBox:SetPoint("RIGHT", -8, 0)
-    newProfileBox:SetHeight(22)
-    newProfileBox:SetAutoFocus(false)
-    GUI:SetFont(newProfileBox, 11)
-    newProfileBox:SetTextColor(C.text[1], C.text[2], C.text[3], 1)
-    newProfileBox:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
-    newProfileBox:SetScript("OnEnterPressed", function(self) self:ClearFocus() end)
-
-    local createBtn = GUI:CreateButton(newProfileContainer, "Create", 80, 24, function()
-        local newName = newProfileBox:GetText()
+    local newProfileWrapper = { name = "" }
+    local newProfileInput = GUI:CreateInput(content, "Profile Name", "name", newProfileWrapper)
+    newProfileInput:SetPoint("TOPLEFT", PAD, y)
+    -- We need space for the button, so don't stretch fully right immediately or handle button positioning
+    newProfileInput:SetWidth(450) -- Adjusted width to fit button
+    
+    -- Manual layout tweaks for Input to match the style
+    newProfileInput.label:ClearAllPoints()
+    newProfileInput.label:SetPoint("LEFT", 0, 0)
+    newProfileInput.label:SetSize(200, 24)
+    newProfileInput.editBox:ClearAllPoints()
+    newProfileInput.editBox:SetPoint("LEFT", 200, 0)
+    newProfileInput.editBox:SetWidth(200)
+    
+    -- Button next to input
+    local createBtn = GUI:CreateButton(content, "Create", 80, 24, function()
+        local newName = newProfileWrapper.name
         if newName and newName ~= "" and db then
-            db:SetProfile(newName)
-            newProfileBox:SetText("")
-            RefreshProfileDisplay()
-            -- Force rebuild of menu next time it opens
-            for _, child in ipairs({profileMenu:GetChildren()}) do child:Hide(); child:SetParent(nil) end
+             db:SetProfile(newName)
+             newProfileWrapper.name = "" -- clear
+             newProfileInput.editBox:SetText("")
+             RefreshProfileDisplay()
         end
     end)
-    createBtn:SetPoint("LEFT", newProfileBoxBg, "RIGHT", 10, 0)
+    createBtn:SetPoint("LEFT", newProfileInput.editBox, "RIGHT", 10, 0)
     
     y = y - FORM_ROW - 10
 
@@ -280,6 +208,7 @@ local function BuildAceDBProfilesTab(parent)
     local utilHeader = GUI:CreateSectionHeader(content, "Copy & Delete")
     utilHeader:SetPoint("TOPLEFT", PAD, y)
     y = y - utilHeader.gap
+    y = y - 10
 
     local copyWrapper = {selected = ""}
     local copyDropdown
@@ -345,6 +274,7 @@ local function BuildAceDBProfilesTab(parent)
         local specHeader = GUI:CreateSectionHeader(content, "Spec Auto-Switch")
         specHeader:SetPoint("TOPLEFT", PAD, y)
         y = y - specHeader.gap
+        y = y - 10
 
         local enableSwitch = GUI:CreateCheckbox(content, "Enable Spec Profiles", "enabled", {enabled = db:IsDualSpecEnabled()}, function(val)
             db:SetDualSpecEnabled(val)
@@ -395,12 +325,14 @@ local function BuildImportExportTab(parent)
     local y = -10
     local PAD = 10
     
-    GUI:CreateLabel(content, "Export or import your complete GUI profile.", 11, C.textMuted):SetPoint("TOPLEFT", PAD, y)
-    y = y - 25
+    local infoBox = GUI:CreateInfoBox(content, "|cffFFCC00Info:|r Export or import your complete GUI profile.\n\n|cffFFCC00Note:|r Press CTRL+C to Copy the string.")
+    infoBox:SetPoint("TOPLEFT", PAD, y)
+    y = y - infoBox:GetHeight() - 10
     
     local exportHeader = GUI:CreateSectionHeader(content, "Export Current Profile")
     exportHeader:SetPoint("TOPLEFT", PAD, y)
     y = y - exportHeader.gap
+    y = y - 10
     
     local exportBox = GUI:CreateScrollableTextBox(content, 120, Addon:ExportProfileToString(), true)
     exportBox:SetPoint("TOPLEFT", PAD, y)
@@ -412,12 +344,13 @@ local function BuildImportExportTab(parent)
         exportBox.editBox:HighlightText()
     end)
     selectBtn:SetPoint("TOPLEFT", PAD, y)
-    GUI:CreateLabel(content, "then press Ctrl+C to copy", 10, C.textMuted):SetPoint("LEFT", selectBtn, "RIGHT", 10, 0)
+
     y = y - 50
     
     local importHeader = GUI:CreateSectionHeader(content, "Import Profile String")
     importHeader:SetPoint("TOPLEFT", PAD, y)
     y = y - importHeader.gap
+    y = y - 10
     
     local importBox = GUI:CreateScrollableTextBox(content, 120, "")
     importBox:SetPoint("TOPLEFT", PAD, y)
@@ -461,9 +394,9 @@ local function BuildGravityStringsTab(parent)
     local PAD = 10
     local y = -10
     
-    local topLabel = GUI:CreateLabel(content, "Pre-configured strings for supported addons.", 11, C.textMuted)
-    topLabel:SetPoint("TOPLEFT", PAD, y)
-    y = y - 30
+    local infoBox = GUI:CreateInfoBox(content, "|cffFFCC00Info:|r Pre-configured strings for supported addons.\n\n|cffFFCC00Note:|r Press CTRL+C to Copy the string.")
+    infoBox:SetPoint("TOPLEFT", PAD, y)
+    y = y - infoBox:GetHeight() - 10
 
     -- 1. Source Profile Dropdown
     local availableProfiles = GUI.Installer and GUI.Installer:GetSourceProfiles() or {}
@@ -619,6 +552,7 @@ local function BuildInstallerTab(parent)
     local statusHeader = GUI:CreateSectionHeader(content, "System Status")
     statusHeader:SetPoint("TOPLEFT", PAD, y)
     y = y - statusHeader.gap
+    y = y - 10
 
     local statusFrame = CreateFrame("Frame", nil, content)
     statusFrame:SetSize(1, 1) 
@@ -832,18 +766,16 @@ local function BuildInstallerTab(parent)
     local setupHeader = GUI:CreateSectionHeader(content, "Setup & Synchronization")
     setupHeader:SetPoint("TOPLEFT", PAD, y)
     y = y - setupHeader.gap
+    y = y - 10
 
     -- ACTION 1: FRESH INSTALL
     local freshLabel = GUI:CreateLabel(content, "Fresh Installation (Express Installation)", 12, C.accent)
     freshLabel:SetPoint("TOPLEFT", PAD, y)
     y = y - 20
     
-    local freshDesc = GUI:CreateLabel(content, "Import 'GravityUI' selected Gravity Profile settings and overwrite configuration for:", 11, C.textMuted)
+    local freshDesc = GUI:CreateLabel(content, "Import 'GravityUI' Profiles for the selected Addons above, with the GravityUI Profile Config.", 11, C.textMuted)
     freshDesc:SetPoint("TOPLEFT", PAD, y)
     y = y - 15
-    local addonListObj = GUI:CreateLabel(content, "The selected Addons from above (checked / unchecked)", 11, {1,1,1})
-    addonListObj:SetPoint("TOPLEFT", PAD, y)
-    y = y - 35
 
     -- Source Selection Dropdown
     local sourceWrapper = { selected = selectedSource }

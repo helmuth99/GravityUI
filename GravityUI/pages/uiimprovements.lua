@@ -17,9 +17,9 @@ local function CreatePropertyRow(parent, labelText, widgetType, arg1, arg2, arg3
     
     local label = row:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     if ns.GUI.SetFont then
-        ns.GUI:SetFont(label, 12, "OUTLINE")
+        ns.GUI:SetFont(label, 12, "")
     else
-        label:SetFont(STANDARD_TEXT_FONT, 12, "OUTLINE")
+        label:SetFont(STANDARD_TEXT_FONT, 12, "")
     end
     label:SetJustifyH("LEFT")
     label:SetSize(LABEL_WIDTH, ROW_HEIGHT)
@@ -72,12 +72,6 @@ local function CreateSubHeader(parent, text)
      label:SetText(text)
      label:SetTextColor(unpack(C.accent))
      
-     local line = parent:CreateTexture(nil, "ARTWORK")
-     line:SetHeight(2)
-     line:SetPoint("TOPLEFT", label, "BOTTOMLEFT", 0, -2)
-     line:SetPoint("RIGHT", parent, "RIGHT", -10, 0)
-     line:SetColorTexture(unpack(C.accent))
-     
      parent.rowCount = row + 1.0
 end
 
@@ -96,7 +90,7 @@ local function BuildAutomation(parent)
     local header = GUI:CreateSectionHeader(content, "Automation")
     header:SetPoint("TOPLEFT", 10, -10)
     header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
-    content.rowCount = 2.0
+    content.rowCount = 1.3
 
     AddRow(content, "Auto Insert M+ Keys", "checkbox", "autoInsertKey", dbUI, nil)
     AddRow(content, "Auto Combat Log in M+", "checkbox", "autoCombatLog", dbUI, nil)
@@ -118,46 +112,34 @@ local function BuildAutomation(parent)
     AddRow(content, "Shift Pauses Accept & Turn-In", "checkbox", "questHoldShift", dbUI, nil)
     
     AddRow(content, "Faster Auto Loot", "checkbox", "fastAutoLoot", dbUI, function(enabled) if enabled then SetCVar("autoLootDefault", "1") end end)
-    local lootDesc = content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    lootDesc:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT+5)))
-    lootDesc:SetWidth(GUI.CONTENT_WIDTH - 40)
-    lootDesc:SetJustifyH("LEFT")
-    lootDesc:SetText("Note: Faster Auto Loot instantly loots all items and enables WoW's Auto Loot setting.")
-    lootDesc:SetTextColor(unpack(C.textMuted))
-    content.rowCount = content.rowCount + 0.6
+    content.rowCount = content.rowCount + 0.2
+    local lootInfo = GUI:CreateInfoBox(content, "Faster Auto Loot instantly loots all items and enables WoW's Auto Loot setting.")
+    lootInfo:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
+    content.rowCount = content.rowCount + (lootInfo:GetHeight() / (ROW_HEIGHT+5)) + 0.2
     
     AddRow(content, "Enable Delete Fix", "checkbox", "deleteFix", dbUI, function(enabled) if ns.ToggleDeleteFix then ns.ToggleDeleteFix(enabled) end end)
-    local delDesc = content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    delDesc:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT+5)))
-    delDesc:SetWidth(GUI.CONTENT_WIDTH - 40)
-    delDesc:SetJustifyH("LEFT")
-    delDesc:SetText("Note: Allows destroying Good/Superior items without typing DELETE.")
-    delDesc:SetTextColor(unpack(C.textMuted))
-    content.rowCount = content.rowCount + 0.6
+    content.rowCount = content.rowCount + 0.2
+    local delInfo = GUI:CreateInfoBox(content, "Allows destroying Good/Superior items without typing DELETE.")
+    delInfo:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
+    content.rowCount = content.rowCount + (delInfo:GetHeight() / (ROW_HEIGHT+5)) + 0.2
     
     AddRow(content, "Faster Movie Skip", "checkbox", "fasterMovieSkip", dbUI, nil)
-    local movieDesc = content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    movieDesc:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT+5)))
-    movieDesc:SetWidth(GUI.CONTENT_WIDTH - 40)
-    movieDesc:SetJustifyH("LEFT")
-    movieDesc:SetText("Note: Use ESC, SPACE, or ENTER to skip cancel Cinematic/Movie dialogs instantly.")
-    movieDesc:SetTextColor(unpack(C.textMuted))
-    content.rowCount = content.rowCount + 0.6
+    content.rowCount = content.rowCount + 0.2
+    local movieInfo = GUI:CreateInfoBox(content, "Use ESC, SPACE, or ENTER to skip cancel Cinematic/Movie dialogs instantly.")
+    movieInfo:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
+    content.rowCount = content.rowCount + (movieInfo:GetHeight() / (ROW_HEIGHT+5)) + 0.2
     
     AddRow(content, "Auto-Select Single Gossip Option", "checkbox", "autoSelectGossip", dbUI, nil)
     
     -- Quick Salvage moved here? Original logic was inside Automation section. Yes.
-    CreateSubHeader(content, "Quick Salvage")
+    content.rowCount = content.rowCount + 0.5
     AddRow(content, "Enable Quick Salvage", "checkbox", "enabled", dbUI.quickSalvage, nil)
     local modOptions = {{value="ALT", text="Alt"}, {value="ALTSHIFT", text="Alt + Shift"}, {value="ALTCTRL", text="Alt + Ctrl"}}
     AddRow(content, "Quick Salvage Modifier", "dropdown", modOptions, "modifier", dbUI.quickSalvage, nil)
-    local qsDesc = content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    qsDesc:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT+5)))
-    qsDesc:SetWidth(GUI.CONTENT_WIDTH - 40)
-    qsDesc:SetJustifyH("LEFT")
-    qsDesc:SetText("Note: Hold the modifier and hover over items in your bags to Mill, Prospect, or Disenchant instantly.")
-    qsDesc:SetTextColor(unpack(C.textMuted))
-    content.rowCount = content.rowCount + 0.8
+    content.rowCount = content.rowCount + 0.2
+    local qsInfo = GUI:CreateInfoBox(content, "Hold the modifier and hover over items in your bags to Mill, Prospect, or Disenchant instantly.")
+    qsInfo:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
+    content.rowCount = content.rowCount + (qsInfo:GetHeight() / (ROW_HEIGHT+5)) + 0.2
 
     content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
 end
@@ -171,6 +153,11 @@ local function BuildAutohide(parent)
     content.rowCount = 0
     
     local function RefreshAutohide() if ns.ApplyAutohideSettings then ns.ApplyAutohideSettings() end end
+    
+    local header = GUI:CreateSectionHeader(content, "Autohide")
+    header:SetPoint("TOPLEFT", 10, -10)
+    header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
+    content.rowCount = 1.3
     
     -- Ensure subtable
     if not dbUI.hideObjectiveTrackerInstanceTypes then
@@ -226,7 +213,7 @@ local function BuildCombat(parent)
     local header = GUI:CreateSectionHeader(content, "Combat")
     header:SetPoint("TOPLEFT", 10, -10)
     header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
-    content.rowCount = 2.0
+    content.rowCount = 1.3
     
     AddRow(content, "Show Damage Numbers", "checkbox", "showDamageNumbers", dbUI, function(enabled) SetCVar("floatingCombatTextCombatDamage", enabled and "1" or "0") end)
     AddRow(content, "Show Healing Numbers", "checkbox", "showHealingNumbers", dbUI, function(enabled) SetCVar("floatingCombatTextCombatHealing", enabled and "1" or "0") end)
@@ -250,15 +237,11 @@ local function BuildBuffs(parent)
     local header = GUI:CreateSectionHeader(content, "World of Warcraft Buffs & Debuffs Settings")
     header:SetPoint("TOPLEFT", 10, -10)
     header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
-    content.rowCount = 2.0
+    content.rowCount = 1.3
     
-    local buffDesc = content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    buffDesc:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * ROW_HEIGHT))
-    buffDesc:SetWidth(GUI.CONTENT_WIDTH - 40)
-    buffDesc:SetJustifyH("LEFT")
-    buffDesc:SetText("Modifies borders and font size of Blizzard default Buff and Debuff frames.")
-    buffDesc:SetTextColor(unpack(C.textMuted))
-    content.rowCount = content.rowCount + 1.2
+    local buffInfo = GUI:CreateInfoBox(content, "Modifies borders and font size of Blizzard default Buff and Debuff frames.")
+    buffInfo:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
+    content.rowCount = content.rowCount + (buffInfo:GetHeight() / (ROW_HEIGHT+5)) + 0.2
 
     if not dbUI.buffBorders then dbUI.buffBorders = {} end
     local dbBuffs = dbUI.buffBorders
@@ -289,16 +272,18 @@ local function BuildChat(parent)
     local function RefreshChat() if ns.Chat and ns.Chat.Refresh then ns.Chat.Refresh() end end
     local dbChat = dbUI.chat or {}
     
+    local header = GUI:CreateSectionHeader(content, "Chat")
+    header:SetPoint("TOPLEFT", 10, -10)
+    header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
+    content.rowCount = 1.3
+    
+    local chatInfo = GUI:CreateInfoBox(content, "Disabling GUI Chatbox will leave the chat at WoW defaults.\n\n|cffFFCC00Note:|r Requires /reload to fully disable this Module.")
+    chatInfo:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
+    content.rowCount = content.rowCount + (chatInfo:GetHeight() / (ROW_HEIGHT+5)) + 0.2
+    
     AddRow(content, "Enable GUI Chatbox", "checkbox", "enabled", dbChat, function(v)
         RefreshChat()
     end)
-    local masterNote = content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    masterNote:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT+5)))
-    masterNote:SetWidth(GUI.CONTENT_WIDTH - 40)
-    masterNote:SetJustifyH("LEFT")
-    masterNote:SetText("Disabling this will leave Chat at WoW defaults. |cffff0000Requires /rl to fully disable.|r")
-    masterNote:SetTextColor(unpack(C.textMuted))
-    content.rowCount = content.rowCount + 0.8
     content.rowCount = content.rowCount + 0.5
 
     -- defaults
@@ -373,7 +358,12 @@ local function BuildTooltip(parent)
     local dbTT = dbUI.tooltip or {}
     if dbTT.enabled == nil then dbTT.enabled = true end
     if not dbTT.visibility then dbTT.visibility = {npcs="SHOW", abilities="SHOW", items="SHOW", frames="SHOW", cdm="SHOW", customTrackers="SHOW"} end
-
+    
+    local header = GUI:CreateSectionHeader(content, "Tooltip")
+    header:SetPoint("TOPLEFT", 10, -10)
+    header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
+    content.rowCount = 1.3
+    
     CreateSubHeader(content, "General Tooltip Settings")
     AddRow(content, "Enable Tooltip Module", "checkbox", "enabled", dbTT, RefreshTooltip)
     AddRow(content, "Anchor to Cursor", "checkbox", "anchorToCursor", dbTT, RefreshTooltip)
@@ -425,6 +415,11 @@ local function BuildCharacter(parent)
     end
     local dbChar = dbUI.character or {}
     if dbChar.enabled == nil then dbChar.enabled = true end
+
+    local header = GUI:CreateSectionHeader(content, "Character Panel")
+    header:SetPoint("TOPLEFT", 10, -10)
+    header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
+    content.rowCount = 1.3
 
     CreateSubHeader(content, "Appearance")
     AddRow(content, "Enable Character Panel Styling", "checkbox", "enabled", dbChar, RefreshChar)
@@ -483,15 +478,17 @@ local function BuildDragonriding(parent)
     -- Initializer defaults (simplified for brevity, main logic in skyriding.lua)
     if dbSky.enabled == nil then dbSky.enabled = true end
 
+    local header = GUI:CreateSectionHeader(content, "Dragonriding")
+    header:SetPoint("TOPLEFT", 10, -10)
+    header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
+    content.rowCount = 1.3
+    
     CreateSubHeader(content, "Enable")
+    local infoBox = GUI:CreateInfoBox(content, "Displays vigor charges, recharge progress, and speed while skyriding.")
+    infoBox:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
+    content.rowCount = content.rowCount + (infoBox:GetHeight() / (ROW_HEIGHT+5)) + 0.2
+    
     AddRow(content, "Enable Vigor Bar", "checkbox", "enabled", dbSky, RefreshSkyriding)
-    local desc = content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    desc:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * ROW_HEIGHT))
-    desc:SetWidth(GUI.CONTENT_WIDTH - 40)
-    desc:SetJustifyH("LEFT")
-    desc:SetText("Displays vigor charges, recharge progress, and speed while skyriding.")
-    desc:SetTextColor(unpack(C.textMuted))
-    content.rowCount = content.rowCount + 0.8
     content.rowCount = content.rowCount + 0.5
 
     CreateSubHeader(content, "Visibility")
@@ -557,7 +554,7 @@ local function BuildCombatTimer(parent)
     local header = GUI:CreateSectionHeader(content, "Combat Timer")
     header:SetPoint("TOPLEFT", 10, -10)
     header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
-    content.rowCount = 2.0
+    content.rowCount = 1.3
 
     local function RefreshCT() if _G.GravityUI_RefreshCombatTimer then _G.GravityUI_RefreshCombatTimer() end end
     local dbCT = dbUI.combatTimer
@@ -607,17 +604,13 @@ local function BuildTeleport(parent)
     local header = GUI:CreateSectionHeader(content, "M+ Teleport")
     header:SetPoint("TOPLEFT", 10, -10)
     header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
-    content.rowCount = 2.0
+    content.rowCount = 1.3
 
-    AddRow(content, "Enable M+ Teleports", "checkbox", "mplusTeleportEnabled", dbUI, nil)
+    local tpInfo = GUI:CreateInfoBox(content, "|cffFFCC00Note:|r Allows you to click dungeon icons in the Mythic+ Challenges frame to cast teleport spells.")
+    tpInfo:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
+    content.rowCount = content.rowCount + (tpInfo:GetHeight() / (ROW_HEIGHT+5)) + 0.2
     
-    local tpDesc = content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    tpDesc:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT+5)))
-    tpDesc:SetWidth(GUI.CONTENT_WIDTH - 40)
-    tpDesc:SetJustifyH("LEFT")
-    tpDesc:SetText("Note: Allows you to click dungeon icons in the Mythic+ Challenges frame to cast teleport spells.")
-    tpDesc:SetTextColor(unpack(C.textMuted))
-    content.rowCount = content.rowCount + 1.2
+    AddRow(content, "Enable M+ Teleports", "checkbox", "mplusTeleportEnabled", dbUI, nil)
     
     content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
 end
@@ -630,13 +623,17 @@ local function BuildWorldMarks(parent)
     local dbUI = db.uiimprovements
     content.rowCount = 0
 
-    local header = GUI:CreateSectionHeader(content, "World Marks Bar")
+    local header = GUI:CreateSectionHeader(content, "World Marks")
     header:SetPoint("TOPLEFT", 10, -10)
     header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
-    content.rowCount = 2.0
+    content.rowCount = 1.3
     
     local function RefreshMarks() if _G.GravityUI_RefreshWorldMarks then _G.GravityUI_RefreshWorldMarks() end end
     local dbMarks = dbUI.marks
+    
+    local infoBox = GUI:CreateInfoBox(content, "|cffFFCC00Note:|r Left-Click to set Raid Target. Shift-Click to set World Marker.\nPulltimer can be changed on the bar with Right-Click.")
+    infoBox:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
+    content.rowCount = content.rowCount + (infoBox:GetHeight() / (ROW_HEIGHT+5)) + 0.2
     
     AddRow(content, "Enable Marks Bar", "checkbox", "enabled", dbMarks, RefreshMarks)
     AddRow(content, "Enable Ready Check & Pull Bar", "checkbox", "showTimerBar", dbMarks, RefreshMarks)
@@ -649,12 +646,7 @@ local function BuildWorldMarks(parent)
     AddRow(content, "Use Theme Color for Border", "checkbox", "useThemeColorBorder", dbMarks, RefreshMarks)
     AddRow(content, "Border Color", "color", "borderColor", dbMarks, RefreshMarks)
     
-    local marksDesc = content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    marksDesc:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT+5)))
-    marksDesc:SetWidth(GUI.CONTENT_WIDTH - 40)
-    marksDesc:SetJustifyH("LEFT")
-    marksDesc:SetText("Note: Left-Click to set Raid Target. Shift-Click to set World Marker.")
-    marksDesc:SetTextColor(unpack(C.textMuted))
+
     content.rowCount = content.rowCount + 1.2
     
     content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))

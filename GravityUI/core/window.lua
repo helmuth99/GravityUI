@@ -12,6 +12,8 @@ GUI.currentPageIndex = 1
 ---------------------------------------------------------------------------
 -- CREATE MAIN WINDOW
 ---------------------------------------------------------------------------
+-- Forward Declarations
+local CreateTopBar, CreateButtonBar, CreateSidebar, CreateContentArea, UpdateButtonSelection
 local function CreateMainWindow()
     if GUI.MainFrame then return end
     
@@ -22,24 +24,54 @@ local function CreateMainWindow()
     frame:SetFrameLevel(100)
     frame:EnableMouse(true)
     frame:SetMovable(true)
-    frame:SetResizable(true) -- Enable resizing
-    frame:SetResizeBounds(900, 600, 1920, 1200) -- Min/Max sizes
     frame:RegisterForDrag("LeftButton")
     frame:SetClampedToScreen(true)
     frame:Hide()
     
-    -- Backdrop
-    frame:SetBackdrop({
-        bgFile = "Interface\\Buttons\\WHITE8x8",
-        edgeFile = "Interface\\Buttons\\WHITE8x8",
-        edgeSize = 2,
-    })
-    frame:SetBackdropColor(C.bg[1], C.bg[2], C.bg[3], 0.98)
-    frame:SetBackdropBorderColor(C.borderAccent[1], C.borderAccent[2], C.borderAccent[3], 1)
+    -- Glassmorphic Backdrop
+    GUI:CreateGlassBackdrop(frame)
     
     -- Make draggable
     frame:SetScript("OnDragStart", function(self) self:StartMoving() end)
     frame:SetScript("OnDragStop", function(self) self:StopMovingOrSizing() end)
+    
+    -- REFRESH COLORS METHOD (Recursive)
+    function frame:RefreshColors()
+        -- 1. Refresh global components
+        if self.topBar and self.topBar.RefreshColors then self.topBar:RefreshColors() end
+        
+        -- 2. Refresh Sidebar Buttons
+        if self.sidebarButtons then
+            for _, btn in ipairs(self.sidebarButtons) do
+                if btn.RefreshColors then btn:RefreshColors() end
+            end
+            -- Force update selection state to apply new colors
+            UpdateButtonSelection() 
+        end
+        
+        -- 3. Refresh Active Content
+        local content = self.contentArea
+        if content then
+            local p = content:GetParent() -- ScrollFrame
+            if p and p.GetScrollChild then
+                local child = p:GetScrollChild()
+                if child and child.RefreshColors then child:RefreshColors() end
+                
+                -- Traverse standard widgets in content
+                local function Recurse(f)
+                    if f.RefreshColors then f:RefreshColors() end
+                    local children = {f:GetChildren()}
+                    for _, child in ipairs(children) do
+                        Recurse(child)
+                    end
+                end
+                Recurse(child)
+            end
+        end
+        
+        -- 4. Refresh Resize Grip
+
+    end
     
     -- ESC to close
     -- Removed from UISpecialFrames to prevent conflicts with other addons triggering global close events
@@ -64,42 +96,7 @@ local function CreateMainWindow()
     CreateContentArea(frame)
     
     -- Resize Grip
-    local grip = CreateFrame("Button", nil, frame)
-    grip:SetSize(20, 20) -- Slightly larger for better visibility
-    grip:SetPoint("BOTTOMRIGHT", -2, 2)
-    
-    -- Use standard WoW resize texture (guaranteed to exist)
-    grip:SetNormalTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Up")
-    grip:SetHighlightTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Highlight")
-    grip:SetPushedTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Down")
-    
-    -- Color it to match theme (muted by default, accent on hover)
-    local gripTex = grip:GetNormalTexture()
-    if gripTex then
-        gripTex:SetVertexColor(C.textMuted[1], C.textMuted[2], C.textMuted[3], 0.7)
-    end
-    
-    grip:SetScript("OnMouseDown", function() 
-        frame:StartSizing("BOTTOMRIGHT")
-        frame.isResizing = true 
-    end)
-    
-    grip:SetScript("OnMouseUp", function() 
-        frame:StopMovingOrSizing()
-        frame.isResizing = false
-    end)
-    
-    grip:SetScript("OnEnter", function(self) 
-        if self:GetNormalTexture() then
-            self:GetNormalTexture():SetVertexColor(C.accent[1], C.accent[2], C.accent[3], 1)
-        end
-    end)
-    
-    grip:SetScript("OnLeave", function(self)
-        if self:GetNormalTexture() then
-            self:GetNormalTexture():SetVertexColor(C.textMuted[1], C.textMuted[2], C.textMuted[3], 0.7)
-        end
-    end)
+
 end
 
 ---------------------------------------------------------------------------
@@ -111,10 +108,17 @@ function CreateTopBar(parent)
     topBar:SetPoint("TOPLEFT", 0, 0)
     topBar:SetPoint("TOPRIGHT", 0, 0)
     
-    topBar:SetBackdrop({
-        bgFile = "Interface\\Buttons\\WHITE8x8",
-    })
-    topBar:SetBackdropColor(C.bgLight[1], C.bgLight[2], C.bgLight[3], 1)
+    -- Glass Header (Darker)
+    topBar:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8" })
+    topBar:SetBackdropColor(C.bgGlass[1], C.bgGlass[2], C.bgGlass[3], 0.5)
+    
+    -- Separator Line
+    local separator = topBar:CreateTexture(nil, "ARTWORK")
+    separator:SetHeight(1)
+    separator:SetPoint("BOTTOMLEFT", 0, 0)
+    separator:SetPoint("BOTTOMRIGHT", 0, 0)
+    separator:SetColorTexture(1, 1, 1, 0.1) -- Subtle divider
+
     
     -- Logo
     local logo = topBar:CreateTexture(nil, "OVERLAY")
@@ -172,7 +176,13 @@ function CreateTopBar(parent)
     searchContainer:SetSize(220, 28)
     searchContainer:SetPoint("RIGHT", closeBtn, "LEFT", -15, 0)
     
-    GUI:CreateBackdrop(searchContainer, C.bg, C.border)
+    searchContainer:SetBackdrop({
+        bgFile = "Interface\\Buttons\\WHITE8x8",
+        edgeFile = "Interface\\Buttons\\WHITE8x8",
+        edgeSize = 1,
+    })
+    searchContainer:SetBackdropColor(0.15, 0.15, 0.15, 1) -- Match close button
+    searchContainer:SetBackdropBorderColor(C.border[1], C.border[2], C.border[3], 1)
     
     local searchIcon = searchContainer:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     GUI:SetFont(searchIcon, 12, "", C.textMuted) -- Same color as placeholder, no outline
@@ -240,7 +250,7 @@ end
 ---------------------------------------------------------------------------
 -- SIDEBAR (Navigation Tabs)
 ---------------------------------------------------------------------------
-function CreateSidebar(parent)
+CreateSidebar = function(parent)
     local sidebar = CreateFrame("Frame", nil, parent, "BackdropTemplate")
     sidebar:SetWidth(180)
     sidebar:SetPoint("TOPLEFT", 0, -60)
@@ -258,7 +268,7 @@ end
 ---------------------------------------------------------------------------
 -- CONTENT AREA
 ---------------------------------------------------------------------------
-function CreateContentArea(parent)
+CreateContentArea = function(parent)
     local content = CreateFrame("Frame", nil, parent)
     content:SetPoint("TOPLEFT", 180, -60)
     content:SetPoint("BOTTOMRIGHT", 0, 50) -- Attach to bottom button bar
@@ -269,7 +279,7 @@ end
 ---------------------------------------------------------------------------
 -- BUTTON BAR (Cooldown Settings, Edit Mode)
 ---------------------------------------------------------------------------
-function CreateButtonBar(parent)
+CreateButtonBar = function(parent)
     local buttonBar = CreateFrame("Frame", nil, parent, "BackdropTemplate")
     buttonBar:SetHeight(50)
     buttonBar:SetPoint("BOTTOMLEFT", 0, 0)
@@ -281,7 +291,7 @@ function CreateButtonBar(parent)
     buttonBar:SetBackdropColor(C.bgLight[1], C.bgLight[2], C.bgLight[3], 0.8)
     
     -- Installers Button
-    local instBtn = GUI:CreateButton(buttonBar, "Installers", 120, 32, function()
+    local instBtn = GUI:CreateButton(buttonBar, "GravityUI Installer", 155, 32, function()
         -- Find profiles page index
         local idx
         for i, id in ipairs(GUI.pageOrder) do 
@@ -297,12 +307,17 @@ function CreateButtonBar(parent)
         end
     end)
     instBtn:SetPoint("LEFT", 20, 0)
-    -- Matching User Image: Dark Teal Background, Bright Cyan Border
-    instBtn:SetBackdropColor(0, 0.3, 0.4, 0.9)
-    instBtn:SetBackdropBorderColor(0, 0.75, 1, 1)
+    instBtn:SetBackdropColor(C.accent[1], C.accent[2], C.accent[3], 0.5)
+    instBtn:SetBackdropBorderColor(C.accent[1], C.accent[2], C.accent[3], 1)
+    
+    -- Add to refresh list
+    instBtn.RefreshColors = function(self)
+        self:SetBackdropColor(C.accent[1], C.accent[2], C.accent[3], 0.5)
+        self:SetBackdropBorderColor(C.accent[1], C.accent[2], C.accent[3], 1)
+    end
     
     -- Cooldown Settings Button
-    local cdmBtn = GUI:CreateButton(buttonBar, "Cooldown Settings", 160, 32, function()
+    local cdmBtn = GUI:CreateButton(buttonBar, "Cooldown Settings", 155, 32, function()
         if CooldownViewerSettings then
             CooldownViewerSettings:SetShown(not CooldownViewerSettings:IsShown())
         else
@@ -312,7 +327,7 @@ function CreateButtonBar(parent)
     cdmBtn:SetPoint("LEFT", instBtn, "RIGHT", 10, 0)
     
     -- Edit Mode Button
-    local editBtn = GUI:CreateButton(buttonBar, "Edit Mode", 120, 32, function()
+    local editBtn = GUI:CreateButton(buttonBar, "Edit Mode", 110, 32, function()
         if EditModeManagerFrame then
             if EditModeManagerFrame:IsShown() then
                 EditModeManagerFrame:Hide()
@@ -358,49 +373,33 @@ function CreateButtonBar(parent)
         return true
     end
 
-    -- Party / Raid Button
-    local prBtn = GUI:CreateButton(buttonBar, "Party / Raid", 120, 32, function()
+    -- Nameplates Button
+    local npBtn = GUI:CreateButton(buttonBar, "Nameplates", 95, 32, function()
         local opened = false
         
-        -- DandersFrames
-        if not opened and OpenAddonConfig("DandersFrames", "DANDERSFRAMES") then opened = true end
+        -- Plater
+        if not opened and OpenAddonConfig("Plater", "PLATER") then opened = true end
         
-        -- Grid2
-        if not opened and OpenAddonConfig("Grid2", "GRID2") then opened = true end
-        
-        -- Cell
-        if not opened and OpenAddonConfig("Cell", "CELL") then opened = true end
-
-        if not opened then
-            print("|cFF30D1FFGravityUI:|r No supported Party/Raid addon loaded (DandersFrames, Grid2, Cell).")
-        end
-    end)
-    prBtn:SetPoint("RIGHT", -20, 0)
-    -- Matching User Image: Dark Teal Background, Bright Cyan Border
-    prBtn:SetBackdropColor(0, 0.3, 0.4, 0.9) -- Dark Teal
-    prBtn:SetBackdropBorderColor(0, 0.75, 1, 1) -- Bright Cyan
-    
-    -- Unitframes Button
-    local ufBtn = GUI:CreateButton(buttonBar, "Unitframes", 120, 32, function()
-        local opened = false
-        
-        -- Unhalted UnitFrames
-        if not opened and OpenAddonConfig("UnhaltedUnitFrames", "UUF") then opened = true end
-        
-        -- MidnightSimpleUnitframes
-        if not opened and OpenAddonConfig("MidnightSimpleUnitframes", "MSUF") then opened = true end
+        -- Platynator
+        if not opened and OpenAddonConfig("Platynator", "PLATYNATOR") then opened = true end
          
         if not opened then
-             print("|cFF30D1FFGravityUI:|r No supported Unitframes addon loaded (Unhalted, Midnight).")
+             print("|cFF30D1FFGravityUI:|r No supported Nameplates addon loaded (Plater, Platynator).")
         end
     end)
-    ufBtn:SetPoint("RIGHT", prBtn, "LEFT", -10, 0)
-    -- Matching User Image: Dark Teal Background, Bright Cyan Border
-    ufBtn:SetBackdropColor(0, 0.3, 0.4, 0.9) -- Dark Teal
-    ufBtn:SetBackdropBorderColor(0, 0.75, 1, 1) -- Bright Cyan
+    npBtn:SetPoint("LEFT", editBtn, "RIGHT", 10, 0)
+    -- Matching User Image styling
+    npBtn:SetBackdropColor(C.accent[1], C.accent[2], C.accent[3], 0.5)
+    npBtn:SetBackdropBorderColor(C.accent[1], C.accent[2], C.accent[3], 1)
+    
+    -- Add to refresh list
+    npBtn.RefreshColors = function(self)
+        self:SetBackdropColor(C.accent[1], C.accent[2], C.accent[3], 0.5)
+        self:SetBackdropBorderColor(C.accent[1], C.accent[2], C.accent[3], 1)
+    end
     
     -- CDM Button (Better Cooldown Manager, Centered Cooldown Manager, Arc UI)
-    local cdmAddonBtn = GUI:CreateButton(buttonBar, "CDM", 120, 32, function()
+    local cdmAddonBtn = GUI:CreateButton(buttonBar, "CDM", 70, 32, function()
         local opened = false
         
         -- Better Cooldown Manager (BCDM)
@@ -416,10 +415,69 @@ function CreateButtonBar(parent)
              print("|cFF30D1FFGravityUI:|r No supported CDM addon loaded (BetterCooldownManager, CenteredCooldownManager, ArcUI).")
         end
     end)
-    cdmAddonBtn:SetPoint("RIGHT", ufBtn, "LEFT", -10, 0)
+    cdmAddonBtn:SetPoint("LEFT", npBtn, "RIGHT", 10, 0)
     -- Matching User Image styling
-    cdmAddonBtn:SetBackdropColor(0, 0.3, 0.4, 0.9)
-    cdmAddonBtn:SetBackdropBorderColor(0, 0.75, 1, 1)
+    cdmAddonBtn:SetBackdropColor(C.accent[1], C.accent[2], C.accent[3], 0.5)
+    cdmAddonBtn:SetBackdropBorderColor(C.accent[1], C.accent[2], C.accent[3], 1)
+    
+    -- Add to refresh list (Standard Button)
+    cdmAddonBtn.RefreshColors = function(self)
+        self:SetBackdropColor(C.accent[1], C.accent[2], C.accent[3], 0.5)
+        self:SetBackdropBorderColor(C.accent[1], C.accent[2], C.accent[3], 1)
+    end
+    
+    -- Unitframes Button
+    local ufBtn = GUI:CreateButton(buttonBar, "Unitframes", 95, 32, function()
+        local opened = false
+        
+        -- Unhalted UnitFrames
+        if not opened and OpenAddonConfig("UnhaltedUnitFrames", "UUF") then opened = true end
+        
+        -- MidnightSimpleUnitframes
+        if not opened and OpenAddonConfig("MidnightSimpleUnitframes", "MSUF") then opened = true end
+         
+        if not opened then
+             print("|cFF30D1FFGravityUI:|r No supported Unitframes addon loaded (Unhalted, Midnight).")
+        end
+    end)
+    ufBtn:SetPoint("LEFT", cdmAddonBtn, "RIGHT", 10, 0)
+    -- Matching User Image: Standardize to Theme Blue
+    ufBtn:SetBackdropColor(C.accent[1], C.accent[2], C.accent[3], 0.5) -- Semi-transparent Theme Blue
+    ufBtn:SetBackdropBorderColor(C.accent[1], C.accent[2], C.accent[3], 1) -- Theme Blue
+    
+    -- Add to refresh list
+    ufBtn.RefreshColors = function(self)
+        self:SetBackdropColor(C.accent[1], C.accent[2], C.accent[3], 0.5)
+        self:SetBackdropBorderColor(C.accent[1], C.accent[2], C.accent[3], 1)
+    end
+
+    -- Party / Raid Button
+    local prBtn = GUI:CreateButton(buttonBar, "Party / Raid", 95, 32, function()
+        local opened = false
+        
+        -- DandersFrames
+        if not opened and OpenAddonConfig("DandersFrames", "DANDERSFRAMES") then opened = true end
+        
+        -- Grid2
+        if not opened and OpenAddonConfig("Grid2", "GRID2") then opened = true end
+        
+        -- Cell
+        if not opened and OpenAddonConfig("Cell", "CELL") then opened = true end
+
+        if not opened then
+            print("|cFF30D1FFGravityUI:|r No supported Party/Raid addon loaded (DandersFrames, Grid2, Cell).")
+        end
+    end)
+    prBtn:SetPoint("LEFT", ufBtn, "RIGHT", 10, 0)
+    -- Matching User Image: Standardize to Theme Blue
+    prBtn:SetBackdropColor(C.accent[1], C.accent[2], C.accent[3], 0.5)
+    prBtn:SetBackdropBorderColor(C.accent[1], C.accent[2], C.accent[3], 1)
+    
+    -- Add to refresh list
+    prBtn.RefreshColors = function(self)
+        self:SetBackdropColor(C.accent[1], C.accent[2], C.accent[3], 0.5)
+        self:SetBackdropBorderColor(C.accent[1], C.accent[2], C.accent[3], 1)
+    end
     
     parent.buttonBar = buttonBar
 end
@@ -427,7 +485,7 @@ end
 ---------------------------------------------------------------------------
 -- CREATE SIDEBAR BUTTONS
 ---------------------------------------------------------------------------
-local function CreateSidebarButtons()
+CreateSidebarButtons = function()
     local frame = GUI.MainFrame
     if not frame then return end
     
@@ -443,22 +501,36 @@ local function CreateSidebarButtons()
             btn:SetSize(160, 36)
             btn:SetPoint("TOPLEFT", 10, -yOffset)
             
-            btn:SetBackdrop({
-                bgFile = "Interface\\Buttons\\WHITE8x8",
-                edgeFile = "Interface\\Buttons\\WHITE8x8",
-                edgeSize = 1,
-            })
+            -- Tech Nav Styling (Transparent default)
+            btn:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8" })
             btn:SetBackdropColor(0, 0, 0, 0)
-            btn:SetBackdropBorderColor(0, 0, 0, 0)
+            
+            -- Vertical Indicator (Hidden by default)
+            local indicator = btn:CreateTexture(nil, "OVERLAY")
+            indicator:SetWidth(3)
+            indicator:SetPoint("TOPLEFT", 0, 0)
+            indicator:SetPoint("BOTTOMLEFT", 0, 0)
+            indicator:SetColorTexture(C.accent[1], C.accent[2], C.accent[3], 1)
+            indicator:Hide()
+            btn.indicator = indicator
             
             local btnText = btn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-            GUI:SetFont(btnText, 13, "OUTLINE")
-            btnText:SetTextColor(C.textBright[1], C.textBright[2], C.textBright[3], 1)
+            GUI:SetFont(btnText, 13, "") -- Removed Outline
+            btnText:SetTextColor(1, 1, 1, 1) -- White text as requested
             btnText:SetText(opts.title or pageId)
-            btnText:SetPoint("LEFT", 10, 0)
+            btnText:SetPoint("LEFT", 15, 0)
             
             btn.text = btnText
             btn.pageIndex = i
+            
+            -- Refresh Method
+            btn.RefreshColors = function(self)
+                local isSelected = (GUI.currentPageIndex == self.pageIndex)
+                if isSelected then
+                    self.indicator:SetColorTexture(C.accent[1], C.accent[2], C.accent[3], 1)
+                    -- Re-apply selection state gradient if we had one (simplified here)
+                end
+            end
             
             -- Click handler
             btn:SetScript("OnClick", function()
@@ -469,12 +541,14 @@ local function CreateSidebarButtons()
             btn:SetScript("OnEnter", function(self)
                 if GUI.currentPageIndex ~= self.pageIndex then
                     self:SetBackdropColor(C.tabHover[1], C.tabHover[2], C.tabHover[3], C.tabHover[4])
+                    self.text:SetTextColor(C.textBright[1], C.textBright[2], C.textBright[3], 1)
                 end
             end)
             
             btn:SetScript("OnLeave", function(self)
                 if GUI.currentPageIndex ~= self.pageIndex then
                     self:SetBackdropColor(0, 0, 0, 0)
+                    self.text:SetTextColor(1, 1, 1, 1)
                 end
             end)
             
@@ -487,21 +561,27 @@ end
 ---------------------------------------------------------------------------
 -- UPDATE BUTTON SELECTION
 ---------------------------------------------------------------------------
-local function UpdateButtonSelection()
+UpdateButtonSelection = function()
     local frame = GUI.MainFrame
     if not frame then return end
     
     for _, btn in ipairs(frame.sidebarButtons) do
         if btn.pageIndex == GUI.currentPageIndex then
-            -- Selected state
-            btn:SetBackdropColor(C.tabSelected[1], C.tabSelected[2], C.tabSelected[3], C.tabSelected[4])
-            btn:SetBackdropBorderColor(C.accent[1], C.accent[2], C.accent[3], 0.5)
-            btn.text:SetTextColor(C.tabSelectedText[1], C.tabSelectedText[2], C.tabSelectedText[3], 1)
+            -- Selected state: Tech Nav
+            -- 1. Show Indicator
+            btn.indicator:Show()
+            btn.indicator:SetColorTexture(C.accent[1], C.accent[2], C.accent[3], 1)
+            
+            -- 2. Gradient Background (Simulated with Alpha)
+            btn:SetBackdropColor(C.accent[1], C.accent[2], C.accent[3], 0.1)
+            
+            -- 3. Text Bright
+            btn.text:SetTextColor(1, 1, 1, 1)
         else
             -- Normal state
+            btn.indicator:Hide()
             btn:SetBackdropColor(0, 0, 0, 0)
-            btn:SetBackdropBorderColor(0, 0, 0, 0)
-            btn.text:SetTextColor(C.textBright[1], C.textBright[2], C.textBright[3], 1)
+            btn.text:SetTextColor(1, 1, 1, 1) -- White text
         end
     end
 end
@@ -624,11 +704,17 @@ end
 ---------------------------------------------------------------------------
 function GUI:Show()
     if not self.MainFrame then
+        -- Sync Colors BEFORE creating window
+        self:UpdateThemeColors()
+        
         CreateMainWindow()
         CreateSidebarButtons()
         self:BuildSearchIndex()
         self:ShowPage(1)
     end
+    
+    -- Sync Colors ON SHOW to ensure freshness
+    self:UpdateThemeColors()
     
     self.MainFrame:Show()
 end

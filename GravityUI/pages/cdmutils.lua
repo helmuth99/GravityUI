@@ -15,9 +15,9 @@ local function CreatePropertyRow(parent, labelText, widgetType, arg1, arg2, arg3
     
     local label = row:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     if ns.GUI.SetFont then
-        ns.GUI:SetFont(label, 12, "OUTLINE")
+        ns.GUI:SetFont(label, 12, "")
     else
-         label:SetFont(STANDARD_TEXT_FONT, 12, "OUTLINE")
+         label:SetFont(STANDARD_TEXT_FONT, 12, "")
     end
     label:SetJustifyH("LEFT")
     label:SetSize(LABEL_WIDTH, ROW_HEIGHT)
@@ -65,9 +65,9 @@ end
 local function CreateSubLabel(parent, text)
     local label = parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     if ns.GUI.SetFont then
-        ns.GUI:SetFont(label, 12, "OUTLINE")
+        ns.GUI:SetFont(label, 12, "")
     else
-         label:SetFont(STANDARD_TEXT_FONT, 12, "OUTLINE")
+         label:SetFont(STANDARD_TEXT_FONT, 12, "")
     end
     label:SetText(text)
     label:SetTextColor(unpack(GUI.Colors.accent))
@@ -121,17 +121,16 @@ local function BuildGUICDMKeybinds(parent)
     local header = GUI:CreateSectionHeader(content, "Cooldown Manager Keybindings")
     header:SetPoint("TOPLEFT", 10, -10)
     header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
-    content.rowCount = 2.0
+    content.rowCount = 1.3
+
+    -- Info Box
+    local infoBox = GUI:CreateInfoBox(content, "Maps your Action Bar keybinds to the cooldown icons.")
+    infoBox:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT + 5))
+    content.rowCount = content.rowCount + (infoBox:GetHeight() / (ROW_HEIGHT + 5)) + 0.5
 
     AddRow(content, "Enable Keybinds on CDM", "checkbox", "enabled", guicdm, refresh)
     
-    local note = content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    note:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT + 5))
-    note:SetWidth(GUI.CONTENT_WIDTH - 40)
-    note:SetJustifyH("LEFT")
-    note:SetTextColor(unpack(GUI.Colors.textMuted))
-    note:SetText("Maps your Action Bar keybinds to the cooldown icons.")
-    content.rowCount = content.rowCount + 1.2
+
     
     CreateSubLabel(content, "Global Appearance (Fallback)")
     AddRow(content, "Global Font Size", "slider", 8, 32, "fontSize", guicdm, refresh, 1)
@@ -186,21 +185,21 @@ local function BuildCDMCentering(parent)
     local header = GUI:CreateSectionHeader(content, "Horizontal Centering")
     header:SetPoint("TOPLEFT", 10, -10)
     header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
-    content.rowCount = 2.0
+    content.rowCount = 1.3
+    
+    -- Info Box
+    local infoBox = GUI:CreateInfoBox(content, "Centers the second row of icons relative to the first row (if multiple rows exist).")
+    infoBox:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT + 5))
+    content.rowCount = content.rowCount + (infoBox:GetHeight() / (ROW_HEIGHT + 5)) + 0.2
     
     AddRow(content, "Enable Centering for BCDM", "checkbox", "enabled", centering, refresh)
+    content.rowCount = content.rowCount + 0.5
     
     CreateSubLabel(content, "Module Specific Settings")
     AddRow(content, "Enable Centering for Essential Bar", "checkbox", "essential", centering, refresh)
     AddRow(content, "Enable Centering for Utility Bar", "checkbox", "utility", centering, refresh)
     
-    local note = content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    note:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT + 5))
-    note:SetWidth(GUI.CONTENT_WIDTH - 40)
-    note:SetJustifyH("LEFT")
-    note:SetTextColor(unpack(GUI.Colors.textMuted))
-    note:SetText("Centers the second row of icons relative to the first row (if multiple rows exist).")
-    content.rowCount = content.rowCount + 1.2
+
     
     content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
 end
@@ -226,26 +225,20 @@ local function BuildUtils(parent)
     local header = GUI:CreateSectionHeader(content, "CD Utils")
     header:SetPoint("TOPLEFT", 10, -10)
     header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
-    content.rowCount = 2.0
+    content.rowCount = 1.3
+    
+    local infoBox = GUI:CreateInfoBox(content, "Shows a highlight on BCDM icons when their keybind is pressed.\n\n|cffFFCC00Note:|r Keybindings and the specific bar (Essential, Utility, etc.) must be enabled for this to work.")
+    infoBox:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT + 5))
+    content.rowCount = content.rowCount + (infoBox:GetHeight() / (ROW_HEIGHT + 5)) + 0.2
     
     AddRow(content, "Enable Button Glow on Keybind Press", "checkbox", "buttonGlow", utils, refresh)
     
-    local info = content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    info:SetPoint("TOPLEFT", 20, -content.rowCount * (ROW_HEIGHT + 5) + 5) -- Indented slightly
-    info:SetText("Note: Keybindings and the specific bar (Essential, Utility, etc.) must be enabled for this to work.")
-    info:SetTextColor(1, 0.8, 0, 1) -- Yellow/Orange warning
-    content.rowCount = content.rowCount + 0.6
+
     
     AddRow(content, "Hide Keybind Text (Glow still works)", "checkbox", "hideKeybindText", utils, refresh)
     AddRow(content, "Glow Color", "color", "buttonGlowColor", utils, refresh)
     
-    local note = content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    note:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT + 5))
-    note:SetWidth(GUI.CONTENT_WIDTH - 40)
-    note:SetJustifyH("LEFT")
-    note:SetTextColor(unpack(GUI.Colors.textMuted))
-    note:SetText("Shows a highlight on BCDM icons when their keybind is pressed.")
-    content.rowCount = content.rowCount + 1.2
+
     
     content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
 end

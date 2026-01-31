@@ -17,9 +17,9 @@ local function CreatePropertyRow(parent, labelText, widgetType, arg1, arg2, arg3
     
     local label = row:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     if ns.GUI.SetFont then
-        ns.GUI:SetFont(label, 12, "OUTLINE")
+        ns.GUI:SetFont(label, 12, "")
     else
-         label:SetFont(STANDARD_TEXT_FONT, 12, "OUTLINE")
+         label:SetFont(STANDARD_TEXT_FONT, 12, "")
     end
     label:SetJustifyH("LEFT")
     label:SetSize(LABEL_WIDTH, ROW_HEIGHT)
@@ -67,9 +67,9 @@ end
 local function CreateSubLabel(parent, text)
     local label = parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     if ns.GUI.SetFont then
-        ns.GUI:SetFont(label, 12, "OUTLINE")
+        ns.GUI:SetFont(label, 12, "")
     else
-         label:SetFont(STANDARD_TEXT_FONT, 12, "OUTLINE")
+         label:SetFont(STANDARD_TEXT_FONT, 12, "")
     end
     label:SetText(text)
     label:SetTextColor(unpack(GUI.Colors.accent))
@@ -135,24 +135,31 @@ local function BuildActionBarsSettings(parent)
     content.rowCount = 0
     local refresh = function() if ns.RefreshActionBars then ns.RefreshActionBars() end end
 
-    -- Master Enable (using AddRow manual equivalent for header-like area)
+
+    
+
+
+    -- Settings Header
+    content.rowCount = content.rowCount + 0.5
+    local settingsHeader = GUI:CreateSectionHeader(content, "Settings")
+    settingsHeader:SetPoint("TOPLEFT", 10, -content.rowCount * 35)
+    settingsHeader:SetPoint("RIGHT", content, "RIGHT", -10, 0)
+    content.rowCount = content.rowCount + 1.3
+
+    -- Info Box
+    local infoText = "Enable your Action Bars in World of Warcraft > Action Bars.\n\n|cFFFFFFFFNote:|r GravityUI is only styling the Default Actionbars, for more extras use AddOns like Dominos, Bartender4."
+    local infoBox = GUI:CreateInfoBox(content, infoText)
+    infoBox:SetPoint("TOPLEFT", 10, -content.rowCount * 35)
+    content.rowCount = content.rowCount + (infoBox:GetHeight() / 35) + 0.2
+
+    -- Master Enable Checkbox
     local masterEnable = GUI:CreateCheckbox(content, "Enable GravityUI Action Bars", "enabled", abs, function()
         ns.RefreshActionBars()
-        -- In tabs we might need to refresh the page or just actions? 
-        -- GUI:RefreshPage() might be too aggressive if it rebuilds tabs. 
-        -- For now just refresh backend.
     end)
-    masterEnable:SetPoint("TOPLEFT", 10, -10)
-    
-    local note = content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    if ns.GUI.SetFont then ns.GUI:SetFont(note, 10, "") end
-    note:SetPoint("TOPLEFT", masterEnable, "BOTTOMLEFT", 28, -2)
-    note:SetTextColor(unpack(GUI.Colors.textMuted))
-    note:SetText("Enable your Action Bars in World of Warcraft Options -> Action Bars")
-    
-    content.rowCount = 1.6
+    masterEnable:SetPoint("TOPLEFT", 10, -content.rowCount * 35)
+    content.rowCount = content.rowCount + 1.0
 
-    -- Quick Keybind
+    -- Quick Keybind (Moved)
     local qaRow = CreateFrame("Frame", nil, content)
     qaRow:SetSize(content:GetWidth() - 20, 30)
     qaRow:SetPoint("TOPLEFT", 10, -content.rowCount * 35)
@@ -164,13 +171,6 @@ local function BuildActionBarsSettings(parent)
     end)
     kbBtn:SetPoint("LEFT", 0, 0)
     content.rowCount = content.rowCount + 1
-
-    -- Settings Header
-    content.rowCount = content.rowCount + 0.5
-    local settingsHeader = GUI:CreateSectionHeader(content, "Settings")
-    settingsHeader:SetPoint("TOPLEFT", 10, -content.rowCount * 35)
-    settingsHeader:SetPoint("RIGHT", content, "RIGHT", -10, 0)
-    content.rowCount = content.rowCount + 1.2
 
     -- Appearance Section
     local g = abs.global
@@ -235,7 +235,7 @@ local function BuildMouseoverSettings(parent)
     local header = GUI:CreateSectionHeader(content, "Mouseover Settings")
     header:SetPoint("TOPLEFT", 10, -10)
     header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
-    content.rowCount = 2.0
+    content.rowCount = 1.3
 
     local f = abs.fade
     AddRow(content, "Enable Mouseover Hide", "checkbox", "enabled", f, refresh)
@@ -288,7 +288,7 @@ local function BuildSpecialButtons(parent)
     local header = GUI:CreateSectionHeader(content, "Special Buttons Settings")
     header:SetPoint("TOPLEFT", 10, -10)
     header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
-    content.rowCount = 2.0
+    content.rowCount = 1.3
 
     local eb = abs.bars.extraActionButton
     AddRow(content, "Extra Action Button Scale", "slider", 0.5, 2.0, "scale", eb, refresh, 0.05)

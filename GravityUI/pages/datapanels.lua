@@ -32,7 +32,7 @@ local function BuildMinimapPanel(parent)
         
         -- Label (Always White)
         local label = row:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-        label:SetFont(ns.FONT_PATH or "Interface/AddOns/GravityUI/assets/Gravity.ttf", 12, "OUTLINE")
+        label:SetFont(ns.FONT_PATH or "Interface/AddOns/GravityUI/assets/Gravity.ttf", 12, "")
         label:SetJustifyH("LEFT")
         label:SetSize(LABEL_WIDTH, ROW_HEIGHT)
         label:SetPoint("LEFT", 0, 0)
@@ -176,11 +176,11 @@ local function BuildCustomPanels(parent)
     -- Duplicated Helpers for closure scope (simplest approach)
     local function CreatePropertyRow(container, labelText, widgetType, arg1, arg2, arg3, arg4, arg5, arg6)
         local row = CreateFrame("Frame", nil, container)
-        row:SetSize(GUI.CONTENT_WIDTH - 20, ROW_HEIGHT)
+        row:SetSize(GUI.CONTENT_WIDTH - 70, ROW_HEIGHT)
         
         -- Label
         local label = row:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-        label:SetFont(ns.FONT_PATH or "Interface/AddOns/GravityUI/assets/Gravity.ttf", 12, "OUTLINE")
+        label:SetFont(ns.FONT_PATH or "Interface/AddOns/GravityUI/assets/Gravity.ttf", 12, "")
         label:SetJustifyH("LEFT")
         label:SetSize(LABEL_WIDTH, ROW_HEIGHT)
         label:SetPoint("LEFT", 0, 0)
@@ -289,19 +289,19 @@ local function BuildCustomPanels(parent)
             end
 
             local row = CreateFrame("Frame", nil, content, "BackdropTemplate")
-            row:SetSize(GUI.CONTENT_WIDTH - 40, editorHeight)
+            row:SetSize(GUI.CONTENT_WIDTH - 50, editorHeight)
             row:SetPoint("TOPLEFT", PAD, -10 - (content.rowCount * 35))
             ns.GUI:CreateBackdrop(row, {0.1, 0.1, 0.1, 0.5}, isEditing and {0, 0.75, 1, 1} or {0.3, 0.3, 0.3, 1})
             
             -- Title
             local name = row:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-            name:SetFont(ns.FONT_PATH or "Interface/AddOns/GravityUI/assets/Gravity.ttf", 16, "OUTLINE")
+            name:SetFont(ns.FONT_PATH or "Interface/AddOns/GravityUI/assets/Gravity.ttf", 16, "")
             name:SetText(cfg.name or id)
             name:SetPoint("TOPLEFT", 15, -12)
             name:SetTextColor(unpack(GUI.Colors.accent))
 
             local slotsText = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-            slotsText:SetFont(ns.FONT_PATH or "Interface/AddOns/GravityUI/assets/Gravity.ttf", 11, "OUTLINE")
+            slotsText:SetFont(ns.FONT_PATH or "Interface/AddOns/GravityUI/assets/Gravity.ttf", 11, "")
             slotsText:SetText((cfg.numSlots or 3) .. " slots assigned")
             slotsText:SetPoint("TOPLEFT", name, "BOTTOMLEFT", 0, -2)
 

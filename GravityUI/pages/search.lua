@@ -8,7 +8,7 @@ local function RefreshSearchResults(content)
     -- Robust clearing of old results
     GUI:ClearPageContent(content)
     
-    local yOffset = -40 -- Start below the header
+    local yOffset = -54 -- Start below the header
     local PAD = 15
     local width = content:GetWidth() - 30
     
@@ -39,7 +39,7 @@ local function RefreshSearchResults(content)
         
         -- Setting Name
         local name = result:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-        GUI:SetFont(name, 12, "OUTLINE", C.text)
+        GUI:SetFont(name, 12, "", C.text)
         name:SetText(item.displayText)
         name:SetPoint("BOTTOMLEFT", 10, 5)
         
