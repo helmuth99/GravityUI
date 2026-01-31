@@ -138,10 +138,7 @@ local function BuildGameMenuPanel(parent)
         fontPickerRow:Hide()
     end
     
-    local note = GUI:CreateLabel(content, "Note: Requires UI Reload to fully apply/remove.", 12, C.textMuted)
-    GUI:SetFont(note, 12, "")
-    note:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - 20
+
     
     content:SetHeight(math.abs(yOffset) + 20)
 end
