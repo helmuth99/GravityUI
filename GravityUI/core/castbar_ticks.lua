@@ -151,6 +151,10 @@ function EventFrame:GetTickConfig(spellID, spellName)
         if isEternity then duration = duration * (data.eternityDurationMod or 0.8) end
     end
     
+    -- Apply Haste Scaling
+    local haste = UnitSpellHaste("player") or 0
+    duration = duration / (1 + (haste / 100))
+    
     return ticks, duration
 end
 
