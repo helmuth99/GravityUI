@@ -21,6 +21,22 @@ ns.Defaults = {
         font = "Gravity",
         fontSize = 12,
         uiScale = 0.64,
+        castbarTicks = {
+            disintegrate = {
+                enableUUF = false,
+                enableBCDM = false,
+                tickWidth = 2,
+                tickHeight = 0.6,
+                tickColor = {1, 1, 1, 0.7},
+            },
+            mindflay = {
+                enableUUF = false,
+                enableBCDM = false,
+                tickWidth = 2,
+                tickHeight = 0.6,
+                tickColor = {1, 1, 1, 0.7},
+            },
+        },
     },
     styling = {
         chatBubbles = {

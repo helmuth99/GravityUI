@@ -222,7 +222,7 @@ local function BuildUtils(parent)
         end
     end
     
-    local header = GUI:CreateSectionHeader(content, "CD Utils")
+    local header = GUI:CreateSectionHeader(content, "Button Glow on Key press")
     header:SetPoint("TOPLEFT", 10, -10)
     header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
     content.rowCount = 1.3
@@ -241,6 +241,94 @@ local function BuildUtils(parent)
 
     
     content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
+    content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
+end
+
+-- 4. Castbar Ticks
+local function BuildCastbar(parent)
+    local scroll, content = GUI:CreateScrollableContent(parent)
+    scroll:SetAllPoints()
+    local db = ns.GetDB(); if not db then return end
+    local ticks = db.general.castbarTicks
+    if not ticks then return end 
+
+    content.rowCount = 0
+    local refresh = function() 
+        if ns.CastbarTicks and ns.CastbarTicks.SetupHooks then
+            ns.CastbarTicks:SetupHooks()
+        end
+    end
+    
+    -- Disintegrate
+    local dHeader = GUI:CreateSectionHeader(content, "Disintegrate Ticks (Evoker)")
+    dHeader:SetPoint("TOPLEFT", 10, -10)
+    
+    local dFrame = CreateFrame("Frame", nil, content)
+    dFrame:SetSize(600, 200) -- Increased height for vertical stack
+    dFrame:SetPoint("TOPLEFT", dHeader, "BOTTOMLEFT", 0, -10)
+    
+    GUI:CreateCheckbox(dFrame, "Enable on UnhaltedUnitFrames", "enableUUF", ticks.disintegrate, function(v) 
+        refresh()
+    end):SetPoint("TOPLEFT", 0, 0)
+    
+    GUI:CreateCheckbox(dFrame, "Enable on BetterCooldownManager", "enableBCDM", ticks.disintegrate, function(v) 
+        refresh()
+    end):SetPoint("TOPLEFT", 0, -30)
+    
+    local dWidth = GUI:CreateSlider(dFrame, "Width", 1, 10, "tickWidth", ticks.disintegrate, function(v)
+        refresh()
+    end)
+    dWidth:SetPoint("TOPLEFT", 0, -70)
+    dWidth.label:SetText("Tick Width")
+    
+    local dHeight = GUI:CreateSlider(dFrame, "Height %", 0.1, 1.0, "tickHeight", ticks.disintegrate, function(v)
+        refresh()
+    end, 0.05)
+    dHeight:SetPoint("TOPLEFT", 0, -110)
+    dHeight.label:SetText("Tick Height")
+    
+    local dColor = GUI:CreateColorPicker(dFrame, "Color", "tickColor", ticks.disintegrate, function(r, g, b, a)
+        refresh()
+    end)
+    dColor:SetPoint("TOPLEFT", 0, -150)
+    dColor.label:SetText("Tick Color")
+
+    -- Mind Flay
+    local mHeader = GUI:CreateSectionHeader(content, "Mind Flay Ticks (Priest)")
+    mHeader:SetPoint("TOPLEFT", dFrame, "BOTTOMLEFT", 0, -10)
+    
+    local mFrame = CreateFrame("Frame", nil, content)
+    mFrame:SetSize(600, 200)
+    mFrame:SetPoint("TOPLEFT", mHeader, "BOTTOMLEFT", 0, -10)
+    
+    GUI:CreateCheckbox(mFrame, "Enable on UnhaltedUnitFrames", "enableUUF", ticks.mindflay, function(v) 
+        refresh()
+    end):SetPoint("TOPLEFT", 0, 0)
+    
+    GUI:CreateCheckbox(mFrame, "Enable on BetterCooldownManager", "enableBCDM", ticks.mindflay, function(v) 
+        refresh()
+    end):SetPoint("TOPLEFT", 0, -30)
+    
+    local mWidth = GUI:CreateSlider(mFrame, "Width", 1, 10, "tickWidth", ticks.mindflay, function(v)
+        refresh()
+    end)
+    mWidth:SetPoint("TOPLEFT", 0, -70)
+    mWidth.label:SetText("Tick Width")
+    
+    local mHeight = GUI:CreateSlider(mFrame, "Height %", 0.1, 1.0, "tickHeight", ticks.mindflay, function(v)
+        refresh()
+    end, 0.05)
+    mHeight:SetPoint("TOPLEFT", 0, -110)
+    mHeight.label:SetText("Tick Height")
+    
+    local mColor = GUI:CreateColorPicker(mFrame, "Color", "tickColor", ticks.mindflay, function(r, g, b, a)
+        refresh()
+    end)
+    mColor:SetPoint("TOPLEFT", 0, -150)
+    mColor.label:SetText("Tick Color")
+    
+    content.rowCount = 15
+    content:SetHeight(500)
 end
 
 -- ═══════════════════════════════════════════════════════════════
@@ -248,7 +336,7 @@ end
 -- ═══════════════════════════════════════════════════════════════
 
 ns.GUI:RegisterPage("cdmutils", {
-    title = "CDM Utils",
+    title = "Utils",
     OnBuild = function(content)
         -- Hide default scrollframe parent
         local scrollFrame = content:GetParent()
@@ -263,7 +351,8 @@ ns.GUI:RegisterPage("cdmutils", {
         local subTabs = GUI:CreateSubTabs(scrollFrame, {
             { name = "Keybindings", builder = BuildGUICDMKeybinds },
             { name = "CDM Centering", builder = BuildCDMCentering },
-            { name = "Utils", builder = BuildUtils },
+            { name = "Button Glow", builder = BuildUtils },
+            { name = "Castbar", builder = BuildCastbar },
         })
         subTabs:SetPoint("TOPLEFT", 10, -10)
         subTabs:SetPoint("TOPRIGHT", -10, 0)
