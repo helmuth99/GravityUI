@@ -266,61 +266,7 @@ local function BuildReadyCheckPanel(parent)
     resetBtn:SetPoint("LEFT", moveBtn, "RIGHT", 10, 0)
     yOffset = yOffset - 40
     
-    -- 3. MISSING RAID BUFFS
-    local header3 = GUI:CreateSectionHeader(content, "Missing Raid Buffs")
-    header3:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - header3.gap
-    yOffset = yOffset - 10
-    
 
-    
-    local rbr1 = CreateStylingRow(content, "Enable Missing Raid Buffs", "checkbox", "enabled", rbDb, function() 
-        if ns.RaidBuffs then ns.RaidBuffs:Refresh() end 
-    end)
-    rbr1:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - ROW_HEIGHT - 5
-    
-    local rbr2 = CreateStylingRow(content, "Show Only When In Group", "checkbox", "showOnlyInGroup", rbDb, function() 
-        if ns.RaidBuffs then ns.RaidBuffs:Refresh() end 
-    end)
-    rbr2:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - ROW_HEIGHT - 5
-    
-    local rbr3 = CreateStylingRow(content, "Show Only In Instance", "checkbox", "showOnlyInInstance", rbDb, function() 
-        if ns.RaidBuffs then ns.RaidBuffs:Refresh() end 
-    end)
-    rbr3:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - ROW_HEIGHT - 5
-    
-    local rbr4 = CreateStylingRow(content, "Also Show Buffs You Can Provide", "checkbox", "providerMode", rbDb, function() 
-        if ns.RaidBuffs then ns.RaidBuffs:Refresh() end 
-    end)
-    rbr4:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - ROW_HEIGHT - 5
-    
-    local rbr5 = CreateStylingRow(content, "Hide Label Bar", "checkbox", "hideLabelBar", rbDb, function() 
-        if ns.RaidBuffs then ns.RaidBuffs:Refresh() end 
-    end)
-    rbr5:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - ROW_HEIGHT - 5
-
-    local rbr6 = CreateStylingRow(content, "Icon Size", "slider", 16, 64, "iconSize", rbDb, function() 
-        if ns.RaidBuffs then ns.RaidBuffs:Refresh() end 
-    end)
-    rbr6:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - ROW_HEIGHT - 5
-    
-    local rbr7 = CreateStylingRow(content, "Label Font Size", "slider", 8, 24, "labelFontSize", rbDb, function() 
-        if ns.RaidBuffs then ns.RaidBuffs:Refresh() end 
-    end)
-    rbr7:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - ROW_HEIGHT - 5
-    
-    -- Checkbox toggle preview
-    local prevBtn = GUI:CreateButton(content, "Toggle Preview", 140, 24, function()
-        if ns.RaidBuffs then ns.RaidBuffs:TogglePreview() end
-    end)
-    prevBtn:SetPoint("TOPLEFT", PAD, yOffset)
     
     content:SetHeight(math.abs(yOffset) + 40)
 end
@@ -919,7 +865,7 @@ GUI:RegisterPage("Styling", {
         local subTabs = GUI:CreateSubTabs(scrollFrame, {
             { name = "Game Menu", builder = BuildGameMenuPanel },
             { name = "Chat Bubbles", builder = BuildChatBubblesPanel },
-            { name = "Ready Check & Buffs", builder = BuildReadyCheckPanel },
+            { name = "Ready Check", builder = BuildReadyCheckPanel },
             { name = "Keystone", builder = BuildKeystonePanel },
             { name = "Power Bar", builder = BuildPowerBarPanel },
             { name = "Alert Frames", builder = BuildAlertsPanel },

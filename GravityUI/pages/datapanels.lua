@@ -387,7 +387,8 @@ local function BuildCustomPanels(parent)
                 enabled = true, name = newId, width = 200, height = 24, bgOpacity = 60,
                 locked = true, fontSize = 12, borderSize = 1,
                 point = "CENTER", relativePoint = "CENTER", x = 0, y = 0,
-                slots = { [1] = {content=""} }
+                numSlots = 3,
+                slots = { [1] = {content=""}, [2] = {content=""}, [3] = {content=""} }
             }
             refresh()
             BuildCustomList()

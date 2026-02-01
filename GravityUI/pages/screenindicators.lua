@@ -282,6 +282,46 @@ local function BuildPet(parent)
     content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
 end
 
+-- 5. Missing Buffs
+local function BuildMissingBuffs(parent)
+    local scroll, content = GUI:CreateScrollableContent(parent)
+    scroll:SetAllPoints()
+    local db = ns.GetDB(); if not db then return end
+    local rbDb = db.raidBuffs
+    
+    content.rowCount = 0
+    local refresh = function() if ns.RaidBuffs then ns.RaidBuffs:Refresh() end end
+
+    local header = GUI:CreateSectionHeader(content, "Missing Raid Buffs")
+    header:SetPoint("TOPLEFT", 10, -10)
+    header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
+    content.rowCount = 1.3
+    
+    CreateSubLabel(content, "General Settings")
+    AddRow(content, "Enable Missing Raid Buffs", "checkbox", "enabled", rbDb, refresh)
+    AddRow(content, "Show Only When In Group", "checkbox", "showOnlyInGroup", rbDb, refresh)
+    AddRow(content, "Show Only In Instance", "checkbox", "showOnlyInInstance", rbDb, refresh)
+    AddRow(content, "Also Show Buffs You Can Provide", "checkbox", "providerMode", rbDb, refresh)
+    AddRow(content, "Hide Label Bar", "checkbox", "hideLabelBar", rbDb, refresh)
+    
+    content.rowCount = content.rowCount + 0.3
+    
+    CreateSubLabel(content, "Appearance")
+    AddRow(content, "Icon Size", "slider", 16, 64, "iconSize", rbDb, refresh)
+    AddRow(content, "Label Font Size", "slider", 8, 24, "labelFontSize", rbDb, refresh)
+    
+    content.rowCount = content.rowCount + 0.5
+    
+    -- Preview Button (Custom implementation since AddRow doesn't support buttons)
+    local prevBtn = GUI:CreateButton(content, "Toggle Preview", 140, 24, function()
+        if ns.RaidBuffs then ns.RaidBuffs:TogglePreview() end
+    end)
+    prevBtn:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT + 5)))
+    content.rowCount = content.rowCount + 1.0
+
+    content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
+end
+
 -- ═══════════════════════════════════════════════════════════════
 -- MAIN PAGE
 -- ═══════════════════════════════════════════════════════════════
@@ -303,6 +343,7 @@ ns.GUI:RegisterPage("screenindicators", {
             { name = "Crosshair", builder = BuildCrosshair },
             { name = "Combat Status", builder = BuildCombatStatus },
             { name = "Pet", builder = BuildPet },
+            { name = "Missing Buffs", builder = BuildMissingBuffs },
         })
         subTabs:SetPoint("TOPLEFT", 10, -10)
         subTabs:SetPoint("TOPRIGHT", -10, 0)

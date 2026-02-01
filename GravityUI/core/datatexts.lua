@@ -91,10 +91,41 @@ local function GetLevelColor(level)
     return color -- Return the color table
 end
 
+local LocalizedToEnglishMap = {}
+if FillLocalizedClassList then
+    FillLocalizedClassList(LocalizedToEnglishMap)
+end
+
+-- Fallback for clients where FillLocalizedClassList might technically exist but return nothing, or not exist
+if not next(LocalizedToEnglishMap) then
+    if LOCALIZED_CLASS_NAMES_MALE then
+        for token, localizedName in pairs(LOCALIZED_CLASS_NAMES_MALE) do
+            LocalizedToEnglishMap[localizedName] = token
+        end
+    end
+    if LOCALIZED_CLASS_NAMES_FEMALE then
+        for token, localizedName in pairs(LOCALIZED_CLASS_NAMES_FEMALE) do
+            LocalizedToEnglishMap[localizedName] = token
+        end
+    end
+end
+
 local function GetClassColor(className)
     if not className then return {r=1, g=1, b=1} end
+    -- Try direct lookup (English Token)
     local c = RAID_CLASS_COLORS[className]
     if c then return c end
+    -- Try localized lookup (e.g. "Krieger" -> "WARRIOR")
+    if LocalizedToEnglishMap[className] then
+        c = RAID_CLASS_COLORS[LocalizedToEnglishMap[className]]
+        if c then return c end
+    end
+    -- Fallback: check upper case just in case
+    if LocalizedToEnglishMap[className:upper()] then
+         c = RAID_CLASS_COLORS[LocalizedToEnglishMap[className:upper()]]
+         if c then return c end
+    end
+    
     return {r=1, g=1, b=1}
 end
 
@@ -642,9 +673,12 @@ DT.Types.durability = {
 -- 6. FRIENDS
 DT.Types.friends = {
     Update = function(slot, config)
-        local wowOnline = C_FriendList.GetNumOnlineFriends() or 0
-        local bnetOnline = select(2, BNGetNumFriends()) or 0
-        local total = wowOnline + bnetOnline
+        -- Verify cache currency, force update if older than 5s
+        if GetTime() - friendsCache.lastUpdate > 5 then BuildFriendsCache() end
+        
+        -- Sum only WoW related friends (WoW Retail + WoW Classic + Native WoW Friends)
+        local total = #friendsCache.wowFriends + #friendsCache.bnetRetail + #friendsCache.bnetClassic
+        
         local r, g, b = GetValueColor()
         local label = GetLabel("Friends: ", "Fr: ", config.shortLabel, config.noLabel)
         return string.format("%s|cff%02x%02x%02x%d|r", label, r*255, g*255, b*255, total)

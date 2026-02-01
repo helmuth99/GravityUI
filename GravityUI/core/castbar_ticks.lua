@@ -56,6 +56,7 @@ EventFrame.State = {
     isChaining = false,
     numTicks = 0,
     duration = 0,
+    tickInterval = 0,
 }
 
 -- ═══════════════════════════════════════════════════════════════
@@ -175,6 +176,7 @@ EventFrame:SetScript("OnEvent", function(self, event, ...)
         
         self.State.numTicks = ticks
         self.State.duration = (endTimeMs - startTimeMs) / 1000
+        self.State.tickInterval = self.State.duration / self.State.numTicks
         
         -- Rebuild/Update Ticks
         self:UpdateLayout()
@@ -185,6 +187,27 @@ EventFrame:SetScript("OnEvent", function(self, event, ...)
         end
         
         self.State.isChanneling = true
+
+    elseif event == "UNIT_SPELLCAST_CHANNEL_UPDATE" then
+        local unit = ...
+        if unit ~= "player" then return end
+        
+        local name, _, _, startTimeMs, endTimeMs, _, _, spellID = UnitChannelInfo("player")
+        if not name or not self.State.tickInterval or self.State.tickInterval == 0 then return end
+        
+        local newDuration = (endTimeMs - startTimeMs) / 1000
+        local newTicks = math.floor((newDuration / self.State.tickInterval) + 0.5)
+        
+        if newTicks ~= self.State.numTicks then
+             self.State.numTicks = newTicks
+             self.State.duration = newDuration
+             self:UpdateLayout()
+             
+             -- Ensure visibility of new ticks
+             for i = 1, math.max(0, newTicks - 1) do
+                if self.Ticks[i] then self.Ticks[i]:Show() end
+             end
+        end
         
     elseif event == "UNIT_SPELLCAST_CHANNEL_STOP" then
         self:Reset()

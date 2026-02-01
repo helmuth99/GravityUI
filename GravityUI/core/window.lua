@@ -29,7 +29,7 @@ local function CreateMainWindow()
     frame:Hide()
     
     -- Glassmorphic Backdrop
-    GUI:CreateGlassBackdrop(frame)
+    GUI:CreateBackdrop(frame, C.bgGlass)
     
     -- Make draggable
     frame:SetScript("OnDragStart", function(self) self:StartMoving() end)
@@ -128,7 +128,7 @@ function CreateTopBar(parent)
     
     -- Title
     local title = topBar:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    GUI:SetFont(title, 16, "OUTLINE", C.text)
+    GUI:SetFont(title, 16, "OUTLINE", {0, 0.6, 1, 1})
     title:SetText("GravityUI")
     title:SetPoint("LEFT", logo, "RIGHT", 8, 0)
     

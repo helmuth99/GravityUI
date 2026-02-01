@@ -336,7 +336,7 @@ end
 -- ═══════════════════════════════════════════════════════════════
 
 ns.GUI:RegisterPage("cdmutils", {
-    title = "Utils",
+    title = "UI Utilities",
     OnBuild = function(content)
         -- Hide default scrollframe parent
         local scrollFrame = content:GetParent()

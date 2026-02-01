@@ -61,10 +61,10 @@ core\installer.lua
 pages\main.lua
 pages\minimap.lua
 pages\actionbars.lua
-pages\cdmutils.lua
 pages\datapanels.lua
 pages\uiimprovements.lua
 pages\screenindicators.lua
+pages\cdmutils.lua
 pages\styling.lua
 pages\search.lua
 pages\profiles.lua
