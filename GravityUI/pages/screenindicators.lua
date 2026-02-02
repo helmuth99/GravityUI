@@ -290,34 +290,338 @@ local function BuildMissingBuffs(parent)
     local rbDb = db.raidBuffs
     
     content.rowCount = 0
-    local refresh = function() if ns.RaidBuffs then ns.RaidBuffs:Refresh() end end
+    local refresh = function() if ns.RaidBuffs and ns.RaidBuffs.Refresh then ns.RaidBuffs:Refresh() end end
+    
+    -- Helper to access RaidBuffs module data
+    local RB = ns.RaidBuffs
+    if not RB then
+        local err = content:CreateFontString(nil, "OVERLAY", "GameFontRed")
+        err:SetPoint("TOPLEFT", 10, -10)
+        err:SetText("Error: RaidBuffs module not loaded.")
+        return
+    end
 
     local header = GUI:CreateSectionHeader(content, "Missing Raid Buffs")
     header:SetPoint("TOPLEFT", 10, -10)
     header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
     content.rowCount = 1.3
+
+    -- Open Standalone Config Button
+    local btnConfig = GUI:CreateButton(content, "Toggle Mover / Unlock Position", 250, 24, function() 
+        if RB.ToggleMover then RB:ToggleMover() end 
+    end)
+    btnConfig:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT + 5)))
+    content.rowCount = content.rowCount + 0.8
+
+    -- ════════════════════════════════════════════════
+    -- BEHAVIOR
+    -- ════════════════════════════════════════════════
+    AddRow(content, "Enable Missing Buffs", "checkbox", "enabled", rbDb, refresh)
+    AddRow(content, "Show 'Buff' Reminder Text", "checkbox", "showBuffReminder", rbDb, refresh)
     
-    CreateSubLabel(content, "General Settings")
-    AddRow(content, "Enable Missing Raid Buffs", "checkbox", "enabled", rbDb, refresh)
-    AddRow(content, "Show Only When In Group", "checkbox", "showOnlyInGroup", rbDb, refresh)
+    -- Reminder Text Customization
+    -- Reminder Text Customization
+    AddRow(content, "   Size", "slider", 8, 32, "reminderFontSize", rbDb, refresh, 1)
+    AddRow(content, "   Color", "color", "reminderColor", rbDb, refresh)
+    
+    AddRow(content, "Show Only In Group/Raid", "checkbox", "showOnlyInGroup", rbDb, refresh)
     AddRow(content, "Show Only In Instance", "checkbox", "showOnlyInInstance", rbDb, refresh)
-    AddRow(content, "Also Show Buffs You Can Provide", "checkbox", "providerMode", rbDb, refresh)
-    AddRow(content, "Hide Label Bar", "checkbox", "hideLabelBar", rbDb, refresh)
-    
-    content.rowCount = content.rowCount + 0.3
-    
+    AddRow(content, "Show Only On Ready Check", "checkbox", "showOnlyOnReadyCheck", rbDb, refresh)
+    AddRow(content, "Ready Check Duration", "slider", 5, 60, "readyCheckDuration", rbDb, refresh, 1)
+    AddRow(content, "Show Only My Class Buffs", "checkbox", "showOnlyPlayerClassBuff", rbDb, refresh)
+    AddRow(content, "Show Only My Missing Buffs", "checkbox", "showOnlyPlayerMissing", rbDb, refresh)
+
+    content.rowCount = content.rowCount + 0.5
+
+    -- ════════════════════════════════════════════════
+    -- APPEARANCE
+    -- ════════════════════════════════════════════════
     CreateSubLabel(content, "Appearance")
-    AddRow(content, "Icon Size", "slider", 16, 64, "iconSize", rbDb, refresh)
-    AddRow(content, "Label Font Size", "slider", 8, 24, "labelFontSize", rbDb, refresh)
+    AddRow(content, "Icon Size", "slider", 16, 128, "iconSize", rbDb, refresh, 4)
+    AddRow(content, "Text Size", "slider", 8, 32, "labelFontSize", rbDb, refresh, 1)
+    AddRow(content, "Spacing", "slider", 0, 50, "spacing", rbDb, refresh, 1)
+    -- Grow direction
+    local growOptions = {{value="LEFT", text="Left"}, {value="CENTER", text="Center"}, {value="RIGHT", text="Right"}}
+    AddRow(content, "Grow Direction", "dropdown", growOptions, "growDirection", rbDb, refresh)
+    
+    -- Expiration Warning
+    content.rowCount = content.rowCount + 0.3
+    CreateSubLabel(content, "Expiration Warning")
+    AddRow(content, "Show Glow Warning", "checkbox", "showExpirationGlow", rbDb, refresh)
+    AddRow(content, "Warning Threshold (min)", "slider", 1, 30, "expirationThreshold", rbDb, refresh, 1)
+    
+
+    AddRow(content, "Glow Color", "color", "glowColor", rbDb, refresh)
+    content.rowCount = content.rowCount + 0.8
+
+    -- ════════════════════════════════════════════════
+    -- CATEGORY & SPLIT SETTINGS
+    -- ════════════════════════════════════════════════
+    content.rowCount = content.rowCount + 0.8
+    CreateSubLabel(content, "Category Frames (Split Bars)")
+    
+    local function AddCategoryControl(label, key)
+        local row = CreateFrame("Frame", nil, content)
+        row:SetSize(GUI.CONTENT_WIDTH - 20, 24)
+        row:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT + 5)))
+        
+        -- Label
+        local txt = row:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+        txt:SetPoint("LEFT", 0, 0)
+        txt:SetText(label)
+        txt:SetWidth(120)
+        
+        -- Helper to create styled checkbutton
+        local function CreateStyledCheck(parent, labelText, dbTable, dbKey, onClick)
+            local cb = CreateFrame("Button", nil, parent, "BackdropTemplate")
+            cb:SetSize(20, 20)
+            
+            cb:SetBackdrop({
+                bgFile = "Interface\\Buttons\\WHITE8x8",
+                edgeFile = "Interface\\Buttons\\WHITE8x8",
+                edgeSize = 1,
+            })
+            cb:SetBackdropColor(0.15, 0.15, 0.15, 1)
+            cb:SetBackdropBorderColor(0, 0, 0, 1)
+            
+            local check = cb:CreateTexture(nil, "OVERLAY")
+            check:SetTexture("Interface\\Buttons\\UI-CheckBox-Check")
+            check:SetPoint("CENTER")
+            check:SetSize(16, 16)
+            check:SetDesaturated(true)
+            check:SetVertexColor(unpack(GUI.Colors.accent))
+            
+            local function UpdateState()
+                local val = dbTable[dbKey]
+                if val == nil then val = true end -- specific logic for these tables
+                check:SetShown(val)
+            end
+            UpdateState()
+            
+            cb:SetScript("OnClick", function()
+                local val = dbTable[dbKey]
+                if val == nil then val = true end
+                dbTable[dbKey] = not val
+                UpdateState()
+                if onClick then onClick() end
+            end)
+            
+            cb:SetScript("OnEnter", function(self) self:SetBackdropBorderColor(GUI.Colors.accent[1], GUI.Colors.accent[2], GUI.Colors.accent[3], 1) end)
+            cb:SetScript("OnLeave", function(self) self:SetBackdropBorderColor(0, 0, 0, 1) end)
+            
+            if labelText then
+                cb.text = cb:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+                cb.text:SetPoint("LEFT", cb, "RIGHT", 5, 0)
+                cb.text:SetText(labelText)
+            end
+            
+            return cb
+        end
+        
+        -- Enable Checkbox
+        if not rbDb.categorySettings[key] then rbDb.categorySettings[key] = {} end
+        local cbEnable = CreateStyledCheck(row, "Enable", rbDb.categorySettings[key], "enabled", refresh)
+        cbEnable:SetPoint("LEFT", 130, 0)
+        
+        -- Split Checkbox
+        local cbSplit = CreateStyledCheck(row, "Detach / Split", rbDb.splitCategories, key, refresh)
+        cbSplit:SetPoint("LEFT", 220, 0)
+        
+        content.rowCount = content.rowCount + 0.8
+    end
+    
+    AddCategoryControl("Raid Buffs", "raid")
+    AddCategoryControl("Self Buffs", "self")
+    AddCategoryControl("Presence Buffs", "presence")
+    AddCategoryControl("Targeted Buffs", "targeted")
+    AddCategoryControl("Custom Buffs", "custom")
+
+    -- ════════════════════════════════════════════════
+    -- BUFF LISTS
+    -- ════════════════════════════════════════════════
+    local function AddBuffToggle(buff)
+        local row = CreateFrame("Frame", nil, content)
+        row:SetSize(GUI.CONTENT_WIDTH - 20, 24)
+        row:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT + 5)))
+        
+        -- Styled Checkbox
+        local cb = CreateFrame("Button", nil, row, "BackdropTemplate")
+        cb:SetSize(20, 20)
+        cb:SetPoint("LEFT", 0, 0)
+        
+        cb:SetBackdrop({
+            bgFile = "Interface\\Buttons\\WHITE8x8",
+            edgeFile = "Interface\\Buttons\\WHITE8x8",
+            edgeSize = 1,
+        })
+        cb:SetBackdropColor(0.15, 0.15, 0.15, 1)
+        cb:SetBackdropBorderColor(0, 0, 0, 1)
+        
+        local check = cb:CreateTexture(nil, "OVERLAY")
+        check:SetTexture("Interface\\Buttons\\UI-CheckBox-Check")
+        check:SetPoint("CENTER")
+        check:SetSize(16, 16)
+        check:SetDesaturated(true)
+        check:SetVertexColor(unpack(GUI.Colors.accent))
+        
+        local function UpdateState()
+             local val = rbDb.enabledBuffs[buff.key]
+             if val == nil then val = true end
+             check:SetShown(val)
+        end
+        UpdateState()
+        
+        cb:SetScript("OnClick", function()
+             local val = rbDb.enabledBuffs[buff.key]
+             if val == nil then val = true end
+             rbDb.enabledBuffs[buff.key] = not val
+             UpdateState()
+             refresh()
+        end)
+        
+        cb:SetScript("OnEnter", function(self) self:SetBackdropBorderColor(GUI.Colors.accent[1], GUI.Colors.accent[2], GUI.Colors.accent[3], 1) end)
+        cb:SetScript("OnLeave", function(self) self:SetBackdropBorderColor(0, 0, 0, 1) end)
+        
+        local icon = row:CreateTexture(nil, "ARTWORK")
+        icon:SetSize(20, 20)
+        icon:SetPoint("LEFT", cb, "RIGHT", 5, 0)
+        
+        local tex = buff.iconOverride
+        if not tex then
+             local id = type(buff.spellID) == "table" and buff.spellID[1] or buff.spellID
+             if C_Spell and C_Spell.GetSpellTexture then
+                 tex = C_Spell.GetSpellTexture(id)
+             else
+                 tex = GetSpellTexture(id)
+             end
+        end
+        icon:SetTexture(tex)
+        
+        local label = row:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+        label:SetPoint("LEFT", icon, "RIGHT", 8, 0)
+        label:SetText(buff.name or "Unknown Buff")
+        
+        content.rowCount = content.rowCount + 0.8
+        return row
+    end
+
+    content.rowCount = content.rowCount + 0.8
+    if RB.RAID_BUFFS then
+        CreateSubLabel(content, "Raid Buffs (Group)")
+        for _, buff in ipairs(RB.RAID_BUFFS) do AddBuffToggle(buff) end
+    end
     
     content.rowCount = content.rowCount + 0.5
+    if RB.PRESENCE_BUFFS then
+        CreateSubLabel(content, "Presence Buffs (One Per Group)")
+        for _, buff in ipairs(RB.PRESENCE_BUFFS) do AddBuffToggle(buff) end
+    end
     
-    -- Preview Button (Custom implementation since AddRow doesn't support buttons)
-    local prevBtn = GUI:CreateButton(content, "Toggle Preview", 140, 24, function()
-        if ns.RaidBuffs then ns.RaidBuffs:TogglePreview() end
+    content.rowCount = content.rowCount + 0.5
+    if RB.TARGETED_BUFFS then
+        CreateSubLabel(content, "Targeted Buffs (On Others)")
+        for _, buff in ipairs(RB.TARGETED_BUFFS) do AddBuffToggle(buff) end
+    end
+    
+    content.rowCount = content.rowCount + 0.5
+    if RB.SELF_BUFFS then
+        CreateSubLabel(content, "Self Buffs (Personal)")
+        for _, buff in ipairs(RB.SELF_BUFFS) do AddBuffToggle(buff) end
+    end
+    
+    -- ════════════════════════════════════════════════
+    -- CUSTOM BUFFS
+    -- ════════════════════════════════════════════════
+    content.rowCount = content.rowCount + 0.8
+    CreateSubLabel(content, "Custom Buffs")
+    
+    -- Add Input and Button
+    local rowAdd = CreateFrame("Frame", nil, content)
+    rowAdd:SetSize(GUI.CONTENT_WIDTH - 20, 30)
+    rowAdd:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT + 5)))
+    
+    local editBox = CreateFrame("EditBox", nil, rowAdd, "BackdropTemplate")
+    editBox:SetSize(120, 24)
+    editBox:SetPoint("LEFT", 0, 0)
+    editBox:SetAutoFocus(false)
+    editBox:SetNumeric(true)
+    editBox:SetFontObject("ChatFontNormal")
+    editBox:SetTextInsets(8, 8, 0, 0)
+    
+    -- Style matches Framework Input
+    editBox:SetBackdrop({
+        bgFile = "Interface\\Buttons\\WHITE8x8",
+        edgeFile = "Interface\\Buttons\\WHITE8x8",
+        edgeSize = 1,
+    })
+    editBox:SetBackdropColor(0.15, 0.15, 0.15, 1)
+    editBox:SetBackdropBorderColor(0, 0, 0, 1)
+    
+    editBox:SetScript("OnEnter", function(self) self:SetBackdropBorderColor(0, 0.6, 1, 1) end)
+    editBox:SetScript("OnLeave", function(self) self:SetBackdropBorderColor(0, 0, 0, 1) end)
+
+    editBox:SetScript("OnEnterPressed", function(self) self:ClearFocus() end)
+    editBox:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
+    editBox.tipText = "Enter Spell ID"
+    editBox:SetText("Spell ID")
+    editBox:SetScript("OnEditFocusGained", function(self) if self:GetText() == "Spell ID" then self:SetText("") end end)
+    
+    local btnAdd = GUI:CreateButton(rowAdd, "+ Add Custom Buff", 140, 24, function() 
+        local text = editBox:GetText()
+        local id = tonumber(text)
+        
+        if id and RB and RB.AddCustomBuff then
+            local success, err = RB:AddCustomBuff(id)
+            if success then
+                print("GravityUI: Custom Buff Added:", id)
+                
+                -- Refresh UI by rebuilding this tab
+                if scroll then scroll:Hide() end
+                if BuildMissingBuffs then 
+                     BuildMissingBuffs(parent) 
+                else
+                     print("GravityUI: Please switch tabs to refresh list.")
+                end
+            else
+                print("|cffff0000GravityUI Error:|r " .. (err or "Unknown error in AddCustomBuff"))
+            end
+        else
+             if not id then print("|cffff0000GravityUI:|r Invalid Spell ID format. Please enter a number.") end
+             if not RB then print("|cffff0000GravityUI:|r RaidBuffs module missing from closure.") end
+             if RB and not RB.AddCustomBuff then print("|cffff0000GravityUI:|r AddCustomBuff function missing on RaidBuffs object.") end
+        end
     end)
-    prevBtn:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT + 5)))
-    content.rowCount = content.rowCount + 1.0
+    btnAdd:SetPoint("LEFT", editBox, "RIGHT", 10, 0)
+    
+    content.rowCount = content.rowCount + 1.2
+    
+    -- List Custom Buffs
+    local customList = rbDb.customBuffs or {}
+    local sortedKeys = {}
+    for k in pairs(customList) do table.insert(sortedKeys, k) end
+    table.sort(sortedKeys)
+    
+    for _, k in ipairs(sortedKeys) do
+        local buff = customList[k]
+        
+        -- Reuse standardized AddBuffToggle which handles styling and rowCount
+        -- We need `AddBuffToggle` to return the frame to add buttons
+        -- Assuming I update AddBuffToggle to return 'row' (I will do that below)
+        local row = AddBuffToggle(buff) 
+        
+        if row then
+            local btnDel = GUI:CreateButton(row, "Del", 40, 20, function()
+                if RB.DeleteCustomBuff then 
+                    RB:DeleteCustomBuff(buff.key)
+                    -- Refresh UI
+                    if scroll then scroll:Hide() end
+                    if BuildMissingBuffs then BuildMissingBuffs(parent) end
+                end
+            end)
+            btnDel:SetPoint("RIGHT", row, "RIGHT", -25, 0)
+        end
+    end
+
 
     content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
 end

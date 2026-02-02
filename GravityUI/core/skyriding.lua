@@ -45,6 +45,14 @@ local SECOND_WIND_SPELL_ID = 425782
 local WHIRLING_SURGE_SPELL_ID = 361584
 local DOT_TEXTURE = "Interface/AddOns/GravityUI/assets/cursor/gui_reticle_dot"
 
+-- Optimized Defaults (Prevent GC Churn)
+local DEFAULT_BAR_COLOR = {0.2, 0.8, 1.0, 1}
+local DEFAULT_BG_COLOR = {0.1, 0.1, 0.1, 0.8}
+local DEFAULT_RECHARGE_COLOR = {0.4, 0.9, 1.0, 0.6}
+local DEFAULT_SW_COLOR = {1, 0.8, 0.2, 1}
+local DEFAULT_SW_RECHARGE_COLOR = {1, 0.9, 0.4, 0.6}
+local DEFAULT_SOFT_COLOR = {0, 0, 0, 0.6} -- Temporary container for soft color calcs
+
 ---------------------------------------------------------------------------
 -- Helpers
 ---------------------------------------------------------------------------
@@ -209,7 +217,12 @@ local function UpdateSegmentMarkers(maxCharges)
     if settings.segmentColor then
         color = settings.segmentColor
     else
-        local barColor = settings.barColor or {0.2, 0.8, 1.0, 1}
+        local barColor = settings.barColor or DEFAULT_BAR_COLOR
+        -- Reuse static table or create once? 
+        -- Since this logic runs on maxCharges change (rare), creating a table here is acceptable,
+        -- BUT UpdateSegmentMarkers is called in ApplySettings.
+        -- Let's stick to simple efficient math but we can't easily avoid the table for SetVertexColor unpack
+        -- unless we unpack explictly.
         color = {barColor[1] * 0.25, barColor[2] * 0.25, barColor[3] * 0.25, 0.6}
     end
     
@@ -290,7 +303,7 @@ local function UpdateRechargeAnimation()
     local segmentStart = current * segmentWidth
     local fillWidth = math.max(1, progress * segmentWidth)
     
-    local color = settings.rechargeColor or {0.4, 0.9, 1.0, 0.6}
+    local color = settings.rechargeColor or DEFAULT_RECHARGE_COLOR
     
     rechargeOverlay:ClearAllPoints()
     rechargeOverlay:SetPoint("LEFT", vigorBar, "LEFT", segmentStart, 0)
@@ -308,7 +321,7 @@ local function UpdateSecondWind()
     local current, max = GetSecondWindInfo()
     
     -- Color
-    local color = settings.secondWindColor or {1, 0.8, 0.2, 1}
+    local color = settings.secondWindColor or DEFAULT_SW_COLOR
     if settings.useThemeColorSecondWind then
         local r, g, b, a = ns.GetAccentColor()
         color = {r, g, b, a}
@@ -443,7 +456,7 @@ local function UpdateSecondWindRecharge()
         local r, g, b = ns.GetAccentColor()
         color = {r, g, b, 0.6}
     else
-        color = {1, 0.9, 0.4, 0.6}  -- Slightly brighter gold
+        color = DEFAULT_SW_RECHARGE_COLOR  -- Slightly brighter gold
     end
 
     swRechargeOverlay:ClearAllPoints()
@@ -621,14 +634,14 @@ local function ApplySettings()
     if secondWindMiniBar then secondWindMiniBar:SetStatusBarTexture(texturePath) end
     
     -- Colors
-    local barColor = settings.barColor or {0.2, 0.8, 1.0, 1}
+    local barColor = settings.barColor or DEFAULT_BAR_COLOR
     if settings.useThemeColorVigor then
         local r, g, b, a = ns.GetAccentColor()
         barColor = {r, g, b, a}
     end
     vigorBar:SetStatusBarColor(unpack(barColor))
     
-    local bgColor = settings.backgroundColor or {0.1, 0.1, 0.1, 0.8}
+    local bgColor = settings.backgroundColor or DEFAULT_BG_COLOR
     vigorBackground:SetColorTexture(unpack(bgColor))
     
     if swBackground then

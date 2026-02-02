@@ -1,97 +1,92 @@
 # GravityUI
 
-Ein modernes, feature-reiches UI-Konfigurations-Addon für World of Warcraft.
+![GravityUI Banner](https://media.discordapp.net/attachments/1146399026477633546/1206198908868165642/Gravity_UI_Logo.png?ex=65db1f9e&is=65c8aa9e&hm=2a77519965851494884210087796030953835623049185638575047805625488&=&format=webp&quality=lossless&width=1440&height=360)
 
-## 🎮 Verwendung
+**GravityUI** ist ein modernes, leistungsstarkes und visuell beeindruckendes UI-Komplettpaket für World of Warcraft (Retail). Es kombiniert ästhetisches "Glassmorphism"-Design mit höchster Performance und umfangreicher Anpassbarkeit.
 
-### Slash Commands
+Unser Ziel ist es, ein Interface zu bieten, das nicht nur fantastisch aussieht, sondern auch deine Spielweise durch intelligente Features und Automatisierungen verbessert.
 
-- `/gui` oder `/gravityui` - Öffnet das Haupt-Einstellungsfenster
-- `/rl` oder `/rlui` - Reload UI (lädt das Interface neu)
-- `/wa` oder `/cdm` - Öffnet die Cooldown Settings (CDM)
-- `/edit` - Öffnet den WoW Edit Mode
+## 🌟 Hauptfeatures
 
-### Minimap Button
+### 🎨 Modernes Design & Styling
+*   **Glassmorphism & Gradients:** Ein einheitlicher, moderner Look mit eleganten Transparenzen und Verläufen.
+*   **Vollständige Anpassbarkeit:** Wähle deine Akzentfarben, nutze Klassenfarben oder erstelle dein eigenes Farbschema.
+*   **Runde Designs:** Weiche Kanten und moderne Formen für ein angenehmes visuelles Erlebnis.
 
-- **Linksklick**: Öffnet das Einstellungsfenster.
-- **Drag**: Der Button kann frei um die Minimap positioniert werden.
-- **Addon Compartment**: GravityUI ist in das WoW Addon-Menü (Minimap-Leiste) integriert.
+### 🛠️ Einfache Einrichtung & Profile
+*   **Express Installer:** Starte sofort durch mit vorgefertigten Profilen für **Details**, **Plater**, **BigWigs**, **Better Cooldown Manager**, **Unhalted UnitFrames** und mehr.
+*   **Profil-Management:** Erstelle, kopiere, exportiere und teile deine Profile ganz einfach. AceDB-basiert für maximale Zuverlässigkeit.
+*   **Responsive Layouts:** Das UI passt sich intelligent an verschiedene Auflösungen und Skalierungen an.
 
-## 📋 Features
+### ⚙️ Das Menü (Konfiguration)
+Das Herzstück von GravityUI ist das umfangreiche Konfigurationsmenü (`/gui`), das in übersichtliche Kategorien unterteilt ist:
 
-### Menü-Sektionen
+*   **Main:**
+    *   **Theme Color:** Wähle deine globale Akzentfarbe oder nutze die Klassenfarbe.
+    *   **UI Scale:** Pixel-perfekte Skalierung für 1080p, 1440p und 4K.
+    *   **FPS Settings:** Optimierte CVars für maximale Performance im Raid/PvP.
+*   **Minimap:**
+    *   Anpassung von Form (Rund/Quadratisch), Größe und Position.
+    *   Smart-Tracking für Quest-Pings und Zonentext.
+*   **Action Bars:**
+    *   Konfiguration von bis zu 8 Leisten.
+    *   Mouseover-Fading und Layout-Anpassungen.
+*   **DataPanels:**
+    *   Informationsleisten für FPS, Latenz, Gold, Haltbarkeit und Freunde (WoW & B.net).
+*   **UI Improvements:** Eine Sammlung mächtiger QoL-Features:
+    *   **Automation:** Auto-Repair, Auto-Sell Junk, Invite-Management.
+    *   **Autohide:** Intelligentes Ausblenden (Objective Tracker, Talking Head, etc.).
+    *   **Combat:** Damage/Healing Zahlen, Spell Queue Window Einstellungen.
+    *   **Buffs & Debuffs:** Styling und Filterung der Auren.
+    *   **Chat:** Modernes Chat-Styling, URL-Copy und Timestamps.
+    *   **Tooltip:** ID-Anzeige, Cursor-Anchor und Kampf-Sichtbarkeit.
+    *   **Character Panel:** Item-Level Anzeige, Verzauberungs-Check und Stats.
+    *   **Dragonriding:** Eigenes Vigor-HUD für das Drachenreiten.
+    *   **Combat Timer & M+ Teleport:** Nützliche Tools für Dungeons und Raids.
+    *   **World Marks:** Schnellzugriff auf Raid-Marker und Ready-Check.
+*   **Screen Indicators:**
+    *   Visuelle Hilfen wie Fadenkreuz (Range), GCD-Ring am Mauszeiger und Fokus-Indikatoren.
+*   **CDM Utils:**
+    *   Integration für den **Better Cooldown Manager**.
+*   **UI Styling:**
+    *   Skins für Game Menu, Chat Bubbles, Ready Check, Loot-Fenster und mehr.
+*   **Profiles:**
+    *   Importieren, Exportieren und Synchronisieren von Profilen.
 
-1.  **Main**: Willkommen, Version, Quick Settings und wichtige Links.
-2.  **UI Styling**: Umfassendes Styling mit runden Designs, benutzerdefinierten Akzentfarben und Klassenfarben-Unterstützung.
-3.  **Action Bars**: Konfiguration für bis zu 8 Action Bars mit Visibility-Optionen und modernem Look.
-4.  **Minimap**: Detaillierte Einstellungen für den Minimap-Button und Minimap-Features.
-5.  **Datatexts**: Informative Anzeigen für FPS/MS, Gold, Haltbarkeit, Spec/Loot und mehr.
-6.  **Quality of Life**: Automatisierung (Reparieren, Verkaufen), Quick Salvage, Auto-Hide für UI-Elemente und Installer.
-7.  **Screen Indicators**: Vignette-Effekte und visuelle Indikatoren für Spielereignisse.
-8.  **Profiles**: Vollständige Profilverwaltung (Erstellen, Löschen, Kopieren, Umschalten) basierend auf AceDB.
+## 🧩 Folgende AddOns benutzen wir zu GravityUI
+GravityUI bietet einen integrierten **Installer**, der automatisch Profile für diese Addons lädt, um ein perfekt abgestimmtes Design zu gewährleisten:
 
-### Spezielle Highlights
+*   **Details! Damage Meter** (Perfekt geskinntes Damage Meter)
+*   **Plater Nameplates** (Profile für Tanks, DDs und Heiler)
+*   **BigWigs** (Boss Mods Design)
+*   **Better Cooldown Manager (BCDM)** (Anzeige wichtiger Cooldowns)
+*   **Unhalted Unit Frames (UUF)** (Unitframes im Gravity-Look)
+*   **Danders Frames** (Alternative Unitframes)
+*   **Platynator** (Nameplates Design)
+*   **Blizzard Edit Mode** (Layout-Positionierung)
 
--   **Intelligente Suche**: Eine dedizierte Suchseite mit Breadcrumbs hilft dabei, jede Einstellung sofort zu finden.
--   **Zentraler Installer**: Ein-Klick-Profile für Top-Addons wie **Details**, **Plater**, **BigWigs**, **BCDM** und mehr.
--   **Einheitliches Branding**: Konsistentes Look-and-Feel inklusive GravityUI-Logo im Fenster und auf der Minimap.
 
-### Zusätzliche Module
+## 🚀 Installation & Erste Schritte
 
--   **Skyriding**: Angepasste UI-Elemente für das Drachenreiten/Himmelsreiten.
--   **Chat & Tooltip**: Verbesserte Darstellung und Funktionalität für Chat und Tooltips.
--   **Loot & Objectives**: Optimierten Fenster für Beute und Questziele.
+1.  Lade **GravityUI** herunter und installiere es in deinen `Interface/AddOns` Ordner.
+2.  Starte World of Warcraft.
+3.  Nutze `/gui` um das Konfigurationsmenü jederzeit zu öffnen.
 
-## 📁 Struktur
+### Wichtige Slash-Commands
 
-```
-GravityUI/
-├── GravityUI.toc       # Addon-Metadaten & Ladeliste
-├── core/
-│   ├── init.lua        # Hauptinitialisierung & Slash Commands
-│   ├── constants.lua   # Farben, Pfade & globale Konstanten
-│   ├── defaults.lua    # Standard-Einstellungen (AceDB)
-│   ├── framework.lua   # Eigene Widget-Bibliothek für das GUI
-│   ├── window.lua      # Hauptfenster-Logik
-│   ├── styling.lua     # Globales UI-Styling
-│   ├── datatexts.lua   # Datatext-System
-│   └── installer.lua   # Multi-Addon Profile Installer
-├── pages/
-│   ├── main.lua        # Einstellungsseite: Hauptmenü
-│   ├── search.lua      # Dedizierte Suchergebnis-Seite (Neu!)
-│   ├── styling.lua     # Einstellungsseite: UI Styling
-│   ├── profiles.lua    # Profilverwaltung & Import/Export
-│   └── ...             # Weitere Konfigurationsseiten
-├── Libs/               # Konsolidierte Bibliotheken via libs.xml
-└── assets/             # GravityUI Logo, Fonts & Texturen
-```
+*   `/gui` oder `/gravityui` – Öffnet das Hauptmenü (Einstellungen).
+*   `/rl` – Lädt das Interface neu (Reload UI).
+*   `/wa` oder `/cdm` – Schnellzugriff auf WeakAuras oder Better Cooldown Manager.
+*   `/edit` – Öffnet den WoW Edit Mode.
 
-## 🚀 Erste Schritte
+## 🤝 Support & Community
 
-1.  Logge dich in World of Warcraft ein.
-2.  Öffne das Interface mit `/gui`.
-3.  Nutze den **Express Installer** unter "Profiles > Installers" für eine schnelle Einrichtung.
-4.  Nutze die **Suchleiste** oben rechts, um bestimmte Optionen schnell zu finden.
+Tritt unserer Community bei für Updates, Support und Feedback!
 
-## 🎨 Design-Philosophie
-
-GravityUI setzt auf ein **modernes, dunkles Design** ("Blue Condition Theme") mit:
-- Fokus auf Visual Excellence und Performance.
-- Hochwertige Mikro-Animationen und Hover-Effekte.
-- Maximale Anpassbarkeit durch das integrierte Styling-System.
-
-## 📝 Credits & Support
-
--   **Author**: Gravity
--   **Website**: [Gravity-Guild.eu](https://Gravity-Guild.eu)
--   **Lizenz**: GPLv3
-
-### Support
-
-1.  Melde Probleme über die Website oder den Discord.
-2.  Stelle sicher, dass alle Abhängigkeiten im `Libs`-Ordner vorhanden sind.
+*   **Discord:** [Gravity Guild Discord](https://discord.gg/nBwzzHc)
+*   **Website:** [Gravity-Guild.eu](https://gravity-guild.eu)
 
 ---
 
-**Viel Spaß beim Spielen! 🎮**
-
+Credits: Entwickelt von **Gravity** und dem GravityUI Team. 
+Lizenziert unter GPLv3.

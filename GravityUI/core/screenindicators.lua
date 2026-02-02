@@ -25,6 +25,13 @@ local RING_TEXTURES = {
     solid    = "Interface/AddOns/GravityUI/assets/cursor/gui_ring_solid.png",
 }
 
+-- Optimized Defaults (Prevent GC Churn)
+local DEFAULT_CURSOR_COLOR = {0, 0.75, 1, 1}
+local DEFAULT_CROSSHAIR_COLOR = {1, 0.95, 0, 1}
+local DEFAULT_CROSSHAIR_RANGE_COLOR = {1, 0.2, 0.2, 1}
+local DEFAULT_CROSSHAIR_BORDER_COLOR = {0, 0, 0, 1}
+local DEFAULT_COMBAT_TEXT_COLOR = {1, 1, 1, 1}
+
 -- Reticle options
 local RETICLE_OPTIONS = {
     dot     = { path = "Interface/AddOns/GravityUI/assets/cursor/gui_reticle_dot.tga", isAtlas = false },
@@ -120,7 +127,7 @@ local function UpdateCursorAppearance()
     if s.useThemeColor then
         r, g, b, a = GetAccentColor()
     else
-        local c = s.customColor or {0, 0.75, 1, 1}
+        local c = s.customColor or DEFAULT_CURSOR_COLOR
         r, g, b, a = unpack(c)
     end
 
@@ -287,11 +294,11 @@ local function UpdateCrosshairAppearance(outOfRange)
 
     local r, g, b, a
     if outOfRange and s.changeColorOnRange then
-        r, g, b, a = unpack(s.outOfRangeColor or {1, 0.2, 0.2, 1})
+        r, g, b, a = unpack(s.outOfRangeColor or DEFAULT_CROSSHAIR_RANGE_COLOR)
     elseif s.useThemeColor then
         r, g, b, a = GetAccentColor()
     else
-        local c = s.customColor or {1, 0.95, 0, 1}
+        local c = s.customColor or DEFAULT_CROSSHAIR_COLOR
         r, g, b, a = unpack(c)
     end
 
@@ -428,7 +435,7 @@ function Screen.ShowCombatStatus(message, ignoreEnabled)
     f.text:SetFont(font, s.fontSize or 24, "OUTLINE")
 
     local col = (message == "+Combat") and s.enterCombatColor or s.leaveCombatColor
-    f.text:SetTextColor(unpack(col or {1, 1, 1, 1}))
+    f.text:SetTextColor(unpack(col or DEFAULT_COMBAT_TEXT_COLOR))
     f.text:SetText(message)
     
     f:SetAlpha(1)

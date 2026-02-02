@@ -305,6 +305,10 @@ local function InitHooks()
 
         TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, GeneralPostCall)
         TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Spell, GeneralPostCall)
+        -- Add support for Buffs/Debuffs (UnitAura)
+        if Enum.TooltipDataType.UnitAura then
+            TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.UnitAura, GeneralPostCall)
+        end
     end
 
     -- Safety wrappers removed to prevent Ping System Taint.

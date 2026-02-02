@@ -28,6 +28,11 @@ local GEM_COLORS = {
     Empty = {0.5, 0.5, 0.5, 0.5},
 }
 
+-- Optimized Defaults
+local DEFAULT_UPGRADE_TRACK_COLOR = {0.98, 0.60, 0.35, 1}
+local DEFAULT_ENCHANT_TEXT_COLOR = {0.2, 0.8, 0.6}
+local DEFAULT_NO_ENCHANT_COLOR = {0.5, 0.5, 0.5}
+
 ---------------------------------------------------------------------------
 -- Settings
 ---------------------------------------------------------------------------
@@ -378,108 +383,7 @@ end
 ---------------------------------------------------------------------------
 -- Main Refresh
 ---------------------------------------------------------------------------
-local function UpdateSlotOverlay(overlay, unit)
-    if not overlay or not overlay.slotInfo then return end
-    local settings = GetSettings()
-    
-    -- Link settings to main Character Panel settings (as requested by user)
-    -- Fallback to defaults (true) if nil
-    local showName = settings.showItemName ~= false
-    local showLevel = settings.showItemLevel ~= false
-    local showEnchant = settings.showEnchants ~= false
-    local showGem = settings.showGems ~= false
-    
-    local itemLink = GetInventoryItemLink(unit, overlay.slotInfo.id)
-    if not itemLink then overlay:Hide(); return end
-    overlay:Show()
 
-    local itemName = GetItemInfo(itemLink)
-    local quality = GetInventoryItemQuality(unit, overlay.slotInfo.id)
-    local r, g, b = GetItemQualityColor(quality)
-
-    -- Name
-    if showName and itemName then
-        overlay.itemName:SetText(itemName)
-        overlay.itemName:SetTextColor(r, g, b, 1)
-        overlay.itemName:Show()
-    else
-        overlay.itemName:Hide()
-    end
-
-    -- ILvl
-    if showLevel then
-         local ilvl = GetSlotItemLevel(unit, overlay.slotInfo.id)
-         if ilvl then
-             local track, cur, max = GetUpgradeTrack(unit, overlay.slotInfo.id)
-             local text = ilvl
-             if track then
-                 local trackColor = settings.inspectUpgradeTrackColor or {0.98, 0.60, 0.35, 1}
-                 local hex = string.format("%02x%02x%02x", trackColor[1]*255, trackColor[2]*255, trackColor[3]*255)
-                 local trackStr = string.format("|cff%s(%s %s/%s)|r", hex, track, cur, max)
-                 if overlay.slotInfo.side == "right" or overlay.slotInfo.id == 16 then
-                      text = trackStr .. " " .. ilvl
-                 else
-                      text = ilvl .. " " .. trackStr
-                 end
-             end
-             overlay.itemLevel:SetText(text)
-             overlay.itemLevel:Show()
-         else
-             overlay.itemLevel:Hide()
-         end
-    else
-        overlay.itemLevel:Hide()
-    end
-
-    -- Enchant
-    if showEnchant then
-        local enchant, enchantable = GetEnchantText(unit, overlay.slotInfo.id)
-        if enchant then
-             local color = settings.enchantTextColor or {0.2, 0.8, 0.6}
-             if settings.enchantClassColor then
-                  local _, class = UnitClass(unit)
-                  local c = RAID_CLASS_COLORS[class]
-                  if c then color = {c.r, c.g, c.b} end
-             end
-             overlay.enchant:SetText(enchant)
-             overlay.enchant:SetTextColor(color[1], color[2], color[3], 1)
-             overlay.enchant:Show()
-        elseif enchantable then
-             -- Only show "No Enchant" if slot is strictly enchantable
-             local color = settings.inspectNoEnchantTextColor or {0.5, 0.5, 0.5}
-             overlay.enchant:SetText("No Enchant")
-             overlay.enchant:SetTextColor(color[1], color[2], color[3], 1)
-             overlay.enchant:Show()
-        else
-             overlay.enchant:Hide()
-        end
-    else
-        overlay.enchant:Hide()
-    end
-
-    -- Gems
-    if showGem then
-        local gems = GetGemInfo(unit, overlay.slotInfo.id)
-        for i, gemTex in ipairs(overlay.gems) do
-            if gems[i] then
-                gemTex:Show()
-                if gems[i].filled then
-                    gemTex:SetTexture(gems[i].icon)
-                    gemTex:SetDesaturated(false)
-                    gemTex:SetVertexColor(1, 1, 1, 1)
-                else
-                    gemTex:SetTexture("Interface\\ItemSocketingFrame\\UI-EmptySocket-Prismatic")
-                    gemTex:SetDesaturated(true)
-                    gemTex:SetVertexColor(0.6, 0.6, 0.6, 1)
-                end
-            else
-                gemTex:Hide()
-            end
-        end
-    else
-        for _, gemTex in ipairs(overlay.gems) do gemTex:Hide() end
-    end
-end
 
 
 local UPGRADE_TRACK_PATTERN = "Upgrade Level:%s*(.+)%s+(%d+)%s*/%s*(%d+)"
@@ -728,7 +632,7 @@ local function UpdateSlotOverlay(overlay, unit)
              local track, cur, max = GetUpgradeTrack(unit, overlay.slotInfo.id)
              local text = ilvl
              if track then
-                 local trackColor = settings.upgradeTrackColor or {0.98, 0.60, 0.35, 1}
+                 local trackColor = settings.upgradeTrackColor or DEFAULT_UPGRADE_TRACK_COLOR
                  local hex = string.format("%02x%02x%02x", trackColor[1]*255, trackColor[2]*255, trackColor[3]*255)
                  local trackStr = string.format("|cff%s(%s %s/%s)|r", hex, track, cur, max)
                  if overlay.slotInfo.side == "right" or overlay.slotInfo.id == 16 then
@@ -750,7 +654,7 @@ local function UpdateSlotOverlay(overlay, unit)
     if showEnchant then
         local enchant, enchantable = GetEnchantText(unit, overlay.slotInfo.id)
         if enchant then
-             local color = settings.enchantTextColor or {0.2, 0.8, 0.6}
+             local color = settings.enchantTextColor or DEFAULT_ENCHANT_TEXT_COLOR
              if settings.enchantClassColor then
                   local _, class = UnitClass(unit)
                   local c = RAID_CLASS_COLORS[class]
@@ -761,7 +665,7 @@ local function UpdateSlotOverlay(overlay, unit)
              overlay.enchant:Show()
         elseif enchantable then
              -- Only show "No Enchant" if slot is strictly enchantable
-             local color = settings.noEnchantTextColor or {0.5, 0.5, 0.5}
+             local color = settings.noEnchantTextColor or DEFAULT_NO_ENCHANT_COLOR
              overlay.enchant:SetText("No Enchant")
              overlay.enchant:SetTextColor(color[1], color[2], color[3], 1)
              overlay.enchant:Show()
