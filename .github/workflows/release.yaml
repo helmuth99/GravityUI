@@ -28,6 +28,8 @@ jobs:
   alpha-release:
     runs-on: ubuntu-latest
     needs: release # Wait for normal release to complete first
+    permissions:
+      contents: write # Allow pushing tags
     env:
       GITHUB_OAUTH: ${{ secrets.DEPLOY_KEY }}
       WAGO_API_TOKEN: ${{ secrets.WAGO_API_TOKEN }}
@@ -38,6 +40,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
+          token: ${{ secrets.DEPLOY_KEY }} # Use personal access token for authentication
 
       - name: Get version and create alpha tag
         id: alpha_version
@@ -52,7 +55,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git tag -a "${ALPHA_TAG}" -m "Alpha release for ${TAG_NAME}"
-          git push https://${GITHUB_OAUTH}@github.com/${GITHUB_REPOSITORY}.git "${ALPHA_TAG}"
+          git push origin "${ALPHA_TAG}"
 
       - name: Package and release alpha
         uses: BigWigsMods/packager@v2
