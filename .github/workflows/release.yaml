@@ -52,7 +52,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git tag -a "${ALPHA_TAG}" -m "Alpha release for ${TAG_NAME}"
-          git push origin "${ALPHA_TAG}"
+          git push https://${GITHUB_OAUTH}@github.com/${GITHUB_REPOSITORY}.git "${ALPHA_TAG}"
 
       - name: Package and release alpha
         uses: BigWigsMods/packager@v2
