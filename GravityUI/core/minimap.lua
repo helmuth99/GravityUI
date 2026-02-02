@@ -843,6 +843,15 @@ local function UpdateButtonVisibility()
     
     -- Missions (Expansion Landing Page)
     if ExpansionLandingPageMinimapButton then
+        -- Fix for SetText crash (missing title)
+        if not ExpansionLandingPageMinimapButton.gravityCrashFix then
+             local old = ExpansionLandingPageMinimapButton.SetTooltip
+             ExpansionLandingPageMinimapButton.SetTooltip = function(self)
+                 if not self.title then self.title = self.systemNameString or "Expansion Button" end
+                 if old then pcall(old, self) end
+             end
+             ExpansionLandingPageMinimapButton.gravityCrashFix = true
+        end
         UpdateElement(ExpansionLandingPageMinimapButton, s.missionsConfig, s.showMissions, preview)
     end
     
