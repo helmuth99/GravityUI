@@ -341,9 +341,7 @@ local function FindHeadersRecursive(frame, depth)
                 if r:IsObjectType("FontString") then
                     local t = r:GetText()
                     if t then
-                        if string.find(t, "Quest") or string.find(t, "Delve") or string.find(t, "Campaign") or string.find(t, "Shipping") or string.find(t, "Objective") or string.find(t, "Ziele") then
-                            isHeader = true
-                        elseif t == "All Objectives" or t == "Alle Ziele" then
+                        if t == "All Objectives" or t == "Alle Ziele" then
                             isHeader = true
                             isMain = true
                         end

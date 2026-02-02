@@ -612,6 +612,10 @@ local function UpdateDisplay()
             counterText = "TEST"
         else
             -- Logic Checks
+            if db.showOnlyPlayerClassBuff and buff.class and buff.class ~= playerClass and not buff.isCustom then
+                frame:Hide(); StopGlow(frame); return
+            end
+
             -- 1. Check Provider Availability (New Check)
             -- Only for group/targeted buffs that depend on a class.
             -- Self buffs are implicit (filtered by ShouldShowSelfBuff which checks playerClass)
