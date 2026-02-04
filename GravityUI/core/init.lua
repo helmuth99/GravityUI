@@ -203,16 +203,9 @@ function Addon:SlashCommandOpen(input)
     input = input and input:lower():trim() or ""
     
     if input == "editmode" then
-        -- Toggle WoW Edit Mode
-        if EditModeManagerFrame then
-            if EditModeManagerFrame:IsShown() then
-                EditModeManagerFrame:Hide()
-            else
-                EditModeManagerFrame:Show()
-            end
-        else
-            print("|cFF30D1FFGravityUI:|r Edit Mode not available.")
-        end
+        -- Safe Instruction
+        print("|cFF30D1FFGravityUI:|r Please use |cFF00FF00Game Menu (Esc) -> Edit Mode|r.")
+        print("Direct toggle is disabled to prevent breaking 'Copy Layout' functionality.")
         return
     end
     
@@ -329,15 +322,7 @@ end
 
 SLASH_GUIEDIT1 = "/edit"
 SlashCmdList["GUIEDIT"] = function()
-    if EditModeManagerFrame then
-        if EditModeManagerFrame:IsShown() then
-            EditModeManagerFrame:Hide()
-        else
-            EditModeManagerFrame:Show()
-        end
-    else
-        print("|cFF30D1FFGravityUI:|r Edit Mode not available.")
-    end
+    print("|cFF30D1FFGravityUI:|r Please use |cFF00FF00Game Menu (Esc) -> Edit Mode|r.")
 end
 
 -- Debug command to export current settings for defaults.lua

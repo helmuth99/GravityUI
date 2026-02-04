@@ -326,51 +326,100 @@ CreateButtonBar = function(parent)
     end)
     cdmBtn:SetPoint("LEFT", instBtn, "RIGHT", 10, 0)
     
-    -- Edit Mode Button
-    local editBtn = GUI:CreateButton(buttonBar, "Edit Mode", 110, 32, function()
-        if EditModeManagerFrame then
-            if EditModeManagerFrame:IsShown() then
-                EditModeManagerFrame:Hide()
-            else
-                EditModeManagerFrame:Show()
-            end
-        else
-            print("|cFF30D1FFGravityUI:|r Edit Mode not available.")
-        end
-    end)
-    editBtn:SetPoint("LEFT", cdmBtn, "RIGHT", 10, 0)
-    
     -- Helper to open addon config
-    local function OpenAddonConfig(name, slashCmd)
+    local function OpenAddonConfig(name, slashCmds)
         if not C_AddOns.IsAddOnLoaded(name) then return false end
         
-        -- Try specific slash commands
-        if slashCmd then
-            if type(slashCmd) == "table" then
-                for _, cmd in ipairs(slashCmd) do
-                    if SlashCmdList[cmd] then
-                        SlashCmdList[cmd]("")
-                        return true
-                    end
-                end
-            elseif SlashCmdList[slashCmd] then
-                SlashCmdList[slashCmd]("")
+        -- Helper to execute a slash command if key exists
+        local function TryRun(key)
+            if SlashCmdList[key] then
+                SlashCmdList[key]("")
                 return true
+            end
+            return false
+        end
+
+        local cmds = type(slashCmds) == "table" and slashCmds or {slashCmds}
+        
+        -- 1. Try direct keys (UPPERCASE, TitleCase, lowercase)
+        for _, cmd in ipairs(cmds) do
+            if TryRun(cmd) then return true end
+            if TryRun(cmd:upper()) then return true end
+            if TryRun(cmd:lower()) then return true end
+        end
+
+        -- 2. Brute force scan for the command string
+        -- e.g. look for SLASH_XYZ1 = "/bigwigs" -> run SlashCmdList["XYZ"]
+        for k, v in pairs(_G) do
+            if type(k) == "string" and k:match("^SLASH_") and type(v) == "string" then
+                for _, targetCmd in ipairs(cmds) do
+                     -- targetCmd might be "bw" or "bigwigs"
+                     -- v might be "/bw" or "/bigwigs"
+                     if v:lower() == "/" .. targetCmd:lower() then
+                         -- Extract key: SLASH_KEY1 -> KEY
+                         local key = k:match("^SLASH_(.+)%d+$")
+                         if key and TryRun(key) then 
+                             return true 
+                         end
+                     end
+                end
             end
         end
 
-        -- Generic AceConfig fallback (some addons register this way)
+        -- 3. Generic AceConfig fallback
         local LibStub = _G.LibStub
         if LibStub then
             local AceConfigDialog = LibStub("AceConfigDialog-3.0", true)
             if AceConfigDialog and AceConfigDialog.Open then
-                 -- Try generic open
                  if AceConfigDialog:Open(name) then return true end
             end
         end
 
         print("|cFF30D1FFGravityUI:|r Loaded " .. name .. " but could not open config automatically.")
         return true
+    end
+
+    -- Boss Mods Button (BigWigs / DBM)
+    -- Boss Mods Button (BigWigs / DBM)
+    local bossBtn = GUI:CreateButton(buttonBar, "Boss Mods", 95, 32, function()
+        local opened = false
+
+        -- BigWigs (Try Slash Commands)
+        if not opened and OpenAddonConfig("BigWigs", {"BIGWIGS", "BW"}) then opened = true end
+        
+        -- BigWigs (Try Option Frame directly if slash failed, sometimes its lod)
+        if not opened and C_AddOns.IsAddOnLoaded("BigWigs") then
+             -- Try generic AceConfig load
+             local LibStub = _G.LibStub
+             if LibStub then
+                 local AceConfigDialog = LibStub("AceConfigDialog-3.0", true)
+                 if AceConfigDialog and AceConfigDialog.Open then
+                      if AceConfigDialog:Open("BigWigs") then opened = true end
+                 end
+             end
+             -- Try LoadOnDemand options if needed
+             if not opened and not C_AddOns.IsAddOnLoaded("BigWigs_Options") then
+                 C_AddOns.LoadAddOn("BigWigs_Options")
+                 if LibStub("AceConfigDialog-3.0"):Open("BigWigs") then opened = true end
+             end
+        end
+
+        -- DBM (Deadly Boss Mods)
+        if not opened and OpenAddonConfig("DBM-Core", {"DBM", "DEADLYBOSSMODS"}) then opened = true end
+
+        if not opened then
+             print("|cFF30D1FFGravityUI:|r No supported Boss Mod addon loaded (BigWigs, DBM).")
+        end
+    end)
+    bossBtn:SetPoint("LEFT", cdmBtn, "RIGHT", 10, 0)
+    -- Matching User Image styling
+    bossBtn:SetBackdropColor(C.accent[1], C.accent[2], C.accent[3], 0.5)
+    bossBtn:SetBackdropBorderColor(C.accent[1], C.accent[2], C.accent[3], 1)
+    
+    -- Add to refresh list
+    bossBtn.RefreshColors = function(self)
+        self:SetBackdropColor(C.accent[1], C.accent[2], C.accent[3], 0.5)
+        self:SetBackdropBorderColor(C.accent[1], C.accent[2], C.accent[3], 1)
     end
 
     -- Nameplates Button
@@ -387,7 +436,7 @@ CreateButtonBar = function(parent)
              print("|cFF30D1FFGravityUI:|r No supported Nameplates addon loaded (Plater, Platynator).")
         end
     end)
-    npBtn:SetPoint("LEFT", editBtn, "RIGHT", 10, 0)
+    npBtn:SetPoint("LEFT", bossBtn, "RIGHT", 10, 0)
     -- Matching User Image styling
     npBtn:SetBackdropColor(C.accent[1], C.accent[2], C.accent[3], 0.5)
     npBtn:SetBackdropBorderColor(C.accent[1], C.accent[2], C.accent[3], 1)

@@ -1,5 +1,7 @@
 -- GravityUI - Autohide Module
 local ADDON_NAME, ns = ...
+local discoveredBCDMFrames = {} -- Persistent cache for dynamic frames
+local ApplyHideSettings -- Forward declaration
 
 local function GetSettings()
     local db = ns.GetDB()
@@ -25,6 +27,7 @@ local function InitDefaults()
             arena = false,
         }
     end
+    if s.hideOnWorldQuestMinigame == nil then s.hideOnWorldQuestMinigame = false end
 end
 
 -- Helper: Check if player is in a Mythic+ dungeon (difficulty 8)
@@ -376,6 +379,168 @@ local function ApplyHideSettings()
             UIErrorsFrame:RegisterEvent("UI_ERROR_MESSAGE")
         end
     end
+
+
+    -- World Quest Minigames (Vehicle / Override Bar) -> Hide Interface
+    -- World Quest Minigames (Vehicle / Override Bar) -> Hide Interface
+    local inVehicle = HasOverrideActionBar() or (C_Vehicle and C_Vehicle.IsVehicleUIShowing())
+    local inPetBattle = C_PetBattles and C_PetBattles.IsInBattle()
+    
+    -- Include Pet Battles in the "Minigame" hide logic to clean up BCDM etc.
+    local hideForMinigame = settings.hideOnWorldQuestMinigame and (inVehicle or inPetBattle)
+
+    -- 1. Objective Tracker (Extension)
+    -- We already handled ObjectiveTrackerFrame above based on instance types.
+    -- Now enforce it if minigame mode is active.
+    if hideForMinigame and ObjectiveTrackerFrame then
+        ObjectiveTrackerFrame:Hide()
+    end
+
+
+
+    -- 4. UnitFrames (Player, Target, Focus)
+    -- Also try to handle UnhaltedUnitFrames if present (they usually recycle these names or hook them)
+    local framesToHide = {
+        -- Blizzard
+        PlayerFrame, TargetFrame, FocusFrame,
+        CompactRaidFrameManager, 
+        
+        -- UnhaltedUnitFrames (UUF)
+        _G["UUF_Player"], _G["UUF_Target"], _G["UUF_Focus"], 
+        _G["UUF_TargetTarget"], _G["UUF_Pet"],
+
+        -- BetterCooldownManager (BCDM)
+        _G["EssentialCooldownViewer"],
+        _G["UtilityCooldownViewer"],
+        _G["BCDM_CustomCooldownViewer"],
+        _G["BCDM_AdditionalCustomCooldownViewer"],
+        _G["BCDM_TrinketBar"],
+        _G["BCDM_CustomItemBar"],
+        _G["BCDM_CustomItemSpellBar"],
+    }
+    
+    -- Dynamic BCDM Frame Discovery (Catch-all for Resource Bars etc.)
+    -- We need to persist discovered frames because if they are hidden, IsVisible() returns false,
+    -- and we wouldn't add them to the list to Restore them!
+    -- discoveredBCDMFrames is defined at module level
+
+    -- 1. Scan for new visible frames
+    local children = {UIParent:GetChildren()}
+    for _, child in ipairs(children) do
+        -- Safety check methods
+        if child and child.IsVisible and child.GetName then
+            local isVisible
+            local success, _ = pcall(function() isVisible = child:IsVisible() end)
+            
+            if success and isVisible then
+                local name = child:GetName()
+                if name and (name:find("^BCDM_") or name:find("CooldownViewer")) then
+                     if not discoveredBCDMFrames[child] then
+                         discoveredBCDMFrames[child] = true
+                     end
+                end
+            end
+        end
+    end
+
+    -- 2. Add all discovered frames to the hide list
+    for frame, _ in pairs(discoveredBCDMFrames) do
+         local found = false
+         for _, existing in pairs(framesToHide) do
+             if existing == frame then found = true; break end
+         end
+         if not found then
+             table.insert(framesToHide, frame)
+         end
+    end
+    
+    for _, frame in pairs(framesToHide) do
+        if frame then
+            -- optimization: if setting is disabled, only process if we previously hooked this frame (need to restore/cleanup)
+            -- otherwise, leave it alone so we don't interfere with other addons.
+            if settings.hideOnWorldQuestMinigame or frame._gui_AutohideHooked then
+            
+                if hideForMinigame then
+                -- Method 1: Standard Hide
+                frame:Hide()
+                
+                -- Method 2: Alpha (Visual Hide)
+                frame:SetAlpha(0)
+                frame:EnableMouse(false)
+
+                -- Method 3: State Driver Override (Combat Sensitive)
+                -- Skip BCDM frames for this (rely on Alpha 0) to avoid breaking their internal state
+                local name = frame.GetName and frame:GetName() or ""
+                local isBCDM = name:find("BCDM") or name:find("CooldownViewer")
+                
+                if not InCombatLockdown() and frame.RegisterStateDriver and not isBCDM then
+                    -- If it's controlled by a driver, Hide() is ignored. We must unregister it.
+                    UnregisterStateDriver(frame, "visibility")
+                    frame:Hide() -- Try hide again after unregister
+                end
+
+                -- Method 4: Aggressive Hooking (Prevent re-show/re-alpha)
+                if not frame._gui_AutohideHooked then
+                    frame._gui_AutohideHooked = true
+                    hooksecurefunc(frame, "Show", function(self)
+                         local s = GetSettings()
+                         -- Recalculate 'inVehicle' here to be sure, or pass it?
+                         -- Ideally we check the global/helper function, but we can just re-check vehicle state
+                         local v = HasOverrideActionBar() or (C_Vehicle and C_Vehicle.IsVehicleUIShowing())
+                         local pb = C_PetBattles and C_PetBattles.IsInBattle()
+                         if s and s.hideOnWorldQuestMinigame and (v or pb) then
+                             self:Hide()
+                             self:SetAlpha(0)
+                         end
+                    end)
+                    hooksecurefunc(frame, "SetAlpha", function(self, alpha)
+                         local s = GetSettings()
+                         local v = HasOverrideActionBar() or (C_Vehicle and C_Vehicle.IsVehicleUIShowing())
+                         local pb = C_PetBattles and C_PetBattles.IsInBattle()
+                         if s and s.hideOnWorldQuestMinigame and (v or pb) and alpha > 0 then
+                             self:SetAlpha(0)
+                         end
+                    end)
+                end
+            else
+                -- Restore visibility
+                frame:SetAlpha(1)
+                frame:EnableMouse(true)
+                
+                -- Debug Restore
+                -- local n = frame.GetName and frame:GetName() or "Unknown"
+                -- if n:find("BCDM") then print("Restoring BCDM Frame: "..n) end
+
+                if frame == PlayerFrame then
+                     frame:Show()
+                     if not InCombatLockdown() then RegisterStateDriver(frame, "visibility", "[@player,exists] show; hide") end
+                elseif frame == TargetFrame then
+                     if UnitExists("target") then frame:Show() end
+                     if not InCombatLockdown() then RegisterStateDriver(frame, "visibility", "[@target,exists] show; hide") end
+                elseif frame == FocusFrame then
+                     if UnitExists("focus") then frame:Show() end
+                     if not InCombatLockdown() then RegisterStateDriver(frame, "visibility", "[@focus,exists] show; hide") end
+                
+                -- UUF Frames
+                elseif frame.GetName and frame:GetName():find("UUF_") then
+                     frame:Show()
+                     if frame.Update then frame:Update() end
+                     -- UUF usually restores its own driver on Update or OnEvent? 
+                     -- We can try to trigger its update.
+                     if not InCombatLockdown() and frame.RegisterStateDriver then
+                         -- Best guess restore for UUF Player
+                         if frame == _G["UUF_Player"] then
+                             RegisterStateDriver(frame, "visibility", "[@player,exists] show; hide")
+                         end
+                     end
+                -- BCDM Frames
+                elseif frame.GetName and (frame:GetName():find("CooldownViewer") or frame:GetName():find("BCDM_")) then
+                     frame:Show()
+                end
+            end
+            end
+        end
+    end
 end
 
 -- Export Refresh Function
@@ -393,12 +558,32 @@ eventFrame:RegisterEvent("PLAYER_ROLES_ASSIGNED")
 eventFrame:RegisterEvent("ADDON_LOADED")
 eventFrame:RegisterEvent("CHALLENGE_MODE_START")
 eventFrame:RegisterEvent("CHALLENGE_MODE_RESET")
+eventFrame:RegisterEvent("UNIT_ENTERING_VEHICLE")
+eventFrame:RegisterEvent("UNIT_EXITING_VEHICLE")
+eventFrame:RegisterEvent("UPDATE_OVERRIDE_ACTIONBAR")
+eventFrame:RegisterEvent("UPDATE_BONUS_ACTIONBAR")
+eventFrame:RegisterEvent("PET_BATTLE_OPENING_START")
+eventFrame:RegisterEvent("PET_BATTLE_CLOSE")
 
 eventFrame:SetScript("OnEvent", function(self, event, addon)
     local settings = GetSettings()
     
     if event == "ADDON_LOADED" and addon == "Blizzard_TalkingHeadUI" then
         ApplyHideSettings()
+        return
+    end
+
+    -- Minigame Detection Checks
+    -- Triggers: Vehicle Enter/Exit, Override Bar Updates, Pet Battles
+    if event == "UNIT_ENTERING_VEHICLE" or event == "UNIT_EXITING_VEHICLE" or 
+       event == "UPDATE_OVERRIDE_ACTIONBAR" or event == "UPDATE_BONUS_ACTIONBAR" or
+       event == "PET_BATTLE_OPENING_START" or event == "PET_BATTLE_CLOSE" then
+        if unit and unit ~= "player" then return end -- Filter units if strictly necessary, update events don't have unit argument usually
+        
+        -- Delay to allow other addons to settle
+        C_Timer.After(0.5, function()
+             ApplyHideSettings()
+        end)
         return
     end
 
@@ -424,3 +609,40 @@ eventFrame:SetScript("OnEvent", function(self, event, addon)
         end
     end
 end)
+
+-- DEBUG COMMAND
+SLASH_GRAVITYUIAUTOHIDEDEBUG1 = "/guidebug"
+SlashCmdList["GRAVITYUIAUTOHIDEDEBUG"] = function()
+    local inVehicle = UnitInVehicle("player")
+    local hasUI = UnitHasVehicleUI("player")
+    local hasBar = HasVehicleActionBar()
+    local hasOverride = HasOverrideActionBar()
+    local cVehicleUI = (C_Vehicle and C_Vehicle.IsVehicleUIShowing())
+    
+    print("|cFF00FF00GravityUI Autohide Debug:|r")
+    print("  UnitInVehicle: " .. tostring(inVehicle))
+    print("  HasOverrideActionBar: " .. tostring(hasOverride))
+    print("  IsVehicleUIShowing: " .. tostring(cVehicleUI))
+    print("  UnitHasVehicleUI: " .. tostring(hasUI))
+    
+    local settings = ns.GetDB().uiimprovements
+    print("  Setting Enabled: " .. tostring(settings and settings.hideOnWorldQuestMinigame))
+
+    print("|cFFFFCC00Scanning BCDM Frames:|r")
+    local children = {UIParent:GetChildren()}
+    for _, child in ipairs(children) do
+        if child and child.GetName then
+            local name = child:GetName()
+            if name and (name:find("BCDM") or name:find("CooldownViewer") or name:find("Resource")) then
+                local vis = "hidden"
+                if child.IsVisible and child:IsVisible() then vis = "|cFF00FF00visible|r" end
+                local alpha = child.GetAlpha and child:GetAlpha() or -1
+                print("  Found: " .. name .. " -> " .. vis .. " (Alpha: " .. alpha .. ")")
+            end
+        end
+    end
+    
+    -- Force run
+    -- ns.ApplyAutohideSettings()
+    -- print("  ApplyHideSettings run complete.")
+end

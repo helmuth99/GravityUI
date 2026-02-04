@@ -20,23 +20,7 @@ function ns.OpenCooldownSettings()
     end
 end
 
----------------------------------------------------------------------------
--- EDIT MODE BUTTON HANDLER
----------------------------------------------------------------------------
-function ns.OpenEditMode()
-    if EditModeManagerFrame then
-        if EditModeManagerFrame:IsShown() then
-            EditModeManagerFrame:Hide()
-        else
-            EditModeManagerFrame:Show()
-        end
-        return true
-    else
-        print("|cFF30D1FFGravityUI:|r Edit Mode not available.")
-        print("|cFF30D1FFGravityUI:|r This feature requires WoW 10.0+")
-        return false
-    end
-end
+
 
 ---------------------------------------------------------------------------
 -- QUICK KEYBIND MODE (Bonus Feature)

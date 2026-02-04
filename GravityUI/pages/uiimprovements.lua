@@ -198,6 +198,11 @@ local function BuildAutohide(parent)
 
     CreateSubHeader(content, "Combat & Messages")
     AddRow(content, "Hide Error Messages (Red Text)", "checkbox", "hideErrorMessages", dbUI, RefreshAutohide)
+    content.rowCount = content.rowCount + 0.5
+
+    CreateSubHeader(content, "World Quest Minigames/Petbattles")
+    AddRow(content, "Hide Interface on Minigame/Petbattle", "checkbox", "hideOnWorldQuestMinigame", dbUI, RefreshAutohide)
+    content.rowCount = content.rowCount + 0.5
 
     content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
 end
