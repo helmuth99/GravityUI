@@ -69,31 +69,48 @@ local function GetFontPath()
     return fontPath
 end
 
-local function GetVigorInfo()
+-- State specific to Vigor/Second Wind (Event-driven cache)
+local vigorState = { current = 0, max = 6, start = 0, duration = 0, rate = 1 }
+local swState = { current = 0, max = 0, start = 0, duration = 0, rate = 1 }
+
+local function UpdateVigorState()
     local data = C_Spell.GetSpellCharges(VIGOR_SPELL_ID)
-    if not data then return 0, 6, 0, 0, 1 end
-    
+    if data then
+        vigorState.current = data.currentCharges or 0
+        vigorState.max = data.maxCharges or 6
+        vigorState.start = data.cooldownStartTime or 0
+        vigorState.duration = data.cooldownDuration or 0
+        vigorState.rate = data.chargeModRate or 1
+    end
+end
+
+local function UpdateSecondWindState()
+    local data = C_Spell.GetSpellCharges(SECOND_WIND_SPELL_ID)
+    if data then
+        swState.current = data.currentCharges or 0
+        swState.max = data.maxCharges or 0
+        swState.start = data.cooldownStartTime or 0
+        swState.duration = data.cooldownDuration or 0
+        swState.rate = data.chargeModRate or 1
+    else
+        swState.max = 0 -- Reset if not found (e.g. untalented)
+    end
+end
+
+local function GetVigorInfo()
     -- API restriction check (IsSecretValue replacement)
-    -- If we are in combat and data looks suspicious (0/6 is typical "unknown" state), treat as invalid
-    if inCombat and data.currentCharges == 0 and data.maxCharges == 6 then
-        return 0, 6, 0, 0, 1 -- Return as is, letting logic handle hide
+    -- If we are in combat and data looks suspicious (0/6 is typical "unknown" state), treat as valid 0
+    -- but do not hide entire frame purely on this if caching handles it.
+    -- However, legacy logic had a specific combat check here.
+    if inCombat and vigorState.current == 0 and vigorState.max == 6 then
+         -- We return cached values. If cache says 0/6, we trust it or the event update.
     end
     
-    return data.currentCharges or 0,
-           data.maxCharges or 6,
-           data.cooldownStartTime or 0,
-           data.cooldownDuration or 0,
-           data.chargeModRate or 1
+    return vigorState.current, vigorState.max, vigorState.start, vigorState.duration, vigorState.rate
 end
 
 local function GetSecondWindInfo()
-    local data = C_Spell.GetSpellCharges(SECOND_WIND_SPELL_ID)
-    if not data then return 0, 0, 0, 0, 1 end
-    return data.currentCharges or 0,
-           data.maxCharges or 0,
-           data.cooldownStartTime or 0,
-           data.cooldownDuration or 0,
-           data.chargeModRate or 1
+    return swState.current, swState.max, swState.start, swState.duration, swState.rate
 end
 
 local function GetGlidingInfo()
@@ -833,6 +850,8 @@ eventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
 eventFrame:SetScript("OnEvent", function(self, event, arg1)
     if event == "PLAYER_LOGIN" then
         C_Timer.After(1, function()
+            UpdateVigorState()
+            UpdateSecondWindState()
             ns.CreateSkyridingFrame()
             ApplySettings()
             if skyridingFrame then skyridingFrame:SetScript("OnUpdate", OnUpdate) end
@@ -843,11 +862,21 @@ eventFrame:SetScript("OnEvent", function(self, event, arg1)
         UpdateVisibility()
     elseif event == "PLAYER_REGEN_DISABLED" then inCombat = true; UpdateVisibility()
     elseif event == "PLAYER_REGEN_ENABLED" then inCombat = false; UpdateVisibility()
-    else
-        -- Updates
+    elseif event == "SPELL_UPDATE_CHARGES" or event == "SPELL_UPDATE_COOLDOWN" then
+        -- Update Cache
+        UpdateVigorState()
+        UpdateSecondWindState()
+        
+        -- Update UI
         if skyridingFrame and skyridingFrame:IsShown() then
-            if event == "SPELL_UPDATE_COOLDOWN" then UpdateAbilityIcon()
-            else UpdateVigorBar(); UpdateSecondWind() end
+            if event == "SPELL_UPDATE_COOLDOWN" then
+                 UpdateAbilityIcon()
+                 UpdateRechargeAnimation() -- Update cooldown visual
+                 UpdateSecondWindRecharge()
+            else
+                 UpdateVigorBar()
+                 UpdateSecondWind()
+            end
         end
     end
 end)
