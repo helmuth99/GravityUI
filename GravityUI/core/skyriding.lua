@@ -156,7 +156,7 @@ local function StartSkyridingFade(targetAlpha)
     fadeTargetAlpha = targetAlpha
 end
 
-local function UpdateVisibility()
+local function UpdateVisibility(gliding, canGlideNow)
     local settings = GetSettings()
     if not settings or not skyridingFrame then return end
 
@@ -165,7 +165,9 @@ local function UpdateVisibility()
         return
     end
 
-    local gliding, canGlideNow, _ = GetGlidingInfo()
+    if gliding == nil then
+        gliding, canGlideNow, _ = GetGlidingInfo()
+    end
     isGliding = gliding
     canGlide = canGlideNow
 
@@ -487,14 +489,17 @@ local function UpdateSecondWindRecharge()
     swRechargeOverlay:Show()
 end
 
-local function UpdateSpeed()
+local function UpdateSpeed(speed)
     local settings = GetSettings()
     if not settings.showSpeed then
         speedText:Hide()
         return
     end
     
-    local _, _, speed = GetGlidingInfo()
+    if speed == nil then
+         local _, _, s = GetGlidingInfo()
+         speed = s
+    end
     
     -- Fallback: If GetGlidingInfo returns 0 or nil, use real unit speed
     if not speed or speed == 0 then
@@ -556,7 +561,7 @@ local function OnUpdate(self, delta)
     if not settings or not settings.enabled then return end
     
     -- Grounded time tracking
-    local gliding, canGlideNow, _ = GetGlidingInfo()
+    local gliding, canGlideNow, forwardSpeed = GetGlidingInfo()
     if not gliding and canGlideNow then
         groundedTime = groundedTime + UPDATE_THROTTLE
     else
@@ -616,9 +621,9 @@ local function OnUpdate(self, delta)
     UpdateRechargeAnimation()
     UpdateSecondWind()
     UpdateSecondWindRecharge()
-    UpdateSpeed()
+    UpdateSpeed(forwardSpeed)
     UpdateAbilityIcon()
-    UpdateVisibility()
+    UpdateVisibility(gliding, canGlideNow)
 end
 
 ---------------------------------------------------------------------------

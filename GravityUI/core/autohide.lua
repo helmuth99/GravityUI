@@ -2,6 +2,7 @@
 local ADDON_NAME, ns = ...
 local discoveredBCDMFrames = {} -- Persistent cache for dynamic frames
 local ApplyHideSettings -- Forward declaration
+local lastHideForMinigame = nil -- specific state tracker for minigame logic
 
 local function GetSettings()
     local db = ns.GetDB()
@@ -395,6 +396,13 @@ local function ApplyHideSettings()
     if hideForMinigame and ObjectiveTrackerFrame then
         ObjectiveTrackerFrame:Hide()
     end
+
+    -- Optimization: If we are validly NOT in a minigame, and we weren't before, skip the heavy unitframe processing.
+    -- This prevents flickering caused by redundant 'Show()' calls on events like mounting.
+    if hideForMinigame == false and lastHideForMinigame == false then
+        return
+    end
+    lastHideForMinigame = hideForMinigame
 
 
 

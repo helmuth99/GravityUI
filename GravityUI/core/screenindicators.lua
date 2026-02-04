@@ -43,39 +43,116 @@ local RETICLE_OPTIONS = {
 -- Melee Range check spells for various classes
 -- Melee Range check spells for various classes (Hash Set for O(1) lookup)
 local MELEE_RANGE_ABILITIES = {
-    [96231] = true,  -- Paladin: Rebuke
-    [6552] = true,   -- Warrior: Pummel
-    [1766] = true,   -- Rogue: Kick
-    [116705] = true, -- Monk: Spear Hand Strike
-    [183752] = true, -- Demon Hunter: Disrupt
+    -- Paladin
+    [35395] = true,  -- Crusader Strike
+    [406647] = true, -- Templar Strike
+    [96231] = true,  -- Rebuke
+    
+    -- Warrior
+    [12294] = true,  -- Mortal Strike
+    [23881] = true,  -- Bloodthirst
+    [23922] = true,  -- Shield Slam
+    [20243] = true,  -- Devastate
+    [1464] = true,   -- Slam
+    [6552] = true,   -- Pummel
+    
+    -- Rogue
+    [193315] = true, -- Sinister Strike
+    [1329] = true,   -- Mutilate
+    [53] = true,     -- Backstab
+    [8676] = true,   -- Ambush
+    [1766] = true,   -- Kick
+    
+    -- Monk
+    [100780] = true, -- Tiger Palm
+    [107428] = true, -- Rising Sun Kick
+    [205523] = true, -- Blackout Kick
+    [116705] = true, -- Spear Hand Strike
+    
+    -- Demon Hunter
+    [183752] = true, -- Disrupt
+    [162794] = true, -- Chaos Strike
+    [201427] = true, -- Annihilation
     [228478] = true, -- Soul Cleave
     [263642] = true, -- Fracture
-    [49143] = true,  -- Frost Strike
-    [85948] = true,  -- Festering Strike
+    
+    -- Death Knight
+    -- Note: Mind Freeze is 15y, avoided for melee check
+    [49020] = true,  -- Obliterate
     [206930] = true, -- Heart Strike
-    [100780] = true, -- Tiger Palm
-    [100784] = true, -- Blackout Kick
-    [107428] = true, -- Rising Sun Kick
+    [85948] = true,  -- Festering Strike
+    [55090] = true,  -- Scourge Strike
+    [49143] = true,  -- Frost Strike
+    
+    -- Druid
     [5221] = true,   -- Shred
-    [3252] = true,   -- Shred (alt)
-    [22568] = true,  -- Ferocious Bite
     [33917] = true,  -- Mangle
     [6807] = true,   -- Maul
-    [17364] = true,  -- Shaman: Stormstrike
-    [7389] = true,   -- Shaman: Primal Strike
-    [60103] = true,  -- Shaman: Lava Lash
-    [186270] = true, -- Hunter: Raptor Strike
-    [190984] = true, -- Hunter: Mongoose Bite
+    [106839] = true, -- Skull Bash
+    
+    -- Shaman
+    [17364] = true,  -- Stormstrike
+    [60103] = true,  -- Lava Lash
+    [7389] = true,   -- Primal Strike
+    
+    -- Hunter
+    [186270] = true, -- Raptor Strike
+    [259387] = true, -- Mongoose Bite (Retail)
+    [2953] = true,   -- Wing Clip
 }
+
+-- Ranged Range check spells (Standard 40y Casts)
+local RANGED_RANGE_ABILITIES = {
+    -- Mage
+    [116] = true,    -- Frostbolt
+    [133] = true,    -- Fireball
+    [30451] = true,  -- Arcane Blast
+    [44425] = true,  -- Arcane Barrage
+    
+    -- Warlock
+    [686] = true,    -- Shadow Bolt
+    [29722] = true,  -- Incinerate
+    [198590] = true, -- Drain Soul
+    [30108] = true,  -- Unstable Affliction
+    
+    -- Priest
+    [585] = true,    -- Smite
+    [589] = true,    -- Shadow Word: Pain
+    [8092] = true,   -- Mind Blast
+    
+    -- Hunter
+    [193455] = true, -- Cobra Shot
+    [56641] = true,  -- Steady Shot
+    [185358] = true, -- Arcane Shot
+    [217200] = true, -- Barbed Shot
+    
+    -- Shaman
+    [188196] = true, -- Lightning Bolt
+    [188389] = true, -- Flame Shock
+    [51505] = true,  -- Lava Burst
+
+    -- Druid
+    [194153] = true, -- Starfire
+    [5176] = true,   -- Wrath
+    [8921] = true,   -- Moonfire
+    
+    -- Evoker
+    [361469] = true, -- Living Flame
+    [356995] = true, -- Disintegrate
+    [362969] = true, -- Azure Strike
+}
+
+local cachedRangeSlot = nil -- Optimization: Cache the slot ID of the ability
 
 -- References
 local cursorFrame, ringTexture, reticleTexture, gcdCooldown
 local crosshairFrame, horizLine, vertLine, horizBorder, vertBorder
 local rangeCheckFrame
-local cachedMeleeSlot = nil -- Optimization: Cache the slot ID of the melee ability
 
 -- Cached settings
 local cachedCursorSettings, cachedCrosshairSettings
+local cursorOffsetX, cursorOffsetY = 0, 0 -- Optimization: Upvalues for OnUpdate
+local lastOutOfRange = nil -- Optimization: State tracker for Crosshair
 local function GetCursorSettings()
     if not cachedCursorSettings then
         local db = ns.GetDB()
@@ -228,12 +305,11 @@ local function CreateCursorFrame()
     reticleTexture = cursorFrame:CreateTexture(nil, "OVERLAY")
     reticleTexture:SetPoint("CENTER")
 
+    -- Optimization: Use upvalues to avoid table lookups in high-frequency OnUpdate
     cursorFrame:SetScript("OnUpdate", function(self)
         local x, y = GetScaledCursorPosition()
-        local s = GetCursorSettings()
-        local ox = s and s.offsetX or 0
-        local oy = s and s.offsetY or 0
-        self:SetPoint("CENTER", UIParent, "BOTTOMLEFT", x + ox, y + oy)
+        -- Direct upvalue access is faster than table lookup
+        self:SetPoint("CENTER", UIParent, "BOTTOMLEFT", x + cursorOffsetX, y + cursorOffsetY)
     end)
 
     -- Right-click hide functionality
@@ -260,30 +336,35 @@ end
 -- CROSSHAIR LOGIC - Bildschirm-Fadenkreuz mit Reichweiten-Check
 ---------------------------------------------------------------------------
 
-local function UpdateMeleeSlotCache()
-    cachedMeleeSlot = nil
+local function UpdateRangeSlotCache()
+    cachedRangeSlot = nil
+    -- Scan Action Bars for known range check spells
     for slot = 1, 180 do
         local actionType, id = GetActionInfo(slot)
-        if id and actionType == "spell" and MELEE_RANGE_ABILITIES[id] then
-            cachedMeleeSlot = slot
-            return
+        if id and actionType == "spell" then
+            if MELEE_RANGE_ABILITIES[id] or RANGED_RANGE_ABILITIES[id] then
+                cachedRangeSlot = slot
+                return
+            end
         end
     end
 end
 
-local function IsOutOfMeleeRange()
+local function IsOutOfRange()
     if not UnitExists("target") or not UnitCanAttack("player", "target") or UnitIsDeadOrGhost("target") then
         return false
     end
 
-    if IsActionInRange and cachedMeleeSlot then
-        local inRange = IsActionInRange(cachedMeleeSlot)
+    if IsActionInRange and cachedRangeSlot then
+        local inRange = IsActionInRange(cachedRangeSlot)
         if inRange == true then return false
         elseif inRange == false then return true end
     end
     
-    -- Fallback: If no cached slot, we could scan (expensive) or just use CheckInteractDistance
-    -- To be safe, if we have no cached slot, rely on InteractDistance(3) which is roughly melee
+    -- Fallback: InteractDistance(3) is roughly melee (10y)
+    -- If we don't have a cached slot, we default to melee check.
+    -- For ranged classes without a cached spell, this might be misleading, 
+    -- but usually they WILL have a primary spell on bars.
     return not CheckInteractDistance("target", 3)
 end
 
@@ -351,8 +432,15 @@ local function CreateCrosshairFrame()
         
         local s = GetCrosshairSettings()
         if s and s.enabled and s.changeColorOnRange then
-            local isOut = IsOutOfMeleeRange()
-            UpdateCrosshairAppearance(isOut)
+            local isOut = IsOutOfRange()
+            if isOut ~= lastOutOfRange then
+                UpdateCrosshairAppearance(isOut)
+                lastOutOfRange = isOut
+            end
+        elseif lastOutOfRange ~= nil then 
+             -- Reset if disabled or setting changed
+             lastOutOfRange = nil 
+             UpdateCrosshairAppearance(false)
         end
     end)
 end
@@ -569,6 +657,8 @@ function Screen.Refresh()
 
     local cS = GetCursorSettings()
     if cS and cS.enabled then
+        cursorOffsetX = cS.offsetX or 0
+        cursorOffsetY = cS.offsetY or 0
         CreateCursorFrame()
         UpdateCursorVisibility()
         UpdateCursorAppearance()
@@ -580,7 +670,7 @@ function Screen.Refresh()
     local chS = GetCrosshairSettings()
     if chS and chS.enabled then
         CreateCrosshairFrame()
-        UpdateCrosshairAppearance(IsOutOfMeleeRange())
+        UpdateCrosshairAppearance(IsOutOfRange())
     elseif chS then
         if crosshairFrame then crosshairFrame:Hide() end
     end
@@ -657,12 +747,12 @@ eventFrame:SetScript("OnEvent", function(self, event, unit)
         UpdateCursorGCD()
     elseif event == "PLAYER_TARGET_CHANGED" then
         if crosshairFrame and crosshairFrame:IsShown() then
-            UpdateCrosshairAppearance(IsOutOfMeleeRange())
+            UpdateCrosshairAppearance(IsOutOfRange())
         end
     elseif event == "UNIT_PET" or event == "PET_BAR_UPDATE" or event == "PLAYER_SPECIALIZATION_CHANGED" then
         Screen.UpdatePetTicker()
-        if event == "PLAYER_SPECIALIZATION_CHANGED" then UpdateMeleeSlotCache() end
+        if event == "PLAYER_SPECIALIZATION_CHANGED" then UpdateRangeSlotCache() end
     elseif event == "ACTIONBAR_SLOT_CHANGED" or event == "ACTIONBAR_PAGE_CHANGED" or event == "UPDATE_BONUS_ACTIONBAR" then
-        UpdateMeleeSlotCache()
+        UpdateRangeSlotCache()
     end
 end)
