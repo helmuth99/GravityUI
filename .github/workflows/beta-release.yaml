@@ -19,7 +19,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Verify tag is on beta branch
+      - name: Verify tag is on beta or main branch
         run: |
           TAG_NAME=${GITHUB_REF#refs/tags/}
           echo "Tag name: $TAG_NAME"
@@ -31,14 +31,14 @@ jobs:
           fi
           echo "Tag format is valid"
 
-          # Check if tag is on beta branch
+          # Check if tag is on beta or main branch
           BRANCHES=$(git branch -r --contains $TAG_NAME)
           echo "Branches containing this tag: $BRANCHES"
-          if [[ ! $BRANCHES =~ origin/beta ]]; then
-            echo "Error: Tag must be on the beta branch"
+          if [[ ! $BRANCHES =~ origin/beta ]] && [[ ! $BRANCHES =~ origin/main ]]; then
+            echo "Error: Tag must be on the beta or main branch"
             exit 1
           fi
-          echo "Tag is on beta branch"
+          echo "Tag is on beta or main branch"
 
       - name: Package and release
         uses: BigWigsMods/packager@v2
