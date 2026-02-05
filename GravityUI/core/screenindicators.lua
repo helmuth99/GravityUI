@@ -81,8 +81,9 @@ local MELEE_RANGE_ABILITIES = {
     [49020] = true,  -- Obliterate
     [206930] = true, -- Heart Strike
     [85948] = true,  -- Festering Strike
-    [55090] = true,  -- Scourge Strike
+    -- [55090] = true,  -- Scourge Strike (Removed: Can become 30y with Clawing Shadows)
     [49143] = true,  -- Frost Strike
+    [49998] = true,  -- Death Strike
     
     -- Druid
     [5221] = true,   -- Shred
@@ -336,18 +337,62 @@ end
 -- CROSSHAIR LOGIC - Bildschirm-Fadenkreuz mit Reichweiten-Check
 ---------------------------------------------------------------------------
 
+local function GetSpellIDFromSlot(slot)
+    local actionType, id = GetActionInfo(slot)
+    if not id then return nil end
+    
+    if actionType == "spell" then
+        return id
+    elseif actionType == "macro" then
+        return GetMacroSpell(id)
+    end
+    return nil
+end
+
 local function UpdateRangeSlotCache()
     cachedRangeSlot = nil
-    -- Scan Action Bars for known range check spells
+    
+    -- Determine Priority based on Class/Spec
+    -- We want to avoid Ranged spells (Arcane Shot) hijacking the crosshair for Melee specs (Survival)
+    local _, class = UnitClass("player")
+    local spec = GetSpecialization()
+    local preferMelee = false -- Default to Neutral/Ranged
+    
+    if class == "HUNTER" and spec == 3 then preferMelee = true end -- Survival
+    if class == "DRUID" and (spec == 2 or spec == 3) then preferMelee = true end -- Feral/Guardian
+    if class == "SHAMAN" and spec == 2 then preferMelee = true end -- Enhancement
+    if class == "WARRIOR" or class == "ROGUE" or class == "DEATHKNIGHT" or class == "DEMONHUNTER" then preferMelee = true end
+    if class == "PALADIN" and spec ~= 1 then preferMelee = true end -- Prot/Ret (Holy is caster-ish but stands in melee, let's say Ret/Prot strong preference)
+    if class == "MONK" and spec ~= 2 then preferMelee = true end -- Brew/WW (MW maybe ranged?)
+
+    local bestSlot = nil
+    
+    -- Scan Action Bars
     for slot = 1, 180 do
-        local actionType, id = GetActionInfo(slot)
-        if id and actionType == "spell" then
-            if MELEE_RANGE_ABILITIES[id] or RANGED_RANGE_ABILITIES[id] then
-                cachedRangeSlot = slot
-                return
+        local id = GetSpellIDFromSlot(slot)
+        if id then
+            local isMelee = MELEE_RANGE_ABILITIES[id]
+            local isRanged = RANGED_RANGE_ABILITIES[id]
+            
+            if isMelee then
+                if preferMelee then
+                    cachedRangeSlot = slot
+                    return -- Found our preferred type!
+                elseif not bestSlot then
+                    bestSlot = slot -- Found something, save it
+                end
+            elseif isRanged then
+                if not preferMelee then
+                    cachedRangeSlot = slot
+                    return -- Found our preferred type!
+                elseif not bestSlot then
+                    bestSlot = slot -- Found something, save it
+                end
             end
         end
     end
+    
+    cachedRangeSlot = bestSlot
 end
 
 local function IsOutOfRange()
@@ -654,8 +699,12 @@ function Screen.Refresh()
     -- Invalidate caches
     cachedCursorSettings = nil
     cachedCrosshairSettings = nil
+    
+    -- FORCE RANGE SLOT UPDATE (Fix for startup race condition)
+    UpdateRangeSlotCache()
 
     local cS = GetCursorSettings()
+
     if cS and cS.enabled then
         cursorOffsetX = cS.offsetX or 0
         cursorOffsetY = cS.offsetY or 0
@@ -756,3 +805,35 @@ eventFrame:SetScript("OnEvent", function(self, event, unit)
         UpdateRangeSlotCache()
     end
 end)
+
+-- Debug Command
+SLASH_GRAVITYDEBUGRANGE1 = "/gravitydebugrange"
+SlashCmdList["GRAVITYDEBUGRANGE"] = function()
+    print("|cFF30D1FFGravityUI Range Debug:|r")
+    if cachedRangeSlot then
+        local actionType, id = GetActionInfo(cachedRangeSlot)
+        local spellID = GetSpellIDFromSlot(cachedRangeSlot)
+        local name = spellID and C_Spell.GetSpellInfo(spellID) and C_Spell.GetSpellInfo(spellID).name or "Unknown"
+        print("  Current Range Slot: " .. cachedRangeSlot .. " (" .. (actionType or "nil") .. " | ID: " .. (id or "nil") .. " | SpellID: " .. (spellID or "nil") .. " | Name: " .. name .. ")")
+        
+        local isMelee = spellID and MELEE_RANGE_ABILITIES[spellID]
+        local isRanged = spellID and RANGED_RANGE_ABILITIES[spellID]
+        print("  Can Crosshair Use? MELEE: " .. (isMelee and "|cFF00FF00YES|r" or "|cFFFF0000NO|r") .. " | RANGED: " .. (isRanged and "|cFF00FF00YES|r" or "|cFFFF0000NO|r"))
+    else
+        print("  Current Range Slot: |cFFFF0000NONE|r (Using Fallback InteractDistance 3)")
+    end
+
+    print("  Scanning Bar 1 (Slots 1-12):")
+    for i = 1, 12 do
+        local at, aid = GetActionInfo(i)
+        if at then
+            local sid = GetSpellIDFromSlot(i)
+            local sname = sid and C_Spell.GetSpellInfo(sid) and C_Spell.GetSpellInfo(sid).name or "Unknown"
+            local isM = sid and MELEE_RANGE_ABILITIES[sid]
+            local isR = sid and RANGED_RANGE_ABILITIES[sid]
+            local status = ""
+            if isM then status = " [MELEE]" elseif isR then status = " [RANGED]" end
+            print("    Slot " .. i .. ": " .. at .. " " .. aid .. " -> SpellID: " .. (sid or "nil") .. " (" .. sname .. ")" .. status)
+        end
+    end
+end
