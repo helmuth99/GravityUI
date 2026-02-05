@@ -113,10 +113,57 @@ local function GetItemQualityColor(quality)
     return 1, 1, 1
 end
 
+-- Pre-calculate pattern
+local ILVL_PATTERN
+if ITEM_LEVEL then
+    ILVL_PATTERN = ITEM_LEVEL:gsub("%%d", "(%%d+)")
+else
+    ILVL_PATTERN = "Item Level (%d+)"
+end
+
 local function GetSlotItemLevel(unit, slotId)
     local itemLink = GetInventoryItemLink(unit, slotId)
     if not itemLink then return nil end
-    local itemLevel = C_Item.GetDetailedItemLevelInfo(itemLink)
+
+    local itemLevel = nil
+
+    -- Ensure item data is cached
+    local itemID = tonumber(itemLink:match("item:(%d+)"))
+    if itemID and C_Item and C_Item.RequestLoadItemDataByID then
+        if not C_Item.IsItemDataCachedByID(itemID) then
+            C_Item.RequestLoadItemDataByID(itemID)
+        end
+    end
+
+    -- 1. Try generic API first
+    if C_Item and C_Item.GetItemInfo then
+        local _, _, _, ilvl = C_Item.GetItemInfo(itemLink)
+        if ilvl then itemLevel = ilvl end
+    end
+    
+    -- 2. Try Detailed API (Base Fallback)
+    if not itemLevel then
+        itemLevel = C_Item.GetDetailedItemLevelInfo(itemLink)
+    end
+
+    -- 3. Parse tooltip for ACTUAL displayed ilvl (this handles Scaling/Timewalking)
+    if C_TooltipInfo and C_TooltipInfo.GetInventoryItem then
+        local tooltipData = C_TooltipInfo.GetInventoryItem(unit, slotId)
+        if tooltipData and tooltipData.lines then
+            for _, line in ipairs(tooltipData.lines) do
+                local text = line.leftText or ""
+                local tooltipIlvl = text:match(ILVL_PATTERN)
+                if tooltipIlvl then
+                    local parsed = tonumber(tooltipIlvl)
+                    if parsed then
+                        itemLevel = parsed  -- Tooltip is authoritative
+                    end
+                    break
+                end
+            end
+        end
+    end
+
     return itemLevel
 end
 
@@ -302,7 +349,7 @@ local function CreateInspectBackground()
     if not InspectFrame._textureHunterHooked then
         InspectFrame:HookScript("OnUpdate", function(self, elapsed)
             self._timer = (self._timer or 0) + elapsed
-            if self._timer > 0.2 then -- Check every 0.2s
+            if self._timer > 1.0 then -- Check every 1.0s (Optimization)
                 self._timer = 0
                 
                 -- Hunt in InspectModelFrame

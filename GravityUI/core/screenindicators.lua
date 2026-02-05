@@ -566,7 +566,8 @@ local function CreateCrosshairFrame()
 
     rangeCheckFrame = CreateFrame("Frame")
     local elapsed = 0
-    rangeCheckFrame:SetScript("OnUpdate", function(self, delta)
+    
+    local function CrosshairOnUpdate(self, delta)
         elapsed = elapsed + delta
         if elapsed < RANGE_CHECK_INTERVAL then return end
         elapsed = 0
@@ -574,27 +575,57 @@ local function CreateCrosshairFrame()
         local s = GetCrosshairSettings()
         if not s or not s.enabled then return end
 
-        -- Optimization: Skip expensive range check if hidden by combat settings
-        if s.onlyInCombat and not InCombatLockdown() then
-            if lastOutOfRange ~= nil then
-                lastOutOfRange = nil
-                UpdateCrosshairAppearance(false)
-            end
-            return
-        end
-
         if s.changeColorOnRange then
             local isOut = IsOutOfRange()
             if isOut ~= lastOutOfRange then
                 UpdateCrosshairAppearance(isOut)
                 lastOutOfRange = isOut
             end
-        elseif lastOutOfRange ~= nil then 
-             -- Reset if disabled or setting changed
-             lastOutOfRange = nil 
+        end
+    end
+
+    local function UpdateRangeCheckState()
+        local s = GetCrosshairSettings()
+        if not s or not s.enabled then
+             rangeCheckFrame:SetScript("OnUpdate", nil)
+             if crosshairFrame then crosshairFrame:Hide() end
+             return
+        end
+
+        -- Combat Check
+        if s.onlyInCombat and not InCombatLockdown() then
+             rangeCheckFrame:SetScript("OnUpdate", nil)
+             -- Force update to ensure Hide() logic runs if needed
+             if lastOutOfRange ~= nil then lastOutOfRange = nil end
+             UpdateCrosshairAppearance(false)
+             return
+        end
+
+        -- Target Check: Only run range check if we have a target
+        if UnitExists("target") then
+             if rangeCheckFrame:GetScript("OnUpdate") ~= CrosshairOnUpdate then
+                 rangeCheckFrame:SetScript("OnUpdate", CrosshairOnUpdate)
+                 -- Instant update to catch range immediately
+                 local isOut = IsOutOfRange()
+                 lastOutOfRange = isOut
+                 UpdateCrosshairAppearance(isOut)
+             end
+        else
+             rangeCheckFrame:SetScript("OnUpdate", nil)
+             -- Reset to default (In Range) state
+             if lastOutOfRange ~= nil then lastOutOfRange = nil end
              UpdateCrosshairAppearance(false)
         end
-    end)
+    end
+
+    rangeCheckFrame:RegisterEvent("PLAYER_TARGET_CHANGED")
+    rangeCheckFrame:RegisterEvent("PLAYER_REGEN_DISABLED")
+    rangeCheckFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
+    rangeCheckFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
+    rangeCheckFrame:SetScript("OnEvent", UpdateRangeCheckState)
+    
+    -- Initial State
+    UpdateRangeCheckState()
 end
 
 ---------------------------------------------------------------------------

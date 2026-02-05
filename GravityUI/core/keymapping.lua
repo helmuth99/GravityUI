@@ -725,7 +725,7 @@ end
 local throttle = 0
 local function OnUpdate(self, elapsed)
     throttle = throttle + elapsed
-    if throttle < 0.05 then return end
+    if throttle < 0.1 then return end
     throttle = 0
     
     if not next(Module.glowingFrames) then return end

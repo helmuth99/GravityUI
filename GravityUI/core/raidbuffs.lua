@@ -933,30 +933,60 @@ local function InitializeFrames()
         end
     end
 
-    updateTicker = C_Timer.NewTicker(0.5, UpdateDisplay)
+    -- Initial Appearance
     UpdateAppearance()
+    -- Initial Display Trigger
+    UpdateDisplay()
 end
 
 -- ============================================================================
--- OPTIONS
+-- EVENT DRIVER (Replaces Ticker)
 -- ============================================================================
--- ============================================================================
--- INIT
--- ============================================================================
+local pendingUpdate = false
+local function RequestUpdate()
+    if pendingUpdate then return end
+    pendingUpdate = true
+    C_Timer.After(0.5, function()
+        pendingUpdate = false
+        UpdateDisplay()
+    end)
+end
+
 local eventFrame = CreateFrame("Frame")
 eventFrame:RegisterEvent("PLAYER_LOGIN")
 eventFrame:RegisterEvent("PLAYER_REGEN_DISABLED")
 eventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
-eventFrame:SetScript("OnEvent", function(self, event)
+eventFrame:RegisterEvent("GROUP_ROSTER_UPDATE")
+eventFrame:RegisterEvent("UNIT_AURA")
+eventFrame:RegisterEvent("UNIT_INVENTORY_CHANGED") -- For weapon enchants
+eventFrame:RegisterEvent("READY_CHECK")
+eventFrame:RegisterEvent("READY_CHECK_FINISHED")
+eventFrame:RegisterEvent("READY_CHECK_CONFIRM")
+
+eventFrame:SetScript("OnEvent", function(self, event, arg1)
     if event == "PLAYER_LOGIN" then
         _, playerClass = UnitClass("player")
         InitializeFrames()
     elseif event == "PLAYER_REGEN_DISABLED" then
         inCombat = true
-        UpdateDisplay()
+        UpdateDisplay() -- Instant update on combat start (usually to hide)
     elseif event == "PLAYER_REGEN_ENABLED" then
         inCombat = false
-        UpdateDisplay()
+        RequestUpdate()
+    elseif event == "UNIT_AURA" or event == "UNIT_INVENTORY_CHANGED" then
+        -- Simple filter: only care about player/party/raid
+        if arg1 and (arg1 == "player" or string.find(arg1, "^party") or string.find(arg1, "^raid")) then
+            RequestUpdate()
+        end
+    elseif event == "READY_CHECK" then
+        inReadyCheck = true
+        RequestUpdate()
+    elseif event == "READY_CHECK_FINISHED" then
+        inReadyCheck = false
+        RequestUpdate()
+    else
+        -- Group updates
+        RequestUpdate()
     end
 end)
 

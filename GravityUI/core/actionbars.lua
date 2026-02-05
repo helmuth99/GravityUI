@@ -291,6 +291,47 @@ local function UpdateFade(self, elapsed)
 
     local currentTime = GetTime()
     local inCombat = InCombatLockdown()
+    
+    -- OPTIMIZATION: Short-Circuit checks during combat if "Always Show in Combat" is enabled
+    -- No need to check individual mouseovers if everything must be visible anyway.
+    if inCombat and db.fade.alwaysShowInCombat then
+        for barKey, frameName in pairs(BAR_FRAMES) do
+            local frame = _G[frameName]
+            local buttons = GetBarButtons(barKey)
+            
+            -- Just enforce target alpha 1
+            local barState = barStates[barKey]
+            if not barState then 
+                barStates[barKey] = { currentAlpha = 1, lastHoverTime = 0 }
+                barState = barStates[barKey]
+            end
+            
+            -- Smooth fade in if needed, or snap if close
+            local targetAlpha = 1
+            if math.abs(barState.currentAlpha - targetAlpha) > 0.01 then
+                local duration = db.fade.fadeInDuration or 0.2
+                local step = tick / duration
+                barState.currentAlpha = math.min(targetAlpha, barState.currentAlpha + step)
+                
+                if frame then frame:SetAlpha(barState.currentAlpha) end
+                for _, btn in ipairs(buttons) do
+                    if not btn._guiHiddenEmpty then
+                        btn:SetAlpha(barState.currentAlpha)
+                    end
+                end
+            elseif barState.currentAlpha ~= targetAlpha then
+                barState.currentAlpha = targetAlpha
+                if frame then frame:SetAlpha(targetAlpha) end
+                for _, btn in ipairs(buttons) do
+                    if not btn._guiHiddenEmpty then
+                        btn:SetAlpha(targetAlpha)
+                    end
+                end
+            end
+        end
+        return -- SKIP ALL MOUSEOVER CHECKS
+    end
+
     local isMouseOverAny = false
     
     -- Check if mouse is over any linked bar
@@ -311,6 +352,9 @@ local function UpdateFade(self, elapsed)
         if frame or (buttons and #buttons > 0) then
             local barDB = db.bars[barKey]
             
+            -- OPTIMIZATION: If this specific bar is set to Always Show, skip mouseover checks for it
+            local forceShow = (barDB and barDB.alwaysShow)
+            
             -- Initialize state
             if not barStates[barKey] then 
                 local current = 1
@@ -323,7 +367,10 @@ local function UpdateFade(self, elapsed)
             end
             local state = barStates[barKey]
 
-            local isHovered = IsMouseOverBar(barKey) or (db.fade.linkBars1to8 and isMouseOverAny and barKey:match("bar%d"))
+            local isHovered = false
+            if not forceShow then
+                 isHovered = IsMouseOverBar(barKey) or (db.fade.linkBars1to8 and isMouseOverAny and barKey:match("bar%d"))
+            end
             
             if isHovered then
                 state.lastHoverTime = currentTime
@@ -335,7 +382,7 @@ local function UpdateFade(self, elapsed)
                 isVisible = true
             end
 
-            local shouldShow = isVisible or (inCombat and db.fade.alwaysShowInCombat) or (barDB and barDB.alwaysShow)
+            local shouldShow = isVisible or forceShow
             
             local targetAlpha = shouldShow and 1 or (db.fade.fadeOutAlpha or 0)
             

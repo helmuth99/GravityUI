@@ -1192,14 +1192,15 @@ end
 -- TICKERS (Optimization)
 -- ═══════════════════════════════════════════════════════════════
 
+local function MasterUpdate()
+    UpdateClockTime()
+    UpdateCoordsPosition()
+    UpdateDatatexts()
+end
+
 local function StartTickers()
-    if clockTicker then clockTicker:Cancel() end
-    if coordsTicker then coordsTicker:Cancel() end
-    if dtTicker then dtTicker:Cancel() end
-    
-    clockTicker = C_Timer.NewTicker(1, UpdateClockTime)
-    coordsTicker = C_Timer.NewTicker(1, UpdateCoordsPosition)
-    dtTicker = C_Timer.NewTicker(1, UpdateDatatexts)
+    if masterTicker then masterTicker:Cancel() end
+    masterTicker = C_Timer.NewTicker(1, MasterUpdate)
 end
 
 -- ═══════════════════════════════════════════════════════════════
@@ -1303,9 +1304,7 @@ end
 -- ═══════════════════════════════════════════════════════════════
 
 local function StopTickers()
-    if clockTicker then clockTicker:Cancel(); clockTicker = nil end
-    if coordsTicker then coordsTicker:Cancel(); coordsTicker = nil end
-    if dtTicker then dtTicker:Cancel(); dtTicker = nil end
+    if masterTicker then masterTicker:Cancel(); masterTicker = nil end
 end
 
 local function HideCustomElements()
@@ -1320,7 +1319,7 @@ local function HideCustomElements()
     if TimeManagerClockButton then TimeManagerClockButton:Show() end
     
     -- Restore Minimap parent/state
-    Minimap:SetParent(MinimapCluster)
+    if Minimap:SetParent(MinimapCluster) then end
     Minimap:SetMovable(false)
     Minimap:SetScale(1.0)
 end

@@ -552,9 +552,13 @@ end
 ---------------------------------------------------------------------------
 -- OnUpdate
 ---------------------------------------------------------------------------
+local currentThrottle = 0.05
+local FAST_THROTTLE = 0.05
+local SLOW_THROTTLE = 0.5
+
 local function OnUpdate(self, delta)
     elapsed = elapsed + delta
-    if elapsed < UPDATE_THROTTLE then return end
+    if elapsed < currentThrottle then return end
     elapsed = 0
     
     local settings = GetSettings()
@@ -624,6 +628,26 @@ local function OnUpdate(self, delta)
     UpdateSpeed(forwardSpeed)
     UpdateAbilityIcon()
     UpdateVisibility(gliding, canGlideNow)
+
+    -- Adaptive Throttle Logic
+    local needsFast = false
+    
+    if isGliding then needsFast = true end
+    if fadeStart > 0 then needsFast = true end
+    if math.abs(currentBarValue - targetBarValue) > 0.001 then needsFast = true end
+    if secondWindMiniBar and secondWindMiniBar:IsShown() and math.abs(swCurrentValue - swTargetValue) > 0.001 then needsFast = true end
+    if rechargeOverlay and rechargeOverlay:IsShown() then needsFast = true end
+    if swRechargeOverlay and swRechargeOverlay:IsShown() then needsFast = true end
+     -- If ability cooldown is active (showing sweep), we need fast updates
+     if abilityIconCooldown and abilityIconCooldown:IsShown() then
+        -- CD object IsShown might be true even if duration is done? Check CD.
+        local start, duration = abilityIconCooldown:GetCooldownTimes()
+        if start and duration and duration > 0 and (GetTime() < start + duration) then
+             needsFast = true
+        end
+    end
+
+    currentThrottle = needsFast and FAST_THROTTLE or SLOW_THROTTLE
 end
 
 ---------------------------------------------------------------------------
@@ -798,31 +822,30 @@ function ns.CreateSkyridingFrame()
     swBackground:SetAllPoints()
     
     swBorder = CreateFrame("Frame", nil, secondWindMiniBar, "BackdropTemplate")
-    swBorder:SetPoint("TOPLEFT", -1, 1); swBorder:SetPoint("BOTTOMRIGHT", 1, -1)
+    swBorder:SetPoint("TOPLEFT", -1, 1)
+    swBorder:SetPoint("BOTTOMRIGHT", 1, -1)
     swBorder:SetBackdrop({edgeFile="Interface\\Buttons\\WHITE8x8", edgeSize=1})
     swBorder:SetBackdropBorderColor(0,0,0,1)
     
     swRechargeOverlay = secondWindMiniBar:CreateTexture(nil, "OVERLAY")
+    swRechargeOverlay:SetTexture("Interface\\Buttons\\WHITE8x8")
+    swRechargeOverlay:Hide()
     
     for i=1,5 do
-        swSegmentMarkers[i] = secondWindMiniBar:CreateTexture(nil, "ARTWORK", nil, 3)
+        local m = secondWindMiniBar:CreateTexture(nil, "ARTWORK", nil, 3)
+        m:SetTexture("Interface\\Buttons\\WHITE8x8")
+        swSegmentMarkers[i] = m
     end
     
-    abilityIcon = CreateFrame("Frame", nil, skyridingFrame)
-    abilityIcon.texture = abilityIcon:CreateTexture(nil, "ARTWORK")
-    abilityIcon.texture:SetAllPoints()
-    abilityIcon.texture:SetTexture(C_Spell.GetSpellTexture(WHIRLING_SURGE_SPELL_ID))
-    abilityIcon.texture:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+    abilityIcon = skyridingFrame:CreateTexture(nil, "ARTWORK")
+    abilityIcon:SetTexture(C_Spell.GetSpellTexture(WHIRLING_SURGE_SPELL_ID))
+    abilityIcon:Hide()
     
-    abilityIcon.border = CreateFrame("Frame", nil, abilityIcon, "BackdropTemplate")
-    abilityIcon.border:SetPoint("TOPLEFT", -1, 1)
-    abilityIcon.border:SetPoint("BOTTOMRIGHT", 1, -1)
-    abilityIcon.border:SetBackdrop({edgeFile="Interface\\Buttons\\WHITE8x8", edgeSize=1})
-    abilityIcon.border:SetBackdropBorderColor(0,0,0,1)
-    
-    abilityIconCooldown = CreateFrame("Cooldown", nil, abilityIcon, "CooldownFrameTemplate")
-    abilityIconCooldown:SetAllPoints()
-    abilityIconCooldown:SetDrawEdge(true)
+    abilityIconCooldown = CreateFrame("Cooldown", nil, skyridingFrame, "CooldownFrameTemplate")
+    abilityIconCooldown:SetAllPoints(abilityIcon)
+    abilityIconCooldown:SetDrawEdge(false)
+    abilityIconCooldown:SetDrawSwipe(true)
+    abilityIconCooldown:Hide()
     
     skyridingFrame:SetMovable(true)
     skyridingFrame:RegisterForDrag("LeftButton")
@@ -853,6 +876,9 @@ eventFrame:RegisterEvent("PLAYER_REGEN_DISABLED")
 eventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
 
 eventFrame:SetScript("OnEvent", function(self, event, arg1)
+    -- Wake up throttle on any event
+    currentThrottle = FAST_THROTTLE
+
     if event == "PLAYER_LOGIN" then
         C_Timer.After(1, function()
             UpdateVigorState()
