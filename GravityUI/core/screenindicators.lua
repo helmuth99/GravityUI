@@ -344,7 +344,50 @@ local function GetSpellIDFromSlot(slot)
     if actionType == "spell" then
         return id
     elseif actionType == "macro" then
-        return GetMacroSpell(id)
+        -- 1. Try Direct API
+        local mid = GetMacroSpell(id)
+        if mid then return mid end
+
+        -- 2. Fallback: Parse Macro Body
+        local _, _, body = GetMacroInfo(id)
+        if body then
+            -- A. Check #showtooltip
+            local tooltips = body:match("#showtooltip%s+([^\n]+)")
+            
+            -- B. Check /cast or /use if no tooltip
+            if not tooltips then
+               for line in body:gmatch("[^\r\n]+") do
+                   local cleanLine = line:match("^%s*(.+)")
+                   if cleanLine then
+                       local l = cleanLine:lower()
+                       if l:find("^/cast") or l:find("^/use") or l:find("^/castsequence") or l:find("^/wirken") or l:find("^/benutzen") then
+                          local payload = cleanLine:match("^/%w+%s+(.+)")
+                          if payload then 
+                              tooltips = payload
+                              break 
+                          end
+                       end
+                   end
+               end
+            end
+            
+            -- C. Resolve Name to ID
+            if tooltips then
+                local cleanName = tooltips:gsub("%[.-%]", ""):match("^%s*(.-)%s*$")
+                cleanName = cleanName:match("([^;]+)") -- Handle /cast [cond] Spell; OtherSpell
+                if cleanName then
+                    cleanName = cleanName:gsub("^!", ""):match("^%s*(.-)%s*$")
+                    
+                    -- Try as Spell Name
+                    local info = C_Spell.GetSpellInfo(cleanName)
+                    if info and info.spellID then return info.spellID end
+                    
+                    -- Try as Item ID (unlikely for range check, but safe)
+                    local itemId = tonumber(cleanName)
+                    if itemId then return nil end -- Items don't count for range check usually
+                end
+            end
+        end
     end
     return nil
 end
