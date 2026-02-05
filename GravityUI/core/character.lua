@@ -580,31 +580,56 @@ local function CreateSlotOverlay(slotFrame, slotInfo, unit)
     -- Gem icons on OUTER side of column (reversed from before)
     overlay.gems = {}
     for i = 1, 4 do
-        local gem = overlay:CreateTexture(nil, "OVERLAY")
-        gem:SetSize(GEM_SIZE, GEM_SIZE)
-        gem:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+        local gemBtn = CreateFrame("Button", nil, overlay)
+        gemBtn:SetSize(GEM_SIZE, GEM_SIZE)
+        gemBtn:EnableMouse(true)
+        gemBtn:RegisterForClicks("LeftButtonUp")
+
+        local gemTex = gemBtn:CreateTexture(nil, "BACKGROUND")
+        gemTex:SetAllPoints()
+        gemTex:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+        gemBtn.icon = gemTex
+
+        -- Interaction scripts
+        gemBtn:SetScript("OnClick", function(self)
+            if overlay.slotInfo and overlay.slotInfo.id then
+                SocketInventoryItem(overlay.slotInfo.id)
+            end
+        end)
+
+        gemBtn:SetScript("OnEnter", function(self)
+            if self.gemLink then
+                GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+                GameTooltip:SetHyperlink(self.gemLink)
+                GameTooltip:Show()
+            end
+        end)
+
+        gemBtn:SetScript("OnLeave", function(self)
+            GameTooltip:Hide()
+        end)
 
         -- Position gems on OUTER side
         if slotInfo.side == "left" then
             -- Gems on LEFT (outer side) - stack vertically
             local yOffset = (i - 1) * (GEM_SIZE + GEM_SPACING)
-            gem:SetPoint("TOPRIGHT", overlay, "TOPLEFT", -2, -yOffset)
+            gemBtn:SetPoint("TOPRIGHT", overlay, "TOPLEFT", -2, -yOffset)
         elseif slotInfo.side == "right" then
             -- Gems on RIGHT (outer side) - stack vertically
             local yOffset = (i - 1) * (GEM_SIZE + GEM_SPACING)
-            gem:SetPoint("TOPLEFT", overlay, "TOPRIGHT", 2, -yOffset)
+            gemBtn:SetPoint("TOPLEFT", overlay, "TOPRIGHT", 2, -yOffset)
         elseif slotInfo.id == INVSLOT_MAINHAND then
             -- MainHand: gems on RIGHT (text is on LEFT)
             local yOffset = (i - 1) * (GEM_SIZE + GEM_SPACING)
-            gem:SetPoint("TOPLEFT", overlay, "TOPRIGHT", 2, -yOffset)
+            gemBtn:SetPoint("TOPLEFT", overlay, "TOPRIGHT", 2, -yOffset)
         else
             -- SecondaryHand: gems on LEFT (text is on RIGHT)
             local yOffset = (i - 1) * (GEM_SIZE + GEM_SPACING)
-            gem:SetPoint("TOPRIGHT", overlay, "TOPLEFT", -2, -yOffset)
+            gemBtn:SetPoint("TOPRIGHT", overlay, "TOPLEFT", -2, -yOffset)
         end
-        gem:Hide()
+        gemBtn:Hide()
 
-        overlay.gems[i] = gem
+        overlay.gems[i] = gemBtn
     end
 
     -- Store scale for later reference
@@ -769,8 +794,16 @@ local function UpdateSlotOverlay(overlay, unit)
     -- Update gem icons (actual textures, including empty sockets)
     if showGems then
         local gems, totalSockets = GetGemInfo(unit, slotId)
-        for i, gemTex in ipairs(overlay.gems) do
+        for i, gemBtn in ipairs(overlay.gems) do
             if gems[i] then
+                local gemTex = gemBtn.icon
+                -- Store link for tooltip
+                gemBtn.gemLink = gems[i].link
+                
+                -- Only enable mouse for filled gems? 
+                -- Ideally empty sockets should also be clickable to socket the item
+                gemBtn:EnableMouse(true) 
+
                 if gems[i].filled then
                     -- Filled socket: show gem icon
                     local gemIcon = gems[i].icon
@@ -779,29 +812,29 @@ local function UpdateSlotOverlay(overlay, unit)
                         gemTex:SetTexture(gemIcon)
                         gemTex:SetDesaturated(false)
                         gemTex:SetVertexColor(1, 1, 1, 1)
-                        gemTex:Show()
+                        gemBtn:Show()
                     else
                         -- Fallback to colored square if icon not available
                         local gemType = gems[i].type or "Prismatic"
                         local color = GEM_COLORS[gemType] or GEM_COLORS.Prismatic
                         gemTex:SetColorTexture(color[1], color[2], color[3], color[4])
                         gemTex:SetDesaturated(false)
-                        gemTex:Show()
+                        gemBtn:Show()
                     end
                 else
                     -- Empty socket: show grey socket icon
                     gemTex:SetTexture("Interface\\ItemSocketingFrame\\UI-EmptySocket-Prismatic")
                     gemTex:SetDesaturated(true)
                     gemTex:SetVertexColor(0.6, 0.6, 0.6, 0.9)
-                    gemTex:Show()
+                    gemBtn:Show()
                 end
             else
-                gemTex:Hide()
+                gemBtn:Hide()
             end
         end
     else
-        for _, gemTex in ipairs(overlay.gems) do
-            gemTex:Hide()
+        for _, gemBtn in ipairs(overlay.gems) do
+            gemBtn:Hide()
         end
     end
 
