@@ -63,16 +63,22 @@ local function IsModifierActive(modKey)
     return false
 end
 
+-- Helper: Sanitize Color Table
+local function SanitizeColor(c, defaultR, defaultG, defaultB, defaultA)
+    if not c or type(c) ~= "table" then
+        return defaultR or 0, defaultG or 0, defaultB or 0, defaultA or 1
+    end
+    return c[1] or defaultR or 0, c[2] or defaultG or 0, c[3] or defaultB or 0, c[4] or defaultA or 1
+end
+
 -- Get color based on user rules: Theme/Class vs Custom
 local function GetColorFromSettings(useThemeSetting, customColorSetting)
     if useThemeSetting then
         return ns.GetAccentColor()
     else
         -- customColorSetting is expected to be a table {r, g, b, a}
-        if type(customColorSetting) == "table" and customColorSetting[1] then
-            return customColorSetting[1], customColorSetting[2], customColorSetting[3], customColorSetting[4] or 1
-        end
-        return 1, 1, 1, 1 -- Fallback to white
+        -- Fallback to Dark Grey/Black loop if invalid, NOT WHITE
+        return SanitizeColor(customColorSetting, 0.2, 0.2, 0.2, 1)
     end
 end
 
@@ -184,7 +190,10 @@ local function ApplyStyle(tooltip)
         Mixin(tooltip, BackdropTemplateMixin)
     end
 
-    local bg = settings.bgColor or {0, 0, 0, 1}
+    -- Sanitize Colors (Fix for White Tooltip Bug)
+    -- If DB is not ready or returns empty/nil, fallback to Black (0,0,0,1)
+    local bgR, bgG, bgB, bgA = SanitizeColor(settings.bgColor, 0, 0, 0, 1)
+    
     local r, g, b, a = GetColorFromSettings(settings.useThemeColor, settings.borderColor)
     local alpha = settings.bgAlpha or 0.8
 
@@ -196,7 +205,7 @@ local function ApplyStyle(tooltip)
             edgeSize = 1,
             insets = { left = 1, right = 1, top = 1, bottom = 1 }
         })
-        tooltip:SetBackdropColor(bg[1], bg[2], bg[3], alpha)
+        tooltip:SetBackdropColor(bgR, bgG, bgB, alpha)
         tooltip:SetBackdropBorderColor(r, g, b, a)
     end)
 
