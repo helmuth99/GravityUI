@@ -14,7 +14,7 @@ local Screen = ns.ScreenIndicators
 -- Constants
 local GCD_SPELL_ID = 61304
 local UPDATE_THROTTLE = 0.01
-local RANGE_CHECK_INTERVAL = 0.1
+local RANGE_CHECK_INTERVAL = 0.2
 local DOT_TEXTURE = "Interface/AddOns/GravityUI/assets/textures/dot.tga"
 
 -- Texture paths for Ring
@@ -153,6 +153,8 @@ local rangeCheckFrame
 -- Cached settings
 local cachedCursorSettings, cachedCrosshairSettings
 local cursorOffsetX, cursorOffsetY = 0, 0 -- Optimization: Upvalues for OnUpdate
+local cursorHideOnRightClick = false -- Optimization: Upvalue for Input Hook
+local isRightClickHidden = false -- Optimization: Use Alpha instead of Show/Hide to prevent Cooldown recalculation stutter
 local lastOutOfRange = nil -- Optimization: State tracker for Crosshair
 local function GetCursorSettings()
     if not cachedCursorSettings then
@@ -195,12 +197,12 @@ end
 -- CURSOR (RETICLE) LOGIC - GCD Ring und Cursor-Indikator
 ---------------------------------------------------------------------------
 
-local function UpdateCursorAppearance()
+local function UpdateCursorStatic()
     if not cursorFrame then return end
     local s = GetCursorSettings()
     if not s or not s.enabled then return end
 
-    -- Ring
+    -- 1. Static Color & Texture (Only on Refresh)
     local r, g, b, a = 1, 1, 1, 1
     if s.useThemeColor then
         r, g, b, a = GetAccentColor()
@@ -215,14 +217,6 @@ local function UpdateCursorAppearance()
     
     ringTexture:SetTexture(texturePath)
     ringTexture:SetVertexColor(r, g, b, 1)
-    
-    local baseAlpha = InCombatLockdown() and s.inCombatAlpha or s.outCombatAlpha or 0.3
-    local ringAlpha = baseAlpha
-    
-    if gcdCooldown and gcdCooldown:IsShown() and s.gcdEnabled then
-        ringAlpha = baseAlpha * (1 - (s.gcdFadeRing or 0.35))
-    end
-    ringTexture:SetAlpha(ringAlpha)
     cursorFrame:SetSize(size, size)
 
     -- Reticle
@@ -238,12 +232,60 @@ local function UpdateCursorAppearance()
     reticleTexture:SetSize(rSize, rSize)
     reticleTexture:SetVertexColor(r, g, b, a)
 
-    -- GCD
-    if gcdCooldown and s.gcdEnabled then
+    -- GCD Static Props
+    if gcdCooldown then
         gcdCooldown:SetSwipeTexture(texturePath)
-        gcdCooldown:SetSwipeColor(r, g, b, baseAlpha)
+        gcdCooldown:SetSwipeColor(r, g, b, InCombatLockdown() and s.inCombatAlpha or s.outCombatAlpha or 0.3) -- Initial alpha
         gcdCooldown:SetReverse(s.gcdReverse or false)
     end
+end
+
+local function UpdateCursorDynamic()
+    if not cursorFrame then return end
+    
+    -- Priority: Right Click Hiding (Instant, Alpha-based)
+    if isRightClickHidden then
+        cursorFrame:SetAlpha(0)
+        return
+    end
+
+    -- Restore Alpha (Fix for Right-Click logic)
+    cursorFrame:SetAlpha(1)
+    
+    -- Ensure visibility if we are restoring alpha (Fix for 'Hide out of Combat' not showing on combat start)
+    if not isRightClickHidden and not cursorFrame:IsShown() then
+        -- Only show if logic permits (e.g. InCombat or !HideOutOfCombat)
+        local settings = GetCursorSettings()
+        if settings and (not settings.hideOutOfCombat or InCombatLockdown()) then
+             cursorFrame:Show()
+        end
+    end
+
+    local s = GetCursorSettings()
+    if not s or not s.enabled then return end
+
+    -- 2. Dynamic Alpha (On GCD/Combat State)
+    local baseAlpha = InCombatLockdown() and s.inCombatAlpha or s.outCombatAlpha or 0.3
+    
+    -- Update GCD Swipe Alpha if needed
+    if gcdCooldown then
+        -- Note: We assume color is constant, only alpha changes, but SetSwipeColor requires RGB too.
+        -- We re-fetch RGB to be safe, or cache it? Fetching is cheap.
+        local r, g, b
+        if s.useThemeColor then
+            r, g, b = GetAccentColor()
+        else
+            local c = s.customColor or DEFAULT_CURSOR_COLOR
+            r, g, b = unpack(c)
+        end
+        gcdCooldown:SetSwipeColor(r, g, b, baseAlpha)
+    end
+
+    local ringAlpha = baseAlpha
+    if gcdCooldown and gcdCooldown:IsShown() and s.gcdEnabled then
+        ringAlpha = baseAlpha * (1 - (s.gcdFadeRing or 0.35))
+    end
+    ringTexture:SetAlpha(ringAlpha)
 end
 
 local function UpdateCursorVisibility()
@@ -267,7 +309,7 @@ local function UpdateCursorGCD()
     local s = GetCursorSettings()
     if not s or not s.enabled or not s.gcdEnabled then
         gcdCooldown:Hide()
-        UpdateCursorAppearance()
+        UpdateCursorDynamic()
         return
     end
 
@@ -282,7 +324,7 @@ local function UpdateCursorGCD()
     else
         gcdCooldown:Hide()
     end
-    UpdateCursorAppearance()
+    UpdateCursorDynamic()
 end
 
 local function CreateCursorFrame()
@@ -314,21 +356,21 @@ local function CreateCursorFrame()
     end)
 
     -- Right-click hide functionality
+    -- Optimization: Use local boolean to avoid table lookup during input event
+    -- Optimization 2: Use SetAlpha(0) via UpdateCursorDynamic instead of Hide() to prevent layout thrashing
     WorldFrame:HookScript("OnMouseDown", function(_, button)
-        if button == "RightButton" then
-            local s = GetCursorSettings()
-            if s and s.enabled and s.hideOnRightClick then
-                cursorFrame:Hide()
-            end
+        if button == "RightButton" and cursorHideOnRightClick then
+             isRightClickHidden = true
+             UpdateCursorDynamic()
         end
     end)
 
     WorldFrame:HookScript("OnMouseUp", function(_, button)
-        if button == "RightButton" then
-            local s = GetCursorSettings()
-            if s and s.enabled and s.hideOnRightClick then
-                UpdateCursorVisibility()
-            end
+        if button == "RightButton" and cursorHideOnRightClick then
+            isRightClickHidden = false
+            -- We call UpdateCursorDynamic to restore alpha. 
+            -- UpdateCursorVisibility is for Combat State (Show/Hide) and usually doesn't need to run here unless state desynced.
+            UpdateCursorDynamic()
         end
     end)
 end
@@ -337,6 +379,7 @@ end
 -- CROSSHAIR LOGIC - Bildschirm-Fadenkreuz mit Reichweiten-Check
 ---------------------------------------------------------------------------
 
+local macroCache = {}
 local function GetSpellIDFromSlot(slot)
     local actionType, id = GetActionInfo(slot)
     if not id then return nil end
@@ -344,9 +387,17 @@ local function GetSpellIDFromSlot(slot)
     if actionType == "spell" then
         return id
     elseif actionType == "macro" then
+        -- Optimization: Check Cache
+        if macroCache[id] then
+            return macroCache[id] ~= -1 and macroCache[id] or nil
+        end
+
         -- 1. Try Direct API
         local mid = GetMacroSpell(id)
-        if mid then return mid end
+        if mid then 
+            macroCache[id] = mid
+            return mid 
+        end
 
         -- 2. Fallback: Parse Macro Body
         local _, _, body = GetMacroInfo(id)
@@ -380,14 +431,16 @@ local function GetSpellIDFromSlot(slot)
                     
                     -- Try as Spell Name
                     local info = C_Spell.GetSpellInfo(cleanName)
-                    if info and info.spellID then return info.spellID end
-                    
-                    -- Try as Item ID (unlikely for range check, but safe)
-                    local itemId = tonumber(cleanName)
-                    if itemId then return nil end -- Items don't count for range check usually
+                    if info and info.spellID then 
+                        macroCache[id] = info.spellID
+                        return info.spellID 
+                    end
                 end
             end
         end
+        
+        -- Cache failure as -1 to avoid re-parsing
+        macroCache[id] = -1
     end
     return nil
 end
@@ -519,7 +572,18 @@ local function CreateCrosshairFrame()
         elapsed = 0
         
         local s = GetCrosshairSettings()
-        if s and s.enabled and s.changeColorOnRange then
+        if not s or not s.enabled then return end
+
+        -- Optimization: Skip expensive range check if hidden by combat settings
+        if s.onlyInCombat and not InCombatLockdown() then
+            if lastOutOfRange ~= nil then
+                lastOutOfRange = nil
+                UpdateCrosshairAppearance(false)
+            end
+            return
+        end
+
+        if s.changeColorOnRange then
             local isOut = IsOutOfRange()
             if isOut ~= lastOutOfRange then
                 UpdateCrosshairAppearance(isOut)
@@ -751,9 +815,11 @@ function Screen.Refresh()
     if cS and cS.enabled then
         cursorOffsetX = cS.offsetX or 0
         cursorOffsetY = cS.offsetY or 0
+        cursorHideOnRightClick = cS.hideOnRightClick or false
         CreateCursorFrame()
         UpdateCursorVisibility()
-        UpdateCursorAppearance()
+        UpdateCursorStatic()
+        UpdateCursorDynamic()
         UpdateCursorGCD()
     elseif cursorFrame then
         cursorFrame:Hide()
@@ -827,6 +893,7 @@ eventFrame:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
 eventFrame:RegisterEvent("ACTIONBAR_SLOT_CHANGED")
 eventFrame:RegisterEvent("ACTIONBAR_PAGE_CHANGED")
 eventFrame:RegisterEvent("UPDATE_BONUS_ACTIONBAR")
+eventFrame:RegisterEvent("UPDATE_MACROS")
 
 eventFrame:SetScript("OnEvent", function(self, event, unit)
     if event == "PLAYER_LOGIN" then
@@ -845,6 +912,9 @@ eventFrame:SetScript("OnEvent", function(self, event, unit)
         Screen.UpdatePetTicker()
         if event == "PLAYER_SPECIALIZATION_CHANGED" then UpdateRangeSlotCache() end
     elseif event == "ACTIONBAR_SLOT_CHANGED" or event == "ACTIONBAR_PAGE_CHANGED" or event == "UPDATE_BONUS_ACTIONBAR" then
+        UpdateRangeSlotCache()
+    elseif event == "UPDATE_MACROS" then
+        macroCache = {} -- Invalidate Cache
         UpdateRangeSlotCache()
     end
 end)

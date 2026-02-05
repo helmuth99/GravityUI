@@ -232,17 +232,14 @@ local function UpdateSegmentMarkers(maxCharges)
     local thickness = settings.segmentThickness or 1
     
     -- Color Logic: Prefer setting, fallback to calculated soft color
-    local color
+    -- Color Logic: Prefer setting, fallback to calculated soft color
+    local r, g, b, a
     if settings.segmentColor then
-        color = settings.segmentColor
+        local c = settings.segmentColor
+        r, g, b, a = c[1], c[2], c[3], c[4] or 1
     else
         local barColor = settings.barColor or DEFAULT_BAR_COLOR
-        -- Reuse static table or create once? 
-        -- Since this logic runs on maxCharges change (rare), creating a table here is acceptable,
-        -- BUT UpdateSegmentMarkers is called in ApplySettings.
-        -- Let's stick to simple efficient math but we can't easily avoid the table for SetVertexColor unpack
-        -- unless we unpack explictly.
-        color = {barColor[1] * 0.25, barColor[2] * 0.25, barColor[3] * 0.25, 0.6}
+        r, g, b, a = barColor[1] * 0.25, barColor[2] * 0.25, barColor[3] * 0.25, 0.6
     end
     
     for i = 1, 10 do
@@ -253,7 +250,7 @@ local function UpdateSegmentMarkers(maxCharges)
             marker:SetPoint("LEFT", vigorBar, "LEFT", xPos - (thickness/2), 0)
             marker:SetWidth(math.max(1, thickness))
             marker:SetHeight(barHeight)
-            marker:SetVertexColor(unpack(color))
+            marker:SetVertexColor(r, g, b, a)
             marker:Show()
         else
             marker:Hide()
@@ -420,7 +417,9 @@ local function UpdateSecondWind()
         local barWidth = skyridingFrame:GetWidth()
         local segmentWidth = barWidth / max
         local thickness = settings.segmentThickness or 1
-        local softColor = { color[1]*0.25, color[2]*0.25, color[3]*0.25, 0.6 }
+        
+        -- Calculate soft color directly (NO TABLE CREATION)
+        local sr, sg, sb, sa = color[1]*0.25, color[2]*0.25, color[3]*0.25, 0.6
         
         for i=1,5 do
             if i < max then
@@ -430,7 +429,7 @@ local function UpdateSecondWind()
                 marker:SetPoint("LEFT", secondWindMiniBar, "LEFT", xPos - (thickness/2), 0)
                 marker:SetWidth(math.max(1, thickness))
                 marker:SetHeight(swHeight)
-                marker:SetVertexColor(unpack(softColor))
+                marker:SetVertexColor(sr, sg, sb, sa)
                 marker:Show()
             end
         end
@@ -470,12 +469,13 @@ local function UpdateSecondWindRecharge()
     local fillWidth = math.max(1, progress * segmentWidth)
 
     -- Use SW color (with theme color support)
-    local color
+    local cr, cg, cb, ca
     if settings.useThemeColorSecondWind then
-        local r, g, b = ns.GetAccentColor()
-        color = {r, g, b, 0.6}
+        local r, g, b, a = ns.GetAccentColor()
+        cr, cg, cb, ca = r, g, b, 0.6
     else
-        color = DEFAULT_SW_RECHARGE_COLOR  -- Slightly brighter gold
+        local c = DEFAULT_SW_RECHARGE_COLOR
+        cr, cg, cb, ca = c[1], c[2], c[3], c[4] or 0.6 -- Slightly brighter gold
     end
 
     swRechargeOverlay:ClearAllPoints()
@@ -485,7 +485,7 @@ local function UpdateSecondWindRecharge()
 
     -- Pulse alpha for visual feedback
     local pulse = 0.7 + 0.3 * math.sin(now * 4)
-    swRechargeOverlay:SetVertexColor(color[1], color[2], color[3], color[4] * pulse)
+    swRechargeOverlay:SetVertexColor(cr, cg, cb, ca * pulse)
     swRechargeOverlay:Show()
 end
 
