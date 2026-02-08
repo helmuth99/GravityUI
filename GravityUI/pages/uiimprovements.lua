@@ -191,10 +191,7 @@ local function BuildAutohide(parent)
     AddRow(content, "Hide Friendly NPC Nameplates", "checkbox", "hideFriendlyNPCNameplates", dbUI, RefreshAutohide)
     content.rowCount = content.rowCount + 0.5
 
-    CreateSubHeader(content, "Status Bars")
-    AddRow(content, "Hide Experience Bar (XP)", "checkbox", "hideXPBar", dbUI, RefreshAutohide)
-    AddRow(content, "Hide Reputation Bar", "checkbox", "hideReputationBar", dbUI, RefreshAutohide)
-    content.rowCount = content.rowCount + 0.5
+
 
     CreateSubHeader(content, "Combat & Messages")
     AddRow(content, "Hide Error Messages (Red Text)", "checkbox", "hideErrorMessages", dbUI, RefreshAutohide)

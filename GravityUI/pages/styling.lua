@@ -44,7 +44,26 @@ local function CreateStylingRow(container, labelText, widgetType, arg1, arg2, ar
         end
         
     elseif widgetType == "dropdown" then
-        widget = GUI:CreateDropdown(row, "", arg1, arg2, arg3, arg4)
+        -- Handle variable argument order for Dropdowns
+        -- Pattern A (Existing): items, key, db, onChange
+        -- Pattern B (New): key, db, onChange, items
+        
+        local items, key, db, change
+        if type(arg1) == "table" and arg1[1] then
+            -- Pattern A: arg1 is the items table
+            items = arg1
+            key = arg2
+            db = arg3
+            change = arg4
+        else
+            -- Pattern B: arg4 is the items table (or we assume standard order)
+            items = arg4
+            key = arg1
+            db = arg2
+            change = arg3
+        end
+        
+        widget = GUI:CreateDropdown(row, "", items, key, db, change)
         widget:SetPoint("LEFT", label, "RIGHT", 10, 0)
         widget:SetWidth(WIDGET_WIDTH)
         if widget.dropdown then
@@ -847,6 +866,177 @@ local function BuildInstancePanel(parent)
 end
 
 -- ═══════════════════════════════════════════════════════════════
+-- BUILDER: XP / REP (Tab 11)
+-- ═══════════════════════════════════════════════════════════════
+local function BuildXPRepPanel(parent)
+    local scroll, content = GUI:CreateScrollableContent(parent)
+    scroll:SetAllPoints()
+    
+    local yOffset = -10
+    local PAD = 10
+    
+    local header = GUI:CreateSectionHeader(content, "Experience & Reputation Bars")
+    header:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - header.gap
+    yOffset = yOffset - 10
+    
+    local db = ns.db.profile.styling.xpRep
+    
+    local row1 = CreateStylingRow(content, "Enable XP/Rep Module", "checkbox", "enabled", db, function()
+        if ns.XPRep and ns.XPRep.Refresh then ns.XPRep:Refresh() end
+    end)
+    row1:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
+    
+    -- Size
+    local rowW = CreateStylingRow(content, "Bar Width", "slider", 100, 1000, "width", db, function()
+        if ns.XPRep and ns.XPRep.Refresh then ns.XPRep:Refresh() end
+    end, 1)
+    rowW:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
+    
+    local rowH = CreateStylingRow(content, "Bar Height", "slider", 2, 50, "height", db, function()
+        if ns.XPRep and ns.XPRep.Refresh then ns.XPRep:Refresh() end
+    end, 1)
+    rowH:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
+    
+    -- Font
+    local rowFS = CreateStylingRow(content, "Font Size", "slider", 6, 32, "fontSize", db, function()
+        if ns.XPRep and ns.XPRep.Refresh then ns.XPRep:Refresh() end
+    end, 1)
+    rowFS:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
+    
+    local outlineOptions = {
+        { text = "None", value = "NONE" },
+        { text = "Outline", value = "OUTLINE" },
+        { text = "Thick Outline", value = "THICKOUTLINE" },
+        { text = "Monochrome", value = "MONOCHROME" },
+    }
+    local rowFO = CreateStylingRow(content, "Font Outline", "dropdown", outlineOptions, "fontOutline", db, function()
+        if ns.XPRep and ns.XPRep.Refresh then ns.XPRep:Refresh() end
+    end)
+    rowFO:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
+    
+    -- Toggles
+    local rowXP = CreateStylingRow(content, "Show Experience", "checkbox", "showXP", db, function()
+        if ns.XPRep and ns.XPRep.Refresh then ns.XPRep:Refresh() end
+    end)
+    rowXP:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
+    
+    local rowRep = CreateStylingRow(content, "Show Reputation", "checkbox", "showRep", db, function()
+        if ns.XPRep and ns.XPRep.Refresh then ns.XPRep:Refresh() end
+    end)
+    rowRep:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
+    
+    local rowMO = CreateStylingRow(content, "Show on Mouseover", "checkbox", "mouseover", db, function()
+        if ns.XPRep and ns.XPRep.Refresh then ns.XPRep:Refresh() end
+    end)
+    rowMO:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
+    
+    local rowHide = CreateStylingRow(content, "Always Hide Bars", "checkbox", "alwaysHide", db, function()
+        if ns.XPRep and ns.XPRep.Refresh then ns.XPRep:Refresh() end
+    end)
+    rowHide:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
+
+    local rowShowText = CreateStylingRow(content, "Always Show Text", "checkbox", "alwaysShowText", db, function()
+        if ns.XPRep and ns.XPRep.Refresh then ns.XPRep:Refresh() end
+    end)
+    rowShowText:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
+    
+    -- Extra spacing for Dropdown (Height 40 vs Row 30)
+    yOffset = yOffset - 5 
+    
+    local strataOptions = {
+        { text = "Background", value = "BACKGROUND" },
+        { text = "Low", value = "LOW" },
+        { text = "Medium", value = "MEDIUM" },
+        { text = "High", value = "HIGH" },
+        { text = "Dialog", value = "DIALOG" },
+        { text = "Fullscreen", value = "FULLSCREEN" },
+        { text = "Fullscreen Dialog", value = "FULLSCREEN_DIALOG" },
+        { text = "Tooltip", value = "TOOLTIP" },
+    }
+    
+    local rowStrata = CreateStylingRow(content, "Frame Strata", "dropdown", "strata", db, function()
+        if ns.XPRep and ns.XPRep.Refresh then ns.XPRep:Refresh() end
+    end, strataOptions)
+    
+    rowStrata:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 10 -- Extra 5px for dropdown bottom overflow
+    
+    -- yOffset = yOffset - ROW_HEIGHT - 5 (Removed to reduce gap)
+    
+    local dbUI = ns.db.profile.uiimprovements
+    local function RefreshAutohide() if ns.ApplyAutohideSettings then ns.ApplyAutohideSettings() end end
+    
+    local rowHideXP = CreateStylingRow(content, "Hide Blizzard XP Bar", "checkbox", "hideXPBar", dbUI, RefreshAutohide)
+    rowHideXP:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
+    
+    local rowHideRep = CreateStylingRow(content, "Hide Blizzard Rep Bar", "checkbox", "hideReputationBar", dbUI, RefreshAutohide)
+    rowHideRep:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
+    
+    -- Colors
+    local rowC1 = CreateStylingRow(content, "XP Color", "color", "xpColor", db, function()
+        if ns.XPRep and ns.XPRep.Refresh then ns.XPRep:Refresh() end
+    end)
+    rowC1:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
+    
+    local rowC2 = CreateStylingRow(content, "Rested Color", "color", "restedColor", db, function()
+        if ns.XPRep and ns.XPRep.Refresh then ns.XPRep:Refresh() end
+    end)
+    rowC2:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
+    
+    local rowC3 = CreateStylingRow(content, "Reputation Color", "color", "repColor", db, function()
+        if ns.XPRep and ns.XPRep.Refresh then ns.XPRep:Refresh() end
+    end)
+    rowC3:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
+    
+    -- Texture dropdown
+    local textureList = {}
+    local LSM = LibStub("LibSharedMedia-3.0", true)
+    if LSM then
+        for _, name in pairs(LSM:List("statusbar")) do
+            table.insert(textureList, { text = name, value = name })
+        end
+        table.sort(textureList, function(a, b) return a.text < b.text end)
+    end
+    
+    local rowTex = CreateStylingRow(content, "Texture", "dropdown", textureList, "texture", db, function()
+        if ns.XPRep and ns.XPRep.Refresh then ns.XPRep:Refresh() end
+    end)
+    rowTex:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
+    
+    -- Mover
+    local moverBtn = GUI:CreateButton(content, "Toggle Mover", 140, 24, function()
+        if ns.XPRep and ns.XPRep.ToggleMover then ns.XPRep:ToggleMover() end
+    end)
+    moverBtn:SetPoint("TOPLEFT", PAD, yOffset)
+    
+    local previewBtn = GUI:CreateButton(content, "Toggle Preview", 140, 24, function()
+        if ns.XPRep and ns.XPRep.TogglePreview then ns.XPRep:TogglePreview() end
+    end)
+    previewBtn:SetPoint("LEFT", moverBtn, "RIGHT", 10, 0)
+    
+    yOffset = yOffset - 40
+    
+    content:SetHeight(math.abs(yOffset) + 20)
+end
+
+-- ═══════════════════════════════════════════════════════════════
 -- MAIN STYLING PAGE
 -- ═══════════════════════════════════════════════════════════════
 GUI:RegisterPage("Styling", {
@@ -872,6 +1062,7 @@ GUI:RegisterPage("Styling", {
             { name = "Loot", builder = BuildLootPanel },
             { name = "Objectives", builder = BuildObjectivesPanel },
             { name = "Instance", builder = BuildInstancePanel },
+            { name = "XP / Rep", builder = BuildXPRepPanel },
         })
         subTabs:SetPoint("TOPLEFT", 10, -10)
         subTabs:SetPoint("TOPRIGHT", -10, 0)

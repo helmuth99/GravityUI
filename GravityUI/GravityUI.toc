@@ -37,6 +37,7 @@ core\dungeondata.lua
 core\automation.lua
 core\quicksalvage.lua
 core\styling.lua
+core\xpreputation.lua
 core\alerts.lua
 core\loot.lua
 core\objectives.lua

@@ -101,6 +101,7 @@ function ns.RefreshAccentColors()
     if ns.Loot and ns.Loot.RefreshHistoryStyling then ns.Loot:RefreshHistoryStyling() end
     if ns.InstanceFrames and ns.InstanceFrames.Initialize then ns.InstanceFrames:Initialize() end
     if ns.Objectives and ns.Objectives.Initialize then ns.Objectives:Initialize() end
+    if ns.XPRep and ns.XPRep.Refresh then ns.XPRep:Refresh() end
 end
 
 -- Get global font settings
@@ -279,6 +280,11 @@ function Addon:PLAYER_ENTERING_WORLD(event, isInitialLogin, isReloadingUi)
     -- Initialize Instance Frames
     if ns.InstanceFrames and ns.InstanceFrames.Initialize then
         ns.InstanceFrames:Initialize()
+    end
+
+    -- Initialize XP/Rep
+    if ns.XPRep and ns.XPRep.Initialize then
+        ns.XPRep:Initialize()
     end
 
     -- Initialize GUICDM Keybinds
