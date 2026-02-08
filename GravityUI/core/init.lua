@@ -295,6 +295,33 @@ function Addon:PLAYER_ENTERING_WORLD(event, isInitialLogin, isReloadingUi)
 
 end
 
+-- Out of Combat Queue System
+ns.OOCQueue = {}
+
+function ns.QueueOOCAction(func)
+    if not InCombatLockdown() then
+        func()
+    else
+        table.insert(ns.OOCQueue, func)
+    end
+end
+
+-- Process OOC Queue
+local function ProcessOOCQueue()
+    if InCombatLockdown() then return end
+    
+    for i = #ns.OOCQueue, 1, -1 do
+        local func = table.remove(ns.OOCQueue, i)
+        if func then
+            pcall(func)
+        end
+    end
+end
+
+local oocFrame = CreateFrame("Frame")
+oocFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
+oocFrame:SetScript("OnEvent", ProcessOOCQueue)
+
 -- Addon Compartment Functions (for addon button in minimap area)
 function GravityUI_CompartmentClick()
     if ns.GUI then

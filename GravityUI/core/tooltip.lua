@@ -68,7 +68,12 @@ local function SanitizeColor(c, defaultR, defaultG, defaultB, defaultA)
     if not c or type(c) ~= "table" then
         return defaultR or 0, defaultG or 0, defaultB or 0, defaultA or 1
     end
-    return c[1] or defaultR or 0, c[2] or defaultG or 0, c[3] or defaultB or 0, c[4] or defaultA or 1
+    -- Force numbers to prevent "Usage: SetBackdropColor(r, g, b [, a])" errors from string data
+    local r = tonumber(c[1]) or defaultR or 0
+    local g = tonumber(c[2]) or defaultG or 0
+    local b = tonumber(c[3]) or defaultB or 0
+    local a = tonumber(c[4]) or defaultA or 1
+    return r, g, b, a
 end
 
 -- Get color based on user rules: Theme/Class vs Custom
@@ -195,19 +200,31 @@ local function ApplyStyle(tooltip)
     local bgR, bgG, bgB, bgA = SanitizeColor(settings.bgColor, 0, 0, 0, 1)
     
     local r, g, b, a = GetColorFromSettings(settings.useThemeColor, settings.borderColor)
-    local alpha = settings.bgAlpha or 0.8
+    local alpha = tonumber(settings.bgAlpha) or 0.8
 
-    -- Wrap in pcall for 12.0 secret value dimension errors
-    pcall(function()
+    -- Robustness Fix:
+    -- If SetBackdrop succeeds (setting texture to white8x8) but SetBackdropColor fails,
+    -- the tooltip stays white. We must ensure color is applied or backdrop is reverted.
+    local backdropSuccess = pcall(function()
         tooltip:SetBackdrop({
             bgFile = "Interface\\Buttons\\WHITE8x8",
             edgeFile = "Interface\\Buttons\\WHITE8x8",
             edgeSize = 1,
             insets = { left = 1, right = 1, top = 1, bottom = 1 }
         })
-        tooltip:SetBackdropColor(bgR, bgG, bgB, alpha)
-        tooltip:SetBackdropBorderColor(r, g, b, a)
     end)
+
+    if backdropSuccess then
+        local colorSuccess = pcall(function()
+            tooltip:SetBackdropColor(bgR, bgG, bgB, alpha)
+            tooltip:SetBackdropBorderColor(r, g, b, a)
+        end)
+        
+        if not colorSuccess then
+            -- Emergency Revert: If we can't color it, clear the white texture
+            pcall(function() tooltip:SetBackdrop(nil) end)
+        end
+    end
 
     -- Healthbar
     pcall(function()
