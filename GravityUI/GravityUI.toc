@@ -1,6 +1,6 @@
 ## Interface: 120000, 120001
 ## Title: |cFF30D1FFGravityUI|r
-## IconTexture: Interface\AddOns\GravityUI\assets\GRAVITY_UI_Icon.blp
+## IconTexture: Interface\AddOns\GravityUI\assets\Gravity_UI_Logo.jpg
 ## AddonCompartmentFunc: GravityUI_CompartmentClick
 ## AddonCompartmentFuncOnEnter: GravityUI_CompartmentOnEnter
 ## AddonCompartmentFuncOnLeave: GravityUI_CompartmentOnLeave
