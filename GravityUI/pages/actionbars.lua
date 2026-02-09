@@ -165,9 +165,17 @@ local function BuildActionBarsSettings(parent)
     qaRow:SetPoint("TOPLEFT", 10, -content.rowCount * 35)
     
     local kbBtn = GUI:CreateButton(qaRow, "Quick Keybind Mode", 220, 24, function() 
-        local LibKeyBound = LibStub("LibKeyBound-1.0", true)
-        if LibKeyBound then LibKeyBound:Toggle()
-        elseif QuickKeybindFrame then ShowUIPanel(QuickKeybindFrame) end
+        if ns.Addon and ns.Addon.SlashCommandKeybind then
+            ns.Addon:SlashCommandKeybind()
+        else
+             -- Fallback if Addon method missing for some reason
+            if not C_AddOns.IsAddOnLoaded("Blizzard_QuickKeybind") then
+                C_AddOns.LoadAddOn("Blizzard_QuickKeybind")
+            end
+            if QuickKeybindFrame then 
+                if QuickKeybindFrame:IsShown() then HideUIPanel(QuickKeybindFrame) else ShowUIPanel(QuickKeybindFrame) end
+            end
+        end
     end)
     kbBtn:SetPoint("LEFT", 0, 0)
     content.rowCount = content.rowCount + 1

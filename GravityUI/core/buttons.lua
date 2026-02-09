@@ -26,16 +26,9 @@ end
 -- QUICK KEYBIND MODE (Bonus Feature)
 ---------------------------------------------------------------------------
 function ns.OpenKeybindMode()
-    local LibKeyBound = LibStub("LibKeyBound-1.0", true)
-    if LibKeyBound then
-        LibKeyBound:Toggle()
+    if ns.Addon and ns.Addon.SlashCommandKeybind then
+        ns.Addon:SlashCommandKeybind()
         return true
-    elseif QuickKeybindFrame then
-        -- Fallback to Blizzard's Quick Keybind Mode
-        ShowUIPanel(QuickKeybindFrame)
-        return true
-    else
-        print("|cFF30D1FFGravityUI:|r Quick Keybind Mode not available.")
-        return false
     end
+    return false
 end

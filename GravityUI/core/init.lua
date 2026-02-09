@@ -197,6 +197,12 @@ function Addon:OnEnable()
     
     -- Initial Updates
     ns.RefreshEverything()
+    
+    -- Debug Command for Quick Keybind
+    _G["SLASH_GUIKB1"] = "/guikb"
+    SlashCmdList["GUIKB"] = function()
+        ns.Addon:SlashCommandKeybind()
+    end
 end
 
 -- Slash command handler
@@ -241,9 +247,39 @@ function Addon:SlashCommandKeybind()
     
     if QuickKeybindFrame then
         if QuickKeybindFrame:IsShown() then
-            QuickKeybindFrame:Hide()
+            HideUIPanel(QuickKeybindFrame)
         else
-            QuickKeybindFrame:Show()
+            ShowUIPanel(QuickKeybindFrame)
+            
+            -- Inject Custom Save & Exit Button
+            if not QuickKeybindFrame.GravityUISaveExit then
+                local btn = CreateFrame("Button", "GravityUI_QuickKeybind_SaveExit", QuickKeybindFrame, "UIPanelButtonTemplate")
+                QuickKeybindFrame.GravityUISaveExit = btn
+                btn:SetText("Save & Exit")
+                btn:SetSize(140, 30)
+                -- Position it below the frame to avoid overlapping the checkbox
+                btn:SetPoint("TOP", QuickKeybindFrame, "BOTTOM", 0, -10) 
+                
+                btn:SetScript("OnClick", function()
+                     -- 1. Trigger the standard "Okay" (Save) logic
+                     if QuickKeybindFrame.okayButton then
+                         QuickKeybindFrame.okayButton:Click()
+                     elseif QuickKeybindFrame.OkayButton then
+                         QuickKeybindFrame.OkayButton:Click()
+                     end
+                     
+                     -- 2. Force Close the QuickKeybindFrame itself (in case click didn't)
+                     HideUIPanel(QuickKeybindFrame)
+                     
+                     -- 3. Close Parent Menus (Settings / Game Menu) to return to game
+                     if SettingsPanel and SettingsPanel:IsShown() then 
+                        HideUIPanel(SettingsPanel) 
+                     end
+                     if GameMenuFrame and GameMenuFrame:IsShown() then 
+                        HideUIPanel(GameMenuFrame) 
+                     end
+                end)
+            end
         end
     end
 end
@@ -291,6 +327,10 @@ function Addon:PLAYER_ENTERING_WORLD(event, isInitialLogin, isReloadingUi)
     if ns.GUICDM_Keybinds and ns.GUICDM_Keybinds.Init then
         ns.GUICDM_Keybinds:Init()
     end
+
+
+    
+
     
 
 end
