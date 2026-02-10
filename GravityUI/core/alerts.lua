@@ -10,9 +10,9 @@ local Alerts = ns.Alerts
 -- POLYFILLS
 -------------------------------------------------------------------------------
 if not AchievementShield_SetPoints then
-    function AchievementShield_SetPoints(shieldPoints, points)
-        if not shieldPoints then return end
-        shieldPoints:SetText(points)
+    function AchievementShield_SetPoints(points, anchorFrame)
+        if not anchorFrame then return end
+        anchorFrame:SetText(points)
     end
 end
 
@@ -137,8 +137,20 @@ local function SkinAchievementAlert(frame)
     end
 
     if frame.Name then frame.Name:SetTextColor(tr, tg, tb, ta) end
-    if frame.Label then frame.Label:SetTextColor(tr, tg, tb, ta) end
-    if frame.GuildName then frame.GuildName:SetTextColor(tr, tg, tb, ta) end
+    -- Force color after a tick because Blizzard resets it
+    C_Timer.After(0.05, function() 
+        if frame.Label then frame.Label:SetTextColor(1, 1, 1, 1) end
+        
+        -- Fallback: Bruteforce search for "Achievement Earned" text
+        for _, region in ipairs({frame:GetRegions()}) do
+            if region:IsObjectType("FontString") then
+                local text = region:GetText()
+                if text == "Achievement Earned" or text == ACHIEVEMENT_TITLE then
+                     region:SetTextColor(1, 1, 1, 1)
+                end
+            end
+        end
+    end)
     
     frame.guiSkinned = true
 end
@@ -205,7 +217,7 @@ local function SkinLootWonAlert(frame)
         end
     end
     
-    if frame.Label then frame.Label:SetTextColor(tr, tg, tb, ta) end
+    if frame.Label then frame.Label:SetTextColor(1, 1, 1, 1) end
     
     frame.guiSkinned = true
 end
@@ -237,7 +249,7 @@ local function SkinDungeonCompletionAlert(frame)
         end
     end
     
-    if frame.dungeonName then frame.dungeonName:SetTextColor(tr, tg, tb, ta) end
+    if frame.dungeonName then frame.dungeonName:SetTextColor(1, 1, 1, 1) end
     if frame.instanceName then frame.instanceName:SetTextColor(tr, tg, tb, ta) end
     
     frame.guiSkinned = true
