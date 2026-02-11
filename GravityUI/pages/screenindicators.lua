@@ -535,6 +535,12 @@ local function BuildMissingBuffs(parent)
     content.rowCount = content.rowCount + 0.8
     CreateSubLabel(content, "Custom Buffs")
     
+    -- Info Text
+    local infoText = "|cffFFCC00Info:|r Add custom spellids for buffs, food or potions.\nUse |cff00ccff/guienchants|r to find your weapon enchant and add your enchantid like this: |cff00ccff7495:224107|r (enchantid:itemid)"
+    local infoBox = GUI:CreateInfoBox(content, infoText)
+    infoBox:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT + 5)))
+    content.rowCount = content.rowCount + (infoBox:GetHeight() / (ROW_HEIGHT + 5)) + 0.2
+    
     -- Add Input and Button
     local rowAdd = CreateFrame("Frame", nil, content)
     rowAdd:SetSize(GUI.CONTENT_WIDTH - 20, 30)
@@ -544,7 +550,7 @@ local function BuildMissingBuffs(parent)
     editBox:SetSize(120, 24)
     editBox:SetPoint("LEFT", 0, 0)
     editBox:SetAutoFocus(false)
-    editBox:SetNumeric(true)
+    editBox:SetNumeric(false) -- Changed to false to allow ":"
     editBox:SetFontObject("ChatFontNormal")
     editBox:SetTextInsets(8, 8, 0, 0)
     
@@ -568,12 +574,15 @@ local function BuildMissingBuffs(parent)
     
     local btnAdd = GUI:CreateButton(rowAdd, "+ Add Custom Buff", 140, 24, function() 
         local text = editBox:GetText()
-        local id = tonumber(text)
+        -- text can be "12345" or "7494:224107"
         
-        if id and RB and RB.AddCustomBuff then
-            local success, err = RB:AddCustomBuff(id)
+        -- Basic Validation
+        local isValid = tonumber(text) or string.find(text, "^%d+:%d+$") or string.find(text, "^%d+%s*:%s*%d+$")
+        
+        if isValid and RB and RB.AddCustomBuff then
+            local success, err = RB:AddCustomBuff(text)
             if success then
-                print("GravityUI: Custom Buff Added:", id)
+                print("GravityUI: Custom Buff Added:", text)
                 
                 -- Refresh UI by rebuilding this tab
                 if scroll then scroll:Hide() end
@@ -586,7 +595,7 @@ local function BuildMissingBuffs(parent)
                 print("|cffff0000GravityUI Error:|r " .. (err or "Unknown error in AddCustomBuff"))
             end
         else
-             if not id then print("|cffff0000GravityUI:|r Invalid Spell ID format. Please enter a number.") end
+             if not isValid then print("|cffff0000GravityUI:|r Invalid format. Use 'SpellID' or 'EnchantID:ItemID'.") end
              if not RB then print("|cffff0000GravityUI:|r RaidBuffs module missing from closure.") end
              if RB and not RB.AddCustomBuff then print("|cffff0000GravityUI:|r AddCustomBuff function missing on RaidBuffs object.") end
         end
@@ -641,6 +650,190 @@ ns.GUI:RegisterPage("screenindicators", {
             scrollFrame.ScrollBar:HookScript("OnShow", function(self) self:Hide() end)
         end
         
+-- 6. Raid Warnings
+local function BuildRaidWarnings(parent)
+    local scroll, content = GUI:CreateScrollableContent(parent)
+    scroll:SetAllPoints()
+    local db = ns.GetDB(); if not db then return end
+    
+    -- Ensure DB table exists
+    if not db.raidWarnings then db.raidWarnings = {} end
+    local dbRW = db.raidWarnings
+    
+    -- Defaults
+    if dbRW.enabled == nil then dbRW.enabled = true end
+    if dbRW.showInGroup == nil then dbRW.showInGroup = true end
+    if dbRW.showInRaid == nil then dbRW.showInRaid = true end
+    if dbRW.soundEnabled == nil then dbRW.soundEnabled = true end
+    if not dbRW.events then dbRW.events = {soulwell=true, ritual=true, feast=true, repair=true, magetable=true, portal=false} end
+    
+    local function RefreshRW()
+        if ns.RaidWarnings and ns.RaidWarnings.ApplySettings then ns.RaidWarnings.ApplySettings() end
+    end
+
+    content.rowCount = 0
+    local header = GUI:CreateSectionHeader(content, "Raid Warnings (Soulwell, Feast, etc.)")
+    header:SetPoint("TOPLEFT", 10, -10)
+    header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
+    content.rowCount = 1.3
+    
+    local infoBox = GUI:CreateInfoBox(content, "Displays an alert when a group member places a Feast, Soulwell, Repair Bot, or Summoning Ritual.")
+    infoBox:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
+    content.rowCount = content.rowCount + (infoBox:GetHeight() / (ROW_HEIGHT+5)) + 0.2
+    
+    AddRow(content, "Enable Raid Warnings", "checkbox", "enabled", dbRW, RefreshRW)
+    content.rowCount = content.rowCount + 0.5
+    
+    CreateSubLabel(content, "Visibility Filters")
+    AddRow(content, "Show in Party", "checkbox", "showInGroup", dbRW, RefreshRW)
+    AddRow(content, "Show in Raid", "checkbox", "showInRaid", dbRW, RefreshRW)
+    content.rowCount = content.rowCount + 0.5
+    
+    CreateSubLabel(content, "Events to Track")
+    AddRow(content, "Soulwells", "checkbox", "soulwell", dbRW.events, RefreshRW)
+    AddRow(content, "Summoning Rituals", "checkbox", "ritual", dbRW.events, RefreshRW)
+    AddRow(content, "Feasts", "checkbox", "feast", dbRW.events, RefreshRW)
+    AddRow(content, "Repair Bots", "checkbox", "repair", dbRW.events, RefreshRW)
+    AddRow(content, "Refreshment Tables (Mage)", "checkbox", "magetable", dbRW.events, RefreshRW)
+    AddRow(content, "Portals Settings", "checkbox", "portal", dbRW.events, RefreshRW)
+    content.rowCount = content.rowCount + 0.5
+    
+    CreateSubLabel(content, "Sound Alert")
+    AddRow(content, "Enable Sound", "checkbox", "soundEnabled", dbRW, RefreshRW)
+    
+    local soundOptions = {{value="Sound\\Interface\\RaidWarning.ogg", text="Raid Warning"}, {value="Sound\\Interface\\ReadyCheck.ogg", text="Ready Check"}}
+    local LSM = LibStub("LibSharedMedia-3.0", true)
+    if LSM then
+        soundOptions = {}
+        for name, _ in pairs(LSM:HashTable("sound")) do table.insert(soundOptions, {value=name, text=name}) end
+        table.sort(soundOptions, function(a,b) return a.text < b.text end)
+    end
+    AddRow(content, "Alert Sound", "dropdown", soundOptions, "soundFile", dbRW, RefreshRW)
+    
+    content.rowCount = content.rowCount + 0.5
+    
+    CreateSubLabel(content, "Appearance")
+    AddRow(content, "Font Size", "slider", 12, 64, "fontSize", dbRW, RefreshRW, 1)
+    AddRow(content, "Text Color", "color", "color", dbRW, RefreshRW)
+    AddRow(content, "X Offset", "slider", -500, 500, "x", dbRW, RefreshRW, 1)
+    AddRow(content, "Y Offset", "slider", -500, 500, "y", dbRW, RefreshRW, 1)
+    
+    -- Font Selection
+    local fontOptions = {{value="Fonts\\FRIZQT__.TTF", text="Friz Quadrata"}}
+    if LSM then
+        fontOptions = {}
+        for name, _ in pairs(LSM:HashTable("font")) do table.insert(fontOptions, {value=name, text=name}) end
+         table.sort(fontOptions, function(a,b) return a.text < b.text end)
+    end
+    AddRow(content, "Font", "dropdown", fontOptions, "font", dbRW, RefreshRW)
+    
+    content.rowCount = content.rowCount + 0.8
+    
+    local testBtn = GUI:CreateButton(content, "Test Alert", 120, 24, function()
+        if ns.RaidWarnings and ns.RaidWarnings.TestAlert then ns.RaidWarnings.TestAlert() end
+    end)
+    testBtn:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT+5)))
+    content.rowCount = content.rowCount + 1.2
+    
+    -- ════════════════════════════════════════════════
+    -- CUSTOM SPELLS
+    -- ════════════════════════════════════════════════
+    CreateSubLabel(content, "Custom Spells")
+    content.rowCount = content.rowCount + 0.2
+    
+    local rowAdd = CreateFrame("Frame", nil, content)
+    rowAdd:SetSize(GUI.CONTENT_WIDTH - 20, 30)
+    rowAdd:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT + 5)))
+    
+    -- 1. Spell ID Input
+    local inputID = GUI:CreateInput(rowAdd, "ID", "tempID", {}, function() end)
+    inputID:SetPoint("LEFT", 0, 0)
+    inputID:SetWidth(80)
+    inputID.editBox:SetWidth(80)
+    inputID.editBox:SetNumeric(true)
+    inputID.editBox:SetText("")
+    inputID.editBox:SetScript("OnEnterPressed", function(self) self:ClearFocus() end)
+    
+    -- 2. Type Dropdown
+    local typeOptions = {
+        {value="feast", text="Feast"},
+        {value="soulwell", text="Soulwell"},
+        {value="portal", text="Portal"},
+        {value="ritual", text="Ritual"},
+        {value="repair", text="Repair Bot"},
+        {value="magetable", text="Mage Table"},
+        {value="extra", text="Extra"}, -- Added "Extra"
+    }
+    -- Hacky dropdown creation since GUI:CreateDropdown binds to DB
+    -- We'll just use a local table to store the temp selection
+    local tempDB = { type = "feast" }
+    local dropType = GUI:CreateDropdown(rowAdd, "", typeOptions, "type", tempDB, function() end)
+    dropType:SetPoint("LEFT", inputID, "RIGHT", 10, 0)
+    dropType:SetWidth(110)
+    dropType.dropdown:SetPoint("LEFT", dropType, "LEFT", 0, 0)
+    dropType.dropdown:SetPoint("RIGHT", dropType, "RIGHT", 0, 0)
+    
+    -- 3. Add Button
+    local btnAdd = GUI:CreateButton(rowAdd, "+", 30, 24, function() 
+        local id = inputID.editBox:GetText()
+        local type = tempDB.type
+        
+        if ns.RaidWarnings and ns.RaidWarnings.AddCustomSpell then
+            local success, err = ns.RaidWarnings.AddCustomSpell(id, type)
+            if success then
+                inputID.editBox:SetText("")
+                -- Rebuild parent to show new item
+                if scroll then scroll:Hide() end
+                if BuildRaidWarnings then BuildRaidWarnings(parent) end
+            else
+                print("|cffff0000GravityUI Error:|r " .. (err or "Invalid Input"))
+            end
+        end
+    end)
+    -- Align with input box content (approx -10y to account for "ID" label)
+    btnAdd:SetPoint("LEFT", dropType, "RIGHT", 10, -10)
+    
+    content.rowCount = content.rowCount + 1.2
+    
+    -- List Custom Spells
+    if dbRW.customSpells then
+        local sorted = {}
+        for id, type in pairs(dbRW.customSpells) do table.insert(sorted, {id=id, type=type}) end
+        table.sort(sorted, function(a,b) return a.id < b.id end)
+        
+        for _, data in ipairs(sorted) do
+             local row = CreateFrame("Frame", nil, content)
+             row:SetSize(GUI.CONTENT_WIDTH - 20, 24)
+             row:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT + 5)))
+             
+             local label = row:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+             label:SetPoint("LEFT", 0, 0)
+             
+             -- Try to get spell info
+             local name = "Unknown"
+             local spellInfo = C_Spell.GetSpellInfo(data.id)
+             if spellInfo then name = spellInfo.name end
+             
+             label:SetText(string.format("|cff00ccff%s|r (%s): %s", data.id, data.type, name))
+             
+             local btnDel = GUI:CreateButton(row, "X", 20, 20, function()
+                 if ns.RaidWarnings and ns.RaidWarnings.RemoveCustomSpell then
+                     ns.RaidWarnings.RemoveCustomSpell(data.id)
+                     -- Rebuild
+                     if scroll then scroll:Hide() end
+                     if BuildRaidWarnings then BuildRaidWarnings(parent) end
+                 end
+             end)
+             -- Adjusted position to prevent clipping
+             btnDel:SetPoint("RIGHT", row, "RIGHT", -35, 0)
+             
+             content.rowCount = content.rowCount + 0.8
+        end
+    end
+    
+    content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
+end
+
         -- Create SubTabs
         local subTabs = GUI:CreateSubTabs(scrollFrame, {
             { name = "Cursor", builder = BuildCursor },
@@ -648,6 +841,7 @@ ns.GUI:RegisterPage("screenindicators", {
             { name = "Combat Status", builder = BuildCombatStatus },
             { name = "Pet", builder = BuildPet },
             { name = "Missing Buffs", builder = BuildMissingBuffs },
+            { name = "Raid Warnings", builder = BuildRaidWarnings },
         })
         subTabs:SetPoint("TOPLEFT", 10, -10)
         subTabs:SetPoint("TOPRIGHT", -10, 0)

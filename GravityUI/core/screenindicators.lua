@@ -735,7 +735,7 @@ end
 
 local function HasPetSpec()
     local _, class = UnitClass("player")
-    local petClasses = { HUNTER = true, WARLOCK = true, DEATHKNIGHT = true }
+    local petClasses = { HUNTER = true, WARLOCK = true, DEATHKNIGHT = true, MAGE = true }
     if not petClasses[class] then return false end
     
     local spec = GetSpecialization()
@@ -746,6 +746,13 @@ local function HasPetSpec()
     if class == "HUNTER" and specID == 254 then return false end
     -- DK: Nur Unheilig (SpecID 252) hat ein permanentes Pet
     if class == "DEATHKNIGHT" and specID ~= 252 then return false end
+    
+    -- Mage: Nur Frost (SpecID 64) hat ein Pet
+    if class == "MAGE" then
+        if specID ~= 64 then return false end
+        -- Check for Lonely Winter (Talent ID 205024)
+        if IsPlayerSpell(205024) then return false end
+    end
     
     return true
 end

@@ -323,6 +323,8 @@ function Addon:PLAYER_ENTERING_WORLD(event, isInitialLogin, isReloadingUi)
         ns.XPRep:Initialize()
     end
 
+
+
     -- Initialize GUICDM Keybinds
     if ns.GUICDM_Keybinds and ns.GUICDM_Keybinds.Init then
         ns.GUICDM_Keybinds:Init()

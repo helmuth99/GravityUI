@@ -207,6 +207,27 @@ ns.Defaults = {
             },
         },
     },
+    raidWarnings = {
+        enabled = true,
+        showInGroup = true,
+        showInRaid = true,
+        soundEnabled = true,
+        font = "Gravity",
+        fontSize = 24,
+        color = {1, 1, 0, 1},
+        soundFile = "Sound\\Interface\\RaidWarning.ogg",
+        x = 0,
+        y = 150,
+        events = {
+            soulwell = true,
+            ritual = true,
+            feast = true,
+            repair = true,
+            magetable = true,
+            portal = false, -- Default portals OFF
+        },
+        customSpells = {}, -- { [spellID] = "type" } e.g. { [12345] = "feast" }
+    },
     raidBuffs = {
         enabled = true,
         showOnlyInGroup = true,

@@ -642,7 +642,27 @@ local function UpdateDisplay()
                  end
             end
 
-            local missing, total, minRem = CountMissingBuff(buff.spellID, buff.key, db.showOnlyPlayerMissing)
+            local missing, total, minRem
+
+            if buff.isCustom and buff.enchantID then
+                local _, mainHandExp, _, mainHandEnchantID, _, offHandExp, _, offHandEnchantID = GetWeaponEnchantInfo()
+                local hasEnchant = (mainHandEnchantID == buff.enchantID) or (offHandEnchantID == buff.enchantID)
+                
+                total = 1
+                if not hasEnchant then
+                    missing = 1
+                else
+                    missing = 0
+                    -- Calculate minRem for glowing (GetWeaponEnchantInfo returns ms)
+                    if mainHandEnchantID == buff.enchantID and mainHandExp then
+                        minRem = mainHandExp / 1000
+                    elseif offHandEnchantID == buff.enchantID and offHandExp then
+                        minRem = offHandExp / 1000
+                    end
+                end
+            else
+                missing, total, minRem = CountMissingBuff(buff.spellID, buff.key, db.showOnlyPlayerMissing)
+            end
             local isExpiring = false
             if minRem and db.showExpirationGlow and db.expirationThreshold and minRem < (db.expirationThreshold * 60) then isExpiring = true end
             
@@ -865,14 +885,95 @@ end
 function RaidBuffs:AddCustomBuff(spellID)
     local db = GetSettings()
     
-    local spellName, _, icon = nil, nil, nil
-    if C_Spell and C_Spell.GetSpellInfo then
-         local info = C_Spell.GetSpellInfo(spellID)
-         if info then spellName = info.name; icon = info.iconID end
+    local isEnchant = false
+    
+    -- Hybrid Input Support: "EnchantID:ItemID"
+    -- Example: "7494:224440" (Tracks Enchant 7494, uses Icon/Name from Item 224440)
+    local enchantID, itemID = string.match(spellID, "^(%d+)%s*:%s*(%d+)$")
+    
+    if enchantID and itemID then
+        spellID = tonumber(enchantID) -- Use Enchant ID as primary ID for key
+        itemID = tonumber(itemID)
+        isEnchant = true
+        local itemName, _, _, _, _, _, _, _, _, itemIcon = C_Item.GetItemInfo(itemID)
+        
+        -- If item info isn't cached yet, it might return nil. 
+        -- We can try to load it, but for now fallback or set immediately if available.
+        if itemName then
+            spellName = itemName
+            icon = itemIcon
+        else
+            -- Fallback if item not cached (User might need to reload or re-add)
+            spellName = "Enchant " .. enchantID .. " (Item " .. itemID .. ")"
+            icon = 136244
+            -- Trigger item load for next time
+            C_Item.RequestLoadItemDataByID(itemID)
+        end
     else
-         spellName, _, icon = GetSpellInfo(spellID)
+        -- Standard Spell Check
+        if C_Spell and C_Spell.GetSpellInfo then
+             local info = C_Spell.GetSpellInfo(spellID)
+             if info then spellName = info.name; icon = info.iconID end
+        else
+             spellName, _, icon = GetSpellInfo(spellID)
+        end
     end
     
+    -- Fallback for raw Enchant ID (no item provided)
+    if not spellName then
+        local id = tonumber(spellID)
+        if id then
+            spellName = "Enchant " .. id
+            icon = 136244 
+            isEnchant = true
+            
+            -- Tooltip Scan Logic (Keep as fallback)
+            local _, _, _, mainID, _, _, _, offID = GetWeaponEnchantInfo()
+    -- ... (Keep existing tooltip scan logic below)
+            
+            -- Try to find the actual name from the weapon tooltip if currently equipped
+            local _, _, _, mainID, _, _, _, offID = GetWeaponEnchantInfo()
+            local slotID = nil
+            if mainID == id then slotID = 16
+            elseif offID == id then slotID = 17 end
+            
+            if slotID then
+                local tooltipData = C_TooltipInfo and C_TooltipInfo.GetInventoryItem("player", slotID)
+                if tooltipData and tooltipData.lines then
+                    for _, line in ipairs(tooltipData.lines) do
+                         local text = line.leftText
+                         if text then
+                             -- Logic: GetWeaponEnchantInfo ONLY tracks Temporary Enchants (Oils, Stones).
+                             -- Temporary enchants always have a duration in the tooltip, e.g. "Name (2 hours)" or "Enchanted: Name (10 min)"
+                             -- Permanent enchants (Runeforges) do NOT have a duration.
+                             -- So we only accept lines that contain a duration pattern `(%d+ `
+                             if text:find("%(%d+") then
+                                 -- Try to strip the "Enchanted: " prefix if present
+                                 local enchantName = text:match("^" .. (ENCHANTED_TOOLTIP_LINE:gsub("%%s", "(.+)")))
+                                 
+                                 -- If standard prefix failed, maybe it's just "Name (Duration)"
+                                 if not enchantName then
+                                     enchantName = text:match("^(.+) %(.+%)")
+                                 end
+                                 
+                                 -- Clean up: Remove duration from the name if it was captured in the first regex (it shouldn't be if greedy, but safety)
+                                 if enchantName then
+                                     enchantName = enchantName:gsub(" %(.+%)", "")
+                                     spellName = enchantName
+                                     
+                                     -- Better Icon Detection
+                                     if spellName:find("Oil") or spellName:find("öl") then icon = 463543 end 
+                                     if spellName:find("Stone") or spellName:find("stein") then icon = 136284 end
+                                     break
+                                 end
+                             end
+                         end
+                    end
+                end
+            end
+        end
+    end
+
     if not spellName then return false, "Invalid Spell ID" end
     
     -- Safety: Ensure customBuffs table exists
@@ -886,6 +987,7 @@ function RaidBuffs:AddCustomBuff(spellID)
         iconOverride = icon,
         -- Custom buffs treated as "Self" tracking (Always Check if enabled)
         isCustom = true,
+        enchantID = isEnchant and tonumber(spellID) or nil,
     }
     
     -- Rebuild/Refresh
@@ -993,3 +1095,11 @@ end)
 -- Slash command
 SLASH_GRAVITYRAIDBUFFS1 = "/guibuffs"
 SlashCmdList["GRAVITYRAIDBUFFS"] = function() RaidBuffs:ToggleMover() end
+
+SLASH_GUIENCHANTS1 = "/guienchants"
+SlashCmdList["GUIENCHANTS"] = function()
+    local hasMain, mainExp, mainCharges, mainID, hasOff, offExp, offCharges, offID = GetWeaponEnchantInfo()
+    print("GravityUI Enchants:")
+    print("Main Hand: Has=", hasMain, "ID=", mainID)
+    print("Off Hand: Has=", hasOff, "ID=", offID)
+end

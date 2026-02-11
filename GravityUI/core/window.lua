@@ -122,8 +122,8 @@ function CreateTopBar(parent)
     
     -- Logo
     local logo = topBar:CreateTexture(nil, "OVERLAY")
-    logo:SetSize(22, 22)
-    logo:SetPoint("LEFT", 15, 0)
+    logo:SetSize(28, 28)
+    logo:SetPoint("LEFT", 10, 0)
     logo:SetTexture(ns.ICON_PATH)
     
     -- Title
