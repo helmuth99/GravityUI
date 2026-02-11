@@ -18,8 +18,6 @@ local clockFrame, clockText
 local coordsFrame, coordsText
 local zoneTextFrame, zoneTextFont
 local datatextFrame
-local pingFrame, pingText
-local pingTimer
 
 -- Patch Minimap Layout if missing (Blizzard code calls this when we reparent elements)
 if not Minimap.Layout then
@@ -503,63 +501,7 @@ local function UpdateZoneText()
     zoneTextFont:SetTextColor(r, g, b)
 end
 
--- ═══════════════════════════════════════════════════════════════
--- MINIMAP PING
--- ═══════════════════════════════════════════════════════════════
 
-local function CreatePingFrame()
-    if pingFrame then return end
-    
-    pingFrame = CreateFrame("Frame", "Gravity_PingFrame", Minimap)
-    pingFrame:SetSize(200, 20)
-    pingFrame:SetFrameLevel(Minimap:GetFrameLevel() + 60)
-    pingFrame:Hide()
-    
-    pingText = pingFrame:CreateFontString(nil, "OVERLAY")
-    local font, outline = ns.GetFont()
-    pingText:SetFont(font, 12, outline)
-    pingText:SetPoint("CENTER")
-    pingText:SetTextColor(1, 1, 1)
-    pingText:SetShadowOffset(1, -1)
-    pingText:SetShadowColor(0, 0, 0, 1)
-end
-
-local function OnMinimapPing(unit, x, y)
-    local s = GetSettings()
-    if not s or not s.showPing or not unit then return end
-    
-    local name = GetUnitName(unit, true)
-    if not name then return end
-    
-    if not pingFrame then CreatePingFrame() end
-    
-    local _, class = UnitClass(unit)
-    local color = RAID_CLASS_COLORS[class] or {r=1, g=1, b=1}
-    local classColorHex = string.format("%02x%02x%02x", color.r*255, color.g*255, color.b*255)
-    
-    pingText:SetText("|cff" .. classColorHex .. name .. "|r")
-    
-    if x and y then
-        -- In Retail, coordinates are normalized from -0.5 to 0.5 relative to center
-        local mWidth = Minimap:GetWidth()
-        local mHeight = Minimap:GetHeight()
-        
-        pingFrame:ClearAllPoints()
-        -- Position 16 pixels below the ping location
-        pingFrame:SetPoint("CENTER", Minimap, "CENTER", x * mWidth, y * mHeight - 16)
-    else
-        pingFrame:ClearAllPoints()
-        pingFrame:SetPoint("CENTER", Minimap, "CENTER", 0, -18)
-    end
-    
-    pingFrame:Show()
-    
-    if pingTimer then pingTimer:Cancel() end
-    pingTimer = C_Timer.NewTimer(3, function()
-        pingFrame:Hide()
-        pingTimer = nil
-    end)
-end
 
 -- ═══════════════════════════════════════════════════════════════
 -- VISIBILITY & PREVIEW HELPERS
@@ -1427,7 +1369,6 @@ end
 local eventFrame = CreateFrame("Frame")
 eventFrame:RegisterEvent("ADDON_LOADED")
 eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
-eventFrame:RegisterEvent("MINIMAP_PING")
 eventFrame:SetScript("OnEvent", function(self, event, ...)
     local arg1, arg2, arg3, arg4, arg5 = ...
     
@@ -1438,8 +1379,5 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
     elseif event == "PLAYER_ENTERING_WORLD" then
         -- Final check once the world is loaded and most things are ready
         C_Timer.After(1, function() ns.RefreshMinimap() end)
-    elseif event == "MINIMAP_PING" then
-        OnMinimapPing(arg1, arg2, arg3)
     end
 end)
-eventFrame:RegisterEvent("MINIMAP_PING")

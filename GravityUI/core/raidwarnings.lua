@@ -254,62 +254,131 @@ function RaidWarnings.Initialize()
 end
 
 -- ============================================================================
--- EVENT HANDLE (UNIT_SPELLCAST_SUCCEEDED)
+-- ADDON COMMUNICATION
+-- ============================================================================
+local COMM_PREFIX = "GravityUI"
+if C_ChatInfo then C_ChatInfo.RegisterAddonMessagePrefix(COMM_PREFIX) end
+
+-- ============================================================================
+-- EVENT HANDLE (UNIT_SPELLCAST_SUCCEEDED & COMM)
 -- ============================================================================
 local eventFrame = CreateFrame("Frame")
 eventFrame:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
+eventFrame:RegisterEvent("CHAT_MSG_ADDON")
 
--- Throttle State
+-- Throttle State (Locally generated events)
 local lastCastGUID = nil
 local lastCastTime = 0
 
-eventFrame:SetScript("OnEvent", function(self, event, unitTarget, castGUID, spellID)
+-- Throttle for incoming COMM messages to prevent duplicates if multiple people send (unlikely but safe)
+local commThrottle = {}
+
+eventFrame:SetScript("OnEvent", function(self, event, ...)
+    -- 1. LOCAL SPELLCAST HANDLING (Sender)
     if event == "UNIT_SPELLCAST_SUCCEEDED" then
+        local unitTarget, castGUID, spellID = ...
+        
+        -- STRICTLY local player only. We rely on COMM for others.
+        if unitTarget ~= "player" then return end
+        
         if not castGUID or not spellID or type(spellID) ~= "number" then return end
+        
         local now = GetTime()
-        if castGUID and castGUID == lastCastGUID and (now - lastCastTime) < 1.0 then
-            return
+        
+        -- Safe Comparison for Secret GUIDs (pcall protection)
+        local isDuplicate = false
+        if castGUID and lastCastGUID then
+            local success, match = pcall(function() return castGUID == lastCastGUID end)
+            if success and match then isDuplicate = true end
         end
+        
+        -- 1s Throttle for same cast
+        if isDuplicate and (now - lastCastTime) < 1.0 then return end
 
         local db = ns.GetDB()
         if not db or not db.raidWarnings or not db.raidWarnings.enabled then return end
         local csv = db.raidWarnings
         
         -- Check Logic: 1. Hardcoded List, 2. Custom List
-        local key = TRACKED_SPELLS[spellID]
+        -- Use pcall to avoid "table index is secret" crash with private auras
+        local success, key = pcall(function() return TRACKED_SPELLS[spellID] end)
+        if not success then key = nil end
+        
         if not key and csv.customSpells then
-            key = csv.customSpells[spellID]
+            local success_custom, key_custom = pcall(function() return csv.customSpells[spellID] end)
+            if success_custom then key = key_custom end
         end
         
         if not key then return end
-        
         if not csv.events or not csv.events[key] then return end
         
+        -- Group Check
         local inRaid = IsInRaid()
         local inGroup = IsInGroup()
         
-        -- Logic:
-        -- If in Raid -> Check showInRaid
-        -- If in Group (but not raid) -> Check showInGroup
-        -- If Solo -> Do NOT show (Strict Mode)
-        
+        local channel = nil
         if inRaid then
              if not csv.showInRaid then return end
+             channel = (IsInGroup(LE_PARTY_CATEGORY_INSTANCE) and "INSTANCE_CHAT") or "RAID"
         elseif inGroup then
              if not csv.showInGroup then return end
+             channel = (IsInGroup(LE_PARTY_CATEGORY_INSTANCE) and "INSTANCE_CHAT") or "PARTY"
         else
              -- SOLO: STRICTLY RETURN
              return 
         end
         
-        -- Update Throttle only if we are actually proceeding
+        -- Update Throttle
         lastCastGUID = castGUID
         lastCastTime = now
         
         local spellName = C_Spell.GetSpellName(spellID) or "Unknown Spell"
-        local sourceName = UnitName(unitTarget) or "Unknown"
+        local playerName = UnitName("player")
         
-        RaidWarnings.ShowAlert(spellName, sourceName, key)
+        -- 1. Show Local Alert
+        RaidWarnings.ShowAlert(spellName, playerName, key)
+        
+        -- 2. Broadcast to Group (Silent Sync)
+        -- Format: "RW:SpellID:Key"
+        if channel then
+            local message = string.format("RW:%d:%s", spellID, key)
+            C_ChatInfo.SendAddonMessage(COMM_PREFIX, message, channel)
+        end
+        
+    -- 2. REMOTE MESSAGE HANDLING (Receiver)
+    elseif event == "CHAT_MSG_ADDON" then
+        local prefix, message, channel, sender = ...
+        
+        if prefix ~= COMM_PREFIX then return end
+        
+        -- Ignore messages from self (we already showed local alert)
+        local myself = UnitName("player")
+        if sender == myself or sender == (myself.."-"..GetRealmName()) then return end
+        
+        -- Parse Message: "RW:SpellID:Key"
+        if string.sub(message, 1, 3) == "RW:" then
+            local _, spellID, key = strsplit(":", message)
+            spellID = tonumber(spellID)
+            
+            if not spellID or not key then return end
+            
+            -- Throttle remote messages (same sender + same spell within 1s)
+            local now = GetTime()
+            local throttleKey = sender .. "_" .. spellID
+            if commThrottle[throttleKey] and (now - commThrottle[throttleKey]) < 1.0 then return end
+            commThrottle[throttleKey] = now
+            
+            -- Fetch Spell Name locally to ensure client language match
+            local spellName = C_Spell.GetSpellName(spellID) or "Unknown Spell"
+            
+            -- Show Alert
+            -- Remove Realm from sender name for cleaner UI
+            if string.find(sender, "-") then
+                sender = string.match(sender, "([^-]+)")
+            end
+            
+            RaidWarnings.ShowAlert(spellName, sender, key)
+        end
     end
 end)
 
