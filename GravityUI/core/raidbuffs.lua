@@ -376,7 +376,7 @@ local function UnitHasBuff(unit, spellIDs)
     return false, nil, nil
 end
 
-local function CountMissingBuff(spellIDs, buffKey, playerOnly)
+    local function CountMissingBuff(spellIDs, buffKey, playerOnly, checkAny)
     local missing = 0
     local total = 0
     local minRemaining = nil
@@ -395,20 +395,28 @@ local function CountMissingBuff(spellIDs, buffKey, playerOnly)
     end
 
     local inRaid = IsInRaid()
+    local foundAny = false
+
     for i = 1, GetNumGroupMembers() do
         local unit = inRaid and "raid"..i or (i==1 and "player" or "party"..(i-1))
         if IsValid(unit) then
-             -- Logic simplified: Assume everyone benefits unless strictly filtered (BuffReminders had beneficiaries table, we'll iterate simple first)
-             -- We'll assume standard class benefits logic if needed later, but for now Check All
              total = total + 1
              local hasBuff, remaining = UnitHasBuff(unit, spellIDs)
-             if not hasBuff then
+             if hasBuff then
+                 foundAny = true
+                 if remaining then
+                     if not minRemaining or remaining < minRemaining then minRemaining = remaining end
+                 end
+             else
                  missing = missing + 1
-             elseif remaining then
-                 if not minRemaining or remaining < minRemaining then minRemaining = remaining end
              end
         end
     end
+
+    if checkAny and foundAny then
+        missing = 0
+    end
+
     return missing, total, minRemaining
 end
 
@@ -646,22 +654,38 @@ local function UpdateDisplay()
 
             if buff.isCustom and buff.enchantID then
                 local _, mainHandExp, _, mainHandEnchantID, _, offHandExp, _, offHandEnchantID = GetWeaponEnchantInfo()
-                local hasEnchant = (mainHandEnchantID == buff.enchantID) or (offHandEnchantID == buff.enchantID)
                 
-                total = 1
-                if not hasEnchant then
-                    missing = 1
-                else
-                    missing = 0
+                -- Check for Offhand Weapon (not Shield/Offhand Item)
+                -- Slot 17 is Offhand
+                local offHandLink = GetInventoryItemLink("player", 17)
+                local requiresOffhand = false
+                if offHandLink then
+                    local _, _, _, _, _, _, _, _, _, _, _, classID = C_Item.GetItemInfo(offHandLink)
+                    -- ClassID 2 is Weapon. 4 is Armor (Shields/Offhands).
+                    if classID == 2 then requiresOffhand = true end
+                end
+
+                total = requiresOffhand and 2 or 1
+                local found = 0
+                if mainHandEnchantID == buff.enchantID then found = found + 1 end
+                if requiresOffhand and offHandEnchantID == buff.enchantID then found = found + 1 end
+                
+                missing = total - found
+                
+                if missing == 0 then
                     -- Calculate minRem for glowing (GetWeaponEnchantInfo returns ms)
                     if mainHandEnchantID == buff.enchantID and mainHandExp then
                         minRem = mainHandExp / 1000
-                    elseif offHandEnchantID == buff.enchantID and offHandExp then
-                        minRem = offHandExp / 1000
+                    end
+                    if requiresOffhand and offHandEnchantID == buff.enchantID and offHandExp then
+                        local offRem = offHandExp / 1000
+                        if not minRem or offRem < minRem then minRem = offRem end
                     end
                 end
             else
-                missing, total, minRem = CountMissingBuff(buff.spellID, buff.key, db.showOnlyPlayerMissing)
+                local playerOnly = (catKey == "self") or db.showOnlyPlayerMissing
+                local checkAny = (catKey == "targeted" or catKey == "presence")
+                missing, total, minRem = CountMissingBuff(buff.spellID, buff.key, playerOnly, checkAny)
             end
             local isExpiring = false
             if minRem and db.showExpirationGlow and db.expirationThreshold and minRem < (db.expirationThreshold * 60) then isExpiring = true end

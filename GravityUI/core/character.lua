@@ -2360,12 +2360,39 @@ local function UpdateStatsPanel(panel, unit)
         -- Set tooltips (Blizzard format)
         if stat.statKey == "LIFESTEAL" then
             local lifesteal = GetLifesteal()
-            row.tooltip = HIGHLIGHT_FONT_COLOR_CODE .. format(PAPERDOLLFRAME_TOOLTIP_FORMAT, STAT_LIFESTEAL) .. " " .. format("%.2F%%", lifesteal) .. FONT_COLOR_CODE_CLOSE
-            row.tooltip2 = format(CR_LIFESTEAL_TOOLTIP, BreakUpLargeNumbers(GetCombatRating(CR_LIFESTEAL)), GetCombatRatingBonus(CR_LIFESTEAL))
+             row.tooltip = HIGHLIGHT_FONT_COLOR_CODE .. format(PAPERDOLLFRAME_TOOLTIP_FORMAT, STAT_LIFESTEAL) .. " " .. format("%.2F%%", lifesteal) .. FONT_COLOR_CODE_CLOSE
+             row.tooltip2 = format(CR_LIFESTEAL_TOOLTIP, BreakUpLargeNumbers(GetCombatRating(CR_LIFESTEAL)), GetCombatRatingBonus(CR_LIFESTEAL))
         elseif stat.statKey == "SPEED" then
-            local speedValue = GetSpeed()
-            row.tooltip = HIGHLIGHT_FONT_COLOR_CODE .. format(PAPERDOLLFRAME_TOOLTIP_FORMAT, STAT_SPEED) .. " " .. format("%.2F%%", speedValue) .. FONT_COLOR_CODE_CLOSE
-            row.tooltip2 = format(CR_SPEED_TOOLTIP, BreakUpLargeNumbers(GetCombatRating(CR_SPEED)), GetCombatRatingBonus(CR_SPEED))
+            -- GRAVITY UI CHANGE: Show actual Movement Speed Capacity instead of current velocity
+            local _, runSpeed, flightSpeed, swimSpeed = GetUnitSpeed("player")
+            local speed = runSpeed
+            
+            -- Determine which speed to show based on state
+            if IsSwimming() then
+                speed = swimSpeed
+            elseif IsFlying() then
+                speed = flightSpeed
+            end
+            
+            -- Calculate percentage (base speed is 7 yards/s)
+            local speedPct = (speed / 7) * 100
+            
+            -- Show current speed %
+            row.value:SetText(string.format("%.0f%%", speedPct))
+
+            -- Tooltip: Show Movement Speed + Breakdown of Rating
+            row.tooltip = HIGHLIGHT_FONT_COLOR_CODE .. "Movement Speed" .. " " .. format("%.0f%%", speedPct) .. FONT_COLOR_CODE_CLOSE
+            
+            -- Add rating info
+            local speedRating = GetCombatRating(CR_SPEED)
+            local speedBonus = GetCombatRatingBonus(CR_SPEED)
+            row.tooltip2 = format(CR_SPEED_TOOLTIP, BreakUpLargeNumbers(speedRating), speedBonus)
+            
+            -- Add movement types breakdown
+            row.tooltip3 = "Run: " .. format("%.0f%%", (runSpeed/7)*100) .. 
+                           " | Fly: " .. format("%.0f%%", (flightSpeed/7)*100) ..
+                           " | Swim: " .. format("%.0f%%", (swimSpeed/7)*100)
+
         elseif stat.statKey == "AVOIDANCE" then
              local avoidance = GetAvoidance()
              row.tooltip = HIGHLIGHT_FONT_COLOR_CODE .. format(PAPERDOLLFRAME_TOOLTIP_FORMAT, STAT_AVOIDANCE) .. " " .. format("%.2F%%", avoidance) .. FONT_COLOR_CODE_CLOSE
@@ -3005,6 +3032,8 @@ eventFrame:RegisterEvent("UPDATE_INVENTORY_DURABILITY")
 eventFrame:RegisterEvent("SOCKET_INFO_UPDATE")
 eventFrame:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
 eventFrame:RegisterEvent("UNIT_STATS")
+eventFrame:RegisterEvent("UNIT_AURA")
+eventFrame:RegisterEvent("UNIT_SPELL_HASTE")
 eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 eventFrame:RegisterEvent("INSPECT_READY")
 
@@ -3020,6 +3049,10 @@ eventFrame:SetScript("OnEvent", function(self, event, arg1)
            event == "SOCKET_INFO_UPDATE" or event == "PLAYER_SPECIALIZATION_CHANGED" then
         ScheduleUpdate()
     elseif event == "UNIT_STATS" and arg1 == "player" then
+        ScheduleUpdate()
+    elseif event == "UNIT_AURA" and arg1 == "player" then
+        ScheduleUpdate()
+    elseif event == "UNIT_SPELL_HASTE" and arg1 == "player" then
         ScheduleUpdate()
     elseif event == "PLAYER_ENTERING_WORLD" then
         -- Delayed init check

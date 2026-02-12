@@ -445,8 +445,12 @@ local function GetSpellIDFromSlot(slot)
     return nil
 end
 
+local cachedRangeSlot = nil -- Optimization: Cache the slot ID of the ability
+local cachedRangeSpellID = nil -- Optimization: Fallback Spell ID
+
 local function UpdateRangeSlotCache()
     cachedRangeSlot = nil
+    cachedRangeSpellID = nil
     
     -- Determine Priority based on Class/Spec
     -- We want to avoid Ranged spells (Arcane Shot) hijacking the crosshair for Melee specs (Survival)
@@ -462,6 +466,7 @@ local function UpdateRangeSlotCache()
     if class == "MONK" and spec ~= 2 then preferMelee = true end -- Brew/WW (MW maybe ranged?)
 
     local bestSlot = nil
+    local bestID = nil
     
     -- Scan Action Bars
     for slot = 1, 180 do
@@ -473,22 +478,27 @@ local function UpdateRangeSlotCache()
             if isMelee then
                 if preferMelee then
                     cachedRangeSlot = slot
+                    cachedRangeSpellID = id
                     return -- Found our preferred type!
                 elseif not bestSlot then
                     bestSlot = slot -- Found something, save it
+                    bestID = id
                 end
             elseif isRanged then
                 if not preferMelee then
                     cachedRangeSlot = slot
+                    cachedRangeSpellID = id
                     return -- Found our preferred type!
                 elseif not bestSlot then
                     bestSlot = slot -- Found something, save it
+                    bestID = id
                 end
             end
         end
     end
     
     cachedRangeSlot = bestSlot
+    cachedRangeSpellID = bestID
 end
 
 local function IsOutOfRange()
@@ -498,6 +508,13 @@ local function IsOutOfRange()
 
     if IsActionInRange and cachedRangeSlot then
         local inRange = IsActionInRange(cachedRangeSlot)
+        if inRange == true then return false
+        elseif inRange == false then return true end
+    end
+    
+    -- Fallback: Check Spell Range directly (Fix for Macros where slot check fails)
+    if cachedRangeSpellID then
+        local inRange = C_Spell.IsSpellInRange(cachedRangeSpellID, "target")
         if inRange == true then return false
         elseif inRange == false then return true end
     end
