@@ -388,7 +388,11 @@ local function ApplyHideSettings()
     local inPetBattle = C_PetBattles and C_PetBattles.IsInBattle()
     
     -- Include Pet Battles in the "Minigame" hide logic to clean up BCDM etc.
-    local hideForMinigame = settings.hideOnWorldQuestMinigame and (inVehicle or inPetBattle)
+    -- EXCLUDE Group Content (Dungeons/Raids) from this logic to prevent taint issues with protected frames
+    local inInstance, instanceType = IsInInstance()
+    local isGroupContent = (instanceType == "party" or instanceType == "raid")
+
+    local hideForMinigame = settings.hideOnWorldQuestMinigame and (inVehicle or inPetBattle) and not isGroupContent
 
     -- 1. Objective Tracker (Extension)
     -- We already handled ObjectiveTrackerFrame above based on instance types.
@@ -469,8 +473,10 @@ local function ApplyHideSettings()
             if settings.hideOnWorldQuestMinigame or frame._gui_AutohideHooked then
             
                 if hideForMinigame then
-                -- Method 1: Standard Hide
-                frame:Hide()
+                -- Method 1: Standard Hide (Combat Safe)
+                if not InCombatLockdown() then
+                    frame:Hide()
+                end
                 
                 -- Method 2: Alpha (Visual Hide)
                 frame:SetAlpha(0)

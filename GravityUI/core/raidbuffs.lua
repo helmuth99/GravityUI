@@ -362,15 +362,32 @@ local function FormatRemainingTime(seconds)
 end
 
 local function UnitHasBuff(unit, spellIDs)
-    if type(spellIDs) ~= "table" then spellIDs = { spellIDs } end
-    for _, id in ipairs(spellIDs) do
-        local auraData = C_UnitAuras.GetUnitAuraBySpellID(unit, id)
-        if auraData then
-            local remaining = nil
-            if auraData.expirationTime and auraData.expirationTime > 0 then
-                remaining = auraData.expirationTime - GetTime()
+    if type(spellIDs) == "string" then
+        -- Check for comma separated
+        if spellIDs:find(",") then
+            local ids = {}
+            for id in string.gmatch(spellIDs, "([^,]+)") do
+                local n = tonumber(strtrim(id))
+                if n then table.insert(ids, n) end
             end
-            return true, remaining, auraData.sourceUnit
+            spellIDs = ids
+        else
+            spellIDs = { tonumber(spellIDs) }
+        end
+    elseif type(spellIDs) ~= "table" then 
+        spellIDs = { spellIDs } 
+    end
+
+    for _, id in ipairs(spellIDs) do
+        if id then
+            local auraData = C_UnitAuras.GetUnitAuraBySpellID(unit, id)
+            if auraData then
+                local remaining = nil
+                if auraData.expirationTime and auraData.expirationTime > 0 then
+                    remaining = auraData.expirationTime - GetTime()
+                end
+                return true, remaining, auraData.sourceUnit
+            end
         end
     end
     return false, nil, nil
@@ -910,13 +927,25 @@ function RaidBuffs:AddCustomBuff(spellID)
     local db = GetSettings()
     
     local isEnchant = false
+    local originalInput = spellID
+    local firstID = spellID
     
+    -- Check for comma separated IDs (e.g. "123, 456, 789")
+    if type(spellID) == "string" and spellID:find(",") then
+        -- Extract first ID for metadata lookup
+        local f = spellID:match("([^,]+)")
+        if f then firstID = tonumber(strtrim(f)) end
+    end
+
     -- Hybrid Input Support: "EnchantID:ItemID"
     -- Example: "7494:224440" (Tracks Enchant 7494, uses Icon/Name from Item 224440)
     local enchantID, itemID = string.match(spellID, "^(%d+)%s*:%s*(%d+)$")
     
+    local spellName, icon
+    
     if enchantID and itemID then
-        spellID = tonumber(enchantID) -- Use Enchant ID as primary ID for key
+        firstID = tonumber(enchantID) -- Use Enchant ID as primary ID for key
+        spellID = firstID -- For enchants, we store the ID as number usually
         itemID = tonumber(itemID)
         isEnchant = true
         local itemName, _, _, _, _, _, _, _, _, itemIcon = C_Item.GetItemInfo(itemID)
@@ -935,11 +964,13 @@ function RaidBuffs:AddCustomBuff(spellID)
         end
     else
         -- Standard Spell Check
+        -- Use firstID (which might be the only one)
+        local lookupID = tonumber(firstID) or firstID
         if C_Spell and C_Spell.GetSpellInfo then
-             local info = C_Spell.GetSpellInfo(spellID)
+             local info = C_Spell.GetSpellInfo(lookupID)
              if info then spellName = info.name; icon = info.iconID end
         else
-             spellName, _, icon = GetSpellInfo(spellID)
+             spellName, _, icon = GetSpellInfo(lookupID)
         end
     end
     

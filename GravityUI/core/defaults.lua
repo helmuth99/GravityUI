@@ -118,8 +118,11 @@ ns.Defaults = {
             enabled = true,
             position = nil,
             growDirection = "DOWN",
-            spacing = 4,
+            spacing = 6,
             maxFrames = 4,
+            width = 320,
+            height = 40, -- Increased default height for better visibility
+            texture = "Gravity",
         },
         lootResults = {
             enabled = true,
@@ -524,6 +527,7 @@ ns.Defaults = {
         autoInsertKey = true,
         hideErrorMessages = true,
         autoTurnInQuest = true,
+        questHoldShift = true,
         hideFriendlyPlayerNameplates = true,
     },
     configPanelAlpha = 1,

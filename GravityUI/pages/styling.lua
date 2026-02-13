@@ -609,7 +609,152 @@ local function BuildLootPanel(parent)
     resetBtn:SetPoint("LEFT", moveBtn, "RIGHT", 10, 0)
     yOffset = yOffset - 50
     
-    -- 2. LOOT HISTORY
+    -- 2. LOOT ROLLS (GroupLoot)
+    local header3 = GUI:CreateSectionHeader(content, "Loot Rolls (Group Loot)")
+    header3:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - header3.gap
+    yOffset = yOffset - 10
+    
+    local infoBox3 = GUI:CreateInfoBox(content, "Skin the Need/Greed roll frames.")
+    infoBox3:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - infoBox3:GetHeight() - 10
+    
+    local rowL1 = CreateStylingRow(content, "Enable Skinning", "checkbox", "enabled", db.lootRoll, function()
+        if ns.Loot and ns.Loot.RefreshRolls then ns.Loot:RefreshRolls() end
+    end)
+    rowL1:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
+    
+    -- Dimensions
+    local rowL2 = CreateStylingRow(content, "Width", "slider", 150, 600, "width", db.lootRoll, function()
+        if ns.Loot and ns.Loot.RefreshRolls then ns.Loot:RefreshRolls() end
+    end, 1)
+    rowL2:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
+    
+    -- Renamed from Height to Item Icon Size per request
+    local rowL3 = CreateStylingRow(content, "Item Icon Size", "slider", 20, 100, "height", db.lootRoll, function()
+        if ns.Loot and ns.Loot.RefreshRolls then ns.Loot:RefreshRolls() end
+    end, 1)
+    rowL3:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
+    
+    local rowL3a = CreateStylingRow(content, "Timer Bar Height", "slider", 1, 30, "timerHeight", db.lootRoll, function()
+        if ns.Loot and ns.Loot.RefreshRolls then ns.Loot:RefreshRolls() end
+    end, 1)
+    rowL3a:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
+
+    -- Texture dropdown
+    local textureList = {}
+    local LSM = LibStub("LibSharedMedia-3.0", true)
+    if LSM then
+        for _, name in pairs(LSM:List("statusbar")) do
+            table.insert(textureList, { text = name, value = name })
+        end
+        table.sort(textureList, function(a, b) return a.text < b.text end)
+    end
+    
+    local rowL4 = CreateStylingRow(content, "Bar Texture", "dropdown", textureList, "texture", db.lootRoll, function()
+        if ns.Loot and ns.Loot.RefreshRolls then ns.Loot:RefreshRolls() end
+    end)
+    rowL4:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
+    
+    -- Font Settings
+    local fontList = {}
+    if LSM then
+        for _, name in pairs(LSM:List("font")) do
+            table.insert(fontList, { text = name, value = name })
+        end
+        table.sort(fontList, function(a, b) return a.text < b.text end)
+    end
+    
+    local rowF1 = CreateStylingRow(content, "Item Name Font", "dropdown", fontList, "nameFont", db.lootRoll, function()
+        if ns.Loot and ns.Loot.RefreshRolls then ns.Loot:RefreshRolls() end
+    end)
+    rowF1:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
+    
+    local rowF2 = CreateStylingRow(content, "Item Name Size", "slider", 8, 32, "nameFontSize", db.lootRoll, function()
+        if ns.Loot and ns.Loot.RefreshRolls then ns.Loot:RefreshRolls() end
+    end, 1)
+    rowF2:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
+    
+    local rowF3 = CreateStylingRow(content, "Item Name Outline", "dropdown", {
+        { text = "NONE", value = "NONE" },
+        { text = "OUTLINE", value = "OUTLINE" },
+        { text = "THICKOUTLINE", value = "THICKOUTLINE" },
+        { text = "MONOCHROME", value = "MONOCHROME" },
+        { text = "OUTLINE, MONOCHROME", value = "OUTLINE, MONOCHROME" },
+    }, "nameFontOutline", db.lootRoll, function()
+        if ns.Loot and ns.Loot.RefreshRolls then ns.Loot:RefreshRolls() end
+    end)
+    rowF3:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
+    
+    local rowF4 = CreateStylingRow(content, "Item Name Color", "color", nil, "nameFontColor", db.lootRoll, function()
+        if ns.Loot and ns.Loot.RefreshRolls then ns.Loot:RefreshRolls() end
+    end)
+    rowF4:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
+
+
+    -- Background Settings
+    local bgPickerRowRoll
+    local rowBgRoll = CreateStylingRow(content, "Enable Background", "checkbox", "enableBackgroundColor", db.lootRoll, function(value)
+        if bgPickerRowRoll then
+            if value then bgPickerRowRoll:Show() else bgPickerRowRoll:Hide() end
+        end
+        if ns.Loot and ns.Loot.RefreshRolls then ns.Loot:RefreshRolls() end
+    end)
+    rowBgRoll:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
+    
+    bgPickerRowRoll = CreateStylingRow(content, "Background Color", "color", "backgroundColor", db.lootRoll, function()
+        if ns.Loot and ns.Loot.RefreshRolls then ns.Loot:RefreshRolls() end
+    end)
+    bgPickerRowRoll:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
+
+    if not db.lootRoll.enableBackgroundColor then
+        bgPickerRowRoll:Hide()
+    end
+    
+    -- Spacing
+    local rowL5 = CreateStylingRow(content, "Vertical Spacing", "slider", 0, 50, "spacing", db.lootRoll, function()
+        if ns.Loot and ns.Loot.RefreshRolls then ns.Loot:RefreshRolls() end
+    end, 1)
+    rowL5:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
+
+    -- Growth Direction
+    local growOptions = {
+        { text = "Down", value = "DOWN" },
+        { text = "Up", value = "UP" },
+    }
+    local rowL6 = CreateStylingRow(content, "Growth Direction", "dropdown", growOptions, "growDirection", db.lootRoll, function()
+        if ns.Loot and ns.Loot.RefreshRolls then ns.Loot:RefreshRolls() end
+    end)
+    rowL6:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
+
+
+    -- Move Button
+    local moveBtnRolls = GUI:CreateButton(content, "Toggle Mover", 160, 24, function()
+         if ns.Loot and ns.Loot.ToggleRollMover then ns.Loot:ToggleRollMover() end
+    end)
+    moveBtnRolls:SetPoint("TOPLEFT", PAD, yOffset)
+    
+    local resetBtnRolls = GUI:CreateButton(content, "Reset Position", 160, 24, function()
+         if ns.Loot and ns.Loot.ResetRollPosition then ns.Loot:ResetRollPosition() end
+    end)
+    resetBtnRolls:SetPoint("LEFT", moveBtnRolls, "RIGHT", 10, 0)
+    
+    yOffset = yOffset - 50
+
+    -- 3. LOOT HISTORY
     local header2 = GUI:CreateSectionHeader(content, "Loot History")
     header2:SetPoint("TOPLEFT", PAD, yOffset)
     yOffset = yOffset - header2.gap

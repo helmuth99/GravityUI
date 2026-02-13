@@ -365,6 +365,9 @@ local function OnLootOpened()
     for i = 1, numItems do
         local texture, name, qty, _, quality, locked, isQuestItem, questID = GetLootSlotInfo(i)
         if texture then
+            if not lootFrame.slots[i] then
+                lootFrame.slots[i] = CreateLootSlot(lootFrame, i)
+            end
             local slot = lootFrame.slots[i]
             slot.slotIndex = i
             slot.icon:SetTexture(texture)
@@ -386,7 +389,11 @@ local function OnLootOpened()
             visible = visible + 1
         end
     end
-    for i = numItems + 1, MAX_LOOT_SLOTS do lootFrame.slots[i]:Hide() end
+    
+    -- Hide unused slots, checking against total created slots
+    for i = numItems + 1, #lootFrame.slots do 
+        if lootFrame.slots[i] then lootFrame.slots[i]:Hide() end
+    end
 
     lootFrame:SetHeight(HEADER_HEIGHT + 10 + (visible * (SLOT_HEIGHT + 2)))
     lootFrame:Show()
@@ -442,6 +449,826 @@ function Loot:ResetPosition()
 end
 
 -------------------------------------------------------------------------------
+-- LOOT ROLLS (Group Loot)
+-------------------------------------------------------------------------------
+
+local function GetStatusbarTexture(name)
+    local LSM = LibStub("LibSharedMedia-3.0", true)
+    if LSM then
+        return LSM:Fetch("statusbar", name or "Gravity")
+    end
+    return "Interface\\TargetingFrame\\UI-StatusBar"
+end
+
+local function UpdateGroupLootStyle(frame)
+    if not frame then return end
+    local db = GetDB()
+    if not db or not db.lootRoll or not db.lootRoll.enabled then return end
+
+    local cfg = db.lootRoll
+    frame:SetSize(cfg.width, cfg.height)
+    frame:SetScale(1)
+
+    -- Background (Transparent)
+    if not frame.guiBackground then
+        frame.guiBackground = frame:CreateTexture(nil, "BACKGROUND")
+        frame.guiBackground:SetAllPoints()
+        frame.guiBackground:SetColorTexture(0, 0, 0, 0) -- Transparent
+    else
+        frame.guiBackground:SetColorTexture(0, 0, 0, 0)
+    end
+    
+    local textureParams = GetStatusbarTexture(cfg.texture)
+
+    -- Timer (StatusBar) - Bottom Strip
+    if frame.Timer then
+        frame.Timer:SetStatusBarTexture(textureParams)
+        frame.Timer:ClearAllPoints()
+        frame.Timer:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 0, 0)
+        frame.Timer:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", 0, 0)
+        frame.Timer:SetHeight(6) -- Thin bar at bottom
+        
+        frame.Timer:SetFrameLevel(frame:GetFrameLevel() + 1)
+        frame.Timer:SetAlpha(1)
+        
+        -- Hide default background of the timer if any
+        if frame.Timer.Background then frame.Timer.Background:Hide() end
+        if frame.Timer.Text then frame.Timer.Text:Hide() end 
+    end
+
+    -- Icon
+    if frame.IconFrame then
+        frame.IconFrame:ClearAllPoints()
+        frame.IconFrame:SetPoint("LEFT", frame, "LEFT", -cfg.height - 5, 0) 
+        frame.IconFrame:SetSize(cfg.height, cfg.height)
+        
+        if frame.IconFrame.Border then frame.IconFrame.Border:Hide() end
+        if frame.IconFrame.Count then frame.IconFrame.Count:SetFont(GetFont()) end
+        
+        -- Remove Border
+        if frame.guiIconBorder then
+             frame.guiIconBorder:Hide()
+        end
+    end
+
+    -- Name
+    if frame.Name then
+        frame.Name:ClearAllPoints()
+        frame.Name:SetPoint("LEFT", frame, "LEFT", 0, 0) -- User req: Align with bar start (was 10)
+        frame.Name:SetFont(GetFont())
+        frame.Name:SetDrawLayer("OVERLAY")
+    end
+    
+    -- 5. Item Level Text
+    local ilvlParent = frame.IconFrame or frame
+    if not frame.guiIlvl then
+        frame.guiIlvl = ilvlParent:CreateFontString(nil, "OVERLAY")
+        -- Use a cleaner/bold font if available, or just standard
+        frame.guiIlvl:SetFont(GetFont(), 10, "OUTLINE") 
+        frame.guiIlvl:SetTextColor(1, 0.8, 0)
+    else
+        frame.guiIlvl:SetParent(ilvlParent)
+    end
+
+    if frame.IconFrame then
+        frame.guiIlvl:ClearAllPoints()
+        frame.guiIlvl:SetPoint("BOTTOM", frame.IconFrame, "BOTTOM", 0, 1)
+        frame.guiIlvl:SetDrawLayer("OVERLAY", 7) -- Maximum overlay
+    end
+
+    -- Bind Text (BoP / BoE) -> RIGHT of Name (Reverted from Icon Top due to clutter)
+    if not frame.guiBindText then
+        frame.guiBindText = frame:CreateFontString(nil, "OVERLAY")
+    end
+    
+    local font = GetFont() -- Ensure font is defined
+    frame.guiBindText:SetFont(font, 10, "OUTLINE")
+    frame.guiBindText:ClearAllPoints()
+    
+    -- Anchor to the RIGHT of the Name
+    -- If Name is not set, fallback to Icon Right
+    if frame.Name then
+        frame.guiBindText:SetPoint("LEFT", frame.Name, "RIGHT", 5, 0)
+    else
+        frame.guiBindText:SetPoint("LEFT", frame.IconFrame, "RIGHT", 5, 0)
+    end
+
+    -- Buttons position (Right side)
+    -- User req: "Icons should not be same size as item icon". Fixed size 22px (was 26).
+    local btnSize = 22 
+    
+    local function SkinButton(btn)
+        if not btn then return end
+        btn:SetSize(btnSize, btnSize)
+        btn:ClearAllPoints()
+        -- DO NOT Force Show() - breaks disabled state logic relative to game rules
+        btn:SetFrameLevel(frame:GetFrameLevel() + 5)
+    end
+
+    -- Disable default decoration
+    if frame.Background then frame.Background:Hide() end
+    if frame.Border then frame.Border:Hide() end
+    -- Background: Ensure NO border/background is visible by aggressively clearing it
+    if frame.SetBackdrop then frame:SetBackdrop(nil) end
+    
+    -- Timer Bar Visuals
+    -- User req: "Timer bar is a bit too narrow" -> Increase to 8px
+    if frame.Timer then
+        frame.Timer:SetHeight(8)
+        
+        -- Add Background to Timer Frame if missing
+        if not frame.TimerBg then
+             frame.TimerBg = frame.Timer:CreateTexture(nil, "BACKGROUND")
+             frame.TimerBg:SetAllPoints(frame.Timer)
+             frame.TimerBg:SetTexture(GetStatusbarTexture(db.lootRoll.texture))
+             frame.TimerBg:SetVertexColor(0.1, 0.1, 0.1, 1) -- Dark background
+        end
+    end
+    
+    -- Item Quality Border
+    if not frame.IconBorder then
+        frame.IconBorder = frame:CreateTexture(nil, "OVERLAY")
+        if frame.IconFrame then
+             frame.IconBorder:SetPoint("CENTER", frame.IconFrame, "CENTER")
+             frame.IconBorder:SetSize(db.lootRoll.height * 1.6, db.lootRoll.height * 1.6)
+             frame.IconBorder:SetTexture("Interface\\Buttons\\UI-ActionButton-Border")
+             frame.IconBorder:SetBlendMode("ADD")
+        end
+    end
+    local link
+    if frame.rollID then
+        link = GetLootRollItemLink(frame.rollID)
+    end
+    
+    if link then
+        local _, _, quality = GetItemInfo(link)
+        if quality then
+            local r, g, b = GetItemQualityColor(quality)
+            if frame.IconBorder then frame.IconBorder:SetVertexColor(r, g, b) end
+        end
+    end
+    
+    -- Check for Transmog Button texture safety on Real Frames too
+    if frame.TransmogButton then
+        -- Default texture is usually fine on real frames, but let's ensure it's not nil if user reported 'missing'.
+        -- Actually, Game usually handles this. If it's invisible, it might be the texture file is gone.
+        -- We won't force a texture on the REAL button unless necessary, but we can verify regions.
+    end
+
+    
+    -- Re-arrange buttons. Order: Pass (Rightmost) <- Transmog <- Greed <- Need
+    
+    local function CreateCount(name)
+        if not frame[name] then
+            frame[name] = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+            frame[name]:SetTextColor(1, 0.82, 0) 
+        end
+        frame[name]:SetText("0") 
+        return frame[name]
+    end
+
+    -- 1. Pass (Rightmost)
+    local lastAnchor = frame
+    -- Shift Up to center above bar (Height 40, Bar 8, Btn 26)
+    -- Layout: Button Bottom = 8px + 4px padding = 12px from bottom.
+    local btnY = 12
+    
+    local xOffset = -5
+    
+    if frame.PassButton then 
+        SkinButton(frame.PassButton)
+        frame.PassButton:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -5, btnY)
+        lastAnchor = frame.PassButton
+        xOffset = -2
+    end
+    
+    -- Pass Count
+    local passCount = CreateCount("guiPassCount")
+    passCount:SetParent(lastAnchor)
+    passCount:SetFont(GameFontNormalSmall:GetFont())
+    passCount:ClearAllPoints()
+    passCount:SetPoint("BOTTOMRIGHT", lastAnchor, "BOTTOMRIGHT", 2, 0)
+    
+    -- 2. Transmog
+    if frame.TransmogButton then 
+        SkinButton(frame.TransmogButton)
+        frame.TransmogButton:SetPoint("RIGHT", lastAnchor, "LEFT", xOffset, 0)
+        lastAnchor = frame.TransmogButton
+        xOffset = -2
+    end
+    
+    -- Transmog Count
+    local transmogCount = CreateCount("guiTransmogCount")
+    transmogCount:SetParent(lastAnchor)
+    transmogCount:SetFont(GameFontNormalSmall:GetFont())
+    transmogCount:ClearAllPoints()
+    transmogCount:SetPoint("BOTTOMRIGHT", lastAnchor, "BOTTOMRIGHT", 2, 0)
+
+    -- 2.5 Disenchant
+    if frame.DisenchantButton then 
+        SkinButton(frame.DisenchantButton)
+        frame.DisenchantButton:SetPoint("RIGHT", lastAnchor, "LEFT", xOffset, 0)
+        lastAnchor = frame.DisenchantButton
+        xOffset = -2
+        
+        -- Disenchant Count
+        local deCount = CreateCount("guiDisenchantCount")
+        deCount:SetParent(lastAnchor)
+        deCount:SetFont(GameFontNormalSmall:GetFont())
+        deCount:ClearAllPoints()
+        deCount:SetPoint("BOTTOMRIGHT", lastAnchor, "BOTTOMRIGHT", 2, 0)
+    end
+    
+    -- 3. Greed
+    if frame.GreedButton then 
+        SkinButton(frame.GreedButton)
+        frame.GreedButton:SetPoint("RIGHT", lastAnchor, "LEFT", xOffset, 0)
+        lastAnchor = frame.GreedButton
+        xOffset = -2
+    end
+
+    -- Greed Count
+    local greedCount = CreateCount("guiGreedCount")
+    greedCount:SetParent(lastAnchor)
+    greedCount:SetFont(GameFontNormalSmall:GetFont())
+    greedCount:ClearAllPoints()
+    greedCount:SetPoint("BOTTOMRIGHT", lastAnchor, "BOTTOMRIGHT", 2, 0)
+    
+    -- 4. Need
+    if frame.NeedButton then 
+        SkinButton(frame.NeedButton)
+        frame.NeedButton:SetPoint("RIGHT", lastAnchor, "LEFT", xOffset, 0)
+        lastAnchor = frame.NeedButton
+        xOffset = -2
+    end
+    
+    -- Need Count
+    local needCount = CreateCount("guiNeedCount")
+    needCount:SetParent(lastAnchor)
+    needCount:SetFont(GameFontNormalSmall:GetFont())
+    needCount:ClearAllPoints()
+    needCount:SetPoint("BOTTOMRIGHT", lastAnchor, "BOTTOMRIGHT", 2, 0)
+
+    -- Store leftmost button for anchoring Name/BindText
+    frame.leftmostButton = lastAnchor
+    
+    -- Helper: Tooltip on Icon
+    if frame.IconFrame then
+        frame.IconFrame:EnableMouse(true)
+        frame.IconFrame:SetScript("OnEnter", function(self)
+            if frame.rollID then
+                GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+                GameTooltip:SetLootRollItem(frame.rollID)
+                GameTooltip:Show()
+            end
+        end)
+        frame.IconFrame:SetScript("OnLeave", function(self)
+            GameTooltip:Hide()
+        end)
+    end
+    
+    -- Dynamic Anchoring for Name & BindText
+    if frame.guiBindText then
+        frame.guiBindText:ClearAllPoints()
+        -- Anchor BindText to LEFT of Buttons, grow Left
+        if frame.leftmostButton then
+            frame.guiBindText:SetPoint("RIGHT", frame.leftmostButton, "LEFT", -5, 0)
+        else
+            frame.guiBindText:SetPoint("RIGHT", frame, "RIGHT", -5, 0)
+        end
+        frame.guiBindText:SetJustifyH("RIGHT") -- Ensure it grows left? No, anchor right determines it.
+    end
+    
+    if frame.Name then
+        frame.Name:ClearAllPoints()
+        if frame.IconFrame then
+            frame.Name:SetPoint("LEFT", frame.IconFrame, "RIGHT", 5, 0) 
+        else
+            frame.Name:SetPoint("LEFT", frame, "LEFT", 5, 0)
+        end
+        
+        -- Anchor Name to LEFT of BindText. If BindText is empty/0-width, it acts as if anchored to Button.
+        if frame.guiBindText then
+             frame.Name:SetPoint("RIGHT", frame.guiBindText, "LEFT", -2, 0)
+        elseif frame.leftmostButton then
+             frame.Name:SetPoint("RIGHT", frame.leftmostButton, "LEFT", -5, 0)
+        else
+             frame.Name:SetPoint("RIGHT", frame, "RIGHT", -5, 0)
+        end
+        
+        frame.Name:SetJustifyH("LEFT")
+        frame.Name:SetWordWrap(false)
+        frame.Name:SetNonSpaceWrap(false)
+    end
+end
+
+local function OnGroupLootShow(frame)
+    local db = GetDB()
+    if not db or not db.lootRoll or not db.lootRoll.enabled then return end
+    
+    UpdateGroupLootStyle(frame)
+    
+    -- Color by Quality
+    local quality = 1
+    if frame.rollID then
+        local _, _, _, q, bindOnPickUp = GetLootRollItemInfo(frame.rollID)
+        quality = q
+        
+        -- Item Level
+        if frame.guiIlvl then
+             frame.guiIlvl:SetText("")
+             local link = GetLootRollItemLink(frame.rollID)
+             if link then
+                 local _, _, _, ilvl = GetItemInfo(link)
+                 if ilvl then
+                     frame.guiIlvl:SetText(ilvl)
+                 else
+                     -- Sometimes GetItemInfo returns nil for ilvl initially
+                     local item = Item:CreateFromItemLink(link)
+                     item:ContinueOnItemLoad(function()
+                        local level = item:GetCurrentItemLevel()
+                        if level then frame.guiIlvl:SetText(level) end
+                     end)
+                 end
+             end
+        end
+
+        -- Bind Text
+        local showBind = false
+        if frame.guiBindText then
+            local bindText = ""
+            
+            -- User req: Do NOT show BoP. Only show BoE in Green with White parens.
+            if not bindOnPickUp then
+                local link = GetLootRollItemLink(frame.rollID)
+                if link then
+                    local _, _, _, _, _, _, _, _, _, _, _, _, _, bindType = GetItemInfo(link)
+                    if bindType == 2 then -- LE_ITEM_BIND_ON_EQUIP
+                         -- Green text, no parens
+                         bindText = "|cff1eff00BoE|r"
+                         showBind = true
+                    elseif bindType == 3 then -- Use
+                         bindText = "|cff1eff00BoU|r"
+                         showBind = true
+                    end
+                end
+            end
+            frame.guiBindText:SetText(bindText)
+        end
+        
+        -- Anchor Name and BindText dynamically
+        -- Only if we have a leftmost button to anchor to
+        if frame.leftmostButton and frame.Name then
+             frame.Name:ClearAllPoints()
+             frame.Name:SetPoint("LEFT", frame, "LEFT", 0, 5)
+             
+             if showBind and frame.guiBindText then
+                 frame.guiBindText:Show()
+                 frame.guiBindText:ClearAllPoints()
+                 frame.guiBindText:SetPoint("RIGHT", frame.leftmostButton, "LEFT", -5, 0)
+                 
+                 frame.Name:SetPoint("RIGHT", frame.guiBindText, "LEFT", -5, 0)
+             else
+                 if frame.guiBindText then frame.guiBindText:Hide() end
+                 frame.Name:SetPoint("RIGHT", frame.leftmostButton, "LEFT", -5, 0)
+             end
+        end
+    end
+    
+    local r, g, b = GetItemQualityColor(quality or 1)
+    
+    if frame.Timer then
+        frame.Timer:SetStatusBarColor(r, g, b, 1)
+    end
+    
+    if frame.guiIconBorder then
+        frame.guiIconBorder:SetBackdropBorderColor(r, g, b, 1)
+    end
+end
+
+function Loot:RefreshRolls()
+    for i = 1, NUM_GROUP_LOOT_FRAMES or 4 do
+        local frame = _G["GroupLootFrame"..i]
+        if frame and frame:IsShown() then
+            UpdateGroupLootStyle(frame)
+            OnGroupLootShow(frame) -- Refreshes colors/text logic too
+        end
+    end
+    -- Update Preview Mover if active
+    if self.rollMover and self.rollMover:IsShown() then
+         self:ToggleRollMover() -- Hide
+         self:ToggleRollMover() -- Show (reloads settings)
+    end
+end
+
+function Loot:ToggleRollMover()
+    if self.rollMover then
+        self.rollMover:Hide()
+        self.rollMover = nil
+        return
+    end
+
+    local db = GetDB()
+    if not db or not db.lootRoll then return end
+
+    local f = CreateFrame("Frame", "GravityUI_LootRollMover", UIParent) -- Removed BackdropTemplate
+    f:SetSize(db.lootRoll.width, db.lootRoll.height)
+    -- f:SetBackdrop(...) -- REMOVED Backdrop to prevent "Thunderfury border" issue
+    f:SetFrameStrata("DIALOG")
+    f:SetClampedToScreen(true)
+    f:SetMovable(true)
+    f:EnableMouse(true)
+    f:RegisterForDrag("LeftButton")
+    
+    -- Load Pos
+    if db.lootRoll.position then
+        local p = db.lootRoll.position
+        f:SetPoint(p.point, UIParent, p.relPoint, p.x, p.y)
+    else
+        f:SetPoint("CENTER", UIParent, "CENTER", 0, 200)
+    end
+    
+    f:SetScript("OnDragStart", f.StartMoving)
+    f:SetScript("OnDragStop", function(self)
+        self:StopMovingOrSizing()
+        local point, _, relPoint, x, y = self:GetPoint()
+        db.lootRoll.position = { point = point, relPoint = relPoint, x = x, y = y }
+    end)
+    
+    self.rollMover = f
+
+    -- Visual Config
+    -- Visual Config
+    local barHeight = db.lootRoll.timerHeight or 8
+    local btnSize = 22 
+    local iconSize = db.lootRoll.height or 30
+    
+    -- Helper to create a single preview row
+    local function CreatePreviewRow(parent, index, data)
+        local pName = "previewRow"..index
+        local p = parent[pName]
+        
+        if not p then
+            p = CreateFrame("Frame", nil, parent) 
+            p:SetSize(db.lootRoll.width, db.lootRoll.height)
+            parent[pName] = p
+        end
+        p:Show()
+        
+        -- Row Background (Dynamic)
+        if not p.rowBg then
+            p.rowBg = p:CreateTexture(nil, "BACKGROUND")
+            p.rowBg:SetAllPoints()
+        end
+        if db.lootRoll.enableBackgroundColor then
+            p.rowBg:Show()
+            if db.lootRoll.backgroundColor then
+                p.rowBg:SetColorTexture(unpack(db.lootRoll.backgroundColor))
+            else
+                p.rowBg:SetColorTexture(0, 0, 0, 0.5)
+            end
+        else
+            p.rowBg:Hide()
+        end
+        
+        -- Position based on Grow Direction
+        p:ClearAllPoints()
+        local dir = db.lootRoll.growDirection or "DOWN"
+        local spacing = db.lootRoll.spacing or 5
+        
+        if index == 1 then
+            p:SetPoint("TOP", parent, "TOP", 0, 0)
+        else
+            local prev = parent["previewRow"..(index-1)]
+            if dir == "UP" then
+                p:SetPoint("BOTTOM", prev, "TOP", 0, spacing)
+            else
+                p:SetPoint("TOP", prev, "BOTTOM", 0, -spacing)
+            end
+        end
+        
+        -- Timer Bar Background (Dark Trough)
+        if not p.timerBg then
+             p.timerBg = p:CreateTexture(nil, "BACKGROUND")
+             p.timerBg:SetPoint("BOTTOMLEFT", p, "BOTTOMLEFT", 0, 0)
+             p.timerBg:SetPoint("BOTTOMRIGHT", p, "BOTTOMRIGHT", 0, 0)
+             p.timerBg:SetHeight(barHeight)
+             p.timerBg:SetTexture(GetStatusbarTexture(db.lootRoll.texture))
+             p.timerBg:SetVertexColor(0.1, 0.1, 0.1, 1) 
+        else
+             p.timerBg:Show()
+             p.timerBg:SetVertexColor(0.1, 0.1, 0.1, 1)
+        end
+
+        -- Timer Bar (Status)
+        if not p.statusBar then
+            p.statusBar = CreateFrame("StatusBar", nil, p)
+            p.statusBar:SetPoint("BOTTOMLEFT", p, "BOTTOMLEFT", 0, 0)
+            p.statusBar:SetPoint("BOTTOMRIGHT", p, "BOTTOMRIGHT", 0, 0)
+            p.statusBar:SetHeight(barHeight)
+            p.statusBar:SetStatusBarTexture(GetStatusbarTexture(db.lootRoll.texture))
+        end
+        p.statusBar:SetStatusBarColor(unpack(data.color))
+        p.statusBar:SetMinMaxValues(0, 1)
+        p.statusBar:SetValue(data.time or 1)
+        
+        -- Icon Button (Interactive)
+        if not p.iconBtn then
+             p.iconBtn = CreateFrame("Button", nil, p)
+             p.iconBtn:SetSize(iconSize, iconSize)
+             p.iconBtn:SetPoint("LEFT", p, "LEFT", -iconSize - 5, 0)
+             p.iconBtn:EnableMouse(true)
+             p.iconBtn:RegisterForClicks("AnyUp")
+             
+             p.icon = p.iconBtn:CreateTexture(nil, "ARTWORK")
+             p.icon:SetAllPoints()
+        end
+        p.icon:SetTexture(data.icon)
+        
+        -- Item Level on Icon
+        if not p.ilvl then
+             p.ilvl = p.iconBtn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+             p.ilvl:SetFont(GameFontNormal:GetFont(), 10, "OUTLINE")
+             p.ilvl:SetTextColor(1, 0.8, 0)
+        end
+        p.ilvl:ClearAllPoints()
+        p.ilvl:SetPoint("BOTTOM", p.iconBtn, "BOTTOM", 0, 1)
+        p.ilvl:SetText(data.ilvl or "")
+
+        -- Tooltip Script
+        p.iconBtn:SetScript("OnEnter", function(self)
+            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+            if data.itemID then
+                GameTooltip:SetHyperlink("item:"..data.itemID)
+            else
+                GameTooltip:SetText(data.name)
+            end
+            GameTooltip:Show()
+        end)
+        p.iconBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
+        
+        -- Icon Border (Quality)
+        if not p.iconBorder then
+            p.iconBorder = p:CreateTexture(nil, "OVERLAY")
+            p.iconBorder:SetPoint("CENTER", p.icon, "CENTER")
+            p.iconBorder:SetSize(iconSize * 1.6, iconSize * 1.6)
+            p.iconBorder:SetTexture("Interface\\Buttons\\UI-ActionButton-Border")
+            p.iconBorder:SetBlendMode("ADD")
+        end
+        p.iconBorder:SetVertexColor(unpack(data.color))
+        
+        -- Name (Aligned to Bar Start)
+        if not p.name then
+             p.name = p:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+             -- User: "Not left aligned with timer bar". Changed offset from 10 to 0.
+             p.name:SetPoint("LEFT", p, "LEFT", 0, 0)
+             p.name:SetTextColor(1, 1, 1)
+        end
+        p.name:SetText(data.name)
+        
+        -- Buttons (Raised slightly above bar)
+        local btnY = barHeight + 4 
+        
+        -- 1. Pass
+        if not p.btnPass then
+            p.btnPass = p:CreateTexture(nil, "OVERLAY")
+            p.btnPass:SetSize(btnSize, btnSize)
+            p.btnPass:SetPoint("BOTTOMRIGHT", p, "BOTTOMRIGHT", -5, btnY)
+            p.btnPass:SetTexture("Interface\\Buttons\\UI-GroupLoot-Pass-Up")
+        end
+        
+        -- Pass Count
+        if not p.countPass then
+             p.countPass = p:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+             p.countPass:SetPoint("BOTTOMRIGHT", p.btnPass, "BOTTOMRIGHT", 2, 0)
+             p.countPass:SetText(data.pass or "0")
+        end
+        
+        -- 2. Transmog
+        if not p.btnTransmog then
+            p.btnTransmog = p:CreateTexture(nil, "OVERLAY")
+            p.btnTransmog:SetSize(btnSize, btnSize)
+            p.btnTransmog:SetPoint("RIGHT", p.btnPass, "LEFT", -2, 0)
+            -- FIX: User says "Transmog item missing completely". 
+            -- Using a reliable Icon ID (Ethereal / Trans mog concept) to guarantee visibility.
+            p.btnTransmog:SetTexture(132060) -- Interface\Icons\Inv_Ethereal_Helmet
+        end
+        -- Transmog Count
+        if not p.countTransmog then
+             p.countTransmog = p:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+             p.countTransmog:SetPoint("BOTTOMRIGHT", p.btnTransmog, "BOTTOMRIGHT", 2, 0)
+        end
+        p.countTransmog:SetText(data.transmog or "0")
+
+        -- 3. Greed
+        if not p.btnGreed then
+            p.btnGreed = p:CreateTexture(nil, "OVERLAY")
+            p.btnGreed:SetSize(btnSize, btnSize)
+            p.btnGreed:SetPoint("RIGHT", p.btnTransmog, "LEFT", -2, 0)
+            p.btnGreed:SetTexture("Interface\\Buttons\\UI-GroupLoot-Coin-Up")
+        end
+        -- Greed Count
+        if not p.countGreed then
+             p.countGreed = p:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+             p.countGreed:SetPoint("BOTTOMRIGHT", p.btnGreed, "BOTTOMRIGHT", 2, 0)
+        end
+        p.countGreed:SetText(data.greed or "0")
+
+
+        -- 4. Need
+        if not p.btnNeed then
+            p.btnNeed = p:CreateTexture(nil, "OVERLAY")
+            p.btnNeed:SetSize(btnSize, btnSize)
+            p.btnNeed:SetPoint("RIGHT", p.btnGreed, "LEFT", -2, 0)
+            p.btnNeed:SetTexture("Interface\\Buttons\\UI-GroupLoot-Dice-Up")
+        end
+        
+        if data.needDisabled then
+             p.btnNeed:SetDesaturated(true)
+             p.btnNeed:SetVertexColor(0.6, 0.6, 0.6)
+        else
+             p.btnNeed:SetDesaturated(false)
+             p.btnNeed:SetVertexColor(1, 1, 1)
+        end
+        
+        -- Need Count
+        if not p.countNeed then
+             p.countNeed = p:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+             p.countNeed:SetPoint("BOTTOMRIGHT", p.btnNeed, "BOTTOMRIGHT", 2, 0)
+        end
+        p.countNeed:SetText(data.need or "0")
+        
+        -- Name (Aligned to Bar Start, with Truncation)
+        if not p.name then
+             p.name = p:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+             p.name:SetPoint("LEFT", p, "LEFT", 0, 5)
+             p.name:SetTextColor(1, 1, 1)
+        end
+        p.name:SetJustifyH("LEFT")
+        p.name:SetWordWrap(false)
+        p.name:SetNonSpaceWrap(false)
+        p.name:SetText(data.name)
+        
+        -- Bind Text (BoP/BoE)
+        if not p.bindText then
+             p.bindText = p:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+             p.bindText:SetFont(GameFontNormal:GetFont(), 10, "OUTLINE")
+             -- Anchor handled below
+        end
+        
+        -- Dynamic Anchoring for Name & BindText to prevent overflow
+        -- Leftmost button is always Need in preview
+        local safeRightAnchor = p.btnNeed
+        
+        p.name:ClearAllPoints()
+        p.name:SetPoint("LEFT", p, "LEFT", 0, 5)
+        
+        if data.bind then
+            p.bindText:ClearAllPoints()
+            p.bindText:SetPoint("RIGHT", safeRightAnchor, "LEFT", -5, 0)
+            p.bindText:SetText(data.bind)
+            if data.bindColor then
+                p.bindText:SetTextColor(unpack(data.bindColor))
+            else
+                p.bindText:SetTextColor(0.5, 0.5, 0.5)
+            end
+            p.bindText:Show()
+            
+            -- Name ends at BindText
+            p.name:SetPoint("RIGHT", p.bindText, "LEFT", -5, 0)
+        else
+            p.bindText:Hide()
+            -- Name ends at Button
+            p.name:SetPoint("RIGHT", safeRightAnchor, "LEFT", -5, 0)
+        end    
+    end
+
+    -- Define 3 sample states
+    -- Create 3 Preview Rows inside the Mover Frame
+    -- FIX: Use valid Texture FileIDs for icons, not ItemIDs
+    CreatePreviewRow(f, 1, {
+         name = "Thunderfury",
+         itemID = 19019,
+         icon = 135339, -- Inv_Sword_39 (Thunderfury texture)
+         color = {1, 0.5, 0}, 
+         ilvl = "13",
+         -- bind = nil, -- BoP hidden
+         time = 1.0,
+         need = "1", greed = "0", transmog = "0", pass = "0",
+         needDisabled = false
+    })
+    
+    CreatePreviewRow(f, 2, {
+         name = "Example Epic",
+         itemID = 19364, -- Ashkandi
+         icon = 133966, -- Inv_Sword_04 (Ashkandi texture)
+         color = {0.64, 0.21, 0.93}, 
+         bind = "|cff1eff00BoE|r",
+         ilvl = "81",
+         time = 0.6,
+         need = "1", greed = "4", transmog = "1", pass = "2",
+         needDisabled = true
+    })
+    
+    CreatePreviewRow(f, 3, {
+         name = "Rare Item",
+         itemID = 12345, -- Placeholder
+         icon = 132060, -- Inv_Ethereal_Helmet
+         color = {0, 0.44, 0.87},
+         ilvl = "55",
+         -- bind = nil, -- BoP hidden
+         time = 0.3,
+         need = "0", greed = "1", transmog = "0", pass = "0",
+         needDisabled = false 
+    })
+    
+    -- Cleanup unused rows if any (e.g. if we had 4 before)
+    if f.previewRow4 then f.previewRow4:Hide() end
+
+    f:SetScript("OnDragStart", f.StartMoving)
+    f:SetScript("OnDragStop", function(self)
+        self:StopMovingOrSizing()
+        local p, _, rp, x, y = self:GetPoint()
+        db.lootRoll.position = { point = p, relPoint = rp, x = x, y = y }
+        Loot:UpdateRollPositions()
+    end)
+    
+    f:Show()
+    self.rollMover = f
+end
+
+function Loot:ResetRollPosition()
+    local db = GetDB()
+    if db and db.lootRoll then db.lootRoll.position = nil end
+    if self.rollMover then self.rollMover:ClearAllPoints(); self.rollMover:SetPoint("CENTER", 0, 200) end
+    Loot:UpdateRollPositions()
+end
+
+function Loot:UpdateRollPositions()
+    local db = GetDB()
+    if not db or not db.lootRoll then return end
+    
+    local anchor = self.rollMover or UIParent
+    local point, relativeTo, relativePoint, x, y = "CENTER", UIParent, "CENTER", 0, 200
+    
+    if db.lootRoll.position then
+        local p = db.lootRoll.position
+        point, relativeTo, relativePoint, x, y = p.point, UIParent, p.relPoint, p.x, p.y
+    end
+    
+    -- If mover exists, use it as the visual anchor reference for logic (but frames anchor to it or the saved pos)
+    -- Actually we need to hook `GroupLootContainer_Update` in Blizzard_UIPanels_Game.lua, 
+    -- OR we can just use `UIParentManagedFrameMixin` overrides? 
+    -- GroupLootContainer is a managed frame. 
+    -- Best way: Reposition `GroupLootContainer` itself?
+    -- `GroupLootContainer` manages the stacking.
+    
+    local container = _G.GroupLootContainer
+    if container then
+        container:EnableMouse(false) 
+        container:ClearAllPoints()
+        
+        -- Improve Growth Direction Logic
+        -- Blizzard's GroupLootContainer often adapts growth based on Y position (Top vs Bottom half),
+        -- or we can try to force it by anchoring TOP vs BOTTOM.
+        local dir = db.lootRoll.growDirection or "DOWN"
+        
+        if dir == "UP" then
+            -- Grow UP: Anchor Container BOTTOM to Mover TOP
+             if self.rollMover then
+                 container:SetPoint("BOTTOM", self.rollMover, "TOP", 0, 5)
+             else
+                 -- Fallback if no mover, use saved pos or default
+                 container:SetPoint("BOTTOM", UIParent, "BOTTOM", x, y)
+             end
+        else
+            -- Grow DOWN: Anchor Container TOP to Mover BOTTOM
+            if self.rollMover then
+                 container:SetPoint("TOP", self.rollMover, "BOTTOM", 0, -5)
+             else
+                 container:SetPoint("TOP", UIParent, "TOP", x, y) -- simplified
+             end
+        end
+        
+        -- If user has a saved position, we might want to respect that exact point,
+        -- but if we want to enforce Direction, we must anchor relative to it appropriately.
+        -- However, `db.lootRoll.position` is just a point/x/y.
+        -- If we use the Mover, we use the Mover's position.
+        
+        if not self.rollMover and db.lootRoll.position then
+             -- Use strict saved position if Mover is hidden
+             local p = db.lootRoll.position
+             container:ClearAllPoints()
+             container:SetPoint(p.point, UIParent, p.relPoint, p.x, p.y)
+        end
+
+        if UIPARENT_MANAGED_FRAME_POSITIONS and UIPARENT_MANAGED_FRAME_POSITIONS["GroupLootContainer"] then
+            UIPARENT_MANAGED_FRAME_POSITIONS["GroupLootContainer"] = nil
+        end
+    end
+end
+
+-------------------------------------------------------------------------------
 -- INITIALIZATION
 -------------------------------------------------------------------------------
 
@@ -484,4 +1311,138 @@ function Loot:Initialize()
             end)
         end
     end
+
+    -- Loot Rolls (Group Loot)
+    if db.lootRoll and db.lootRoll.enabled then
+        -- Initial Skinning
+        for i = 1, NUM_GROUP_LOOT_FRAMES or 4 do
+            local f = _G["GroupLootFrame"..i]
+            if f then 
+                UpdateGroupLootStyle(f) 
+                f:HookScript("OnShow", OnGroupLootShow)
+            end
+        end
+
+        ------------------------------------------------------------
+        -- Hook Container Update to enforce position
+        ------------------------------------------------------------
+        if _G.GroupLootContainer_Update then
+            hooksecurefunc("GroupLootContainer_Update", function()
+               Loot:UpdateRollPositions()
+            end)
+        end
+        
+        Loot:UpdateRollPositions()
+    end
+end
+
+
+-- Test Command
+SLASH_GRAVITYLOOTTEST1 = "/gravitytestloot"
+SlashCmdList["GRAVITYLOOTTEST"] = function()
+    local f = _G["GroupLootFrame1"]
+    if not f then return end
+    
+    -- Stop Blizzard scripts from crashing due to missing rollID
+    f:SetScript("OnUpdate", nil)
+    f:SetScript("OnShow", nil) 
+    f:SetScript("OnEvent", nil)
+    
+    f.rollID = 123 
+    
+    -- Force Visibility & Position from DB
+    f:SetParent(UIParent)
+    f:SetFrameStrata("DIALOG")
+    f:SetAlpha(1)
+    
+    local db = GetDB()
+    if db and db.lootRoll and db.lootRoll.position then
+         local p = db.lootRoll.position
+         f:ClearAllPoints()
+         f:SetPoint(p.point, UIParent, p.relPoint, p.x, p.y)
+    else
+         f:ClearAllPoints()
+         f:SetPoint("CENTER", UIParent, "CENTER", 0, 100)
+    end
+    
+    f:Show()
+    
+    UpdateGroupLootStyle(f)
+    
+    -- Mock Data
+    local texture = 135339 -- Thunderfury
+    local name = "Thunderfury, Blessed Blade of the Windseeker"
+    local quality = 5 -- Legendary
+    local r, g, b = GetItemQualityColor(quality)
+    
+    if f.IconFrame then
+        -- Force Icon Size to match settings
+        local height = (db and db.lootRoll and db.lootRoll.height) or 30
+        f.IconFrame:SetSize(height, height)
+        f.IconFrame:EnableMouse(true)
+        if f.IconFrame.Icon then f.IconFrame.Icon:SetAllPoints() end
+
+        f.IconFrame.Icon:SetTexture(texture)
+        if f.IconFrame.Count then f.IconFrame.Count:SetText("") end
+         -- Border Logic
+         if f.IconBorder and f.IconBorder.SetBackdropBorderColor then
+             f.IconBorder:SetBackdropBorderColor(r, g, b, 1)
+             -- Fix Border Position
+             f.IconBorder:ClearAllPoints()
+             f.IconBorder:SetPoint("TOPLEFT", f.IconFrame, "TOPLEFT", -1, 1)
+             f.IconBorder:SetPoint("BOTTOMRIGHT", f.IconFrame, "BOTTOMRIGHT", 1, -1)
+             f.IconBorder:EnableMouse(false)
+         end
+         
+         -- Tooltip Overlay (Force high strata)
+         if not f.IconFrame.TestHoverOverlay then
+            f.IconFrame.TestHoverOverlay = CreateFrame("Button", nil, f.IconFrame)
+            f.IconFrame.TestHoverOverlay:SetAllPoints(f.IconFrame)
+            f.IconFrame.TestHoverOverlay:SetFrameLevel(999)
+         end
+         f.IconFrame.TestHoverOverlay:EnableMouse(true)
+         f.IconFrame.TestHoverOverlay:SetScript("OnEnter", function(self)
+             GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+             GameTooltip:SetHyperlink("item:19019")
+             GameTooltip:Show()
+         end)
+         f.IconFrame.TestHoverOverlay:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    end
+    
+    if f.guiBindText then
+        f.guiBindText:SetText("|cff1eff00BoE|r")
+    end
+    
+    if f.guiIlvl then
+         -- Match Thunderfury's real ilvl (13) for consistency, or dynamic
+         local _, _, _, ilvl = GetItemInfo(19019)
+         f.guiIlvl:SetText(ilvl or "13")
+    end
+    
+    if f.Name then
+        f.Name:SetText(name)
+        f.Name:SetVertexColor(1, 1, 1) 
+        -- Re-apply style to ensure font/color is precise
+        if f.Name.SetFont then 
+            if db and db.lootRoll then
+                 local fontPath = LibStub("LibSharedMedia-3.0"):Fetch("font", db.lootRoll.nameFont or "Gravity")
+                 f.Name:SetFont(fontPath, db.lootRoll.nameFontSize or 12, db.lootRoll.nameFontOutline or "OUTLINE")
+                 if db.lootRoll.nameFontColor then
+                     f.Name:SetTextColor(unpack(db.lootRoll.nameFontColor))
+                 end
+            end
+        end
+    end
+    
+    if f.Timer then
+        f.Timer:SetMinMaxValues(0, 100)
+        f.Timer:SetValue(100)
+        f.Timer:SetStatusBarColor(r, g, b, 1)
+        f.Timer:SetScript("OnUpdate", function(self, elapsed)
+             local v = self:GetValue()
+             if v <= 0 then self:SetValue(100) else self:SetValue(v - (elapsed * 20)) end
+        end)
+    end
+
+    print("|cff00ccffGravityUI|r: Test Loot Frame Updated (BoE Text, Layout).")
 end
