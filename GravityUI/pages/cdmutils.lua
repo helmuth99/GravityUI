@@ -331,6 +331,106 @@ local function BuildCastbar(parent)
     content:SetHeight(500)
 end
 
+-- 5. CDM Buffbar
+local function BuildCDMBuffbar(parent)
+    local scroll, content = GUI:CreateScrollableContent(parent)
+    scroll:SetAllPoints()
+    local db = ns.GetDB(); if not db then return end
+    
+    -- Default to actionbars.cdmBuffbar as planned
+    local dbCDM = db.actionbars.cdmBuffbar
+    if not dbCDM then 
+        dbCDM = {} 
+        db.actionbars.cdmBuffbar = dbCDM 
+    end
+    
+    content.rowCount = 0
+
+    local header = GUI:CreateSectionHeader(content, "CDM Buffbar")
+    header:SetPoint("TOPLEFT", 10, -10)
+    header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
+    content.rowCount = 1.3
+    
+    local function RefreshCDM() 
+        if ns.CDM and ns.CDM.RefreshBuffBar then ns.CDM.RefreshBuffBar() end 
+    end
+
+    -- Info Box
+    local infoBox = GUI:CreateInfoBox(content, "Bar Width, Opacity, Visibility, Display Mode, Timer, Tooltips and Position can be changed in the Editmode.")
+    infoBox:SetPoint("TOPLEFT", header, "BOTTOMLEFT", 0, -10)
+    
+    content.rowCount = 1.3 + (infoBox:GetHeight() / 30) + 0.5
+
+    CreateSubLabel(content, "Tracked Buffbar")
+    AddRow(content, "Enable GUI Buffbar", "checkbox", "enabled", dbCDM, RefreshCDM)
+    content.rowCount = content.rowCount + 0.5
+    
+    CreateSubLabel(content, "Dynamic Positioning")
+    AddRow(content, "Enable Dynamic Positioning", "checkbox", "dynamicPositioning", dbCDM, RefreshCDM)
+    
+    local dirOptions = {{value="UP", text="Grow Up"}, {value="DOWN", text="Grow Down"}}
+    AddRow(content, "Grow Direction", "dropdown", dirOptions, "growDirection", dbCDM, RefreshCDM)
+    
+    AddRow(content, "Spacing", "slider", -10, 20, "spacing", dbCDM, RefreshCDM, 1)
+    
+    -- Anchor is now handled automatically
+    local updateBtn = GUI:CreateButton(content, "Force Layout Update", 150, 30)
+    updateBtn:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * 35))
+    updateBtn:SetScript("OnClick", function() 
+        if ns.TrackedBuffBar and ns.TrackedBuffBar.UpdateLayout then 
+            ns.TrackedBuffBar:UpdateLayout() 
+        end 
+    end)
+    content.rowCount = content.rowCount + 1.5
+
+    CreateSubLabel(content, "Bar Appearance")
+    
+    -- Texture Dropdown
+    local textureOptions = {{value="Solid", text="Solid"}, {value="Interface/AddOns/GravityUI/assets/textures/Flat.tga", text="Flat"}}
+    local LSM = LibStub("LibSharedMedia-3.0", true)
+    if LSM then 
+        textureOptions = {}
+        for name, _ in pairs(LSM:HashTable("statusbar")) do table.insert(textureOptions, {value=name, text=name}) end
+        table.sort(textureOptions, function(a,b) return a.text < b.text end)
+    end
+    AddRow(content, "Bar Texture", "dropdown", textureOptions, "texture", dbCDM, RefreshCDM)
+    
+    AddRow(content, "Bar Height", "slider", 5, 50, "height", dbCDM, RefreshCDM, 1)
+    -- Width removed by user request
+    
+    AddRow(content, "Font Size", "slider", 8, 24, "fontSize", dbCDM, RefreshCDM, 1)
+    
+
+    
+    -- Font Dropdown
+    local fontOptions = {{value="Gravity", text="Gravity"}}
+    if LSM then
+        fontOptions = {}
+        for name, _ in pairs(LSM:HashTable("font")) do table.insert(fontOptions, {value=name, text=name}) end
+        table.sort(fontOptions, function(a,b) return a.text < b.text end)
+    end
+    AddRow(content, "Font", "dropdown", fontOptions, "font", dbCDM, RefreshCDM)
+    
+
+    content.rowCount = content.rowCount + 0.5
+    
+    CreateSubLabel(content, "Colors")
+    AddRow(content, "Use Default Background Color", "checkbox", "useThemeBackground", dbCDM, RefreshCDM)
+    AddRow(content, "Background Color", "color", "backgroundColor", dbCDM, RefreshCDM)
+    
+    AddRow(content, "Use Theme Color for Bars", "checkbox", "useThemeColor", dbCDM, RefreshCDM)
+    AddRow(content, "Bar Color", "color", "barColor", dbCDM, RefreshCDM)
+    AddRow(content, "Spark Color", "color", "sparkColor", dbCDM, RefreshCDM)
+    content.rowCount = content.rowCount + 0.5
+    
+    CreateSubLabel(content, "Icons")
+    AddRow(content, "Icon Size", "slider", 10, 50, "iconSize", dbCDM, RefreshCDM, 1)
+    AddRow(content, "Icon Border Size", "slider", 0, 5, "iconBorderSize", dbCDM, RefreshCDM, 1)
+    AddRow(content, "Icon Border Color", "color", "iconBorderColor", dbCDM, RefreshCDM)
+    
+    content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
+end
+
 -- ═══════════════════════════════════════════════════════════════
 -- MAIN PAGE REGISTER
 -- ═══════════════════════════════════════════════════════════════
@@ -353,6 +453,7 @@ ns.GUI:RegisterPage("cdmutils", {
             { name = "CDM Centering", builder = BuildCDMCentering },
             { name = "Button Glow", builder = BuildUtils },
             { name = "Castbar", builder = BuildCastbar },
+            { name = "CDM Buffbar", builder = BuildCDMBuffbar },
         })
         subTabs:SetPoint("TOPLEFT", 10, -10)
         subTabs:SetPoint("TOPRIGHT", -10, 0)

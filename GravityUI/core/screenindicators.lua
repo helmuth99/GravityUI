@@ -834,6 +834,10 @@ local function CheckPetWarnings()
         f.text:SetText(msg)
         f:ClearAllPoints()
         f:SetPoint("CENTER", UIParent, "CENTER", s.xOffset or 0, s.yOffset or 150)
+        
+        -- Apply Strata dynamically
+        if s.strata then f:SetFrameStrata(s.strata) end
+        
         f:Show()
     else
         f:Hide()
@@ -914,6 +918,9 @@ function Screen.PreviewPetWarning(warnType)
     f.text:SetText(msg)
     f:ClearAllPoints()
     f:SetPoint("CENTER", UIParent, "CENTER", s.xOffset or 0, s.yOffset or 150)
+    
+    if s.strata then f:SetFrameStrata(s.strata) end
+    
     f:Show()
 
     if PetWarningsState.previewTimer then PetWarningsState.previewTimer:Cancel() end

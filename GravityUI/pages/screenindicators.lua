@@ -273,6 +273,18 @@ local function BuildPet(parent)
     AddRow(content, "X Offset", "slider", -1000, 1000, "xOffset", ps, refresh, 1)
     AddRow(content, "Y Offset", "slider", -1000, 1000, "yOffset", ps, refresh, 1)
     
+    local strataOptions = {
+        {value="BACKGROUND", text="Background"},
+        {value="LOW", text="Low"},
+        {value="MEDIUM", text="Medium"},
+        {value="HIGH", text="High"},
+        {value="DIALOG", text="Dialog"},
+        {value="FULLSCREEN", text="Fullscreen"},
+        {value="FULLSCREEN_DIALOG", text="Fullscreen Dialog"},
+        {value="TOOLTIP", text="Tooltip"},
+    }
+    AddRow(content, "Frame Strata", "dropdown", strataOptions, "strata", ps, refresh)
+    
     content.rowCount = content.rowCount + 0.3
     
     CreateSubLabel(content, "Colors")

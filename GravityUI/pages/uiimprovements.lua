@@ -294,11 +294,30 @@ local function BuildChat(parent)
     if not dbChat.urls then dbChat.urls = {enabled=true, color={0,0.75,1,1}} end
     if not dbChat.editBox then dbChat.editBox = {enabled=true, positionTop=false, bgAlpha=0.4, bgColor={0,0,0,1}} end
     if not dbChat.fade then dbChat.fade = {enabled=true, delay=15} end
+    -- Chat Tabs Defaults
+    if not dbChat.tabs then 
+        dbChat.tabs = {
+            style = "button",
+            activeTab = {useThemeColor = true, customColor = {1, 0.82, 0, 1}, alpha = 1.0},
+            inactiveTab = {alpha = 0.5}
+        }
+    end
+    -- Ensure sub-tables
+    if not dbChat.tabs.activeTab then dbChat.tabs.activeTab = {useThemeColor = true, customColor = {1, 0.82, 0, 1}, alpha = 1.0} end
+    if not dbChat.tabs.inactiveTab then dbChat.tabs.inactiveTab = {alpha = 0.5} end
 
     CreateSubHeader(content, "Chat Background")
     AddRow(content, "Chat Background Texture", "checkbox", "enabled", dbChat.glass, RefreshChat)
     AddRow(content, "Background Opacity", "slider", 0, 1, "bgAlpha", dbChat.glass, RefreshChat, 0.05)
     AddRow(content, "Background Color", "color", "bgColor", dbChat.glass, RefreshChat)
+    content.rowCount = content.rowCount + 0.5
+
+    CreateSubHeader(content, "Chat Tabs")
+    AddRow(content, "Use Theme Color for Active Tab", "checkbox", "useThemeColor", dbChat.tabs.activeTab, RefreshChat)
+    AddRow(content, "Custom Active Color (if Theme disabled)", "color", "customColor", dbChat.tabs.activeTab, RefreshChat)
+    AddRow(content, "Active Tab Opacity", "slider", 0, 1, "alpha", dbChat.tabs.activeTab, RefreshChat, 0.1)
+    AddRow(content, "Inactive Tab Opacity", "slider", 0, 1, "alpha", dbChat.tabs.inactiveTab, RefreshChat, 0.1)
+    AddRow(content, "Auto Hide Chat Tabs", "checkbox", "hideTabs", dbChat, RefreshChat)
     content.rowCount = content.rowCount + 0.5
 
     CreateSubHeader(content, "Input Box Background")
@@ -342,7 +361,7 @@ local function BuildChat(parent)
 
     CreateSubHeader(content, "UI Cleanup")
     AddRow(content, "Hide Chat Buttons", "checkbox", "hideButtons", dbChat, RefreshChat)
-    AddRow(content, "Auto Hide Chat Tabs", "checkbox", "hideTabs", dbChat, RefreshChat)
+    -- Remove old Hide Tabs row (moved up)
     AddRow(content, "Unclamp Chat (Allow off-screen)", "checkbox", "unclamp", dbChat, RefreshChat)
 
     content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))

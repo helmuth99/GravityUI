@@ -432,7 +432,7 @@ ns.Defaults = {
         },
         autoRepairGuild = false,
         automationExpanded = true,
-        spellQueueWindow = 120,
+        spellQueueWindow = 150,
         chat =         {
             enabled = true,
             glass =             {
@@ -445,7 +445,17 @@ ns.Defaults = {
                 enabled = true,
                 bgAlpha = 0.25,
             },
-            hideTabs = true,
+            hideTabs = false,
+            tabs = {
+                activeTab = {
+                    useThemeColor = true,
+                    customColor = {1, 0.8, 0, 1},
+                    alpha = 0.9,
+                },
+                inactiveTab = {
+                    alpha = 0.7,
+                },
+            },
             fade =             {
                 enabled = false,
                 delay = 15,
@@ -872,6 +882,7 @@ ns.Defaults = {
             petAttackWarning = true,
             petAttackText = "*** PET NOT ATTACKING ***",
             petDeadText = "*** SUMMON PET ***",
+            strata = "TOOLTIP",
         },
         petWarningsExpanded = true,
         combatStatus =         {
@@ -1124,6 +1135,36 @@ ns.Defaults = {
             enabled = true,
             essential = true,
             utility = true,
+        },
+        cdmBuffbar = {
+            enabled = true,
+            -- Master
+            texture = "Gravity Normal",
+            height = 20,
+            -- width removed
+            fontSize = 12,
+            font = "Gravity",
+
+            
+            -- Colors
+            useThemeBackground = true,
+            backgroundColor = {0, 0, 0, 0.5},
+            useThemeColor = true,
+            barColor = {0, 0.57, 0.98, 1},
+            
+            -- Icon
+            iconSize = 20,
+            iconBorderSize = 1,
+            iconBorderColor = {0, 0, 0, 1},
+            
+            -- Spark
+            sparkColor = {0.85, 0.85, 0.85, 1},
+            
+            -- Dynamic Positioning
+            dynamicPositioning = false,
+            growDirection = "DOWN", -- UP or DOWN
+            spacing = 0,
+            anchor = {point="CENTER", relativePoint="CENTER", x=0, y=0},
         },
     },
     skyriding =     {

@@ -42,6 +42,11 @@ local EDITBOX_TEXTURES = {
 
 local function GetSettings()
     local db = ns.GetDB()
+    -- Fallback for weird edge cases (e.g. AceConfig open)
+    if not db and ns.Addon and ns.Addon.db then
+        db = ns.Addon.db.profile
+    end
+    
     if db and db.uiimprovements and db.uiimprovements.chat then
         return db.uiimprovements.chat
     end
@@ -67,6 +72,7 @@ local function Kill(frame, force)
     end
 
     if shouldKill then
+        frame.__guiKilled = true -- Mark as killed to prevent fighting
         frame:Hide()
         -- frame:SetParent(Hider) -- DON'T re-parent, it breaks Edit Mode handles
         frame:SetAlpha(0)
@@ -164,6 +170,264 @@ local function StyleFontStrings(chatFrame)
         chatFrame:SetFont(fontPath, fontSize, fontOutline or "OUTLINE")
         chatFrame:SetShadowOffset(0, 0)
     end
+end
+
+---------------------------------------------------------------------------
+-- Tab Styling
+---------------------------------------------------------------------------
+
+local function UpdateTabColors(tab)
+    if not tab or not tab.__guiBackdrop then return end
+    
+    local chatFrame = _G["ChatFrame" .. tab:GetID()]
+    local isSelected = (chatFrame == SELECTED_CHAT_FRAME)
+    local isHovered = tab.__guiHovered -- Use explicit flag!
+    -- local isHovered = MouseIsOver(tab) -- Disabled: unreliable?
+    local settings = GetSettings()
+    
+    -- Configurable Fading
+    local activeAlpha = settings and settings.tabs and settings.tabs.activeTab and settings.tabs.activeTab.alpha or 1.0
+    local inactiveAlpha = settings and settings.tabs and settings.tabs.inactiveTab and settings.tabs.inactiveTab.alpha or 0.5
+    
+    -- Debugging Alpha Issues
+    -- print("UpdateTabColors: ID="..tab:GetID().." settings="..(settings and "OK" or "NIL").." active="..activeAlpha.." inactive="..inactiveAlpha)
+    
+    -- Determine colors
+    local bgAlpha = 0
+    local borderR, borderG, borderB, borderA = 0, 0, 0, 0
+    local textR, textG, textB = 1, 1, 1 -- Default White Text
+    
+    -- Theme Color Helper
+    local function GetActiveColor()
+        if settings and settings.tabs and settings.tabs.activeTab then
+             if settings.tabs.activeTab.useThemeColor then
+                 if C.accent then return unpack(C.accent) end
+             elseif settings.tabs.activeTab.customColor then
+                 return unpack(settings.tabs.activeTab.customColor)
+             end
+        end
+        return 1, 0.8, 0 -- Fallback Gold
+    end
+
+    if isSelected then
+        -- Selected: High Visibility, Theme/Custom Text
+        tab.__guiIgnoreAlpha = true
+        tab:SetAlpha(activeAlpha)
+        tab.__guiIgnoreAlpha = false
+        
+        bgAlpha = 0.8 -- Stronger background for "Button" feel
+        borderA = 1
+        
+        local ar, ag, ab = GetActiveColor()
+        borderR, borderG, borderB = ar, ag, ab
+        textR, textG, textB = ar, ag, ab -- Text matches active color
+        
+    elseif isHovered then
+        -- Hover: Visible BG + Grey Border
+        tab.__guiIgnoreAlpha = true
+        tab:SetAlpha(inactiveAlpha + 0.2) -- Slight boost on hover
+        tab.__guiIgnoreAlpha = false
+        
+        bgAlpha = 0.5
+        borderR, borderG, borderB = 0.5, 0.5, 0.5
+        borderA = 1
+        textR, textG, textB = 1, 1, 1 -- White on hover
+        
+        -- Inactive: Dim, White Text
+        tab.__guiIgnoreAlpha = true
+        tab:SetAlpha(inactiveAlpha)
+        tab.__guiIgnoreAlpha = false
+        
+        bgAlpha = 0.3 -- Subtle background always visible for "Button" look
+        borderR, borderG, borderB = 0, 0, 0
+        borderA = 0 -- No Border for inactive tabs (Cleaner Look)
+        textR, textG, textB = 1, 1, 1 -- White inactive
+    end
+    
+    -- Apply Backdrop
+    tab.__guiBackdrop:SetBackdropColor(0.1, 0.1, 0.1, bgAlpha) -- Dark Grey Button Base
+    tab.__guiBackdrop:SetBackdropBorderColor(borderR, borderG, borderB, borderA)
+    
+    -- Apply Text Color
+    -- Apply Text Color
+    if tab.__guiMyText then
+        tab.__guiMyText:SetTextColor(textR, textG, textB, 1)
+    end
+end
+
+local function StyleChatTab(tab)
+    if not tab then return end
+    
+    -- 1. Strip Textures (Iterative Method - SAFER)
+    -- We want to hide ALL standard Blizzard textures (Left, Right, Middle, Active, Highlight, etc.)
+    -- BUT NOT the text (FontString) or our custom backdrop (Frame)
+    
+    local regions = {tab:GetRegions()}
+    for _, region in ipairs(regions) do
+        if region:IsObjectType("Texture") then
+            -- local texture = region:GetTexture()
+            -- Don't SetTexture(nil) as it breaks Blizzard's UpdateColors
+            region:SetAlpha(0)
+            region:Hide()
+        end
+    end
+    
+    -- Extra Safety: Explicitly hide known Blizzard textures
+    local textureNames = {"Left", "Right", "Middle", "ActiveLeft", "ActiveMiddle", "ActiveRight", "HighlightLeft", "HighlightMiddle", "HighlightRight", "Glow", "SelectedLeft", "SelectedMiddle", "SelectedRight"} 
+    for _, name in ipairs(textureNames) do
+        local tex = tab[name]
+        if tex then tex:SetAlpha(0) tex:Hide() end
+    end
+    
+    -- Find and anchor Tab Text
+    -- Find Tab Text (Dynamic Search)
+    local text = _G[tab:GetName() .. "Text"]
+    
+    -- Fallback: Search regions if global name fails (likely in Modern WoW)
+    if not text then
+        for _, region in ipairs({tab:GetRegions()}) do
+            if region:IsObjectType("FontString") then
+                text = region
+                break
+            end
+        end
+    end
+    
+    if text then
+        text:SetParent(tab)
+        text:SetDrawLayer("OVERLAY", 7)
+        text:ClearAllPoints()
+        text:SetPoint("CENTER", tab, "CENTER", 0, -5)
+        text:SetJustifyV("MIDDLE")
+        text:SetJustifyH("CENTER")
+        
+        -- DIAGNOSTIC VOID STRATEGY
+        -- 1. Create a void frame if needed
+        if not ns.Chat.voidFrame then
+            ns.Chat.voidFrame = CreateFrame("Frame")
+            ns.Chat.voidFrame:Hide()
+        end
+
+        if not text.__guiReplaced then
+            text.__guiReplaced = true
+            
+            -- Styling Logic
+
+            -- 1. Create our custom text (Using GameFontWhite)
+            local myText = tab:CreateFontString(nil, "OVERLAY", "GameFontWhite")
+            myText:SetPoint("CENTER", tab, "CENTER", 0, -5)
+            myText:SetJustifyV("MIDDLE")
+            myText:SetJustifyH("CENTER")
+            
+            -- Font Logic
+            local fontPath, fontOutline = ns.GetFont()
+            myText:SetFont(fontPath, 12, fontOutline or "OUTLINE")
+            myText:SetShadowOffset(0, 0)
+            -- myText:SetTextColor(1, 1, 1, 1) -- Handled by UpdateTabColors now
+            
+            tab.__guiMyText = myText
+            
+            -- 2. Hide Original (Alpha Only - Safer)
+            text:SetAlpha(0)
+            
+            -- 3. Sync Logic
+            local function SyncText(self)
+                local content = self:GetText() or ""
+                -- Strip colors
+                if string.find(content, "|c") then
+                     content = string.gsub(content, "|c%x%x%x%x%x%x%x%x", "")
+                     content = string.gsub(content, "|r", "")
+                end
+                
+                -- Update our text
+                if tab.__guiMyText then
+                    tab.__guiMyText:SetText(content)
+                    -- Re-apply colors based on state (Active vs Inactive)
+                    UpdateTabColors(tab)
+                end
+            end
+            
+            hooksecurefunc(text, "SetText", function(self) SyncText(self) end)
+            hooksecurefunc(text, "SetFormattedText", function(self) SyncText(self) end)
+            
+            -- Initial Sync
+            SyncText(text)
+        end
+        
+        -- Prevent color changes on the original (just in case it finds its way back)
+        text.__guiIgnoreColorHook = true 
+        text:SetTextColor(1, 1, 1) 
+        text.__guiIgnoreColorHook = false
+    end
+    
+    -- 2. Create Backdrop (Wider & Centered)
+    if not tab.__guiBackdrop then
+        local bd = CreateFrame("Frame", nil, tab, "BackdropTemplate")
+        bd:SetFrameLevel(tab:GetFrameLevel() - 1)
+        
+        -- Widen the box relative to the tab frame
+        -- Tab frame is usually wider than text, so 0 padding might be huge
+        -- But user wants WIDER boxes.
+        bd:SetPoint("TOPLEFT", tab, "TOPLEFT", 0, -4) 
+        bd:SetPoint("BOTTOMRIGHT", tab, "BOTTOMRIGHT", 0, 0)
+        
+        bd:SetBackdrop({
+            bgFile = "Interface\\Buttons\\WHITE8x8",
+            edgeFile = "Interface\\Buttons\\WHITE8x8",
+            edgeSize = 1,
+        })
+        
+        tab.__guiBackdrop = bd
+        
+        -- Hook scripts for dynamic updates
+        if not tab.__guiHookedScripts then
+            tab.__guiHookedScripts = true
+            tab:HookScript("OnEnter", function() 
+                tab.__guiHovered = true 
+                UpdateTabColors(tab) 
+            end)
+            tab:HookScript("OnLeave", function() 
+                tab.__guiHovered = false
+                UpdateTabColors(tab) 
+            end)
+            tab:HookScript("OnShow", function() UpdateTabColors(tab) end)
+        end
+        
+        -- Hook SetAlpha to prevent Blizzard from overriding our alpha
+        -- (e.g. during fade animations or tab switching)
+        if not tab.__guiHookedAlpha then
+            tab.__guiHookedAlpha = true
+            hooksecurefunc(tab, "SetAlpha", function(self, newAlpha)
+                if self.__guiIgnoreAlpha then return end
+                -- Re-apply our colors/alpha if something else changes it
+                UpdateTabColors(self)
+            end)
+        end
+    end
+    
+    -- 3. Initial Color Update
+    UpdateTabColors(tab)
+    
+    -- 4. Font Style (White)
+    local fontPath, fontOutline = ns.GetFont()
+    if text then
+        text:SetFont(fontPath, 12, fontOutline or "OUTLINE")
+        text:SetShadowOffset(0, 0)
+        text:SetTextColor(1, 1, 1) -- Force White
+    end
+end
+
+-- Global hook to handle selection changes
+if not ns.Chat.SelectionHooked then
+    ns.Chat.SelectionHooked = true
+    hooksecurefunc("FCF_SelectDockFrame", function()
+        for i = 1, 10 do
+            local tab = _G["ChatFrame" .. i .. "Tab"]
+            if tab and tab.__guiBackdrop then
+                UpdateTabColors(tab)
+            end
+        end
+    end)
 end
 
 ---------------------------------------------------------------------------
@@ -612,7 +876,16 @@ local function GlobalCleanup()
         local tab = _G["ChatFrame"..i.."Tab"]
         local cf = _G["ChatFrame"..i]
         if tab then
-            local text = tab.Text and tab.Text:GetText() or ""
+            -- Find Text safely
+            local textObj = _G["ChatFrame"..i.."TabText"]
+            if not textObj then
+                 for _, region in ipairs({tab:GetRegions()}) do
+                    if region:IsObjectType("FontString") then textObj = region break end
+                 end
+            end
+            
+            local text = textObj and textObj:GetText() or ""
+
             -- Kill Voice tabs and "Chat X" tabs permanently (Retail defaults)
             if text:find("Voice") or text:find("Chat %d") then
                 Kill(tab, true)
@@ -777,21 +1050,25 @@ end
 ---------------------------------------------------------------------------
 -- Tab Autohide logic
 ---------------------------------------------------------------------------
+
+-- Helper: Check if mouse is over ANY part of the chat (Dock, Frame, or Tab)
+local function IsMouseOverChat()
+    if GeneralDockManager and MouseIsOver(GeneralDockManager) then return true end
+    
+    for i = 1, 10 do
+        local cf = _G["ChatFrame"..i]
+        local tab = _G["ChatFrame"..i.."Tab"]
+        if (cf and cf:IsShown() and MouseIsOver(cf)) then return true end
+        if (tab and tab:IsShown() and MouseIsOver(tab)) then return true end
+    end
+    return false
+end
+
 local function UpdateAllTabsVisibility()
     local settings = GetSettings()
     if not settings or not settings.hideTabs then return end
 
-    -- Check if mouse is over ANY chat frame or tab
-    local isOverAny = (GeneralDockManager and MouseIsOver(GeneralDockManager))
-    for i = 1, 10 do
-        if isOverAny then break end
-        local cf = _G["ChatFrame"..i]
-        local tab = _G["ChatFrame"..i.."Tab"]
-        if (cf and MouseIsOver(cf)) or (tab and MouseIsOver(tab)) then
-            isOverAny = true
-            break
-        end
-    end
+    local isOverAny = IsMouseOverChat()
 
     -- Apply visibility to all valid tabs
     for i = 1, 10 do
@@ -835,12 +1112,18 @@ local function ApplyTabAutohide(chatFrame)
 
             -- Securely prevent alpha changes by Blizzard (e.g. on click or flash)
             hooksecurefunc(tab, "SetAlpha", function(self, alpha)
+                if self.__guiKilled then return end -- Respect Kill()
+                if self.__guiIgnoreAlphaHook then return end
+
                 if settings.hideTabs and not self.__guiFading then
-                    -- If we are not hovering AND alpha is rising, squash it
-                    local isOver = MouseIsOver(self) or MouseIsOver(chatFrame)
-                    if not isOver and alpha > 0 then
+                    self.__guiIgnoreAlphaHook = true -- Prevent recursion
+                    -- If ANY part of chat is hovered, FORCE alpha to stay up
+                    if IsMouseOverChat() and alpha < 1 then
+                        self:SetAlpha(1)
+                    elseif not IsMouseOverChat() and alpha > 0 then
                         self:SetAlpha(0)
                     end
+                    self.__guiIgnoreAlphaHook = false
                 end
             end)
             
@@ -851,9 +1134,12 @@ local function ApplyTabAutohide(chatFrame)
                     local s = GetSettings()
                     if s and s.hideTabs then
                         local t = _G[cf:GetName().."Tab"]
-                        if t and not t.__guiFading then
-                            local isOver = MouseIsOver(t) or MouseIsOver(cf)
-                            if not isOver then t:SetAlpha(0) end
+                        if t and not t.__guiFading and not t.__guiKilled then
+                            if IsMouseOverChat() then
+                                t:SetAlpha(1)
+                            else
+                                t:SetAlpha(0)
+                            end
                         end
                     end
                 end)
@@ -878,10 +1164,15 @@ end
 
 function ns.Chat.Refresh()
     local settings = GetSettings()
+    -- Validation
+    
     if not settings or settings.enabled == false then return end
 
-    -- Run global cleanup first
-    GlobalCleanup()
+    -- Run global cleanup first (Protected Call to avoid crash)
+    local status, err = pcall(GlobalCleanup)
+    if not status then
+        -- print("GRAVITY DEBUG: GlobalCleanup CRASHED: " .. tostring(err))
+    end
 
     -- Iterate all chat frames (standard and potential extra)
     for i = 1, 10 do
@@ -905,6 +1196,11 @@ function ns.Chat.Refresh()
 
             -- 5. Tabs
             ApplyTabAutohide(chatFrame)
+            
+            local tab = _G[frameName .. "Tab"]
+            if tab then
+                StyleChatTab(tab)
+            end
 
             -- 6. Clamping
             ApplyClamping(chatFrame)
@@ -913,11 +1209,68 @@ function ns.Chat.Refresh()
             HookChatMessages(chatFrame)
         end
     end
+    
+    -- 8. Alignment (Updated: Feb 13)
+    if not ns.Chat.hookedAlignment then
+        ns.Chat.hookedAlignment = true
+        
+        -- Hook relevant functions to keep alignment
+        -- Point to NEW module function
+        local function SafeAlign() 
+             if ns.Chat and ns.Chat.RepositionTabs then ns.Chat.RepositionTabs() end
+        end
+        hooksecurefunc("FCF_DockUpdate", SafeAlign)
+        hooksecurefunc("FCF_OpenNewWindow", SafeAlign)
+        hooksecurefunc("FCF_DockFrame", SafeAlign)
+        hooksecurefunc("FCF_UnDockFrame", SafeAlign)
+    end
+    
+    -- Always run alignment logic during Refresh
+    -- (This fixes reliability issues where alignment might be skipped if Refresh ran too early)
+    if ns.Chat.RepositionTabs then
+        ns.Chat.RepositionTabs()
+    end
+end
+ 
+-- Module Function: Reposition Chat Tabs
+function ns.Chat.RepositionTabs()
+    local DOCK = GENERAL_CHAT_DOCK
+    if not DOCK then return end
+    
+    local anchor = _G["ChatFrame1"] -- Anchor to main chat
+    if not anchor then return end
+    
+    -- We want the first tab to be flush left with ChatFrame1
+    -- And others to follow with 1px spacing
+    
+    local lastTab = nil
+    
+     if not DOCK.DOCKED_CHAT_FRAMES then return end
+     
+     for i, chatFrame in ipairs(DOCK.DOCKED_CHAT_FRAMES) do
+         local tab = _G[chatFrame:GetName() .. "Tab"]
+         if tab and tab:IsShown() then
+             tab:ClearAllPoints()
+             
+             if lastTab then
+                 -- Subsequent tabs: Anchor to previous tab's RIGHT with 2px spacing (Increased)
+                 tab:SetPoint("BOTTOMLEFT", lastTab, "BOTTOMRIGHT", 2, 0)
+             else
+                 -- First tab: Anchor to ChatFrame1's TOPLEFT
+                 -- Offset updated to -7 to match text alignment better
+                 tab:SetPoint("BOTTOMLEFT", anchor, "TOPLEFT", -7, 2)
+             end
+             
+             lastTab = tab
+         end
+     end
 end
 
 function ns.Chat.Init()
     local settings = GetSettings()
     if settings and settings.enabled == false then return end
+
+
 
     SetupURLClickHandler()
     
@@ -926,6 +1279,12 @@ function ns.Chat.Init()
     hooksecurefunc("FCF_OpenTemporaryWindow", function() ns.Chat.Refresh() end)
     hooksecurefunc("FCF_DockFrame", function() ns.Chat.Refresh() end)
     hooksecurefunc("FCF_UnDockFrame", function() ns.Chat.Refresh() end)
+    
+    -- Prevents Blizzard from resetting alpha/colors on tab selection/deselection
+    -- This fixes the "Active Tab Alpha 1.0" issue
+    hooksecurefunc("FCFTab_UpdateColors", function(tab, selected)
+        if ns.Chat and ns.Chat.Refresh then UpdateTabColors(tab) end
+    end)
 
     -- Initial Refresh after a short delay to let SVs load
     C_Timer.After(1, function() ns.Chat.Refresh() end)

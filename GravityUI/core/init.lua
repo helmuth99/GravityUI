@@ -102,6 +102,7 @@ function ns.RefreshAccentColors()
     if ns.InstanceFrames and ns.InstanceFrames.Initialize then ns.InstanceFrames:Initialize() end
     if ns.Objectives and ns.Objectives.Initialize then ns.Objectives:Initialize() end
     if ns.XPRep and ns.XPRep.Refresh then ns.XPRep:Refresh() end
+    if ns.TrackedBuffBar and ns.TrackedBuffBar.Refresh then ns.TrackedBuffBar:Refresh() end
 end
 
 -- Get global font settings
@@ -323,7 +324,10 @@ function Addon:PLAYER_ENTERING_WORLD(event, isInitialLogin, isReloadingUi)
         ns.XPRep:Initialize()
     end
 
-
+    -- Initialize Tracked BuffBars (CDM)
+    if ns.TrackedBuffBar and ns.TrackedBuffBar.Init then
+        ns.TrackedBuffBar:Init()
+    end
 
     -- Initialize GUICDM Keybinds
     if ns.GUICDM_Keybinds and ns.GUICDM_Keybinds.Init then

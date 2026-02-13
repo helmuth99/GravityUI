@@ -58,6 +58,7 @@ core\actionbars.lua
 core\keymapping.lua
 core\tooltip.lua
 core\installer.lua
+core\trackedbuffbar.lua
 
 # Pages
 pages\main.lua
