@@ -2525,34 +2525,55 @@ local function UpdateILvlDisplay()
 end
 
 ---------------------------------------------------------------------------
--- Debounce update function
+-- Debounce update functions
 ---------------------------------------------------------------------------
-ScheduleUpdate = function()
-    if pendingUpdate then return end
-    pendingUpdate = true
+-- STATS UPDATE: High frequency, low cost (Text only)
+ScheduleStatUpdate = function()
+    if pendingStatUpdate then return end
+    pendingStatUpdate = true
 
     C_Timer.After(0.2, function()
-        pendingUpdate = false
+        pendingStatUpdate = false
 
-        -- Update character frame if visible AND on Character tab (not Reputation/Currency)
+        -- Update character frame text if visible
         if CharacterFrame and CharacterFrame:IsShown() and PaperDollFrame and PaperDollFrame:IsShown() then
-            UpdateAllSlotOverlays("player", slotOverlays)
             UpdateILvlDisplay()
             if statsPanel then
                 -- Don't update/show stats panel if Equipment Manager is open
-                local equipMgrOpen = PaperDollFrame.EquipmentManagerPane
-                                     and PaperDollFrame.EquipmentManagerPane:IsShown()
+                local equipMgrOpen = PaperDollFrame.EquipmentManagerPane and PaperDollFrame.EquipmentManagerPane:IsShown()
                 if not equipMgrOpen then
                     UpdateStatsPanel(statsPanel, "player")
                 end
             end
         end
 
-        -- Update inspect frame if visible (delegated to gui_inspect.lua)
+        -- Update inspect frame if visible (delegated)
         if ns.Inspect and ns.Inspect.UpdateInspectFrame then
             ns.Inspect.UpdateInspectFrame()
         end
     end)
+end
+
+-- GEAR UPDATE: Low frequency, high cost (Frames, Textures, Overlays)
+-- Note: Gear changes usually affect stats, so this triggers a stat update too.
+ScheduleGearUpdate = function()
+    if pendingGearUpdate then return end
+    pendingGearUpdate = true
+
+    C_Timer.After(0.2, function()
+        pendingGearUpdate = false
+
+        if CharacterFrame and CharacterFrame:IsShown() and PaperDollFrame and PaperDollFrame:IsShown() then
+            UpdateAllSlotOverlays("player", slotOverlays)
+            -- Trigger stat update as gear changes affect stats
+            ScheduleStatUpdate()
+        end
+    end)
+end
+
+-- Backwards compatibility / General catch-all
+ScheduleUpdate = function()
+    ScheduleGearUpdate()
 end
 
 ---------------------------------------------------------------------------
@@ -2660,7 +2681,7 @@ local function HookCharacterFrame()
                 -- Character tab is active - apply custom layout
                 ApplyCharacterPaneLayout()
                 InitializeCharacterOverlays()
-                ScheduleUpdate()
+                ScheduleGearUpdate() -- Full update on show
                 
                 -- FORCE APPLY SCALE: Ensure scale is set even if ApplyCharacterPaneLayout returned early
                 local settings = GetSettings()
@@ -3000,7 +3021,9 @@ local function HookCharacterFrame()
                 -- Show ilvl display, center ilvl, and settings button on Character tab
                 if CharacterFrame._guiILvlDisplay then CharacterFrame._guiILvlDisplay:Show() end
                 if CharacterFrame._guiCenterILvl then CharacterFrame._guiCenterILvl:Show() end
-                ScheduleUpdate()
+                
+                ScheduleGearUpdate()
+                
                 -- Refresh equipment slot borders (may be reset by Blizzard on reopen)
                 if #allEquipmentSlots > 0 and UpdateEquipmentSlotBorder then
                     C_Timer.After(0.05, function()
@@ -3045,15 +3068,19 @@ eventFrame:SetScript("OnEvent", function(self, event, arg1)
                 HookCharacterFrame()
             end)
         end
+    -- GEAR UPDATES (And subsequently stats)
     elseif event == "PLAYER_EQUIPMENT_CHANGED" or event == "UPDATE_INVENTORY_DURABILITY" or
            event == "SOCKET_INFO_UPDATE" or event == "PLAYER_SPECIALIZATION_CHANGED" then
-        ScheduleUpdate()
+        ScheduleGearUpdate()
+        
+    -- STAT UPDATES ONLY
     elseif event == "UNIT_STATS" and arg1 == "player" then
-        ScheduleUpdate()
+        ScheduleStatUpdate()
     elseif event == "UNIT_AURA" and arg1 == "player" then
-        ScheduleUpdate()
+        ScheduleStatUpdate()
     elseif event == "UNIT_SPELL_HASTE" and arg1 == "player" then
-        ScheduleUpdate()
+        ScheduleStatUpdate()
+        
     elseif event == "PLAYER_ENTERING_WORLD" then
         -- Delayed init check
         C_Timer.After(0.5, function()
@@ -3061,8 +3088,9 @@ eventFrame:SetScript("OnEvent", function(self, event, arg1)
                 HookCharacterFrame()
             end
         end)
+        
     elseif event == "INSPECT_READY" then
-        ScheduleUpdate()
+        ScheduleGearUpdate()
     end
 end)
 
