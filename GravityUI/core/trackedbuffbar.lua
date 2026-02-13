@@ -258,7 +258,7 @@ function Module:SkinBar(bar)
                     break
                 end
                 -- 2. Fallback: OVERLAY + Small Width (If ID changes in future)
-                if not spark and region:GetDrawLayer() == "OVERLAY" and region:GetWidth() < 20 and region:GetHeight() >= (bar:GetHeight() - 5) then
+                if not spark and region:GetDrawLayer() == "OVERLAY" and (not bar:IsProtected()) and region:GetWidth() < 20 and region:GetHeight() >= (bar:GetHeight() - 5) then
                      spark = region
                 end
             end
