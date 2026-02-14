@@ -523,6 +523,12 @@ local function UpdateGroupLootStyle(frame)
         frame.IconFrame:SetPoint("LEFT", frame, "LEFT", -cfg.height - 5, 0) 
         frame.IconFrame:SetSize(cfg.height, cfg.height)
         
+        -- Ensure Icon fills the frame
+        if frame.IconFrame.Icon then
+            frame.IconFrame.Icon:ClearAllPoints()
+            frame.IconFrame.Icon:SetAllPoints(frame.IconFrame)
+        end
+        
         if frame.IconFrame.Border then frame.IconFrame.Border:Hide() end
         if frame.IconFrame.Count then frame.IconFrame.Count:SetFont(GetFont()) end
         
@@ -612,12 +618,14 @@ local function UpdateGroupLootStyle(frame)
         link = GetLootRollItemLink(frame.rollID)
     end
     
+    -- Color by Quality (Always apply if we have quality)
+    if quality then
+        local r, g, b = GetItemQualityColor(quality)
+        if frame.IconBorder then frame.IconBorder:SetBackdropBorderColor(r, g, b, 1) end
+    end
+    
     if link then
-        local _, _, quality = GetItemInfo(link)
-        if quality then
-            local r, g, b = GetItemQualityColor(quality)
-            if frame.IconBorder then frame.IconBorder:SetVertexColor(r, g, b) end
-        end
+        -- Any logic that strictly needs link
     end
     
     -- Check for Transmog Button texture safety on Real Frames too
@@ -682,11 +690,24 @@ local function UpdateGroupLootStyle(frame)
     if frame.IconFrame then
         frame.IconFrame:EnableMouse(true)
         frame.IconFrame:SetScript("OnEnter", function(self)
-            if frame.rollID then
-                GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+            
+            local valid = false
+            -- 1. Try Live Loot Roll
+            if frame.rollID and frame.rollID < 100 then -- Real IDs are small integers usually, fake are 100+
                 GameTooltip:SetLootRollItem(frame.rollID)
-                GameTooltip:Show()
+                -- Check if it actually worked? Hard to tell, but usually does for valid IDs
+                valid = true
             end
+            
+            -- 2. Fallback to cached link (Test Mode or if Roll functions fail)
+            if not valid or GameTooltip:NumLines() == 0 then
+                 if frame.gravityLootLink then
+                     GameTooltip:SetHyperlink(frame.gravityLootLink)
+                 end
+            end
+            
+            GameTooltip:Show()
         end)
         frame.IconFrame:SetScript("OnLeave", function(self)
             GameTooltip:Hide()
@@ -742,6 +763,8 @@ local function OnGroupLootShow(frame)
         if frame.guiIlvl then
              frame.guiIlvl:SetText("")
              local link = GetLootRollItemLink(frame.rollID)
+             frame.gravityLootLink = link -- Store for tooltip fallback
+             
              if link then
                  local _, _, _, ilvl = GetItemInfo(link)
                  if ilvl then
@@ -819,6 +842,8 @@ local function OnGroupLootShow(frame)
     
     if frame.Timer then
         frame.Timer:SetStatusBarColor(r, g, b, 1)
+        -- Also update the timer background if we want it to match or be darker
+        if frame.TimerBg then frame.TimerBg:SetVertexColor(r * 0.3, g * 0.3, b * 0.3, 1) end
     end
     
     if frame.IconBorder then
@@ -873,6 +898,13 @@ function Loot:ToggleRollMover()
         self:StopMovingOrSizing()
         local point, _, relPoint, x, y = self:GetPoint()
         db.lootRoll.position = { point = point, relPoint = relPoint, x = x, y = y }
+    end)
+    
+    f:SetScript("OnUpdate", function(self, elapsed)
+        -- Enforce Width
+        if self:GetWidth() ~= db.lootRoll.width then 
+             self:SetWidth(db.lootRoll.width)
+        end
     end)
     
     self.rollMover = f
@@ -1194,63 +1226,75 @@ end
 function Loot:UpdateRollPositions()
     local db = GetDB()
     if not db or not db.lootRoll then return end
+
+    -- Layout Settings
+    local dir = db.lootRoll.growDirection or "DOWN"
+    local spacing = db.lootRoll.spacing or 5
+    local width = db.lootRoll.width or 320
     
+    -- Anchor Point (Mover or Saved Position)
     local anchor = self.rollMover or UIParent
     local point, relativeTo, relativePoint, x, y = "CENTER", UIParent, "CENTER", 0, 200
     
     if db.lootRoll.position then
         local p = db.lootRoll.position
-        point, relativeTo, relativePoint, x, y = p.point, UIParent, p.relPoint, p.x, p.y
+        -- If mover is hidden, we use saved config. If mover is shown, we use Mover's current pos.
+        if not self.rollMover then
+             point, relativeTo, relativePoint, x, y = p.point, UIParent, p.relPoint, p.x, p.y
+        else
+             point, relativeTo, relativePoint, x, y = self.rollMover:GetPoint()
+        end
     end
     
-    -- If mover exists, use it as the visual anchor reference for logic (but frames anchor to it or the saved pos)
-    -- Actually we need to hook `GroupLootContainer_Update` in Blizzard_UIPanels_Game.lua, 
-    -- OR we can just use `UIParentManagedFrameMixin` overrides? 
-    -- GroupLootContainer is a managed frame. 
-    -- Best way: Reposition `GroupLootContainer` itself?
-    -- `GroupLootContainer` manages the stacking.
-    
+    -- Blizzard GroupLootContainer Management
+    -- We want to completely override its layout logic.
     local container = _G.GroupLootContainer
     if container then
-        container:EnableMouse(false) 
+        container:EnableMouse(false)
+        container:SetSize(1, 1) 
         container:ClearAllPoints()
+        -- Move it off-screen or hide it conceptually so it doesn't interfere, 
+        -- BUT we need it visible for the frames to be shown? 
+        -- Actually GroupLootFrame1..4 are children of UIParent usually (or re-parented to Container).
+        -- Let's check parentage. Usually they are UIParent.
+        -- We just need to position the frames ourselves.
         
-        -- Improve Growth Direction Logic
-        -- Blizzard's GroupLootContainer often adapts growth based on Y position (Top vs Bottom half),
-        -- or we can try to force it by anchoring TOP vs BOTTOM.
-        local dir = db.lootRoll.growDirection or "DOWN"
-        
-        if dir == "UP" then
-            -- Grow UP: Anchor Container BOTTOM to Mover TOP
-             if self.rollMover then
-                 container:SetPoint("BOTTOM", self.rollMover, "TOP", 0, 5)
-             else
-                 -- Fallback if no mover, use saved pos or default
-                 container:SetPoint("BOTTOM", UIParent, "BOTTOM", x, y)
-             end
-        else
-            -- Grow DOWN: Anchor Container TOP to Mover BOTTOM
-            if self.rollMover then
-                 container:SetPoint("TOP", self.rollMover, "BOTTOM", 0, -5)
-             else
-                 container:SetPoint("TOP", UIParent, "TOP", x, y) -- simplified
-             end
-        end
-        
-        -- If user has a saved position, we might want to respect that exact point,
-        -- but if we want to enforce Direction, we must anchor relative to it appropriately.
-        -- However, `db.lootRoll.position` is just a point/x/y.
-        -- If we use the Mover, we use the Mover's position.
-        
-        if not self.rollMover and db.lootRoll.position then
-             -- Use strict saved position if Mover is hidden
-             local p = db.lootRoll.position
-             container:ClearAllPoints()
-             container:SetPoint(p.point, UIParent, p.relPoint, p.x, p.y)
-        end
+        -- To prevent Blizzard from re-anchoring them, we might need to hook/overwrite GroupLootContainer_Update?
+        -- We already hooked it to call this function.
+        -- So essentially, we just re-do the anchoring *after* Blizzard does it.
+    end
 
-        if UIPARENT_MANAGED_FRAME_POSITIONS and UIPARENT_MANAGED_FRAME_POSITIONS["GroupLootContainer"] then
-            UIPARENT_MANAGED_FRAME_POSITIONS["GroupLootContainer"] = nil
+    local lastFrame = nil
+    
+    for i = 1, NUM_GROUP_LOOT_FRAMES or 4 do
+        local frame = _G["GroupLootFrame"..i]
+        if frame and frame:IsShown() then
+            frame:ClearAllPoints()
+            frame:SetWidth(width) -- Enforce Width
+            
+            if not lastFrame then
+                -- First Frame: Anchor to Position
+                if self.rollMover and self.rollMover:IsShown() then
+                     -- Anchor to Mover
+                     if dir == "UP" then
+                         frame:SetPoint("BOTTOM", self.rollMover, "TOP", 0, spacing)
+                     else
+                         frame:SetPoint("TOP", self.rollMover, "BOTTOM", 0, -spacing)
+                     end
+                else
+                     -- Anchor to Saved Position
+                     frame:SetPoint(point, relativeTo, relativePoint, x, y)
+                end
+            else
+                -- Subsequent Frames: Anchor to Last Frame
+                if dir == "UP" then
+                    frame:SetPoint("BOTTOM", lastFrame, "TOP", 0, spacing)
+                else
+                    frame:SetPoint("TOP", lastFrame, "BOTTOM", 0, -spacing)
+                end
+            end
+            
+            lastFrame = frame
         end
     end
 end
@@ -1307,6 +1351,86 @@ function Loot:Initialize()
             if f then 
                 UpdateGroupLootStyle(f) 
                 f:HookScript("OnShow", OnGroupLootShow)
+                
+                -- Robustness: Add OnUpdate to retry data loading and enforce layout
+                f:HookScript("OnUpdate", function(self, elapsed)
+                    if not self.gravityUpdateTimer then self.gravityUpdateTimer = 0 end
+                    self.gravityUpdateTimer = self.gravityUpdateTimer + elapsed
+                    if self.gravityUpdateTimer > 0.2 then
+                        self.gravityUpdateTimer = 0
+                        -- 1. Enforce Width (Blizzard likes to reset this)
+                         local db = GetDB()
+                         if db and db.lootRoll and db.lootRoll.width then
+                             if self:GetWidth() ~= db.lootRoll.width then
+                                 self:SetWidth(db.lootRoll.width)
+                             end
+                         end
+                         
+                         -- 2. Retry Ilvl / Link / Color
+                         if self.rollID then
+                             local link = GetLootRollItemLink(self.rollID)
+                             local _, _, _, quality = GetLootRollItemInfo(self.rollID)
+                             
+                             if quality then
+                                 local r, g, b = GetItemQualityColor(quality)
+                                 -- Force Border Color
+                                 if self.IconBorder then self.IconBorder:SetBackdropBorderColor(r, g, b, 1) end
+                                 -- Force Timer Color
+                                 if self.Timer then self.Timer:SetStatusBarColor(r, g, b, 1) end
+                             end
+                             
+                             -- Retry Ilvl
+                             if self.guiIlvl and link then
+                                 local effectiveLevel = GetDetailedItemLevelInfo(link)
+                                 local _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, isCrafted = GetItemInfo(link)
+                                 
+                                 -- Fallback to standard GetItemInfo if detailed fails
+                                 if not effectiveLevel then
+                                     local _, _, _, ilvl = GetItemInfo(link)
+                                     effectiveLevel = ilvl
+                                 end
+
+                                 if effectiveLevel then
+                                     self.guiIlvl:SetText(effectiveLevel)
+                                     self.guiIlvl:Show()
+                                 else
+                                     -- Try Loading if still nil
+                                      if not self.itemLoadingChecked then
+                                         self.itemLoadingChecked = true
+                                         local item = Item:CreateFromItemLink(link)
+                                         item:ContinueOnItemLoad(function()
+                                            local level = GetDetailedItemLevelInfo(link) or item:GetCurrentItemLevel()
+                                            if level then 
+                                                self.guiIlvl:SetText(level) 
+                                                self.guiIlvl:Show()
+                                            end
+                                         end)
+                                      end
+                                 end
+                             end
+                             
+                             -- Retry Bind Text
+                             if self.guiBindText and (not self.guiBindText:GetText() or self.guiBindText:GetText() == "") and link then
+                                 local _, _, _, _, _, _, _, _, _, _, _, _, _, bindType = GetItemInfo(link)
+                                 if bindType == 2 then 
+                                     self.guiBindText:SetText("|cff1eff00BoE|r")
+                                 elseif bindType == 3 then
+                                     self.guiBindText:SetText("|cff1eff00BoU|r")
+                                 end
+                             end
+                         end
+                         
+                         -- 3. Enforce Layout Position (Aggressive)
+                         -- Only if not moving
+                         if not self.isMoving and not (Loot.rollMover and Loot.rollMover:IsShown()) then
+                              -- We rely on UpdateRollPositions() to be called by GroupLootContainer_Update
+                              -- But we can trigger it if needed? 
+                              -- Calling it every 0.2s is too expensive as it loops all frames.
+                              -- But we can check if our point is correct? 
+                              -- Let's stick to Enforcing Width for now, Position is usually handled by the Container Hook.
+                         end
+                    end
+                end)
             end
         end
 
@@ -1327,108 +1451,65 @@ end
 -- Test Command
 SLASH_GRAVITYLOOTTEST1 = "/gravitytestloot"
 SlashCmdList["GRAVITYLOOTTEST"] = function()
-    local f = _G["GroupLootFrame1"]
-    if not f then return end
-    
-    -- Stop Blizzard scripts from crashing due to missing rollID
-    f:SetScript("OnUpdate", nil)
-    f:SetScript("OnShow", nil) 
-    f:SetScript("OnEvent", nil)
-    
-    f.rollID = 123 
-    
-    -- Force Visibility & Position from DB
-    f:SetParent(UIParent)
-    f:SetFrameStrata("DIALOG")
-    f:SetAlpha(1)
-    
-    local db = GetDB()
-    if db and db.lootRoll and db.lootRoll.position then
-         local p = db.lootRoll.position
-         f:ClearAllPoints()
-         f:SetPoint(p.point, UIParent, p.relPoint, p.x, p.y)
-    else
-         f:ClearAllPoints()
-         f:SetPoint("CENTER", UIParent, "CENTER", 0, 100)
-    end
-    
-    f:Show()
-    
-    UpdateGroupLootStyle(f)
-    
-    -- Mock Data
-    local texture = 135339 -- Thunderfury
-    local name = "Thunderfury, Blessed Blade of the Windseeker"
-    local quality = 5 -- Legendary
-    local r, g, b = GetItemQualityColor(quality)
-    
-    if f.IconFrame then
-        -- Force Icon Size to match settings
-        local height = (db and db.lootRoll and db.lootRoll.height) or 30
-        f.IconFrame:SetSize(height, height)
-        f.IconFrame:EnableMouse(true)
-        if f.IconFrame.Icon then f.IconFrame.Icon:SetAllPoints() end
+    -- Spawn 3 frames to test spacing/growth
+    for i = 1, 3 do
+        local f = _G["GroupLootFrame"..i]
+        if f then
+            -- Stop Blizzard scripts
+            f:SetScript("OnUpdate", nil)
+            f:SetScript("OnShow", nil) 
+            f:SetScript("OnEvent", nil)
+            
+            f.rollID = 100 + i 
+            
+            f:SetParent(UIParent)
+            f:SetFrameStrata("DIALOG")
+            f:SetAlpha(1)
+            
+            f:Show()
+            UpdateGroupLootStyle(f)
+            
+            -- Mock Data
+            local texture = 135339 -- Thunderfury
+            local name = "Thunderfury, Blessed Blade of the Windseeker"
+            local quality = 5 -- Legendary
+            local link = "item:19019::::::::80:::::"
+            
+            if i == 2 then
+                texture = 133966 -- Ashkandi
+                name = "Ashkandi, Greatsword of the Brotherhood"
+                quality = 4 -- Epic
+                link = "item:19364::::::::76:::::"
+            elseif i == 3 then
+                texture = 132060 -- Ethereal
+                name = "Strange Dust"
+                quality = 3 -- Rare
+                link = "item:10940:::::::::::::"
+            end
+            
+            f.gravityLootLink = link
 
-        f.IconFrame.Icon:SetTexture(texture)
-        if f.IconFrame.Count then f.IconFrame.Count:SetText("") end
-         -- Border Logic
-         if f.IconBorder then
-             f.IconBorder:SetBackdropBorderColor(r, g, b, 1)
-             -- Fix Border Position
-             f.IconBorder:ClearAllPoints()
-             f.IconBorder:SetPoint("TOPLEFT", f.IconFrame, "TOPLEFT", -1, 1)
-             f.IconBorder:SetPoint("BOTTOMRIGHT", f.IconFrame, "BOTTOMRIGHT", 1, -1)
-         end
-         
-         -- Tooltip Overlay (Force high strata)
-         if not f.IconFrame.TestHoverOverlay then
-            f.IconFrame.TestHoverOverlay = CreateFrame("Button", nil, f.IconFrame)
-            f.IconFrame.TestHoverOverlay:SetAllPoints(f.IconFrame)
-            f.IconFrame.TestHoverOverlay:SetFrameLevel(999)
-         end
-         f.IconFrame.TestHoverOverlay:EnableMouse(true)
-         f.IconFrame.TestHoverOverlay:SetScript("OnEnter", function(self)
-             GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-             GameTooltip:SetHyperlink("item:19019")
-             GameTooltip:Show()
-         end)
-         f.IconFrame.TestHoverOverlay:SetScript("OnLeave", function() GameTooltip:Hide() end)
-    end
-    
-    if f.guiBindText then
-        f.guiBindText:SetText("|cff1eff00BoE|r")
-    end
-    
-    if f.guiIlvl then
-         -- Match Thunderfury's real ilvl (13) for consistency, or dynamic
-         local _, _, _, ilvl = GetItemInfo(19019)
-         f.guiIlvl:SetText(ilvl or "13")
-    end
-    
-    if f.Name then
-        f.Name:SetText(name)
-        f.Name:SetVertexColor(1, 1, 1) 
-        -- Re-apply style to ensure font/color is precise
-        if f.Name.SetFont then 
-            if db and db.lootRoll then
-                 local fontPath = LibStub("LibSharedMedia-3.0"):Fetch("font", db.lootRoll.nameFont or "Gravity")
-                 f.Name:SetFont(fontPath, db.lootRoll.nameFontSize or 12, db.lootRoll.nameFontOutline or "OUTLINE")
-                 if db.lootRoll.nameFontColor then
-                     f.Name:SetTextColor(unpack(db.lootRoll.nameFontColor))
-                 end
+            local r, g, b = GetItemQualityColor(quality)
+            
+            if f.IconFrame then
+                 if f.IconFrame.Icon then f.IconFrame.Icon:SetTexture(texture) end
+                 if f.IconBorder then f.IconBorder:SetBackdropBorderColor(r, g, b, 1) end
+            end
+            
+            if f.Name then
+                f.Name:SetText(name)
+                f.Name:SetTextColor(1, 1, 1) 
+            end
+            
+            if f.Timer then
+                f.Timer:SetMinMaxValues(0, 100)
+                f.Timer:SetValue(50 + (i*10))
+                f.Timer:SetStatusBarColor(r, g, b, 1)
+                if f.TimerBg then f.TimerBg:SetVertexColor(r * 0.3, g * 0.3, b * 0.3, 1) end
             end
         end
     end
     
-    if f.Timer then
-        f.Timer:SetMinMaxValues(0, 100)
-        f.Timer:SetValue(100)
-        f.Timer:SetStatusBarColor(r, g, b, 1)
-        f.Timer:SetScript("OnUpdate", function(self, elapsed)
-             local v = self:GetValue()
-             if v <= 0 then self:SetValue(100) else self:SetValue(v - (elapsed * 20)) end
-        end)
-    end
-
-    print("|cff00ccffGravityUI|r: Test Loot Frame Updated (BoE Text, Layout).")
+    Loot:UpdateRollPositions()
+    print("|cff00ccffGravityUI|r: Test Loot Frames Updated.")
 end
