@@ -401,7 +401,7 @@ local function OnLootOpened()
         if lootFrame.slots[i] then lootFrame.slots[i]:Hide() end
     end
 
-    lootFrame:SetHeight(HEADER_HEIGHT + 10 + (visible * (SLOT_HEIGHT + 2)))
+    lootFrame:SetHeight(HEADER_HEIGHT + 30 + (visible * (SLOT_HEIGHT + 2)))
     lootFrame:Show()
 end
 
@@ -1423,11 +1423,8 @@ function Loot:Initialize()
                          -- 3. Enforce Layout Position (Aggressive)
                          -- Only if not moving
                          if not self.isMoving and not (Loot.rollMover and Loot.rollMover:IsShown()) then
-                              -- We rely on UpdateRollPositions() to be called by GroupLootContainer_Update
-                              -- But we can trigger it if needed? 
-                              -- Calling it every 0.2s is too expensive as it loops all frames.
-                              -- But we can check if our point is correct? 
-                              -- Let's stick to Enforcing Width for now, Position is usually handled by the Container Hook.
+                              -- Force layout update to snap any rogue frames back
+                              Loot:UpdateRollPositions()
                          end
                     end
                 end)

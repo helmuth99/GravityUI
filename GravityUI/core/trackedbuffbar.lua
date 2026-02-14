@@ -250,7 +250,7 @@ function Module:SkinBar(bar)
     if not spark and bar.GetRegions then
         local regions = {bar:GetRegions()}
         for _, region in ipairs(regions) do
-            if region:IsObjectType("Texture") then
+            if not region:IsForbidden() and region:IsObjectType("Texture") then
                 local tex = region:GetTexture()
                 -- 1. Check Path Name or Specific ID (6739577 found in debug)
                 if (type(tex) == "string" and (tex:find("Spark") or tex:find("SPARK"))) or (tex == 6739577) then
@@ -258,8 +258,12 @@ function Module:SkinBar(bar)
                     break
                 end
                 -- 2. Fallback: OVERLAY + Small Width (If ID changes in future)
-                if not spark and region:GetDrawLayer() == "OVERLAY" and (not bar:IsProtected()) and region:GetWidth() < 20 and region:GetHeight() >= (bar:GetHeight() - 5) then
-                     spark = region
+                if not spark and region:GetDrawLayer() == "OVERLAY" and (not bar:IsProtected()) then
+                     local w, h = region:GetSize()
+                     local barH = bar:GetHeight()
+                     if w and h and barH and w < 20 and h >= (barH - 5) then
+                         spark = region
+                     end
                 end
             end
         end
