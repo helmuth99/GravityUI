@@ -694,7 +694,7 @@ local function BuildLootPanel(parent)
     rowF3:SetPoint("TOPLEFT", PAD, yOffset)
     yOffset = yOffset - ROW_HEIGHT - 5
     
-    local rowF4 = CreateStylingRow(content, "Item Name Color", "color", nil, "nameFontColor", db.lootRoll, function()
+    local rowF4 = CreateStylingRow(content, "Item Name Color", "color", "nameFontColor", db.lootRoll, function()
         if ns.Loot and ns.Loot.RefreshRolls then ns.Loot:RefreshRolls() end
     end)
     rowF4:SetPoint("TOPLEFT", PAD, yOffset)

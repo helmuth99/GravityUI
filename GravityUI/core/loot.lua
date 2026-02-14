@@ -1,10 +1,12 @@
 local ADDON_NAME, ns = ...
 local GUI = ns.GUI
 local C = ns.Colors
+local LSM = LibStub("LibSharedMedia-3.0", true)
 
 -- Module
 ns.Loot = {}
 local Loot = ns.Loot
+
 
 -------------------------------------------------------------------------------
 -- CONSTANTS & HELPERS
@@ -28,6 +30,10 @@ local function GetFont()
     local path, outline = ns.GetFont()
     return path, 11, outline
 end
+
+-- Ensure LSM is available locally if not already (it is used in GetStatusbarTexture later)
+-- We will resolve it inside the function to be safe or use ns.LSM if it exists
+
 
 local function GetAccent()
     return ns.GetAccentColor()
@@ -453,7 +459,6 @@ end
 -------------------------------------------------------------------------------
 
 local function GetStatusbarTexture(name)
-    local LSM = LibStub("LibSharedMedia-3.0", true)
     if LSM then
         return LSM:Fetch("statusbar", name or "Gravity")
     end
@@ -469,13 +474,21 @@ local function UpdateGroupLootStyle(frame)
     frame:SetSize(cfg.width, cfg.height)
     frame:SetScale(1)
 
-    -- Background (Transparent)
+    -- Background (Transparent or Colored)
     if not frame.guiBackground then
         frame.guiBackground = frame:CreateTexture(nil, "BACKGROUND")
         frame.guiBackground:SetAllPoints()
-        frame.guiBackground:SetColorTexture(0, 0, 0, 0) -- Transparent
+    end
+    
+    if cfg.enableBackgroundColor then
+        frame.guiBackground:Show()
+        if cfg.backgroundColor then
+            frame.guiBackground:SetColorTexture(unpack(cfg.backgroundColor))
+        else
+            frame.guiBackground:SetColorTexture(0, 0, 0, 0.5)
+        end
     else
-        frame.guiBackground:SetColorTexture(0, 0, 0, 0)
+        frame.guiBackground:Hide()
     end
     
     local textureParams = GetStatusbarTexture(cfg.texture)
@@ -486,7 +499,7 @@ local function UpdateGroupLootStyle(frame)
         frame.Timer:ClearAllPoints()
         frame.Timer:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 0, 0)
         frame.Timer:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", 0, 0)
-        frame.Timer:SetHeight(6) -- Thin bar at bottom
+        frame.Timer:SetHeight(cfg.timerHeight or 8) 
         
         frame.Timer:SetFrameLevel(frame:GetFrameLevel() + 1)
         frame.Timer:SetAlpha(1)
@@ -494,6 +507,14 @@ local function UpdateGroupLootStyle(frame)
         -- Hide default background of the timer if any
         if frame.Timer.Background then frame.Timer.Background:Hide() end
         if frame.Timer.Text then frame.Timer.Text:Hide() end 
+        
+        -- Add Background to Timer Frame if missing
+        if not frame.TimerBg then
+             frame.TimerBg = frame.Timer:CreateTexture(nil, "BACKGROUND")
+             frame.TimerBg:SetAllPoints(frame.Timer)
+             frame.TimerBg:SetTexture(GetStatusbarTexture(cfg.texture))
+             frame.TimerBg:SetVertexColor(0.1, 0.1, 0.1, 1) -- Dark background
+        end
     end
 
     -- Icon
@@ -505,17 +526,26 @@ local function UpdateGroupLootStyle(frame)
         if frame.IconFrame.Border then frame.IconFrame.Border:Hide() end
         if frame.IconFrame.Count then frame.IconFrame.Count:SetFont(GetFont()) end
         
-        -- Remove Border
-        if frame.guiIconBorder then
-             frame.guiIconBorder:Hide()
-        end
+        if frame.guiIconBorder then frame.guiIconBorder:Hide() end
     end
-
+    
     -- Name
     if frame.Name then
         frame.Name:ClearAllPoints()
-        frame.Name:SetPoint("LEFT", frame, "LEFT", 0, 0) -- User req: Align with bar start (was 10)
-        frame.Name:SetFont(GetFont())
+        local timerHeight = cfg.timerHeight or 8
+        frame.Name:SetPoint("LEFT", frame, "LEFT", 0, timerHeight / 2) 
+        
+        local fontName = cfg.nameFont or "Gravity"
+        local fontPath = (LSM and LSM:Fetch("font", fontName)) or "Fonts\\FRIZQT__.TTF"
+        local fontSize = cfg.nameFontSize or 12
+        local fontOutline = cfg.nameFontOutline or "OUTLINE"
+
+        frame.Name:SetFont(fontPath, fontSize, fontOutline)
+        
+        if cfg.nameFontColor then
+             frame.Name:SetTextColor(unpack(cfg.nameFontColor))
+        end
+
         frame.Name:SetDrawLayer("OVERLAY")
     end
     
@@ -523,7 +553,6 @@ local function UpdateGroupLootStyle(frame)
     local ilvlParent = frame.IconFrame or frame
     if not frame.guiIlvl then
         frame.guiIlvl = ilvlParent:CreateFontString(nil, "OVERLAY")
-        -- Use a cleaner/bold font if available, or just standard
         frame.guiIlvl:SetFont(GetFont(), 10, "OUTLINE") 
         frame.guiIlvl:SetTextColor(1, 0.8, 0)
     else
@@ -533,66 +562,49 @@ local function UpdateGroupLootStyle(frame)
     if frame.IconFrame then
         frame.guiIlvl:ClearAllPoints()
         frame.guiIlvl:SetPoint("BOTTOM", frame.IconFrame, "BOTTOM", 0, 1)
-        frame.guiIlvl:SetDrawLayer("OVERLAY", 7) -- Maximum overlay
+        frame.guiIlvl:SetDrawLayer("OVERLAY", 7) 
     end
 
-    -- Bind Text (BoP / BoE) -> RIGHT of Name (Reverted from Icon Top due to clutter)
+    -- Bind Text (BoP / BoE)
     if not frame.guiBindText then
         frame.guiBindText = frame:CreateFontString(nil, "OVERLAY")
     end
     
-    local font = GetFont() -- Ensure font is defined
+    local font = GetFont() 
     frame.guiBindText:SetFont(font, 10, "OUTLINE")
     frame.guiBindText:ClearAllPoints()
     
-    -- Anchor to the RIGHT of the Name
-    -- If Name is not set, fallback to Icon Right
     if frame.Name then
         frame.guiBindText:SetPoint("LEFT", frame.Name, "RIGHT", 5, 0)
     else
         frame.guiBindText:SetPoint("LEFT", frame.IconFrame, "RIGHT", 5, 0)
     end
 
-    -- Buttons position (Right side)
-    -- User req: "Icons should not be same size as item icon". Fixed size 22px (was 26).
     local btnSize = 22 
     
     local function SkinButton(btn)
         if not btn then return end
         btn:SetSize(btnSize, btnSize)
         btn:ClearAllPoints()
-        -- DO NOT Force Show() - breaks disabled state logic relative to game rules
         btn:SetFrameLevel(frame:GetFrameLevel() + 5)
     end
 
     -- Disable default decoration
     if frame.Background then frame.Background:Hide() end
     if frame.Border then frame.Border:Hide() end
-    -- Background: Ensure NO border/background is visible by aggressively clearing it
     if frame.SetBackdrop then frame:SetBackdrop(nil) end
     
-    -- Timer Bar Visuals
-    -- User req: "Timer bar is a bit too narrow" -> Increase to 8px
-    if frame.Timer then
-        frame.Timer:SetHeight(8)
-        
-        -- Add Background to Timer Frame if missing
-        if not frame.TimerBg then
-             frame.TimerBg = frame.Timer:CreateTexture(nil, "BACKGROUND")
-             frame.TimerBg:SetAllPoints(frame.Timer)
-             frame.TimerBg:SetTexture(GetStatusbarTexture(db.lootRoll.texture))
-             frame.TimerBg:SetVertexColor(0.1, 0.1, 0.1, 1) -- Dark background
-        end
-    end
-    
-    -- Item Quality Border
+    -- Item Quality Border (Clean 1px)
     if not frame.IconBorder then
-        frame.IconBorder = frame:CreateTexture(nil, "OVERLAY")
+        local borderParent = frame.IconFrame or frame
+        frame.IconBorder = CreateFrame("Frame", nil, borderParent, "BackdropTemplate")
         if frame.IconFrame then
-             frame.IconBorder:SetPoint("CENTER", frame.IconFrame, "CENTER")
-             frame.IconBorder:SetSize(db.lootRoll.height * 1.6, db.lootRoll.height * 1.6)
-             frame.IconBorder:SetTexture("Interface\\Buttons\\UI-ActionButton-Border")
-             frame.IconBorder:SetBlendMode("ADD")
+             frame.IconBorder:SetPoint("TOPLEFT", frame.IconFrame, "TOPLEFT", -1, 1)
+             frame.IconBorder:SetPoint("BOTTOMRIGHT", frame.IconFrame, "BOTTOMRIGHT", 1, -1)
+             frame.IconBorder:SetBackdrop({
+                 edgeFile = "Interface\\Buttons\\WHITE8x8",
+                 edgeSize = 1,
+             })
         end
     end
     local link
@@ -618,22 +630,11 @@ local function UpdateGroupLootStyle(frame)
     
     -- Re-arrange buttons. Order: Pass (Rightmost) <- Transmog <- Greed <- Need
     
-    local function CreateCount(name)
-        if not frame[name] then
-            frame[name] = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-            frame[name]:SetTextColor(1, 0.82, 0) 
-        end
-        frame[name]:SetText("0") 
-        return frame[name]
-    end
-
     -- 1. Pass (Rightmost)
     local lastAnchor = frame
     -- Shift Up to center above bar (Height 40, Bar 8, Btn 26)
     -- Layout: Button Bottom = 8px + 4px padding = 12px from bottom.
     local btnY = 12
-    
-    local xOffset = -5
     
     if frame.PassButton then 
         SkinButton(frame.PassButton)
@@ -641,13 +642,6 @@ local function UpdateGroupLootStyle(frame)
         lastAnchor = frame.PassButton
         xOffset = -2
     end
-    
-    -- Pass Count
-    local passCount = CreateCount("guiPassCount")
-    passCount:SetParent(lastAnchor)
-    passCount:SetFont(GameFontNormalSmall:GetFont())
-    passCount:ClearAllPoints()
-    passCount:SetPoint("BOTTOMRIGHT", lastAnchor, "BOTTOMRIGHT", 2, 0)
     
     -- 2. Transmog
     if frame.TransmogButton then 
@@ -657,26 +651,12 @@ local function UpdateGroupLootStyle(frame)
         xOffset = -2
     end
     
-    -- Transmog Count
-    local transmogCount = CreateCount("guiTransmogCount")
-    transmogCount:SetParent(lastAnchor)
-    transmogCount:SetFont(GameFontNormalSmall:GetFont())
-    transmogCount:ClearAllPoints()
-    transmogCount:SetPoint("BOTTOMRIGHT", lastAnchor, "BOTTOMRIGHT", 2, 0)
-
     -- 2.5 Disenchant
     if frame.DisenchantButton then 
         SkinButton(frame.DisenchantButton)
         frame.DisenchantButton:SetPoint("RIGHT", lastAnchor, "LEFT", xOffset, 0)
         lastAnchor = frame.DisenchantButton
         xOffset = -2
-        
-        -- Disenchant Count
-        local deCount = CreateCount("guiDisenchantCount")
-        deCount:SetParent(lastAnchor)
-        deCount:SetFont(GameFontNormalSmall:GetFont())
-        deCount:ClearAllPoints()
-        deCount:SetPoint("BOTTOMRIGHT", lastAnchor, "BOTTOMRIGHT", 2, 0)
     end
     
     -- 3. Greed
@@ -686,13 +666,6 @@ local function UpdateGroupLootStyle(frame)
         lastAnchor = frame.GreedButton
         xOffset = -2
     end
-
-    -- Greed Count
-    local greedCount = CreateCount("guiGreedCount")
-    greedCount:SetParent(lastAnchor)
-    greedCount:SetFont(GameFontNormalSmall:GetFont())
-    greedCount:ClearAllPoints()
-    greedCount:SetPoint("BOTTOMRIGHT", lastAnchor, "BOTTOMRIGHT", 2, 0)
     
     -- 4. Need
     if frame.NeedButton then 
@@ -702,13 +675,6 @@ local function UpdateGroupLootStyle(frame)
         xOffset = -2
     end
     
-    -- Need Count
-    local needCount = CreateCount("guiNeedCount")
-    needCount:SetParent(lastAnchor)
-    needCount:SetFont(GameFontNormalSmall:GetFont())
-    needCount:ClearAllPoints()
-    needCount:SetPoint("BOTTOMRIGHT", lastAnchor, "BOTTOMRIGHT", 2, 0)
-
     -- Store leftmost button for anchoring Name/BindText
     frame.leftmostButton = lastAnchor
     
@@ -727,35 +693,33 @@ local function UpdateGroupLootStyle(frame)
         end)
     end
     
-    -- Dynamic Anchoring for Name & BindText
-    if frame.guiBindText then
-        frame.guiBindText:ClearAllPoints()
-        -- Anchor BindText to LEFT of Buttons, grow Left
-        if frame.leftmostButton then
-            frame.guiBindText:SetPoint("RIGHT", frame.leftmostButton, "LEFT", -5, 0)
-        else
-            frame.guiBindText:SetPoint("RIGHT", frame, "RIGHT", -5, 0)
-        end
-        frame.guiBindText:SetJustifyH("RIGHT") -- Ensure it grows left? No, anchor right determines it.
-    end
+    -- Dynamic Anchoring for Name & BindText (Decoupled for perfect centering)
+    local timerHeight = cfg.timerHeight or 8
+    local centerY = timerHeight / 2
     
+    -- Calculate reserved width for buttons
+    local reservedWidth = 5 
+    if frame.PassButton then reservedWidth = reservedWidth + 22 + 2 end
+    if frame.TransmogButton then reservedWidth = reservedWidth + 22 + 2 end
+    if frame.GreedButton then reservedWidth = reservedWidth + 22 + 2 end
+    if frame.NeedButton then reservedWidth = reservedWidth + 22 + 2 end
+    -- Add Disenchant if it exists
+    if frame.DisenchantButton then reservedWidth = reservedWidth + 22 + 2 end
+
     if frame.Name then
         frame.Name:ClearAllPoints()
-        if frame.IconFrame then
-            frame.Name:SetPoint("LEFT", frame.IconFrame, "RIGHT", 5, 0) 
-        else
-            frame.Name:SetPoint("LEFT", frame, "LEFT", 5, 0)
-        end
-        
-        -- Anchor Name to LEFT of BindText. If BindText is empty/0-width, it acts as if anchored to Button.
+        frame.Name:SetPoint("LEFT", frame, "LEFT", 0, centerY)
+            
         if frame.guiBindText then
-             frame.Name:SetPoint("RIGHT", frame.guiBindText, "LEFT", -2, 0)
-        elseif frame.leftmostButton then
-             frame.Name:SetPoint("RIGHT", frame.leftmostButton, "LEFT", -5, 0)
+            frame.guiBindText:ClearAllPoints()
+            -- Anchor BindText to the right limit
+            frame.guiBindText:SetPoint("RIGHT", frame, "RIGHT", -reservedWidth, centerY)
+            
+            frame.Name:SetPoint("RIGHT", frame.guiBindText, "LEFT", -5, 0)
         else
-             frame.Name:SetPoint("RIGHT", frame, "RIGHT", -5, 0)
+            -- Anchor Name to the right limit
+            frame.Name:SetPoint("RIGHT", frame, "RIGHT", -reservedWidth, centerY)
         end
-        
         frame.Name:SetJustifyH("LEFT")
         frame.Name:SetWordWrap(false)
         frame.Name:SetNonSpaceWrap(false)
@@ -818,19 +782,35 @@ local function OnGroupLootShow(frame)
         
         -- Anchor Name and BindText dynamically
         -- Only if we have a leftmost button to anchor to
-        if frame.leftmostButton and frame.Name then
+        -- Anchor Name and BindText dynamically
+        -- Decouple from Buttons to ensure perfect vertical centering
+        if frame.Name then
+             local timerHeight = (db and db.lootRoll and db.lootRoll.timerHeight) or 8
+             local centerY = timerHeight / 2 -- Visual center above timer
+             
+             -- Calculate reserved width for buttons
+             local reservedWidth = 5 
+             if frame.PassButton then reservedWidth = reservedWidth + 22 + 2 end
+             if frame.TransmogButton then reservedWidth = reservedWidth + 22 + 2 end
+             if frame.GreedButton then reservedWidth = reservedWidth + 22 + 2 end
+             if frame.NeedButton then reservedWidth = reservedWidth + 22 + 2 end
+             -- Add Disenchant if it exists
+             if frame.DisenchantButton then reservedWidth = reservedWidth + 22 + 2 end
+             
              frame.Name:ClearAllPoints()
-             frame.Name:SetPoint("LEFT", frame, "LEFT", 0, 5)
+             frame.Name:SetPoint("LEFT", frame, "LEFT", 0, centerY)
              
              if showBind and frame.guiBindText then
                  frame.guiBindText:Show()
                  frame.guiBindText:ClearAllPoints()
-                 frame.guiBindText:SetPoint("RIGHT", frame.leftmostButton, "LEFT", -5, 0)
+                 -- Anchor BindText to the right limit
+                 frame.guiBindText:SetPoint("RIGHT", frame, "RIGHT", -reservedWidth, centerY)
                  
                  frame.Name:SetPoint("RIGHT", frame.guiBindText, "LEFT", -5, 0)
              else
                  if frame.guiBindText then frame.guiBindText:Hide() end
-                 frame.Name:SetPoint("RIGHT", frame.leftmostButton, "LEFT", -5, 0)
+                 -- Anchor Name to the right limit
+                 frame.Name:SetPoint("RIGHT", frame, "RIGHT", -reservedWidth, centerY)
              end
         end
     end
@@ -841,8 +821,8 @@ local function OnGroupLootShow(frame)
         frame.Timer:SetStatusBarColor(r, g, b, 1)
     end
     
-    if frame.guiIconBorder then
-        frame.guiIconBorder:SetBackdropBorderColor(r, g, b, 1)
+    if frame.IconBorder then
+        frame.IconBorder:SetBackdropBorderColor(r, g, b, 1)
     end
 end
 
@@ -922,7 +902,7 @@ function Loot:ToggleRollMover()
         end
         if db.lootRoll.enableBackgroundColor then
             p.rowBg:Show()
-            if db.lootRoll.backgroundColor then
+            if db.lootRoll.backgroundColor and #db.lootRoll.backgroundColor >= 3 then
                 p.rowBg:SetColorTexture(unpack(db.lootRoll.backgroundColor))
             else
                 p.rowBg:SetColorTexture(0, 0, 0, 0.5)
@@ -1009,14 +989,32 @@ function Loot:ToggleRollMover()
         
         -- Icon Border (Quality)
         if not p.iconBorder then
-            p.iconBorder = p:CreateTexture(nil, "OVERLAY")
-            p.iconBorder:SetPoint("CENTER", p.icon, "CENTER")
-            p.iconBorder:SetSize(iconSize * 1.6, iconSize * 1.6)
-            p.iconBorder:SetTexture("Interface\\Buttons\\UI-ActionButton-Border")
-            p.iconBorder:SetBlendMode("ADD")
+            p.iconBorder = CreateFrame("Frame", nil, p.iconBtn, "BackdropTemplate")
+            p.iconBorder:SetPoint("TOPLEFT", p.iconBtn, "TOPLEFT", -1, 1)
+            p.iconBorder:SetPoint("BOTTOMRIGHT", p.iconBtn, "BOTTOMRIGHT", 1, -1)
+            p.iconBorder:SetBackdrop({
+                 edgeFile = "Interface\\Buttons\\WHITE8x8",
+                 edgeSize = 1,
+            })
         end
-        p.iconBorder:SetVertexColor(unpack(data.color))
+        p.iconBorder:SetBackdropBorderColor(unpack(data.color))
         
+        -- Background Texture
+        if not p.guiBackground then
+            p.guiBackground = p:CreateTexture(nil, "BACKGROUND")
+            p.guiBackground:SetAllPoints()
+            p.guiBackground:SetColorTexture(0, 0, 0, 0.5)
+        end
+        
+        if db.lootRoll.enableBackgroundColor then
+            p.guiBackground:Show()
+            if db.lootRoll.backgroundColor then
+                p.guiBackground:SetColorTexture(unpack(db.lootRoll.backgroundColor))
+            end
+        else
+            p.guiBackground:Hide()
+        end
+
         -- Name (Aligned to Bar Start)
         if not p.name then
              p.name = p:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -1037,13 +1035,6 @@ function Loot:ToggleRollMover()
             p.btnPass:SetTexture("Interface\\Buttons\\UI-GroupLoot-Pass-Up")
         end
         
-        -- Pass Count
-        if not p.countPass then
-             p.countPass = p:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-             p.countPass:SetPoint("BOTTOMRIGHT", p.btnPass, "BOTTOMRIGHT", 2, 0)
-             p.countPass:SetText(data.pass or "0")
-        end
-        
         -- 2. Transmog
         if not p.btnTransmog then
             p.btnTransmog = p:CreateTexture(nil, "OVERLAY")
@@ -1053,12 +1044,6 @@ function Loot:ToggleRollMover()
             -- Using a reliable Icon ID (Ethereal / Trans mog concept) to guarantee visibility.
             p.btnTransmog:SetTexture(132060) -- Interface\Icons\Inv_Ethereal_Helmet
         end
-        -- Transmog Count
-        if not p.countTransmog then
-             p.countTransmog = p:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-             p.countTransmog:SetPoint("BOTTOMRIGHT", p.btnTransmog, "BOTTOMRIGHT", 2, 0)
-        end
-        p.countTransmog:SetText(data.transmog or "0")
 
         -- 3. Greed
         if not p.btnGreed then
@@ -1067,13 +1052,6 @@ function Loot:ToggleRollMover()
             p.btnGreed:SetPoint("RIGHT", p.btnTransmog, "LEFT", -2, 0)
             p.btnGreed:SetTexture("Interface\\Buttons\\UI-GroupLoot-Coin-Up")
         end
-        -- Greed Count
-        if not p.countGreed then
-             p.countGreed = p:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-             p.countGreed:SetPoint("BOTTOMRIGHT", p.btnGreed, "BOTTOMRIGHT", 2, 0)
-        end
-        p.countGreed:SetText(data.greed or "0")
-
 
         -- 4. Need
         if not p.btnNeed then
@@ -1091,19 +1069,26 @@ function Loot:ToggleRollMover()
              p.btnNeed:SetVertexColor(1, 1, 1)
         end
         
-        -- Need Count
-        if not p.countNeed then
-             p.countNeed = p:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-             p.countNeed:SetPoint("BOTTOMRIGHT", p.btnNeed, "BOTTOMRIGHT", 2, 0)
-        end
-        p.countNeed:SetText(data.need or "0")
-        
         -- Name (Aligned to Bar Start, with Truncation)
         if not p.name then
              p.name = p:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-             p.name:SetPoint("LEFT", p, "LEFT", 0, 5)
+             p.name:SetPoint("LEFT", p, "LEFT", 0, barHeight / 2) -- Sync with Live
+        end
+        
+        -- Apply Font Settings
+        local fontName = db.lootRoll.nameFont or "Gravity"
+        local fontPath = (LSM and LSM:Fetch("font", fontName)) or "Fonts\\FRIZQT__.TTF"
+        local fontSize = db.lootRoll.nameFontSize or 12
+        local fontOutline = db.lootRoll.nameFontOutline or "OUTLINE"
+        
+        p.name:SetFont(fontPath, fontSize, fontOutline)
+        
+        if db.lootRoll.nameFontColor then
+             p.name:SetTextColor(unpack(db.lootRoll.nameFontColor))
+        else
              p.name:SetTextColor(1, 1, 1)
         end
+        
         p.name:SetJustifyH("LEFT")
         p.name:SetWordWrap(false)
         p.name:SetNonSpaceWrap(false)
@@ -1116,16 +1101,18 @@ function Loot:ToggleRollMover()
              -- Anchor handled below
         end
         
-        -- Dynamic Anchoring for Name & BindText to prevent overflow
-        -- Leftmost button is always Need in preview
-        local safeRightAnchor = p.btnNeed
+        -- Dynamic Anchoring (Decoupled Sync)
+        local centerY = barHeight / 2
+        -- Calculate reserved width (Standard 4 buttons + spacing)
+        -- 5 (edge) + 22(Pass) + 2 + 22(Tm) + 2 + 22(Greed) + 2 + 22(Need) = 99
+        local reservedWidth = 99
         
         p.name:ClearAllPoints()
-        p.name:SetPoint("LEFT", p, "LEFT", 0, 5)
+        p.name:SetPoint("LEFT", p, "LEFT", 0, centerY)
         
         if data.bind then
             p.bindText:ClearAllPoints()
-            p.bindText:SetPoint("RIGHT", safeRightAnchor, "LEFT", -5, 0)
+            p.bindText:SetPoint("RIGHT", p, "RIGHT", -reservedWidth, centerY)
             p.bindText:SetText(data.bind)
             if data.bindColor then
                 p.bindText:SetTextColor(unpack(data.bindColor))
@@ -1138,8 +1125,8 @@ function Loot:ToggleRollMover()
             p.name:SetPoint("RIGHT", p.bindText, "LEFT", -5, 0)
         else
             p.bindText:Hide()
-            -- Name ends at Button
-            p.name:SetPoint("RIGHT", safeRightAnchor, "LEFT", -5, 0)
+            -- Name ends at reserved width
+            p.name:SetPoint("RIGHT", p, "RIGHT", -reservedWidth, centerY)
         end    
     end
 
@@ -1385,13 +1372,12 @@ SlashCmdList["GRAVITYLOOTTEST"] = function()
         f.IconFrame.Icon:SetTexture(texture)
         if f.IconFrame.Count then f.IconFrame.Count:SetText("") end
          -- Border Logic
-         if f.IconBorder and f.IconBorder.SetBackdropBorderColor then
+         if f.IconBorder then
              f.IconBorder:SetBackdropBorderColor(r, g, b, 1)
              -- Fix Border Position
              f.IconBorder:ClearAllPoints()
              f.IconBorder:SetPoint("TOPLEFT", f.IconFrame, "TOPLEFT", -1, 1)
              f.IconBorder:SetPoint("BOTTOMRIGHT", f.IconFrame, "BOTTOMRIGHT", 1, -1)
-             f.IconBorder:EnableMouse(false)
          end
          
          -- Tooltip Overlay (Force high strata)

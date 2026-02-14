@@ -122,7 +122,14 @@ ns.Defaults = {
             maxFrames = 4,
             width = 320,
             height = 40, -- Increased default height for better visibility
-            texture = "Gravity",
+            timerHeight = 8,
+            texture = "Gravity Normal",
+            enableBackgroundColor = false,
+            backgroundColor = { 0, 0, 0, 0.5 },
+            nameFont = "Gravity",
+            nameFontSize = 12,
+            nameFontOutline = "OUTLINE",
+            nameFontColor = { 1, 1, 1, 1 },
         },
         lootResults = {
             enabled = true,

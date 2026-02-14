@@ -820,68 +820,6 @@ function GUI:CreateSlider(parent, label, min, max, dbKey, dbTable, onChange, ste
 end
 
 ---------------------------------------------------------------------------
--- WIDGET: COLOR PICKER
----------------------------------------------------------------------------
-function GUI:CreateColorPicker(parent, label, dbKey, dbTable, onChange)
-    local container = CreateFrame("Frame", nil, parent)
-    container:SetSize(200, 24)
-    
-    local text = container:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    GUI:SetFont(text, 12, "", C.text)
-    text:SetText(label or "Color")
-    text:SetPoint("LEFT", 0, 0)
-    
-    self:RegisterInSearchIndex(label, container)
-    
-    local button = CreateFrame("Button", nil, container, "BackdropTemplate")
-    button:SetSize(24, 24)
-    button:SetPoint("RIGHT", 0, 0)
-    GUI:CreateBackdrop(button, {1,1,1,1}, C.border)
-    
-    local texture = button:CreateTexture(nil, "OVERLAY")
-    texture:SetAllPoints()
-    texture:SetColorTexture(1, 1, 1, 1)
-    
-    local function UpdateColor()
-        local color = dbTable[dbKey] or {1,1,1,1}
-        texture:SetColorTexture(unpack(color))
-    end
-    
-    button:SetScript("OnClick", function()
-        local color = dbTable[dbKey] or {1,1,1,1}
-        local r, g, b, a = unpack(color)
-        
-        local picker = ColorPickerFrame
-        picker:SetColorRGB(r, g, b)
-        picker.hasOpacity = true
-        picker.opacity = 1 - (a or 1)
-        picker.previousValues = {r, g, b, a}
-        
-        picker.func = function()
-            local r, g, b = picker:GetColorRGB()
-            local a = 1 - OpacitySliderFrame:GetValue()
-            dbTable[dbKey] = {r, g, b, a}
-            UpdateColor()
-            if onChange then onChange({r, g, b, a}) end
-        end
-        
-        picker.opacityFunc = picker.func
-        
-        picker.cancelFunc = function()
-            dbTable[dbKey] = picker.previousValues
-            UpdateColor()
-            if onChange then onChange(picker.previousValues) end
-        end
-        
-        picker:Hide() -- Reset
-        picker:Show()
-    end)
-    
-    UpdateColor()
-    return container
-end
-
----------------------------------------------------------------------------
 -- WIDGET: INPUT (EditBox)
 ---------------------------------------------------------------------------
 function GUI:CreateInput(parent, label, dbKey, dbTable, onChange)
@@ -1208,7 +1146,7 @@ end
 ---------------------------------------------------------------------------
 -- WIDGET: COLOR PICKER
 ---------------------------------------------------------------------------
-function GUI:CreateColorPicker(parent, label, dbKey, dbTable, onChange)
+function GUI:CreateColorPicker(parent, label, dbKey, dbTable, callbackFunc)
     local container = CreateFrame("Frame", nil, parent)
     container:SetSize(200, 20)
     
@@ -1245,7 +1183,11 @@ function GUI:CreateColorPicker(parent, label, dbKey, dbTable, onChange)
         if dbTable and dbKey then
             dbTable[dbKey] = {r, g, b, a or 1}
         end
-        if onChange then onChange(r, g, b, a) end
+        
+        -- Strict check for callback
+        if type(callbackFunc) == "function" then 
+            callbackFunc(r, g, b, a) 
+        end
     end
     
     -- Initialize color (visual only)
