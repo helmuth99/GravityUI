@@ -28,6 +28,9 @@ externals:
     GravityUI/Libs/LibStub:
         url: https://repos.wowace.com/wow/libstub/trunk
 
+move-folders:
+  GravityUI/GravityUI: GravityUI
+
 required-dependencies:
   - unhaltedunitframes
   - danders-frames
