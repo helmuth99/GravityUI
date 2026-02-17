@@ -9,24 +9,20 @@ ignore:
   - "Makefile"
 
 externals:
-    GravityUI/Libs/Ace3:
-        url: https://repos.curseforge.com/wow/ace3/trunk
-    GravityUI/Libs/CallbackHandler-1.0:
-        url: https://repos.wowace.com/wow/callbackhandler/trunk
-    GravityUI/Libs/LibSharedMedia-3.0:
-        url: https://repos.wowace.com/wow/libsharedmedia-3-0/trunk
-    GravityUI/Libs/LibDualSpec-1.0:
-        url: https://github.com/AdiAddons/LibDualSpec-1.0
-    GravityUI/Libs/LibDeflate:
-        url: https://github.com/SafeteeWoW/LibDeflate
-    GravityUI/Libs/LibCustomGlow-1.0:
-        url: https://github.com/Stanzilla/LibCustomGlow
-    GravityUI/Libs/LibKeyBound-1.0:
-        url: https://repos.wowace.com/wow/libkeybound-1-0/trunk
-    GravityUI/Libs/LibOpenRaid:
-        url: https://github.com/Tercioo/Open-Raid-Library
-    GravityUI/Libs/LibStub:
-        url: https://repos.wowace.com/wow/libstub/trunk
+  GravityUI/Libs/AceAddon-3.0: https://repos.curseforge.com/wow/ace3/trunk/AceAddon-3.0
+  GravityUI/Libs/AceComm-3.0: https://repos.curseforge.com/wow/ace3/trunk/AceComm-3.0
+  GravityUI/Libs/AceConsole-3.0: https://repos.curseforge.com/wow/ace3/trunk/AceConsole-3.0
+  GravityUI/Libs/AceDB-3.0: https://repos.curseforge.com/wow/ace3/trunk/AceDB-3.0
+  GravityUI/Libs/AceEvent-3.0: https://repos.curseforge.com/wow/ace3/trunk/AceEvent-3.0
+  GravityUI/Libs/AceLocale-3.0: https://repos.curseforge.com/wow/ace3/trunk/AceLocale-3.0
+  GravityUI/Libs/CallbackHandler-1.0: https://repos.curseforge.com/wow/callbackhandler/trunk/CallbackHandler-1.0
+  GravityUI/Libs/LibCustomGlow-1.0: https://github.com/Stanzilla/LibCustomGlow
+  GravityUI/Libs/LibDeflate: https://github.com/SafeteeWoW/LibDeflate
+  GravityUI/Libs/LibDualSpec-1.0: https://repos.curseforge.com/wow/libdualspec-1-0
+  GravityUI/Libs/LibKeyBound-1.0: https://repos.curseforge.com/wow/libkeybound-1-0
+  GravityUI/Libs/LibOpenRaid: https://github.com/Tercioo/Open-Raid-Library
+  GravityUI/Libs/LibSharedMedia-3.0: https://repos.curseforge.com/wow/libsharedmedia-3-0/trunk/LibSharedMedia-3.0
+  GravityUI/Libs/LibStub: https://repos.curseforge.com/wow/libstub/trunk
 
 move-folders:
   GravityUI/GravityUI: GravityUI
