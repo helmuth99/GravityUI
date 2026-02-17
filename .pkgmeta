@@ -9,27 +9,27 @@ ignore:
   - "Makefile"
 
 externals:
-    GravityUI/GravityUI/Libs/Ace3:
-        url: https://github.com/WoWAce/Ace3/trunk
-    GravityUI/GravityUI/Libs/CallbackHandler-1.0:
-        url: https://github.com/BigWigsMods/CallbackHandler-1.0/trunk
-    GravityUI/GravityUI/Libs/LibSharedMedia-3.0:
-        url: https://github.com/SharedMedia/LibSharedMedia-3.0/trunk
-    GravityUI/GravityUI/Libs/LibDualSpec-1.0:
-        url: https://github.com/AdiAddons/LibDualSpec-1.0/trunk
-    GravityUI/GravityUI/Libs/LibDeflate:
-        url: https://github.com/Safetee/LibDeflate/trunk
-    GravityUI/GravityUI/Libs/LibCustomGlow-1.0:
-        url: https://github.com/Gethe/LibCustomGlow/trunk
-    GravityUI/GravityUI/Libs/LibKeyBound-1.0:
+    GravityUI/Libs/Ace3:
+        url: https://github.com/WoWAce/Ace3
+    GravityUI/Libs/CallbackHandler-1.0:
+        url: https://github.com/BigWigsMods/CallbackHandler-1.0
+    GravityUI/Libs/LibSharedMedia-3.0:
+        url: https://github.com/SharedMedia/LibSharedMedia-3.0
+    GravityUI/Libs/LibDualSpec-1.0:
+        url: https://github.com/AdiAddons/LibDualSpec-1.0
+    GravityUI/Libs/LibDeflate:
+        url: https://github.com/Safetee/LibDeflate
+    GravityUI/Libs/LibCustomGlow-1.0:
+        url: https://github.com/Gethe/LibCustomGlow
+    GravityUI/Libs/LibKeyBound-1.0:
         url: https://repos.wowace.com/wow/libkeybound-1-0/trunk
-    GravityUI/GravityUI/Libs/LibOpenRaid:
-        url: https://github.com/Tercioo/Open-Raid-Library/trunk
-    GravityUI/GravityUI/Libs/LibStub:
-        url: https://github.com/Stanzilla/LibStub/trunk
+    GravityUI/Libs/LibOpenRaid:
+        url: https://github.com/Tercioo/Open-Raid-Library
+    GravityUI/Libs/LibStub:
+        url: https://github.com/Stanzilla/LibStub
 
 move-folders:
-  GravityUI/GravityUI: GravityUI
+  GravityUI: GravityUI
 
 required-dependencies:
   - unhaltedunitframes
