@@ -10,23 +10,23 @@ ignore:
 
 externals:
     GravityUI/Libs/Ace3:
-        url: git::https://github.com/WoWAce/Ace3.git
+        url: https://repos.curseforge.com/wow/ace3/trunk
     GravityUI/Libs/CallbackHandler-1.0:
-        url: git::https://github.com/BigWigsMods/CallbackHandler-1.0.git
+        url: https://repos.wowace.com/wow/callbackhandler/trunk
     GravityUI/Libs/LibSharedMedia-3.0:
-        url: git::https://github.com/SharedMedia/LibSharedMedia-3.0.git
+        url: https://repos.wowace.com/wow/libsharedmedia-3-0/trunk
     GravityUI/Libs/LibDualSpec-1.0:
-        url: git::https://github.com/AdiAddons/LibDualSpec-1.0.git
+        url: https://github.com/AdiAddons/LibDualSpec-1.0
     GravityUI/Libs/LibDeflate:
-        url: git::https://github.com/Safetee/LibDeflate.git
+        url: https://github.com/Safetee/LibDeflate
     GravityUI/Libs/LibCustomGlow-1.0:
-        url: git::https://github.com/Gethe/LibCustomGlow.git
+        url: https://github.com/Gethe/LibCustomGlow
     GravityUI/Libs/LibKeyBound-1.0:
         url: https://repos.wowace.com/wow/libkeybound-1-0/trunk
     GravityUI/Libs/LibOpenRaid:
-        url: git::https://github.com/Tercioo/Open-Raid-Library.git
+        url: https://github.com/Tercioo/Open-Raid-Library
     GravityUI/Libs/LibStub:
-        url: git::https://github.com/Stanzilla/LibStub.git
+        url: https://repos.wowace.com/wow/libstub/trunk
 
 move-folders:
   GravityUI: GravityUI
