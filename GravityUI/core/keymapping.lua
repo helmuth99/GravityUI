@@ -109,21 +109,28 @@ local function ScanActionBars(force)
             local querySlot = slot
             
             -- Handle paging for Bar 1 (ACTIONBUTTON) via Button Attributes (Source of Truth)
+            -- Handle paging for Bar 1 (ACTIONBUTTON)
             if config.prefix == "ACTIONBUTTON" then
-                local btnIdx = i + 1
-                local button = _G["ActionButton" .. btnIdx]
                 if _G.Dominos then
-                    button = _G["DominosActionButton" .. btnIdx]
-                end
-
-                if button and button.GetAttribute then
-                    local actionID = button:GetAttribute("action")
-                    if actionID and type(actionID) == "number" and actionID > 0 then
-                        querySlot = actionID
+                    -- Dominos: Trust the button's action attribute (Source of Truth)
+                    local btnIdx = i + 1
+                    local button = _G["DominosActionButton" .. btnIdx]
+                    if button and button.GetAttribute then
+                        local actionID = button:GetAttribute("action")
+                        if actionID and type(actionID) == "number" and actionID > 0 then
+                            querySlot = actionID
+                        end
                     end
                 else
-                     -- Fallback for Default UI if button object missing
+                    -- Default UI: Calculate based on Page/Stance (API)
+                    -- ActionButton1:GetAttribute("action") is not reliable for paging in Default UI
                     local page = GetActionBarPage()
+                    local offset = GetBonusBarOffset()
+                    
+                    if offset > 0 then
+                        page = 6 + offset -- Classic/Retail Stance Paging Standard (e.g. Cat=Page 7)
+                    end
+                    
                     if page and page > 1 then
                         querySlot = slot + ((page - 1) * 12)
                     end

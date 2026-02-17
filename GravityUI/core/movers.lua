@@ -123,7 +123,7 @@ local function HookEditMode()
         
         Movers.checkbox = cb
         Movers.hooked = true
-        print("GravityUI: EditMode Hook Successful")
+        
     end
 
     -- Check if loaded
