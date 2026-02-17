@@ -194,7 +194,7 @@ local function ApplyStyle(tooltip)
     if not tooltip.SetBackdrop then
         Mixin(tooltip, BackdropTemplateMixin)
     end
-
+    
     -- Sanitize Colors (Fix for White Tooltip Bug)
     -- If DB is not ready or returns empty/nil, fallback to Black (0,0,0,1)
     local bgR, bgG, bgB, bgA = SanitizeColor(settings.bgColor, 0, 0, 0, 1)
@@ -213,6 +213,16 @@ local function ApplyStyle(tooltip)
             insets = { left = 1, right = 1, top = 1, bottom = 1 }
         })
     end)
+    
+    local function RestoreDefaults()
+        pcall(function() 
+            tooltip:SetBackdrop(nil) -- Remove white box
+            if tooltip.NineSlice then
+                tooltip.NineSlice:Show()
+                tooltip.NineSlice:SetAlpha(1)
+            end
+        end)
+    end
 
     if backdropSuccess then
         local colorSuccess = pcall(function()
@@ -221,9 +231,12 @@ local function ApplyStyle(tooltip)
         end)
         
         if not colorSuccess then
-            -- Emergency Revert: If we can't color it, clear the white texture
-            pcall(function() tooltip:SetBackdrop(nil) end)
+            -- Emergency Revert: If we can't color it, clear the white texture AND restore Blizzard Art
+            RestoreDefaults()
         end
+    else
+        -- Initial Backdrop Set Failed? Restore original just in case.
+        RestoreDefaults()
     end
 
     -- Healthbar

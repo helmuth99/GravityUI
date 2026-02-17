@@ -265,6 +265,110 @@ local function CreateMarksBar()
     
     -- Hide if initially needed (Refesh handles it but let's be sure)
     UpdateAlpha(0)
+    
+    if WorldMarks.RegisterMover then WorldMarks:RegisterMover() end
+end
+
+---------------------------------------------------------------------------
+-- MOVER LOGIC
+---------------------------------------------------------------------------
+function WorldMarks:ToggleMover(forceState)
+    if not self.mover then self:CreateMover() end
+    
+    local shouldShow = false
+    if forceState ~= nil then
+        shouldShow = forceState
+    else
+        shouldShow = not (self.mover and self.mover:IsShown())
+    end
+
+    if self.mover then
+        if shouldShow then
+            self.mover:Show()
+            self.frame:Show() -- Ensure frame is visible underlying
+            self.frame:SetAlpha(1)
+            
+            -- Apply Standard Edit Mode Style
+            if ns.Movers and ns.Movers.ApplyEditModeStyle then
+                if forceState == true then
+                    self.mover:SetBackdropColor(0, 0, 0, 0)
+                    self.mover:SetBackdropBorderColor(0, 0, 0, 0)
+                    ns.Movers:ApplyEditModeStyle(self.mover, true)
+                else
+                    self.mover:SetBackdropColor(0, 0.5, 0, 0.5)
+                    self.mover:SetBackdropBorderColor(0, 1, 0, 1)
+                    ns.Movers:ApplyEditModeStyle(self.mover, false)
+                end
+            end
+        else
+            if ns.Movers and ns.Movers.ApplyEditModeStyle then
+                ns.Movers:ApplyEditModeStyle(self.mover, false)
+            end
+            self.mover:Hide()
+            self.Refresh() -- Restore alpha/visibility state
+        end
+    end
+end
+
+function WorldMarks:CreateMover()
+    if self.mover then return end
+    local frame = self.frame
+    if not frame then return end
+    
+    self.mover = CreateFrame("Frame", "GravityUI_WorldMarks_Mover", UIParent, "BackdropTemplate")
+    self.mover:SetAllPoints(frame)
+    self.mover:SetBackdrop({
+        bgFile = "Interface\\Buttons\\WHITE8x8",
+        edgeFile = "Interface\\Buttons\\WHITE8x8",
+        edgeSize = 1,
+    })
+    -- Default to Green (Manual)
+    self.mover:SetBackdropColor(0, 0.5, 0, 0.5)
+    self.mover:SetBackdropBorderColor(0, 1, 0, 1)
+    
+    self.mover:EnableMouse(true)
+    self.mover:SetMovable(true)
+    self.mover:RegisterForDrag("LeftButton")
+    self.mover:SetFrameStrata("DIALOG")
+    self.mover:Hide()
+    
+    local text = self.mover:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    text:SetPoint("CENTER")
+    text:SetText("World Marks")
+    
+    self.mover:SetScript("OnDragStart", function()
+        frame:StartMoving()
+        self.mover:SetAllPoints(frame)
+    end)
+    
+    self.mover:SetScript("OnDragStop", function()
+        frame:StopMovingOrSizing()
+        
+        -- Calculate center offset to support existing logic
+        local centerX, centerY = UIParent:GetCenter()
+        local frameX, frameY = frame:GetCenter()
+        if frameX and centerX then
+             local settings = GetSettings()
+             if settings then
+                 settings.offsetX = frameX - centerX
+                 settings.offsetY = frameY - centerY
+             end
+        end
+        
+        self.mover:ClearAllPoints()
+        self.mover:SetAllPoints(frame)
+    end)
+    
+    -- Sync Size
+    hooksecurefunc(frame, "SetSize", function() 
+        if self.mover then self.mover:SetSize(frame:GetSize()) end
+    end)
+end
+
+function WorldMarks:RegisterMover()
+    if ns.Movers and ns.Movers.Register then
+        ns.Movers:Register("WorldMarks", self.frame, function(frame, enabled, force) self:ToggleMover(force) end, "World Marks")
+    end
 end
 
 -- Export to ns for init

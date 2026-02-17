@@ -602,7 +602,7 @@ local function BuildCombatTimer(parent)
     AddRow(content, "Use Theme Color for Border", "checkbox", "useThemeColorBorder", dbCT, RefreshCT)
     AddRow(content, "Border Color", "color", "borderColor", dbCT, RefreshCT)
 
-    local previewBtn = GUI:CreateButton(content, "Toggle Preview", 120, 26, function()
+    local previewBtn = GUI:CreateButton(content, "Toggle Mover", 120, 26, function()
         if _G.GravityUI_ToggleCombatTimerPreview then
             local isPreview = _G.GravityUI_IsCombatTimerPreviewMode and _G.GravityUI_IsCombatTimerPreviewMode()
             _G.GravityUI_ToggleCombatTimerPreview(not isPreview)
@@ -666,6 +666,14 @@ local function BuildWorldMarks(parent)
     AddRow(content, "Hide Border", "checkbox", "hideBorder", dbMarks, RefreshMarks)
     AddRow(content, "Use Theme Color for Border", "checkbox", "useThemeColorBorder", dbMarks, RefreshMarks)
     AddRow(content, "Border Color", "color", "borderColor", dbMarks, RefreshMarks)
+    
+    local btnMover = GUI:CreateButton(content, "Toggle Mover", 120, 26, function()
+        if ns.WorldMarks and ns.WorldMarks.ToggleMover then
+            ns.WorldMarks:ToggleMover()
+        end
+    end)
+    btnMover:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT+5)))
+    content.rowCount = content.rowCount + 1.2
     
 
     content.rowCount = content.rowCount + 1.2

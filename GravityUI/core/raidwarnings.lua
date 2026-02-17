@@ -87,7 +87,7 @@ local alertFrame, alertText
 local function CreateAlertFrame()
     if alertFrame then return end
     
-    alertFrame = CreateFrame("Frame", "GravityUI_RaidAlertFrame", UIParent)
+    alertFrame = CreateFrame("Frame", "GravityUI_RaidAlertFrame", UIParent, "BackdropTemplate")
     alertFrame:SetSize(400, 50)
     alertFrame:SetPoint("CENTER", 0, 150)
     alertFrame:SetFrameStrata("HIGH")
@@ -382,7 +382,82 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
     end
 end)
 
--- Auto-Initialize on Load (Pre-Create Frame)
-RaidWarnings.Initialize()
+-- ============================================================================
+-- MOVER LOGIC
+-- ============================================================================
+function RaidWarnings.ToggleMover(forceState)
+    if not alertFrame then CreateAlertFrame() end
+    
+    local shouldShow = false
+    if forceState ~= nil then
+        shouldShow = forceState
+    else
+        shouldShow = not alertFrame:IsShown()
+    end
+    
+    if shouldShow then
+        alertFrame:Show()
+        alertText:SetText("Raid Warning Test")
+        alertFrame:SetBackdrop({
+            bgFile = "Interface\\Buttons\\WHITE8x8",
+            edgeFile = "Interface\\Buttons\\WHITE8x8",
+            edgeSize = 1,
+        })
+        
+        -- Default to Green (Manual Toggle)
+        local r, g, b, a = 0, 0.5, 0, 0.5
+        local br, bg, bb, ba = 0, 1, 0, 1
+        
+        -- Check Global Edit Mode Override
+        if forceState == true and ns.Movers and ns.Movers.ApplyEditModeStyle then
+            -- We manually set colors to match ApplyEditModeStyle because we control the backdrop directly here
+            -- Blue Overlay
+            r, g, b, a = 0, 0.6, 1, 0.5
+            br, bg, bb, ba = 0, 0.8, 1, 1
+        end
+
+        alertFrame:SetBackdropColor(r, g, b, a)
+        alertFrame:SetBackdropBorderColor(br, bg, bb, ba)
+        alertFrame:EnableMouse(true)
+        alertFrame:RegisterForDrag("LeftButton")
+        alertFrame:SetScript("OnDragStart", alertFrame.StartMoving)
+        alertFrame:SetScript("OnDragStop", function(self)
+            self:StopMovingOrSizing()
+            local _, _, _, x, y = self:GetPoint()
+            local db = ns.GetDB()
+            if db and db.raidWarnings then
+                db.raidWarnings.x = x
+                db.raidWarnings.y = y
+            end
+        end)
+    else
+        alertFrame:Hide()
+        alertFrame:EnableMouse(false)
+        alertFrame:RegisterForDrag()
+        alertFrame:SetScript("OnDragStart", nil)
+        alertFrame:SetScript("OnDragStop", nil)
+        alertFrame:SetBackdrop(nil)
+    end
+end
+
+function RaidWarnings.RegisterMover()
+    if ns.Movers and ns.Movers.Register then
+        if not alertFrame then CreateAlertFrame() end
+        ns.Movers:Register("RaidWarnings", alertFrame, function(frame, enabled, force) RaidWarnings.ToggleMover(force) end, "Raid Warnings")
+    end
+end
+
+-- ============================================================================
+-- INITIALIZATION
+-- ============================================================================
+function RaidWarnings.Initialize()
+    CreateAlertFrame()
+    RaidWarnings.RegisterMover()
+end
+
+-- ============================================================================
+-- ADDON COMMUNICATION
+-- ============================================================================
+local COMM_PREFIX = "GravityUI"
 
 

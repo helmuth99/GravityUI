@@ -959,6 +959,7 @@ eventFrame:RegisterEvent("UPDATE_MACROS")
 
 eventFrame:SetScript("OnEvent", function(self, event, unit)
     if event == "PLAYER_LOGIN" then
+        Screen.RegisterMovers()
         C_Timer.After(1, Screen.Refresh)
     elseif event == "PLAYER_REGEN_DISABLED" or event == "PLAYER_REGEN_ENABLED" then
         UpdateCursorVisibility()
@@ -1012,3 +1013,216 @@ SlashCmdList["GRAVITYDEBUGRANGE"] = function()
         end
     end
 end
+
+---------------------------------------------------------------------------
+-- MOVER SYSTEM INTEGRATION
+---------------------------------------------------------------------------
+local movers = {}
+
+
+---------------------------------------------------------------------------
+-- MOVER HELPER
+---------------------------------------------------------------------------
+local function CreateOverlayMover(type, width, height, labelText, point, x, y, onDragStopFunc)
+    local moverName = "GravityUI_Mover_"..type
+    local m = _G[moverName]
+    if not m then
+        m = CreateFrame("Frame", moverName, UIParent, "BackdropTemplate")
+        m:SetSize(width, height)
+        m:SetPoint(point, UIParent, point, x, y)
+        m:SetFrameStrata("DIALOG")
+        m:SetBackdrop({
+            bgFile = "Interface\\Buttons\\WHITE8x8",
+            edgeFile = "Interface\\Buttons\\WHITE8x8",
+            edgeSize = 1,
+        })
+        m:SetBackdropColor(0, 0.5, 0, 0.5)
+        m:SetBackdropBorderColor(0, 1, 0, 1)
+        
+        local t = m:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        t:SetPoint("CENTER")
+        t:SetText(labelText)
+        
+        m:EnableMouse(true)
+        m:SetMovable(true)
+        m:RegisterForDrag("LeftButton")
+        m:SetScript("OnDragStart", m.StartMoving)
+        m:SetScript("OnDragStop", function(self)
+            self:StopMovingOrSizing()
+            local point, _, relativePoint, x, y = self:GetPoint()
+            if onDragStopFunc then
+                onDragStopFunc(self, x, y)
+            end
+        end)
+        
+        -- Cache specific mover frame for reuse/hiding
+        movers[type] = m
+    end
+    return m
+end
+
+function Screen.ToggleMover(type, forceState)
+    local shouldShow = false
+    -- Check existing state of Mover frame to toggle
+    local moverName = "GravityUI_Mover_"..type
+    local m = movers[type] -- Key by type for cache
+    if forceState ~= nil then
+        shouldShow = forceState
+    else
+        shouldShow = not (m and m:IsShown())
+    end
+
+    if not shouldShow then
+        if m then m:Hide() end
+        -- Disable Previews
+        if type == "pet" then 
+            PetWarningsState.preview = false
+            if PetWarningsState.frame then PetWarningsState.frame:Hide() end
+        elseif type == "combat" then
+             if CombatTextState.textFrame then CombatTextState.textFrame:Hide() end
+        elseif type == "crosshair" then
+             -- Hide Crosshair Preview implies hiding the range check frame if not enabled
+             Screen.Refresh() 
+        end
+        return
+    end
+
+    -- Show Logic
+    if type == "pet" then
+        local s = GetPetWarningsSettings()
+        if not s then return end
+        
+        -- Create/Show Mover
+        m = CreateOverlayMover("pet", 400, 50, "Pet Warnings", "CENTER", s.xOffset or 0, s.yOffset or 150, function(p, x, y)
+            s.xOffset = x
+            s.yOffset = y
+            -- Update Preview Position
+            if PetWarningsState.frame then 
+                PetWarningsState.frame:ClearAllPoints()
+                PetWarningsState.frame:SetPoint("CENTER", UIParent, "CENTER", x, y)
+            end
+        end)
+        
+        -- Apply Standard Edit Mode Style ONLY if forced via global Edit Mode
+        if ns.Movers and ns.Movers.ApplyEditModeStyle then
+            if forceState == true then
+                m:SetBackdropColor(0, 0, 0, 0)
+                m:SetBackdropBorderColor(0, 0, 0, 0)
+                ns.Movers:ApplyEditModeStyle(m, true)
+            else
+                m:SetBackdropColor(0, 0.5, 0, 0.5)
+                m:SetBackdropBorderColor(0, 1, 0, 1)
+                ns.Movers:ApplyEditModeStyle(m, false)
+            end
+        end
+        
+        -- Show Preview Content
+        PetWarningsState.preview = true
+        CreatePetWarningFrame()
+        local f = PetWarningsState.frame
+        
+        f:ClearAllPoints()
+        f:SetPoint("CENTER", m, "CENTER") -- Anchor to mover
+        
+        -- Apply Font & Color (MATCHES CheckPetWarnings logic)
+        local font = LSM:Fetch("font", ns.GetDB().general.font or "Gravity")
+        f.text:SetFont(font, s.fontSize or 28, "OUTLINE")
+        
+        local r, g, b, a = 1, 1, 1, 1
+        if s.useThemeColor then
+            r, g, b, a = ns.GetAccentColor()
+        elseif s.warningColor then
+            r, g, b, a = unpack(s.warningColor)
+        end
+        f.text:SetTextColor(r, g, b, a)
+        
+        f.text:SetText(s.petDeadText or "*** PET TOT ***")
+        f:Show()
+        
+        m:Show()
+        
+    elseif type == "combat" then
+        local s = GetCombatStatusSettings()
+        if not s then return end
+        
+        m = CreateOverlayMover("combat", 300, 50, "Combat Status Text", "CENTER", s.xOffset or 0, s.yOffset or 100, function(p, x, y)
+            s.xOffset = x
+            s.yOffset = y
+            if CombatTextState.textFrame then
+                CombatTextState.textFrame:ClearAllPoints()
+                CombatTextState.textFrame:SetPoint("CENTER", UIParent, "CENTER", x, y)
+            end
+        end)
+        
+        -- Apply Standard Edit Mode Style
+        if ns.Movers and ns.Movers.ApplyEditModeStyle then
+            if forceState == true then
+                m:SetBackdropColor(0, 0, 0, 0)
+                m:SetBackdropBorderColor(0, 0, 0, 0)
+                ns.Movers:ApplyEditModeStyle(m, true)
+            else
+                m:SetBackdropColor(0, 0.5, 0, 0.5)
+                m:SetBackdropBorderColor(0, 1, 0, 1)
+                ns.Movers:ApplyEditModeStyle(m, false)
+            end
+        end
+        
+        CreateCombatTextFrame()
+        local f = CombatTextState.textFrame
+        f:Show()
+        f:SetAlpha(1)
+        f.text:SetText("+Combat")
+        f:ClearAllPoints()
+        f:SetPoint("CENTER", UIParent, "CENTER", s.xOffset or 0, s.yOffset or 100)
+        
+        m:ClearAllPoints()
+        m:SetPoint("CENTER", UIParent, "CENTER", s.xOffset or 0, s.yOffset or 100)
+        m:Show()
+        
+    elseif type == "crosshair" then
+        local s = GetCrosshairSettings()
+        if not s then return end -- Should have defaults?
+        
+        m = CreateOverlayMover("crosshair", 60, 60, "Crosshair", "CENTER", s.offsetX or 0, s.offsetY or 0, function(p, x, y)
+            s.offsetX = x
+            s.offsetY = y
+            Screen.Refresh() -- Updates existing crosshair pos
+        end)
+        
+        -- Apply Standard Edit Mode Style
+        if ns.Movers and ns.Movers.ApplyEditModeStyle then
+            if forceState == true then
+                m:SetBackdropColor(0, 0, 0, 0)
+                m:SetBackdropBorderColor(0, 0, 0, 0)
+                ns.Movers:ApplyEditModeStyle(m, true)
+            else
+                m:SetBackdropColor(0, 0.5, 0, 0.5)
+                m:SetBackdropBorderColor(0, 1, 0, 1)
+                ns.Movers:ApplyEditModeStyle(m, false)
+            end
+        end
+        
+        -- Force Show Crosshair (create if needed)
+        CreateCrosshairFrame()
+        UpdateCrosshairAppearance(false) -- In Range style
+        crosshairFrame:Show()
+        
+        m:ClearAllPoints()
+        m:SetPoint("CENTER", UIParent, "CENTER", s.offsetX or 0, s.offsetY or 0)
+        m:Show()
+    end
+end
+
+function Screen.RegisterMovers()
+    if not (ns.Movers and ns.Movers.Register) then return end
+    
+    -- Pet Warnings
+    ns.Movers:Register("PetWarnings", nil, function(frame, enabled, force) Screen.ToggleMover("pet", force) end, "Pet Warnings")
+    
+    -- Combat Status
+    ns.Movers:Register("CombatStatus", nil, function(frame, enabled, force) Screen.ToggleMover("combat", force) end, "Combat Status")
+    
+    -- Crosshair (Removed from Edit Mode per user request)
+    -- ns.Movers:Register("Crosshair", nil, function(frame, enabled, force) Screen.ToggleMover("crosshair", force) end, "Crosshair")
+end
+

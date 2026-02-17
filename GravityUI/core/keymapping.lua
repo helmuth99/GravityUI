@@ -116,7 +116,7 @@ local function ScanActionBars(force)
                 key = key:gsub("SHIFT", "S"):gsub("CTRL", "C"):gsub("ALT", "A")
                 key = key:gsub("MOUSEWHEELUP", "WU"):gsub("MOUSEWHEELDOWN", "WD")
                 key = key:gsub("BUTTON3", "M3"):gsub("BUTTON4", "M4"):gsub("BUTTON5", "M5")
-                key = key:gsub("SPACE", "Spc"):gsub("%-", "")
+                key = key:gsub("SPACE", "Spc"):gsub("NUMPAD", "N"):gsub("%-", "")
             end
 
             if actionType == "spell" and id then
@@ -580,13 +580,16 @@ function Module:Init()
     f:RegisterEvent("ACTIONBAR_SLOT_CHANGED")
     f:RegisterEvent("UPDATE_BINDINGS")
     f:RegisterEvent("PLAYER_REGEN_ENABLED")
+    f:RegisterEvent("ACTIONBAR_PAGE_CHANGED")
+    f:RegisterEvent("UPDATE_BONUS_ACTIONBAR")
+    f:RegisterEvent("UPDATE_VEHICLE_ACTIONBAR")
     
     f:SetScript("OnEvent", function(self, event)
         if event == "PLAYER_ENTERING_WORLD" then
             lastScan = 0
             ScanActionBars()
             Module:DiscoverFrames()
-        elseif event == "ACTIONBAR_SLOT_CHANGED" or event == "UPDATE_BINDINGS" then
+        elseif event == "ACTIONBAR_SLOT_CHANGED" or event == "UPDATE_BINDINGS" or event == "ACTIONBAR_PAGE_CHANGED" or event == "UPDATE_BONUS_ACTIONBAR" or event == "UPDATE_VEHICLE_ACTIONBAR" then
             ScanActionBars()
             Module:ApplyKeybinds()
         elseif event == "PLAYER_REGEN_ENABLED" then

@@ -405,10 +405,23 @@ local function OnLootOpened()
     lootFrame:Show()
 end
 
-function Loot:ToggleMover()
+function Loot:ToggleMover(forceState)
     if not lootFrame then lootFrame = CreateLootWindow() end
     
-    if lootFrame:IsShown() and lootFrame._previewMode then
+    local shouldShow = false
+    if forceState ~= nil then
+        shouldShow = forceState
+    else
+        -- Toggle logic
+        shouldShow = not (lootFrame:IsShown() and lootFrame._previewMode)
+    end
+
+    -- Register with Movers System
+    if ns.Movers and ns.Movers.Register then
+        ns.Movers:Register("LootWindow", lootFrame, function(frame, enabled) Loot:ToggleMover(enabled) end, "Loot Window")
+    end
+    
+    if not shouldShow then
         lootFrame:Hide()
         lootFrame._previewMode = false
     else
@@ -439,6 +452,12 @@ function Loot:ToggleMover()
         end
         for i = 4, MAX_LOOT_SLOTS do lootFrame.slots[i]:Hide() end
         lootFrame:SetHeight(HEADER_HEIGHT + 10 + (3 * (SLOT_HEIGHT + 2)))
+        
+        -- Apply Standard Edit Mode Style
+        if ns.Movers and ns.Movers.ApplyEditModeStyle then
+            ns.Movers:ApplyEditModeStyle(lootFrame, forceState == true)
+        end
+        
         lootFrame:Show()
     end
 end
@@ -866,12 +885,19 @@ function Loot:RefreshRolls()
     end
 end
 
-function Loot:ToggleRollMover()
-    if self.rollMover then
-        self.rollMover:Hide()
-        self.rollMover = nil
+function Loot:ToggleRollMover(forceState)
+    local shouldShow = not (self.rollMover and self.rollMover:IsShown())
+    if forceState ~= nil then shouldShow = forceState end
+
+    if not shouldShow then
+        if self.rollMover then
+            self.rollMover:Hide()
+            self.rollMover = nil
+        end
         return
     end
+
+    if self.rollMover then return end -- Already shown
 
     local db = GetDB()
     if not db or not db.lootRoll then return end
@@ -1212,6 +1238,11 @@ function Loot:ToggleRollMover()
         Loot:UpdateRollPositions()
     end)
     
+    -- Apply Standard Edit Mode Style
+    if ns.Movers and ns.Movers.ApplyEditModeStyle then
+        ns.Movers:ApplyEditModeStyle(f, forceState == true)
+    end
+    
     f:Show()
     self.rollMover = f
 end
@@ -1324,6 +1355,12 @@ function Loot:Initialize()
                     OnLootOpened()
                 end
             end)
+        end
+        
+        -- Register with Movers (Lazy Load safe)
+        if ns.Movers and ns.Movers.Register then
+            ns.Movers:Register("LootWindow", nil, function(frame, enabled) Loot:ToggleMover(enabled) end, "Loot Window")
+            ns.Movers:Register("LootRolls", nil, function(frame, enabled) Loot:ToggleRollMover(enabled) end, "Loot Rolls")
         end
     end
     

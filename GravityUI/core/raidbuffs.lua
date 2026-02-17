@@ -886,13 +886,19 @@ local function CreateSingleMover(name, frame, label)
     return m
 end
 
-function RaidBuffs:ToggleMover()
+function RaidBuffs:ToggleMover(forceState)
     local db = GetSettings()
     
     local mainMover = CreateSingleMover("GravityUI_Mover_Main", mainFrame, "Main / Shared Buffs")
     
-    local anyShown = false
-    if mainMover:IsShown() then
+    local shouldShow = false
+    if forceState ~= nil then
+        shouldShow = forceState
+    else
+        shouldShow = not mainMover:IsShown()
+    end
+    
+    if not shouldShow then
         -- Toggle OFF
         RaidBuffs.isTestMode = false
         mainMover:Hide()
@@ -906,15 +912,17 @@ function RaidBuffs:ToggleMover()
         mainMover:Show()
         
         -- Show Split Movers
-        for cat, split in pairs(db.splitCategories) do
-            if split then
-                local catFrame = GetFrameForCategory(cat)
-                local m = CreateSingleMover("GravityUI_Mover_"..cat, catFrame, cat.." Buffs")
-                local pos = db.categorySettings[cat].position or { point="CENTER", x=0, y=0 }
-                m:ClearAllPoints()
-                m:SetPoint(pos.point, UIParent, pos.point, pos.x, pos.y)
-                m:SetSize(math.max(150, db.iconSize*2), db.iconSize+10)
-                m:Show()
+        if db.splitCategories then
+            for cat, split in pairs(db.splitCategories) do
+                if split then
+                    local catFrame = GetFrameForCategory(cat)
+                    local m = CreateSingleMover("GravityUI_Mover_"..cat, catFrame, cat.." Buffs")
+                    local pos = (db.categorySettings[cat] and db.categorySettings[cat].position) or { point="CENTER", x=0, y=0 }
+                    m:ClearAllPoints()
+                    m:SetPoint(pos.point, UIParent, pos.point, pos.x, pos.y)
+                    m:SetSize(math.max(150, db.iconSize*2), db.iconSize+10)
+                    m:Show()
+                end
             end
         end
     end
@@ -1094,6 +1102,11 @@ local function InitializeFrames()
     UpdateAppearance()
     -- Initial Display Trigger
     UpdateDisplay()
+
+    -- Register with Movers
+    if ns.Movers and ns.Movers.Register then
+        ns.Movers:Register("RaidBuffs", mainFrame, function(frame, enabled) RaidBuffs:ToggleMover(enabled) end, "Raid Buffs")
+    end
 end
 
 -- ============================================================================

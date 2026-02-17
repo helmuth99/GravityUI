@@ -358,7 +358,7 @@ local function ReplaceSubSystemAnchors(subSystem)
     subSystem.guiHooked = true
 end
 
-function Alerts:ToggleMovers()
+function Alerts:ToggleMovers(forceState)
     if not alertHolder then Alerts:CreateHolders() end
 
     if not alertMover then
@@ -405,16 +405,55 @@ function Alerts:ToggleMovers()
         toastText:SetPoint("CENTER")
         toastText:SetText("Toasts")
         toastText:SetTextColor(1, 1, 1)
-    end
-
-    if alertMover:IsShown() then
+        
+        -- Default to hidden initially if just created
         alertMover:Hide()
         toastMover:Hide()
+    end
+
+    local shouldShow = false
+    if forceState ~= nil then
+        shouldShow = forceState
     else
+        shouldShow = not alertMover:IsShown()
+    end
+
+    if shouldShow then
         alertMover:Show()
         toastMover:Show()
+        
+        -- Apply Standard Edit Mode Style (Blue) if forced, otherwise keep custom colors
+        if ns.Movers and ns.Movers.ApplyEditModeStyle then
+            if forceState == true then
+                -- Global Edit Mode: Hide base color, show Overlay
+                alertMover:SetBackdropColor(0, 0, 0, 0)
+                alertMover:SetBackdropBorderColor(0, 0, 0, 0)
+                ns.Movers:ApplyEditModeStyle(alertMover, true)
+                
+                toastMover:SetBackdropColor(0, 0, 0, 0)
+                toastMover:SetBackdropBorderColor(0, 0, 0, 0)
+                ns.Movers:ApplyEditModeStyle(toastMover, true)
+            else
+                -- Manual Mode: Restore Colors, Hide Overlay
+                alertMover:SetBackdropColor(0.2, 0.8, 0.8, 0.5)
+                alertMover:SetBackdropBorderColor(0.2, 0.8, 0.8, 1)
+                ns.Movers:ApplyEditModeStyle(alertMover, false)
+                
+                toastMover:SetBackdropColor(0.8, 0.6, 0.2, 0.5)
+                toastMover:SetBackdropBorderColor(0.8, 0.6, 0.2, 1)
+                ns.Movers:ApplyEditModeStyle(toastMover, false)
+            end
+        end
+    else
+        if ns.Movers and ns.Movers.ApplyEditModeStyle then
+             ns.Movers:ApplyEditModeStyle(alertMover, false)
+             ns.Movers:ApplyEditModeStyle(toastMover, false)
+        end
+        alertMover:Hide()
+        toastMover:Hide()
     end
 end
+
 
 function Alerts:Test()
     PlaySound(SOUNDKIT.RAID_WARNING)
@@ -500,6 +539,43 @@ function Alerts:Initialize()
     
     Alerts:CreateHolders()
     
+    -- Register with Movers
+    if ns.Movers and ns.Movers.Register then
+        ns.Movers:Register("Alerts", alertHolder, function(frame, enabled) Alerts:ToggleMovers(enabled) end, "Alerts Anchor")
+        -- Note: ToggleMovers toggles BOTH. We only need to register one "Callback" effectively, or register both frames but handle the callback carefully.
+        -- Since ToggleMovers toggles BOTH, registering just "Alerts" and relying on it to toggle Toasts is fine, 
+        -- BUT if we want separate movers in the list (if we list them), we might want separate callbacks.
+        -- However, `ToggleMovers` implementation couples them. I will stick to coupled for now or register the second one as a dummy or separate if possible.
+        -- Actually, Register checks if name exists. I'll register "Toasts" as well, but pass the same callback? 
+        -- If I pass the same callback, calling it for Alerts toggles Toasts. Calling it for Toasts toggles Alerts. 
+        -- If UpdateDisplay calls both, we toggle twice? 
+        -- Solution: Update ToggleMovers to be idempotent for a specific frame? Or just register one "Group".
+        -- I'll register "Alerts & Toasts" as one entry? 
+        -- Or just register both with same callback, but `ToggleMovers(enabled)` sets both. 
+        -- `UpdateDisplay` calls toggleFunc for EACH registered mover.
+        -- If I register "Alerts" -> ToggleMovers(true) -> Sets Both True.
+        -- If I register "Toasts" -> ToggleMovers(true) -> Sets Both True. (Redundant but harmless).
+        -- BUT, creating the overlay/registry entry for "Toasts" might be needed if `ns.Movers` manages the frame visibility directly???
+        -- My `movers.lua` logic: `pcall(data.toggleFunc, data.frame, shouldShow)`.
+        -- So it will call ToggleMovers(alertHolder, true) then ToggleMovers(toastHolder, true).
+        -- `ToggleMovers` signature I wrote: `function Alerts:ToggleMovers(forceState)`. 
+        -- If called as `Alerts:ToggleMovers(enabled)`, `self` is missing if called with dot notation from pcall? 
+        -- `ns.Movers` stores `toggleFunc`. I passed `function(frame, enabled) Alerts:ToggleMovers(enabled) end`. 
+        -- This closure ignores the frame arg and calls `Alerts:ToggleMovers(enabled)`.
+        -- So it works. Redundancy is fine.
+        
+        ns.Movers:Register("Toasts", toastHolder, function(frame, enabled) end, "Toasts Anchor") 
+        -- Wait, if I pass `function() end` for Toasts, it won't toggle. 
+        -- But `Alerts` toggle handles both. So "Toasts" registration is just for... tracking? 
+        -- If `ns.Movers` uses the list to Show/Hide frames directly if no toggleFunc? 
+        -- `alertHolder` and `toastHolder` are just frames. 
+        -- If I don't register Toasts, will it be hidden? 
+        -- No, `ToggleMovers` handles it.
+        -- If I register Toasts, `UpdateDisplay` iterates it.
+        -- If I give it a toggleFunc that does nothing, `ToggleMovers` (called by Alerts) already did the job.
+        -- So empty function is fine.
+    end
+
     -- Prevent repeated hooking on refresh
     if self.initialized then 
         -- Just update anchors if needed

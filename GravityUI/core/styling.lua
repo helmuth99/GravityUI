@@ -378,12 +378,23 @@ local function CreateReadyCheckMover()
     end)
 end
 
-function Styling:ToggleReadyCheckMover()
+function Styling:ToggleReadyCheckMover(forceState)
     CreateReadyCheckMover()
-    if readyCheckMover and readyCheckMover:IsShown() then
-        readyCheckMover:Hide()
-    elseif readyCheckMover then
-        readyCheckMover:Show()
+    
+    local shouldShow = false
+    if forceState ~= nil then
+        shouldShow = forceState
+    else
+        shouldShow = not (readyCheckMover and readyCheckMover:IsShown())
+    end
+
+    if shouldShow then
+        if ns.Movers and ns.Movers.ApplyEditModeStyle then
+            ns.Movers:ApplyEditModeStyle(readyCheckMover, forceState == true)
+        end
+        if readyCheckMover then readyCheckMover:Show() end
+    else
+        if readyCheckMover then readyCheckMover:Hide() end
     end
 end
 
@@ -559,6 +570,10 @@ function Styling:SkinReadyCheck()
         -- But `gui_readycheck.lua` had logic to drag the frame itself if unlocked?
         -- Let's stick to the Mover Overlay approach for consistency with user request "Toggle Mover"
     end)
+    
+    if ns.Movers and ns.Movers.Register then
+        ns.Movers:Register("ReadyCheck", nil, function(frame, enabled, force) Styling:ToggleReadyCheckMover(force) end, "Ready Check")
+    end
     
     frame.guiSkinned = true
 end
@@ -919,13 +934,17 @@ local function CreateAltPowerBarMover()
     end)
 end
 
-function Styling:TogglePowerBarMover()
+function Styling:TogglePowerBarMover(forceState)
     if not altPowerBar then return end
     CreateAltPowerBarMover()
-    if powerBarMover:IsShown() then
-        powerBarMover:Hide()
-        UpdateAltPowerBar(altPowerBar)
-    else
+
+    local shouldShow = not powerBarMover:IsShown()
+    if forceState ~= nil then shouldShow = forceState end
+
+    if shouldShow then
+        if ns.Movers and ns.Movers.ApplyEditModeStyle then
+            ns.Movers:ApplyEditModeStyle(powerBarMover, forceState == true)
+        end
         powerBarMover:Show()
         altPowerBar:Show()
         if not altPowerBar.powerName then
@@ -933,6 +952,9 @@ function Styling:TogglePowerBarMover()
             altPowerBar:SetMinMaxValues(0, 100)
             altPowerBar:SetValue(50)
         end
+    else
+        powerBarMover:Hide()
+        UpdateAltPowerBar(altPowerBar)
     end
 end
 
@@ -1021,6 +1043,10 @@ function Styling:SkinPowerBar()
     end)
 
     UpdateAltPowerBar(altPowerBar)
+    
+    if ns.Movers and ns.Movers.Register then
+        ns.Movers:Register("PowerBarAlt", nil, function(frame, enabled, force) Styling:TogglePowerBarMover(force) end, "Encounter Power Bar")
+    end
 end
 
 function Styling:RefreshPowerBar()

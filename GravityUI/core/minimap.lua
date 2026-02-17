@@ -1360,6 +1360,15 @@ function ns.InitializeMinimapButton()
     
     CreateMinimapButton()
     ns.RefreshMinimap()
+    
+    if ns.Movers and ns.Movers.Register then
+         ns.Movers:Register("Minimap", Minimap, function(frame, enabled, force)
+              -- Apply Edit Mode Style
+              if ns.Movers.ApplyEditModeStyle then
+                  ns.Movers:ApplyEditModeStyle(frame, enabled)
+              end
+         end, "Minimap")
+    end
 end
 
 -- ═══════════════════════════════════════════════════════════════

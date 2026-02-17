@@ -193,13 +193,26 @@ end
 -- EVENTS
 ---------------------------------------------------------------------------
 local eventFrame = CreateFrame("Frame")
+eventFrame:RegisterEvent("PLAYER_LOGIN")
 eventFrame:RegisterEvent("PLAYER_REGEN_DISABLED")
 eventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
 eventFrame:RegisterEvent("ENCOUNTER_START")
 eventFrame:RegisterEvent("ENCOUNTER_END")
 
 eventFrame:SetScript("OnEvent", function(self, event)
-    if event == "PLAYER_REGEN_DISABLED" then
+    if event == "PLAYER_LOGIN" then
+        -- Register Mover
+        if ns.Movers and ns.Movers.Register then
+             -- We need to ensure frame exists or create it lazily. 
+             -- Since Register needs a frame, we might need to create it now or update registry to support callbacks that return frames? 
+             -- My Mover system takes a frame arg. 
+             -- If I pass nil, the callback `TogglePreview(enabled)` works fine because it creates the frame.
+             -- But standard UpdateDisplay might try to Show/Hide `data.frame`.
+             -- So I should create the frame hidden.
+             local frame = CreateTimerFrame()
+             ns.Movers:Register("CombatTimer", frame, function(frame, enabled, force) CombatTimer.TogglePreview(enabled, force) end, "Combat Timer")
+        end
+    elseif event == "PLAYER_REGEN_DISABLED" then
         StartTimer()
     elseif event == "PLAYER_REGEN_ENABLED" then
         StopTimer()
@@ -221,7 +234,7 @@ end)
 ---------------------------------------------------------------------------
 -- PREVIEW / API
 ---------------------------------------------------------------------------
-function CombatTimer.TogglePreview(show)
+function CombatTimer.TogglePreview(show, isForceEditMode)
     CombatTimerState.isPreviewMode = show
     local frame = CombatTimerState.timerFrame or CreateTimerFrame()
     
@@ -230,8 +243,23 @@ function CombatTimer.TogglePreview(show)
         frame:EnableMouse(true)
         UpdateAppearance()
         frame.text:SetText("01:23")
+
+        -- Apply Standard Edit Mode Style
+        if ns.Movers and ns.Movers.ApplyEditModeStyle then
+            if isForceEditMode == true then
+                frame:SetBackdropColor(0, 0, 0, 0)
+                frame:SetBackdropBorderColor(0, 0, 0, 0)
+                ns.Movers:ApplyEditModeStyle(frame, true)
+            else
+                ns.Movers:ApplyEditModeStyle(frame, false)
+            end
+        end
+
         frame:Show()
     else
+        if ns.Movers and ns.Movers.ApplyEditModeStyle then
+            ns.Movers:ApplyEditModeStyle(frame, false)
+        end
         frame:EnableMouse(false)
         if not InCombatLockdown() then
             StopTimer()

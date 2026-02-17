@@ -199,6 +199,9 @@ function Addon:OnEnable()
     -- Initial Updates
     ns.RefreshEverything()
     
+    -- Initialize Movers
+    if ns.Movers and ns.Movers.Initialize then ns.Movers:Initialize() end
+
     -- Debug Command for Quick Keybind
     _G["SLASH_GUIKB1"] = "/guikb"
     SlashCmdList["GUIKB"] = function()
@@ -221,9 +224,12 @@ function Addon:SlashCommandOpen(input)
         -- Toggle Cooldown Settings
         if CooldownViewerSettings then
             CooldownViewerSettings:SetShown(not CooldownViewerSettings:IsShown())
+            CooldownViewerSettings:SetShown(not CooldownViewerSettings:IsShown())
         else
             print("|cFF30D1FFGravityUI:|r Cooldown Settings not available.")
         end
+        -- Print welcome message
+        print("|cFF30D1FFGravityUI:|r Version " .. (C_AddOns.GetAddOnMetadata("GravityUI", "Version") or "Dev") .. " Loaded.")
         return
     end
     
@@ -301,6 +307,11 @@ function Addon:PLAYER_ENTERING_WORLD(event, isInitialLogin, isReloadingUi)
     -- Initialize Alerts
     if ns.Alerts and ns.Alerts.Initialize then
         ns.Alerts:Initialize()
+    end
+    
+    -- Initialize Raid Warnings
+    if ns.RaidWarnings and ns.RaidWarnings.Initialize then
+        ns.RaidWarnings:Initialize()
     end
     
     -- Initialize Loot

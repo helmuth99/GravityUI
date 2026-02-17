@@ -244,10 +244,17 @@ local function BuildPet(parent)
     petPreviewRow:SetSize(content:GetWidth() - 20, 30)
     petPreviewRow:SetPoint("TOPLEFT", content, "TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT + 5))
     
-    local btnDead = GUI:CreateButton(petPreviewRow, "Dead / Missing", 180, 24, function() ns.ScreenIndicators.PreviewPetWarning("petDead") end)
-    btnDead:SetPoint("LEFT", petPreviewRow, "LEFT", 140, 0)
+    local btnMover = GUI:CreateButton(petPreviewRow, "Toggle Mover", 120, 24, function() 
+        if ns.ScreenIndicators and ns.ScreenIndicators.ToggleMover then 
+            ns.ScreenIndicators.ToggleMover("pet") 
+        end 
+    end)
+    btnMover:SetPoint("LEFT", petPreviewRow, "LEFT", 0, 0)
+
+    local btnDead = GUI:CreateButton(petPreviewRow, "Dead / Missing", 120, 24, function() ns.ScreenIndicators.PreviewPetWarning("petDead") end)
+    btnDead:SetPoint("LEFT", btnMover, "RIGHT", 10, 0)
     
-    local btnIdle = GUI:CreateButton(petPreviewRow, "Not Attacking", 180, 24, function() ns.ScreenIndicators.PreviewPetWarning("petIdle") end)
+    local btnIdle = GUI:CreateButton(petPreviewRow, "Not Attacking", 120, 24, function() ns.ScreenIndicators.PreviewPetWarning("petIdle") end)
     btnIdle:SetPoint("LEFT", btnDead, "RIGHT", 10, 0)
     
     content.rowCount = content.rowCount + 1.3
@@ -745,6 +752,12 @@ local function BuildRaidWarnings(parent)
         if ns.RaidWarnings and ns.RaidWarnings.TestAlert then ns.RaidWarnings.TestAlert() end
     end)
     testBtn:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT+5)))
+    
+    local moverBtn = GUI:CreateButton(content, "Toggle Mover", 120, 24, function()
+        if ns.RaidWarnings and ns.RaidWarnings.ToggleMover then ns.RaidWarnings.ToggleMover() end
+    end)
+    moverBtn:SetPoint("LEFT", testBtn, "RIGHT", 10, 0)
+    
     content.rowCount = content.rowCount + 1.2
     
     -- ════════════════════════════════════════════════

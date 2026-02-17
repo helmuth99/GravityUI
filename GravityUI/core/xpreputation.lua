@@ -29,6 +29,7 @@ function XPRep:Initialize()
     self:CreateContainer()
     self:CreateBars()
     self:CreateMover()
+    self:RegisterMover()
     
     self:RegisterEvents()
     
@@ -372,17 +373,39 @@ function XPRep:TogglePreview()
     self:Update()
 end
 
-function XPRep:ToggleMover()
-    if self.mover and self.mover:IsShown() then
-        self.mover:Hide()
-        return
-    end
+function XPRep:ToggleMover(forceState)
+    if not self.mover then self:CreateMover() end
     
-    if not self.mover then
-        self:CreateMover()
+    local shouldShow = false
+    if forceState ~= nil then
+        shouldShow = forceState
+    else
+        shouldShow = not self.mover:IsShown()
     end
-    self.mover:Show()
+
+    if shouldShow then
+        self.mover:Show()
+        -- Color Logic
+        if forceState == true then
+             -- Global Edit Mode: Blue
+             self.mover:SetBackdropColor(0, 0.6, 1, 0.5)
+             self.mover:SetBackdropBorderColor(0, 0.8, 1, 1)
+        else
+             -- Manual: Green
+             self.mover:SetBackdropColor(0, 1, 0, 0.5)
+             self.mover:SetBackdropBorderColor(0, 1, 0, 1)
+        end
+    else
+        self.mover:Hide()
+    end
 end
+
+function XPRep:RegisterMover()
+    if ns.Movers and ns.Movers.Register then
+        ns.Movers:Register("XPRep", self.frame, function(frame, enabled) self:ToggleMover(enabled) end, "XP/Rep Bar")
+    end
+end
+
 
 function XPRep:CreateMover()
     if self.mover then return end
