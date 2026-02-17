@@ -1,15 +1,35 @@
 package-as: GravityUI
 
 ignore:
+  - ".git"
+  - ".github"
+  - ".gitignore"
   - "*.md"
   - "*.textile"
-  - ElvUI_Libraries/Core/LibStub/tests
-  - Makefile
-  - .gitignore
-  - .github/*
+  - "Makefile"
+
+externals:
+    GravityUI/Libs/Ace3:
+        url: https://github.com/WoWAce/Ace3/trunk
+    GravityUI/Libs/CallbackHandler-1.0:
+        url: https://github.com/BigWigsMods/CallbackHandler-1.0/trunk
+    GravityUI/Libs/LibSharedMedia-3.0:
+        url: https://github.com/SharedMedia/LibSharedMedia-3.0/trunk
+    GravityUI/Libs/LibDualSpec-1.0:
+        url: https://github.com/AdiAddons/LibDualSpec-1.0/trunk
+    GravityUI/Libs/LibDeflate:
+        url: https://github.com/Safetee/LibDeflate/trunk
+    GravityUI/Libs/LibCustomGlow-1.0:
+        url: https://github.com/Gethe/LibCustomGlow/trunk
+    GravityUI/Libs/LibKeyBound-1.0:
+        url: https://repos.wowace.com/wow/libkeybound-1-0/trunk
+    GravityUI/Libs/LibOpenRaid:
+        url: https://github.com/Tercioo/Open-Raid-Library/trunk
+    GravityUI/Libs/LibStub:
+        url: https://github.com/Stanzilla/LibStub/trunk
 
 move-folders:
-  GravityUI/GravityUI: GravityUI
+  GravityUI: GravityUI
 
 required-dependencies:
   - unhaltedunitframes
@@ -19,6 +39,3 @@ required-dependencies:
   - details
   - plater-nameplates
   - blizzmove
-
-optional-dependencies:
-

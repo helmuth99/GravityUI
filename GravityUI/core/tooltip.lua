@@ -22,7 +22,15 @@ local CUSTOM_CLASS_COLORS = CUSTOM_CLASS_COLORS
 local UNIT_FRAME_PATTERNS = {
     "UnitFrame", "PlayerFrame", "TargetFrame", "FocusFrame",
     "PartyMemberFrame", "CompactRaidFrame", "CompactPartyFrame",
-    "NamePlate", "Gravity.*Frame"
+    "NamePlate", "Gravity.*Frame",
+    "UUF", "Unhalted"
+}
+
+local CDM_PATTERNS = {
+    "BCD", "BetterCooldown",
+    "EssentialCooldownViewer",
+    "UtilityCooldownViewer",
+    "BuffIconCooldownViewer"
 }
 
 local ACTION_BUTTON_PATTERNS = {
@@ -119,6 +127,15 @@ local function GetTooltipContext(owner)
     if not owner then return "npcs" end
     
     local name = owner:GetName() or ""
+    local parent = owner:GetParent()
+    local parentName = parent and parent:GetName() or ""
+    
+    -- CDM Icons (Check Owner AND Parent)
+    for _, pattern in ipairs(CDM_PATTERNS) do
+        if strmatch(name, pattern) or strmatch(parentName, pattern) then
+            return "cdm"
+        end
+    end
     
     -- Action Buttons / Abilities
     for _, pattern in ipairs(ACTION_BUTTON_PATTERNS) do
@@ -369,3 +386,5 @@ f:RegisterEvent("PLAYER_LOGIN")
 f:SetScript("OnEvent", function()
     InitHooks()
 end)
+
+
