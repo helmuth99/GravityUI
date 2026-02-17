@@ -18,9 +18,9 @@ externals:
     GravityUI/Libs/LibDualSpec-1.0:
         url: https://github.com/AdiAddons/LibDualSpec-1.0
     GravityUI/Libs/LibDeflate:
-        url: https://github.com/Safetee/LibDeflate
+        url: https://github.com/SafeteeWoW/LibDeflate
     GravityUI/Libs/LibCustomGlow-1.0:
-        url: https://github.com/Gethe/LibCustomGlow
+        url: https://github.com/Stanzilla/LibCustomGlow
     GravityUI/Libs/LibKeyBound-1.0:
         url: https://repos.wowace.com/wow/libkeybound-1-0/trunk
     GravityUI/Libs/LibOpenRaid:
