@@ -422,6 +422,9 @@ function Loot:ToggleMover(forceState)
     end
     
     if not shouldShow then
+        if ns.Movers and ns.Movers.ApplyEditModeStyle then
+            ns.Movers:ApplyEditModeStyle(lootFrame, false)
+        end
         lootFrame:Hide()
         lootFrame._previewMode = false
     else
@@ -902,16 +905,33 @@ function Loot:ToggleRollMover(forceState)
     local db = GetDB()
     if not db or not db.lootRoll then return end
 
-    local f = CreateFrame("Frame", "GravityUI_LootRollMover", UIParent) -- Removed BackdropTemplate
-    f:SetSize(db.lootRoll.width, db.lootRoll.height)
-    -- f:SetBackdrop(...) -- REMOVED Backdrop to prevent "Thunderfury border" issue
-    f:SetFrameStrata("DIALOG")
-    f:SetClampedToScreen(true)
-    f:SetMovable(true)
-    f:EnableMouse(true)
-    f:RegisterForDrag("LeftButton")
+    -- Fix Memory Leak: Reuse existing frame if available
+    local f = _G["GravityUI_LootRollMover"]
+    if not f then
+        f = CreateFrame("Frame", "GravityUI_LootRollMover", UIParent) -- Removed BackdropTemplate
+        f:SetFrameStrata("DIALOG")
+        f:SetClampedToScreen(true)
+        f:SetMovable(true)
+        f:EnableMouse(true)
+        f:RegisterForDrag("LeftButton")
+        
+        f:SetScript("OnDragStart", f.StartMoving)
+        f:SetScript("OnDragStop", function(self)
+            self:StopMovingOrSizing()
+            local point, _, relPoint, x, y = self:GetPoint()
+            db.lootRoll.position = { point = point, relPoint = relPoint, x = x, y = y }
+        end)
+        
+        f:SetScript("OnUpdate", function(self, elapsed)
+            -- Enforce Width
+            if self:GetWidth() ~= db.lootRoll.width then 
+                 self:SetWidth(db.lootRoll.width)
+            end
+        end)
+    end
     
-    -- Load Pos
+    -- Always update properties on Show
+    f:SetSize(db.lootRoll.width, db.lootRoll.height)
     if db.lootRoll.position then
         local p = db.lootRoll.position
         f:SetPoint(p.point, UIParent, p.relPoint, p.x, p.y)
@@ -919,21 +939,8 @@ function Loot:ToggleRollMover(forceState)
         f:SetPoint("CENTER", UIParent, "CENTER", 0, 200)
     end
     
-    f:SetScript("OnDragStart", f.StartMoving)
-    f:SetScript("OnDragStop", function(self)
-        self:StopMovingOrSizing()
-        local point, _, relPoint, x, y = self:GetPoint()
-        db.lootRoll.position = { point = point, relPoint = relPoint, x = x, y = y }
-    end)
-    
-    f:SetScript("OnUpdate", function(self, elapsed)
-        -- Enforce Width
-        if self:GetWidth() ~= db.lootRoll.width then 
-             self:SetWidth(db.lootRoll.width)
-        end
-    end)
-    
     self.rollMover = f
+    self.rollMover:Show()
 
     -- Visual Config
     -- Visual Config

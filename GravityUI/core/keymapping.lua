@@ -106,7 +106,31 @@ local function ScanActionBars(force)
     for _, config in ipairs(barConfigs) do
         for i = 0, (config.ending - config.start) do
             local slot = config.start + i
-            local actionType, id = GetActionInfo(slot)
+            local querySlot = slot
+            
+            -- Handle paging for Bar 1 (ACTIONBUTTON) via Button Attributes (Source of Truth)
+            if config.prefix == "ACTIONBUTTON" then
+                local btnIdx = i + 1
+                local button = _G["ActionButton" .. btnIdx]
+                if _G.Dominos then
+                    button = _G["DominosActionButton" .. btnIdx]
+                end
+
+                if button and button.GetAttribute then
+                    local actionID = button:GetAttribute("action")
+                    if actionID and type(actionID) == "number" and actionID > 0 then
+                        querySlot = actionID
+                    end
+                else
+                     -- Fallback for Default UI if button object missing
+                    local page = GetActionBarPage()
+                    if page and page > 1 then
+                        querySlot = slot + ((page - 1) * 12)
+                    end
+                end
+            end
+
+            local actionType, id = GetActionInfo(querySlot)
             
             local name, bindId
             local buttonIndex = i + 1
@@ -116,7 +140,9 @@ local function ScanActionBars(force)
                 key = key:gsub("SHIFT", "S"):gsub("CTRL", "C"):gsub("ALT", "A")
                 key = key:gsub("MOUSEWHEELUP", "WU"):gsub("MOUSEWHEELDOWN", "WD")
                 key = key:gsub("BUTTON3", "M3"):gsub("BUTTON4", "M4"):gsub("BUTTON5", "M5")
-                key = key:gsub("SPACE", "Spc"):gsub("NUMPAD", "N"):gsub("%-", "")
+                key = key:gsub("SPACE", "Spc"):gsub("%-", "")
+                key = key:gsub("NUMPADPLUS", "N+"):gsub("NUMPADMINUS", "N-"):gsub("NUMPADMULTIPLY", "N*"):gsub("NUMPADDIVIDE", "N/"):gsub("NUMPADDECIMAL", "N.")
+                key = key:gsub("NUMPAD", "N")
             end
 
             if actionType == "spell" and id then
@@ -590,8 +616,11 @@ function Module:Init()
             ScanActionBars()
             Module:DiscoverFrames()
         elseif event == "ACTIONBAR_SLOT_CHANGED" or event == "UPDATE_BINDINGS" or event == "ACTIONBAR_PAGE_CHANGED" or event == "UPDATE_BONUS_ACTIONBAR" or event == "UPDATE_VEHICLE_ACTIONBAR" then
-            ScanActionBars()
-            Module:ApplyKeybinds()
+            -- Fix: Delay scan to allow action bar addons (Dominos/Bartender) to update buttons first 
+            C_Timer.After(0.1, function()
+                ScanActionBars(true)
+                Module:ApplyKeybinds()
+            end)
         elseif event == "PLAYER_REGEN_ENABLED" then
             Module:ApplyKeybinds()
         end
