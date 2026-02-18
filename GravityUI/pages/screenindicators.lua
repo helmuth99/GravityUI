@@ -790,9 +790,84 @@ local function BuildInterruptTracker(parent)
     content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
 end
 
+
+-- 7. Bloodlust
+local function BuildBloodlust(parent)
+    local scroll, content = GUI:CreateScrollableContent(parent)
+    scroll:SetAllPoints()
+    local db = ns.GetDB(); if not db then return end
+    
+    -- Ensure Defaults
+    if not db.screenindicators.bloodlust then
+         db.screenindicators.bloodlust = {
+            enabled = true,
+            size = 256,
+            texture = "goku",
+            sound = "Kamehameha",
+            soundChannel = "Master",
+         }
+    end
+    
+    local c = db.screenindicators.bloodlust
+    content.rowCount = 0
+    local refresh = function() 
+        -- No live refresh needed for this module usually, but standard practice
+    end
+    
+    local header = GUI:CreateSectionHeader(content, "Bloodlust / Heroism")
+    header:SetPoint("TOPLEFT", 10, -10)
+    header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
+    content.rowCount = 1.3
+    
+    local infoBox = GUI:CreateInfoBox(content, "Displays an animated alert when Bloodlust/Heroism effects are used in your group.")
+    infoBox:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
+    content.rowCount = content.rowCount + (infoBox:GetHeight() / (ROW_HEIGHT+5)) + 0.2
+    
+    CreateSubLabel(content, "General")
+    AddRow(content, "Enable Alert", "checkbox", "enabled", c, refresh)
+    
+    -- Controls
+    local testBtn = GUI:CreateButton(content, "Test Alert", 100, 24, function()
+        if ns.ScreenIndicators.PreviewBloodlust then ns.ScreenIndicators.PreviewBloodlust() end
+    end)
+    testBtn:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT + 5)))
+    
+    local stopBtn = GUI:CreateButton(content, "Stop Test", 100, 24, function()
+        if ns.ScreenIndicators.StopBloodlust then ns.ScreenIndicators.StopBloodlust() end
+    end)
+    stopBtn:SetPoint("LEFT", testBtn, "RIGHT", 10, 0)
+    
+    local moverBtn = GUI:CreateButton(content, "Toggle Mover", 120, 24, function()
+        if ns.ScreenIndicators.ToggleBloodlustMover then ns.ScreenIndicators.ToggleBloodlustMover() end
+    end)
+    moverBtn:SetPoint("LEFT", stopBtn, "RIGHT", 10, 0)
+    
+    content.rowCount = content.rowCount + 1.2
+    
+    CreateSubLabel(content, "Appearance & Sound")
+    AddRow(content, "Size", "slider", 64, 512, "size", c, refresh, 2)
+    
+    local texOptions = {
+        {value="goku", text="Goku"}, 
+        {value="pedro", text="Pedro"},
+        {value="KP_Demon", text="KP Demon"},
+    }
+    AddRow(content, "Visual Style", "dropdown", texOptions, "texture", c, refresh)
+    
+    local soundOptions = {
+        {value="Kamehameha", text="Kamehameha"}, 
+        {value="pedro", text="Pedro"}, 
+        {value="KP_Demon", text="KP Demon"},
+    }
+    AddRow(content, "Sound Effect", "dropdown", soundOptions, "sound", c, refresh)
+    
+    content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
+end
+
 -- ═══════════════════════════════════════════════════════════════
 -- MAIN PAGE
 -- ═══════════════════════════════════════════════════════════════
+
 ns.GUI:RegisterPage("screenindicators", {
     title = "UI Indicators",
     OnBuild = function(content)
@@ -1004,7 +1079,9 @@ end
             { name = "Missing Buffs", builder = BuildMissingBuffs },
             { name = "Raid Warnings", builder = BuildRaidWarnings },
             { name = "Interrupt Tracker", builder = BuildInterruptTracker },
+            { name = "Bloodlust", builder = BuildBloodlust },
         }
+        -- Create SubTabs
         local subTabs = GUI:CreateSubTabs(scrollFrame, categories)
         subTabs:SetPoint("TOPLEFT", 10, -10)
         subTabs:SetPoint("TOPRIGHT", -10, 0)

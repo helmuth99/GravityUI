@@ -23,6 +23,25 @@ function Movers:Register(name, frame, toggleFunc, label)
     }
 end
 
+function Movers:Toggle(name)
+    local data = self.registry[name]
+    if not data then return end
+    
+    if data.frame then
+        if data.frame:IsShown() then
+            data.frame:Hide()
+        else
+            data.frame:Show()
+            -- Apply overlay style if in edit mode context, but for manual toggle usually we just want to see it
+        end
+    end
+    
+    if data.toggleFunc then
+        local isShown = data.frame and data.frame:IsShown()
+        pcall(data.toggleFunc, data.frame, isShown, isShown)
+    end
+end
+
 -- ============================================================================
 -- VISIBILITY LOGIC
 -- ============================================================================

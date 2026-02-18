@@ -260,79 +260,182 @@ local COMM_PREFIX = "GravityUI"
 if C_ChatInfo then C_ChatInfo.RegisterAddonMessagePrefix(COMM_PREFIX) end
 
 -- ============================================================================
+-- SPELL ID LAUNDERING (Fix for Tainted Party Events in 12.0.1)
+-- ============================================================================
+local launderBar = CreateFrame("StatusBar")
+launderBar:SetMinMaxValues(0, 9999999)
+
+local launderSlider = CreateFrame("Slider", nil, UIParent)
+launderSlider:SetMinMaxValues(0, 9999999)
+launderSlider:SetSize(1, 1)
+launderSlider:Hide()
+
+local onValueChangedResult = nil
+local onSliderChangedResult = nil
+
+launderBar:SetScript("OnValueChanged", function(self, value)
+    onValueChangedResult = value
+end)
+
+launderSlider:SetScript("OnValueChanged", function(self, value)
+    onSliderChangedResult = value
+end)
+
+-- ============================================================================
+-- WATCHER FRAMES (Reliable Event Detection)
+-- ============================================================================
+local watcherFrames = {}
+-- We need up to 40 frames for Raid
+for i = 1, 40 do
+    watcherFrames[i] = CreateFrame("Frame")
+end
+
+-- Forward declaration
+local ProcessSpellCast 
+
+local function UpdateWatchers()
+    -- Unregister all first
+    for _, f in ipairs(watcherFrames) do f:UnregisterAllEvents() end
+    
+    local members = GetNumGroupMembers()
+    local method = IsInRaid() and "raid" or "party"
+    if method == "party" then members = members - 1 end -- 'party' excludes player in count usually involved in other loops, but let's be specific
+    -- Actually:
+    -- If Raid: raid1..raidN
+    -- If Party: party1..party4 (GetNumSubgroupMembers) + player
+    
+    if IsInRaid() then
+        for i = 1, 40 do
+             local unit = "raid"..i
+             if UnitExists(unit) then
+                 watcherFrames[i]:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", unit)
+                 watcherFrames[i]:SetScript("OnEvent", function(_, _, unit, castGUID, spellId)
+                     ProcessSpellCast(unit, castGUID, spellId)
+                 end)
+             end
+        end
+    elseif IsInGroup() then
+        -- Party Members
+        for i = 1, 4 do
+             local unit = "party"..i
+             if UnitExists(unit) then
+                 watcherFrames[i]:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", unit)
+                 watcherFrames[i]:SetScript("OnEvent", function(_, _, unit, castGUID, spellId)
+                     ProcessSpellCast(unit, castGUID, spellId)
+                 end)
+             end
+        end
+        -- Player (handled by a separate watcher or just slot 5)
+        watcherFrames[5]:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player")
+        watcherFrames[5]:SetScript("OnEvent", function(_, _, unit, castGUID, spellId)
+             ProcessSpellCast(unit, castGUID, spellId)
+        end)
+    else
+        -- Solo (Player only)
+        watcherFrames[1]:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player")
+        watcherFrames[1]:SetScript("OnEvent", function(_, _, unit, castGUID, spellId)
+             ProcessSpellCast(unit, castGUID, spellId)
+        end)
+    end
+end
+
+-- ============================================================================
 -- EVENT HANDLE (UNIT_SPELLCAST_SUCCEEDED & COMM)
 -- ============================================================================
-local eventFrame = CreateFrame("Frame")
-eventFrame:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
-eventFrame:RegisterEvent("CHAT_MSG_ADDON")
-
+-- ============================================================================
+-- SPELL PROCESSING (Laundered)
+-- ============================================================================
 -- Throttle State (Locally generated events)
 local lastCastGUID = nil
 local lastCastTime = 0
 
--- Throttle for incoming COMM messages to prevent duplicates if multiple people send (unlikely but safe)
+ProcessSpellCast = function(unitTarget, castGUID, spellID)
+    -- 1. LAUNDER SPELL ID
+    onValueChangedResult = nil
+    launderBar:SetValue(0) 
+    pcall(launderBar.SetValue, launderBar, spellID)
+    local cleanID = onValueChangedResult
+
+    if not cleanID then
+        onSliderChangedResult = nil
+        launderSlider:SetValue(0)
+        pcall(launderSlider.SetValue, launderSlider, spellID)
+        cleanID = onSliderChangedResult
+    end
+    
+    if not cleanID then return end
+    spellID = cleanID
+
+    -- 2. LOGIC
+    if not castGUID or not spellID or type(spellID) ~= "number" then return end
+    
+    local now = GetTime()
+    
+    -- Safe Comparison for Secret GUIDs (pcall protection)
+    local isDuplicate = false
+    if castGUID and lastCastGUID then
+        local success, match = pcall(function() return castGUID == lastCastGUID end)
+        if success and match then isDuplicate = true end
+    end
+    
+    -- 1s Throttle for same cast
+    if isDuplicate and (now - lastCastTime) < 1.0 then return end
+
+    local db = ns.GetDB()
+    if not db or not db.raidWarnings or not db.raidWarnings.enabled then return end
+    local csv = db.raidWarnings
+    
+    -- Check Tracked Spells (using pcall for safety)
+    local key = nil
+    local success, val = pcall(function() return TRACKED_SPELLS[spellID] end)
+    if success then key = val end
+    
+    -- Check Custom Spells
+    if not key and csv.customSpells then
+        local success_custom, key_custom = pcall(function() return csv.customSpells[spellID] end)
+        if success_custom then key = key_custom end
+    end
+    
+    if not key then return end
+    if csv.events and not csv.events[key] then return end
+    
+    -- Group Check (Redundant if watchers are managed well, but safe)
+    local inRaid = IsInRaid()
+    local inGroup = IsInGroup()
+    
+    if inRaid then
+         if not csv.showInRaid then return end
+    elseif inGroup then
+         if not csv.showInGroup then return end
+    end
+    
+    -- Update Throttle
+    lastCastGUID = castGUID
+    lastCastTime = now
+    
+    local spellName = C_Spell.GetSpellName(spellID) or "Unknown Spell"
+    local providerName = UnitName(unitTarget) or "Unknown"
+    
+    -- Show Alert (Locally Detected)
+    RaidWarnings.ShowAlert(spellName, providerName, key)
+end
+
+-- ============================================================================
+-- EVENT HANDLE (WATCHER MGMT & COMM)
+-- ============================================================================
+local eventFrame = CreateFrame("Frame")
+eventFrame:RegisterEvent("CHAT_MSG_ADDON")
+eventFrame:RegisterEvent("GROUP_ROSTER_UPDATE")
+eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
+eventFrame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
+
+-- Throttle for incoming COMM messages
 local commThrottle = {}
 
 eventFrame:SetScript("OnEvent", function(self, event, ...)
-    -- 1. LOCAL SPELLCAST HANDLING (Sender)
-    if event == "UNIT_SPELLCAST_SUCCEEDED" then
-        local unitTarget, castGUID, spellID = ...
+    if event == "GROUP_ROSTER_UPDATE" or event == "PLAYER_ENTERING_WORLD" or event == "ZONE_CHANGED_NEW_AREA" then
+        UpdateWatchers()
         
-        -- Filter: Only track Group Members or Player
-        if not UnitInParty(unitTarget) and not UnitInRaid(unitTarget) and unitTarget ~= "player" then return end
-        
-        if not castGUID or not spellID or type(spellID) ~= "number" then return end
-        
-        local now = GetTime()
-        
-        -- Safe Comparison for Secret GUIDs (pcall protection)
-        local isDuplicate = false
-        if castGUID and lastCastGUID then
-            local success, match = pcall(function() return castGUID == lastCastGUID end)
-            if success and match then isDuplicate = true end
-        end
-        
-        -- 1s Throttle for same cast
-        if isDuplicate and (now - lastCastTime) < 1.0 then return end
-
-        local db = ns.GetDB()
-        if not db or not db.raidWarnings or not db.raidWarnings.enabled then return end
-        local csv = db.raidWarnings
-        -- Check Tracked Spells (using pcall for safety)
-        local key = nil
-        local success, val = pcall(function() return TRACKED_SPELLS[spellID] end)
-        if success then key = val end
-        
-        -- Check Custom Spells
-        if not key and csv.customSpells then
-            local success_custom, key_custom = pcall(function() return csv.customSpells[spellID] end)
-            if success_custom then key = key_custom end
-        end
-        
-        if not key then return end
-        if csv.events and not csv.events[key] then return end
-        
-        -- Group Check
-        local inRaid = IsInRaid()
-        local inGroup = IsInGroup()
-        
-        if inRaid then
-             if not csv.showInRaid then return end
-        elseif inGroup then
-             if not csv.showInGroup then return end
-        end
-        
-        -- Update Throttle
-        lastCastGUID = castGUID
-        lastCastTime = now
-        
-        local spellName = C_Spell.GetSpellName(spellID) or "Unknown Spell"
-        local providerName = UnitName(unitTarget) or "Unknown"
-        
-        -- Show Alert (Locally Detected)
-        RaidWarnings.ShowAlert(spellName, providerName, key)
-        
-    -- 2. REMOTE MESSAGE HANDLING (Receiver)
     elseif event == "CHAT_MSG_ADDON" then
         local prefix, message, channel, sender = ...
         

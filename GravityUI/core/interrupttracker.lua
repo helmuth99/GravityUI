@@ -113,12 +113,112 @@ local container = nil
 local testModeActive = false
 
 -- ============================================================================
+-- SPELL ID LAUNDERING (Fix for Tainted Party Events in 12.0.1)
+-- ============================================================================
+-- These MUST be created here, NOT inside event handlers
+local launderBar = CreateFrame("StatusBar")
+launderBar:SetMinMaxValues(0, 9999999)
+
+-- Slider for OnValueChanged laundering
+local launderSlider = CreateFrame("Slider", nil, UIParent)
+launderSlider:SetMinMaxValues(0, 9999999)
+launderSlider:SetSize(1, 1)
+launderSlider:Hide()
+
+-- OnValueChanged result storage (written by callback, read by handler)
+local onValueChangedResult = nil
+local onSliderChangedResult = nil
+
+-- The key insight: when a widget fires OnValueChanged, the C++ engine
+-- re-reads the value from internal storage and passes it as a callback arg.
+-- This MIGHT strip taint since it's a new value from C++ land.
+launderBar:SetScript("OnValueChanged", function(self, value)
+    onValueChangedResult = value
+end)
+
+launderSlider:SetScript("OnValueChanged", function(self, value)
+    onSliderChangedResult = value
+end)
+
+-- Watcher Frames for explicit unit registration
+local partyFrames = {}
+for i = 1, 4 do
+    partyFrames[i] = CreateFrame("Frame")
+end
+
+-- Player Watcher (To avoid AceEvent/Global Taint issues)
+local playerWatcher = CreateFrame("Frame")
+
+-- Helper to register events
+local function RegisterPartyWatchers()
+    -- Party Members (Laundered)
+    for i = 1, 4 do
+        local unit = "party" .. i
+        partyFrames[i]:UnregisterAllEvents()
+        if UnitExists(unit) then
+            partyFrames[i]:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", unit)
+            partyFrames[i]:SetScript("OnEvent", function(_, _, unit, castGUID, spellId)
+                -- Launder spellID
+                onValueChangedResult = nil
+                launderBar:SetValue(0) -- reset
+                pcall(launderBar.SetValue, launderBar, spellId)
+                local barResult = onValueChangedResult
+
+                -- Try OnValueChanged laundering (Slider)
+                onSliderChangedResult = nil
+                launderSlider:SetValue(0) -- reset
+                pcall(launderSlider.SetValue, launderSlider, spellId)
+                local sliderResult = onSliderChangedResult
+
+                local cleanID = barResult or sliderResult
+
+                -- print("GravityUI Debug: Raw ID:", spellId, "Clean ID:", cleanID)
+
+                if cleanID then
+                    InterruptTracker:UNIT_SPELLCAST_SUCCEEDED("UNIT_SPELLCAST_SUCCEEDED", unit, castGUID, cleanID)
+                end
+            end)
+            -- print("GravityUI Debug: Registered watcher for", unit)
+        end
+    end
+    
+    -- Player Watcher (Direct, Player Unit is usually safe but we use RegisterUnitEvent to be sure)
+    playerWatcher:UnregisterAllEvents()
+    playerWatcher:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player")
+    playerWatcher:SetScript("OnEvent", function(_, _, unit, castGUID, spellId)
+         InterruptTracker:UNIT_SPELLCAST_SUCCEEDED("UNIT_SPELLCAST_SUCCEEDED", unit, castGUID, spellId)
+    end)
+end
+
+
+
+-- ============================================================================
 -- FRAME MANAGEMENT
 -- ============================================================================
 
 local function GetSettings()
     local db = ns.GetDB()
     if db and db.screenindicators then
+        if not db.screenindicators.interruptTracker then
+            db.screenindicators.interruptTracker = {
+                enabled = true,
+                x = 0, y = 0,
+                width = 220, height = 20,
+                barHeight = 20,
+                iconSize = 20,
+                fontSize = 12,
+                font = "Gravity",
+                texture = "Solid",
+                growUpwards = true,
+                useClassColors = true,
+                showBorder = true,
+                showIcon = true,
+                showTime = true,
+                testMode = false,
+                useSpecificCooldownColor = false,
+                cooldownTextColor = {1, 1, 1, 1},
+            }
+        end
         return db.screenindicators.interruptTracker
     end
     return nil
@@ -315,10 +415,11 @@ local function StartCooldown(guid, name, class, spellId, isReady)
     local s = GetSettings()
     if not s or not s.enabled then return end
     
-    -- Check if tracked
     local baseCD = INTERRUPTS[spellId]
     if not baseCD then return end
     
+    -- print("GravityUI Debug: StartCooldown", name, spellId, isReady)
+
     -- Check duplicates
     for i, info in ipairs(activeBars) do
         if info.guid == guid and info.spellId == spellId then
@@ -495,78 +596,44 @@ function InterruptTracker:UNIT_SPELLCAST_SUCCEEDED(event, unit, castGUID, spellI
     -- Check if it is an interrupt spell
     -- Safe Check: Avoid "table index is secret"
     if not spellId or type(spellId) ~= "number" then return end
+    
+    -- Debug Print
+    -- print("GravityUI Debug: Event", event, "Unit", unit, "Spell", spellId)
 
-    -- Safe Check: Wrap lookup in pcall because "table index is secret" can still happen with valid types sometimes?
-    local isInterrupt = false
+    -- Safe Check: Wrap lookup in pcall
     local success, val = pcall(function() return INTERRUPTS[spellId] end)
     if success and val then 
-         -- Filter: Only track Group Members or Player
-         if UnitInParty(unit) or UnitInRaid(unit) or UnitIsUnit(unit, "player") then
-             local guid = UnitGUID(unit)
-             local name = UnitName(unit)
-             local _, class = UnitClass(unit)
-             
+         local guid = UnitGUID(unit)
+         local name = UnitName(unit)
+         local _, class = UnitClass(unit)
+         
+         -- print("GravityUI Debug: Interrupt Event Detected", unit, name, spellId)
+         
+         -- Robust Filter: Check if this GUID is in our activeBars tracking list
+         local tracked = false
+         if UnitIsUnit(unit, "player") then 
+             tracked = true 
+         else
+             for _, info in ipairs(activeBars) do
+                 if info.guid == guid then
+                     tracked = true
+                     break
+                 end
+             end
+         end
+         
+         if tracked then
+             -- print("GravityUI Debug: Updating Cooldown for", name, spellId)
              StartCooldown(guid, name, class, spellId)
+         else
+             -- print("GravityUI Debug: Ignored Untracked Unit", unit, name)
          end
     end
 end
 
 
 
--- ============================================================================
--- INITIALIZATION & MOVER
--- ============================================================================
 
-function InterruptTracker.ToggleMover(force)
-    if not container then return end
-    local s = GetSettings()
-    if not s or not s.enabled then return end
-    
-    local show = false
-    if force ~= nil then
-        show = force
-    else
-        show = not container.mover:IsShown()
-    end
-    
-    if show then
-        container.mover:Show()
-        
-        -- Style based on mode
-        -- If force is true, we assume Edit Mode (Blue). 
-        -- If force is nil (Manual Toggle), we use Green.
-        if force then
-            -- Edit Mode: Blue Overlay
-            container:SetBackdropColor(0, 0.6, 1, 0.5)
-            container:SetBackdropBorderColor(0, 0.8, 1, 1)
-        else
-            -- Manual Toggle: Green Highlight
-            container:SetBackdropColor(0, 1, 0, 0.3)
-            container:SetBackdropBorderColor(0, 1, 0, 1)
-        end
-        
-        -- Add dummy bars for visual
-        if #activeBars == 0 then
-             StartCooldown(UnitGUID("player"), "Test Player", "WARRIOR", 6552) -- Pummel
-             StartCooldown(UnitGUID("player"), "Test Mage", "MAGE", 2139) -- Counterspell
-        end
-    else
-        container.mover:Hide()
-        
-        -- Restore Theme/Custom coloring logic for hidden state (Background)
-        -- Wait, usually implementation hides background if not moving?
-        -- User requested "Use Theme Background". 
-        -- If so, we should set it here.
-        
-        -- Restore Transparency
-        container:SetBackdropColor(0, 0, 0, 0)
-        container:SetBackdropBorderColor(0, 0, 0, 0)
-        
-        -- Clear dummies
-        activeBars = {}
-        for _, f in ipairs(framePool) do f:Hide() end
-    end
-end
 
 function InterruptTracker.TestMode()
     if testModeActive then
@@ -629,15 +696,22 @@ local function OnInspectReady(guid)
     
     -- Check Spec Interrupt
     local unit = nil
-    if UnitGUID("player") == guid then unit = "player"
-    elseif UnitGUID("target") == guid then unit = "target"
-    elseif UnitGUID("focus") == guid then unit = "focus"
+    
+    -- Safe Comparison Helper
+    local function SafeEq(a, b)
+        local ok, res = pcall(function() return a == b end)
+        return ok and res
+    end
+
+    if SafeEq(UnitGUID("player"), guid) then unit = "player"
+    elseif SafeEq(UnitGUID("target"), guid) then unit = "target"
+    elseif SafeEq(UnitGUID("focus"), guid) then unit = "focus"
     else
         if IsInGroup() then
              local prefix = IsInRaid() and "raid" or "party"
              for i=1, GetNumGroupMembers() do
                  local u = prefix..i
-                 if UnitGUID(u) == guid then unit = u break end
+                 if SafeEq(UnitGUID(u), guid) then unit = u break end
              end
         end
     end
@@ -724,8 +798,13 @@ local function OnGroupRosterUpdate()
     if (not inGroup or instanceType == "raid") and not testModeActive then
          for _, info in ipairs(activeBars) do info.frame:Hide() end
          activeBars = {}
+         -- Unregister watchers
+         for i=1,4 do partyFrames[i]:UnregisterAllEvents() end
          return
     end
+    
+    -- Register Watchers for Party Members
+    RegisterPartyWatchers()
     
     local members = {}
     
@@ -785,7 +864,64 @@ local function OnGroupRosterUpdate()
     UpdateLayout()
 end
 
+-- ============================================================================
+-- INITIALIZATION & MOVER
+-- ============================================================================
+
+local moverDummiesActive = false
+
+function InterruptTracker.ToggleMover(force)
+    if not container then return end
+    local s = GetSettings()
+    if not s or not s.enabled then return end
+    
+    local show = false
+    if force ~= nil then
+        show = force
+    else
+        show = not container.mover:IsShown()
+    end
+    
+    if show then
+        container.mover:Show()
+        
+        -- Style based on mode
+        if force then
+            -- Edit Mode: Blue Overlay
+            container:SetBackdropColor(0, 0.6, 1, 0.5)
+            container:SetBackdropBorderColor(0, 0.8, 1, 1)
+        else
+            -- Manual Toggle: Green Highlight
+            container:SetBackdropColor(0, 1, 0, 0.3)
+            container:SetBackdropBorderColor(0, 1, 0, 1)
+        end
+        
+        -- Add dummy bars for visual if empty
+        if #activeBars == 0 then
+             StartCooldown(UnitGUID("player"), "Test Player", "WARRIOR", 6552) -- Pummel
+             StartCooldown(UnitGUID("player"), "Test Mage", "MAGE", 2139) -- Counterspell
+             moverDummiesActive = true
+        end
+    else
+        container.mover:Hide()
+        
+        -- Restore Transparency
+        container:SetBackdropColor(0, 0, 0, 0)
+        container:SetBackdropBorderColor(0, 0, 0, 0)
+        
+        -- Clear dummies ONLY if we created them
+        if moverDummiesActive then
+            activeBars = {}
+            for _, f in ipairs(framePool) do f:Hide() end
+            moverDummiesActive = false
+            -- Trigger immediate roster update to restore real bars if any (though unlikely if we were empty)
+            OnGroupRosterUpdate()
+        end
+    end
+end
+
 function InterruptTracker.Initialize()
+    if container then return end
     -- Create Container
     container = CreateFrame("Frame", "GravityUI_InterruptTracker", UIParent, "BackdropTemplate")
     local s = GetSettings()
@@ -832,19 +968,21 @@ function InterruptTracker.Initialize()
     container.mover = mover
     
     -- Init Events via AceEvent
-    -- Init Events via AceEvent
     if s.enabled then
-        InterruptTracker:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
+        -- InterruptTracker:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player") -- REMOVED: Managed by playerWatcher
         InterruptTracker:RegisterEvent("INSPECT_READY", function(_, guid) OnInspectReady(guid) end)
         InterruptTracker:RegisterEvent("GROUP_ROSTER_UPDATE", OnGroupRosterUpdate)
         InterruptTracker:RegisterEvent("PLAYER_ENTERING_WORLD", OnGroupRosterUpdate)
         
         container:Show()
         OnGroupRosterUpdate() -- Initial scan
+        RegisterPartyWatchers() -- Initial watchers (Includes Player)
         
         updateFrame:Show() -- Starts OnUpdate
     else
         InterruptTracker:UnregisterAllEvents()
+        for i=1,4 do partyFrames[i]:UnregisterAllEvents() end
+        playerWatcher:UnregisterAllEvents()
         updateFrame:Hide()
         container:Hide()
     end
@@ -866,17 +1004,20 @@ function InterruptTracker.ApplySettings()
      if not container or not s then return end
      
     if s.enabled then
-        InterruptTracker:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
+        -- InterruptTracker:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player") -- REMOVED
         InterruptTracker:RegisterEvent("INSPECT_READY", function(_, guid) OnInspectReady(guid) end)
         InterruptTracker:RegisterEvent("GROUP_ROSTER_UPDATE", OnGroupRosterUpdate)
         InterruptTracker:RegisterEvent("PLAYER_ENTERING_WORLD", OnGroupRosterUpdate)
         
         OnGroupRosterUpdate() -- Initial scan
+        RegisterPartyWatchers() -- Initial watchers
         
         updateFrame:Show()
         container:Show()
     else
         InterruptTracker:UnregisterAllEvents()
+        for i=1,4 do partyFrames[i]:UnregisterAllEvents() end
+        playerWatcher:UnregisterAllEvents()
         updateFrame:Hide()
         container:Hide()
     end
@@ -893,4 +1034,22 @@ function InterruptTracker.ApplySettings()
      end
      
      UpdateLayout()
+end
+
+-- ============================================================================
+-- DEBUG COMMAND
+-- ============================================================================
+SLASH_GRAVITYDEBUGINTERRUPTS1 = "/gravitydebuginterrupts"
+SlashCmdList["GRAVITYDEBUGINTERRUPTS"] = function()
+    print("GravityUI Debug: Interrupt Tracker State")
+    if not container then print("- Container: nil") return end
+    print("- Container Shown:", container:IsShown())
+    print("- Active Bars:", #activeBars)
+    for i, info in ipairs(activeBars) do
+        print(i, info.name, info.spellId, info.expiration, info.frame:IsShown())
+    end
+    print("- Mover Shown:", container.mover and container.mover:IsShown())
+    local s = GetSettings()
+    print("- Enabled:", s and s.enabled)
+    print("- Group:", IsInGroup(), "Raid:", IsInRaid())
 end
