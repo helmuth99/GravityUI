@@ -1247,6 +1247,7 @@ local BLOODLUST_SPELLS = {
     -- We can add more IDs as discovered or reported.
     [354051] = true, -- Drums of Deathly Ferocity (SL)
     [381335] = true, -- Feral Hide Drums (DF)
+    [444257] = true, -- Thunderous Drums (TWW)
 }
 
 -- Media mapping
