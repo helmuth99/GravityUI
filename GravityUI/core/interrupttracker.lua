@@ -815,7 +815,7 @@ local function OnGroupRosterUpdate()
     -- 1. Raid: Hide (Too much clutter)
     -- 2. Solo: Hide (User request)
     -- Exception: Test Mode
-    if (not inGroup or instanceType == "raid") and not testModeActive then
+    if (not inGroup or instanceType == "raid" or IsInRaid()) and not testModeActive then
          for _, info in ipairs(activeBars) do info.frame:Hide() end
          activeBars = {}
          -- Unregister watchers

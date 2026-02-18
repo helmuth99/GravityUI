@@ -259,9 +259,15 @@ function Module:SkinBar(bar)
                 end
                 -- 2. Fallback: OVERLAY + Small Width (If ID changes in future)
                 if not spark and region:GetDrawLayer() == "OVERLAY" and (not bar:IsProtected()) then
-                     local w, h = region:GetSize()
-                     local barH = bar:GetHeight()
-                     if w and h and barH and w < 20 and h >= (barH - 5) then
+                     local isSpark = false
+                     pcall(function()
+                         local w, h = region:GetSize()
+                         local barH = bar:GetHeight()
+                         if w and h and barH and w < 20 and h >= (barH - 5) then
+                             isSpark = true
+                         end
+                     end)
+                     if isSpark then
                          spark = region
                      end
                 end
