@@ -214,6 +214,7 @@ local function GetSettings()
                 showBorder = true,
                 showIcon = true,
                 showTime = true,
+                showReadyText = true,
                 testMode = false,
                 useSpecificCooldownColor = false,
                 cooldownTextColor = {1, 1, 1, 1},
@@ -452,7 +453,11 @@ local function StartCooldown(guid, name, class, spellId, isReady)
                 -- If it's a "ready" bar and we find an existing one, ensure it's in ready state
                 info.expiration = 0
                 info.duration = 0
-                info.frame.time:SetText("Ready")
+                if s.showReadyText then
+                    info.frame.time:SetText("Ready")
+                else
+                    info.frame.time:SetText("")
+                end
                 -- Reset Color to Ready Color (if different)
                 local cr, cg, cb, ca = 1, 1, 1, 1
                 if s.useSpecificCooldownColor then
@@ -496,7 +501,11 @@ local function StartCooldown(guid, name, class, spellId, isReady)
         expiration = GetTime() + duration
         f.time:SetText(string.format("%.1f", duration))
     else
-        f.time:SetText("Ready")
+        if s.showReadyText then
+             f.time:SetText("Ready")
+        else
+             f.time:SetText("")
+        end
         f.bar:SetValue(1)
     end
     
@@ -538,6 +547,7 @@ end
 local function OnUpdate(self, elapsed)
     local now = GetTime()
     local dirty = false
+    local s = GetSettings()
     
     -- Check expiration
     for i, info in ipairs(activeBars) do
@@ -548,10 +558,14 @@ local function OnUpdate(self, elapsed)
                 info.duration = 0
                 info.expiration = 0
                 info.frame.bar:SetValue(1) -- Set bar to full
-                info.frame.time:SetText("Ready")
+                
+                if s and s.showReadyText then
+                     info.frame.time:SetText("Ready")
+                else
+                     info.frame.time:SetText("")
+                end
                 
                 -- Reset Color to Ready Color
-                local s = GetSettings()
                 local cr, cg, cb, ca = 1, 1, 1, 1
                 if s and s.useSpecificCooldownColor then
                     local c = s.cooldownTextColor or {1, 1, 1, 1}
@@ -569,8 +583,9 @@ local function OnUpdate(self, elapsed)
             end
         else
             -- Already Ready
-            if info.frame.time:GetText() ~= "Ready" then
-                 info.frame.time:SetText("Ready")
+            local targetText = (s and s.showReadyText) and "Ready" or ""
+            if info.frame.time:GetText() ~= targetText then
+                 info.frame.time:SetText(targetText)
             end
         end
     end
@@ -735,10 +750,15 @@ local function OnInspectReady(guid)
                              -- Reset to Ready (Switching specs resets CDs usually)
                              info.duration = 0
                              info.expiration = 0
-                             info.frame.time:SetText("Ready")
-                             info.frame.bar:SetValue(1)
                              
                              local s = GetSettings()
+                             if s and s.showReadyText then
+                                  info.frame.time:SetText("Ready")
+                             else
+                                  info.frame.time:SetText("")
+                             end
+
+                             info.frame.bar:SetValue(1)
                              local cr, cg, cb, ca = 1, 1, 1, 1
                              if s and s.useSpecificCooldownColor then
                                 local c = s.cooldownTextColor or {1, 1, 1, 1}
@@ -886,15 +906,25 @@ function InterruptTracker.ToggleMover(force)
         container.mover:Show()
         
         -- Style based on mode
+        local r, g, b, a, br, bg, bb, ba
         if force then
             -- Edit Mode: Blue Overlay
-            container:SetBackdropColor(0, 0.6, 1, 0.5)
-            container:SetBackdropBorderColor(0, 0.8, 1, 1)
+            r, g, b, a = 0, 0.6, 1, 0.5
+            br, bg, bb, ba = 0, 0.8, 1, 1
         else
             -- Manual Toggle: Green Highlight
-            container:SetBackdropColor(0, 1, 0, 0.3)
-            container:SetBackdropBorderColor(0, 1, 0, 1)
+            r, g, b, a = 0, 1, 0, 0.3
+            br, bg, bb, ba = 0, 1, 0, 1
         end
+
+        container.mover:SetBackdrop({
+            bgFile = "Interface\\Buttons\\WHITE8x8",
+            edgeFile = "Interface\\Buttons\\WHITE8x8",
+            edgeSize = 1,
+            insets = { left = 0, right = 0, top = 0, bottom = 0 }
+        })
+        container.mover:SetBackdropColor(r, g, b, a)
+        container.mover:SetBackdropBorderColor(br, bg, bb, ba)
         
         -- Add dummy bars for visual if empty
         if #activeBars == 0 then
@@ -904,10 +934,7 @@ function InterruptTracker.ToggleMover(force)
         end
     else
         container.mover:Hide()
-        
-        -- Restore Transparency
-        container:SetBackdropColor(0, 0, 0, 0)
-        container:SetBackdropBorderColor(0, 0, 0, 0)
+        container.mover:SetBackdrop(nil)
         
         -- Clear dummies ONLY if we created them
         if moverDummiesActive then
@@ -945,8 +972,9 @@ function InterruptTracker.Initialize()
     container:SetBackdropBorderColor(0, 0, 0, 0)
     
     -- Mover Overlay
-    local mover = CreateFrame("Frame", nil, container)
+    local mover = CreateFrame("Frame", nil, container, "BackdropTemplate")
     mover:SetAllPoints()
+    mover:SetFrameStrata("DIALOG") -- Ensure above bars
     mover:EnableMouse(true)
     mover:RegisterForDrag("LeftButton")
     mover:Hide()

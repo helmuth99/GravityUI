@@ -198,6 +198,13 @@ local function ReadSpellCooldown(spellID)
     return nil, nil, nil
 end
 
+local function GetScaledCursorPosition()
+    local x, y = GetCursorPosition()
+    local scale = UIParent:GetEffectiveScale()
+    return x / scale, y / scale
+end
+
+
 ---------------------------------------------------------------------------
 -- CURSOR (RETICLE) LOGIC - GCD Ring und Cursor-Indikator
 ---------------------------------------------------------------------------
