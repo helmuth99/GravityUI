@@ -196,6 +196,12 @@ end
 function Addon:OnEnable()
     self:RegisterEvent("PLAYER_ENTERING_WORLD")
     
+    -- Initialize Modules
+    if ns.InterruptTracker and ns.InterruptTracker.Initialize then 
+        ns.InterruptTracker.Initialize() 
+        if ns.InterruptTracker.ApplySettings then ns.InterruptTracker.ApplySettings() end
+    end
+    
     -- Initial Updates
     ns.RefreshEverything()
     
@@ -343,6 +349,11 @@ function Addon:PLAYER_ENTERING_WORLD(event, isInitialLogin, isReloadingUi)
     -- Initialize GUICDM Keybinds
     if ns.GUICDM_Keybinds and ns.GUICDM_Keybinds.Init then
         ns.GUICDM_Keybinds:Init()
+    end
+
+    -- Initialize Interrupt Tracker
+    if ns.InterruptTracker and ns.InterruptTracker.Initialize then
+        ns.InterruptTracker:Initialize()
     end
 
 

@@ -278,8 +278,8 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
     if event == "UNIT_SPELLCAST_SUCCEEDED" then
         local unitTarget, castGUID, spellID = ...
         
-        -- STRICTLY local player only. We rely on COMM for others.
-        if unitTarget ~= "player" then return end
+        -- Filter: Only track Group Members or Player
+        if not UnitInParty(unitTarget) and not UnitInRaid(unitTarget) and unitTarget ~= "player" then return end
         
         if not castGUID or not spellID or type(spellID) ~= "number" then return end
         
@@ -298,34 +298,28 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
         local db = ns.GetDB()
         if not db or not db.raidWarnings or not db.raidWarnings.enabled then return end
         local csv = db.raidWarnings
+        -- Check Tracked Spells (using pcall for safety)
+        local key = nil
+        local success, val = pcall(function() return TRACKED_SPELLS[spellID] end)
+        if success then key = val end
         
-        -- Check Logic: 1. Hardcoded List, 2. Custom List
-        -- Use pcall to avoid "table index is secret" crash with private auras
-        local success, key = pcall(function() return TRACKED_SPELLS[spellID] end)
-        if not success then key = nil end
-        
+        -- Check Custom Spells
         if not key and csv.customSpells then
             local success_custom, key_custom = pcall(function() return csv.customSpells[spellID] end)
             if success_custom then key = key_custom end
         end
         
         if not key then return end
-        if not csv.events or not csv.events[key] then return end
+        if csv.events and not csv.events[key] then return end
         
         -- Group Check
         local inRaid = IsInRaid()
         local inGroup = IsInGroup()
         
-        local channel = nil
         if inRaid then
              if not csv.showInRaid then return end
-             channel = (IsInGroup(LE_PARTY_CATEGORY_INSTANCE) and "INSTANCE_CHAT") or "RAID"
         elseif inGroup then
              if not csv.showInGroup then return end
-             channel = (IsInGroup(LE_PARTY_CATEGORY_INSTANCE) and "INSTANCE_CHAT") or "PARTY"
-        else
-             -- SOLO: STRICTLY RETURN
-             return 
         end
         
         -- Update Throttle
@@ -333,17 +327,10 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
         lastCastTime = now
         
         local spellName = C_Spell.GetSpellName(spellID) or "Unknown Spell"
-        local playerName = UnitName("player")
+        local providerName = UnitName(unitTarget) or "Unknown"
         
-        -- 1. Show Local Alert
-        RaidWarnings.ShowAlert(spellName, playerName, key)
-        
-        -- 2. Broadcast to Group (Silent Sync)
-        -- Format: "RW:SpellID:Key"
-        if channel then
-            local message = string.format("RW:%d:%s", spellID, key)
-            C_ChatInfo.SendAddonMessage(COMM_PREFIX, message, channel)
-        end
+        -- Show Alert (Locally Detected)
+        RaidWarnings.ShowAlert(spellName, providerName, key)
         
     -- 2. REMOTE MESSAGE HANDLING (Receiver)
     elseif event == "CHAT_MSG_ADDON" then

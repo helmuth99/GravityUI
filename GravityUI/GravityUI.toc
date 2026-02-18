@@ -77,6 +77,7 @@ pages\profiles.lua
 core\buttons.lua
 core\skyriding.lua
 core\screenindicators.lua
+core\interrupttracker.lua
 
 # Strings
 strings\strings.xml

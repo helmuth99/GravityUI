@@ -654,6 +654,142 @@ local function BuildMissingBuffs(parent)
     content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
 end
 
+-- 6. Interrupt Tracker
+local function BuildInterruptTracker(parent)
+    local scroll, content = GUI:CreateScrollableContent(parent)
+    scroll:SetAllPoints()
+    local db = ns.GetDB(); if not db then return end
+    
+    if not db.screenindicators.interruptTracker then
+         db.screenindicators.interruptTracker = {
+            enabled = true,
+            width = 200,
+            height = 20,
+            texture = "Gravity",
+            font = "Gravity",
+            fontSize = 12,
+            fontOutline = "OUTLINE",
+            barColor = {1, 1, 1, 1},
+            textColor = {1, 1, 1, 1},
+            useClassColor = true,
+            growDirection = "DOWN",
+            x = 0, y = 0,
+            sayKick = false,
+            sayKickText = "Interrupted %t with %s!",
+         }
+    end
+    
+    local c = db.screenindicators.interruptTracker
+    content.rowCount = 0
+    local function Refresh()
+        if ns.InterruptTracker and ns.InterruptTracker.ApplySettings then
+             ns.InterruptTracker.ApplySettings()
+        end
+        -- Delay UI refresh to ensure DB update propagates
+        C_Timer.After(0.05, function() 
+            if ns.GUI and ns.GUI.RefreshAll then ns.GUI:RefreshAll() end 
+        end)
+    end
+    
+    local header = GUI:CreateSectionHeader(content, "Interrupt Tracker")
+    header:SetPoint("TOPLEFT", 10, -10)
+    header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
+    content.rowCount = 1.3
+    
+    local infoBox = GUI:CreateInfoBox(content, "Tracks interrupts of your party members using local combat events. Reliable and lightweight.")
+    infoBox:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
+    content.rowCount = content.rowCount + (infoBox:GetHeight() / (ROW_HEIGHT+5)) + 0.2
+    
+    CreateSubLabel(content, "General")
+    AddRow(content, "Enable Tracker", "checkbox", "enabled", c, Refresh)
+    
+    local testBtn = GUI:CreateButton(content, "Toggle Test Mode", 140, 24, function()
+        if ns.InterruptTracker.TestMode then ns.InterruptTracker.TestMode() end
+    end)
+    testBtn:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT + 5)))
+    
+    local moverBtn = GUI:CreateButton(content, "Toggle Mover", 120, 24, function()
+        if ns.InterruptTracker.ToggleMover then ns.InterruptTracker.ToggleMover() end
+    end)
+    moverBtn:SetPoint("LEFT", testBtn, "RIGHT", 10, 0)
+    
+    content.rowCount = content.rowCount + 1.2
+    
+    CreateSubLabel(content, "Dimensions & Layout")
+    AddRow(content, "Width", "slider", 50, 400, "width", c, Refresh, 1)
+    AddRow(content, "Bar Height", "slider", 10, 50, "height", c, Refresh, 1)
+    AddRow(content, "Bar Spacing", "slider", 0, 20, "spacing", c, Refresh, 1)
+    AddRow(content, "X Offset", "slider", -500, 500, "x", c, Refresh, 1)
+    AddRow(content, "Y Offset", "slider", -500, 500, "y", c, Refresh, 1)
+    
+    local directions = {{value="UP", text="Grow Up"},{value="DOWN", text="Grow Down"}}
+    AddRow(content, "Grow Direction", "dropdown", directions, "growDirection", c, Refresh)
+    
+    content.rowCount = content.rowCount + 0.3
+    
+    CreateSubLabel(content, "Appearance")
+    
+    local LSM = LibStub("LibSharedMedia-3.0", true)
+    local fontOptions = {{value="Fonts\\FRIZQT__.TTF", text="Friz Quadrata"}}
+    local texOptions = {{value="Interface\\TargetingFrame\\UI-StatusBar", text="Blizzard"}}
+    
+    if LSM then
+        fontOptions = {}
+        for name, _ in pairs(LSM:HashTable("font")) do table.insert(fontOptions, {value=name, text=name}) end
+        table.sort(fontOptions, function(a,b) return a.text < b.text end)
+        
+        texOptions = {}
+        for name, _ in pairs(LSM:HashTable("statusbar")) do table.insert(texOptions, {value=name, text=name}) end
+        table.sort(texOptions, function(a,b) return a.text < b.text end)
+    end
+    
+    AddRow(content, "Texture", "dropdown", texOptions, "texture", c, Refresh)
+    AddRow(content, "Font", "dropdown", fontOptions, "font", c, Refresh)
+    AddRow(content, "Font Size", "slider", 8, 32, "fontSize", c, Refresh, 1)
+    
+    local outlines = {{value="NONE", text="None"},{value="OUTLINE", text="Outline"},{value="THICKOUTLINE", text="Thick Outline"}}
+    AddRow(content, "Font Outline", "dropdown", outlines, "fontOutline", c, Refresh)
+    
+    content.rowCount = content.rowCount + 0.3
+    
+    CreateSubLabel(content, "Colors")
+    
+    AddRow(content, "Use Class Colors for Bar", "checkbox", "useClassColor", c, Refresh)
+    AddRow(content, "Use Theme Color for Bar", "checkbox", "useThemeBarColor", c, Refresh)
+    AddRow(content, "Bar Color", "color", "barColor", c, Refresh)
+    
+    content.rowCount = content.rowCount + 0.2
+    
+    -- Font Color
+    AddRow(content, "Use Class Colors for Text", "checkbox", "useClassColorText", c, Refresh)
+    AddRow(content, "Use Theme Color for Text", "checkbox", "useThemeFontColor", c, Refresh)
+    AddRow(content, "Text Color", "color", "textColor", c, Refresh)
+    
+    content.rowCount = content.rowCount + 0.2
+
+    AddRow(content, "Use different Color for Cooldown", "checkbox", "useSpecificCooldownColor", c, Refresh)
+    if c.useSpecificCooldownColor then
+        AddRow(content, "Cooldown Text Color", "color", "cooldownTextColor", c, Refresh)
+    end
+    
+    AddRow(content, "Use Ready Text", "checkbox", "showReadyText", c, Refresh)
+    
+    content.rowCount = content.rowCount + 0.3
+
+    -- Backdrop Color
+    AddRow(content, "Use Class Colors for Background", "checkbox", "useClassColorBackdrop", c, Refresh)
+    AddRow(content, "Use Theme Bar Background", "checkbox", "useThemeBackdropColor", c, Refresh)
+    AddRow(content, "Bar Background Color", "color", "backdropColor", c, Refresh)
+    
+    content.rowCount = content.rowCount + 0.3
+    
+    CreateSubLabel(content, "Announce to Say")
+    AddRow(content, "Enable 'Say Kick'", "checkbox", "sayKick", c, Refresh)
+    AddRow(content, "Message (%t=Target, %f=Focus)", "input", "sayKickText", c, Refresh)
+    
+    content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
+end
+
 -- ═══════════════════════════════════════════════════════════════
 -- MAIN PAGE
 -- ═══════════════════════════════════════════════════════════════
@@ -860,14 +996,16 @@ local function BuildRaidWarnings(parent)
 end
 
         -- Create SubTabs
-        local subTabs = GUI:CreateSubTabs(scrollFrame, {
+        local categories = {
             { name = "Cursor", builder = BuildCursor },
             { name = "Crosshair", builder = BuildCrosshair },
-            { name = "Combat Status", builder = BuildCombatStatus },
-            { name = "Pet", builder = BuildPet },
+            { name = "Combat Indicator", builder = BuildCombatStatus },
+            { name = "Pet Info", builder = BuildPet },
             { name = "Missing Buffs", builder = BuildMissingBuffs },
             { name = "Raid Warnings", builder = BuildRaidWarnings },
-        })
+            { name = "Interrupt Tracker", builder = BuildInterruptTracker },
+        }
+        local subTabs = GUI:CreateSubTabs(scrollFrame, categories)
         subTabs:SetPoint("TOPLEFT", 10, -10)
         subTabs:SetPoint("TOPRIGHT", -10, 0)
     end,

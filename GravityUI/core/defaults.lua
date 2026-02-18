@@ -238,6 +238,40 @@ ns.Defaults = {
         },
         customSpells = {}, -- { [spellID] = "type" } e.g. { [12345] = "feast" }
     },
+    interruptTracker = {
+        enabled = true,
+        width = 200,
+        height = 20,
+        spacing = 0,
+        texture = "Gravity Normal",
+        font = "Gravity",
+        fontSize = 12,
+        fontOutline = "OUTLINE",
+        
+        -- Colors
+        useClassColor = false,   -- Priority 1 for Bar Color
+        
+        useThemeBarColor = false,    -- Priority 2 (if class color off)
+        barColor = {0.129, 0.129, 0.129, 0.851}, -- Priority 3 (Custom) #212121D9
+
+        useSpecificCooldownColor = true,
+        cooldownTextColor = {1, 1, 1, 1},
+        showReadyText = true,
+
+        useClassColorText = true,   -- Priority 1 for Font (NEW)
+        useThemeFontColor = false, -- Priority 2 for Font
+        textColor = {1, 1, 1, 1},   -- Priority 3 (Custom)
+
+        useClassColorBackdrop = false, -- Priority 1 for Background (NEW)
+        useThemeBackdropColor = false, -- Priority 2 for Background
+        backdropColor = {0.463, 0.463, 0.463, 0.851}, -- Priority 3 (Custom) #767676D9
+
+        growDirection = "UP",
+        x = 0, 
+        y = 0,
+        sayKick = false,
+        sayKickText = "Interrupted %t!",
+    },
     raidBuffs = {
         enabled = true,
         showOnlyInGroup = true,
