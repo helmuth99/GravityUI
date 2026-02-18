@@ -648,6 +648,12 @@ local function OnUpdate(self, delta)
     end
 
     currentThrottle = needsFast and FAST_THROTTLE or SLOW_THROTTLE
+
+    -- Smart Sleep Mode: If full vigor, not gliding, and no animations, throttle aggressively or pause
+    if not isGliding and not needsFast and currentBarValue == 1 and swCurrentValue == (swMaxCharges > 0 and 1 or 0) and fadeStart == 0 then
+         -- Sleep Check (Check drastically less often, e.g. 1s)
+         currentThrottle = 1.0
+    end
 end
 
 ---------------------------------------------------------------------------

@@ -201,15 +201,15 @@ local function GetSettings()
     if db and db.screenindicators then
         if not db.screenindicators.interruptTracker then
             db.screenindicators.interruptTracker = {
-                enabled = true,
+                enabled = false,
                 x = 0, y = 0,
                 width = 220, height = 20,
                 barHeight = 20,
                 iconSize = 20,
                 fontSize = 12,
                 font = "Gravity",
-                texture = "Solid",
-                growUpwards = true,
+                texture = "Gravity Normal",
+                growDirection = "UP",
                 useClassColors = true,
                 showBorder = true,
                 showIcon = true,
@@ -218,6 +218,12 @@ local function GetSettings()
                 testMode = false,
                 useSpecificCooldownColor = false,
                 cooldownTextColor = {1, 1, 1, 1},
+                fontOutline = "OUTLINE",
+                barColor = {0.129, 0.129, 0.129, 0.85},
+                textColor = {1, 1, 1, 1},
+                useClassColor = false,
+                sayKick = false,
+                sayKickText = "Interrupted %t!",
             }
         end
         return db.screenindicators.interruptTracker
@@ -408,6 +414,76 @@ local function UpdateLayout()
     end
 end
 
+
+local UPDATE_THROTTLE = 0.05
+local timeSinceLastUpdate = 0
+
+local function OnUpdate(self, elapsed)
+    timeSinceLastUpdate = timeSinceLastUpdate + elapsed
+    if timeSinceLastUpdate < UPDATE_THROTTLE then return end
+    timeSinceLastUpdate = 0
+
+    local now = GetTime()
+    local dirty = false
+    local s = GetSettings()
+    
+    if #activeBars == 0 then
+        self:Hide()
+        return
+    end
+    
+    -- Check expiration
+    for i, info in ipairs(activeBars) do
+        if info.duration > 0 then
+            -- Active Cooldown
+            if now >= info.expiration then
+                -- Expired -> Ready
+                info.duration = 0
+                info.expiration = 0
+                info.frame.bar:SetValue(1) -- Set bar to full
+                
+                local readyText = (s and s.showReadyText) and "Ready" or ""
+                if info.frame.time:GetText() ~= readyText then
+                    info.frame.time:SetText(readyText)
+                end
+                
+                -- Reset Color to Ready Color
+                local cr, cg, cb, ca = 1, 1, 1, 1
+                if s and s.useSpecificCooldownColor then
+                    local c = s.cooldownTextColor or {1, 1, 1, 1}
+                     cr, cg, cb, ca = c[1] or 1, c[2] or 1, c[3] or 1, c[4] or 1
+                end
+                info.frame.time:SetTextColor(cr, cg, cb, ca)
+                
+                dirty = true
+            else
+                -- Update Timer Text
+                local remaining = info.expiration - now
+                local pct = remaining / info.duration
+                info.frame.bar:SetValue(pct) -- Update bar value
+                
+                -- Optimization: Only SetText if changed (and throttle to 0.1s visual resolution)
+                local newText = string.format("%.1f", remaining)
+                if info.frame.time:GetText() ~= newText then
+                    info.frame.time:SetText(newText)
+                end
+            end
+        else
+            -- Already Ready
+            local targetText = (s and s.showReadyText) and "Ready" or ""
+            if info.frame.time:GetText() ~= targetText then
+                 info.frame.time:SetText(targetText)
+            end
+        end
+    end
+    
+    if dirty then UpdateLayout() end
+end
+
+local updateFrame = CreateFrame("Frame", "GravityUI_InterruptTrackerUpdate", UIParent)
+updateFrame:Hide()
+updateFrame:SetScript("OnUpdate", OnUpdate)
+
 -- ============================================================================
 -- LOGIC
 -- ============================================================================
@@ -520,6 +596,7 @@ local function StartCooldown(guid, name, class, spellId, isReady)
     }
     table.insert(activeBars, info)
     
+    updateFrame:Show() -- Ensure OnUpdate is running
     UpdateLayout()
     
     -- Say Kick (Self Only)
@@ -544,61 +621,10 @@ local function StartCooldown(guid, name, class, spellId, isReady)
      end
 end
 
-local function OnUpdate(self, elapsed)
-    local now = GetTime()
-    local dirty = false
-    local s = GetSettings()
-    
-    -- Check expiration
-    for i, info in ipairs(activeBars) do
-        if info.duration > 0 then
-            -- Active Cooldown
-            if now >= info.expiration then
-                -- Expired -> Ready
-                info.duration = 0
-                info.expiration = 0
-                info.frame.bar:SetValue(1) -- Set bar to full
-                
-                if s and s.showReadyText then
-                     info.frame.time:SetText("Ready")
-                else
-                     info.frame.time:SetText("")
-                end
-                
-                -- Reset Color to Ready Color
-                local cr, cg, cb, ca = 1, 1, 1, 1
-                if s and s.useSpecificCooldownColor then
-                    local c = s.cooldownTextColor or {1, 1, 1, 1}
-                     cr, cg, cb, ca = c[1] or 1, c[2] or 1, c[3] or 1, c[4] or 1
-                end
-                info.frame.time:SetTextColor(cr, cg, cb, ca)
-                
-                dirty = true
-            else
-                -- Update Timer Text
-                local remaining = info.expiration - now
-                local pct = remaining / info.duration
-                info.frame.bar:SetValue(pct) -- Update bar value
-                info.frame.time:SetText(string.format("%.1f", remaining)) -- Use string.format for consistency with StartCooldown
-            end
-        else
-            -- Already Ready
-            local targetText = (s and s.showReadyText) and "Ready" or ""
-            if info.frame.time:GetText() ~= targetText then
-                 info.frame.time:SetText(targetText)
-            end
-        end
-    end
-    
-    if dirty then UpdateLayout() end
-end
+local UPDATE_THROTTLE = 0.05
+local timeSinceLastUpdate = 0
 
--- ============================================================================
--- EVENT HANDLERS (AceEvent)
--- ============================================================================
-local updateFrame = CreateFrame("Frame", "GravityUI_InterruptTrackerUpdate", UIParent)
-updateFrame:Hide()
-updateFrame:SetScript("OnUpdate", OnUpdate)
+
 
 function InterruptTracker:UNIT_SPELLCAST_SUCCEEDED(event, unit, castGUID, spellId)
     -- Restriction: Only in Party (Dungeons/M+), Disable in Raid/Solo

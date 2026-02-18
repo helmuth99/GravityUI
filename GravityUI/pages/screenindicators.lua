@@ -662,20 +662,20 @@ local function BuildInterruptTracker(parent)
     
     if not db.screenindicators.interruptTracker then
          db.screenindicators.interruptTracker = {
-            enabled = true,
+            enabled = false,
             width = 200,
             height = 20,
-            texture = "Gravity",
+            texture = "Gravity Normal",
             font = "Gravity",
             fontSize = 12,
             fontOutline = "OUTLINE",
-            barColor = {1, 1, 1, 1},
+            barColor = {0.129, 0.129, 0.129, 0.85},
             textColor = {1, 1, 1, 1},
-            useClassColor = true,
-            growDirection = "DOWN",
+            useClassColor = false,
+            growDirection = "UP",
             x = 0, y = 0,
             sayKick = false,
-            sayKickText = "Interrupted %t with %s!",
+            sayKickText = "Interrupted %t!",
          }
     end
     
@@ -800,7 +800,7 @@ local function BuildBloodlust(parent)
     -- Ensure Defaults
     if not db.screenindicators.bloodlust then
          db.screenindicators.bloodlust = {
-            enabled = true,
+            enabled = false,
             size = 256,
             texture = "goku",
             sound = "Kamehameha",
@@ -1070,6 +1070,72 @@ local function BuildRaidWarnings(parent)
     content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
 end
 
+-- 8. Difficulty Indicator
+local function BuildDifficulty(parent)
+    local scroll, content = GUI:CreateScrollableContent(parent)
+    scroll:SetAllPoints()
+    local db = ns.GetDB(); if not db then return end
+    
+    if not db.screenindicators.difficulty then
+         db.screenindicators.difficulty = {
+            enabled = false,
+            instantDungeon = false,
+            instantRaid = false,
+            duration = 15,
+            autoMythic = false,
+            scale = 1.0,
+            x = 0, y = 200,
+         }
+    end
+    
+    local c = db.screenindicators.difficulty
+    content.rowCount = 0
+    local refresh = function() 
+        if ns.ScreenIndicators and ns.ScreenIndicators.UpdateDifficultyPosition then 
+            ns.ScreenIndicators.UpdateDifficultyPosition()
+        end 
+    end
+    
+    local header = GUI:CreateSectionHeader(content, "Difficulty Indicator")
+    header:SetPoint("TOPLEFT", 10, -10)
+    header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
+    content.rowCount = 1.3
+    
+    local infoBox = GUI:CreateInfoBox(content, "Automatically shows a difficulty selection bar for 15s when you become Group/Raid Leader.")
+    infoBox:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
+    content.rowCount = content.rowCount + (infoBox:GetHeight() / (ROW_HEIGHT+5)) + 0.2
+    
+    CreateSubLabel(content, "General")
+    AddRow(content, "Enable Indicator", "checkbox", "enabled", c, refresh)
+    AddRow(content, "Instant Dungeon Mythic (Skip UI)", "checkbox", "instantDungeon", c, refresh)
+    AddRow(content, "Instant Raid Mythic (Skip UI)", "checkbox", "instantRaid", c, refresh)
+    AddRow(content, "Auto-Set Mythic on Timeout", "checkbox", "autoMythic", c, refresh)
+    AddRow(content, "Duration (sec)", "slider", 5, 60, "duration", c, refresh, 1)
+    
+    content.rowCount = content.rowCount + 0.5
+    
+    local previewBtn = GUI:CreateButton(content, "Preview Bar", 140, 24, function()
+        if ns.ScreenIndicators.PreviewDifficulty then ns.ScreenIndicators.PreviewDifficulty() end
+    end)
+    previewBtn:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT + 5)))
+    
+    local moverBtn = GUI:CreateButton(content, "Toggle Mover", 120, 24, function()
+        if ns.Movers and ns.Movers.Toggle then
+            ns.Movers:Toggle("GravityUI_Difficulty")
+        end
+    end)
+    moverBtn:SetPoint("LEFT", previewBtn, "RIGHT", 10, 0)
+    
+    content.rowCount = content.rowCount + 1.2
+    
+    CreateSubLabel(content, "Dimensions")
+    AddRow(content, "Scale", "slider", 0.5, 2.0, "scale", c, refresh, 0.1)
+    AddRow(content, "X Offset (Mover)", "slider", -800, 800, "x", c, refresh, 1)
+    AddRow(content, "Y Offset (Mover)", "slider", -800, 800, "y", c, refresh, 1)
+
+    content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
+end
+
         -- Create SubTabs
         local categories = {
             { name = "Cursor", builder = BuildCursor },
@@ -1080,6 +1146,7 @@ end
             { name = "Raid Warnings", builder = BuildRaidWarnings },
             { name = "Interrupt Tracker", builder = BuildInterruptTracker },
             { name = "Bloodlust", builder = BuildBloodlust },
+            { name = "Difficulty", builder = BuildDifficulty },
         }
         -- Create SubTabs
         local subTabs = GUI:CreateSubTabs(scrollFrame, categories)

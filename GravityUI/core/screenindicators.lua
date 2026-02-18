@@ -1651,3 +1651,260 @@ local blListener = CreateFrame("Frame")
 blListener:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
 blListener:SetScript("OnEvent", OnSpellCast)
 
+
+-- ============================================================================
+-- DIFFICULTY INDICATOR (Leader Promotion Popup)
+-- ============================================================================
+
+local DifficultyState = {
+    frame = nil,
+    timer = nil,
+    lastIsLeader = false,
+}
+
+local function GetDifficultySettings()
+    local db = ns.GetDB()
+    -- Ensure defaults if missing
+    if not db.screenindicators.difficulty then
+        db.screenindicators.difficulty = {
+            enabled = false,
+            instantDungeon = false,
+            instantRaid = false,
+            duration = 15,
+            autoMythic = false, -- Future feature
+            scale = 1.0,
+            x = 0, y = 200,
+        }
+    end
+    return db.screenindicators.difficulty
+end
+
+local function CreateDifficultyBar()
+    if DifficultyState.frame then return end
+    
+    local f = CreateFrame("Frame", "GravityUI_DifficultyBar", UIParent, "BackdropTemplate")
+    f:SetSize(300, 60)
+    f:SetPoint("CENTER", 0, 200)
+    f:SetFrameStrata("DIALOG")
+    f:Hide()
+    
+    -- Glassmorphic Background
+    f:SetBackdrop({
+        bgFile = "Interface\\Buttons\\WHITE8x8",
+        edgeFile = "Interface\\Buttons\\WHITE8x8",
+        edgeSize = 1,
+    })
+    f:SetBackdropColor(0.1, 0.1, 0.1, 0.9)
+    f:SetBackdropBorderColor(0, 0, 0, 1)
+    
+    -- Title
+    f.title = f:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    f.title:SetPoint("TOP", 0, -8)
+    f.title:SetText("Select Difficulty")
+    f.title:SetTextColor(1, 0.8, 0, 1)
+    
+    -- Helper to create buttons
+    local function CreateDiffButton(parent, label, diffID_Dungeon, diffID_Raid, color)
+        local btn = CreateFrame("Button", nil, parent, "BackdropTemplate")
+        btn:SetSize(80, 24)
+        
+        btn:SetBackdrop({
+            bgFile = "Interface\\Buttons\\WHITE8x8",
+            edgeFile = "Interface\\Buttons\\WHITE8x8",
+            edgeSize = 1,
+        })
+        btn:SetBackdropColor(0.2, 0.2, 0.2, 1)
+        btn:SetBackdropBorderColor(0, 0, 0, 1)
+        
+        local text = btn:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+        text:SetPoint("CENTER")
+        text:SetText(label)
+        if color then text:SetTextColor(unpack(color)) end
+        
+        btn:SetScript("OnEnter", function(self) 
+            self:SetBackdropColor(0.4, 0.4, 0.4, 1)
+            self:SetBackdropBorderColor(1, 1, 1, 1)
+        end)
+        btn:SetScript("OnLeave", function(self) 
+            self:SetBackdropColor(0.2, 0.2, 0.2, 1)
+            self:SetBackdropBorderColor(0, 0, 0, 1)
+        end)
+        
+        btn:SetScript("OnClick", function()
+            if IsInRaid() then
+                SetRaidDifficultyID(diffID_Raid)
+                print("GravityUI: Raid Difficulty set to " .. label)
+            else
+                SetDungeonDifficultyID(diffID_Dungeon)
+                print("GravityUI: Dungeon Difficulty set to " .. label)
+            end
+            
+            -- Close bar after selection
+            if DifficultyState.timer then DifficultyState.timer:Cancel() end
+            parent:Hide()
+        end)
+        
+        return btn
+    end
+    
+    -- Buttons (Normal, Heroic, Mythic)
+    -- Dungeon IDs: 1=Normal, 2=Heroic, 23=Mythic
+    -- Raid IDs: 14=Normal, 15=Heroic, 16=Mythic
+    
+    local btnNormal = CreateDiffButton(f, "Normal", 1, 14, {0.2, 1, 0.2, 1})
+    btnNormal:SetPoint("BOTTOMLEFT", 15, 10)
+    
+    local btnHeroic = CreateDiffButton(f, "Heroic", 2, 15, {0.2, 0.6, 1, 1})
+    btnHeroic:SetPoint("LEFT", btnNormal, "RIGHT", 10, 0)
+    
+    local btnMythic = CreateDiffButton(f, "Mythic", 23, 16, {0.8, 0.2, 1, 1}) -- Purple for Mythic
+    btnMythic:SetPoint("LEFT", btnHeroic, "RIGHT", 10, 0)
+    
+    -- Highlight Mythic (Standard)
+    btnMythic:SetBackdropBorderColor(0.7, 0.2, 1, 0.8)
+    
+    DifficultyState.frame = f
+    
+    -- Mover Integration
+    local function DifficultyMoverToggle(frame, visible)
+        if visible then
+             frame:EnableMouse(true)
+             frame:SetMovable(true)
+             frame:RegisterForDrag("LeftButton")
+             frame:SetScript("OnDragStart", frame.StartMoving)
+             frame:SetScript("OnDragStop", function(self)
+                 self:StopMovingOrSizing()
+                 local s = GetDifficultySettings()
+                 
+                 -- Force CENTER normalization so (0,0) is always screen center
+                 local x, y = self:GetCenter()
+                 local ux, uy = UIParent:GetCenter()
+                 local diffX = x - ux
+                 local diffY = y - uy
+                 
+                 s.point = "CENTER"
+                 s.relativePoint = "CENTER"
+                 s.x = diffX
+                 s.y = diffY
+                 
+                 self:ClearAllPoints()
+                 self:SetPoint("CENTER", UIParent, "CENTER", diffX, diffY)
+             end)
+             frame.title:SetText("MOVER (Drag Me)")
+             
+             -- Blue Overlay
+             if not frame.bg then
+                 frame.bg = frame:CreateTexture(nil, "BACKGROUND")
+                 frame.bg:SetAllPoints()
+                 frame.bg:SetColorTexture(0, 0.6, 1, 0.5) -- Blue Overlay
+             end
+             frame.bg:Show()
+             
+             frame:Show()
+        else
+             frame:Hide()
+             frame:EnableMouse(false)
+             frame.title:SetText("Select Difficulty")
+             if frame.bg then frame.bg:Hide() end
+        end
+    end
+     
+    if ns.Movers and ns.Movers.Register then
+        ns.Movers:Register("GravityUI_Difficulty", f, DifficultyMoverToggle, "Difficulty Indicator")
+    end
+    
+    -- Apply initial saved position
+    Screen.UpdateDifficultyPosition()
+end
+
+function Screen.UpdateDifficultyPosition()
+    if not DifficultyState.frame then return end
+    local f = DifficultyState.frame
+    local s = GetDifficultySettings()
+    
+    f:ClearAllPoints()
+    -- Always force CENTER for consistent X/Y behavior (User Request: 0,0 = Center)
+    local x = s.x or 0
+    local y = s.y or 0
+    
+    f:SetPoint("CENTER", UIParent, "CENTER", x, y)
+    f:SetScale(s.scale or 1.0)
+end
+
+function Screen.TriggerDifficultyBar()
+    local s = GetDifficultySettings()
+    if not s or not s.enabled then return end
+    
+    -- Instant Mythic Logic
+    if IsInRaid() then
+        if s.instantRaid then
+            SetRaidDifficultyID(16) -- Mythic
+            print("GravityUI: Instant Set Raid to Mythic")
+            return
+        end
+    elseif IsInGroup() then
+        if s.instantDungeon then
+            SetDungeonDifficultyID(23) -- Mythic
+            print("GravityUI: Instant Set Dungeon to Mythic")
+            return
+        end
+    end
+    
+    CreateDifficultyBar()
+    local f = DifficultyState.frame
+    
+    -- Position
+    Screen.UpdateDifficultyPosition() -- Reuse the logic
+    
+    f:Show()
+    
+    -- Timer
+    if DifficultyState.timer then DifficultyState.timer:Cancel() end
+    DifficultyState.timer = C_Timer.NewTimer(s.duration or 15, function()
+        f:Hide()
+        if s.autoMythic then
+            if IsInRaid() then
+                SetRaidDifficultyID(16) -- Mythic Raid
+                print("GravityUI: Auto-Set Raid to Mythic")
+            else
+                SetDungeonDifficultyID(23) -- Mythic Dungeon
+                print("GravityUI: Auto-Set Dungeon to Mythic")
+            end
+        end
+    end)
+end
+
+function Screen.PreviewDifficulty()
+    Screen.TriggerDifficultyBar()
+end
+
+-- Logic to Detect Leadership Change
+local function CheckLeadership()
+    local isLeader = UnitIsGroupLeader("player")
+    
+    -- If we become leader (and weren't before)
+    -- If we become leader (and weren't before)
+    if isLeader and not DifficultyState.lastIsLeader then
+        -- Only trigger if NOT inside an instance (raid/dungeon)
+        local inInstance, _ = IsInInstance()
+        if not inInstance then
+             Screen.TriggerDifficultyBar()
+        end
+    end
+    
+    DifficultyState.lastIsLeader = isLeader
+end
+
+local diffListener = CreateFrame("Frame")
+diffListener:RegisterEvent("GROUP_ROSTER_UPDATE")
+diffListener:RegisterEvent("PLAYER_FLAGS_CHANGED") -- Detects leader flag changes? Roster update is safer.
+diffListener:RegisterEvent("PLAYER_ENTERING_WORLD")
+
+diffListener:SetScript("OnEvent", function(self, event)
+    if event == "PLAYER_ENTERING_WORLD" then
+        CreateDifficultyBar()
+        DifficultyState.lastIsLeader = UnitIsGroupLeader("player")
+    else
+        CheckLeadership()
+    end
+end)
