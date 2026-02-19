@@ -1,7 +1,5 @@
 # GravityUI
 
-![GravityUI Banner](https://media.discordapp.net/attachments/1146399026477633546/1206198908868165642/Gravity_UI_Logo.png?ex=65db1f9e&is=65c8aa9e&hm=2a77519965851494884210087796030953835623049185638575047805625488&=&format=webp&quality=lossless&width=1440&height=360)
-
 **GravityUI** ist ein modernes, leistungsstarkes und visuell beeindruckendes UI-Komplettpaket für World of Warcraft (Retail). Es kombiniert ästhetisches "Glassmorphism"-Design mit höchster Performance und umfangreicher Anpassbarkeit.
 
 Unser Ziel ist es, ein Interface zu bieten, das nicht nur fantastisch aussieht, sondern auch deine Spielweise durch intelligente Features und Automatisierungen verbessert.

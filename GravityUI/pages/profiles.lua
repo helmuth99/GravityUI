@@ -585,10 +585,7 @@ local function BuildInstallerTab(parent)
             statusText:SetText("|cFFFF0000Configuration Mismatch|r")
         end
         
-        
-        -- Show Global Metadata (Account-Wide) if available
-        -- This shows "Who did the last setup", even if current char is mismatched.
-        -- Use GetAceDB() because GetDB() returns the profile (no global)
+        -- Metadata Logic
         local rawDB = ns.GetAceDB()
         local globalDB = rawDB and rawDB.global
         local metaDisplayed = false
@@ -610,136 +607,161 @@ local function BuildInstallerTab(parent)
         end
         
         -- Adjust Details Frame position based on metadata visibility
-        if metaDisplayed then
-             detailsFrame:SetPoint("TOPLEFT", 0, -50)
-        else
-             detailsFrame:SetPoint("TOPLEFT", 0, -35)
-        end
-        
-        -- Details
-        local dy = 0
+        local topOffset = metaDisplayed and -50 or -35
+        detailsFrame:SetPoint("TOPLEFT", 0, topOffset)
+
+        -- Clear previous children (hide them)
         for _, child in ipairs({detailsFrame:GetChildren()}) do child:Hide() end
         
-        for _, item in ipairs(report) do
-            -- Create/Reuse Checkbox Container or Row
-            -- We need a Checkbox on Left, Text on Right.
-            
-            -- Ideally we reuse frames or create new ones properly.
-            -- Using a hash-based retrieval for reusing by addon name would be best but simple create works for low item count (~10)
-            
-            local row = detailsFrame[item.label] 
-            if not row then
-                row = CreateFrame("Frame", nil, detailsFrame)
-                row:SetHeight(18)
-                
-                -- Create temporary state object for this checkbox to ensure it initializes Checked
-                local cbState = { checked = true }
-                
-                -- FORCE unchecked if not loaded
-                if not item.loaded then
-                    selectionState[item.label] = false
-                    cbState.checked = false
-                end
-                
-                if selectionState[item.label] ~= nil then cbState.checked = selectionState[item.label] end
-                
-                -- Capture label for closure
-                local labelText = item.label
-                
-                -- GUI:CreateCheckbox(parent, label, key, table, callback)
-                row.cb = GUI:CreateCheckbox(row, "", "checked", cbState, function(val) 
-                     selectionState[labelText] = val 
-                     if row.UpdateColor then row:UpdateColor() end
-                end)
-                row.cb:SetPoint("LEFT", 0, 0)
-                row.cb:SetSize(350, 24) 
-                
-                -- We use the framework's label
-                row.text = row.cb.label 
-                
-                detailsFrame[item.label] = row
-            end
-            
-            -- Re-Attach Color Update logic to row for reuse (FRESH CLOSURE)
-            row.UpdateColor = function(self)
-                local isChecked = selectionState[item.label]
-                if not self.text then return end
-                
-                if item.loaded == false then
-                     self.text:SetTextColor(0.5, 0.5, 0.5, 1)
-                     return
-                end
-                
-                if not isChecked then
-                     self.text:SetTextColor(0.5, 0.5, 0.5, 1)
-                else
-                     if item.match then
-                         self.text:SetTextColor(0, 1, 0, 1)
-                     else
-                         self.text:SetTextColor(1, 0, 0, 1)
-                     end
-                end
-            end
-            
-            -- Handle Loaded State
-            if item.loaded == false then
-                 -- Not Loaded: Disable Checkbox and force Unchecked
-                 if row.cb.Disable then row.cb:Disable() end
-                 -- selectionState already forced false above
-                 
-                 -- Update Text
-                 row.text:SetText(item.label .. ": |cFF888888Not Loaded|r")
-                 -- Force gray color (UpdateRowColor handles it)
-                 if row.cb.label then row.cb.label:SetTextColor(0.5, 0.5, 0.5, 1) end
-            else
-                 -- Loaded: Enable
-                 if row.cb.Enable then row.cb:Enable() end
-                 -- Initialize state if nil
-                 if selectionState[item.label] == nil then selectionState[item.label] = true end
-                 
-                 -- Update Text Content
-                 local contentText = item.label .. ": " .. (item.current or "Unknown")
-                 if not item.match then contentText = contentText .. " (Expected: " .. targetProfile .. ")" end
-                 row.text:SetText(contentText)
-                 
-                 -- Ensure checkbox visual matches state (might trigger callback)
-                 if row.cb.SetValue then row.cb:SetValue(selectionState[item.label], false) end
-            end
-            
-            row:UpdateColor()
-            
-            row:ClearAllPoints()
-            row:SetPoint("TOPLEFT", 10, dy)
-            row:SetPoint("RIGHT", -10, dy)
-            row:Show()
-
-            
-            -- Initialize state in our master table if missing
-            if selectionState[item.label] == nil then selectionState[item.label] = true end
-            
-            -- Force visual update if needed (though binding above handles it usually)
-            -- If the row was reused, we might need to update the checkbox?
-            -- Since we don't have a reliable SetChecked on the wrapper usually...
-            -- We just rely on the fact that we re-bind it or it's a new frame. 
-            -- But we are caching 'row'. So reused rows might have stale state if we don't update 'cbState'.
-            -- Actually, we passed 'cbState' during creation. Changing it now won't update the widget if it doesn't watch the table.
-            -- Best approach without deep widget knowledge: Re-create structure or recreate widget?
-            -- Or just assume the user won't toggle 100 times in a way that breaks reuse order (which is stable: by addon label).
-            -- We ARE reusing by label (detailsFrame[item.label]), so the checkbox stays with the addon. 
-            -- So the state should persist correctly as long as selectionState is source of truth.
-            -- We just need to make sure visuals match selectionState.
-            -- GUI Checkboxes usually update from table on Show? Or only on init?
-            -- Let's try to set the checked value if the method exists.
-            if row.cb.SetChecked then row.cb:SetChecked(selectionState[item.label]) end
-
-
-            
-            dy = dy - 24 -- Increased spacing for larger rows
-        end
-        detailsFrame:SetHeight(math.abs(dy))
+        -- 1. Split Items Categories & Init State
+        local importantItems = {}
+        local optionalItems = {}
         
-        local totalH = 35 + math.abs(dy)
-        return totalH 
+        for _, item in ipairs(report) do
+            -- Default Selection State Logic
+            if selectionState[item.label] == nil then
+                if item.category == "Optional" then
+                    selectionState[item.label] = false
+                else
+                    selectionState[item.label] = true
+                end
+            end
+            
+            -- Override if not loaded -> False
+            if not item.loaded then
+                selectionState[item.label] = false
+            end
+
+            if item.category == "Optional" then
+                table.insert(optionalItems, item)
+            else
+                table.insert(importantItems, item)
+            end
+        end
+        
+        -- 2. Render Columns helper
+        -- We hold references to created fontstrings for titles to hide/reuse safely?
+        -- Actually, we can just create them if missing.
+        if not detailsFrame.leftTitle then
+             detailsFrame.leftTitle = detailsFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+             detailsFrame.leftTitle:SetPoint("TOPLEFT", 10, 0)
+             detailsFrame.leftTitle:SetText("Important Addon Profiles")
+        end
+        detailsFrame.leftTitle:Show()
+        
+        if not detailsFrame.rightTitle then
+             detailsFrame.rightTitle = detailsFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+             detailsFrame.rightTitle:SetPoint("TOPLEFT", 350, 0)
+             detailsFrame.rightTitle:SetText("Optional Addon Profiles")
+        end
+        detailsFrame.rightTitle:Show()
+
+        local function UpdateHeader(currentReport)
+             local allOk = true
+             
+             for _, item in ipairs(currentReport) do
+                 -- If Checked AND Mismatch -> Fail
+                 -- (Important addons are Checked by default, so this covers them too if selectionState is correct)
+                 -- We must rely on selectionState.
+                 
+                 local isChecked = selectionState[item.label]
+                 -- Fallback for safety if nil (shouldn't happen with init logic below, but just in case)
+                 if isChecked == nil then
+                     if item.category == "Optional" then isChecked = false else isChecked = true end
+                 end
+                 
+                 if isChecked and (not item.match) then
+                     allOk = false
+                     break
+                 end
+             end
+             
+             if allOk then
+                statusText:SetText("|cFF00FF00System Fully Configured|r") 
+             else
+                statusText:SetText("|cFFFF0000Configuration Mismatch|r")
+             end
+        end
+
+        local function RenderColumn(items, xOffset)
+            local y = -25
+            
+            for _, item in ipairs(items) do
+                 local row = detailsFrame[item.label]
+                 if not row then
+                    row = CreateFrame("Frame", nil, detailsFrame)
+                    row:SetSize(320, 20) -- Explicit Size to ensure visibility
+                    
+                    local cbState = { checked = selectionState[item.label] }
+                    
+                    local label = item.label
+                    row.cb = GUI:CreateCheckbox(row, "", "checked", cbState, function(val)
+                         selectionState[label] = val
+                         if row.UpdateColor then row:UpdateColor() end
+                         
+                         -- Dynamic Header Update
+                         UpdateHeader(report)
+                    end)
+                    row.cb:SetPoint("LEFT", 0, 0)
+                    row.cb:SetSize(300, 24) -- Width for checkbox handling
+                    
+                    row.text = row.cb.label 
+                    detailsFrame[item.label] = row
+                 end
+                 
+                 -- Update Color Logic
+                 row.UpdateColor = function(self)
+                     local isChecked = selectionState[item.label]
+                     if not self.text then return end
+                     
+                     if item.loaded == false then
+                          self.text:SetTextColor(0.5, 0.5, 0.5, 1)
+                          return
+                     end
+                     
+                     if not isChecked then
+                          self.text:SetTextColor(0.5, 0.5, 0.5, 1)
+                     else
+                          if item.match then
+                              self.text:SetTextColor(0, 1, 0, 1)
+                          else
+                              self.text:SetTextColor(1, 0, 0, 1)
+                          end
+                     end
+                 end
+                 
+                 -- Refresh Display
+                 if item.loaded == false then
+                      if row.cb.Disable then row.cb:Disable() end
+                      row.text:SetText(item.label .. ": |cFF888888Not Loaded|r")
+                 else
+                      if row.cb.Enable then row.cb:Enable() end
+                      local contentText = item.label .. ": " .. (item.current or "Unknown")
+                      if not item.match then contentText = contentText .. " (|cFFFF0000Mismatch|r)" end
+                      row.text:SetText(contentText)
+                      if row.cb.SetValue then row.cb:SetValue(selectionState[item.label], false) end
+                 end
+                 
+                 row:UpdateColor()
+                 row:ClearAllPoints()
+                 row:SetPoint("TOPLEFT", xOffset, y)
+                 row:Show()
+                 
+                 y = y - 24
+            end
+            return math.abs(y)
+        end
+        
+        local h1 = RenderColumn(importantItems, 10)
+        local h2 = RenderColumn(optionalItems, 350)
+        
+        local maxH = math.max(h1, h2)
+        detailsFrame:SetHeight(maxH)
+        
+        -- Initial Header Update
+        UpdateHeader(report)
+        
+        return (math.abs(topOffset) + maxH)
     end
     
     local statusH = UpdateStatus()

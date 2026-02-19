@@ -157,7 +157,6 @@ local rangeCheckFrame
 
 -- Cached settings
 local cachedCursorSettings, cachedCrosshairSettings
-local cursorOffsetX, cursorOffsetY = 0, 0 -- Optimization: Upvalues for OnUpdate
 local cursorHideOnRightClick = false -- Optimization: Upvalue for Input Hook
 local isRightClickHidden = false -- Optimization: Use Alpha instead of Show/Hide to prevent Cooldown recalculation stutter
 local lastOutOfRange = nil -- Optimization: State tracker for Crosshair
@@ -362,9 +361,10 @@ local function CreateCursorFrame()
 
     -- Optimization: Use upvalues to avoid table lookups in high-frequency OnUpdate
     cursorFrame:SetScript("OnUpdate", function(self)
-        local x, y = GetScaledCursorPosition()
+        local x, y = GetCursorPosition()
+        local s = UIParent:GetEffectiveScale()
         -- Direct upvalue access is faster than table lookup
-        self:SetPoint("CENTER", UIParent, "BOTTOMLEFT", x + cursorOffsetX, y + cursorOffsetY)
+        self:SetPoint("CENTER", UIParent, "BOTTOMLEFT", (x / s) + cursorOffsetX, (y / s) + cursorOffsetY)
     end)
 
     -- Right-click hide functionality
@@ -373,7 +373,8 @@ local function CreateCursorFrame()
     WorldFrame:HookScript("OnMouseDown", function(_, button)
         if button == "RightButton" and cursorHideOnRightClick then
              isRightClickHidden = true
-             UpdateCursorDynamic()
+             -- Optimization: Direct set to avoid function call overhead
+             if cursorFrame then cursorFrame:SetAlpha(0) end
         end
     end)
 
@@ -967,6 +968,7 @@ eventFrame:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
 eventFrame:RegisterEvent("ACTIONBAR_SLOT_CHANGED")
 eventFrame:RegisterEvent("ACTIONBAR_PAGE_CHANGED")
 eventFrame:RegisterEvent("UPDATE_BONUS_ACTIONBAR")
+eventFrame:RegisterEvent("UPDATE_BONUS_ACTIONBAR")
 eventFrame:RegisterEvent("UPDATE_MACROS")
 
 eventFrame:SetScript("OnEvent", function(self, event, unit)
@@ -997,7 +999,7 @@ end)
 -- Debug Command
 SLASH_GRAVITYDEBUGRANGE1 = "/gravitydebugrange"
 SlashCmdList["GRAVITYDEBUGRANGE"] = function()
-    print("|cFF30D1FFGravityUI Range Debug:|r")
+    ns.Print("Range Debug:")
     if cachedRangeSlot then
         local actionType, id = GetActionInfo(cachedRangeSlot)
         local spellID = GetSpellIDFromSlot(cachedRangeSlot)
@@ -1733,10 +1735,10 @@ local function CreateDifficultyBar()
         btn:SetScript("OnClick", function()
             if IsInRaid() then
                 SetRaidDifficultyID(diffID_Raid)
-                print("GravityUI: Raid Difficulty set to " .. label)
+                ns.Print("Raid Difficulty set to " .. label)
             else
                 SetDungeonDifficultyID(diffID_Dungeon)
-                print("GravityUI: Dungeon Difficulty set to " .. label)
+                ns.Print("Dungeon Difficulty set to " .. label)
             end
             
             -- Close bar after selection
@@ -1839,13 +1841,13 @@ function Screen.TriggerDifficultyBar()
     if IsInRaid() then
         if s.instantRaid then
             SetRaidDifficultyID(16) -- Mythic
-            print("GravityUI: Instant Set Raid to Mythic")
+            ns.Print("Instant Set Raid to Mythic")
             return
         end
     elseif IsInGroup() then
         if s.instantDungeon then
             SetDungeonDifficultyID(23) -- Mythic
-            print("GravityUI: Instant Set Dungeon to Mythic")
+            ns.Print("Instant Set Dungeon to Mythic")
             return
         end
     end
@@ -1865,10 +1867,10 @@ function Screen.TriggerDifficultyBar()
         if s.autoMythic then
             if IsInRaid() then
                 SetRaidDifficultyID(16) -- Mythic Raid
-                print("GravityUI: Auto-Set Raid to Mythic")
+                ns.Print("Auto-Set Raid to Mythic")
             else
                 SetDungeonDifficultyID(23) -- Mythic Dungeon
-                print("GravityUI: Auto-Set Dungeon to Mythic")
+                ns.Print("Auto-Set Dungeon to Mythic")
             end
         end
     end)

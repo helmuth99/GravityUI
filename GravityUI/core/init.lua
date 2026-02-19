@@ -21,9 +21,15 @@ function ns.GetDB()
     return dbCache
 end
 
-function ns.InvalidateCache()
+-- Helper to clear caches
+function ns.InvalidateCaches()
     dbCache = nil
     ns.accentCache = nil
+end
+
+-- Standard Print Helper
+function ns.Print(msg)
+    print("|cFF30D1FFGravityUI|r " .. tostring(msg))
 end
 
 -- Get AceDB object for profile management
@@ -158,8 +164,8 @@ function Addon:OnInitialize()
     self:RegisterChatCommand("rl", "SlashCommandReload")
     self:RegisterChatCommand("kb", "SlashCommandKeybind")
     
-    print("|cFF30D1FFGravityUI|r loaded. Type |cFFFFFF00/gui|r to open settings.")
-    print("|cFF30D1FFGravityUI|r using profile: |cFF00BFFF" .. ns.db:GetCurrentProfile() .. "|r")
+    ns.Print("loaded. Type |cFFFFFF00/gui|r to open settings.")
+    ns.Print("using profile: |cFF00BFFF" .. ns.db:GetCurrentProfile() .. "|r")
     
     -- Character panel module auto-initializes via event registration
 end
@@ -220,9 +226,11 @@ function Addon:SlashCommandOpen(input)
     input = input and input:lower():trim() or ""
     
     if input == "editmode" then
-        -- Safe Instruction
-        print("|cFF30D1FFGravityUI:|r Please use |cFF00FF00Game Menu (Esc) -> Edit Mode|r.")
-        print("Direct toggle is disabled to prevent breaking 'Copy Layout' functionality.")
+        if SlashCmdList["EDITMODE"] then
+            SlashCmdList["EDITMODE"]("")
+        elseif EditModeManagerFrame then
+            ShowUIPanel(EditModeManagerFrame)
+        end
         return
     end
     
@@ -232,10 +240,10 @@ function Addon:SlashCommandOpen(input)
             CooldownViewerSettings:SetShown(not CooldownViewerSettings:IsShown())
             CooldownViewerSettings:SetShown(not CooldownViewerSettings:IsShown())
         else
-            print("|cFF30D1FFGravityUI:|r Cooldown Settings not available.")
+            ns.Print("Cooldown Settings not available.")
         end
         -- Print welcome message
-        print("|cFF30D1FFGravityUI:|r Version " .. (C_AddOns.GetAddOnMetadata("GravityUI", "Version") or "Dev") .. " Loaded.")
+        ns.Print("Version " .. (C_AddOns.GetAddOnMetadata("GravityUI", "Version") or "Dev") .. " Loaded.")
         return
     end
     
@@ -243,7 +251,7 @@ function Addon:SlashCommandOpen(input)
     if ns.GUI then
         ns.GUI:Toggle()
     else
-        print("|cFF30D1FFGravityUI:|r GUI not loaded yet. Try again in a moment.")
+        ns.Print("GUI not loaded yet. Try again in a moment.")
     end
 end
 
@@ -417,13 +425,17 @@ SlashCmdList["GUICDM"] = function()
     if CooldownViewerSettings then
         CooldownViewerSettings:SetShown(not CooldownViewerSettings:IsShown())
     else
-        print("|cFF30D1FFGravityUI:|r Cooldown Settings not available.")
+        ns.Print("Cooldown Settings not available.")
     end
 end
 
 SLASH_GUIEDIT1 = "/edit"
-SlashCmdList["GUIEDIT"] = function()
-    print("|cFF30D1FFGravityUI:|r Please use |cFF00FF00Game Menu (Esc) -> Edit Mode|r.")
+SlashCmdList["GUIEDIT"] = function(msg)
+    if SlashCmdList["EDITMODE"] then
+        SlashCmdList["EDITMODE"](msg)
+    elseif EditModeManagerFrame then
+        ShowUIPanel(EditModeManagerFrame)
+    end
 end
 
 -- Debug command to export current settings for defaults.lua
@@ -436,7 +448,7 @@ SlashCmdList["GUIEXPORT"] = function(msg)
             -- Fallback serialization
              local LibSerialize = LibStub("LibSerialize", true) -- Optional if available
              -- Basic print for now
-             print("|cFF30D1FFGravityUI:|r Exporting defaults...")
+             ns.Print("Exporting defaults...")
              
              -- Create a frame to hold the text
              local f = CreateFrame("Frame", "GUIExportFrame", UIParent)
@@ -500,7 +512,7 @@ SlashCmdList["GUIEXPORT"] = function(msg)
              close:SetScript("OnClick", function() f:Hide() end)
              
              f:Show()
-             print("|cFF30D1FFGravityUI:|r Profile serialized. Please copy the text.")
+             ns.Print("Profile serialized. Please copy the text.")
              return
         end
     end
@@ -512,7 +524,7 @@ end
 SLASH_GUITESTCLEANUP1 = "/guitestcleanup"
 SlashCmdList["GUITESTCLEANUP"] = function()
     local profile = "testUI"
-    print("|cFFFF0000[GravityUI]|r Cleaning up '" .. profile .. "' profiles...")
+    ns.Print("Cleaning up '" .. profile .. "' profiles...")
     
     local db = ns.GetDB()
     if db then db.installer = db.installer or {} end

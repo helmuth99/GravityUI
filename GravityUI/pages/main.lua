@@ -104,7 +104,7 @@ end
 local function RestorePreviousFPSSettings()
     local db = ns.GetDB()
     if not db or not db.fpsBackup then
-        print("|cffFF6B6B[GravityUI]|r No backup found. Apply FPS settings first to create a backup.")
+        ns.Print("No backup found. Apply FPS settings first to create a backup.")
         return false
     end
 
@@ -122,9 +122,9 @@ local function RestorePreviousFPSSettings()
     -- Clear backup after successful restore
     db.fpsBackup = nil
 
-    print("|cff34D399[GravityUI]|r Restored " .. successCount .. " previous settings.")
+    ns.Print("Restored " .. successCount .. " previous settings.")
     if failCount > 0 then
-        print("|cffFF6B6B[GravityUI]|r " .. failCount .. " settings could not be restored.")
+        ns.Print(failCount .. " settings could not be restored.")
     end
     return true
 end
@@ -148,10 +148,10 @@ local function ApplyGravityFPSSettings()
         end
     end
 
-    print("|cff34D399[GravityUI]|r Your previous settings have been backed up.")
-    print("|cff34D399[GravityUI]|r Applied " .. successCount .. " FPS settings. Use 'Restore Previous Settings' to undo.")
+    ns.Print("Your previous settings have been backed up.")
+    ns.Print("Applied " .. successCount .. " FPS settings. Use 'Restore Previous Settings' to undo.")
     if failCount > 0 then
-        print("|cffFF6B6B[GravityUI]|r " .. failCount .. " settings could not be applied (may require restart).")
+        ns.Print(failCount .. " settings could not be applied (may require restart).")
     end
 end
 
@@ -274,9 +274,9 @@ ns.GUI:RegisterPage("main", {
             db.general.uiScale = val
             pcall(function() UIParent:SetScale(val) end)
             scaleSlider.SetValue(val)
-            local msg = "|cff34D399[GravityUI]|r UI scale set to " .. string.format("%.4f", val)
+            local msg = "UI scale set to " .. string.format("%.4f", val)
             if name then msg = msg .. " (" .. name .. ")" end
-            DEFAULT_CHAT_FRAME:AddMessage(msg)
+            ns.Print(msg)
         end
         
         local function AutoScale()

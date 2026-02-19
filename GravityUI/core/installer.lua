@@ -205,19 +205,19 @@ Installer.registry = {
                                     if ok then decodedData = res end
                                 end
                             end
-                             -- DECODE STRATEGY 3: Json (Internal?)
+                              -- DECODE STRATEGY 3: Json (Internal?)
                              -- Sometimes simple tables.
                         else
-                             print("[GUI Debug] Danders: Decompress failed.")
+                             ns.Print("[GUI Debug] Danders: Decompress failed.")
                         end
                     else
-                         print("[GUI Debug] Danders: DecodeForPrint failed.")
+                         ns.Print("[GUI Debug] Danders: DecodeForPrint failed.")
                     end
                 else
-                    print("[GUI Debug] Danders: LibDeflate missing.")
+                    ns.Print("[GUI Debug] Danders: LibDeflate missing.")
                 end
             elseif type(data) == "table" then
-                print("[GUI Debug] Danders: Data is already a table.")
+                ns.Print("[GUI Debug] Danders: Data is already a table.")
                 decodedData = data
             end
             
@@ -275,7 +275,7 @@ Installer.registry = {
                 if ok then 
                     success = true
                 else
-                    print("[GUI Debug] Danders Apply failed: " .. tostring(err))
+                    ns.Print("[GUI Debug] Danders Apply failed: " .. tostring(err))
                 end
             end
             
@@ -419,7 +419,7 @@ Installer.registry = {
              if SetAceProfileInGlobal("UnhaltedUnitFramesDB", profileName) then return true end
         end,
         Import = function(self, data, profileName)
-             print("[GUI Debug] UUF Import specific profile: " .. tostring(profileName))
+             ns.Print("[GUI Debug] UUF Import specific profile: " .. tostring(profileName))
              
              -- Ensure profile is set before import (just in case)
              if _G.UUF and _G.UUF.db then 
@@ -430,14 +430,14 @@ Installer.registry = {
 
              -- TRY Global UUF object
              if _G.UUF and _G.UUF.ImportProfile then
-                  print("[GUI Debug] UUF calling ImportProfile...")
+                  ns.Print("[GUI Debug] UUF calling ImportProfile...")
                   local ok, err = pcall(_G.UUF.ImportProfile, _G.UUF, data)
                   if ok then
-                      print("[GUI Debug] UUF Import Success. Calling Update...")
+                      ns.Print("[GUI Debug] UUF Import Success. Calling Update...")
                       if _G.UUF.ThrottledUpdateAll then pcall(_G.UUF.ThrottledUpdateAll, _G.UUF) end
                       if _G.UUF.UpdateLayout then pcall(_G.UUF.UpdateLayout, _G.UUF) end
                   else
-                      print("[GUI Debug] UUF Import Error: " .. tostring(err))
+                      ns.Print("[GUI Debug] UUF Import Error: " .. tostring(err))
                   end
                   return
              end
@@ -606,6 +606,186 @@ Installer.registry = {
             return false
         end
     },
+    {
+        name = "Baganator",
+        label = "Baganator",
+        category = "Optional",
+        Check = function() return C_AddOns.IsAddOnLoaded("Baganator") end,
+        GetProfile = function() 
+             if _G.BAGANATOR_CONFIG and _G.BAGANATOR_CONFIG.Profiles and _G.BAGANATOR_CURRENT_PROFILE then
+                 return _G.BAGANATOR_CURRENT_PROFILE
+             end
+             return nil
+        end,
+        SetProfile = function(self, profileName)
+             -- Custom Injection: Baganator doesn't use AceDB
+             if _G.BAGANATOR_CONFIG and _G.BAGANATOR_CONFIG.Profiles then
+                  -- 1. Create if missing (copy current or empty?)
+                  if not _G.BAGANATOR_CONFIG.Profiles[profileName] then
+                      _G.BAGANATOR_CONFIG.Profiles[profileName] = {} -- Empty init, data import usually fills it
+                      -- Or should we copy Default?
+                      if _G.BAGANATOR_CONFIG.Profiles["Default"] then
+                          -- Shallow copy
+                          for k,v in pairs(_G.BAGANATOR_CONFIG.Profiles["Default"]) do
+                              _G.BAGANATOR_CONFIG.Profiles[profileName][k] = v
+                          end
+                      end
+                  end
+                  
+                  -- 2. Switch
+                  _G.BAGANATOR_CURRENT_PROFILE = profileName
+                  
+                  -- 3. Force UI Refresh
+                  if Baganator and Baganator.API and Baganator.API.FireProfileChanged then 
+                      pcall(Baganator.API.FireProfileChanged) 
+                  end
+                  return true
+             end
+        end,
+        Import = function(self, data, profileName)
+             -- Baganator Data is usually a table of settings
+             if _G.BAGANATOR_CONFIG and _G.BAGANATOR_CONFIG.Profiles then
+                  if not _G.BAGANATOR_CONFIG.Profiles[profileName] then _G.BAGANATOR_CONFIG.Profiles[profileName] = {} end
+                  local target = _G.BAGANATOR_CONFIG.Profiles[profileName]
+                  
+                  -- Merge Data
+                  if type(data) == "table" then
+                      for k,v in pairs(data) do target[k] = v end
+                  end
+                  
+                  -- Switch to it?
+                  _G.BAGANATOR_CURRENT_PROFILE = profileName
+             end
+        end,
+        HasProfile = function(self, profileName)
+             if _G.BAGANATOR_CONFIG and _G.BAGANATOR_CONFIG.Profiles then
+                 return _G.BAGANATOR_CONFIG.Profiles[profileName] ~= nil
+             end
+             return false
+        end
+    },
+    {
+        name = "HidingBar",
+        label = "HidingBar",
+        category = "Optional",
+        Check = function() return C_AddOns.IsAddOnLoaded("HidingBar") end,
+        GetProfile = function()
+             if _G.HidingBarDBChar and _G.HidingBarDBChar.currentProfileName then
+                 return _G.HidingBarDBChar.currentProfileName
+             end
+             -- Fallback: Check global profiles keys
+             if _G.HidingBarDB and _G.HidingBarDB.profiles then
+                 -- If only one profile exists, assume it's current? No, risky.
+                 -- Return "Default" if nothing found?
+                 return "Unknown" 
+             end
+             return nil
+        end,
+        SetProfile = function(self, profileName)
+             if _G.HidingBarDB and _G.HidingBarDB.profiles then
+                 -- Setup DB if missing profile
+                 if not _G.HidingBarDB.profiles[profileName] then
+                      _G.HidingBarDB.profiles[profileName] = {}
+                      -- Copy defaults?
+                 end
+                 
+                 -- Set Char DB pointer
+                 if _G.HidingBarDBChar then
+                      _G.HidingBarDBChar.currentProfileName = profileName
+                 end
+                 
+                 -- Update
+                 if _G.HidingBar and _G.HidingBar.UpdateConfig then pcall(_G.HidingBar.UpdateConfig) end
+                 return true
+             end
+        end,
+        Import = function(self, data, profileName)
+             if _G.HidingBarDB and _G.HidingBarDB.profiles then
+                  if not _G.HidingBarDB.profiles[profileName] then _G.HidingBarDB.profiles[profileName] = {} end
+                  local target = _G.HidingBarDB.profiles[profileName]
+                  if type(data) == "table" then
+                      for k,v in pairs(data) do target[k] = v end
+                  end
+                  
+                  if _G.HidingBarDBChar then _G.HidingBarDBChar.currentProfileName = profileName end
+             end
+        end,
+        HasProfile = function(self, profileName)
+             if _G.HidingBarDB and _G.HidingBarDB.profiles then
+                 return _G.HidingBarDB.profiles[profileName] ~= nil
+             end
+             return false
+        end
+    },
+    {
+        name = "NorthernSkyRaidTools",
+        label = "NSRT", -- Shortened label to fit UI
+        category = "Optional",
+        Check = function() return C_AddOns.IsAddOnLoaded("NorthernSkyRaidTools") end,
+        GetProfile = function()
+             -- Check for our injected marker
+             if _G.NSRT and _G.NSRT.GravityUIProfile == "GravityUI" then
+                 return "GravityUI"
+             end
+             return "Manual"
+        end,
+        SetProfile = function(self, profileName)
+             -- Inject marker
+             if _G.NSRT then _G.NSRT.GravityUIProfile = profileName end
+             return true
+        end,
+        Import = function(self, data, profileName)
+             if _G.NSRT and type(data) == "table" then
+                  for k,v in pairs(data) do
+                      _G.NSRT[k] = v
+                  end
+                  _G.NSRT.GravityUIProfile = profileName
+                  
+                  if _G.ReloadUI then 
+                       -- Should we reload? Installer usually asks at end.
+                  end
+             end
+        end,
+        HasProfile = function(self, profileName)
+             return true 
+        end
+    },
+    {
+        name = "WarpDeplete",
+        label = "WarpDeplete",
+        category = "Optional",
+        Check = function() return C_AddOns.IsAddOnLoaded("WarpDeplete") end,
+        GetProfile = function()
+             local db = _G.WarpDepleteDB
+             if db and db.profileKeys then
+                  return db.profileKeys[UnitName("player").." - "..GetRealmName()]
+             end
+             return nil
+        end,
+        SetProfile = function(self, profileName)
+             -- WarpDeplete uses standard AceDB usually: WarpDepleteDB
+             return SetAceProfileInGlobal("WarpDepleteDB", profileName)
+             -- Need to tell WarpDeplete to refresh?
+             -- It probably listens to OnProfileChanged if using AceDB
+        end,
+        Import = function(self, data, profileName)
+             -- Direct DB Injection
+             if _G.WarpDepleteDB then
+                 if not _G.WarpDepleteDB.profiles then _G.WarpDepleteDB.profiles = {} end
+                 
+                 _G.WarpDepleteDB.profiles[profileName] = data
+                 
+                 -- Set Active
+                 SetAceProfileInGlobal("WarpDepleteDB", profileName)
+             end
+        end,
+        HasProfile = function(self, profileName)
+             if _G.WarpDepleteDB and _G.WarpDepleteDB.profiles then
+                  return _G.WarpDepleteDB.profiles[profileName] ~= nil
+             end
+             return false
+        end
+    },
 }
 
 -- Returns the system status
@@ -637,11 +817,16 @@ function Installer:GetSystemStatus(targetProfile)
 
             
             local match = (current == targetProfile)
-            if not match then allGood = false end
+            
+            -- Only Important addons determine the global system status
+            if not match and addon.category ~= "Optional" then 
+                allGood = false 
+            end
             
             table.insert(report, {
                 label = addon.label,
                 name = addon.name,
+                category = addon.category,
                 current = current,
                 match = match,
                 loaded = true
@@ -651,6 +836,7 @@ function Installer:GetSystemStatus(targetProfile)
             table.insert(report, {
                 label = addon.label,
                 name = addon.name,
+                category = addon.category,
                 current = "Not Loaded",
                 match = false,
                 loaded = false
@@ -773,7 +959,7 @@ end
 -- Full Install (Import + Sync)
 function Installer:Install(targetProfile, sourceProfileName, allowList)
     -- targetProfile = "testUI" -- TEST MODE FORCE
-    -- print("|cFF00FF00[TEST MODE]|r Installing to profile: " .. targetProfile)
+    -- ns.Print("[TEST MODE] Installing to profile: " .. targetProfile)
     targetProfile = targetProfile or ADDON_NAME
     -- Determine Import Source
     local imports
@@ -785,7 +971,7 @@ function Installer:Install(targetProfile, sourceProfileName, allowList)
     end
     
     if not imports then 
-        print("|cffff0000GravityUI:|r No import data found" .. (sourceProfileName and (" for profile " .. sourceProfileName) or "") .. "!")
+        ns.Print("No import data found" .. (sourceProfileName and (" for profile " .. sourceProfileName) or "") .. "!")
         return 
     end
 

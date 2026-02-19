@@ -633,16 +633,16 @@ SlashCmdList["GRAVITYUIAUTOHIDEDEBUG"] = function()
     local hasOverride = HasOverrideActionBar()
     local cVehicleUI = (C_Vehicle and C_Vehicle.IsVehicleUIShowing())
     
-    print("|cFF00FF00GravityUI Autohide Debug:|r")
-    print("  UnitInVehicle: " .. tostring(inVehicle))
-    print("  HasOverrideActionBar: " .. tostring(hasOverride))
-    print("  IsVehicleUIShowing: " .. tostring(cVehicleUI))
-    print("  UnitHasVehicleUI: " .. tostring(hasUI))
+    ns.Print("Autohide Debug:")
+    ns.Print("  UnitInVehicle: " .. tostring(inVehicle))
+    ns.Print("  HasOverrideActionBar: " .. tostring(hasOverride))
+    ns.Print("  IsVehicleUIShowing: " .. tostring(cVehicleUI))
+    ns.Print("  UnitHasVehicleUI: " .. tostring(hasUI))
     
     local settings = ns.GetDB().uiimprovements
-    print("  Setting Enabled: " .. tostring(settings and settings.hideOnWorldQuestMinigame))
+    ns.Print("  Setting Enabled: " .. tostring(settings and settings.hideOnWorldQuestMinigame))
 
-    print("|cFFFFCC00Scanning BCDM Frames:|r")
+    ns.Print("Scanning BCDM Frames:")
     local children = {UIParent:GetChildren()}
     for _, child in ipairs(children) do
         if child and child.GetName then
@@ -651,7 +651,7 @@ SlashCmdList["GRAVITYUIAUTOHIDEDEBUG"] = function()
                 local vis = "hidden"
                 if child.IsVisible and child:IsVisible() then vis = "|cFF00FF00visible|r" end
                 local alpha = child.GetAlpha and child:GetAlpha() or -1
-                print("  Found: " .. name .. " -> " .. vis .. " (Alpha: " .. alpha .. ")")
+                ns.Print("  Found: " .. name .. " -> " .. vis .. " (Alpha: " .. alpha .. ")")
             end
         end
     end
