@@ -86,7 +86,7 @@ end
 
 -- Refresh accent colors throughout UI
 function ns.RefreshAccentColors()
-    ns.InvalidateCache()
+    ns.InvalidateCaches()
     
     if ns.GUI and ns.GUI.RefreshColors then
         ns.GUI:RefreshColors()

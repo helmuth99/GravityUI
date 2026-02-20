@@ -191,6 +191,30 @@ end
 -- Styling Logic
 ---------------------------------------------------------------------------
 
+local TOOLTIP_BACKDROP = {
+    bgFile = "Interface\\Buttons\\WHITE8x8",
+    edgeFile = "Interface\\Buttons\\WHITE8x8",
+    edgeSize = 1,
+    insets = { left = 1, right = 1, top = 1, bottom = 1 }
+}
+
+local function ApplyBackdrop(t)
+    t:SetBackdrop(TOOLTIP_BACKDROP)
+end
+
+local function ApplyBackdropColor(t, bgR, bgG, bgB, alpha, r, g, b, a)
+    t:SetBackdropColor(bgR, bgG, bgB, alpha)
+    t:SetBackdropBorderColor(r, g, b, a)
+end
+
+local function RestoreTooltipDefaults(t)
+    t:SetBackdrop(nil) -- Remove white box
+    if t.NineSlice then
+        t.NineSlice:Show()
+        t.NineSlice:SetAlpha(1)
+    end
+end
+
 local function ApplyStyle(tooltip)
     if not tooltip or tooltip:IsForbidden() then return end
     
@@ -220,40 +244,18 @@ local function ApplyStyle(tooltip)
     local alpha = tonumber(settings.bgAlpha) or 0.8
 
     -- Robustness Fix:
-    -- If SetBackdrop succeeds (setting texture to white8x8) but SetBackdropColor fails,
-    -- the tooltip stays white. We must ensure color is applied or backdrop is reverted.
-    local backdropSuccess = pcall(function()
-        tooltip:SetBackdrop({
-            bgFile = "Interface\\Buttons\\WHITE8x8",
-            edgeFile = "Interface\\Buttons\\WHITE8x8",
-            edgeSize = 1,
-            insets = { left = 1, right = 1, top = 1, bottom = 1 }
-        })
-    end)
+    local backdropSuccess = pcall(ApplyBackdrop, tooltip)
     
-    local function RestoreDefaults()
-        pcall(function() 
-            tooltip:SetBackdrop(nil) -- Remove white box
-            if tooltip.NineSlice then
-                tooltip.NineSlice:Show()
-                tooltip.NineSlice:SetAlpha(1)
-            end
-        end)
-    end
-
     if backdropSuccess then
-        local colorSuccess = pcall(function()
-            tooltip:SetBackdropColor(bgR, bgG, bgB, alpha)
-            tooltip:SetBackdropBorderColor(r, g, b, a)
-        end)
+        local colorSuccess = pcall(ApplyBackdropColor, tooltip, bgR, bgG, bgB, alpha, r, g, b, a)
         
         if not colorSuccess then
             -- Emergency Revert: If we can't color it, clear the white texture AND restore Blizzard Art
-            RestoreDefaults()
+            pcall(RestoreTooltipDefaults, tooltip)
         end
     else
         -- Initial Backdrop Set Failed? Restore original just in case.
-        RestoreDefaults()
+        pcall(RestoreTooltipDefaults, tooltip)
     end
 
     -- Healthbar

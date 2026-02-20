@@ -419,22 +419,17 @@ end
 -- RETAIL SAFETY WRAPPERS
 ---------------------------------------------------------------------------
 local function SafeIsActionInRange(action)
-    local ok, result = pcall(function()
-        local inRange = IsActionInRange(action)
-        if inRange == false then return false end
-        if inRange == true then return true end
-        return nil
-    end)
-    return ok and result or nil
+    local ok, result = pcall(IsActionInRange, action)
+    if not ok then return nil end
+    if result == false then return false end
+    if result == true then return true end
+    return nil
 end
 
 local function SafeIsUsableAction(action)
-    local ok, isUsable = pcall(function()
-        local usable, noMana = IsUsableAction(action)
-        return usable and true or false
-    end)
+    local ok, usable, noMana = pcall(IsUsableAction, action)
     if not ok then return true end
-    return isUsable
+    return usable and true or false
 end
 
 ---------------------------------------------------------------------------

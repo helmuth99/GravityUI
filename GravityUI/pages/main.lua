@@ -15,6 +15,7 @@ local Gravity_FPS_CVARS = {
     ["ffxAntiAliasingMode"] = "0",
     ["alphaTestMSAA"] = "1",
     ["cameraFov"] = "90",
+    ["RenderScale"] = "0.83",
 
     -- Graphics Quality (Base)
     ["graphicsQuality"] = "9",
@@ -32,7 +33,7 @@ local Gravity_FPS_CVARS = {
     ["spellVisualDensityFilterSetting"] = "1",
     ["graphicsProjectedTextures"] = "1",
     ["projectedTextures"] = "1",
-    ["graphicsViewDistance"] = "3",
+    ["graphicsViewDistance"] = "2",
     ["graphicsEnvironmentDetail"] = "0",
     ["graphicsGroundClutter"] = "0",
 
@@ -47,7 +48,7 @@ local Gravity_FPS_CVARS = {
     ["GxApi"] = "D3D12",
     ["physicsLevel"] = "0",
     ["maxFPS"] = "144",
-    ["maxFPSBk"] = "60",
+    ["maxFPSBk"] = "30",
     ["targetFPS"] = "61",
     ["useTargetFPS"] = "0",
     ["ResampleSharpness"] = "0.2",

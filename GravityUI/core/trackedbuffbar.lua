@@ -26,6 +26,15 @@ local function GetLSM()
     return LibStub("LibSharedMedia-3.0", true)
 end
 
+local function CheckSparkSize(region, bar)
+    local w, h = region:GetSize()
+    local barH = bar:GetHeight()
+    if w and h and barH and w < 20 and h >= (barH - 5) then
+        return true
+    end
+    return false
+end
+
 -- ═══════════════════════════════════════════════════════════════
 -- SKINNING LOGIC
 -- ═══════════════════════════════════════════════════════════════
@@ -260,13 +269,10 @@ function Module:SkinBar(bar)
                 -- 2. Fallback: OVERLAY + Small Width (If ID changes in future)
                 if not spark and region:GetDrawLayer() == "OVERLAY" and (not bar:IsProtected()) then
                      local isSpark = false
-                     pcall(function()
-                         local w, h = region:GetSize()
-                         local barH = bar:GetHeight()
-                         if w and h and barH and w < 20 and h >= (barH - 5) then
-                             isSpark = true
-                         end
-                     end)
+                     local ok, result = pcall(CheckSparkSize, region, bar)
+                     if ok and result then
+                         isSpark = true
+                     end
                      if isSpark then
                          spark = region
                      end
@@ -480,13 +486,15 @@ end
 
 
 
+local function DoLayoutUpdate()
+    Module.layoutTimer = nil
+    Module:UpdateLayout()
+end
+
 -- Performance: Debounce layout updates to prevent spamming
 function Module:RequestLayout()
     if self.layoutTimer then return end 
-    self.layoutTimer = C_Timer.After(0.05, function() 
-        self.layoutTimer = nil
-        self:UpdateLayout()
-    end)
+    self.layoutTimer = C_Timer.After(0.05, DoLayoutUpdate)
 end
 
 -- Hook OnShow/OnHide to trigger layout

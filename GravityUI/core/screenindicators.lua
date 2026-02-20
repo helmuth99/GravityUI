@@ -968,7 +968,6 @@ eventFrame:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
 eventFrame:RegisterEvent("ACTIONBAR_SLOT_CHANGED")
 eventFrame:RegisterEvent("ACTIONBAR_PAGE_CHANGED")
 eventFrame:RegisterEvent("UPDATE_BONUS_ACTIONBAR")
-eventFrame:RegisterEvent("UPDATE_BONUS_ACTIONBAR")
 eventFrame:RegisterEvent("UPDATE_MACROS")
 
 eventFrame:SetScript("OnEvent", function(self, event, unit)
@@ -1473,9 +1472,10 @@ local function CheckLeadership()
     -- If we become leader (and weren't before)
     -- If we become leader (and weren't before)
     if isLeader and not DifficultyState.lastIsLeader then
-        -- Only trigger if NOT inside an instance (raid/dungeon)
+        -- Only trigger if NOT inside an instance (raid/dungeon) AND NOT in a matchmaking queue/group
         local inInstance, _ = IsInInstance()
-        if not inInstance then
+        local isLFG = HasLFGRestrictions() or IsInLFGDungeon()
+        if not inInstance and not isLFG then
              Screen.TriggerDifficultyBar()
         end
     end

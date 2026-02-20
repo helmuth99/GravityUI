@@ -426,6 +426,8 @@ end
 local UPDATE_THROTTLE = 0.05
 local timeSinceLastUpdate = 0
 
+local DEFAULT_COLOR = {1, 1, 1, 1}
+
 local function OnUpdate(self, elapsed)
     timeSinceLastUpdate = timeSinceLastUpdate + elapsed
     if timeSinceLastUpdate < UPDATE_THROTTLE then return end
@@ -458,7 +460,7 @@ local function OnUpdate(self, elapsed)
                 -- Reset Color to Ready Color
                 local cr, cg, cb, ca = 1, 1, 1, 1
                 if s and s.useSpecificCooldownColor then
-                    local c = s.cooldownTextColor or {1, 1, 1, 1}
+                    local c = s.cooldownTextColor or DEFAULT_COLOR
                      cr, cg, cb, ca = c[1] or 1, c[2] or 1, c[3] or 1, c[4] or 1
                 end
                 info.frame.time:SetTextColor(cr, cg, cb, ca)
@@ -470,10 +472,11 @@ local function OnUpdate(self, elapsed)
                 local pct = remaining / info.duration
                 info.frame.bar:SetValue(pct) -- Update bar value
                 
-                -- Optimization: Only SetText if changed (and throttle to 0.1s visual resolution)
-                local newText = string.format("%.1f", remaining)
-                if info.frame.time:GetText() ~= newText then
-                    info.frame.time:SetText(newText)
+                -- Optimization: Only format and set text if the decisecond value changed
+                local rem10 = math.ceil(remaining * 10)
+                if info.lastRem10 ~= rem10 then
+                    info.lastRem10 = rem10
+                    info.frame.time:SetText(string.format("%.1f", math.max(0, remaining)))
                 end
             end
         else
@@ -545,7 +548,7 @@ local function StartCooldown(guid, name, class, spellId, isReady)
                 -- Reset Color to Ready Color (if different)
                 local cr, cg, cb, ca = 1, 1, 1, 1
                 if s.useSpecificCooldownColor then
-                    local c = s.cooldownTextColor or {1, 1, 1, 1}
+                    local c = s.cooldownTextColor or DEFAULT_COLOR
                     cr, cg, cb, ca = c[1] or 1, c[2] or 1, c[3] or 1, c[4] or 1
                 end
                 info.frame.time:SetTextColor(cr, cg, cb, ca)
