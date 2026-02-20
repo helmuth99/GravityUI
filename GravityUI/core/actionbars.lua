@@ -56,7 +56,7 @@ C_Timer.After(1, function()
         local f = _G[BAR_FRAMES[barKey]]
         if f then
             f:SetAlpha(1)
-            f:SetScale(1)
+            -- f:SetScale(1) -- REMOVED: Causes ADDON_ACTION_BLOCKED and overrides EditMode
         end
     end
 end)
