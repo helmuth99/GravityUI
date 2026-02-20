@@ -571,8 +571,40 @@ local function BuildInstallerTab(parent)
 
     -- Checkbox States
     local selectionState = {} 
-    -- Initialize selectionState? We can do it on first status update or just check defaults
-    -- Default behavior: Check Everything that is loaded.
+    
+    -- [PERSISTENCE] Helpers
+    local function GetGlobalSelection(addonName)
+        local db = ns.GetAceDB()
+        local val = nil
+        if db and db.global and db.global.installer and db.global.installer.selections then
+            val = db.global.installer.selections[addonName]
+        end
+        
+        -- [FIX] Sanitize input: If corrupted with table, treat as nil (fallback to default) AND auto-repair
+        if type(val) == "table" then
+             -- Auto-repair corruption
+             if db and db.global and db.global.installer and db.global.installer.selections then
+                 db.global.installer.selections[addonName] = nil
+             end
+             return nil 
+        end
+        
+        return val
+    end
+
+    local function SetGlobalSelection(addonName, value)
+        -- [FIX] Sanitize output: Force boolean or nil, never allow table
+        if type(value) == "table" then
+            value = false
+        end
+        
+        local db = ns.GetAceDB()
+        if db and db.global then
+            if not db.global.installer then db.global.installer = {} end
+            if not db.global.installer.selections then db.global.installer.selections = {} end
+            db.global.installer.selections[addonName] = value
+        end
+    end
 
     local function UpdateStatus()
         local targetProfile = "GravityUI" 
@@ -620,10 +652,17 @@ local function BuildInstallerTab(parent)
         for _, item in ipairs(report) do
             -- Default Selection State Logic
             if selectionState[item.label] == nil then
-                if item.category == "Optional" then
-                    selectionState[item.label] = false
+                -- [PERSISTENCE] Check Global DB First
+                local savedState = GetGlobalSelection(item.name)
+                
+                if savedState ~= nil then
+                    selectionState[item.label] = savedState
                 else
-                    selectionState[item.label] = true
+                    if item.category == "Optional" then
+                        selectionState[item.label] = false
+                    else
+                        selectionState[item.label] = true
+                    end
                 end
             end
             
@@ -697,6 +736,9 @@ local function BuildInstallerTab(parent)
                     local label = item.label
                     row.cb = GUI:CreateCheckbox(row, "", "checked", cbState, function(val)
                          selectionState[label] = val
+                         -- [PERSISTENCE] Save to DB
+                         SetGlobalSelection(item.name, val)
+                         
                          if row.UpdateColor then row:UpdateColor() end
                          
                          -- Dynamic Header Update
@@ -739,7 +781,7 @@ local function BuildInstallerTab(parent)
                       local contentText = item.label .. ": " .. (item.current or "Unknown")
                       if not item.match then contentText = contentText .. " (|cFFFF0000Mismatch|r)" end
                       row.text:SetText(contentText)
-                      if row.cb.SetValue then row.cb:SetValue(selectionState[item.label], false) end
+                      if row.cb.SetValue then row.cb:SetValue(selectionState[item.label], true) end
                  end
                  
                  row:UpdateColor()

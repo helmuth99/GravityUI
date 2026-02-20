@@ -696,9 +696,63 @@ local function BuildInterruptTracker(parent)
     header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
     content.rowCount = 1.3
     
-    local infoBox = GUI:CreateInfoBox(content, "Tracks interrupts of your party members using local combat events. Reliable and lightweight.")
+    local infoBox = GUI:CreateInfoBox(content, "Tracks interrupts of party members with GravityUI.\nNon-users can use this macro (|cffFF9900replace SPELL_ID|r):")
     infoBox:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
-    content.rowCount = content.rowCount + (infoBox:GetHeight() / (ROW_HEIGHT+5)) + 0.2
+    content.rowCount = content.rowCount + (infoBox:GetHeight() / (ROW_HEIGHT+5)) + 0.1 -- Reduced padding from 0.2
+    
+    -- Copy-Paste EditBox
+    local macroRow = CreateFrame("Frame", nil, content)
+    macroRow:SetSize(GUI.CONTENT_WIDTH - 40, 26) -- Reduced width (was -20)
+    macroRow:SetPoint("TOPLEFT", 10, -5 - (content.rowCount * (ROW_HEIGHT + 5))) -- Reduced top offset (was -10)
+    
+    local editBox = CreateFrame("EditBox", nil, macroRow, "BackdropTemplate")
+    editBox:SetSize(GUI.CONTENT_WIDTH - 60, 18) -- Reduced width (was -40)
+    editBox:SetPoint("LEFT", 0, 0) -- Aligned to left (was 10)
+    editBox:SetAutoFocus(false)
+    editBox:SetFontObject("GameFontHighlightSmall")
+    editBox:SetText('/run local c=IsInGroup(2)and"INSTANCE_CHAT"or"PARTY" C_ChatInfo.SendAddonMessage("GRV_INT","SPELL_ID",c)')
+    editBox:SetCursorPosition(0)
+    editBox:SetTextInsets(5, 5, 0, 0)
+    
+    -- GravityUI Style Backdrop
+    editBox:SetBackdrop({
+        bgFile = "Interface\\Buttons\\WHITE8x8",
+        edgeFile = "Interface\\Buttons\\WHITE8x8",
+        edgeSize = 1,
+    })
+    editBox:SetBackdropColor(0.1, 0.1, 0.1, 0.8)
+    editBox:SetBackdropBorderColor(0, 0, 0, 1)
+    
+    editBox:SetScript("OnEnter", function(self) self:SetBackdropBorderColor(GUI.Colors.accent[1], GUI.Colors.accent[2], GUI.Colors.accent[3], 1) end)
+    editBox:SetScript("OnLeave", function(self) 
+        if not self:HasFocus() then
+            self:SetBackdropBorderColor(0, 0, 0, 1) 
+        end
+    end)
+    
+    editBox:SetScript("OnEditFocusGained", function(self) 
+        self:HighlightText() 
+        self:SetBackdropBorderColor(GUI.Colors.accent[1], GUI.Colors.accent[2], GUI.Colors.accent[3], 1)
+    end)
+    
+    editBox:SetScript("OnEscapePressed", function(self) 
+        self:ClearFocus() 
+        self:SetBackdropBorderColor(0, 0, 0, 1)
+    end)
+    
+    editBox:SetScript("OnEditFocusLost", function(self)
+        self:SetBackdropBorderColor(0, 0, 0, 1)
+    end)
+
+    -- Prevent editing
+    editBox:SetScript("OnTextChanged", function(self, user) 
+        if user then 
+            self:SetText('/run local c=IsInGroup(2)and"INSTANCE_CHAT"or"PARTY" C_ChatInfo.SendAddonMessage("GRV_INT","SPELL_ID",c)') 
+            self:HighlightText() 
+        end 
+    end)
+    
+    content.rowCount = content.rowCount + 1.2 -- Adjusted spacing below
     
     CreateSubLabel(content, "General")
     AddRow(content, "Enable Tracker", "checkbox", "enabled", c, Refresh)
@@ -783,86 +837,13 @@ local function BuildInterruptTracker(parent)
     
     content.rowCount = content.rowCount + 0.3
     
-    CreateSubLabel(content, "Announce to Say")
-    AddRow(content, "Enable 'Say Kick'", "checkbox", "sayKick", c, Refresh)
-    AddRow(content, "Message (%t=Target, %f=Focus)", "input", "sayKickText", c, Refresh)
+    -- (Say Kick Removed)
     
     content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
 end
 
 
--- 7. Bloodlust
-local function BuildBloodlust(parent)
-    local scroll, content = GUI:CreateScrollableContent(parent)
-    scroll:SetAllPoints()
-    local db = ns.GetDB(); if not db then return end
-    
-    -- Ensure Defaults
-    if not db.screenindicators.bloodlust then
-         db.screenindicators.bloodlust = {
-            enabled = false,
-            size = 256,
-            texture = "goku",
-            sound = "Kamehameha",
-            soundChannel = "Master",
-         }
-    end
-    
-    local c = db.screenindicators.bloodlust
-    content.rowCount = 0
-    local refresh = function() 
-        -- No live refresh needed for this module usually, but standard practice
-    end
-    
-    local header = GUI:CreateSectionHeader(content, "Bloodlust / Heroism")
-    header:SetPoint("TOPLEFT", 10, -10)
-    header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
-    content.rowCount = 1.3
-    
-    local infoBox = GUI:CreateInfoBox(content, "Displays an animated alert when Bloodlust/Heroism effects are used in your group.")
-    infoBox:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
-    content.rowCount = content.rowCount + (infoBox:GetHeight() / (ROW_HEIGHT+5)) + 0.2
-    
-    CreateSubLabel(content, "General")
-    AddRow(content, "Enable Alert", "checkbox", "enabled", c, refresh)
-    
-    -- Controls
-    local testBtn = GUI:CreateButton(content, "Test Alert", 100, 24, function()
-        if ns.ScreenIndicators.PreviewBloodlust then ns.ScreenIndicators.PreviewBloodlust() end
-    end)
-    testBtn:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT + 5)))
-    
-    local stopBtn = GUI:CreateButton(content, "Stop Test", 100, 24, function()
-        if ns.ScreenIndicators.StopBloodlust then ns.ScreenIndicators.StopBloodlust() end
-    end)
-    stopBtn:SetPoint("LEFT", testBtn, "RIGHT", 10, 0)
-    
-    local moverBtn = GUI:CreateButton(content, "Toggle Mover", 120, 24, function()
-        if ns.ScreenIndicators.ToggleBloodlustMover then ns.ScreenIndicators.ToggleBloodlustMover() end
-    end)
-    moverBtn:SetPoint("LEFT", stopBtn, "RIGHT", 10, 0)
-    
-    content.rowCount = content.rowCount + 1.2
-    
-    CreateSubLabel(content, "Appearance & Sound")
-    AddRow(content, "Size", "slider", 64, 512, "size", c, refresh, 2)
-    
-    local texOptions = {
-        {value="goku", text="Goku"}, 
-        {value="pedro", text="Pedro"},
-        {value="KP_Demon", text="KP Demon"},
-    }
-    AddRow(content, "Visual Style", "dropdown", texOptions, "texture", c, refresh)
-    
-    local soundOptions = {
-        {value="Kamehameha", text="Kamehameha"}, 
-        {value="pedro", text="Pedro"}, 
-        {value="KP_Demon", text="KP Demon"},
-    }
-    AddRow(content, "Sound Effect", "dropdown", soundOptions, "sound", c, refresh)
-    
-    content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
-end
+
 
 -- ═══════════════════════════════════════════════════════════════
 -- MAIN PAGE
@@ -907,9 +888,64 @@ local function BuildRaidWarnings(parent)
     header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
     content.rowCount = 1.3
     
-    local infoBox = GUI:CreateInfoBox(content, "Displays an alert when a group member places a Feast, Soulwell, Repair Bot, or Summoning Ritual.")
+    local infoBox = GUI:CreateInfoBox(content, "Displays alerts from party members with GravityUI.\nNon-users can use this macro (|cffFF9900replace SPELL_ID|r):")
     infoBox:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
-    content.rowCount = content.rowCount + (infoBox:GetHeight() / (ROW_HEIGHT+5)) + 0.2
+    content.rowCount = content.rowCount + (infoBox:GetHeight() / (ROW_HEIGHT+5)) + 0.1
+    
+    -- Copy-Paste EditBox
+    local macroRow = CreateFrame("Frame", nil, content)
+    macroRow:SetSize(GUI.CONTENT_WIDTH - 40, 26)
+    macroRow:SetPoint("TOPLEFT", 10, -5 - (content.rowCount * (ROW_HEIGHT + 5)))
+    
+    local editBox = CreateFrame("EditBox", nil, macroRow, "BackdropTemplate")
+    editBox:SetSize(GUI.CONTENT_WIDTH - 60, 18)
+    editBox:SetPoint("LEFT", 0, 0)
+    editBox:SetAutoFocus(false)
+    editBox:SetFontObject("GameFontHighlightSmall")
+    -- Updated Macro: Robust Channel Logic + Simplified Payload
+    editBox:SetText('/run C_ChatInfo.SendAddonMessage("GravityUI","RW:SPELL_ID",IsInGroup(2)and"INSTANCE_CHAT"or IsInRaid()and"RAID"or"PARTY")')
+    editBox:SetCursorPosition(0)
+    editBox:SetTextInsets(5, 5, 0, 0)
+    
+    -- GravityUI Style Backdrop
+    editBox:SetBackdrop({
+        bgFile = "Interface\\Buttons\\WHITE8x8",
+        edgeFile = "Interface\\Buttons\\WHITE8x8",
+        edgeSize = 1,
+    })
+    editBox:SetBackdropColor(0.1, 0.1, 0.1, 0.8)
+    editBox:SetBackdropBorderColor(0, 0, 0, 1)
+    
+    editBox:SetScript("OnEnter", function(self) self:SetBackdropBorderColor(GUI.Colors.accent[1], GUI.Colors.accent[2], GUI.Colors.accent[3], 1) end)
+    editBox:SetScript("OnLeave", function(self) 
+        if not self:HasFocus() then
+            self:SetBackdropBorderColor(0, 0, 0, 1) 
+        end
+    end)
+    
+    editBox:SetScript("OnEditFocusGained", function(self) 
+        self:HighlightText() 
+        self:SetBackdropBorderColor(GUI.Colors.accent[1], GUI.Colors.accent[2], GUI.Colors.accent[3], 1)
+    end)
+    
+    editBox:SetScript("OnEscapePressed", function(self) 
+        self:ClearFocus() 
+        self:SetBackdropBorderColor(0, 0, 0, 1)
+    end)
+    
+    editBox:SetScript("OnEditFocusLost", function(self)
+        self:SetBackdropBorderColor(0, 0, 0, 1)
+    end)
+
+    -- Prevent editing
+    editBox:SetScript("OnTextChanged", function(self, user) 
+        if user then 
+            self:SetText('/run C_ChatInfo.SendAddonMessage("GravityUI","RW:SPELL_ID",IsInGroup(2)and"INSTANCE_CHAT"or IsInRaid()and"RAID"or"PARTY")') 
+            self:HighlightText() 
+        end 
+    end)
+    
+    content.rowCount = content.rowCount + 1.2
     
     AddRow(content, "Enable Raid Warnings", "checkbox", "enabled", dbRW, RefreshRW)
     content.rowCount = content.rowCount + 0.5
@@ -1070,7 +1106,7 @@ local function BuildRaidWarnings(parent)
     content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
 end
 
--- 8. Difficulty Indicator
+-- 7. Difficulty Indicator
 local function BuildDifficulty(parent)
     local scroll, content = GUI:CreateScrollableContent(parent)
     scroll:SetAllPoints()
@@ -1145,7 +1181,6 @@ end
             { name = "Missing Buffs", builder = BuildMissingBuffs },
             { name = "Raid Warnings", builder = BuildRaidWarnings },
             { name = "Interrupt Tracker", builder = BuildInterruptTracker },
-            { name = "Bloodlust", builder = BuildBloodlust },
             { name = "Difficulty", builder = BuildDifficulty },
         }
         -- Create SubTabs

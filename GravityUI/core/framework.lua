@@ -571,7 +571,7 @@ function GUI:CreateCheckbox(parent, label, dbKey, dbTable, onChange)
         return false
     end
     
-    local function SetValue(val)
+    local function SetValue(val, suppressCallback)
         if dbTable and dbKey then
             dbTable[dbKey] = val
         end
@@ -587,7 +587,7 @@ function GUI:CreateCheckbox(parent, label, dbKey, dbTable, onChange)
             switch:SetBackdropColor(C.toggleOff[1], C.toggleOff[2], C.toggleOff[3], 1)
         end
         
-        if onChange then
+        if onChange and not suppressCallback then
             onChange(val)
         end
     end
@@ -625,9 +625,11 @@ function GUI:CreateCheckbox(parent, label, dbKey, dbTable, onChange)
     end)
     
     container.GetValue = GetValue
-    container.SetValue = SetValue
     
-    -- Add Enable/Disable/SetChecked methods for consistency
+    -- [FIX] method wrapper to discard 'self'
+    container.SetValue = function(self, val, suppress)
+        SetValue(val, suppress)
+    end
     container.Enable = function()
         container.disabled = false
         switch:EnableMouse(true)

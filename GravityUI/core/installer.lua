@@ -933,9 +933,22 @@ function Installer:Synchronize(targetProfile, allowList)
         local isAllowed = (not allowList) or (allowList[addon.name])
         
         if isAllowed and addon.Check() then
-            pcall(addon.SetProfile, addon, targetProfile)
-            -- Mark as installed/synced in DB
-            if db then db.installer[string.lower(addon.name)] = true end
+            -- Safe Check: Only switch if the target profile EXISTS
+            local shouldSync = true
+            
+            if addon.HasProfile then
+                 if not addon:HasProfile(targetProfile) then
+                     shouldSync = false
+                     -- Optional: Log that we skipped it?
+                     -- ns.Print("Skipped " .. addon.label .. " (Profile missing)")
+                 end
+            end
+            
+            if shouldSync then
+                pcall(addon.SetProfile, addon, targetProfile)
+                -- Mark as installed/synced in DB
+                if db then db.installer[string.lower(addon.name)] = true end
+            end
         end
     end
     

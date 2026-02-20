@@ -113,8 +113,13 @@ local container = nil
 local testModeActive = false
 
 -- ============================================================================
--- SPELL ID LAUNDERING (Fix for Tainted Party Events in 12.0.1)
+-- SPELL ID LAUNDERING (DISABLED - REPLACED BY ADDON COMMS)
 -- ============================================================================
+-- Launder method disabled. We now use Addon Messages ("GRV_INT") to sync interrupts.
+-- This avoids the taint issues with spellIDs in the combat log/unit events
+-- by relying on each client to report their own successful interrupts.
+
+--[[ 
 -- These MUST be created here, NOT inside event handlers
 local launderBar = CreateFrame("StatusBar")
 launderBar:SetMinMaxValues(0, 9999999)
@@ -145,13 +150,15 @@ local partyFrames = {}
 for i = 1, 4 do
     partyFrames[i] = CreateFrame("Frame")
 end
+]]
 
 -- Player Watcher (To avoid AceEvent/Global Taint issues)
 local playerWatcher = CreateFrame("Frame")
 
 -- Helper to register events
 local function RegisterPartyWatchers()
-    -- Party Members (Laundered)
+    -- Party Members (DISABLED - Using CHAT_MSG_ADDON)
+    --[[
     for i = 1, 4 do
         local unit = "party" .. i
         partyFrames[i]:UnregisterAllEvents()
@@ -181,6 +188,7 @@ local function RegisterPartyWatchers()
             -- print("GravityUI Debug: Registered watcher for", unit)
         end
     end
+    ]]
     
     -- Player Watcher (Direct, Player Unit is usually safe but we use RegisterUnitEvent to be sure)
     playerWatcher:UnregisterAllEvents()
@@ -222,8 +230,8 @@ local function GetSettings()
                 barColor = {0.129, 0.129, 0.129, 0.85},
                 textColor = {1, 1, 1, 1},
                 useClassColor = false,
-                sayKick = false,
-                sayKickText = "Interrupted %t!",
+                useClassColor = false,
+                -- (Say Kick Removed)
             }
         end
         return db.screenindicators.interruptTracker
@@ -599,26 +607,7 @@ local function StartCooldown(guid, name, class, spellId, isReady)
     updateFrame:Show() -- Ensure OnUpdate is running
     UpdateLayout()
     
-    -- Say Kick (Self Only)
-    local isEditMode = container and container.mover and container.mover:IsShown()
-    if not isReady and UnitGUID("player") == guid and not testModeActive and not isEditMode then
-         if s and s.sayKick and s.sayKickText then
-             local msg = s.sayKickText
-             
-             -- %t = Target
-             local targetName = UnitName("target") or "Target"
-             msg = msg:gsub("%%t", targetName)
-             
-             -- %f = Focus
-             local focusName = UnitName("focus") or "Focus"
-             msg = msg:gsub("%%f", focusName)
-             
-             -- %s legacy support
-             msg = msg:gsub("%%s", "Spell") 
-
-             SendChatMessage(msg, "SAY")
-         end
-     end
+    -- (Say Kick Logic Removed)
 end
 
 local UPDATE_THROTTLE = 0.05
@@ -638,8 +627,9 @@ function InterruptTracker:UNIT_SPELLCAST_SUCCEEDED(event, unit, castGUID, spellI
     -- Safe Check: Avoid "table index is secret"
     if not spellId or type(spellId) ~= "number" then return end
     
-    -- Debug Print
-    -- print("GravityUI Debug: Event", event, "Unit", unit, "Spell", spellId)
+    -- ONLY PROCESS PLAYER LOCALLY
+    -- Other members are processed via CHAT_MSG_ADDON to avoid taint/hacks
+    if not UnitIsUnit(unit, "player") then return end
 
     -- Safe Check: Wrap lookup in pcall
     local success, val = pcall(function() return INTERRUPTS[spellId] end)
@@ -648,28 +638,33 @@ function InterruptTracker:UNIT_SPELLCAST_SUCCEEDED(event, unit, castGUID, spellI
          local name = UnitName(unit)
          local _, class = UnitClass(unit)
          
-         -- print("GravityUI Debug: Interrupt Event Detected", unit, name, spellId)
+         -- Start Local Cooldown
+         StartCooldown(guid, name, class, spellId)
          
-         -- Robust Filter: Check if this GUID is in our activeBars tracking list
-         local tracked = false
-         if UnitIsUnit(unit, "player") then 
-             tracked = true 
-         else
-             for _, info in ipairs(activeBars) do
-                 if info.guid == guid then
-                     tracked = true
-                     break
-                 end
-             end
-         end
-         
-         if tracked then
-             -- print("GravityUI Debug: Updating Cooldown for", name, spellId)
-             StartCooldown(guid, name, class, spellId)
-         else
-             -- print("GravityUI Debug: Ignored Untracked Unit", unit, name)
-         end
+         -- Broadcast to Party
+         local channel = IsInGroup(LE_PARTY_CATEGORY_INSTANCE) and "INSTANCE_CHAT" or "PARTY"
+         -- Prefer ADDON channel
+         pcall(C_ChatInfo.SendAddonMessage, "GRV_INT", tostring(spellId), channel)
     end
+end
+    
+function InterruptTracker:CHAT_MSG_ADDON(event, prefix, text, channel, sender)
+    if prefix ~= "GRV_INT" then return end
+    
+    -- Ignore Self (handled locally in UNIT_SPELLCAST_SUCCEEDED)
+    local name = Ambiguate(sender, "none")
+    if UnitIsUnit(name, "player") then return end
+    
+    local spellId = tonumber(text)
+    if not spellId then return end
+    
+    local guid = UnitGUID(name)
+    if not guid then return end -- Can't track if we don't know who sent it (should act on name match if needed, but GUID is safer)
+    
+    local _, class = UnitClass(name)
+    
+    -- print("GravityUI: Received Interrupt", name, spellId)
+    StartCooldown(guid, name, class, spellId)
 end
 
 
@@ -687,6 +682,30 @@ function InterruptTracker.TestMode()
         StartCooldown(UnitGUID("player"), "Test Mage", "MAGE", 2139) -- Counterspell
         StartCooldown(UnitGUID("player"), "Test Shaman", "SHAMAN", 57994) -- Wind Shear
     end
+end
+
+-- ============================================================================
+-- TEST COMMANDS
+-- ============================================================================
+-- 1. Test Mode (Dummy Bars)
+if ns.Addon then
+    ns.Addon:RegisterChatCommand("gravitytest", function() 
+        InterruptTracker.TestMode() 
+        print("GravityUI: Test Mode Toggled")
+    end)
+    
+    -- 2. Simulate Incoming Generic Interrupt (for Macro Testing)
+    ns.Addon:RegisterChatCommand("gravitysim", function(msg)
+        local spellId = tonumber(msg) or 47528 -- Default to Mind Freeze
+        local s = GetSettings()
+        if not s.enabled then 
+            print("GravityUI: Simulation FAILED - Interrupt Tracker is DISABLED in settings.")
+            return 
+        end
+        print("GravityUI: Simulating Interrupt from 'TestPlayer': " .. spellId)
+        -- Simulate direct call to StartCooldown (bypassing GUID lookup failure)
+        StartCooldown("FakeGUID-123456", "TestPlayer", "DEATHKNIGHT", spellId)
+    end)
 end
 
 -- ============================================================================
@@ -844,8 +863,9 @@ local function OnGroupRosterUpdate()
     if (not inGroup or instanceType == "raid" or IsInRaid()) and not testModeActive then
          for _, info in ipairs(activeBars) do info.frame:Hide() end
          activeBars = {}
-         -- Unregister watchers
-         for i=1,4 do partyFrames[i]:UnregisterAllEvents() end
+         activeBars = {}
+          -- Unregister watchers
+         -- for i=1,4 do partyFrames[i]:UnregisterAllEvents() end
          return
     end
     
@@ -1028,6 +1048,10 @@ function InterruptTracker.Initialize()
         InterruptTracker:RegisterEvent("GROUP_ROSTER_UPDATE", OnGroupRosterUpdate)
         InterruptTracker:RegisterEvent("PLAYER_ENTERING_WORLD", OnGroupRosterUpdate)
         
+        -- Addon Communication
+        C_ChatInfo.RegisterAddonMessagePrefix("GRV_INT")
+        InterruptTracker:RegisterEvent("CHAT_MSG_ADDON")
+        
         container:Show()
         OnGroupRosterUpdate() -- Initial scan
         RegisterPartyWatchers() -- Initial watchers (Includes Player)
@@ -1063,6 +1087,10 @@ function InterruptTracker.ApplySettings()
         InterruptTracker:RegisterEvent("GROUP_ROSTER_UPDATE", OnGroupRosterUpdate)
         InterruptTracker:RegisterEvent("PLAYER_ENTERING_WORLD", OnGroupRosterUpdate)
         
+         -- Addon Communication
+        C_ChatInfo.RegisterAddonMessagePrefix("GRV_INT")
+        InterruptTracker:RegisterEvent("CHAT_MSG_ADDON")
+        
         OnGroupRosterUpdate() -- Initial scan
         RegisterPartyWatchers() -- Initial watchers
         
@@ -1070,7 +1098,8 @@ function InterruptTracker.ApplySettings()
         container:Show()
     else
         InterruptTracker:UnregisterAllEvents()
-        for i=1,4 do partyFrames[i]:UnregisterAllEvents() end
+        -- partyFrames loop removed as we don't use them anymore (except in disabled laundering)
+        -- for i=1,4 do partyFrames[i]:UnregisterAllEvents() end
         playerWatcher:UnregisterAllEvents()
         updateFrame:Hide()
         container:Hide()

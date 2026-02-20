@@ -260,8 +260,9 @@ local COMM_PREFIX = "GravityUI"
 if C_ChatInfo then C_ChatInfo.RegisterAddonMessagePrefix(COMM_PREFIX) end
 
 -- ============================================================================
--- SPELL ID LAUNDERING (Fix for Tainted Party Events in 12.0.1)
+-- SPELL ID LAUNDERING (DISABLED - REPLACED BY ADDON COMMS)
 -- ============================================================================
+--[[
 local launderBar = CreateFrame("StatusBar")
 launderBar:SetMinMaxValues(0, 9999999)
 
@@ -280,6 +281,7 @@ end)
 launderSlider:SetScript("OnValueChanged", function(self, value)
     onSliderChangedResult = value
 end)
+]]
 
 -- ============================================================================
 -- WATCHER FRAMES (Reliable Event Detection)
@@ -297,41 +299,13 @@ local function UpdateWatchers()
     -- Unregister all first
     for _, f in ipairs(watcherFrames) do f:UnregisterAllEvents() end
     
-    local members = GetNumGroupMembers()
-    local method = IsInRaid() and "raid" or "party"
-    if method == "party" then members = members - 1 end -- 'party' excludes player in count usually involved in other loops, but let's be specific
-    -- Actually:
-    -- If Raid: raid1..raidN
-    -- If Party: party1..party4 (GetNumSubgroupMembers) + player
+    -- Only watch player locally
+    -- We assume the user wants alerts if enabled, regardless of group type, 
+    -- but usually we check IsInGroup inside ProcessSpellCast for displaying.
+    -- However, we should register the event always if we are in a group to broadcast.
     
-    if IsInRaid() then
-        for i = 1, 40 do
-             local unit = "raid"..i
-             if UnitExists(unit) then
-                 watcherFrames[i]:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", unit)
-                 watcherFrames[i]:SetScript("OnEvent", function(_, _, unit, castGUID, spellId)
-                     ProcessSpellCast(unit, castGUID, spellId)
-                 end)
-             end
-        end
-    elseif IsInGroup() then
-        -- Party Members
-        for i = 1, 4 do
-             local unit = "party"..i
-             if UnitExists(unit) then
-                 watcherFrames[i]:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", unit)
-                 watcherFrames[i]:SetScript("OnEvent", function(_, _, unit, castGUID, spellId)
-                     ProcessSpellCast(unit, castGUID, spellId)
-                 end)
-             end
-        end
-        -- Player (handled by a separate watcher or just slot 5)
-        watcherFrames[5]:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player")
-        watcherFrames[5]:SetScript("OnEvent", function(_, _, unit, castGUID, spellId)
-             ProcessSpellCast(unit, castGUID, spellId)
-        end)
-    else
-        -- Solo (Player only)
+    if IsInGroup() then
+        -- Watch Player (Slot 1 is enough since we only watch 1 unit now)
         watcherFrames[1]:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player")
         watcherFrames[1]:SetScript("OnEvent", function(_, _, unit, castGUID, spellId)
              ProcessSpellCast(unit, castGUID, spellId)
@@ -350,21 +324,9 @@ local lastCastGUID = nil
 local lastCastTime = 0
 
 ProcessSpellCast = function(unitTarget, castGUID, spellID)
-    -- 1. LAUNDER SPELL ID
-    onValueChangedResult = nil
-    launderBar:SetValue(0) 
-    pcall(launderBar.SetValue, launderBar, spellID)
-    local cleanID = onValueChangedResult
-
-    if not cleanID then
-        onSliderChangedResult = nil
-        launderSlider:SetValue(0)
-        pcall(launderSlider.SetValue, launderSlider, spellID)
-        cleanID = onSliderChangedResult
-    end
-    
-    if not cleanID then return end
-    spellID = cleanID
+    -- ONLY PROCESS PLAYER LOCALLY
+    -- Other members are processed via CHAT_MSG_ADDON to avoid taint/hacks
+    if not UnitIsUnit(unitTarget, "player") then return end
 
     -- 2. LOGIC
     if not castGUID or not spellID or type(spellID) ~= "number" then return end
@@ -418,6 +380,10 @@ ProcessSpellCast = function(unitTarget, castGUID, spellID)
     
     -- Show Alert (Locally Detected)
     RaidWarnings.ShowAlert(spellName, providerName, key)
+    
+    -- Broadcast to Party/Raid
+    local channel = IsInGroup(LE_PARTY_CATEGORY_INSTANCE) and "INSTANCE_CHAT" or (IsInRaid() and "RAID" or "PARTY")
+    pcall(C_ChatInfo.SendAddonMessage, COMM_PREFIX, "RW:"..spellID..":"..key, channel)
 end
 
 -- ============================================================================
@@ -445,12 +411,21 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
         local myself = UnitName("player")
         if sender == myself or sender == (myself.."-"..GetRealmName()) then return end
         
-        -- Parse Message: "RW:SpellID:Key"
+        -- Parse Message: "RW:SpellID:Key" (Key is optional)
         if string.sub(message, 1, 3) == "RW:" then
             local _, spellID, key = strsplit(":", message)
             spellID = tonumber(spellID)
             
-            if not spellID or not key then return end
+            if not spellID then return end
+            
+            -- If Key is missing, try to resolve it from TRACKED_SPELLS
+            if not key or key == "" then
+                if TRACKED_SPELLS[spellID] then
+                    key = TRACKED_SPELLS[spellID]
+                else
+                    key = "alert" -- Generic fallback
+                end
+            end
             
             -- Throttle remote messages (same sender + same spell within 1s)
             local now = GetTime()

@@ -928,6 +928,9 @@ local function StyleEditBox(chatFrame)
         end
     end
     
+    -- Force Arrow Keys to work without Alt
+    editBox:SetAltArrowKeyMode(false)
+    
     -- Backdrop
      if not chatFrame.__guiEditBoxBackdrop then
         local backdrop = CreateFrame("Frame", nil, chatFrame, "BackdropTemplate")

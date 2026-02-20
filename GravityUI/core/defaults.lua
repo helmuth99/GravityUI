@@ -1007,13 +1007,7 @@ ns.Defaults = {
             hideUntilOutOfRange = false,
             onlyInCombat = false,
         },
-        bloodlust = {
-            enabled = false,
-            texture = "pedro",
-            size = 256,
-            sound = "pedro",
-            soundChannel = "Master",
-        },
+
     },
     main =     {
         showWelcome = true,
