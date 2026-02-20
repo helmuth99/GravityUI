@@ -1062,7 +1062,7 @@ function InterruptTracker.Initialize()
         updateFrame:Show() -- Starts OnUpdate
     else
         InterruptTracker:UnregisterAllEvents()
-        for i=1,4 do partyFrames[i]:UnregisterAllEvents() end
+        -- partyFrames loop removed as it causes a nil access error since they are no longer initialized
         playerWatcher:UnregisterAllEvents()
         updateFrame:Hide()
         container:Hide()
