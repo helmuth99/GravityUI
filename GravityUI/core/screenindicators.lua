@@ -233,15 +233,21 @@ local function UpdateCursorStatic()
     -- Reticle
     local rStyle = s.reticleStyle or "dot"
     local rSize = s.reticleSize or 10
-    local rInfo = RETICLE_OPTIONS[rStyle] or RETICLE_OPTIONS.dot
     
-    if rInfo.isAtlas then
-        reticleTexture:SetAtlas(rInfo.path)
+    if rStyle == "none" then
+        reticleTexture:Hide()
     else
-        reticleTexture:SetTexture(rInfo.path)
+        reticleTexture:Show()
+        local rInfo = RETICLE_OPTIONS[rStyle] or RETICLE_OPTIONS.dot
+        
+        if rInfo.isAtlas then
+            reticleTexture:SetAtlas(rInfo.path)
+        else
+            reticleTexture:SetTexture(rInfo.path)
+        end
+        reticleTexture:SetSize(rSize, rSize)
+        reticleTexture:SetVertexColor(r, g, b, a)
     end
-    reticleTexture:SetSize(rSize, rSize)
-    reticleTexture:SetVertexColor(r, g, b, a)
 
     -- GCD Static Props
     if gcdCooldown then
@@ -365,25 +371,18 @@ local function CreateCursorFrame()
         local s = UIParent:GetEffectiveScale()
         -- Direct upvalue access is faster than table lookup
         self:SetPoint("CENTER", UIParent, "BOTTOMLEFT", (x / s) + cursorOffsetX, (y / s) + cursorOffsetY)
-    end)
-
-    -- Right-click hide functionality
-    -- Optimization: Use local boolean to avoid table lookup during input event
-    -- Optimization 2: Use SetAlpha(0) via UpdateCursorDynamic instead of Hide() to prevent layout thrashing
-    WorldFrame:HookScript("OnMouseDown", function(_, button)
-        if button == "RightButton" and cursorHideOnRightClick then
-             isRightClickHidden = true
-             -- Optimization: Direct set to avoid function call overhead
-             if cursorFrame then cursorFrame:SetAlpha(0) end
-        end
-    end)
-
-    WorldFrame:HookScript("OnMouseUp", function(_, button)
-        if button == "RightButton" and cursorHideOnRightClick then
-            isRightClickHidden = false
-            -- We call UpdateCursorDynamic to restore alpha. 
-            -- UpdateCursorVisibility is for Combat State (Show/Hide) and usually doesn't need to run here unless state desynced.
-            UpdateCursorDynamic()
+        
+        -- Right-click hide functionality (Polling instead of HookScript to prevent micro-stutter)
+        if cursorHideOnRightClick then
+            local isDown = IsMouseButtonDown("RightButton")
+            if isDown ~= isRightClickHidden then
+                isRightClickHidden = isDown
+                if isDown then
+                    self:SetAlpha(0)
+                else
+                    UpdateCursorDynamic()
+                end
+            end
         end
     end)
 end

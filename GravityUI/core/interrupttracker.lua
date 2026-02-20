@@ -108,7 +108,15 @@ local CD_REDUCTION_TALENTS = {
     [378848] = { affects = 47528, reduction = 3 }, -- Mind Freeze (47528)
 }
 
+-- Spec-specific cooldown overrides (SpellID -> { SpecID -> Cooldown })
+local SPEC_COOLDOWN_OVERRIDES = {
+    [57994] = {
+        [264] = 30, -- Restoration Shaman: Wind Shear is 30s
+    },
+}
+
 local activeReductions = {}
+local activeSpecs = {}
 local container = nil
 local testModeActive = false
 
@@ -119,76 +127,14 @@ local testModeActive = false
 -- This avoids the taint issues with spellIDs in the combat log/unit events
 -- by relying on each client to report their own successful interrupts.
 
---[[ 
--- These MUST be created here, NOT inside event handlers
-local launderBar = CreateFrame("StatusBar")
-launderBar:SetMinMaxValues(0, 9999999)
 
--- Slider for OnValueChanged laundering
-local launderSlider = CreateFrame("Slider", nil, UIParent)
-launderSlider:SetMinMaxValues(0, 9999999)
-launderSlider:SetSize(1, 1)
-launderSlider:Hide()
-
--- OnValueChanged result storage (written by callback, read by handler)
-local onValueChangedResult = nil
-local onSliderChangedResult = nil
-
--- The key insight: when a widget fires OnValueChanged, the C++ engine
--- re-reads the value from internal storage and passes it as a callback arg.
--- This MIGHT strip taint since it's a new value from C++ land.
-launderBar:SetScript("OnValueChanged", function(self, value)
-    onValueChangedResult = value
-end)
-
-launderSlider:SetScript("OnValueChanged", function(self, value)
-    onSliderChangedResult = value
-end)
-
--- Watcher Frames for explicit unit registration
-local partyFrames = {}
-for i = 1, 4 do
-    partyFrames[i] = CreateFrame("Frame")
-end
-]]
 
 -- Player Watcher (To avoid AceEvent/Global Taint issues)
 local playerWatcher = CreateFrame("Frame")
 
 -- Helper to register events
 local function RegisterPartyWatchers()
-    -- Party Members (DISABLED - Using CHAT_MSG_ADDON)
-    --[[
-    for i = 1, 4 do
-        local unit = "party" .. i
-        partyFrames[i]:UnregisterAllEvents()
-        if UnitExists(unit) then
-            partyFrames[i]:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", unit)
-            partyFrames[i]:SetScript("OnEvent", function(_, _, unit, castGUID, spellId)
-                -- Launder spellID
-                onValueChangedResult = nil
-                launderBar:SetValue(0) -- reset
-                pcall(launderBar.SetValue, launderBar, spellId)
-                local barResult = onValueChangedResult
 
-                -- Try OnValueChanged laundering (Slider)
-                onSliderChangedResult = nil
-                launderSlider:SetValue(0) -- reset
-                pcall(launderSlider.SetValue, launderSlider, spellId)
-                local sliderResult = onSliderChangedResult
-
-                local cleanID = barResult or sliderResult
-
-                -- print("GravityUI Debug: Raw ID:", spellId, "Clean ID:", cleanID)
-
-                if cleanID then
-                    InterruptTracker:UNIT_SPELLCAST_SUCCEEDED("UNIT_SPELLCAST_SUCCEEDED", unit, castGUID, cleanID)
-                end
-            end)
-            -- print("GravityUI Debug: Registered watcher for", unit)
-        end
-    end
-    ]]
     
     -- Player Watcher (Direct, Player Unit is usually safe but we use RegisterUnitEvent to be sure)
     playerWatcher:UnregisterAllEvents()
@@ -506,6 +452,11 @@ local function StartCooldown(guid, name, class, spellId, isReady)
     local baseCD = INTERRUPTS[spellId]
     if not baseCD then return end
     
+    -- Apply Spec-Specific Cooldown Override
+    if activeSpecs[guid] and SPEC_COOLDOWN_OVERRIDES[spellId] and SPEC_COOLDOWN_OVERRIDES[spellId][activeSpecs[guid]] then
+        baseCD = SPEC_COOLDOWN_OVERRIDES[spellId][activeSpecs[guid]]
+    end
+    
     -- print("GravityUI Debug: StartCooldown", name, spellId, isReady)
 
     -- Check duplicates
@@ -782,6 +733,8 @@ local function OnInspectReady(guid)
     if unit then
         local specID = GetInspectSpecialization(unit)
         if specID and specID > 0 then
+            activeSpecs[guid] = specID
+            
             local specInterrupt = SPEC_INTERRUPTS[specID]
             if specInterrupt then
                 -- Find existing bar for this GUID
@@ -866,9 +819,6 @@ local function OnGroupRosterUpdate()
     if (not inGroup or instanceType == "raid" or IsInRaid()) and not testModeActive then
          for _, info in ipairs(activeBars) do info.frame:Hide() end
          activeBars = {}
-         activeBars = {}
-          -- Unregister watchers
-         -- for i=1,4 do partyFrames[i]:UnregisterAllEvents() end
          return
     end
     

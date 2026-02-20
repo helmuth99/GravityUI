@@ -106,7 +106,7 @@ local function BuildCursor(parent)
     AddRow(content, "Ring Style", "dropdown", ringStyles, "ringStyle", c, refresh)
     AddRow(content, "Ring Size", "slider", 10, 100, "ringSize", c, refresh, 1)
     
-    local reticleStyles = {{value="dot", text="Dot"},{value="cross", text="Crosshair (Atlas)"},{value="chevron", text="Chevron (Atlas)"},{value="diamond", text="Diamond (Atlas)"}}
+    local reticleStyles = {{value="none", text="None"}, {value="dot", text="Dot"},{value="cross", text="Crosshair (Atlas)"},{value="chevron", text="Chevron (Atlas)"},{value="diamond", text="Diamond (Atlas)"}}
     AddRow(content, "Reticle Style", "dropdown", reticleStyles, "reticleStyle", c, refresh)
     AddRow(content, "Reticle Size", "slider", 1, 40, "reticleSize", c, refresh, 1)
     
