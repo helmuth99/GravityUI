@@ -796,7 +796,6 @@ local function UpdateButtonVisibility()
         end
         UpdateElement(ExpansionLandingPageMinimapButton, s.missionsConfig, s.showMissions, preview)
     end
-    
     -- Addon Compartment
     if AddonCompartmentFrame then
         UpdateElement(AddonCompartmentFrame, s.addonCompartmentConfig, s.showAddonCompartment, preview)
@@ -1150,95 +1149,32 @@ end
 -- ═══════════════════════════════════════════════════════════════
 
 local function UpdateButtonPosition()
-    if not minimapButton then return end
-    local db = GetButtonDB()
-    local angle = math.rad(db.minimapPos or 220)
-    local x = math.cos(angle) * 80
-    local y = math.sin(angle) * 80
-    minimapButton:ClearAllPoints()
-    minimapButton:SetPoint("CENTER", Minimap, "CENTER", x, y)
+    -- Managed internally by LibDBIcon
 end
 
 local function CreateMinimapButton()
     if minimapButton then return end
     
-    local button = CreateFrame("Button", "GravityUIMinimapButton", Minimap)
-    button:SetSize(32, 32)
-    button:SetFrameStrata("MEDIUM")
-    button:SetFrameLevel(50) -- Above everything
-    button:EnableMouse(true)
-    button:RegisterForClicks("AnyUp")
-    button:RegisterForDrag("LeftButton")
-    button:SetMovable(true)
+    local LDB = LibStub("LibDataBroker-1.1", true)
+    local LDBIcon = LibStub("LibDBIcon-1.0", true)
+    if not LDB or not LDBIcon then return end
     
-    -- Background (Dark Shadow)
-    local bg = button:CreateTexture(nil, "BACKGROUND")
-    bg:SetSize(25, 25)
-    bg:SetPoint("CENTER", 0, 0)
-    bg:SetTexture("Interface\\CharacterFrame\\TempPortraitAlphaMask") -- Use mask as a solid dark circle
-    bg:SetVertexColor(0, 0, 0, 0.8)
+    local broker = LDB:NewDataObject("GravityUI", {
+        type = "launcher",
+        text = "GravityUI",
+        icon = ns.ICON_PATH,
+        OnClick = function(_, btn)
+            if btn == "LeftButton" and ns.GUI then ns.GUI:Toggle() end
+        end,
+        OnTooltipShow = function(tooltip)
+            tooltip:AddLine("|cFF30D1FFGravityUI|r")
+            tooltip:AddLine("Left-click to open settings", 0.5, 0.8, 1)
+        end,
+    })
     
-    -- Icon
-    local icon = button:CreateTexture(nil, "ARTWORK")
-    icon:SetSize(22, 22)
-    icon:SetPoint("CENTER", 0, 0)
-    icon:SetTexture(ns.ICON_PATH)
-    
-    -- Mask (Make it round)
-    local mask = button:CreateMaskTexture()
-    mask:SetSize(22, 22)
-    mask:SetPoint("CENTER", 0, 0)
-    mask:SetTexture("Interface\\CharacterFrame\\TempPortraitAlphaMask", "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
-    icon:AddMaskTexture(mask)
-    
-    -- Border (The gold ring) - Removed as requested
-    -- local border = button:CreateTexture(nil, "OVERLAY")
-    -- border:SetSize(54, 54)
-    -- border:SetPoint("CENTER", 0, 1)
-    -- border:SetTexture([[Interface\Minimap\MiniMap-TrackingBorder]])
-    
-    -- Highlight
-    local highlight = button:CreateTexture(nil, "HIGHLIGHT")
-    highlight:SetSize(28, 28)
-    highlight:SetPoint("CENTER", 0, 0)
-    highlight:SetTexture([[Interface\Minimap\UI-Minimap-ZoomButton-Highlight]])
-    highlight:SetBlendMode("ADD")
-    
-    button:SetScript("OnClick", function(_, btn)
-        if btn == "LeftButton" and ns.GUI then ns.GUI:Toggle() end
-    end)
-    
-    button:SetScript("OnEnter", function(self)
-        GameTooltip:SetOwner(self, "ANCHOR_LEFT")
-        GameTooltip:AddLine("|cFF30D1FFGravityUI|r")
-        GameTooltip:AddLine("Left-click to open settings", 0.5, 0.8, 1)
-        GameTooltip:Show()
-    end)
-    
-    button:SetScript("OnLeave", function() GameTooltip:Hide() end)
-    
-    button:SetScript("OnDragStart", function(self)
-        self:LockHighlight()
-        self:SetScript("OnUpdate", function()
-            local mx, my = Minimap:GetCenter()
-            local px, py = GetCursorPosition()
-            local scale = Minimap:GetEffectiveScale()
-            px, py = px / scale, py / scale
-            local angle = math.deg(math.atan2(py - my, px - mx))
-            if angle < 0 then angle = angle + 360 end
-            local db = GetButtonDB()
-            db.minimapPos = angle
-            UpdateButtonPosition()
-        end)
-    end)
-    
-    button:SetScript("OnDragStop", function(self)
-        self:UnlockHighlight()
-        self:SetScript("OnUpdate", nil)
-    end)
-    
-    minimapButton = button
-    UpdateButtonPosition()
+    local dbBtn = GetButtonDB()
+    LDBIcon:Register("GravityUI", broker, dbBtn)
+    minimapButton = LDBIcon:GetMinimapButton("GravityUI")
 end
 
 -- ═══════════════════════════════════════════════════════════════
@@ -1271,8 +1207,12 @@ end
 -- ═══════════════════════════════════════════════════════════════
 
 function ns.SetMinimapButtonVisible(visible)
-    if not minimapButton then return end
-    if visible then minimapButton:Show() else minimapButton:Hide() end
+    local LDBIcon = LibStub("LibDBIcon-1.0", true)
+    if not LDBIcon or not minimapButton then return end
+    
+    local dbBtn = GetButtonDB()
+    dbBtn.hide = not visible
+    LDBIcon:Refresh("GravityUI", dbBtn)
 end
 
 function ns.RefreshMinimap()

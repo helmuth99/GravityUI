@@ -58,6 +58,7 @@ core\minimap.lua
 core\actionbars.lua
 core\keymapping.lua
 core\tooltip.lua
+core\iconcatcher.lua
 core\installer.lua
 core\trackedbuffbar.lua
 

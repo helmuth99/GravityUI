@@ -107,6 +107,7 @@ local function BuildSettingsTab(parent)
     genContainer.rowCount = 0
     
     AddRow(genContainer, "Show Minimap", "checkbox", "enabled", m, refresh)
+    AddRow(genContainer, "Hide GravityUI Button", "checkbox", "hide", m.button, refresh)
     AddRow(genContainer, "Lock Minimap", "checkbox", "lock", m, refresh)
 
     AddRow(genContainer, "Auto Zoom Out", "checkbox", "autoZoom", m, refresh)
@@ -357,6 +358,126 @@ local function BuildElementsTab(parent)
     content:SetHeight(math.abs(y) + 50)
 end
 
+-- ═══════════════════════════════════════════════════════════════
+-- BUILDER: ICON CATCHER TAB (Tab 3)
+-- ═══════════════════════════════════════════════════════════════
+local function BuildIconCatcherTab(parent)
+    local scroll, content = GUI:CreateScrollableContent(parent)
+    scroll:SetAllPoints()
+
+    local db = ns.GetDB()
+    if not db or not db.minimap then return end
+    
+    local c = db.minimap.catcher
+    local refresh = ns.RefreshAddonDrawer or function() print("GravityUI: Please /reload for Addon Drawer changes to take effect.") end
+    
+    local ROW_HEIGHT = 30
+    local LABEL_WIDTH = 220
+    local WIDGET_WIDTH = 250
+    local PAD = 10
+    local y = -10
+    content._hasContent = false
+    
+    local function CreatePropertyRow(container, labelText, widgetType, arg1, arg2, arg3, arg4, arg5, arg6)
+        local row = CreateFrame("Frame", nil, container)
+        row:SetSize(GUI.CONTENT_WIDTH - 20, ROW_HEIGHT)
+        local label = row:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        GUI:SetFont(label, 12, "")
+        label:SetJustifyH("LEFT")
+        label:SetSize(LABEL_WIDTH, ROW_HEIGHT)
+        label:SetPoint("LEFT", 0, 0)
+        label:SetText(labelText)
+        label:SetTextColor(unpack(GUI.Colors.text))
+        
+        local widget
+        if widgetType == "checkbox" then
+            widget = GUI:CreateCheckbox(row, "", arg1, arg2, arg3)
+            widget:SetPoint("LEFT", label, "RIGHT", 10, 0)
+        elseif widgetType == "slider" then
+            widget = GUI:CreateSlider(row, "", arg1, arg2, arg3, arg4, arg5, arg6)
+            widget:SetHeight(ROW_HEIGHT)
+            widget:SetWidth(220)
+            widget:SetPoint("LEFT", label, "RIGHT", 10, 0)
+            widget.editBox:ClearAllPoints()
+            widget.editBox:SetPoint("RIGHT", widget, "RIGHT", 0, 0)
+            widget.slider:ClearAllPoints()
+            widget.slider:SetPoint("LEFT", widget, "LEFT", 0, 0)
+            widget.slider:SetPoint("RIGHT", widget.editBox, "LEFT", -10, 0)
+        elseif widgetType == "dropdown" then
+            widget = GUI:CreateDropdown(row, "", arg1, arg2, arg3, arg4)
+            widget:SetPoint("LEFT", label, "RIGHT", 10, 0)
+            widget:SetWidth(WIDGET_WIDTH)
+            widget.dropdown:ClearAllPoints()
+            widget.dropdown:SetPoint("LEFT", widget, "LEFT", 0, 0)
+            widget.dropdown:SetPoint("RIGHT", widget, "RIGHT", 0, 0)
+        elseif widgetType == "color" then
+            widget = GUI:CreateColorPicker(row, "", arg1, arg2, arg3)
+            widget:SetPoint("LEFT", label, "RIGHT", 10, 0)
+        elseif widgetType == "input"  then
+            widget = GUI:CreateInput(row, "", arg1, arg2, arg3)
+            widget:SetPoint("LEFT", label, "RIGHT", 10, 0)
+            widget:SetWidth(WIDGET_WIDTH)
+        end
+        return row
+    end
+    
+    local function AddRow(container, label, type, ...)
+        local row = CreatePropertyRow(container, label, type, ...)
+        local count = container.rowCount or 0
+        row:SetPoint("TOPLEFT", 10, -10 - (count * (ROW_HEIGHT + 5)))
+        container.rowCount = count + 1
+        return row
+    end
+    
+    -- 1. General Settings
+    local genHeader = GUI:CreateSectionHeader(content, "General Settings")
+    genHeader:SetPoint("TOPLEFT", PAD, y)
+    y = y - genHeader.gap
+    
+    local genContainer = CreateFrame("Frame", nil, content)
+    genContainer:SetPoint("TOPLEFT", PAD, y)
+    genContainer:SetWidth(GUI.CONTENT_WIDTH - 20)
+    genContainer.rowCount = 0
+    
+    AddRow(genContainer, "Enable Icon Catcher", "checkbox", "enabled", c, refresh)
+    AddRow(genContainer, "Lock Icon/Bar", "checkbox", "locked", c, refresh)
+    AddRow(genContainer, "Enable Masque Support", "checkbox", "masque", c, refresh)
+    
+    local modeOpts = { {value = "ICON", text = "Icon"}, {value = "BAR", text = "Bar"} }
+    AddRow(genContainer, "Display Mode", "dropdown", modeOpts, "mode", c, refresh)
+    AddRow(genContainer, "Catcher Icon Size", "slider", 16, 64, "catcherIconSize", c, refresh, 1)
+    AddRow(genContainer, "Bar Width", "slider", 5, 300, "catcherBarWidth", c, refresh, 1)
+    AddRow(genContainer, "Bar Height", "slider", 5, 300, "catcherBarHeight", c, refresh, 1)
+    
+    AddRow(genContainer, "Use Theme Color", "checkbox", "useThemeColor", c, refresh)
+    AddRow(genContainer, "Custom Bar Color", "color", "customBackgroundColor", c, refresh)
+    
+    genContainer:SetHeight(10 + (genContainer.rowCount * (ROW_HEIGHT + 5)))
+    y = y - genContainer:GetHeight() - 10
+    
+    -- 2. Layout Settings
+    local layoutHeader = GUI:CreateSectionHeader(content, "Grid Layout")
+    layoutHeader:SetPoint("TOPLEFT", PAD, y)
+    y = y - layoutHeader.gap
+    
+    local layoutContainer = CreateFrame("Frame", nil, content)
+    layoutContainer:SetPoint("TOPLEFT", PAD, y)
+    layoutContainer:SetWidth(GUI.CONTENT_WIDTH - 20)
+    layoutContainer.rowCount = 0
+    
+    AddRow(layoutContainer, "Icons Per Row", "slider", 1, 10, "iconsPerRow", c, refresh, 1)
+    AddRow(layoutContainer, "Icon Size", "slider", 16, 64, "iconSize", c, refresh, 1)
+    
+    local dirOpts = { {value="DOWN", text="Down"}, {value="UP", text="Up"}, {value="LEFT", text="Left"}, {value="RIGHT", text="Right"} }
+    AddRow(layoutContainer, "Grow Direction", "dropdown", dirOpts, "growDirection", c, refresh)
+    
+    layoutContainer:SetHeight(10 + (layoutContainer.rowCount * (ROW_HEIGHT + 5)))
+    y = y - layoutContainer:GetHeight() - 10
+    
+
+
+    content:SetHeight(math.abs(y) + 50)
+end
 
 ns.GUI:RegisterPage("minimap", {
     title = "Minimap",
@@ -374,6 +495,7 @@ ns.GUI:RegisterPage("minimap", {
         local subTabs = GUI:CreateSubTabs(scrollFrame, {
             { name = "Minimap Settings", builder = BuildSettingsTab },
             { name = "Minimap Elements", builder = BuildElementsTab },
+            { name = "Icon Catcher", builder = BuildIconCatcherTab },
         })
         subTabs:SetPoint("TOPLEFT", 10, -10)
         subTabs:SetPoint("TOPRIGHT", -10, 0)

@@ -664,59 +664,7 @@ Installer.registry = {
              return false
         end
     },
-    {
-        name = "HidingBar",
-        label = "HidingBar",
-        category = "Optional",
-        Check = function() return C_AddOns.IsAddOnLoaded("HidingBar") end,
-        GetProfile = function()
-             if _G.HidingBarDBChar and _G.HidingBarDBChar.currentProfileName then
-                 return _G.HidingBarDBChar.currentProfileName
-             end
-             -- Fallback: Check global profiles keys
-             if _G.HidingBarDB and _G.HidingBarDB.profiles then
-                 -- If only one profile exists, assume it's current? No, risky.
-                 -- Return "Default" if nothing found?
-                 return "Unknown" 
-             end
-             return nil
-        end,
-        SetProfile = function(self, profileName)
-             if _G.HidingBarDB and _G.HidingBarDB.profiles then
-                 -- Setup DB if missing profile
-                 if not _G.HidingBarDB.profiles[profileName] then
-                      _G.HidingBarDB.profiles[profileName] = {}
-                      -- Copy defaults?
-                 end
-                 
-                 -- Set Char DB pointer
-                 if _G.HidingBarDBChar then
-                      _G.HidingBarDBChar.currentProfileName = profileName
-                 end
-                 
-                 -- Update
-                 if _G.HidingBar and _G.HidingBar.UpdateConfig then pcall(_G.HidingBar.UpdateConfig) end
-                 return true
-             end
-        end,
-        Import = function(self, data, profileName)
-             if _G.HidingBarDB and _G.HidingBarDB.profiles then
-                  if not _G.HidingBarDB.profiles[profileName] then _G.HidingBarDB.profiles[profileName] = {} end
-                  local target = _G.HidingBarDB.profiles[profileName]
-                  if type(data) == "table" then
-                      for k,v in pairs(data) do target[k] = v end
-                  end
-                  
-                  if _G.HidingBarDBChar then _G.HidingBarDBChar.currentProfileName = profileName end
-             end
-        end,
-        HasProfile = function(self, profileName)
-             if _G.HidingBarDB and _G.HidingBarDB.profiles then
-                 return _G.HidingBarDB.profiles[profileName] ~= nil
-             end
-             return false
-        end
-    },
+
     {
         name = "NorthernSkyRaidTools",
         label = "NSRT", -- Shortened label to fit UI

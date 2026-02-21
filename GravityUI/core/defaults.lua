@@ -710,6 +710,7 @@ ns.Defaults = {
         showDifficulty = true,
         stylingExpanded = true,
         scale = 1,
+        showMRT = true,
         showMissions = false,
         borderColor =         {
             [1] = 0,
@@ -796,8 +797,28 @@ ns.Defaults = {
         },
         useClassColorBorder = false,
         button = {
-            hide = true,
+            hide = false,
             minimapPos = 220,
+        },
+        catcher = {
+            enabled = true,
+            masque = false,
+            fadeOutEnabled = false,
+            fadeOutTime = 10,
+            locked = false,
+            mode = "ICON", -- "ICON" or "BAR"
+            useThemeColor = true,
+            customBackgroundColor = {0.1, 0.1, 0.1, 0.95},
+            iconsPerRow = 4,
+            iconSize = 30,
+            growDirection = "DOWN", -- "DOWN", "UP", "LEFT", "RIGHT"
+            offsetX = 0,
+            offsetY = 0,
+            minimapPos = 200, -- Angle if mode is ICON
+            catcherIconSize = 40,
+            catcherBarWidth = 100,
+            catcherBarHeight = 20,
+            hardcodedHides = "", -- comma separated strings, e.g "_G.ExpansionLandingPageMinimapButton"
         },
         dungeonEye =         {
             enabled = true,
@@ -812,6 +833,12 @@ ns.Defaults = {
             offsetY = -235,
             point = "TOPRIGHT",
             offsetX = -114,
+        },
+        mrtConfig =         {
+            scale = 1,
+            offsetY = -28,
+            point = "TOPRIGHT",
+            offsetX = -28,
         },
         generalExpanded = true,
         posExpanded = false,
