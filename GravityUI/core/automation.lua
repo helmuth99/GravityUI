@@ -470,34 +470,176 @@ local function InitMovieSkip()
     hookRef(MovieFrame, function() return MovieFrame and MovieFrame.CloseDialog and MovieFrame.CloseDialog.ConfirmButton end)
 end
 
-local originalDeleteGood = nil
-local originalDeleteQuest = nil
+-- ==========================================
+-- GravityUI: Smart Item Destroyer
+-- ==========================================
+local SmartDelete = {}
+
+function SmartDelete:GetItemData()
+    local cType, cId, cLink = GetCursorInfo()
+    if cType == "battlepet" and cId then
+        local pName = C_PetJournal and C_PetJournal.GetPetInfoBySpeciesID(cId)
+        return pName and ("|cff0070dd[" .. pName .. "]|r") or nil
+    elseif cType == "item" then
+        return cLink
+    end
+end
+
+function SmartDelete:CleanBoxText(textBody)
+    if not textBody or not DELETE_GOOD_ITEM then return textBody end
+    local reqString = string.match(DELETE_GOOD_ITEM, "\n(.+)$")
+    if reqString then
+        reqString = string.gsub(reqString, "%%s", "")
+        reqString = strtrim(reqString)
+        if reqString ~= "" and string.find(textBody, reqString, 1, true) then
+            return strtrim(string.sub(textBody, 1, string.find(textBody, reqString, 1, true) - 1))
+        end
+    end
+    return textBody
+end
+
+function SmartDelete.OnHover(frame, link, txt)
+    if not link then return end
+    local lType = string.match(link, "^(%a+)")
+    if lType == "item" then
+        GameTooltip:SetOwner(frame, "ANCHOR_CURSOR")
+        GameTooltip:SetHyperlink(link)
+        GameTooltip:Show()
+    elseif lType == "battlepet" and BattlePetToolTip_ShowLink then
+        GameTooltip:SetOwner(frame, "ANCHOR_CURSOR")
+        BattlePetToolTip_ShowLink(link)
+    end
+end
+
+function SmartDelete.OnLeave()
+    GameTooltip:Hide()
+    if BattlePetTooltip then BattlePetTooltip:Hide() end
+end
+
+function SmartDelete:InitHooks()
+    for _, popName in pairs({"DELETE_ITEM", "DELETE_QUEST_ITEM", "DELETE_GOOD_QUEST_ITEM", "DELETE_GOOD_ITEM"}) do
+        local d = StaticPopupDialogs[popName]
+        if d then
+            d.OnHyperlinkEnter = self.OnHover
+            d.OnHyperlinkLeave = self.OnLeave
+        end
+    end
+end
+
+function SmartDelete:Process()
+    local s = GetSettings()
+    if not s or not s.deleteFix then return end
+
+    local pFrame, pEdit, pBtn
+    for i = 1, 4 do
+        local f = _G["StaticPopup" .. i]
+        if f and f:IsShown() then
+            local e = _G["StaticPopup" .. i .. "EditBox"]
+            local b = _G["StaticPopup" .. i .. "Button1"]
+            if e and b then
+                pFrame, pEdit, pBtn = f, e, b
+                break
+            end
+        end
+    end
+
+    if not pFrame then return end
+    local link = self:GetItemData()
+    
+    if pEdit then pEdit:Hide() end
+    if pBtn then pBtn:Enable() end
+
+    local txtRegion = _G[pFrame:GetName() .. "Text"]
+    if txtRegion and link then
+        local rawText = txtRegion:GetText() or ""
+        txtRegion:SetText(self:CleanBoxText(rawText) .. "\n\n" .. link)
+        if not (pEdit and pEdit:IsShown()) then
+            pFrame:SetHeight(pFrame:GetHeight() + 32)
+        end
+    end
+end
+
+-- ==========================================
+-- GravityUI: Safe Release (Death Protection)
+-- ==========================================
+local SafeRelease = {
+    overlay = nil,
+    label = nil,
+    holdTime = 1.0,
+    startTime = 0,
+    released = false
+}
+
+function SafeRelease:Build(btnTarget)
+    if self.overlay then return end
+    self.overlay = CreateFrame("Button", "GravityUI_SafeReleaseBtn", btnTarget)
+    self.overlay:SetAllPoints()
+    self.overlay:SetFrameStrata("DIALOG")
+    self.overlay:EnableMouse(true)
+    self.overlay:RegisterForClicks("AnyUp", "AnyDown")
+    
+    local tex = self.overlay:CreateTexture(nil, "BACKGROUND")
+    tex:SetAllPoints()
+    tex:SetColorTexture(0.05, 0.05, 0.05, 0.9)
+    
+    self.overlay.label = self.overlay:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    self.overlay.label:SetPoint("CENTER")
+    self.overlay.label:SetTextColor(1, 0.5, 0)
+    
+    self.overlay:SetScript("OnClick", function() end)
+end
+
+function SafeRelease:Update()
+    if self.released then
+        self.overlay:Hide()
+        return
+    end
+    
+    if IsAltKeyDown() then
+        if self.startTime == 0 then self.startTime = GetTime() end
+        local diff = self.holdTime - (GetTime() - self.startTime)
+        if diff <= 0 then
+            self.released = true
+            self.overlay:Hide()
+        else
+            self.overlay.label:SetText(string.format("Hold ALT (%.1fs)", diff))
+        end
+    else
+        self.startTime = 0
+        self.overlay.label:SetText(string.format("Hold ALT (%.1fs)", self.holdTime))
+    end
+end
+
+function SafeRelease:Reset()
+    self.startTime = 0
+    self.released = false
+    if self.overlay then
+        self.overlay:SetScript("OnUpdate", nil)
+        self.overlay:Hide()
+    end
+end
+
+function SafeRelease:Trigger()
+    local s = GetSettings()
+    if not s or not s.deathReleaseProtection then return end
+
+    local isVis, popupData = StaticPopup_Visible("DEATH")
+    if not isVis or not popupData then return end
+    
+    local dBtn = popupData.GetButton and popupData:GetButton(1)
+    if not dBtn then return end
+
+    self:Build(dBtn)
+    self:Reset()
+    self.overlay.label:SetText(string.format("Hold ALT (%.1fs)", self.holdTime))
+    self.overlay:SetScript("OnUpdate", function() self:Update() end)
+    self.overlay:Show()
+end
 
 local function ToggleDeleteFix(enable)
-    if enable then
-        -- Apply Fix
-        if not originalDeleteGood then originalDeleteGood = StaticPopupDialogs.DELETE_GOOD_ITEM end
-        if not originalDeleteQuest then originalDeleteQuest = StaticPopupDialogs.DELETE_GOOD_QUEST_ITEM end
-        
-        StaticPopupDialogs.DELETE_GOOD_ITEM = StaticPopupDialogs.DELETE_ITEM
-        StaticPopupDialogs.DELETE_GOOD_QUEST_ITEM = StaticPopupDialogs.DELETE_ITEM
-    else
-        -- Revert Fix
-        if originalDeleteGood then StaticPopupDialogs.DELETE_GOOD_ITEM = originalDeleteGood end
-        if originalDeleteQuest then StaticPopupDialogs.DELETE_GOOD_QUEST_ITEM = originalDeleteQuest end
-    end
+    -- Deprecated basic stub, UI Improvements integration dynamically updates GetSettings
 end
-
--- Export for UI callback
 ns.ToggleDeleteFix = ToggleDeleteFix
-
-local function InitDeleteFix()
-    local settings = GetSettings()
-    -- Only enable if set. If disabled, do nothing (originals stay nil, untouched)
-    if settings and settings.deleteFix then
-        ToggleDeleteFix(true)
-    end
-end
 
 ---------------------------------------------------------------------------
 -- EVENT REGISTRATION
@@ -515,6 +657,10 @@ automationFrame:RegisterEvent("QUEST_COMPLETE")
 automationFrame:RegisterEvent("GOSSIP_SHOW")
 automationFrame:RegisterEvent("GOSSIP_CLOSED")
 automationFrame:RegisterEvent("LOOT_READY")
+automationFrame:RegisterEvent("DELETE_ITEM_CONFIRM")
+automationFrame:RegisterEvent("PLAYER_DEAD")
+automationFrame:RegisterEvent("PLAYER_ALIVE")
+automationFrame:RegisterEvent("PLAYER_UNGHOST")
 automationFrame:RegisterEvent("CHALLENGE_MODE_START")
 automationFrame:RegisterEvent("CHALLENGE_MODE_COMPLETED")
 automationFrame:RegisterEvent("CHALLENGE_MODE_RESET")
@@ -543,6 +689,12 @@ automationFrame:SetScript("OnEvent", function(self, event, ...)
         OnGossipClosed()
     elseif event == "LOOT_READY" then
         OnLootReady()
+    elseif event == "DELETE_ITEM_CONFIRM" then
+        SmartDelete:Process()
+    elseif event == "PLAYER_DEAD" then
+        C_Timer.After(0.05, function() SafeRelease:Trigger() end)
+    elseif event == "PLAYER_ALIVE" or event == "PLAYER_UNGHOST" then
+        SafeRelease:Reset()
     elseif event == "CHALLENGE_MODE_START" then
         OnChallengeModeStart()
     elseif event == "CHALLENGE_MODE_COMPLETED" or event == "CHALLENGE_MODE_RESET" then
@@ -554,8 +706,9 @@ automationFrame:SetScript("OnEvent", function(self, event, ...)
                  if s.showDamageNumbers ~= nil then SetCVar("floatingCombatTextCombatDamage", s.showDamageNumbers and "1" or "0") end
                  if s.showHealingNumbers ~= nil then SetCVar("floatingCombatTextCombatHealing", s.showHealingNumbers and "1" or "0") end
                  if s.spellQueueWindow then SetCVar("SpellQueueWindow", tostring(s.spellQueueWindow)) end
+                 
+                 if s.deleteFix then SmartDelete:InitHooks() end
              end
-             InitDeleteFix()
              OverrideLfgApplicationDialog()
         end
         C_Timer.After(2, CheckResumeLogging)

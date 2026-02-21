@@ -124,6 +124,12 @@ local function BuildAutomation(parent)
     delInfo:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
     content.rowCount = content.rowCount + (delInfo:GetHeight() / (ROW_HEIGHT+5)) + 0.2
     
+    AddRow(content, "Death Release Protection", "checkbox", "deathReleaseProtection", dbUI, nil)
+    content.rowCount = content.rowCount + 0.2
+    local deathInfo = GUI:CreateInfoBox(content, "Forces you to hold ALT for 1 second before 'Release Spirit' can be clicked.")
+    deathInfo:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
+    content.rowCount = content.rowCount + (deathInfo:GetHeight() / (ROW_HEIGHT+5)) + 0.2
+    
     AddRow(content, "Faster Movie Skip", "checkbox", "fasterMovieSkip", dbUI, nil)
     content.rowCount = content.rowCount + 0.2
     local movieInfo = GUI:CreateInfoBox(content, "Use ESC, SPACE, or ENTER to skip cancel Cinematic/Movie dialogs instantly.")

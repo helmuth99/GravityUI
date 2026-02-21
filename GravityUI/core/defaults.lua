@@ -462,6 +462,7 @@ ns.Defaults = {
             },
         },
         deleteFix = true,
+        deathReleaseProtection = true,
 
 
         hideFriendlyNPCNameplates = true,
