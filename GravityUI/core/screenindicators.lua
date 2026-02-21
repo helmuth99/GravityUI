@@ -975,7 +975,6 @@ eventFrame:SetScript("OnEvent", function(self, event, unit)
         C_Timer.After(1, Screen.Refresh)
     elseif event == "PLAYER_REGEN_DISABLED" or event == "PLAYER_REGEN_ENABLED" then
         UpdateCursorVisibility()
-        Screen.Refresh()
         Screen.ShowCombatStatus(event == "PLAYER_REGEN_DISABLED" and "+Combat" or "-Combat")
     elseif event == "SPELL_UPDATE_COOLDOWN" then
         UpdateCursorGCD()
