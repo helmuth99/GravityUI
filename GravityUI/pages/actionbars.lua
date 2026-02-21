@@ -53,6 +53,10 @@ local function CreatePropertyRow(parent, labelText, widgetType, arg1, arg2, arg3
          widget:SetPoint("LEFT", label, "RIGHT", 10, 0)
     end
     
+    if ns.GUI and ns.GUI.RegisterInSearchIndex then
+        ns.GUI:RegisterInSearchIndex(labelText, row)
+    end
+    
     return row
 end
 

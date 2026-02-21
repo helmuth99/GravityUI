@@ -1391,11 +1391,13 @@ function GUI:CreateSubTabs(parent, tabs)
     local tabButtons = {}
     local tabContents = {}
     
-    -- Store for indexing context
-    if GUI.currentSearchContext then
-        local page = GUI.pages[GUI.currentSearchContext.pageId]
+    -- Store for layout and indexing context
+    local pageId = (GUI.currentSearchContext and GUI.currentSearchContext.pageId) or GUI.buildingPageId
+    if pageId then
+        local page = GUI.pages[pageId]
         if page then
             page.lastSubTabsData = tabs
+            page.subTabs = container
         end
     end
     

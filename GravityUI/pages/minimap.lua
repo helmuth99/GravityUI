@@ -66,6 +66,11 @@ local function BuildSettingsTab(parent)
              widget = GUI:CreateColorPicker(row, "", arg1, arg2, arg3)
              widget:SetPoint("LEFT", label, "RIGHT", 10, 0)
         end
+        
+        if ns.GUI and ns.GUI.RegisterInSearchIndex then
+            ns.GUI:RegisterInSearchIndex(labelText, row)
+        end
+        
         return row
     end
     
@@ -216,6 +221,11 @@ local function BuildElementsTab(parent)
             widget.dropdown:SetPoint("LEFT", widget, "LEFT", 0, 0)
             widget.dropdown:SetPoint("RIGHT", widget, "RIGHT", 0, 0)
         end
+        
+        if ns.GUI and ns.GUI.RegisterInSearchIndex then
+            ns.GUI:RegisterInSearchIndex(labelText, row)
+        end
+        
         return row
     end
     

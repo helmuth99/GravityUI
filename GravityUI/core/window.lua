@@ -716,7 +716,9 @@ function GUI:ShowPage(index)
     if not opts then return end
     
     if not opts.frame then
+        self.buildingPageId = pageId
         opts.frame = BuildPageFrame(opts)
+        self.buildingPageId = nil
     end
     
     opts.frame:Show()
@@ -845,6 +847,15 @@ function GUI:NavigateToItem(item)
     C_Timer.After(0.1, function()
         if item.widget and item.widget:IsVisible() then
             local scrollFrame = page.frame
+            local parent = item.widget:GetParent()
+            while parent do
+                if parent.GetVerticalScrollRange and parent.GetScrollChild then
+                    scrollFrame = parent
+                    break
+                end
+                parent = parent:GetParent()
+            end
+            
             if scrollFrame and scrollFrame.GetVerticalScrollRange then
                 local content = scrollFrame:GetScrollChild()
                 local widgetY = item.widget:GetTop()

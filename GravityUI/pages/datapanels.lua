@@ -75,6 +75,11 @@ local function BuildMinimapPanel(parent)
             widget:SetWidth(WIDGET_WIDTH)
             widget.editBox:SetWidth(WIDGET_WIDTH)
         end
+        
+        if ns.GUI and ns.GUI.RegisterInSearchIndex then
+            ns.GUI:RegisterInSearchIndex(labelText, row)
+        end
+        
         return row
     end
     
@@ -219,6 +224,11 @@ local function BuildCustomPanels(parent)
             widget:SetWidth(WIDGET_WIDTH)
             widget.editBox:SetWidth(WIDGET_WIDTH)
         end
+        
+        if ns.GUI and ns.GUI.RegisterInSearchIndex then
+            ns.GUI:RegisterInSearchIndex(labelText, row)
+        end
+        
         return row
     end
     
