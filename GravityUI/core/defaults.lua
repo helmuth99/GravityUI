@@ -1008,7 +1008,26 @@ ns.Defaults = {
             hideUntilOutOfRange = false,
             onlyInCombat = false,
         },
-
+        afkScreen = {
+            enabled = false,
+            camTurnSpeed = 3,
+            rotationDirection = 1, -- 1: Left, 2: Right, 3: Random
+            useClassColor = true,
+            useThemeColor = false,
+            customColor = { 1, 1, 1, 1 },
+            preventInAh = true,
+            showCharacter = true,
+            animationState = 0, -- Standard stand
+            showRealm = false,
+            showTitle = true,
+            showGuild = true,
+            showBrackets = true,
+            showRank = false,
+            displaySeconds = true,
+            timeFormat = 1, -- 1: 24h, 2: 12h, 3: 12h no leading 0
+            showAmPm = false,
+            showTimer = true,
+        },
     },
     main =     {
         showWelcome = true,

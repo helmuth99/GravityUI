@@ -1172,6 +1172,91 @@ local function BuildDifficulty(parent)
     content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
 end
 
+-- 8. AFK Screen
+local function BuildAFKScreen(parent)
+    local scroll, content = GUI:CreateScrollableContent(parent)
+    scroll:SetAllPoints()
+    local db = ns.GetDB(); if not db then return end
+    
+    if not db.screenindicators.afkScreen then
+        db.screenindicators.afkScreen = {
+            enabled = true, camTurnSpeed = 3, rotationDirection = 1, useClassColor = true,
+            useThemeColor = false, customColor = { 1, 1, 1, 1 }, preventInAh = true, 
+            showCharacter = true, animationState = 0, showRealm = false, showTitle = true, 
+            showGuild = true, showBrackets = true, showRank = false, displaySeconds = true, 
+            timeFormat = 1, showAmPm = false, showTimer = true
+        }
+    end
+    
+    local c = db.screenindicators.afkScreen
+    content.rowCount = 0
+    local refresh = function() end -- No immediate refresh needed usually, applies on next AFK
+    
+    local header = GUI:CreateSectionHeader(content, "AFK Screen")
+    header:SetPoint("TOPLEFT", 10, -10)
+    header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
+    content.rowCount = 1.3
+    
+    local infoBox = GUI:CreateInfoBox(content, "Replaces the default UI with a cinematic character view while you are Away From Keyboard.")
+    infoBox:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
+    content.rowCount = content.rowCount + (infoBox:GetHeight() / (ROW_HEIGHT+5)) + 0.2
+    
+    CreateSubLabel(content, "General")
+    AddRow(content, "Enable AFK Screen", "checkbox", "enabled", c, refresh)
+    AddRow(content, "Prevent in Auction/Professions", "checkbox", "preventInAh", c, refresh)
+    
+    content.rowCount = content.rowCount + 0.5
+    
+    CreateSubLabel(content, "Cinematic Camera")
+    AddRow(content, "Turn Speed", "slider", 1, 10, "camTurnSpeed", c, refresh, 1)
+    
+    local dirOptions = { {text="Left", value=1}, {text="Right", value=2}, {text="Random", value=3} }
+    AddRow(content, "Rotation Direction", "dropdown", dirOptions, "rotationDirection", c, refresh)
+    
+    content.rowCount = content.rowCount + 0.5
+    
+    CreateSubLabel(content, "Appearance & Colors")
+    AddRow(content, "Use Class Color (Border & Name)", "checkbox", "useClassColor", c, refresh)
+    AddRow(content, "Use Theme Color (If Class Color Off)", "checkbox", "useThemeColor", c, refresh)
+    AddRow(content, "Custom Color (If Both Off)", "color", "customColor", c, refresh)
+    
+    content.rowCount = content.rowCount + 0.5
+    
+    CreateSubLabel(content, "Character Model")
+    AddRow(content, "Show Character Model", "checkbox", "showCharacter", c, refresh)
+    -- Verified looping animations for Retail (12.0 API limits)
+    local animOptions = { 
+        {text="Stand", value=0}, 
+        {text="Walk", value=4},
+        {text="Dance", value=69}
+    }
+    AddRow(content, "Display Animation", "dropdown", animOptions, "animationState", c, refresh)
+
+    content.rowCount = content.rowCount + 0.5
+    
+    CreateSubLabel(content, "Text & Information")
+    AddRow(content, "Show Character Title", "checkbox", "showTitle", c, refresh)
+    AddRow(content, "Show Guild Name", "checkbox", "showGuild", c, refresh)
+    AddRow(content, "Show Guild Brackets (< >)", "checkbox", "showBrackets", c, refresh)
+    AddRow(content, "Show Guild Rank", "checkbox", "showRank", c, refresh)
+    
+    content.rowCount = content.rowCount + 0.5
+    
+    CreateSubLabel(content, "Time & Timer Settings")
+    AddRow(content, "Show Current Time", "checkbox", "showTimer", c, refresh)
+    
+    local timeOptions = { {text="24-Hour", value=1}, {text="12-Hour", value=2}, {text="12-Hour (No Leading 0)", value=3} }
+    AddRow(content, "Time Format", "dropdown", timeOptions, "timeFormat", c, refresh)
+    if c.timeFormat ~= 1 then
+        AddRow(content, "Show AM/PM", "checkbox", "showAmPm", c, refresh)
+    end
+    
+    AddRow(content, "Show AFK Duration", "checkbox", "showTimer", c, refresh)
+    AddRow(content, "Display Timer Seconds", "checkbox", "displaySeconds", c, refresh)
+
+    content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
+end
+
         -- Create SubTabs
         local categories = {
             { name = "Cursor", builder = BuildCursor },
@@ -1182,6 +1267,7 @@ end
             { name = "Raid Warnings", builder = BuildRaidWarnings },
             { name = "Interrupt Tracker", builder = BuildInterruptTracker },
             { name = "Difficulty", builder = BuildDifficulty },
+            { name = "AFK Screen", builder = BuildAFKScreen },
         }
         -- Create SubTabs
         local subTabs = GUI:CreateSubTabs(scrollFrame, categories)

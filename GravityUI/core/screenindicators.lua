@@ -1495,3 +1495,425 @@ diffListener:SetScript("OnEvent", function(self, event)
         CheckLeadership()
     end
 end)
+
+-- ============================================================================
+-- AFK SCREEN
+-- ============================================================================
+
+local AFKState = {
+    frame = nil,
+    timer = nil,
+    startTime = 0,
+    isAFK = false,
+    cameraRotating = false,
+    originalCameraYaw = nil,
+}
+
+local ExitAFK -- Forward declaration for use in CreateAFKFrame scripts
+
+local function GetAFKSettings()
+    local db = ns.GetDB()
+    if db and db.screenindicators and db.screenindicators.afkScreen then
+        return db.screenindicators.afkScreen
+    end
+    -- Fallback defaults if db isn't fully initialized
+    return {
+        enabled = true, camTurnSpeed = 3, rotationDirection = 1, useClassColor = true,
+        preventInAh = true, fpView = false, resetCamera = false, showCharacter = true,
+        showRealm = false, showTitle = true, showGuild = true, showBrackets = true,
+        showRank = false, displaySeconds = true, timeFormat = 1, showAmPm = false,
+        showTimer = true, showLabel = true
+    }
+end
+
+local function FormatAFKTime(seconds)
+    local m = math.floor(seconds / 60)
+    local s = math.floor(seconds % 60)
+    local displaySeconds = GetAFKSettings().displaySeconds
+    if displaySeconds then
+        return string.format("%02d:%02d", m, s)
+    else
+        return string.format("%02d", m)
+    end
+end
+
+local function GetFormattedClock()
+    local s = GetAFKSettings()
+    local h, m = GetGameTime()
+    local ampm = ""
+    
+    if s.timeFormat == 2 or s.timeFormat == 3 then -- 12h formats
+        if s.showAmPm then
+            ampm = (h >= 12) and " PM" or " AM"
+        end
+        if h == 0 then h = 12
+        elseif h > 12 then h = h - 12 end
+    end
+    
+    if s.timeFormat == 3 then -- 12h no leading zero
+        return string.format("%d:%02d%s", h, m, ampm)
+    else
+        return string.format("%02d:%02d%s", h, m, ampm)
+    end
+end
+
+local function CreateAFKFrame()
+    if AFKState.frame then return end
+
+    local f = CreateFrame("Frame", "GravityUI_AFKScreen", nil, "BackdropTemplate")
+    f:SetScale(UIParent:GetScale())
+    f:SetAllPoints(UIParent)
+    f:SetFrameStrata("FULLSCREEN_DIALOG")
+    f:Hide()
+    
+    -- Prevent clicks from clicking through to the world
+    f:EnableMouse(true)
+    f:EnableKeyboard(true)
+    f:SetPropagateKeyboardInput(true)
+    
+    -- Background
+    f.bg = f:CreateTexture(nil, "BACKGROUND")
+    f.bg:SetAllPoints()
+    f.bg:SetColorTexture(0, 0, 0, 0.7)
+    
+    -- Bottom Panel for Info
+    f.bottomPanel = CreateFrame("Frame", nil, f, "BackdropTemplate")
+    f.bottomPanel:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 0, 0)
+    f.bottomPanel:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", 0, 0)
+    f.bottomPanel:SetHeight(90)
+    f.bottomPanel:SetBackdrop({
+        bgFile = "Interface\\Buttons\\WHITE8x8",
+        edgeFile = "Interface\\Buttons\\WHITE8x8",
+        edgeSize = 2,
+    })
+    f.bottomPanel:SetBackdropColor(0.05, 0.05, 0.05, 0.8)
+    
+    -- Player Model
+    f.model = CreateFrame("PlayerModel", nil, f)
+    f.model:SetSize(600, 800)
+    f.model:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -150, 50)
+    
+    -- Left Anchor
+    f.nameAnchor = CreateFrame("Frame", nil, f.bottomPanel)
+    f.nameAnchor:SetPoint("LEFT", f.bottomPanel, "LEFT", 50, 4)
+    f.nameAnchor:SetSize(1, 1)
+
+    -- Title Prefix
+    f.titlePrefixText = f.bottomPanel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    f.titlePrefixText:SetPoint("BOTTOMLEFT", f.nameAnchor, "BOTTOMLEFT", 0, 0)
+    
+    -- Name Text
+    f.nameText = f.bottomPanel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    f.nameText:SetPoint("BOTTOMLEFT", f.titlePrefixText, "BOTTOMRIGHT", 0, -3)
+    
+    -- Title Suffix
+    f.titleSuffixText = f.bottomPanel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    f.titleSuffixText:SetPoint("BOTTOMLEFT", f.nameText, "BOTTOMRIGHT", 0, 3)
+    
+    -- Guild Text
+    f.guildText = f.bottomPanel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    f.guildText:SetPoint("TOPLEFT", f.nameAnchor, "BOTTOMLEFT", 0, -5)
+    
+    -- Clock Text
+    f.clockText = f.bottomPanel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    f.clockText:SetPoint("BOTTOMRIGHT", f.bottomPanel, "RIGHT", -50, 2)
+    
+    -- Timer Text
+    f.timerText = f.bottomPanel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    f.timerText:SetPoint("CENTER", f.bottomPanel, "CENTER", 0, 0)
+    
+    -- GravityUI Logo / Branding text
+    f.brandingText = f.bottomPanel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    f.brandingText:SetPoint("TOPRIGHT", f.clockText, "BOTTOMRIGHT", 0, -4)
+    f.brandingText:SetText("|TInterface\\AddOns\\GravityUI\\assets\\GRAVITY_UI_Icon.blp:20:20:0:0|t GravityUI")
+    
+    AFKState.frame = f
+    
+    -- OnUpdate for Timer and Clock Update
+    f:SetScript("OnUpdate", function(self, elapsed)
+        if not AFKState.isAFK then return end
+        
+        -- Fallback: Ensure to exit if game removed AFK flag
+        if not UnitIsAFK("player") then
+            ExitAFK()
+            return
+        end
+        
+        local s = GetAFKSettings()
+        
+        -- Update Clock
+        self.clockText:SetText(GetFormattedClock())
+        
+        -- Update AFK Timer
+        if s.showTimer then
+            local afkSecs = GetTime() - AFKState.startTime
+            self.timerText:SetText("AFK for: " .. FormatAFKTime(afkSecs))
+        else
+            self.timerText:SetText("")
+        end
+    end)
+    
+    -- Instantly break AFK UI on key press
+    f:SetScript("OnKeyDown", function(self, key)
+        local isModifier = (key == "LSHIFT" or key == "RSHIFT" or key == "LCTRL" or key == "RCTRL" or key == "LALT" or key == "RALT")
+        if not isModifier then
+            if AFKState.isAFK then
+                ExitAFK()
+            end
+        end
+    end)
+end
+
+local function UpdateAFKAppearance()
+    local s = GetAFKSettings()
+    local f = AFKState.frame
+    
+    local font, outline = ns.GetFont()
+    
+    -- Colors
+    local r, g, b = 0.5, 0.5, 0.5
+    
+    if s.useClassColor then
+        local _, class = UnitClass("player")
+        local color = RAID_CLASS_COLORS[class]
+        if color then
+            r, g, b = color.r, color.g, color.b
+        end
+    elseif s.useThemeColor then
+        local ar, ag, ab = ns.GetAccentColor()
+        r, g, b = ar, ag, ab
+    else
+        r, g, b = unpack(s.customColor or {1, 1, 1, 1})
+    end
+    
+    -- Apply Border Color
+    f.bottomPanel:SetBackdropBorderColor(r, g, b, 1)
+    
+    -- Name & Title Format
+    local nameObj = UnitName("player")
+    local pvpName = UnitPVPName("player") or nameObj
+    
+    local titlePrefix, titleSuffix = "", ""
+    if s.showTitle then
+        local safeMatchName = string.gsub(nameObj, "([%(%)%.%%%+%-%*%?%[%^%$])", "%%%1")
+        local p, s_str = string.match(pvpName, "^(.*)" .. safeMatchName .. "(.*)$")
+        if p and s_str then
+            titlePrefix = p:trim()
+            titleSuffix = s_str:trim()
+        end
+    end
+    
+    f.titlePrefixText:SetFont(font, 20, outline)
+    f.titlePrefixText:SetTextColor(1, 1, 1, 1)
+    f.titlePrefixText:SetText(titlePrefix)
+    
+    f.nameText:SetFont(font, 36, outline)
+    f.nameText:SetTextColor(r, g, b, 1) -- Class/Theme colored Name
+    f.nameText:SetText(nameObj)
+    
+    f.titleSuffixText:SetFont(font, 20, outline)
+    f.titleSuffixText:SetTextColor(1, 1, 1, 1)
+    f.titleSuffixText:SetText(titleSuffix)
+    
+    -- Dynamic Spacing
+    f.nameText:ClearAllPoints()
+    if titlePrefix ~= "" then
+        f.nameText:SetPoint("BOTTOMLEFT", f.titlePrefixText, "BOTTOMRIGHT", 4, -3)
+    else
+        f.nameText:SetPoint("BOTTOMLEFT", f.titlePrefixText, "BOTTOMRIGHT", 0, -3)
+    end
+    
+    f.titleSuffixText:ClearAllPoints()
+    if titleSuffix ~= "" and string.sub(titleSuffix, 1, 1) ~= "," then
+        f.titleSuffixText:SetPoint("BOTTOMLEFT", f.nameText, "BOTTOMRIGHT", 4, 3)
+    else
+        f.titleSuffixText:SetPoint("BOTTOMLEFT", f.nameText, "BOTTOMRIGHT", 0, 3)
+    end
+    
+    -- Guild Format
+    f.guildText:SetFont(font, 20, outline)
+    if s.showGuild then
+        local guildName, guildRankName = GetGuildInfo("player")
+        if guildName then
+            local guildStr = guildName
+            if s.showBrackets then guildStr = "<" .. guildStr .. ">" end
+            if s.showRank then guildStr = guildStr .. " " .. guildRankName end
+            f.guildText:SetText(guildStr)
+            f.guildText:SetTextColor(1, 1, 1, 1) -- White Guild Text
+        else
+            f.guildText:SetText("")
+        end
+    else
+        f.guildText:SetText("")
+    end
+    
+    -- Clock, Timer & Brand Appearance
+    f.clockText:SetFont(font, 36, outline)
+    f.clockText:SetTextColor(r, g, b, 1)
+    
+    f.timerText:SetFont(font, 24, outline)
+    f.timerText:SetTextColor(r, g, b, 1) -- Class/Theme colored Timer
+    
+    f.brandingText:SetFont(font, 20, outline)
+    f.brandingText:SetTextColor(1, 1, 1, 1) -- White GravityUI text
+    
+    -- Model
+    if s.showCharacter then
+        f.model:Show()
+        f.model:SetUnit("player")
+        -- Make it face slightly Left/Right relative to screen mostly towards camera
+        f.model:SetFacing(0.2) 
+        f.model:SetAnimation(s.animationState or 0) 
+    else
+        f.model:Hide()
+    end
+end
+
+local function StartCinematicCamera()
+    local s = GetAFKSettings()
+    AFKState.cameraRotating = true
+    
+    -- Setup View
+    if s.fpView then
+        SaveView(2) -- Save current view to view 2
+        SetView(5) -- Assume view 5 is first person, or just zoom in
+        CameraZoomIn(50)
+    end
+    
+    -- Store original turn speed
+    AFKState.originalCameraYaw = GetCVar("cameraYawMoveSpeed")
+    
+    -- Turn Speed via CVar (Override only for AFK period)
+    SetCVar("cameraYawMoveSpeed", s.camTurnSpeed or 3)
+    
+    -- Start Rotation
+    if s.rotationDirection == 1 then
+        MoveViewLeftStart()
+    elseif s.rotationDirection == 2 then
+        MoveViewRightStart()
+    else
+        -- Random
+        if math.random() > 0.5 then
+            MoveViewLeftStart()
+        else
+            MoveViewRightStart()
+        end
+    end
+end
+
+local function StopCinematicCamera()
+    if not AFKState.cameraRotating then return end
+    local s = GetAFKSettings()
+    
+    MoveViewLeftStop()
+    MoveViewRightStop()
+    
+    -- Restore original turn speed
+    if AFKState.originalCameraYaw then
+        SetCVar("cameraYawMoveSpeed", AFKState.originalCameraYaw)
+        AFKState.originalCameraYaw = nil
+    end
+    
+    if s.fpView then
+        SetView(2) -- Restore view 2
+    end
+    
+    if s.resetCamera then
+        ResetView(5)
+    end
+    
+    AFKState.cameraRotating = false
+end
+
+local function EnterAFK()
+    local s = GetAFKSettings()
+    if not s.enabled then return end
+    
+    -- Exception Checks
+    if s.preventInAh then
+        -- Check if AH or TradeSkill is open
+        if (AuctionHouseFrame and AuctionHouseFrame:IsShown()) or 
+           (TradeSkillFrame and TradeSkillFrame:IsShown()) then
+            return
+        end
+    end
+    
+    if InCombatLockdown() then return end
+    if AFKState.isAFK then return end
+    
+    AFKState.isAFK = true
+    AFKState.startTime = GetTime()
+    
+    CreateAFKFrame()
+    UpdateAFKAppearance()
+    
+    -- Hide UI, Show AFK
+    UIParent:Hide()
+    AFKState.frame:Show()
+    
+    StartCinematicCamera()
+end
+
+function ExitAFK()
+    if not AFKState.isAFK then return end
+    
+    AFKState.isAFK = false
+    
+    StopCinematicCamera()
+    
+    if AFKState.frame then
+        AFKState.frame:Hide()
+    end
+    
+    -- Restore UI safely
+    if not UIParent:IsShown() and not InCombatLockdown() then
+        UIParent:Show()
+    end
+    
+    -- Force remove the game's AFK flag if we manually exited via movement/ESC
+    if UnitIsAFK("player") then
+        SendChatMessage("", "AFK")
+    end
+end
+
+local afkEventFrame = CreateFrame("Frame")
+afkEventFrame:RegisterEvent("PLAYER_FLAGS_CHANGED")
+afkEventFrame:RegisterEvent("PLAYER_REGEN_DISABLED")
+afkEventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
+
+-- Failsafes if standard UI frames are triggered
+afkEventFrame:RegisterEvent("AUCTION_HOUSE_SHOW")
+afkEventFrame:RegisterEvent("TRADE_SKILL_SHOW")
+
+afkEventFrame:SetScript("OnEvent", function(self, event, unit)
+    if event == "PLAYER_FLAGS_CHANGED" and unit == "player" then
+        if UnitIsAFK("player") then
+            EnterAFK()
+        else
+            ExitAFK()
+        end
+    elseif event == "PLAYER_REGEN_DISABLED" then
+        -- Force exit if combat starts
+        ExitAFK()
+    elseif event == "PLAYER_ENTERING_WORLD" then
+        if UnitIsAFK("player") then
+            EnterAFK()
+        else
+            ExitAFK()
+        end
+    elseif event == "AUCTION_HOUSE_SHOW" or event == "TRADE_SKILL_SHOW" then
+        local s = GetAFKSettings()
+        if s and s.preventInAh and AFKState.isAFK then
+            ExitAFK()
+        end
+    end
+end)
+
+-- Hook UIParent OnShow to prevent locking out if user forces UI open
+hooksecurefunc(UIParent, "Show", function()
+    if AFKState.isAFK then
+        ExitAFK()
+        -- Note: If we just showed UIParent inside ExitAFK, this hook fires.
+        -- We clear the isAFK flag *before* we show UIParent, so we don't infinitely recurse.
+    end
+end)
