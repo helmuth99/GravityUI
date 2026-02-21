@@ -884,6 +884,10 @@ function GUI:CreateInput(parent, label, dbKey, dbTable, onChange)
         self:ClearFocus()
     end)
     
+    editBox:SetScript("OnEditFocusLost", function(self)
+        SetValue(self:GetText())
+    end)
+    
     -- Hover effect
     editBox:SetScript("OnEnter", function(self)
         self:SetBackdropBorderColor(C.accent[1], C.accent[2], C.accent[3], 1)

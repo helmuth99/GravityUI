@@ -102,7 +102,8 @@ local function BuildAutomation(parent)
     local repairOptions = {{value="off", text="Off"}, {value="personal", text="Personal Gold"}, {value="guild", text="Guild Bank First"}}
     AddRow(content, "Auto Repair", "dropdown", repairOptions, "autoRepair", dbUI, nil)
     
-    AddRow(content, "Auto Accept Role Check", "checkbox", "autoRoleAccept", dbUI, nil)
+    AddRow(content, "Auto Accept Role Check (Group)", "checkbox", "autoRoleAccept", dbUI, nil)
+    AddRow(content, "LFG Queue on double click", "checkbox", "lfgQuickJoin", dbUI, nil)
     
     local inviteOptions = {{value="off", text="Off"}, {value="all", text="All Invites"}, {value="friends", text="Friends Only"}, {value="guild", text="Guild Only"}, {value="both", text="Friends & Guild"}}
     AddRow(content, "Auto Accept Invites", "dropdown", inviteOptions, "autoAcceptInvites", dbUI, nil)

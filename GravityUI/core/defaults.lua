@@ -312,7 +312,7 @@ ns.Defaults = {
             },
             size = 26,
         },
-        combatExpanded = true,
+
         -- combatFont removed
         character =         {
             inspectEnabled = true,
@@ -423,9 +423,9 @@ ns.Defaults = {
             },
             useThemeColorID = true,
         },
-        mplusTeleportExpanded = true,
-        tooltipExpanded = true,
-        skyridingExpanded = true,
+
+
+
         combatTimer =         {
             backdropColor =             {
                 [1] = 0,
@@ -461,10 +461,9 @@ ns.Defaults = {
                 [4] = 1,
             },
         },
-        autoTurnInQuests = true,
         deleteFix = true,
-        autohideExpanded = true,
-        buffBordersExpanded = true,
+
+
         hideFriendlyNPCNameplates = true,
         buffBorders =         {
             fontSize = 12,
@@ -474,8 +473,7 @@ ns.Defaults = {
             hideDebuffFrame = false,
             hideBuffFrame = false,
         },
-        autoRepairGuild = false,
-        automationExpanded = true,
+
         spellQueueWindow = 150,
         chat =         {
             enabled = true,
@@ -542,27 +540,25 @@ ns.Defaults = {
                 },
             },
         },
-        hideRaidWarnings = false,
-        autoAcceptQuests = true,
         autoAcceptInvites = "off",
         hideWorldMapBlackout = true,
-        worldMarksExpanded = true,
+
         autoAcceptQuest = true,
         fasterMovieSkip = true,
-        chatExpanded = true,
+
         quickSalvage =         {
             enabled = false,
             modifier = "ALT",
         },
-        charExpanded = true,
-        autoSellGrey = true,
+
         showDamageNumbers = true,
         autoRoleAccept = true,
+        lfgQuickJoin = true,
         autoRepair = "personal",
         hideRaidFrameManager = true,
         sellJunk = true,
         hideBuffCollapseButton = true,
-        combatTimerExpanded = true,
+
         hideObjectiveTrackerAlways = false,
         mplusTeleportEnabled = true,
         autoInsertKey = true,
@@ -570,6 +566,15 @@ ns.Defaults = {
         autoTurnInQuest = true,
         questHoldShift = true,
         hideFriendlyPlayerNameplates = true,
+        autoCombatLog = false,
+        autoCombatLogRaidNormal = false,
+        autoCombatLogRaidHeroic = false,
+        autoCombatLogRaidMythic = false,
+        autoSelectGossip = false,
+        fastAutoLoot = false,
+        hideTalkingHead = false,
+        muteTalkingHead = false,
+        hideOnWorldQuestMinigame = true,
     },
     configPanelAlpha = 1,
     minimap =     {
@@ -871,39 +876,7 @@ ns.Defaults = {
         physicsLevel = "1",
         textureFilteringMode = "5",
     },
-    qol =     {
-        autohideExpanded = true,
-        hideRaidFrameManager = true,
-        autoRepair = "personal",
-        combatExpanded = true,
-        autoAcceptInvites = "off",
-        autoAcceptQuest = true,
-        fasterMovieSkip = true,
-        spellQueueWindow = 120,
-        autoTurnInQuest = true,
-        showDamageNumbers = true,
-        uiImprovementsExpanded = true,
-        convenienceExpanded = true,
-        hideErrorMessages = true,
-        sellJunk = true,
-        hideObjectiveTrackerInstanceTypes =         {
-            arena = false,
-            mythicDungeon = false,
-            normalDungeon = false,
-            followerDungeon = false,
-            heroicDungeon = false,
-            mythicPlus = true,
-            raid = false,
-            pvp = false,
-        },
-        hideBuffCollapseButton = true,
-        autoRoleAccept = true,
-        hideFriendlyPlayerNameplates = true,
-        autoInsertKey = true,
-        hideFriendlyNPCNameplates = true,
-        quickAccessExpanded = true,
-        automationExpanded = true,
-    },
+-- Legacy QOL table removed
     datapanels =     {
         extraExpanded = true,
         minimapExpanded = true,

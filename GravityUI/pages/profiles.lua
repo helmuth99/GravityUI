@@ -190,7 +190,7 @@ local function BuildAceDBProfilesTab(parent)
     
     -- Button next to input
     local createBtn = GUI:CreateButton(content, "Create", 80, 24, function()
-        local newName = newProfileWrapper.name
+        local newName = newProfileInput.editBox:GetText()
         if newName and newName ~= "" and db then
              db:SetProfile(newName)
              newProfileWrapper.name = "" -- clear

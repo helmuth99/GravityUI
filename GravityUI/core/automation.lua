@@ -1,7 +1,6 @@
 -- GravityUI - Automation Module
 local ADDON_NAME, ns = ...
 
--- Helper: Get QoL Settings
 local function GetSettings()
     local db = ns.GetDB()
     if db and db.uiimprovements then
@@ -60,6 +59,57 @@ local function OnRoleCheckShow()
     local settings = GetSettings()
     if settings and settings.autoRoleAccept then
         CompleteLFGRoleCheck(true)
+    end
+end
+
+---------------------------------------------------------------------------
+-- LFG QUICK JOIN: DOUBLE CLICK TO APPLY
+---------------------------------------------------------------------------
+
+local function HandleGravityLfgClick(self)
+    local cfg = GetSettings()
+    if not cfg or not cfg.lfgQuickJoin then return end
+    
+    local isAvailable = not LFGListFrame.SearchPanel.SignUpButton.tooltip
+    if isAvailable and _G.LFGListSearchPanel_SignUp then
+        _G.LFGListSearchPanel_SignUp(self:GetParent():GetParent():GetParent())
+    end
+end
+
+local function InjectGravityLfgListeners()
+    if not LFGListFrame or not LFGListFrame.SearchPanel or not LFGListFrame.SearchPanel.ScrollBox then return end
+    
+    local targetNode = LFGListFrame.SearchPanel.ScrollBox:GetScrollTarget()
+    if not targetNode then return end
+    
+    local entryNodes = {targetNode:GetChildren()}
+    for _, node in ipairs(entryNodes) do
+        if node and node:GetObjectType() == "Button" and not node.guiLfgAttached then
+            node:SetScript("OnDoubleClick", HandleGravityLfgClick)
+            node:RegisterForClicks("AnyUp")
+            node.guiLfgAttached = true
+        end
+    end
+end
+
+local function OverrideLfgApplicationDialog()
+    if LFGListApplicationDialog then
+        LFGListApplicationDialog:HookScript("OnShow", function()
+            local cfg = GetSettings()
+            if not cfg or not cfg.lfgQuickJoin then return end
+            
+            if not IsShiftKeyDown() and LFGListApplicationDialog.SignUpButton then
+                LFGListApplicationDialog.SignUpButton:Click()
+            end
+        end)
+    end
+    if LFDRoleCheckPopupAcceptButton then
+        LFDRoleCheckPopupAcceptButton:HookScript("OnShow", function()
+            local cfg = GetSettings()
+            if cfg and cfg.autoRoleAccept then
+                LFDRoleCheckPopupAcceptButton:Click()
+            end
+        end)
     end
 end
 
@@ -456,6 +506,7 @@ end
 -- Init Hooks immediately
 InitMovieSkip()
 
+automationFrame:RegisterEvent("ADDON_LOADED")
 automationFrame:RegisterEvent("MERCHANT_SHOW")
 automationFrame:RegisterEvent("LFG_ROLE_CHECK_SHOW")
 automationFrame:RegisterEvent("PARTY_INVITE_REQUEST")
@@ -471,9 +522,12 @@ automationFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 automationFrame:RegisterEvent("CHALLENGE_MODE_KEYSTONE_RECEPTABLE_OPEN")
 automationFrame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
 automationFrame:RegisterEvent("PLAYER_DIFFICULTY_CHANGED")
+automationFrame:RegisterEvent("LFG_LIST_SEARCH_RESULTS_RECEIVED")
 
 automationFrame:SetScript("OnEvent", function(self, event, ...)
-    if event == "MERCHANT_SHOW" then
+    if event == "ADDON_LOADED" then
+        -- (LFG hook moved to dedicated file)
+    elseif event == "MERCHANT_SHOW" then
         OnMerchantShow()
     elseif event == "LFG_ROLE_CHECK_SHOW" then
         OnRoleCheckShow()
@@ -502,9 +556,12 @@ automationFrame:SetScript("OnEvent", function(self, event, ...)
                  if s.spellQueueWindow then SetCVar("SpellQueueWindow", tostring(s.spellQueueWindow)) end
              end
              InitDeleteFix()
+             OverrideLfgApplicationDialog()
         end
         C_Timer.After(2, CheckResumeLogging)
     elseif event == "CHALLENGE_MODE_KEYSTONE_RECEPTABLE_OPEN" then
         OnKeyStoneInsert()
+    elseif event == "LFG_LIST_SEARCH_RESULTS_RECEIVED" then
+        C_Timer.After(0.1, InjectGravityLfgListeners)
     end
 end)
