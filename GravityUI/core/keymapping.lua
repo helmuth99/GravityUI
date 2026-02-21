@@ -725,11 +725,16 @@ function Module:ToggleGlow(frame, show, rawKey, reqMods)
         frame.glowRawKey = rawKey
         frame.glowReqMods = reqMods
         Module.glowingFrames[frame] = true
+        Listener:SetScript("OnUpdate", OnUpdate) -- Start checking
     else
         frame.gravityGlow:Hide()
         frame.glowRawKey = nil
         frame.glowReqMods = nil
         Module.glowingFrames[frame] = nil
+        
+        if not next(Module.glowingFrames) then
+            Listener:SetScript("OnUpdate", nil) -- Stop checking
+        end
     end
 end
 
@@ -817,7 +822,7 @@ end
 
 Listener:SetPropagateKeyboardInput(true)
 Listener:SetScript("OnKeyDown", function(self, key) OnInput(key, true) end)
-Listener:SetScript("OnUpdate", OnUpdate)
+-- OnUpdate is dynamically toggled in ToggleGlow
 
 function Module:UpdateUtils()
     local db = ns.GetDB().actionbars.guicdm.utils

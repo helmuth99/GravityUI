@@ -513,6 +513,16 @@ local function UpdateRangeSlotCache()
     cachedRangeSpellID = bestID
 end
 
+local isRangeCacheUpdateQueued = false
+local function QueueRangeSlotCacheUpdate()
+    if isRangeCacheUpdateQueued then return end
+    isRangeCacheUpdateQueued = true
+    C_Timer.After(0.5, function()
+        isRangeCacheUpdateQueued = false
+        UpdateRangeSlotCache()
+    end)
+end
+
 local function IsOutOfRange()
     if not UnitExists("target") or not UnitCanAttack("player", "target") or UnitIsDeadOrGhost("target") then
         return false
@@ -984,12 +994,12 @@ eventFrame:SetScript("OnEvent", function(self, event, unit)
         end
     elseif event == "UNIT_PET" or event == "PET_BAR_UPDATE" or event == "PLAYER_SPECIALIZATION_CHANGED" then
         Screen.UpdatePetTicker()
-        if event == "PLAYER_SPECIALIZATION_CHANGED" then UpdateRangeSlotCache() end
+        if event == "PLAYER_SPECIALIZATION_CHANGED" then QueueRangeSlotCacheUpdate() end
     elseif event == "ACTIONBAR_SLOT_CHANGED" or event == "ACTIONBAR_PAGE_CHANGED" or event == "UPDATE_BONUS_ACTIONBAR" then
-        UpdateRangeSlotCache()
+        QueueRangeSlotCacheUpdate()
     elseif event == "UPDATE_MACROS" then
         macroCache = {} -- Invalidate Cache
-        UpdateRangeSlotCache()
+        QueueRangeSlotCacheUpdate()
     end
 end)
 
@@ -1483,7 +1493,6 @@ end
 
 local diffListener = CreateFrame("Frame")
 diffListener:RegisterEvent("GROUP_ROSTER_UPDATE")
-diffListener:RegisterEvent("PLAYER_FLAGS_CHANGED") -- Detects leader flag changes? Roster update is safer.
 diffListener:RegisterEvent("PLAYER_ENTERING_WORLD")
 
 diffListener:SetScript("OnEvent", function(self, event)
