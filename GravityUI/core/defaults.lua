@@ -555,6 +555,7 @@ ns.Defaults = {
         showDamageNumbers = true,
         autoRoleAccept = true,
         lfgQuickJoin = true,
+        lfgQuickJoinRoles = { tank = false, healer = false, dps = true },
         autoRepair = "personal",
         hideRaidFrameManager = true,
         sellJunk = true,

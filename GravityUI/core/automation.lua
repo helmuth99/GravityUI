@@ -66,18 +66,104 @@ end
 -- LFG QUICK JOIN: DOUBLE CLICK TO APPLY
 ---------------------------------------------------------------------------
 
+local function ForceApplyLfgRolesNow()
+    local cfg = GetSettings()
+    if not cfg or not cfg.lfgQuickJoinRoles or not _G.LFGListApplicationDialog or not _G.LFGListApplicationDialog:IsShown() then return end
+    
+    local roles = cfg.lfgQuickJoinRoles
+    local function SetRole(btn, desiredState)
+        if btn and btn.CheckButton and btn.CheckButton:IsEnabled() then
+            local checked = btn.CheckButton:GetChecked() and true or false
+            if checked ~= desiredState then
+                btn.CheckButton:Click()
+            end
+        end
+    end
+    
+    local tankBtn = _G.LFGListApplicationDialog.TankButton or _G.LFGListApplicationDialog.RoleButtonTank
+    local healerBtn = _G.LFGListApplicationDialog.HealerButton or _G.LFGListApplicationDialog.RoleButtonHealer
+    local dpsBtn = _G.LFGListApplicationDialog.DamagerButton or _G.LFGListApplicationDialog.RoleButtonDPS
+    
+    SetRole(tankBtn, roles.tank)
+    SetRole(healerBtn, roles.healer)
+    SetRole(dpsBtn, roles.dps)
+end
+
 local function HandleGravityLfgClick(self)
     local cfg = GetSettings()
     if not cfg or not cfg.lfgQuickJoin then return end
     
+    -- Validation: Check if at least one role is selected
+    if cfg.lfgQuickJoinRoles then
+        if not cfg.lfgQuickJoinRoles.tank and not cfg.lfgQuickJoinRoles.healer and not cfg.lfgQuickJoinRoles.dps then
+            print("|cffFFCC00GravityUI:|r LFG Quick-Join abgebrochen! Bitte wähle oben rechts mindestens eine Rolle (Tank/Heal/DD) aus.")
+            return
+        end
+    end
+    
     local isAvailable = not LFGListFrame.SearchPanel.SignUpButton.tooltip
     if isAvailable and _G.LFGListSearchPanel_SignUp then
+        -- 1. Gruppe auswählen (öffnet den Rollen-Dialog)
         _G.LFGListSearchPanel_SignUp(self:GetParent():GetParent():GetParent())
+        
+        -- 2. Sofort im selben Ausführungs-Frame den Dialog bestätigen
+        -- (Nutzt die Hardware-Freigabe des Doppelklicks)
+        if LFGListApplicationDialog and LFGListApplicationDialog:IsShown() then
+            if not IsShiftKeyDown() and LFGListApplicationDialog.SignUpButton then
+                ForceApplyLfgRolesNow()
+                if LFGListApplicationDialog.SignUpButton:IsEnabled() then
+                    LFGListApplicationDialog.SignUpButton:Click()
+                end
+            end
+        end
+    end
+end
+
+local HooksState = {}
+local function OverrideLfgApplicationDialog()
+    if not HooksState.lfgAppDialog and _G.LFGListApplicationDialog then
+        if _G.LFGListApplicationDialog.UpdateRoles then
+            hooksecurefunc(_G.LFGListApplicationDialog, "UpdateRoles", function()
+                C_Timer.After(0.01, ForceApplyLfgRolesNow)
+            end)
+        elseif _G.LFGListApplicationDialog_UpdateRoles then
+            hooksecurefunc("LFGListApplicationDialog_UpdateRoles", function()
+                C_Timer.After(0.01, ForceApplyLfgRolesNow)
+            end)
+        end
+
+        _G.LFGListApplicationDialog:HookScript("OnShow", function()
+            C_Timer.After(0.01, ForceApplyLfgRolesNow)
+            C_Timer.After(0.1, ForceApplyLfgRolesNow)
+            C_Timer.After(0.25, ForceApplyLfgRolesNow)
+        end)
+        HooksState.lfgAppDialog = true
+    end
+    
+    if not HooksState.lfgSearchSignup and _G.LFGListFrame and _G.LFGListFrame.SearchPanel and _G.LFGListFrame.SearchPanel.SignUpButton then
+        _G.LFGListFrame.SearchPanel.SignUpButton:HookScript("OnClick", function()
+            C_Timer.After(0.01, ForceApplyLfgRolesNow)
+            C_Timer.After(0.1, ForceApplyLfgRolesNow)
+            C_Timer.After(0.25, ForceApplyLfgRolesNow)
+        end)
+        HooksState.lfgSearchSignup = true
+    end
+    
+    if not HooksState.lfdRolePopup and _G.LFDRoleCheckPopupAcceptButton then
+        _G.LFDRoleCheckPopupAcceptButton:HookScript("OnShow", function()
+            local cfg = GetSettings()
+            if cfg and cfg.autoRoleAccept then
+                _G.LFDRoleCheckPopupAcceptButton:Click()
+            end
+        end)
+        HooksState.lfdRolePopup = true
     end
 end
 
 local function InjectGravityLfgListeners()
     if not LFGListFrame or not LFGListFrame.SearchPanel or not LFGListFrame.SearchPanel.ScrollBox then return end
+    
+    OverrideLfgApplicationDialog()
     
     local targetNode = LFGListFrame.SearchPanel.ScrollBox:GetScrollTarget()
     if not targetNode then return end
@@ -92,25 +178,177 @@ local function InjectGravityLfgListeners()
     end
 end
 
-local function OverrideLfgApplicationDialog()
-    if LFGListApplicationDialog then
-        LFGListApplicationDialog:HookScript("OnShow", function()
-            local cfg = GetSettings()
-            if not cfg or not cfg.lfgQuickJoin then return end
-            
-            if not IsShiftKeyDown() and LFGListApplicationDialog.SignUpButton then
-                LFGListApplicationDialog.SignUpButton:Click()
+
+
+---------------------------------------------------------------------------
+-- LFG ROLE CHECKBOXES INJECTION
+---------------------------------------------------------------------------
+
+local LfgRoleCheckboxes = {}
+
+local function CreateRoleCheckbox(parent, roleName, texCoord, anchorFrame, anchorPoint, anchorRelPoint, offsetX, offsetY, configKey)
+    local btn = CreateFrame("CheckButton", "GravityUI_LFGRole_"..roleName, parent)
+    btn:SetSize(22, 22)
+    btn:SetPoint(anchorPoint, anchorFrame, anchorRelPoint, offsetX, offsetY)
+    
+    -- Dark background for contrast
+    local bg = btn:CreateTexture(nil, "BACKGROUND")
+    bg:SetSize(24, 24)
+    bg:SetPoint("CENTER")
+    bg:SetColorTexture(0, 0, 0, 0.7)
+    
+    local normalTex = btn:CreateTexture(nil, "ARTWORK")
+    normalTex:SetAllPoints()
+    normalTex:SetTexture("Interface\\LFGFrame\\LFGRole")
+    normalTex:SetTexCoord(unpack(texCoord))
+    btn:SetNormalTexture(normalTex)
+    
+    local pushedTex = btn:CreateTexture(nil, "ARTWORK")
+    pushedTex:SetAllPoints()
+    pushedTex:SetTexture("Interface\\LFGFrame\\LFGRole")
+    pushedTex:SetTexCoord(unpack(texCoord))
+    pushedTex:SetVertexColor(0.5, 0.5, 0.5)
+    btn:SetPushedTexture(pushedTex)
+    
+    local highlightTex = btn:CreateTexture(nil, "HIGHLIGHT")
+    highlightTex:SetAllPoints()
+    highlightTex:SetTexture("Interface\\LFGFrame\\LFGRole")
+    highlightTex:SetTexCoord(unpack(texCoord))
+    highlightTex:SetBlendMode("ADD")
+    highlightTex:SetAlpha(0.6)
+    btn:SetHighlightTexture(highlightTex)
+
+    -- Better checked texture - a bright glowing border instead of a small tick
+    local checkedTex = btn:CreateTexture(nil, "OVERLAY")
+    checkedTex:SetSize(30, 30)
+    checkedTex:SetPoint("CENTER")
+    checkedTex:SetTexture("Interface\\Buttons\\UI-Quickslot-Depress")
+    checkedTex:SetBlendMode("ADD")
+    btn:SetCheckedTexture(checkedTex)
+    
+    local function UpdateThemeColor()
+        local db = ns.GetDB()
+        local general = db and db.general
+        if general then
+            if general.useClassColorTheme then
+                local _, class = UnitClass("player")
+                local color = RAID_CLASS_COLORS[class]
+                if color then
+                    checkedTex:SetVertexColor(color.r, color.g, color.b, 1)
+                else
+                    checkedTex:SetVertexColor(0.2, 1, 0.2, 1)
+                end
+            elseif general.themeColor then
+                checkedTex:SetVertexColor(general.themeColor[1], general.themeColor[2], general.themeColor[3], 1)
+            else
+                checkedTex:SetVertexColor(0.2, 1, 0.2, 1)
             end
-        end)
+        else
+            checkedTex:SetVertexColor(0.2, 1, 0.2, 1)
+        end
     end
-    if LFDRoleCheckPopupAcceptButton then
-        LFDRoleCheckPopupAcceptButton:HookScript("OnShow", function()
-            local cfg = GetSettings()
-            if cfg and cfg.autoRoleAccept then
-                LFDRoleCheckPopupAcceptButton:Click()
-            end
-        end)
+
+    -- Run it immediately so that the color is already registered before OnShow
+    UpdateThemeColor()
+    
+    -- Load saved state and re-apply visual theme just in case user changed it in the options
+    btn:SetScript("OnShow", function(self)
+        local cfg = GetSettings()
+        -- State
+        if cfg and cfg.lfgQuickJoinRoles then
+            self:SetChecked(cfg.lfgQuickJoinRoles[configKey])
+        end
+        UpdateThemeColor()
+    end)
+    
+    -- Save state on click
+    btn:SetScript("OnClick", function(self)
+        local cfg = GetSettings()
+        if cfg and cfg.lfgQuickJoinRoles then
+            cfg.lfgQuickJoinRoles[configKey] = self:GetChecked()
+        end
+    end)
+    
+    -- Tooltip
+    btn:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        GameTooltip:SetText("Auto-Select " .. roleName .. " (Quick Join)")
+        GameTooltip:Show()
+    end)
+    btn:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    
+    return btn
+end
+
+local function InjectRoleTogglesLFG()
+    if LfgRoleCheckboxes.injected or not _G.LFGListFrame then return end
+    local sp = LFGListFrame.SearchPanel
+    if not sp then return end
+    
+    local closeBtn = _G.PVEFrame and _G.PVEFrame.CloseButton or _G.PVEFrameCloseButton
+    
+    -- Determine available roles for the player's class
+    local _, classFilename = UnitClass("player")
+    local canTank = false
+    local canHeal = false
+    
+    if classFilename == "WARRIOR" or classFilename == "PALADIN" or classFilename == "DRUID" or classFilename == "DEATHKNIGHT" or classFilename == "MONK" or classFilename == "DEMONHUNTER" then
+        canTank = true
     end
+    if classFilename == "PALADIN" or classFilename == "PRIEST" or classFilename == "SHAMAN" or classFilename == "DRUID" or classFilename == "MONK" or classFilename == "EVOKER" then
+        canHeal = true
+    end
+    
+    -- Anchor starting point
+    local currentAnchor = closeBtn
+    local currentPoint = "RIGHT"
+    local currentRelPoint = "LEFT"
+    local currentX = -10
+    local currentY = -2
+    
+    if not closeBtn then
+        currentAnchor = sp
+        currentPoint = "TOPRIGHT"
+        currentRelPoint = "TOPRIGHT"
+        currentX = -5
+        currentY = 23
+    end
+
+    -- Create buttons from right to left (DPS -> Healer -> Tank) so they stack neatly against the close button
+    -- TexCoords from Interface\LFGFrame\LFGRole: Tank, Healer, DPS
+    
+    LfgRoleCheckboxes.dps = CreateRoleCheckbox(sp, "DPS", {0.25, 0.5, 0, 1}, currentAnchor, currentPoint, currentRelPoint, currentX, currentY, "dps")
+    currentAnchor = LfgRoleCheckboxes.dps
+    currentPoint = "RIGHT"
+    currentRelPoint = "LEFT"
+    currentX = -2
+    currentY = 0
+    
+    if canHeal then
+        LfgRoleCheckboxes.healer = CreateRoleCheckbox(sp, "Healer", {0.75, 1, 0, 1}, currentAnchor, currentPoint, currentRelPoint, currentX, currentY, "healer")
+        currentAnchor = LfgRoleCheckboxes.healer
+    else
+        -- Hide the healer option if the class can't heal, and also ensure the config is false
+        local cfg = GetSettings()
+        if cfg and cfg.lfgQuickJoinRoles then cfg.lfgQuickJoinRoles.healer = false end
+    end
+    
+    if canTank then
+        LfgRoleCheckboxes.tank = CreateRoleCheckbox(sp, "Tank", {0.5, 0.75, 0, 1}, currentAnchor, currentPoint, currentRelPoint, currentX, currentY, "tank")
+        currentAnchor = LfgRoleCheckboxes.tank
+    else
+        -- Hide the tank option if the class can't tank
+        local cfg = GetSettings()
+        if cfg and cfg.lfgQuickJoinRoles then cfg.lfgQuickJoinRoles.tank = false end
+    end
+    
+    local label = sp:CreateFontString(nil, "OVERLAY", "GameFontNormal_NoShadow")
+    label:SetPoint("RIGHT", currentAnchor, "LEFT", -8, 0)
+    label:SetText("Roles:")
+    label:SetTextColor(1, 0.82, 0)
+    LfgRoleCheckboxes.label = label
+    
+    LfgRoleCheckboxes.injected = true
 end
 
 ---------------------------------------------------------------------------
@@ -672,7 +910,11 @@ automationFrame:RegisterEvent("LFG_LIST_SEARCH_RESULTS_RECEIVED")
 
 automationFrame:SetScript("OnEvent", function(self, event, ...)
     if event == "ADDON_LOADED" then
-        -- (LFG hook moved to dedicated file)
+        local addonName = ...
+        if addonName == "Blizzard_LFGList" then
+            OverrideLfgApplicationDialog()
+            InjectRoleTogglesLFG()
+        end
     elseif event == "MERCHANT_SHOW" then
         OnMerchantShow()
     elseif event == "LFG_ROLE_CHECK_SHOW" then
@@ -710,6 +952,7 @@ automationFrame:SetScript("OnEvent", function(self, event, ...)
                  if s.deleteFix then SmartDelete:InitHooks() end
              end
              OverrideLfgApplicationDialog()
+             InjectRoleTogglesLFG()
         end
         C_Timer.After(2, CheckResumeLogging)
     elseif event == "CHALLENGE_MODE_KEYSTONE_RECEPTABLE_OPEN" then

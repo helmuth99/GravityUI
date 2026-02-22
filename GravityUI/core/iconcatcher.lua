@@ -328,7 +328,7 @@ local function LayoutGrid()
         local baseSize = 32
         local btnScale = size / baseSize
         
-        btn:SetParent(CatcherFrame)
+        btn:SetParent(GridContainer)
         btn:SetSize(baseSize, baseSize)
         btn:SetScale(btnScale)
         
@@ -390,8 +390,8 @@ local function CatchButton(buttonFrame, debugName, skipLayout)
     
     Catcher.caughtIcons[buttonFrame] = true
     
-    -- Parent back to CatcherFrame (Sibling to GridContainer) to bypass the Backdrop drawing bug!
-    buttonFrame:SetParent(CatcherFrame)
+    -- Parent to GridContainer so it natively inherits drawer visibility!
+    buttonFrame:SetParent(GridContainer)
     buttonFrame:SetFrameStrata("MEDIUM")
     buttonFrame:SetFrameLevel(50)
     
@@ -438,9 +438,9 @@ local function CatchButton(buttonFrame, debugName, skipLayout)
         
         -- Prevent generic Addons reparenting to Minimap
         hooksecurefunc(buttonFrame, "SetParent", function(self, newParent)
-            if not self.GravityExt_IsUpdating and newParent ~= CatcherFrame then
+            if not self.GravityExt_IsUpdating and newParent ~= GridContainer then
                 self.GravityExt_IsUpdating = true
-                self:SetParent(CatcherFrame)
+                self:SetParent(GridContainer)
                 self.GravityExt_IsUpdating = false
             end
         end)
@@ -515,6 +515,32 @@ local function CatchButton(buttonFrame, debugName, skipLayout)
                 self.GravityExt_IsUpdating = false
             end
         end)
+        
+        -- Prevent addons from showing their buttons while the drawer is visibly closed
+        hooksecurefunc(buttonFrame, "Show", function(self)
+            if not Catcher.isExpanded and not self.GravityExt_IsUpdating then
+                self.GravityExt_IsUpdating = true
+                self:Hide()
+                self.GravityExt_IsUpdating = false
+            end
+        end)
+
+        -- Prevent addons from using SetShown to bypass Show/Hide hooks
+        if buttonFrame.SetShown then
+            hooksecurefunc(buttonFrame, "SetShown", function(self, show)
+                if not self.GravityExt_IsUpdating then
+                    if show and not Catcher.isExpanded then
+                        self.GravityExt_IsUpdating = true
+                        self:Hide()
+                        self.GravityExt_IsUpdating = false
+                    elseif not show and Catcher.isExpanded then
+                        self.GravityExt_IsUpdating = true
+                        self:Show()
+                        self.GravityExt_IsUpdating = false
+                    end
+                end
+            end)
+        end
         
         buttonFrame.GravityExt_Hooked = true
     end
@@ -875,11 +901,13 @@ function ns.RefreshAddonDrawer()
     -- Sync visibility with Toggle Drawer state
     if not Catcher.isExpanded then
         GridContainer:Hide()
+        GridContainer.bgFrame:Hide()
         for btn, _ in pairs(Catcher.caughtIcons) do
             btn:Hide()
         end
     else
         GridContainer:Show()
+        GridContainer.bgFrame:Show()
         for btn, _ in pairs(Catcher.caughtIcons) do
             btn:Show()
         end
