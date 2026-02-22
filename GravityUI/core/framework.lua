@@ -1429,6 +1429,14 @@ function GUI:CreateSubTabs(parent, tabs)
         btn:SetBackdropColor(0.15, 0.15, 0.15, 1)
         btn:SetBackdropBorderColor(C.border[1], C.border[2], C.border[3], 1)
         
+        -- Register Tab in Search Index
+        if GUI.currentSearchContext then
+            local prevTab = GUI.currentSearchContext.tabIndex
+            GUI:SetSearchContext(GUI.currentSearchContext.pageId, i)
+            GUI:RegisterInSearchIndex(tabInfo.name, btn)
+            GUI:SetSearchContext(GUI.currentSearchContext.pageId, prevTab)
+        end
+        
         local contentFrame = CreateFrame("Frame", nil, parent)
         contentFrame:SetPoint("BOTTOMRIGHT", 0, 0)
         contentFrame:Hide()
