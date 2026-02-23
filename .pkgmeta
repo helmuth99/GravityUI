@@ -32,7 +32,6 @@ required-dependencies:
   - unhaltedunitframes
   - danders-frames
   - bettercooldownmanager
-  - big-wigs
   - details
   - plater-nameplates
   - blizzmove
