@@ -258,17 +258,37 @@ local function UpdateButtonText(button, settings)
         end
     end
 end
+local hoveredElements = {}
+
+local function OnElementEnter(self)
+    local barKey = self._guiBarKey
+    if barKey then
+        hoveredElements[barKey] = (hoveredElements[barKey] or 0) + 1
+    end
+end
+
+local function OnElementLeave(self)
+    local barKey = self._guiBarKey
+    if barKey then
+        hoveredElements[barKey] = math.max(0, (hoveredElements[barKey] or 0) - 1)
+    end
+end
+
+local function HookBarElement(frame, barKey)
+    if not frame or frame._guiHoverHooked then return end
+    frame._guiBarKey = barKey
+    frame:HookScript("OnEnter", OnElementEnter)
+    frame:HookScript("OnLeave", OnElementLeave)
+    frame._guiHoverHooked = true
+end
+
 local function IsMouseOverBar(barKey)
+    -- O(1) Event-driven check
+    if hoveredElements[barKey] and hoveredElements[barKey] > 0 then return true end
+    
+    -- Safety Fallback: Just check the parent frame once (O(1)) instead of looping all buttons
     local frame = _G[BAR_FRAMES[barKey]]
     if frame and frame:IsMouseOver() then return true end
-    
-    local buttons = GetBarButtons(barKey)
-    if not buttons or #buttons == 0 then return false end
-
-    -- Check individual buttons
-    for _, btn in ipairs(buttons) do
-        if btn:IsMouseOver() then return true end
-    end
     
     return false
 end
@@ -763,11 +783,15 @@ function ns.RefreshActionBars()
     end
 
     for barKey, _ in pairs(BAR_BUTTONS) do
+        local frame = _G[BAR_FRAMES[barKey]]
+        if frame then HookBarElement(frame, barKey) end
+        
         local buttons = GetBarButtons(barKey)
         for _, btn in ipairs(buttons) do
             SkinButton(btn, g)
             UpdateButtonText(btn, g)
             UpdateEmptySlotVisibility(btn, g)
+            HookBarElement(btn, barKey)
         end
     end
 
