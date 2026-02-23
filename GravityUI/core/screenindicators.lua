@@ -1888,6 +1888,7 @@ local afkEventFrame = CreateFrame("Frame")
 afkEventFrame:RegisterEvent("PLAYER_FLAGS_CHANGED")
 afkEventFrame:RegisterEvent("PLAYER_REGEN_DISABLED")
 afkEventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
+afkEventFrame:RegisterEvent("PLAYER_LEAVING_WORLD")
 
 -- Failsafes if standard UI frames are triggered
 afkEventFrame:RegisterEvent("AUCTION_HOUSE_SHOW")
@@ -1903,6 +1904,10 @@ afkEventFrame:SetScript("OnEvent", function(self, event, unit)
     elseif event == "PLAYER_REGEN_DISABLED" then
         -- Force exit if combat starts
         ExitAFK()
+    elseif event == "PLAYER_LEAVING_WORLD" then
+        if AFKState.isAFK then
+            ExitAFK()
+        end
     elseif event == "PLAYER_ENTERING_WORLD" then
         if UnitIsAFK("player") then
             EnterAFK()
