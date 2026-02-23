@@ -997,9 +997,21 @@ SetupAggressiveHooks()
 
 local eventFrame = CreateFrame("Frame")
 eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
-eventFrame:SetScript("OnEvent", function(self, event, ...)
+local loginCheckDone = false
+
+eventFrame:SetScript("OnEvent", function(self, event, isInitialLogin, isReloadingUI)
     if event == "PLAYER_ENTERING_WORLD" then
         local s = GetSettings()
+        
+        if not loginCheckDone then
+            loginCheckDone = true
+            if s and s.enabled and C_AddOns and C_AddOns.IsAddOnLoaded("HidingBar") then
+                C_Timer.After(4, function()
+                    print("|cFF30D1FFGravityUI:|r |cFFFF0000WARNING:|r Both |cFFFFFF00HidingBar|r and |cFFFFFF00GravityUI Icon Catcher|r are enabled. This will cause conflicts. Please disable one of them.")
+                end)
+            end
+        end
+        
         if not s or not s.enabled then return end
         
         C_Timer.After(2, function()

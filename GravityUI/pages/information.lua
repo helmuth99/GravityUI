@@ -108,7 +108,7 @@ local function BuildInformationTab(content)
     y = y - 10
 
     local changelogs = {
-        { version = "3.69", date = "Recent", changes = {"Overhauled Feature Hub descriptions", "Added Fade Out & Icon Background toggles to Icon Catcher", "Added Transparent Chat Tab options"} },
+        { version = "3.69", date = "Recent", changes = {"Overhauled Feature Hub descriptions", "Added Fade Out & Icon Background toggles to Icon Catcher", "Added Transparent Chat Tab options", "Added HidingBar conflict alert for Icon Catcher"} },
         { version = "3.68", date = "", changes = {"Bugfixes and optimizations", "Added Information Tab", "Added custom minimap icon catcher"} },
         { version = "3.67", date = "", changes = {"Fixed BTWQuests and WIM Minimap Icons", "LFG Role Selection Color fix"} },
         { version = "3.66", date = "", changes = {"Increased Icon Catcher slider limits to 300", "Optimized Combat Hooks"} },
