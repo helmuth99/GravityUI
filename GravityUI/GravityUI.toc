@@ -72,6 +72,7 @@ pages\screenindicators.lua
 pages\cdmutils.lua
 pages\styling.lua
 pages\search.lua
+pages\information.lua
 pages\profiles.lua
 
 # Special Features

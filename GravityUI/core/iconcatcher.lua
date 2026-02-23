@@ -171,8 +171,13 @@ local function ApplyThemeToGrid()
         GridContainer.bgFrame:SetBackdropBorderColor(0, 0, 0, 1)
         
         -- Toggle Button is grey, symbol receives the theme color
-        ToggleBtn:SetBackdropColor(0.1, 0.1, 0.1, 0.95)
-        ToggleBtn:SetBackdropBorderColor(0, 0, 0, 1)
+        if s.showIconBackground == false then
+            ToggleBtn:SetBackdropColor(0, 0, 0, 0)
+            ToggleBtn:SetBackdropBorderColor(0, 0, 0, 0)
+        else
+            ToggleBtn:SetBackdropColor(0.1, 0.1, 0.1, 0.95)
+            ToggleBtn:SetBackdropBorderColor(0, 0, 0, 1)
+        end
         ToggleBtn.icon:Show()
         ToggleBtn.icon:SetVertexColor(r, g, b, 1)
     end
@@ -569,7 +574,50 @@ local function CatchExistingButtons()
     
     local framesToFind = {
         LibDBIcon10_MethodRaidTools = true,
+        WIM3MinimapButton = true,
+        BtwQuestsMinimapButton = true,
+        BTWQuestsMinimapButton = true,
+        BtWQuestsMinimapButton = true,
     }
+    
+    -- Load Custom Frames from settings (Case-Insensitive Support)
+    if s.customFrames and s.customFrames ~= "" then
+        
+        -- Build a map of lowercase frame names from _G once to avoid expensive per-tick scans
+        local lowerGlobalMap = {}
+        for k, v in pairs(_G) do
+            if type(k) == "string" and type(v) == "table" then
+                -- Safely check for SetPoint to avoid Blizzard "forbidden table" access errors
+                local success, hasSetPoint = pcall(function() return v.SetPoint end)
+                if success and hasSetPoint then
+                    -- Only care about frames, minimize string.lower calls
+                    local lowerK = string.lower(k)
+                    if string.find(lowerK, "minimap") or string.find(lowerK, "button") or string.find(lowerK, "icon") then
+                        lowerGlobalMap[lowerK] = k
+                    end
+                end
+            end
+        end
+        
+        for customName in string.gmatch(s.customFrames, "([^,]+)") do
+            local cleanName = strtrim(customName)
+            if cleanName and cleanName ~= "" then
+                local lowerName = string.lower(cleanName)
+                
+                -- 1. Try exact match first
+                if _G[cleanName] then
+                    framesToFind[cleanName] = true
+                -- 2. Try case-insensitive lookup
+                elseif lowerGlobalMap[lowerName] then
+                    local realName = lowerGlobalMap[lowerName]
+                    framesToFind[realName] = true
+                else
+                    -- Fallback: Add it anyway just in case it loads later exactly as typed
+                    framesToFind[cleanName] = true
+                end
+            end
+        end
+    end
     
     -- IMMEDIATE FRAME 0 SWEEP to prevent minimap UI flicker on load
     local initialCatch = false

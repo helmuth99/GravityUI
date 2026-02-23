@@ -444,13 +444,30 @@ local function BuildIconCatcherTab(parent)
     AddRow(genContainer, "Enable Masque Support", "checkbox", "masque", c, refresh)
     
     local modeOpts = { {value = "ICON", text = "Icon"}, {value = "BAR", text = "Bar"} }
-    AddRow(genContainer, "Display Mode", "dropdown", modeOpts, "mode", c, refresh)
+    local iconBgRow
+    local customRefresh = function()
+        refresh()
+        if iconBgRow then
+            if c.mode == "ICON" then
+                iconBgRow:Show()
+            else
+                iconBgRow:Hide()
+            end
+        end
+    end
+    AddRow(genContainer, "Display Mode", "dropdown", modeOpts, "mode", c, customRefresh)
+    iconBgRow = AddRow(genContainer, "Show Background on Minimap Icon", "checkbox", "showIconBackground", c, refresh)
+    customRefresh() -- Trigger initial state
+    
     AddRow(genContainer, "Catcher Icon Size", "slider", 16, 64, "catcherIconSize", c, refresh, 1)
     AddRow(genContainer, "Bar Width", "slider", 5, 300, "catcherBarWidth", c, refresh, 1)
     AddRow(genContainer, "Bar Height", "slider", 5, 300, "catcherBarHeight", c, refresh, 1)
     
     AddRow(genContainer, "Use Theme Color", "checkbox", "useThemeColor", c, refresh)
     AddRow(genContainer, "Custom Bar Color", "color", "customBackgroundColor", c, refresh)
+
+    AddRow(genContainer, "Fade Out (Enable/Disable)", "checkbox", "fadeOutEnabled", c, refresh)
+    AddRow(genContainer, "Fade Out Time (Seconds)", "slider", 1, 60, "fadeOutTime", c, refresh, 1)
     
     genContainer:SetHeight(10 + (genContainer.rowCount * (ROW_HEIGHT + 5)))
     y = y - genContainer:GetHeight() - 10
@@ -470,6 +487,7 @@ local function BuildIconCatcherTab(parent)
     
     local dirOpts = { {value="DOWN", text="Down"}, {value="UP", text="Up"}, {value="LEFT", text="Left"}, {value="RIGHT", text="Right"} }
     AddRow(layoutContainer, "Grow Direction", "dropdown", dirOpts, "growDirection", c, refresh)
+    AddRow(layoutContainer, "Custom Frame Names (e.g. BtwQuestsMinimapButton)", "input", "customFrames", c, refresh)
     
     layoutContainer:SetHeight(10 + (layoutContainer.rowCount * (ROW_HEIGHT + 5)))
     y = y - layoutContainer:GetHeight() - 10

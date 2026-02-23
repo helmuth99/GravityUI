@@ -201,7 +201,7 @@ local function UpdateTabColors(tab)
     local function GetActiveColor()
         if settings and settings.tabs and settings.tabs.activeTab then
              if settings.tabs.activeTab.useThemeColor then
-                 if C.accent then return unpack(C.accent) end
+                 return ns.GetAccentColor()
              elseif settings.tabs.activeTab.customColor then
                  return unpack(settings.tabs.activeTab.customColor)
              end
@@ -209,17 +209,33 @@ local function UpdateTabColors(tab)
         return 1, 0.8, 0 -- Fallback Gold
     end
 
+    local activeDisableBg = settings.tabs and settings.tabs.activeTab and settings.tabs.activeTab.disableBackground
+
     if isSelected then
         -- Selected: High Visibility, Theme/Custom Text
         tab.__guiIgnoreAlpha = true
         tab:SetAlpha(activeAlpha)
         tab.__guiIgnoreAlpha = false
         
-        bgAlpha = 0.8 -- Stronger background for "Button" feel
-        borderA = 1
+        local activeDisableBox = settings.tabs and settings.tabs.activeTab and settings.tabs.activeTab.disableBox
+        
+        if activeDisableBg then
+            bgAlpha = 0 -- Entirely invisible background
+            borderA = 0 -- No border
+            borderR, borderG, borderB = 0, 0, 0
+        elseif activeDisableBox then
+            bgAlpha = 0.3 -- Same as inactive
+            borderA = 0   -- No border
+            borderR, borderG, borderB = 0, 0, 0
+        else
+            bgAlpha = 0.8 -- Stronger background for "Button" feel
+            borderA = 1
+        end
         
         local ar, ag, ab = GetActiveColor()
-        borderR, borderG, borderB = ar, ag, ab
+        if not activeDisableBox and not activeDisableBg then
+            borderR, borderG, borderB = ar, ag, ab
+        end
         textR, textG, textB = ar, ag, ab -- Text matches active color
         
     elseif isHovered then
@@ -228,17 +244,28 @@ local function UpdateTabColors(tab)
         tab:SetAlpha(inactiveAlpha + 0.2) -- Slight boost on hover
         tab.__guiIgnoreAlpha = false
         
-        bgAlpha = 0.5
-        borderR, borderG, borderB = 0.5, 0.5, 0.5
-        borderA = 1
+        if activeDisableBg then
+            bgAlpha = 0
+            borderA = 0
+            borderR, borderG, borderB = 0, 0, 0
+        else
+            bgAlpha = 0.5
+            borderR, borderG, borderB = 0.5, 0.5, 0.5
+            borderA = 1
+        end
         textR, textG, textB = 1, 1, 1 -- White on hover
         
+    else
         -- Inactive: Dim, White Text
         tab.__guiIgnoreAlpha = true
         tab:SetAlpha(inactiveAlpha)
         tab.__guiIgnoreAlpha = false
         
-        bgAlpha = 0.3 -- Subtle background always visible for "Button" look
+        if activeDisableBg then
+            bgAlpha = 0
+        else
+            bgAlpha = 0.3 -- Subtle background always visible for "Button" look
+        end
         borderR, borderG, borderB = 0, 0, 0
         borderA = 0 -- No Border for inactive tabs (Cleaner Look)
         textR, textG, textB = 1, 1, 1 -- White inactive
@@ -506,8 +533,10 @@ local function CreateCopyPopup()
         edgeFile = "Interface\\Buttons\\WHITE8x8",
         edgeSize = 1,
     })
-    urlPopup:SetBackdropColor(unpack(C.bg or {0.1, 0.1, 0.1, 1}))
-    urlPopup:SetBackdropBorderColor(unpack(C.accent or {0, 0.75, 1, 1}))  -- Cyan
+    
+    local bgr, bgg, bgb, bga = ns.GetThemeBgColor()
+    urlPopup:SetBackdropColor(bgr, bgg, bgb, bga)
+    urlPopup:SetBackdropBorderColor(ns.GetAccentColor())
     
     urlPopup:EnableMouse(true)
     urlPopup:SetMovable(true)
@@ -524,7 +553,8 @@ local function CreateCopyPopup()
     -- Styling Text (Use Main Font)
     local fontPath, fontOutline = ns.GetFont()
     title:SetFont(fontPath, 14, fontOutline)
-    title:SetTextColor(unpack(C.accent or {0, 0.75, 1, 1}))
+    local sr, sg, sb, sa = ns.GetAccentColor()
+    title:SetTextColor(sr, sg, sb, sa)
 
     local editBox = CreateFrame("EditBox", nil, urlPopup, "InputBoxTemplate")
     editBox:SetSize(380, 24)
@@ -636,8 +666,9 @@ local function CreateChatCopyFrame()
         edgeFile = "Interface\\Buttons\\WHITE8x8",
         edgeSize = 1,
     })
-    chatCopyFrame:SetBackdropColor(unpack(C.bg or {0.1, 0.1, 0.1, 1}))
-    chatCopyFrame:SetBackdropBorderColor(unpack(C.accent or {0, 0.75, 1, 1})) -- Cyan
+    local bgr, bgg, bgb, bga = ns.GetThemeBgColor()
+    chatCopyFrame:SetBackdropColor(bgr, bgg, bgb, bga)
+    chatCopyFrame:SetBackdropBorderColor(ns.GetAccentColor())
     
     chatCopyFrame:EnableMouse(true)
     chatCopyFrame:SetMovable(true)
@@ -654,7 +685,8 @@ local function CreateChatCopyFrame()
     -- Use Main Font
     local fontPath, fontOutline = ns.GetFont()
     title:SetFont(fontPath, 14, fontOutline)
-    title:SetTextColor(unpack(C.accent or {0, 0.75, 1, 1}))
+    local sr, sg, sb, sa = ns.GetAccentColor()
+    title:SetTextColor(sr, sg, sb, sa)
 
     local scrollFrame = CreateFrame("ScrollFrame", nil, chatCopyFrame, "UIPanelScrollFrameTemplate")
     scrollFrame:SetPoint("TOPLEFT", 12, -35)
@@ -666,7 +698,8 @@ local function CreateChatCopyFrame()
        sb:SetWidth(8)
        local thumb = sb:GetThumbTexture()
        if thumb then
-           thumb:SetColorTexture(C.accent[1], C.accent[2], C.accent[3], 0.5)
+           local sr, sg, sb_color, sa = ns.GetAccentColor()
+           thumb:SetColorTexture(sr, sg, sb_color, 0.5)
            thumb:SetWidth(8)
        end
     end
@@ -706,10 +739,10 @@ local function CreateChatCopyFrame()
     btnText:SetFont(fontPath, 12, "", {1, 0.82, 0, 1}) -- Gold/Yellow text
     
     selectAllBtn:SetScript("OnEnter", function(self)
-        self:SetBackdropBorderColor(unpack(C.accent or {0, 0.75, 1, 1}))
+        self:SetBackdropBorderColor(ns.GetAccentColor())
     end)
     selectAllBtn:SetScript("OnLeave", function(self)
-        self:SetBackdropBorderColor(unpack(C.border or {0.2,0.2,0.2,1}))
+        self:SetBackdropBorderColor(0.2, 0.2, 0.2, 1)
     end)
     
     selectAllBtn:SetScript("OnClick", function()

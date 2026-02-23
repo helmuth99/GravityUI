@@ -315,7 +315,9 @@ local function BuildChat(parent)
         }
     end
     -- Ensure sub-tables
-    if not dbChat.tabs.activeTab then dbChat.tabs.activeTab = {useThemeColor = true, customColor = {1, 0.82, 0, 1}, alpha = 1.0} end
+    if not dbChat.tabs.activeTab then dbChat.tabs.activeTab = {useThemeColor = true, customColor = {1, 0.82, 0, 1}, alpha = 1.0, disableBox = false, disableBackground = false} end
+    if dbChat.tabs.activeTab.disableBox == nil then dbChat.tabs.activeTab.disableBox = false end
+    if dbChat.tabs.activeTab.disableBackground == nil then dbChat.tabs.activeTab.disableBackground = false end
     if not dbChat.tabs.inactiveTab then dbChat.tabs.inactiveTab = {alpha = 0.5} end
 
     CreateSubHeader(content, "Chat Background")
@@ -325,6 +327,8 @@ local function BuildChat(parent)
     content.rowCount = content.rowCount + 0.5
 
     CreateSubHeader(content, "Chat Tabs")
+    AddRow(content, "Disable Box Base & Border", "checkbox", "disableBox", dbChat.tabs.activeTab, RefreshChat)
+    AddRow(content, "Disable Background Entirely", "checkbox", "disableBackground", dbChat.tabs.activeTab, RefreshChat)
     AddRow(content, "Use Theme Color for Active Tab", "checkbox", "useThemeColor", dbChat.tabs.activeTab, RefreshChat)
     AddRow(content, "Custom Active Color (if Theme disabled)", "color", "customColor", dbChat.tabs.activeTab, RefreshChat)
     AddRow(content, "Active Tab Opacity", "slider", 0, 1, "alpha", dbChat.tabs.activeTab, RefreshChat, 0.1)
