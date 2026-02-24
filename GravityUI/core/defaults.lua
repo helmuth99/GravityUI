@@ -811,6 +811,7 @@ ns.Defaults = {
             fadeOutTime = 10,
             locked = false,
             mode = "ICON", -- "ICON" or "BAR"
+            catcherIcon = "GravityUI",
             useThemeColor = true,
             customBackgroundColor = {0.1, 0.1, 0.1, 0.95},
             iconsPerRow = 4,

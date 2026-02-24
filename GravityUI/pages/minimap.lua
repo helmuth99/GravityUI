@@ -445,17 +445,29 @@ local function BuildIconCatcherTab(parent)
     
     local modeOpts = { {value = "ICON", text = "Icon"}, {value = "BAR", text = "Bar"} }
     local iconBgRow
+    local iconTexRow
     local customRefresh = function()
         refresh()
-        if iconBgRow then
+        if iconBgRow and iconTexRow then
             if c.mode == "ICON" then
                 iconBgRow:Show()
+                iconTexRow:Show()
             else
                 iconBgRow:Hide()
+                iconTexRow:Hide()
             end
         end
     end
     AddRow(genContainer, "Display Mode", "dropdown", modeOpts, "mode", c, customRefresh)
+    
+    local iconOpts = {
+        {value = "GravityUI", text = "GravityUI"},
+        {value = "Interface\\AddOns\\GravityUI\\assets\\minimap\\icon_arrow", text = "Custom Arrow (Down)"},
+        {value = "Interface\\AddOns\\GravityUI\\assets\\minimap\\icon_arrow_left", text = "Custom Arrow (Left)"},
+        {value = "Interface\\AddOns\\GravityUI\\assets\\minimap\\icon_minimap", text = "Custom Minimap"},
+        {value = "Interface\\AddOns\\GravityUI\\assets\\minimap\\icon_puzzle", text = "Custom Puzzle"},
+    }
+    iconTexRow = AddRow(genContainer, "Icon Texture", "dropdown", iconOpts, "catcherIcon", c, refresh)
     iconBgRow = AddRow(genContainer, "Show Background on Minimap Icon", "checkbox", "showIconBackground", c, refresh)
     customRefresh() -- Trigger initial state
     

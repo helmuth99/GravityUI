@@ -166,7 +166,7 @@ local function ApplyThemeToGrid()
         ToggleBtn:SetBackdropBorderColor(0, 0, 0, 1)
         ToggleBtn.icon:Hide()
     else
-        -- ICON mode transparent or rigid gray panel
+        -- ICON mode transparent or rigid panel
         GridContainer.bgFrame:SetBackdropColor(0.1, 0.1, 0.1, 0.95)
         GridContainer.bgFrame:SetBackdropBorderColor(0, 0, 0, 1)
         
@@ -179,6 +179,13 @@ local function ApplyThemeToGrid()
             ToggleBtn:SetBackdropBorderColor(0, 0, 0, 1)
         end
         ToggleBtn.icon:Show()
+        
+        if s.catcherIcon and s.catcherIcon ~= "GravityUI" then
+            ToggleBtn.icon:SetTexture(s.catcherIcon)
+        else
+            ToggleBtn.icon:SetTexture(ns.ICON_PATH)
+        end
+        ToggleBtn.icon:SetTexCoord(0, 1, 0, 1)
         ToggleBtn.icon:SetVertexColor(r, g, b, 1)
     end
 end

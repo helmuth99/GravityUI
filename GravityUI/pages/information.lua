@@ -108,11 +108,11 @@ local function BuildInformationTab(content)
     y = y - 10
 
     local changelogs = {
-        { version = "3.69", date = "Recent", changes = {"Overhauled Feature Hub descriptions", "Added Fade Out & Icon Background toggles to Icon Catcher", "Added Transparent Chat Tab options", "Added HidingBar conflict alert for Icon Catcher"} },
-        { version = "3.68", date = "", changes = {"Bugfixes and optimizations", "Added Information Tab", "Added custom minimap icon catcher"} },
-        { version = "3.67", date = "", changes = {"Fixed BTWQuests and WIM Minimap Icons", "LFG Role Selection Color fix"} },
-        { version = "3.66", date = "", changes = {"Increased Icon Catcher slider limits to 300", "Optimized Combat Hooks"} },
-        { version = "3.65", date = "", changes = {"Interrupt Tracker support for Restoration Shaman"} },
+        { version = "3.70", date = "Recent", changes = {"Added Custom Icon Selection to Icon Catcher (Arrow, Minimap, Puzzle)", "Optimized Core Ticker Updates and Event Handlers (Zero-Allocation 20Hz)", "Added Left-pointing custom arrow to Catcher dropdown"} },
+        { version = "3.69", date = "23.02.2026", changes = {"Overhauled Feature Hub descriptions", "Added Fade Out & Icon Background toggles to Icon Catcher", "Added Transparent Chat Tab options", "Added HidingBar conflict alert for Icon Catcher"} },
+        { version = "3.68", date = "22.02.2026", changes = {"Bugfixes and optimizations", "Added Information Tab", "Added custom minimap icon catcher"} },
+        { version = "3.67", date = "21.02.2026", changes = {"Fixed BTWQuests and WIM Minimap Icons", "LFG Role Selection Color fix"} },
+        { version = "3.66", date = "20.02.2026", changes = {"Increased Icon Catcher slider limits to 300", "Optimized Combat Hooks"} },
     }
 
     for _, log in ipairs(changelogs) do
