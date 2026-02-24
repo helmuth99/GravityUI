@@ -697,6 +697,43 @@ local function BuildWorldMarks(parent)
     content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
 end
 
+-- 12. Mail
+local function BuildMailExtras(parent)
+    local scroll, content = GUI:CreateScrollableContent(parent)
+    scroll:SetAllPoints()
+    local db = ns.GetDB(); if not db then return end
+    local dbUI = db.uiimprovements
+    content.rowCount = 0
+
+    local header = GUI:CreateSectionHeader(content, "Mail")
+    header:SetPoint("TOPLEFT", 10, -10)
+    header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
+    content.rowCount = 1.3
+    
+    local function RefreshMail() if ns.Mail and ns.Mail.ApplySettings then ns.Mail.ApplySettings() end end
+    local dbMail = dbUI.mail
+    if not dbMail then dbMail = {}; dbUI.mail = dbMail end
+    
+    local infoBox = GUI:CreateInfoBox(content, "Improves the Mailbox with an Open All button, Address Book with Alts/Friends/Guild/Contacts, and gold tracking.")
+    infoBox:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
+    content.rowCount = content.rowCount + (infoBox:GetHeight() / (ROW_HEIGHT+5)) + 0.2
+    
+    AddRow(content, "Enable Mail Module", "checkbox", "enabled", dbMail, RefreshMail)
+    AddRow(content, "Enable Open All Button", "checkbox", "openAll", dbMail, RefreshMail)
+    AddRow(content, "Enable Address Book (Send Mail)", "checkbox", "addressBook", dbMail, RefreshMail)
+    AddRow(content, "Track Gold in Chat", "checkbox", "trackGold", dbMail, RefreshMail)
+    content.rowCount = content.rowCount + 0.5
+    
+    CreateSubHeader(content, "Contacts")
+    
+    -- We can add a simple button to print instructions
+    local contactInfo = GUI:CreateInfoBox(content, "To manage contacts, open the Mailbox Send Mail tab, type a name in the 'To' field, click the Address Book dropdown and select 'Add Contact' or 'Remove Contact'.")
+    contactInfo:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
+    content.rowCount = content.rowCount + (contactInfo:GetHeight() / (ROW_HEIGHT+5)) + 0.2
+    
+    content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
+end
+
 -- ═══════════════════════════════════════════════════════════════
 -- MAIN PAGE
 -- ═══════════════════════════════════════════════════════════════
@@ -725,6 +762,7 @@ ns.GUI:RegisterPage("uiimprovements", {
             { name = "Combat Timer", builder = BuildCombatTimer },
             { name = "M+ Teleport", builder = BuildTeleport },
             { name = "World Marks", builder = BuildWorldMarks },
+            { name = "Mail", builder = BuildMailExtras },
         })
         subTabs:SetPoint("TOPLEFT", 10, -10)
         subTabs:SetPoint("TOPRIGHT", -10, 0)

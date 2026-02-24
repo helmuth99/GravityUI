@@ -108,11 +108,11 @@ local function BuildInformationTab(content)
     y = y - 10
 
     local changelogs = {
-        { version = "3.70", date = "Recent", changes = {"Added Custom Icon Selection to Icon Catcher (Arrow, Minimap, Puzzle)", "Optimized Core Ticker Updates and Event Handlers (Zero-Allocation 20Hz)", "Added Left-pointing custom arrow to Catcher dropdown"} },
+        { version = "3.71", date = "Recent", changes = {"Added Mail Extras module (Open All, Address Book, Gold tracking)", "Colored Address Book names by class", "Cross-realm mailing support for BNet and Guildies"} },
+        { version = "3.70", date = "24.02.2026", changes = {"Added Custom Icon Selection to Icon Catcher (Arrow, Minimap, Puzzle)", "Optimized Core Ticker Updates and Event Handlers (Zero-Allocation 20Hz)", "Added Left-pointing custom arrow to Catcher dropdown"} },
         { version = "3.69", date = "23.02.2026", changes = {"Overhauled Feature Hub descriptions", "Added Fade Out & Icon Background toggles to Icon Catcher", "Added Transparent Chat Tab options", "Added HidingBar conflict alert for Icon Catcher"} },
         { version = "3.68", date = "22.02.2026", changes = {"Bugfixes and optimizations", "Added Information Tab", "Added custom minimap icon catcher"} },
         { version = "3.67", date = "21.02.2026", changes = {"Fixed BTWQuests and WIM Minimap Icons", "LFG Role Selection Color fix"} },
-        { version = "3.66", date = "20.02.2026", changes = {"Increased Icon Catcher slider limits to 300", "Optimized Combat Hooks"} },
     }
 
     for _, log in ipairs(changelogs) do
@@ -166,6 +166,7 @@ local function BuildInformationTab(content)
         { name = "Combat Timer", desc = "A visual stopwatch tracking the duration spent in combat or encounters.\nExcellent for visualizing long raid bosses or Mythic+ pack length.", stateTable = db.uiimprovements and db.uiimprovements.combatTimer, stateKey = "enabled", pageId = "uiimprovements", tabIndex = 9 },
         { name = "M+ Teleport Icons", desc = "Clickable dungeon portals embedded directly into the Mythic+ LFG UI.\nRapidly port to dungeons without searching through your spellbook.", stateTable = db.uiimprovements, stateKey = "mplusTeleportEnabled", pageId = "uiimprovements", tabIndex = 10 },
         { name = "World Marks", desc = "A streamlined interface for dropping world markers and flare tools.\nProvides quick access to ready-checks and countdown pull timers.", stateTable = db.uiimprovements and db.uiimprovements.marks, stateKey = "enabled", pageId = "uiimprovements", tabIndex = 11 },
+        { name = "Mail Extras", desc = "Adds an 'Open All' button, an Address Book for alts and friends, and gold loot messages.\nImproves mailbox efficiency natively without extra addons.", stateTable = db.uiimprovements and db.uiimprovements.mail, stateKey = "enabled", pageId = "uiimprovements", tabIndex = 12 },
         
         -- Screen Indicators (screenindicators.lua)
         { name = "Cursor Utilities", desc = "Attach GCD Rings, Cursor Castbars, and highlights to your mouse.\nSuperb for tracking mechanics instantly without looking away from the action.", stateTable = db.screenindicators and db.screenindicators.cursor, stateKey = "enabled", pageId = "screenindicators", tabIndex = 1 },
@@ -174,7 +175,6 @@ local function BuildInformationTab(content)
         { name = "Pet Info", desc = "Quick pet management tools and large status warnings (Pet Dead).\nCrucial for Hunters and Warlocks who need rapid reminders.", stateTable = db.screenindicators and db.screenindicators.petWarnings, stateKey = "enabled", pageId = "screenindicators", tabIndex = 4 },
         { name = "Missing Buffs (Raid)", desc = "Tracks missing raid buffs dynamically based on group class composition.\nExamines exactly who is present and what buffs are missing pre-pull.", stateTable = db.raidBuffs, stateKey = "enabled", pageId = "screenindicators", tabIndex = 5 },
         { name = "Raid Warnings", desc = "Displays centralized large text alerts for helpful utility spells.\nWarns for newly dropped Soulwells, Feasts, Mage Tables, and Rituals.", stateTable = db.raidWarnings, stateKey = "enabled", pageId = "screenindicators", tabIndex = 6 },
-        { name = "Interrupt Tracker", desc = "Tracks party interrupts and visualizes kick cooldowns in M+ and raids.\nAnchored lists showing who interrupted what and when they are ready.", stateTable = db.interruptTracker, stateKey = "enabled", pageId = "screenindicators", tabIndex = 7 },
         { name = "Difficulty Indicator", desc = "Visual status bar tracking the currently selected instance difficulty.\nIncludes a dropdown for rapidly changing difficulties out-of-world.", stateTable = db.screenindicators and db.screenindicators.difficulty, stateKey = "enabled", pageId = "screenindicators", tabIndex = 8 },
         { name = "AFK Screen", desc = "An immersive, cinematic character orbit view when Away From Keyboard.\nDisplays real time, guild, character rank, and a moving camera.", stateTable = db.screenindicators and db.screenindicators.afkScreen, stateKey = "enabled", pageId = "screenindicators", tabIndex = 9 },
         

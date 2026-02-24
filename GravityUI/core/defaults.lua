@@ -239,7 +239,7 @@ ns.Defaults = {
         customSpells = {}, -- { [spellID] = "type" } e.g. { [12345] = "feast" }
     },
     interruptTracker = {
-        enabled = true,
+        enabled = false,
         width = 200,
         height = 20,
         spacing = 0,
@@ -542,6 +542,13 @@ ns.Defaults = {
                     [4] = 1,
                 },
             },
+        },
+        mail = {
+            enabled = true,
+            openAll = true,
+            addressBook = true,
+            trackGold = true,
+            contacts = {},
         },
         autoAcceptInvites = "off",
         hideWorldMapBlackout = true,

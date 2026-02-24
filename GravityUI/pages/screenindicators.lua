@@ -1270,7 +1270,6 @@ end
             { name = "Pet Info", builder = BuildPet },
             { name = "Missing Buffs", builder = BuildMissingBuffs },
             { name = "Raid Warnings", builder = BuildRaidWarnings },
-            { name = "Interrupt Tracker", builder = BuildInterruptTracker },
             { name = "Difficulty", builder = BuildDifficulty },
             { name = "AFK Screen", builder = BuildAFKScreen },
         }

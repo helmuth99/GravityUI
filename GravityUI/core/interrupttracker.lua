@@ -180,6 +180,9 @@ local function GetSettings()
                 -- (Say Kick Removed)
             }
         end
+        -- Force disable until Blizzard API issues are resolved
+        db.screenindicators.interruptTracker.enabled = false
+        
         return db.screenindicators.interruptTracker
     end
     return nil

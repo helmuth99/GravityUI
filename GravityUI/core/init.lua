@@ -208,6 +208,11 @@ function Addon:OnEnable()
         if ns.InterruptTracker.ApplySettings then ns.InterruptTracker.ApplySettings() end
     end
     
+    if ns.Mail and ns.Mail.Initialize then
+        ns.Mail.Initialize()
+        if ns.Mail.ApplySettings then ns.Mail.ApplySettings() end
+    end
+    
     -- Initial Updates
     ns.RefreshEverything()
     
@@ -362,6 +367,11 @@ function Addon:PLAYER_ENTERING_WORLD(event, isInitialLogin, isReloadingUi)
     -- Initialize Interrupt Tracker
     if ns.InterruptTracker and ns.InterruptTracker.Initialize then
         ns.InterruptTracker:Initialize()
+    end
+
+    -- Initialize Mail
+    if ns.Mail and ns.Mail.Initialize then
+        ns.Mail.Initialize()
     end
 
 
