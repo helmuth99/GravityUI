@@ -59,8 +59,27 @@ local function GetKeysForSlot(slot, prefix, index)
         if k1 then return k1, k2 end
     end
     
-    return nil
 end
+
+local barConfigs = {
+    { start = 1,  ending = 12, prefix = "ACTIONBUTTON" },        -- Bar 1
+    { start = 13, ending = 24, prefix = "ACTIONBAR2BUTTON" }, -- Bar 2
+    { start = 25, ending = 36, prefix = "MULTIACTIONBAR3BUTTON" }, -- Bar 3 (Side Right)
+    { start = 37, ending = 48, prefix = "MULTIACTIONBAR4BUTTON" }, -- Bar 4 (Side Right 2)
+    { start = 49, ending = 60, prefix = "MULTIACTIONBAR2BUTTON" }, -- Bar 5 (Bottom Right)
+    { start = 61, ending = 72, prefix = "MULTIACTIONBAR1BUTTON" }, -- Bar 6 (Bottom Left)
+    -- Dragonflight Bars (5-8)
+    { start = 73, ending = 84,  prefix = "MULTIACTIONBAR5BUTTON" },
+    { start = 85, ending = 96,  prefix = "MULTIACTIONBAR6BUTTON" },
+    { start = 97, ending = 108, prefix = "MULTIACTIONBAR7BUTTON" },
+    { start = 109,ending = 120, prefix = "MULTIACTIONBAR8BUTTON" }, 
+    -- Paging / Dominos extras
+    { start = 121,ending = 132, prefix = "MULTIACTIONBAR9BUTTON" }, 
+    { start = 133,ending = 144, prefix = "MULTIACTIONBAR10BUTTON" },
+    { start = 145,ending = 156, prefix = "MULTIACTIONBAR5BUTTON" },
+    { start = 157,ending = 168, prefix = "MULTIACTIONBAR6BUTTON" },
+    { start = 169,ending = 180, prefix = "MULTIACTIONBAR7BUTTON" },
+}
 
 -- Robust Action Bar Scan for Retail
 local function ScanActionBars(force)
@@ -70,25 +89,7 @@ local function ScanActionBars(force)
     
     wipe(spellKeybinds)
 
-    local barConfigs = {
-        { start = 1,  ending = 12, prefix = "ACTIONBUTTON" },        -- Bar 1
-        { start = 13, ending = 24, prefix = "ACTIONBAR2BUTTON" }, -- Bar 2
-        { start = 25, ending = 36, prefix = "MULTIACTIONBAR3BUTTON" }, -- Bar 3 (Side Right)
-        { start = 37, ending = 48, prefix = "MULTIACTIONBAR4BUTTON" }, -- Bar 4 (Side Right 2)
-        { start = 49, ending = 60, prefix = "MULTIACTIONBAR2BUTTON" }, -- Bar 5 (Bottom Right)
-        { start = 61, ending = 72, prefix = "MULTIACTIONBAR1BUTTON" }, -- Bar 6 (Bottom Left)
-        -- Dragonflight Bars (5-8)
-        { start = 73, ending = 84,  prefix = "MULTIACTIONBAR5BUTTON" },
-        { start = 85, ending = 96,  prefix = "MULTIACTIONBAR6BUTTON" },
-        { start = 97, ending = 108, prefix = "MULTIACTIONBAR7BUTTON" },
-        { start = 109,ending = 120, prefix = "MULTIACTIONBAR8BUTTON" }, 
-        -- Paging / Dominos extras
-        { start = 121,ending = 132, prefix = "MULTIACTIONBAR9BUTTON" }, 
-        { start = 133,ending = 144, prefix = "MULTIACTIONBAR10BUTTON" },
-        { start = 145,ending = 156, prefix = "MULTIACTIONBAR5BUTTON" },
-        { start = 157,ending = 168, prefix = "MULTIACTIONBAR6BUTTON" },
-        { start = 169,ending = 180, prefix = "MULTIACTIONBAR7BUTTON" },
-    }
+    wipe(spellKeybinds)
 
     -- Helper for safe table assignment
     local function SafeSet(key, value)
@@ -110,20 +111,22 @@ local function ScanActionBars(force)
             
             -- Handle paging for Bar 1 (ACTIONBUTTON) via Button Attributes (Source of Truth)
             -- Handle paging for Bar 1 (ACTIONBUTTON)
-            if config.prefix == "ACTIONBUTTON" then
-                if _G.Dominos then
-                    -- Dominos: Trust the button's action attribute (Source of Truth)
-                    local btnIdx = i + 1
-                    local button = _G["DominosActionButton" .. btnIdx]
-                    if button and button.GetAttribute then
-                        local actionID = button:GetAttribute("action")
-                        if actionID and type(actionID) == "number" and actionID > 0 then
-                            querySlot = actionID
-                        end
+            if _G.Dominos then
+                -- Dominos: Trust the button's action attribute (Source of Truth) for ALL bars
+                -- Dominos buttons are sequentially numbered 1 to 60 (or more) regardless of the underlying bar
+                -- We try to map the slot to the corresponding Dominos button based on standard layout (Bar 1 = 1-12, Bar 2 = 13-24)
+                local btnIdx = slot
+                local button = _G["DominosActionButton" .. btnIdx]
+                if button and button.GetAttribute then
+                    local actionID = button:GetAttribute("action")
+                    if actionID and type(actionID) == "number" and actionID > 0 then
+                        querySlot = actionID
                     end
-                else
-                    -- Default UI: Calculate based on Page/Stance (API)
-                    -- ActionButton1:GetAttribute("action") is not reliable for paging in Default UI
+                end
+            else
+                -- Default UI: Calculate based on Page/Stance (API)
+                -- ActionButton1:GetAttribute("action") is not reliable for paging in Default UI
+                if config.prefix == "ACTIONBUTTON" then
                     local page = GetActionBarPage()
                     local offset = GetBonusBarOffset()
                     
@@ -162,12 +165,65 @@ local function ScanActionBars(force)
                  end
             elseif actionType == "macro" and id then
                  local success, mname, _, body = pcall(GetMacroInfo, id)
+                 local lookupId = id
+                 
+                 -- FALLBACK: If API macro index is corrupted, lookup by the Macro's String Name via GetActionText
+                 if not body or body == "" then
+                     local mText = GetActionText(querySlot)
+                     if mText then
+                         local s2, n2, _, b2 = pcall(GetMacroInfo, mText)
+                         if b2 and b2 ~= "" then
+                             success, mname, body = true, n2, b2
+                             lookupId = mname
+                         end
+                     end
+                 end
+                 
                  if success and mname and key then 
                     SafeSet(SafeLower(mname), key)
                  end
                  
-                 local mid = GetMacroSpell(id)
-                 local mitem, mlink = GetMacroItem(id)
+                 local mid = pcall(GetMacroSpell, lookupId) and GetMacroSpell(lookupId) or nil
+                 local mitem, mlink
+                 pcall(function() mitem, mlink = GetMacroItem(lookupId) end)
+                 
+                 if body then
+                      -- Explicitly check for both 13 and 14 so that a macro with both gets both bindings saved
+                      local found13, found14 = false, false
+                      for line in body:gmatch("[^\r\n]+") do
+                          local l = line:lower():match("^%s*(.+)")
+                          if l then
+                              if not found13 and (l:find("^/use%s+13") or l:find("^/benutzen%s+13")) then
+                                  found13 = true
+                                  if key then 
+                                      SafeSet(13, key) 
+                                      local tId = GetInventoryItemID("player", 13)
+                                      if tId then 
+                                          SafeSet(tId, key) 
+                                          local sOk, iN = pcall(GetItemInfo, tId)
+                                          if sOk and iN then SafeSet(SafeLower(iN), key) end
+                                          local ssOk, iS = pcall(GetItemSpell, tId)
+                                          if ssOk and iS then SafeSet(SafeLower(iS), key) end
+                                      end
+                                  end
+                              end
+                              if not found14 and (l:find("^/use%s+14") or l:find("^/benutzen%s+14")) then
+                                  found14 = true
+                                  if key then 
+                                      SafeSet(14, key) 
+                                      local tId = GetInventoryItemID("player", 14)
+                                      if tId then 
+                                          SafeSet(tId, key)
+                                          local sOk, iN = pcall(GetItemInfo, tId)
+                                          if sOk and iN then SafeSet(SafeLower(iN), key) end
+                                          local ssOk, iS = pcall(GetItemSpell, tId)
+                                          if ssOk and iS then SafeSet(SafeLower(iS), key) end
+                                      end
+                                  end
+                              end
+                          end
+                      end
+                 end
                  
                  if mid then
                      bindId = mid
@@ -190,7 +246,7 @@ local function ScanActionBars(force)
                      end
                  elseif body then
                       -- Fallback: Parse macro text (mostly safe as it's string parsing, but careful with results)
-                      local tooltips = body:match("#showtooltip%s+([^\n]+)")
+                      local tooltips = body:match("#showtooltip[ \t]+([^\r\n]+)")
                       if not tooltips then
                            for line in body:gmatch("[^\r\n]+") do
                                local cleanLine = line:match("^%s*(.+)")
@@ -225,13 +281,21 @@ local function ScanActionBars(force)
                                            local iOk, itemName = pcall(GetItemInfo, itemId)
                                            if iOk and itemName then
                                                name = itemName
-                                               if key then SafeSet(SafeLower(name), key) end
+                                               if key then 
+                                                   SafeSet(SafeLower(name), key)
+                                                   SafeSet(slotId, key) -- Save slot ID explicitly (for BCDM Trinket matching fallback)
+                                               end
                                            end
                                            local sOk, itemSpell = pcall(GetItemSpell, itemId)
                                            if sOk and itemSpell and key then
                                                SafeSet(SafeLower(itemSpell), key)
                                                if not name then name = itemSpell end
+                                               SafeSet(slotId, key) -- Save slot ID explicitly
                                            end
+                                       else
+                                            -- If GetInventoryItemID fails (cache miss), fallback to saving the slot itself
+                                            bindId = slotId
+                                            if key then SafeSet(slotId, key) end
                                        end
                                    else
                                        bindId = slotId
@@ -324,12 +388,27 @@ function Module:UpdateFrame(frame)
         if success then spellId = id end
     end
     
-    if not spellId and frame.icon then
+    local itemId = frame.itemID or (frame.icon and frame.icon.itemID) or frame.cooldownID
+    
+    if not spellId and not itemId and frame.icon then
         spellId = frame.icon.spellID or frame.icon.spellId
     end
-    if not spellId and name then
+    if not spellId and not itemId and name then
         local idStr = name:match("BCDM_Custom_(%d+)")
         if idStr then spellId = tonumber(idStr) end
+        
+        -- Trinket slots are saved by their Equipment Slot ID (13/14)
+        local trinketSlot = name:match("BCDM_Custom_Trinket_(%d+)")
+        if trinketSlot then 
+            local tSlotNum = tonumber(trinketSlot)
+            if tSlotNum then
+                spellId = tSlotNum -- Match the slot explicitly as fallback
+                local tItemId = GetInventoryItemID("player", tSlotNum)
+                if tItemId then
+                    itemId = tItemId
+                end
+            end
+        end
     end
 
     local bind = nil
@@ -368,6 +447,38 @@ function Module:UpdateFrame(frame)
                 
                 if not usedName then
                     local successItemSpell, itemSpell = pcall(GetItemSpell, spellId)
+                    if successItemSpell and itemSpell then
+                        local successLower2, itemSpellLower = pcall(function() return itemSpell:lower() end)
+                        if successLower2 and itemSpellLower then
+                             local successBind4, b4 = pcall(function() return spellKeybinds[itemSpellLower] end)
+                             if successBind4 then bind = b4 end
+                        end
+                    end
+                end
+            end
+        end
+    end
+    
+    if not bind and itemId then
+        -- Safe indexing with pcall to avoid "table index is secret"
+        local success, b = pcall(function() return spellKeybinds[itemId] end)
+        if success then bind = b end
+        
+        if not bind then
+            local successItem, itemName = pcall(GetItemInfo, itemId)
+            if successItem and itemName then
+                local successLower, nameLower = pcall(function() return itemName:lower() end)
+                local usedName = false
+                if successLower and nameLower then
+                     local successBind, b3 = pcall(function() return spellKeybinds[nameLower] end)
+                     if successBind then 
+                         bind = b3 
+                         usedName = true
+                     end
+                end
+                
+                if not usedName then
+                    local successItemSpell, itemSpell = pcall(GetItemSpell, itemId)
                     if successItemSpell and itemSpell then
                         local successLower2, itemSpellLower = pcall(function() return itemSpell:lower() end)
                         if successLower2 and itemSpellLower then
@@ -684,6 +795,43 @@ SlashCmdList["GRAVITYUIGUICDMDEBUG"] = function()
         for _, id in ipairs(ids) do
             print("  - ID |cFF00FF00" .. id .. "|r: " .. spellKeybinds[id])
         end
+        
+        print("--- Macro Bar Scan ---")
+        for _, config in ipairs(barConfigs) do
+            for i = 0, (config.ending - config.start) do
+                local slot = config.start + i
+                local querySlot = slot
+                if _G.Dominos then
+                    local btnIdx = slot
+                    local button = _G["DominosActionButton" .. btnIdx]
+                    if button and button.GetAttribute then
+                        local actionID = button:GetAttribute("action")
+                        if actionID and type(actionID) == "number" and actionID > 0 then querySlot = actionID end
+                    end
+                else
+                    if config.prefix == "ACTIONBUTTON" then
+                        local page, offset = GetActionBarPage(), GetBonusBarOffset()
+                        if offset > 0 then page = 6 + offset end
+                        if page and page > 1 then querySlot = slot + ((page - 1) * 12) end
+                    end
+                end
+                
+                local actionType, id = GetActionInfo(querySlot)
+                if actionType == "macro" then
+                    local sOk, mname, _, body = pcall(GetMacroInfo, id)
+                    local btnIndex = i + 1
+                    local key = GetBindingKey(config.prefix .. btnIndex)
+                    if not key and _G.Dominos then key = GetBindingKey("CLICK DominosActionButton" .. querySlot .. ":LeftButton") end
+                    
+                    if sOk and body then
+                        print("Found Macro on Slot " .. querySlot .. " | Key: " .. (key or "NIL"))
+                        print("Name: " .. (mname or "Unknown") .. " | Body: " .. body:gsub("\n", " \\n "))
+                    end
+                end
+            end
+        end
+        print("--- End Dump ---")
+        
         ScanActionBars(true)
     else
         print("Scans will now occur silently.")

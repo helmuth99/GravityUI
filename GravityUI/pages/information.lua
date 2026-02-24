@@ -108,7 +108,8 @@ local function BuildInformationTab(content)
     y = y - 10
 
     local changelogs = {
-        { version = "3.71", date = "Recent", changes = {"Added Mail Extras module (Open All, Address Book, Gold tracking)", "Colored Address Book names by class", "Cross-realm mailing support for BNet and Guildies"} },
+        { version = "3.72", date = "Recent", changes = {"Fixed an issue where Trinket Macro Keybinds on BCDM were not visible", "Added robust fallback for Action Bar Addon compatibility (e.g. Dominos) to fix missing macro keybinds"} },
+        { version = "3.71", date = "24.02.2026", changes = {"Added Mail Extras module (Open All, Address Book, Gold tracking)", "Colored Address Book names by class", "Cross-realm mailing support for BNet and Guildies"} },
         { version = "3.70", date = "24.02.2026", changes = {"Added Custom Icon Selection to Icon Catcher (Arrow, Minimap, Puzzle)", "Optimized Core Ticker Updates and Event Handlers (Zero-Allocation 20Hz)", "Added Left-pointing custom arrow to Catcher dropdown"} },
         { version = "3.69", date = "23.02.2026", changes = {"Overhauled Feature Hub descriptions", "Added Fade Out & Icon Background toggles to Icon Catcher", "Added Transparent Chat Tab options", "Added HidingBar conflict alert for Icon Catcher"} },
         { version = "3.68", date = "22.02.2026", changes = {"Bugfixes and optimizations", "Added Information Tab", "Added custom minimap icon catcher"} },
