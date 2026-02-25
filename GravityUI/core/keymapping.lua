@@ -91,10 +91,19 @@ local function ScanActionBars(force)
 
     wipe(spellKeybinds)
 
+    local keybindPriorities = {}
+
     -- Helper for safe table assignment
-    local function SafeSet(key, value)
+    local function SafeSet(key, value, priority)
         if not key or not value then return end
-        pcall(function() spellKeybinds[key] = value end)
+        priority = priority or 2 -- Macro or fallback default to lowest priority
+        pcall(function()
+            local currentPriority = keybindPriorities[key] or 99
+            if priority <= currentPriority then
+                spellKeybinds[key] = value
+                keybindPriorities[key] = priority
+            end
+        end)
     end
 
     -- Helper for safe name lowercasing
@@ -331,25 +340,33 @@ local function ScanActionBars(force)
             end
 
             if bindId and key then
-                SafeSet(bindId, key)
+                local prio = (actionType == "macro") and 2 or 1
+                SafeSet(bindId, key, prio)
                 if name then
-                    SafeSet(SafeLower(name), key)
+                    SafeSet(SafeLower(name), key, prio)
                 end
                 
                 if type(bindId) == "number" then
-                     SafeSet(bindId, key)
+                     SafeSet(bindId, key, prio)
                 end
 
                 if actionType == "item" or (type(bindId) == "number" and not name) then
                     local checkId = (type(bindId) == "number") and bindId or id
                     if checkId then
+                        if checkId == GetInventoryItemID("player", 13) then
+                            SafeSet(13, key, prio)
+                        end
+                        if checkId == GetInventoryItemID("player", 14) then
+                            SafeSet(14, key, prio)
+                        end
+                        
                         local sOk, itemSpell = pcall(GetItemSpell, checkId)
                         if sOk and itemSpell then
-                            SafeSet(SafeLower(itemSpell), key)
+                            SafeSet(SafeLower(itemSpell), key, prio)
                         end
                         local iOk, itemName = pcall(GetItemInfo, checkId)
                         if iOk and itemName then
-                             SafeSet(SafeLower(itemName), key)
+                             SafeSet(SafeLower(itemName), key, prio)
                         end
                     end
                 end
