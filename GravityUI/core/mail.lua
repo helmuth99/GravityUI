@@ -287,6 +287,20 @@ local function BuildAddressBookMenu(frame, level, menuList)
                         UIDropDownMenu_AddButton(info, level)
                     end
                 end
+                
+                -- Clear Alts Button
+                info.text = "|cFFFF5555[Clear Alts List]|r"
+                info.arg1 = nil
+                info.func = function()
+                    local dbObj = ns.db.global
+                    if dbObj then
+                        dbObj.mailAlts = {}
+                        PopulateAlts()
+                        ns.Print("Alts list has been cleared. Only your current character remains.")
+                        CloseDropDownMenus()
+                    end
+                end
+                UIDropDownMenu_AddButton(info, level)
             end
         elseif menuList == "guild" then
             if IsInGuild() then

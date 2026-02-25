@@ -833,6 +833,20 @@ function SafeRelease:Update()
         return
     end
     
+    -- Ensure we are only blocking the "DEATH" popup.
+    -- If the popup was recycled for a Resurrection offer (e.g. Battle Rezz),
+    -- we disable our overlay so we don't block the "Accept" button.
+    -- We use SetAlpha/EnableMouse instead of Hide() to keep OnUpdate running
+    -- in case the resurrect is declined and the DEATH popup returns!
+    if not StaticPopup_Visible("DEATH") then
+        self.overlay:SetAlpha(0)
+        self.overlay:EnableMouse(false)
+        return
+    else
+        self.overlay:SetAlpha(1)
+        self.overlay:EnableMouse(true)
+    end
+    
     if IsAltKeyDown() then
         if self.startTime == 0 then self.startTime = GetTime() end
         local diff = self.holdTime - (GetTime() - self.startTime)
@@ -869,9 +883,11 @@ function SafeRelease:Trigger()
 
     self:Build(dBtn)
     self:Reset()
+    
+    -- In case the popup was reused, ensure we show it now because the type is DEATH again
+    self.overlay:Show()
     self.overlay.label:SetText(string.format("Hold ALT (%.1fs)", self.holdTime))
     self.overlay:SetScript("OnUpdate", function() self:Update() end)
-    self.overlay:Show()
 end
 
 local function ToggleDeleteFix(enable)

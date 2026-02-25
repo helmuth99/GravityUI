@@ -108,7 +108,8 @@ local function BuildInformationTab(content)
     y = y - 10
 
     local changelogs = {
-        { version = "3.75", date = "Recent", changes = {"Fixed an issue where Macro Keybinds overwrote direct Item Keybinds on BCDM Trinket bars", "Added a Priority System to ensure 'real' spells & items have higher priority than macros"} },
+        { version = "3.76", date = "Recent", changes = {"Fixed an issue where the GravityUI Installer failed to sync UnhaltedUnitFrames", "Fixed 'Death Release Protection' blocking clicks on recycled 'Accept Resurrection' popups", "Added a 'Clear Alts List' button to the Mail Module Address Book"} },
+        { version = "3.75", date = "25.02.2026", changes = {"Fixed an issue where Macro Keybinds overwrote direct Item Keybinds on BCDM Trinket bars", "Added a Priority System to ensure 'real' spells & items have higher priority than macros"} },
         { version = "3.74", date = "25.02.2026", changes = {"Fixed GameMenuFrame UI taint during combat", "Fixed missing dependency error for the Mail module"} },
         { version = "3.73", date = "25.02.2026", changes = {"Total overhaul of the Main Page layout into categorized Subtabs", "Completely redesigned all Subtabs with a sleek, glowing 'Underline' aesthetic"} },
         { version = "3.72", date = "25.02.2026", changes = {"Fixed an issue where Trinket Macro Keybinds on BCDM were not visible", "Added robust fallback for Action Bar Addon compatibility (e.g. Dominos) to fix missing macro keybinds"} },

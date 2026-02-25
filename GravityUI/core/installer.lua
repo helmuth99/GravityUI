@@ -387,6 +387,11 @@ Installer.registry = {
              if p1 then return p1 end
              local p2 = GetAceProfileFromGlobal("UnhaltedUnitFramesDB")
              if p2 then return p2 end
+
+             -- 1.5 Try directly on UUF object
+             if _G.UUF and _G.UUF.db and _G.UUF.db.GetCurrentProfile then
+                 return _G.UUF.db:GetCurrentProfile()
+             end
              
              -- 2. Try AceAddon Object (Method)
              local LibStub = _G.LibStub
@@ -415,11 +420,22 @@ Installer.registry = {
              end
              
              -- Ultimate Fallback: Direct DB Write
-             if SetAceProfileInGlobal("UUFDB", profileName) then return true end
-             if SetAceProfileInGlobal("UnhaltedUnitFramesDB", profileName) then return true end
+             local s1 = SetAceProfileInGlobal("UUFDB", profileName)
+             local s2 = SetAceProfileInGlobal("UnhaltedUnitFramesDB", profileName)
+             
+             -- If we force set it in global, we need to tell UUF to update if it exists
+             if (s1 or s2) and _G.UUF and _G.UUF.UpdateLayout then
+                 pcall(_G.UUF.UpdateLayout, _G.UUF)
+                 return true
+             end
+             return s1 or s2
         end,
         Import = function(self, data, profileName)
              ns.Print("[GUI Debug] UUF Import specific profile: " .. tostring(profileName))
+             
+             -- Force Direct Profile Keys injection before anything else
+             SetAceProfileInGlobal("UUFDB", profileName)
+             SetAceProfileInGlobal("UnhaltedUnitFramesDB", profileName)
              
              -- Ensure profile is set before import (just in case)
              if _G.UUF and _G.UUF.db then 
@@ -526,6 +542,10 @@ Installer.registry = {
 
         end,
         HasProfile = function(self, profileName)
+             -- Check raw SavedVariables first
+             if _G.UUFDB and _G.UUFDB.profiles and _G.UUFDB.profiles[profileName] then return true end
+             if _G.UnhaltedUnitFramesDB and _G.UnhaltedUnitFramesDB.profiles and _G.UnhaltedUnitFramesDB.profiles[profileName] then return true end
+             
              if _G.UUF and _G.UUF.db then -- Global check
                   for _, v in ipairs(_G.UUF.db:GetProfiles()) do if v == profileName then return true end end
              else
