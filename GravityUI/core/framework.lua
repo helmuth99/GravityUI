@@ -1405,29 +1405,49 @@ function GUI:CreateSubTabs(parent, tabs)
     container.tabButtons = tabButtons
     
     local BUTTON_HEIGHT = 28
-    local SPACING_X = 5
+    local SPACING_X = 2
     local SPACING_Y = 5
     
     for i, tabInfo in ipairs(tabs) do
-        local btn = CreateFrame("Button", nil, container, "BackdropTemplate")
+        local btn = CreateFrame("Button", nil, container)
         btn:SetHeight(BUTTON_HEIGHT)
         
         local text = btn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-        SetFont(text, 12, "", C.text)
+        SetFont(text, 13, "", C.textMuted) -- Default to muted text
         text:SetText(tabInfo.name)
         text:SetPoint("CENTER", 0, 0)
         btn.text = text
         
-        local width = text:GetStringWidth() + 30
+        local width = text:GetStringWidth() + 24
         btn:SetSize(width, BUTTON_HEIGHT)
         
-        btn:SetBackdrop({
-            bgFile = "Interface\\Buttons\\WHITE8x8",
-            edgeFile = "Interface\\Buttons\\WHITE8x8",
-            edgeSize = 1,
-        })
-        btn:SetBackdropColor(0.15, 0.15, 0.15, 1)
-        btn:SetBackdropBorderColor(C.border[1], C.border[2], C.border[3], 1)
+        -- Modern flat style: no visible border or solid background
+        -- Active Tab Upward Glow (Gradient)
+        local glow = btn:CreateTexture(nil, "BACKGROUND")
+        glow:SetAllPoints()
+        glow:SetTexture("Interface\\Buttons\\WHITE8x8")
+        -- "VERTICAL" gradient: min (bottom) to max (top) - lowered opacity to 0.15 for readability
+        glow:SetGradient("VERTICAL", CreateColor(C.accent[1], C.accent[2], C.accent[3], 0.12), CreateColor(C.accent[1], C.accent[2], C.accent[3], 0))
+        glow:Hide()
+        btn.glow = glow
+        
+        -- Active Tab Bottom Underline
+        local underline = btn:CreateTexture(nil, "ARTWORK")
+        underline:SetTexture("Interface\\Buttons\\WHITE8x8")
+        underline:SetColorTexture(C.accent[1], C.accent[2], C.accent[3], 1)
+        underline:SetHeight(2)
+        -- Match the full width of the glow background
+        underline:SetPoint("BOTTOMLEFT", btn, "BOTTOMLEFT", 0, 0)
+        underline:SetPoint("BOTTOMRIGHT", btn, "BOTTOMRIGHT", 0, 0)
+        underline:Hide() -- Hidden by default
+        btn.underline = underline
+        
+        -- Hover State Overlay (Subtle White Glow)
+        local hoverGrad = btn:CreateTexture(nil, "HIGHLIGHT")
+        hoverGrad:SetAllPoints()
+        hoverGrad:SetTexture("Interface\\Buttons\\WHITE8x8")
+        hoverGrad:SetGradient("VERTICAL", CreateColor(1, 1, 1, 0.08), CreateColor(1, 1, 1, 0))
+        hoverGrad:SetBlendMode("ADD")
         
         -- Register Tab in Search Index
         if GUI.currentSearchContext then
@@ -1456,16 +1476,31 @@ function GUI:CreateSubTabs(parent, tabs)
             end
         end
         
+        btn:SetScript("OnEnter", function(self)
+            if not self.isActive then
+                self.text:SetTextColor(C.text[1], C.text[2], C.text[3], 1)
+            end
+        end)
+        
+        btn:SetScript("OnLeave", function(self)
+            if not self.isActive then
+                self.text:SetTextColor(C.textMuted[1], C.textMuted[2], C.textMuted[3], 1)
+            end
+        end)
+        
         btn:SetScript("OnClick", function()
             for j, otherBtn in ipairs(tabButtons) do
                 local isSelected = (i == j)
+                otherBtn.isActive = isSelected
                 if isSelected then
-                    otherBtn:SetBackdropColor(C.accent[1], C.accent[2], C.accent[3], 0.3)
-                    otherBtn:SetBackdropBorderColor(C.accent[1], C.accent[2], C.accent[3], 1)
+                    otherBtn.text:SetTextColor(C.accent[1], C.accent[2], C.accent[3], 1)
+                    otherBtn.glow:Show()
+                    otherBtn.underline:Show()
                     tabContents[j]:Show()
                 else
-                    otherBtn:SetBackdropColor(0.15, 0.15, 0.15, 1)
-                    otherBtn:SetBackdropBorderColor(C.border[1], C.border[2], C.border[3], 1)
+                    otherBtn.text:SetTextColor(C.textMuted[1], C.textMuted[2], C.textMuted[3], 1)
+                    otherBtn.glow:Hide()
+                    otherBtn.underline:Hide()
                     tabContents[j]:Hide()
                 end
             end

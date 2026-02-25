@@ -172,284 +172,324 @@ end
 ---------------------------------------------------------------------------
 -- MAIN PAGE BUILD
 ---------------------------------------------------------------------------
-ns.GUI:RegisterPage("main", {
-    title = "Main",
-    OnBuild = function(content)
-        local db = ns.GetDB()
-        if not db then return end
-        
-        -- Use the provided content frame directly (which is already a ScrollChild)
-        -- No need to create another ScrollFrame inside it
-        
-        local yOffset = -10
-        local PADDING = 10
-        
-        -- ═══════════════════════════════════════════════════════════════
-        -- WELCOME SECTION
-        -- ═══════════════════════════════════════════════════════════════
-        local welcomeHeader = GUI:CreateSectionHeader(content, "Welcome to GravityUI")
-        welcomeHeader:SetPoint("TOPLEFT", PADDING, yOffset)
-        -- Note: SetPoint("RIGHT") is handled automatically by CreateSectionHeader (if overriding)
-        -- If not overriding, we should check if we need to set it. 
-        -- Assuming user reverted framework.lua, the override IS present.
-        -- So we do NOT set RIGHT manually here to avoid conflicts.
-        yOffset = yOffset - welcomeHeader.gap
-        yOffset = yOffset - 10
-        
-        local welcomeText = GUI:CreateLabel(content, 
-            "A modern, feature-rich UI configuration addon for World of Warcraft.\n" ..
-            "Use the menu on the left to navigate through different settings.",
-            12, C.text)
-        GUI:SetFont(welcomeText, 12, "")
-        welcomeText:SetPoint("TOPLEFT", PADDING, yOffset)
-        welcomeText:SetWidth(640)
-        welcomeText:SetJustifyH("LEFT")
-        yOffset = yOffset - 45
-        
-        -- ═══════════════════════════════════════════════════════════════
-        -- THEME COLOR SECTION
-        -- ═══════════════════════════════════════════════════════════════
-        local themeHeader = GUI:CreateSectionHeader(content, "Theme Color")
-        themeHeader:SetPoint("TOPLEFT", PADDING, yOffset)
-        yOffset = yOffset - themeHeader.gap
-        yOffset = yOffset - 10
-        
-        local themeInfo = GUI:CreateInfoBox(content, "Theme Color is used for styling modules in GravityUI.")
-        themeInfo:SetPoint("TOPLEFT", PADDING, yOffset)
-        yOffset = yOffset - themeInfo:GetHeight() - 10 -- Dynamic Spacing
-        
-        -- Theme Color Pickers
-        if GUI.CreateColorPicker then
-            local colorPicker = GUI:CreateColorPicker(content, "Primary Theme Color", "themeColor", db.general, function()
-                if ns.RefreshAccentColors then ns.RefreshAccentColors() end
-            end)
-            colorPicker:SetPoint("TOPLEFT", PADDING, yOffset)
-            yOffset = yOffset - 30
+local PADDING = 10
 
-            local bgColorPicker = GUI:CreateColorPicker(content, "Theme Background Color", "themeBgColor", db.general, function()
-                if ns.RefreshAccentColors then ns.RefreshAccentColors() end
-            end)
-            bgColorPicker:SetPoint("TOPLEFT", PADDING, yOffset)
-            yOffset = yOffset - 30
-        end
-        
-        -- Use Class Color Theme
-        local classThemeCheck = GUI:CreateCheckbox(content, "Use Class Color for Theme", "useClassColorTheme", db.general, function()
+local function BuildWelcome(parent)
+    local scroll, content = ns.GUI:CreateScrollableContent(parent)
+    scroll:SetAllPoints()
+    local db = ns.GetDB()
+    if not db then return end
+    
+    local yOffset = -10
+    
+    local welcomeHeader = ns.GUI:CreateSectionHeader(content, "Welcome to GravityUI")
+    welcomeHeader:SetPoint("TOPLEFT", PADDING, yOffset)
+    yOffset = yOffset - welcomeHeader.gap - 10
+    
+    local welcomeText = ns.GUI:CreateLabel(content, 
+        "A modern, feature-rich UI configuration addon for World of Warcraft.\n" ..
+        "Use the menu on the left to navigate through different settings.",
+        12, C.text)
+    ns.GUI:SetFont(welcomeText, 12, "")
+    welcomeText:SetPoint("TOPLEFT", PADDING, yOffset)
+    welcomeText:SetWidth(640)
+    welcomeText:SetJustifyH("LEFT")
+    yOffset = yOffset - 45
+    
+    -- GravityUI Logo
+    local logoWidth = 640
+    local logoHeight = 360 -- Maintain 16:9, but scale to width
+    local logo = content:CreateTexture(nil, "ARTWORK")
+    logo:SetTexture("Interface\\AddOns\\GravityUI\\assets\\Gravity_UI_Logo.jpg")
+    logo:SetSize(logoWidth, logoHeight)
+    logo:SetAlpha(0.12) -- Make it somewhat transparent to blend with background
+    -- Center it relative to the 640 width of the welcome text block
+    logo:SetPoint("TOPLEFT", PADDING + (640 - logoWidth) / 2, yOffset)
+    yOffset = yOffset - logoHeight - 20
+
+    content:SetHeight(math.abs(yOffset) + 20)
+end
+
+local function BuildThemeColor(parent)
+    local scroll, content = ns.GUI:CreateScrollableContent(parent)
+    scroll:SetAllPoints()
+    local db = ns.GetDB()
+    if not db then return end
+    
+    local yOffset = -10
+    
+    local themeHeader = ns.GUI:CreateSectionHeader(content, "Theme Color")
+    themeHeader:SetPoint("TOPLEFT", PADDING, yOffset)
+    yOffset = yOffset - themeHeader.gap - 10
+    
+    local themeInfo = ns.GUI:CreateInfoBox(content, "Theme Color is used for styling modules in GravityUI.")
+    themeInfo:SetPoint("TOPLEFT", PADDING, yOffset)
+    yOffset = yOffset - themeInfo:GetHeight() - 10
+    
+    if ns.GUI.CreateColorPicker then
+        local colorPicker = ns.GUI:CreateColorPicker(content, "Primary Theme Color", "themeColor", db.general, function()
             if ns.RefreshAccentColors then ns.RefreshAccentColors() end
         end)
-        classThemeCheck:SetPoint("TOPLEFT", PADDING, yOffset)
-        yOffset = yOffset - 40
-        yOffset = yOffset - 10 -- Extra spacer
-        
-        -- ═══════════════════════════════════════════════════════════════
-        -- UI SCALE SECTION
-        -- ═══════════════════════════════════════════════════════════════
-        local uiScaleHeader = GUI:CreateSectionHeader(content, "UI Scale")
-        uiScaleHeader:SetPoint("TOPLEFT", PADDING, yOffset)
-        yOffset = yOffset - uiScaleHeader.gap
-        yOffset = yOffset - 10
-        
-        -- UI Scale Slider
-        if db.general.uiScale == nil then db.general.uiScale = 0.64 end
-        
-        local scaleSlider = GUI:CreateSlider(content, "Global UI Scale", 0.3, 2.0, "uiScale", db.general, function(val)
-            pcall(function() UIParent:SetScale(val) end)
-        end, 0.01)
-        scaleSlider:SetPoint("TOPLEFT", PADDING, yOffset)
-        scaleSlider:SetWidth(400)
-        yOffset = yOffset - 50
-        
-        -- Preset Buttons Label
-        local presetLabel = GUI:CreateLabel(content, "Quick UI Scale Presets:", 12, C.text)
-        presetLabel:SetPoint("TOPLEFT", PADDING, yOffset)
-        yOffset = yOffset - 25
-        
-        -- Info text (Moved & Converted to InfoBox)
-        local presetInfo = GUI:CreateInfoBox(content, 
-            "Hover over any preset for details. 1440p+ is Gravity's personal setting.")
-        presetInfo:SetPoint("TOPLEFT", PADDING, yOffset)
-        yOffset = yOffset - presetInfo:GetHeight() - 10 -- Dynamic Spacing
-        
-        -- Preset Button Functions
-        local function ApplyPreset(val, name)
-            db.general.uiScale = val
-            pcall(function() UIParent:SetScale(val) end)
-            scaleSlider.SetValue(val)
-            local msg = "UI scale set to " .. string.format("%.4f", val)
-            if name then msg = msg .. " (" .. name .. ")" end
-            ns.Print(msg)
-        end
-        
-        local function AutoScale()
-            local _, height = GetPhysicalScreenSize()
-            local scale = 768 / height
-            scale = math.max(0.3, math.min(2.0, scale))
-            ApplyPreset(scale, "Auto")
-        end
-        
-        -- Button Container
-        local buttonContainer = CreateFrame("Frame", nil, content)
-        buttonContainer:SetPoint("TOPLEFT", PADDING, yOffset)
-        buttonContainer:SetHeight(26)
-        buttonContainer:SetWidth(500)
-        
-        local BUTTON_GAP = 6
-        local buttons = {}
-        
-        -- Create 5 preset buttons
-        buttons[1] = GUI:CreateButton(buttonContainer, "1080p", 50, 26, function() ApplyPreset(0.7111, "1080p") end)
-        buttons[2] = GUI:CreateButton(buttonContainer, "1440p", 50, 26, function() ApplyPreset(0.5333, "1440p") end)
-        buttons[3] = GUI:CreateButton(buttonContainer, "1440p+", 50, 26, function() ApplyPreset(0.64, "1440p+") end)
-        buttons[4] = GUI:CreateButton(buttonContainer, "4K", 50, 26, function() ApplyPreset(0.3555, "4K") end)
-        buttons[5] = GUI:CreateButton(buttonContainer, "Auto", 50, 26, AutoScale)
-        
-        for i, btn in ipairs(buttons) do
-            btn:SetWidth(80) 
-            btn:ClearAllPoints()
-            if i == 1 then
-                btn:SetPoint("LEFT", buttonContainer, "LEFT", 0, 0)
-            else
-                btn:SetPoint("LEFT", buttons[i-1], "RIGHT", BUTTON_GAP, 0)
-            end
-        end
-        
-        -- Tooltips for preset buttons
-        local tooltipData = {
-            { title = "1080p", desc = "Scale: 0.7111\nPixel-perfect for 1920×1080" },
-            { title = "1440p", desc = "Scale: 0.5333\nPixel-perfect for 2560×1440" },
-            { title = "1440p+", desc = "Scale: 0.64\nGravity's personal setting — larger and more readable.\nRequires manual adjustment for pixel perfection." },
-            { title = "4K", desc = "Scale: 0.3555\nPixel-perfect for 3840×2160" },
-            { title = "Auto", desc = "Computes pixel-perfect scale based on your resolution.\nFormula: 768 ÷ screen height" },
-        }
-        
-        for i, btn in ipairs(buttons) do
-            local data = tooltipData[i]
-            btn:HookScript("OnEnter", function(self)
-                GameTooltip:SetOwner(self, "ANCHOR_TOP")
-                GameTooltip:AddLine(data.title, 1, 1, 1)
-                GameTooltip:AddLine(data.desc, 0.8, 0.8, 0.8, true)
-                GameTooltip:Show()
-            end)
-            btn:HookScript("OnLeave", function()
-                GameTooltip:Hide()
-            end)
-        end
-        
-        yOffset = yOffset - 32
-        
+        colorPicker:SetPoint("TOPLEFT", PADDING, yOffset)
+        yOffset = yOffset - 30
 
-        yOffset = yOffset - 10 -- Extra spacer
-        
-        -- ═══════════════════════════════════════════════════════════════
-        -- DEFAULT FONT SETTINGS
-        -- ═══════════════════════════════════════════════════════════════
-        local fontHeader = GUI:CreateSectionHeader(content, "Default Font Settings")
-        fontHeader:SetPoint("TOPLEFT", PADDING, yOffset)
-        yOffset = yOffset - fontHeader.gap
-        yOffset = yOffset - 10
-        
-        local fontInfo = GUI:CreateInfoBox(content, 
-            "|cff00BFFFInfo:|r These settings apply throughout the UI, including the Minimap and all Datapanels.\n" ..
-            "|cffFFCC00Note:|r A /reload is required for some elements to take full effect.")
-        fontInfo:SetPoint("TOPLEFT", PADDING, yOffset)
-        yOffset = yOffset - fontInfo:GetHeight() - 20 
-        
-        -- Font List (LibSharedMedia)
-        local fontList = {}
-        local LSM = LibStub("LibSharedMedia-3.0", true)
-        if LSM then
-            for name in pairs(LSM:HashTable("font")) do
-                table.insert(fontList, {value = name, text = name})
-            end
-            table.sort(fontList, function(a, b) return a.text < b.text end)
+        local bgColorPicker = ns.GUI:CreateColorPicker(content, "Theme Background Color", "themeBgColor", db.general, function()
+            if ns.RefreshAccentColors then ns.RefreshAccentColors() end
+        end)
+        bgColorPicker:SetPoint("TOPLEFT", PADDING, yOffset)
+        yOffset = yOffset - 30
+    end
+    
+    local classThemeCheck = ns.GUI:CreateCheckbox(content, "Use Class Color for Theme", "useClassColorTheme", db.general, function()
+        if ns.RefreshAccentColors then ns.RefreshAccentColors() end
+    end)
+    classThemeCheck:SetPoint("TOPLEFT", PADDING, yOffset)
+    yOffset = yOffset - 40
+    
+    content:SetHeight(math.abs(yOffset) + 20)
+end
+
+local function BuildUIScale(parent)
+    local scroll, content = ns.GUI:CreateScrollableContent(parent)
+    scroll:SetAllPoints()
+    local db = ns.GetDB()
+    if not db then return end
+    
+    local yOffset = -10
+    
+    local uiScaleHeader = ns.GUI:CreateSectionHeader(content, "UI Scale")
+    uiScaleHeader:SetPoint("TOPLEFT", PADDING, yOffset)
+    yOffset = yOffset - uiScaleHeader.gap - 10
+    
+    local presetInfo = ns.GUI:CreateInfoBox(content, "Hover over any preset for details. Gravity's 1440p is Gravity's personal setting.")
+    presetInfo:SetPoint("TOPLEFT", PADDING, yOffset)
+    yOffset = yOffset - presetInfo:GetHeight() - 10
+    
+    local presetLabel = ns.GUI:CreateLabel(content, "Quick UI Scale Presets:", 12, C.text)
+    presetLabel:SetPoint("TOPLEFT", PADDING, yOffset)
+    yOffset = yOffset - 25
+    
+    if db.general.uiScale == nil then db.general.uiScale = 0.64 end
+    
+    local scaleSlider
+    
+    local function ApplyPreset(val, name)
+        db.general.uiScale = val
+        pcall(function() UIParent:SetScale(val) end)
+        if scaleSlider and scaleSlider.SetValue then scaleSlider.SetValue(val) end
+        local msg = "UI scale set to " .. string.format("%.4f", val)
+        if name then msg = msg .. " (" .. name .. ")" end
+        ns.Print(msg)
+    end
+    
+    local function AutoScale()
+        local _, height = GetPhysicalScreenSize()
+        local scale = 768 / height
+        scale = math.max(0.3, math.min(2.0, scale))
+        ApplyPreset(scale, "Auto")
+    end
+    
+    local buttonContainer = CreateFrame("Frame", nil, content)
+    buttonContainer:SetPoint("TOPLEFT", PADDING, yOffset)
+    buttonContainer:SetHeight(26)
+    buttonContainer:SetWidth(500)
+    
+    local BUTTON_GAP = 6
+    local buttons = {}
+    
+    buttons[1] = ns.GUI:CreateButton(buttonContainer, "1080p", 50, 26, function() ApplyPreset(0.7111, "1080p") end)
+    buttons[2] = ns.GUI:CreateButton(buttonContainer, "1440p", 50, 26, function() ApplyPreset(0.5333, "1440p") end)
+    buttons[3] = ns.GUI:CreateButton(buttonContainer, "4K", 50, 26, function() ApplyPreset(0.3555, "4K") end)
+    buttons[4] = ns.GUI:CreateButton(buttonContainer, "Gravity's 1440p", 50, 26, function() ApplyPreset(0.64, "Gravity's 1440p") end)
+    buttons[5] = ns.GUI:CreateButton(buttonContainer, "Auto", 50, 26, AutoScale)
+    
+    for i, btn in ipairs(buttons) do
+        if i == 4 then
+            btn:SetWidth(120)
         else
-            fontList = {{value = "Friz Quadrata TT", text = "Friz Quadrata TT"}}
+            btn:SetWidth(80) 
         end
-        
-        local fontDropdown = GUI:CreateDropdown(content, "Default Font", fontList, "font", db.general, function()
-            if ns.GUI.RefreshAll then ns.GUI:RefreshAll() end
-        end)
-        fontDropdown:SetPoint("TOPLEFT", PADDING, yOffset)
-        fontDropdown:SetWidth(400)
-        yOffset = yOffset - 50
-        
-        local outlineOptions = {
-            {value = "", text = "None"},
-            {value = "OUTLINE", text = "Outline"},
-            {value = "THICKOUTLINE", text = "Thick Outline"},
-        }
-        local outlineDropdown = GUI:CreateDropdown(content, "Font Outline", outlineOptions, "fontOutline", db.general, function()
-            if ns.GUI.RefreshAll then ns.GUI:RefreshAll() end
-        end)
-        outlineDropdown:SetPoint("TOPLEFT", PADDING, yOffset)
-        outlineDropdown:SetWidth(400)
-        yOffset = yOffset - 50
-        yOffset = yOffset - 10 -- Extra spacer
-
-        -- ═══════════════════════════════════════════════════════════════
-        -- GRAVITY RECOMMENDED FPS SETTINGS
-        -- ═══════════════════════════════════════════════════════════════
-        local fpsHeader = GUI:CreateSectionHeader(content, "Gravity Recommended FPS Settings")
-        fpsHeader:SetPoint("TOPLEFT", PADDING, yOffset)
-        yOffset = yOffset - fpsHeader.gap
-        yOffset = yOffset - 10
-
-        local fpsDesc = GUI:CreateInfoBox(content,
-            "Apply Gravity's optimized graphics settings for competitive play. " ..
-            "Your current settings are automatically saved when you click Apply - use 'Restore Previous Settings' to revert anytime. " ..
-            "Caution: Clicking Apply again will overwrite your backup with these settings.")
-        fpsDesc:SetPoint("TOPLEFT", PADDING, yOffset)
-        yOffset = yOffset - fpsDesc:GetHeight() - 10
-
-        local restoreFpsBtn
-        local fpsStatusText
-
-        local function UpdateFPSStatus()
-            local allMatch, matched, total = CheckCVarsMatch()
-            if matched >= 50 then
-                fpsStatusText:SetText("Settings: All applied")
-                fpsStatusText:SetTextColor(C.accent[1], C.accent[2], C.accent[3], 1)
-            else
-                fpsStatusText:SetText(string.format("Settings: %d/%d match", matched, total))
-                fpsStatusText:SetTextColor(C.textMuted[1], C.textMuted[2], C.textMuted[3], 1)
-            end
+        btn:ClearAllPoints()
+        if i == 1 then
+            btn:SetPoint("LEFT", buttonContainer, "LEFT", 0, 0)
+        else
+            btn:SetPoint("LEFT", buttons[i-1], "RIGHT", BUTTON_GAP, 0)
         end
-
-        local applyFpsBtn = GUI:CreateButton(content, "Apply FPS Settings", 200, 28, function()
-            ApplyGravityFPSSettings()
-            if restoreFpsBtn then
-                restoreFpsBtn:SetAlpha(1)
-                restoreFpsBtn:Enable()
-            end
-            UpdateFPSStatus()
+    end
+    
+    local tooltipData = {
+        { title = "1080p", desc = "Scale: 0.7111\nPixel-perfect for 1920×1080" },
+        { title = "1440p", desc = "Scale: 0.5333\nPixel-perfect for 2560×1440" },
+        { title = "4K", desc = "Scale: 0.3555\nPixel-perfect for 3840×2160" },
+        { title = "Gravity's 1440p", desc = "Scale: 0.64\nGravity's personal setting — larger and more readable.\nRequires manual adjustment for pixel perfection." },
+        { title = "Auto", desc = "Computes pixel-perfect scale based on your resolution.\nFormula: 768 ÷ screen height" },
+    }
+    
+    for i, btn in ipairs(buttons) do
+        local data = tooltipData[i]
+        btn:HookScript("OnEnter", function(self)
+            GameTooltip:SetOwner(self, "ANCHOR_TOP")
+            GameTooltip:AddLine(data.title, 1, 1, 1)
+            GameTooltip:AddLine(data.desc, 0.8, 0.8, 0.8, true)
+            GameTooltip:Show()
         end)
-        applyFpsBtn:SetPoint("TOPLEFT", PADDING, yOffset)
-
-        restoreFpsBtn = GUI:CreateButton(content, "Restore Previous Settings", 200, 28, function()
-            if RestorePreviousFPSSettings() then
-                restoreFpsBtn:SetAlpha(0.5)
-                restoreFpsBtn:Disable()
-            end
-            UpdateFPSStatus()
+        btn:HookScript("OnLeave", function()
+            GameTooltip:Hide()
         end)
-        restoreFpsBtn:SetPoint("LEFT", applyFpsBtn, "RIGHT", 10, 0)
-        
-        if not db.fpsBackup then
+    end
+    
+    yOffset = yOffset - 32 - 10
+    
+    scaleSlider = ns.GUI:CreateSlider(content, "Global UI Scale", 0.3, 2.0, "uiScale", db.general, function(val)
+        pcall(function() UIParent:SetScale(val) end)
+    end, 0.01)
+    scaleSlider:SetPoint("TOPLEFT", PADDING, yOffset)
+    scaleSlider:SetWidth(400)
+    yOffset = yOffset - 50
+    
+    content:SetHeight(math.abs(yOffset) + 20)
+end
+
+local function BuildFontSettings(parent)
+    local scroll, content = ns.GUI:CreateScrollableContent(parent)
+    scroll:SetAllPoints()
+    local db = ns.GetDB()
+    if not db then return end
+    
+    local yOffset = -10
+    
+    local fontHeader = ns.GUI:CreateSectionHeader(content, "Default Font Settings")
+    fontHeader:SetPoint("TOPLEFT", PADDING, yOffset)
+    yOffset = yOffset - fontHeader.gap - 10
+    
+    local fontInfo = ns.GUI:CreateInfoBox(content, 
+        "|cff00BFFFInfo:|r These settings apply throughout the UI, including the Minimap and all Datapanels.\n" ..
+        "|cffFFCC00Note:|r A /reload is required for some elements to take full effect.")
+    fontInfo:SetPoint("TOPLEFT", PADDING, yOffset)
+    yOffset = yOffset - fontInfo:GetHeight() - 20 
+    
+    local fontList = {}
+    local LSM = LibStub("LibSharedMedia-3.0", true)
+    if LSM then
+        for name in pairs(LSM:HashTable("font")) do
+            table.insert(fontList, {value = name, text = name})
+        end
+        table.sort(fontList, function(a, b) return a.text < b.text end)
+    else
+        fontList = {{value = "Friz Quadrata TT", text = "Friz Quadrata TT"}}
+    end
+    
+    local fontDropdown = ns.GUI:CreateDropdown(content, "Default Font", fontList, "font", db.general, function()
+        if ns.GUI.RefreshAll then ns.GUI:RefreshAll() end
+    end)
+    fontDropdown:SetPoint("TOPLEFT", PADDING, yOffset)
+    fontDropdown:SetWidth(400)
+    yOffset = yOffset - 50
+    
+    local outlineOptions = {
+        {value = "", text = "None"},
+        {value = "OUTLINE", text = "Outline"},
+        {value = "THICKOUTLINE", text = "Thick Outline"},
+    }
+    local outlineDropdown = ns.GUI:CreateDropdown(content, "Font Outline", outlineOptions, "fontOutline", db.general, function()
+        if ns.GUI.RefreshAll then ns.GUI:RefreshAll() end
+    end)
+    outlineDropdown:SetPoint("TOPLEFT", PADDING, yOffset)
+    outlineDropdown:SetWidth(400)
+    yOffset = yOffset - 50
+    
+    content:SetHeight(math.abs(yOffset) + 20)
+end
+
+local function BuildFPSSettings(parent)
+    local scroll, content = ns.GUI:CreateScrollableContent(parent)
+    scroll:SetAllPoints()
+    local db = ns.GetDB()
+    if not db then return end
+    
+    local yOffset = -10
+    
+    local fpsHeader = ns.GUI:CreateSectionHeader(content, "Gravity Recommended FPS Settings")
+    fpsHeader:SetPoint("TOPLEFT", PADDING, yOffset)
+    yOffset = yOffset - fpsHeader.gap - 10
+    
+    local fpsDesc = ns.GUI:CreateInfoBox(content,
+        "Apply Gravity's optimized graphics settings for competitive play. " ..
+        "Your current settings are automatically saved when you click Apply - use 'Restore Previous Settings' to revert anytime. " ..
+        "Caution: Clicking Apply again will overwrite your backup with these settings.")
+    fpsDesc:SetPoint("TOPLEFT", PADDING, yOffset)
+    yOffset = yOffset - fpsDesc:GetHeight() - 10
+    
+    local restoreFpsBtn
+    local fpsStatusText
+
+    local function UpdateFPSStatus()
+        local allMatch, matched, total = CheckCVarsMatch()
+        if matched >= 50 then
+            fpsStatusText:SetText("Settings: All applied")
+            fpsStatusText:SetTextColor(C.accent[1], C.accent[2], C.accent[3], 1)
+        else
+            fpsStatusText:SetText(string.format("Settings: %d/%d match", matched, total))
+            fpsStatusText:SetTextColor(C.textMuted[1], C.textMuted[2], C.textMuted[3], 1)
+        end
+    end
+
+    local applyFpsBtn = ns.GUI:CreateButton(content, "Apply FPS Settings", 200, 28, function()
+        ApplyGravityFPSSettings()
+        if restoreFpsBtn then
+            restoreFpsBtn:SetAlpha(1)
+            restoreFpsBtn:Enable()
+        end
+        UpdateFPSStatus()
+    end)
+    applyFpsBtn:SetPoint("TOPLEFT", PADDING, yOffset)
+
+    restoreFpsBtn = ns.GUI:CreateButton(content, "Restore Previous Settings", 200, 28, function()
+        if RestorePreviousFPSSettings() then
             restoreFpsBtn:SetAlpha(0.5)
             restoreFpsBtn:Disable()
         end
-        
-        yOffset = yOffset - 38
-
-        fpsStatusText = GUI:CreateLabel(content, "", 11, C.accent)
-        GUI:SetFont(fpsStatusText, 11, "")
-        fpsStatusText:SetPoint("TOPLEFT", PADDING, yOffset)
-        
         UpdateFPSStatus()
+    end)
+    restoreFpsBtn:SetPoint("LEFT", applyFpsBtn, "RIGHT", 10, 0)
+    
+    if not db.fpsBackup then
+        restoreFpsBtn:SetAlpha(0.5)
+        restoreFpsBtn:Disable()
+    end
+    
+    yOffset = yOffset - 38
+
+    fpsStatusText = ns.GUI:CreateLabel(content, "", 11, C.accent)
+    ns.GUI:SetFont(fpsStatusText, 11, "")
+    fpsStatusText:SetPoint("TOPLEFT", PADDING, yOffset)
+    
+    UpdateFPSStatus()
+    
+    yOffset = yOffset - 22
+    
+    content:SetHeight(math.abs(yOffset) + 20)
+end
+
+ns.GUI:RegisterPage("main", {
+    title = "Main",
+    OnBuild = function(content)
+        local scrollFrame = content:GetParent()
+        content:Hide()
         
-        yOffset = yOffset - 22
+        if scrollFrame.ScrollBar then
+            scrollFrame.ScrollBar:Hide()
+            scrollFrame.ScrollBar:HookScript("OnShow", function(self) self:Hide() end)
+        end
         
-        -- Set Final Height of Content
-        content:SetHeight(math.abs(yOffset) + 20)
+        local subTabs = ns.GUI:CreateSubTabs(scrollFrame, {
+            { name = "Welcome", builder = BuildWelcome },
+            { name = "Theme Color", builder = BuildThemeColor },
+            { name = "UI Scale", builder = BuildUIScale },
+            { name = "Font Settings", builder = BuildFontSettings },
+            { name = "FPS Settings", builder = BuildFPSSettings },
+        })
+        subTabs:SetPoint("TOPLEFT", 10, -10)
+        subTabs:SetPoint("TOPRIGHT", -10, 0)
     end,
 })

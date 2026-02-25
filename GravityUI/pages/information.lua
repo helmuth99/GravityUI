@@ -108,7 +108,8 @@ local function BuildInformationTab(content)
     y = y - 10
 
     local changelogs = {
-        { version = "3.72", date = "Recent", changes = {"Fixed an issue where Trinket Macro Keybinds on BCDM were not visible", "Added robust fallback for Action Bar Addon compatibility (e.g. Dominos) to fix missing macro keybinds"} },
+        { version = "3.73", date = "Recent", changes = {"Total overhaul of the Main Page layout into categorized Subtabs", "Completely redesigned all Subtabs with a sleek, glowing 'Underline' aesthetic"} },
+        { version = "3.72", date = "25.02.2026", changes = {"Fixed an issue where Trinket Macro Keybinds on BCDM were not visible", "Added robust fallback for Action Bar Addon compatibility (e.g. Dominos) to fix missing macro keybinds"} },
         { version = "3.71", date = "24.02.2026", changes = {"Added Mail Extras module (Open All, Address Book, Gold tracking)", "Colored Address Book names by class", "Cross-realm mailing support for BNet and Guildies"} },
         { version = "3.70", date = "24.02.2026", changes = {"Added Custom Icon Selection to Icon Catcher (Arrow, Minimap, Puzzle)", "Optimized Core Ticker Updates and Event Handlers (Zero-Allocation 20Hz)", "Added Left-pointing custom arrow to Catcher dropdown"} },
         { version = "3.69", date = "23.02.2026", changes = {"Overhauled Feature Hub descriptions", "Added Fade Out & Icon Background toggles to Icon Catcher", "Added Transparent Chat Tab options", "Added HidingBar conflict alert for Icon Catcher"} },
@@ -139,7 +140,10 @@ local function BuildInformationTab(content)
 
     local features = {
         -- Main Category
-        { name = "Main UI Scale & Global Fonts", desc = "Centralized settings for interface scaling and global font styling.\nAdjusts the entire UI size uniformly across all modules.", pageId = "main" },
+        { name = "Theme Color", desc = "Base color settings used for styling modules in GravityUI.", pageId = "main", tabIndex = 2 },
+        { name = "Global UI Scale", desc = "Centralized settings for interface scaling and quick presets.", pageId = "main", tabIndex = 3 },
+        { name = "Global Fonts", desc = "Centralized settings for global font styling.", pageId = "main", tabIndex = 4 },
+        { name = "FPS Optimization", desc = "Apply Gravity's optimized graphics settings for competitive play.", pageId = "main", tabIndex = 5 },
 
         -- Minimap (minimap.lua)
         { name = "Minimap Overhaul", desc = "Transforms the default minimap into a clean, modern square or round frame.\nFeatures smart anchoring, dynamic zoom, and addon minimization.", stateTable = db.minimap, stateKey = "enabled", pageId = "minimap", tabIndex = 1 },
