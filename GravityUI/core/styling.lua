@@ -153,6 +153,7 @@ end
 
 -- Inject Button logic (Idempotent for updates)
 local function InjectGravityUIButton(updateVisibilityOnly)
+    if InCombatLockdown() then return end
     local db = GetDB()
     local shouldShow = db and db.gamemenu and db.gamemenu.showGravityButton
     
@@ -217,6 +218,7 @@ local function InjectGravityUIButton(updateVisibilityOnly)
 end
 
 function Styling:SkinGameMenu()
+    if InCombatLockdown() then return end
     local db = GetDB()
     if not db or not db.gamemenu or not db.gamemenu.enabled then return end
     
@@ -277,6 +279,7 @@ function Styling:HookGameMenu()
     if hasHookedGameMenu then return end
     if GameMenuFrame and GameMenuFrame.InitButtons then
         hooksecurefunc(GameMenuFrame, "InitButtons", function()
+             if InCombatLockdown() then return end
              InjectGravityUIButton()
              C_Timer.After(0, function() Styling:SkinGameMenu() end)
         end)

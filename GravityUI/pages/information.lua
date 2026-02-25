@@ -108,7 +108,8 @@ local function BuildInformationTab(content)
     y = y - 10
 
     local changelogs = {
-        { version = "3.73", date = "Recent", changes = {"Total overhaul of the Main Page layout into categorized Subtabs", "Completely redesigned all Subtabs with a sleek, glowing 'Underline' aesthetic"} },
+        { version = "3.74", date = "Recent", changes = {"Fixed GameMenuFrame UI taint during combat", "Fixed missing dependency error for the Mail module"} },
+        { version = "3.73", date = "25.02.2026", changes = {"Total overhaul of the Main Page layout into categorized Subtabs", "Completely redesigned all Subtabs with a sleek, glowing 'Underline' aesthetic"} },
         { version = "3.72", date = "25.02.2026", changes = {"Fixed an issue where Trinket Macro Keybinds on BCDM were not visible", "Added robust fallback for Action Bar Addon compatibility (e.g. Dominos) to fix missing macro keybinds"} },
         { version = "3.71", date = "24.02.2026", changes = {"Added Mail Extras module (Open All, Address Book, Gold tracking)", "Colored Address Book names by class", "Cross-realm mailing support for BNet and Guildies"} },
         { version = "3.70", date = "24.02.2026", changes = {"Added Custom Icon Selection to Icon Catcher (Arrow, Minimap, Puzzle)", "Optimized Core Ticker Updates and Event Handlers (Zero-Allocation 20Hz)", "Added Left-pointing custom arrow to Catcher dropdown"} },
@@ -117,7 +118,8 @@ local function BuildInformationTab(content)
         { version = "3.67", date = "21.02.2026", changes = {"Fixed BTWQuests and WIM Minimap Icons", "LFG Role Selection Color fix"} },
     }
 
-    for _, log in ipairs(changelogs) do
+    for i = 1, math.min(#changelogs, 3) do
+        local log = changelogs[i]
         local vLabel = GUI:CreateLabel(content, "|cFF30D1FFv" .. log.version .. "|r - " .. log.date, 13, C.accent)
         vLabel:SetPoint("TOPLEFT", PAD, y)
         y = y - 20

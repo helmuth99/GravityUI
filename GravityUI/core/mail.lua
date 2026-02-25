@@ -2,7 +2,6 @@ local ADDON_NAME, ns = ...
 local Mail = {}
 ns.Mail = Mail
 LibStub("AceEvent-3.0"):Embed(Mail)
-LibStub("AceHook-3.0"):Embed(Mail)
 
 -- ============================================================================
 -- CONSTANTS & VARIABLES
@@ -342,24 +341,28 @@ local function BuildAddressBookMenu(frame, level, menuList)
     end
 end
 
--- Hook SendMail to save recent
-function Mail:SendMailFrame_Reset()
-    local name = strtrim(SendMailNameEditBox:GetText())
-    if name ~= "" then
-        local s = GetSettings()
-        if s and s.addressBook then
-            -- Remove if exists
-            for i, v in ipairs(recentMails) do
-                if v == name then
-                    table.remove(recentMails, i)
-                    break
+-- Hook SendMail to save recent targets
+local hasHookedSendMail = false
+local function HookSendMail()
+    if hasHookedSendMail then return end
+    hooksecurefunc("SendMail", function(target, subject, body)
+        local name = strtrim(tostring(target))
+        if name ~= "" then
+            local s = GetSettings()
+            if s and s.addressBook then
+                -- Remove if exists
+                for i, v in ipairs(recentMails) do
+                    if string.lower(v) == string.lower(name) then
+                        table.remove(recentMails, i)
+                        break
+                    end
                 end
+                table.insert(recentMails, 1, name)
+                if #recentMails > 10 then table.remove(recentMails) end
             end
-            table.insert(recentMails, 1, name)
-            if #recentMails > 10 then table.remove(recentMails) end
         end
-    end
-    self.hooks["SendMailFrame_Reset"]()
+    end)
+    hasHookedSendMail = true
 end
 
 -- ============================================================================
@@ -423,12 +426,7 @@ function Mail:PLAYER_ENTERING_WORLD()
     PopulateAlts()
     local s = GetSettings()
     if s and s.enabled and s.addressBook then
-        if not self:IsHooked("SendMailFrame_Reset") then
-            -- Note: We must hook after Blizzard UI loads the SendMailFrame
-            if SendMailFrame_Reset then
-                self:RawHook("SendMailFrame_Reset", true)
-            end
-        end
+        HookSendMail()
     end
 end
 
@@ -446,16 +444,11 @@ function Mail.ApplySettings()
     if s and s.enabled then
         Mail:RegisterEvent("PLAYER_INTERACTION_MANAGER_FRAME_SHOW")
         Mail:RegisterEvent("PLAYER_INTERACTION_MANAGER_FRAME_HIDE")
-        if not Mail:IsHooked("SendMailFrame_Reset") and SendMailFrame_Reset then
-            Mail:RawHook("SendMailFrame_Reset", true)
-        end
+        HookSendMail()
         if OpenAllMail and s.openAll then OpenAllMail:Hide() end
     else
         Mail:UnregisterEvent("PLAYER_INTERACTION_MANAGER_FRAME_SHOW")
         Mail:UnregisterEvent("PLAYER_INTERACTION_MANAGER_FRAME_HIDE")
-        if Mail:IsHooked("SendMailFrame_Reset") then
-            Mail:Unhook("SendMailFrame_Reset")
-        end
         isOpeningAll = false
         if OpenAllButton then OpenAllButton:Hide() end
         if AddressBookButton then AddressBookButton:Hide() end
