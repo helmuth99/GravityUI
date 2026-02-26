@@ -414,48 +414,63 @@ local function CatchButton(buttonFrame, debugName, skipLayout)
     
     -- Enforce position: if the Addon tries to SetPoint (like Details! does on click), force it back.
     if not buttonFrame.GravityExt_Hooked then
-        hooksecurefunc(buttonFrame, "SetPoint", function(self)
+        local origSetPoint = buttonFrame.SetPoint
+        buttonFrame.SetPoint = function(self, ...)
             if not self.GravityExt_IsUpdating and self.GravityExt_Anchor1 then
                 self.GravityExt_IsUpdating = true
                 self:ClearAllPoints()
-                self:SetPoint(self.GravityExt_Anchor1, GridContainer, self.GravityExt_Anchor2, self.GravityExt_xOff, self.GravityExt_yOff)
+                origSetPoint(self, self.GravityExt_Anchor1, GridContainer, self.GravityExt_Anchor2, self.GravityExt_xOff, self.GravityExt_yOff)
                 self.GravityExt_IsUpdating = false
+            else
+                origSetPoint(self, ...)
             end
-        end)
-        hooksecurefunc(buttonFrame, "ClearAllPoints", function(self)
+        end
+        
+        local origClearAllPoints = buttonFrame.ClearAllPoints
+        buttonFrame.ClearAllPoints = function(self)
+            origClearAllPoints(self)
             if not self.GravityExt_IsUpdating and self.GravityExt_Anchor1 then
                 self.GravityExt_IsUpdating = true
-                self:SetPoint(self.GravityExt_Anchor1, GridContainer, self.GravityExt_Anchor2, self.GravityExt_xOff, self.GravityExt_yOff)
+                origSetPoint(self, self.GravityExt_Anchor1, GridContainer, self.GravityExt_Anchor2, self.GravityExt_xOff, self.GravityExt_yOff)
                 self.GravityExt_IsUpdating = false
             end
-        end)
+        end
         
         -- Force icons to remain on MEDIUM strata so they stay above the Level 1 background
-        hooksecurefunc(buttonFrame, "SetFrameStrata", function(self, strata)
+        local origSetFrameStrata = buttonFrame.SetFrameStrata
+        buttonFrame.SetFrameStrata = function(self, strata)
             if not self.GravityExt_IsUpdatingStrata and strata ~= "MEDIUM" then
                 self.GravityExt_IsUpdatingStrata = true
-                self:SetFrameStrata("MEDIUM")
+                origSetFrameStrata(self, "MEDIUM")
                 self.GravityExt_IsUpdatingStrata = false
+            else
+                origSetFrameStrata(self, strata)
             end
-        end)
+        end
         
         -- Force icons to remain at Level 50 or higher
-        hooksecurefunc(buttonFrame, "SetFrameLevel", function(self, level)
+        local origSetFrameLevel = buttonFrame.SetFrameLevel
+        buttonFrame.SetFrameLevel = function(self, level)
             if not self.GravityExt_IsUpdatingLevel and level < 50 then
                 self.GravityExt_IsUpdatingLevel = true
-                self:SetFrameLevel(50)
+                origSetFrameLevel(self, 50)
                 self.GravityExt_IsUpdatingLevel = false
+            else
+                origSetFrameLevel(self, level)
             end
-        end)
+        end
         
         -- Prevent generic Addons reparenting to Minimap
-        hooksecurefunc(buttonFrame, "SetParent", function(self, newParent)
+        local origSetParent = buttonFrame.SetParent
+        buttonFrame.SetParent = function(self, newParent)
             if not self.GravityExt_IsUpdating and newParent ~= GridContainer then
                 self.GravityExt_IsUpdating = true
-                self:SetParent(GridContainer)
+                origSetParent(self, GridContainer)
                 self.GravityExt_IsUpdating = false
+            else
+                origSetParent(self, newParent)
             end
-        end)
+        end
         
         -- MASQUE SUPPORT: Hand over rendering payload if active
         local s = GetSettings()
