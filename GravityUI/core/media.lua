@@ -15,7 +15,7 @@ local assetPath = "Interface/AddOns/" .. ADDON_NAME .. "/assets/"
 -- FONTS REGISTRATION
 -- ═══════════════════════════════════════════════════════════════
 LSM:Register(FONT, "Gravity", assetPath .. "Gravity.ttf")
-LSM:Register(FONT, "Gravity Big", assetPath .. "Gravity-Big.ttf")
+LSM:Register(FONT, "Gravity ExtraBold", assetPath .. "Gravity-ExtraBold.ttf")
 LSM:Register(FONT, "Gravity Bold", assetPath .. "Gravity-Bold.ttf")
 LSM:Register(FONT, "Gravity Expressway", assetPath .. "Gravity-Expressway.TTF")
 LSM:Register(FONT, "Gravity Light", assetPath .. "Gravity-Light.ttf")
