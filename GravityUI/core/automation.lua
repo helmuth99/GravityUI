@@ -896,6 +896,72 @@ end
 ns.ToggleDeleteFix = ToggleDeleteFix
 
 ---------------------------------------------------------------------------
+-- EDITMODE CHECK ON SPEC SWITCH
+---------------------------------------------------------------------------
+local function OnSpecSwitchEditModeCheck()
+    local settings = GetSettings()
+    if not settings or not settings.checkEditmodeOnSpecSwitch then return end
+
+    -- Give WoW a second to finish changing its internal layouts
+    C_Timer.After(1.0, function()
+        if not C_EditMode or not C_EditMode.GetLayouts then return end
+        
+        local layoutInfo = C_EditMode.GetLayouts()
+        if not layoutInfo or not layoutInfo.activeLayout then return end
+        
+        local currentLayoutName = "Unknown"
+        local gravityUILayoutID = nil
+        
+        -- Find current layout name and look for "GravityUI" layout ID
+        for i, layout in ipairs(layoutInfo.layouts) do
+            local id = layout.layoutIdentifier or layout.layoutID or layout.id
+            if id and id == layoutInfo.activeLayout then
+                currentLayoutName = layout.layoutName
+            end
+            if layout.layoutName == "GravityUI" then
+                gravityUILayoutID = layout.layoutIdentifier or (i + 2) -- heuristic fallback
+            end
+        end
+        
+        if currentLayoutName == "Unknown" then
+            local assumedIndex = layoutInfo.activeLayout - 2
+            if assumedIndex > 0 and layoutInfo.layouts[assumedIndex] then
+                currentLayoutName = layoutInfo.layouts[assumedIndex].layoutName
+            end
+        end
+        
+        -- If current is not GravityUI, and we found the GravityUI profile, prompt user
+        if currentLayoutName ~= "GravityUI" and gravityUILayoutID then
+            if not StaticPopupDialogs["GRAVITYUI_EDITMODE_SPEC_SWITCH"] then
+                StaticPopupDialogs["GRAVITYUI_EDITMODE_SPEC_SWITCH"] = {
+                    text = "Your Edit Mode profile is not GravityUI.\nWould you like to change it back to GravityUI?",
+                    button1 = YES,
+                    button2 = NO,
+                    button3 = "Disable Check",
+                    OnAccept = function(self, data)
+                        if InCombatLockdown() then return end
+                        C_EditMode.SetActiveLayout(data)
+                    end,
+                    OnAlt = function(self)
+                        local s = GetSettings()
+                        if s then
+                            s.checkEditmodeOnSpecSwitch = false
+                            print("|cFF30D1FFGravityUI:|r Edit Mode Check on Spec Switch has been disabled.")
+                        end
+                    end,
+                    timeout = 0,
+                    whileDead = true,
+                    hideOnEscape = true,
+                    preferredIndex = 3, -- Avoid UI taint where possible
+                }
+            end
+            
+            StaticPopup_Show("GRAVITYUI_EDITMODE_SPEC_SWITCH", "", "", gravityUILayoutID)
+        end
+    end)
+end
+
+---------------------------------------------------------------------------
 -- EVENT REGISTRATION
 ---------------------------------------------------------------------------
 
@@ -923,6 +989,7 @@ automationFrame:RegisterEvent("CHALLENGE_MODE_KEYSTONE_RECEPTABLE_OPEN")
 automationFrame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
 automationFrame:RegisterEvent("PLAYER_DIFFICULTY_CHANGED")
 automationFrame:RegisterEvent("LFG_LIST_SEARCH_RESULTS_RECEIVED")
+automationFrame:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
 
 automationFrame:SetScript("OnEvent", function(self, event, ...)
     if event == "ADDON_LOADED" then
@@ -975,5 +1042,10 @@ automationFrame:SetScript("OnEvent", function(self, event, ...)
         OnKeyStoneInsert()
     elseif event == "LFG_LIST_SEARCH_RESULTS_RECEIVED" then
         C_Timer.After(0.1, InjectGravityLfgListeners)
+    elseif event == "PLAYER_SPECIALIZATION_CHANGED" then
+        local unit = ...
+        if unit == "player" then
+            OnSpecSwitchEditModeCheck()
+        end
     end
 end)

@@ -583,6 +583,7 @@ ns.Defaults = {
         autoCombatLogRaidMythic = false,
         autoSelectGossip = false,
         fastAutoLoot = false,
+        checkEditmodeOnSpecSwitch = true,
         hideTalkingHead = false,
         muteTalkingHead = false,
         hideOnWorldQuestMinigame = true,

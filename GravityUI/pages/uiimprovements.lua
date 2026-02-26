@@ -142,6 +142,7 @@ local function BuildAutomation(parent)
     content.rowCount = content.rowCount + (movieInfo:GetHeight() / (ROW_HEIGHT+5)) + 0.2
     
     AddRow(content, "Auto-Select Single Gossip Option", "checkbox", "autoSelectGossip", dbUI, nil)
+    AddRow(content, "Auto Check EditMode on Spec Switch", "checkbox", "checkEditmodeOnSpecSwitch", dbUI, nil)
     
     -- Quick Salvage moved here? Original logic was inside Automation section. Yes.
     content.rowCount = content.rowCount + 0.5
