@@ -108,19 +108,11 @@ local function BuildInformationTab(content)
     y = y - 10
 
     local changelogs = {
-        { version = "3.79", date = "Recent", changes = {"Updated Gravity Font with kyrillic support"} },
+        { version = "3.80", date = "Recent", changes = {"Integrated Extra Action Button and Zone Ability into the custom Edit Mode movers", "Fixed an issue where Blizzard's Minimap overlay blocked clicks in Edit Mode"} },
+        { version = "3.79", date = "26.02.2026", changes = {"Updated Gravity Font with kyrillic support"} },
         { version = "3.78", date = "26.02.2026", changes = {"Added an option to automatically prompt and restore GravityUI Edit Mode Layout upon specialization switch", "Added a quick 'Disable Check' option into the Edit Mode popup"} },
         { version = "3.77", date = "26.02.2026", changes = {"Fixed missing or incorrect sound file assets paths across the UI"} },
         { version = "3.76", date = "26.02.2026", changes = {"Fixed an issue where the GravityUI Installer failed to sync UnhaltedUnitFrames", "Fixed 'Death Release Protection' blocking clicks on recycled 'Accept Resurrection' popups", "Added a 'Clear Alts List' button to the Mail Module Address Book"} },
-        { version = "3.75", date = "25.02.2026", changes = {"Fixed an issue where Macro Keybinds overwrote direct Item Keybinds on BCDM Trinket bars", "Added a Priority System to ensure 'real' spells & items have higher priority than macros"} },
-        { version = "3.74", date = "25.02.2026", changes = {"Fixed GameMenuFrame UI taint during combat", "Fixed missing dependency error for the Mail module"} },
-        { version = "3.73", date = "25.02.2026", changes = {"Total overhaul of the Main Page layout into categorized Subtabs", "Completely redesigned all Subtabs with a sleek, glowing 'Underline' aesthetic"} },
-        { version = "3.72", date = "25.02.2026", changes = {"Fixed an issue where Trinket Macro Keybinds on BCDM were not visible", "Added robust fallback for Action Bar Addon compatibility (e.g. Dominos) to fix missing macro keybinds"} },
-        { version = "3.71", date = "24.02.2026", changes = {"Added Mail Extras module (Open All, Address Book, Gold tracking)", "Colored Address Book names by class", "Cross-realm mailing support for BNet and Guildies"} },
-        { version = "3.70", date = "24.02.2026", changes = {"Added Custom Icon Selection to Icon Catcher (Arrow, Minimap, Puzzle)", "Optimized Core Ticker Updates and Event Handlers (Zero-Allocation 20Hz)", "Added Left-pointing custom arrow to Catcher dropdown"} },
-        { version = "3.69", date = "23.02.2026", changes = {"Overhauled Feature Hub descriptions", "Added Fade Out & Icon Background toggles to Icon Catcher", "Added Transparent Chat Tab options", "Added HidingBar conflict alert for Icon Catcher"} },
-        { version = "3.68", date = "22.02.2026", changes = {"Bugfixes and optimizations", "Added Information Tab", "Added custom minimap icon catcher"} },
-        { version = "3.67", date = "21.02.2026", changes = {"Fixed BTWQuests and WIM Minimap Icons", "LFG Role Selection Color fix"} },
     }
 
     for i = 1, math.min(#changelogs, 3) do

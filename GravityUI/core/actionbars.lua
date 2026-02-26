@@ -579,13 +579,17 @@ local function CreateMover(key, parentFrame, labelText)
     mover:SetClampedToScreen(true)
     mover:RegisterForDrag("LeftButton")
     
-    mover.bg = mover:CreateTexture(nil, "BACKGROUND")
-    mover.bg:SetAllPoints()
-    mover.bg:SetColorTexture(0, 0.5, 1, 0.5)
-    
     mover.text = mover:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     mover.text:SetPoint("CENTER")
     mover.text:SetText(labelText)
+    
+    if ns.Movers and ns.Movers.ApplyEditModeStyle then
+        ns.Movers:ApplyEditModeStyle(mover, true) -- Default to true when shown explicitly
+    else
+        mover.bg = mover:CreateTexture(nil, "BACKGROUND")
+        mover.bg:SetAllPoints()
+        mover.bg:SetColorTexture(0, 0.5, 1, 0.5)
+    end
     
     mover:SetScript("OnDragStart", function(self)
         self:StartMoving()
@@ -651,32 +655,50 @@ InitializeExtraButtons = function()
             end
         end
         
-        -- Create/Update Mover
+    -- Create/Update Movers
+    if not movers["extraActionButton"] then
         local mover = CreateMover("extraActionButton", frame, "Extra Action Button")
-        mover:SetSize(160 * (settings.scale or 1), 80 * (settings.scale or 1))
-        mover:ClearAllPoints()
-        mover:SetPoint("CENTER", frame, "CENTER")
+        if ns.Movers and ns.Movers.Register then
+            ns.Movers:Register("ExtraActionButton", mover, function(f, enabled, force)
+                if force then
+                    InitializeExtraButtons()
+                end
+                if enabled then
+                    mover:Show()
+                else
+                    mover:Hide()
+                end
+            end, "Extra Action Button")
+        end
+    end
+    
+        local moverEAB = movers["extraActionButton"]
+        if moverEAB then
+            moverEAB:SetSize(160 * (settings.scale or 1), 80 * (settings.scale or 1))
+            moverEAB:ClearAllPoints()
+            moverEAB:SetPoint("CENTER", frame, "CENTER")
+        end
     end
     
     -- Zone Ability (ZoneAbilityFrame)
     local zoneFrame = _G.ZoneAbilityFrame
     if zoneFrame then
-        local settings = db.bars.zoneAbility
+        local zSettings = db.bars.zoneAbility
         
         -- Scale
-        if settings.scale then 
-            pcall(function() zoneFrame:SetScale(settings.scale) end)
+        if zSettings.scale then 
+            pcall(function() zoneFrame:SetScale(zSettings.scale) end)
         end
         
         -- Position
-        if settings.position then
+        if zSettings.position then
             zoneFrame:ClearAllPoints()
-            zoneFrame:SetPoint(settings.position.point, UIParent, settings.position.relativePoint, settings.position.x, settings.position.y)
+            zoneFrame:SetPoint(zSettings.position.point, UIParent, zSettings.position.relativePoint, zSettings.position.x, zSettings.position.y)
         end
         
         -- Artwork (ZoneAbilityFrame.SpellButton.Style)
         if zoneFrame.SpellButton and zoneFrame.SpellButton.Style then
-            if settings.hideArtwork then
+            if zSettings.hideArtwork then
                 zoneFrame.SpellButton.Style:Hide()
                 zoneFrame.SpellButton.Style:SetAlpha(0)
             else
@@ -685,15 +707,33 @@ InitializeExtraButtons = function()
             end
         end
         
-        -- Create/Update Mover
-        local mover = CreateMover("zoneAbility", zoneFrame, "Zone Ability")
-        mover:SetSize(160 * (settings.scale or 1), 80 * (settings.scale or 1))
-        mover:ClearAllPoints()
-        mover:SetPoint("CENTER", zoneFrame, "CENTER")
+        if not movers["zoneAbility"] then
+            local mover = CreateMover("zoneAbility", zoneFrame, "Zone Ability")
+            if ns.Movers and ns.Movers.Register then
+                ns.Movers:Register("ZoneAbility", mover, function(f, enabled, force)
+                    if force then
+                        InitializeExtraButtons()
+                    end
+                    if enabled then
+                        mover:Show()
+                    else
+                        mover:Hide()
+                    end
+                end, "Zone Ability")
+            end
+        end
+        
+        local moverZone = movers["zoneAbility"]
+        if moverZone then
+            moverZone:SetSize(160 * (zSettings.scale or 1), 80 * (zSettings.scale or 1))
+            moverZone:ClearAllPoints()
+            moverZone:SetPoint("CENTER", zoneFrame, "CENTER")
+        end
     end
 end
 
 function ActionBars.ToggleExtraButtonMovers()
+    -- Kept for legacy compatibility / manual slash commands if any, but Edit Mode will handle visibility via ns.Movers
     if InCombatLockdown() then return end
     moversLocked = not moversLocked
     

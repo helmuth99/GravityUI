@@ -1275,6 +1275,14 @@ function ns.RefreshMinimap()
     if MinimapCluster then
         MinimapCluster:SetAlpha(1)
         MinimapCluster:SetScript("OnLeave", nil) -- Stop fading out
+        
+        -- Push Blizzard's Minimap container to the background and shrink it
+        -- This prevents its Edit Mode bounding box from blocking the GravityUI Minimap
+        MinimapCluster:SetFrameStrata("BACKGROUND")
+        MinimapCluster:SetSize(30, 30)
+        MinimapCluster:SetScale(0.1)
+        MinimapCluster:ClearAllPoints()
+        MinimapCluster:SetPoint("TOPRIGHT", UIParent, "TOPRIGHT", 0, 0)
     end
     
     -- Extra Elements

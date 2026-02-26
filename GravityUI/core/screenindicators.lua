@@ -1670,6 +1670,13 @@ local function CreateAFKFrame()
             end
         end
     end)
+
+    -- Instantly break AFK UI on mouse click
+    f:SetScript("OnMouseDown", function()
+        if AFKState.isAFK then
+            ExitAFK()
+        end
+    end)
 end
 
 local function UpdateAFKAppearance()
