@@ -1193,7 +1193,30 @@ local function HideCustomElements()
     if datatextFrame then datatextFrame:Hide() end
     
     -- Restore Blizzard elements
-    if MinimapCluster.ZoneTextButton then MinimapCluster.ZoneTextButton:Show() end
+    if MinimapCluster then
+        if MinimapCluster.ZoneTextButton then MinimapCluster.ZoneTextButton:Show() end
+        
+        if MinimapCluster.GravityExt_OrigPoint then
+            MinimapCluster:SetFrameStrata(MinimapCluster.GravityExt_OrigStrata or "LOW")
+            MinimapCluster:SetSize(unpack(MinimapCluster.GravityExt_OrigSize or {192, 192}))
+            MinimapCluster:SetScale(MinimapCluster.GravityExt_OrigScale or 1.0)
+            MinimapCluster:ClearAllPoints()
+            local p = MinimapCluster.GravityExt_OrigPoint
+            if p[1] then MinimapCluster:SetPoint(unpack(p)) end
+        else
+            MinimapCluster:SetFrameStrata("LOW")
+            MinimapCluster:SetSize(192, 192)
+            MinimapCluster:SetScale(1.0)
+            MinimapCluster:ClearAllPoints()
+            MinimapCluster:SetPoint("TOPRIGHT", UIParent, "TOPRIGHT", -16, -16)
+        end
+        
+        -- Poke Blizzard to resume control
+        if MinimapCluster.Update then pcall(MinimapCluster.Update, MinimapCluster) end
+        if EditModeManagerFrame and EditModeManagerFrame.UpdateSystem then
+            pcall(EditModeManagerFrame.UpdateSystem, EditModeManagerFrame, MinimapCluster)
+        end
+    end
     if TimeManagerClockButton then TimeManagerClockButton:Show() end
     
     -- Restore Minimap parent/state
@@ -1275,6 +1298,14 @@ function ns.RefreshMinimap()
     if MinimapCluster then
         MinimapCluster:SetAlpha(1)
         MinimapCluster:SetScript("OnLeave", nil) -- Stop fading out
+        
+        -- Cache Original Blizzard Minimap State
+        if not MinimapCluster.GravityExt_OrigStrata then
+            MinimapCluster.GravityExt_OrigStrata = MinimapCluster:GetFrameStrata()
+            MinimapCluster.GravityExt_OrigSize = {MinimapCluster:GetSize()}
+            MinimapCluster.GravityExt_OrigScale = MinimapCluster:GetScale()
+            MinimapCluster.GravityExt_OrigPoint = {MinimapCluster:GetPoint()}
+        end
         
         -- Push Blizzard's Minimap container to the background and shrink it
         -- This prevents its Edit Mode bounding box from blocking the GravityUI Minimap

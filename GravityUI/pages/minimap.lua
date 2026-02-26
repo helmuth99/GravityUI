@@ -106,7 +106,7 @@ local function BuildSettingsTab(parent)
     genContainer:SetWidth(GUI.CONTENT_WIDTH - 20)
     genContainer.rowCount = 0
     
-    AddRow(genContainer, "Show Minimap", "checkbox", "enabled", m, refresh)
+    AddRow(genContainer, "Enable Minimap", "checkbox", "enabled", m, refresh)
     AddRow(genContainer, "Hide GravityUI Button", "checkbox", "hide", m.button, refresh)
     AddRow(genContainer, "Lock Minimap", "checkbox", "lock", m, refresh)
 
