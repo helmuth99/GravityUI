@@ -1262,6 +1262,101 @@ local function BuildAFKScreen(parent)
     content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
 end
 
+-- 9. Messages
+local function BuildMessages(parent)
+    local scroll, content = GUI:CreateScrollableContent(parent)
+    scroll:SetAllPoints()
+    local db = ns.GetDB(); if not db then return end
+    
+    if not db.screenindicators.messages then
+        db.screenindicators.messages = {
+            enabled = true,
+            general = {
+                durability = { enabled = true, x = 0, y = 200, fontSize = 24, textColor = {1, 0, 0, 1}, fontOutline = "OUTLINE", font = "Gravity" }
+            },
+            hunter = {
+                misdirect = { enabled = true, width = 200, height = 20, x = 0, y = 100, barColor = {0, 0.8, 1, 1}, textColor = {1,1,1,1}, fontSize = 12, texture = "Gravity Normal", font = "Gravity", fontOutline = "OUTLINE" }
+            },
+            rogue = {
+                stealth = { enabled = true, x = 0, y = 250, fontSize = 24, textColor = {0.5, 0.5, 0.5, 1}, fontOutline = "OUTLINE", font = "Gravity" },
+                shroud = { enabled = true },
+                tricks = { enabled = true, width = 200, height = 20, x = 0, y = 100, barColor = {1, 1, 0, 1}, textColor = {1,1,1,1}, fontSize = 12, texture = "Gravity Normal", font = "Gravity", fontOutline = "OUTLINE" }
+            }
+        }
+    end
+    
+    local m = db.screenindicators.messages
+    content.rowCount = 0
+    local refresh = function() end
+    
+    local header = GUI:CreateSectionHeader(content, "Messages")
+    header:SetPoint("TOPLEFT", 10, -10)
+    header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
+    content.rowCount = 1.3
+    
+    -- GENERAL
+    CreateSubLabel(content, "General")
+    AddRow(content, "Enable Messages Module", "checkbox", "enabled", m, refresh)
+    
+    local btnPreviewDurability = GUI:CreateButton(content, "Preview Durability", 140, 24, function() ns.Messages.PreviewDurability() end)
+    btnPreviewDurability:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT + 5)))
+    content.rowCount = content.rowCount + 1.1
+    
+    local d = m.general.durability
+    AddRow(content, "Durability Warning (<25%)", "checkbox", "enabled", d, refresh)
+    AddRow(content, "Durability Font Size", "slider", 10, 60, "fontSize", d, refresh, 1)
+    AddRow(content, "Durability Color", "color", "textColor", d, refresh)
+    AddRow(content, "Durability X Offset", "slider", -1000, 1000, "x", d, refresh, 1)
+    AddRow(content, "Durability Y Offset", "slider", -1000, 1000, "y", d, refresh, 1)
+    content.rowCount = content.rowCount + 0.5
+    
+    -- HUNTER
+    CreateSubLabel(content, "Hunter")
+    local btnPreviewMisdirect = GUI:CreateButton(content, "Preview Misdirect", 140, 24, function() ns.Messages.PreviewMisdirect() end)
+    btnPreviewMisdirect:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT + 5)))
+    content.rowCount = content.rowCount + 1.1
+
+    local h = m.hunter.misdirect
+    AddRow(content, "Misdirect Bar", "checkbox", "enabled", h, refresh)
+    AddRow(content, "Bar Width", "slider", 50, 400, "width", h, refresh, 1)
+    AddRow(content, "Bar Height", "slider", 10, 50, "height", h, refresh, 1)
+    AddRow(content, "Bar Color", "color", "barColor", h, refresh)
+    AddRow(content, "Text Color", "color", "textColor", h, refresh)
+    AddRow(content, "Font Size", "slider", 8, 30, "fontSize", h, refresh, 1)
+    AddRow(content, "X Offset", "slider", -1000, 1000, "x", h, refresh, 1)
+    AddRow(content, "Y Offset", "slider", -1000, 1000, "y", h, refresh, 1)
+    content.rowCount = content.rowCount + 0.5
+    
+    -- ROGUE
+    CreateSubLabel(content, "Rogue")
+    local btnPreviewStealth = GUI:CreateButton(content, "Preview Stealth", 140, 24, function() ns.Messages.PreviewStealth() end)
+    btnPreviewStealth:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT + 5)))
+    local btnPreviewTricks = GUI:CreateButton(content, "Preview Tricks", 140, 24, function() ns.Messages.PreviewTricks() end)
+    btnPreviewTricks:SetPoint("LEFT", btnPreviewStealth, "RIGHT", 10, 0)
+    content.rowCount = content.rowCount + 1.1
+    
+    local rS = m.rogue.stealth
+    AddRow(content, "Stealth Text", "checkbox", "enabled", rS, refresh)
+    AddRow(content, "Stealth Font Size", "slider", 10, 60, "fontSize", rS, refresh, 1)
+    AddRow(content, "Stealth Color", "color", "textColor", rS, refresh)
+    AddRow(content, "Stealth X Offset", "slider", -1000, 1000, "x", rS, refresh, 1)
+    AddRow(content, "Stealth Y Offset", "slider", -1000, 1000, "y", rS, refresh, 1)
+    
+    AddRow(content, "Shroud Countdown (Say)", "checkbox", "enabled", m.rogue.shroud, refresh)
+    
+    local rT = m.rogue.tricks
+    AddRow(content, "Tricks of the Trade Bar", "checkbox", "enabled", rT, refresh)
+    AddRow(content, "Bar Width", "slider", 50, 400, "width", rT, refresh, 1)
+    AddRow(content, "Bar Height", "slider", 10, 50, "height", rT, refresh, 1)
+    AddRow(content, "Bar Color", "color", "barColor", rT, refresh)
+    AddRow(content, "Text Color", "color", "textColor", rT, refresh)
+    AddRow(content, "Font Size", "slider", 8, 30, "fontSize", rT, refresh, 1)
+    AddRow(content, "X Offset", "slider", -1000, 1000, "x", rT, refresh, 1)
+    AddRow(content, "Y Offset", "slider", -1000, 1000, "y", rT, refresh, 1)
+    
+    content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
+end
+
         -- Create SubTabs
         local categories = {
             { name = "Cursor", builder = BuildCursor },
@@ -1272,6 +1367,7 @@ end
             { name = "Raid Warnings", builder = BuildRaidWarnings },
             { name = "Difficulty", builder = BuildDifficulty },
             { name = "AFK Screen", builder = BuildAFKScreen },
+            { name = "Messages", builder = BuildMessages },
         }
         -- Create SubTabs
         local subTabs = GUI:CreateSubTabs(scrollFrame, categories)

@@ -84,7 +84,7 @@ Installer.registry = {
         end,
         Import = function(self, data, profileName)
             if _G.Details then 
-                local res = _G.Details:ImportProfile(data, profileName, true, false, true) 
+                local res = _G.Details:ImportProfile(data, profileName, false, true, true) 
             end
         end,
         HasProfile = function(self, profileName)

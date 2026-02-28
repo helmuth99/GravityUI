@@ -275,9 +275,9 @@ local function GetEnchantText(unit, slotId)
 
     -- Not all slots can be enchanted - only check enchantable slots
     local enchantableSlots = {
+        [INVSLOT_HEAD] = true,
+        [INVSLOT_SHOULDER] = true,
         [INVSLOT_CHEST] = true,
-        [INVSLOT_BACK] = true,
-        [INVSLOT_WRIST] = true,
         [INVSLOT_LEGS] = true,
         [INVSLOT_FEET] = true,
         [INVSLOT_FINGER1] = true,
@@ -288,6 +288,20 @@ local function GetEnchantText(unit, slotId)
 
     if not enchantableSlots[slotId] then
         return nil, false  -- Not enchantable
+    end
+
+    -- Ignore Shields and Held In Off-hand (Frills)
+    if slotId == INVSLOT_OFFHAND then
+        local itemID = GetInventoryItemID(unit, slotId)
+        if itemID then
+            local _, _, _, _, _, itemClassID, itemSubClassID = GetItemInfoInstant(itemID)
+            -- itemClassID 4 is Armor
+            -- itemSubClassID 6 is Shield
+            -- itemSubClassID 23 is Held In Off-hand (Frill)
+            if itemClassID == 4 and (itemSubClassID == 6 or itemSubClassID == 23) then
+                return nil, false -- Not enchantable
+            end
+        end
     end
 
     -- Use tooltip info API if available (Modern WoW)

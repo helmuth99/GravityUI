@@ -108,7 +108,8 @@ local function BuildInformationTab(content)
     y = y - 10
 
     local changelogs = {
-        { version = "3.80", date = "Recent", changes = {"Integrated Extra Action Button and Zone Ability into the custom Edit Mode movers", "Fixed an issue where Blizzard's Minimap overlay blocked clicks in Edit Mode"} },
+        { version = "3.81", date = "Recent", changes = {"Added 'Messages' subtab to UI Indicators with Trackers for Misdirection, Tricks of the Trade, Durability, Stealth, and Shroud", "Fixed 'Details' Profile Installation not applying custom strings correctly", "Updated Character Panel enchant logic for the Midnight expansion (Head/Shoulder)"} },
+        { version = "3.80", date = "27.02.2026", changes = {"Integrated Extra Action Button and Zone Ability into the custom Edit Mode movers", "Fixed an issue where Blizzard's Minimap overlay blocked clicks in Edit Mode"} },
         { version = "3.79", date = "26.02.2026", changes = {"Updated Gravity Font with kyrillic support"} },
         { version = "3.78", date = "26.02.2026", changes = {"Added an option to automatically prompt and restore GravityUI Edit Mode Layout upon specialization switch", "Added a quick 'Disable Check' option into the Edit Mode popup"} },
         { version = "3.77", date = "26.02.2026", changes = {"Fixed missing or incorrect sound file assets paths across the UI"} },
@@ -181,6 +182,7 @@ local function BuildInformationTab(content)
         { name = "Raid Warnings", desc = "Displays centralized large text alerts for helpful utility spells.\nWarns for newly dropped Soulwells, Feasts, Mage Tables, and Rituals.", stateTable = db.raidWarnings, stateKey = "enabled", pageId = "screenindicators", tabIndex = 6 },
         { name = "Difficulty Indicator", desc = "Visual status bar tracking the currently selected instance difficulty.\nIncludes a dropdown for rapidly changing difficulties out-of-world.", stateTable = db.screenindicators and db.screenindicators.difficulty, stateKey = "enabled", pageId = "screenindicators", tabIndex = 7 },
         { name = "AFK Screen", desc = "An immersive, cinematic character orbit view when Away From Keyboard.\nDisplays real time, guild, character rank, and a moving camera.", stateTable = db.screenindicators and db.screenindicators.afkScreen, stateKey = "enabled", pageId = "screenindicators", tabIndex = 8 },
+        { name = "Messages (General & Class)", desc = "Tracks crucial player events like active Misdirection, Tricks of the Trade, Stealth,\nShroud Countdowns, and low durability warnings on customized bars.", stateTable = db.screenindicators and db.screenindicators.messages, stateKey = "enabled", pageId = "screenindicators", tabIndex = 9 },
         
         -- UI Utilities (cdmutils.lua)
         { name = "Keybindings on CDM", desc = "Maps action bar keybind text directly onto the BetterCooldownManager frames.\nAllows custom coloring and hiding of the text on the cooling timeline icons.", stateTable = db.actionbars and db.actionbars.guicdm, stateKey = "enabled", pageId = "cdmutils", tabIndex = 1 },
