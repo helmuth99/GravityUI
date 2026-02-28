@@ -1066,6 +1066,129 @@ function Styling:RefreshPowerBar()
 end
 
 -------------------------------------------------------------------------------
+-- WIDGET POWER BAR CONTAINER (UIWidgetPowerBarContainerFrame)
+-------------------------------------------------------------------------------
+
+local widgetPowerBarMover = nil
+
+function Styling:SaveWidgetPowerBarPosition(point, relPoint, x, y)
+    local db = GetDB()
+    if db then
+        db.widgetPowerBar = db.widgetPowerBar or {}
+        db.widgetPowerBar.position = { point = point, relPoint = relPoint, x = x, y = y }
+    end
+end
+
+function Styling:GetWidgetPowerBarPosition()
+    local db = GetDB()
+    return db and db.widgetPowerBar and db.widgetPowerBar.position
+end
+
+function Styling:ResetWidgetPowerBarPosition()
+    local db = GetDB()
+    if db and db.widgetPowerBar then db.widgetPowerBar.position = nil end
+    local container = _G.UIWidgetPowerBarContainerFrame
+    if container then
+        container:ClearAllPoints()
+        container:SetPoint("TOP", UIParent, "TOP", 0, -200)
+    end
+    if widgetPowerBarMover then
+        widgetPowerBarMover:ClearAllPoints()
+        widgetPowerBarMover:SetPoint("CENTER", container, "CENTER")
+    end
+end
+
+local function CreateWidgetPowerBarMover()
+    if widgetPowerBarMover then return end
+    
+    local container = _G.UIWidgetPowerBarContainerFrame
+    if not container then return end
+
+    local sr, sg, sb, sa = ns.GetAccentColor()
+    
+    widgetPowerBarMover = CreateFrame("Frame", "GravityUI_WidgetPowerBarMover", UIParent, "BackdropTemplate")
+    widgetPowerBarMover:SetSize(math.max(container:GetWidth() or 200, 200), math.max(container:GetHeight() or 40, 40))
+    widgetPowerBarMover:SetPoint("CENTER", container, "CENTER")
+    widgetPowerBarMover:SetBackdrop({
+        bgFile = "Interface\\Buttons\\WHITE8x8",
+        edgeFile = "Interface\\Buttons\\WHITE8x8",
+        edgeSize = 1,
+    })
+    widgetPowerBarMover:SetBackdropColor(sr, sg, sb, 0.3)
+    widgetPowerBarMover:SetBackdropBorderColor(sr, sg, sb, 1)
+    widgetPowerBarMover:EnableMouse(true)
+    widgetPowerBarMover:SetMovable(true)
+    widgetPowerBarMover:RegisterForDrag("LeftButton")
+    widgetPowerBarMover:SetFrameStrata("FULLSCREEN_DIALOG")
+    widgetPowerBarMover:Hide()
+
+    widgetPowerBarMover.text = widgetPowerBarMover:CreateFontString(nil, "OVERLAY")
+    widgetPowerBarMover.text:SetPoint("CENTER")
+    widgetPowerBarMover.text:SetFont(GetFontPath(), 10, "OUTLINE")
+    widgetPowerBarMover.text:SetText("Widget Power Bar")
+    
+    widgetPowerBarMover:SetScript("OnDragStart", function() container:StartMoving() end)
+    widgetPowerBarMover:SetScript("OnDragStop", function(self)
+        container:StopMovingOrSizing()
+        local point, _, relPoint, x, y = container:GetPoint()
+        Styling:SaveWidgetPowerBarPosition(point, relPoint, x, y)
+        self:ClearAllPoints()
+        self:SetPoint("CENTER", container, "CENTER")
+    end)
+    
+    container:SetMovable(true)
+    container:SetClampedToScreen(true)
+end
+
+function Styling:ToggleWidgetPowerBarMover(forceState)
+    CreateWidgetPowerBarMover()
+    if not widgetPowerBarMover then return end
+
+    local container = _G.UIWidgetPowerBarContainerFrame
+    local shouldShow = not widgetPowerBarMover:IsShown()
+    if forceState ~= nil then shouldShow = forceState end
+
+    if shouldShow then
+        if ns.Movers and ns.Movers.ApplyEditModeStyle then
+            ns.Movers:ApplyEditModeStyle(widgetPowerBarMover, forceState == true)
+        end
+        widgetPowerBarMover:SetSize(math.max(container:GetWidth() or 200, 200), math.max(container:GetHeight() or 40, 40))
+        widgetPowerBarMover:Show()
+    else
+        widgetPowerBarMover:Hide()
+    end
+end
+
+function Styling:InitWidgetPowerBar()
+    local container = _G.UIWidgetPowerBarContainerFrame
+    if not container then return end
+
+    local pos = Styling:GetWidgetPowerBarPosition()
+    if pos and pos.point then
+        container:ClearAllPoints()
+        container:SetPoint(pos.point, UIParent, pos.relPoint or "CENTER", pos.x or 0, pos.y or 0)
+    end
+
+    hooksecurefunc(container, "SetPoint", function(self, point, relativeTo)
+        if self._isSettingPosition then return end
+        
+        local currentPos = Styling:GetWidgetPowerBarPosition()
+        if currentPos and currentPos.point then
+            if point ~= currentPos.point or relativeTo ~= UIParent then
+                self._isSettingPosition = true
+                self:ClearAllPoints()
+                self:SetPoint(currentPos.point, UIParent, currentPos.relPoint or "CENTER", currentPos.x or 0, currentPos.y or 0)
+                self._isSettingPosition = false
+            end
+        end
+    end)
+
+    if ns.Movers and ns.Movers.Register then
+        ns.Movers:Register("WidgetPowerBar", nil, function(frame, enabled, force) Styling:ToggleWidgetPowerBarMover(force) end, "Widget Power Bar")
+    end
+end
+
+-------------------------------------------------------------------------------
 -- ALERT FRAMES
 -------------------------------------------------------------------------------
 function Styling:SkinAlertFrames()
@@ -1109,6 +1232,7 @@ function Styling:Initialize()
     self:SkinReadyCheck()
     self:SkinKeystone()
     self:SkinPowerBar()
+    self:InitWidgetPowerBar()
     self:SkinAlertFrames()
     self:SkinLoot()
     self:SkinReputationCurrency()

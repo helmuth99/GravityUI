@@ -81,6 +81,15 @@ ns.Defaults = {
                 x = 1.6666791439056,
             },
         },
+        widgetPowerBar = {
+            enabled = true,
+            position = {
+                y = -200,
+                relPoint = "TOP",
+                point = "TOP",
+                x = 0,
+            },
+        },
         alerts = {
             enabled = true,
             alertPosition = {

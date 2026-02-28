@@ -294,11 +294,9 @@ local function GetEnchantText(unit, slotId)
     if slotId == INVSLOT_OFFHAND then
         local itemID = GetInventoryItemID(unit, slotId)
         if itemID then
-            local _, _, _, _, _, itemClassID, itemSubClassID = GetItemInfoInstant(itemID)
-            -- itemClassID 4 is Armor
-            -- itemSubClassID 6 is Shield
-            -- itemSubClassID 23 is Held In Off-hand (Frill)
-            if itemClassID == 4 and (itemSubClassID == 6 or itemSubClassID == 23) then
+            local _, _, _, itemEquipLoc = GetItemInfoInstant(itemID)
+            -- INVTYPE_SHIELD and INVTYPE_HOLDABLE cannot be enchanted
+            if itemEquipLoc == "INVTYPE_SHIELD" or itemEquipLoc == "INVTYPE_HOLDABLE" then
                 return nil, false -- Not enchantable
             end
         end
