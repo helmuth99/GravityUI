@@ -13,9 +13,7 @@ local STEALTH_SPELL_IDS = { [1784] = true, [115191] = true }
 local SHROUD_SPELL_ID = 114018
 
 local UPDATE_THROTTLE = 0.05
-local DURABILITY_THROTTLE = 1.0
 local timeSinceLastUpdate = 0
-local timeSinceLastDurability = 0
 
 -- State tracking
 local activeTrackingBars = {} -- Tracks Misdirection & Tricks
@@ -176,6 +174,9 @@ end
 -- CORE LOGIC
 -- ============================================================================
 
+local updateFrame = CreateFrame("Frame")
+updateFrame:Hide()
+
 local function UpdateTrackingBars(elapsed)
     local s = GetSettings()
     if not (s and s.enabled) then
@@ -184,6 +185,7 @@ local function UpdateTrackingBars(elapsed)
             bar.frame:Hide()
         end
         activeTrackingBars = {}
+        updateFrame:Hide()
         return
     end
 
@@ -200,6 +202,10 @@ local function UpdateTrackingBars(elapsed)
             info.frame.bar:SetValue(pct)
             info.frame.time:SetText(string.format("%.1f", remaining))
         end
+    end
+    
+    if #activeTrackingBars == 0 then
+        updateFrame:Hide()
     end
 end
 
@@ -224,6 +230,7 @@ local function ApplyTrackingBar(spellID, duration, expiration)
             info.duration = duration
             info.expiration = expiration
             info.frame:Show()
+            updateFrame:Show()
             return
         end
     end
@@ -239,6 +246,7 @@ local function ApplyTrackingBar(spellID, duration, expiration)
         expiration = expiration,
         frame = frame,
     })
+    updateFrame:Show()
 end
 
 local function RemoveTrackingBar(spellID)
@@ -248,6 +256,9 @@ local function RemoveTrackingBar(spellID)
             activeTrackingBars[i].frame:Hide()
             table.remove(activeTrackingBars, i)
         end
+    end
+    if #activeTrackingBars == 0 then
+        updateFrame:Hide()
     end
 end
 
@@ -387,7 +398,6 @@ end
 
 local eventFrame = CreateFrame("Frame")
 eventFrame:RegisterEvent("UNIT_AURA")
-eventFrame:RegisterEvent("UPDATE_EXHAUSTION")
 eventFrame:RegisterEvent("UPDATE_INVENTORY_DURABILITY")
 eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 eventFrame:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
@@ -407,18 +417,11 @@ eventFrame:SetScript("OnEvent", function(self, event, unit, castGUID, spellID)
     end
 end)
 
-local updateFrame = CreateFrame("Frame")
 updateFrame:SetScript("OnUpdate", function(self, elapsed)
     timeSinceLastUpdate = timeSinceLastUpdate + elapsed
     if timeSinceLastUpdate >= UPDATE_THROTTLE then
         UpdateTrackingBars(timeSinceLastUpdate)
         timeSinceLastUpdate = 0
-    end
-    
-    timeSinceLastDurability = timeSinceLastDurability + elapsed
-    if timeSinceLastDurability >= DURABILITY_THROTTLE then
-        EvaluateDurability()
-        timeSinceLastDurability = 0
     end
 end)
 
