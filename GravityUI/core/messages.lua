@@ -294,8 +294,8 @@ local function EvaluatePlayerAuras()
     -- Scan Helpful Auras using ContinuationToken
     local continuationToken
     repeat
-        local slots
-        slots = C_UnitAuras.GetAuraSlots("player", "HELPFUL", 40, continuationToken)
+        local slots = C_UnitAuras.GetAuraSlots("player", "HELPFUL", 40, continuationToken)
+        if not slots then break end
         continuationToken = slots.continuationToken
         for _, slot in ipairs(slots) do
             local auraInfo = C_UnitAuras.GetAuraDataBySlot("player", slot)
