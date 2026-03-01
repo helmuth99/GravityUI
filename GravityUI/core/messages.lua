@@ -213,6 +213,54 @@ local function StartShroudCountdown()
 end
 
 -- ============================================================================
+-- PREVIEW FUNCTIONS
+-- ============================================================================
+
+function Messages.PreviewDurability()
+    local s = GetSettings()
+    if not (s and s.general and s.general.durability) then return end
+    
+    if not DurabilityState.textFrame then
+        DurabilityState.textFrame = CreateTextFrame("GravityUI_DurabilityText")
+    end
+    
+    UpdateTextFrameAppearance(DurabilityState.textFrame, s.general.durability)
+    DurabilityState.textFrame.text:SetText("Durability Low (Preview)")
+    DurabilityState.textFrame:Show()
+    
+    if DurabilityState.previewTimer then DurabilityState.previewTimer:Cancel() end
+    DurabilityState.previewTimer = C_Timer.NewTimer(3, function()
+        if not DurabilityState.active then
+            DurabilityState.textFrame:Hide()
+        else
+            DurabilityState.textFrame.text:SetText("Durability Low")
+        end
+    end)
+end
+
+function Messages.PreviewStealth()
+    local s = GetSettings()
+    if not (s and s.general and s.general.stealth) then return end
+    
+    if not StealthState.textFrame then
+        StealthState.textFrame = CreateTextFrame("GravityUI_StealthText")
+    end
+    
+    UpdateTextFrameAppearance(StealthState.textFrame, s.general.stealth)
+    StealthState.textFrame.text:SetText("Stealth (Preview)")
+    StealthState.textFrame:Show()
+    
+    if StealthState.previewTimer then StealthState.previewTimer:Cancel() end
+    StealthState.previewTimer = C_Timer.NewTimer(3, function()
+        if not StealthState.active then
+            StealthState.textFrame:Hide()
+        else
+            StealthState.textFrame.text:SetText("Stealth")
+        end
+    end)
+end
+
+-- ============================================================================
 -- EVENTS & UPDATE
 -- ============================================================================
 
