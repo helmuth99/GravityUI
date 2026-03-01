@@ -509,7 +509,10 @@ local function BuildSoundAlerts(parent)
         local sndConfig = saDB.sounds[info.key]
         
         AddRow(content, "Enable " .. info.name, "checkbox", "enabled", sndConfig, RefreshSA)
-        AddRow(content, "Replacement Sound", "dropdown", soundOptions, "sound", sndConfig, function()
+        AddRow(content, "Replacement Sound", "dropdown", soundOptions, "sound", sndConfig, function(newValue, isUserInput)
+             -- The dropdown builder fires this callback on creation. We only want to play sounds when the USER manually selects something.
+             if not isUserInput then return end
+             
              -- If they select a sound, automatically toggle the enable switch on
              if sndConfig.sound ~= "None" and not sndConfig.enabled then
                   sndConfig.enabled = true
