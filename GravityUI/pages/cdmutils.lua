@@ -514,6 +514,15 @@ local function BuildSoundAlerts(parent)
              if sndConfig.sound ~= "None" and not sndConfig.enabled then
                   sndConfig.enabled = true
              end
+             
+             -- Preview the selected sound
+             if sndConfig.sound ~= "None" and LSM then
+                 local soundFile = LSM:Fetch("sound", sndConfig.sound)
+                 if soundFile then
+                     PlaySoundFile(soundFile, "Master")
+                 end
+             end
+             
              RefreshSA()
              -- Refresh UI elements to show checkbox tick state
              if ns.GUI.RefreshAll then ns.GUI:RefreshAll() end
