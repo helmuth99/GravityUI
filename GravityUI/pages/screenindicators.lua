@@ -1275,12 +1275,8 @@ local function BuildMessages(parent)
                 durability = { enabled = true, x = 0, y = 200, fontSize = 24, textColor = {1, 0, 0, 1}, fontOutline = "OUTLINE", font = "Gravity" },
                 stealth = { enabled = true, x = 0, y = 250, fontSize = 24, textColor = {0.5, 0.5, 0.5, 1}, fontOutline = "OUTLINE", font = "Gravity" }
             },
-            hunter = {
-                misdirect = { enabled = true, width = 200, height = 20, x = 0, y = 100, barColor = {0, 0.8, 1, 1}, textColor = {1,1,1,1}, fontSize = 12, texture = "Gravity Normal", font = "Gravity", fontOutline = "OUTLINE" }
-            },
             rogue = {
-                shroud = { enabled = true },
-                tricks = { enabled = true, width = 200, height = 20, x = 0, y = 100, barColor = {1, 1, 0, 1}, textColor = {1,1,1,1}, fontSize = 12, texture = "Gravity Normal", font = "Gravity", fontOutline = "OUTLINE" }
+                shroud = { enabled = true }
             }
         }
     end
@@ -1337,50 +1333,17 @@ local function BuildMessages(parent)
     AddRow(content, "Stealth Y Offset", "slider", -1000, 1000, "y", rS, refresh, 1)
     content.rowCount = content.rowCount + 0.5
     
-    -- HUNTER
-    CreateSubLabel(content, "Hunter")
-
-    local h = m.hunter.misdirect
-    AddRow(content, "Misdirect Bar", "checkbox", "enabled", h, refresh)
-    
-    local btnPreviewMisdirect = GUI:CreateButton(content, "Preview Misdirect", 140, 24, function() ns.Messages.PreviewMisdirect() end)
-    btnPreviewMisdirect:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT + 5)))
-    content.rowCount = content.rowCount + 1.1
-
-    AddRow(content, "Bar Width", "slider", 50, 400, "width", h, refresh, 1)
-    AddRow(content, "Bar Height", "slider", 10, 50, "height", h, refresh, 1)
-    AddRow(content, "Bar Color", "color", "barColor", h, refresh)
-    AddRow(content, "Text Color", "color", "textColor", h, refresh)
-    AddRow(content, "Font Size", "slider", 8, 30, "fontSize", h, refresh, 1)
-    AddRow(content, "X Offset", "slider", -1000, 1000, "x", h, refresh, 1)
-    AddRow(content, "Y Offset", "slider", -1000, 1000, "y", h, refresh, 1)
-    content.rowCount = content.rowCount + 0.5
-    
     -- ROGUE
     CreateSubLabel(content, "Rogue")
     
     AddRow(content, "Shroud Countdown (Say)", "checkbox", "enabled", m.rogue.shroud, refresh)
     content.rowCount = content.rowCount + 0.5
     
-    local rT = m.rogue.tricks
-    AddRow(content, "Tricks of the Trade Bar", "checkbox", "enabled", rT, refresh)
-    
-    local btnPreviewTricks = GUI:CreateButton(content, "Preview Tricks", 140, 24, function() ns.Messages.PreviewTricks() end)
-    btnPreviewTricks:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT + 5)))
-    content.rowCount = content.rowCount + 1.1
-
-    AddRow(content, "Bar Width", "slider", 50, 400, "width", rT, refresh, 1)
-    AddRow(content, "Bar Height", "slider", 10, 50, "height", rT, refresh, 1)
-    AddRow(content, "Bar Color", "color", "barColor", rT, refresh)
-    AddRow(content, "Text Color", "color", "textColor", rT, refresh)
-    AddRow(content, "Font Size", "slider", 8, 30, "fontSize", rT, refresh, 1)
-    AddRow(content, "X Offset", "slider", -1000, 1000, "x", rT, refresh, 1)
-    AddRow(content, "Y Offset", "slider", -1000, 1000, "y", rT, refresh, 1)
-    
     content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
 end
 
-        -- Create SubTabs
+
+
         local categories = {
             { name = "Cursor", builder = BuildCursor },
             { name = "Crosshair", builder = BuildCrosshair },
@@ -1392,7 +1355,6 @@ end
             { name = "AFK Screen", builder = BuildAFKScreen },
             { name = "Messages", builder = BuildMessages },
         }
-        -- Create SubTabs
         local subTabs = GUI:CreateSubTabs(scrollFrame, categories)
         subTabs:SetPoint("TOPLEFT", 10, -10)
         subTabs:SetPoint("TOPRIGHT", -10, 0)

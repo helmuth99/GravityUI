@@ -105,303 +105,56 @@ local function CreateTrackingBar()
     
     -- Text (Time)
     f.time = f.bar:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    f.time:SetJustifyH("RIGHT")
-    f.time:SetPoint("RIGHT", f.bar, "RIGHT", -4, 0)
-    
-    -- Backdrop (Border)
-    local bd = {
-        bgFile = "Interface\\Buttons\\WHITE8x8",
-        edgeFile = "Interface\\Buttons\\WHITE8x8",
-        edgeSize = 1,
-        insets = { left = 0, right = 0, top = 0, bottom = 0 }
-    }
-    f:SetBackdrop(bd)
-    f:SetBackdropColor(0, 0, 0, 0)
-    f:SetBackdropBorderColor(0, 0, 0, 1)
-    
-    return f
-end
+-- (Tracker Bar logic removed per user request)
 
-local function GetTrackingBar()
-    for _, f in ipairs(trackingFramesPool) do
-        if not f.inUse then
-            f.inUse = true
-            return f
-        end
-    end
-    local f = CreateTrackingBar()
-    f.inUse = true
-    table.insert(trackingFramesPool, f)
-    return f
-end
+local STEALTH_SPELL_IDS = {
+    [115191] = true, -- Rogue Stealth
+    [199483] = true, -- Rogue Camouflage (Talent)
+    [1784]   = true, -- Rogue Stealth (Classic/Base)
+    [5215]   = true, -- Druid Prowl
+}
 
-local function StyleTrackingBar(f, s_group, spellName, spellIcon)
-    if not f or not s_group then return end
-    
-    local width = s_group.width or 200
-    local height = s_group.height or 20
-    f:SetSize(width, height)
-    
-    f:ClearAllPoints()
-    f:SetPoint("CENTER", UIParent, "CENTER", s_group.x or 0, s_group.y or 0)
-    
-    local texture = LSM and LSM:Fetch("statusbar", s_group.texture or "Gravity") or "Interface\\TargetingFrame\\UI-StatusBar"
-    f.bar:SetStatusBarTexture(texture)
-    f.bg:SetTexture(texture)
-    
-    local font = LSM and LSM:Fetch("font", s_group.font or "Gravity") or "Fonts\\FRIZQT__.TTF"
-    local flags = s_group.fontOutline or "OUTLINE"
-    local size = s_group.fontSize or 10
-    
-    f.name:SetFont(font, size, flags)
-    f.time:SetFont(font, size, flags)
-    
-    local tc = s_group.textColor or {1, 1, 1, 1}
-    f.name:SetTextColor(unpack(tc))
-    f.time:SetTextColor(unpack(tc))
-    
-    local bc = s_group.barColor or {0, 0.75, 1, 1}
-    f.bar:SetStatusBarColor(unpack(bc))
-    f.bg:SetVertexColor(bc[1], bc[2], bc[3], 0.3)
-    
-    f.icon:SetTexture(spellIcon)
-    f.icon:ClearAllPoints()
-    f.icon:SetSize(height, height)
-    f.icon:SetPoint("RIGHT", f, "LEFT", 0, 0)
-    
-    f.name:SetText(spellName)
-end
+local SHROUD_SPELL_ID = 114018
 
 -- ============================================================================
 -- CORE LOGIC
 -- ============================================================================
 
-local updateFrame = CreateFrame("Frame")
-updateFrame:Hide()
-
-local function UpdateTrackingBars(elapsed)
-    local s = GetSettings()
-    -- Only clear bars if the user has explicitly disabled the setting
-    if s and s.enabled == false then
-        for _, bar in ipairs(activeTrackingBars) do
-            bar.frame.inUse = false
-            bar.frame:Hide()
-        end
-        activeTrackingBars = {}
-        updateFrame:Hide()
-        return
-    end
-
-    local now = GetTime()
-    for i = #activeTrackingBars, 1, -1 do
-        local info = activeTrackingBars[i]
-        if now >= info.expiration then
-            info.frame.inUse = false
-            info.frame:Hide()
-            table.remove(activeTrackingBars, i)
-        else
-            local remaining = info.expiration - now
-            local pct = remaining / info.duration
-            info.frame.bar:SetValue(pct)
-            info.frame.time:SetText(string.format("%.1f", remaining))
-        end
-    end
-    
-    if #activeTrackingBars == 0 then
-        updateFrame:Hide()
-    end
-end
-
-local function ApplyTrackingBar(spellID, duration, expiration)
-    local s = GetSettings()
-    
-    -- Safety against zero/nil durations from Edge-Case Auras
-    duration = duration or 0
-    expiration = expiration or 0
-    
-    if duration <= 0 then 
-        if spellID == MISDIRECTION_TARGET_ID then duration = 8
-        elseif spellID == TRICKS_TARGET_ID then duration = 6
-        else duration = 30 end
-    end
-    
-    if expiration <= 0 then expiration = GetTime() + duration end
-
-    local s_group = nil
-    if spellID == MISDIRECTION_SPELL_ID or spellID == MISDIRECTION_TARGET_ID then
-        if s and s.hunter and s.hunter.misdirect and s.hunter.misdirect.enabled then
-            s_group = s.hunter.misdirect
-        else
-            -- Fallback for non-Hunters (like Tanks) receiving the buff
-            s_group = { width = 200, height = 20, barColor = {0, 0.8, 1, 1}, textColor = {1,1,1,1}, fontSize = 12, texture = "Gravity Normal", font = "Gravity", x = 0, y = 100, fontOutline = "OUTLINE" }
-        end
-    elseif spellID == TRICKS_OF_THE_TRADE_SPELL_ID or spellID == TRICKS_TARGET_ID then
-        if s and s.rogue and s.rogue.tricks and s.rogue.tricks.enabled then
-            s_group = s.rogue.tricks
-        else
-            -- Fallback for non-Rogues receiving the buff
-            s_group = { width = 200, height = 20, barColor = {1, 1, 0, 1}, textColor = {1,1,1,1}, fontSize = 12, texture = "Gravity Normal", font = "Gravity", x = 0, y = 100, fontOutline = "OUTLINE" }
-        end
-    end
-    
-    if not s_group then return end
-    
-    -- Check if it already exists
-    for _, info in ipairs(activeTrackingBars) do
-        if info.spellID == spellID then
-            info.duration = duration
-            info.expiration = expiration
-            info.frame:Show()
-            updateFrame:Show()
-            return
-        end
-    end
-    
-    local name, _, icon = C_Spell.GetSpellName(spellID), nil, C_Spell.GetSpellTexture(spellID)
-    local frame = GetTrackingBar()
-    StyleTrackingBar(frame, s_group, name, icon)
-    frame:Show()
-    
-    table.insert(activeTrackingBars, {
-        spellID = spellID,
-        duration = duration,
-        expiration = expiration,
-        frame = frame,
-    })
-    updateFrame:Show()
-end
-
-local function RemoveTrackingBar(spellID)
-    for i = #activeTrackingBars, 1, -1 do
-        if activeTrackingBars[i].spellID == spellID then
-            activeTrackingBars[i].frame.inUse = false
-            activeTrackingBars[i].frame:Hide()
-            table.remove(activeTrackingBars, i)
-        end
-    end
-    if #activeTrackingBars == 0 then
-        updateFrame:Hide()
-    end
-end
-
-local LastAuraState = {
-    misdirect30 = false,
-    misdirect30Exp = 0,
-    tricks30 = false,
-    tricks30Exp = 0
-}
-
--- Evaluate Auras for the player and their target/focus/pet for Misdirection/Tricks
+-- Evaluate Auras for the player for Stealth
 local function EvaluateAuras()
     local s = GetSettings()
-    -- We do not return early here if s.enabled is false, because we want Misdirect/Tricks to ALWAYS show for Tanks 
-    -- unless they specifically disabled the entire addon (handled by loader).
     
-    -- Reset state indicators
-    local foundMisdirect30 = false
-    local foundMisdirect8 = false
-    local foundTricks30 = false
-    local foundTricks6 = false
+    -- Absolute Master Toggle + Stealth Toggle Verification
+    if not (s and s.enabled and s.general and s.general.stealth and s.general.stealth.enabled) then
+        if StealthState.textFrame then
+            StealthState.textFrame:Hide()
+        end
+        StealthState.active = false
+        return
+    end
+    
     local hasStealth = false
 
-    -- Use C_UnitAuras iteration (efficient for Retail)
     local function ProcessAura(aura, unit)
         local spellID = aura.spellId
-
-        -- Misdirection
-        if spellID == MISDIRECTION_SPELL_ID then
-            if unit == "player" or aura.sourceUnit == "player" then
-                foundMisdirect30 = true
-                LastAuraState.misdirect30Exp = aura.expirationTime
-                ApplyTrackingBar(spellID, aura.duration, aura.expirationTime)
-            end
-        elseif spellID == MISDIRECTION_TARGET_ID then
-            if unit == "player" or aura.sourceUnit == "player" then
-                foundMisdirect8 = true
-                ApplyTrackingBar(spellID, aura.duration, aura.expirationTime)
-            end
-        -- Tricks of the trade
-        elseif spellID == TRICKS_OF_THE_TRADE_SPELL_ID then
-            if unit == "player" or aura.sourceUnit == "player" then
-                foundTricks30 = true
-                LastAuraState.tricks30Exp = aura.expirationTime
-                ApplyTrackingBar(spellID, aura.duration, aura.expirationTime)
-            end
-        elseif spellID == TRICKS_TARGET_ID then
-            if unit == "player" or aura.sourceUnit == "player" then
-                foundTricks6 = true
-                ApplyTrackingBar(spellID, aura.duration, aura.expirationTime)
-            end
-        -- Stealth (Only track on player if they are a Rogue, Druid, or Hunter)
-        elseif STEALTH_SPELL_IDS[spellID] and unit == "player" then
+        -- Stealth (Only track on player if they are a Rogue or Druid)
+        if STEALTH_SPELL_IDS[spellID] and unit == "player" then
             local _, class = UnitClass("player")
             if class == "ROGUE" or class == "DRUID" or class == "HUNTER" then
                 hasStealth = true
             end
         end
-        return false -- Continue iterating
+        return false
     end
     
-    -- Units to scan (Misdirect/Tricks can be on these)
-    local unitsToScan = {"player", "target", "focus", "pet"}
-    
-    for _, scanUnit in ipairs(unitsToScan) do
-        if UnitExists(scanUnit) then
-            for i = 1, 40 do
-                local auraInfo = C_UnitAuras.GetAuraDataByIndex(scanUnit, i, "HELPFUL")
-                if not auraInfo then break end
-                ProcessAura(auraInfo, scanUnit)
-            end
-        end
-    end
-    
-    -- Misdirection Transference Logic
-    if foundMisdirect8 then
-        LastAuraState.misdirect30 = false
-        RemoveTrackingBar(MISDIRECTION_SPELL_ID) -- Clear prep bar
-    elseif foundMisdirect30 then
-        LastAuraState.misdirect30 = true
-        RemoveTrackingBar(MISDIRECTION_TARGET_ID) -- ensure fake bar is gone if re-applied
-    else
-        if LastAuraState.misdirect30 then
-            -- 30s prep buff vanished. Did it naturally expire, or was it consumed by an attack?
-            -- Give a 0.2s variance buffer for network latency
-            if GetTime() < (LastAuraState.misdirect30Exp - 0.2) then
-                -- Consumed early! FAKE THE ACTIVE BAR!
-                ApplyTrackingBar(MISDIRECTION_TARGET_ID, 8, GetTime() + 8)
-            end
-            LastAuraState.misdirect30 = false
-            RemoveTrackingBar(MISDIRECTION_SPELL_ID)
-        else
-            RemoveTrackingBar(MISDIRECTION_SPELL_ID)
-            -- Rely on UpdateTrackingBars to naturally expire MISDIRECTION_TARGET_ID after 8s
-        end
-    end
-
-    -- Tricks Transference Logic
-    if foundTricks6 then
-        LastAuraState.tricks30 = false
-        RemoveTrackingBar(TRICKS_OF_THE_TRADE_SPELL_ID) -- Clear prep bar
-    elseif foundTricks30 then
-        LastAuraState.tricks30 = true
-        RemoveTrackingBar(TRICKS_TARGET_ID)
-    else
-        if LastAuraState.tricks30 then
-            -- 30s prep buff vanished. Did it naturally expire, or was it consumed by an attack?
-            if GetTime() < (LastAuraState.tricks30Exp - 0.2) then
-                -- Consumed early! FAKE THE ACTIVE BAR!
-                ApplyTrackingBar(TRICKS_TARGET_ID, 6, GetTime() + 6)
-            end
-            LastAuraState.tricks30 = false
-            RemoveTrackingBar(TRICKS_OF_THE_TRADE_SPELL_ID)
-        else
-            RemoveTrackingBar(TRICKS_OF_THE_TRADE_SPELL_ID)
-            -- Rely on UpdateTrackingBars to naturally expire TRICKS_TARGET_ID after 6s
-        end
+    for i = 1, 40 do
+        local auraInfo = C_UnitAuras.GetAuraDataByIndex("player", i, "HELPFUL")
+        if not auraInfo then break end
+        ProcessAura(auraInfo, "player")
     end
     
     -- Handle Stealth Text
-    if hasStealth and s.general and s.general.stealth and s.general.stealth.enabled then
+    if hasStealth then
         if not StealthState.textFrame then
             StealthState.textFrame = CreateTextFrame("GravityUI_StealthText")
         end
@@ -420,8 +173,10 @@ end
 -- Evaluate Durability
 local function EvaluateDurability()
     local s = GetSettings()
+    -- Absolute Master Toggle + Durability Toggle Verification
     if not (s and s.enabled and s.general and s.general.durability and s.general.durability.enabled) then
         if DurabilityState.textFrame then DurabilityState.textFrame:Hide() end
+        DurabilityState.active = false
         return
     end
     
@@ -497,7 +252,7 @@ eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 eventFrame:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
 
 eventFrame:SetScript("OnEvent", function(self, event, unit, castGUID, spellID)
-    if (event == "UNIT_AURA" and (unit == "player" or unit == "target" or unit == "focus" or unit == "pet")) or event == "PLAYER_TARGET_CHANGED" or event == "PLAYER_FOCUS_CHANGED" or event == "PET_BAR_UPDATE" then
+    if event == "UNIT_AURA" and unit == "player" then
         EvaluateAuras()
     elseif event == "UPDATE_INVENTORY_DURABILITY" or event == "PLAYER_ENTERING_WORLD" then
         EvaluateDurability()
@@ -514,83 +269,3 @@ eventFrame:SetScript("OnEvent", function(self, event, unit, castGUID, spellID)
     end
 end)
 
-updateFrame:SetScript("OnUpdate", function(self, elapsed)
-    timeSinceLastUpdate = timeSinceLastUpdate + elapsed
-    if timeSinceLastUpdate >= UPDATE_THROTTLE then
-        UpdateTrackingBars(timeSinceLastUpdate)
-        timeSinceLastUpdate = 0
-    end
-end)
-
--- ============================================================================
--- PREVIEW APIs
--- ============================================================================
-
-local previewTimers = {}
-
-function Messages.PreviewDurability()
-    local s = GetSettings()
-    if not (s and s.general and s.general.durability) then return end
-    if not DurabilityState.textFrame then DurabilityState.textFrame = CreateTextFrame("GravityUI_DurabilityText") end
-    
-    UpdateTextFrameAppearance(DurabilityState.textFrame, s.general.durability)
-    DurabilityState.textFrame.text:SetText("Durability Low")
-    DurabilityState.textFrame:Show()
-    
-    if previewTimers.durability then previewTimers.durability:Cancel() end
-    previewTimers.durability = C_Timer.NewTimer(3, function() 
-        if not DurabilityState.active then DurabilityState.textFrame:Hide() end
-    end)
-end
-
-function Messages.PreviewStealth()
-    local s = GetSettings()
-    if not (s and s.general and s.general.stealth) then return end
-    if not StealthState.textFrame then StealthState.textFrame = CreateTextFrame("GravityUI_StealthText") end
-    
-    UpdateTextFrameAppearance(StealthState.textFrame, s.general.stealth)
-    StealthState.textFrame.text:SetText("Stealth")
-    StealthState.textFrame:Show()
-    
-    if previewTimers.stealth then previewTimers.stealth:Cancel() end
-    previewTimers.stealth = C_Timer.NewTimer(3, function() 
-        if not StealthState.active then StealthState.textFrame:Hide() end
-    end)
-end
-
-function Messages.PreviewMisdirect()
-    local s = GetSettings()
-    if not (s and s.hunter and s.hunter.misdirect) then return end
-    -- Force set active to disable logic for a bit
-    ApplyTrackingBar(MISDIRECTION_SPELL_ID, 8, GetTime() + 8)
-end
-
-function Messages.PreviewTricks()
-    local s = GetSettings()
-    if not (s and s.rogue and s.rogue.tricks) then return end
-    -- Force set active to disable logic for a bit
-    ApplyTrackingBar(TRICKS_OF_THE_TRADE_SPELL_ID, 6, GetTime() + 6)
-end
-
--- ============================================================================
--- DIAGNOSTIC TOOL
--- ============================================================================
-SLASH_GRVTESTMD1 = "/grvtestmd"
-SlashCmdList["GRVTESTMD"] = function()
-    print("========= GRV TEST MD =========")
-    local units = {"player", "target", "focus", "pet"}
-    for _, scanUnit in ipairs(units) do
-        if UnitExists(scanUnit) then
-            print("Scanning Unit:", scanUnit)
-            for i = 1, 40 do
-                local auraInfo = C_UnitAuras.GetAuraDataByIndex(scanUnit, i, "HELPFUL")
-                if not auraInfo then break end
-                print("  ID:", auraInfo.spellId, "Name:", auraInfo.name, "Src:", auraInfo.sourceUnit)
-                if auraInfo.spellId == MISDIRECTION_SPELL_ID or auraInfo.spellId == MISDIRECTION_TARGET_ID then
-                    print("  >> FOUND MISDIRECT MATCH! <<")
-                end
-            end
-        end
-    end
-    print("================================")
-end

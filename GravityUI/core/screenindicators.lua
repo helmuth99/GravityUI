@@ -420,6 +420,12 @@ local function GetSpellIDFromSlot(slot)
     if actionType == "spell" then
         return id
     elseif actionType == "macro" then
+        -- Critical UI Fix: Modern WoW clients sometimes evaluate the macro to the Spell ID 
+        -- directly inside `GetActionInfo`. Macro internal IDs are roughly 1-150.
+        if type(id) == "number" and id > 1000 then
+            return id
+        end
+
         -- Optimization: Check Cache
         if macroCache[id] then
             return macroCache[id] ~= -1 and macroCache[id] or nil
@@ -427,7 +433,8 @@ local function GetSpellIDFromSlot(slot)
 
         -- 1. Try Direct API
         local mid = GetMacroSpell(id)
-        if mid then 
+        -- FIX: Only trust the API if it's actually a tracked range ability (not an Augment Rune)
+        if mid and (MELEE_RANGE_ABILITIES[mid] or RANGED_RANGE_ABILITIES[mid]) then 
             macroCache[id] = mid
             return mid 
         end
@@ -462,9 +469,17 @@ local function GetSpellIDFromSlot(slot)
                 if cleanName then
                     cleanName = cleanName:gsub("^!", ""):match("^%s*(.-)%s*$")
                     
+                    -- FIX: Hardcoded EN-to-ID fallback for English macros on DE clients
+                    local lower = cleanName:lower()
+                    if lower == "aimed shot" then return 19434 end
+                    if lower == "rapid fire" then return 257044 end
+                    if lower == "chaos bolt" then return 116858 end
+                    if lower == "mortal strike" then return 12294 end
+                    
                     -- Try as Spell Name
                     local info = C_Spell.GetSpellInfo(cleanName)
-                    if info and info.spellID then 
+                    -- FIX: Only cache it if it's a tracked spell
+                    if info and info.spellID and (MELEE_RANGE_ABILITIES[info.spellID] or RANGED_RANGE_ABILITIES[info.spellID]) then 
                         macroCache[id] = info.spellID
                         return info.spellID 
                     end
@@ -549,15 +564,16 @@ local function IsOutOfRange()
         return false
     end
 
-    if IsActionInRange and cachedRangeSlot then
-        local inRange = IsActionInRange(cachedRangeSlot)
+    -- PRIMARY: Check Spell Range directly. This bypasses WoW's flawed macro slot evaluation.
+    if cachedRangeSpellID then
+        local inRange = C_Spell.IsSpellInRange(cachedRangeSpellID, "target")
         if inRange == true then return false
         elseif inRange == false then return true end
     end
-    
-    -- Fallback: Check Spell Range directly (Fix for Macros where slot check fails)
-    if cachedRangeSpellID then
-        local inRange = C_Spell.IsSpellInRange(cachedRangeSpellID, "target")
+
+    -- SECONDARY: Fallback to slot (Useful for vehicles or dynamic abilities where SpellID is unknown)
+    if IsActionInRange and cachedRangeSlot then
+        local inRange = IsActionInRange(cachedRangeSlot)
         if inRange == true then return false
         elseif inRange == false then return true end
     end

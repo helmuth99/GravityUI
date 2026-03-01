@@ -151,7 +151,7 @@ local SELF_BUFFS = {
             return lethalCount < requiredLethal or nonLethalCount < requiredNonLethal
         end,
     },
-    { spellID = {232698, 228260}, key = "shadowform", name = "Shadowform", class = "PRIEST", missingText = "NO\nFORM" },
+    { spellID = {232698, 194249, 391109, 228260}, key = "shadowform", name = "Shadowform", class = "PRIEST", missingText = "NO\nFORM" },
     {
         spellID = 382021,
         key = "earthlivingWeapon",

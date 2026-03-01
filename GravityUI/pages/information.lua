@@ -108,7 +108,8 @@ local function BuildInformationTab(content)
     y = y - 10
 
     local changeLogs = {
-        { version = "3.83", date = "Recent", changes = {"Overhauled Misdirection and Tricks of the Trade tracking logic to circumvent hidden API limitations", "Expanded Ranged Crosshair checks to cover all class rotations (e.g. Aimed Shot, Chaos Bolt)", "Fixed a bug where existing UI profiles failed to load Stealth settings in the Messages module"} },
+        { version = "3.84", date = "Recent", changes = {"Fixed a UI layout anchoring bug preventing Options from drawing correctly", "Fixed a nil value crash in the Messages subsystem when iterating buff slots", "Fixed Battle.net Tag validation parsing for Guide synchronization"} },
+        { version = "3.83", date = "01.03.2026", changes = {"Overhauled Misdirection and Tricks of the Trade tracking logic to circumvent hidden API limitations", "Expanded Ranged Crosshair checks to cover all class rotations (e.g. Aimed Shot, Chaos Bolt)", "Fixed a bug where existing UI profiles failed to load Stealth settings in the Messages module", "Synced Midnight enchantable slots (Head/Shoulder) to the Inspect Panel"} },
         { version = "3.82", date = "28.02.2026", changes = {"Added UIWidgetPowerBarContainerFrame (Widget Power Bar) to EditMode Custom Movers", "Fixed false positive 'No Enchant' displayed on Held-in-off-hand items and shields in Character Panel"} },
         { version = "3.81", date = "27.02.2026", changes = {"Added 'Messages' subtab to UI Indicators with Trackers for Misdirection, Tricks of the Trade, Durability, Stealth, and Shroud", "Fixed 'Details' Profile Installation not applying custom strings correctly", "Updated Character Panel enchant logic for the Midnight expansion (Head/Shoulder)"} },
         { version = "3.80", date = "27.02.2026", changes = {"Integrated Extra Action Button and Zone Ability into the custom Edit Mode movers", "Fixed an issue where Blizzard's Minimap overlay blocked clicks in Edit Mode"} },
@@ -116,10 +117,10 @@ local function BuildInformationTab(content)
         { version = "3.78", date = "26.02.2026", changes = {"Added an option to automatically prompt and restore GravityUI Edit Mode Layout upon specialization switch", "Added a quick 'Disable Check' option into the Edit Mode popup"} },
         { version = "3.77", date = "26.02.2026", changes = {"Fixed missing or incorrect sound file assets paths across the UI"} },
         { version = "3.76", date = "26.02.2026", changes = {"Fixed an issue where the GravityUI Installer failed to sync UnhaltedUnitFrames", "Fixed 'Death Release Protection' blocking clicks on recycled 'Accept Resurrection' popups", "Added a 'Clear Alts List' button to the Mail Module Address Book"} },
-3    }
+    }
 
-    for i = 1, math.min(#changelogs, 3) do
-        local log = changelogs[i]
+    for i = 1, math.min(#changeLogs, 3) do
+        local log = changeLogs[i]
         local vLabel = GUI:CreateLabel(content, "|cFF30D1FFv" .. log.version .. "|r - " .. log.date, 13, C.accent)
         vLabel:SetPoint("TOPLEFT", PAD, y)
         y = y - 20

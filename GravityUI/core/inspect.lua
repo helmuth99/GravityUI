@@ -399,10 +399,10 @@ local function GetEnchantText(unit, slotId)
 
     -- Check if slot is enchantable
     -- Only show "No Enchant" for slots that ARE enchantable but missing one
-    -- Chest(5), Wrist(9), Legs(7), Feet(8), Finger(11/12), Back(15), MainHand(16)
+    -- Head(1), Shoulder(3), Chest(5), Wrist(9), Legs(7), Feet(8), Finger(11/12), Back(15), MainHand(16), OffHand(17)
     local enchantableSlots = { 
-        [5]=true, [9]=true, [7]=true, [8]=true, 
-        [11]=true, [12]=true, [15]=true, [16]=true 
+        [1]=true, [3]=true, [5]=true, [7]=true, [8]=true, [9]=true,
+        [11]=true, [12]=true, [15]=true, [16]=true, [17]=true 
     }
     
     -- If not in the list, we don't care if it has an enchant or not for the "No Enchant" warning
