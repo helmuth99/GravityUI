@@ -108,7 +108,7 @@ local function BuildInformationTab(content)
     y = y - 10
 
     local changeLogs = {
-        { version = "3.84", date = "Recent", changes = {"Fixed a UI layout anchoring bug preventing Options from drawing correctly", "Fixed a nil value crash in the Messages subsystem when iterating buff slots", "Fixed Battle.net Tag validation parsing for Guide synchronization"} },
+        { version = "3.84", date = "Recent", changes = {"Fixed a UI layout anchoring bug preventing Options from drawing correctly", "Fixed a nil value crash in the Messages subsystem when iterating buff slots"} },
         { version = "3.83", date = "01.03.2026", changes = {"Overhauled Misdirection and Tricks of the Trade tracking logic to circumvent hidden API limitations", "Expanded Ranged Crosshair checks to cover all class rotations (e.g. Aimed Shot, Chaos Bolt)", "Fixed a bug where existing UI profiles failed to load Stealth settings in the Messages module", "Synced Midnight enchantable slots (Head/Shoulder) to the Inspect Panel"} },
         { version = "3.82", date = "28.02.2026", changes = {"Added UIWidgetPowerBarContainerFrame (Widget Power Bar) to EditMode Custom Movers", "Fixed false positive 'No Enchant' displayed on Held-in-off-hand items and shields in Character Panel"} },
         { version = "3.81", date = "27.02.2026", changes = {"Added 'Messages' subtab to UI Indicators with Trackers for Misdirection, Tricks of the Trade, Durability, Stealth, and Shroud", "Fixed 'Details' Profile Installation not applying custom strings correctly", "Updated Character Panel enchant logic for the Midnight expansion (Head/Shoulder)"} },
