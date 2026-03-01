@@ -110,16 +110,22 @@ local function EvaluateAuras()
     local hasStealth = false
 
     local function ProcessAura(aura, unit)
+        -- Guard against 12.0 restricted auras returning 'secret' values
+        -- Restricted auras usually have nil or restricted names
+        if not aura.name or type(aura.spellId) ~= "number" then return false end
+        
         local spellID = aura.spellId
         
-        -- Guard against 12.0 restricted auras returning a 'secret' value
-        if type(spellID) ~= "number" then return false end
-        
         -- Stealth (Only track on player if they are a Rogue or Druid)
-        if STEALTH_SPELL_IDS[spellID] and unit == "player" then
-            local _, class = UnitClass("player")
-            if class == "ROGUE" or class == "DRUID" or class == "HUNTER" then
-                hasStealth = true
+        if unit == "player" then
+            -- Using pcall here as final defense because some "secret" values still report as type 'number'
+            -- but will throw "table index is secret" if used as an actual key in a table lookup.
+            local ok, isStealth = pcall(function() return STEALTH_SPELL_IDS[spellID] end)
+            if ok and isStealth then
+                local _, class = UnitClass("player")
+                if class == "ROGUE" or class == "DRUID" or class == "HUNTER" then
+                    hasStealth = true
+                end
             end
         end
         return false
