@@ -25,7 +25,7 @@ local function CreatePropertyRow(parent, labelText, widgetType, arg1, arg2, arg3
     label:SetText(labelText)
     label:SetTextColor(unpack(GUI.Colors.text))
     
-    local widget
+    local widget 
     if widgetType == "checkbox" then
         widget = GUI:CreateCheckbox(row, "", arg1, arg2, arg3)
         widget:SetPoint("LEFT", label, "RIGHT", 10, 0)
@@ -459,7 +459,7 @@ local function BuildSoundAlerts(parent)
     end
 
     -- Info Box
-    local infoBox = GUI:CreateInfoBox(content, "Mute annoying game sounds or replace them with custom ones (e.g. from DBM/SharedMedia).\nChanges apply immediately.")
+    local infoBox = GUI:CreateInfoBox(content, "Change the CDM sound alerts from the devices to a custom sound.")
     infoBox:SetPoint("TOPLEFT", header, "BOTTOMLEFT", 0, -10)
     
     content.rowCount = 1.3 + (infoBox:GetHeight() / 30) + 0.5
