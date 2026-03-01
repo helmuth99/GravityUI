@@ -109,7 +109,7 @@ local function BuildInformationTab(content)
 
     local changeLogs = {
         { version = "3.83", date = "Recent", changes = {"Overhauled Misdirection and Tricks of the Trade tracking logic to circumvent hidden API limitations", "Expanded Ranged Crosshair checks to cover all class rotations (e.g. Aimed Shot, Chaos Bolt)", "Fixed a bug where existing UI profiles failed to load Stealth settings in the Messages module"} },
-        { version = "3.82", date = "Recent", changes = {"Added UIWidgetPowerBarContainerFrame (Widget Power Bar) to EditMode Custom Movers", "Fixed false positive 'No Enchant' displayed on Held-in-off-hand items and shields in Character Panel"} },
+        { version = "3.82", date = "28.02.2026", changes = {"Added UIWidgetPowerBarContainerFrame (Widget Power Bar) to EditMode Custom Movers", "Fixed false positive 'No Enchant' displayed on Held-in-off-hand items and shields in Character Panel"} },
         { version = "3.81", date = "27.02.2026", changes = {"Added 'Messages' subtab to UI Indicators with Trackers for Misdirection, Tricks of the Trade, Durability, Stealth, and Shroud", "Fixed 'Details' Profile Installation not applying custom strings correctly", "Updated Character Panel enchant logic for the Midnight expansion (Head/Shoulder)"} },
         { version = "3.80", date = "27.02.2026", changes = {"Integrated Extra Action Button and Zone Ability into the custom Edit Mode movers", "Fixed an issue where Blizzard's Minimap overlay blocked clicks in Edit Mode"} },
         { version = "3.79", date = "26.02.2026", changes = {"Updated Gravity Font with kyrillic support"} },
