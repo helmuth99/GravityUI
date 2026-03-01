@@ -74,18 +74,15 @@ local function CreateMainWindow()
     end
     
     -- ESC to close
-    -- Removed from UISpecialFrames to prevent conflicts with other addons triggering global close events
-    -- table.insert(UISpecialFrames, "GravityUIFrame")
+    -- Using UISpecialFrames to allow closing with Escape without SetPropagateKeyboardInput taint
+    tinsert(UISpecialFrames, "GravityUIFrame")
     
-    frame:SetPropagateKeyboardInput(true)
     frame:SetScript("OnKeyDown", function(self, key)
         if key == "ESCAPE" then
-            self:SetPropagateKeyboardInput(false)
             self:Hide()
-        else
-            self:SetPropagateKeyboardInput(true)
         end
     end)
+    frame:SetPropagateKeyboardInput(true) -- Try setting it once here during creation, if it still errors we remove it completely
     
     GUI.MainFrame = frame
     
