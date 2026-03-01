@@ -191,7 +191,7 @@ local function BuildInformationTab(content)
         { name = "Raid Warnings", desc = "Displays centralized large text alerts for helpful utility spells.\nWarns for newly dropped Soulwells, Feasts, Mage Tables, and Rituals.", stateTable = db.raidWarnings, stateKey = "enabled", pageId = "screenindicators", tabIndex = 6 },
         { name = "Difficulty Indicator", desc = "Visual status bar tracking the currently selected instance difficulty.\nIncludes a dropdown for rapidly changing difficulties out-of-world.", stateTable = db.screenindicators and db.screenindicators.difficulty, stateKey = "enabled", pageId = "screenindicators", tabIndex = 7 },
         { name = "AFK Screen", desc = "An immersive, cinematic character orbit view when Away From Keyboard.\nDisplays real time, guild, character rank, and a moving camera.", stateTable = db.screenindicators and db.screenindicators.afkScreen, stateKey = "enabled", pageId = "screenindicators", tabIndex = 8 },
-        { name = "Messages (General & Class)", desc = "Tracks crucial player events like active Misdirection, Tricks of the Trade, Stealth,\nShroud Countdowns, and low durability warnings on customized bars.", stateTable = db.screenindicators and db.screenindicators.messages, stateKey = "enabled", pageId = "screenindicators", tabIndex = 9 },
+
         
         -- UI Utilities (cdmutils.lua)
         { name = "Keybindings on CDM", desc = "Maps action bar keybind text directly onto the BetterCooldownManager frames.\nAllows custom coloring and hiding of the text on the cooling timeline icons.", stateTable = db.actionbars and db.actionbars.guicdm, stateKey = "enabled", pageId = "cdmutils", tabIndex = 1 },

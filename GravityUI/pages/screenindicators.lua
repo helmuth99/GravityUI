@@ -1262,86 +1262,6 @@ local function BuildAFKScreen(parent)
     content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
 end
 
--- 9. Messages
-local function BuildMessages(parent)
-    local scroll, content = GUI:CreateScrollableContent(parent)
-    scroll:SetAllPoints()
-    local db = ns.GetDB(); if not db then return end
-    
-    if not db.screenindicators.messages then
-        db.screenindicators.messages = {
-            enabled = true,
-            general = {
-                durability = { enabled = true, x = 0, y = 200, fontSize = 24, textColor = {1, 0, 0, 1}, fontOutline = "OUTLINE", font = "Gravity" },
-                stealth = { enabled = true, x = 0, y = 250, fontSize = 24, textColor = {0.5, 0.5, 0.5, 1}, fontOutline = "OUTLINE", font = "Gravity" }
-            },
-            rogue = {
-                shroud = { enabled = true }
-            }
-        }
-    end
-    
-    local m = db.screenindicators.messages
-    
-    -- Migration / Safety Net
-    if not m.general.stealth then
-        if m.rogue and m.rogue.stealth then
-            m.general.stealth = CopyTable(m.rogue.stealth)
-        else
-            m.general.stealth = { enabled = true, x = 0, y = 250, fontSize = 24, textColor = {0.5, 0.5, 0.5, 1}, fontOutline = "OUTLINE", font = "Gravity" }
-        end
-    end
-    content.rowCount = 0
-    local refresh = function() end
-    
-    local header = GUI:CreateSectionHeader(content, "Messages")
-    header:SetPoint("TOPLEFT", 10, -10)
-    header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
-    content.rowCount = 1.3
-    
-    -- GENERAL
-    CreateSubLabel(content, "General")
-    AddRow(content, "Enable Messages Module", "checkbox", "enabled", m, refresh)
-    
-    content.rowCount = content.rowCount + 0.5 -- Spacing below enable
-    
-    local d = m.general.durability
-    AddRow(content, "Durability Warning (<25%)", "checkbox", "enabled", d, refresh)
-    
-    local btnPreviewDurability = GUI:CreateButton(content, "Preview Durability", 140, 24, function() ns.Messages.PreviewDurability() end)
-    btnPreviewDurability:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT + 5)))
-    content.rowCount = content.rowCount + 1.1
-    
-    AddRow(content, "Durability Font Size", "slider", 10, 60, "fontSize", d, refresh, 1)
-    AddRow(content, "Durability Color", "color", "textColor", d, refresh)
-    AddRow(content, "Durability X Offset", "slider", -1000, 1000, "x", d, refresh, 1)
-    AddRow(content, "Durability Y Offset", "slider", -1000, 1000, "y", d, refresh, 1)
-    content.rowCount = content.rowCount + 0.5
-    
-    -- STEALTH (General)
-    CreateSubLabel(content, "Stealth (Rogue, Feral, Hunter)")
-    local rS = m.general.stealth
-    AddRow(content, "Stealth Text", "checkbox", "enabled", rS, refresh)
-    
-    local btnPreviewStealth = GUI:CreateButton(content, "Preview Stealth", 140, 24, function() ns.Messages.PreviewStealth() end)
-    btnPreviewStealth:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT + 5)))
-    content.rowCount = content.rowCount + 1.1
-    
-    AddRow(content, "Stealth Font Size", "slider", 10, 60, "fontSize", rS, refresh, 1)
-    AddRow(content, "Stealth Color", "color", "textColor", rS, refresh)
-    AddRow(content, "Stealth X Offset", "slider", -1000, 1000, "x", rS, refresh, 1)
-    AddRow(content, "Stealth Y Offset", "slider", -1000, 1000, "y", rS, refresh, 1)
-    content.rowCount = content.rowCount + 0.5
-    
-    -- ROGUE
-    CreateSubLabel(content, "Rogue")
-    
-    AddRow(content, "Shroud Countdown (Say)", "checkbox", "enabled", m.rogue.shroud, refresh)
-    content.rowCount = content.rowCount + 0.5
-    
-    content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
-end
-
 
 
         local categories = {
@@ -1353,7 +1273,6 @@ end
             { name = "Raid Warnings", builder = BuildRaidWarnings },
             { name = "Difficulty", builder = BuildDifficulty },
             { name = "AFK Screen", builder = BuildAFKScreen },
-            { name = "Messages", builder = BuildMessages },
         }
         local subTabs = GUI:CreateSubTabs(scrollFrame, categories)
         subTabs:SetPoint("TOPLEFT", 10, -10)
