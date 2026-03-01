@@ -118,10 +118,18 @@ local function EvaluateAuras()
         
         -- Stealth (Only track on player if they are a Rogue or Druid)
         if unit == "player" then
-            -- Using pcall here as final defense because some "secret" values still report as type 'number'
-            -- but will throw "table index is secret" if used as an actual key in a table lookup.
-            local ok, isStealth = pcall(function() return STEALTH_SPELL_IDS[spellID] end)
-            if ok and isStealth then
+            -- We iterate our local table instead of indexing it with spellID.
+            -- Using a 'secret' value as a table index causes a crash that pcall sometimes cannot catch.
+            -- Comparing the secret value (id == spellID) is generally safe.
+            local isStealth = false
+            for sID, _ in pairs(STEALTH_SPELL_IDS) do
+                if sID == spellID then
+                    isStealth = true
+                    break
+                end
+            end
+            
+            if isStealth then
                 local _, class = UnitClass("player")
                 if class == "ROGUE" or class == "DRUID" or class == "HUNTER" then
                     hasStealth = true
