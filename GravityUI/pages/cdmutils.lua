@@ -514,12 +514,15 @@ local function BuildSoundAlerts(parent)
              if sndConfig.sound ~= "None" and not sndConfig.enabled then
                   sndConfig.enabled = true
              end
-             
              -- Preview the selected sound
              if sndConfig.sound ~= "None" and LSM then
                  local soundFile = LSM:Fetch("sound", sndConfig.sound)
                  if soundFile then
+                     -- Set a flag so the hook in soundalerts.lua knows to ignore this specific play
+                     if ns.SoundAlerts then ns.SoundAlerts._previewing = true end
                      PlaySoundFile(soundFile, "Master")
+                     -- Remove flag immediately after the C API call finishes executing synchronously
+                     if ns.SoundAlerts then ns.SoundAlerts._previewing = false end
                  end
              end
              

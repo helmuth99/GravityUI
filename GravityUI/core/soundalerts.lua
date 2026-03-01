@@ -74,6 +74,9 @@ function SoundAlerts.ApplySettings()
     end
 end
 
+local lastPlayed = {}
+local SOUND_THROTTLE = 1.0 -- 1 second cooldown per sound
+
 -- Hook PlaySound
 hooksecurefunc("PlaySound", function(soundID)
     local id = tonumber(soundID)
@@ -86,10 +89,14 @@ hooksecurefunc("PlaySound", function(soundID)
         if info.triggerId == id then
             local sndConfig = settings.sounds[info.key]
             if sndConfig and sndConfig.enabled and sndConfig.sound and sndConfig.sound ~= "None" then
-                if LSM then
-                    local soundFile = LSM:Fetch("sound", sndConfig.sound)
-                    if soundFile then
-                        PlaySoundFile(soundFile, "Master")
+                local now = GetTime()
+                if not lastPlayed[info.key] or (now - lastPlayed[info.key] > SOUND_THROTTLE) then
+                    if LSM then
+                        local soundFile = LSM:Fetch("sound", sndConfig.sound)
+                        if soundFile then
+                            lastPlayed[info.key] = now
+                            PlaySoundFile(soundFile, "Master")
+                        end
                     end
                 end
             end
@@ -100,6 +107,8 @@ end)
 
 -- Hook PlaySoundFile
 hooksecurefunc("PlaySoundFile", function(fileID)
+    if SoundAlerts._previewing then return end -- Avoid infinite loop when clicking the UI dropdown
+    
     local id = tonumber(fileID)
     if not id then return end
     
@@ -110,11 +119,15 @@ hooksecurefunc("PlaySoundFile", function(fileID)
         if info.fileId == id then
             local sndConfig = settings.sounds[info.key]
             if sndConfig and sndConfig.enabled and sndConfig.sound and sndConfig.sound ~= "None" then
-                if LSM then
-                    local soundFile = LSM:Fetch("sound", sndConfig.sound)
-                    if soundFile then
-                         -- Using a tiny delay to ensure we override if PlaySoundFile fires simultaneously
-                         C_Timer.After(0.01, function() PlaySoundFile(soundFile, "Master") end)
+                local now = GetTime()
+                if not lastPlayed[info.key] or (now - lastPlayed[info.key] > SOUND_THROTTLE) then
+                    if LSM then
+                        local soundFile = LSM:Fetch("sound", sndConfig.sound)
+                        if soundFile then
+                             lastPlayed[info.key] = now
+                             -- Using a tiny delay to ensure we override if PlaySoundFile fires simultaneously
+                             C_Timer.After(0.01, function() PlaySoundFile(soundFile, "Master") end)
+                        end
                     end
                 end
             end
