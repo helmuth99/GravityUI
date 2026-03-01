@@ -1052,6 +1052,20 @@ ns.Defaults = {
             showAmPm = false,
             showTimer = true,
         },
+        messages = {
+            enabled = true,
+            general = {
+                durability = { enabled = true, x = 0, y = 200, fontSize = 24, textColor = {1, 0, 0, 1}, fontOutline = "OUTLINE", font = "Gravity" },
+                stealth = { enabled = true, x = 0, y = 250, fontSize = 24, textColor = {0.5, 0.5, 0.5, 1}, fontOutline = "OUTLINE", font = "Gravity" }
+            },
+            hunter = {
+                misdirect = { enabled = true, width = 200, height = 20, x = 0, y = 100, barColor = {0, 0.8, 1, 1}, textColor = {1,1,1,1}, fontSize = 12, texture = "Gravity Normal", font = "Gravity", fontOutline = "OUTLINE" }
+            },
+            rogue = {
+                shroud = { enabled = true },
+                tricks = { enabled = true, width = 200, height = 20, x = 0, y = 120, barColor = {1, 1, 0, 1}, textColor = {1,1,1,1}, fontSize = 12, texture = "Gravity Normal", font = "Gravity", fontOutline = "OUTLINE" }
+            }
+        },
     },
     main =     {
         showWelcome = true,

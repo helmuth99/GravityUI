@@ -21,11 +21,15 @@ local function OnMerchantShow()
 
     -- Sell Junk
     if settings.sellJunk then
-        for bag = 0, 4 do
-            for slot = 1, C_Container.GetContainerNumSlots(bag) do
-                local info = C_Container.GetContainerItemInfo(bag, slot)
-                if info and info.quality == Enum.ItemQuality.Poor then
-                    C_Container.UseContainerItem(bag, slot)
+        if C_MerchantFrame and C_MerchantFrame.SellAllJunkItems then
+            C_MerchantFrame.SellAllJunkItems()
+        else
+            for bag = 0, 4 do
+                for slot = 1, C_Container.GetContainerNumSlots(bag) do
+                    local info = C_Container.GetContainerItemInfo(bag, slot)
+                    if info and info.quality == Enum.ItemQuality.Poor and not info.hasNoValue then
+                        C_Container.UseContainerItem(bag, slot)
+                    end
                 end
             end
         end
@@ -680,7 +684,8 @@ local function OnKeyStoneInsert()
         for slot = 1, C_Container.GetContainerNumSlots(bag) do
             local id = C_Container.GetContainerItemID(bag, slot)
             if (id and C_Item.IsItemKeystoneByID(id)) then
-                C_Container.UseContainerItem(bag, slot)
+                -- Bypass protected right-click UseContainerItem using left-click PickupContainerItem
+                C_Container.PickupContainerItem(bag, slot)
                 print("|cFF30D1FFGravityUI:|r Auto-inserted Keystone")
                 return
             end

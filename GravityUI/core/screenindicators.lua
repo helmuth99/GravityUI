@@ -114,38 +114,59 @@ local RANGED_RANGE_ABILITIES = {
     [133] = true,    -- Fireball
     [30451] = true,  -- Arcane Blast
     [44425] = true,  -- Arcane Barrage
+    [30455] = true,  -- Ice Lance
+    [44614] = true,  -- Flurry
+    [11366] = true,  -- Pyroblast
+    [108853] = true, -- Fire Blast
     
     -- Warlock
     [686] = true,    -- Shadow Bolt
     [29722] = true,  -- Incinerate
     [198590] = true, -- Drain Soul
     [30108] = true,  -- Unstable Affliction
+    [116858] = true, -- Chaos Bolt
+    [17962] = true,  -- Conflagrate
+    [104316] = true, -- Call Dreadstalkers
+    [105174] = true, -- Hand of Gul'dan
     
     -- Priest
     [585] = true,    -- Smite
     [589] = true,    -- Shadow Word: Pain
     [8092] = true,   -- Mind Blast
+    [47666] = true,  -- Penance
+    [14914] = true,  -- Holy Fire
+    [15407] = true,  -- Mind Flay
     
     -- Hunter
     [193455] = true, -- Cobra Shot
     [56641] = true,  -- Steady Shot
     [185358] = true, -- Arcane Shot
     [217200] = true, -- Barbed Shot
+    [19434] = true,  -- Aimed Shot
+    [257044] = true, -- Rapid Fire
+    [34026] = true,  -- Kill Command
+    [53351] = true,  -- Kill Shot
+    [432247] = true, -- Black Arrow (Hero Talent)
     
     -- Shaman
     [188196] = true, -- Lightning Bolt
     [188389] = true, -- Flame Shock
     [51505] = true,  -- Lava Burst
+    [117014] = true, -- Elemental Blast
+    [61659] = true,  -- Fire Nova
 
     -- Druid
     [194153] = true, -- Starfire
     [5176] = true,   -- Wrath
     [8921] = true,   -- Moonfire
+    [78674] = true,  -- Starsurge
+    [202347] = true, -- Stellar Flare
     
     -- Evoker
     [361469] = true, -- Living Flame
     [356995] = true, -- Disintegrate
     [362969] = true, -- Azure Strike
+    [359077] = true, -- Fire Breath
 }
 
 local cachedRangeSlot = nil -- Optimization: Cache the slot ID of the ability
