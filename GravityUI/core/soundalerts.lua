@@ -5,7 +5,7 @@ ns.SoundAlerts = SoundAlerts
 local LSM = LibStub("LibSharedMedia-3.0", true)
 
 -- ============================================================================
--- SOUND DATA MAPPING (From SimpleSoundChange)
+-- SOUND DATA MAPPING
 -- ============================================================================
 local SOUND_DATA = {
     { key = "BoatHorn",        name = "Boat Horn",          fileId = 7466062, triggerId = 316442 },
