@@ -509,29 +509,47 @@ local function BuildSoundAlerts(parent)
         local sndConfig = saDB.sounds[info.key]
         
         AddRow(content, "Enable " .. info.name, "checkbox", "enabled", sndConfig, RefreshSA)
-        AddRow(content, "Replacement Sound", "dropdown", soundOptions, "sound", sndConfig, function(newValue, isUserInput)
-             -- The dropdown builder fires this callback on creation. We only want to play sounds when the USER manually selects something.
+        local dropRow = AddRow(content, "Replacement Sound", "dropdown", soundOptions, "sound", sndConfig, function(newValue, isUserInput)
              if not isUserInput then return end
              
              -- If they select a sound, automatically toggle the enable switch on
              if sndConfig.sound ~= "None" and not sndConfig.enabled then
                   sndConfig.enabled = true
              end
-             -- Preview the selected sound
+             
+             RefreshSA()
+             if ns.GUI.RefreshAll then ns.GUI:RefreshAll() end
+        end)
+        
+        -- Create an explicit Play button next to the dropdown
+        local playBtn = CreateFrame("Button", nil, dropRow)
+        playBtn:SetSize(22, 22)
+        -- Anchor exactly to the right of the dropdown (LABEL_WIDTH=220 + LEFTMARGIN=10 + DROPDOWN=250 = 480)
+        playBtn:SetPoint("LEFT", dropRow, "LEFT", 490, 0)
+        playBtn:SetNormalTexture("Interface\\OptionsFrame\\VoiceChat-Play")
+        playBtn:SetPushedTexture("Interface\\OptionsFrame\\VoiceChat-Play")
+        playBtn:GetPushedTexture():SetPoint("TOPLEFT", 1, -1)
+        playBtn:GetPushedTexture():SetPoint("BOTTOMRIGHT", 1, -1)
+        playBtn:SetHighlightTexture("Interface\\Buttons\\UI-Common-MouseHilight", "ADD")
+        
+        playBtn:SetScript("OnClick", function()
              if sndConfig.sound ~= "None" and LSM then
                  local soundFile = LSM:Fetch("sound", sndConfig.sound)
                  if soundFile then
-                     -- Set a flag so the hook in soundalerts.lua knows to ignore this specific play
                      if ns.SoundAlerts then ns.SoundAlerts._previewing = true end
                      PlaySoundFile(soundFile, "Master")
-                     -- Remove flag immediately after the C API call finishes executing synchronously
                      if ns.SoundAlerts then ns.SoundAlerts._previewing = false end
                  end
              end
-             
-             RefreshSA()
-             -- Refresh UI elements to show checkbox tick state
-             if ns.GUI.RefreshAll then ns.GUI:RefreshAll() end
+        end)
+        
+        playBtn:SetScript("OnEnter", function(self)
+             GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+             GameTooltip:SetText("Preview Sound", 1, 1, 1)
+             GameTooltip:Show()
+        end)
+        playBtn:SetScript("OnLeave", function(self)
+             GameTooltip:Hide()
         end)
         content.rowCount = content.rowCount + 0.2
     end
