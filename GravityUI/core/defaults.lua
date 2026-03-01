@@ -248,7 +248,7 @@ ns.Defaults = {
         customSpells = {}, -- { [spellID] = "type" } e.g. { [12345] = "feast" }
     },
     soundAlerts = {
-        enabled = true,
+        enabled = false,
         sounds = {}
     },
     interruptTracker = {
