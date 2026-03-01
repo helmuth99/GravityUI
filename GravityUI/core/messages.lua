@@ -111,6 +111,10 @@ local function EvaluateAuras()
 
     local function ProcessAura(aura, unit)
         local spellID = aura.spellId
+        
+        -- Guard against 12.0 restricted auras returning a 'secret' value
+        if type(spellID) ~= "number" then return false end
+        
         -- Stealth (Only track on player if they are a Rogue or Druid)
         if STEALTH_SPELL_IDS[spellID] and unit == "player" then
             local _, class = UnitClass("player")
