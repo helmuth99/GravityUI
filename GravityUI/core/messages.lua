@@ -123,7 +123,10 @@ local function EvaluateAuras()
             -- Comparing the secret value (id == spellID) is generally safe.
             local isStealth = false
             for sID, _ in pairs(STEALTH_SPELL_IDS) do
-                if sID == spellID then
+                -- Final Defense: Wrap comparison in pcall. 
+                -- Blizzard 11.0+ can throw "attempt to compare... secret number value" if it's tainted.
+                local ok, match = pcall(function() return sID == spellID end)
+                if ok and match then
                     isStealth = true
                     break
                 end
