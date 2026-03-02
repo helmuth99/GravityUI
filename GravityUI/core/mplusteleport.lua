@@ -176,7 +176,7 @@ local function UpdateLibraryVisibility()
         end
     end
 end
-
+2
 ---------------------------------------------------------------------------
 -- GROUP KEY LIST CONTENT
 ---------------------------------------------------------------------------
@@ -390,7 +390,9 @@ end
 function MPlusTeleport:CreateLibraryFrame(libType)
     if libraryFrames[libType] then return libraryFrames[libType] end
     local frame = CreateFrame("Frame", "GravityUI_" .. libType .. "Library", UIParent)
-    frame:SetSize(300, 400); frame:SetFrameStrata("HIGH"); frame:SetFrameLevel(10)
+    frame:SetSize(300, 400)
+    frame:SetFrameStrata(libType == "GroupKeys" and "BACKGROUND" or "HIGH")
+    frame:SetFrameLevel(10)
     
     local r, g, b = 0.11, 0.12, 0.13
     if ns.GetThemeBgColor then r, g, b = ns.GetThemeBgColor() end
