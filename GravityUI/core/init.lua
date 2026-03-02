@@ -315,64 +315,30 @@ end
 -- Event handler
 function Addon:PLAYER_ENTERING_WORLD(event, isInitialLogin, isReloadingUi)
     -- Initialize custom datapanels
-    if ns.Datapanels and ns.Datapanels.Init then
-        ns.Datapanels:Init()
-    end
+    if ns.Datapanels and ns.Datapanels.Init then ns.Datapanels:Init() end
+    if ns.Styling and ns.Styling.Initialize then ns.Styling:Initialize() end
     
-    if ns.Styling and ns.Styling.Initialize then
-        ns.Styling:Initialize()
-    end
+    -- CHUNK 1: +0.5 Seconds (ActionBars, PlayerFrames, etc.)
+    C_Timer.After(0.5, function()
+        if ns.Alerts and ns.Alerts.Initialize then ns.Alerts:Initialize() end
+        if ns.InstanceFrames and ns.InstanceFrames.Initialize then ns.InstanceFrames:Initialize() end
+    end)
     
-    -- Initialize Alerts
-    if ns.Alerts and ns.Alerts.Initialize then
-        ns.Alerts:Initialize()
-    end
+    -- CHUNK 2: +1.0 Seconds (Loot, Combat Helpers, Raid Warnings)
+    C_Timer.After(1.0, function()
+        if ns.Loot and ns.Loot.Initialize then ns.Loot:Initialize() end
+        if ns.RaidWarnings and ns.RaidWarnings.Initialize then ns.RaidWarnings:Initialize() end
+        if ns.TrackedBuffBar and ns.TrackedBuffBar.Init then ns.TrackedBuffBar:Init() end
+        if ns.InterruptTracker and ns.InterruptTracker.Initialize then ns.InterruptTracker:Initialize() end
+    end)
     
-    -- Initialize Raid Warnings
-    if ns.RaidWarnings and ns.RaidWarnings.Initialize then
-        ns.RaidWarnings:Initialize()
-    end
-    
-    -- Initialize Loot
-    if ns.Loot and ns.Loot.Initialize then
-        ns.Loot:Initialize()
-    end
-    
-    
-    -- Initialize Objectives
-    if ns.Objectives and ns.Objectives.Initialize then
-        ns.Objectives:Initialize()
-    end
-    
-    -- Initialize Instance Frames
-    if ns.InstanceFrames and ns.InstanceFrames.Initialize then
-        ns.InstanceFrames:Initialize()
-    end
-
-    -- Initialize XP/Rep
-    if ns.XPRep and ns.XPRep.Initialize then
-        ns.XPRep:Initialize()
-    end
-
-    -- Initialize Tracked BuffBars (CDM)
-    if ns.TrackedBuffBar and ns.TrackedBuffBar.Init then
-        ns.TrackedBuffBar:Init()
-    end
-
-    -- Initialize GUICDM Keybinds
-    if ns.GUICDM_Keybinds and ns.GUICDM_Keybinds.Init then
-        ns.GUICDM_Keybinds:Init()
-    end
-
-    -- Initialize Interrupt Tracker
-    if ns.InterruptTracker and ns.InterruptTracker.Initialize then
-        ns.InterruptTracker:Initialize()
-    end
-
-    -- Initialize Mail
-    if ns.Mail and ns.Mail.Initialize then
-        ns.Mail.Initialize()
-    end
+    -- CHUNK 3: +1.5 Seconds (Secondary Systems, Objectives, XP)
+    C_Timer.After(1.5, function()
+        if ns.Objectives and ns.Objectives.Initialize then ns.Objectives:Initialize() end
+        if ns.XPRep and ns.XPRep.Initialize then ns.XPRep:Initialize() end
+        if ns.GUICDM_Keybinds and ns.GUICDM_Keybinds.Init then ns.GUICDM_Keybinds:Init() end
+        if ns.Mail and ns.Mail.Initialize then ns.Mail.Initialize() end
+    end)
 
 
     

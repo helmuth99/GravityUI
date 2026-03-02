@@ -386,12 +386,18 @@ local function CreateCursorFrame()
     reticleTexture = cursorFrame:CreateTexture(nil, "OVERLAY")
     reticleTexture:SetPoint("CENTER")
 
-    -- Optimization: Use upvalues to avoid table lookups in high-frequency OnUpdate
+    local lastX, lastY, lastS = -1, -1, -1
+    
+    -- Optimization: Use upvalues to avoid table lookups and cache position to prevent layout thrashing
     cursorFrame:SetScript("OnUpdate", function(self)
         local x, y = GetCursorPosition()
         local s = UIParent:GetEffectiveScale()
-        -- Direct upvalue access is faster than table lookup
-        self:SetPoint("CENTER", UIParent, "BOTTOMLEFT", (x / s) + cursorOffsetX, (y / s) + cursorOffsetY)
+        
+        -- Prevent SetPoint layout thrashing if mouse hasn't moved
+        if x ~= lastX or y ~= lastY or s ~= lastS then
+            lastX, lastY, lastS = x, y, s
+            self:SetPoint("CENTER", UIParent, "BOTTOMLEFT", (x / s) + cursorOffsetX, (y / s) + cursorOffsetY)
+        end
         
         -- Right-click hide functionality (Polling instead of HookScript to prevent micro-stutter)
         if cursorHideOnRightClick then

@@ -560,7 +560,7 @@ local function BuildMissingBuffs(parent)
     CreateSubLabel(content, "Custom Buffs")
     
     -- Info Text
-    local infoText = "|cffFFCC00Info:|r Add custom spellids for buffs, food or potions.\nUse |cff00ccff/guienchants|r to find your weapon enchant and add your enchantid like this: |cff00ccff7495:224107|r (enchantid:itemid)"
+    local infoText = "|cffFFCC00Info:|r Add custom spellids for buffs, food or potions.\nYou can track multiple buffs (e.g. food) by separating their IDs with a comma.\nUse |cff00ccff/guienchants|r to find your weapon enchant and add your enchantid like this: |cff00ccff7495:224107|r (enchantid:itemid)"
     local infoBox = GUI:CreateInfoBox(content, infoText)
     infoBox:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT + 5)))
     content.rowCount = content.rowCount + (infoBox:GetHeight() / (ROW_HEIGHT + 5)) + 0.2
@@ -600,8 +600,8 @@ local function BuildMissingBuffs(parent)
         local text = editBox:GetText()
         -- text can be "12345" or "7494:224107"
         
-        -- Basic Validation
-        local isValid = tonumber(text) or string.find(text, "^%d+:%d+$") or string.find(text, "^%d+%s*:%s*%d+$")
+        -- Basic Validation: Number, comma-separated list, or EnchantID:ItemID
+        local isValid = tonumber(text) or string.find(text, "^%d+%s*:%s*%d+$") or string.find(text, "^[%d%s,]+$")
         
         if isValid and RB and RB.AddCustomBuff then
             local success, err = RB:AddCustomBuff(text)

@@ -960,7 +960,7 @@ function RaidBuffs:AddCustomBuff(spellID)
     -- Check for comma separated IDs (e.g. "123, 456, 789")
     if type(spellID) == "string" and spellID:find(",") then
         -- Extract first ID for metadata lookup
-        local f = spellID:match("([^,]+)")
+        local f = spellID:match("([^,%s]+)")
         if f then firstID = tonumber(strtrim(f)) end
     end
 
