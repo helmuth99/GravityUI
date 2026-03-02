@@ -85,7 +85,12 @@ local function CreateSecureOverlay(dungeonIcon)
             else
                 start, duration = GetSpellCooldown(spellID)
             end
-            highlight:SetColorTexture(unpack((duration and duration > 1.5) and {1, 0.8, 0, 0.3} or {0.3, 1, 0.5, 0.3}))
+            local isCooldown = false
+            if start and duration then
+                local success, res = pcall(function() return duration > 1.5 end)
+                if success then isCooldown = res end
+            end
+            highlight:SetColorTexture(unpack(isCooldown and {1, 0.8, 0, 0.3} or {0.3, 1, 0.5, 0.3}))
         else
             highlight:SetColorTexture(1, 0.2, 0.2, 0.3)
         end
@@ -111,29 +116,10 @@ end
 ---------------------------------------------------------------------------
 -- VISIBILITY & UPDATE LOGIC
 ---------------------------------------------------------------------------
-local function UpdateLibraryVisibility()
-    local settings = GetSettings()
-    local challengesOpen = ChallengesFrame and ChallengesFrame:IsVisible()
-    local inValidGroup = IsInGroup() and not IsInRaid() and not IsInInstance() and not (C_Scenario and C_Scenario.IsInScenario())
-
-    if libraryFrames.Dungeon then libraryFrames.Dungeon:SetShown(IsEnabled() and challengesOpen and settings.dungeonLibraryEnabled) end
-    if libraryFrames.Raid then libraryFrames.Raid:SetShown(IsEnabled() and challengesOpen and settings.raidLibraryEnabled) end
-    
-    local gKeys = libraryFrames.GroupKeys
-    if gKeys then
-        if IsEnabled() and (gKeys.isPreview or (settings.groupKeyListEnabled and inValidGroup)) then
-            gKeys:Show()
-            MPlusTeleport:UpdateGroupKeys()
-        else
-            gKeys:Hide()
-        end
-    end
-end
-
 local function UpdateButtonCooldowns(frame)
     if not frame or not frame.icons then return end
     for _, btn in ipairs(frame.icons) do
-        if btn:IsShown() and btn.cd and btn:GetAttribute("spell") then
+        if btn.cd and btn:GetAttribute("spell") then
             local spellID = btn:GetAttribute("spell")
             local start, duration = 0, 0
             if C_Spell and C_Spell.GetSpellCooldown then
@@ -143,8 +129,15 @@ local function UpdateButtonCooldowns(frame)
                 start, duration = GetSpellCooldown(spellID)
             end
 
-            if start and duration and duration > 1.5 then
+            local isCooldown = false
+            if start and duration then
+                local success, res = pcall(function() return duration > 1.5 end)
+                if success then isCooldown = res end
+            end
+
+            if isCooldown then
                 btn.cd:SetCooldown(start, duration)
+                btn.cd:SetHideCountdownNumbers(false)
                 btn.icon:SetDesaturated(true)
                 btn.icon:SetAlpha(0.6)
             else
@@ -152,6 +145,34 @@ local function UpdateButtonCooldowns(frame)
                 btn.icon:SetDesaturated(false)
                 btn.icon:SetAlpha(IsSpellKnown(spellID) and 1 or 0.4)
             end
+        end
+    end
+end
+
+local function UpdateLibraryVisibility()
+    if InCombatLockdown() then return end
+    local settings = GetSettings()
+    local challengesOpen = ChallengesFrame and ChallengesFrame:IsVisible()
+    local inValidGroup = IsInGroup() and not IsInRaid() and not IsInInstance() and not (C_Scenario and C_Scenario.IsInScenario())
+
+    if libraryFrames.Dungeon then
+        local show = IsEnabled() and challengesOpen and settings.dungeonLibraryEnabled
+        libraryFrames.Dungeon:SetShown(show)
+        if show then UpdateButtonCooldowns(libraryFrames.Dungeon) end
+    end
+    if libraryFrames.Raid then
+        local show = IsEnabled() and challengesOpen and settings.raidLibraryEnabled
+        libraryFrames.Raid:SetShown(show)
+        if show then UpdateButtonCooldowns(libraryFrames.Raid) end
+    end
+    
+    local gKeys = libraryFrames.GroupKeys
+    if gKeys then
+        if IsEnabled() and (gKeys.isPreview or (settings.groupKeyListEnabled and inValidGroup)) then
+            gKeys:Show()
+            MPlusTeleport:UpdateGroupKeys()
+        else
+            gKeys:Hide()
         end
     end
 end
@@ -173,6 +194,11 @@ local function BroadcastKey()
 end
 
 function MPlusTeleport:UpdateGroupKeys()
+    if InCombatLockdown() then
+        MPlusTeleport.pendingGroupUpdate = true
+        return
+    end
+    MPlusTeleport.pendingGroupUpdate = false
     local success, err = pcall(function()
         local frame = libraryFrames.GroupKeys
         if not frame then return end
@@ -487,7 +513,7 @@ function MPlusTeleport:ToggleGroupKeyListPreview(show)
 end
 
 local eventFrame = CreateFrame("Frame")
-eventFrame:RegisterEvent("ADDON_LOADED"); eventFrame:RegisterEvent("SPELL_UPDATE_COOLDOWN"); eventFrame:RegisterEvent("GROUP_ROSTER_UPDATE"); eventFrame:RegisterEvent("CHAT_MSG_PARTY"); eventFrame:RegisterEvent("CHAT_MSG_PARTY_LEADER"); eventFrame:RegisterEvent("CHAT_MSG_ADDON"); eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
+eventFrame:RegisterEvent("ADDON_LOADED"); eventFrame:RegisterEvent("SPELL_UPDATE_COOLDOWN"); eventFrame:RegisterEvent("GROUP_ROSTER_UPDATE"); eventFrame:RegisterEvent("CHAT_MSG_PARTY"); eventFrame:RegisterEvent("CHAT_MSG_PARTY_LEADER"); eventFrame:RegisterEvent("CHAT_MSG_ADDON"); eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD"); eventFrame:RegisterEvent("PLAYER_REGEN_DISABLED"); eventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
 eventFrame:SetScript("OnEvent", function(_, event, ...)
     if event == "ADDON_LOADED" then
         local name = ...
@@ -499,6 +525,18 @@ eventFrame:SetScript("OnEvent", function(_, event, ...)
     elseif event == "SPELL_UPDATE_COOLDOWN" then
         for _, f in pairs(libraryFrames) do UpdateButtonCooldowns(f) end
         if libraryFrames.GroupKeys then MPlusTeleport:UpdateGroupKeys() end
+    elseif event == "PLAYER_REGEN_DISABLED" then
+        for _, f in pairs(libraryFrames) do f:Hide() end
+    elseif event == "PLAYER_REGEN_ENABLED" then
+        UpdateLibraryVisibility()
+        if MPlusTeleport.pendingGroupUpdate and libraryFrames.GroupKeys then
+            MPlusTeleport:UpdateGroupKeys()
+        end
+        if ChallengesFrame and ChallengesFrame.DungeonIcons then
+            for _, icon in ipairs(ChallengesFrame.DungeonIcons) do
+                if icon.mapID and not icon.guiTeleportOverlay then CreateSecureOverlay(icon) end
+            end
+        end
     elseif event == "GROUP_ROSTER_UPDATE" or event == "PLAYER_ENTERING_WORLD" then
         BroadcastKey(); UpdateLibraryVisibility()
     elseif event == "CHAT_MSG_PARTY" or event == "CHAT_MSG_PARTY_LEADER" then
