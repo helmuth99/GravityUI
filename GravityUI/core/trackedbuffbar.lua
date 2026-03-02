@@ -191,7 +191,8 @@ function Module:SkinBar(bar)
     local icon = bar.icon or bar.Icon
     -- Check children for icon if not found
     if not icon and bar.GetChildren then
-        for _, child in ipairs({bar:GetChildren()}) do
+        for i = 1, select("#", bar:GetChildren()) do
+             local child = select(i, bar:GetChildren())
              if child.Texture or (child.IsObjectType and child:IsObjectType("Texture")) then
                  -- This is risky, might catch random textures
              end
@@ -345,8 +346,8 @@ function Module:ScanForBars()
              end
                  
              -- Scan Children
-             local children = {obj:GetChildren()}
-             for _, child in ipairs(children) do
+             for i = 1, select("#", obj:GetChildren()) do
+                 local child = select(i, obj:GetChildren())
                  -- Direct Child Bar
                  if child.SetStatusBarTexture then
                      Module.knownBars[child] = true
@@ -375,7 +376,8 @@ function Module:ScanForBars()
     -- 2. Heuristic: Scan for the specific object pattern "BuffBarCooldownViewer.X.Bar"
     local root = _G["BuffBarCooldownViewer"]
     if root and root.GetChildren then
-        for _, child in ipairs({root:GetChildren()}) do
+        for i = 1, select("#", root:GetChildren()) do
+             local child = select(i, root:GetChildren())
              if child.Bar and child.Bar.SetStatusBarTexture then
                  Module.knownBars[child.Bar] = true
              end

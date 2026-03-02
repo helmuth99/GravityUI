@@ -476,7 +476,8 @@ local function CatchButton(buttonFrame, debugName, skipLayout)
         local s = GetSettings()
         if s and s.masque and MasqueGroup then
             -- Forcefully strip the golden Blizzard ring and the default round background 
-            for _, region in ipairs({buttonFrame:GetRegions()}) do
+            for i = 1, select("#", buttonFrame:GetRegions()) do
+                local region = select(i, buttonFrame:GetRegions())
                 if region:IsObjectType("Texture") then
                     
                     -- Initial check
@@ -518,7 +519,8 @@ local function CatchButton(buttonFrame, debugName, skipLayout)
             end
             
             -- Fix all internal textures
-            for _, region in ipairs({buttonFrame:GetRegions()}) do
+            for i = 1, select("#", buttonFrame:GetRegions()) do
+                local region = select(i, buttonFrame:GetRegions())
                 FixTexture(region)
             end
             

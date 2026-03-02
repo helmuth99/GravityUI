@@ -439,23 +439,26 @@ local function ApplyHideSettings()
     -- 1. Scan for new visible frames
     -- Optimization: Only scan if setting is enabled and we are actually in a minigame OR need to restore
     if settings.hideOnWorldQuestMinigame then
-        local children = {UIParent:GetChildren()}
-        for _, child in ipairs(children) do
-        -- Safety check methods
-        if child and child.IsVisible and child.GetName then
-            local isVisible
-            local success, _ = pcall(function() isVisible = child:IsVisible() end)
-            
-            if success and isVisible then
-                local name = child:GetName()
-                if name and (name:find("^BCDM_") or name:find("CooldownViewer")) then
-                     if not discoveredBCDMFrames[child] then
-                         discoveredBCDMFrames[child] = true
-                     end
+        local function ScanMinigameFrames(...)
+            for i = 1, select("#", ...) do
+                local child = select(i, ...)
+                -- Safety check methods
+                if child and child.IsVisible and child.GetName then
+                    local isVisible
+                    local success, _ = pcall(function() isVisible = child:IsVisible() end)
+                    
+                    if success and isVisible then
+                        local name = child:GetName()
+                        if name and (name:find("^BCDM_") or name:find("CooldownViewer")) then
+                             if not discoveredBCDMFrames[child] then
+                                 discoveredBCDMFrames[child] = true
+                             end
+                        end
+                    end
                 end
             end
         end
-        end
+        ScanMinigameFrames(UIParent:GetChildren())
     end
 
     -- 2. Add all discovered frames to the hide list
@@ -657,18 +660,21 @@ SlashCmdList["GRAVITYUIAUTOHIDEDEBUG"] = function()
     ns.Print("  Setting Enabled: " .. tostring(settings and settings.hideOnWorldQuestMinigame))
 
     ns.Print("Scanning BCDM Frames:")
-    local children = {UIParent:GetChildren()}
-    for _, child in ipairs(children) do
-        if child and child.GetName then
-            local name = child:GetName()
-            if name and (name:find("BCDM") or name:find("CooldownViewer") or name:find("Resource")) then
-                local vis = "hidden"
-                if child.IsVisible and child:IsVisible() then vis = "|cFF00FF00visible|r" end
-                local alpha = child.GetAlpha and child:GetAlpha() or -1
-                ns.Print("  Found: " .. name .. " -> " .. vis .. " (Alpha: " .. alpha .. ")")
+    local function ScanBCDMDebug(...)
+        for i = 1, select("#", ...) do
+            local child = select(i, ...)
+            if child and child.GetName then
+                local name = child:GetName()
+                if name and (name:find("BCDM") or name:find("CooldownViewer") or name:find("Resource")) then
+                    local vis = "hidden"
+                    if child.IsVisible and child:IsVisible() then vis = "|cFF00FF00visible|r" end
+                    local alpha = child.GetAlpha and child:GetAlpha() or -1
+                    ns.Print("  Found: " .. name .. " -> " .. vis .. " (Alpha: " .. alpha .. ")")
+                end
             end
         end
     end
+    ScanBCDMDebug(UIParent:GetChildren())
     
     -- Force run
     -- ns.ApplyAutohideSettings()

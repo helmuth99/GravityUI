@@ -1964,9 +1964,8 @@ local function UpdateStatsPanel(panel, unit)
         wipe(trackedUnderlines)
 
         -- Release child frames (stat rows, stat bars) to pool
-        local children = {scrollChild:GetChildren()}
-        for i = 1, #children do
-            local frame = children[i]
+        for i = 1, select("#", scrollChild:GetChildren()) do
+            local frame = select(i, scrollChild:GetChildren())
             if frame then
                 ReleaseToPool(frame)
                 if frame.SetScript then
@@ -1978,9 +1977,8 @@ local function UpdateStatsPanel(panel, unit)
         end
 
         -- Also clear any remaining regions (FontStrings, Textures) on scrollChild
-        local regions = {scrollChild:GetRegions()}
-        for i = #regions, 1, -1 do
-            local region = regions[i]
+        for i = select("#", scrollChild:GetRegions()), 1, -1 do
+            local region = select(i, scrollChild:GetRegions())
             if region then
                 region:Hide()
                 if region.SetText then

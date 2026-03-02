@@ -215,13 +215,16 @@ function GUI:ClearPageContent(content)
     end
     
     -- Clear children (Frames)
-    local children = {content:GetChildren()}
-    for _, child in ipairs(children) do
-        if not child.isStepHeader then
-            child:Hide()
-            child:SetParent(nil)
+    local function ClearChildren(...)
+        for i = 1, select("#", ...) do
+            local child = select(i, ...)
+            if not child.isStepHeader then
+                child:Hide()
+                child:SetParent(nil)
+            end
         end
     end
+    ClearChildren(content:GetChildren())
 end
 
 ---------------------------------------------------------------------------

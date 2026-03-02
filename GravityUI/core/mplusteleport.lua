@@ -183,12 +183,25 @@ end
 C_ChatInfo.RegisterAddonMessagePrefix("GravityUI")
 C_ChatInfo.RegisterAddonMessagePrefix("AstralKeys")
 C_ChatInfo.RegisterAddonMessagePrefix("LibKeystone")
+C_ChatInfo.RegisterAddonMessagePrefix("LibKS")
 
-local function BroadcastKey()
+local lastMapID, lastLevel = nil, nil
+local function BroadcastKey(force)
     if not IsInGroup() then return end
     local mapID, level = GetOwnedKeystone()
+    
+    if force ~= true then
+        if mapID == lastMapID and level == lastLevel then return end
+    end
+    lastMapID, lastLevel = mapID, level
+
+    local channel = IsInGroup(LE_PARTY_CATEGORY_INSTANCE) and "INSTANCE_CHAT" or (IsInRaid() and "RAID" or "PARTY")
+    
+    -- Request keys from others (AstralKeys/LibKeystone support)
+    C_ChatInfo.SendAddonMessage("AstralKeys", "request", channel)
+    C_ChatInfo.SendAddonMessage("LibKS", "R", channel)
+    
     if mapID then
-        local channel = IsInGroup(LE_PARTY_CATEGORY_INSTANCE) and "INSTANCE_CHAT" or (IsInRaid() and "RAID" or "PARTY")
         C_ChatInfo.SendAddonMessage("GravityUI", string.format("KEY:%d:%d", mapID, level), channel)
     end
 end
@@ -515,7 +528,8 @@ function MPlusTeleport:ToggleGroupKeyListPreview(show)
 end
 
 local eventFrame = CreateFrame("Frame")
-eventFrame:RegisterEvent("ADDON_LOADED"); eventFrame:RegisterEvent("SPELL_UPDATE_COOLDOWN"); eventFrame:RegisterEvent("GROUP_ROSTER_UPDATE"); eventFrame:RegisterEvent("CHAT_MSG_PARTY"); eventFrame:RegisterEvent("CHAT_MSG_PARTY_LEADER"); eventFrame:RegisterEvent("CHAT_MSG_ADDON"); eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD"); eventFrame:RegisterEvent("PLAYER_REGEN_DISABLED"); eventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
+eventFrame:RegisterEvent("ADDON_LOADED"); eventFrame:RegisterEvent("SPELL_UPDATE_COOLDOWN"); eventFrame:RegisterEvent("GROUP_ROSTER_UPDATE"); eventFrame:RegisterEvent("CHAT_MSG_ADDON"); eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD"); eventFrame:RegisterEvent("PLAYER_REGEN_DISABLED"); eventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
+eventFrame:RegisterEvent("BAG_UPDATE_DELAYED"); eventFrame:RegisterEvent("CHALLENGE_MODE_COMPLETED")
 eventFrame:SetScript("OnEvent", function(_, event, ...)
     if event == "ADDON_LOADED" then
         local name = ...
@@ -525,6 +539,7 @@ eventFrame:SetScript("OnEvent", function(_, event, ...)
             hooksecurefunc(ChallengesFrame, "Update", HookDungeonIcons); HookDungeonIcons(); UpdateLibraryVisibility()
         end
     elseif event == "SPELL_UPDATE_COOLDOWN" then
+        if InCombatLockdown() then return end
         for _, f in pairs(libraryFrames) do UpdateButtonCooldowns(f) end
         if libraryFrames.GroupKeys then MPlusTeleport:UpdateGroupKeys() end
     elseif event == "PLAYER_REGEN_DISABLED" then
@@ -540,19 +555,26 @@ eventFrame:SetScript("OnEvent", function(_, event, ...)
             end
         end
     elseif event == "GROUP_ROSTER_UPDATE" or event == "PLAYER_ENTERING_WORLD" then
-        BroadcastKey(); UpdateLibraryVisibility()
-    elseif event == "CHAT_MSG_PARTY" or event == "CHAT_MSG_PARTY_LEADER" then
-        local text, sender = ...
-        local mid, lvl = text:match("keystone:%d+:(%d+):(%d+)") 
-        if mid then
-            groupKeys[Ambiguate(sender, "none")] = { mapID = tonumber(mid), level = tonumber(lvl) }; MPlusTeleport:UpdateGroupKeys()
-        end
+        BroadcastKey(true); UpdateLibraryVisibility()
+    elseif event == "BAG_UPDATE_DELAYED" or event == "CHALLENGE_MODE_COMPLETED" then
+        BroadcastKey(false); UpdateLibraryVisibility()
     elseif event == "CHAT_MSG_ADDON" then
         local prefix, text, _, sender = ...
-        if prefix == "GravityUI" or prefix == "AstralKeys" or prefix == "LibKeystone" then
-            local mid, lvl = text:match("keystone:%d+:(%d+):(%d+)") -- Sniff for links
-            if not mid then mid, lvl = text:match("KEY:(%d+):(%d+)") end -- Sniff for our format
-            if mid then
+        if prefix == "GravityUI" or prefix == "AstralKeys" or prefix == "LibKeystone" or prefix == "LibKS" then
+            local mid, lvl
+            
+            -- LibKeystone/BigWigs format: "level,mapID,rating"
+            if prefix == "LibKS" and text ~= "R" then
+                local kLevel, kMapID = text:match("^(%d+),(%d+),")
+                if kLevel and kMapID then
+                    mid, lvl = kMapID, kLevel
+                end
+            else
+                mid, lvl = text:match("keystone:%d+:(%d+):(%d+)") -- Sniff for links
+                if not mid then mid, lvl = text:match("KEY:(%d+):(%d+)") end -- Sniff for our format
+            end
+            
+            if mid and tonumber(mid) > 0 then
                 groupKeys[Ambiguate(sender, "none")] = { mapID = tonumber(mid), level = tonumber(lvl) }; MPlusTeleport:UpdateGroupKeys()
             end
         end

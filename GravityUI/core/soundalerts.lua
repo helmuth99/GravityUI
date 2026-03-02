@@ -74,11 +74,12 @@ function SoundAlerts.ApplySettings()
     end
 end
 
+local DEBUG_SOUNDS = false
 local lastPlayed = {}
-local SOUND_THROTTLE = 1.0 -- 1 second cooldown per sound
+local SOUND_THROTTLE = 3.0 -- Increased to 3s to debounce rapid double-fires from BCDM
 
 -- Hook PlaySound
-hooksecurefunc("PlaySound", function(soundID)
+hooksecurefunc("PlaySound", function(soundID, channel)
     local id = tonumber(soundID)
     if not id then return end
     
@@ -90,12 +91,19 @@ hooksecurefunc("PlaySound", function(soundID)
             local sndConfig = settings.sounds[info.key]
             if sndConfig and sndConfig.enabled and sndConfig.sound and sndConfig.sound ~= "None" then
                 local now = GetTime()
+                
+                if DEBUG_SOUNDS then
+                    ns.Print("PlaySound Blocked: " .. info.name .. " Channel: " .. tostring(channel))
+                    -- Print exactly who is calling this
+                    print(debugstack(2, 2, 0)) 
+                end
+
                 if not lastPlayed[info.key] or (now - lastPlayed[info.key] > SOUND_THROTTLE) then
                     if LSM then
                         local soundFile = LSM:Fetch("sound", sndConfig.sound)
                         if soundFile then
                             lastPlayed[info.key] = now
-                            PlaySoundFile(soundFile, "Master")
+                            PlaySoundFile(soundFile, channel or "Master")
                         end
                     end
                 end
@@ -106,7 +114,7 @@ hooksecurefunc("PlaySound", function(soundID)
 end)
 
 -- Hook PlaySoundFile
-hooksecurefunc("PlaySoundFile", function(fileID)
+hooksecurefunc("PlaySoundFile", function(fileID, channel)
     if SoundAlerts._previewing then return end -- Avoid infinite loop when clicking the UI dropdown
     
     local id = tonumber(fileID)
@@ -120,13 +128,19 @@ hooksecurefunc("PlaySoundFile", function(fileID)
             local sndConfig = settings.sounds[info.key]
             if sndConfig and sndConfig.enabled and sndConfig.sound and sndConfig.sound ~= "None" then
                 local now = GetTime()
+
+                if DEBUG_SOUNDS then
+                    ns.Print("PlaySoundFile Blocked: " .. info.name .. " Channel: " .. tostring(channel))
+                    print(debugstack(2, 2, 0)) 
+                end
+
                 if not lastPlayed[info.key] or (now - lastPlayed[info.key] > SOUND_THROTTLE) then
                     if LSM then
                         local soundFile = LSM:Fetch("sound", sndConfig.sound)
                         if soundFile then
                              lastPlayed[info.key] = now
                              -- Using a tiny delay to ensure we override if PlaySoundFile fires simultaneously
-                             C_Timer.After(0.01, function() PlaySoundFile(soundFile, "Master") end)
+                             C_Timer.After(0.01, function() PlaySoundFile(soundFile, channel or "Master") end)
                         end
                     end
                 end

@@ -172,8 +172,8 @@ local function InjectGravityLfgListeners()
     local targetNode = LFGListFrame.SearchPanel.ScrollBox:GetScrollTarget()
     if not targetNode then return end
     
-    local entryNodes = {targetNode:GetChildren()}
-    for _, node in ipairs(entryNodes) do
+    for i = 1, select("#", targetNode:GetChildren()) do
+        local node = select(i, targetNode:GetChildren())
         if node and node:GetObjectType() == "Button" and not node.guiLfgAttached then
             node:SetScript("OnDoubleClick", HandleGravityLfgClick)
             node:RegisterForClicks("AnyUp")

@@ -308,7 +308,8 @@ local function SkinHeaderFrame(header, isMain)
     -- Minimize Button handling (Re-run to ensure it stays on top/correct)
     local btn = header.MinimizeButton
     if not btn then
-         for _, child in ipairs({header:GetChildren()}) do
+         for i = 1, select("#", header:GetChildren()) do
+             local child = select(i, header:GetChildren())
              if child:IsObjectType("Button") then
                  local w = child:GetWidth()
                  if w and w > 10 and w < 40 then btn = child break end
@@ -323,8 +324,8 @@ end
 local function FindHeadersRecursive(frame, depth)
     if not frame or depth > 6 then return end 
     
-    local children = {frame:GetChildren()}
-    for _, child in ipairs(children) do
+    for i = 1, select("#", frame:GetChildren()) do
+        local child = select(i, frame:GetChildren())
         local isHeader = false
         local isMain = false
         
@@ -336,8 +337,8 @@ local function FindHeadersRecursive(frame, depth)
         
         -- Method B: Keywords (Fallback)
         if not isHeader then
-            local regions = {child:GetRegions()}
-            for _, r in ipairs(regions) do
+            for j = 1, select("#", child:GetRegions()) do
+                local r = select(j, child:GetRegions())
                 if r:IsObjectType("FontString") then
                     local t = r:GetText()
                     if t then
@@ -357,6 +358,20 @@ local function FindHeadersRecursive(frame, depth)
         else
             FindHeadersRecursive(child, depth + 1)
         end
+    end
+end
+
+local function SkinWidgetsRecursive(frame)
+    if not frame then return end
+    for i = 1, select("#", frame:GetChildren()) do
+        local child = select(i, frame:GetChildren())
+        -- Check for Bar with Spark
+        if child.Bar and child.Bar.Spark then
+            child.Bar.Spark:SetAlpha(0)
+            child.Bar.Spark:Hide()
+        end
+        -- Recurse
+        SkinWidgetsRecursive(child)
     end
 end
 
@@ -416,19 +431,6 @@ function Objectives:SkinTracker()
     
     -- 3. Specific Scenario Widget Skinning (Remove Sparks)
     if ScenarioObjectiveTracker and ScenarioObjectiveTracker.ContentsFrame then
-         local function SkinWidgetsRecursive(frame)
-             if not frame then return end
-             local children = {frame:GetChildren()}
-             for _, child in ipairs(children) do
-                 -- Check for Bar with Spark
-                 if child.Bar and child.Bar.Spark then
-                     child.Bar.Spark:SetAlpha(0)
-                     child.Bar.Spark:Hide()
-                 end
-                 -- Recurse
-                 SkinWidgetsRecursive(child)
-             end
-         end
          SkinWidgetsRecursive(ScenarioObjectiveTracker.ContentsFrame)
     end
 end

@@ -106,8 +106,8 @@ end
 -- Process Container
 local function ProcessAuraContainer(container, isBuff)
     if not container then return end
-    local frames = {container:GetChildren()}
-    for _, frame in ipairs(frames) do
+    for i = 1, select("#", container:GetChildren()) do
+        local frame = select(i, container:GetChildren())
         if frame.Icon or frame.icon then
             AddBorderToButton(frame, isBuff)
             ApplyFontSettings(frame)
@@ -166,8 +166,8 @@ local function ApplyBuffBorders()
     end
     
     if TemporaryEnchantFrame then
-        local frames = {TemporaryEnchantFrame:GetChildren()}
-        for _, frame in ipairs(frames) do
+        for i = 1, select("#", TemporaryEnchantFrame:GetChildren()) do
+            local frame = select(i, TemporaryEnchantFrame:GetChildren())
             AddBorderToButton(frame, true)
             ApplyFontSettings(frame)
         end

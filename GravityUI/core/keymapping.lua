@@ -550,7 +550,8 @@ function Module:DiscoverFrames()
     for containerName, barKey in pairs(barToSettingsKey) do
         local container = _G[containerName]
         if container then
-            for _, child in ipairs({container:GetChildren()}) do
+            for i = 1, select("#", container:GetChildren()) do
+                local child = select(i, container:GetChildren())
                 if child and not Module.knownFrames[child] then
                     Module.knownFrames[child] = true
                     self:UpdateFrame(child)
@@ -580,11 +581,11 @@ function Module:UpdateFrameLayout(frameName, shouldCenter)
     if not frame then return end
     
     -- Collect and group children by row (Y-coordinate)
-    local children = { frame:GetChildren() }
     local rows = {}
     local tolerance = 5 -- Y-pixel tolerance to be in same row
     
-    for _, child in ipairs(children) do
+    for i = 1, select("#", frame:GetChildren()) do
+        local child = select(i, frame:GetChildren())
         if child:IsShown() and child:GetWidth() > 0 then
             local _, _, _, _, y = child:GetPoint()
             -- Try to find existing row
@@ -794,9 +795,10 @@ SlashCmdList["GRAVITYUIGUICDMDEBUG"] = function()
         for containerName, settingKey in pairs(barToSettingsKey) do
             local container = _G[containerName]
             if container then
-                local children = {container:GetChildren()}
-                print("  - " .. containerName .. ": FOUND (" .. #children .. " children)")
-                for i, child in ipairs(children) do
+                local numChildren = select("#", container:GetChildren())
+                print("  - " .. containerName .. ": FOUND (" .. numChildren .. " children)")
+                for i = 1, numChildren do
+                    local child = select(i, container:GetChildren())
                     if i <= 3 then
                         local cName = child:GetName() or "Unnamed"
                         local sid = child.spellID or child.spellId or (child.GetSpellID and child:GetSpellID())

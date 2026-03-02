@@ -60,10 +60,12 @@ local function CreateMainWindow()
                 -- Traverse standard widgets in content
                 local function Recurse(f)
                     if f.RefreshColors then f:RefreshColors() end
-                    local children = {f:GetChildren()}
-                    for _, child in ipairs(children) do
-                        Recurse(child)
+                    local function ProcessChildren(...)
+                        for i = 1, select("#", ...) do
+                            Recurse(select(i, ...))
+                        end
                     end
+                    ProcessChildren(f:GetChildren())
                 end
                 Recurse(child)
             end
