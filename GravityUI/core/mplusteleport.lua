@@ -540,8 +540,10 @@ eventFrame:SetScript("OnEvent", function(_, event, ...)
         end
     elseif event == "SPELL_UPDATE_COOLDOWN" then
         if InCombatLockdown() then return end
-        for _, f in pairs(libraryFrames) do UpdateButtonCooldowns(f) end
-        if libraryFrames.GroupKeys then MPlusTeleport:UpdateGroupKeys() end
+        for _, f in pairs(libraryFrames) do 
+            if f:IsShown() then UpdateButtonCooldowns(f) end 
+        end
+        if libraryFrames.GroupKeys and libraryFrames.GroupKeys:IsShown() then MPlusTeleport:UpdateGroupKeys() end
     elseif event == "PLAYER_REGEN_DISABLED" then
         for _, f in pairs(libraryFrames) do f:Hide() end
     elseif event == "PLAYER_REGEN_ENABLED" then
