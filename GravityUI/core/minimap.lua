@@ -465,7 +465,7 @@ local function CreateZoneText()
     zoneTextFrame:SetScript("OnEvent", function() UpdateZoneText() end)
 end
 
-local function UpdateZoneText()
+function UpdateZoneText()
     local s = GetSettings()
     if not s or not s.enabled then return end
     if not zoneTextFrame then CreateZoneText() end
