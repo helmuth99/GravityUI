@@ -1117,11 +1117,14 @@ local function UpdateInspectFrame()
         SetupInspectTitleArea()
     end
     
-    InspectFrame:SetWidth(INSPECT_CONFIG.FRAME_TARGET_WIDTH)
-    CreateInspectBackground()
-    RepositionInspectSlots()
-    RepositionInspectCloseButton(true)
-    PositionInspectModelScene()
+    if not inspectLayoutApplied then
+        InspectFrame:SetWidth(INSPECT_CONFIG.FRAME_TARGET_WIDTH)
+        CreateInspectBackground()
+        RepositionInspectSlots()
+        RepositionInspectCloseButton(true)
+        PositionInspectModelScene()
+        inspectLayoutApplied = true
+    end
     
     local unit = InspectFrame.unit or "target"
     if UnitExists(unit) then
@@ -1168,6 +1171,9 @@ local function OnEvent(self, event, arg1)
         InspectFrame:HookScript("OnShow", function()
             TriggerInspectUpdates()
         end)
+        InspectFrame:HookScript("OnHide", function()
+            inspectLayoutApplied = false
+        end)
     elseif event == "INSPECT_READY" then
         TriggerInspectUpdates()
     elseif event == "PLAYER_TARGET_CHANGED" then
@@ -1192,6 +1198,9 @@ if C_AddOns.IsAddOnLoaded("Blizzard_InspectUI") and InspectFrame then
     -- Hook if not already hooked (this script runs once, but for safety)
     if not InspectFrame.gravityAndInsetHooked then
         InspectFrame:HookScript("OnShow", TriggerInspectUpdates)
+        InspectFrame:HookScript("OnHide", function()
+            inspectLayoutApplied = false
+        end)
         InspectFrame.gravityAndInsetHooked = true
     end
     -- If frame is currently open (reload scenario), update immediately

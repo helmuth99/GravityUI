@@ -1520,6 +1520,8 @@ local trackedUnderlines = {}
 -- Frame Pools to prevent memory leaks
 local statRowPool = {}
 local statBarPool = {}
+local headerPool = {}
+local linePool = {}
 
 local function AcquireStatRow(parent)
     local row = table.remove(statRowPool)
@@ -1558,24 +1560,55 @@ local function AcquireStatBar(parent)
         row:Show()
         if row.label then row.label:Show() end
         if row.value then row.value:Show() end
+        if row.bar then row.bar:Show() end
     end
     return row
 end
 
-local function ReleaseToPool(frame)
-    frame:Hide()
-    frame:SetParent(nil)
-    frame:ClearAllPoints()
-    
-    -- Clear tooltip properties to prevent "ghost" tooltips when reused
-    frame.tooltip = nil
-    frame.tooltip2 = nil
-    frame.tooltip3 = nil
-    
-    if frame.bar then
-        table.insert(statBarPool, frame)
+local function AcquireHeader(parent)
+    local header = table.remove(headerPool)
+    if not header then
+        header = parent:CreateFontString(nil, "OVERLAY")
     else
-        table.insert(statRowPool, frame)
+        -- FontStrings are regions, they stay with their parent but we can re-anchor
+        header:Show()
+    end
+    return header
+end
+
+local function AcquireLine(parent)
+    local line = table.remove(linePool)
+    if not line then
+        line = parent:CreateTexture(nil, "ARTWORK")
+    else
+        line:Show()
+    end
+    return line
+end
+
+local function ReleaseToPool(obj)
+    if not obj then return end
+    obj:Hide()
+    
+    if obj:IsObjectType("Frame") then
+        obj:SetParent(nil)
+        obj:ClearAllPoints()
+        
+        -- Clear tooltip properties
+        obj.tooltip = nil
+        obj.tooltip2 = nil
+        obj.tooltip3 = nil
+        
+        if obj.bar then
+            table.insert(statBarPool, obj)
+        else
+            table.insert(statRowPool, obj)
+        end
+    elseif obj:IsObjectType("FontString") then
+        obj:SetText("")
+        table.insert(headerPool, obj)
+    elseif obj:IsObjectType("Texture") then
+        table.insert(linePool, obj)
     end
 end
 
@@ -1816,7 +1849,7 @@ local function CreateSectionHeader(parent, text, yOffset)
         headerColor = settings.headerColor or {0.204, 0.827, 0.6}
     end
 
-    local header = parent:CreateFontString(nil, "OVERLAY")
+    local header = AcquireHeader(parent)
     header:SetFont(font, fontSize, "THINOUTLINE")
     header:SetPoint("TOPLEFT", parent, "TOPLEFT", 5, yOffset)
     header:SetTextColor(headerColor[1], headerColor[2], headerColor[3], 1)
@@ -1825,7 +1858,7 @@ local function CreateSectionHeader(parent, text, yOffset)
     TrackFontString(header, "sectionHeader")
 
     -- Underline (uses headerColor)
-    local line = parent:CreateTexture(nil, "ARTWORK")
+    local line = AcquireLine(parent)
     line:SetHeight(1)
     line:SetPoint("TOPLEFT", header, "BOTTOMLEFT", 0, -2)
     line:SetPoint("RIGHT", parent, "RIGHT", -5, 0)
@@ -1944,22 +1977,16 @@ local function UpdateStatsPanel(panel, unit)
         local scrollChild = panel.scrollChild
         unit = unit or panel.unit or "player"
 
-        -- First, hide all tracked FontStrings (headers, labels, values)
+        -- First, hide and release all tracked FontStrings/Textures
         for _, entry in ipairs(trackedFontStrings) do
-            if entry.fs and entry.fs.Hide then
-                entry.fs:Hide()
-                entry.fs:SetText("")
-            end
+            if entry.fs then ReleaseToPool(entry.fs) end
         end
-
-        -- Hide all tracked underlines (Textures)
         for _, line in ipairs(trackedUnderlines) do
-            if line and line.Hide then
-                line:Hide()
-            end
+            if line then ReleaseToPool(line) end
         end
 
-        -- Clear the tracking tables
+        -- Note: Row pooling is separate and handled by releasing children below
+        -- but we must wipe these tables after releasing icons/lines
         wipe(trackedFontStrings)
         wipe(trackedUnderlines)
 
@@ -1968,23 +1995,14 @@ local function UpdateStatsPanel(panel, unit)
             local frame = select(i, scrollChild:GetChildren())
             if frame then
                 ReleaseToPool(frame)
-                if frame.SetScript then
-                    frame:SetScript("OnShow", nil)
-                    frame:SetScript("OnHide", nil)
-                    frame:SetScript("OnUpdate", nil)
-                end
             end
         end
 
-        -- Also clear any remaining regions (FontStrings, Textures) on scrollChild
-        for i = select("#", scrollChild:GetRegions()), 1, -1 do
+        -- Regions (Textures/FontStrings) are already handled by ReleaseToPool calls above
+        -- but hide anything else just in case.
+        for i = 1, select("#", scrollChild:GetRegions()) do
             local region = select(i, scrollChild:GetRegions())
-            if region then
-                region:Hide()
-                if region.SetText then
-                    region:SetText("")
-                end
-            end
+            if region then region:Hide() end
         end
 
         local y = -5
