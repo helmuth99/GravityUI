@@ -476,7 +476,17 @@ DT.Types.guild = {
         local showNotes = IsShiftKeyDown()
         GameTooltip:AddLine(guildName .. (showNotes and " (Notes)" or ""), 1, 1, 1)
 
-        local motd = GetGuildRosterMOTD()
+        local motd = ""
+        if C_Club and C_Club.GetGuildClubId then
+            local clubId = C_Club.GetGuildClubId()
+            if clubId then
+                local clubInfo = C_Club.GetClubInfo(clubId)
+                if clubInfo and clubInfo.broadcast then
+                    motd = clubInfo.broadcast
+                end
+            end
+        end
+
         if motd and motd ~= "" then
             GameTooltip:AddLine(" ")
             GameTooltip:AddLine("MOTD:", 1, 0.8, 0)
