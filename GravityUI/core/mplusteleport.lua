@@ -114,7 +114,7 @@ end
 local function UpdateLibraryVisibility()
     local settings = GetSettings()
     local challengesOpen = ChallengesFrame and ChallengesFrame:IsVisible()
-    local inValidGroup = IsInGroup() and not IsInRaid() and not IsInInstance()
+    local inValidGroup = IsInGroup() and not IsInRaid() and not IsInInstance() and not (C_Scenario and C_Scenario.IsInScenario())
 
     if libraryFrames.Dungeon then libraryFrames.Dungeon:SetShown(IsEnabled() and challengesOpen and settings.dungeonLibraryEnabled) end
     if libraryFrames.Raid then libraryFrames.Raid:SetShown(IsEnabled() and challengesOpen and settings.raidLibraryEnabled) end
@@ -178,7 +178,7 @@ function MPlusTeleport:UpdateGroupKeys()
         if not frame then return end
     
         local settings = GetSettings()
-        local inValidGroup = IsInGroup() and not IsInRaid() and not IsInInstance()
+        local inValidGroup = IsInGroup() and not IsInRaid() and not IsInInstance() and not (C_Scenario and C_Scenario.IsInScenario())
         if not (frame.isPreview or (settings.groupKeyListEnabled and inValidGroup)) then
             frame:Hide()
             return
