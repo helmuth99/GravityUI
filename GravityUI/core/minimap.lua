@@ -444,6 +444,8 @@ end
 -- ZONE TEXT
 -- ═══════════════════════════════════════════════════════════════
 
+local UpdateZoneText -- Forward declaration
+
 local function CreateZoneText()
     if zoneTextFrame then return end
     zoneTextFrame = CreateFrame("Frame", nil, Minimap)
