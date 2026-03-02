@@ -757,7 +757,10 @@ function Module:Init()
                 Module:ApplyKeybinds()
             end)
         elseif event == "PLAYER_REGEN_ENABLED" then
-            Module:ApplyKeybinds()
+            -- Delay update to avoid combat-end frame spike
+            C_Timer.After(0.5, function()
+                Module:ApplyKeybinds()
+            end)
         end
     end)
     

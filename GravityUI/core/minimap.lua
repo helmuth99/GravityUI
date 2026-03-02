@@ -419,12 +419,19 @@ local function UpdateCoords()
     coordsText:SetTextColor(unpack(cfg.color))
 end
 
+local lastX, lastY = 0, 0
 local function UpdateCoordsPosition()
     if not coordsText or not coordsFrame:IsShown() then return end
     local mapID = C_Map.GetBestMapForUnit("player")
     if mapID then
         local pos = C_Map.GetPlayerMapPosition(mapID, "player")
         if pos then
+            -- Throttle: Only update if moved significantly
+            if math.abs(pos.x - (lastX or 0)) < 0.0001 and math.abs(pos.y - (lastY or 0)) < 0.0001 then
+                return 
+            end
+            lastX, lastY = pos.x, pos.y
+
             coordsText:SetFormattedText("%.1f, %.1f", pos.x * 100, pos.y * 100)
             coordsFrame:SetWidth(coordsText:GetStringWidth() + 5)
             return
@@ -453,7 +460,7 @@ local function CreateZoneText()
     zoneTextFrame:RegisterEvent("ZONE_CHANGED")
     zoneTextFrame:RegisterEvent("ZONE_CHANGED_INDOORS")
     zoneTextFrame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
-    zoneTextFrame:SetScript("OnEvent", function() ns.RefreshMinimap() end)
+    zoneTextFrame:SetScript("OnEvent", function() UpdateZoneText() end)
 end
 
 local function UpdateZoneText()

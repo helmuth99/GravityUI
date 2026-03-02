@@ -437,8 +437,10 @@ local function ApplyHideSettings()
     -- discoveredBCDMFrames is defined at module level
 
     -- 1. Scan for new visible frames
-    local children = {UIParent:GetChildren()}
-    for _, child in ipairs(children) do
+    -- Optimization: Only scan if setting is enabled and we are actually in a minigame OR need to restore
+    if settings.hideOnWorldQuestMinigame then
+        local children = {UIParent:GetChildren()}
+        for _, child in ipairs(children) do
         -- Safety check methods
         if child and child.IsVisible and child.GetName then
             local isVisible
@@ -452,6 +454,7 @@ local function ApplyHideSettings()
                      end
                 end
             end
+        end
         end
     end
 
@@ -610,6 +613,17 @@ eventFrame:SetScript("OnEvent", function(self, event, addon)
              if InCombatLockdown() then return end
              ApplyHideSettings()
          end)
+        return
+    end
+
+    if event == "ZONE_CHANGED_NEW_AREA" then
+        if self.zoneUpdatePending then return end
+        self.zoneUpdatePending = true
+        C_Timer.After(1, function()
+            self.zoneUpdatePending = false
+            if InCombatLockdown() then return end
+            ApplyHideSettings()
+        end)
         return
     end
 

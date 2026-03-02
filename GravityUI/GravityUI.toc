@@ -35,6 +35,7 @@ core\window.lua
 # Utilities
 core\utils.lua
 core\dungeondata.lua
+core\teleportdata.lua
 core\automation.lua
 core\quicksalvage.lua
 core\styling.lua

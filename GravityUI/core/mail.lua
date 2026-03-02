@@ -66,45 +66,81 @@ local function ProcessNextMail()
     if (CODAmount and CODAmount > 0) or isGM then
         -- Skip COD or GM mail
         ns.Print("Skipped COD/GM mail from " .. tostring(sender) .. ".")
-        -- You would normally move to the next index, but the API automatically shifts messages 
-        -- down when one is fully deleted. Since we can't delete a COD mail without paying, 
-        -- a simple robust implementation is to just stop the process here or skip it by 
-        -- keeping track of an offset. For simplicity in a basic module, we stop.
+        -- In a robust system, we would skip this index, but Blizzard's Inbox shifts.
+        -- For simplicity, we stop if we hit something we can't auto-delete.
         isOpeningAll = false
         OpenAllButton:SetText("Open All")
         return
     end
 
-    -- Has item to loot?
-    if hasItem then
-        -- Just take the first attachment
-        TakeInboxItem(1, 1)
-        lootUpdateFrame.waitTimer = 0.3 -- Wait a bit for the server to process
-        lootUpdateFrame:Show()
-        return
+    -- 1. Loot Items (Check all slots in case one is unique/blocked)
+    if hasItem and hasItem > 0 then
+        -- Check Bag Space
+        local freeSlots = 0
+        for i = 0, 4 do
+            local numFree, _ = C_Container.GetContainerNumFreeSlots(i)
+            freeSlots = freeSlots + numFree
+        end
+        
+        if freeSlots == 0 then
+            ns.Print("|cFFFF0000Error:|r Inventory is full. Stopping Open All.")
+            isOpeningAll = false
+            OpenAllButton:SetText("Open All")
+            return
+        end
+
+        for i = 1, 12 do -- Max attachments is 12
+            local itemID = select(2, GetInboxItem(1, i))
+            if itemID then
+                TakeInboxItem(1, i)
+                lootUpdateFrame.waitTimer = 0.35
+                lootUpdateFrame:Show()
+                return
+            end
+        end
     end
     
-    -- Has money to loot?
+    -- 2. Loot Money
     if money > 0 then
         totalGoldLooted = totalGoldLooted + money
-        TakeInboxMoney(1, money)
-        lootUpdateFrame.waitTimer = 0.3
+        TakeInboxMoney(1)
+        lootUpdateFrame.waitTimer = 0.35
         lootUpdateFrame:Show()
         return
     end
     
-    -- Mail is empty, delete it
+    -- 3. Empty? Delete.
     DeleteInboxItem(1)
-    lootUpdateFrame.waitTimer = 0.3
+    lootUpdateFrame.waitTimer = 0.4 -- Deletion takes slightly longer to register
     lootUpdateFrame:Show()
 end
 
 lootUpdateFrame:SetScript("OnUpdate", function(self, elapsed)
+    if not isOpeningAll then self:Hide(); return end
     if self.waitTimer > 0 then
         self.waitTimer = self.waitTimer - elapsed
     else
         self:Hide()
         ProcessNextMail()
+    end
+end)
+
+-- Error Catching
+Mail:RegisterEvent("UI_ERROR_MESSAGE", function(_, _, message)
+    if isOpeningAll then
+        -- Common stoppage reasons
+        if message == ERR_INV_FULL or message == ERR_ITEM_MAX_COUNT then
+            ns.Print("|cFFFF0000Stopping Open All:|r " .. message)
+            isOpeningAll = false
+            if OpenAllButton then OpenAllButton:SetText("Open All") end
+        end
+    end
+end)
+
+Mail:RegisterEvent("MAIL_CLOSED", function()
+    if isOpeningAll then
+        isOpeningAll = false
+        if OpenAllButton then OpenAllButton:SetText("Open All") end
     end
 end)
 

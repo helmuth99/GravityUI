@@ -127,6 +127,23 @@ local function CreateAlertFrame()
     ns.RaidAlertFrame = alertFrame
 end
 
+local textInfoFrame, textInfoText
+local function CreateTextInfoFrame()
+    if textInfoFrame then return end
+    
+    textInfoFrame = CreateFrame("Frame", "GravityUI_TextInfoFrame", UIParent)
+    textInfoFrame:SetSize(400, 50)
+    textInfoFrame:SetPoint("CENTER", 0, 100)
+    textInfoFrame:Hide()
+    
+    textInfoText = textInfoFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalHuge")
+    textInfoText:SetPoint("CENTER")
+    textInfoText:SetJustifyH("CENTER")
+    textInfoFrame.text = textInfoText
+    
+    ns.TextInfoFrame = textInfoFrame
+end
+
 function RaidWarnings.ApplySettings()
     if not alertFrame then return end
     -- Force fetch DB to ensure fresh settings
@@ -162,6 +179,24 @@ function RaidWarnings.ApplySettings()
     -- Scale/Size
     alertFrame:SetScale(1)
     alertFrame:SetSize(400, (csv.fontSize or 24) + 10)
+
+    -- Text Info Settings
+    if not textInfoFrame then CreateTextInfoFrame() end
+    local ti = csv.textInfos
+    if ti then
+        local fontPath = "Fonts/FRIZQT__.TTF"
+        local LSM = GetLSM()
+        if LSM then
+            local fetched = LSM:Fetch("font", csv.font or defaultFont)
+            if fetched then fontPath = fetched end
+        end
+        textInfoText:SetFont(fontPath, ti.durabilitySize or 24, "OUTLINE")
+        local r, g, b = 1, 0.2, 0.2
+        if ti.durabilityColor then r,g,b = unpack(ti.durabilityColor) end
+        textInfoText:SetTextColor(r, g, b)
+        textInfoFrame:ClearAllPoints()
+        textInfoFrame:SetPoint("CENTER", UIParent, "CENTER", ti.durabilityX or 0, ti.durabilityY or 200)
+    end
 end
 
 -- ============================================================================
@@ -251,6 +286,63 @@ end
 -- ============================================================================
 function RaidWarnings.Initialize()
     CreateAlertFrame()
+    CreateTextInfoFrame()
+end
+
+function RaidWarnings.CheckDurability()
+    local db = ns.GetDB()
+    if not db or not db.raidWarnings or not db.raidWarnings.enabled then 
+        if textInfoFrame then textInfoFrame:Hide() end
+        return 
+    end
+    
+    local csv = db.raidWarnings
+    local ti = csv.textInfos
+    
+    if not ti or not ti.durabilityEnabled then
+        if textInfoFrame then textInfoFrame:Hide() end
+        return
+    end
+
+    -- Visibility Filters
+    local inRaid = IsInRaid()
+    local inGroup = IsInGroup()
+    
+    if inRaid then
+         if not csv.showInRaid then if textInfoFrame then textInfoFrame:Hide() end return end
+    elseif inGroup then
+         if not csv.showInGroup then if textInfoFrame then textInfoFrame:Hide() end return end
+    else
+        -- Not in group at all, user said respect group/raid dependencies.
+        -- If both are false, it should never show? 
+        -- Usually warnings only show in groups.
+        if textInfoFrame then textInfoFrame:Hide() end
+        return
+    end
+
+    -- Calculate Durability
+    local totalCurrent, totalMax = 0, 0
+    for i = 1, 18 do
+        local current, max = GetInventoryItemDurability(i)
+        if current and max then
+            totalCurrent = totalCurrent + current
+            totalMax = totalMax + max
+        end
+    end
+
+    if totalMax > 0 then
+        local percent = (totalCurrent / totalMax) * 100
+        if percent < (ti.durabilityThreshold or 25) then
+            if not textInfoFrame then CreateTextInfoFrame() end
+            RaidWarnings.ApplySettings()
+            textInfoText:SetText("Durability low")
+            textInfoFrame:Show()
+        else
+            if textInfoFrame then textInfoFrame:Hide() end
+        end
+    else
+        if textInfoFrame then textInfoFrame:Hide() end
+    end
 end
 
 -- ============================================================================
@@ -393,14 +485,15 @@ local eventFrame = CreateFrame("Frame")
 eventFrame:RegisterEvent("CHAT_MSG_ADDON")
 eventFrame:RegisterEvent("GROUP_ROSTER_UPDATE")
 eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
-eventFrame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
+eventFrame:RegisterEvent("UPDATE_INVENTORY_DURABILITY")
 
 -- Throttle for incoming COMM messages
 local commThrottle = {}
 
 eventFrame:SetScript("OnEvent", function(self, event, ...)
-    if event == "GROUP_ROSTER_UPDATE" or event == "PLAYER_ENTERING_WORLD" or event == "ZONE_CHANGED_NEW_AREA" then
+    if event == "GROUP_ROSTER_UPDATE" or event == "PLAYER_ENTERING_WORLD" or event == "UPDATE_INVENTORY_DURABILITY" then
         UpdateWatchers()
+        RaidWarnings.CheckDurability()
         
     elseif event == "CHAT_MSG_ADDON" then
         local prefix, message, channel, sender = ...
@@ -517,7 +610,11 @@ end
 -- ============================================================================
 function RaidWarnings.Initialize()
     CreateAlertFrame()
+    CreateTextInfoFrame()
     RaidWarnings.RegisterMover()
+    
+    -- Initial Check
+    C_Timer.After(2, RaidWarnings.CheckDurability)
 end
 
 -- ============================================================================

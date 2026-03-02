@@ -1189,6 +1189,252 @@ function Styling:InitWidgetPowerBar()
 end
 
 -------------------------------------------------------------------------------
+-- WIDGET BELOW MINIMAP CONTAINER (UIWidgetBelowMinimapContainerFrame)
+-------------------------------------------------------------------------------
+
+local widgetBelowMinimapMover = nil
+
+function Styling:SaveWidgetBelowMinimapPosition(point, relPoint, x, y)
+    local db = GetDB()
+    if db then
+        db.widgetBelowMinimap = db.widgetBelowMinimap or {}
+        db.widgetBelowMinimap.position = { point = point, relPoint = relPoint, x = x, y = y }
+    end
+end
+
+function Styling:GetWidgetBelowMinimapPosition()
+    local db = GetDB()
+    return db and db.widgetBelowMinimap and db.widgetBelowMinimap.position
+end
+
+function Styling:ResetWidgetBelowMinimapPosition()
+    local db = GetDB()
+    if db and db.widgetBelowMinimap then db.widgetBelowMinimap.position = nil end
+    local container = _G.UIWidgetBelowMinimapContainerFrame
+    if container then
+        container:ClearAllPoints()
+        container:SetPoint("TOPRIGHT", UIParent, "TOPRIGHT", -200, -350)
+    end
+    if widgetBelowMinimapMover then
+        widgetBelowMinimapMover:ClearAllPoints()
+        widgetBelowMinimapMover:SetPoint("CENTER", container, "CENTER")
+    end
+end
+
+local function CreateWidgetBelowMinimapMover()
+    if widgetBelowMinimapMover then return end
+    
+    local container = _G.UIWidgetBelowMinimapContainerFrame
+    if not container then return end
+
+    local sr, sg, sb, sa = ns.GetAccentColor()
+    
+    widgetBelowMinimapMover = CreateFrame("Frame", "GravityUI_WidgetBelowMinimapMover", UIParent, "BackdropTemplate")
+    widgetBelowMinimapMover:SetSize(math.max(container:GetWidth() or 200, 200), math.max(container:GetHeight() or 40, 40))
+    widgetBelowMinimapMover:SetPoint("CENTER", container, "CENTER")
+    widgetBelowMinimapMover:SetBackdrop({
+        bgFile = "Interface\\Buttons\\WHITE8x8",
+        edgeFile = "Interface\\Buttons\\WHITE8x8",
+        edgeSize = 1,
+    })
+    widgetBelowMinimapMover:SetBackdropColor(sr, sg, sb, 0.3)
+    widgetBelowMinimapMover:SetBackdropBorderColor(sr, sg, sb, 1)
+    widgetBelowMinimapMover:EnableMouse(true)
+    widgetBelowMinimapMover:SetMovable(true)
+    widgetBelowMinimapMover:RegisterForDrag("LeftButton")
+    widgetBelowMinimapMover:SetFrameStrata("FULLSCREEN_DIALOG")
+    widgetBelowMinimapMover:Hide()
+
+    widgetBelowMinimapMover.text = widgetBelowMinimapMover:CreateFontString(nil, "OVERLAY")
+    widgetBelowMinimapMover.text:SetPoint("CENTER")
+    widgetBelowMinimapMover.text:SetFont(GetFontPath(), 10, "OUTLINE")
+    widgetBelowMinimapMover.text:SetText("Widget Below Minimap")
+    
+    widgetBelowMinimapMover:SetScript("OnDragStart", function() container:StartMoving() end)
+    widgetBelowMinimapMover:SetScript("OnDragStop", function(self)
+        container:StopMovingOrSizing()
+        local point, _, relPoint, x, y = container:GetPoint()
+        Styling:SaveWidgetBelowMinimapPosition(point, relPoint, x, y)
+        self:ClearAllPoints()
+        self:SetPoint("CENTER", container, "CENTER")
+    end)
+    
+    container:SetMovable(true)
+    container:SetClampedToScreen(true)
+end
+
+function Styling:ToggleWidgetBelowMinimapMover(forceState)
+    CreateWidgetBelowMinimapMover()
+    if not widgetBelowMinimapMover then return end
+
+    local container = _G.UIWidgetBelowMinimapContainerFrame
+    local shouldShow = not widgetBelowMinimapMover:IsShown()
+    if forceState ~= nil then shouldShow = forceState end
+
+    if shouldShow then
+        if ns.Movers and ns.Movers.ApplyEditModeStyle then
+            ns.Movers:ApplyEditModeStyle(widgetBelowMinimapMover, forceState == true)
+        end
+        widgetBelowMinimapMover:SetSize(math.max(container:GetWidth() or 200, 200), math.max(container:GetHeight() or 40, 40))
+        widgetBelowMinimapMover:Show()
+    else
+        widgetBelowMinimapMover:Hide()
+    end
+end
+
+function Styling:InitWidgetBelowMinimap()
+    local container = _G.UIWidgetBelowMinimapContainerFrame
+    if not container then return end
+
+    local pos = Styling:GetWidgetBelowMinimapPosition()
+    if pos and pos.point then
+        container:ClearAllPoints()
+        container:SetPoint(pos.point, UIParent, pos.relPoint or "CENTER", pos.x or 0, pos.y or 0)
+    end
+
+    hooksecurefunc(container, "SetPoint", function(self, point, relativeTo)
+        if self._isSettingPosition then return end
+        
+        local currentPos = Styling:GetWidgetBelowMinimapPosition()
+        if currentPos and currentPos.point then
+            if point ~= currentPos.point or relativeTo ~= UIParent then
+                self._isSettingPosition = true
+                self:ClearAllPoints()
+                self:SetPoint(currentPos.point, UIParent, currentPos.relPoint or "CENTER", currentPos.x or 0, currentPos.y or 0)
+                self._isSettingPosition = false
+            end
+        end
+    end)
+
+    if ns.Movers and ns.Movers.Register then
+        ns.Movers:Register("WidgetBelowMinimap", nil, function(frame, enabled, force) Styling:ToggleWidgetBelowMinimapMover(force) end, "Widget Below Minimap")
+    end
+end
+
+-------------------------------------------------------------------------------
+-- TOP CENTER CONTAINER (UIWidgetTopCenterContainerFrame)
+-------------------------------------------------------------------------------
+
+local widgetTopCenterMover = nil
+
+function Styling:SaveWidgetTopCenterPosition(point, relPoint, x, y)
+    local db = GetDB()
+    if db then
+        db.widgetTopCenter = db.widgetTopCenter or {}
+        db.widgetTopCenter.position = { point = point, relPoint = relPoint, x = x, y = y }
+    end
+end
+
+function Styling:GetWidgetTopCenterPosition()
+    local db = GetDB()
+    return db and db.widgetTopCenter and db.widgetTopCenter.position
+end
+
+function Styling:ResetWidgetTopCenterPosition()
+    local db = GetDB()
+    if db and db.widgetTopCenter then db.widgetTopCenter.position = nil end
+    local container = _G.UIWidgetTopCenterContainerFrame
+    if container then
+        container:ClearAllPoints()
+        container:SetPoint("TOP", UIParent, "TOP", 0, -200)
+    end
+    if widgetTopCenterMover then
+        widgetTopCenterMover:ClearAllPoints()
+        widgetTopCenterMover:SetPoint("CENTER", container, "CENTER")
+    end
+end
+
+local function CreateWidgetTopCenterMover()
+    if widgetTopCenterMover then return end
+    
+    local container = _G.UIWidgetTopCenterContainerFrame
+    if not container then return end
+
+    local sr, sg, sb, sa = ns.GetAccentColor()
+    
+    widgetTopCenterMover = CreateFrame("Frame", "GravityUI_WidgetTopCenterMover", UIParent, "BackdropTemplate")
+    widgetTopCenterMover:SetSize(math.max(container:GetWidth() or 200, 200), math.max(container:GetHeight() or 40, 40))
+    widgetTopCenterMover:SetPoint("CENTER", container, "CENTER")
+    widgetTopCenterMover:SetBackdrop({
+        bgFile = "Interface\\Buttons\\WHITE8x8",
+        edgeFile = "Interface\\Buttons\\WHITE8x8",
+        edgeSize = 1,
+    })
+    widgetTopCenterMover:SetBackdropColor(sr, sg, sb, 0.3)
+    widgetTopCenterMover:SetBackdropBorderColor(sr, sg, sb, 1)
+    widgetTopCenterMover:EnableMouse(true)
+    widgetTopCenterMover:SetMovable(true)
+    widgetTopCenterMover:RegisterForDrag("LeftButton")
+    widgetTopCenterMover:SetFrameStrata("FULLSCREEN_DIALOG")
+    widgetTopCenterMover:Hide()
+
+    widgetTopCenterMover.text = widgetTopCenterMover:CreateFontString(nil, "OVERLAY")
+    widgetTopCenterMover.text:SetPoint("CENTER")
+    widgetTopCenterMover.text:SetFont(GetFontPath(), 10, "OUTLINE")
+    widgetTopCenterMover.text:SetText("Widget Top Center")
+    
+    widgetTopCenterMover:SetScript("OnDragStart", function() container:StartMoving() end)
+    widgetTopCenterMover:SetScript("OnDragStop", function(self)
+        container:StopMovingOrSizing()
+        local point, _, relPoint, x, y = container:GetPoint()
+        Styling:SaveWidgetTopCenterPosition(point, relPoint, x, y)
+        self:ClearAllPoints()
+        self:SetPoint("CENTER", container, "CENTER")
+    end)
+    
+    container:SetMovable(true)
+    container:SetClampedToScreen(true)
+end
+
+function Styling:ToggleWidgetTopCenterMover(forceState)
+    CreateWidgetTopCenterMover()
+    if not widgetTopCenterMover then return end
+
+    local container = _G.UIWidgetTopCenterContainerFrame
+    local shouldShow = not widgetTopCenterMover:IsShown()
+    if forceState ~= nil then shouldShow = forceState end
+
+    if shouldShow then
+        if ns.Movers and ns.Movers.ApplyEditModeStyle then
+            ns.Movers:ApplyEditModeStyle(widgetTopCenterMover, forceState == true)
+        end
+        widgetTopCenterMover:SetSize(math.max(container:GetWidth() or 200, 200), math.max(container:GetHeight() or 40, 40))
+        widgetTopCenterMover:Show()
+    else
+        widgetTopCenterMover:Hide()
+    end
+end
+
+function Styling:InitWidgetTopCenter()
+    local container = _G.UIWidgetTopCenterContainerFrame
+    if not container then return end
+
+    local pos = Styling:GetWidgetTopCenterPosition()
+    if pos and pos.point then
+        container:ClearAllPoints()
+        container:SetPoint(pos.point, UIParent, pos.relPoint or "CENTER", pos.x or 0, pos.y or 0)
+    end
+
+    hooksecurefunc(container, "SetPoint", function(self, point, relativeTo)
+        if self._isSettingPosition then return end
+        
+        local currentPos = Styling:GetWidgetTopCenterPosition()
+        if currentPos and currentPos.point then
+            if point ~= currentPos.point or relativeTo ~= UIParent then
+                self._isSettingPosition = true
+                self:ClearAllPoints()
+                self:SetPoint(currentPos.point, UIParent, currentPos.relPoint or "CENTER", currentPos.x or 0, currentPos.y or 0)
+                self._isSettingPosition = false
+            end
+        end
+    end)
+
+    if ns.Movers and ns.Movers.Register then
+        ns.Movers:Register("WidgetTopCenter", nil, function(frame, enabled, force) Styling:ToggleWidgetTopCenterMover(force) end, "Widget Top Center")
+    end
+end
+
+-------------------------------------------------------------------------------
 -- ALERT FRAMES
 -------------------------------------------------------------------------------
 function Styling:SkinAlertFrames()
@@ -1233,6 +1479,8 @@ function Styling:Initialize()
     self:SkinKeystone()
     self:SkinPowerBar()
     self:InitWidgetPowerBar()
+    self:InitWidgetBelowMinimap()
+    self:InitWidgetTopCenter()
     self:SkinAlertFrames()
     self:SkinLoot()
     self:SkinReputationCurrency()

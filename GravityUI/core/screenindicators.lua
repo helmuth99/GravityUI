@@ -1938,6 +1938,12 @@ afkEventFrame:RegisterEvent("PLAYER_LEAVING_WORLD")
 afkEventFrame:RegisterEvent("AUCTION_HOUSE_SHOW")
 afkEventFrame:RegisterEvent("TRADE_SKILL_SHOW")
 
+-- LFG/PvP Failsafes: Exit AFK when a queue pops or ready check happens
+afkEventFrame:RegisterEvent("LFG_PROPOSAL_SHOW")
+afkEventFrame:RegisterEvent("UPDATE_BATTLEFIELD_STATUS")
+afkEventFrame:RegisterEvent("READY_CHECK")
+afkEventFrame:RegisterEvent("LFG_ROLE_CHECK_SHOW")
+
 afkEventFrame:SetScript("OnEvent", function(self, event, unit)
     if event == "PLAYER_FLAGS_CHANGED" and unit == "player" then
         if UnitIsAFK("player") then
@@ -1961,6 +1967,10 @@ afkEventFrame:SetScript("OnEvent", function(self, event, unit)
     elseif event == "AUCTION_HOUSE_SHOW" or event == "TRADE_SKILL_SHOW" then
         local s = GetAFKSettings()
         if s and s.preventInAh and AFKState.isAFK then
+            ExitAFK()
+        end
+    elseif event == "LFG_PROPOSAL_SHOW" or event == "UPDATE_BATTLEFIELD_STATUS" or event == "READY_CHECK" or event == "LFG_ROLE_CHECK_SHOW" then
+        if AFKState.isAFK then
             ExitAFK()
         end
     end

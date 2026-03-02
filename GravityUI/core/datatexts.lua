@@ -816,11 +816,26 @@ DT.Types.coords = {
 DT.Types.spec = {
     Update = function(slot, config)
         local spec = GetSpecialization()
-        local _, name, _, icon = GetSpecializationInfo(spec or 1)
+        local _, _, _, specIcon = GetSpecializationInfo(spec or 1)
+        
+        local lootSpec = GetLootSpecialization()
+        local lootIcon
+        if lootSpec == 0 then
+            local _, _, _, autoIcon = GetSpecializationInfo(spec or 1)
+            lootIcon = autoIcon
+        else
+            local _, _, _, specificIcon = GetSpecializationInfoByID(lootSpec)
+            lootIcon = specificIcon
+        end
+
         local r, g, b = GetValueColor()
-        local label = GetLabel("Spec: ", "S: ", config.shortLabel, config.noLabel)
-        local iconText = string.format("|T%s:14:14:0:0:64:64:4:60:4:60|t", icon or "")
-        return string.format("%s %s|cff%02x%02x%02x%s|r", iconText, label, r*255, g*255, b*255, name or "None")
+        local specLabel = GetLabel("Spec: ", "S: ", config.shortLabel, config.noLabel)
+        local lootLabel = GetLabel("Loot: ", "L: ", config.shortLabel, config.noLabel)
+        
+        local specIconText = string.format("|T%s:14:14:0:0:64:64:4:60:4:60|t", specIcon or "")
+        local lootIconText = string.format("|T%s:14:14:0:0:64:64:4:60:4:60|t", lootIcon or "")
+        
+        return string.format("%s%s %s%s", specLabel, specIconText, lootLabel, lootIconText)
     end,
     OnEnter = function(self)
         GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")

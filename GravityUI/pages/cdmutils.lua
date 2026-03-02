@@ -473,6 +473,7 @@ local function BuildSoundAlerts(parent)
     if LSM then
         for name, _ in pairs(LSM:HashTable("sound")) do table.insert(soundOptions, {value=name, text=name}) end
         table.sort(soundOptions, function(a,b)
+             if a.value == b.value then return false end
              if a.value == "None" then return true end
              if b.value == "None" then return false end
              return a.text < b.text 

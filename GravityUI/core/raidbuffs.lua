@@ -8,6 +8,7 @@ local ADDON_NAME, ns = ...
 
 local RaidBuffs = {}
 ns.RaidBuffs = RaidBuffs
+local visibilityCache = {}
 
 -- ============================================================================
 -- CONSTANTS & DEFINITIONS
@@ -393,17 +394,27 @@ local function UnitHasBuff(unit, spellIDs)
     return false, nil, nil
 end
 
-    local function CountMissingBuff(spellIDs, buffKey, playerOnly, checkAny)
+    -- Valid members check (Throttled visibility)
+local function IsValid(unit)
+    if not UnitExists(unit) or UnitIsDeadOrGhost(unit) or not UnitIsConnected(unit) or not UnitCanAssist("player", unit) then
+        return false
+    end
+    
+    -- Throttle UnitIsVisible (expensive C-API call)
+    local now = GetTime()
+    if not visibilityCache[unit] or (now - visibilityCache[unit].time > 5) then
+        visibilityCache[unit] = { val = UnitIsVisible(unit), time = now }
+    end
+    return visibilityCache[unit].val
+end
+
+local function CountMissingBuff(spellIDs, buffKey, playerOnly, checkAny, unitList)
     local missing = 0
     local total = 0
     local minRemaining = nil
     
-    -- Valid members check
-    local function IsValid(unit)
-        return UnitExists(unit) and not UnitIsDeadOrGhost(unit) and UnitIsConnected(unit) and UnitCanAssist("player", unit) and UnitIsVisible(unit)
-    end
 
-    if playerOnly or GetNumGroupMembers() == 0 then
+    if playerOnly or (not unitList or #unitList == 0) then
         total = 1
         local hasBuff, remaining = UnitHasBuff("player", spellIDs)
         if not hasBuff then missing = 1
@@ -411,23 +422,18 @@ end
         return missing, total, minRemaining
     end
 
-    local inRaid = IsInRaid()
     local foundAny = false
-
-    for i = 1, GetNumGroupMembers() do
-        local unit = inRaid and "raid"..i or (i==1 and "player" or "party"..(i-1))
-        if IsValid(unit) then
-             total = total + 1
-             local hasBuff, remaining = UnitHasBuff(unit, spellIDs)
-             if hasBuff then
-                 foundAny = true
-                 if remaining then
-                     if not minRemaining or remaining < minRemaining then minRemaining = remaining end
-                 end
-             else
-                 missing = missing + 1
+    for _, unit in ipairs(unitList) do
+         total = total + 1
+         local hasBuff, remaining = UnitHasBuff(unit, spellIDs)
+         if hasBuff then
+             foundAny = true
+             if remaining then
+                 if not minRemaining or remaining < minRemaining then minRemaining = remaining end
              end
-        end
+         else
+             missing = missing + 1
+         end
     end
 
     if checkAny and foundAny then
@@ -613,7 +619,7 @@ local function UpdateDisplay()
         custom = {}
     }
 
-    local function ProcessBuffFrame(buff, frame, isGroupCategory, catKey)
+    local function ProcessBuffFrame(buff, frame, isGroupCategory, catKey, unitList)
         if not frame then return end
         
         -- Check if Category Enabled
@@ -702,7 +708,7 @@ local function UpdateDisplay()
             else
                 local playerOnly = (catKey == "self") or (catKey == "custom") or db.showOnlyPlayerMissing
                 local checkAny = (catKey == "targeted" or catKey == "presence")
-                missing, total, minRem = CountMissingBuff(buff.spellID, buff.key, playerOnly, checkAny)
+                missing, total, minRem = CountMissingBuff(buff.spellID, buff.key, playerOnly, checkAny, unitList)
             end
             local isExpiring = false
             if minRem and db.showExpirationGlow and db.expirationThreshold and minRem < (db.expirationThreshold * 60) then isExpiring = true end
@@ -768,14 +774,27 @@ local function UpdateDisplay()
     -- Currently it loops ALL. If user has 20 enabled buffs, Test Mode shows 20 icons.
     -- This might be clutter, but it's accurate to "what if everything is missing".
     -- Accepted for now.
-    for _, buff in ipairs(RAID_BUFFS) do ProcessBuffFrame(buff, buffFrames[buff.key], true, "raid") end
+    -- Build valid unit list once per update
+    local validUnits = {}
+    if GetNumGroupMembers() > 0 then
+        local inRaid = IsInRaid()
+        for i = 1, GetNumGroupMembers() do
+            local unit = inRaid and "raid"..i or (i==1 and "player" or "party"..(i-1))
+            if IsValid(unit) then
+                table.insert(validUnits, unit)
+            end
+        end
+    end
+
+    -- Process All
+    for _, buff in ipairs(RAID_BUFFS) do ProcessBuffFrame(buff, buffFrames[buff.key], true, "raid", validUnits) end
     for _, buff in ipairs(PRESENCE_BUFFS) do 
-        if isTestMode or buff.class == playerClass then ProcessBuffFrame(buff, buffFrames[buff.key], false, "presence") 
+        if isTestMode or buff.class == playerClass then ProcessBuffFrame(buff, buffFrames[buff.key], false, "presence", validUnits) 
         else if buffFrames[buff.key] then buffFrames[buff.key]:Hide() end end
     end
-    for _, buff in ipairs(TARGETED_BUFFS) do ProcessBuffFrame(buff, buffFrames[buff.key], false, "targeted") end
-    for _, buff in ipairs(SELF_BUFFS) do ProcessBuffFrame(buff, buffFrames[buff.key], false, "self") end
-    if db.customBuffs then for k, b in pairs(db.customBuffs) do ProcessBuffFrame(b, buffFrames[k], false, "custom") end end
+    for _, buff in ipairs(TARGETED_BUFFS) do ProcessBuffFrame(buff, buffFrames[buff.key], false, "targeted", validUnits) end
+    for _, buff in ipairs(SELF_BUFFS) do ProcessBuffFrame(buff, buffFrames[buff.key], false, "self", validUnits) end
+    if db.customBuffs then for k, b in pairs(db.customBuffs) do ProcessBuffFrame(b, buffFrames[k], false, "custom", validUnits) end end
 
     -- Layout Function
     local function LayoutFrames(frameList, parentFrame)
@@ -1113,10 +1132,18 @@ end
 -- EVENT DRIVER (Replaces Ticker)
 -- ============================================================================
 local pendingUpdate = false
-local function RequestUpdate()
+local function RequestUpdate(event)
     if pendingUpdate then return end
+    
+    local delay = 0.5
+    if event == "UNIT_AURA" or event == "UNIT_INVENTORY_CHANGED" then
+        delay = 2.0 -- Throttle standard aura changes
+    elseif event == "PLAYER_REGEN_DISABLED" or event == "READY_CHECK" then
+        delay = 0.05 -- High priority
+    end
+    
     pendingUpdate = true
-    C_Timer.After(0.5, function()
+    C_Timer.After(delay, function()
         pendingUpdate = false
         UpdateDisplay()
     end)
@@ -1142,21 +1169,21 @@ eventFrame:SetScript("OnEvent", function(self, event, arg1)
         UpdateDisplay() -- Instant update on combat start (usually to hide)
     elseif event == "PLAYER_REGEN_ENABLED" then
         inCombat = false
-        RequestUpdate()
+        RequestUpdate(event)
     elseif event == "UNIT_AURA" or event == "UNIT_INVENTORY_CHANGED" then
         -- Simple filter: only care about player/party/raid
         if arg1 and (arg1 == "player" or string.find(arg1, "^party") or string.find(arg1, "^raid")) then
-            RequestUpdate()
+            RequestUpdate(event)
         end
     elseif event == "READY_CHECK" then
         inReadyCheck = true
-        RequestUpdate()
+        RequestUpdate(event)
     elseif event == "READY_CHECK_FINISHED" then
         inReadyCheck = false
-        RequestUpdate()
+        RequestUpdate(event)
     else
         -- Group updates
-        RequestUpdate()
+        RequestUpdate(event)
     end
 end)
 

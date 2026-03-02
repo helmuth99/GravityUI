@@ -93,6 +93,31 @@ local function GetBarButtons(barKey)
     return buttons
 end
 
+-- Debounced Update Helpers
+local pendingUsabilityUpdate = false
+local function RequestUsabilityUpdate()
+    if pendingUsabilityUpdate then return end
+    pendingUsabilityUpdate = true
+    C_Timer.After(0.1, function()
+        if ns.ActionBars and ns.ActionBars.UpdateAllUsability then
+            ns.ActionBars.UpdateAllUsability()
+        end
+        pendingUsabilityUpdate = false
+    end)
+end
+
+local pendingRefresh = false
+local function RequestRefresh()
+    if pendingRefresh then return end
+    pendingRefresh = true
+    C_Timer.After(0.2, function()
+        if ns.RefreshActionBars then
+            ns.RefreshActionBars()
+        end
+        pendingRefresh = false
+    end)
+end
+
 ---------------------------------------------------------------------------
 -- BUTTON SKINNING
 ---------------------------------------------------------------------------
@@ -534,7 +559,7 @@ local function UpdateAllEmptySlots()
     end
 end
 
-local function UpdateAllUsability()
+function ActionBars.UpdateAllUsability()
     local db = GetDB()
     if not db or not db.enabled then return end
     local g = db.global
@@ -858,7 +883,7 @@ function ns.RefreshActionBars()
     end
     
     -- Usability Initial Run
-    UpdateAllUsability()
+    ActionBars.UpdateAllUsability()
     
     -- Initialize Extra Buttons
     if InitializeExtraButtons then InitializeExtraButtons() end
@@ -888,8 +913,8 @@ initFrame:SetScript("OnEvent", function(self, event)
     if event == "PLAYER_LOGIN" then
         ns.RefreshActionBars()
     elseif event == "ACTIONBAR_SLOT_CHANGED" or event == "UPDATE_BINDINGS" or event == "ACTIONBAR_PAGE_CHANGED" or event == "UPDATE_BONUS_ACTIONBAR" or event == "UPDATE_VEHICLE_ACTIONBAR" then
-        ns.RefreshActionBars()
+        RequestRefresh()
     else
-        UpdateAllUsability()
+        RequestUsabilityUpdate()
     end
 end)

@@ -108,6 +108,13 @@ local function BuildInformationTab(content)
     y = y - 10
 
     local changeLogs = {
+        { version = "3.86", date = "02.03.2026", changes = {
+            "Overhauled 'Group Key List' visibility - now strictly restricted to 5-man parties outside of instances",
+            "Added 'Lock/Unlock' frame functionality to the Group Key List to prevent accidental movement and resizing",
+            "Added a 'Scale Reset' button to the Group Key List header to quickly restore the 1.0 scale factor",
+            "Implemented hover tooltips for all keystones in the Group Key List for rapid affix and level inspection",
+            "Cleaned up legacy chat commands: Removed !key and !keys to reduce internal and shared chat noise"
+        } },
         { version = "3.85", date = "01.03.2026", changes = {
             "Added Sound Alerts module to 'UI Utilities' for replacing game sounds with custom SharedMedia files",
             "Added manual 'Play' buttons for instant sound previews in the Sound Alerts menu",

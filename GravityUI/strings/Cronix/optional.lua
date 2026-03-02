@@ -24,18 +24,18 @@ imports["Baganator"] = {
 ["default_battlepet"] = true,
 ["default_food"] = true,
 ["default_recipe"] = true,
-["default_weapon"] = true,
-["default_questitem"] = true,
+["default_junk"] = true,
+["default_reagent"] = true,
 ["default_consumable"] = true,
 ["default_tradegoods"] = true,
-["default_gem"] = true,
-["default_potion"] = true,
-["default_profession"] = true,
-["default_auto_equipment_sets"] = true,
-["default_container"] = true,
 ["default_key"] = true,
-["default_reagent"] = true,
-["default_junk"] = true,
+["default_container"] = true,
+["default_auto_equipment_sets"] = true,
+["default_profession"] = true,
+["default_potion"] = true,
+["default_gem"] = true,
+["default_questitem"] = true,
+["default_weapon"] = true,
 },
 ["show_search_box"] = true,
 ["debug_categories_search"] = false,
@@ -45,10 +45,10 @@ imports["Baganator"] = {
 ["reverse_groups_sort_order"] = false,
 ["auto_open"] = {
 ["merchant"] = true,
-["item_upgrade"] = true,
 ["void_storage"] = false,
+["item_upgrade"] = true,
 ["guild_bank"] = true,
-["forge_of_bonds"] = false,
+["trade_partner"] = true,
 ["tradeskill"] = false,
 ["auction_house"] = true,
 ["character_panel"] = false,
@@ -56,26 +56,27 @@ imports["Baganator"] = {
 ["item_interaction"] = true,
 ["mail"] = true,
 ["sockets"] = true,
-["trade_partner"] = true,
+["forge_of_bonds"] = false,
 ["bank"] = true,
 },
 ["icon_corners_auto_insert_applied"] = {
 ["battle_pet_level"] = true,
-["bag_type"] = true,
 ["keystone_level"] = true,
+["bag_type"] = true,
 },
 ["show_recents_tabs_main_view"] = false,
 ["upgrade_plugin_ignored"] = {
 },
 ["category_hidden"] = {
-["default_housing"] = false,
-["default_hearthstone"] = false,
+["1"] = false,
+["18"] = false,
 ["14"] = false,
+["default_hearthstone"] = false,
+["27"] = false,
 ["26"] = false,
 ["20"] = false,
-["18"] = false,
 ["11"] = false,
-["1"] = false,
+["default_housing"] = false,
 },
 ["junk_plugin_ignored"] = {
 },
@@ -109,11 +110,10 @@ imports["Baganator"] = {
 "24",
 "2",
 "11",
-"6",
+"12",
 "15",
 "__end",
 "_3",
-"12",
 "20",
 "22",
 "3",
@@ -125,6 +125,7 @@ imports["Baganator"] = {
 "16",
 "default_housing",
 "9",
+"27",
 "1",
 "14",
 "__end",
@@ -157,125 +158,21 @@ imports["Baganator"] = {
 },
 ["bank_view_position"] = {
 "BOTTOMLEFT",
-7.777732372283936,
-204.2221069335938,
+11.11108112335205,
+235.0554504394531,
 },
-["sort_start_at_bottom"] = false,
-["custom_categories"] = {
-["23"] = {
-["name"] = "Weapons",
-["search"] = "#weapon",
-},
-["22"] = {
-["name"] = "Prof",
-["search"] = "#profession",
-},
-["21"] = {
-["name"] = "Trade",
-["search"] = "tradable loot || tradeable loot",
-},
-["13"] = {
-["name"] = "Food",
-["search"] = "#food",
-},
-["26"] = {
-["name"] = "Ring",
-["search"] = "#finger",
-},
-["8"] = {
-["name"] = "Trinkets",
-["search"] = "#trinket",
-},
-["15"] = {
-["name"] = "Gems",
-["search"] = "#gem",
-},
-["9"] = {
-["name"] = "Quest",
-["search"] = "#quest",
-},
-["14"] = {
-["name"] = "Junk",
-["search"] = "#junk",
-},
-["5"] = {
-["name"] = "Consumables",
-["search"] = "#consumable",
-},
-["1"] = {
-["name"] = "TWW",
-["search"] = "#tww",
-},
-["18"] = {
-["name"] = "Pets",
-["search"] = "#battle pet || pet",
-},
-["3"] = {
-["name"] = "Recipes",
-["search"] = "#recipe",
-},
-["2"] = {
-["name"] = "Misc",
-["search"] = "#tabard || #shirt",
-},
-["19"] = {
-["name"] = "Pots",
-["search"] = "#potion",
-},
-["4"] = {
-["name"] = "Boxes",
-["search"] = "open",
-},
-["7"] = {
-["name"] = "Gear",
-["search"] = "#armor",
-},
-["6"] = {
-["name"] = "Enchants",
-["search"] = "#item enhancement",
-},
-["25"] = {
-["name"] = "BoE",
-["search"] = "boe",
-},
-["24"] = {
-["name"] = "BoA",
-["search"] = "boa",
-},
-["16"] = {
-["name"] = "Toys",
-["search"] = "#toy",
-},
-["17"] = {
-["name"] = "Keys",
-["search"] = "#key",
-},
-["20"] = {
-["name"] = "Sparks",
-["search"] = "spark",
-},
-["12"] = {
-["name"] = "Mats",
-["search"] = "#tradeskill || #reagent",
-},
-["11"] = {
-["name"] = "Legacy",
-["search"] = "#gear&!tww",
-},
-["10"] = {
-["name"] = "Utility",
-["search"] = "",
-},
+["recent_timeout"] = 15,
+["currency_headers_collapsed"] = {
 },
 ["recent_include_owned"] = false,
-["icon_mark_unusable"] = false,
-["guild_current_tab"] = 1,
+["category_sort_method"] = "item-level",
+["icon_context_fading"] = true,
 ["guild_view_position_2"] = {
 "TOPLEFT",
 150.4443664550781,
 -143.148193359375,
 },
-["lock_frames"] = false,
+["icon_equipment_set_border"] = true,
 ["debug_timers"] = false,
 ["seen_welcome"] = 1,
 ["hide_special_container"] = {
@@ -304,38 +201,17 @@ imports["Baganator"] = {
 0,
 0,
 },
-["bag_icon_size"] = 36,
+["category_edit_search_mode"] = "visual",
 ["category_horizontal_spacing_2"] = 0.3,
-["currencies_tracked_imported"] = {
-},
+["bag_view_show_bag_slots"] = false,
 ["category_default_import"] = 3,
 ["debug_categories"] = false,
 ["character_bank_current_tab"] = 0,
 ["category_horizontal_spacing"] = 0.15,
-["bag_view_position"] = {
-"BOTTOMRIGHT",
--10.335205078125,
-9.555904388427734,
-},
+["migrated_sort_method"] = true,
 ["upgrade_plugin"] = "none",
-["saved_searches"] = {
-},
-["guild_bank_sort_method"] = "unset",
-["category_migration"] = 5,
-["category_section_toggled"] = {
-["Equipment"] = false,
-["Main"] = false,
-["Crafting"] = false,
-["1"] = false,
-["General"] = false,
-},
+["junk_plugin"] = "poor_quality",
 ["category_modifications"] = {
-["default_miscellaneous"] = {
-["addedItems"] = {
-["i:244465"] = true,
-["i:233186"] = true,
-},
-},
 ["23"] = {
 ["priority"] = -1,
 ["addedItems"] = {
@@ -343,11 +219,22 @@ imports["Baganator"] = {
 ["i:178780"] = true,
 },
 },
+["default_miscellaneous"] = {
+["addedItems"] = {
+["i:244465"] = true,
+["i:233186"] = true,
+["i:259361"] = true,
+["i:253580"] = true,
+["i:255826"] = true,
+["i:260531"] = true,
+},
+},
 ["22"] = {
 ["priority"] = -1,
 ["addedItems"] = {
-["i:222551"] = true,
 ["i:222548"] = true,
+["i:222551"] = true,
+["i:256645"] = true,
 },
 },
 ["21"] = {
@@ -368,6 +255,13 @@ imports["Baganator"] = {
 ["i:180653"] = true,
 },
 ["priority"] = -1,
+},
+["27"] = {
+["showGroupPrefix"] = true,
+["priority"] = -1,
+["addedItems"] = {
+["i:264882"] = true,
+},
 },
 ["default_housing"] = {
 ["showGroupPrefix"] = true,
@@ -395,27 +289,15 @@ imports["Baganator"] = {
 ["8"] = {
 ["priority"] = 0,
 },
-["15"] = {
-["priority"] = -1,
+["25"] = {
+["priority"] = 0,
 },
-["9"] = {
+["15"] = {
 ["priority"] = -1,
 },
 ["14"] = {
 ["showGroupPrefix"] = true,
 ["priority"] = 3,
-},
-["19"] = {
-["priority"] = -1,
-},
-["1"] = {
-["showGroupPrefix"] = true,
-["priority"] = -1,
-["addedItems"] = {
-["i:225557"] = true,
-["i:225767"] = true,
-["i:235897"] = true,
-},
 },
 ["18"] = {
 ["priority"] = -1,
@@ -431,11 +313,27 @@ imports["Baganator"] = {
 ["i:116421"] = true,
 ["i:116420"] = true,
 ["i:89906"] = true,
-["i:116424"] = true,
+["i:122457"] = true,
 ["i:116429"] = true,
 ["i:71153"] = true,
-["i:122457"] = true,
+["i:116424"] = true,
 ["i:116418"] = true,
+},
+},
+["1"] = {
+["showGroupPrefix"] = true,
+["priority"] = -1,
+["addedItems"] = {
+["i:225557"] = true,
+["i:225767"] = true,
+["i:235897"] = true,
+},
+},
+["19"] = {
+["priority"] = -1,
+["addedItems"] = {
+["i:241304"] = true,
+["i:258138"] = true,
 },
 },
 ["3"] = {
@@ -458,11 +356,11 @@ imports["Baganator"] = {
 ["i:159972"] = true,
 ["i:133299"] = true,
 ["i:133298"] = true,
-["i:133306"] = true,
+["i:178701"] = true,
 ["i:133286"] = true,
 ["i:133363"] = true,
 ["i:159427"] = true,
-["i:178701"] = true,
+["i:133306"] = true,
 ["i:159429"] = true,
 },
 ["priority"] = -1,
@@ -474,8 +372,8 @@ imports["Baganator"] = {
 ["i:213777"] = true,
 },
 },
-["25"] = {
-["priority"] = 0,
+["9"] = {
+["priority"] = -1,
 },
 ["24"] = {
 ["priority"] = 3,
@@ -498,9 +396,11 @@ imports["Baganator"] = {
 ["13"] = {
 ["priority"] = -1,
 ["addedItems"] = {
-["i:222776"] = true,
 ["i:222781"] = true,
 ["i:222778"] = true,
+["i:242764"] = true,
+["i:222776"] = true,
+["i:266985"] = true,
 ["i:222768"] = true,
 },
 },
@@ -516,18 +416,18 @@ imports["Baganator"] = {
 },
 ["10"] = {
 ["addedItems"] = {
-["i:132516"] = true,
+["i:65274"] = true,
 ["i:64401"] = true,
 ["i:188152"] = true,
-["i:109076"] = true,
-["i:168222"] = true,
 ["i:65360"] = true,
+["i:168222"] = true,
+["i:109076"] = true,
 ["i:64402"] = true,
-["i:65274"] = true,
-["i:111820"] = true,
+["i:132516"] = true,
 ["i:64400"] = true,
-["i:109253"] = true,
+["i:111820"] = true,
 ["i:221903"] = true,
+["i:109253"] = true,
 ["i:221949"] = true,
 ["i:49040"] = true,
 ["i:203722"] = true,
@@ -536,15 +436,7 @@ imports["Baganator"] = {
 ["priority"] = 3,
 },
 },
-["warband_bank_view_width"] = 16,
-["guild_view_position"] = {
-"LEFT",
-583.5559692382812,
-150.0554809570313,
-},
-["add_to_category_buttons_2"] = "drag+alt",
-["view_type"] = "unset",
-["bank_current_tab"] = 1,
+["category_migration"] = 5,
 ["currencies_tracked"] = {
 ["Cronìx-Blackhand"] = {
 },
@@ -563,24 +455,31 @@ imports["Baganator"] = {
 ["Bláckstar-Kel'Thuzad"] = {
 },
 },
-["show_buttons_on_alt"] = false,
+["guild_bank_sort_method"] = "unset",
+["warband_bank_view_width"] = 16,
+["guild_view_position"] = {
+"LEFT",
+583.5559692382812,
+150.0554809570313,
+},
+["add_to_category_buttons_2"] = "drag+alt",
+["view_type"] = "unset",
+["bank_current_tab"] = 2,
+["icon_text_quality_colors"] = true,
+["bag_empty_space_at_top"] = false,
 ["icon_text_font_size"] = 14,
+["sort_ignore_slots_at_end"] = false,
+["disabled_skins"] = {
+},
+["view_alpha"] = 1,
 ["sort_ignore_slots_count_2"] = {
 ["Cronîx-Blackhand"] = 0,
 },
-["setting_anchors"] = false,
-["disabled_skins"] = {
-},
-["bag_view_width"] = 16,
 ["sort_ignore_bank_slots_count"] = {
 ["Cronîx-Blackhand"] = 0,
 },
-["recent_characters_main_view"] = {
-"Cronîx-Blackhand",
-"Cronìx-Blackhand",
-"Crônix-Blackhand",
-"Cròníx-Blackhand",
-},
+["category_group_empty_slots"] = true,
+["debug_keywords"] = false,
 ["skins"] = {
 ["elvui"] = {
 ["use_bag_font"] = false,
@@ -592,18 +491,28 @@ imports["Baganator"] = {
 },
 ["dark"] = {
 ["view_transparency"] = 0.2,
-["square_icons"] = false,
+["square_icons"] = true,
 ["no_frame_borders"] = true,
 ["empty_slot_background"] = false,
 },
 },
-["debug_keywords"] = false,
-["category_group_empty_slots"] = true,
+["recent_characters_main_view"] = {
+"Cronîx-Blackhand",
+"Cronìx-Blackhand",
+"Crônix-Blackhand",
+"Cròníx-Blackhand",
+},
 ["auto_sort_on_open"] = false,
-["view_alpha"] = 1,
-["sort_ignore_slots_at_end"] = false,
-["bag_empty_space_at_top"] = false,
-["icon_text_quality_colors"] = true,
+["bag_view_width"] = 16,
+["setting_anchors"] = false,
+["show_buttons_on_alt"] = false,
+["category_section_toggled"] = {
+["1"] = false,
+["Main"] = false,
+["Crafting"] = false,
+["General"] = false,
+["Equipment"] = false,
+},
 ["guild_view_dialog_position"] = {
 "TOP",
 "UIParent",
@@ -611,16 +520,22 @@ imports["Baganator"] = {
 -5.999967098236084,
 -170.9444885253906,
 },
-["junk_plugin"] = "poor_quality",
+["saved_searches"] = {
+},
 ["bank_only_view_position"] = {
 "LEFT",
 549.7777099609375,
 20.44439697265625,
 },
-["migrated_sort_method"] = true,
+["bag_view_position"] = {
+"BOTTOMRIGHT",
+-8.66845703125,
+22.88926315307617,
+},
 ["show_sort_button_2"] = true,
-["bag_view_show_bag_slots"] = false,
-["category_edit_search_mode"] = "visual",
+["currencies_tracked_imported"] = {
+},
+["bag_icon_size"] = 36,
 ["currency_panel_position"] = {
 "RIGHT",
 "Baganator_CategoryViewBackpackViewFramedark",
@@ -628,12 +543,120 @@ imports["Baganator"] = {
 0,
 0,
 },
-["icon_equipment_set_border"] = true,
-["icon_context_fading"] = true,
-["category_sort_method"] = "item-level",
-["currency_headers_collapsed"] = {
+["lock_frames"] = false,
+["guild_current_tab"] = 1,
+["icon_mark_unusable"] = false,
+["custom_categories"] = {
+["10"] = {
+["name"] = "Utility",
+["search"] = "",
 },
-["recent_timeout"] = 15,
+["11"] = {
+["name"] = "Legacy",
+["search"] = "#gear&!tww",
+},
+["12"] = {
+["name"] = "Mats",
+["search"] = "#tradeskill || #reagent",
+},
+["20"] = {
+["name"] = "Sparks",
+["search"] = "spark",
+},
+["17"] = {
+["name"] = "Keys",
+["search"] = "#key",
+},
+["16"] = {
+["name"] = "Toys",
+["search"] = "#toy",
+},
+["15"] = {
+["name"] = "Gems",
+["search"] = "#gem",
+},
+["25"] = {
+["name"] = "BoE",
+["search"] = "boe",
+},
+["8"] = {
+["name"] = "Trinkets",
+["search"] = "#trinket",
+},
+["14"] = {
+["name"] = "Junk",
+["search"] = "#junk",
+},
+["4"] = {
+["name"] = "Boxes",
+["search"] = "open",
+},
+["1"] = {
+["name"] = "TWW",
+["search"] = "#tww",
+},
+["19"] = {
+["name"] = "Pots",
+["search"] = "#potion",
+},
+["3"] = {
+["name"] = "Recipes",
+["search"] = "#recipe",
+},
+["2"] = {
+["name"] = "Misc",
+["search"] = "#tabard || #shirt",
+},
+["5"] = {
+["name"] = "Consumables",
+["search"] = "#consumable",
+},
+["18"] = {
+["name"] = "Pets",
+["search"] = "#battle pet || pet",
+},
+["7"] = {
+["name"] = "Gear",
+["search"] = "#armor",
+},
+["6"] = {
+["name"] = "Enchants",
+["search"] = "#item enhancement",
+},
+["9"] = {
+["name"] = "Quest",
+["search"] = "#quest",
+},
+["24"] = {
+["name"] = "BoA",
+["search"] = "boa",
+},
+["27"] = {
+["name"] = "Midnight",
+["search"] = "#midnight",
+},
+["26"] = {
+["name"] = "Ring",
+["search"] = "#finger",
+},
+["13"] = {
+["name"] = "Food",
+["search"] = "#food",
+},
+["21"] = {
+["name"] = "Trade",
+["search"] = "tradable loot || tradeable loot",
+},
+["22"] = {
+["name"] = "Prof",
+["search"] = "#profession",
+},
+["23"] = {
+["name"] = "Weapons",
+["search"] = "#weapon",
+},
+},
+["sort_start_at_bottom"] = false,
 }
 
 }
@@ -692,10 +715,10 @@ imports["NorthernSkyRaidTools"] = {
 [3180] = {
 ["enabled"] = true,
 },
-[3179] = {
+[3135] = {
 ["enabled"] = true,
 },
-[3135] = {
+[3179] = {
 ["enabled"] = true,
 },
 },
@@ -703,14 +726,14 @@ imports["NorthernSkyRaidTools"] = {
 ["IconSettings"] = {
 ["yTimer"] = 0,
 ["relativeTo"] = "CENTER",
-["Glow"] = 0,
+["FontSize"] = 24,
 ["xTimer"] = 0,
 ["xOffset"] = 205,
-["Width"] = 50,
-["Anchor"] = "CENTER",
 ["yOffset"] = 153,
-["yTextOffset"] = 0,
 ["xTextOffset"] = 0,
+["Width"] = 50,
+["yTextOffset"] = 0,
+["Font"] = "Gravity",
 ["colors"] = {
 1,
 1,
@@ -719,24 +742,41 @@ imports["NorthernSkyRaidTools"] = {
 },
 ["GrowDirection"] = "Down",
 ["Height"] = 50,
-["Font"] = "Gravity",
+["Anchor"] = "CENTER",
 ["TimerFontSize"] = 30,
-["FontSize"] = 24,
+["Glow"] = 0,
 },
 ["ShowExtraReminderFrame"] = false,
-["PersonalReminderFrameMoveable"] = false,
+["SpellTTSTimer"] = 5,
 ["TextTTS"] = false,
 ["TextCountdown"] = 0,
 ["UnitIconSettings"] = {
 ["Position"] = "CENTER",
 ["xOffset"] = 0,
-["Width"] = 25,
-["Height"] = 25,
 ["yOffset"] = 0,
+["Height"] = 25,
+["Width"] = 25,
 },
-["Bars"] = false,
-["SpellDuration"] = 10,
-["SpellTTSTimer"] = 5,
+["Sticky"] = 5,
+["ExtraReminderFrame"] = {
+["enabled"] = false,
+["relativeTo"] = "TOPLEFT",
+["xOffset"] = 5,
+["Moveable"] = false,
+["Width"] = 500,
+["Font"] = "Gravity",
+["BGcolor"] = {
+0,
+0,
+0,
+0.3,
+},
+["Height"] = 600,
+["FontSize"] = 14,
+["yOffset"] = -54,
+["Anchor"] = "TOPLEFT",
+},
+["ExtraReminderFrameMoveable"] = false,
 ["OnlySpellReminders"] = true,
 ["TextSettings"] = {
 ["FontSize"] = 40,
@@ -751,9 +791,9 @@ imports["NorthernSkyRaidTools"] = {
 },
 ["GrowDirection"] = "Up",
 ["Anchor"] = "CENTER",
-["Width"] = 302.933349609375,
-["Height"] = 40,
 ["relativeTo"] = "CENTER",
+["Height"] = 40,
+["Width"] = 302.933349609375,
 },
 ["BarSettings"] = {
 ["yTimer"] = 0,
@@ -772,20 +812,20 @@ imports["NorthernSkyRaidTools"] = {
 ["xTextOffset"] = 2,
 ["xIcon"] = 0,
 ["Height"] = 22,
-["Font"] = "Gravity",
 ["colors"] = {
 1,
 0,
 0,
 1,
 },
+["Font"] = "Gravity",
 },
-["PersNote"] = true,
+["SpellDuration"] = 10,
 ["TextTTSTimer"] = 5,
 ["SpellName"] = true,
 ["enabled"] = true,
-["ShowPersonalReminderFrame"] = false,
-["SpellCountdown"] = 0,
+["MRTNote"] = false,
+["ReminderFrameMoveable"] = false,
 ["GlowSettings"] = {
 ["Thickness"] = 4,
 ["Lines"] = 10,
@@ -797,11 +837,10 @@ imports["NorthernSkyRaidTools"] = {
 },
 ["xOffset"] = 0,
 ["Length"] = 10,
-["yOffset"] = 0,
 ["Frequency"] = 0.2,
+["yOffset"] = 0,
 },
-["AutoShare"] = true,
-["SpellTTS"] = false,
+["ShowReminderFrame"] = true,
 ["ReminderFrame"] = {
 ["enabled"] = true,
 ["relativeTo"] = "TOPLEFT",
@@ -816,35 +855,19 @@ imports["NorthernSkyRaidTools"] = {
 0.3,
 },
 ["Height"] = 223,
-["FontSize"] = 14,
+["Anchor"] = "TOPLEFT",
 ["yOffset"] = -67,
-["Anchor"] = "TOPLEFT",
-},
-["TextDuration"] = 10,
-["ShowReminderFrame"] = true,
-["HideTimerText"] = false,
-["ReminderFrameMoveable"] = false,
-["MRTNote"] = true,
-["ExtraReminderFrame"] = {
-["enabled"] = false,
-["relativeTo"] = "TOPLEFT",
-["xOffset"] = 5,
-["Moveable"] = false,
-["Width"] = 500,
-["Font"] = "Gravity",
-["BGcolor"] = {
-0,
-0,
-0,
-0.3,
-},
-["Height"] = 600,
-["Anchor"] = "TOPLEFT",
-["yOffset"] = -54,
 ["FontSize"] = 14,
 },
-["Sticky"] = 5,
-["ExtraReminderFrameMoveable"] = false,
+["SpellTTS"] = false,
+["TextDuration"] = 10,
+["AutoShare"] = true,
+["HideTimerText"] = false,
+["SpellCountdown"] = 0,
+["ShowPersonalReminderFrame"] = false,
+["PersNote"] = true,
+["Bars"] = false,
+["PersonalReminderFrameMoveable"] = false,
 ["PersonalReminderFrame"] = {
 ["enabled"] = false,
 ["relativeTo"] = "LEFT",
@@ -859,14 +882,27 @@ imports["NorthernSkyRaidTools"] = {
 0.3,
 },
 ["Height"] = 183,
-["FontSize"] = 14,
-["yOffset"] = 207,
 ["Anchor"] = "LEFT",
+["yOffset"] = 207,
+["FontSize"] = 14,
 },
 },
 ["UseDefaultPASounds"] = true,
 ["NSUI"] = {
 ["scale"] = 1,
+["externals_anchor"] = {
+["settings"] = {
+["anchorPoint"] = {
+"CENTER",
+"UIParent",
+"CENTER",
+0,
+150,
+},
+["height"] = 70,
+["width"] = 70,
+},
+},
 ["AutoComplete"] = {
 ["WA"] = {
 "Northern Sky",
@@ -892,25 +928,13 @@ imports["NorthernSkyRaidTools"] = {
 ["scale"] = 1,
 },
 },
-["externals_anchor"] = {
-["settings"] = {
-["anchorPoint"] = {
-"CENTER",
-"UIParent",
-"CENTER",
-0,
-150,
-},
-["height"] = 70,
-["width"] = 70,
-},
-},
 },
 ["Settings"] = {
 ["SuF"] = false,
 ["CooldownThreshold"] = 15,
 ["Blizzard"] = false,
 ["Minimap"] = {
+["minimapPos"] = 223.4974003637528,
 ["showInCompartment"] = true,
 ["hide"] = false,
 },
@@ -927,32 +951,8 @@ imports["NorthernSkyRaidTools"] = {
 ["Translit"] = false,
 ["GlobalNickNames"] = false,
 ["VersionCheckRemoveResponse"] = false,
-["MissingRaidBuffs"] = false,
-["AutoUpdateRaidWA"] = false,
-["OmniCD"] = false,
-["ShareNickNames"] = 4,
-["GenericDisplay"] = {
-["Anchor"] = "CENTER",
-["relativeTo"] = "CENTER",
-["xOffset"] = -200,
-["yOffset"] = 400,
-},
-["WeakAurasImportAccept"] = 1,
-["MRT"] = false,
-["CheckCooldowns"] = true,
-["DebugLogs"] = false,
-["Debug"] = false,
-["TTSVolume"] = 50,
-["LIQUID_MACRO"] = false,
-["NickNamesSyncSend"] = 3,
-["MRTNoteComparison"] = false,
-["Grid2"] = false,
-["ElvUI"] = false,
-["Cell"] = false,
-["ExternalSelfPing"] = false,
-["AcceptNickNames"] = 4,
 ["RebuffCheck"] = false,
-["PAExtraAction"] = false,
+["AutoUpdateWA"] = false,
 ["VersionCheckPresets"] = {
 {
 "WA: Northern Sky Manaforge Omega",
@@ -962,7 +962,31 @@ imports["NorthernSkyRaidTools"] = {
 },
 },
 },
-["AutoUpdateWA"] = false,
+["ShareNickNames"] = 4,
+["OmniCD"] = false,
+["WeakAurasImportAccept"] = 1,
+["MRT"] = false,
+["CheckCooldowns"] = true,
+["AcceptNickNames"] = 4,
+["Debug"] = false,
+["TTSVolume"] = 50,
+["MRTNoteComparison"] = false,
+["NickNamesSyncSend"] = 3,
+["LIQUID_MACRO"] = false,
+["Cell"] = false,
+["ElvUI"] = false,
+["Grid2"] = false,
+["ExternalSelfPing"] = false,
+["DebugLogs"] = false,
+["GenericDisplay"] = {
+["Anchor"] = "CENTER",
+["relativeTo"] = "CENTER",
+["xOffset"] = -200,
+["yOffset"] = 400,
+},
+["PAExtraAction"] = false,
+["AutoUpdateRaidWA"] = false,
+["MissingRaidBuffs"] = false,
 },
 ["PATextSettings"] = {
 ["enabled"] = true,
@@ -1026,8 +1050,8 @@ imports["NorthernSkyRaidTools"] = {
 ["sound"] = "|cFF4BAAC8Soak|r",
 ["edited"] = false,
 },
-[1283247] = {
-["sound"] = "|cFF4BAAC8Targeted|r",
+[1253531] = {
+["sound"] = "|cFF4BAAC8Beam|r",
 ["edited"] = false,
 },
 [1281184] = {
@@ -1038,7 +1062,7 @@ imports["NorthernSkyRaidTools"] = {
 ["sound"] = "|cFF4BAAC8Targeted|r",
 ["edited"] = false,
 },
-[1283236] = {
+[1280023] = {
 ["sound"] = "|cFF4BAAC8Targeted|r",
 ["edited"] = false,
 },
@@ -1046,8 +1070,8 @@ imports["NorthernSkyRaidTools"] = {
 ["sound"] = "|cFF4BAAC8Spread|r",
 ["edited"] = false,
 },
-[1253531] = {
-["sound"] = "|cFF4BAAC8Beam|r",
+[1284527] = {
+["sound"] = "|cFF4BAAC8Targeted|r",
 ["edited"] = false,
 },
 [1248994] = {
@@ -1058,18 +1082,15 @@ imports["NorthernSkyRaidTools"] = {
 ["sound"] = "|cFF4BAAC8Targeted|r",
 ["edited"] = false,
 },
-[1259861] = {
+[1241339] = {
+["sound"] = "|cFF4BAAC8Void|r",
+["edited"] = false,
+},
+[1232470] = {
 ["sound"] = "|cFF4BAAC8Targeted|r",
 ["edited"] = false,
 },
-[1253511] = {
-["sound"] = "|cFF4BAAC8Fixate|r",
-["edited"] = false,
-},
-[1251775] = {
-["sound"] = "|cFF4BAAC8Fixate|r",
-["edited"] = false,
-},
+["UseDefaultMPlusPASounds"] = true,
 [1261286] = {
 ["sound"] = "|cFF4BAAC8Targeted|r",
 ["edited"] = false,
@@ -1078,7 +1099,10 @@ imports["NorthernSkyRaidTools"] = {
 ["sound"] = "|cFF4BAAC8Break|r",
 ["edited"] = false,
 },
-["UseDefaultMPlusPASounds"] = true,
+[1251775] = {
+["sound"] = "|cFF4BAAC8Fixate|r",
+["edited"] = false,
+},
 ["UseDefaultPASounds"] = true,
 [472793] = {
 ["sound"] = "|cFF4BAAC8Targeted|r",
@@ -1096,7 +1120,7 @@ imports["NorthernSkyRaidTools"] = {
 ["sound"] = "|cFF4BAAC8Targeted|r",
 ["edited"] = false,
 },
-[1251785] = {
+[1260027] = {
 ["sound"] = "|cFF4BAAC8Targeted|r",
 ["edited"] = false,
 },
@@ -1104,7 +1128,7 @@ imports["NorthernSkyRaidTools"] = {
 ["sound"] = "|cFF4BAAC8Fixate|r",
 ["edited"] = false,
 },
-[1242091] = {
+[1268992] = {
 ["sound"] = "|cFF4BAAC8Targeted|r",
 ["edited"] = false,
 },
@@ -1120,15 +1144,15 @@ imports["NorthernSkyRaidTools"] = {
 ["sound"] = "|cFF4BAAC8Spread|r",
 ["edited"] = false,
 },
-[1233887] = {
-["sound"] = "|cFF4BAAC8Debuff|r",
+[466559] = {
+["sound"] = "|cFF4BAAC8Targeted|r",
 ["edited"] = false,
 },
 [1252733] = {
 ["sound"] = "|cFF4BAAC8Targeted|r",
 ["edited"] = false,
 },
-[466559] = {
+[1282911] = {
 ["sound"] = "|cFF4BAAC8Targeted|r",
 ["edited"] = false,
 },
@@ -1140,15 +1164,15 @@ imports["NorthernSkyRaidTools"] = {
 ["sound"] = "|cFF4BAAC8Targeted|r",
 ["edited"] = false,
 },
-[1282911] = {
+[1233887] = {
+["sound"] = "|cFF4BAAC8Debuff|r",
+["edited"] = false,
+},
+[1242091] = {
 ["sound"] = "|cFF4BAAC8Targeted|r",
 ["edited"] = false,
 },
-[1268992] = {
-["sound"] = "|cFF4BAAC8Targeted|r",
-["edited"] = false,
-},
-[1260027] = {
+[1251785] = {
 ["sound"] = "|cFF4BAAC8Targeted|r",
 ["edited"] = false,
 },
@@ -1156,23 +1180,23 @@ imports["NorthernSkyRaidTools"] = {
 ["sound"] = "|cFF4BAAC8Clear|r",
 ["edited"] = false,
 },
-[1232470] = {
-["sound"] = "|cFF4BAAC8Targeted|r",
+[1253511] = {
+["sound"] = "|cFF4BAAC8Fixate|r",
 ["edited"] = false,
 },
-[1241339] = {
-["sound"] = "|cFF4BAAC8Void|r",
+[1259861] = {
+["sound"] = "|cFF4BAAC8Targeted|r",
 ["edited"] = false,
 },
 [1237623] = {
 ["sound"] = "|cFF4BAAC8Targeted|r",
 ["edited"] = false,
 },
-[1280023] = {
+[1283236] = {
 ["sound"] = "|cFF4BAAC8Targeted|r",
 ["edited"] = false,
 },
-[1284527] = {
+[1283247] = {
 ["sound"] = "|cFF4BAAC8Targeted|r",
 ["edited"] = false,
 },
@@ -1182,23 +1206,24 @@ imports["NorthernSkyRaidTools"] = {
 ["relativeTo"] = "TOP",
 ["xOffset"] = 0,
 ["yOffset"] = -400,
-["GrowDirection"] = "DOWN",
-["Spacing"] = 5,
 ["Anchor"] = "TOP",
-["FontSize"] = 18,
-["Width"] = 30,
+["Spacing"] = 5,
 ["Height"] = 30,
+["Width"] = 30,
+["FontSize"] = 18,
+["GrowDirection"] = "DOWN",
 },
 ["IconDisplay"] = {
-["yOffset"] = -350,
+["Width"] = 40,
 ["relativeTo"] = "TOP",
 ["Scpaing"] = 5,
 ["GrowDirection"] = "DOWN",
 ["Height"] = 40,
-["xOffset"] = 0,
 ["Anchor"] = "TOP",
-["Width"] = 40,
+["xOffset"] = 0,
+["yOffset"] = -350,
 },
+["AutoInvite"] = true,
 ["TextDisplay"] = {
 ["relativeTo"] = "CENTER",
 ["Anchor"] = "CENTER",
@@ -1211,17 +1236,17 @@ imports["NorthernSkyRaidTools"] = {
 ["enabled"] = false,
 ["relativeTo"] = "BOTTOMLEFT",
 ["xOffset"] = 0,
-["PerRow"] = 3,
+["GrowDirection"] = "RIGHT",
 ["RowGrowDirection"] = "UP",
 ["Width"] = 25,
-["StackScale"] = 1.100000023841858,
-["yOffset"] = 0,
-["Limit"] = 5,
-["GrowDirection"] = "RIGHT",
-["Height"] = 25,
-["Anchor"] = "BOTTOMLEFT",
 ["DebuffTypeBorder"] = false,
+["Height"] = 25,
+["Limit"] = 5,
 ["Spacing"] = -1,
+["Anchor"] = "BOTTOMLEFT",
+["yOffset"] = 0,
+["StackScale"] = 1.100000023841858,
+["PerRow"] = 3,
 },
 ["NickNames"] = {
 ["Lukîî-Blackhand"] = "Luki",
@@ -1234,18 +1259,20 @@ imports["NorthernSkyRaidTools"] = {
 ["PersonalReminders"] = {
 },
 ["HasLoggedIntoMidnight"] = true,
-["AssignmentSettings"] = {
-[3178] = {
-["Soaks"] = true,
-},
-["OnPull"] = true,
-[3180] = {
-["Soaks"] = true,
-},
-[3306] = {
-["Soaks"] = true,
-["SplitSoaks"] = true,
-},
+["PASettings"] = {
+["enabled"] = true,
+["relativeTo"] = "CENTER",
+["xOffset"] = -187,
+["RowGrowDirection"] = "UP",
+["Width"] = 40,
+["UpscaleDuration"] = true,
+["GrowDirection"] = "LEFT",
+["Limit"] = 5,
+["Spacing"] = -1,
+["Height"] = 40,
+["Anchor"] = "CENTER",
+["yOffset"] = -50,
+["PerRow"] = 10,
 },
 ["PATankSettings"] = {
 ["enabled"] = false,
@@ -1256,23 +1283,22 @@ imports["NorthernSkyRaidTools"] = {
 ["Limit"] = 5,
 ["Spacing"] = -1,
 ["Height"] = 40,
+["GrowDirection"] = "LEFT",
+["Anchor"] = "CENTER",
 ["yOffset"] = -101,
-["Anchor"] = "CENTER",
-["GrowDirection"] = "LEFT",
 },
-["PASettings"] = {
-["enabled"] = true,
-["relativeTo"] = "CENTER",
-["xOffset"] = -187,
-["RowGrowDirection"] = "UP",
-["Width"] = 40,
-["PerRow"] = 10,
-["Limit"] = 5,
-["GrowDirection"] = "LEFT",
-["Height"] = 40,
-["yOffset"] = -50,
-["Anchor"] = "CENTER",
-["Spacing"] = -1,
+["AssignmentSettings"] = {
+[3178] = {
+["Soaks"] = true,
+},
+["OnPull"] = true,
+[3306] = {
+["Soaks"] = true,
+["SplitSoaks"] = true,
+},
+[3180] = {
+["Soaks"] = true,
+},
 },
 }
 
@@ -1317,7 +1343,7 @@ imports["WarpDeplete"] = {
 ["frameY"] = 187.8846740722656,
 ["forcesOverlayTextureColor"] = "ff00ff28",
 ["timerFont"] = "Gravity",
-["barWidth"] = 300,
+["keyFont"] = "Gravity",
 }
 
 }

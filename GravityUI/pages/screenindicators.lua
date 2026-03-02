@@ -960,6 +960,38 @@ local function BuildRaidWarnings(parent)
     AddRow(content, "Show in Raid", "checkbox", "showInRaid", dbRW, RefreshRW)
     content.rowCount = content.rowCount + 0.5
     
+    CreateSubLabel(content, "Text Infos")
+    local ti = dbRW.textInfos
+    if not ti then
+        ti = { durabilityEnabled = false, durabilityThreshold = 25, durabilitySize = 24, durabilityColor = {1, 0.2, 0.2, 1}, durabilityX = 0, durabilityY = 200 }
+        dbRW.textInfos = ti
+    end
+
+    AddRow(content, "Durability Check (<25%)", "checkbox", "durabilityEnabled", ti, RefreshRW)
+    AddRow(content, "Durability Threshold %", "slider", 1, 100, "durabilityThreshold", ti, RefreshRW, 1)
+    AddRow(content, "Text Size", "slider", 10, 72, "durabilitySize", ti, RefreshRW, 1)
+    AddRow(content, "Text Color", "color", "durabilityColor", ti, RefreshRW)
+    AddRow(content, "X-Position", "slider", -800, 800, "durabilityX", ti, RefreshRW, 1)
+    AddRow(content, "Y-Position", "slider", -800, 800, "durabilityY", ti, RefreshRW, 1)
+    
+    local previewTIBtn = GUI:CreateButton(content, "Preview Durability Info", 160, 24, function()
+        if ns.TextInfoFrame then
+            if ns.TextInfoFrame:IsShown() then
+                ns.TextInfoFrame:Hide()
+            else
+                RefreshRW()
+                if ns.TextInfoFrame.text then ns.TextInfoFrame.text:SetText("Durability low") end
+                ns.TextInfoFrame:Show()
+                -- Auto-hide after 5s to avoid permanent clutter during config
+                C_Timer.After(5, function() if ns.TextInfoFrame then ns.TextInfoFrame:Hide() end end)
+            end
+        end
+    end)
+    previewTIBtn:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT+5)))
+    content.rowCount = content.rowCount + 1.2
+
+    content.rowCount = content.rowCount + 0.5
+    
     CreateSubLabel(content, "Events to Track")
     AddRow(content, "Soulwells", "checkbox", "soulwell", dbRW.events, RefreshRW)
     AddRow(content, "Summoning Rituals", "checkbox", "ritual", dbRW.events, RefreshRW)

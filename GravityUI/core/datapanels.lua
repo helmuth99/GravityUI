@@ -310,13 +310,32 @@ function DP:Init()
 
     DP:RefreshAll()
     
-    if ticker then ticker:Cancel() end
-    ticker = C_Timer.NewTicker(1, function()
-        for id, frame in pairs(panels) do
-            if frame:IsShown() and frame.UpdateFonts then
-                frame.UpdateFonts()
+    local function IsHighPriority(config)
+        if not config or not config.slots then return false end
+        for i = 1, 5 do
+            local slot = config.slots[i]
+            if slot and (slot.content == "fps" or slot.content == "ms") then
+                return true
             end
         end
+        return false
+    end
+
+    if ticker then ticker:Cancel() end
+    local tickCount = 0
+    ticker = C_Timer.NewTicker(1, function()
+        tickCount = tickCount + 1
+        local checkPassive = (tickCount % 5 == 0)
+        
+        for id, frame in pairs(panels) do
+            if frame:IsShown() and frame.UpdateFonts then
+                local config = db.datapanels.custom[id]
+                if IsHighPriority(config) or checkPassive then
+                    frame.UpdateFonts()
+                end
+            end
+        end
+        if checkPassive then tickCount = 0 end
     end)
 end
 

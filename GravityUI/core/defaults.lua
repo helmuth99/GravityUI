@@ -90,6 +90,24 @@ ns.Defaults = {
                 x = 0,
             },
         },
+        widgetBelowMinimap = {
+            enabled = true,
+            position = {
+                y = -350,
+                relPoint = "TOPRIGHT",
+                point = "TOPRIGHT",
+                x = -200,
+            },
+        },
+        widgetTopCenter = {
+            enabled = true,
+            position = {
+                y = -200,
+                relPoint = "TOP",
+                point = "TOP",
+                x = 0,
+            },
+        },
         alerts = {
             enabled = true,
             alertPosition = {
@@ -246,6 +264,14 @@ ns.Defaults = {
             portal = false, -- Default portals OFF
         },
         customSpells = {}, -- { [spellID] = "type" } e.g. { [12345] = "feast" }
+        textInfos = {
+            durabilityEnabled = false,
+            durabilityThreshold = 25,
+            durabilitySize = 24,
+            durabilityColor = {1, 0.2, 0.2, 1},
+            durabilityX = 0,
+            durabilityY = 200,
+        },
     },
     soundAlerts = {
         enabled = false,
@@ -585,6 +611,27 @@ ns.Defaults = {
 
         hideObjectiveTrackerAlways = false,
         mplusTeleportEnabled = true,
+        dungeonLibraryEnabled = true,
+        raidLibraryEnabled = true,
+        libraryScale = 0.9,
+        groupKeyListEnabled = true,
+        dungeonLibraryExpansions = {
+            ["Midnight"] = true,
+            ["The War Within"] = false,
+            ["Dragonflight"] = false,
+            ["Shadowlands"] = false,
+            ["Battle for Azeroth"] = false,
+            ["Legion"] = false,
+            ["Warlords of Draenor"] = false,
+            ["Mists of Pandaria"] = false,
+            ["Cataclysm"] = false,
+            ["Wrath of the Lich King"] = false,
+        },
+        raidLibraryExpansions = {
+            ["The War Within"] = true,
+            ["Dragonflight"] = true,
+            ["Shadowlands"] = true,
+        },
         autoInsertKey = true,
         hideErrorMessages = true,
         autoTurnInQuest = true,

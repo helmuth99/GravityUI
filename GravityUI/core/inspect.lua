@@ -399,14 +399,27 @@ local function GetEnchantText(unit, slotId)
 
     -- Check if slot is enchantable
     -- Only show "No Enchant" for slots that ARE enchantable but missing one
-    -- Head(1), Shoulder(3), Chest(5), Wrist(9), Legs(7), Feet(8), Finger(11/12), Back(15), MainHand(16), OffHand(17)
+    -- Updated for parity with character.lua: Head(1), Shoulder(3), Chest(5), Legs(7), Feet(8), Finger(11/12), MainHand(16), OffHand(17)
     local enchantableSlots = { 
-        [1]=true, [3]=true, [5]=true, [7]=true, [8]=true, [9]=true,
-        [11]=true, [12]=true, [15]=true, [16]=true, [17]=true 
+        [1]=true, [3]=true, [5]=true, [7]=true, [8]=true,
+        [11]=true, [12]=true, [16]=true, [17]=true 
     }
     
     -- If not in the list, we don't care if it has an enchant or not for the "No Enchant" warning
-    local isEnchantable = enchantableSlots[slotId]
+    if not enchantableSlots[slotId] then
+        return nil, false
+    end
+
+    -- Ignore Shields and Held In Off-hand (Frills)
+    if slotId == 17 then -- INVSLOT_OFFHAND
+        local itemID = GetInventoryItemID(unit, slotId)
+        if itemID then
+            local _, _, _, itemEquipLoc = GetItemInfoInstant(itemID)
+            if itemEquipLoc == "INVTYPE_SHIELD" or itemEquipLoc == "INVTYPE_HOLDABLE" then
+                return nil, false -- Not enchantable
+            end
+        end
+    end
 
     -- Scan tooltip
     local data = C_TooltipInfo.GetInventoryItem(unit, slotId)
@@ -424,7 +437,7 @@ local function GetEnchantText(unit, slotId)
         end
     end
     
-    return nil, isEnchantable
+    return nil, true
 end
 
 ---------------------------------------------------------------------------
@@ -648,12 +661,12 @@ local function UpdateSlotOverlay(overlay, unit)
     if not overlay or not overlay.slotInfo then return end
     local settings = GetSettings()
     
-    -- Link settings to main Character Panel settings (as requested by user)
-    -- Fallback to defaults (true) if nil
-    local showName = settings.showItemName ~= false
-    local showLevel = settings.showItemLevel ~= false
-    local showEnchant = settings.showEnchants ~= false
-    local showGem = settings.showGems ~= false
+    -- Link settings to main Character Panel settings (Parity check)
+    -- Use inspect-specific settings or fallback to character ones
+    local showName = settings.showInspectItemName ~= false
+    local showLevel = settings.showInspectItemLevel ~= false
+    local showEnchant = settings.showInspectEnchants ~= false
+    local showGem = settings.showInspectGems ~= false
     
     local itemLink = GetInventoryItemLink(unit, overlay.slotInfo.id)
     if not itemLink then overlay:Hide(); return end
@@ -701,8 +714,8 @@ local function UpdateSlotOverlay(overlay, unit)
     if showEnchant then
         local enchant, enchantable = GetEnchantText(unit, overlay.slotInfo.id)
         if enchant then
-             local color = settings.enchantTextColor or DEFAULT_ENCHANT_TEXT_COLOR
-             if settings.enchantClassColor then
+             local color = settings.inspectEnchantTextColor or settings.enchantTextColor or DEFAULT_ENCHANT_TEXT_COLOR
+             if settings.inspectEnchantClassColor or settings.enchantClassColor then
                   local _, class = UnitClass(unit)
                   local c = RAID_CLASS_COLORS[class]
                   if c then color = {c.r, c.g, c.b} end
@@ -712,7 +725,7 @@ local function UpdateSlotOverlay(overlay, unit)
              overlay.enchant:Show()
         elseif enchantable then
              -- Only show "No Enchant" if slot is strictly enchantable
-             local color = settings.noEnchantTextColor or DEFAULT_NO_ENCHANT_COLOR
+             local color = settings.inspectNoEnchantTextColor or settings.noEnchantTextColor or DEFAULT_NO_ENCHANT_COLOR
              overlay.enchant:SetText("No Enchant")
              overlay.enchant:SetTextColor(color[1], color[2], color[3], 1)
              overlay.enchant:Show()
