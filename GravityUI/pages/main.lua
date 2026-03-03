@@ -21,7 +21,7 @@ local Gravity_FPS_CVARS = {
     ["graphicsQuality"] = "9",
     ["graphicsShadowQuality"] = "0",
     ["graphicsLiquidDetail"] = "1",
-    ["graphicsParticleDensity"] = "5",
+    ["graphicsParticleDensity"] = "3",           -- Good statt High (war 5)
     ["graphicsSSAO"] = "0",
     ["graphicsDepthEffects"] = "0",
     ["graphicsComputeEffects"] = "0",
@@ -31,15 +31,15 @@ local Gravity_FPS_CVARS = {
     ["graphicsSpellDensity"] = "0",
     ["spellClutter"] = "1",
     ["spellVisualDensityFilterSetting"] = "1",
-    ["graphicsProjectedTextures"] = "1",
-    ["projectedTextures"] = "1",
+    ["graphicsProjectedTextures"] = "1",        
+    ["projectedTextures"] = "1",                
     ["graphicsViewDistance"] = "2",
     ["graphicsEnvironmentDetail"] = "0",
     ["graphicsGroundClutter"] = "0",
 
     -- Advanced Tab
     ["gxTripleBuffer"] = "0",
-    ["textureFilteringMode"] = "5",
+    ["textureFilteringMode"] = "2",             -- FIX: 4x Anisotropic (war 5 = 16x – unnötig)
     ["graphicsRayTracedShadows"] = "0",
     ["rtShadowQuality"] = "0",
     ["ResampleQuality"] = "4",
@@ -62,6 +62,8 @@ local Gravity_FPS_CVARS = {
     ["volumeFogLevel"] = "0",
     ["reflectionMode"] = "0",
     ["ffxGlow"] = "0",
+    ["ffxSpecular"] = "0",                      -- NEU: Spekulare Glanzeffekte aus
+    ["ffxDeathrattle"] = "0",                   -- NEU: Death-Effekte vereinfacht
     ["farclip"] = "5000",
     ["horizonStart"] = "1000",
     ["horizonClip"] = "5000",
@@ -74,15 +76,19 @@ local Gravity_FPS_CVARS = {
     ["TerrainLodDiv"] = "512",
     ["waterDetail"] = "1",
     ["rippleDetail"] = "0",
-    ["weatherDensity"] = "3",
+    ["weatherDensity"] = "0",                   -- FIX: war 3 – minimal Weather Partikel
     ["entityShadowFadeScale"] = "15",
     ["groundEffectDist"] = "40",
     ["ResampleAlwaysSharpen"] = "1",
+    ["shadowmode"] = "1",                       -- NEU: Einfache Schatten-Methode
+    ["shadowtexturesize"] = "512",              -- NEU: Shadowmap-Größe optimiert
+    ["nameplateMotion"] = "0",                  -- NEU: Nameplate-Animation aus (kein float)
 
     -- Special Hacks
     ["cameraDistanceMaxZoomFactor"] = "2.6",
     ["CameraReduceUnexpectedMovement"] = "1",
 }
+
 
 ---------------------------------------------------------------------------
 -- HELPER: FPS Settings Functions

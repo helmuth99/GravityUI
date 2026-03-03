@@ -197,16 +197,30 @@ function RaidWarnings.ApplySettings()
         textInfoFrame:ClearAllPoints()
         textInfoFrame:SetPoint("CENTER", UIParent, "CENTER", ti.durabilityX or 0, ti.durabilityY or 200)
     end
+
+    -- Mark that settings have been freshly applied. settingsDirty will be reset to true
+    -- by MarkSettingsDirty() when called from the settings panel, ensuring the next
+    -- ShowAlert() call will re-apply if anything changed in between.
+    -- (No action needed here since ShowAlert sets settingsDirty = false after calling us)
 end
 
 -- ============================================================================
 -- ALERTS
 -- ============================================================================
+-- Performance Fix (Bug 2): settingsDirty flag ensures ApplySettings() is called
+-- once on init/refresh, NOT on every single alert invocation.
+local settingsDirty = true
+function RaidWarnings.MarkSettingsDirty() settingsDirty = true end
+
 function RaidWarnings.ShowAlert(spellName, providerName, key)
     if not alertFrame then CreateAlertFrame() end
-    
-    RaidWarnings.ApplySettings()
-    
+
+    -- Only re-apply settings when something actually changed (e.g. after a Refresh)
+    if settingsDirty then
+        RaidWarnings.ApplySettings()
+        settingsDirty = false
+    end
+
     local db = ns.GetDB()
     local csv = db and db.raidWarnings
     
@@ -378,30 +392,25 @@ end)
 -- ============================================================================
 -- WATCHER FRAMES (Reliable Event Detection)
 -- ============================================================================
-local watcherFrames = {}
--- We need up to 40 frames for Raid
-for i = 1, 40 do
-    watcherFrames[i] = CreateFrame("Frame")
-end
+-- Performance Fix: We only ever watch the player (1 unit), so 1 frame is sufficient.
+-- Previous code created 40 frames unnecessarily.
+local watcherFrame = CreateFrame("Frame")
 
 -- Forward declaration
-local ProcessSpellCast 
+local ProcessSpellCast
+
+-- Bug 3 Fix: Named function instead of anonymous closure to avoid
+-- re-allocating a closure object on every GROUP_ROSTER_UPDATE.
+local function WatcherOnEvent(_, _, unit, castGUID, spellId)
+    ProcessSpellCast(unit, castGUID, spellId)
+end
 
 local function UpdateWatchers()
-    -- Unregister all first
-    for _, f in ipairs(watcherFrames) do f:UnregisterAllEvents() end
-    
-    -- Only watch player locally
-    -- We assume the user wants alerts if enabled, regardless of group type, 
-    -- but usually we check IsInGroup inside ProcessSpellCast for displaying.
-    -- However, we should register the event always if we are in a group to broadcast.
-    
+    watcherFrame:UnregisterAllEvents()
+
     if IsInGroup() then
-        -- Watch Player (Slot 1 is enough since we only watch 1 unit now)
-        watcherFrames[1]:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player")
-        watcherFrames[1]:SetScript("OnEvent", function(_, _, unit, castGUID, spellId)
-             ProcessSpellCast(unit, castGUID, spellId)
-        end)
+        watcherFrame:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player")
+        watcherFrame:SetScript("OnEvent", WatcherOnEvent)
     end
 end
 

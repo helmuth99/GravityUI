@@ -89,18 +89,31 @@ local function Kill(frame, force)
         -- Store original OnShow if it had one (some Blizzard buttons do)
         frame.__guiOriginalOnShow = frame:GetScript("OnShow")
 
-        hooksecurefunc(frame, "Show", function(self) 
-            local s = GetSettings()
-            if force or (s and s.hideButtons) then
+        -- Performance Fix (Bug 4): Cache the kill-state as upvalue booleans.
+        -- GetSettings() (= DB lookup) was previously being called on EVERY Show/SetAlpha
+        -- call, which fires multiple times per chat tab switch. These hooks are extremely
+        -- hot paths that must have zero overhead.
+        -- The cached value is updated by calling Kill() again when settings change.
+        local shouldSuppress = shouldKill
+        frame.__guiUpdateSuppressState = function(newState)
+            shouldSuppress = newState
+        end
+
+        hooksecurefunc(frame, "Show", function(self)
+            if shouldSuppress then
                 self:Hide()
             end
         end)
         hooksecurefunc(frame, "SetAlpha", function(self, alpha)
-            local s = GetSettings()
-            if alpha > 0 and (force or (s and s.hideButtons)) then
+            if alpha > 0 and shouldSuppress then
                 self:SetAlpha(0)
             end
         end)
+    else
+        -- If already hooked, update the cached state for subsequent calls
+        if frame.__guiUpdateSuppressState then
+            frame.__guiUpdateSuppressState(shouldKill)
+        end
     end
 end
 

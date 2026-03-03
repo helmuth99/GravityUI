@@ -885,6 +885,7 @@ local function BuildRaidWarnings(parent)
     
     local function RefreshRW()
         if ns.RaidWarnings and ns.RaidWarnings.ApplySettings then ns.RaidWarnings.ApplySettings() end
+        if ns.RaidWarnings and ns.RaidWarnings.MarkSettingsDirty then ns.RaidWarnings.MarkSettingsDirty() end
     end
 
     content.rowCount = 0
