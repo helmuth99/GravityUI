@@ -567,9 +567,6 @@ local function StartCooldown(guid, name, class, spellId, isReady)
     -- (Say Kick Logic Removed)
 end
 
-local UPDATE_THROTTLE = 0.05
-local timeSinceLastUpdate = 0
-
 
 
 function InterruptTracker:UNIT_SPELLCAST_SUCCEEDED(event, unit, castGUID, spellId)

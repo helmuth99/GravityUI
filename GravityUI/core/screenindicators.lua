@@ -307,14 +307,13 @@ local function UpdateCursorDynamic()
     
     -- Update GCD Swipe Alpha if needed
     if gcdCooldown then
-        -- Note: We assume color is constant, only alpha changes, but SetSwipeColor requires RGB too.
-        -- We re-fetch RGB to be safe, or cache it? Fetching is cheap.
+        -- Optimization: Resolve color directly into locals (avoid unpack allocation)
         local r, g, b
         if s.useThemeColor then
             r, g, b = GetAccentColor()
         else
             local c = s.customColor or DEFAULT_CURSOR_COLOR
-            r, g, b = unpack(c)
+            r, g, b = c[1], c[2], c[3]
         end
         gcdCooldown:SetSwipeColor(r, g, b, baseAlpha)
     end
@@ -1680,7 +1679,8 @@ local function CreateAFKFrame()
     
     AFKState.frame = f
     
-    -- OnUpdate for Timer and Clock Update
+    -- OnUpdate for Timer and Clock Update (Throttled to 1Hz - no need for per-frame updates)
+    local afkUpdateElapsed = 0
     f:SetScript("OnUpdate", function(self, elapsed)
         if not AFKState.isAFK then return end
         
@@ -1689,6 +1689,11 @@ local function CreateAFKFrame()
             ExitAFK()
             return
         end
+        
+        -- Performance: Only update clock/timer once per second
+        afkUpdateElapsed = afkUpdateElapsed + elapsed
+        if afkUpdateElapsed < 1.0 then return end
+        afkUpdateElapsed = 0
         
         local s = GetAFKSettings()
         

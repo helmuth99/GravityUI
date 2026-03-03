@@ -494,25 +494,27 @@ local function UpdateButtonUsability(button, settings)
         return
     end
 
-
     -- Usability Check
     if settings.usabilityIndicator then
         local isUsable = SafeIsUsableAction(button.action)
 
         if not isUsable then
-            if settings.usabilityDesaturate then
-                icon:SetDesaturated(true)
-                icon:SetVertexColor(0.6, 0.6, 0.6, 1) -- Slightly brighter when desaturated
-            else
-                icon:SetDesaturated(false)
-                icon:SetVertexColor(0.4, 0.4, 0.4, 1)
+            -- Performance: Only call API if state actually changed (prevents Blizzard overlay cascade)
+            if button._guiTinted ~= "unusable" then
+                if settings.usabilityDesaturate then
+                    icon:SetDesaturated(true)
+                    icon:SetVertexColor(0.6, 0.6, 0.6, 1)
+                else
+                    icon:SetDesaturated(false)
+                    icon:SetVertexColor(0.4, 0.4, 0.4, 1)
+                end
+                button._guiTinted = "unusable"
             end
-            button._guiTinted = "unusable"
             return
         end
     end
 
-    -- Normal
+    -- Normal: Only reset if we were previously tinted
     if button._guiTinted then
         icon:SetVertexColor(1, 1, 1, 1)
         icon:SetDesaturated(false)
@@ -843,8 +845,12 @@ function ns.RefreshActionBars()
     local g = db.global
 
     -- Hide Empty Slots (Grid Management)
+    -- Performance: Only call SetCVar if value actually changed (prevents ActionButton_Update cascade on all buttons)
     if g.hideEmptySlots ~= nil then
-        SetCVar("alwaysShowActionBars", g.hideEmptySlots and "0" or "1")
+        local targetVal = g.hideEmptySlots and "0" or "1"
+        if GetCVar("alwaysShowActionBars") ~= targetVal then
+            SetCVar("alwaysShowActionBars", targetVal)
+        end
     end
 
     for barKey, _ in pairs(BAR_BUTTONS) do
@@ -882,8 +888,9 @@ function ns.RefreshActionBars()
         end
     end
     
-    -- Usability Initial Run
-    ActionBars.UpdateAllUsability()
+    -- Usability is managed event-driven via ACTIONBAR_UPDATE_USABLE / SPELL_UPDATE_USABLE
+    -- Do NOT call UpdateAllUsability() here - it causes SPELL_ACTIVATION_OVERLAY_HIDE
+    -- flood on ALL registered buttons at once during initialization
     
     -- Initialize Extra Buttons
     if InitializeExtraButtons then InitializeExtraButtons() end
@@ -899,10 +906,12 @@ end
 local initFrame = CreateFrame("Frame")
 initFrame:RegisterEvent("PLAYER_LOGIN")
 initFrame:RegisterEvent("ACTIONBAR_UPDATE_USABLE")
-initFrame:RegisterEvent("ACTIONBAR_UPDATE_COOLDOWN")
+-- Note: ACTIONBAR_UPDATE_COOLDOWN removed - fires too frequently (every CD tick)
+-- Cooldown display is handled by Blizzard natively; we only need usability state
 initFrame:RegisterEvent("SPELL_UPDATE_USABLE")
 initFrame:RegisterEvent("UNIT_POWER_UPDATE")
-initFrame:RegisterEvent("PLAYER_TARGET_CHANGED")
+-- Note: PLAYER_TARGET_CHANGED removed - does not affect spell usability,
+-- only range checks (handled by screenindicators.lua crosshair)
 initFrame:RegisterEvent("ACTIONBAR_SLOT_CHANGED")
 initFrame:RegisterEvent("UPDATE_BINDINGS")
 initFrame:RegisterEvent("ACTIONBAR_PAGE_CHANGED")

@@ -527,6 +527,17 @@ function MPlusTeleport:ToggleGroupKeyListPreview(show)
     local f = self:CreateLibraryFrame("GroupKeys"); f.isPreview = show; UpdateLibraryVisibility()
 end
 
+-- Performance: Debounce SPELL_UPDATE_COOLDOWN (fires extremely frequently in instances)
+local spellCDUpdatePending = false
+local function ProcessCooldownUpdate()
+    spellCDUpdatePending = false
+    if InCombatLockdown() then return end
+    for _, f in pairs(libraryFrames) do
+        if f:IsShown() then UpdateButtonCooldowns(f) end
+    end
+    if libraryFrames.GroupKeys and libraryFrames.GroupKeys:IsShown() then MPlusTeleport:UpdateGroupKeys() end
+end
+
 local eventFrame = CreateFrame("Frame")
 eventFrame:RegisterEvent("ADDON_LOADED"); eventFrame:RegisterEvent("SPELL_UPDATE_COOLDOWN"); eventFrame:RegisterEvent("GROUP_ROSTER_UPDATE"); eventFrame:RegisterEvent("CHAT_MSG_ADDON"); eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD"); eventFrame:RegisterEvent("PLAYER_REGEN_DISABLED"); eventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
 eventFrame:RegisterEvent("BAG_UPDATE_DELAYED"); eventFrame:RegisterEvent("CHALLENGE_MODE_COMPLETED")
@@ -539,11 +550,11 @@ eventFrame:SetScript("OnEvent", function(_, event, ...)
             hooksecurefunc(ChallengesFrame, "Update", HookDungeonIcons); HookDungeonIcons(); UpdateLibraryVisibility()
         end
     elseif event == "SPELL_UPDATE_COOLDOWN" then
-        if InCombatLockdown() then return end
-        for _, f in pairs(libraryFrames) do 
-            if f:IsShown() then UpdateButtonCooldowns(f) end 
+        -- Performance: Debounce - SPELL_UPDATE_COOLDOWN fires for every spell/item CD in game
+        if not spellCDUpdatePending then
+            spellCDUpdatePending = true
+            C_Timer.After(0.5, ProcessCooldownUpdate)
         end
-        if libraryFrames.GroupKeys and libraryFrames.GroupKeys:IsShown() then MPlusTeleport:UpdateGroupKeys() end
     elseif event == "PLAYER_REGEN_DISABLED" then
         for _, f in pairs(libraryFrames) do f:Hide() end
     elseif event == "PLAYER_REGEN_ENABLED" then

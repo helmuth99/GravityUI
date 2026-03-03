@@ -81,7 +81,7 @@ pages\profiles.lua
 core\buttons.lua
 core\skyriding.lua
 core\screenindicators.lua
-core\interrupttracker.lua
 core\mail.lua
+
 # Strings
 strings\strings.xml

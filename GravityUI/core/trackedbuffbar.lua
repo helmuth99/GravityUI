@@ -554,9 +554,16 @@ function Module:Init()
     end)
     
     -- Periodic Scan (to catch dynamically created bars)
+    -- Performance: Skip full scan if no known bars are currently visible
     C_Timer.NewTicker(2.0, function()
+        local anyVisible = false
+        for bar in pairs(Module.knownBars) do
+            if bar:IsVisible() then anyVisible = true; break end
+        end
+        -- Always scan if no bars known yet (discovery phase), otherwise only if visible
+        if not anyVisible and next(Module.knownBars) ~= nil then return end
         Module:ScanForBars()
-        Module:UpdateLayout() -- Periodic Layout Check
+        Module:UpdateLayout()
     end)
     
     Module:Refresh()

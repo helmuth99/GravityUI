@@ -922,12 +922,8 @@ function Loot:ToggleRollMover(forceState)
             db.lootRoll.position = { point = point, relPoint = relPoint, x = x, y = y }
         end)
         
-        f:SetScript("OnUpdate", function(self, elapsed)
-            -- Enforce Width
-            if self:GetWidth() ~= db.lootRoll.width then 
-                 self:SetWidth(db.lootRoll.width)
-            end
-        end)
+        -- Performance: Width is set on Show/Refresh rather than per-frame OnUpdate
+        -- No OnUpdate needed here - width is static and controlled by Settings
     end
     
     -- Always update properties on Show
