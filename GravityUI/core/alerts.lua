@@ -334,7 +334,7 @@ local function ReplaceSubSystemAnchors(subSystem)
         local growDown = not db or (db.alertGrowDirection == "DOWN")
         local point = growDown and "TOP" or "BOTTOM"
         local relPoint = growDown and "BOTTOM" or "TOP"
-        local offset = growDown and -10 or 10
+        local offset = growDown and -4 or 4
         local yOffset = (db and db.alertYOffset) or 0
         
         -- Re-implement Blizzard's basic logic but with our forced direction
