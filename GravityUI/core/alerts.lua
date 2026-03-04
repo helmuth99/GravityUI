@@ -468,7 +468,7 @@ function Alerts:Test()
     if AchievementAlertSystem then AchievementAlertSystem:AddAlert(6) end
     if LootAlertSystem then
         local itemLink = "|cffa335ee|Hitem:19019::::::::::::|h[Thunderfury, Blessed Blade of the Windseeker]|h|r"
-        LootAlertSystem:AddAlert(itemLink, 1, nil, nil, nil, nil, nil, nil)
+        pcall(LootAlertSystem.AddAlert, LootAlertSystem, itemLink, 1, nil, nil, nil, nil, nil, nil)
     end
     
     -- Force re-anchor after alerts are created
