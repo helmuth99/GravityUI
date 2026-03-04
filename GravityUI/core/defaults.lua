@@ -275,7 +275,6 @@ ns.Defaults = {
     },
     soundAlerts = {
         enabled = false,
-        sounds = {}
     },
     interruptTracker = {
         enabled = false,
@@ -643,6 +642,7 @@ ns.Defaults = {
         autoCombatLogRaidNormal = false,
         autoCombatLogRaidHeroic = false,
         autoCombatLogRaidMythic = false,
+        ahCurrentExpansionFilter = false,
         autoSelectGossip = false,
         fastAutoLoot = false,
         checkEditmodeOnSpecSwitch = true,

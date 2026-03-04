@@ -440,123 +440,32 @@ local function BuildSoundAlerts(parent)
     local scroll, content = GUI:CreateScrollableContent(parent)
     scroll:SetAllPoints()
     local db = ns.GetDB(); if not db then return end
-    
-    local saDB = db.soundAlerts
-    if not saDB then 
-        saDB = { enabled = true, sounds = {} }
-        db.soundAlerts = saDB 
+
+    if not db.soundAlerts then
+        db.soundAlerts = { enabled = false }
     end
-    
+    local saDB = db.soundAlerts
+
     content.rowCount = 0
 
     local header = GUI:CreateSectionHeader(content, "Sound Alerts")
     header:SetPoint("TOPLEFT", 10, -10)
     header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
     content.rowCount = 1.3
-    
-    local function RefreshSA() 
-        if ns.SoundAlerts and ns.SoundAlerts.ApplySettings then ns.SoundAlerts.ApplySettings() end 
+
+    local infoBox = GUI:CreateInfoBox(content, "When enabled, all sounds registered in LibSharedMedia appear under a \"GravityUI\" section inside Blizzard's CooldownViewer alert sound dropdown.\n\nTo use: open the Cooldown Manager settings, edit an alert, select Sound, then choose a sound from the GravityUI section.\n\n|cffFFCC00Note:|r Enabling this module requires a /reload to take effect. Disabling requires a /reload as well.")
+    infoBox:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
+    content.rowCount = content.rowCount + (infoBox:GetHeight() / (ROW_HEIGHT+5)) + 0.3
+
+    local function RefreshSA()
+        if ns.SoundAlerts and ns.SoundAlerts.ApplySettings then ns.SoundAlerts.ApplySettings() end
     end
 
-    -- Info Box
-    local infoBox = GUI:CreateInfoBox(content, "Change the CDM sound alerts from the devices to a custom sound.")
-    infoBox:SetPoint("TOPLEFT", header, "BOTTOMLEFT", 0, -10)
-    
-    content.rowCount = 1.3 + (infoBox:GetHeight() / 30) + 0.5
+    AddRow(content, "Enable Custom Sounds in CDM", "checkbox", "enabled", saDB, RefreshSA)
 
-    CreateSubLabel(content, "General")
-    AddRow(content, "Enable Sound Alerts Module", "checkbox", "enabled", saDB, RefreshSA)
-    content.rowCount = content.rowCount + 0.5
-    
-    local LSM = LibStub("LibSharedMedia-3.0", true)
-    local soundOptions = {{value="None", text="None (Mute Only)"}}
-    if LSM then
-        for name, _ in pairs(LSM:HashTable("sound")) do table.insert(soundOptions, {value=name, text=name}) end
-        table.sort(soundOptions, function(a,b)
-             if a.value == b.value then return false end
-             if a.value == "None" then return true end
-             if b.value == "None" then return false end
-             return a.text < b.text 
-        end)
-    end
-
-    CreateSubLabel(content, "Replaceable Sounds")
-    
-    local soundsList = {
-        { key = "BoatHorn",        name = "Boat Horn" },
-        { key = "AirHorn",         name = "Air Horn" },
-        { key = "BikeHorn",        name = "Bike Horn" },
-        { key = "CashRegister",    name = "Cash Register" },
-        { key = "JackpotBell",     name = "Jackpot Bell" },
-        { key = "JackpotCoins",    name = "Jackpot Coins" },
-        { key = "JackpotFail",     name = "Jackpot Fail" },
-        { key = "RotaryPhoneDial", name = "Rotary Phone Dial" },
-        { key = "RotaryPhoneRing", name = "Rotary Phone Ring" },
-        { key = "StovePipe",       name = "Stove Pipe" },
-        { key = "TrashcanLid",     name = "Trashcan Lid" },
-    }
-
-    for _, info in ipairs(soundsList) do
-        -- Ensure sub-table exists
-        if not saDB.sounds[info.key] then
-             saDB.sounds[info.key] = { enabled = false, sound = "None" }
-        end
-        
-        -- Fallback for empty strings or nils imported from older configurations
-        if saDB.sounds[info.key].sound == nil or saDB.sounds[info.key].sound == "" then
-             saDB.sounds[info.key].sound = "None"
-        end
-
-        local sndConfig = saDB.sounds[info.key]
-        
-        AddRow(content, "Enable " .. info.name, "checkbox", "enabled", sndConfig, RefreshSA)
-        local dropRow = AddRow(content, "Replacement Sound", "dropdown", soundOptions, "sound", sndConfig, function(newValue, isUserInput)
-             if not isUserInput then return end
-             
-             -- If they select a sound, automatically toggle the enable switch on
-             if sndConfig.sound ~= "None" and not sndConfig.enabled then
-                  sndConfig.enabled = true
-             end
-             
-             RefreshSA()
-             if ns.GUI.RefreshAll then ns.GUI:RefreshAll() end
-        end)
-        
-        -- Create an explicit Play button next to the dropdown
-        local playBtn = CreateFrame("Button", nil, dropRow)
-        playBtn:SetSize(22, 22)
-        -- Anchor exactly to the right of the dropdown (LABEL_WIDTH=220 + LEFTMARGIN=10 + DROPDOWN=250 = 480)
-        playBtn:SetPoint("LEFT", dropRow, "LEFT", 490, 0)
-        playBtn:SetNormalTexture("Interface\\OptionsFrame\\VoiceChat-Play")
-        playBtn:SetPushedTexture("Interface\\OptionsFrame\\VoiceChat-Play")
-        playBtn:GetPushedTexture():SetPoint("TOPLEFT", 1, -1)
-        playBtn:GetPushedTexture():SetPoint("BOTTOMRIGHT", 1, -1)
-        playBtn:SetHighlightTexture("Interface\\Buttons\\UI-Common-MouseHilight", "ADD")
-        
-        playBtn:SetScript("OnClick", function()
-             if sndConfig.sound ~= "None" and LSM then
-                 local soundFile = LSM:Fetch("sound", sndConfig.sound)
-                 if soundFile then
-                     if ns.SoundAlerts then ns.SoundAlerts._previewing = true end
-                     PlaySoundFile(soundFile, "Master")
-                     if ns.SoundAlerts then ns.SoundAlerts._previewing = false end
-                 end
-             end
-        end)
-        
-        playBtn:SetScript("OnEnter", function(self)
-             GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-             GameTooltip:SetText("Preview Sound", 1, 1, 1)
-             GameTooltip:Show()
-        end)
-        playBtn:SetScript("OnLeave", function(self)
-             GameTooltip:Hide()
-        end)
-        content.rowCount = content.rowCount + 0.2
-    end
-    
     content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
 end
+
 
 -- ═══════════════════════════════════════════════════════════════
 -- MAIN PAGE REGISTER

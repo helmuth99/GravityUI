@@ -901,6 +901,26 @@ ns.ToggleDeleteFix = ToggleDeleteFix
 ---------------------------------------------------------------------------
 -- EDITMODE CHECK ON SPEC SWITCH
 ---------------------------------------------------------------------------
+---------------------------------------------------------------------------
+-- AUCTION HOUSE: AUTO FILTER CURRENT EXPANSION
+---------------------------------------------------------------------------
+
+local function OnAuctionHouseShow()
+    local settings = GetSettings()
+    if not settings or not settings.ahCurrentExpansionFilter then return end
+
+    if AUCTION_HOUSE_DEFAULT_FILTERS then
+        -- The modern AH filter uses this global table to define default active filters
+        -- We just flip the boolean state.
+        AUCTION_HOUSE_DEFAULT_FILTERS[Enum.AuctionHouseFilter.CurrentExpansionOnly] = true
+        
+        -- If AH is currently shown and has a method to reset/apply filters, trigger it
+        if AuctionHouseFrame and AuctionHouseFrame.SearchBar and AuctionHouseFrame.SearchBar.FilterButton then
+            AuctionHouseFrame.SearchBar.FilterButton:Reset()
+        end
+    end
+end
+
 local function OnSpecSwitchEditModeCheck()
     local settings = GetSettings()
     if not settings or not settings.checkEditmodeOnSpecSwitch then return end
@@ -993,6 +1013,7 @@ automationFrame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
 automationFrame:RegisterEvent("PLAYER_DIFFICULTY_CHANGED")
 automationFrame:RegisterEvent("LFG_LIST_SEARCH_RESULTS_RECEIVED")
 automationFrame:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
+automationFrame:RegisterEvent("AUCTION_HOUSE_SHOW")
 
 automationFrame:SetScript("OnEvent", function(self, event, ...)
     if event == "ADDON_LOADED" then
@@ -1050,5 +1071,7 @@ automationFrame:SetScript("OnEvent", function(self, event, ...)
         if unit == "player" then
             OnSpecSwitchEditModeCheck()
         end
+    elseif event == "AUCTION_HOUSE_SHOW" then
+        OnAuctionHouseShow()
     end
 end)

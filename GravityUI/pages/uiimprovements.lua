@@ -143,6 +143,11 @@ local function BuildAutomation(parent)
     
     AddRow(content, "Auto-Select Single Gossip Option", "checkbox", "autoSelectGossip", dbUI, nil)
     AddRow(content, "Auto Check EditMode on Spec Switch", "checkbox", "checkEditmodeOnSpecSwitch", dbUI, nil)
+    AddRow(content, "AH: Filter Current Expansion", "checkbox", "ahCurrentExpansionFilter", dbUI, nil)
+    content.rowCount = content.rowCount + 0.2
+    local ahInfo = GUI:CreateInfoBox(content, "Setzt beim Öffnen des Auktionshauses automatisch den Filter auf die aktuelle Expansion.")
+    ahInfo:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
+    content.rowCount = content.rowCount + (ahInfo:GetHeight() / (ROW_HEIGHT+5)) + 0.2
     
     -- Quick Salvage moved here? Original logic was inside Automation section. Yes.
     content.rowCount = content.rowCount + 0.5
