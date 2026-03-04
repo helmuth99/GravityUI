@@ -241,97 +241,133 @@ local function ScanActionBars(force)
                          local nOk, nVal = pcall(function() return info.name end)
                          if nOk then name = nVal end
                      end
-                 elseif mlink then
-                     local itemId = mlink:match("item:(%d+)")
-                     if itemId then
-                        bindId = tonumber(itemId)
-                        local iOk, itemName = pcall(GetItemInfo, itemId)
-                        if iOk and itemName then 
-                            name = itemName 
-                            if key then SafeSet(SafeLower(name), key) end
-                        end
-                        local sOk, itemSpell = pcall(GetItemSpell, itemId)
-                        if sOk and itemSpell and key then SafeSet(SafeLower(itemSpell), key) end
+                 end
+                 
+                 -- Extra: also parse #showtooltip / /cast from body as additional lookup keys.
+                 -- Runs even when mid is valid to cover cases where BCDM uses a different
+                 -- spell ID variant than what GetMacroSpell returns.
+                 if body and key then
+                     local ttip = body:match("#showtooltip[ \t]+([^\r\n]+)")
+                     if not ttip then
+                         for line in body:gmatch("[^\r\n]+") do
+                             local l = line:lower():match("^%s*(.+)")
+                             if l and (l:find("^/cast") or l:find("^/wirken") or l:find("^/castsequence")) then
+                                 ttip = line:match("^/%w+%s+(.+)")
+                                 if ttip then break end
+                             end
+                         end
                      end
-                 elseif body then
-                      -- Fallback: Parse macro text (mostly safe as it's string parsing, but careful with results)
-                      local tooltips = body:match("#showtooltip[ \t]+([^\r\n]+)")
-                      if not tooltips then
-                           for line in body:gmatch("[^\r\n]+") do
-                               local cleanLine = line:match("^%s*(.+)")
-                               if cleanLine then
-                                   local l = cleanLine:lower()
-                                   if l:find("^/cast") or l:find("^/use") or l:find("^/castsequence") or l:find("^/wirken") or l:find("^/benutzen") then
-                                      local payload = cleanLine:match("^/%w+%s+(.+)")
-                                      if payload then 
-                                          tooltips = payload
-                                          local itemIdMatch = payload:match("item:(%d+)")
-                                          if itemIdMatch then bindId = tonumber(itemIdMatch) end
-                                          break 
-                                      end
+                     if ttip then
+                         local cName = ttip:gsub("%[.-%]", ""):match("^%s*(.-)%s*$")
+                         cName = cName and cName:match("([^;]+)")
+                         if cName then
+                             cName = cName:gsub("^!", ""):match("^%s*(.-)%s*$")
+                             if cName ~= "" and not tonumber(cName) then
+                                 SafeSet(SafeLower(cName), key, 2)
+                                 local sOk2, sInfo2 = pcall(C_Spell.GetSpellInfo, cName)
+                                 if sOk2 and sInfo2 then
+                                     local idOk, spId = pcall(function() return sInfo2.spellID end)
+                                     if idOk and spId and spId > 0 then SafeSet(spId, key, 2) end
+                                     local lnOk, lName = pcall(function() return sInfo2.name end)
+                                     if lnOk and lName then SafeSet(SafeLower(lName), key, 2) end
+                                 end
+                             end
+                         end
+                     end
+                 end
+
+                 if not mid then
+                     if mlink then
+                         local itemId = mlink:match("item:(%d+)")
+                         if itemId then
+                            bindId = tonumber(itemId)
+                            local iOk, itemName = pcall(GetItemInfo, itemId)
+                            if iOk and itemName then 
+                                name = itemName 
+                                if key then SafeSet(SafeLower(name), key) end
+                            end
+                            local sOk, itemSpell = pcall(GetItemSpell, itemId)
+                            if sOk and itemSpell and key then SafeSet(SafeLower(itemSpell), key) end
+                         end
+                     elseif body then
+                          -- Fallback: Parse macro text (mostly safe as it's string parsing, but careful with results)
+                          local tooltips = body:match("#showtooltip[ \t]+([^\r\n]+)")
+                          if not tooltips then
+                               for line in body:gmatch("[^\r\n]+") do
+                                   local cleanLine = line:match("^%s*(.+)")
+                                   if cleanLine then
+                                       local l = cleanLine:lower()
+                                       if l:find("^/cast") or l:find("^/use") or l:find("^/castsequence") or l:find("^/wirken") or l:find("^/benutzen") then
+                                          local payload = cleanLine:match("^/%w+%s+(.+)")
+                                          if payload then 
+                                              tooltips = payload
+                                              local itemIdMatch = payload:match("item:(%d+)")
+                                              if itemIdMatch then bindId = tonumber(itemIdMatch) end
+                                              break 
+                                          end
+                                       end
+                                       if line:lower():find("^/use%s+13") then tooltips = "13"; break
+                                       elseif line:lower():find("^/use%s+14") then tooltips = "14"; break end
                                    end
-                                   if line:lower():find("^/use%s+13") then tooltips = "13"; break
-                                   elseif line:lower():find("^/use%s+14") then tooltips = "14"; break end
                                end
-                           end
-                      end
-                      
-                      if tooltips then
-                           local cleanName = tooltips:gsub("%[.-%]", ""):match("^%s*(.-)%s*$")
-                           cleanName = cleanName:match("([^;]+)")
-                           if cleanName then
-                               cleanName = cleanName:gsub("^!", ""):match("^%s*(.-)%s*$")
-                               local slotId = tonumber(cleanName)
-                               if slotId then
-                                   if slotId == 13 or slotId == 14 then
-                                       local itemId = GetInventoryItemID("player", slotId)
-                                       if itemId then
-                                           bindId = itemId
-                                           local iOk, itemName = pcall(GetItemInfo, itemId)
-                                           if iOk and itemName then
-                                               name = itemName
-                                               if key then 
-                                                   SafeSet(SafeLower(name), key)
-                                                   SafeSet(slotId, key) -- Save slot ID explicitly (for BCDM Trinket matching fallback)
+                          end
+                          
+                          if tooltips then
+                               local cleanName = tooltips:gsub("%[.-%]", ""):match("^%s*(.-)%s*$")
+                               cleanName = cleanName:match("([^;]+)")
+                               if cleanName then
+                                   cleanName = cleanName:gsub("^!", ""):match("^%s*(.-)%s*$")
+                                   local slotId = tonumber(cleanName)
+                                   if slotId then
+                                       if slotId == 13 or slotId == 14 then
+                                           local itemId = GetInventoryItemID("player", slotId)
+                                           if itemId then
+                                               bindId = itemId
+                                               local iOk, itemName = pcall(GetItemInfo, itemId)
+                                               if iOk and itemName then
+                                                   name = itemName
+                                                   if key then 
+                                                       SafeSet(SafeLower(name), key)
+                                                       SafeSet(slotId, key)
+                                                   end
                                                end
-                                           end
-                                           local sOk, itemSpell = pcall(GetItemSpell, itemId)
-                                           if sOk and itemSpell and key then
-                                               SafeSet(SafeLower(itemSpell), key)
-                                               if not name then name = itemSpell end
-                                               SafeSet(slotId, key) -- Save slot ID explicitly
+                                               local sOk, itemSpell = pcall(GetItemSpell, itemId)
+                                               if sOk and itemSpell and key then
+                                                   SafeSet(SafeLower(itemSpell), key)
+                                                   if not name then name = itemSpell end
+                                                   SafeSet(slotId, key)
+                                               end
+                                           else
+                                                bindId = slotId
+                                                if key then SafeSet(slotId, key) end
                                            end
                                        else
-                                            -- If GetInventoryItemID fails (cache miss), fallback to saving the slot itself
-                                            bindId = slotId
-                                            if key then SafeSet(slotId, key) end
-                                       end
-                                   else
-                                       bindId = slotId
-                                       local sOk, sInfo = pcall(C_Spell.GetSpellInfo, slotId)
-                                       if sOk and sInfo then 
-                                           local nOk, nVal = pcall(function() return sInfo.name end)
-                                           if nOk then 
-                                               name = nVal 
-                                               if key then SafeSet(SafeLower(name), key) end
+                                           bindId = slotId
+                                           local sOk, sInfo = pcall(C_Spell.GetSpellInfo, slotId)
+                                           if sOk and sInfo then 
+                                               local nOk, nVal = pcall(function() return sInfo.name end)
+                                               if nOk then 
+                                                   name = nVal 
+                                                   if key then SafeSet(SafeLower(name), key) end
+                                               end
                                            end
                                        end
+                                   else
+                                       name = cleanName
+                                       bindId = "macro_"..name 
+                                       if key then SafeSet(SafeLower(name), key) end
                                    end
-                               else
-                                   name = cleanName
-                                   bindId = "macro_"..name 
-                                   if key then SafeSet(SafeLower(name), key) end
                                end
-                           end
-                      end
-                 else
-                      -- Try generic spell lookup for macro ID? Usually not needed if mid/mlink failed
-                      local sOk, fallbackInfo = pcall(C_Spell.GetSpellInfo, id)
-                      if sOk and fallbackInfo then
-                          bindId = id
-                          local nOk, nVal = pcall(function() return fallbackInfo.name end)
-                          if nOk then name = nVal end
-                      end
+                          end
+                     else
+                          -- Try generic spell lookup for macro ID? Usually not needed if mid/mlink failed
+                          local sOk, fallbackInfo = pcall(C_Spell.GetSpellInfo, id)
+                          if sOk and fallbackInfo then
+                              bindId = id
+                              local nOk, nVal = pcall(function() return fallbackInfo.name end)
+                              if nOk then name = nVal end
+                          end
+                     end
                  end
             elseif actionType == "item" and id then
                  bindId = id
