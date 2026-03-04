@@ -894,7 +894,46 @@ function ns.RefreshActionBars()
     
     -- Initialize Extra Buttons
     if InitializeExtraButtons then InitializeExtraButtons() end
+
+    -- Dominos Skinning (only if both master toggle and Dominos toggle are enabled)
+    if C_AddOns.IsAddOnLoaded("Dominos") and db.skinDominos then
+        local g = db.global
+        local dominosPatterns = {
+            { prefix = "DominosActionButton",             from = 1,  to = 24  }, -- Bars 1-2
+            { prefix = "MultiBarRightActionButton",       from = 1,  to = 12  }, -- Bar 3
+            { prefix = "MultiBarLeftActionButton",        from = 1,  to = 12  }, -- Bar 4
+            { prefix = "MultiBarBottomRightActionButton", from = 1,  to = 12  }, -- Bar 5
+            { prefix = "MultiBarBottomLeftActionButton",  from = 1,  to = 12  }, -- Bar 6
+            { prefix = "DominosActionButton",             from = 73, to = 132 }, -- Bars 7-11
+            { prefix = "MultiBar5ActionButton",           from = 1,  to = 12  }, -- Bar 12
+            { prefix = "MultiBar6ActionButton",           from = 1,  to = 12  }, -- Bar 13
+            { prefix = "MultiBar7ActionButton",           from = 1,  to = 12  }, -- Bar 14
+        }
+        for _, p in ipairs(dominosPatterns) do
+            for i = p.from, p.to do
+                local btn = _G[p.prefix .. i]
+                if btn then
+                    SkinButton(btn, g)
+                    UpdateButtonText(btn, g)
+                end
+            end
+        end
+    end
+
+    -- Bartender4 Skinning (only if both master toggle and BT4 toggle are enabled)
+    -- BT4 uses simple sequential naming: BT4Button1-120 (10 bars × 12 buttons)
+    if C_AddOns.IsAddOnLoaded("Bartender4") and db.skinBartender4 then
+        local g = db.global
+        for i = 1, 120 do
+            local btn = _G["BT4Button" .. i]
+            if btn then
+                SkinButton(btn, g)
+                UpdateButtonText(btn, g)
+            end
+        end
+    end
 end
+
 
 ---------------------------------------------------------------------------
 -- INITIALIZATION
@@ -927,3 +966,36 @@ initFrame:SetScript("OnEvent", function(self, event)
         RequestUsabilityUpdate()
     end
 end)
+
+---------------------------------------------------------------------------
+-- DOMINOS SKINNING
+---------------------------------------------------------------------------
+-- Dominos reuses Blizzard MultiBar names for bars 3-6 (already skinned).
+-- Only DominosActionButton1-24 (bars 1+2) need custom skinning.
+-- Skinning is applied via RefreshActionBars() which is called at PLAYER_LOGIN.
+
+ns.SkinDominosButtons = function()
+    ns.RefreshActionBars() -- Delegate to the main refresh which includes Dominos
+end
+
+-- Hook: when Dominos finishes loading, trigger a refresh once the DB is ready
+local dominosHookFrame = CreateFrame("Frame")
+dominosHookFrame:RegisterEvent("ADDON_LOADED")
+dominosHookFrame:SetScript("OnEvent", function(self, event, addonName)
+    if addonName == "Dominos" then
+        -- Wait for PLAYER_LOGIN to ensure DB is ready, then re-run the full refresh
+        local waitFrame = CreateFrame("Frame")
+        waitFrame:RegisterEvent("PLAYER_LOGIN")
+        waitFrame:SetScript("OnEvent", function(wf)
+            C_Timer.After(0.5, function()
+                local db = GetDB()
+                if db and db.skinDominos then
+                    ns.RefreshActionBars()
+                end
+            end)
+            wf:UnregisterEvent("PLAYER_LOGIN")
+        end)
+        self:UnregisterEvent("ADDON_LOADED")
+    end
+end)
+

@@ -477,6 +477,168 @@ local function BuildFPSSettings(parent)
     content:SetHeight(math.abs(yOffset) + 20)
 end
 
+local function BuildEditMode(parent)
+    local scroll, content = ns.GUI:CreateScrollableContent(parent)
+    scroll:SetAllPoints()
+    local db = ns.GetDB()
+    if not db then return end
+
+    local yOffset = -10
+    local PAD = PADDING
+
+    -- Header
+    local header = ns.GUI:CreateSectionHeader(content, "GravityUI Edit Mode")
+    header:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - header.gap - 10
+
+    local infoBox = ns.GUI:CreateInfoBox(content,
+        "Enable GravityUI Edit Mode to drag and reposition all GravityUI elements.\n" ..
+        "Changes are saved automatically when you drag a frame.")
+    infoBox:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - infoBox:GetHeight() - 14
+
+    -- ── Enable / Disable Buttons ──────────────────────────────────────────
+    local Movers = ns.Movers
+
+    local btnContainer = CreateFrame("Frame", nil, content)
+    btnContainer:SetPoint("TOPLEFT", PAD, yOffset)
+    btnContainer:SetSize(440, 32)
+
+    local enableBtn = ns.GUI:CreateButton(btnContainer, "Enable GravityUI Edit Mode", 210, 32, function()
+        if Movers then
+            Movers:SetEditMode(true)
+            Movers:SetShowGravityElements(true)
+        end
+    end)
+    enableBtn:SetPoint("LEFT", btnContainer, "LEFT", 0, 0)
+
+    local disableBtn = ns.GUI:CreateButton(btnContainer, "Disable GravityUI Edit Mode", 210, 32, function()
+        if Movers then
+            Movers:SetEditMode(false)
+            Movers:SetShowGravityElements(false)
+        end
+    end)
+    disableBtn:SetPoint("LEFT", enableBtn, "RIGHT", 10, 0)
+
+    yOffset = yOffset - 42
+
+    -- ── Status Label ─────────────────────────────────────────────────────
+    local statusLabel = ns.GUI:CreateLabel(content, "", 11, C.textMuted)
+    ns.GUI:SetFont(statusLabel, 11, "")
+    statusLabel:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - 22
+
+    -- Live update status when this tab is shown
+    local function RefreshStatus()
+        if Movers and Movers.isEditMode and Movers.showGravityElements then
+            statusLabel:SetText("|cff00FF80● Edit Mode ACTIVE — Drag elements to reposition them|r")
+        else
+            statusLabel:SetText("")
+        end
+    end
+    RefreshStatus()
+
+    -- Refresh status on each button click
+    hooksecurefunc(enableBtn, "Click", RefreshStatus)
+    hooksecurefunc(disableBtn, "Click", RefreshStatus)
+
+    -- ── Registered Elements List ──────────────────────────────────────────
+    yOffset = yOffset - 8
+    local elemHeader = ns.GUI:CreateSectionHeader(content, "Registered Movable Elements")
+    elemHeader:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - elemHeader.gap - 4
+
+    if Movers and next(Movers.registry) ~= nil then
+        -- Sort alphabetically by label
+        local sortedNames = {}
+        for name in pairs(Movers.registry) do
+            table.insert(sortedNames, name)
+        end
+        table.sort(sortedNames, function(a, b)
+            local la = (Movers.registry[a].label or a):lower()
+            local lb = (Movers.registry[b].label or b):lower()
+            return la < lb
+        end)
+
+        for _, name in ipairs(sortedNames) do
+            local data = Movers.registry[name]
+            if name ~= "ZoneAbility" then
+            local displayLabel = data.label or name
+
+            -- Row
+            local row = CreateFrame("Frame", nil, content, "BackdropTemplate")
+            row:SetSize(480, 28)
+            row:SetPoint("TOPLEFT", PAD, yOffset)
+            ns.GUI:CreateBackdrop(row, {0.12, 0.12, 0.12, 0.35}, C.border)
+
+            -- Label
+            local lbl = row:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+            ns.GUI:SetFont(lbl, 12, "")
+            lbl:SetPoint("LEFT", 10, 0)
+            lbl:SetText(displayLabel)
+            lbl:SetTextColor(C.text[1], C.text[2], C.text[3], 1)
+
+            -- Toggle button: first click = show mover, second click = hide + save
+            local frameAvailable = name ~= "ZoneAbility" or (data.frame and data.frame.IsShown ~= nil)
+            local moverActive = false
+
+            local toggleBtn = ns.GUI:CreateButton(row, "Move", 56, 20, function() end)
+            toggleBtn:SetPoint("RIGHT", row, "RIGHT", -6, 0)
+
+            local function SetMoverActive(active)
+                moverActive = active
+                if active then
+                    -- Show the mover
+                    if Movers and data.toggleFunc then
+                        pcall(data.toggleFunc, data.frame, true, true)
+                    end
+                    -- Update button appearance to "Done"
+                    if toggleBtn.text then
+                        toggleBtn.text:SetText("Done")
+                        toggleBtn.text:SetTextColor(C.accent[1], C.accent[2], C.accent[3], 1)
+                    end
+                else
+                    -- Hide the mover (position auto-saved on drag via OnDragStop)
+                    if Movers and data.toggleFunc then
+                        pcall(data.toggleFunc, data.frame, false, false)
+                    end
+                    -- Revert button to "Move"
+                    if toggleBtn.text then
+                        toggleBtn.text:SetText("Move")
+                        toggleBtn.text:SetTextColor(C.text[1], C.text[2], C.text[3], 1)
+                    end
+                end
+            end
+
+            toggleBtn:SetScript("OnClick", function()
+                if not frameAvailable then return end
+                SetMoverActive(not moverActive)
+            end)
+
+            if not frameAvailable then
+                toggleBtn:SetAlpha(0.4)
+                toggleBtn:SetScript("OnEnter", function(self)
+                    GameTooltip:SetOwner(self, "ANCHOR_LEFT")
+                    GameTooltip:AddLine("Not available", 1, 0.5, 0, true)
+                    GameTooltip:AddLine("Zone Ability only appears during\nspecific zone events or encounters.", 0.7, 0.7, 0.7, true)
+                    GameTooltip:Show()
+                end)
+                toggleBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
+            end
+
+            yOffset = yOffset - 32
+            end -- if name ~= ZoneAbility
+        end
+    else
+        local emptyLabel = ns.GUI:CreateLabel(content, "No movable elements registered yet.", 12, C.textMuted)
+        emptyLabel:SetPoint("TOPLEFT", PAD + 5, yOffset)
+        yOffset = yOffset - 24
+    end
+
+    content:SetHeight(math.abs(yOffset) + 20)
+end
+
+
 ns.GUI:RegisterPage("main", {
     title = "Main",
     OnBuild = function(content)
@@ -489,11 +651,12 @@ ns.GUI:RegisterPage("main", {
         end
         
         local subTabs = ns.GUI:CreateSubTabs(scrollFrame, {
-            { name = "Welcome", builder = BuildWelcome },
-            { name = "Theme Color", builder = BuildThemeColor },
-            { name = "UI Scale", builder = BuildUIScale },
+            { name = "Welcome",       builder = BuildWelcome },
+            { name = "Theme Color",   builder = BuildThemeColor },
+            { name = "UI Scale",      builder = BuildUIScale },
             { name = "Font Settings", builder = BuildFontSettings },
-            { name = "FPS Settings", builder = BuildFPSSettings },
+            { name = "FPS Settings",  builder = BuildFPSSettings },
+            { name = "Edit Mode",     builder = BuildEditMode },
         })
         subTabs:SetPoint("TOPLEFT", 10, -10)
         subTabs:SetPoint("TOPRIGHT", -10, 0)

@@ -124,32 +124,30 @@ local function HandleGravityLfgClick(self)
 end
 
 local HooksState = {}
+local lfgRolePending = false
+local function ScheduleForceApplyLfgRoles()
+    if lfgRolePending then return end
+    lfgRolePending = true
+    C_Timer.After(0.15, function()
+        lfgRolePending = false
+        ForceApplyLfgRolesNow()
+    end)
+end
+
 local function OverrideLfgApplicationDialog()
     if not HooksState.lfgAppDialog and _G.LFGListApplicationDialog then
         if _G.LFGListApplicationDialog.UpdateRoles then
-            hooksecurefunc(_G.LFGListApplicationDialog, "UpdateRoles", function()
-                C_Timer.After(0.01, ForceApplyLfgRolesNow)
-            end)
+            hooksecurefunc(_G.LFGListApplicationDialog, "UpdateRoles", ScheduleForceApplyLfgRoles)
         elseif _G.LFGListApplicationDialog_UpdateRoles then
-            hooksecurefunc("LFGListApplicationDialog_UpdateRoles", function()
-                C_Timer.After(0.01, ForceApplyLfgRolesNow)
-            end)
+            hooksecurefunc("LFGListApplicationDialog_UpdateRoles", ScheduleForceApplyLfgRoles)
         end
 
-        _G.LFGListApplicationDialog:HookScript("OnShow", function()
-            C_Timer.After(0.01, ForceApplyLfgRolesNow)
-            C_Timer.After(0.1, ForceApplyLfgRolesNow)
-            C_Timer.After(0.25, ForceApplyLfgRolesNow)
-        end)
+        _G.LFGListApplicationDialog:HookScript("OnShow", ScheduleForceApplyLfgRoles)
         HooksState.lfgAppDialog = true
     end
     
     if not HooksState.lfgSearchSignup and _G.LFGListFrame and _G.LFGListFrame.SearchPanel and _G.LFGListFrame.SearchPanel.SignUpButton then
-        _G.LFGListFrame.SearchPanel.SignUpButton:HookScript("OnClick", function()
-            C_Timer.After(0.01, ForceApplyLfgRolesNow)
-            C_Timer.After(0.1, ForceApplyLfgRolesNow)
-            C_Timer.After(0.25, ForceApplyLfgRolesNow)
-        end)
+        _G.LFGListFrame.SearchPanel.SignUpButton:HookScript("OnClick", ScheduleForceApplyLfgRoles)
         HooksState.lfgSearchSignup = true
     end
     

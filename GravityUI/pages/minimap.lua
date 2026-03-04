@@ -442,6 +442,10 @@ local function BuildIconCatcherTab(parent)
     AddRow(genContainer, "Enable Icon Catcher", "checkbox", "enabled", c, refresh)
     AddRow(genContainer, "Lock Icon/Bar", "checkbox", "locked", c, refresh)
     AddRow(genContainer, "Enable Masque Support", "checkbox", "masque", c, refresh)
+    AddRow(genContainer, "Enable GravityUI Skinning", "checkbox", "guiSkinning", c, function()
+        print("|cFF30D1FFGravityUI:|r Icon Catcher skinning change takes effect after |cFFFFFF00/reload|r.")
+        refresh()
+    end)
     
     local modeOpts = { {value = "ICON", text = "Icon"}, {value = "BAR", text = "Bar"} }
     local iconBgRow

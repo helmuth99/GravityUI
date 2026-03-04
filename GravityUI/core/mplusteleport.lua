@@ -470,6 +470,7 @@ function MPlusTeleport:CreateLibraryFrame(libType)
     if libType == "GroupKeys" then
         -- Lock Button
         local lock = CreateFrame("Button", nil, frame)
+        frame.lockBtn = lock
         lock:SetSize(26, 26); lock:SetPoint("TOPRIGHT", -10, -4)
         local function UpdateLockTexture()
             local locked = settings[lockKey]
@@ -492,6 +493,7 @@ function MPlusTeleport:CreateLibraryFrame(libType)
 
         -- Reset Button
         local reset = CreateFrame("Button", nil, frame)
+        frame.resetBtn = reset
         reset:SetSize(18, 18); reset:SetPoint("RIGHT", lock, "LEFT", -8, 0)
         reset:SetNormalTexture("Interface\\Buttons\\UI-RefreshButton")
         local resetTex = reset:GetNormalTexture()
@@ -507,7 +509,31 @@ function MPlusTeleport:CreateLibraryFrame(libType)
 
     libraryFrames[libType] = frame
     if libType ~= "GroupKeys" then self:RefreshLibrary(libType) end
+    if libType == "GroupKeys" then self:ApplyGroupKeyAppearance(frame) end
     return frame
+end
+
+function MPlusTeleport:ApplyGroupKeyAppearance(frame)
+    frame = frame or libraryFrames.GroupKeys
+    if not frame then return end
+    local s = GetSettings()
+    -- Background: CreateBackdrop uses SetBackdropColor directly on frame
+    if frame.SetBackdropColor then
+        if s.groupkeysHideBackground then
+            frame:SetBackdropColor(0, 0, 0, 0)
+            if frame.border then frame.border:SetAlpha(0) end
+        else
+            local r, g, b = 0.11, 0.12, 0.13
+            if ns.GetThemeBgColor then r, g, b = ns.GetThemeBgColor() end
+            frame:SetBackdropColor(r, g, b, 0.8)
+            if frame.border then frame.border:SetAlpha(1) end
+        end
+    end
+    -- Title bar (fonstring at the top) + header buttons
+    local showBar = not s.groupkeysHideTitleBar
+    if frame.title then frame.title:SetShown(showBar) end
+    if frame.lockBtn then frame.lockBtn:SetShown(showBar) end
+    if frame.resetBtn then frame.resetBtn:SetShown(showBar) end
 end
 
 ---------------------------------------------------------------------------
@@ -520,6 +546,7 @@ function MPlusTeleport:ApplySettings()
         if s.raidLibraryEnabled then self:CreateLibraryFrame("Raid") end
         if s.groupKeyListEnabled then self:CreateLibraryFrame("GroupKeys") end
     end
+    self:ApplyGroupKeyAppearance()
     UpdateLibraryVisibility()
 end
 

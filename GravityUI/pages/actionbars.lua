@@ -163,7 +163,57 @@ local function BuildActionBarsSettings(parent)
     masterEnable:SetPoint("TOPLEFT", 10, -content.rowCount * 35)
     content.rowCount = content.rowCount + 1.0
 
-    -- Quick Keybind (Moved)
+    -- Dominos Skinning (only shown if Dominos is loaded)
+    if C_AddOns.IsAddOnLoaded("Dominos") then
+        local dominosCheck = GUI:CreateCheckbox(content, "Skin Dominos Buttons (matching style)", "skinDominos", abs, function(enabled)
+            if enabled then
+                if ns.SkinDominosButtons then ns.SkinDominosButtons() end
+            else
+                -- Strip our skinning from Dominos buttons
+                for i = 1, 24 do
+                    local btn = _G["DominosActionButton" .. i]
+                    if btn then
+                        if btn._guiStripped then
+                            local icon = btn.icon or btn.Icon
+                            if icon then icon:SetTexCoord(0, 1, 0, 1); icon:SetAllPoints(btn) end
+                        end
+                        if btn._guiBackdrop then btn._guiBackdrop:Hide() end
+                        if btn._guiNormal then btn._guiNormal:Hide() end
+                        if btn._guiGloss then btn._guiGloss:Hide() end
+                    end
+                end
+            end
+        end)
+        dominosCheck:SetPoint("TOPLEFT", 10, -content.rowCount * 35)
+        content.rowCount = content.rowCount + 1.0
+    end
+
+    -- Bartender4 Skinning (only shown if Bartender4 is loaded)
+    if C_AddOns.IsAddOnLoaded("Bartender4") then
+        local bt4Check = GUI:CreateCheckbox(content, "Skin Bartender4 Buttons (matching style)", "skinBartender4", abs, function(enabled)
+            if not enabled then
+                -- Strip our skinning from BT4 buttons
+                for i = 1, 120 do
+                    local btn = _G["BT4Button" .. i]
+                    if btn then
+                        if btn._guiStripped then
+                            local icon = btn.icon or btn.Icon
+                            if icon then icon:SetTexCoord(0, 1, 0, 1); icon:SetAllPoints(btn) end
+                        end
+                        if btn._guiBackdrop then btn._guiBackdrop:Hide() end
+                        if btn._guiNormal then btn._guiNormal:Hide() end
+                        if btn._guiGloss then btn._guiGloss:Hide() end
+                    end
+                end
+            else
+                ns.RefreshActionBars()
+            end
+        end)
+        bt4Check:SetPoint("TOPLEFT", 10, -content.rowCount * 35)
+        content.rowCount = content.rowCount + 1.0
+    end
+
+
     local qaRow = CreateFrame("Frame", nil, content)
     qaRow:SetSize(content:GetWidth() - 20, 30)
     qaRow:SetPoint("TOPLEFT", 10, -content.rowCount * 35)

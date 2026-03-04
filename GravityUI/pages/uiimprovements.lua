@@ -655,6 +655,16 @@ local function BuildTeleport(parent)
     content.rowCount = content.rowCount + 0.5
     CreateSubHeader(content, "Group Key List")
     AddRow(content, "Show Group Key List", "checkbox", "groupKeyListEnabled", dbUI, RefreshTP)
+    AddRow(content, "Hide Background", "checkbox", "groupkeysHideBackground", dbUI, function()
+        if ns.MPlusTeleport and ns.MPlusTeleport.ApplyGroupKeyAppearance then
+            ns.MPlusTeleport:ApplyGroupKeyAppearance()
+        end
+    end)
+    AddRow(content, "Hide Label Bar", "checkbox", "groupkeysHideTitleBar", dbUI, function()
+        if ns.MPlusTeleport and ns.MPlusTeleport.ApplyGroupKeyAppearance then
+            ns.MPlusTeleport:ApplyGroupKeyAppearance()
+        end
+    end)
     
     local btnGroupPreview = GUI:CreateButton(content, "Toggle Mover & Preview", 180, 26, function()
         if ns.MPlusTeleport and ns.MPlusTeleport.ToggleGroupKeyListPreview then

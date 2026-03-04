@@ -512,20 +512,86 @@ local function CatchButton(buttonFrame, debugName, skipLayout)
             end
             MasqueGroup:AddButton(buttonFrame)
         else
-            -- Fix direct icon reference if it exists
-            if buttonFrame.icon then 
-                FixTexture(buttonFrame.icon)
-                buttonFrame.icon:SetDrawLayer("OVERLAY", 7)
+            local s_live = GetSettings()
+            local useGUISkin = s_live and s_live.guiSkinning
+
+            if useGUISkin then
+                -- GravityUI Skinning: strip ring, zoom icon, add backdrop + border
+                local TEXTURE_PATH = "Interface/AddOns/GravityUI/assets/iconskin/"
+
+                -- 1. Strip golden ring and background textures
+                for i = 1, select("#", buttonFrame:GetRegions()) do
+                    local region = select(i, buttonFrame:GetRegions())
+                    if region and region.IsObjectType and region:IsObjectType("Texture") then
+                        -- Protect the icon payload
+                        if region ~= buttonFrame.icon and region ~= buttonFrame.Icon then
+                            CheckAndNuke(buttonFrame, region, region:GetTexture())
+                            -- Hook to prevent ring from reappearing
+                            if not region.GravityExt_GUISkinHooked then
+                                hooksecurefunc(region, "SetTexture", function(self, newTex)
+                                    if self.GravityExt_Hiding then return end
+                                    local s2 = GetSettings()
+                                    if s2 and s2.guiSkinning then
+                                        CheckAndNuke(buttonFrame, self, newTex)
+                                    end
+                                end)
+                                hooksecurefunc(region, "Show", function(self)
+                                    if self.GravityExt_Hiding then return end
+                                    local s2 = GetSettings()
+                                    if s2 and s2.guiSkinning and (self:GetAlpha() == 0 or not self:GetTexture()) then
+                                        self.GravityExt_Hiding = true
+                                        self:Hide()
+                                        self.GravityExt_Hiding = false
+                                    end
+                                end)
+                                region.GravityExt_GUISkinHooked = true
+                            end
+                        end
+                    end
+                end
+
+                -- 2. Zoom icon (remove circular minimap crop, make square)
+                local icon = buttonFrame.icon or buttonFrame.Icon
+                if icon then
+                    FixTexture(icon)
+                    icon:SetDrawLayer("ARTWORK", 0)
+                    local zoom = 0.07
+                    icon:SetTexCoord(zoom, 1 - zoom, zoom, 1 - zoom)
+                    icon:SetAllPoints(buttonFrame)
+                end
+
+                -- 3. Backdrop (black square behind icon)
+                if not buttonFrame._guiBackdrop then
+                    buttonFrame._guiBackdrop = buttonFrame:CreateTexture(nil, "BACKGROUND", nil, -8)
+                    buttonFrame._guiBackdrop:SetColorTexture(0, 0, 0, 1)
+                    buttonFrame._guiBackdrop:SetAllPoints(buttonFrame)
+                end
+                buttonFrame._guiBackdrop:SetAlpha(0.8)
+                buttonFrame._guiBackdrop:Show()
+
+                -- 4. Border overlay (GravityUI Normal texture)
+                if not buttonFrame._guiBorder then
+                    buttonFrame._guiBorder = buttonFrame:CreateTexture(nil, "OVERLAY", nil, 1)
+                    buttonFrame._guiBorder:SetTexture(TEXTURE_PATH .. "Normal")
+                    buttonFrame._guiBorder:SetVertexColor(0, 0, 0, 1)
+                    buttonFrame._guiBorder:SetAllPoints(buttonFrame)
+                end
+                buttonFrame._guiBorder:Show()
+
+            else
+                -- Standard: just fix brightness/color, no GravityUI skin
+                if buttonFrame.icon then
+                    FixTexture(buttonFrame.icon)
+                    buttonFrame.icon:SetDrawLayer("OVERLAY", 7)
+                end
+
+                for i = 1, select("#", buttonFrame:GetRegions()) do
+                    local region = select(i, buttonFrame:GetRegions())
+                    FixTexture(region)
+                end
             end
-            
-            -- Fix all internal textures
-            for i = 1, select("#", buttonFrame:GetRegions()) do
-                local region = select(i, buttonFrame:GetRegions())
-                FixTexture(region)
-            end
-            
-            -- Force Alpha to 1. If an external Addon is forcing them to 50% opacity, 
-            -- the dark background bleeds through and makes them look shadowed/behind.
+
+            -- Force Alpha to 1
             buttonFrame:SetAlpha(1)
             hooksecurefunc(buttonFrame, "SetAlpha", function(self, alpha)
                 if not self.GravityExt_IsUpdatingAlpha and alpha < 1 then
@@ -535,6 +601,7 @@ local function CatchButton(buttonFrame, debugName, skipLayout)
                 end
             end)
         end
+
         
         -- Prevent addons from hiding their buttons while the drawer is visibly open
         hooksecurefunc(buttonFrame, "Hide", function(self)

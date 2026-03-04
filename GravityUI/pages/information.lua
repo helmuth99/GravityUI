@@ -108,6 +108,17 @@ local function BuildInformationTab(content)
     y = y - 10
 
     local changeLogs = {
+        { version = "3.88", date = "04.03.2026", changes = {
+            "Added GravityUI skinning for Dominos action bars (Bars 1-14, all button types)",
+            "Added GravityUI skinning for Bartender4 action bars (BT4Button1-120)",
+            "Added 'Enable GravityUI Skinning' to Icon Catcher: removes gold ring, applies square backdrop + border",
+            "Icon Catcher GravityUI skinning is zero-cost after load (no OnUpdate, no event overhead)",
+            "Added missing defaults for skinDominos, skinBartender4, guiSkinning, groupkeysHideBackground, groupkeysHideTitleBar",
+        } },
+        { version = "3.87", date = "04.03.2026", changes = {
+            "Added 'Hide Background' and 'Hide Label Bar' options to M+ Teleport Group Key List",
+            "Lock/Unlock and Reset Scale icons are now also hidden when Hide Label Bar is active",
+        } },
         { version = "3.86", date = "02.03.2026", changes = {
             "Overhauled 'Group Key List' visibility - now strictly restricted to 5-man parties outside of instances",
             "Added 'Lock/Unlock' frame functionality to the Group Key List to prevent accidental movement and resizing",
@@ -160,6 +171,7 @@ local function BuildInformationTab(content)
         { name = "Global UI Scale", desc = "Centralized settings for interface scaling and quick presets.", pageId = "main", tabIndex = 3 },
         { name = "Global Fonts", desc = "Centralized settings for global font styling.", pageId = "main", tabIndex = 4 },
         { name = "FPS Optimization", desc = "Apply Gravity's optimized graphics settings for competitive play.", pageId = "main", tabIndex = 5 },
+        { name = "Edit Mode (GravityUI)", desc = "Enable or disable GravityUI's custom element movers.\nDrag and reposition all registered GravityUI frames independently.", pageId = "main", tabIndex = 6 },
 
         -- Minimap (minimap.lua)
         { name = "Minimap Overhaul", desc = "Transforms the default minimap into a clean, modern square or round frame.\nFeatures smart anchoring, dynamic zoom, and addon minimization.", stateTable = db.minimap, stateKey = "enabled", pageId = "minimap", tabIndex = 1 },

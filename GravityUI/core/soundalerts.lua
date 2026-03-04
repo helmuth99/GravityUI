@@ -116,6 +116,7 @@ end)
 -- Hook PlaySoundFile
 hooksecurefunc("PlaySoundFile", function(fileID, channel)
     if SoundAlerts._previewing then return end -- Avoid infinite loop when clicking the UI dropdown
+    if SoundAlerts._playingCustom then return end -- Avoid re-triggering our own PlaySoundFile call
     
     local id = tonumber(fileID)
     if not id then return end
@@ -138,9 +139,10 @@ hooksecurefunc("PlaySoundFile", function(fileID, channel)
                     if LSM then
                         local soundFile = LSM:Fetch("sound", sndConfig.sound)
                         if soundFile then
-                             lastPlayed[info.key] = now
-                             -- Using a tiny delay to ensure we override if PlaySoundFile fires simultaneously
-                             C_Timer.After(0.01, function() PlaySoundFile(soundFile, channel or "Master") end)
+                            lastPlayed[info.key] = now
+                            SoundAlerts._playingCustom = true
+                            PlaySoundFile(soundFile, channel or "Master")
+                            SoundAlerts._playingCustom = false
                         end
                     end
                 end

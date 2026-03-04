@@ -448,15 +448,12 @@ ProcessSpellCast = function(unitTarget, castGUID, spellID)
     if not db or not db.raidWarnings or not db.raidWarnings.enabled then return end
     local csv = db.raidWarnings
     
-    -- Check Tracked Spells (using pcall for safety)
-    local key = nil
-    local success, val = pcall(function() return TRACKED_SPELLS[spellID] end)
-    if success then key = val end
+    -- Check Tracked Spells
+    local key = TRACKED_SPELLS[spellID]
     
     -- Check Custom Spells
     if not key and csv.customSpells then
-        local success_custom, key_custom = pcall(function() return csv.customSpells[spellID] end)
-        if success_custom then key = key_custom end
+        key = csv.customSpells[spellID]
     end
     
     if not key then return end
@@ -625,10 +622,4 @@ function RaidWarnings.Initialize()
     -- Initial Check
     C_Timer.After(2, RaidWarnings.CheckDurability)
 end
-
--- ============================================================================
--- ADDON COMMUNICATION
--- ============================================================================
-local COMM_PREFIX = "GravityUI"
-
 
