@@ -496,7 +496,7 @@ local function OnUpdate(self, elapsed)
     local dirty = false
     local s = GetSettings()
     
-    if #activeBars == 0 then
+    if not next(activeBars) then
         self:Hide()
         return
     end
