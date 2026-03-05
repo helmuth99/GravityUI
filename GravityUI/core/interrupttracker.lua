@@ -953,7 +953,7 @@ local function OnInspectReady(guid)
             local specInterrupt = SPEC_INTERRUPTS[specID]
             if specInterrupt then
                 -- Find existing bar for this GUID
-                for _, info in pairs(activeBars) do
+                for _, info in ipairs(activeBars) do
                     if info.guid == guid then
                         -- Check if we need to update spellID
                         if info.spellId ~= specInterrupt then
@@ -1061,8 +1061,16 @@ local function OnGroupRosterUpdate()
         local interruptID = CLASS_INTERRUPTS[class]
         
         if interruptID then
-            -- Check if bar exists (O(1) lookup in map)
-            if not activeBars[guid..interruptID] then
+            -- Check if bar exists
+            local found = false
+            for _, info in ipairs(activeBars) do
+                if info.guid == guid and info.spellId == interruptID then
+                    found = true
+                    break
+                end
+            end
+            
+            if not found then
                  local name = UnitName(unit)
                  StartCooldown(guid, name, class, interruptID, true) -- Force Ready State
             end
@@ -1079,11 +1087,12 @@ local function OnGroupRosterUpdate()
     HandleMember("player")
     
     -- Clean up removed members
-    for key, info in pairs(activeBars) do
+    for i = #activeBars, 1, -1 do
+        local info = activeBars[i]
         -- Logic: If guid is not in current members AND bar is not testMode, hide it.
         if not members[info.guid] and not testModeActive then
              info.frame:Hide()
-             activeBars[key] = nil
+             table.remove(activeBars, i)
         end
     end
     
@@ -1133,7 +1142,7 @@ function InterruptTracker.ToggleMover(force)
         container.mover:SetBackdropBorderColor(br, bg, bb, ba)
         
         -- Add dummy bars for visual if empty
-        if not next(activeBars) then
+        if #activeBars == 0 then
              StartCooldown(UnitGUID("player"), "Test Player", "WARRIOR", 6552) -- Pummel
              StartCooldown(UnitGUID("player"), "Test Mage", "MAGE", 2139) -- Counterspell
              moverDummiesActive = true
@@ -1275,7 +1284,7 @@ function InterruptTracker.ApplySettings()
     container:SetBackdropColor(0, 0, 0, 0)
      
      -- Refresh styles of active
-     for _, info in pairs(activeBars) do
+     for _, info in ipairs(activeBars) do
           StyleBar(info.frame, info.class)
      end
      
@@ -1290,11 +1299,9 @@ SlashCmdList["GRAVITYDEBUGINTERRUPTS"] = function()
     print("GravityUI Debug: Interrupt Tracker State")
     if not container then print("- Container: nil") return end
     print("- Container Shown:", container:IsShown())
-    local count = 0
-    for _ in pairs(activeBars) do count = count + 1 end
-    print("- Active Bars:", count)
-    for key, info in pairs(activeBars) do
-        print("-", info.name, info.spellId, info.expiration, info.frame:IsShown())
+    print("- Active Bars:", #activeBars)
+    for i, info in ipairs(activeBars) do
+        print(i, info.name, info.spellId, info.expiration, info.frame:IsShown())
     end
     print("- Mover Shown:", container.mover and container.mover:IsShown())
     local s = GetSettings()
