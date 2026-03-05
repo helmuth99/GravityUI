@@ -251,6 +251,17 @@ end
 -- FRAME MANAGEMENT
 -- ============================================================================
 
+local function IsTrackerAllowed()
+    if testModeActive then return true end
+    if not IsInGroup() then return false end
+    if IsInRaid() then return false end
+    
+    local _, instanceType = IsInInstance()
+    if instanceType == "raid" then return false end
+    
+    return true
+end
+
 local function GetSettings()
     local db = ns.GetDB()
     if db and db.screenindicators then
@@ -550,6 +561,7 @@ updateFrame:SetScript("OnUpdate", OnUpdate)
 local function StartCooldown(guid, name, class, spellId, isReady)
     local s = GetSettings()
     if not s or not s.enabled then return end
+    if not IsTrackerAllowed() then return end
     
     local baseCD = INTERRUPTS[spellId]
     if not baseCD then return end
@@ -699,6 +711,7 @@ end
     
 function InterruptTracker:CHAT_MSG_ADDON(event, prefix, text, channel, sender)
     if prefix ~= "GRV_INT" then return end
+    if not IsTrackerAllowed() then return end
     
     -- Ignore Self (handled locally in UNIT_SPELLCAST_SUCCEEDED)
     local name = Ambiguate(sender, "none")
@@ -716,6 +729,7 @@ end
 
 -- Shared handler for Say/Party kick messages (M+ fallback when addon comms are blocked)
 local function OnChatKickReceived(senderName, text)
+    if not IsTrackerAllowed() then return end
     -- Match any number in parentheses: e.g. "Interrupted (47528)" or "Kicked! (47528)"
     local spellId = text and text:match("%((%d+)%)")
     if not spellId then return end
@@ -748,6 +762,7 @@ end
 -- TIME-CORRELATION FALLBACK (MOB INTERRUPTED)
 -- ============================================================================
 local function OnMobInterrupted(unit)
+    if not IsTrackerAllowed() then return end
     local now = GetTime()
     local bestName = nil
     local bestDelta = 999
