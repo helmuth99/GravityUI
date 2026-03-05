@@ -46,6 +46,7 @@ core\objectives.lua
 core\instanceframes.lua
 core\raidbuffs.lua
 core\raidwarnings.lua
+core\interrupttracker.lua
 core\castbar_ticks.lua
 core\combattimer.lua
 core\mplusteleport.lua

@@ -701,63 +701,9 @@ local function BuildInterruptTracker(parent)
     header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
     content.rowCount = 1.3
     
-    local infoBox = GUI:CreateInfoBox(content, "Tracks interrupts of party members with GravityUI.\nNon-users can use this macro (|cffFF9900replace SPELL_ID|r):")
+    local infoBox = GUI:CreateInfoBox(content, "Tracks interrupt cooldowns of party members in M+ dungeons.\nAdd a |cffFF9900/say|r or |cffFF9900/party|r line to your kick macro with the spell ID in parentheses.\nExample: |cffFF9900/say Interrupted with Mind Freeze! (47528)|r")
     infoBox:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
-    content.rowCount = content.rowCount + (infoBox:GetHeight() / (ROW_HEIGHT+5)) + 0.1 -- Reduced padding from 0.2
-    
-    -- Copy-Paste EditBox
-    local macroRow = CreateFrame("Frame", nil, content)
-    macroRow:SetSize(GUI.CONTENT_WIDTH - 40, 26) -- Reduced width (was -20)
-    macroRow:SetPoint("TOPLEFT", 10, -5 - (content.rowCount * (ROW_HEIGHT + 5))) -- Reduced top offset (was -10)
-    
-    local editBox = CreateFrame("EditBox", nil, macroRow, "BackdropTemplate")
-    editBox:SetSize(GUI.CONTENT_WIDTH - 60, 18) -- Reduced width (was -40)
-    editBox:SetPoint("LEFT", 0, 0) -- Aligned to left (was 10)
-    editBox:SetAutoFocus(false)
-    editBox:SetFontObject("GameFontHighlightSmall")
-    editBox:SetText('/run local c=IsInGroup(2)and"INSTANCE_CHAT"or"PARTY" C_ChatInfo.SendAddonMessage("GRV_INT","SPELL_ID",c)')
-    editBox:SetCursorPosition(0)
-    editBox:SetTextInsets(5, 5, 0, 0)
-    
-    -- GravityUI Style Backdrop
-    editBox:SetBackdrop({
-        bgFile = "Interface\\Buttons\\WHITE8x8",
-        edgeFile = "Interface\\Buttons\\WHITE8x8",
-        edgeSize = 1,
-    })
-    editBox:SetBackdropColor(0.1, 0.1, 0.1, 0.8)
-    editBox:SetBackdropBorderColor(0, 0, 0, 1)
-    
-    editBox:SetScript("OnEnter", function(self) self:SetBackdropBorderColor(GUI.Colors.accent[1], GUI.Colors.accent[2], GUI.Colors.accent[3], 1) end)
-    editBox:SetScript("OnLeave", function(self) 
-        if not self:HasFocus() then
-            self:SetBackdropBorderColor(0, 0, 0, 1) 
-        end
-    end)
-    
-    editBox:SetScript("OnEditFocusGained", function(self) 
-        self:HighlightText() 
-        self:SetBackdropBorderColor(GUI.Colors.accent[1], GUI.Colors.accent[2], GUI.Colors.accent[3], 1)
-    end)
-    
-    editBox:SetScript("OnEscapePressed", function(self) 
-        self:ClearFocus() 
-        self:SetBackdropBorderColor(0, 0, 0, 1)
-    end)
-    
-    editBox:SetScript("OnEditFocusLost", function(self)
-        self:SetBackdropBorderColor(0, 0, 0, 1)
-    end)
-
-    -- Prevent editing
-    editBox:SetScript("OnTextChanged", function(self, user) 
-        if user then 
-            self:SetText('/run local c=IsInGroup(2)and"INSTANCE_CHAT"or"PARTY" C_ChatInfo.SendAddonMessage("GRV_INT","SPELL_ID",c)') 
-            self:HighlightText() 
-        end 
-    end)
-    
-    content.rowCount = content.rowCount + 1.2 -- Adjusted spacing below
+    content.rowCount = content.rowCount + (infoBox:GetHeight() / (ROW_HEIGHT+5)) + 0.2
     
     CreateSubLabel(content, "General")
     AddRow(content, "Enable Tracker", "checkbox", "enabled", c, Refresh)
@@ -839,10 +785,6 @@ local function BuildInterruptTracker(parent)
     AddRow(content, "Use Class Colors for Background", "checkbox", "useClassColorBackdrop", c, Refresh)
     AddRow(content, "Use Theme Bar Background", "checkbox", "useThemeBackdropColor", c, Refresh)
     AddRow(content, "Bar Background Color", "color", "backdropColor", c, Refresh)
-    
-    content.rowCount = content.rowCount + 0.3
-    
-    -- (Say Kick Removed)
     
     content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
 end
@@ -1304,6 +1246,7 @@ end
             { name = "Pet Info", builder = BuildPet },
             { name = "Missing Buffs", builder = BuildMissingBuffs },
             { name = "Raid Warnings", builder = BuildRaidWarnings },
+            { name = "Interrupt Tracker", builder = BuildInterruptTracker },
             { name = "Difficulty", builder = BuildDifficulty },
             { name = "AFK Screen", builder = BuildAFKScreen },
         }

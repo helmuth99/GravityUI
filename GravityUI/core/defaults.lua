@@ -307,8 +307,6 @@ ns.Defaults = {
         growDirection = "UP",
         x = 0, 
         y = 0,
-        sayKick = false,
-        sayKickText = "Interrupted %t!",
     },
     raidBuffs = {
         enabled = true,

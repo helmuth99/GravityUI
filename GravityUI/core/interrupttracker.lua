@@ -176,12 +176,10 @@ local function GetSettings()
                 barColor = {0.129, 0.129, 0.129, 0.85},
                 textColor = {1, 1, 1, 1},
                 useClassColor = false,
-                useClassColor = false,
-                -- (Say Kick Removed)
+                sayKick = false,
+                sayKickChannel = "SAY",
             }
         end
-        -- Force disable until Blizzard API issues are resolved
-        db.screenindicators.interruptTracker.enabled = false
         
         return db.screenindicators.interruptTracker
     end
@@ -571,33 +569,29 @@ end
 
 function InterruptTracker:UNIT_SPELLCAST_SUCCEEDED(event, unit, castGUID, spellId)
     -- Restriction: Only in Party (Dungeons/M+), Disable in Raid/Solo
-    if not IsInGroup() then return end -- Must be in a group
-    if IsInRaid() then return end      -- Must be in a Party (not Raid Group)
+    if not IsInGroup() then return end
+    if IsInRaid() then return end
     
     local _, instanceType = IsInInstance()
-    if instanceType == "raid" then return end -- Must not be in Raid Instance
+    if instanceType == "raid" then return end
 
-    -- Check if it is an interrupt spell
-    -- Safe Check: Avoid "table index is secret"
     if not spellId or type(spellId) ~= "number" then return end
     
     -- ONLY PROCESS PLAYER LOCALLY
-    -- Other members are processed via CHAT_MSG_ADDON to avoid taint/hacks
+    -- Other members are tracked via CHAT_MSG_SAY / CHAT_MSG_PARTY (macro-based)
     if not UnitIsUnit(unit, "player") then return end
 
-    -- Safe Check: Wrap lookup in pcall
     local success, val = pcall(function() return INTERRUPTS[spellId] end)
     if success and val then 
          local guid = UnitGUID(unit)
          local name = UnitName(unit)
          local _, class = UnitClass(unit)
          
-         -- Start Local Cooldown
+         -- Start Local Cooldown (own player only)
          StartCooldown(guid, name, class, spellId)
          
-         -- Broadcast to Party
+         -- Try Addon Message (may not work in M+ in Midnight, but keep as fallback)
          local channel = IsInGroup(LE_PARTY_CATEGORY_INSTANCE) and "INSTANCE_CHAT" or "PARTY"
-         -- Prefer ADDON channel
          pcall(C_ChatInfo.SendAddonMessage, "GRV_INT", tostring(spellId), channel)
     end
 end
@@ -613,12 +607,40 @@ function InterruptTracker:CHAT_MSG_ADDON(event, prefix, text, channel, sender)
     if not spellId then return end
     
     local guid = UnitGUID(name)
-    if not guid then return end -- Can't track if we don't know who sent it (should act on name match if needed, but GUID is safer)
+    if not guid then return end
     
     local _, class = UnitClass(name)
-    
-    -- print("GravityUI: Received Interrupt", name, spellId)
     StartCooldown(guid, name, class, spellId)
+end
+
+-- Shared handler for Say/Party kick messages (M+ fallback when addon comms are blocked)
+local function OnChatKickReceived(senderName, text)
+    -- Match any number in parentheses: e.g. "Interrupted (47528)" or "Kicked! (47528)"
+    local spellId = text and text:match("%((%d+)%)")
+    if not spellId then return end
+    spellId = tonumber(spellId)
+    if not spellId then return end
+    
+    -- Only process known interrupt spells (prevents false positives from random chat)
+    local ok, val = pcall(function() return INTERRUPTS[spellId] end)
+    if not ok or not val then return end
+    
+    -- Ignore own messages (already handled locally)
+    local name = Ambiguate(senderName, "none")
+    if UnitIsUnit(name, "player") then return end
+    
+    local guid = UnitGUID(name)
+    if not guid then return end
+    local _, class = UnitClass(name)
+    StartCooldown(guid, name, class, spellId)
+end
+
+function InterruptTracker:CHAT_MSG_SAY(event, text, senderName)
+    OnChatKickReceived(senderName, text)
+end
+
+function InterruptTracker:CHAT_MSG_PARTY(event, text, senderName)
+    OnChatKickReceived(senderName, text)
 end
 
 
@@ -996,23 +1018,25 @@ function InterruptTracker.Initialize()
     
     -- Init Events via AceEvent
     if s.enabled then
-        -- InterruptTracker:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player") -- REMOVED: Managed by playerWatcher
         InterruptTracker:RegisterEvent("INSPECT_READY", function(_, guid) OnInspectReady(guid) end)
         InterruptTracker:RegisterEvent("GROUP_ROSTER_UPDATE", OnGroupRosterUpdate)
         InterruptTracker:RegisterEvent("PLAYER_ENTERING_WORLD", OnGroupRosterUpdate)
         
-        -- Addon Communication
+        -- Addon Communication (may not work in M+ in Midnight)
         C_ChatInfo.RegisterAddonMessagePrefix("GRV_INT")
         InterruptTracker:RegisterEvent("CHAT_MSG_ADDON")
         
-        container:Show()
-        OnGroupRosterUpdate() -- Initial scan
-        RegisterPartyWatchers() -- Initial watchers (Includes Player)
+        -- Chat listener: picks up GRV_INT:SPELLID from kick macros in say/party
+        InterruptTracker:RegisterEvent("CHAT_MSG_SAY")
+        InterruptTracker:RegisterEvent("CHAT_MSG_PARTY")
         
-        updateFrame:Show() -- Starts OnUpdate
+        container:Show()
+        OnGroupRosterUpdate()
+        RegisterPartyWatchers()
+        
+        updateFrame:Show()
     else
         InterruptTracker:UnregisterAllEvents()
-        -- partyFrames loop removed as it causes a nil access error since they are no longer initialized
         playerWatcher:UnregisterAllEvents()
         updateFrame:Hide()
         container:Hide()
@@ -1035,24 +1059,25 @@ function InterruptTracker.ApplySettings()
      if not container or not s then return end
      
     if s.enabled then
-        -- InterruptTracker:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player") -- REMOVED
         InterruptTracker:RegisterEvent("INSPECT_READY", function(_, guid) OnInspectReady(guid) end)
         InterruptTracker:RegisterEvent("GROUP_ROSTER_UPDATE", OnGroupRosterUpdate)
         InterruptTracker:RegisterEvent("PLAYER_ENTERING_WORLD", OnGroupRosterUpdate)
         
-         -- Addon Communication
+        -- Addon Communication (may not work in M+ in Midnight)
         C_ChatInfo.RegisterAddonMessagePrefix("GRV_INT")
         InterruptTracker:RegisterEvent("CHAT_MSG_ADDON")
         
-        OnGroupRosterUpdate() -- Initial scan
-        RegisterPartyWatchers() -- Initial watchers
+        -- Chat listener: always on when tracker is enabled
+        InterruptTracker:RegisterEvent("CHAT_MSG_SAY")
+        InterruptTracker:RegisterEvent("CHAT_MSG_PARTY")
+        
+        OnGroupRosterUpdate()
+        RegisterPartyWatchers()
         
         updateFrame:Show()
         container:Show()
     else
         InterruptTracker:UnregisterAllEvents()
-        -- partyFrames loop removed as we don't use them anymore (except in disabled laundering)
-        -- for i=1,4 do partyFrames[i]:UnregisterAllEvents() end
         playerWatcher:UnregisterAllEvents()
         updateFrame:Hide()
         container:Hide()
