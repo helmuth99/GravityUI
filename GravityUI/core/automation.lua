@@ -966,8 +966,18 @@ local function OnSpecSwitchEditModeCheck()
                     OnAccept = function(self, data)
                         if InCombatLockdown() then return end
                         -- Use the standardized Installer Sync logic for consistent scaling/positioning
-                        if ns.Installer and ns.Installer.Synchronize then
-                            ns.Installer:Synchronize("GravityUI", { ["EditMode"] = true })
+                        local Installer = ns.GUI and ns.GUI.Installer
+                        if Installer and Installer.Synchronize then
+                            Installer:Synchronize("GravityUI", { ["EditMode"] = true })
+                        else
+                            -- Fallback if Installer not found
+                            C_EditMode.SetActiveLayout(data)
+                            C_Timer.After(0.5, function()
+                                if EditModeManagerFrame and EditModeManagerFrame.UpdateActionBarLayouts then
+                                    pcall(function() EditModeManagerFrame:UpdateActionBarLayouts() end)
+                                end
+                                pcall(function() EventRegistry:TriggerEvent("EditMode.ActiveLayoutChanged") end)
+                            end)
                         end
                     end,
                     OnAlt = function(self)
