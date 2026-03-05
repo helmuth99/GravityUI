@@ -121,27 +121,128 @@ local container = nil
 local testModeActive = false
 
 -- ============================================================================
--- SPELL ID LAUNDERING (DISABLED - REPLACED BY ADDON COMMS)
+-- SPELL ID LAUNDERING & PARTY WATCHERS
 -- ============================================================================
--- Launder method disabled. We now use Addon Messages ("GRV_INT") to sync interrupts.
--- This avoids the taint issues with spellIDs in the combat log/unit events
--- by relying on each client to report their own successful interrupts.
+local recentPartyCasts = {}
 
+-- These MUST be created here, NOT inside event handlers
+local launderBar = CreateFrame("StatusBar")
+launderBar:SetMinMaxValues(0, 9999999)
 
+-- Slider for OnValueChanged laundering
+local launderSlider = CreateFrame("Slider", nil, UIParent)
+launderSlider:SetMinMaxValues(0, 9999999)
+launderSlider:SetSize(1, 1)
+launderSlider:Hide()
 
--- Player Watcher (To avoid AceEvent/Global Taint issues)
+local onValueChangedResult = nil
+launderBar:SetScript("OnValueChanged", function(self, value)
+    onValueChangedResult = value
+end)
+
+local onSliderChangedResult = nil
+launderSlider:SetScript("OnValueChanged", function(self, value)
+    onSliderChangedResult = value
+end)
+
 local playerWatcher = CreateFrame("Frame")
+local partyFrames = {}
+local partyPetFrames = {}
+for i = 1, 4 do
+    partyFrames[i] = CreateFrame("Frame")
+    partyPetFrames[i] = CreateFrame("Frame")
+end
 
 -- Helper to register events
 local function RegisterPartyWatchers()
-
-    
-    -- Player Watcher (Direct, Player Unit is usually safe but we use RegisterUnitEvent to be sure)
+    -- Player Watcher
     playerWatcher:UnregisterAllEvents()
     playerWatcher:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player")
     playerWatcher:SetScript("OnEvent", function(_, _, unit, castGUID, spellId)
          InterruptTracker:UNIT_SPELLCAST_SUCCEEDED("UNIT_SPELLCAST_SUCCEEDED", unit, castGUID, spellId)
     end)
+
+    -- Party Watchers
+    for i = 1, 4 do
+        local unit = "party" .. i
+        partyFrames[i]:UnregisterAllEvents()
+        if UnitExists(unit) then
+            partyFrames[i]:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", unit)
+            partyFrames[i]:SetScript("OnEvent", function(self, event, eUnit, eCastGUID, eSpellID, eCastBarID)
+                local cleanUnit = "party" .. i
+                local cleanName = UnitName(cleanUnit)
+
+                if cleanName then
+                    recentPartyCasts[cleanName] = GetTime()
+                end
+
+                -- Try OnValueChanged laundering (StatusBar)
+                onValueChangedResult = nil
+                launderBar:SetValue(0)
+                pcall(launderBar.SetValue, launderBar, eSpellID)
+                local barResult = onValueChangedResult
+
+                -- Try OnValueChanged laundering (Slider)
+                onSliderChangedResult = nil
+                launderSlider:SetValue(0)
+                pcall(launderSlider.SetValue, launderSlider, eSpellID)
+                local sliderResult = onSliderChangedResult
+
+                local cleanID = nil
+                if barResult then
+                    local ok, data = pcall(function() return INTERRUPTS[barResult] end)
+                    if ok and data then
+                        cleanID = barResult
+                    end
+                end
+                if not cleanID and sliderResult then
+                    local ok, data = pcall(function() return INTERRUPTS[sliderResult] end)
+                    if ok and data then
+                        cleanID = sliderResult
+                    end
+                end
+
+                if cleanID and cleanName then
+                    InterruptTracker:UNIT_SPELLCAST_SUCCEEDED("UNIT_SPELLCAST_SUCCEEDED", cleanUnit, eCastGUID, cleanID)
+                end
+            end)
+        end
+    end
+
+    -- Party Pet Watchers
+    for i = 1, 4 do
+        local petUnit = "partypet" .. i
+        local ownerUnit = "party" .. i
+        partyPetFrames[i]:UnregisterAllEvents()
+        if UnitExists(petUnit) then
+            partyPetFrames[i]:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", petUnit)
+            partyPetFrames[i]:SetScript("OnEvent", function(self, event, eUnit, eCastGUID, eSpellID, eCastBarID)
+                local cleanOwner = "party" .. i
+                local cleanName = UnitName(cleanOwner)
+
+                if cleanName then
+                    recentPartyCasts[cleanName] = GetTime()
+                end
+
+                onValueChangedResult = nil
+                launderBar:SetValue(0)
+                pcall(launderBar.SetValue, launderBar, eSpellID)
+                local barResult = onValueChangedResult
+
+                local cleanID = nil
+                if barResult then
+                    local ok, data = pcall(function() return INTERRUPTS[barResult] end)
+                    if ok and data then
+                        cleanID = barResult
+                    end
+                end
+
+                if cleanID and cleanName then
+                    InterruptTracker:UNIT_SPELLCAST_SUCCEEDED("UNIT_SPELLCAST_SUCCEEDED", cleanOwner, eCastGUID, cleanID)
+                end
+            end)
+        end
+    end
 end
 
 
@@ -577,22 +678,22 @@ function InterruptTracker:UNIT_SPELLCAST_SUCCEEDED(event, unit, castGUID, spellI
 
     if not spellId or type(spellId) ~= "number" then return end
     
-    -- ONLY PROCESS PLAYER LOCALLY
-    -- Other members are tracked via CHAT_MSG_SAY / CHAT_MSG_PARTY (macro-based)
-    if not UnitIsUnit(unit, "player") then return end
-
     local success, val = pcall(function() return INTERRUPTS[spellId] end)
     if success and val then 
          local guid = UnitGUID(unit)
+         if not guid then return end
          local name = UnitName(unit)
          local _, class = UnitClass(unit)
          
-         -- Start Local Cooldown (own player only)
+         -- Start Local Cooldown
          StartCooldown(guid, name, class, spellId)
          
          -- Try Addon Message (may not work in M+ in Midnight, but keep as fallback)
-         local channel = IsInGroup(LE_PARTY_CATEGORY_INSTANCE) and "INSTANCE_CHAT" or "PARTY"
-         pcall(C_ChatInfo.SendAddonMessage, "GRV_INT", tostring(spellId), channel)
+         -- Only send if we are the one who cast it
+         if UnitIsUnit(unit, "player") then
+             local channel = IsInGroup(LE_PARTY_CATEGORY_INSTANCE) and "INSTANCE_CHAT" or "PARTY"
+             pcall(C_ChatInfo.SendAddonMessage, "GRV_INT", tostring(spellId), channel)
+         end
     end
 end
     
@@ -642,6 +743,74 @@ end
 function InterruptTracker:CHAT_MSG_PARTY(event, text, senderName)
     OnChatKickReceived(senderName, text)
 end
+
+-- ============================================================================
+-- TIME-CORRELATION FALLBACK (MOB INTERRUPTED)
+-- ============================================================================
+local function OnMobInterrupted(unit)
+    local now = GetTime()
+    local bestName = nil
+    local bestDelta = 999
+
+    for name, ts in pairs(recentPartyCasts) do
+        local delta = now - ts
+        if delta > 1.0 then
+            recentPartyCasts[name] = nil
+        elseif delta < bestDelta then
+            bestDelta = delta
+            bestName = name
+        end
+    end
+
+    if bestName and bestDelta < 0.5 then
+        -- We found the likely kicker
+        -- Fallback to default class interrupt
+        for idx = 1, 4 do
+            local u = "party" .. idx
+            if UnitExists(u) and UnitName(u) == bestName then
+                local guid = UnitGUID(u)
+                local _, class = UnitClass(u)
+                local role = UnitGroupRolesAssigned(u)
+                
+                -- Skip healers that aren't shamans
+                if not (role == "HEALER" and class ~= "SHAMAN") then
+                    local interruptID = CLASS_INTERRUPTS[class]
+                    if interruptID and guid then
+                        StartCooldown(guid, bestName, class, interruptID)
+                    end
+                end
+                break
+            end
+        end
+    end
+end
+
+local mobInterruptFrame = CreateFrame("Frame")
+mobInterruptFrame:RegisterUnitEvent("UNIT_SPELLCAST_INTERRUPTED", "target", "focus")
+mobInterruptFrame:SetScript("OnEvent", function(self, event, unit)
+    OnMobInterrupted(unit)
+end)
+
+local nameplateCastFrames = {}
+local nameplateFrame = CreateFrame("Frame")
+nameplateFrame:RegisterEvent("NAME_PLATE_UNIT_ADDED")
+nameplateFrame:RegisterEvent("NAME_PLATE_UNIT_REMOVED")
+nameplateFrame:SetScript("OnEvent", function(self, event, unit)
+    if event == "NAME_PLATE_UNIT_ADDED" then
+        if not nameplateCastFrames[unit] then
+            nameplateCastFrames[unit] = CreateFrame("Frame")
+        end
+        local f = nameplateCastFrames[unit]
+        f:RegisterUnitEvent("UNIT_SPELLCAST_INTERRUPTED", unit)
+        f:SetScript("OnEvent", function(_, _, eUnit)
+            OnMobInterrupted(eUnit)
+        end)
+    elseif event == "NAME_PLATE_UNIT_REMOVED" then
+        if nameplateCastFrames[unit] then
+            nameplateCastFrames[unit]:UnregisterAllEvents()
+        end
+    end
+end)
 
 
 

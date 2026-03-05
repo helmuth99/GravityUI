@@ -701,7 +701,7 @@ local function BuildInterruptTracker(parent)
     header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
     content.rowCount = 1.3
     
-    local infoBox = GUI:CreateInfoBox(content, "Tracks interrupt cooldowns of party members in M+ dungeons.\nAdd a |cffFF9900/say|r or |cffFF9900/party|r line to your kick macro with the spell ID in parentheses.\nExample: |cffFF9900/say Interrupted with Mind Freeze! (47528)|r")
+    local infoBox = GUI:CreateInfoBox(content, "Tracks interrupt cooldowns of party members in Dungeons.")
     infoBox:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
     content.rowCount = content.rowCount + (infoBox:GetHeight() / (ROW_HEIGHT+5)) + 0.2
     

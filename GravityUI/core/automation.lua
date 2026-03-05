@@ -921,6 +921,8 @@ local function OnAuctionHouseShow()
     end
 end
 
+local lastSpec = nil
+
 local function OnSpecSwitchEditModeCheck()
     local settings = GetSettings()
     if not settings or not settings.checkEditmodeOnSpecSwitch then return end
@@ -964,6 +966,13 @@ local function OnSpecSwitchEditModeCheck()
                     OnAccept = function(self, data)
                         if InCombatLockdown() then return end
                         C_EditMode.SetActiveLayout(data)
+                        -- Give EditMode server changes time to process, then force actionbar redraw
+                        C_Timer.After(0.5, function()
+                            if EditModeManagerFrame and EditModeManagerFrame.UpdateActionBarLayouts then
+                                pcall(function() EditModeManagerFrame:UpdateActionBarLayouts() end)
+                            end
+                            pcall(function() EventRegistry:TriggerEvent("EditMode.ActiveLayoutChanged") end)
+                        end)
                     end,
                     OnAlt = function(self)
                         local s = GetSettings()
@@ -1050,6 +1059,7 @@ automationFrame:SetScript("OnEvent", function(self, event, ...)
         OnChallengeModeEnd()
     elseif event == "PLAYER_ENTERING_WORLD" or event == "ZONE_CHANGED_NEW_AREA" or event == "PLAYER_DIFFICULTY_CHANGED" then
         if event == "PLAYER_ENTERING_WORLD" then
+             lastSpec = GetSpecialization()
              local s = GetSettings()
              if s then
                  if s.showDamageNumbers ~= nil then SetCVar("floatingCombatTextCombatDamage", s.showDamageNumbers and "1" or "0") end
@@ -1069,7 +1079,13 @@ automationFrame:SetScript("OnEvent", function(self, event, ...)
     elseif event == "PLAYER_SPECIALIZATION_CHANGED" then
         local unit = ...
         if unit == "player" then
-            OnSpecSwitchEditModeCheck()
+            local currentSpec = GetSpecialization()
+            if lastSpec and currentSpec and currentSpec ~= lastSpec then
+                lastSpec = currentSpec
+                OnSpecSwitchEditModeCheck()
+            elseif not lastSpec and currentSpec then
+                lastSpec = currentSpec
+            end
         end
     elseif event == "AUCTION_HOUSE_SHOW" then
         OnAuctionHouseShow()

@@ -168,15 +168,14 @@ local function ScanActionBars(force)
                  bindId = id
                  local success, info = pcall(C_Spell.GetSpellInfo, id)
                  if success and info then 
-                     -- Protected name access
-                     local nSuccess, nVal = pcall(function() return info.name end)
-                     if nSuccess then name = nVal end
+                     local nVal = info.name
+                     if nVal then name = nVal end
                  end
             elseif actionType == "macro" and id then
                  local success, mname, _, body = pcall(GetMacroInfo, id)
                  local lookupId = id
                  
-                 -- FALLBACK: If API macro index is corrupted, lookup by the Macro's String Name via GetActionText
+                 -- FALLBACK: If API macro index is corrupted, lookup by name
                  if not body or body == "" then
                      local mText = GetActionText(querySlot)
                      if mText then
@@ -189,44 +188,63 @@ local function ScanActionBars(force)
                  end
                  
                  if success and mname and key then 
-                    SafeSet(SafeLower(mname), key)
+                    SafeSet(SafeLower(mname), key, 2)
                  end
                  
                  local mid = pcall(GetMacroSpell, lookupId) and GetMacroSpell(lookupId) or nil
                  local mitem, mlink
                  pcall(function() mitem, mlink = GetMacroItem(lookupId) end)
                  
-                 if body then
-                      -- Explicitly check for both 13 and 14 so that a macro with both gets both bindings saved
+                 -- Parse macro text even if GetMacroSpell/Item failed
+                 if body and key then
+                      -- 1. Parse Trinket Slots / Equipment
                       local found13, found14 = false, false
                       for line in body:gmatch("[^\r\n]+") do
                           local l = line:lower():match("^%s*(.+)")
                           if l then
                               if not found13 and (l:find("^/use%s+13") or l:find("^/benutzen%s+13")) then
                                   found13 = true
-                                  if key then 
-                                      SafeSet(13, key) 
-                                      local tId = GetInventoryItemID("player", 13)
-                                      if tId then 
-                                          SafeSet(tId, key) 
-                                          local sOk, iN = pcall(GetItemInfo, tId)
-                                          if sOk and iN then SafeSet(SafeLower(iN), key) end
-                                          local ssOk, iS = pcall(GetItemSpell, tId)
-                                          if ssOk and iS then SafeSet(SafeLower(iS), key) end
-                                      end
-                                  end
+                                  SafeSet(13, key, 2)
+                                  local tId = GetInventoryItemID("player", 13)
+                                  if tId then SafeSet(tId, key, 2) end
                               end
                               if not found14 and (l:find("^/use%s+14") or l:find("^/benutzen%s+14")) then
                                   found14 = true
-                                  if key then 
-                                      SafeSet(14, key) 
-                                      local tId = GetInventoryItemID("player", 14)
-                                      if tId then 
-                                          SafeSet(tId, key)
-                                          local sOk, iN = pcall(GetItemInfo, tId)
-                                          if sOk and iN then SafeSet(SafeLower(iN), key) end
-                                          local ssOk, iS = pcall(GetItemSpell, tId)
-                                          if ssOk and iS then SafeSet(SafeLower(iS), key) end
+                                  SafeSet(14, key, 2)
+                                  local tId = GetInventoryItemID("player", 14)
+                                  if tId then SafeSet(tId, key, 2) end
+                              end
+                          end
+                      end
+
+                      -- 2. Parse #showtooltip or /cast for ACTUAL spell
+                      local showtooltip = body:match("#showtooltip[ \t]+([^\r\n]+)")
+                      if showtooltip then
+                          local cName = showtooltip:gsub("%[.-%]", ""):match("^%s*(.-)%s*$")
+                          cName = cName and cName:match("([^;]+)")
+                          if cName then
+                              cName = cName:gsub("^!", ""):match("^%s*(.-)%s*$")
+                              if cName ~= "" and not tonumber(cName) then
+                                  SafeSet(SafeLower(cName), key, 2)
+                                  local sOk, sInfo = pcall(C_Spell.GetSpellInfo, cName)
+                                  if sOk and sInfo and sInfo.spellID then SafeSet(sInfo.spellID, key, 2) end
+                              end
+                          end
+                      end
+
+                      for line in body:gmatch("[^\r\n]+") do
+                          local l = line:lower():match("^%s*(.+)")
+                          if l and (l:find("^/cast") or l:find("^/wirken") or l:find("^/use") or l:find("^/benutzen")) then
+                              local spell = line:match("^/%w+%s+(.+)")
+                              if spell then
+                                  local cSpell = spell:gsub("%[.-%]", ""):match("^%s*(.-)%s*$")
+                                  cSpell = cSpell and cSpell:match("([^;]+)")
+                                  if cSpell then
+                                      cSpell = cSpell:gsub("^!", ""):match("^%s*(.-)%s*$")
+                                      if cSpell ~= "" and not tonumber(cSpell) then
+                                          SafeSet(SafeLower(cSpell), key, 2)
+                                          local sOk, sInfo = pcall(C_Spell.GetSpellInfo, cSpell)
+                                          if sOk and sInfo and sInfo.spellID then SafeSet(sInfo.spellID, key, 2) end
                                       end
                                   end
                               end
@@ -237,10 +255,7 @@ local function ScanActionBars(force)
                  if mid then
                      bindId = mid
                      local sOk, info = pcall(C_Spell.GetSpellInfo, mid)
-                     if sOk and info then 
-                         local nOk, nVal = pcall(function() return info.name end)
-                         if nOk then name = nVal end
-                     end
+                     if sOk and info and info.name then name = info.name end
                  end
                  
                  -- Extra: also parse #showtooltip / /cast from body as additional lookup keys.
@@ -369,10 +384,6 @@ local function ScanActionBars(force)
                           end
                      end
                  end
-            elseif actionType == "item" and id then
-                 bindId = id
-                 local iOk, itemName = pcall(GetItemInfo, id)
-                 if iOk then name = itemName end
             end
 
             if bindId and key then
@@ -553,7 +564,7 @@ function Module:UpdateFrame(frame)
     end
 
     if not frame.gravityKeybind then
-        frame.gravityKeybind = parentObj:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmallOutline")
+        frame.gravityKeybind = parentObj:CreateFontString(nil, "OVERLAY")
     else
         if frame.gravityKeybind:GetParent() ~= parentObj then
            frame.gravityKeybind:SetParent(parentObj)
@@ -570,12 +581,17 @@ function Module:UpdateFrame(frame)
        local fontSize = barStyle and barStyle.fontSize or settings.fontSize
        local color = barStyle and barStyle.color or settings.color
 
-       frame.gravityKeybind:SetText(bind)
-       frame.gravityKeybind:SetFont(GetFontPath(), fontSize, "OUTLINE")
-       frame.gravityKeybind:ClearAllPoints()
-       frame.gravityKeybind:SetPoint(settings.anchor, settings.offsetX, settings.offsetY)
-       frame.gravityKeybind:SetTextColor(unpack(color))
-       frame.gravityKeybind:Show()
+        frame.gravityKeybind:SetFont(GetFontPath(), fontSize or 12, "OUTLINE")
+        frame.gravityKeybind:SetText(bind)
+        frame.gravityKeybind:ClearAllPoints()
+        frame.gravityKeybind:SetPoint(settings.anchor or "TOPRIGHT", settings.offsetX or 0, settings.offsetY or 0)
+        
+        if color and type(color) == "table" and #color >= 3 then
+            frame.gravityKeybind:SetTextColor(unpack(color))
+        else
+            frame.gravityKeybind:SetTextColor(1, 1, 1, 1)
+        end
+        frame.gravityKeybind:Show()
     else
        frame.gravityKeybind:Hide()
     end
@@ -775,21 +791,22 @@ function Module:Init()
     -- Hook ActionBars (Existing logic)
     local f = CreateFrame("Frame")
     f:RegisterEvent("PLAYER_ENTERING_WORLD")
-    f:RegisterEvent("ACTIONBAR_SLOT_CHANGED")
-    f:RegisterEvent("UPDATE_BINDINGS")
-    f:RegisterEvent("PLAYER_REGEN_ENABLED")
     f:RegisterEvent("ACTIONBAR_PAGE_CHANGED")
     f:RegisterEvent("UPDATE_BONUS_ACTIONBAR")
     f:RegisterEvent("UPDATE_VEHICLE_ACTIONBAR")
+    f:RegisterEvent("UPDATE_MACROS")
     
     f:SetScript("OnEvent", function(self, event)
         if event == "PLAYER_ENTERING_WORLD" then
-            lastScan = 0
-            ScanActionBars()
-            Module:DiscoverFrames()
-        elseif event == "ACTIONBAR_SLOT_CHANGED" or event == "UPDATE_BINDINGS" or event == "ACTIONBAR_PAGE_CHANGED" or event == "UPDATE_BONUS_ACTIONBAR" or event == "UPDATE_VEHICLE_ACTIONBAR" then
-            -- Fix: Delay scan to allow action bar addons (Dominos/Bartender) to update buttons first 
-            C_Timer.After(0.1, function()
+            C_Timer.After(1.5, function()
+                lastScan = 0
+                ScanActionBars(true)
+                Module:DiscoverFrames()
+                Module:ApplyKeybinds()
+            end)
+        elseif event == "ACTIONBAR_SLOT_CHANGED" or event == "UPDATE_BINDINGS" or event == "ACTIONBAR_PAGE_CHANGED" or event == "UPDATE_BONUS_ACTIONBAR" or event == "UPDATE_VEHICLE_ACTIONBAR" or event == "UPDATE_MACROS" then
+            -- Fix: Delay scan to allow action bar addons to update buttons first 
+            C_Timer.After(0.5, function()
                 ScanActionBars(true)
                 Module:ApplyKeybinds()
             end)
@@ -854,36 +871,28 @@ SlashCmdList["GRAVITYUIGUICDMDEBUG"] = function()
             print("  - ID |cFF00FF00" .. id .. "|r: " .. spellKeybinds[id])
         end
         
-        print("--- Macro Bar Scan ---")
-        for _, config in ipairs(barConfigs) do
-            for i = 0, (config.ending - config.start) do
-                local slot = config.start + i
-                local querySlot = slot
-                if _G.Dominos then
-                    local btnIdx = slot
-                    local button = _G["DominosActionButton" .. btnIdx]
-                    if button and button.GetAttribute then
-                        local actionID = button:GetAttribute("action")
-                        if actionID and type(actionID) == "number" and actionID > 0 then querySlot = actionID end
-                    end
-                else
-                    if config.prefix == "ACTIONBUTTON" then
-                        local page, offset = GetActionBarPage(), GetBonusBarOffset()
-                        if offset > 0 then page = 6 + offset end
-                        if page and page > 1 then querySlot = slot + ((page - 1) * 12) end
-                    end
+        print("--- Macro Bar Scan (1-180 Slots) ---")
+        for slot = 1, 180 do
+            local actionType, id = GetActionInfo(slot)
+            if actionType == "macro" then
+                local sOk, mname, _, body = pcall(GetMacroInfo, id)
+                if sOk and body then
+                    print("Slot " .. slot .. " | Macro: " .. (mname or "Unknown"))
                 end
-                
-                local actionType, id = GetActionInfo(querySlot)
-                if actionType == "macro" then
-                    local sOk, mname, _, body = pcall(GetMacroInfo, id)
-                    local btnIndex = i + 1
-                    local key = GetBindingKey(config.prefix .. btnIndex)
-                    if not key and _G.Dominos then key = GetBindingKey("CLICK DominosActionButton" .. querySlot .. ":LeftButton") end
-                    
-                    if sOk and body then
-                        print("Found Macro on Slot " .. querySlot .. " | Key: " .. (key or "NIL"))
-                        print("Name: " .. (mname or "Unknown") .. " | Body: " .. body:gsub("\n", " \\n "))
+            end
+        end
+        
+        if _G.Dominos then
+            print("--- Dominos Button Dump (1-60) ---")
+            for i = 1, 60 do
+                local btn = _G["DominosActionButton" .. i]
+                if btn then
+                    local action = btn:GetAttribute("action")
+                    local key, _ = GetKeysForSlot(i, "DOMINOS", i)
+                    local isMacro = action and GetActionInfo(action) == "macro"
+                    if isMacro or key then
+                        local hasKey = key and "|cFF00FF00YES|r ("..key..")" or "|cFFFF0000NO|r"
+                        print("Dominos Button " .. i .. " | ActionID: " .. (action or "nil") .. " | Key: " .. hasKey)
                     end
                 end
             end
