@@ -965,14 +965,10 @@ local function OnSpecSwitchEditModeCheck()
                     button3 = "Disable Check",
                     OnAccept = function(self, data)
                         if InCombatLockdown() then return end
-                        C_EditMode.SetActiveLayout(data)
-                        -- Give EditMode server changes time to process, then force actionbar redraw
-                        C_Timer.After(0.5, function()
-                            if EditModeManagerFrame and EditModeManagerFrame.UpdateActionBarLayouts then
-                                pcall(function() EditModeManagerFrame:UpdateActionBarLayouts() end)
-                            end
-                            pcall(function() EventRegistry:TriggerEvent("EditMode.ActiveLayoutChanged") end)
-                        end)
+                        -- Use the standardized Installer Sync logic for consistent scaling/positioning
+                        if ns.Installer and ns.Installer.Synchronize then
+                            ns.Installer:Synchronize("GravityUI", { ["EditMode"] = true })
+                        end
                     end,
                     OnAlt = function(self)
                         local s = GetSettings()

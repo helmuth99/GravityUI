@@ -135,11 +135,6 @@ launderSlider:SetMinMaxValues(0, 9999999)
 launderSlider:SetSize(1, 1)
 launderSlider:Hide()
 
-local onValueChangedResult = nil
-launderBar:SetScript("OnValueChanged", function(self, value)
-    onValueChangedResult = value
-end)
-
 local onSliderChangedResult = nil
 launderSlider:SetScript("OnValueChanged", function(self, value)
     onSliderChangedResult = value
@@ -459,7 +454,12 @@ local function UpdateLayout()
     local height = s.height or 20
     
     -- Sort active bars by expiration time
-    table.sort(activeBars, function(a, b)
+    local sortedBars = {}
+    for _, info in pairs(activeBars) do
+        table.insert(sortedBars, info)
+    end
+    
+    table.sort(sortedBars, function(a, b)
         -- Stable sort for Ready (0) vs Ready (0)
         -- And separate Ready (0) from Active (>GetTime())
         if a.expiration ~= b.expiration then
@@ -468,7 +468,7 @@ local function UpdateLayout()
         return a.name < b.name
     end)
     
-    for i, info in ipairs(activeBars) do
+    for i, info in ipairs(sortedBars) do
         local f = info.frame
         f:ClearAllPoints()
         if s.growDirection == "UP" then
@@ -502,7 +502,7 @@ local function OnUpdate(self, elapsed)
     end
     
     -- Check expiration
-    for i, info in ipairs(activeBars) do
+    for key, info in pairs(activeBars) do
         if info.duration > 0 then
             -- Active Cooldown
             if now >= info.expiration then
@@ -573,56 +573,57 @@ local function StartCooldown(guid, name, class, spellId, isReady)
     
     -- print("GravityUI Debug: StartCooldown", name, spellId, isReady)
 
-    -- Check duplicates
-    for i, info in ipairs(activeBars) do
-        if info.guid == guid and info.spellId == spellId then
-            -- Refresh
-            if not isReady then
-                -- Dynamic CD Logic
-                local duration = baseCD
-                if activeReductions[guid] then
-                    if activeReductions[guid][spellId] then
-                        duration = duration - activeReductions[guid][spellId]
-                    end
-                    if activeReductions[guid]["PCT_" .. spellId] then
-                        duration = duration * (1 - activeReductions[guid]["PCT_" .. spellId])
-                    end
+    -- Check duplicates (Key-based mapping for O(1) and guaranteed uniqueness)
+    local key = guid .. spellId
+    local info = activeBars[key]
+    
+    if info then
+        -- Refresh existing bar
+        if not isReady then
+            -- Dynamic CD Logic
+            local duration = baseCD
+            if activeReductions[guid] then
+                if activeReductions[guid][spellId] then
+                    duration = duration - activeReductions[guid][spellId]
                 end
-                
-                info.expiration = GetTime() + duration
-                info.duration = duration
-                
-                -- Update Text
-                info.frame.time:SetText(string.format("%.1f", duration))
-                 -- Reset Color to CD Color
-                local r, g, b, a = 1, 1, 1, 1
-                if s.useSpecificCooldownColor and s.cooldownTextColor then
-                    local c = s.cooldownTextColor
-                    r,g,b,a = c[1],c[2],c[3],c[4]
+                if activeReductions[guid]["PCT_" .. spellId] then
+                    duration = duration * (1 - activeReductions[guid]["PCT_" .. spellId])
                 end
-                info.frame.time:SetTextColor(r,g,b,a)
-            else
-                -- If it's a "ready" bar and we find an existing one, ensure it's in ready state
-                info.expiration = 0
-                info.duration = 0
-                if s.showReadyText then
-                    info.frame.time:SetText("Ready")
-                else
-                    info.frame.time:SetText("")
-                end
-                -- Reset Color to Ready Color (if different)
-                local cr, cg, cb, ca = 1, 1, 1, 1
-                if s.useSpecificCooldownColor then
-                    local c = s.cooldownTextColor or DEFAULT_COLOR
-                    cr, cg, cb, ca = c[1] or 1, c[2] or 1, c[3] or 1, c[4] or 1
-                end
-                info.frame.time:SetTextColor(cr, cg, cb, ca)
             end
-            -- Re-apply styling
-            StyleBar(info.frame, class)
-            UpdateLayout()
-            return
+            
+            info.expiration = GetTime() + duration
+            info.duration = duration
+            
+            -- Update Text
+            info.frame.time:SetText(string.format("%.1f", duration))
+             -- Reset Color to CD Color
+            local r, g, b, a = 1, 1, 1, 1
+            if s.useSpecificCooldownColor and s.cooldownTextColor then
+                local c = s.cooldownTextColor
+                r, g, b, a = c[1] or 1, c[2] or 1, c[3] or 1, c[4] or 1
+            end
+            info.frame.time:SetTextColor(r, g, b, a)
+        else
+            -- If it's a "ready" bar and we find an existing one, ensure it's in ready state
+            info.expiration = 0
+            info.duration = 0
+            if s.showReadyText then
+                info.frame.time:SetText("Ready")
+            else
+                info.frame.time:SetText("")
+            end
+            -- Reset Color to Ready Color (if different)
+            local cr, cg, cb, ca = 1, 1, 1, 1
+            if s.useSpecificCooldownColor then
+                local c = s.cooldownTextColor or DEFAULT_COLOR
+                cr, cg, cb, ca = c[1] or 1, c[2] or 1, c[3] or 1, c[4] or 1
+            end
+            info.frame.time:SetTextColor(cr, cg, cb, ca)
         end
+        -- Re-apply styling
+        StyleBar(info.frame, class)
+        UpdateLayout()
+        return
     end
     
     -- Create new
@@ -670,7 +671,7 @@ local function StartCooldown(guid, name, class, spellId, isReady)
         duration = duration,
         frame = f
     }
-    table.insert(activeBars, info)
+    activeBars[key] = info
     
     updateFrame:Show() -- Ensure OnUpdate is running
     UpdateLayout()
@@ -699,6 +700,9 @@ function InterruptTracker:UNIT_SPELLCAST_SUCCEEDED(event, unit, castGUID, spellI
          
          -- Start Local Cooldown
          StartCooldown(guid, name, class, spellId)
+         
+         -- Record for correlation fallback
+         recentPartyCasts[name] = GetTime()
          
          -- Try Addon Message (may not work in M+ in Midnight, but keep as fallback)
          -- Only send if we are the one who cast it
@@ -789,7 +793,12 @@ local function OnMobInterrupted(unit)
                 
                 -- Skip healers that aren't shamans
                 if not (role == "HEALER" and class ~= "SHAMAN") then
+                    -- Priority: Spec-specific interrupt > Class interrupt
                     local interruptID = CLASS_INTERRUPTS[class]
+                    if activeSpecs[guid] and SPEC_INTERRUPTS[activeSpecs[guid]] then
+                        interruptID = SPEC_INTERRUPTS[activeSpecs[guid]]
+                    end
+                    
                     if interruptID and guid then
                         StartCooldown(guid, bestName, class, interruptID)
                     end
@@ -833,8 +842,8 @@ end)
 
 function InterruptTracker.TestMode()
     if testModeActive then
-        activeBars = {}
         for _, f in ipairs(framePool) do f:Hide() end
+        activeBars = {}
         testModeActive = false
     else
         testModeActive = true
