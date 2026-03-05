@@ -108,6 +108,11 @@ local function BuildInformationTab(content)
     y = y - 10
 
     local changeLogs = {
+        { version = "3.90", date = "05.03.2026", changes = {
+            "Re-enabled and completely overhauled the Interrupt Tracker (modernized de-duplication logic)",
+            "Improved Edit Mode synchronization during specialization switch (uses standard installer sync)",
+            "Forced Sound Alerts to play through the 'Master' audio channel for guaranteed audibility",
+        } },
         { version = "3.88", date = "04.03.2026", changes = {
             "Added GravityUI skinning for Dominos action bars (Bars 1-14, all button types)",
             "Added GravityUI skinning for Bartender4 action bars (BT4Button1-120)",

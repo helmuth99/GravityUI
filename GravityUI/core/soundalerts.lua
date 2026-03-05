@@ -241,10 +241,7 @@ local function InstallPlaybackHook()
 
         local soundPath = FetchSharedMediaPath(meta.key)
         if soundPath then
-            local didPlay = PlaySoundFile(soundPath, "SFX")
-            if didPlay == false then
-                PlaySoundFile(soundPath, "Master")
-            end
+            PlaySoundFile(soundPath, "Master")
         end
     end)
 end
