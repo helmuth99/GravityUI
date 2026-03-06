@@ -553,19 +553,27 @@ function Module:Init()
         Module:Refresh()
     end)
     
+    local function ApplyClickThrough()
+        local obj = _G.BuffBarCooldownViewer
+        if obj then
+            if obj.SetMouseClickThrough then obj:SetMouseClickThrough(true) end
+            if obj.EnableMouse then obj:EnableMouse(false) end
+        end
+    end
+
     -- Periodic Scan (to catch dynamically created bars)
-    -- Performance: Skip full scan if no known bars are currently visible
     C_Timer.NewTicker(2.0, function()
+        ApplyClickThrough()
         local anyVisible = false
         for bar in pairs(Module.knownBars) do
             if bar:IsVisible() then anyVisible = true; break end
         end
-        -- Always scan if no bars known yet (discovery phase), otherwise only if visible
         if not anyVisible and next(Module.knownBars) ~= nil then return end
         Module:ScanForBars()
         Module:UpdateLayout()
     end)
     
+    ApplyClickThrough()
     Module:Refresh()
 end
 

@@ -8,70 +8,81 @@ LibStub("AceEvent-3.0"):Embed(InterruptTracker)
 -- ============================================================================
 local LSM = LibStub("LibSharedMedia-3.0", true)
 
--- Main Interrupt Spells (ID -> Cooldown)
-local INTERRUPTS = {
+-- Main Config (Unified source of truth)
+local INTERRUPT_CONFIG = {
     -- DEATH KNIGHT
-    [47528] = 15,   -- Mind Freeze
+    { class = "DEATHKNIGHT", spellID = 47528, cd = 15, isDefault = true, talents = { [378848] = { reduction = 3 } } }, -- Coldthirst
     -- DEMON HUNTER
-    [183752] = 15,  -- Disrupt
+    { class = "DEMONHUNTER", spellID = 183752, cd = 15, isDefault = true },
     -- DRUID
-    [106839] = 15,  -- Skull Bash
-    [78675] = 60,   -- Solar Beam
+    { class = "DRUID", spellID = 106839, cd = 15, isDefault = true },
+    { class = "DRUID", spellID = 78675, cd = 60, specID = 102 }, -- Balance (Solar Beam)
     -- EVOKER
-    [351338] = 40,  -- Quell
+    { class = "EVOKER", spellID = 351338, cd = 40, isDefault = true, talents = { [412713] = { pctReduction = 0.1 } } }, -- Interwoven Threads
     -- HUNTER
-    [147362] = 24,  -- Counter Shot
-    [187707] = 15,  -- Muzzle
+    { class = "HUNTER", spellID = 147362, cd = 24, isDefault = true, talents = { [388039] = { reduction = 2 } } }, -- Lone Survivor (Counter Shot)
+    { class = "HUNTER", spellID = 187707, cd = 15, specID = 255, talents = { [388039] = { reduction = 2 } } }, -- Lone Survivor (Muzzle)
     -- MAGE
-    [2139] = 24,    -- Counterspell
+    { class = "MAGE", spellID = 2139, cd = 24, isDefault = true },
     -- MONK
-    [116705] = 15,  -- Spear Hand Strike
+    { class = "MONK", spellID = 116705, cd = 15, isDefault = true },
     -- PALADIN
-    [96231] = 15,   -- Rebuke
-    [420090] = 15, -- NPC Rebuke (Follower Dungeon)
+    { class = "PALADIN", spellID = 96231, cd = 15, isDefault = true },
+    { class = "PALADIN", spellID = 420090, cd = 15 }, -- NPC Rebuke (Follower Dungeon)
     -- PRIEST
-    [15487] = 45,   -- Silence
+    { class = "PRIEST", spellID = 15487, cd = 45, specID = 258, isDefault = true }, -- Shadow (Silence)
     -- ROGUE
-    [1766] = 15,    -- Kick
+    { class = "ROGUE", spellID = 1766, cd = 15, isDefault = true },
     -- SHAMAN
-    [57994] = 12,   -- Wind Shear
+    { class = "SHAMAN", spellID = 57994, cd = 12, isDefault = true, overrides = { [264] = 30 } }, -- Resto 30s
     -- WARLOCK
-    [19647] = 24,   -- Spell Lock (Felhunter)
-    [132409] = 24,  -- Spell Lock (Command Demon)
-    [119914] = 30,  -- Axe Toss (Felguard)
+    { class = "WARLOCK", spellID = 19647, cd = 24, isDefault = true }, -- Spell Lock
+    { class = "WARLOCK", spellID = 132409, cd = 24 }, -- Command Demon
+    { class = "WARLOCK", spellID = 119914, cd = 30 }, -- Axe Toss
     -- WARRIOR
-    [6552] = 15,    -- Pummel
+    { class = "WARRIOR", spellID = 6552, cd = 15, isDefault = true },
 }
 
-local CLASS_INTERRUPTS = {
-    ["WARRIOR"] = 6552,
-    ["PALADIN"] = 96231,
-    ["HUNTER"] = 147362,
-    ["ROGUE"] = 1766,
-    ["PRIEST"] = 15487,
-    ["DEATHKNIGHT"] = 47528,
-    ["SHAMAN"] = 57994,
-    ["MAGE"] = 2139,
-    ["WARLOCK"] = 19647, -- Spell Lock (Standard)
-    ["MONK"] = 116705,
-    ["DRUID"] = 106839,
-    ["DEMONHUNTER"] = 183752,
-    ["EVOKER"] = 351338,
-}
+-- Runtime Lookup Tables (Populated from CONFIG)
+local INTERRUPTS = {}              -- [spellID] = baseCD
+local CLASS_INTERRUPTS = {}        -- [class] = defaultSpellID
+local SPEC_INTERRUPTS = {}         -- [specID] = spellID
+local SPEC_COOLDOWN_OVERRIDES = {} -- [spellID] = { [specID] = cd }
+local CD_REDUCTION_TALENTS = {}    -- [talentID] = { affects, reduction, pctReduction }
 
-local SPEC_INTERRUPTS = {
-    -- DRUID
-    [102] = 78675,  -- Balance (Solar Beam)
-    
-    -- HUNTER
-    [255] = 187707, -- Survival (Muzzle)
-    
-    -- PRIEST
-    [258] = 15487,  -- Shadow (Silence)
-    
-    -- WARLOCK (Optional handling for Demo/Destro if needed, currently sticking to Spell Lock default)
-    -- [266] = 119914, -- Demonology (Axe Toss) - Optional
-}
+local function BuildInterruptTables()
+    for _, data in ipairs(INTERRUPT_CONFIG) do
+        -- 1. Base Cooldown Table
+        INTERRUPTS[data.spellID] = data.cd
+        
+        -- 2. Class Defaults
+        if data.isDefault then
+            CLASS_INTERRUPTS[data.class] = data.spellID
+        end
+        
+        -- 3. Spec Specific Mappings
+        if data.specID then
+            SPEC_INTERRUPTS[data.specID] = data.spellID
+        end
+        
+        -- 4. Spec Specific CD Overrides
+        if data.overrides then
+            SPEC_COOLDOWN_OVERRIDES[data.spellID] = data.overrides
+        end
+
+        -- 5. Talent Reductions
+        if data.talents then
+            for talentID, talentData in pairs(data.talents) do
+                CD_REDUCTION_TALENTS[talentID] = {
+                    affects = data.spellID,
+                    reduction = talentData.reduction,
+                    pctReduction = talentData.pctReduction
+                }
+            end
+        end
+    end
+end
+BuildInterruptTables()
 
 local CLASS_COLORS = {
     ["DEATHKNIGHT"] = {0.77, 0.12, 0.23},
@@ -96,24 +107,7 @@ local framePool = {}
 -- DYNAMIC COOLDOWN DATA
 -- ============================================================================
 
--- Talents that reduce interrupt cooldowns (scanned via inspect)
-local CD_REDUCTION_TALENTS = {
-    -- Hunter: Lone Survivor - "Counter Shot and Muzzle CD reduced by 2 sec"
-    [388039] = { affects = 147362, reduction = 2 }, -- Counter Shot
-    -- Evoker: Interwoven Threads - "All spell CDs reduced by 10%"
-    [412713] = { affects = 351338, pctReduction = 0.1 }, -- Quell
-    
-    -- "On Successful Kick" talents (We track successful kicks, so these apply)
-    -- DK: Coldthirst - "Mind Freeze CD reduced by 3 sec on successful interrupt"
-    [378848] = { affects = 47528, reduction = 3 }, -- Mind Freeze (47528)
-}
 
--- Spec-specific cooldown overrides (SpellID -> { SpecID -> Cooldown })
-local SPEC_COOLDOWN_OVERRIDES = {
-    [57994] = {
-        [264] = 30, -- Restoration Shaman: Wind Shear is 30s
-    },
-}
 
 local activeReductions = {}
 local activeSpecs = {}
@@ -735,14 +729,18 @@ end
 local function OnChatKickReceived(senderName, text)
     if not IsTrackerAllowed() then return end
     -- Match any number in parentheses: e.g. "Interrupted (47528)" or "Kicked! (47528)"
-    local spellId = text and text:match("%((%d+)%)")
-    if not spellId then return end
+    local ok, spellId = pcall(function()
+        if not text or type(text) ~= "string" then return nil end
+        return text:match("%((%d+)%)")
+    end)
+    
+    if not ok or not spellId then return end
     spellId = tonumber(spellId)
     if not spellId then return end
     
     -- Only process known interrupt spells (prevents false positives from random chat)
-    local ok, val = pcall(function() return INTERRUPTS[spellId] end)
-    if not ok or not val then return end
+    local ok2, val = pcall(function() return INTERRUPTS[spellId] end)
+    if not ok2 or not val then return end
     
     -- Ignore own messages (already handled locally)
     local name = Ambiguate(senderName, "none")
@@ -953,7 +951,7 @@ local function OnInspectReady(guid)
             local specInterrupt = SPEC_INTERRUPTS[specID]
             if specInterrupt then
                 -- Find existing bar for this GUID
-                for _, info in ipairs(activeBars) do
+                for key, info in pairs(activeBars) do
                     if info.guid == guid then
                         -- Check if we need to update spellID
                         if info.spellId ~= specInterrupt then
@@ -1058,12 +1056,22 @@ local function OnGroupRosterUpdate()
         
         -- Create/Update Bar (Persistent)
         local _, class = UnitClass(unit)
+        local role = UnitGroupRolesAssigned(unit)
+        
+        -- Skip healers that aren't shamans (they usually don't have interrupts by default)
+        -- Holy Paladins specifically are reported as having an incorrect interrupt bar
+        if role == "HEALER" and class ~= "SHAMAN" then return end
+        
+        -- Priority: Spec-specific interrupt > Class interrupt
         local interruptID = CLASS_INTERRUPTS[class]
+        if activeSpecs[guid] and SPEC_INTERRUPTS[activeSpecs[guid]] then
+            interruptID = SPEC_INTERRUPTS[activeSpecs[guid]]
+        end
         
         if interruptID then
             -- Check if bar exists
             local found = false
-            for _, info in ipairs(activeBars) do
+            for key, info in pairs(activeBars) do
                 if info.guid == guid and info.spellId == interruptID then
                     found = true
                     break
@@ -1087,12 +1095,11 @@ local function OnGroupRosterUpdate()
     HandleMember("player")
     
     -- Clean up removed members
-    for i = #activeBars, 1, -1 do
-        local info = activeBars[i]
+    for key, info in pairs(activeBars) do
         -- Logic: If guid is not in current members AND bar is not testMode, hide it.
         if not members[info.guid] and not testModeActive then
              info.frame:Hide()
-             table.remove(activeBars, i)
+             activeBars[key] = nil
         end
     end
     
@@ -1142,7 +1149,7 @@ function InterruptTracker.ToggleMover(force)
         container.mover:SetBackdropBorderColor(br, bg, bb, ba)
         
         -- Add dummy bars for visual if empty
-        if #activeBars == 0 then
+        if not next(activeBars) then
              StartCooldown(UnitGUID("player"), "Test Player", "WARRIOR", 6552) -- Pummel
              StartCooldown(UnitGUID("player"), "Test Mage", "MAGE", 2139) -- Counterspell
              moverDummiesActive = true
@@ -1284,7 +1291,7 @@ function InterruptTracker.ApplySettings()
     container:SetBackdropColor(0, 0, 0, 0)
      
      -- Refresh styles of active
-     for _, info in ipairs(activeBars) do
+     for key, info in pairs(activeBars) do
           StyleBar(info.frame, info.class)
      end
      
@@ -1299,9 +1306,11 @@ SlashCmdList["GRAVITYDEBUGINTERRUPTS"] = function()
     print("GravityUI Debug: Interrupt Tracker State")
     if not container then print("- Container: nil") return end
     print("- Container Shown:", container:IsShown())
-    print("- Active Bars:", #activeBars)
-    for i, info in ipairs(activeBars) do
-        print(i, info.name, info.spellId, info.expiration, info.frame:IsShown())
+    local count = 0
+    for _ in pairs(activeBars) do count = count + 1 end
+    print("- Active Bars:", count)
+    for key, info in pairs(activeBars) do
+        print("-", info.name, info.spellId, info.expiration, info.frame:IsShown())
     end
     print("- Mover Shown:", container.mover and container.mover:IsShown())
     local s = GetSettings()
