@@ -1107,6 +1107,33 @@ function GUI:CreateDropdown(parent, label, items, dbKey, dbTable, onChange)
             btn:SetScript("OnEnter", function(self) self:SetBackdropColor(C.accent[1], C.accent[2], C.accent[3], 0.3) end)
             btn:SetScript("OnLeave", function(self) self:SetBackdropColor(0, 0, 0, 0) end)
             
+            if item.previewFunc then
+                local playBtn = CreateFrame("Button", nil, btn)
+                playBtn:SetSize(18, 18)
+                playBtn:SetPoint("RIGHT", -6, 0)
+                
+                local playIcon = playBtn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+                SetFont(playIcon, 10, "", C.text)
+                playIcon:SetText("▶")
+                playIcon:SetPoint("CENTER", 1, 0)
+                
+                playBtn:SetScript("OnEnter", function(self) 
+                    btn:GetScript("OnEnter")(btn)
+                    SetFont(playIcon, 10, "", C.accent)
+                end)
+                playBtn:SetScript("OnLeave", function(self) 
+                    btn:GetScript("OnLeave")(btn)
+                    SetFont(playIcon, 10, "", C.text)
+                end)
+                
+                playBtn:SetScript("OnClick", function()
+                    item.previewFunc(item.value)
+                end)
+                
+                -- Adjust text width so it doesn't overlap the play button
+                btnText:SetWidth(isScrollable and 140 or 160)
+            end
+            
             btn:SetScript("OnClick", function()
                 CloseActiveDropdown() -- Close fully BEFORE value change
                 SetValue(item.value)

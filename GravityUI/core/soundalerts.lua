@@ -21,10 +21,11 @@ local function GetSettings()
     local db = ns.GetDB()
     if not db then return nil end
     if not db.soundAlerts then
-        db.soundAlerts = { enabled = false }
+        db.soundAlerts = { enabled = false, channel = "Master" }
     end
     
     local saDB = db.soundAlerts
+    if not saDB.channel then saDB.channel = "Master" end
     if type(saDB.payloadMeta) ~= "table" then saDB.payloadMeta = {} end
     if type(saDB.sharedMediaNameToPayload) ~= "table" then saDB.sharedMediaNameToPayload = {} end
     if type(saDB.nextCustomPayload) ~= "number" then saDB.nextCustomPayload = CUSTOM_PAYLOAD_START end
@@ -81,8 +82,7 @@ end
 -- ============================================================================
 local function GetLSM()
     if LibStub then
-        local ok, lib = pcall(LibStub.GetLibrary, LibStub, "LibSharedMedia-3.0", true)
-        if ok and lib then return lib end
+        return LibStub("LibSharedMedia-3.0", true)
     end
     return nil
 end
@@ -241,7 +241,9 @@ local function InstallPlaybackHook()
 
         local soundPath = FetchSharedMediaPath(meta.key)
         if soundPath then
-            PlaySoundFile(soundPath, "Master")
+            local settings = GetSettings()
+            local channel = (settings and settings.channel) or "Master"
+            PlaySoundFile(soundPath, channel)
         end
     end)
 end

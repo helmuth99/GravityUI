@@ -463,7 +463,13 @@ local function BuildSoundAlerts(parent)
 
     AddRow(content, "Enable Custom Sounds in CDM", "checkbox", "enabled", saDB, RefreshSA)
 
-    content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
+    local channelOptions = {
+        { value = "Master", text = "Master" },
+        { value = "SFX", text = "SFX" },
+    }
+    AddRow(content, "Sound Channel", "dropdown", channelOptions, "channel", saDB, RefreshSA)
+
+    content.rowCount = content.rowCount + 0.5
 end
 
 

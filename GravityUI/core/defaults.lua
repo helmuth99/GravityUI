@@ -275,6 +275,7 @@ ns.Defaults = {
     },
     soundAlerts = {
         enabled = false,
+        channel = "Master",
     },
     interruptTracker = {
         enabled = false,
