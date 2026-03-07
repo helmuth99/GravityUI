@@ -326,27 +326,22 @@ function RaidWarnings.CheckDurability()
          if not csv.showInRaid then if textInfoFrame then textInfoFrame:Hide() end return end
     elseif inGroup then
          if not csv.showInGroup then if textInfoFrame then textInfoFrame:Hide() end return end
-    else
-        -- Not in group at all, user said respect group/raid dependencies.
-        -- If both are false, it should never show? 
-        -- Usually warnings only show in groups.
-        if textInfoFrame then textInfoFrame:Hide() end
-        return
     end
 
     -- Calculate Durability
-    local totalCurrent, totalMax = 0, 0
+    local minPercent = 100
+    local hasDurability = false
     for i = 1, 18 do
         local current, max = GetInventoryItemDurability(i)
-        if current and max then
-            totalCurrent = totalCurrent + current
-            totalMax = totalMax + max
+        if current and max and max > 0 then
+            hasDurability = true
+            local pct = (current / max) * 100
+            if pct < minPercent then minPercent = pct end
         end
     end
 
-    if totalMax > 0 then
-        local percent = (totalCurrent / totalMax) * 100
-        if percent < (ti.durabilityThreshold or 25) then
+    if hasDurability then
+        if minPercent < (ti.durabilityThreshold or 25) then
             if not textInfoFrame then CreateTextInfoFrame() end
             RaidWarnings.ApplySettings()
             textInfoText:SetText("Durability low")
