@@ -609,6 +609,7 @@ local function BuildMissingBuffs(parent)
                 print("GravityUI: Custom Buff Added:", text)
                 
                 -- Refresh UI by rebuilding this tab
+                if scroll then GUI.CustomBuffScrollPosition = scroll:GetVerticalScroll() end
                 if scroll then scroll:Hide() end
                 if BuildMissingBuffs then 
                      BuildMissingBuffs(parent) 
@@ -634,6 +635,12 @@ local function BuildMissingBuffs(parent)
     for k in pairs(customList) do table.insert(sortedKeys, k) end
     table.sort(sortedKeys)
     
+    local function RefreshTab()
+        if scroll then GUI.CustomBuffScrollPosition = scroll:GetVerticalScroll() end
+        if scroll then scroll:Hide() end
+        if BuildMissingBuffs then BuildMissingBuffs(parent) end
+    end
+    
     for _, k in ipairs(sortedKeys) do
         local buff = customList[k]
         
@@ -646,17 +653,102 @@ local function BuildMissingBuffs(parent)
             local btnDel = GUI:CreateButton(row, "Del", 40, 20, function()
                 if RB.DeleteCustomBuff then 
                     RB:DeleteCustomBuff(buff.key)
-                    -- Refresh UI
-                    if scroll then scroll:Hide() end
-                    if BuildMissingBuffs then BuildMissingBuffs(parent) end
+                    if GUI.EditingCustomBuffKey == buff.key then GUI.EditingCustomBuffKey = nil end
+                    RefreshTab()
                 end
             end)
             btnDel:SetPoint("RIGHT", row, "RIGHT", -25, 0)
+            
+            local btnEdit = GUI:CreateButton(row, "Edit", 40, 20, function()
+                if GUI.EditingCustomBuffKey == buff.key then
+                    GUI.EditingCustomBuffKey = nil -- Toggle off
+                else
+                    GUI.EditingCustomBuffKey = buff.key
+                end
+                RefreshTab()
+            end)
+            btnEdit:SetPoint("RIGHT", btnDel, "LEFT", -5, 0)
+            
+            -- INLINE EDIT ROW
+            if GUI.EditingCustomBuffKey == buff.key then
+                content.rowCount = content.rowCount + 0.2
+                local editRow = CreateFrame("Frame", nil, content)
+                editRow:SetSize(GUI.CONTENT_WIDTH - 20, 30)
+                editRow:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT + 5)))
+                
+                local arrow = editRow:CreateTexture(nil, "ARTWORK")
+                arrow:SetTexture("Interface\\ChatFrame\\ChatFrameExpandArrow")
+                arrow:SetSize(16, 16)
+                arrow:SetPoint("LEFT", 25, 0)
+                arrow:SetVertexColor(unpack(GUI.Colors.accent))
+                
+                local inlineEdit = CreateFrame("EditBox", nil, editRow, "BackdropTemplate")
+                inlineEdit:SetSize(180, 24)
+                inlineEdit:SetPoint("LEFT", arrow, "RIGHT", 5, 0)
+                inlineEdit:SetAutoFocus(true)
+                inlineEdit:SetFontObject("ChatFontNormal")
+                inlineEdit:SetTextInsets(8, 8, 0, 0)
+                inlineEdit:SetText(tostring(buff.spellID))
+                inlineEdit:HighlightText()
+                inlineEdit:SetCursorPosition(string.len(tostring(buff.spellID)))
+                
+                inlineEdit:SetBackdrop({
+                    bgFile = "Interface\\Buttons\\WHITE8x8",
+                    edgeFile = "Interface\\Buttons\\WHITE8x8",
+                    edgeSize = 1,
+                })
+                inlineEdit:SetBackdropColor(0.15, 0.15, 0.15, 1)
+                inlineEdit:SetBackdropBorderColor(GUI.Colors.accent[1], GUI.Colors.accent[2], GUI.Colors.accent[3], 1)
+                
+                inlineEdit:SetScript("OnEscapePressed", function(self)
+                    self:ClearFocus()
+                    GUI.EditingCustomBuffKey = nil
+                    RefreshTab()
+                end)
+                
+                local saveFunc = function()
+                    local text = inlineEdit:GetText()
+                    if text and text ~= "" then
+                        if RB and RB.DeleteCustomBuff and RB.AddCustomBuff then
+                            local isValid = tonumber(text) or string.find(text, "^%d+%s*:%s*%d+$") or string.find(text, "^[%d%s,]+$")
+                            if isValid then
+                                RB:DeleteCustomBuff(buff.key)
+                                RB:AddCustomBuff(text)
+                            else
+                                print("|cffff0000GravityUI:|r Invalid format. Use 'SpellID' or 'EnchantID:ItemID'.")
+                            end
+                            GUI.EditingCustomBuffKey = nil
+                            RefreshTab()
+                        end
+                    end
+                end
+                
+                inlineEdit:SetScript("OnEnterPressed", saveFunc)
+                
+                local btnSave = GUI:CreateButton(editRow, "Save", 60, 24, saveFunc)
+                btnSave:SetPoint("LEFT", inlineEdit, "RIGHT", 10, 0)
+                
+                local btnCancel = GUI:CreateButton(editRow, "Cancel", 60, 24, function()
+                    GUI.EditingCustomBuffKey = nil
+                    RefreshTab()
+                end)
+                btnCancel:SetPoint("LEFT", btnSave, "RIGHT", 5, 0)
+                
+                content.rowCount = content.rowCount + 1.2
+            end
         end
     end
 
 
     content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
+    
+    if GUI.CustomBuffScrollPosition then
+        C_Timer.After(0.01, function()
+            if scroll then 
+                scroll:SetVerticalScroll(GUI.CustomBuffScrollPosition) 
+            end
+        end)
+    end
 end
 
 -- 6. Interrupt Tracker
