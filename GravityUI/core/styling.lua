@@ -1186,6 +1186,244 @@ function Styling:InitWidgetPowerBar()
     if ns.Movers and ns.Movers.Register then
         ns.Movers:Register("WidgetPowerBar", nil, function(frame, enabled, force) Styling:ToggleWidgetPowerBarMover(force) end, "Widget Power Bar")
     end
+
+    local function GetActivePreyPercent()
+        local questID = C_QuestLog and C_QuestLog.GetActivePreyQuest and C_QuestLog.GetActivePreyQuest()
+        if not questID or questID == 0 then return nil, nil, false end
+        local isCompleted = C_QuestLog.IsQuestFlaggedCompleted and C_QuestLog.IsQuestFlaggedCompleted(questID)
+        
+        local titleInfo = C_QuestLog.GetTitleForQuestID and C_QuestLog.GetTitleForQuestID(questID)
+        local questTitle = type(titleInfo) == "table" and titleInfo.title or titleInfo
+
+        local isWidgetShown = false
+        
+        if isCompleted then return 100, questTitle, true end
+
+        if GetQuestProgressBarPercent then
+            local p = GetQuestProgressBarPercent(questID)
+            if p and p > 0 then return math.floor(p), questTitle, true end
+        end
+
+        -- Try widget
+        if C_UIWidgetManager and C_UIWidgetManager.GetAllWidgetsBySetID and C_UIWidgetManager.GetPreyHuntProgressWidgetVisualizationInfo then
+            local sets = {C_UIWidgetManager.GetTopCenterWidgetSetID(), C_UIWidgetManager.GetObjectiveTrackerWidgetSetID(), C_UIWidgetManager.GetBelowMinimapWidgetSetID(), C_UIWidgetManager.GetPowerBarWidgetSetID()}
+            for _, setID in ipairs(sets) do
+                if setID then
+                    local widgets = C_UIWidgetManager.GetAllWidgetsBySetID(setID)
+                    if widgets then
+                        for _, w in ipairs(widgets) do
+                            if w.widgetType == 31 then -- PreyHuntProgress
+                                local info = C_UIWidgetManager.GetPreyHuntProgressWidgetVisualizationInfo(w.widgetID)
+                                if info and info.shownState == 1 then
+                                    isWidgetShown = true
+                                    if info.progressPercentage then return info.progressPercentage, questTitle, true end
+                                    if info.progressPercent then return info.progressPercent, questTitle, true end
+                                    if info.tooltip then
+                                        local pctText = info.tooltip:match("(%d+)%%")
+                                        if pctText then return tonumber(pctText), questTitle, true end
+                                    end
+                                    
+                                    -- Fallback based on preydator's progressState mapping
+                                    if info.progressState then
+                                        if info.progressState == 0 then return 0, questTitle, true end
+                                        if info.progressState == 1 then return 33, questTitle, true end
+                                        if info.progressState == 2 then return 66, questTitle, true end
+                                        if info.progressState == 3 then return 100, questTitle, true end
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+        
+        -- Try objective percent
+        if C_QuestLog.GetQuestObjectives then
+            local objectives = C_QuestLog.GetQuestObjectives(questID)
+            if objectives and #objectives > 0 then
+                local totalF = 0
+                local totalR = 0
+                local anyNumeric = false
+                
+                for _, obj in ipairs(objectives) do
+                    local f = tonumber(obj.numFulfilled or obj.fulfilled)
+                    local r = tonumber(obj.numRequired or obj.required)
+                    
+                    if f ~= nil and r == nil and obj.finished ~= nil then
+                        r = 1
+                        f = obj.finished and 1 or math.max(0, f)
+                    end
+                    
+                    if f and r and r > 0 then
+                        anyNumeric = true
+                        totalF = totalF + math.max(0, f)
+                        totalR = totalR + math.max(0, r)
+                    else
+                        local text = obj.text
+                        if type(text) == "string" and text ~= "" then
+                            local ct, mt = text:match("(%d+)%s*/%s*(%d+)")
+                            if ct and mt and tonumber(mt) > 0 then
+                                anyNumeric = true
+                                totalF = totalF + math.max(0, tonumber(ct))
+                                totalR = totalR + math.max(0, tonumber(mt))
+                            else
+                                local pctText = text:match("(%d+)%s*%%")
+                                if pctText then
+                                    local parsedPct = tonumber(pctText)
+                                    if parsedPct then return parsedPct, questTitle, isWidgetShown end
+                                end
+                            end
+                        end
+                    end
+                end
+                
+                if anyNumeric and totalR > 0 then
+                    return math.floor((totalF / totalR) * 100), questTitle, isWidgetShown
+                end
+            end
+        end
+        
+        return nil, questTitle, isWidgetShown
+    end
+
+    local function EnsurePreyTracker()
+        if ns.PreyTrackerBar then return end
+        
+        local bar = CreateFrame("StatusBar", "GravityUIPreyTracker", UIParent)
+        bar:SetSize(120, 16)
+        bar:SetStatusBarTexture("Interface\\TargetingFrame\\UI-StatusBar")
+        bar:SetStatusBarColor(0.85, 0.1, 0.1)
+        
+        local bg = bar:CreateTexture(nil, "BACKGROUND")
+        bg:SetAllPoints()
+        bg:SetColorTexture(0, 0, 0, 0.6)
+        
+        local border = CreateFrame("Frame", nil, bar, "BackdropTemplate")
+        border:SetAllPoints()
+        border:SetBackdrop({
+            edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+            edgeSize = 12,
+            insets = { left = 2, right = 2, top = 2, bottom = 2 },
+        })
+        border:SetBackdropBorderColor(0.8, 0.1, 0.1, 0.85)
+        
+        local title = bar:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        title:SetPoint("BOTTOM", bar, "TOP", 0, 2)
+        title:SetText("Prey")
+        title:SetTextColor(1, 0.82, 0, 1)
+        bar.title = title
+        
+        local valText = bar:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        valText:SetPoint("CENTER", bar, "CENTER", 0, 0)
+        bar.valText = valText
+        
+        local container = _G.UIWidgetPowerBarContainerFrame
+        bar:SetPoint("TOP", container or UIParent, "BOTTOM", 0, -10)
+        
+        bar:Hide()
+        ns.PreyTrackerBar = bar
+    end
+    
+    SLASH_GRAVITYPREYDEBUG1 = "/gravitydebugprey"
+    SlashCmdList["GRAVITYPREYDEBUG"] = function()
+        local questID = C_QuestLog and C_QuestLog.GetActivePreyQuest and C_QuestLog.GetActivePreyQuest()
+        print("--- Gravity Prey Debug ---")
+        print("Active Prey QuestID:", questID)
+        
+        if not questID or questID == 0 then return end
+        
+        if GetQuestProgressBarPercent then
+            print("GetQuestProgressBarPercent:", GetQuestProgressBarPercent(questID))
+        end
+        
+        if C_QuestLog.GetQuestObjectives then
+            local obj = C_QuestLog.GetQuestObjectives(questID)
+            if obj then
+                for i, o in ipairs(obj) do
+                    print("Obj["..i.."] type:", o.type, "text:", o.text, "numF:", o.numFulfilled, "numR:", o.numRequired, "fin:", o.finished)
+                end
+            else
+                print("No Quest Objectives Array")
+            end
+        end
+        
+        if C_UIWidgetManager and C_UIWidgetManager.GetPreyHuntProgressWidgetVisualizationInfo then
+            local sets = {C_UIWidgetManager.GetTopCenterWidgetSetID(), C_UIWidgetManager.GetObjectiveTrackerWidgetSetID(), C_UIWidgetManager.GetBelowMinimapWidgetSetID(), C_UIWidgetManager.GetPowerBarWidgetSetID()}
+            for _, setID in ipairs(sets) do
+                if setID then
+                    local widgets = C_UIWidgetManager.GetAllWidgetsBySetID(setID)
+                    if widgets then
+                        for _, w in ipairs(widgets) do
+                            if w.widgetType == 31 then
+                                local info = C_UIWidgetManager.GetPreyHuntProgressWidgetVisualizationInfo(w.widgetID)
+                                if info then
+                                    print("Widget Found ID:", w.widgetID, "shown:", info.shownState)
+                                    for k, v in pairs(info) do
+                                        print("  ", k, "=", tostring(v))
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    local function UpdatePreyTracker()
+        local db = ns.GetDB()
+        if not (db and db.uiimprovements and db.uiimprovements.showWidgetPowerValue) then
+            if ns.PreyTrackerBar then ns.PreyTrackerBar:Hide() end
+            return
+        end
+        
+        EnsurePreyTracker()
+        
+        local pct, title, isWidgetShown = GetActivePreyPercent()
+        
+        if pct and isWidgetShown then
+            if title then
+                local cleanTitle = title:match("^%s*[Pp]rey:%s*(.-)%s*%(") or title:match("^%s*[Pp]rey:%s*(.-)%s*$") or title
+                ns.PreyTrackerBar.title:SetText(cleanTitle)
+            end
+            
+            ns.PreyTrackerBar:SetMinMaxValues(0, 100)
+            ns.PreyTrackerBar:SetValue(pct)
+            ns.PreyTrackerBar.valText:SetText(pct .. "%")
+            
+            local container = _G.UIWidgetPowerBarContainerFrame
+            if container and container:IsShown() then
+                ns.PreyTrackerBar:ClearAllPoints()
+                ns.PreyTrackerBar:SetPoint("TOP", container, "BOTTOM", 0, -10)
+                ns.PreyTrackerBar:Show()
+            else
+                ns.PreyTrackerBar:Hide()
+            end
+        else
+            ns.PreyTrackerBar:Hide()
+        end
+    end
+
+    function ns.UpdateWidgetPowerValueVisibility(enabled)
+        if enabled then
+            if not ns.widgetPowerTicker then
+                ns.widgetPowerTicker = C_Timer.NewTicker(0.5, UpdatePreyTracker)
+            end
+            UpdatePreyTracker()
+        else
+            if ns.PreyTrackerBar then ns.PreyTrackerBar:Hide() end
+            if ns.widgetPowerTicker then
+                ns.widgetPowerTicker:Cancel()
+                ns.widgetPowerTicker = nil
+            end
+        end
+    end
+
+    local db = ns.GetDB()
+    if db and db.uiimprovements and db.uiimprovements.showWidgetPowerValue then
+        ns.UpdateWidgetPowerValueVisibility(true)
+    end
 end
 
 -------------------------------------------------------------------------------

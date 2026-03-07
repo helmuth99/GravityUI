@@ -149,6 +149,9 @@ local function BuildAutomation(parent)
     ahInfo:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
     content.rowCount = content.rowCount + (ahInfo:GetHeight() / (ROW_HEIGHT+5)) + 0.2
     
+    AddRow(content, "Show Widget Power Value (Prey)", "checkbox", "showWidgetPowerValue", dbUI, function(enabled) if ns.UpdateWidgetPowerValueVisibility then ns.UpdateWidgetPowerValueVisibility(enabled) end end)
+
+    
     -- Quick Salvage moved here? Original logic was inside Automation section. Yes.
     content.rowCount = content.rowCount + 0.5
     AddRow(content, "Enable Quick Salvage", "checkbox", "enabled", dbUI.quickSalvage, nil)

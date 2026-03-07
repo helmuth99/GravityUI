@@ -643,6 +643,7 @@ ns.Defaults = {
         autoCombatLogRaidMythic = false,
         ahCurrentExpansionFilter = false,
         autoSelectGossip = false,
+        showWidgetPowerValue = false,
         fastAutoLoot = false,
         checkEditmodeOnSpecSwitch = true,
         hideTalkingHead = false,
