@@ -11,7 +11,7 @@ local LSM = LibStub("LibSharedMedia-3.0", true)
 -- Main Config (Unified source of truth)
 local INTERRUPT_CONFIG = {
     -- DEATH KNIGHT
-    { class = "DEATHKNIGHT", spellID = 47528, cd = 15, isDefault = true, talents = { [378848] = { reduction = 3 } } }, -- Coldthirst
+    { class = "DEATHKNIGHT", spellID = 47528, cd = 15, isDefault = true }, -- Mind Freeze
     -- DEMON HUNTER
     { class = "DEMONHUNTER", spellID = 183752, cd = 15, isDefault = true },
     -- DRUID
@@ -49,6 +49,24 @@ local CLASS_INTERRUPTS = {}        -- [class] = defaultSpellID
 local SPEC_INTERRUPTS = {}         -- [specID] = spellID
 local SPEC_COOLDOWN_OVERRIDES = {} -- [spellID] = { [specID] = cd }
 local CD_REDUCTION_TALENTS = {}    -- [talentID] = { affects, reduction, pctReduction }
+local CD_ON_KICK_TALENTS = {       -- [talentID] = { reduction }
+    [378848] = { reduction = 3 }   -- DK: Coldthirst
+}
+local SPEC_EXTRA_KICKS = {
+    [266] = { -- Warlock Demonology
+        { id = 119914, cd = 30, name = "Axe Toss" }
+    },
+    [267] = { -- Warlock Destruction
+        { id = 119914, cd = 30, name = "Axe Toss" }
+    },
+    [265] = { -- Warlock Affliction
+        { id = 119914, cd = 30, name = "Axe Toss" }
+    }
+}
+-- Automatically register talents that grant an extra kick
+local EXTRA_KICK_TALENTS = {
+    [385110] = { id = 1276467, cd = 25, name = "Fel Ravager" }, -- Warlock Grimoire of Sacrifice
+}
 
 local function BuildInterruptTables()
     for _, data in ipairs(INTERRUPT_CONFIG) do
@@ -318,6 +336,22 @@ local function CreateBarFrame()
     return f
 end
 
+local elvuiFont = nil
+local elvuiTexture = nil
+
+local function DetectElvUI()
+    if ElvUI then
+        local ok, E = pcall(unpack, ElvUI)
+        if ok and E and E.media then
+            if E.media.normFont then elvuiFont = E.media.normFont end
+            if E.media.normTex then elvuiTexture = E.media.normTex end
+        end
+    end
+end
+
+-- Call detection immediately
+DetectElvUI()
+
 local function StyleBar(f, class)
     local s = GetSettings()
     if not s then return end
@@ -332,7 +366,9 @@ local function StyleBar(f, class)
     
     -- Texture
     local texture = "Interface\\TargetingFrame\\UI-StatusBar"
-    if LSM then
+    if elvuiTexture then
+        texture = elvuiTexture
+    elseif LSM then
         texture = LSM:Fetch("statusbar", s.texture or "Gravity")
     end
     f.bar:SetStatusBarTexture(texture)
@@ -340,7 +376,9 @@ local function StyleBar(f, class)
     
     -- Font
     local font = "Fonts\\FRIZQT__.TTF"
-    if LSM then
+    if elvuiFont then
+        font = elvuiFont
+    elseif LSM then
          font = LSM:Fetch("font", s.font or "Gravity")
     end
     local flags = s.fontOutline or "OUTLINE"
@@ -454,11 +492,19 @@ local function UpdateLayout()
     end
     
     table.sort(sortedBars, function(a, b)
-        -- Stable sort for Ready (0) vs Ready (0)
-        -- And separate Ready (0) from Active (>GetTime())
-        if a.expiration ~= b.expiration then
-             return a.expiration < b.expiration
+        local aExp = a.expiration or 0
+        local bExp = b.expiration or 0
+        
+        -- Always put Ready (0) at the top
+        if aExp == 0 and bExp ~= 0 then return true end
+        if bExp == 0 and aExp ~= 0 then return false end
+        
+        -- If both are on cooldown, sort by which one finishes first
+        if aExp ~= bExp then
+             return aExp < bExp
         end
+        
+        -- Tie-breaker: sort alphabetically by name
         return a.name < b.name
     end)
     
@@ -661,6 +707,7 @@ local function StartCooldown(guid, name, class, spellId, isReady)
         name = name,
         class = class,
         spellId = spellId,
+        baseDuration = duration,
         expiration = expiration,
         duration = duration,
         frame = f
@@ -800,6 +847,17 @@ local function OnMobInterrupted(unit)
                     if interruptID and guid then
                         StartCooldown(guid, bestName, class, interruptID)
                     end
+                    
+                    -- Handle on-kick conditional CD reductions (e.g. DK Coldthirst)
+                    local key = guid .. (interruptID or CLASS_INTERRUPTS[class])
+                    local info = activeBars[key]
+                    if info and activeReductions[guid] and activeReductions[guid].onKick then
+                        local newExpiration = info.expiration - activeReductions[guid].onKick
+                        if newExpiration < now then newExpiration = now end
+                        info.expiration = newExpiration
+                        -- Avoid updating the text here, OnUpdate will smoothly catch it
+                        if not NS_TEST_MODE then updateFrame:Show() end
+                    end
                 end
                 break
             end
@@ -911,6 +969,19 @@ local function ProcessInspect(guid)
                                 activeReductions[guid]["PCT_" .. talent.affects] = (activeReductions[guid]["PCT_" .. talent.affects] or 0) + talent.pctReduction
                             end
                         end
+                        
+                        local onKick = CD_ON_KICK_TALENTS[defInfo.spellID]
+                        if onKick then
+                            activeReductions[guid].onKick = (activeReductions[guid].onKick or 0) + onKick.reduction
+                        end
+
+                        local extraKick = EXTRA_KICK_TALENTS[defInfo.spellID]
+                        if extraKick then
+                            if not activeReductions[guid].extraKicks then
+                                activeReductions[guid].extraKicks = {}
+                            end
+                            table.insert(activeReductions[guid].extraKicks, extraKick)
+                        end
                     end
                 end
             end
@@ -952,35 +1023,72 @@ local function OnInspectReady(guid)
             if specInterrupt then
                 -- Find existing bar for this GUID
                 for key, info in pairs(activeBars) do
-                    if info.guid == guid then
+                    if info.guid == guid and info.spellId ~= specInterrupt then
                         -- Check if we need to update spellID
-                        if info.spellId ~= specInterrupt then
-                             info.spellId = specInterrupt
-                             
-                             -- Update Icon
-                             local spellIcon = C_Spell.GetSpellTexture(specInterrupt)
-                             info.frame.icon:SetTexture(spellIcon)
-                             
-                             -- Reset to Ready (Switching specs resets CDs usually)
-                             info.duration = 0
-                             info.expiration = 0
-                             
-                             local s = GetSettings()
-                             if s and s.showReadyText then
-                                  info.frame.time:SetText("Ready")
-                             else
-                                  info.frame.time:SetText("")
-                             end
-
-                             info.frame.bar:SetValue(1)
-                             local cr, cg, cb, ca = 1, 1, 1, 1
-                             if s and s.useSpecificCooldownColor then
-                                local c = s.cooldownTextColor or {1, 1, 1, 1}
-                                cr, cg, cb, ca = c[1] or 1, c[2] or 1, c[3] or 1, c[4] or 1
-                             end
-                             info.frame.time:SetTextColor(cr, cg, cb, ca)
+                        info.spellId = specInterrupt
+                        -- Update Icon
+                        local icon = select(3, GetSpellInfo(specInterrupt)) or select(3, C_Spell.GetSpellInfo(specInterrupt))
+                        if icon and info.frame then
+                             info.frame.icon:SetTexture(icon)
                         end
-                        break 
+                        
+                        -- Reset to Ready (Switching specs resets CDs usually)
+                        info.duration = 0
+                        info.expiration = 0
+                        
+                        local s = GetSettings()
+                        if s and s.showReadyText then
+                             info.frame.time:SetText("Ready")
+                        else
+                             info.frame.time:SetText("")
+                        end
+
+                        info.frame.bar:SetValue(1)
+                        local cr, cg, cb, ca = 1, 1, 1, 1
+                        if s and s.useSpecificCooldownColor then
+                           local c = s.cooldownTextColor or {1, 1, 1, 1}
+                           cr, cg, cb, ca = c[1] or 1, c[2] or 1, c[3] or 1, c[4] or 1
+                        end
+                        info.frame.time:SetTextColor(cr, cg, cb, ca)
+                    end
+                end
+            end
+            
+            -- Handle Spec extra kicks (e.g Warlock Axe Toss)
+            if SPEC_EXTRA_KICKS[specID] then
+                if not activeReductions[guid] then activeReductions[guid] = {} end
+                if not activeReductions[guid].extraKicks then activeReductions[guid].extraKicks = {} end
+                
+                for _, extraKick in ipairs(SPEC_EXTRA_KICKS[specID]) do
+                    local alreadyExists = false
+                    for _, ek in ipairs(activeReductions[guid].extraKicks) do
+                        if ek.id == extraKick.id then alreadyExists = true break end
+                    end
+                    if not alreadyExists then
+                        table.insert(activeReductions[guid].extraKicks, extraKick)
+                    end
+                end
+            end
+            
+            -- If we have extra kicks, start tracking them 
+            if activeReductions[guid] and activeReductions[guid].extraKicks then
+                local _, class = UnitClass(unit)
+                local name = UnitName(unit)
+                for _, extra in ipairs(activeReductions[guid].extraKicks) do
+                    local extraSpellID = extra.id
+                    local extraCD = extra.cd
+                    if not INTERRUPTS[extraSpellID] then
+                        INTERRUPTS[extraSpellID] = extraCD -- Add to master table if missing
+                    end
+                    
+                    if not activeBars[guid .. extraSpellID] then
+                        -- Initialize it as ready
+                        StartCooldown(guid, name, class, extraSpellID)
+                        local info = activeBars[guid .. extraSpellID]
+                        if info then
+                            info.expiration = 0 -- Ready immediately
+                            if not NS_TEST_MODE then updateFrame:Show() end
+                        end
                     end
                 end
             end
