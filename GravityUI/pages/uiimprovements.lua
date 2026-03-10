@@ -117,6 +117,12 @@ local function BuildAutomation(parent)
     AddRow(content, "Auto Turn-In Quests", "checkbox", "autoTurnInQuest", dbUI, nil)
     AddRow(content, "Shift Pauses Accept & Turn-In", "checkbox", "questHoldShift", dbUI, nil)
     
+    content.rowCount = content.rowCount + 0.5
+    local usefulHeader = GUI:CreateSectionHeader(content, "Usefull Stuff")
+    usefulHeader:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
+    usefulHeader:SetPoint("RIGHT", content, "RIGHT", -10, 0)
+    content.rowCount = content.rowCount + 1.0
+    
     AddRow(content, "Faster Auto Loot", "checkbox", "fastAutoLoot", dbUI, function(enabled) if enabled then SetCVar("autoLootDefault", "1") end end)
     content.rowCount = content.rowCount + 0.2
     local lootInfo = GUI:CreateInfoBox(content, "Faster Auto Loot instantly loots all items and enables WoW's Auto Loot setting.")
