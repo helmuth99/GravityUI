@@ -1931,9 +1931,10 @@ function ExitAFK()
     end
 end
 
-local afkEventFrame = CreateFrame("Frame", nil, UIParent, "SecureHandlerStateTemplate")
+local afkEventFrame = CreateFrame("Frame", nil, nil, "SecureHandlerStateTemplate")
 afkEventFrame:RegisterEvent("PLAYER_REGEN_DISABLED")
 afkEventFrame:RegisterEvent("PLAYER_LEAVING_WORLD")
+afkEventFrame:RegisterEvent("PLAYER_FLAGS_CHANGED")
 
 -- Failsafes if standard UI frames are triggered
 afkEventFrame:RegisterEvent("AUCTION_HOUSE_SHOW")
@@ -1945,7 +1946,7 @@ afkEventFrame:RegisterEvent("UPDATE_BATTLEFIELD_STATUS")
 afkEventFrame:RegisterEvent("READY_CHECK")
 afkEventFrame:RegisterEvent("LFG_ROLE_CHECK_SHOW")
 
-afkEventFrame:SetScript("OnEvent", function(self, event)
+afkEventFrame:SetScript("OnEvent", function(self, event, ...)
     if event == "PLAYER_REGEN_DISABLED" then
         -- Force exit if combat starts
         ExitAFK()
@@ -1961,6 +1962,19 @@ afkEventFrame:SetScript("OnEvent", function(self, event)
     elseif event == "LFG_PROPOSAL_SHOW" or event == "UPDATE_BATTLEFIELD_STATUS" or event == "READY_CHECK" or event == "LFG_ROLE_CHECK_SHOW" then
         if AFKState.isAFK then
             ExitAFK()
+        end
+    elseif event == "PLAYER_FLAGS_CHANGED" then
+        local unit = ...
+        if unit == "player" then
+            if UnitIsAFK("player") then
+                if not AFKState.isAFK then
+                    EnterAFK()
+                end
+            else
+                if AFKState.isAFK then
+                    ExitAFK()
+                end
+            end
         end
     end
 end)

@@ -23,6 +23,7 @@ local C = {
     -- Branding
     accent = {0, 0.6, 1, 1}, -- Gravity Blue (Dynamic)
     accentLight = {0.4, 0.8, 1, 1}, -- Highlight
+    accentHover = {0.2, 0.8, 1, 1}, -- Interaction
     
     -- Typography
     text = {0.9, 0.92, 0.95, 1},
@@ -191,6 +192,7 @@ function GUI:UpdateThemeColors()
     -- Update Palette
     C.accent = {r, g, b, 1}
     C.accentLight = {math.min(r*1.3, 1), math.min(g*1.3, 1), math.min(b*1.3, 1), 1}
+    C.accentHover = {math.min(r*1.5, 1), math.min(g*1.5, 1), math.min(b*1.5, 1), 1}
     C.borderAccent = {r, g, b, 1}
     C.sectionHeader = {r, g, b, 1}
     C.tabSelectedText = {r, g, b, 1}
