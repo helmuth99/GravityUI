@@ -362,15 +362,23 @@ local function IsFriendOrBNet(name)
     -- Check normal friends
     if C_FriendList.IsFriend(name) then return true end
     -- Check BattleNet friends
-    local numBNetTotal = BNGetNumFriends()
+    local numBNetTotal = C_BattleNet.GetNumFriends()
     for i = 1, numBNetTotal do
         local accountInfo = C_BattleNet.GetFriendAccountInfo(i)
         if accountInfo and accountInfo.gameAccountInfo then
             local charName = accountInfo.gameAccountInfo.characterName
             local realmName = accountInfo.gameAccountInfo.realmName
             if charName then
-                local fullName = realmName and (charName .. "-" .. realmName) or charName
-                if fullName == name or charName == name:match("^([^-]+)") then
+                -- Whisper sender realm names have spaces removed (e.g., "TheMaelstrom")
+                local cleanRealm = realmName and realmName:gsub("%s+", "") or ""
+                local fullName = (cleanRealm ~= "") and (charName .. "-" .. cleanRealm) or charName
+                local searchName = name:gsub("%s+", "")
+                
+                -- Support matching both "Name-Realm" and just "Name"
+                local nameOnly = name:match("^([^-]+)") or name
+                
+                if fullName == searchName or charName == nameOnly then
+                    -- print("|cFF30D1FFGravityUI Debug:|r Found BNet Friend match: " .. fullName)
                     return true
                 end
             end
@@ -418,6 +426,83 @@ local function OnPartyInvite(inviterName)
     if shouldAccept then
         AcceptGroup()
         StaticPopup_Hide("PARTY_INVITE")
+    end
+end
+
+---------------------------------------------------------------------------
+-- WHISPER INVITES: AUTO INVITE ON KEYWORD
+---------------------------------------------------------------------------
+
+local function OnWhisper(msg, sender, isBNet)
+    local settings = GetSettings()
+    if not settings or not settings.inviteOnWhisper then return end
+    if not msg or not sender then return end
+
+    -- Check if we are already in a group and not the leader
+    if IsInGroup() and not UnitIsGroupLeader("player") then 
+        return 
+    end
+    -- Check if group is full
+    if GetNumGroupMembers() >= (IsInRaid() and 40 or 5) then 
+        return 
+    end
+
+    -- Parse keywords
+    local keywords = {}
+    for kw in string.gmatch(settings.inviteOnWhisperKeywords or "", "([^,%s]+)") do
+        table.insert(keywords, kw:lower())
+    end
+    -- print("|cFF30D1FFGravityUI Debug:|r Keywords: " .. table.concat(keywords, ", "))
+
+    -- Match keyword (case-insensitive)
+    local match = false
+    local text = strtrim(msg:lower())
+    for _, kw in ipairs(keywords) do
+        if text == kw or text:find("%f[%a]" .. kw .. "%f[%A]") then
+            match = true
+            break
+        end
+    end
+
+    if not match then 
+        return 
+    end
+    print("|cFF30D1FFGravityUI:|r Whisper Keyword Matched: " .. text .. " from " .. (isBNet and "BNet" or "Whisper"))
+
+    -- Filter Check
+    local allowed = false
+    if settings.inviteOnWhisperAll then
+        allowed = true
+    else
+        if settings.inviteOnWhisperFriends then
+            if isBNet then
+                allowed = true -- BNet whispers are always from friends
+            else
+                allowed = IsFriendOrBNet(sender)
+            end
+        end
+        if not allowed and settings.inviteOnWhisperGuild then
+            if isBNet then
+                allowed = true -- BNet whisper is trusted
+            else
+                allowed = IsGuildMemberByName(sender)
+            end
+        end
+    end
+
+    if not allowed then
+        return 
+    end
+
+    if isBNet then
+        local accountInfo = C_BattleNet.GetAccountInfoByID(sender)
+        if accountInfo and accountInfo.gameAccountInfo and accountInfo.gameAccountInfo.gameAccountID then
+            print("|cFF30D1FFGravityUI:|r Sending BNet Invite to " .. (accountInfo.gameAccountInfo.characterName or "Unknown"))
+            BNInviteFriend(accountInfo.gameAccountInfo.gameAccountID)
+        end
+    else
+        print("|cFF30D1FFGravityUI:|r Sending Invite to " .. sender)
+        C_PartyInfo.InviteUnit(sender)
     end
 end
 
@@ -1029,8 +1114,20 @@ automationFrame:RegisterEvent("PLAYER_DIFFICULTY_CHANGED")
 automationFrame:RegisterEvent("LFG_LIST_SEARCH_RESULTS_RECEIVED")
 automationFrame:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
 automationFrame:RegisterEvent("AUCTION_HOUSE_SHOW")
+automationFrame:RegisterEvent("CHAT_MSG_WHISPER")
+automationFrame:RegisterEvent("CHAT_MSG_BN_WHISPER")
 
 automationFrame:SetScript("OnEvent", function(self, event, ...)
+    if event == "CHAT_MSG_WHISPER" then
+        local msg, sender = ...
+        OnWhisper(msg, sender, false)
+        return
+    elseif event == "CHAT_MSG_BN_WHISPER" then
+        local msg, _, _, _, _, _, _, _, _, _, _, _, presenceID = ...
+        OnWhisper(msg, presenceID, true)
+        return
+    end
+
     if event == "ADDON_LOADED" then
         local addonName = ...
         if addonName == "Blizzard_LFGList" then

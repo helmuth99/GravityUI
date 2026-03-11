@@ -900,6 +900,18 @@ local function BuildInstallerTab(parent)
             end
         })
     end)
+    -- Custom Red Theme for Fresh Install
+    installBtn:SetBackdropColor(0.4, 0.1, 0.1, 0.8)
+    installBtn:SetBackdropBorderColor(0.8, 0.2, 0.2, 1)
+    if installBtn.glow then installBtn.glow:SetColorTexture(1, 0.2, 0.2, 0.1) end
+    
+    installBtn:HookScript("OnEnter", function(self)
+        self:SetBackdropBorderColor(1, 0.3, 0.3, 1)
+    end)
+    installBtn:HookScript("OnLeave", function(self)
+        self:SetBackdropBorderColor(0.8, 0.2, 0.2, 1)
+    end)
+
     -- Align button with the dropdown input for cleaner look
     installBtn:SetPoint("TOPLEFT", PAD + 160, y) 
     
@@ -923,6 +935,17 @@ local function BuildInstallerTab(parent)
         UpdateStatus() 
         UpdateSyncState()
     end)
+    -- Custom Blue Theme for Sync (matching GravityUI Accent)
+    syncBtn:SetBackdropColor(0, 0.2, 0.3, 0.8)
+    syncBtn:SetBackdropBorderColor(C.accent[1], C.accent[2], C.accent[3], 1)
+    
+    syncBtn:HookScript("OnEnter", function(self)
+        self:SetBackdropBorderColor(C.accentHover[1], C.accentHover[2], C.accentHover[3], 1)
+    end)
+    syncBtn:HookScript("OnLeave", function(self)
+        self:SetBackdropBorderColor(C.accent[1], C.accent[2], C.accent[3], 1)
+    end)
+
     -- Align with Install button
     syncBtn:SetPoint("TOPLEFT", PAD + 160, y)
     
@@ -953,6 +976,12 @@ end
 ---------------------------------------------------------------------------
 ns.GUI:RegisterPage("profiles", {
     title = "Profiles",
+    subTabs = {
+        { name = "Manage Profiles", builder = BuildAceDBProfilesTab },
+        { name = "Import/Export", builder = BuildImportExportTab },
+        { name = "Gravity Strings", builder = BuildGravityStringsTab },
+        { name = "Installers", builder = BuildInstallerTab },
+    },
     OnBuild = function(content)
         -- We don't want the default scrollframe to interfere with our sub-tabs
         -- So we hide the parent's scrollchild and use our own structure
@@ -966,16 +995,23 @@ ns.GUI:RegisterPage("profiles", {
             scrollFrame.ScrollBar:HookScript("OnShow", function(self) self:Hide() end)
         end
         
-        local subTabs = GUI:CreateSubTabs(scrollFrame, {
-            { name = "Manage Profiles", builder = BuildAceDBProfilesTab },
-            { name = "Import/Export", builder = BuildImportExportTab },
-            { name = "Gravity Strings", builder = BuildGravityStringsTab },
-            { name = "Installers", builder = BuildInstallerTab },
-        })
-        subTabs:SetPoint("TOPLEFT", 10, -10)
-        subTabs:SetPoint("TOPRIGHT", -10, 0)
-        
-        -- Expose for external control (Installers button)
-        GUI.pages["profiles"].subTabs = subTabs
+        local opts = GUI.pages["profiles"]
+        opts.subTabsContainer = GUI:CreateSubTabs(scrollFrame, opts.subTabs)
+        opts.subTabsContainer:SetPoint("TOPLEFT", 10, -10)
+        opts.subTabsContainer:SetPoint("TOPRIGHT", -10, 0)
     end,
+    OnShow = function(content, subIndex)
+        local opts = GUI.pages["profiles"]
+        if not opts.subTabsContainer then return end
+        
+        subIndex = subIndex or 1
+        
+        for _, cf in pairs(opts.subTabsContainer.tabContents) do
+            cf:Hide()
+        end
+        
+        if opts.subTabsContainer.tabContents[subIndex] then
+            opts.subTabsContainer.tabContents[subIndex]:Show()
+        end
+    end
 })

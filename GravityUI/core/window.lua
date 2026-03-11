@@ -1,4 +1,4 @@
--- GravityUI Main GUI Window
+﻿-- GravityUI Main GUI Window
 local ADDON_NAME, ns = ...
 
 local GUI = ns.GUI
@@ -16,11 +16,12 @@ GUI.currentPageIndex = 1
 local CreateTopBar, CreateButtonBar, CreateSidebar, CreateContentArea, UpdateButtonSelection
 local function CreateMainWindow()
     if GUI.MainFrame then return end
-    
+
+    local db = ns.GetDB()
     local frame = CreateFrame("Frame", "GravityUIFrame", UIParent, "BackdropTemplate")
-    frame:SetSize(900, 650)
+    frame:SetSize(980, 680)
     frame:SetPoint("CENTER")
-    frame:SetFrameStrata("HIGH") -- Changed from DIALOG to HIGH to play nicer with other windows
+    frame:SetFrameStrata("HIGH")
     frame:SetFrameLevel(100)
     frame:EnableMouse(true)
     frame:SetMovable(true)
@@ -31,10 +32,12 @@ local function CreateMainWindow()
     -- Glassmorphic Backdrop
     GUI:CreateBackdrop(frame, C.bgGlass)
     
-    -- Make draggable
+    -- Draggable Script
     frame:SetScript("OnDragStart", function(self) self:StartMoving() end)
-    frame:SetScript("OnDragStop", function(self) self:StopMovingOrSizing() end)
-    
+    frame:SetScript("OnDragStop", function(self) 
+        self:StopMovingOrSizing()
+    end)
+
     -- REFRESH COLORS METHOD (Recursive)
     function frame:RefreshColors()
         -- 1. Refresh global components
@@ -78,13 +81,6 @@ local function CreateMainWindow()
     -- ESC to close
     -- Using UISpecialFrames to allow closing with Escape without SetPropagateKeyboardInput taint
     tinsert(UISpecialFrames, "GravityUIFrame")
-    
-    frame:SetScript("OnKeyDown", function(self, key)
-        if key == "ESCAPE" then
-            self:Hide()
-        end
-    end)
-    frame:SetPropagateKeyboardInput(true) -- Try setting it once here during creation, if it still errors we remove it completely
     
     GUI.MainFrame = frame
     
@@ -250,17 +246,160 @@ end
 -- SIDEBAR (Navigation Tabs)
 ---------------------------------------------------------------------------
 CreateSidebar = function(parent)
-    local sidebar = CreateFrame("Frame", nil, parent, "BackdropTemplate")
-    sidebar:SetWidth(180)
-    sidebar:SetPoint("TOPLEFT", 0, -60)
-    sidebar:SetPoint("BOTTOMLEFT", 0, 50) -- Attach to bottom button bar
+    -- Change sidebar to a ScrollFrame container
+    local sidebarContainer = CreateFrame("Frame", nil, parent, "BackdropTemplate")
+    sidebarContainer:SetWidth(180)
+    sidebarContainer:SetPoint("TOPLEFT", 0, -60)
+    sidebarContainer:SetPoint("BOTTOMLEFT", 0, 50) -- Attach to bottom button bar
     
-    sidebar:SetBackdrop({
+    sidebarContainer:SetBackdrop({
         bgFile = "Interface\\Buttons\\WHITE8x8",
     })
-    sidebar:SetBackdropColor(C.bgLight[1], C.bgLight[2], C.bgLight[3], 0.5)
+    sidebarContainer:SetBackdropColor(C.bgLight[1], C.bgLight[2], C.bgLight[3], 0.5)
     
-    parent.sidebar = sidebar
+    -- Create the actual scroll frame
+    local scroll = CreateFrame("ScrollFrame", "GravityUISidebarScroll", sidebarContainer, "UIPanelScrollFrameTemplate")
+    scroll:SetPoint("TOPLEFT", 0, -16)
+    scroll:SetPoint("BOTTOMRIGHT", 0, 16)
+    
+    -- Hide default scrollbar to keep it clean (or we can style it)
+    if _G["GravityUISidebarScrollScrollBar"] then
+        _G["GravityUISidebarScrollScrollBar"]:SetAlpha(0)
+        -- We still want mousewheel to work, so we don't Hide() it entirely, just make it invisible
+    end
+    
+    local content = CreateFrame("Frame", nil, scroll)
+    content:SetSize(180, 1) -- Height gets updated dynamically
+    scroll:SetScrollChild(content)
+    
+    -- --- Scroll Indicators (Overlays) ---
+    -- Top Indicator Bar
+    local indicatorUpContainer = CreateFrame("Frame", nil, sidebarContainer)
+    indicatorUpContainer:SetSize(180, 16)
+    indicatorUpContainer:SetPoint("TOPLEFT", sidebarContainer, "TOPLEFT", 0, 0)
+    local upBg = indicatorUpContainer:CreateTexture(nil, "BACKGROUND")
+    upBg:SetAllPoints()
+    upBg:SetColorTexture(0, 0, 0, 0.25) -- Dark very transparent
+    
+    local indicatorUp = indicatorUpContainer:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    GUI:SetFont(indicatorUp, 12, "")
+    indicatorUp:SetPoint("CENTER", 0, 1)
+    indicatorUp:SetText("▲")
+    indicatorUp:SetTextColor(C.accent[1], C.accent[2], C.accent[3], 1)
+    indicatorUpContainer:SetAlpha(0)
+    
+    -- Bottom Indicator Bar
+    local indicatorDownContainer = CreateFrame("Frame", nil, sidebarContainer)
+    indicatorDownContainer:SetSize(180, 16)
+    indicatorDownContainer:SetPoint("BOTTOMLEFT", sidebarContainer, "BOTTOMLEFT", 0, 0)
+    local downBg = indicatorDownContainer:CreateTexture(nil, "BACKGROUND")
+    downBg:SetAllPoints()
+    downBg:SetColorTexture(0, 0, 0, 0.25) -- Dark very transparent
+    
+    local indicatorDown = indicatorDownContainer:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    GUI:SetFont(indicatorDown, 12, "")
+    indicatorDown:SetPoint("CENTER", 0, -1)
+    indicatorDown:SetText("▼")
+    indicatorDown:SetTextColor(C.accent[1], C.accent[2], C.accent[3], 1)
+    indicatorDownContainer:SetAlpha(0)
+    
+    local function UpdateScrollIndicators()
+        local current = scroll:GetVerticalScroll()
+        local maxRange = scroll:GetVerticalScrollRange()
+        
+        -- Show UP arrow if we are scrolled down at all
+        if current > 1 then
+            indicatorUpContainer:SetAlpha(1)
+        else
+            indicatorUpContainer:SetAlpha(0)
+        end
+        
+        -- Show DOWN arrow if we haven't reached the bottom
+        if maxRange > 0 and current < (maxRange - 1) then
+            indicatorDownContainer:SetAlpha(1)
+        else
+            indicatorDownContainer:SetAlpha(0)
+        end
+    end
+    
+    -- --- Custom Scrollbar ---
+    local sb = CreateFrame("Frame", nil, sidebarContainer)
+    sb:SetWidth(20) -- Wider hit box
+    sb:SetPoint("TOPRIGHT", 0, -22)
+    sb:SetPoint("BOTTOMRIGHT", 0, 22)
+    
+    local thumb = CreateFrame("Button", nil, sb, "BackdropTemplate")
+    thumb:SetWidth(7) -- 1px smaller
+    thumb:SetPoint("RIGHT", 0, 0) -- Align thumb to the right of the hit box
+    thumb:SetBackdrop({
+        bgFile = "Interface\\Buttons\\WHITE8x8",
+    })
+    thumb:SetBackdropColor(C.accent[1], C.accent[2], C.accent[3], 0.4) -- More transparent blue
+    -- Removed dot texture to make it a clean blue bar
+    
+    local function UpdateThumb()
+        local maxRange = scroll:GetVerticalScrollRange()
+        if maxRange <= 0 then
+            thumb:Hide()
+            return
+        end
+        thumb:Show()
+        
+        local thumbHeight = 20
+        thumb:SetHeight(thumbHeight)
+        
+        local current = scroll:GetVerticalScroll()
+        local ratio = current / maxRange
+        local trackHeight = sb:GetHeight() - thumbHeight
+        thumb:SetPoint("TOPRIGHT", 0, -(ratio * trackHeight))
+    end
+    
+    thumb:RegisterForDrag("LeftButton")
+    thumb:SetScript("OnDragStart", function(self)
+        self.isDragging = true
+        local _, y = GetCursorPosition()
+        self.lastY = y / self:GetEffectiveScale()
+    end)
+    thumb:SetScript("OnDragStop", function(self)
+        self.isDragging = false
+    end)
+    
+    -- Show scrollbar only when mouse is over sidebar OR scrollbar itself
+    sidebarContainer:SetScript("OnUpdate", function(self)
+        if self:IsMouseOver() or sb:IsMouseOver() or thumb.isDragging then
+            sb:SetAlpha(1)
+        else
+            sb:SetAlpha(0)
+        end
+        
+        if thumb.isDragging then
+            local _, y = GetCursorPosition()
+            y = y / thumb:GetEffectiveScale()
+            local diff = thumb.lastY - y
+            if diff ~= 0 then
+                local maxRange = scroll:GetVerticalScrollRange()
+                local trackHeight = sb:GetHeight() - thumb:GetHeight()
+                if trackHeight > 0 then
+                    local scrollDiff = (diff / trackHeight) * maxRange
+                    scroll:SetVerticalScroll(math.max(0, math.min(maxRange, scroll:GetVerticalScroll() + scrollDiff)))
+                end
+                thumb.lastY = y
+            end
+        end
+    end)
+
+    scroll:HookScript("OnVerticalScroll", function()
+        UpdateScrollIndicators()
+        UpdateThumb()
+    end)
+    
+    scroll:HookScript("OnScrollRangeChanged", function()
+        UpdateScrollIndicators()
+        UpdateThumb()
+    end)
+    
+    parent.sidebarContainer = sidebarContainer
+    parent.sidebar = content -- Buttons attach here
     parent.sidebarButtons = {}
 end
 
@@ -290,22 +429,18 @@ CreateButtonBar = function(parent)
     buttonBar:SetBackdropColor(C.bgLight[1], C.bgLight[2], C.bgLight[3], 0.8)
     
     -- Installers Button
-    local instBtn = GUI:CreateButton(buttonBar, "GravityUI Installer", 155, 32, function()
+    local instBtn = GUI:CreateButton(buttonBar, "Installer", 130, 32, function()
         -- Find profiles page index
         local idx
         for i, id in ipairs(GUI.pageOrder) do 
             if id == "profiles" then idx = i; break end 
         end
         if idx then
-            GUI:ShowPage(idx)
-            -- Click the 4th tab (Installers)
-            local p = GUI.pages["profiles"]
-            if p and p.subTabs and p.subTabs.tabButtons and p.subTabs.tabButtons[4] then
-                p.subTabs.tabButtons[4]:Click()
-            end
+            -- We assume "Installers" is the 4th item in profiles subtabs now
+            GUI:ShowPage(idx, 4) 
         end
     end)
-    instBtn:SetPoint("LEFT", 20, 0)
+    instBtn:SetPoint("LEFT", 15, 0)
     instBtn:SetBackdropColor(C.accent[1], C.accent[2], C.accent[3], 0.5)
     instBtn:SetBackdropBorderColor(C.accent[1], C.accent[2], C.accent[3], 1)
     
@@ -316,14 +451,14 @@ CreateButtonBar = function(parent)
     end
     
     -- Cooldown Settings Button
-    local cdmBtn = GUI:CreateButton(buttonBar, "Cooldown Settings", 155, 32, function()
+    local cdmBtn = GUI:CreateButton(buttonBar, "CDM Settings", 130, 32, function()
         if CooldownViewerSettings then
             CooldownViewerSettings:SetShown(not CooldownViewerSettings:IsShown())
         else
             print("|cFF30D1FFGravityUI:|r Cooldown Settings not available.")
         end
     end)
-    cdmBtn:SetPoint("LEFT", instBtn, "RIGHT", 10, 0)
+    cdmBtn:SetPoint("LEFT", instBtn, "RIGHT", 8, 0)
     
     -- Helper to open addon config
     local function OpenAddonConfig(name, slashCmds)
@@ -380,7 +515,7 @@ CreateButtonBar = function(parent)
 
     -- Boss Mods Button (BigWigs / DBM)
     -- Boss Mods Button (BigWigs / DBM)
-    local bossBtn = GUI:CreateButton(buttonBar, "Boss Mods", 95, 32, function()
+    local bossBtn = GUI:CreateButton(buttonBar, "Boss Mods", 90, 32, function()
         local opened = false
 
         -- BigWigs (Try Slash Commands)
@@ -401,7 +536,7 @@ CreateButtonBar = function(parent)
                  C_AddOns.LoadAddOn("BigWigs_Options")
                  if LibStub("AceConfigDialog-3.0"):Open("BigWigs") then opened = true end
              end
-        end
+         end
 
         -- DBM (Deadly Boss Mods)
         if not opened and OpenAddonConfig("DBM-Core", {"DBM", "DEADLYBOSSMODS"}) then opened = true end
@@ -410,7 +545,7 @@ CreateButtonBar = function(parent)
              print("|cFF30D1FFGravityUI:|r No supported Boss Mod addon loaded (BigWigs, DBM).")
         end
     end)
-    bossBtn:SetPoint("LEFT", cdmBtn, "RIGHT", 10, 0)
+    bossBtn:SetPoint("LEFT", cdmBtn, "RIGHT", 8, 0)
     -- Matching User Image styling
     bossBtn:SetBackdropColor(C.accent[1], C.accent[2], C.accent[3], 0.5)
     bossBtn:SetBackdropBorderColor(C.accent[1], C.accent[2], C.accent[3], 1)
@@ -422,7 +557,7 @@ CreateButtonBar = function(parent)
     end
 
     -- Nameplates Button
-    local npBtn = GUI:CreateButton(buttonBar, "Nameplates", 95, 32, function()
+    local npBtn = GUI:CreateButton(buttonBar, "Nameplates", 90, 32, function()
         local opened = false
         
         -- Plater
@@ -435,7 +570,7 @@ CreateButtonBar = function(parent)
              print("|cFF30D1FFGravityUI:|r No supported Nameplates addon loaded (Plater, Platynator).")
         end
     end)
-    npBtn:SetPoint("LEFT", bossBtn, "RIGHT", 10, 0)
+    npBtn:SetPoint("LEFT", bossBtn, "RIGHT", 8, 0)
     -- Matching User Image styling
     npBtn:SetBackdropColor(C.accent[1], C.accent[2], C.accent[3], 0.5)
     npBtn:SetBackdropBorderColor(C.accent[1], C.accent[2], C.accent[3], 1)
@@ -447,7 +582,7 @@ CreateButtonBar = function(parent)
     end
     
     -- CDM Button (Better Cooldown Manager, Centered Cooldown Manager, Arc UI)
-    local cdmAddonBtn = GUI:CreateButton(buttonBar, "CDM", 70, 32, function()
+    local cdmAddonBtn = GUI:CreateButton(buttonBar, "CDM", 50, 32, function()
         local opened = false
         
         -- Better Cooldown Manager (BCDM)
@@ -463,7 +598,7 @@ CreateButtonBar = function(parent)
              print("|cFF30D1FFGravityUI:|r No supported CDM addon loaded (BetterCooldownManager, CenteredCooldownManager, ArcUI).")
         end
     end)
-    cdmAddonBtn:SetPoint("LEFT", npBtn, "RIGHT", 10, 0)
+    cdmAddonBtn:SetPoint("LEFT", npBtn, "RIGHT", 8, 0)
     -- Matching User Image styling
     cdmAddonBtn:SetBackdropColor(C.accent[1], C.accent[2], C.accent[3], 0.5)
     cdmAddonBtn:SetBackdropBorderColor(C.accent[1], C.accent[2], C.accent[3], 1)
@@ -475,7 +610,7 @@ CreateButtonBar = function(parent)
     end
     
     -- Unitframes Button
-    local ufBtn = GUI:CreateButton(buttonBar, "Unitframes", 95, 32, function()
+    local ufBtn = GUI:CreateButton(buttonBar, "Unitframes", 90, 32, function()
         local opened = false
         
         -- Unhalted UnitFrames
@@ -488,7 +623,7 @@ CreateButtonBar = function(parent)
              print("|cFF30D1FFGravityUI:|r No supported Unitframes addon loaded (Unhalted, Midnight).")
         end
     end)
-    ufBtn:SetPoint("LEFT", cdmAddonBtn, "RIGHT", 10, 0)
+    ufBtn:SetPoint("LEFT", cdmAddonBtn, "RIGHT", 8, 0)
     -- Matching User Image: Standardize to Theme Blue
     ufBtn:SetBackdropColor(C.accent[1], C.accent[2], C.accent[3], 0.5) -- Semi-transparent Theme Blue
     ufBtn:SetBackdropBorderColor(C.accent[1], C.accent[2], C.accent[3], 1) -- Theme Blue
@@ -498,9 +633,9 @@ CreateButtonBar = function(parent)
         self:SetBackdropColor(C.accent[1], C.accent[2], C.accent[3], 0.5)
         self:SetBackdropBorderColor(C.accent[1], C.accent[2], C.accent[3], 1)
     end
-
+ 
     -- Party / Raid Button
-    local prBtn = GUI:CreateButton(buttonBar, "Party / Raid", 95, 32, function()
+    local prBtn = GUI:CreateButton(buttonBar, "Party / Raid", 90, 32, function()
         local opened = false
         
         -- DandersFrames
@@ -511,20 +646,108 @@ CreateButtonBar = function(parent)
         
         -- Cell
         if not opened and OpenAddonConfig("Cell", "CELL") then opened = true end
-
+ 
         if not opened then
             print("|cFF30D1FFGravityUI:|r No supported Party/Raid addon loaded (DandersFrames, Grid2, Cell).")
         end
     end)
-    prBtn:SetPoint("LEFT", ufBtn, "RIGHT", 10, 0)
+    prBtn:SetPoint("LEFT", ufBtn, "RIGHT", 8, 0)
     -- Matching User Image: Standardize to Theme Blue
     prBtn:SetBackdropColor(C.accent[1], C.accent[2], C.accent[3], 0.5)
     prBtn:SetBackdropBorderColor(C.accent[1], C.accent[2], C.accent[3], 1)
-    
+     
     -- Add to refresh list
     prBtn.RefreshColors = function(self)
         self:SetBackdropColor(C.accent[1], C.accent[2], C.accent[3], 0.5)
         self:SetBackdropBorderColor(C.accent[1], C.accent[2], C.accent[3], 1)
+    end
+     
+    -- Discord Link & Manual UI Scale Input (Bottom Right)
+    local db = ns.GetDB()
+    if db then
+        -- Discord Button
+        local discordBtn = CreateFrame("Button", nil, buttonBar)
+        discordBtn:SetSize(32, 32)
+        discordBtn:SetPoint("BOTTOMRIGHT", -113, 9)
+        
+        local discordIcon = discordBtn:CreateTexture(nil, "ARTWORK")
+        discordIcon:SetAllPoints()
+        discordIcon:SetTexture(ns.DISCORD_ICON)
+        discordIcon:SetVertexColor(1, 1, 1, 1)
+
+        discordBtn:SetScript("OnEnter", function(self)
+            GameTooltip:SetOwner(self, "ANCHOR_TOP")
+            GameTooltip:AddLine("Join our Discord", 0, 0.75, 1)
+            GameTooltip:AddLine("Click to copy link: |cff00ffffhttps://discord.gg/nBwzzHc|r", 1, 1, 1)
+            GameTooltip:Show()
+            discordIcon:SetVertexColor(C.accent[1], C.accent[2], C.accent[3], 1)
+        end)
+
+        discordBtn:SetScript("OnLeave", function(self)
+            GameTooltip:Hide()
+            discordIcon:SetVertexColor(1, 1, 1, 1)
+        end)
+
+        discordBtn:SetScript("OnClick", function()
+            local edit_box = ChatEdit_ChooseBoxForSend()
+            ChatEdit_ActivateChat(edit_box)
+            edit_box:SetText("https://discord.gg/nBwzzHc")
+            edit_box:HighlightText()
+            ns.Print("Discord link pasted to chat! Press Enter to send or Ctrl+C to copy.")
+        end)
+
+        -- Scale Container
+        local scaleContainer = CreateFrame("Frame", nil, buttonBar)
+        scaleContainer:SetSize(45, 24)
+        scaleContainer:SetPoint("BOTTOMRIGHT", -10, 13)
+
+        local scaleLabel = scaleContainer:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        GUI:SetFont(scaleLabel, 10, "", C.textMuted)
+        scaleLabel:SetText("Scale:")
+        scaleLabel:SetPoint("RIGHT", scaleContainer, "LEFT", -4, 0)
+
+        local scaleInput = CreateFrame("EditBox", nil, scaleContainer, "BackdropTemplate")
+        scaleInput:SetSize(45, 22)
+        scaleInput:SetPoint("CENTER")
+        scaleInput:SetAutoFocus(false)
+        GUI:SetFont(scaleInput, 11, "", C.textBright)
+        scaleInput:SetTextInsets(5, 5, 0, 0)
+        scaleInput:SetJustifyH("CENTER")
+
+        scaleInput:SetBackdrop({
+            bgFile = "Interface\\Buttons\\WHITE8x8",
+            edgeFile = "Interface\\Buttons\\WHITE8x8",
+            edgeSize = 1,
+        })
+        scaleInput:SetBackdropColor(0.15, 0.15, 0.15, 1)
+        scaleInput:SetBackdropBorderColor(C.border[1], C.border[2], C.border[3], 1)
+
+        local function UpdateScaleValue()
+            local current = db.general.configPanelScale or 1
+            scaleInput:SetText(string.format("%.2f", current))
+        end
+
+        scaleInput:SetScript("OnEnterPressed", function(self)
+            local val = tonumber(self:GetText())
+            if val and val >= 0.3 and val <= 2.5 then
+                db.general.configPanelScale = val
+                if GUI.MainFrame then
+                    GUI.MainFrame:SetScale(val)
+                end
+            end
+            self:ClearFocus()
+            UpdateScaleValue()
+        end)
+
+        scaleInput:SetScript("OnEscapePressed", function(self)
+            UpdateScaleValue()
+            self:ClearFocus()
+        end)
+
+        scaleInput:SetScript("OnEnter", function(self) self:SetBackdropBorderColor(C.accent[1], C.accent[2], C.accent[3], 1) end)
+        scaleInput:SetScript("OnLeave", function(self) self:SetBackdropBorderColor(C.border[1], C.border[2], C.border[3], 1) end)
+
+        UpdateScaleValue()
     end
     
     parent.buttonBar = buttonBar
@@ -533,78 +756,263 @@ end
 ---------------------------------------------------------------------------
 -- CREATE SIDEBAR BUTTONS
 ---------------------------------------------------------------------------
+GUI.expandedCategories = GUI.expandedCategories or {}
+
+function GUI:UpdateSidebarLayout()
+    local frame = self.MainFrame
+    if not frame then return end
+    
+    local yOffset = 10
+    
+    for _, item in ipairs(frame.sidebarItems) do
+        if item.type == "header" then
+            item:SetPoint("TOPLEFT", 15, -yOffset)
+            local isExpanded = GUI.expandedCategories[item.pageId] ~= false
+            item.icon:SetText(isExpanded and "-" or "+")
+            yOffset = yOffset + 26
+        elseif item.type == "subtab" then
+            local isExpanded = GUI.expandedCategories[item.pageId] ~= false
+            if isExpanded then
+                item:Show()
+                item:SetPoint("TOPLEFT", 10, -yOffset)
+                yOffset = yOffset + 30
+            else
+                item:Hide()
+            end
+        elseif item.type == "spacer" then
+            local isExpanded = GUI.expandedCategories[item.pageId] ~= false
+            if isExpanded then
+                yOffset = yOffset + 10
+            end
+        elseif item.type == "single" then
+            item:SetPoint("TOPLEFT", 10, -yOffset)
+            yOffset = yOffset + 42
+        end
+    end
+    
+    frame.sidebar:SetHeight(math.max(yOffset + 10, 1))
+end
+
 CreateSidebarButtons = function()
     local frame = GUI.MainFrame
     if not frame then return end
     
-    local yOffset = 10
+    GUI.expandedCategories = GUI.expandedCategories or {}
+    frame.sidebarItems = {}
+    frame.sidebarButtons = {}
+    
     local buttonIndex = 0
     
     for i, pageId in ipairs(GUI.pageOrder) do
         local opts = GUI.pages[pageId]
         if not opts.hideFromSidebar and (not opts.showIf or opts.showIf()) then
-            buttonIndex = buttonIndex + 1
             
-            local btn = CreateFrame("Button", nil, frame.sidebar, "BackdropTemplate")
-            btn:SetSize(160, 36)
-            btn:SetPoint("TOPLEFT", 10, -yOffset)
-            
-            -- Tech Nav Styling (Transparent default)
-            btn:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8" })
-            btn:SetBackdropColor(0, 0, 0, 0)
-            
-            -- Vertical Indicator (Hidden by default)
-            local indicator = btn:CreateTexture(nil, "OVERLAY")
-            indicator:SetWidth(3)
-            indicator:SetPoint("TOPLEFT", 0, 0)
-            indicator:SetPoint("BOTTOMLEFT", 0, 0)
-            indicator:SetColorTexture(C.accent[1], C.accent[2], C.accent[3], 1)
-            indicator:Hide()
-            btn.indicator = indicator
-            
-            local btnText = btn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-            GUI:SetFont(btnText, 13, "") -- Removed Outline
-            btnText:SetTextColor(1, 1, 1, 1) -- White text as requested
-            btnText:SetText(opts.title or pageId)
-            btnText:SetPoint("LEFT", 15, 0)
-            
-            btn.text = btnText
-            btn.pageIndex = i
-            
-            -- Refresh Method
-            btn.RefreshColors = function(self)
-                local isSelected = (GUI.currentPageIndex == self.pageIndex)
-                if isSelected then
-                    self.indicator:SetColorTexture(C.accent[1], C.accent[2], C.accent[3], 1)
-                    -- Re-apply selection state gradient if we had one (simplified here)
+            if opts.subTabs and #opts.subTabs > 0 then
+                local db = ns.GetDB()
+                local isSideTop = db and db.general.menuStyle == "SIDE_TOP"
+                
+                local headerBtn = CreateFrame("Button", nil, frame.sidebar, "BackdropTemplate")
+                headerBtn:SetSize(160, isSideTop and 36 or 20)
+                
+                local headerIcon = headerBtn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+                GUI:SetFont(headerIcon, 12, "", C.sectionHeader)
+                headerIcon:SetPoint("RIGHT", -5, 0)
+                headerIcon:SetText("-")
+                headerBtn.icon = headerIcon
+                
+                local headerText = headerBtn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+                GUI:SetFont(headerText, 13, "", C.sectionHeader)
+                headerText:SetPoint("LEFT", isSideTop and 15 or 0, 0)
+                headerText:SetText(opts.title or pageId)
+                headerBtn.text = headerText
+                
+                if isSideTop then
+                    headerBtn:SetSize(175, 36)
+                    
+                    local indicator = headerBtn:CreateTexture(nil, "OVERLAY")
+                    indicator:SetWidth(3)
+                    indicator:SetPoint("TOPLEFT", 0, 0)
+                    indicator:SetPoint("BOTTOMLEFT", 0, 0)
+                    indicator:SetColorTexture(C.accent[1], C.accent[2], C.accent[3], 1)
+                    indicator:Hide()
+                    headerBtn.indicator = indicator
+                    
+                    headerBtn:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8" })
+                    headerBtn:SetBackdropColor(0, 0, 0, 0)
+                    
+                    headerBtn:SetScript("OnEnter", function(self)
+                        if GUI.currentPageIndex ~= self.pageIndex then
+                            self:SetBackdropColor(C.tabHover[1], C.tabHover[2], C.tabHover[3], C.tabHover[4])
+                            self.text:SetTextColor(C.textBright[1], C.textBright[2], C.textBright[3], 1)
+                        end
+                    end)
+                    
+                    headerBtn:SetScript("OnLeave", function(self)
+                        if GUI.currentPageIndex ~= self.pageIndex then
+                            self:SetBackdropColor(0, 0, 0, 0)
+                            self.text:SetTextColor(1, 1, 1, 1)
+                        end
+                    end)
+                end
+                
+                headerBtn:SetScript("OnClick", function()
+                    local db = ns.GetDB()
+                    if db.general.menuStyle == "SIDE_TOP" then
+                        GUI:ShowPage(pageId, 1)
+                    else
+                        if GUI.expandedCategories[pageId] == false then
+                            GUI.expandedCategories[pageId] = true
+                        else
+                            GUI.expandedCategories[pageId] = false
+                        end
+                        GUI:UpdateSidebarLayout()
+                    end
+                end)
+                
+                headerBtn.type = "header"
+                headerBtn.pageId = pageId
+                headerBtn.pageIndex = i
+                headerBtn.subTabIndex = 1 -- Headers in SIDE_TOP act as first subtab
+                table.insert(frame.sidebarItems, headerBtn)
+                
+                -- Add to buttons list for selection highlighting ONLY in SIDE_TOP
+                if isSideTop then
+                    buttonIndex = buttonIndex + 1
+                    frame.sidebarButtons[buttonIndex] = headerBtn
+                    headerIcon:Hide()
+                end
+                
+                -- 2. Create nested subtab buttons (ONLY in SIDE mode)
+                local db = ns.GetDB()
+                if db.general.menuStyle ~= "SIDE_TOP" then
+                    for subIdx, tabInfo in ipairs(opts.subTabs) do
+                    buttonIndex = buttonIndex + 1
+                    
+                    local btn = CreateFrame("Button", nil, frame.sidebar, "BackdropTemplate")
+                    btn:SetSize(160, 28)
+                    btn:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8" })
+                    btn:SetBackdropColor(0, 0, 0, 0)
+                    
+                    local indicator = btn:CreateTexture(nil, "OVERLAY")
+                    indicator:SetWidth(2)
+                    indicator:SetPoint("TOPLEFT", 0, 0)
+                    indicator:SetPoint("BOTTOMLEFT", 0, 0)
+                    indicator:SetColorTexture(C.accent[1], C.accent[2], C.accent[3], 1)
+                    indicator:Hide()
+                    btn.indicator = indicator
+                    
+                    local btnText = btn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+                    GUI:SetFont(btnText, 13, "")
+                    btnText:SetTextColor(1, 1, 1, 1)
+                    btnText:SetText(tabInfo.name)
+                    btnText:SetPoint("LEFT", 15, 0)
+                    
+                    btn.text = btnText
+                    btn.pageIndex = i
+                    btn.subTabIndex = subIdx
+                    
+                    btn.RefreshColors = function(self)
+                        local isSelected = (GUI.currentPageIndex == self.pageIndex and GUI.currentSubTabIndex == self.subTabIndex)
+                        if isSelected then
+                            self.indicator:SetColorTexture(C.accent[1], C.accent[2], C.accent[3], 1)
+                        end
+                    end
+                    
+                    btn:SetScript("OnClick", function()
+                        GUI:ShowPage(i, subIdx)
+                        if tabInfo.fn then
+                            tabInfo.fn()
+                        end
+                    end)
+                    
+                    btn:SetScript("OnEnter", function(self)
+                        if GUI.currentPageIndex ~= self.pageIndex or GUI.currentSubTabIndex ~= self.subTabIndex then
+                            self:SetBackdropColor(C.tabHover[1], C.tabHover[2], C.tabHover[3], C.tabHover[4])
+                            self.text:SetTextColor(C.textBright[1], C.textBright[2], C.textBright[3], 1)
+                        end
+                    end)
+                    
+                    btn:SetScript("OnLeave", function(self)
+                        if GUI.currentPageIndex ~= self.pageIndex or GUI.currentSubTabIndex ~= self.subTabIndex then
+                            self:SetBackdropColor(0, 0, 0, 0)
+                            self.text:SetTextColor(1, 1, 1, 1)
+                        end
+                    end)
+                    
+                    btn.type = "subtab"
+                    btn.pageId = pageId
+                    frame.sidebarButtons[buttonIndex] = btn
+                    table.insert(frame.sidebarItems, btn)
                 end
             end
-            
-            -- Click handler
-            btn:SetScript("OnClick", function()
-                GUI:ShowPage(i)
-            end)
-            
-            -- Hover effect
-            btn:SetScript("OnEnter", function(self)
-                if GUI.currentPageIndex ~= self.pageIndex then
-                    self:SetBackdropColor(C.tabHover[1], C.tabHover[2], C.tabHover[3], C.tabHover[4])
-                    self.text:SetTextColor(C.textBright[1], C.textBright[2], C.textBright[3], 1)
+                
+                table.insert(frame.sidebarItems, { type = "spacer", pageId = pageId })
+            else
+                -- Traditional Single Page Button
+                buttonIndex = buttonIndex + 1
+                
+                local db = ns.GetDB()
+                local isSideTop = db and db.general.menuStyle == "SIDE_TOP"
+                
+                local btn = CreateFrame("Button", nil, frame.sidebar, "BackdropTemplate")
+                btn:SetSize(isSideTop and 175 or 160, 36)
+                btn:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8" })
+                btn:SetBackdropColor(0, 0, 0, 0)
+                
+                local indicator = btn:CreateTexture(nil, "OVERLAY")
+                indicator:SetWidth(3)
+                indicator:SetPoint("TOPLEFT", 0, 0)
+                indicator:SetPoint("BOTTOMLEFT", 0, 0)
+                indicator:SetColorTexture(C.accent[1], C.accent[2], C.accent[3], 1)
+                indicator:Hide()
+                btn.indicator = indicator
+                
+                local btnText = btn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+                GUI:SetFont(btnText, 13, "") 
+                btnText:SetTextColor(1, 1, 1, 1)
+                btnText:SetText(opts.title or pageId)
+                btnText:SetPoint("LEFT", 15, 0)
+                
+                btn.text = btnText
+                btn.pageIndex = i
+                btn.subTabIndex = 1
+                
+                btn.RefreshColors = function(self)
+                    local isSelected = (GUI.currentPageIndex == self.pageIndex)
+                    if isSelected then
+                        self.indicator:SetColorTexture(C.accent[1], C.accent[2], C.accent[3], 1)
+                    end
                 end
-            end)
-            
-            btn:SetScript("OnLeave", function(self)
-                if GUI.currentPageIndex ~= self.pageIndex then
-                    self:SetBackdropColor(0, 0, 0, 0)
-                    self.text:SetTextColor(1, 1, 1, 1)
-                end
-            end)
-            
-            frame.sidebarButtons[buttonIndex] = btn
-            yOffset = yOffset + 42
+                
+                btn:SetScript("OnClick", function()
+                    GUI:ShowPage(i, 1)
+                end)
+                
+                btn:SetScript("OnEnter", function(self)
+                    if GUI.currentPageIndex ~= self.pageIndex then
+                        self:SetBackdropColor(C.tabHover[1], C.tabHover[2], C.tabHover[3], C.tabHover[4])
+                        self.text:SetTextColor(C.textBright[1], C.textBright[2], C.textBright[3], 1)
+                    end
+                end)
+                
+                btn:SetScript("OnLeave", function(self)
+                    if GUI.currentPageIndex ~= self.pageIndex then
+                        self:SetBackdropColor(0, 0, 0, 0)
+                        self.text:SetTextColor(1, 1, 1, 1)
+                    end
+                end)
+                
+                btn.type = "single"
+                btn.pageId = pageId
+                frame.sidebarButtons[buttonIndex] = btn
+                table.insert(frame.sidebarItems, btn)
+            end
         end
     end
+    
+    GUI:UpdateSidebarLayout()
 end
+
 
 ---------------------------------------------------------------------------
 -- UPDATE BUTTON SELECTION
@@ -613,8 +1021,24 @@ UpdateButtonSelection = function()
     local frame = GUI.MainFrame
     if not frame then return end
     
+    local db = ns.GetDB()
+    local isSideTop = db and db.general.menuStyle == "SIDE_TOP"
+    
     for _, btn in ipairs(frame.sidebarButtons) do
-        if btn.pageIndex == GUI.currentPageIndex then
+        local isSelected
+        if isSideTop then
+            -- In SIDE_TOP, we only care about the main page index in the sidebar
+            isSelected = (btn.pageIndex == GUI.currentPageIndex)
+        else
+            -- Standard mode: Headers are not in this list, but if they were, they shouldn't match
+            if btn.type == "header" then
+                isSelected = false
+            else
+                isSelected = (btn.pageIndex == GUI.currentPageIndex and btn.subTabIndex == GUI.currentSubTabIndex)
+            end
+        end
+        
+        if isSelected then
             -- Selected state: Tech Nav
             -- 1. Show Indicator
             btn.indicator:Show()
@@ -682,8 +1106,11 @@ local function HideAllPages()
     end
 end
 
-function GUI:ShowPage(index)
+function GUI:ShowPage(index, subIndex)
     if not self.MainFrame then return end
+    
+    -- Default to subIndex 1 if not provided (for backwards compatibility or simple pages)
+    subIndex = subIndex or 1
     
     -- Handle string ID or Index
     local pageId = type(index) == "string" and index or self.pageOrder[index]
@@ -696,14 +1123,15 @@ function GUI:ShowPage(index)
         end
     end
     
-    -- Don't switch if already on it
-    if self.currentPageId == pageId then return end
+    -- Don't switch if already on it AND on the same subtab
+    if self.currentPageId == pageId and self.currentSubTabIndex == subIndex then return end
     
     -- Handle Search state return
     if pageId == "search" then
         if self.currentPageId ~= "search" then
             self.preSearchPageId = self.currentPageId
             self.preSearchPageIndex = self.currentPageIndex
+            self.preSearchSubTabIndex = self.currentSubTabIndex
         end
     end
     
@@ -716,6 +1144,7 @@ function GUI:ShowPage(index)
     
     if not opts.frame then
         self.buildingPageId = pageId
+        -- We pass the subIndex initially in case it needs it for first build
         opts.frame = BuildPageFrame(opts)
         self.buildingPageId = nil
     end
@@ -723,9 +1152,23 @@ function GUI:ShowPage(index)
     opts.frame:Show()
     self.currentPageIndex = index
     self.currentPageId = pageId
+    self.currentSubTabIndex = subIndex
     
     if opts.OnShow then
-        opts.OnShow(opts.frame:GetScrollChild())
+        -- Pass subIndex so the page knows which internal section to render
+        opts.OnShow(opts.frame:GetScrollChild(), subIndex)
+        
+        -- Update top tabs if they exist
+        if opts.subTabsContainer and opts.subTabsContainer.UpdateButtons then
+            opts.subTabsContainer:UpdateButtons(subIndex)
+        end
+    end
+
+    -- Ensure the category is expanded in the sidebar if it was collapsed (ONLY in SIDE mode)
+    local db = ns.GetDB()
+    if db.general.menuStyle ~= "SIDE_TOP" and self.expandedCategories[pageId] == false then
+        self.expandedCategories[pageId] = true
+        self:UpdateSidebarLayout()
     end
     
     UpdateButtonSelection()
@@ -765,6 +1208,11 @@ function GUI:Show()
     
     -- Sync Colors ON SHOW to ensure freshness
     self:UpdateThemeColors()
+    
+    local db = ns.GetDB()
+    if db and db.general and db.general.configPanelScale then
+        self.MainFrame:SetScale(db.general.configPanelScale)
+    end
     
     self.MainFrame:Show()
 end
@@ -831,16 +1279,10 @@ end
 function GUI:NavigateToItem(item)
     if not item then return end
     
-    -- 1. Switch Page
-    self:ShowPage(item.pageId)
+    -- 1. Switch Page and Tab
+    self:ShowPage(item.pageId, item.tabIndex)
     
-    -- 2. Switch Tab (if applicable)
     local page = self.pages[item.pageId]
-    if page and item.tabIndex and item.tabIndex > 0 and page.subTabs then
-        if page.subTabs.tabButtons and page.subTabs.tabButtons[item.tabIndex] then
-            page.subTabs.tabButtons[item.tabIndex]:Click()
-        end
-    end
     
     -- 3. Scroll to widget (delayed to allow build/layout)
     C_Timer.After(0.1, function()
@@ -888,3 +1330,4 @@ function GUI:BuildSearchIndex()
         end
     end
 end
+

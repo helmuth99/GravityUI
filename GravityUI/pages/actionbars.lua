@@ -106,10 +106,7 @@ local lockProxy = setmetatable({}, {
     __index = function(t, k)
         if k == "buttonLock" then
             local isLocked = GetCVar("lockActionBars") == "1"
-            if not isLocked then return "unlocked" end
-            local modifier = GetModifiedClick("PICKUPACTION") or "SHIFT"
-            if modifier == "NONE" then return "none" end
-            return modifier:lower()
+            return isLocked and "locked" or "unlocked"
         end
     end,
     __newindex = function(t, k, v)
@@ -118,9 +115,6 @@ local lockProxy = setmetatable({}, {
                 SetCVar("lockActionBars", "0")
             else
                 SetCVar("lockActionBars", "1")
-                local modifier = (v == "none") and "NONE" or v:upper()
-                SetModifiedClick("PICKUPACTION", modifier)
-                SaveBindings(GetCurrentBindingSet())
             end
         end
     end
@@ -145,7 +139,7 @@ local function BuildActionBarsSettings(parent)
 
     -- Settings Header
     content.rowCount = content.rowCount + 0.5
-    local settingsHeader = GUI:CreateSectionHeader(content, "Settings")
+    local settingsHeader = GUI:CreateSectionHeader(content, "Action Bars Settings")
     settingsHeader:SetPoint("TOPLEFT", 10, -content.rowCount * 35)
     settingsHeader:SetPoint("RIGHT", content, "RIGHT", -10, 0)
     content.rowCount = content.rowCount + 1.3
@@ -347,7 +341,7 @@ local function BuildSpecialButtons(parent)
     content.rowCount = 0
     local refresh = function() if ns.RefreshActionBars then ns.RefreshActionBars() end end
 
-    local header = GUI:CreateSectionHeader(content, "Special Buttons Settings")
+    local header = GUI:CreateSectionHeader(content, "Extra Action Buttons Settings")
     header:SetPoint("TOPLEFT", 10, -10)
     header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
     content.rowCount = 1.3
@@ -382,6 +376,11 @@ end
 -- ═══════════════════════════════════════════════════════════════
 ns.GUI:RegisterPage("actionbars", {
     title = "Action Bars",
+    subTabs = {
+        { name = "Action Bars Settings", builder = BuildActionBarsSettings },
+        { name = "Mouseover Settings", builder = BuildMouseoverSettings },
+        { name = "Extra Action Buttons", builder = BuildSpecialButtons },
+    },
     OnBuild = function(content)
         -- Hide default scrollframe parent
         local scrollFrame = content:GetParent()
@@ -392,13 +391,23 @@ ns.GUI:RegisterPage("actionbars", {
             scrollFrame.ScrollBar:HookScript("OnShow", function(self) self:Hide() end)
         end
         
-        -- Create SubTabs
-        local subTabs = GUI:CreateSubTabs(scrollFrame, {
-            { name = "Action Bars Settings", builder = BuildActionBarsSettings },
-            { name = "Mouseover Settings", builder = BuildMouseoverSettings },
-            { name = "Special Buttons", builder = BuildSpecialButtons },
-        })
-        subTabs:SetPoint("TOPLEFT", 10, -10)
-        subTabs:SetPoint("TOPRIGHT", -10, 0)
+        local opts = GUI.pages["actionbars"]
+        opts.subTabsContainer = GUI:CreateSubTabs(scrollFrame, opts.subTabs)
+        opts.subTabsContainer:SetPoint("TOPLEFT", 10, -10)
+        opts.subTabsContainer:SetPoint("TOPRIGHT", -10, 0)
     end,
+    OnShow = function(content, subIndex)
+        local opts = GUI.pages["actionbars"]
+        if not opts.subTabsContainer then return end
+        
+        subIndex = subIndex or 1
+        
+        for _, cf in pairs(opts.subTabsContainer.tabContents) do
+            cf:Hide()
+        end
+        
+        if opts.subTabsContainer.tabContents[subIndex] then
+            opts.subTabsContainer.tabContents[subIndex]:Show()
+        end
+    end
 })

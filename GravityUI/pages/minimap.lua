@@ -91,7 +91,7 @@ local function BuildSettingsTab(parent)
     content._hasContent = false
     
     -- 1. Minimap Settings
-    local genHeader = GUI:CreateSectionHeader(content, "General Settings")
+    local genHeader = GUI:CreateSectionHeader(content, "Minimap Settings")
     genHeader:SetPoint("TOPLEFT", PAD, y)
     y = y - genHeader.gap
     
@@ -369,7 +369,7 @@ local function BuildIconCatcherTab(parent)
     if not db or not db.minimap then return end
     
     local c = db.minimap.catcher
-    local refresh = ns.RefreshAddonDrawer or function() print("GravityUI: Please /reload for Addon Drawer changes to take effect.") end
+    local refresh = ns.RefreshAddonDrawer or function() print("GravityUI: Please /reload for Icon Catcher changes to take effect.") end
     
     local ROW_HEIGHT = 30
     local LABEL_WIDTH = 220
@@ -430,7 +430,7 @@ local function BuildIconCatcherTab(parent)
     end
     
     -- 1. General Settings
-    local genHeader = GUI:CreateSectionHeader(content, "General Settings")
+    local genHeader = GUI:CreateSectionHeader(content, "Icon Catcher Settings")
     genHeader:SetPoint("TOPLEFT", PAD, y)
     y = y - genHeader.gap
     
@@ -515,6 +515,11 @@ end
 
 ns.GUI:RegisterPage("minimap", {
     title = "Minimap",
+    subTabs = {
+        { name = "Minimap Settings", builder = BuildSettingsTab },
+        { name = "Minimap Elements", builder = BuildElementsTab },
+        { name = "Icon Catcher", builder = BuildIconCatcherTab },
+    },
     OnBuild = function(content)
         -- Hide default scrollframe of the main container
         local scrollFrame = content:GetParent()
@@ -525,13 +530,23 @@ ns.GUI:RegisterPage("minimap", {
             scrollFrame.ScrollBar:HookScript("OnShow", function(self) self:Hide() end)
         end
         
-        -- Create SubTabs
-        local subTabs = GUI:CreateSubTabs(scrollFrame, {
-            { name = "Minimap Settings", builder = BuildSettingsTab },
-            { name = "Minimap Elements", builder = BuildElementsTab },
-            { name = "Icon Catcher", builder = BuildIconCatcherTab },
-        })
-        subTabs:SetPoint("TOPLEFT", 10, -10)
-        subTabs:SetPoint("TOPRIGHT", -10, 0)
+        local opts = GUI.pages["minimap"]
+        opts.subTabsContainer = GUI:CreateSubTabs(scrollFrame, opts.subTabs)
+        opts.subTabsContainer:SetPoint("TOPLEFT", 10, -10)
+        opts.subTabsContainer:SetPoint("TOPRIGHT", -10, 0)
     end,
+    OnShow = function(content, subIndex)
+        local opts = GUI.pages["minimap"]
+        if not opts.subTabsContainer then return end
+        
+        subIndex = subIndex or 1
+        
+        for _, cf in pairs(opts.subTabsContainer.tabContents) do
+            cf:Hide()
+        end
+        
+        if opts.subTabsContainer.tabContents[subIndex] then
+            opts.subTabsContainer.tabContents[subIndex]:Show()
+        end
+    end
 })

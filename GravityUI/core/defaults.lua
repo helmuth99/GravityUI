@@ -21,6 +21,9 @@ ns.Defaults = {
         font = "Gravity",
         fontSize = 12,
         uiScale = 0.64,
+        configPanelScale = 1,
+        windowSize = { width = 980, height = 680 },
+        menuStyle = "SIDE_TOP",
         castbarTicks = {
             disintegrate = {
                 enableUUF = false,
@@ -503,13 +506,20 @@ ns.Defaults = {
 
 
         hideFriendlyNPCNameplates = true,
-        buffBorders =         {
-            fontSize = 12,
+        buffBorders = {
+            enableBuffs = true,
             enableDebuffs = true,
             borderSize = 2,
-            enableBuffs = true,
-            hideDebuffFrame = false,
+            enableStyling = false,
+            noBlink = true,
+            font = "Gravity",
+            fontOutline = "OUTLINE",
+            fontSize = 12,
+            countFontSize = 12,
+            fontColor = {1, 1, 1, 1},
+            countColor = {1, 1, 1, 1},
             hideBuffFrame = false,
+            hideDebuffFrame = false,
         },
 
         spellQueueWindow = 150,
@@ -588,6 +598,11 @@ ns.Defaults = {
             contacts = {},
         },
         autoAcceptInvites = "off",
+        inviteOnWhisper = false,
+        inviteOnWhisperAll = false,
+        inviteOnWhisperFriends = true,
+        inviteOnWhisperGuild = true,
+        inviteOnWhisperKeywords = "invite, inv",
         hideWorldMapBlackout = true,
 
         autoAcceptQuest = true,

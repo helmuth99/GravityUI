@@ -1,4 +1,4 @@
---[[
+ï»¿--[[
 	LibKeyBound-1.0 localization file
 		Deutch by Gamefaq
 --]]
@@ -21,15 +21,15 @@ LibKeyBoundLocale10 = {
 	BindingMode = "Tastenbelegungsmodus";
 	Enabled = "Tastenbelegungsmodus aktiviert";
 	Disabled = "Tastenbelegungsmodus deaktiviert";
-	ClearTip = format("Drücke %s, um alle Tastenbelegungen zu löschen", GetBindingText("ESCAPE", "KEY_"));
+	ClearTip = format("DrÃ¼cke %s, um alle Tastenbelegungen zu lÃ¶schen", GetBindingText("ESCAPE", "KEY_"));
 	NoKeysBoundTip = "Keine Tasten zugewiesen";
 	ClearedBindings = "Alle Belegungen von %s wurden entfernt";
 	BoundKey = "%s wurde %s zugewiesen";
 	UnboundKey = "%s wurde von %s entfernt";
-	CannotBindInCombat = "Tasten können nicht im Kampf belegt werden";
+	CannotBindInCombat = "Tasten kÃ¶nnen nicht im Kampf belegt werden";
 	CombatBindingsEnabled = "Verlasse Kampf, Tastenbelegungsmodus aktiviert";
 	CombatBindingsDisabled = "Beginne Kampf, Tastenbelegungsmodus deaktiviert";
-	BindingsHelp = "Schwebe mit der Maus über eine Schaltfläche. Drücke dann eine Taste, um sie dieser Schaltfläche zuzuweisen. Um alle Tastenbelegungen der Schaltfläche wieder zu löschen, drücke %s.";
+	BindingsHelp = "Schwebe mit der Maus Ã¼ber eine SchaltflÃ¤che. DrÃ¼cke dann eine Taste, um sie dieser SchaltflÃ¤che zuzuweisen. Um alle Tastenbelegungen der SchaltflÃ¤che wieder zu lÃ¶schen, drÃ¼cke %s.";
 
 	-- This is the short display version you see on the Button
 	["Alt"] = "A",

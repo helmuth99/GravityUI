@@ -10,6 +10,7 @@ _G.GravityUI = ns
 -- Media paths
 ns.MEDIA_PATH = "Interface/AddOns/" .. ADDON_NAME .. "/assets/"
 ns.ICON_PATH = ns.MEDIA_PATH .. "GRAVITY_UI_Icon.blp"
+ns.DISCORD_ICON = ns.MEDIA_PATH .. "discord.tga"
 ns.FONT_PATH = ns.MEDIA_PATH .. "Gravity.ttf"
 
 -- Default accent color (Deep Sky Blue)

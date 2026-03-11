@@ -91,15 +91,27 @@ local SLOT_INFO = {
 }
 
 ---------------------------------------------------------------------------
--- State
+-- State & Caching
 ---------------------------------------------------------------------------
 local inspectPaneInitialized = false
 local currentInspectGUID = nil
 local inspectOverlays = {}
 local inspectLayoutApplied = false
 
+-- Performance Cache: GUID -> SlotID -> Data
+-- Data = { link = link, ilvl = ilvl, enchant = text, gems = { {icon, filled}, ... } }
+local inspectCache = {}
+
+local function ClearInspectCache(guid)
+    if not guid then
+        inspectCache = {}
+    else
+        inspectCache[guid] = nil
+    end
+end
+
 ---------------------------------------------------------------------------
--- Helpers (Duplicated from character.lua for independence)
+-- Helpers (Optimized)
 ---------------------------------------------------------------------------
 local function GetGlobalFont()
     if ns.GetFont then return ns.GetFont() end
@@ -121,21 +133,13 @@ else
     ILVL_PATTERN = "Item Level (%d+)"
 end
 
-local function GetSlotItemLevel(unit, slotId)
-    local itemLink = GetInventoryItemLink(unit, slotId)
+local function GetSlotItemLevel(unit, slotId, itemLink)
+    itemLink = itemLink or GetInventoryItemLink(unit, slotId)
     if not itemLink then return nil end
 
     local itemLevel = nil
 
-    -- Ensure item data is cached
-    local itemID = tonumber(itemLink:match("item:(%d+)"))
-    if itemID and C_Item and C_Item.RequestLoadItemDataByID then
-        if not C_Item.IsItemDataCachedByID(itemID) then
-            C_Item.RequestLoadItemDataByID(itemID)
-        end
-    end
-
-    -- 1. Try generic API first
+    -- 1. Try generic API first (Fastest)
     if C_Item and C_Item.GetItemInfo then
         local _, _, _, ilvl = C_Item.GetItemInfo(itemLink)
         if ilvl then itemLevel = ilvl end
@@ -146,7 +150,7 @@ local function GetSlotItemLevel(unit, slotId)
         itemLevel = C_Item.GetDetailedItemLevelInfo(itemLink)
     end
 
-    -- 3. Parse tooltip for ACTUAL displayed ilvl (this handles Scaling/Timewalking)
+    -- 3. Parse tooltip for ACTUAL displayed ilvl (Auth Fallback - Heavy)
     if C_TooltipInfo and C_TooltipInfo.GetInventoryItem then
         local tooltipData = C_TooltipInfo.GetInventoryItem(unit, slotId)
         if tooltipData and tooltipData.lines then
@@ -483,7 +487,7 @@ local function GetGemInfo(unit, slotId)
             filled = filled + 1
             local itemID = GetItemInfoInstant(gemLink)
             local texture = itemID and C_Item.GetItemIconByID(itemID)
-            table.insert(gems, { filled=true, icon=texture })
+            table.insert(gems, { filled=true, icon=texture, link=gemLink })
         end
     end
     if totalSockets < filled then totalSockets = filled end
@@ -605,9 +609,24 @@ local function CreateSlotOverlay(slotFrame, slotInfo, unit)
     -- Gems
     overlay.gems = {}
     for i=1,4 do
-        local gem = overlay:CreateTexture(nil, "OVERLAY")
+        local gem = CreateFrame("Button", nil, overlay)
         gem:SetSize(GEM_SIZE, GEM_SIZE)
-        gem:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+        
+        gem.icon = gem:CreateTexture(nil, "ARTWORK")
+        gem.icon:SetAllPoints()
+        gem.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+        
+        gem:SetScript("OnEnter", function(self)
+            if self.link then
+                GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+                GameTooltip:SetHyperlink(self.link)
+                GameTooltip:Show()
+            end
+        end)
+        gem:SetScript("OnLeave", function(self)
+            GameTooltip:Hide()
+        end)
+        
         table.insert(overlay.gems, gem)
     end
 
@@ -657,24 +676,23 @@ local function CreateSlotOverlay(slotFrame, slotInfo, unit)
     return overlay
 end
 
-local function UpdateSlotOverlay(overlay, unit)
+local function UpdateSlotOverlay(overlay, unit, cachedData)
     if not overlay or not overlay.slotInfo then return end
     local settings = GetSettings()
     
-    -- Link settings to main Character Panel settings (Parity check)
-    -- Use inspect-specific settings or fallback to character ones
     local showName = settings.showInspectItemName ~= false
     local showLevel = settings.showInspectItemLevel ~= false
     local showEnchant = settings.showInspectEnchants ~= false
     local showGem = settings.showInspectGems ~= false
     
-    local itemLink = GetInventoryItemLink(unit, overlay.slotInfo.id)
-    if not itemLink then overlay:Hide(); return end
+    if not cachedData then 
+        overlay:Hide()
+        return 
+    end
     overlay:Show()
 
-    local itemName = GetItemInfo(itemLink)
-    local quality = GetInventoryItemQuality(unit, overlay.slotInfo.id)
-    local r, g, b = GetItemQualityColor(quality)
+    local itemName = cachedData.name
+    local r, g, b = GetItemQualityColor(cachedData.quality or 1)
 
     -- Name
     if showName and itemName then
@@ -686,77 +704,72 @@ local function UpdateSlotOverlay(overlay, unit)
     end
 
     -- ILvl
-    if showLevel then
-         local ilvl = GetSlotItemLevel(unit, overlay.slotInfo.id)
-         if ilvl then
-             local track, cur, max = GetUpgradeTrack(unit, overlay.slotInfo.id)
-             local text = ilvl
-             if track then
-                 local trackColor = settings.upgradeTrackColor or DEFAULT_UPGRADE_TRACK_COLOR
-                 local hex = string.format("%02x%02x%02x", trackColor[1]*255, trackColor[2]*255, trackColor[3]*255)
-                 local trackStr = string.format("|cff%s(%s %s/%s)|r", hex, track, cur, max)
-                 if overlay.slotInfo.side == "right" or overlay.slotInfo.id == 16 then
-                      text = trackStr .. " " .. ilvl
-                 else
-                      text = ilvl .. " " .. trackStr
-                 end
+    if showLevel and cachedData.ilvl then
+        local text = cachedData.ilvl
+        if cachedData.track then
+             local trackColor = settings.upgradeTrackColor or DEFAULT_UPGRADE_TRACK_COLOR
+             local hex = string.format("%02x%02x%02x", trackColor[1]*255, trackColor[2]*255, trackColor[3]*255)
+             local trackStr = string.format("|cff%s(%s %s/%s)|r", hex, cachedData.track, cachedData.curTrack, cachedData.maxTrack)
+             if overlay.slotInfo.side == "right" or overlay.slotInfo.id == 16 then
+                  text = trackStr .. " " .. cachedData.ilvl
+             else
+                  text = cachedData.ilvl .. " " .. trackStr
              end
-             overlay.itemLevel:SetText(text)
-             overlay.itemLevel:Show()
-         else
-             overlay.itemLevel:Hide()
-         end
+        end
+        overlay.itemLevel:SetText(text)
+        overlay.itemLevel:Show()
     else
         overlay.itemLevel:Hide()
     end
 
     -- Enchant
-    if showEnchant then
-        local enchant, enchantable = GetEnchantText(unit, overlay.slotInfo.id)
-        if enchant then
-             local color = settings.inspectEnchantTextColor or settings.enchantTextColor or DEFAULT_ENCHANT_TEXT_COLOR
+    if showEnchant and (cachedData.enchant or cachedData.enchantable) then
+        local color
+        if cachedData.enchant then
+             color = settings.inspectEnchantTextColor or settings.enchantTextColor or DEFAULT_ENCHANT_TEXT_COLOR
              if settings.inspectEnchantClassColor or settings.enchantClassColor then
                   local _, class = UnitClass(unit)
                   local c = RAID_CLASS_COLORS[class]
                   if c then color = {c.r, c.g, c.b} end
              end
-             overlay.enchant:SetText(enchant)
-             overlay.enchant:SetTextColor(color[1], color[2], color[3], 1)
-             overlay.enchant:Show()
-        elseif enchantable then
-             -- Only show "No Enchant" if slot is strictly enchantable
-             local color = settings.inspectNoEnchantTextColor or settings.noEnchantTextColor or DEFAULT_NO_ENCHANT_COLOR
-             overlay.enchant:SetText("No Enchant")
-             overlay.enchant:SetTextColor(color[1], color[2], color[3], 1)
-             overlay.enchant:Show()
+             overlay.enchant:SetText(cachedData.enchant)
         else
-             overlay.enchant:Hide()
+             color = settings.inspectNoEnchantTextColor or settings.noEnchantTextColor or DEFAULT_NO_ENCHANT_COLOR
+             overlay.enchant:SetText("No Enchant")
         end
+        overlay.enchant:SetTextColor(color[1], color[2], color[3], 1)
+        overlay.enchant:Show()
     else
         overlay.enchant:Hide()
     end
 
     -- Gems
-    if showGem then
-        local gems = GetGemInfo(unit, overlay.slotInfo.id)
-        for i, gemTex in ipairs(overlay.gems) do
-            if gems[i] then
-                gemTex:Show()
-                if gems[i].filled then
-                    gemTex:SetTexture(gems[i].icon)
-                    gemTex:SetDesaturated(false)
-                    gemTex:SetVertexColor(1, 1, 1, 1)
+    if showGem and cachedData.gems then
+        for i, gemBtn in ipairs(overlay.gems) do
+            local gemInfo = cachedData.gems[i]
+            if gemInfo then
+                gemBtn:Show()
+                if gemInfo.filled then
+                    gemBtn.icon:SetTexture(gemInfo.icon)
+                    gemBtn.icon:SetDesaturated(false)
+                    gemBtn.icon:SetVertexColor(1, 1, 1, 1)
+                    gemBtn.link = gemInfo.link
                 else
-                    gemTex:SetTexture("Interface\\ItemSocketingFrame\\UI-EmptySocket-Prismatic")
-                    gemTex:SetDesaturated(true)
-                    gemTex:SetVertexColor(0.6, 0.6, 0.6, 1)
+                    gemBtn.icon:SetTexture("Interface\\ItemSocketingFrame\\UI-EmptySocket-Prismatic")
+                    gemBtn.icon:SetDesaturated(true)
+                    gemBtn.icon:SetVertexColor(0.6, 0.6, 0.6, 1)
+                    gemBtn.link = nil
                 end
             else
-                gemTex:Hide()
+                gemBtn:Hide()
+                gemBtn.link = nil
             end
         end
     else
-        for _, gemTex in ipairs(overlay.gems) do gemTex:Hide() end
+        for _, gemBtn in ipairs(overlay.gems) do 
+            gemBtn:Hide() 
+            gemBtn.link = nil
+        end
     end
 end
 
@@ -775,14 +788,16 @@ end
 ---------------------------------------------------------------------------
 -- Header / Title
 ---------------------------------------------------------------------------
-local function CalculateInspectAverageILvl(unit)
+local function CalculateInspectAverageILvl(guid)
     local total = 0
     local count = 0
-    -- Slots 1-17 except 4(shirt) and 19(tabard)
-    -- Using SLOT_INFO keys
+    local cache = inspectCache[guid]
+    if not cache then return 0 end
+
     for id, _ in pairs(SLOT_INFO) do
         if id ~= 4 and id ~= 19 then
-            local ilvl = GetSlotItemLevel(unit, id)
+            local data = cache[id]
+            local ilvl = data and data.ilvl
             if ilvl and ilvl > 0 then
                 total = total + ilvl
                 count = count + 1
@@ -790,10 +805,10 @@ local function CalculateInspectAverageILvl(unit)
         end
     end
     -- 2H Weapon check
-    local main = GetInventoryItemLink(unit, 16)
-    local off = GetInventoryItemLink(unit, 17)
-    if main and not off then
-        local ilvl = GetSlotItemLevel(unit, 16)
+    local mainData = cache[16]
+    local offData = cache[17]
+    if mainData and not offData then
+        local ilvl = mainData.ilvl
         if ilvl then
              total = total + ilvl
              count = count + 1
@@ -806,7 +821,8 @@ end
 local function UpdateInspectILvlDisplay()
     if not InspectFrame or not InspectFrame._guiILvlDisplay then return end
     local unit = InspectFrame.unit or "target"
-    if currentInspectGUID and UnitGUID(unit) ~= currentInspectGUID then return end
+    local guid = UnitGUID(unit)
+    if not guid then return end
 
     local name = UnitName(unit) or "Unknown"
     local level = UnitLevel(unit)
@@ -824,11 +840,9 @@ local function UpdateInspectILvlDisplay()
     InspectFrame._guiILvlDisplay.spec:SetText(string.format("%s %s %s", level, specName, className))
     InspectFrame._guiILvlDisplay.spec:SetTextColor(color.r, color.g, color.b, 1)
 
-    local ilvl = CalculateInspectAverageILvl(unit)
+    local ilvl = CalculateInspectAverageILvl(guid)
     if ilvl > 0 then
         InspectFrame._guiCenterILvl.text:SetText(string.format("%.1f", ilvl))
-        -- Color gradient for ilvl optional, using white or class color for now?
-        -- Old code used GetILvlColor. We'll stick to white/grey
     else
         InspectFrame._guiCenterILvl.text:SetText("")
     end
@@ -1128,14 +1142,50 @@ local function UpdateInspectFrame()
     
     local unit = InspectFrame.unit or "target"
     if UnitExists(unit) then
-        UpdateAllInspectSlotBorders(unit)
-        for _, overlay in pairs(inspectOverlays) do
-            UpdateSlotOverlay(overlay, unit)
+        local guid = UnitGUID(unit)
+        if not guid then return end
+        
+        -- Start Cache Populating
+        if not inspectCache[guid] then inspectCache[guid] = {} end
+        local cache = inspectCache[guid]
+        
+        -- Process all slots in a single pass
+        for slotID, _ in pairs(SLOT_INFO) do
+            local link = GetInventoryItemLink(unit, slotID)
+            if link then
+                if not cache[slotID] or cache[slotID].link ~= link then
+                    -- New or different item: Full scan
+                    local ilvl = GetSlotItemLevel(unit, slotID, link)
+                    local track, cur, max = GetUpgradeTrack(unit, slotID)
+                    local enchant, enchantable = GetEnchantText(unit, slotID)
+                    local gems = GetGemInfo(unit, slotID)
+                    local name, _, quality = GetItemInfo(link)
+                    
+                    cache[slotID] = {
+                        link = link,
+                        ilvl = ilvl,
+                        track = track,
+                        curTrack = cur,
+                        maxTrack = max,
+                        enchant = enchant,
+                        enchantable = enchantable,
+                        gems = gems,
+                        name = name or "Loading...",
+                        quality = quality or 1
+                    }
+                end
+            else
+                cache[slotID] = nil
+            end
         end
-        -- Ensure unit is set on frame for helper uses
-        if not InspectFrame.unit then InspectFrame.unit = unit end
+
+        UpdateAllInspectSlotBorders(unit)
+        for slotID, overlay in pairs(inspectOverlays) do
+            UpdateSlotOverlay(overlay, unit, cache[slotID])
+        end
+
         UpdateInspectILvlDisplay()
-        currentInspectGUID = UnitGUID(unit)
+        currentInspectGUID = guid
     end
     
     local baseScale = INSPECT_CONFIG.BASE_SCALE
@@ -1146,14 +1196,26 @@ end
 ---------------------------------------------------------------------------
 -- Events
 ---------------------------------------------------------------------------
-local function TriggerInspectUpdates()
-    -- Immediate update
+---------------------------------------------------------------------------
+-- Throttled Update System
+---------------------------------------------------------------------------
+local lastInspectUpdate = 0
+local function ThrottledUpdate()
+    local now = GetTime()
+    if (now - lastInspectUpdate) < 0.1 then return end
+    lastInspectUpdate = now
     UpdateInspectFrame()
-    -- Retry sequence to handle data latency (server delay on item links)
-    C_Timer.After(0.2, UpdateInspectFrame)
-    C_Timer.After(0.5, UpdateInspectFrame)
-    C_Timer.After(1.0, UpdateInspectFrame)
-    C_Timer.After(2.0, UpdateInspectFrame)
+end
+
+local function TriggerInspectUpdates(force)
+    -- 1. Immediate Throttled Update
+    ThrottledUpdate()
+    
+    -- 2. Single Delayed Update for data latency (server delay)
+    -- We only need one retry at 0.5s to catch most missing item links
+    if not force then
+        C_Timer.After(0.5, ThrottledUpdate)
+    end
 end
 
 ---------------------------------------------------------------------------

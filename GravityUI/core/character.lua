@@ -165,7 +165,13 @@ end
 -- Utility: Format large numbers (17257920 -> "17.2M")
 ---------------------------------------------------------------------------
 local function FormatNumber(num)
-    if not num or num == 0 then return "0" end
+    if not num then return "0" end
+    
+    -- Scrub "secret number" taint (common in Retail for health/stats)
+    local scrubbed = tonumber(tostring(num))
+    if not scrubbed or scrubbed == 0 then return "0" end
+    num = scrubbed
+
     if num >= 1000000 then
         return string.format("%.1fM", num / 1000000)
     elseif num >= 1000 then
@@ -1389,6 +1395,7 @@ local function SetupTitleArea()
 
         displayFrame.text = nameText
         displayFrame.specText = specText
+        
         CharacterFrame._guiILvlDisplay = displayFrame
     end
 
@@ -1606,8 +1613,10 @@ local function ReleaseToPool(obj)
         end
     elseif obj:IsObjectType("FontString") then
         obj:SetText("")
+        obj:ClearAllPoints()
         table.insert(headerPool, obj)
     elseif obj:IsObjectType("Texture") then
+        obj:ClearAllPoints()
         table.insert(linePool, obj)
     end
 end
@@ -1977,9 +1986,11 @@ local function UpdateStatsPanel(panel, unit)
         local scrollChild = panel.scrollChild
         unit = unit or panel.unit or "player"
 
-        -- First, hide and release all tracked FontStrings/Textures
+        -- First, hide and release all tracked FontStrings (Headers only) and Textures
         for _, entry in ipairs(trackedFontStrings) do
-            if entry.fs then ReleaseToPool(entry.fs) end
+            if entry.fs and entry.cat == "sectionHeader" then 
+                ReleaseToPool(entry.fs) 
+            end
         end
         for _, line in ipairs(trackedUnderlines) do
             if line then ReleaseToPool(line) end
@@ -1991,11 +2002,9 @@ local function UpdateStatsPanel(panel, unit)
         wipe(trackedUnderlines)
 
         -- Release child frames (stat rows, stat bars) to pool
-        for i = 1, select("#", scrollChild:GetChildren()) do
-            local frame = select(i, scrollChild:GetChildren())
-            if frame then
-                ReleaseToPool(frame)
-            end
+        local children = {scrollChild:GetChildren()}
+        for _, frame in ipairs(children) do
+            ReleaseToPool(frame)
         end
 
         -- Regions (Textures/FontStrings) are already handled by ReleaseToPool calls above

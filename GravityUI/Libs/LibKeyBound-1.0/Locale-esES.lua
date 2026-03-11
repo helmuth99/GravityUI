@@ -1,4 +1,4 @@
---[[
+ï»¿--[[
 	LibKeyBound-1.0 localization file
 		Spanish by StiviS
 --]]
@@ -24,7 +24,7 @@ LibKeyBoundLocale10 = {
 	CannotBindInCombat = 'No se pueden atajar teclas en combate';
 	CombatBindingsEnabled = 'Saliendo de combate, modo de Atajos de Teclado activado';
 	CombatBindingsDisabled = 'Entrando en combate, modo de Atajos de Teclado desactivado';
-	BindingsHelp = "Sitúese en un botón, entonces pulse una tecla para establecer su atajo.  Para limpiar el Atajo del botón actual, pulse %s.";
+	BindingsHelp = "SitÃºese en un botÃ³n, entonces pulse una tecla para establecer su atajo.  Para limpiar el Atajo del botÃ³n actual, pulse %s.";
 
 	-- This is the short display version you see on the Button
 	["Alt"] = "A",

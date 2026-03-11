@@ -1104,35 +1104,39 @@ end
 local function IsMouseOverChat()
     if GeneralDockManager and MouseIsOver(GeneralDockManager) then return true end
     
+    -- Also check the ChatFrame1 specifically if it's the primary dock
+    if ChatFrame1 and MouseIsOver(ChatFrame1) then return true end
+
     for i = 1, 10 do
         local cf = _G["ChatFrame"..i]
         local tab = _G["ChatFrame"..i.."Tab"]
-        if (cf and cf:IsShown() and MouseIsOver(cf)) then return true end
-        if (tab and tab:IsShown() and MouseIsOver(tab)) then return true end
+        if cf and cf:IsShown() and MouseIsOver(cf) then return true end
+        if tab and tab:IsShown() and MouseIsOver(tab) then return true end
     end
     return false
 end
 
-local function UpdateAllTabsVisibility()
+local lastHoverState = false
+local function UpdateAllTabsVisibility(forceState)
     local settings = GetSettings()
     if not settings or not settings.hideTabs then return end
 
-    local isOverAny = IsMouseOverChat()
+    local isOverAny = (forceState ~= nil) and forceState or IsMouseOverChat()
+    
+    -- Only trigger fade if state actually changed
+    if isOverAny == lastHoverState and forceState == nil then return end
+    lastHoverState = isOverAny
 
     -- Apply visibility to all valid tabs
     for i = 1, 10 do
         local cf = _G["ChatFrame"..i]
         local tab = _G["ChatFrame"..i.."Tab"]
-        -- Only show tabs for frames that are initialized and NOT killed
-        if tab and cf and cf.isInitialized and tab:GetParent() ~= Hider and not tab.__guiKilled then
-            tab.__guiFading = true
+        if tab and cf and cf.isInitialized and not tab.__guiKilled then
             if isOverAny then
                 UIFrameFadeIn(tab, 0.2, tab:GetAlpha(), 1)
             else
-                UIFrameFadeOut(tab, 0.5, tab:GetAlpha(), 0)
+                UIFrameFadeOut(tab, 0.4, tab:GetAlpha(), 0)
             end
-            -- Reset fading flag after animation finishes
-            C_Timer.After(0.6, function() tab.__guiFading = false end)
         end
     end
 end
@@ -1145,32 +1149,28 @@ local function ApplyTabAutohide(chatFrame)
     if not tab then return end
 
     if settings.hideTabs then
-        -- Hook the primary frame and tab if not already done
+        -- Initialize Ticker once (centralized)
+        if not ns.Chat.AutohideTicker then
+            ns.Chat.AutohideTicker = C_Timer.NewTicker(0.2, function()
+                UpdateAllTabsVisibility()
+            end)
+        end
+
+        -- Initialize Alpha and Hooks
         if not tab.__guiTabHooked then
             tab.__guiTabHooked = true
             
-            tab:HookScript("OnEnter", UpdateAllTabsVisibility)
-            tab:HookScript("OnLeave", function() 
-                C_Timer.After(0.1, UpdateAllTabsVisibility)
-            end)
-            
-            chatFrame:HookScript("OnEnter", UpdateAllTabsVisibility)
-            chatFrame:HookScript("OnLeave", function() 
-                C_Timer.After(0.1, UpdateAllTabsVisibility)
-            end)
-
             -- Securely prevent alpha changes by Blizzard (e.g. on click or flash)
             hooksecurefunc(tab, "SetAlpha", function(self, alpha)
-                if self.__guiKilled then return end -- Respect Kill()
+                if self.__guiKilled or not self.__guiTabHooked then return end
                 if self.__guiIgnoreAlphaHook then return end
 
-                if settings.hideTabs and not self.__guiFading then
-                    self.__guiIgnoreAlphaHook = true -- Prevent recursion
-                    -- If ANY part of chat is hovered, FORCE alpha to stay up
-                    if IsMouseOverChat() and alpha < 1 then
-                        self:SetAlpha(1)
-                    elseif not IsMouseOverChat() and alpha > 0 then
-                        self:SetAlpha(0)
+                local s = GetSettings()
+                if s and s.hideTabs then
+                    self.__guiIgnoreAlphaHook = true
+                    local target = IsMouseOverChat() and 1 or 0
+                    if alpha ~= target then
+                        self:SetAlpha(target)
                     end
                     self.__guiIgnoreAlphaHook = false
                 end
@@ -1183,19 +1183,22 @@ local function ApplyTabAutohide(chatFrame)
                     local s = GetSettings()
                     if s and s.hideTabs then
                         local t = _G[cf:GetName().."Tab"]
-                        if t and not t.__guiFading and not t.__guiKilled then
-                            if IsMouseOverChat() then
-                                t:SetAlpha(1)
-                            else
-                                t:SetAlpha(0)
-                            end
+                        if t and not t.__guiKilled then
+                            t:SetAlpha(IsMouseOverChat() and 1 or 0)
                         end
                     end
                 end)
             end
         end
-        tab:SetAlpha(0)
+        
+        -- Set initial state
+        tab:SetAlpha(IsMouseOverChat() and 1 or 0)
     else
+        -- Disabled: Restore alpha and stop ticker
+        if ns.Chat.AutohideTicker then
+            ns.Chat.AutohideTicker:Cancel()
+            ns.Chat.AutohideTicker = nil
+        end
         tab:SetAlpha(1)
     end
 end

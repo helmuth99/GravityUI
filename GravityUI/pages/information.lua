@@ -22,13 +22,7 @@ local function CreateFeatureRow(container, name, desc, stateTable, stateKey, yOf
     
     if pageId then
         row:SetScript("OnClick", function()
-            GUI:ShowPage(pageId)
-            if tabIndex then
-                local page = GUI.pages[pageId]
-                if page and page.subTabs and page.subTabs.tabButtons and page.subTabs.tabButtons[tabIndex] then
-                    C_Timer.After(0.01, function() page.subTabs.tabButtons[tabIndex]:Click() end)
-                end
-            end
+            GUI:ShowPage(pageId, tabIndex)
         end)
     end
 
@@ -95,7 +89,10 @@ local function CreateFeatureRow(container, name, desc, stateTable, stateKey, yOf
     return row
 end
 
-local function BuildInformationTab(content)
+local function BuildInformationTab(parent)
+    local scroll, content = ns.GUI:CreateScrollableContent(parent)
+    scroll:SetAllPoints()
+    
     local y = -10
     local PAD = 10
     local db = ns.GetDB()
@@ -186,25 +183,22 @@ local function BuildInformationTab(content)
         -- Action Bars (actionbars.lua)
         { name = "Action Bars", desc = "Custom skinned, dynamically fading immersive action bars.\nAdjust scaling, padding, backdrop aesthetics, and hotkey fonts.", stateTable = db.actionbars, stateKey = "enabled", pageId = "actionbars", tabIndex = 1 },
         { name = "Mouseover Settings", desc = "Configure specific fade rules based on mouse interactions.\nSet global fade duration, delays, and out-of-combat hiding rules.", stateTable = db.actionbars and db.actionbars.fade, stateKey = "enabled", pageId = "actionbars", tabIndex = 2 },
-        { name = "Special Buttons", desc = "Control the Extra Action Button, Zone Ability, and Encounter bars.\nEasily scale and reposition these critical scenario-specific buttons.", pageId = "actionbars", tabIndex = 3 },
+        { name = "Extra Action Buttons", desc = "Control the Extra Action Button, Zone Ability, and Encounter bars.\nEasily scale and reposition these critical scenario-specific buttons.", pageId = "actionbars", tabIndex = 3 },
         
         -- Datapanels (datapanels.lua)
         { name = "Minimap Datapanel", desc = "Information bar anchored below the minimap showing tracked metrics.\nDisplays dynamically updating durability, gold, latency, or time.", stateTable = db.minimap and db.minimap.datatext, stateKey = "enabled", pageId = "datapanels", tabIndex = 1 },
         { name = "Custom Panels", desc = "Create highly customizable, floating text strings for any tracked data.\nBuild personalized dashboards anywhere on your screen.", pageId = "datapanels", tabIndex = 2 },
         
         -- UI Improvements (uiimprovements.lua)
-        { name = "Automation", desc = "Automates tedious tasks out of sight: auto-repair, fast loot, and sell junk.\nIncludes auto-accepting quests, skips for movies, and dialogue routing.", pageId = "uiimprovements", tabIndex = 1 },
+        { name = "Automation / Stuff", desc = "Automates tedious tasks out of sight: auto-repair, fast loot, and sell junk.\nIncludes auto-accepting quests, skips for movies, and dialogue routing.", pageId = "uiimprovements", tabIndex = 1 },
         { name = "Autohide Setup", desc = "Configure contextual hiding rules based on game events (e.g. Minigames).\nAutomatically hides specific UI frames to preserve immersion.", pageId = "uiimprovements", tabIndex = 2 },
         { name = "Combat Settings", desc = "Visual combat lockouts, screen flashes on aggro, and threat coloring.\nReplaces aggressive default red flashes with customized indicators.", pageId = "uiimprovements", tabIndex = 3 },
         { name = "Blizzard Buffs & Debuffs", desc = "Enhances the default player buff/debuff frames with modern borders.\nRemoves the rigid Blizzard texture wrapping.", stateTable = db.uiimprovements and db.uiimprovements.buffBorders, stateKey = "enableBuffs", pageId = "uiimprovements", tabIndex = 4 },
-        { name = "Chat Styling", desc = "Glassmorphic chat windows with short channel names and clickable URLs.\nOptimizes chat layout and supports dynamic fading for inactivity.", stateTable = db.uiimprovements and db.uiimprovements.chat, stateKey = "enabled", pageId = "uiimprovements", tabIndex = 5 },
-        { name = "Tooltip Styling", desc = "Modernized, dark-themed tooltips with clean health bars.\nDisplays advanced information like Item IDs, Spell IDs, and NPC IDs.", stateTable = db.uiimprovements and db.uiimprovements.tooltip, stateKey = "enabled", pageId = "uiimprovements", tabIndex = 6 },
-        { name = "Character Panel Enhancements", desc = "Directly embeds item level, durability, enchants, and gems onto slots.\nSignificantly enhances the player and inspect character paper dolls.", stateTable = db.uiimprovements and db.uiimprovements.character, stateKey = "enabled", pageId = "uiimprovements", tabIndex = 7 },
-        { name = "Skyriding Tracking", desc = "A smooth, customizable Vigor trackingHUD with visual animations.\nReplaces the disjointed default UI with a unified, centered layout.", stateTable = db.skyriding, stateKey = "enabled", pageId = "uiimprovements", tabIndex = 8 },
-        { name = "Combat Timer", desc = "A visual stopwatch tracking the duration spent in combat or encounters.\nExcellent for visualizing long raid bosses or Mythic+ pack length.", stateTable = db.uiimprovements and db.uiimprovements.combatTimer, stateKey = "enabled", pageId = "uiimprovements", tabIndex = 9 },
-        { name = "M+ Teleport Icons", desc = "Clickable dungeon portals embedded directly into the Mythic+ LFG UI.\nRapidly port to dungeons without searching through your spellbook.", stateTable = db.uiimprovements, stateKey = "mplusTeleportEnabled", pageId = "uiimprovements", tabIndex = 10 },
-        { name = "World Marks", desc = "A streamlined interface for dropping world markers and flare tools.\nProvides quick access to ready-checks and countdown pull timers.", stateTable = db.uiimprovements and db.uiimprovements.marks, stateKey = "enabled", pageId = "uiimprovements", tabIndex = 11 },
-        { name = "Mail Extras", desc = "Adds an 'Open All' button, an Address Book for alts and friends, and gold loot messages.\nImproves mailbox efficiency natively without extra addons.", stateTable = db.uiimprovements and db.uiimprovements.mail, stateKey = "enabled", pageId = "uiimprovements", tabIndex = 12 },
+        { name = "Skyriding Tracking", desc = "A smooth, customizable Vigor trackingHUD with visual animations.\nReplaces the disjointed default UI with a unified, centered layout.", stateTable = db.skyriding, stateKey = "enabled", pageId = "uiimprovements", tabIndex = 5 },
+        { name = "Combat Timer", desc = "A visual stopwatch tracking the duration spent in combat or encounters.\nExcellent for visualizing long raid bosses or Mythic+ pack length.", stateTable = db.uiimprovements and db.uiimprovements.combatTimer, stateKey = "enabled", pageId = "uiimprovements", tabIndex = 6 },
+        { name = "M+ Teleport Icons", desc = "Clickable dungeon portals embedded directly into the Mythic+ LFG UI.\nRapidly port to dungeons without searching through your spellbook.", stateTable = db.uiimprovements, stateKey = "mplusTeleportEnabled", pageId = "uiimprovements", tabIndex = 7 },
+        { name = "World Marks", desc = "A streamlined interface for dropping world markers and flare tools.\nProvides quick access to ready-checks and countdown pull timers.", stateTable = db.uiimprovements and db.uiimprovements.marks, stateKey = "enabled", pageId = "uiimprovements", tabIndex = 8 },
+        { name = "Mail Extras", desc = "Adds an 'Open All' button, an Address Book for alts and friends, and gold loot messages.\nImproves mailbox efficiency natively without extra addons.", stateTable = db.uiimprovements and db.uiimprovements.mail, stateKey = "enabled", pageId = "uiimprovements", tabIndex = 9 },
         
         -- Screen Indicators (screenindicators.lua)
         { name = "Cursor Utilities", desc = "Attach GCD Rings, Cursor Castbars, and highlights to your mouse.\nSuperb for tracking mechanics instantly without looking away from the action.", stateTable = db.screenindicators and db.screenindicators.cursor, stateKey = "enabled", pageId = "screenindicators", tabIndex = 1 },
@@ -213,30 +207,33 @@ local function BuildInformationTab(content)
         { name = "Pet Info", desc = "Quick pet management tools and large status warnings (Pet Dead).\nCrucial for Hunters and Warlocks who need rapid reminders.", stateTable = db.screenindicators and db.screenindicators.petWarnings, stateKey = "enabled", pageId = "screenindicators", tabIndex = 4 },
         { name = "Missing Buffs (Raid)", desc = "Tracks missing raid buffs dynamically based on group class composition.\nExamines exactly who is present and what buffs are missing pre-pull.", stateTable = db.raidBuffs, stateKey = "enabled", pageId = "screenindicators", tabIndex = 5 },
         { name = "Raid Warnings", desc = "Displays centralized large text alerts for helpful utility spells.\nWarns for newly dropped Soulwells, Feasts, Mage Tables, and Rituals.", stateTable = db.raidWarnings, stateKey = "enabled", pageId = "screenindicators", tabIndex = 6 },
-        { name = "Interrupt Tracker", desc = "Tracks interrupt cooldowns of party members in M+ dungeons.\nUses Say/Party chat as a fallback broadcast when addon comms are unavailable.", stateTable = db.interruptTracker, stateKey = "enabled", pageId = "screenindicators", tabIndex = 7 },
+        { name = "Interrupt Tracker", desc = "Tracks interrupt cooldowns of party members in M+ dungeons.\nUses Say/Party chat as a fallback broadcast when addon comms are unavailable.", stateTable = db.screenindicators and db.screenindicators.interruptTracker, stateKey = "enabled", pageId = "screenindicators", tabIndex = 7 },
         { name = "Difficulty Indicator", desc = "Visual status bar tracking the currently selected instance difficulty.\nIncludes a dropdown for rapidly changing difficulties out-of-world.", stateTable = db.screenindicators and db.screenindicators.difficulty, stateKey = "enabled", pageId = "screenindicators", tabIndex = 8 },
         { name = "AFK Screen", desc = "An immersive, cinematic character orbit view when Away From Keyboard.\nDisplays real time, guild, character rank, and a moving camera.", stateTable = db.screenindicators and db.screenindicators.afkScreen, stateKey = "enabled", pageId = "screenindicators", tabIndex = 9 },
 
         
         -- UI Utilities (cdmutils.lua)
-        { name = "Keybindings on CDM", desc = "Maps action bar keybind text directly onto the BetterCooldownManager frames.\nAllows custom coloring and hiding of the text on the cooling timeline icons.", stateTable = db.actionbars and db.actionbars.guicdm, stateKey = "enabled", pageId = "cdmutils", tabIndex = 1 },
+        { name = "CDM Keybindings", desc = "Maps action bar keybind text directly onto the BetterCooldownManager frames.\nAllows custom coloring and hiding of the text on the cooling timeline icons.", stateTable = db.actionbars and db.actionbars.guicdm, stateKey = "enabled", pageId = "cdmutils", tabIndex = 1 },
         { name = "CDM Centering", desc = "Physically aligns BetterCooldownManager's frames symmetrically into the UI.\nGuarantees perfectly pixel-aligned center cooling timelines.", stateTable = db.actionbars and db.actionbars.cdmCentering, stateKey = "enabled", pageId = "cdmutils", tabIndex = 2 },
-        { name = "Action Button Glow", desc = "Customizes the Proc, Alert, and Auto-attack glow on all action buttons.\nAllows re-coloring or overriding the highly noisy default animations.", stateTable = db.actionbars and db.actionbars.guicdm and db.actionbars.guicdm.utils, stateKey = "buttonGlow", pageId = "cdmutils", tabIndex = 3 },
+        { name = "CDM Button Glow", desc = "Customizes the Proc, Alert, and Auto-attack glow on all action buttons.\nAllows re-coloring or overriding the highly noisy default animations.", stateTable = db.actionbars and db.actionbars.guicdm and db.actionbars.guicdm.utils, stateKey = "buttonGlow", pageId = "cdmutils", tabIndex = 3 },
         { name = "Castbar Ticks", desc = "Adds channeling tick marks (e.g., Evoker Disintegrate) to Unit Frames.\nTracks intervals mathematically to avoid clipping spells prematurely.", stateTable = db.general and db.general.castbarTicks and db.general.castbarTicks.disintegrate, stateKey = "enableUUF", pageId = "cdmutils", tabIndex = 4 },
         { name = "CDM Buffbar Integration", desc = "Enhances specific buff trackers with GravityUI styling logic.\nForces precise borders, shadows, and coloring onto third-party icons.", stateTable = db.actionbars and db.actionbars.cdmBuffbar, stateKey = "enabled", pageId = "cdmutils", tabIndex = 5 },
         { name = "Sound Alerts", desc = "Integrates custom SharedMedia sounds directly into Blizzard's CooldownViewer.\nSeamlessly replaces specific Blizzard sounds with your own media files.", stateTable = db.soundAlerts, stateKey = "enabled", pageId = "cdmutils", tabIndex = 6 },
 
         -- Styling Tab (styling.lua)
-        { name = "Game Menu", desc = "Generates a fully customized Escape Key menu overriding the Blizzard UI.\nApplies unified structural gradients and dark-mode styling.", stateTable = db.styling and db.styling.gamemenu, stateKey = "enabled", pageId = "Styling", tabIndex = 1 },
-        { name = "Chat Bubbles", desc = "Alters the 3D in-world chat bubbles with custom fonts and flat backgrounds.\nHighly readable and integrates with nameplate aesthetics.", stateTable = db.styling and db.styling.chatBubbles, stateKey = "enabled", pageId = "Styling", tabIndex = 2 },
-        { name = "Ready Check", desc = "Replaces the Blizzard Ready Check pop-up with a customized dark version.\nSupports unique coloring and thematic structure fonts.", stateTable = db.styling, stateKey = "skinReadyCheck", pageId = "Styling", tabIndex = 3 },
-        { name = "Keystone", desc = "Overrides the Mythic+ Keystone insertion pedestal frame.\nReplaces clunky textures with clean lines and legible text.", stateTable = db.styling and db.styling.keystone, stateKey = "enabled", pageId = "Styling", tabIndex = 4 },
+        { name = "Game Menu", desc = "Generates a fully customized Escape Key menu overriding the Blizzard UI.\nApplies unified structural gradients and dark-mode styling.", stateTable = db.styling and db.styling.gamemenu, stateKey = "enabled", pageId = "Styling", tabIndex = 6 },
+        { name = "Chat Bubbles", desc = "Alters the 3D in-world chat bubbles with custom fonts and flat backgrounds.\nHighly readable and integrates with nameplate aesthetics.", stateTable = db.styling and db.styling.chatBubbles, stateKey = "enabled", pageId = "Styling", tabIndex = 11 },
+        { name = "Ready Check", desc = "Replaces the Blizzard Ready Check pop-up with a customized dark version.\nSupports unique coloring and thematic structure fonts.", stateTable = db.styling, stateKey = "skinReadyCheck", pageId = "Styling", tabIndex = 7 },
+        { name = "Keystone", desc = "Overrides the Mythic+ Keystone insertion pedestal frame.\nReplaces clunky textures with clean lines and legible text.", stateTable = db.styling and db.styling.keystone, stateKey = "enabled", pageId = "Styling", tabIndex = 8 },
         { name = "Power Bar", desc = "Skins the Player's Alternative Power bar (sanity, corruption, etc).\nConverts the bizarre Blizzard artwork into straight, scalable bars.", stateTable = db.styling and db.styling.powerBar, stateKey = "enabled", pageId = "Styling", tabIndex = 5 },
-        { name = "Alert Frames", desc = "Skins Blizzard alert toast pop-ups (Achievements, Loot Rolls, Mounts).\nIntercepts specific windows without breaking API compatibility limits.", stateTable = db.styling and db.styling.alerts, stateKey = "enabled", pageId = "Styling", tabIndex = 6 },
-        { name = "Loot Enhancement", desc = "Modernized loot frames supporting the 'loot-under-mouse' position metric.\nAesthetically wraps standard loot distributions and boss kills.", stateTable = db.styling and db.styling.loot, stateKey = "enabled", pageId = "Styling", tabIndex = 7 },
-        { name = "Objective Tracker", desc = "Overrides Blizzard's quest tracking layout with clean styling profiles.\nUses progressive contextual color text to highlight current progress.", stateTable = db.styling and db.styling.objectives, stateKey = "objectiveTrackerSkinning", pageId = "Styling", tabIndex = 8 },
-        { name = "Instance Frames", desc = "Skins the Dungeon Finder, LFG, and Premade Groups menu globally.\nUnifies the complex LFG panel with standard GravityUI colors.", stateTable = db.styling and db.styling.instanceFrames, stateKey = "enabled", pageId = "Styling", tabIndex = 9 },
-        { name = "Experience & Rep", desc = "Draws highly customized, moveable tracking bars for XP and faction Rep.\nMorphs based on max level logic immediately.", stateTable = db.styling and db.styling.xpRep, stateKey = "enabled", pageId = "Styling", tabIndex = 10 },
+        { name = "Alert Frames", desc = "Skins Blizzard alert toast pop-ups (Achievements, Loot Rolls, Mounts).\nIntercepts specific windows without breaking API compatibility limits.", stateTable = db.styling and db.styling.alerts, stateKey = "enabled", pageId = "Styling", tabIndex = 10 },
+        { name = "Loot Enhancement", desc = "Modernized loot frames supporting the 'loot-under-mouse' position metric.\nAesthetically wraps standard loot distributions and boss kills.", stateTable = db.styling and db.styling.loot, stateKey = "enabled", pageId = "Styling", tabIndex = 5 },
+        { name = "Objective Tracker", desc = "Overrides Blizzard's quest tracking layout with clean styling profiles.\nUses progressive contextual color text to highlight current progress.", stateTable = db.styling and db.styling.objectives, stateKey = "objectiveTrackerSkinning", pageId = "Styling", tabIndex = 4 },
+        { name = "Instance Frames", desc = "Skins the Dungeon Finder, LFG, and Premade Groups menu globally.\nUnifies the complex LFG panel with standard GravityUI colors.", stateTable = db.styling and db.styling.instanceFrames, stateKey = "enabled", pageId = "Styling", tabIndex = 12 },
+        { name = "Experience & Rep", desc = "Draws highly customized, moveable tracking bars for XP and faction Rep.\nMorphs based on max level logic immediately.", stateTable = db.styling and db.styling.xpRep, stateKey = "enabled", pageId = "Styling", tabIndex = 13 },
+        { name = "Chat Styling", desc = "Glassmorphic chat windows with short channel names and clickable URLs.\nOptimizes chat layout and supports dynamic fading for inactivity.", stateTable = db.uiimprovements and db.uiimprovements.chat, stateKey = "enabled", pageId = "Styling", tabIndex = 2 },
+        { name = "Tooltip Styling", desc = "Modernized, dark-themed tooltips with clean health bars.\nDisplays advanced information like Item IDs, Spell IDs, and NPC IDs.", stateTable = db.uiimprovements and db.uiimprovements.tooltip, stateKey = "enabled", pageId = "Styling", tabIndex = 3 },
+        { name = "Character Panel Enhancements", desc = "Directly embeds item level, durability, enchants, and gems onto slots.\nSignificantly enhances the player and inspect character paper dolls.", stateTable = db.uiimprovements and db.uiimprovements.character, stateKey = "enabled", pageId = "Styling", tabIndex = 1 },
         
         -- Profiles (profiles.lua)
         { name = "Manage Profiles", desc = "Create, delete, and copy persistent addon profile hierarchies entirely.\nManages different character needs from a unified interface.", pageId = "profiles", tabIndex = 1 },
@@ -259,5 +256,35 @@ end
 
 ns.GUI:RegisterPage("information", {
     title = "Information",
-    OnBuild = BuildInformationTab,
+    subTabs = {
+        { name = "Information", builder = BuildInformationTab },
+    },
+    OnBuild = function(content)
+        local scrollFrame = content:GetParent()
+        content:Hide()
+        
+        if scrollFrame.ScrollBar then
+            scrollFrame.ScrollBar:Hide()
+            scrollFrame.ScrollBar:HookScript("OnShow", function(self) self:Hide() end)
+        end
+        
+        local opts = GUI.pages["information"]
+        opts.subTabsContainer = ns.GUI:CreateSubTabs(scrollFrame, opts.subTabs)
+        opts.subTabsContainer:SetPoint("TOPLEFT", 10, -10)
+        opts.subTabsContainer:SetPoint("TOPRIGHT", -10, 0)
+    end,
+    OnShow = function(content, subIndex)
+        local opts = GUI.pages["information"]
+        if not opts.subTabsContainer then return end
+        
+        subIndex = subIndex or 1
+        
+        for _, cf in pairs(opts.subTabsContainer.tabContents) do
+            cf:Hide()
+        end
+        
+        if opts.subTabsContainer.tabContents[subIndex] then
+            opts.subTabsContainer.tabContents[subIndex]:Show()
+        end
+    end
 })

@@ -1,12 +1,12 @@
--- GravityUI - Quality of Life Page
+﻿-- GravityUI - Quality of Life Page
 local ADDON_NAME, ns = ...
 
 local GUI = ns.GUI
 local C = GUI.Colors
 
--- ═══════════════════════════════════════════════════════════════
+-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 -- SHARED HELPERS
--- ═══════════════════════════════════════════════════════════════
+-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 local ROW_HEIGHT = 30
 local LABEL_WIDTH = 220
 local WIDGET_WIDTH = 250
@@ -51,6 +51,15 @@ local function CreatePropertyRow(parent, labelText, widgetType, arg1, arg2, arg3
     elseif widgetType == "color" then
          widget = GUI:CreateColorPicker(row, "", arg1, arg2, arg3)
          widget:SetPoint("LEFT", label, "RIGHT", 10, 0)
+    elseif widgetType == "input" then
+         widget = GUI:CreateInput(row, "", arg1, arg2, arg3)
+         widget:SetPoint("LEFT", label, "RIGHT", 10, 0)
+         widget:SetWidth(WIDGET_WIDTH)
+         if widget.editBox then
+             widget.editBox:ClearAllPoints()
+             widget.editBox:SetPoint("LEFT", widget, "LEFT", 0, 0)
+             widget.editBox:SetPoint("RIGHT", widget, "RIGHT", 0, 0)
+         end
     end
     
     if ns.GUI and ns.GUI.RegisterInSearchIndex then
@@ -80,9 +89,9 @@ local function CreateSubHeader(parent, text)
      parent.rowCount = row + 1.0
 end
 
--- ═══════════════════════════════════════════════════════════════
+-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 -- BUILDERS
--- ═══════════════════════════════════════════════════════════════
+-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 -- 1. Automation
 local function BuildAutomation(parent)
@@ -113,12 +122,24 @@ local function BuildAutomation(parent)
     local inviteOptions = {{value="off", text="Off"}, {value="all", text="All Invites"}, {value="friends", text="Friends Only"}, {value="guild", text="Guild Only"}, {value="both", text="Friends & Guild"}}
     AddRow(content, "Auto Accept Invites", "dropdown", inviteOptions, "autoAcceptInvites", dbUI, nil)
     
+    content.rowCount = content.rowCount + 0.2
+    AddRow(content, "Invite on Whisper", "checkbox", "inviteOnWhisper", dbUI, nil)
+    AddRow(content, "   - Invite All", "checkbox", "inviteOnWhisperAll", dbUI, nil)
+    AddRow(content, "   - Only Friends / BNet", "checkbox", "inviteOnWhisperFriends", dbUI, nil)
+    AddRow(content, "   - Only Guild Members", "checkbox", "inviteOnWhisperGuild", dbUI, nil)
+    AddRow(content, "   - Keywords (comma separated)", "input", "inviteOnWhisperKeywords", dbUI, nil)
+    
+    content.rowCount = content.rowCount + 0.2
+    local whisperInfo = GUI:CreateInfoBox(content, "Auto invite players who whisper a keyword. Filter Priority: Invite All > Friends/Guild.")
+    whisperInfo:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
+    content.rowCount = content.rowCount + (whisperInfo:GetHeight() / (ROW_HEIGHT+5)) + 0.2
+    
     AddRow(content, "Auto Accept Quests", "checkbox", "autoAcceptQuest", dbUI, nil)
     AddRow(content, "Auto Turn-In Quests", "checkbox", "autoTurnInQuest", dbUI, nil)
     AddRow(content, "Shift Pauses Accept & Turn-In", "checkbox", "questHoldShift", dbUI, nil)
     
     content.rowCount = content.rowCount + 0.5
-    local usefulHeader = GUI:CreateSectionHeader(content, "Usefull Stuff")
+    local usefulHeader = GUI:CreateSectionHeader(content, "Useful Stuff")
     usefulHeader:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
     usefulHeader:SetPoint("RIGHT", content, "RIGHT", -10, 0)
     content.rowCount = content.rowCount + 1.0
@@ -151,7 +172,7 @@ local function BuildAutomation(parent)
     AddRow(content, "Auto Check EditMode on Spec Switch", "checkbox", "checkEditmodeOnSpecSwitch", dbUI, nil)
     AddRow(content, "AH: Filter Current Expansion", "checkbox", "ahCurrentExpansionFilter", dbUI, nil)
     content.rowCount = content.rowCount + 0.2
-    local ahInfo = GUI:CreateInfoBox(content, "Setzt beim Öffnen des Auktionshauses automatisch den Filter auf die aktuelle Expansion.")
+    local ahInfo = GUI:CreateInfoBox(content, "Automatically sets the filter to the current expansion when opening the auction house.")
     ahInfo:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
     content.rowCount = content.rowCount + (ahInfo:GetHeight() / (ROW_HEIGHT+5)) + 0.2
     
@@ -276,246 +297,59 @@ local function BuildBuffs(parent)
     local dbBuffs = dbUI.buffBorders
     local function RefreshBuffs() if ns.BuffBorders and ns.BuffBorders.Refresh then ns.BuffBorders.Refresh() end end
 
+    -- BORDERS
     AddRow(content, "Enable Buff Borders", "checkbox", "enableBuffs", dbBuffs, RefreshBuffs)
     AddRow(content, "Enable Debuff Borders", "checkbox", "enableDebuffs", dbBuffs, RefreshBuffs)
-    AddRow(content, "Border Size", "slider", 1, 5, "borderSize", dbBuffs, RefreshBuffs, 0.5)
-    AddRow(content, "Font Size", "slider", 8, 24, "fontSize", dbBuffs, RefreshBuffs, 1)
+    AddRow(content, "Border Size", "slider", 0, 5, "borderSize", dbBuffs, RefreshBuffs, 0.5)
     
     content.rowCount = content.rowCount + 0.5
-
-    CreateSubHeader(content, "Hide Blizzard Default Frames")
-    AddRow(content, "Hide Buffs", "checkbox", "hideBuffFrame", dbBuffs, RefreshBuffs)
-    AddRow(content, "Hide Debuffs", "checkbox", "hideDebuffFrame", dbBuffs, RefreshBuffs)
-
-    content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
-end
-
--- 5. Chat
-local function BuildChat(parent)
-    local scroll, content = GUI:CreateScrollableContent(parent)
-    scroll:SetAllPoints()
-    local db = ns.GetDB(); if not db then return end
-    local dbUI = db.uiimprovements
-    content.rowCount = 0
-
-    local function RefreshChat() if ns.Chat and ns.Chat.Refresh then ns.Chat.Refresh() end end
-    local dbChat = dbUI.chat or {}
+    AddRow(content, "Enable Styling", "checkbox", "enableStyling", dbBuffs, RefreshBuffs)
     
-    local header = GUI:CreateSectionHeader(content, "Chat")
-    header:SetPoint("TOPLEFT", 10, -10)
-    header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
-    content.rowCount = 1.3
-    
-    local chatInfo = GUI:CreateInfoBox(content, "Disabling GUI Chatbox will leave the chat at WoW defaults.\n\n|cffFFCC00Note:|r Requires /reload to fully disable this Module.")
-    chatInfo:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
-    content.rowCount = content.rowCount + (chatInfo:GetHeight() / (ROW_HEIGHT+5)) + 0.2
-    
-    AddRow(content, "Enable GUI Chatbox", "checkbox", "enabled", dbChat, function(v)
-        RefreshChat()
-    end)
     content.rowCount = content.rowCount + 0.5
-
-    -- defaults
-    if not dbChat.glass then dbChat.glass = {enabled=true, bgAlpha=0.25, bgColor={0,0,0,1}} end
-    if not dbChat.timestamps then dbChat.timestamps = {enabled=true, format="24h", color={0.6,0.6,0.6,1}} end
-    if not dbChat.urls then dbChat.urls = {enabled=true, color={0,0.75,1,1}} end
-    if not dbChat.editBox then dbChat.editBox = {enabled=true, positionTop=false, bgAlpha=0.4, bgColor={0,0,0,1}} end
-    if not dbChat.fade then dbChat.fade = {enabled=true, delay=15} end
-    -- Chat Tabs Defaults
-    if not dbChat.tabs then 
-        dbChat.tabs = {
-            style = "button",
-            activeTab = {useThemeColor = true, customColor = {1, 0.82, 0, 1}, alpha = 1.0},
-            inactiveTab = {alpha = 0.5}
-        }
+    CreateSubHeader(content, "Effects")
+    AddRow(content, "Disable Blinking", "checkbox", "noBlink", dbBuffs, RefreshBuffs)
+    
+    content.rowCount = content.rowCount + 0.5
+    CreateSubHeader(content, "Font Settings")
+    
+    local LSM = LibStub("LibSharedMedia-3.0", true)
+    local fontOptions = {}
+    if LSM then
+        local fontList = LSM:List("font")
+        if fontList then
+            for _, name in ipairs(fontList) do
+                table.insert(fontOptions, { text = name, value = name })
+            end
+        end
     end
-    -- Ensure sub-tables
-    if not dbChat.tabs.activeTab then dbChat.tabs.activeTab = {useThemeColor = true, customColor = {1, 0.82, 0, 1}, alpha = 1.0, disableBox = false, disableBackground = false} end
-    if dbChat.tabs.activeTab.disableBox == nil then dbChat.tabs.activeTab.disableBox = false end
-    if dbChat.tabs.activeTab.disableBackground == nil then dbChat.tabs.activeTab.disableBackground = false end
-    if not dbChat.tabs.inactiveTab then dbChat.tabs.inactiveTab = {alpha = 0.5} end
-
-    CreateSubHeader(content, "Chat Background")
-    AddRow(content, "Chat Background Texture", "checkbox", "enabled", dbChat.glass, RefreshChat)
-    AddRow(content, "Background Opacity", "slider", 0, 1, "bgAlpha", dbChat.glass, RefreshChat, 0.05)
-    AddRow(content, "Background Color", "color", "bgColor", dbChat.glass, RefreshChat)
-    content.rowCount = content.rowCount + 0.5
-
-    CreateSubHeader(content, "Chat Tabs")
-    AddRow(content, "Disable Box Base & Border", "checkbox", "disableBox", dbChat.tabs.activeTab, RefreshChat)
-    AddRow(content, "Disable Background Entirely", "checkbox", "disableBackground", dbChat.tabs.activeTab, RefreshChat)
-    AddRow(content, "Use Theme Color for Active Tab", "checkbox", "useThemeColor", dbChat.tabs.activeTab, RefreshChat)
-    AddRow(content, "Custom Active Color (if Theme disabled)", "color", "customColor", dbChat.tabs.activeTab, RefreshChat)
-    AddRow(content, "Active Tab Opacity", "slider", 0, 1, "alpha", dbChat.tabs.activeTab, RefreshChat, 0.1)
-    AddRow(content, "Inactive Tab Opacity", "slider", 0, 1, "alpha", dbChat.tabs.inactiveTab, RefreshChat, 0.1)
-    AddRow(content, "Auto Hide Chat Tabs", "checkbox", "hideTabs", dbChat, RefreshChat)
-    content.rowCount = content.rowCount + 0.5
-
-    CreateSubHeader(content, "Input Box Background")
-    AddRow(content, "Input Box Background Texture", "checkbox", "enabled", dbChat.editBox, RefreshChat)
-    AddRow(content, "Background Opacity", "slider", 0, 1, "bgAlpha", dbChat.editBox, RefreshChat, 0.05)
-    AddRow(content, "Background Color", "color", "bgColor", dbChat.editBox, RefreshChat)
-    AddRow(content, "Position Input Box at Top", "checkbox", "positionTop", dbChat.editBox, RefreshChat)
-    AddRow(content, "Width (0 = Auto)", "slider", 0, 1000, "width", dbChat.editBox, RefreshChat, 5)
-    AddRow(content, "Height", "slider", 10, 100, "height", dbChat.editBox, RefreshChat, 1)
-    AddRow(content, "X Offset", "slider", -100, 100, "offsetX", dbChat.editBox, RefreshChat, 1)
-    AddRow(content, "Y Offset", "slider", -100, 100, "offsetY", dbChat.editBox, RefreshChat, 1)
-    content.rowCount = content.rowCount + 0.5
-
-    CreateSubHeader(content, "Message Fade")
-    AddRow(content, "Fade Messages After Inactivity", "checkbox", "enabled", dbChat.fade, RefreshChat)
-    AddRow(content, "Fade Delay (seconds)", "slider", 5, 120, "delay", dbChat.fade, RefreshChat, 5)
-    content.rowCount = content.rowCount + 0.5
-
-    CreateSubHeader(content, "URL Detection")
-    AddRow(content, "Make URLs Clickable", "checkbox", "enabled", dbChat.urls, RefreshChat)
-    local noteUrl = content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    noteUrl:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT+5)))
-    noteUrl:SetWidth(GUI.CONTENT_WIDTH - 40)
-    noteUrl:SetJustifyH("LEFT")
-    noteUrl:SetText("Click any URL in chat to open a copy dialog.")
-    noteUrl:SetTextColor(unpack(C.textMuted))
-    content.rowCount = content.rowCount + 0.8
-    content.rowCount = content.rowCount + 0.5
-
-    CreateSubHeader(content, "Copy Button")
-    local copyOptions = {{value="always", text="Always Show"}, {value="hover", text="Show on Hover"}, {value="disabled", text="Disabled"}}
-    AddRow(content, "Copy Button", "dropdown", copyOptions, "copyButtonMode", dbChat, RefreshChat)
-    content.rowCount = content.rowCount + 0.5
-
-    CreateSubHeader(content, "Timestamps")
-    AddRow(content, "Show Timestamps", "checkbox", "enabled", dbChat.timestamps, RefreshChat)
-    local timeOptions = {{value="12h", text="12-Hour (03:27 PM)"}, {value="24h", text="24-Hour (15:27)"}}
-    AddRow(content, "Format", "dropdown", timeOptions, "format", dbChat.timestamps, RefreshChat)
-    AddRow(content, "Timestamp Color", "color", "color", dbChat.timestamps, RefreshChat)
-    content.rowCount = content.rowCount + 0.5
-
-    CreateSubHeader(content, "UI Cleanup")
-    AddRow(content, "Hide Chat Buttons", "checkbox", "hideButtons", dbChat, RefreshChat)
-    -- Remove old Hide Tabs row (moved up)
-    AddRow(content, "Unclamp Chat (Allow off-screen)", "checkbox", "unclamp", dbChat, RefreshChat)
-
-    content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
-end
-
--- 6. Tooltip
-local function BuildTooltip(parent)
-    local scroll, content = GUI:CreateScrollableContent(parent)
-    scroll:SetAllPoints()
-    local db = ns.GetDB(); if not db then return end
-    local dbUI = db.uiimprovements
-    content.rowCount = 0
-
-    local function RefreshTooltip() if ns.Tooltip and ns.Tooltip.Refresh then ns.Tooltip.Refresh() end end
-    local dbTT = dbUI.tooltip or {}
-    if dbTT.enabled == nil then dbTT.enabled = true end
-    if not dbTT.visibility then dbTT.visibility = {npcs="SHOW", abilities="SHOW", items="SHOW", frames="SHOW", cdm="SHOW", customTrackers="SHOW"} end
-    
-    local header = GUI:CreateSectionHeader(content, "Tooltip")
-    header:SetPoint("TOPLEFT", 10, -10)
-    header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
-    content.rowCount = 1.3
-    
-    CreateSubHeader(content, "General Tooltip Settings")
-    AddRow(content, "Enable Tooltip Module", "checkbox", "enabled", dbTT, RefreshTooltip)
-    AddRow(content, "Anchor to Cursor", "checkbox", "anchorToCursor", dbTT, RefreshTooltip)
-    AddRow(content, "Class Color Names", "checkbox", "classColorName", dbTT, RefreshTooltip)
-    AddRow(content, "Show IDs (Spells/Items)", "checkbox", "showIDs", dbTT, RefreshTooltip)
-    AddRow(content, "Use Theme Color for IDs", "checkbox", "useThemeColorID", dbTT, RefreshTooltip)
-    AddRow(content, "Custom ID Color", "color", "idColor", dbTT, RefreshTooltip)
-    content.rowCount = content.rowCount + 0.5
-
-    CreateSubHeader(content, "Combat & Visibility")
-    AddRow(content, "Hide in Combat", "checkbox", "hideInCombat", dbTT, RefreshTooltip)
-    local modOptions = {{value="NONE", text="None"}, {value="SHIFT", text="Shift"}, {value="CTRL", text="Ctrl"}, {value="ALT", text="Alt"}}
-    AddRow(content, "Combat Override Key", "dropdown", modOptions, "combatKey", dbTT, RefreshTooltip)
-    content.rowCount = content.rowCount + 0.5
-
-    CreateSubHeader(content, "Context Visibility")
-    local visOptions = {{value="SHOW", text="Always Show"}, {value="HIDE", text="Always Hide"}, {value="SHIFT", text="Show on Shift"}, {value="CTRL", text="Show on Ctrl"}, {value="ALT", text="Show on Alt"}}
-    AddRow(content, "World Units (NPCs/Players)", "dropdown", visOptions, "npcs", dbTT.visibility, RefreshTooltip)
-    AddRow(content, "Abilities (Action Bars)", "dropdown", visOptions, "abilities", dbTT.visibility, RefreshTooltip)
-    AddRow(content, "Items (Bags/Bank)", "dropdown", visOptions, "items", dbTT.visibility, RefreshTooltip)
-    AddRow(content, "Unit Frames", "dropdown", visOptions, "frames", dbTT.visibility, RefreshTooltip)
-    AddRow(content, "CDM Icons", "dropdown", visOptions, "cdm", dbTT.visibility, RefreshTooltip)
-    content.rowCount = content.rowCount + 0.5
-
-    CreateSubHeader(content, "Tooltip Styling")
-    AddRow(content, "Enable Custom Square Style", "checkbox", "customStyle", dbTT, RefreshTooltip)
-    AddRow(content, "Hide Health Bar", "checkbox", "hideHealthBar", dbTT, RefreshTooltip)
-    AddRow(content, "Font Size", "slider", 8, 24, "fontSize", dbTT, RefreshTooltip, 1)
-    AddRow(content, "Background Opacity", "slider", 0, 1, "bgAlpha", dbTT, RefreshTooltip, 0.05)
-    AddRow(content, "Background Color", "color", "bgColor", dbTT, RefreshTooltip)
-    AddRow(content, "Use Theme Color for Border", "checkbox", "useThemeColor", dbTT, RefreshTooltip)
-    AddRow(content, "Custom Border Color", "color", "borderColor", dbTT, RefreshTooltip)
-
-    content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
-end
-
--- 7. Character Panel
-local function BuildCharacter(parent)
-    local scroll, content = GUI:CreateScrollableContent(parent)
-    scroll:SetAllPoints()
-    local db = ns.GetDB(); if not db then return end
-    local dbUI = db.uiimprovements
-    content.rowCount = 0
-
-    local function RefreshChar()
-        if ns.Character and ns.Character.RefreshCharacterPane then ns.Character.RefreshCharacterPane() end
-        if ns.Character and ns.Character.RefreshAllFonts then ns.Character.RefreshAllFonts() end
-        if ns.Inspect and ns.Inspect.UpdateInspectFrame then ns.Inspect.UpdateInspectFrame() end
+    -- Fallback/Default font
+    if #fontOptions == 0 then
+        table.insert(fontOptions, { text = "System", value = "Fonts\\FRIZQT__.TTF" })
+        table.insert(fontOptions, { text = "Gravity", value = "Gravity" })
     end
-    local dbChar = dbUI.character or {}
-    if dbChar.enabled == nil then dbChar.enabled = true end
-
-    local header = GUI:CreateSectionHeader(content, "Character Panel")
-    header:SetPoint("TOPLEFT", 10, -10)
-    header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
-    content.rowCount = 1.3
-
-    CreateSubHeader(content, "Appearance")
-    AddRow(content, "Enable Character Panel Styling", "checkbox", "enabled", dbChar, RefreshChar)
-    AddRow(content, "Enable Inspect Panel Styling", "checkbox", "inspectEnabled", dbChar, function() if ns.Inspect and ns.Inspect.UpdateInspectFrame then ns.Inspect.UpdateInspectFrame() end end)
-    AddRow(content, "Panel Scale", "slider", 0.75, 1.5, "panelScale", dbChar, function(val)
-        if CharacterFrame then CharacterFrame:SetScale(1.30 * val) end
-        if ns.Inspect and ns.Inspect.UpdateInspectFrame then ns.Inspect.UpdateInspectFrame() end
-    end, 0.05)
-    AddRow(content, "Use Theme Color for Background", "checkbox", "useThemeBackground", dbChar, function() if ns.Character and ns.Character.RefreshBackground then ns.Character.RefreshBackground() end end)
-    AddRow(content, "Background Color", "color", "panelBgColor", dbChar, function() if ns.Character and ns.Character.RefreshBackground then ns.Character.RefreshBackground() end end)
-    AddRow(content, "Background Opacity", "slider", 0, 100, "panelOpacity", dbChar, function() if ns.Character and ns.Character.RefreshBackground then ns.Character.RefreshBackground() end end, 1)
+    
+    local outlineOptions = {
+        { text = "None", value = "NONE" },
+        { text = "Outline", value = "OUTLINE" },
+        { text = "Thick Outline", value = "THICKOUTLINE" },
+        { text = "Monochrome", value = "MONOCHROME" },
+    }
+    
+    AddRow(content, "Font", "dropdown", fontOptions, "font", dbBuffs, RefreshBuffs)
+    AddRow(content, "Duration Font Size", "slider", 8, 24, "fontSize", dbBuffs, RefreshBuffs, 1)
+    AddRow(content, "Count Font Size", "slider", 8, 24, "countFontSize", dbBuffs, RefreshBuffs, 1)
+    AddRow(content, "Font Outline", "dropdown", outlineOptions, "fontOutline", dbBuffs, RefreshBuffs)
+    AddRow(content, "Duration Color", "color", "fontColor", dbBuffs, RefreshBuffs)
+    AddRow(content, "Count Color", "color", "countColor", dbBuffs, RefreshBuffs)
+    
     content.rowCount = content.rowCount + 0.5
-
-    CreateSubHeader(content, "Slot Overlays")
-    AddRow(content, "Show Equipment Name", "checkbox", "showItemName", dbChar, RefreshChar)
-    AddRow(content, "Show Item Level & Track", "checkbox", "showItemLevel", dbChar, RefreshChar)
-    AddRow(content, "Show Enchant Status", "checkbox", "showEnchants", dbChar, RefreshChar)
-    AddRow(content, "Show Gem Indicators", "checkbox", "showGems", dbChar, RefreshChar)
-    AddRow(content, "Show Durability Bars", "checkbox", "showDurability", dbChar, RefreshChar)
-    content.rowCount = content.rowCount + 0.5
-
-    CreateSubHeader(content, "Stats Panel")
-    AddRow(content, "Show Stat Tooltips", "checkbox", "showTooltips", dbChar, RefreshChar)
-    local statFormats = {{value="percent", text="Percentage (19.5%)"}, {value="rating", text="Rating (1234)"}, {value="both", text="Both"}}
-    AddRow(content, "Secondary Stat Format", "dropdown", statFormats, "secondaryStatFormat", dbChar, RefreshChar)
-    content.rowCount = content.rowCount + 0.5
-
-    CreateSubHeader(content, "Text Sizes")
-    AddRow(content, "Slot Text Size", "slider", 6, 24, "slotTextSize", dbChar, RefreshChar, 1)
-    AddRow(content, "Header Text Size", "slider", 6, 24, "headerTextSize", dbChar, RefreshChar, 1)
-    AddRow(content, "Stats Text Size", "slider", 6, 24, "statsTextSize", dbChar, RefreshChar, 1)
-    content.rowCount = content.rowCount + 0.5
-
-    CreateSubHeader(content, "Text Colors")
-    AddRow(content, "Stats Text Color", "color", "statsTextColor", dbChar, RefreshChar)
-    AddRow(content, "Header Class Color", "checkbox", "headerClassColor", dbChar, RefreshChar)
-    AddRow(content, "Custom Header Color", "color", "headerColor", dbChar, RefreshChar)
-    AddRow(content, "Enchant Class Color", "checkbox", "enchantClassColor", dbChar, RefreshChar)
-    AddRow(content, "Custom Enchant Color", "color", "enchantTextColor", dbChar, RefreshChar)
-    AddRow(content, "No Enchant Color", "color", "noEnchantTextColor", dbChar, RefreshChar)
-    AddRow(content, "Upgrade Track Color", "color", "upgradeTrackColor", dbChar, RefreshChar)
+    CreateSubHeader(content, "Blizzard Frames")
+    AddRow(content, "Hide Blizzard Buff Frame", "checkbox", "hideBuffFrame", dbBuffs, RefreshBuffs)
+    AddRow(content, "Hide Blizzard Debuff Frame", "checkbox", "hideDebuffFrame", dbBuffs, RefreshBuffs)
 
     content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
 end
+
 
 -- 8. Dragonriding (Skyriding)
 local function BuildDragonriding(parent)
@@ -800,11 +634,22 @@ local function BuildMailExtras(parent)
     content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
 end
 
--- ═══════════════════════════════════════════════════════════════
+-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 -- MAIN PAGE
--- ═══════════════════════════════════════════════════════════════
+-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 ns.GUI:RegisterPage("uiimprovements", {
     title = "UI Improvements",
+    subTabs = {
+        { name = "Automation / Stuff", builder = BuildAutomation },
+        { name = "Autohide", builder = BuildAutohide },
+        { name = "Combat", builder = BuildCombat },
+        { name = "Buffs & Debuffs", builder = BuildBuffs },
+        { name = "Dragonriding", builder = BuildDragonriding },
+        { name = "Combat Timer", builder = BuildCombatTimer },
+        { name = "M+ Teleport", builder = BuildTeleport },
+        { name = "World Marks", builder = BuildWorldMarks },
+        { name = "Mail", builder = BuildMailExtras },
+    },
     OnBuild = function(content)
         -- Hide default scrollframe parent
         local scrollFrame = content:GetParent()
@@ -815,22 +660,24 @@ ns.GUI:RegisterPage("uiimprovements", {
             scrollFrame.ScrollBar:HookScript("OnShow", function(self) self:Hide() end)
         end
         
-        -- Create SubTabs
-        local subTabs = GUI:CreateSubTabs(scrollFrame, {
-            { name = "Automation", builder = BuildAutomation },
-            { name = "Autohide", builder = BuildAutohide },
-            { name = "Combat", builder = BuildCombat },
-            { name = "Buffs & Debuffs", builder = BuildBuffs },
-            { name = "Chat", builder = BuildChat },
-            { name = "Tooltip", builder = BuildTooltip },
-            { name = "Character Panel", builder = BuildCharacter },
-            { name = "Dragonriding", builder = BuildDragonriding },
-            { name = "Combat Timer", builder = BuildCombatTimer },
-            { name = "M+ Teleport", builder = BuildTeleport },
-            { name = "World Marks", builder = BuildWorldMarks },
-            { name = "Mail", builder = BuildMailExtras },
-        })
-        subTabs:SetPoint("TOPLEFT", 10, -10)
-        subTabs:SetPoint("TOPRIGHT", -10, 0)
+        local opts = GUI.pages["uiimprovements"]
+        opts.subTabsContainer = GUI:CreateSubTabs(scrollFrame, opts.subTabs)
+        opts.subTabsContainer:SetPoint("TOPLEFT", 10, -10)
+        opts.subTabsContainer:SetPoint("TOPRIGHT", -10, 0)
     end,
+    OnShow = function(content, subIndex)
+        local opts = GUI.pages["uiimprovements"]
+        if not opts.subTabsContainer then return end
+        
+        subIndex = subIndex or 1
+        
+        for _, cf in pairs(opts.subTabsContainer.tabContents) do
+            cf:Hide()
+        end
+        
+        if opts.subTabsContainer.tabContents[subIndex] then
+            opts.subTabsContainer.tabContents[subIndex]:Show()
+        end
+    end
 })
+

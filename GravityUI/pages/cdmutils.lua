@@ -479,6 +479,14 @@ end
 
 ns.GUI:RegisterPage("cdmutils", {
     title = "UI Utilities",
+    subTabs = {
+        { name = "CDM Keybindings", builder = BuildGUICDMKeybinds },
+        { name = "CDM Centering", builder = BuildCDMCentering },
+        { name = "CDM Button Glow", builder = BuildUtils },
+        { name = "Castbar Ticks", builder = BuildCastbar },
+        { name = "CDM Buffbar", builder = BuildCDMBuffbar },
+        { name = "Sound Alerts", builder = BuildSoundAlerts },
+    },
     OnBuild = function(content)
         -- Hide default scrollframe parent
         local scrollFrame = content:GetParent()
@@ -489,16 +497,23 @@ ns.GUI:RegisterPage("cdmutils", {
             scrollFrame.ScrollBar:HookScript("OnShow", function(self) self:Hide() end)
         end
         
-        -- Create SubTabs
-        local subTabs = GUI:CreateSubTabs(scrollFrame, {
-            { name = "Keybindings", builder = BuildGUICDMKeybinds },
-            { name = "CDM Centering", builder = BuildCDMCentering },
-            { name = "Button Glow", builder = BuildUtils },
-            { name = "Castbar", builder = BuildCastbar },
-            { name = "CDM Buffbar", builder = BuildCDMBuffbar },
-            { name = "Sound Alerts", builder = BuildSoundAlerts },
-        })
-        subTabs:SetPoint("TOPLEFT", 10, -10)
-        subTabs:SetPoint("TOPRIGHT", -10, 0)
+        local opts = GUI.pages["cdmutils"]
+        opts.subTabsContainer = GUI:CreateSubTabs(scrollFrame, opts.subTabs)
+        opts.subTabsContainer:SetPoint("TOPLEFT", 10, -10)
+        opts.subTabsContainer:SetPoint("TOPRIGHT", -10, 0)
     end,
+    OnShow = function(content, subIndex)
+        local opts = GUI.pages["cdmutils"]
+        if not opts.subTabsContainer then return end
+        
+        subIndex = subIndex or 1
+        
+        for _, cf in pairs(opts.subTabsContainer.tabContents) do
+            cf:Hide()
+        end
+        
+        if opts.subTabsContainer.tabContents[subIndex] then
+            opts.subTabsContainer.tabContents[subIndex]:Show()
+        end
+    end
 })

@@ -416,6 +416,10 @@ end
 
 ns.GUI:RegisterPage("datapanels", {
     title = "Datapanels",
+    subTabs = {
+        { name = "Minimap Datapanel", builder = BuildMinimapPanel },
+        { name = "Custom Panels", builder = BuildCustomPanels },
+    },
     OnBuild = function(content)
         -- Hide default scrollframe parent
         local scrollFrame = content:GetParent()
@@ -426,12 +430,23 @@ ns.GUI:RegisterPage("datapanels", {
             scrollFrame.ScrollBar:HookScript("OnShow", function(self) self:Hide() end)
         end
         
-        -- Create SubTabs
-        local subTabs = GUI:CreateSubTabs(scrollFrame, {
-            { name = "Minimap Datapanel Settings", builder = BuildMinimapPanel },
-            { name = "Custom Panels", builder = BuildCustomPanels },
-        })
-        subTabs:SetPoint("TOPLEFT", 10, -10)
-        subTabs:SetPoint("TOPRIGHT", -10, 0)
+        local opts = GUI.pages["datapanels"]
+        opts.subTabsContainer = GUI:CreateSubTabs(scrollFrame, opts.subTabs)
+        opts.subTabsContainer:SetPoint("TOPLEFT", 10, -10)
+        opts.subTabsContainer:SetPoint("TOPRIGHT", -10, 0)
     end,
+    OnShow = function(content, subIndex)
+        local opts = GUI.pages["datapanels"]
+        if not opts.subTabsContainer then return end
+        
+        subIndex = subIndex or 1
+        
+        for _, cf in pairs(opts.subTabsContainer.tabContents) do
+            cf:Hide()
+        end
+        
+        if opts.subTabsContainer.tabContents[subIndex] then
+            opts.subTabsContainer.tabContents[subIndex]:Show()
+        end
+    end
 })

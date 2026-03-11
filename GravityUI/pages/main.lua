@@ -200,7 +200,42 @@ local function BuildWelcome(parent)
     welcomeText:SetPoint("TOPLEFT", PADDING, yOffset)
     welcomeText:SetWidth(640)
     welcomeText:SetJustifyH("LEFT")
-    yOffset = yOffset - 45
+    yOffset = yOffset - 40
+    
+    -- Menu Style Settings
+    local styleHeader = ns.GUI:CreateSectionHeader(content, "Navigation Style")
+    styleHeader:SetPoint("TOPLEFT", PADDING, yOffset)
+    yOffset = yOffset - styleHeader.gap - 5
+    
+    local styleInfo = ns.GUI:CreateInfoBox(content, "|cFFFFD100Note:|r Changing the Menu Style requires a UI Reload to take effect.")
+    styleInfo:SetPoint("TOPLEFT", PADDING, yOffset)
+    yOffset = yOffset - styleInfo:GetHeight() - 15
+    
+    local styleOptions = {
+        { text = "Side Menu (Consolidated)", value = "SIDE" },
+        { text = "Side + Top Tabs (Legacy)", value = "SIDE_TOP" },
+    }
+    
+    local initialStyle = db.general.menuStyle
+    local styleDropdown = ns.GUI:CreateDropdown(content, "Select Menu Layout", styleOptions, "menuStyle", db.general, function(val)
+        if val ~= initialStyle then
+            ns.GUI:ShowConfirmation({
+                title = "UI Reload Required",
+                message = "Changing the menu layout style requires a UI Reload to take effect. This will restart the interface.",
+                warningText = "Would you like to reload now?",
+                acceptText = "Yes",
+                cancelText = "No Later",
+                onAccept = function()
+                    ReloadUI()
+                end,
+            })
+            initialStyle = val
+        end
+    end)
+    styleDropdown:SetPoint("TOPLEFT", PADDING, yOffset)
+    yOffset = yOffset - 50
+
+    yOffset = yOffset - 5
     
     -- GravityUI Logo
     local logoWidth = 640
@@ -641,6 +676,14 @@ end
 
 ns.GUI:RegisterPage("main", {
     title = "Main",
+    subTabs = {
+        { name = "Welcome",       builder = BuildWelcome },
+        { name = "Theme Color",   builder = BuildThemeColor },
+        { name = "UI Scale",      builder = BuildUIScale },
+        { name = "Font Settings", builder = BuildFontSettings },
+        { name = "FPS Settings",  builder = BuildFPSSettings },
+        { name = "Edit Mode",     builder = BuildEditMode },
+    },
     OnBuild = function(content)
         local scrollFrame = content:GetParent()
         content:Hide()
@@ -650,15 +693,23 @@ ns.GUI:RegisterPage("main", {
             scrollFrame.ScrollBar:HookScript("OnShow", function(self) self:Hide() end)
         end
         
-        local subTabs = ns.GUI:CreateSubTabs(scrollFrame, {
-            { name = "Welcome",       builder = BuildWelcome },
-            { name = "Theme Color",   builder = BuildThemeColor },
-            { name = "UI Scale",      builder = BuildUIScale },
-            { name = "Font Settings", builder = BuildFontSettings },
-            { name = "FPS Settings",  builder = BuildFPSSettings },
-            { name = "Edit Mode",     builder = BuildEditMode },
-        })
-        subTabs:SetPoint("TOPLEFT", 10, -10)
-        subTabs:SetPoint("TOPRIGHT", -10, 0)
+        local opts = GUI.pages["main"]
+        opts.subTabsContainer = ns.GUI:CreateSubTabs(scrollFrame, opts.subTabs)
+        opts.subTabsContainer:SetPoint("TOPLEFT", 10, -10)
+        opts.subTabsContainer:SetPoint("TOPRIGHT", -10, 0)
     end,
+    OnShow = function(content, subIndex)
+        local opts = GUI.pages["main"]
+        if not opts.subTabsContainer then return end
+        
+        subIndex = subIndex or 1
+        
+        for _, cf in pairs(opts.subTabsContainer.tabContents) do
+            cf:Hide()
+        end
+        
+        if opts.subTabsContainer.tabContents[subIndex] then
+            opts.subTabsContainer.tabContents[subIndex]:Show()
+        end
+    end
 })

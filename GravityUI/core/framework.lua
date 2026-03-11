@@ -1414,171 +1414,140 @@ end
 -- WIDGET: SUB-TABS (Horizontal top-bar style)
 ---------------------------------------------------------------------------
 function GUI:CreateSubTabs(parent, tabs)
+    local db = ns.GetDB()
+    local isSideTop = db and db.general.menuStyle == "SIDE_TOP"
+    
     local container = CreateFrame("Frame", nil, parent)
-    -- Initial height, updated by layout
-    container:SetHeight(35)
+    container:SetPoint("TOPLEFT", 0, 0)
+    container:SetPoint("TOPRIGHT", 0, 0)
     
     local tabButtons = {}
     local tabContents = {}
     
-    -- Store for layout and indexing context
-    local pageId = (GUI.currentSearchContext and GUI.currentSearchContext.pageId) or GUI.buildingPageId
-    if pageId then
-        local page = GUI.pages[pageId]
-        if page then
-            page.lastSubTabsData = tabs
-            page.subTabs = container
+    if isSideTop then
+        container:SetHeight(36)
+        
+        -- Create a background for the tab bar
+        local bg = container:CreateTexture(nil, "BACKGROUND")
+        bg:SetAllPoints()
+        bg:SetColorTexture(C.bgLight[1], C.bgLight[2], C.bgLight[3], 0.3)
+        
+        local underline = container:CreateTexture(nil, "ARTWORK")
+        underline:SetHeight(1)
+        underline:SetPoint("BOTTOMLEFT", 0, 0)
+        underline:SetPoint("BOTTOMRIGHT", 0, 0)
+        underline:SetColorTexture(C.border[1], C.border[2], C.border[3], 0.5)
+        
+        local xOffset = 0
+        local yOffset = 0
+        local rowHeight = 28
+        local spacing = 2
+        local maxWidth = (parent:GetWidth() > 0) and (parent:GetWidth() - 20) or (GUI.CONTENT_WIDTH - 20)
+        
+        for i, tabInfo in ipairs(tabs) do
+            local btn = CreateFrame("Button", nil, container, "BackdropTemplate")
+            
+            -- Calculate width based on text or use a minimum
+            -- More compact padding (20px total)
+            local textWidth = tabInfo.name and (string.len(tabInfo.name) * 8) or 60
+            local btnWidth = math.max(60, textWidth + 20)
+            
+            -- Wrap to next row?
+            if xOffset + btnWidth > maxWidth then
+                xOffset = 0
+                yOffset = yOffset - rowHeight - spacing
+            end
+            
+            btn:SetSize(btnWidth, rowHeight)
+            btn:SetPoint("TOPLEFT", xOffset, yOffset)
+            
+            xOffset = xOffset + btnWidth + spacing
+            
+            local text = btn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+            GUI:SetFont(text, 12, "")
+            text:SetPoint("CENTER", 0, 0)
+            text:SetText(tabInfo.name or ("Tab " .. i))
+            text:SetTextColor(C.textMuted[1], C.textMuted[2], C.textMuted[3], 1)
+            btn.text = text
+            
+            local activeLine = btn:CreateTexture(nil, "OVERLAY")
+            activeLine:SetHeight(1)
+            activeLine:SetPoint("BOTTOMLEFT", 4, 1)
+            activeLine:SetPoint("BOTTOMRIGHT", -4, 1)
+            activeLine:SetColorTexture(C.accent[1], C.accent[2], C.accent[3], 0.8)
+            activeLine:Hide()
+            btn.activeLine = activeLine
+
+            btn:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8" })
+            btn:SetBackdropColor(0, 0, 0, 0)
+            
+            btn:SetScript("OnEnter", function(self)
+                if not self.isActive then
+                    self:SetBackdropColor(C.tabHover[1], C.tabHover[2], C.tabHover[3], C.tabHover[4])
+                    self.text:SetTextColor(C.textBright[1], C.textBright[2], C.textBright[3], 1)
+                end
+            end)
+            
+            btn:SetScript("OnLeave", function(self)
+                if not self.isActive then
+                    self:SetBackdropColor(0, 0, 0, 0)
+                    self.text:SetTextColor(C.textMuted[1], C.textMuted[2], C.textMuted[3], 1)
+                end
+            end)
+            
+            btn:SetScript("OnClick", function()
+                local pageId = GUI.currentPageId
+                if pageId then
+                     local idx
+                     for t, id in ipairs(GUI.pageOrder) do if id == pageId then idx = t; break end end
+                     if idx then GUI:ShowPage(idx, i) end
+                end
+            end)
+            
+            tabButtons[i] = btn
         end
+        
+        -- Set container height based on rows used
+        container:SetHeight(math.abs(yOffset) + rowHeight + 4)
+    else
+        container:SetHeight(1)
     end
     
-    -- Store for layout update
-    container.tabButtons = tabButtons
-    
-    local BUTTON_HEIGHT = 28
-    local SPACING_X = 2
-    local SPACING_Y = 5
-    
     for i, tabInfo in ipairs(tabs) do
-        local btn = CreateFrame("Button", nil, container)
-        btn:SetHeight(BUTTON_HEIGHT)
-        
-        local text = btn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-        SetFont(text, 13, "", C.textMuted) -- Default to muted text
-        text:SetText(tabInfo.name)
-        text:SetPoint("CENTER", 0, 0)
-        btn.text = text
-        
-        local width = text:GetStringWidth() + 24
-        btn:SetSize(width, BUTTON_HEIGHT)
-        
-        -- Modern flat style: no visible border or solid background
-        -- Active Tab Upward Glow (Gradient)
-        local glow = btn:CreateTexture(nil, "BACKGROUND")
-        glow:SetAllPoints()
-        glow:SetTexture("Interface\\Buttons\\WHITE8x8")
-        -- "VERTICAL" gradient: min (bottom) to max (top) - lowered opacity to 0.15 for readability
-        glow:SetGradient("VERTICAL", CreateColor(C.accent[1], C.accent[2], C.accent[3], 0.12), CreateColor(C.accent[1], C.accent[2], C.accent[3], 0))
-        glow:Hide()
-        btn.glow = glow
-        
-        -- Active Tab Bottom Underline
-        local underline = btn:CreateTexture(nil, "ARTWORK")
-        underline:SetTexture("Interface\\Buttons\\WHITE8x8")
-        underline:SetColorTexture(C.accent[1], C.accent[2], C.accent[3], 1)
-        underline:SetHeight(2)
-        -- Match the full width of the glow background
-        underline:SetPoint("BOTTOMLEFT", btn, "BOTTOMLEFT", 0, 0)
-        underline:SetPoint("BOTTOMRIGHT", btn, "BOTTOMRIGHT", 0, 0)
-        underline:Hide() -- Hidden by default
-        btn.underline = underline
-        
-        -- Hover State Overlay (Subtle White Glow)
-        local hoverGrad = btn:CreateTexture(nil, "HIGHLIGHT")
-        hoverGrad:SetAllPoints()
-        hoverGrad:SetTexture("Interface\\Buttons\\WHITE8x8")
-        hoverGrad:SetGradient("VERTICAL", CreateColor(1, 1, 1, 0.08), CreateColor(1, 1, 1, 0))
-        hoverGrad:SetBlendMode("ADD")
-        
-        -- Register Tab in Search Index
-        if GUI.currentSearchContext then
-            local prevTab = GUI.currentSearchContext.tabIndex
-            GUI:SetSearchContext(GUI.currentSearchContext.pageId, i)
-            GUI:RegisterInSearchIndex(tabInfo.name, btn)
-            GUI:SetSearchContext(GUI.currentSearchContext.pageId, prevTab)
-        end
-        
         local contentFrame = CreateFrame("Frame", nil, parent)
+        contentFrame:SetPoint("TOPLEFT", container, "BOTTOMLEFT", 0, 0)
         contentFrame:SetPoint("BOTTOMRIGHT", 0, 0)
         contentFrame:Hide()
         tabContents[i] = contentFrame
         
         if tabInfo.builder then
-            -- Set search context for the tab
             if GUI.currentSearchContext then
                 GUI:SetSearchContext(GUI.currentSearchContext.pageId, i)
             end
-            
             tabInfo.builder(contentFrame)
-            
-            -- Restore page-level context (no tab)
             if GUI.currentSearchContext then
                 GUI:SetSearchContext(GUI.currentSearchContext.pageId, 0)
             end
         end
-        
-        btn:SetScript("OnEnter", function(self)
-            if not self.isActive then
-                self.text:SetTextColor(C.text[1], C.text[2], C.text[3], 1)
-            end
-        end)
-        
-        btn:SetScript("OnLeave", function(self)
-            if not self.isActive then
-                self.text:SetTextColor(C.textMuted[1], C.textMuted[2], C.textMuted[3], 1)
-            end
-        end)
-        
-        btn:SetScript("OnClick", function()
-            for j, otherBtn in ipairs(tabButtons) do
-                local isSelected = (i == j)
-                otherBtn.isActive = isSelected
-                if isSelected then
-                    otherBtn.text:SetTextColor(C.accent[1], C.accent[2], C.accent[3], 1)
-                    otherBtn.glow:Show()
-                    otherBtn.underline:Show()
-                    tabContents[j]:Show()
-                else
-                    otherBtn.text:SetTextColor(C.textMuted[1], C.textMuted[2], C.textMuted[3], 1)
-                    otherBtn.glow:Hide()
-                    otherBtn.underline:Hide()
-                    tabContents[j]:Hide()
-                end
-            end
-            if tabInfo.fn then
-                tabInfo.fn()
-            end
-        end)
-        
-        tabButtons[i] = btn
     end
     
-    -- Dynamic Layout Update
-    local function UpdateLayout()
-        local width = container:GetWidth()
-        if not width or width < 10 then return end
-        
-        local x = 0
-        local y = 0
-        
-        for _, btn in ipairs(container.tabButtons) do
-            local btnWidth = btn:GetWidth()
-            
-            -- Wrap?
-            if (x + btnWidth) > width and x > 0 then
-                x = 0
-                y = y - (BUTTON_HEIGHT + SPACING_Y)
+    container.tabContents = tabContents
+    container.tabButtons = tabButtons
+    
+    -- Function to update button states (called by ShowPage)
+    container.UpdateButtons = function(self, activeIndex)
+        if not isSideTop then return end
+        for i, btn in ipairs(self.tabButtons) do
+            if i == activeIndex then
+                btn.isActive = true
+                btn.text:SetTextColor(C.accent[1], C.accent[2], C.accent[3], 1)
+                btn.activeLine:Show()
+            else
+                btn.isActive = false
+                btn.text:SetTextColor(C.textMuted[1], C.textMuted[2], C.textMuted[3], 1)
+                btn.activeLine:Hide()
             end
-            
-            btn:ClearAllPoints()
-            btn:SetPoint("TOPLEFT", x, y)
-            
-            x = x + btnWidth + SPACING_X
         end
-        
-        local totalHeight = math.abs(y) + BUTTON_HEIGHT + 5
-        container:SetHeight(totalHeight)
-    end
-    
-    container:SetScript("OnSizeChanged", UpdateLayout)
-    
-    -- Content Anchoring
-    for _, cf in pairs(tabContents) do
-         cf:SetPoint("TOPLEFT", container, "BOTTOMLEFT", 0, -10)
-    end
-    
-    -- Select first tab
-    if tabButtons[1] then
-        tabButtons[1]:GetScript("OnClick")(tabButtons[1])
     end
     
     return container

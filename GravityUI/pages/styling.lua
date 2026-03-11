@@ -1,4 +1,4 @@
-local ADDON_NAME, ns = ...
+﻿local ADDON_NAME, ns = ...
 local GUI = ns.GUI
 local C = GUI.Colors
 
@@ -80,9 +80,9 @@ local function CreateStylingRow(container, labelText, widgetType, arg1, arg2, ar
     return row, widget
 end
 
--- ═══════════════════════════════════════════════════════════════
+-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 -- BUILDER: GAME MENU (Tab 1)
--- ═══════════════════════════════════════════════════════════════
+-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 local function BuildGameMenuPanel(parent)
     local scroll, content = GUI:CreateScrollableContent(parent)
     scroll:SetAllPoints()
@@ -162,9 +162,9 @@ local function BuildGameMenuPanel(parent)
     content:SetHeight(math.abs(yOffset) + 20)
 end
 
--- ═══════════════════════════════════════════════════════════════
+-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 -- BUILDER: CHAT BUBBLES (Tab 2)
--- ═══════════════════════════════════════════════════════════════
+-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 local function BuildChatBubblesPanel(parent)
     local scroll, content = GUI:CreateScrollableContent(parent)
     scroll:SetAllPoints()
@@ -205,9 +205,9 @@ local function BuildChatBubblesPanel(parent)
     content:SetHeight(math.abs(yOffset) + 20)
 end
 
--- ═══════════════════════════════════════════════════════════════
+-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 -- BUILDER: READY CHECK (Tab 3)
--- ═══════════════════════════════════════════════════════════════
+-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 local function BuildReadyCheckPanel(parent)
     local scroll, content = GUI:CreateScrollableContent(parent)
     scroll:SetAllPoints()
@@ -290,9 +290,9 @@ local function BuildReadyCheckPanel(parent)
     content:SetHeight(math.abs(yOffset) + 40)
 end
 
--- ═══════════════════════════════════════════════════════════════
+-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 -- BUILDER: KEYSTONE (Tab 4)
--- ═══════════════════════════════════════════════════════════════
+-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 local function BuildKeystonePanel(parent)
     local scroll, content = GUI:CreateScrollableContent(parent)
     scroll:SetAllPoints()
@@ -358,9 +358,9 @@ local function BuildKeystonePanel(parent)
     content:SetHeight(math.abs(yOffset) + 20)
 end
 
--- ═══════════════════════════════════════════════════════════════
+-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 -- BUILDER: POWER BAR (Tab 5)
--- ═══════════════════════════════════════════════════════════════
+-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 local function BuildPowerBarPanel(parent)
     local scroll, content = GUI:CreateScrollableContent(parent)
     scroll:SetAllPoints()
@@ -399,9 +399,9 @@ local function BuildPowerBarPanel(parent)
     content:SetHeight(math.abs(yOffset) + 20)
 end
 
--- ═══════════════════════════════════════════════════════════════
+-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 -- BUILDER: ALERTS (Tab 6)
--- ═══════════════════════════════════════════════════════════════
+-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 local function BuildAlertsPanel(parent)
     local scroll, content = GUI:CreateScrollableContent(parent)
     scroll:SetAllPoints()
@@ -518,9 +518,9 @@ local function BuildAlertsPanel(parent)
     content:SetHeight(math.abs(yOffset) + 20)
 end
 
--- ═══════════════════════════════════════════════════════════════
+-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 -- BUILDER: LOOT (Tab 7)
--- ═══════════════════════════════════════════════════════════════
+-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 local function BuildLootPanel(parent)
     local scroll, content = GUI:CreateScrollableContent(parent)
     scroll:SetAllPoints()
@@ -815,9 +815,9 @@ local function BuildLootPanel(parent)
     content:SetHeight(math.abs(yOffset) + 20)
 end
 
--- ═══════════════════════════════════════════════════════════════
+-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 -- BUILDER: OBJECTIVES (Tab 9)
--- ═══════════════════════════════════════════════════════════════
+-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 local function BuildObjectivesPanel(parent)
     local scroll, content = GUI:CreateScrollableContent(parent)
     scroll:SetAllPoints()
@@ -923,9 +923,9 @@ local function BuildObjectivesPanel(parent)
     content:SetHeight(math.abs(yOffset) + 20)
 end
 
--- ═══════════════════════════════════════════════════════════════
+-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 -- BUILDER: WIP PANELS (Placeholder)
--- ═══════════════════════════════════════════════════════════════
+-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 local function BuildPlaceholderPanel(parent)
     local scroll, content = GUI:CreateScrollableContent(parent)
     scroll:SetAllPoints()
@@ -934,9 +934,9 @@ local function BuildPlaceholderPanel(parent)
     content:SetHeight(50)
 end
 
--- ═══════════════════════════════════════════════════════════════
+-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 -- BUILDER: INSTANCE (Tab 10)
--- ═══════════════════════════════════════════════════════════════
+-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 local function BuildInstancePanel(parent)
     local scroll, content = GUI:CreateScrollableContent(parent)
     scroll:SetAllPoints()
@@ -1010,9 +1010,9 @@ local function BuildInstancePanel(parent)
     content:SetHeight(math.abs(yOffset) + 20)
 end
 
--- ═══════════════════════════════════════════════════════════════
+-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 -- BUILDER: XP / REP (Tab 11)
--- ═══════════════════════════════════════════════════════════════
+-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 local function BuildXPRepPanel(parent)
     local scroll, content = GUI:CreateScrollableContent(parent)
     scroll:SetAllPoints()
@@ -1027,8 +1027,29 @@ local function BuildXPRepPanel(parent)
     
     local db = ns.db.profile.styling.xpRep
     
-    local row1 = CreateStylingRow(content, "Enable XP/Rep Module", "checkbox", "enabled", db, function()
+    local row1 = CreateStylingRow(content, "Enable XP/Rep Module", "checkbox", "enabled", db, function(val)
+        if val then
+            -- Automate hiding Blizzard bars when GravityUI module is enabled
+            local dbUI = ns.db.profile.uiimprovements
+            dbUI.hideXPBar = true
+            dbUI.hideReputationBar = true
+            if ns.ApplyAutohideSettings then ns.ApplyAutohideSettings() end
+        end
+
         if ns.XPRep and ns.XPRep.Refresh then ns.XPRep:Refresh() end
+
+        -- Refresh the page to update the Blizzard hide checkboxes visually
+        local page = GUI.pages["Styling"]
+        if page and page.subTabsContainer and GUI.MainFrame and GUI.MainFrame:IsShown() then
+            local subIndex = GUI.currentSubTabIndex or 1
+            local contentFrame = page.subTabsContainer.tabContents[subIndex]
+            local tabInfo = page.subTabs[subIndex]
+            
+            if contentFrame and tabInfo and tabInfo.builder then
+                GUI:ClearPageContent(contentFrame)
+                tabInfo.builder(contentFrame)
+            end
+        end
     end)
     row1:SetPoint("TOPLEFT", PAD, yOffset)
     yOffset = yOffset - ROW_HEIGHT - 5
@@ -1181,13 +1202,303 @@ local function BuildXPRepPanel(parent)
     content:SetHeight(math.abs(yOffset) + 20)
 end
 
--- ═══════════════════════════════════════════════════════════════
+-- 5. Chat
+local function BuildChat(parent)
+    local scroll, content = GUI:CreateScrollableContent(parent)
+    scroll:SetAllPoints()
+    local db = ns.GetDB(); if not db then return end
+    local dbUI = db.uiimprovements
+    
+    local yOffset = -10
+    local PAD = 10
+
+    local function RefreshChat() if ns.Chat and ns.Chat.Refresh then ns.Chat.Refresh() end end
+    local dbChat = dbUI.chat or {}
+    
+    local header = GUI:CreateSectionHeader(content, "Chat")
+    header:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - header.gap - 10
+    
+    local chatInfo = GUI:CreateInfoBox(content, "Disabling GUI Chatbox will leave the chat at WoW defaults.\n\n|cffFFCC00Note:|r Requires /reload to fully disable this Module.")
+    chatInfo:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - chatInfo:GetHeight() - 10
+    
+    local r1 = CreateStylingRow(content, "Enable GUI Chatbox", "checkbox", "enabled", dbChat, function(v)
+        RefreshChat()
+    end)
+    r1:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - 35
+
+    -- defaults
+    if not dbChat.glass then dbChat.glass = {enabled=true, bgAlpha=0.25, bgColor={0,0,0,1}} end
+    if not dbChat.timestamps then dbChat.timestamps = {enabled=true, format="24h", color={0.6,0.6,0.6,1}} end
+    if not dbChat.urls then dbChat.urls = {enabled=true, color={0,0.75,1,1}} end
+    if not dbChat.editBox then dbChat.editBox = {enabled=true, positionTop=false, bgAlpha=0.4, bgColor={0,0,0,1}} end
+    if not dbChat.fade then dbChat.fade = {enabled=true, delay=15} end
+    -- Chat Tabs Defaults
+    if not dbChat.tabs then 
+        dbChat.tabs = {
+            style = "button",
+            activeTab = {useThemeColor = true, customColor = {1, 0.82, 0, 1}, alpha = 1.0},
+            inactiveTab = {alpha = 0.5}
+        }
+    end
+    -- Ensure sub-tables
+    if not dbChat.tabs.activeTab then dbChat.tabs.activeTab = {useThemeColor = true, customColor = {1, 0.82, 0, 1}, alpha = 1.0, disableBox = false, disableBackground = false} end
+    if dbChat.tabs.activeTab.disableBox == nil then dbChat.tabs.activeTab.disableBox = false end
+    if dbChat.tabs.activeTab.disableBackground == nil then dbChat.tabs.activeTab.disableBackground = false end
+    if not dbChat.tabs.inactiveTab then dbChat.tabs.inactiveTab = {alpha = 0.5} end
+
+        local function MakeSubHeader(txt)
+        local h = CreateFrame("Frame", nil, content)
+        h:SetSize(GUI.CONTENT_WIDTH - 20, 20)
+        local t = h:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        if ns.GUI.SetFont then ns.GUI:SetFont(t, 12, "") end
+        t:SetPoint("LEFT")
+        t:SetText(txt)
+        t:SetTextColor(unpack(GUI.Colors.accent))
+        h:SetPoint("TOPLEFT", PAD, yOffset)
+        yOffset = yOffset - 25
+        return h
+    end
+
+    local function MakeRow(...)
+        local row = CreateStylingRow(content, ...)
+        row:SetPoint("TOPLEFT", PAD, yOffset)
+        yOffset = yOffset - 35
+        return row
+    end
+
+    MakeSubHeader("Chat Background")
+    MakeRow("Chat Background Texture", "checkbox", "enabled", dbChat.glass, RefreshChat)
+    MakeRow("Background Opacity", "slider", 0, 1, "bgAlpha", dbChat.glass, RefreshChat, 0.05)
+    MakeRow("Background Color", "color", "bgColor", dbChat.glass, RefreshChat)
+
+    MakeSubHeader("Chat Tabs")
+    MakeRow("Disable Box Base & Border", "checkbox", "disableBox", dbChat.tabs.activeTab, RefreshChat)
+    MakeRow("Disable Background Entirely", "checkbox", "disableBackground", dbChat.tabs.activeTab, RefreshChat)
+    MakeRow("Use Theme Color for Active Tab", "checkbox", "useThemeColor", dbChat.tabs.activeTab, RefreshChat)
+    MakeRow("Custom Active Color", "color", "customColor", dbChat.tabs.activeTab, RefreshChat)
+    MakeRow("Active Tab Opacity", "slider", 0, 1, "alpha", dbChat.tabs.activeTab, RefreshChat, 0.1)
+    MakeRow("Inactive Tab Opacity", "slider", 0, 1, "alpha", dbChat.tabs.inactiveTab, RefreshChat, 0.1)
+    MakeRow("Auto Hide Chat Tabs", "checkbox", "hideTabs", dbChat, RefreshChat)
+
+    MakeSubHeader("Input Box Background")
+    MakeRow("Input Box Background Texture", "checkbox", "enabled", dbChat.editBox, RefreshChat)
+    MakeRow("Background Opacity", "slider", 0, 1, "bgAlpha", dbChat.editBox, RefreshChat, 0.05)
+    MakeRow("Background Color", "color", "bgColor", dbChat.editBox, RefreshChat)
+    MakeRow("Position Input Box at Top", "checkbox", "positionTop", dbChat.editBox, RefreshChat)
+    MakeRow("Width (0 = Auto)", "slider", 0, 1000, "width", dbChat.editBox, RefreshChat, 5)
+    MakeRow("Height", "slider", 10, 100, "height", dbChat.editBox, RefreshChat, 1)
+    MakeRow("X Offset", "slider", -100, 100, "offsetX", dbChat.editBox, RefreshChat, 1)
+    MakeRow("Y Offset", "slider", -100, 100, "offsetY", dbChat.editBox, RefreshChat, 1)
+
+    MakeSubHeader("Message Fade")
+    MakeRow("Fade Messages After Inactivity", "checkbox", "enabled", dbChat.fade, RefreshChat)
+    MakeRow("Fade Delay (seconds)", "slider", 5, 120, "delay", dbChat.fade, RefreshChat, 5)
+
+    MakeSubHeader("URL Detection")
+    MakeRow("Make URLs Clickable", "checkbox", "enabled", dbChat.urls, RefreshChat)
+    local noteUrl = content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    noteUrl:SetPoint("TOPLEFT", PAD, yOffset)
+    noteUrl:SetWidth(GUI.CONTENT_WIDTH - 40)
+    noteUrl:SetJustifyH("LEFT")
+    noteUrl:SetText("Click any URL in chat to open a copy dialog.")
+    noteUrl:SetTextColor(unpack(C.textMuted))
+    yOffset = yOffset - 30
+
+    MakeSubHeader("Copy Button")
+    local copyOptions = {{value="always", text="Always Show"}, {value="hover", text="Show on Hover"}, {value="disabled", text="Disabled"}}
+    MakeRow("Copy Button", "dropdown", copyOptions, "copyButtonMode", dbChat, RefreshChat)
+
+    MakeSubHeader("Timestamps")
+    MakeRow("Show Timestamps", "checkbox", "enabled", dbChat.timestamps, RefreshChat)
+    local timeOptions = {{value="12h", text="12-Hour (03:27 PM)"}, {value="24h", text="24-Hour (15:27)"}}
+    MakeRow("Format", "dropdown", timeOptions, "format", dbChat.timestamps, RefreshChat)
+    MakeRow("Timestamp Color", "color", "color", dbChat.timestamps, RefreshChat)
+
+    MakeSubHeader("UI Cleanup")
+    MakeRow("Hide Chat Buttons", "checkbox", "hideButtons", dbChat, RefreshChat)
+    MakeRow("Unclamp Chat (Allow off-screen)", "checkbox", "unclamp", dbChat, RefreshChat)
+
+    content:SetHeight(math.abs(yOffset) + 20)
+end
+
+-- 6. Tooltip
+local function BuildTooltip(parent)
+    local scroll, content = GUI:CreateScrollableContent(parent)
+    scroll:SetAllPoints()
+    local db = ns.GetDB(); if not db then return end
+    local dbUI = db.uiimprovements
+    
+    local yOffset = -10
+    local PAD = 10
+
+    local function RefreshTooltip() if ns.Tooltip and ns.Tooltip.Refresh then ns.Tooltip.Refresh() end end
+    local dbTT = dbUI.tooltip or {}
+    if dbTT.enabled == nil then dbTT.enabled = true end
+    if not dbTT.visibility then dbTT.visibility = {npcs="SHOW", abilities="SHOW", items="SHOW", frames="SHOW", cdm="SHOW", customTrackers="SHOW"} end
+    
+    local header = GUI:CreateSectionHeader(content, "Tooltip")
+    header:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - header.gap - 10
+
+        local function MakeSubHeader(txt)
+        local h = CreateFrame("Frame", nil, content)
+        h:SetSize(GUI.CONTENT_WIDTH - 20, 20)
+        local t = h:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        if ns.GUI.SetFont then ns.GUI:SetFont(t, 12, "") end
+        t:SetPoint("LEFT")
+        t:SetText(txt)
+        t:SetTextColor(unpack(GUI.Colors.accent))
+        h:SetPoint("TOPLEFT", PAD, yOffset)
+        yOffset = yOffset - 25
+        return h
+    end
+
+    local function MakeRow(...)
+        local row = CreateStylingRow(content, ...)
+        row:SetPoint("TOPLEFT", PAD, yOffset)
+        yOffset = yOffset - 35
+        return row
+    end
+    
+    MakeSubHeader("General Tooltip Settings")
+    MakeRow("Enable Tooltip Module", "checkbox", "enabled", dbTT, RefreshTooltip)
+    MakeRow("Anchor to Cursor", "checkbox", "anchorToCursor", dbTT, RefreshTooltip)
+    MakeRow("Class Color Names", "checkbox", "classColorName", dbTT, RefreshTooltip)
+    MakeRow("Show IDs (Spells/Items)", "checkbox", "showIDs", dbTT, RefreshTooltip)
+    MakeRow("Use Theme Color for IDs", "checkbox", "useThemeColorID", dbTT, RefreshTooltip)
+    MakeRow("Custom ID Color", "color", "idColor", dbTT, RefreshTooltip)
+
+    MakeSubHeader("Combat & Visibility")
+    MakeRow("Hide in Combat", "checkbox", "hideInCombat", dbTT, RefreshTooltip)
+    local modOptions = {{value="NONE", text="None"}, {value="SHIFT", text="Shift"}, {value="CTRL", text="Ctrl"}, {value="ALT", text="Alt"}}
+    MakeRow("Combat Override Key", "dropdown", modOptions, "combatKey", dbTT, RefreshTooltip)
+
+    MakeSubHeader("Context Visibility")
+    local visOptions = {{value="SHOW", text="Always Show"}, {value="HIDE", text="Always Hide"}, {value="SHIFT", text="Show on Shift"}, {value="CTRL", text="Show on Ctrl"}, {value="ALT", text="Show on Alt"}}
+    MakeRow("World Units (NPCs/Players)", "dropdown", visOptions, "npcs", dbTT.visibility, RefreshTooltip)
+    MakeRow("Abilities (Action Bars)", "dropdown", visOptions, "abilities", dbTT.visibility, RefreshTooltip)
+    MakeRow("Items (Bags/Bank)", "dropdown", visOptions, "items", dbTT.visibility, RefreshTooltip)
+    MakeRow("Unit Frames", "dropdown", visOptions, "frames", dbTT.visibility, RefreshTooltip)
+    MakeRow("CDM Icons", "dropdown", visOptions, "cdm", dbTT.visibility, RefreshTooltip)
+
+    MakeSubHeader("Tooltip Styling")
+    MakeRow("Enable Custom Square Style", "checkbox", "customStyle", dbTT, RefreshTooltip)
+    MakeRow("Hide Health Bar", "checkbox", "hideHealthBar", dbTT, RefreshTooltip)
+    MakeRow("Font Size", "slider", 8, 24, "fontSize", dbTT, RefreshTooltip, 1)
+    MakeRow("Background Opacity", "slider", 0, 1, "bgAlpha", dbTT, RefreshTooltip, 0.05)
+    MakeRow("Background Color", "color", "bgColor", dbTT, RefreshTooltip)
+    MakeRow("Use Theme Color for Border", "checkbox", "useThemeColor", dbTT, RefreshTooltip)
+    MakeRow("Custom Border Color", "color", "borderColor", dbTT, RefreshTooltip)
+
+    content:SetHeight(math.abs(yOffset) + 20)
+end
+
+-- 7. Character Panel
+local function BuildCharacter(parent)
+    local scroll, content = GUI:CreateScrollableContent(parent)
+    scroll:SetAllPoints()
+    local db = ns.GetDB(); if not db then return end
+    local dbUI = db.uiimprovements
+    
+    local yOffset = -10
+    local PAD = 10
+
+    local function RefreshChar()
+        if ns.Character and ns.Character.RefreshCharacterPane then ns.Character.RefreshCharacterPane() end
+        if ns.Character and ns.Character.RefreshAllFonts then ns.Character.RefreshAllFonts() end
+        if ns.Inspect and ns.Inspect.UpdateInspectFrame then ns.Inspect.UpdateInspectFrame() end
+    end
+    local dbChar = dbUI.character or {}
+    if dbChar.enabled == nil then dbChar.enabled = true end
+
+    local header = GUI:CreateSectionHeader(content, "Character Panel")
+    header:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - header.gap - 10
+
+        local function MakeSubHeader(txt)
+        local h = CreateFrame("Frame", nil, content)
+        h:SetSize(GUI.CONTENT_WIDTH - 20, 20)
+        local t = h:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        if ns.GUI.SetFont then ns.GUI:SetFont(t, 12, "") end
+        t:SetPoint("LEFT")
+        t:SetText(txt)
+        t:SetTextColor(unpack(GUI.Colors.accent))
+        h:SetPoint("TOPLEFT", PAD, yOffset)
+        yOffset = yOffset - 25
+        return h
+    end
+
+    local function MakeRow(...)
+        local row = CreateStylingRow(content, ...)
+        row:SetPoint("TOPLEFT", PAD, yOffset)
+        yOffset = yOffset - 35
+        return row
+    end
+
+    MakeSubHeader("Appearance")
+    MakeRow("Enable Character Panel Styling", "checkbox", "enabled", dbChar, RefreshChar)
+    MakeRow("Enable Inspect Panel Styling", "checkbox", "inspectEnabled", dbChar, function() if ns.Inspect and ns.Inspect.UpdateInspectFrame then ns.Inspect.UpdateInspectFrame() end end)
+    MakeRow("Panel Scale", "slider", 0.75, 1.5, "panelScale", dbChar, function(val)
+        if CharacterFrame then CharacterFrame:SetScale(1.30 * val) end
+        if ns.Inspect and ns.Inspect.UpdateInspectFrame then ns.Inspect.UpdateInspectFrame() end
+    end, 0.05)
+    MakeRow("Use Theme Color for Background", "checkbox", "useThemeBackground", dbChar, function() if ns.Character and ns.Character.RefreshBackground then ns.Character.RefreshBackground() end end)
+    MakeRow("Background Color", "color", "panelBgColor", dbChar, function() if ns.Character and ns.Character.RefreshBackground then ns.Character.RefreshBackground() end end)
+    MakeRow("Background Opacity", "slider", 0, 100, "panelOpacity", dbChar, function() if ns.Character and ns.Character.RefreshBackground then ns.Character.RefreshBackground() end end, 1)
+
+    MakeSubHeader("Slot Overlays")
+    MakeRow("Show Equipment Name", "checkbox", "showItemName", dbChar, RefreshChar)
+    MakeRow("Show Item Level & Track", "checkbox", "showItemLevel", dbChar, RefreshChar)
+    MakeRow("Show Enchant Status", "checkbox", "showEnchants", dbChar, RefreshChar)
+    MakeRow("Show Gem Indicators", "checkbox", "showGems", dbChar, RefreshChar)
+    MakeRow("Show Durability Bars", "checkbox", "showDurability", dbChar, RefreshChar)
+
+    MakeSubHeader("Stats Panel")
+    MakeRow("Show Stat Tooltips", "checkbox", "showTooltips", dbChar, RefreshChar)
+    local statFormats = {{value="percent", text="Percentage (19.5%)"}, {value="rating", text="Rating (1234)"}, {value="both", text="Both"}}
+    MakeRow("Secondary Stat Format", "dropdown", statFormats, "secondaryStatFormat", dbChar, RefreshChar)
+
+    MakeSubHeader("Text Sizes")
+    MakeRow("Slot Text Size", "slider", 6, 24, "slotTextSize", dbChar, RefreshChar, 1)
+    MakeRow("Header Text Size", "slider", 6, 24, "headerTextSize", dbChar, RefreshChar, 1)
+    MakeRow("Stats Text Size", "slider", 6, 24, "statsTextSize", dbChar, RefreshChar, 1)
+
+    MakeSubHeader("Text Colors")
+    MakeRow("Stats Text Color", "color", "statsTextColor", dbChar, RefreshChar)
+    MakeRow("Header Class Color", "checkbox", "headerClassColor", dbChar, RefreshChar)
+    MakeRow("Custom Header Color", "color", "headerColor", dbChar, RefreshChar)
+    MakeRow("Enchant Class Color", "checkbox", "enchantClassColor", dbChar, RefreshChar)
+    MakeRow("Custom Enchant Color", "color", "enchantTextColor", dbChar, RefreshChar)
+    MakeRow("No Enchant Color", "color", "noEnchantTextColor", dbChar, RefreshChar)
+    MakeRow("Upgrade Track Color", "color", "upgradeTrackColor", dbChar, RefreshChar)
+
+    content:SetHeight(math.abs(yOffset) + 20)
+end
+
+-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 -- MAIN STYLING PAGE
--- ═══════════════════════════════════════════════════════════════
+-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 GUI:RegisterPage("Styling", {
     title = "UI Styling",
+    subTabs = {
+        { name = "Character Panel", builder = BuildCharacter },
+        { name = "Chat", builder = BuildChat },
+        { name = "Tooltip", builder = BuildTooltip },
+        { name = "Objective Tracker", builder = BuildObjectivesPanel },
+        { name = "Loot", builder = BuildLootPanel },
+        { name = "Game Menu", builder = BuildGameMenuPanel },
+        { name = "Ready Check", builder = BuildReadyCheckPanel },
+        { name = "Keystone", builder = BuildKeystonePanel },
+        { name = "Power Bar", builder = BuildPowerBarPanel },
+        { name = "Alert Frames", builder = BuildAlertsPanel },
+        { name = "Chat Bubbles", builder = BuildChatBubblesPanel },
+        { name = "Instance", builder = BuildInstancePanel },
+        { name = "XP / Rep", builder = BuildXPRepPanel },
+    },
     OnBuild = function(content)
-        -- Hide default scrollframe parent (since we use SubTabs which create their own content areas)
         local scrollFrame = content:GetParent()
         content:Hide()
         
@@ -1196,20 +1507,30 @@ GUI:RegisterPage("Styling", {
             scrollFrame.ScrollBar:HookScript("OnShow", function(self) self:Hide() end)
         end
         
-        -- Create SubTabs
-        local subTabs = GUI:CreateSubTabs(scrollFrame, {
-            { name = "Game Menu", builder = BuildGameMenuPanel },
-            { name = "Chat Bubbles", builder = BuildChatBubblesPanel },
-            { name = "Ready Check", builder = BuildReadyCheckPanel },
-            { name = "Keystone", builder = BuildKeystonePanel },
-            { name = "Power Bar", builder = BuildPowerBarPanel },
-            { name = "Alert Frames", builder = BuildAlertsPanel },
-            { name = "Loot", builder = BuildLootPanel },
-            { name = "Objectives", builder = BuildObjectivesPanel },
-            { name = "Instance", builder = BuildInstancePanel },
-            { name = "XP / Rep", builder = BuildXPRepPanel },
-        })
-        subTabs:SetPoint("TOPLEFT", 10, -10)
-        subTabs:SetPoint("TOPRIGHT", -10, 0)
+        -- Create SubTabs container
+        local opts = GUI.pages["Styling"]
+        opts.subTabsContainer = GUI:CreateSubTabs(scrollFrame, opts.subTabs)
+        opts.subTabsContainer:SetPoint("TOPLEFT", 10, -10)
+        opts.subTabsContainer:SetPoint("TOPRIGHT", -10, 0)
     end,
+    OnShow = function(content, subIndex)
+        local opts = GUI.pages["Styling"]
+        if not opts.subTabsContainer then return end
+        
+        subIndex = subIndex or 1
+        
+        -- Hide all
+        for _, cf in pairs(opts.subTabsContainer.tabContents) do
+            cf:Hide()
+        end
+        
+        -- Show active
+        if opts.subTabsContainer.tabContents[subIndex] then
+            opts.subTabsContainer.tabContents[subIndex]:Show()
+        end
+    end
 })
+
+
+
+

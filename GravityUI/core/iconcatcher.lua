@@ -824,7 +824,7 @@ ToggleBtn:SetScript("OnEnter", function(self)
         ToggleDrawer()
     end
     GameTooltip:SetOwner(self, "ANCHOR_LEFT")
-    GameTooltip:AddLine("|cFF30D1FFAddon Drawer|r")
+    GameTooltip:AddLine("|cFF30D1FFIcon Catcher|r")
     if s and s.mode == "ICON" then
         GameTooltip:AddLine("Left-click to toggle extensions", 1, 1, 1)
     end
@@ -1141,5 +1141,5 @@ if ns.Movers then
              CatcherFrame:SetScript("OnDragStart", nil)
              CatcherFrame:SetScript("OnDragStop", nil)
          end
-    end, "Icon Catcher (Addon Drawer)")
+    end, "Icon Catcher")
 end

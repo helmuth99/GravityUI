@@ -884,22 +884,6 @@ end
 
 
 
--- ═══════════════════════════════════════════════════════════════
--- MAIN PAGE
--- ═══════════════════════════════════════════════════════════════
-
-ns.GUI:RegisterPage("screenindicators", {
-    title = "UI Indicators",
-    OnBuild = function(content)
-        -- Hide default scrollframe parent
-        local scrollFrame = content:GetParent()
-        content:Hide()
-        
-        if scrollFrame.ScrollBar then
-            scrollFrame.ScrollBar:Hide()
-            scrollFrame.ScrollBar:HookScript("OnShow", function(self) self:Hide() end)
-        end
-        
 -- 6. Raid Warnings
 local function BuildRaidWarnings(parent)
     local scroll, content = GUI:CreateScrollableContent(parent)
@@ -1331,19 +1315,50 @@ end
 
 
 
-        local categories = {
-            { name = "Cursor", builder = BuildCursor },
-            { name = "Crosshair", builder = BuildCrosshair },
-            { name = "Combat Indicator", builder = BuildCombatStatus },
-            { name = "Pet Info", builder = BuildPet },
-            { name = "Missing Buffs", builder = BuildMissingBuffs },
-            { name = "Raid Warnings", builder = BuildRaidWarnings },
-            { name = "Interrupt Tracker", builder = BuildInterruptTracker },
-            { name = "Difficulty", builder = BuildDifficulty },
-            { name = "AFK Screen", builder = BuildAFKScreen },
-        }
-        local subTabs = GUI:CreateSubTabs(scrollFrame, categories)
-        subTabs:SetPoint("TOPLEFT", 10, -10)
-        subTabs:SetPoint("TOPRIGHT", -10, 0)
+-- ═══════════════════════════════════════════════════════════════
+-- MAIN PAGE
+-- ═══════════════════════════════════════════════════════════════
+
+ns.GUI:RegisterPage("screenindicators", {
+    title = "UI Indicators",
+    subTabs = {
+        { name = "Cursor", builder = BuildCursor },
+        { name = "Crosshair", builder = BuildCrosshair },
+        { name = "Combat Indicator", builder = BuildCombatStatus },
+        { name = "Pet Info", builder = BuildPet },
+        { name = "Missing Buffs", builder = BuildMissingBuffs },
+        { name = "Raid Warnings", builder = BuildRaidWarnings },
+        { name = "Interrupt Tracker", builder = BuildInterruptTracker },
+        { name = "Difficulty Changer", builder = BuildDifficulty },
+        { name = "AFK Screen", builder = BuildAFKScreen },
+    },
+    OnBuild = function(content)
+        -- Hide default scrollframe parent
+        local scrollFrame = content:GetParent()
+        content:Hide()
+        
+        if scrollFrame.ScrollBar then
+            scrollFrame.ScrollBar:Hide()
+            scrollFrame.ScrollBar:HookScript("OnShow", function(self) self:Hide() end)
+        end
+        
+        local opts = GUI.pages["screenindicators"]
+        opts.subTabsContainer = GUI:CreateSubTabs(scrollFrame, opts.subTabs)
+        opts.subTabsContainer:SetPoint("TOPLEFT", 10, -10)
+        opts.subTabsContainer:SetPoint("TOPRIGHT", -10, 0)
     end,
+    OnShow = function(content, subIndex)
+        local opts = GUI.pages["screenindicators"]
+        if not opts.subTabsContainer then return end
+        
+        subIndex = subIndex or 1
+        
+        for _, cf in pairs(opts.subTabsContainer.tabContents) do
+            cf:Hide()
+        end
+        
+        if opts.subTabsContainer.tabContents[subIndex] then
+            opts.subTabsContainer.tabContents[subIndex]:Show()
+        end
+    end
 })
