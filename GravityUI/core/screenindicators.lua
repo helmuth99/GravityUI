@@ -1682,14 +1682,6 @@ local function CreateAFKFrame()
     -- OnUpdate for Timer and Clock Update (Throttled to 1Hz - no need for per-frame updates)
     local afkUpdateElapsed = 0
     f:SetScript("OnUpdate", function(self, elapsed)
-        if not AFKState.isAFK then return end
-        
-        -- Fallback: Ensure to exit if game removed AFK flag
-        if not UnitIsAFK("player") then
-            ExitAFK()
-            return
-        end
-        
         -- Performance: Only update clock/timer once per second
         afkUpdateElapsed = afkUpdateElapsed + elapsed
         if afkUpdateElapsed < 1.0 then return end
@@ -1939,10 +1931,8 @@ function ExitAFK()
     end
 end
 
-local afkEventFrame = CreateFrame("Frame")
-afkEventFrame:RegisterEvent("PLAYER_FLAGS_CHANGED")
+local afkEventFrame = CreateFrame("Frame", nil, UIParent, "SecureHandlerStateTemplate")
 afkEventFrame:RegisterEvent("PLAYER_REGEN_DISABLED")
-afkEventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 afkEventFrame:RegisterEvent("PLAYER_LEAVING_WORLD")
 
 -- Failsafes if standard UI frames are triggered
@@ -1955,24 +1945,12 @@ afkEventFrame:RegisterEvent("UPDATE_BATTLEFIELD_STATUS")
 afkEventFrame:RegisterEvent("READY_CHECK")
 afkEventFrame:RegisterEvent("LFG_ROLE_CHECK_SHOW")
 
-afkEventFrame:SetScript("OnEvent", function(self, event, unit)
-    if event == "PLAYER_FLAGS_CHANGED" and unit == "player" then
-        if UnitIsAFK("player") then
-            EnterAFK()
-        else
-            ExitAFK()
-        end
-    elseif event == "PLAYER_REGEN_DISABLED" then
+afkEventFrame:SetScript("OnEvent", function(self, event)
+    if event == "PLAYER_REGEN_DISABLED" then
         -- Force exit if combat starts
         ExitAFK()
     elseif event == "PLAYER_LEAVING_WORLD" then
         if AFKState.isAFK then
-            ExitAFK()
-        end
-    elseif event == "PLAYER_ENTERING_WORLD" then
-        if UnitIsAFK("player") then
-            EnterAFK()
-        else
             ExitAFK()
         end
     elseif event == "AUCTION_HOUSE_SHOW" or event == "TRADE_SKILL_SHOW" then
@@ -1982,6 +1960,19 @@ afkEventFrame:SetScript("OnEvent", function(self, event, unit)
         end
     elseif event == "LFG_PROPOSAL_SHOW" or event == "UPDATE_BATTLEFIELD_STATUS" or event == "READY_CHECK" or event == "LFG_ROLE_CHECK_SHOW" then
         if AFKState.isAFK then
+            ExitAFK()
+        end
+    end
+end)
+
+-- Secure AFK Detection via State Driver (Taint-Safe)
+RegisterStateDriver(afkEventFrame, "afk", "[afk] 1; 0")
+afkEventFrame:SetAttribute("_onstate-afk", "self:SetAttribute('isafk', newstate)")
+afkEventFrame:HookScript("OnAttributeChanged", function(self, name, value)
+    if name == "isafk" then
+        if value == "1" then
+            EnterAFK()
+        else
             ExitAFK()
         end
     end

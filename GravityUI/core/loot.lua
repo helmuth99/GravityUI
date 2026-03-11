@@ -179,6 +179,33 @@ local function CreateLootWindow()
     f:EnableMouse(true)
     f:Hide()
 
+    -- Close Button
+    f.close = CreateFrame("Button", nil, f, "BackdropTemplate")
+    f.close:SetSize(16, 16)
+    f.close:SetPoint("TOPRIGHT", -5, -5)
+    f.close:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8", edgeFile = "Interface\\Buttons\\WHITE8x8", edgeSize = 1 })
+    f.close:SetBackdropColor(0.8, 0.2, 0.2, 0.6)
+    f.close:SetBackdropBorderColor(1, 1, 1, 0.4)
+    
+    f.close.text = f.close:CreateFontString(nil, "OVERLAY")
+    f.close.text:SetFont(ns.GetFont(), 10, "OUTLINE")
+    f.close.text:SetPoint("CENTER", 0, 0)
+    f.close.text:SetText("X")
+    f.close.text:SetTextColor(1, 1, 1, 1)
+
+    f.close:SetScript("OnEnter", function(self)
+        self:SetBackdropColor(1, 0.2, 0.2, 1)
+        self:SetBackdropBorderColor(1, 1, 1, 1)
+    end)
+    f.close:SetScript("OnLeave", function(self)
+        self:SetBackdropColor(0.8, 0.2, 0.2, 0.6)
+        self:SetBackdropBorderColor(1, 1, 1, 0.4)
+    end)
+    f.close:SetScript("OnClick", function()
+        CloseLoot()
+        f:Hide()
+    end)
+
     f:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8", edgeFile = "Interface\\Buttons\\WHITE8x8", edgeSize = 1 })
 
     f.header = f:CreateFontString(nil, "OVERLAY")
@@ -401,7 +428,8 @@ local function OnLootOpened()
         if lootFrame.slots[i] then lootFrame.slots[i]:Hide() end
     end
 
-    lootFrame:SetHeight(HEADER_HEIGHT + 30 + (visible * (SLOT_HEIGHT + 2)))
+    -- Sizing fix: Use numItems (total loot) instead of 'visible' to ensure height is correct even if textures lag
+    lootFrame:SetHeight(HEADER_HEIGHT + 10 + (numItems * (SLOT_HEIGHT + 2)))
     lootFrame:Show()
 end
 
