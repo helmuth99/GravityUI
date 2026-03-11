@@ -1894,6 +1894,10 @@ local function EnterAFK()
     end
     
     if InCombatLockdown() then return end
+    
+    local inInstance, instanceType = IsInInstance()
+    if inInstance and (instanceType == "pvp" or instanceType == "arena") then return end
+
     if AFKState.isAFK then return end
     
     AFKState.isAFK = true
@@ -1966,6 +1970,9 @@ afkEventFrame:SetScript("OnEvent", function(self, event, ...)
     elseif event == "PLAYER_FLAGS_CHANGED" then
         local unit = ...
         if unit == "player" then
+            local inInstance, instanceType = IsInInstance()
+            if inInstance and (instanceType == "pvp" or instanceType == "arena") then return end
+            
             if UnitIsAFK("player") then
                 if not AFKState.isAFK then
                     EnterAFK()
