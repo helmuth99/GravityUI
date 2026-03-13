@@ -364,21 +364,23 @@ local function IsFriendOrBNet(name)
     -- Check BattleNet friends
     local numBNetTotal = C_BattleNet.GetNumFriends()
     for i = 1, numBNetTotal do
-        local accountInfo = C_BattleNet.GetFriendAccountInfo(i)
-        if accountInfo and accountInfo.gameAccountInfo then
+        local success, accountInfo = pcall(C_BattleNet.GetFriendAccountInfo, i)
+        if success and accountInfo and accountInfo.gameAccountInfo then
             local charName = accountInfo.gameAccountInfo.characterName
             local realmName = accountInfo.gameAccountInfo.realmName
             if charName then
                 -- Whisper sender realm names have spaces removed (e.g., "TheMaelstrom")
                 local cleanRealm = realmName and realmName:gsub("%s+", "") or ""
                 local fullName = (cleanRealm ~= "") and (charName .. "-" .. cleanRealm) or charName
-                local searchName = name:gsub("%s+", "")
                 
-                -- Support matching both "Name-Realm" and just "Name"
-                local nameOnly = name:match("^([^-]+)") or name
+                local matchSuccess, isMatch = pcall(function()
+                    local searchName = name:gsub("%s+", "")
+                    -- Support matching both "Name-Realm" and just "Name"
+                    local nameOnly = name:match("^([^-]+)") or name
+                    return fullName == searchName or charName == nameOnly
+                end)
                 
-                if fullName == searchName or charName == nameOnly then
-                    -- print("|cFF30D1FFGravityUI Debug:|r Found BNet Friend match: " .. fullName)
+                if matchSuccess and isMatch then
                     return true
                 end
             end
@@ -456,11 +458,19 @@ local function OnWhisper(msg, sender, isBNet)
 
     -- Match keyword (case-insensitive)
     local match = false
-    local text = strtrim(msg:lower())
-    for _, kw in ipairs(keywords) do
-        if text == kw or text:find("%f[%a]" .. kw .. "%f[%A]") then
-            match = true
-            break
+    local text = ""
+    local lowerSuccess, lowerText = pcall(function() return strtrim(msg:lower()) end)
+    
+    if lowerSuccess then
+        text = lowerText
+        for _, kw in ipairs(keywords) do
+            local findSuccess, findMatch = pcall(function() 
+                return text == kw or text:find("%f[%a]" .. kw .. "%f[%A]") 
+            end)
+            if findSuccess and findMatch then
+                match = true
+                break
+            end
         end
     end
 

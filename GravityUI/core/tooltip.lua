@@ -126,9 +126,22 @@ end
 local function GetTooltipContext(owner)
     if not owner then return "npcs" end
     
-    local name = owner:GetName() or ""
-    local parent = owner:GetParent()
-    local parentName = parent and parent:GetName() or ""
+    -- Retail Safety: Handle cases where owner might be forbidden or not a proper widget
+    if type(owner) ~= "table" or (owner.IsForbidden and owner:IsForbidden()) then
+        return "npcs"
+    end
+
+    local ok, name = pcall(function() return owner:GetName() or "" end)
+    if not ok then name = "" end
+    
+    local parent = nil
+    pcall(function() parent = owner:GetParent() end)
+    
+    local parentName = ""
+    if parent and not (parent.IsForbidden and parent:IsForbidden()) then
+        local pok, pname = pcall(function() return parent:GetName() or "" end)
+        if pok then parentName = pname end
+    end
     
     -- CDM Icons (Check Owner AND Parent)
     for _, pattern in ipairs(CDM_PATTERNS) do

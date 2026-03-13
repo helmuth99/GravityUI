@@ -521,8 +521,15 @@ local function HookChatMessages(chatFrame)
     local origAddMessage = chatFrame.AddMessage
     chatFrame.AddMessage = function(self, text, ...)
         if text and type(text) == "string" then
-            text = AddTimestamp(text)
-            text = MakeURLsClickable(text)
+            local success, newText = pcall(function(msg)
+                msg = AddTimestamp(msg)
+                msg = MakeURLsClickable(msg)
+                return msg
+            end, text)
+            
+            if success then
+                text = newText
+            end
         end
         return origAddMessage(self, text, ...)
     end
