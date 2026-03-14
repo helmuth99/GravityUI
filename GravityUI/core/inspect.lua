@@ -832,17 +832,57 @@ local function UpdateInspectILvlDisplay()
     
     local color = RAID_CLASS_COLORS[class] or {r=1, g=1, b=1}
     
-    InspectFrame._guiILvlDisplay.text:SetText(name)
+    -- Name & Title
+    local pvpName = UnitPVPName(unit) or name
+    if pvpName ~= name and InspectFrame._guiILvlDisplay.titleText then
+        local title = pvpName:gsub(name, ""):gsub("^%s*", ""):gsub("%s*$", "")
+        InspectFrame._guiILvlDisplay.text:SetText(name)
+        InspectFrame._guiILvlDisplay.titleText:SetText(title)
+        InspectFrame._guiILvlDisplay.titleText:Show()
+
+        if pvpName:find("^" .. name) then
+            -- Suffix
+            InspectFrame._guiILvlDisplay.titleText:ClearAllPoints()
+            InspectFrame._guiILvlDisplay.titleText:SetPoint("LEFT", InspectFrame._guiILvlDisplay.text, "RIGHT", 2, 0)
+        else
+            -- Prefix
+            InspectFrame._guiILvlDisplay.text:ClearAllPoints()
+            InspectFrame._guiILvlDisplay.text:SetPoint("LEFT", InspectFrame._guiILvlDisplay.titleText, "RIGHT", 2, 0)
+            InspectFrame._guiILvlDisplay.titleText:ClearAllPoints()
+            InspectFrame._guiILvlDisplay.titleText:SetPoint("TOPLEFT", InspectFrame._guiILvlDisplay, "TOPLEFT", 0, 0)
+        end
+    else
+        InspectFrame._guiILvlDisplay.text:SetText(name)
+        InspectFrame._guiILvlDisplay.text:ClearAllPoints()
+        InspectFrame._guiILvlDisplay.text:SetPoint("TOPLEFT", InspectFrame._guiILvlDisplay, "TOPLEFT", 0, 0)
+        if InspectFrame._guiILvlDisplay.titleText then InspectFrame._guiILvlDisplay.titleText:Hide() end
+    end
     InspectFrame._guiILvlDisplay.text:SetTextColor(color.r, color.g, color.b, 1)
     
     local classInfo = C_CreatureInfo.GetClassInfo(select(3, UnitClass(unit)))
     local className = classInfo and classInfo.className or ""
-    InspectFrame._guiILvlDisplay.spec:SetText(string.format("%s %s %s", level, specName, className))
+    -- Level (white) + Spec/Class (class colored)
+    InspectFrame._guiILvlDisplay.spec:SetText(string.format("|cffffffff%s|r %s %s", level, specName, className))
     InspectFrame._guiILvlDisplay.spec:SetTextColor(color.r, color.g, color.b, 1)
+    
+    -- Always align with the left edge of the container
+    InspectFrame._guiILvlDisplay.spec:ClearAllPoints()
+    InspectFrame._guiILvlDisplay.spec:SetPoint("TOPLEFT", InspectFrame._guiILvlDisplay, "TOPLEFT", 0, -18)
 
     local ilvl = CalculateInspectAverageILvl(guid)
     if ilvl > 0 then
-        InspectFrame._guiCenterILvl.text:SetText(string.format("%.1f", ilvl))
+        -- Character panel defines GetILvlColor, we can use a local copy or just define it here if needed
+        -- For Inspect, we'll implement the same quality color logic
+        local function GetQualityColor(val)
+            if val >= 252 then return "ffff8000" -- Orange
+            elseif val >= 233 then return "ffa335ee" -- Purple
+            elseif val >= 220 then return "ff0070dd" -- Blue
+            elseif val >= 210 then return "ff1eff00" -- Green
+            elseif val >= 200 then return "ffffffff" -- White
+            else return "ff9d9d9d" -- Grey
+            end
+        end
+        InspectFrame._guiCenterILvl.text:SetText(string.format("|c%s%.1f|r", GetQualityColor(ilvl), ilvl))
     else
         InspectFrame._guiCenterILvl.text:SetText("")
     end
@@ -863,14 +903,20 @@ local function SetupInspectTitleArea()
         display:SetFrameLevel(InspectFrame:GetFrameLevel()+10)
         
         local name = display:CreateFontString(nil, "OVERLAY")
-        name:SetFont(GetGlobalFont(), 12, "")
+        name:SetFont(GetGlobalFont(), 14, "OUTLINE")
         name:SetPoint("TOPLEFT", 0, 0)
         display.text = name
+
+        local title = display:CreateFontString(nil, "OVERLAY")
+        title:SetFont(GetGlobalFont(), 12, "OUTLINE")
+        title:SetTextColor(1, 1, 1, 1)
+        title:SetJustifyH("LEFT")
+        display.titleText = title
         
         local spec = display:CreateFontString(nil, "OVERLAY")
-        spec:SetFont(GetGlobalFont(), 12, "")
-        spec:SetPoint("TOPRIGHT", InspectFrame, "TOPRIGHT", -70, -10)
-        spec:SetJustifyH("RIGHT")
+        spec:SetFont(GetGlobalFont(), 11, "OUTLINE")
+        spec:SetPoint("TOPLEFT", name, "BOTTOMLEFT", 0, -2)
+        spec:SetJustifyH("LEFT")
         display.spec = spec
         
         InspectFrame._guiILvlDisplay = display
@@ -879,11 +925,11 @@ local function SetupInspectTitleArea()
     if not InspectFrame._guiCenterILvl then
         local center = CreateFrame("Frame", nil, InspectFrame)
         center:SetSize(200, 20)
-        center:SetPoint("TOP", 0, -10)
+        center:SetPoint("TOPRIGHT", InspectFrame, "TOPRIGHT", -70, -18)  -- Shifted Down to -18 for better centering
         center:SetFrameLevel(InspectFrame:GetFrameLevel()+10)
         local text = center:CreateFontString(nil, "OVERLAY")
-        text:SetFont(GetGlobalFont(), 21, "OUTLINE")
-        text:SetPoint("CENTER")
+        text:SetFont(GetGlobalFont(), 18, "OUTLINE")
+        text:SetPoint("RIGHT")
         center.text = text
         InspectFrame._guiCenterILvl = center
     end

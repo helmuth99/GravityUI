@@ -1383,17 +1383,24 @@ local function SetupTitleArea()
 
         -- Line 1: Character name
         local nameText = displayFrame:CreateFontString(nil, "OVERLAY")
-        nameText:SetFont(font, 12, "")
+        nameText:SetFont(font, 14, "OUTLINE")
         nameText:SetPoint("TOPLEFT", displayFrame, "TOPLEFT", 0, 0)
         nameText:SetJustifyH("LEFT")
 
-        -- Line 2: Level + Spec (right-aligned near right icons)
-        local specText = CharacterFrame:CreateFontString(nil, "OVERLAY")
-        specText:SetFont(font, 12, "")
-        specText:SetPoint("TOPRIGHT", CharacterFrame, "TOPRIGHT", -132, -10)  -- Aligned with right slot column
-        specText:SetJustifyH("RIGHT")
+        -- Line 1: Title (White, Size 12)
+        local titleText = displayFrame:CreateFontString(nil, "OVERLAY")
+        titleText:SetFont(font, 12, "OUTLINE")
+        titleText:SetTextColor(1, 1, 1, 1)
+        titleText:SetJustifyH("LEFT")
+
+        -- Line 2: Level + Spec (below name)
+        local specText = displayFrame:CreateFontString(nil, "OVERLAY")
+        specText:SetFont(font, 11, "OUTLINE")
+        specText:SetPoint("TOPLEFT", nameText, "BOTTOMLEFT", 0, -2)
+        specText:SetJustifyH("LEFT")
 
         displayFrame.text = nameText
+        displayFrame.titleText = titleText
         displayFrame.specText = specText
         
         CharacterFrame._guiILvlDisplay = displayFrame
@@ -1403,13 +1410,13 @@ local function SetupTitleArea()
     if not CharacterFrame._guiCenterILvl then
         local centerFrame = CreateFrame("Frame", nil, CharacterFrame)
         centerFrame:SetSize(200, 20)
-        centerFrame:SetPoint("TOP", CharacterFrame, "TOP", -62, -10)  -- Title bar, shifted left over model
+        centerFrame:SetPoint("TOPRIGHT", CharacterFrame, "TOPRIGHT", -132, -18)  -- Shifted Down to -18 for better centering
         centerFrame:SetFrameLevel(CharacterFrame:GetFrameLevel() + 10)
 
         local centerText = centerFrame:CreateFontString(nil, "OVERLAY")
-        centerText:SetFont(font, 21, "OUTLINE")  -- Large font
-        centerText:SetPoint("CENTER")
-        centerText:SetJustifyH("CENTER")
+        centerText:SetFont(font, 18, "OUTLINE")  -- Adjusted from 21
+        centerText:SetPoint("RIGHT")
+        centerText:SetJustifyH("RIGHT")
 
         centerFrame.text = centerText
         CharacterFrame._guiCenterILvl = centerFrame
@@ -2476,16 +2483,16 @@ end
 -- Get color for item level (tiered based on gear quality)
 ---------------------------------------------------------------------------
 local function GetILvlColor(ilvl)
-    -- Color tiers for modern retail (~240-290 range)
-    if ilvl >= 285 then
+    -- Color tiers for modern retail (User: 220+ blue, 233+ purple)
+    if ilvl >= 252 then
         return 1, 0.5, 0           -- Orange (Mythic raid tier)
-    elseif ilvl >= 275 then
-        return 0.64, 0.21, 0.93    -- Purple (Heroic raid)
-    elseif ilvl >= 265 then
-        return 0, 0.44, 0.87       -- Blue (Mythic dungeon)
-    elseif ilvl >= 255 then
+    elseif ilvl >= 233 then
+        return 0.64, 0.21, 0.93    -- Purple (User requirement)
+    elseif ilvl >= 220 then
+        return 0, 0.44, 0.87       -- Blue (User requirement)
+    elseif ilvl >= 210 then
         return 0, 1, 0             -- Green (Heroic dungeon)
-    elseif ilvl >= 245 then
+    elseif ilvl >= 200 then
         return 1, 1, 1             -- White (Normal)
     else
         return 0.62, 0.62, 0.62    -- Grey (Below normal)
@@ -2532,31 +2539,56 @@ local function UpdateILvlDisplay()
         r, g, b = classColor.r, classColor.g, classColor.b
     end
 
-    -- Line 1: Character name (class colored)
-    displayFrame.text:SetText(name)
+    -- Line 1: Character name with title (class colored)
+    local pvpName = UnitPVPName("player") or name
+    if pvpName ~= name and displayFrame.titleText then
+        -- Title cleanup (UnitPVPName can be "Title Name" or "Name Title")
+        local title = pvpName:gsub(name, ""):gsub("^%s*", ""):gsub("%s*$", "")
+        
+        displayFrame.text:SetText(name)
+        displayFrame.titleText:SetText(title)
+        displayFrame.titleText:Show()
+
+        -- Position: Check if title is prefix or suffix
+        if pvpName:find("^" .. name) then
+            -- Suffix: Name Title
+            displayFrame.titleText:ClearAllPoints()
+            displayFrame.titleText:SetPoint("LEFT", displayFrame.text, "RIGHT", 2, 0)
+        else
+            -- Prefix: Title Name
+            displayFrame.text:ClearAllPoints()
+            displayFrame.text:SetPoint("LEFT", displayFrame.titleText, "RIGHT", 2, 0)
+            displayFrame.titleText:ClearAllPoints()
+            displayFrame.titleText:SetPoint("TOPLEFT", displayFrame, "TOPLEFT", 0, 0)
+        end
+    else
+        displayFrame.text:SetText(name)
+        displayFrame.text:ClearAllPoints()
+        displayFrame.text:SetPoint("TOPLEFT", displayFrame, "TOPLEFT", 0, 0)
+        if displayFrame.titleText then displayFrame.titleText:Hide() end
+    end
     displayFrame.text:SetTextColor(r, g, b, 1)
 
-    -- Line 2: Level + Spec (class colored)
+    -- Line 2: Level (white) + Spec/Class (class colored)
     if displayFrame.specText then
-        local specLine = string.format("%d %s %s", level, specName, AbbreviateClassName(className))
+        local specLine = string.format("|cffffffff%d|r %s %s", level, specName, AbbreviateClassName(className))
         displayFrame.specText:SetText(specLine)
         displayFrame.specText:SetTextColor(r, g, b, 1)
+        
+        -- Always align with the left edge of the container
+        displayFrame.specText:ClearAllPoints()
+        displayFrame.specText:SetPoint("TOPLEFT", displayFrame, "TOPLEFT", 0, -18)
     end
 
-    -- Update center ilvl display (above model) - shows equipped | overall with color coding
+    -- Update center ilvl display (above model) - shows equipped | overall
     local centerFrame = CharacterFrame._guiCenterILvl
     if centerFrame and centerFrame.text then
-        -- Get colors for each ilvl tier
         local eR, eG, eB = GetILvlColor(equipped)
         local oR, oG, oB = GetILvlColor(overall)
-
-        -- Format with color codes (one decimal point)
         local equippedHex = string.format("%02x%02x%02x", math.floor(eR*255), math.floor(eG*255), math.floor(eB*255))
         local overallHex = string.format("%02x%02x%02x", math.floor(oR*255), math.floor(oG*255), math.floor(oB*255))
-        local equippedStr = string.format("%.1f", equipped)
-        local overallStr = string.format("%.1f", overall)
-
-        local centerStr = string.format("|cff%s%s  |  |cff%s%s|r", equippedHex, equippedStr, overallHex, overallStr)
+        
+        local centerStr = string.format("|cff%s%.1f|r  |  |cff%s%.1f|r", equippedHex, equipped, overallHex, overall)
         centerFrame.text:SetText(centerStr)
     end
 end
