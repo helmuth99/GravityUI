@@ -9,6 +9,7 @@ LibStub("AceEvent-3.0"):Embed(Mail)
 local L = ns.L -- Optional if you have localization
 local OpenAllButton, AddressBookButton
 local isOpeningAll = false
+local currentMailIndex = 1
 local totalGoldLooted = 0
 local lootUpdateFrame = CreateFrame("Frame")
 lootUpdateFrame:Hide()
@@ -48,10 +49,13 @@ end
 local function ProcessNextMail()
     if not isOpeningAll then return end
     
-    local numItems, totalItems = GetInboxNumItems()
-    if numItems == 0 then
+    local numItems, totalInboxCount = GetInboxNumItems()
+    
+    -- Safety check: if our current index is beyond the total items, we've finished the scan
+    if currentMailIndex > numItems or numItems == 0 then
         -- Done!
         isOpeningAll = false
+        currentMailIndex = 1
         OpenAllButton:SetText("Open All")
         ns.Print("Finished opening all mail.")
         if totalGoldLooted > 0 then
@@ -60,20 +64,18 @@ local function ProcessNextMail()
         return
     end
     
-    -- Check if we can loot the first mail
-    local _, _, sender, _, money, CODAmount, _, hasItem, _, _, _, _, isGM = GetInboxHeaderInfo(1)
+    -- Check if we can loot the current mail index
+    local _, _, sender, _, money, CODAmount, _, hasItem, wasRead, _, _, _, isGM = GetInboxHeaderInfo(currentMailIndex)
     
     if (CODAmount and CODAmount > 0) or isGM then
-        -- Skip COD or GM mail
+        -- Skip COD or GM mail, but continue to next index
         ns.Print("Skipped COD/GM mail from " .. tostring(sender) .. ".")
-        -- In a robust system, we would skip this index, but Blizzard's Inbox shifts.
-        -- For simplicity, we stop if we hit something we can't auto-delete.
-        isOpeningAll = false
-        OpenAllButton:SetText("Open All")
+        currentMailIndex = currentMailIndex + 1
+        ProcessNextMail()
         return
     end
 
-    -- 1. Loot Items (Check all slots in case one is unique/blocked)
+    -- 1. Loot Items
     if hasItem and hasItem > 0 then
         -- Check Bag Space
         local freeSlots = 0
@@ -85,17 +87,18 @@ local function ProcessNextMail()
         if freeSlots == 0 then
             ns.Print("|cFFFF0000Error:|r Inventory is full. Stopping Open All.")
             isOpeningAll = false
+            currentMailIndex = 1
             OpenAllButton:SetText("Open All")
             return
         end
 
-        for i = 1, 12 do -- Max attachments is 12
-            local itemID = select(2, GetInboxItem(1, i))
+        for i = 1, 12 do
+            local itemID = select(2, GetInboxItem(currentMailIndex, i))
             if itemID then
-                TakeInboxItem(1, i)
+                TakeInboxItem(currentMailIndex, i)
                 lootUpdateFrame.waitTimer = 0.35
                 lootUpdateFrame:Show()
-                return
+                return -- Stay on same index, it will shift or lose hasItem
             end
         end
     end
@@ -103,15 +106,27 @@ local function ProcessNextMail()
     -- 2. Loot Money
     if money > 0 then
         totalGoldLooted = totalGoldLooted + money
-        TakeInboxMoney(1)
+        TakeInboxMoney(currentMailIndex)
         lootUpdateFrame.waitTimer = 0.35
         lootUpdateFrame:Show()
+        return -- Stay on same index
+    end
+    
+    -- 3. Check for text content if unread
+    -- If it's unread and has no loot, but might have text, we skip it to prevent deletion
+    -- (Actually, Blizzard's Inbox doesn't tell us "hasText" easily without opening, 
+    -- but usually 'empty' mail from system/players comes with text)
+    if not wasRead and (not hasItem or hasItem == 0) and (not money or money == 0) then
+        -- This is likely a text-only letter. Skip it.
+        currentMailIndex = currentMailIndex + 1
+        ProcessNextMail()
         return
     end
     
-    -- 3. Empty? Delete.
-    DeleteInboxItem(1)
-    lootUpdateFrame.waitTimer = 0.4 -- Deletion takes slightly longer to register
+    -- 4. Empty and Read? Delete.
+    DeleteInboxItem(currentMailIndex)
+    -- currentMailIndex stays same because the inbox shifts
+    lootUpdateFrame.waitTimer = 0.4
     lootUpdateFrame:Show()
 end
 
@@ -140,6 +155,7 @@ end)
 Mail:RegisterEvent("MAIL_CLOSED", function()
     if isOpeningAll then
         isOpeningAll = false
+        currentMailIndex = 1
         if OpenAllButton then OpenAllButton:SetText("Open All") end
     end
 end)
@@ -157,6 +173,7 @@ local function OnOpenAllClicked()
     
     isOpeningAll = true
     totalGoldLooted = 0
+    currentMailIndex = 1
     OpenAllButton:SetText("Stop")
     ProcessNextMail()
 end
@@ -468,6 +485,7 @@ end
 function Mail:PLAYER_INTERACTION_MANAGER_FRAME_HIDE(event, paneType)
     if paneType == interactionTypeMail then
         isOpeningAll = false
+        currentMailIndex = 1
         if OpenAllButton then OpenAllButton:SetText("Open All") end
     end
 end
