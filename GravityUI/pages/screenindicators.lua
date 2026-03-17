@@ -899,7 +899,7 @@ local function BuildRaidWarnings(parent)
     if dbRW.showInGroup == nil then dbRW.showInGroup = true end
     if dbRW.showInRaid == nil then dbRW.showInRaid = true end
     if dbRW.soundEnabled == nil then dbRW.soundEnabled = true end
-    if not dbRW.events then dbRW.events = {soulwell=true, ritual=true, feast=true, repair=true, magetable=true, portal=false} end
+    if not dbRW.events then dbRW.events = {soulwell=true, ritual=true, gateway=true, feast=true, repair=true, magetable=true, portal=false} end
     
     local function RefreshRW()
         if ns.RaidWarnings and ns.RaidWarnings.ApplySettings then ns.RaidWarnings.ApplySettings() end
@@ -1017,6 +1017,7 @@ local function BuildRaidWarnings(parent)
     AddRow(content, "Feasts", "checkbox", "feast", dbRW.events, RefreshRW)
     AddRow(content, "Repair Bots", "checkbox", "repair", dbRW.events, RefreshRW)
     AddRow(content, "Refreshment Tables (Mage)", "checkbox", "magetable", dbRW.events, RefreshRW)
+    AddRow(content, "Demonic Gateway", "checkbox", "gateway", dbRW.events, RefreshRW)
     AddRow(content, "Portals Settings", "checkbox", "portal", dbRW.events, RefreshRW)
     content.rowCount = content.rowCount + 0.5
     

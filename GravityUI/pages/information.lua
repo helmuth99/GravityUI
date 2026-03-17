@@ -105,6 +105,13 @@ local function BuildInformationTab(parent)
     y = y - 10
 
     local changeLogs = {
+        { version = "3.92", date = "18.03.2026", changes = {
+            "Added Demonic Gateway (ID 111771) to Raid Warnings with the unique message 'Demonic Gateway placed by [PlayerName]'",
+            "Added a 'Demonic Gateway' toggle to the Raid Warnings settings tab",
+        } },
+        { version = "3.91", date = "18.03.2026", changes = {
+            "Added new Feast spell IDs (242745 and 266985) to the Raid Warnings tracking list",
+        } },
         { version = "3.90", date = "05.03.2026", changes = {
             "Re-enabled and completely overhauled the Interrupt Tracker (modernized de-duplication logic)",
             "Improved Edit Mode synchronization during specialization switch (uses standard installer sync)",

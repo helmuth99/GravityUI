@@ -56,6 +56,9 @@ local TRACKED_SPELLS = {
     [176248] = "portal", 
     [176242] = "portal", 
     
+    -- WARLOCK
+    [111771] = "gateway", 
+    
     -- FEASTS
     [201351] = "feast", 
     [201352] = "feast", 
@@ -71,6 +74,8 @@ local TRACKED_SPELLS = {
     [396092] = "feast", 
     [433066] = "feast", 
     [462213] = "feast", -- Hearty Feast of the Midnight Masquerade
+    [242745] = "feast", 
+    [266985] = "feast", 
 }
 
 -- ============================================================================
@@ -232,6 +237,7 @@ function RaidWarnings.ShowAlert(spellName, providerName, key)
     if key == "soulwell" then text = string.format("Soulwell created by %s", providerName) end
     if key == "ritual" then text = string.format("Summoning Ritual started by %s", providerName) end
     if key == "magetable" then text = string.format("Refreshment Table created by %s", providerName) end
+    if key == "gateway" then text = string.format("Demonic Gateway placed by %s", providerName) end
     
     alertText:SetText(text)
     

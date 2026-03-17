@@ -264,6 +264,7 @@ ns.Defaults = {
             feast = true,
             repair = true,
             magetable = true,
+            gateway = true,
             portal = false, -- Default portals OFF
         },
         customSpells = {}, -- { [spellID] = "type" } e.g. { [12345] = "feast" }
