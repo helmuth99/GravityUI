@@ -1568,12 +1568,17 @@ end
 
 local diffListener = CreateFrame("Frame")
 diffListener:RegisterEvent("GROUP_ROSTER_UPDATE")
+diffListener:RegisterEvent("PARTY_LEADER_CHANGED")
 diffListener:RegisterEvent("PLAYER_ENTERING_WORLD")
 
 diffListener:SetScript("OnEvent", function(self, event)
     if event == "PLAYER_ENTERING_WORLD" then
         CreateDifficultyBar()
-        DifficultyState.lastIsLeader = UnitIsGroupLeader("player")
+        -- Reset state to force a fresh check upon entering world
+        DifficultyState.lastIsLeader = false
+        C_Timer.After(2, function()
+            CheckLeadership()
+        end)
     else
         CheckLeadership()
     end

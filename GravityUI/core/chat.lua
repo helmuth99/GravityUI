@@ -1329,7 +1329,8 @@ function ns.Chat.Init()
     local settings = GetSettings()
     if settings and settings.enabled == false then return end
 
-
+    -- Reset Blizzard timestamps to none (to fix double timestamp after revert)
+    SetCVar("showTimestamps", "none")
 
     SetupURLClickHandler()
     

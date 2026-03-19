@@ -196,11 +196,17 @@ local function CreateMarksBar()
             SetRaidTargetIconTexture(btn.icon, i)
             local wmMap = { [1]=5, [2]=6, [3]=3, [4]=2, [5]=7, [6]=1, [7]=4, [8]=8 }
             local wmID = wmMap[i] or i
-            btn:SetAttribute("macrotext", "/tm [nomod:shift] " .. i .. "\n/wm [mod:shift] " .. wmID)
+            btn:SetAttribute("type1", "macro")
+            btn:SetAttribute("macrotext1", "/tm " .. i)
+            btn:SetAttribute("shift-type1", "macro")
+            btn:SetAttribute("shift-macrotext1", "/wm " .. wmID)
         elseif i == 9 then
             -- Clear Button
             btn.icon:SetTexture("Interface\\Buttons\\UI-GroupLoot-Pass-Up")
-            btn:SetAttribute("macrotext", "/tm [target=player,nomod:shift] 0\n/tm [nomod:shift] 0\n/clearraidmarkers [nomod:shift]\n/cwm [mod:shift] all")
+            btn:SetAttribute("type1", "macro")
+            btn:SetAttribute("macrotext1", "/tm player 0\n/tm 0\n/clearraidmarkers")
+            btn:SetAttribute("shift-type1", "macro")
+            btn:SetAttribute("shift-macrotext1", "/cwm all")
         elseif i == 10 then
             -- Ready Check
             btn:SetAttribute("macrotext", "/readycheck")

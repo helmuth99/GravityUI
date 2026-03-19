@@ -149,13 +149,14 @@ local function ApplyHideSettings()
     if CompactRaidFrameManager then
         if settings.hideRaidFrameManager then
              CompactRaidFrameManager:SetAlpha(0)
-             CompactRaidFrameManager:EnableMouse(false)
              if not InCombatLockdown() then
+                 CompactRaidFrameManager:EnableMouse(false)
                  CompactRaidFrameManager:UnregisterAllEvents()
                  CompactRaidFrameManager:Hide()
              else
                  -- Queue for OOC
                  ns.QueueOOCAction(function()
+                     CompactRaidFrameManager:EnableMouse(false)
                      CompactRaidFrameManager:UnregisterAllEvents()
                      CompactRaidFrameManager:Hide()
                  end)
@@ -181,12 +182,18 @@ local function ApplyHideSettings()
         else
             -- Restore visibility
             CompactRaidFrameManager:SetAlpha(1)
-            CompactRaidFrameManager:EnableMouse(true)
-            -- Restore events if re-enabled (basic set)
             if not InCombatLockdown() then
+                 CompactRaidFrameManager:EnableMouse(true)
                  CompactRaidFrameManager:RegisterEvent("GROUP_ROSTER_UPDATE")
                  CompactRaidFrameManager:RegisterEvent("PLAYER_ENTERING_WORLD")
                  CompactRaidFrameManager:Show()
+            else
+                 ns.QueueOOCAction(function()
+                     CompactRaidFrameManager:EnableMouse(true)
+                     CompactRaidFrameManager:RegisterEvent("GROUP_ROSTER_UPDATE")
+                     CompactRaidFrameManager:RegisterEvent("PLAYER_ENTERING_WORLD")
+                     CompactRaidFrameManager:Show()
+                 end)
             end
         end
     end
@@ -496,7 +503,15 @@ local function ApplyHideSettings()
                 
                 -- Method 2: Alpha (Visual Hide)
                 frame:SetAlpha(0)
-                frame:EnableMouse(false)
+                
+                -- Guard EnableMouse on protected frames (UnitFrames etc.)
+                if not InCombatLockdown() then
+                    frame:EnableMouse(false)
+                else
+                    ns.QueueOOCAction(function()
+                        frame:EnableMouse(false)
+                    end)
+                end
 
                 -- Method 3: State Driver Override (Combat Sensitive)
                 -- Skip BCDM frames for this (rely on Alpha 0) to avoid breaking their internal state
@@ -535,7 +550,14 @@ local function ApplyHideSettings()
             else
                 -- Restore visibility
                 frame:SetAlpha(1)
-                frame:EnableMouse(true)
+                
+                if not InCombatLockdown() then
+                    frame:EnableMouse(true)
+                else
+                    ns.QueueOOCAction(function()
+                        frame:EnableMouse(true)
+                    end)
+                end
                 
                 -- Debug Restore
                 -- local n = frame.GetName and frame:GetName() or "Unknown"
