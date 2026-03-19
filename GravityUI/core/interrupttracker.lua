@@ -180,7 +180,7 @@ local function RegisterPartyWatchers()
                 local cleanName = UnitName(cleanUnit)
 
                 if cleanName then
-                    recentPartyCasts[cleanName] = GetTime()
+                    pcall(function() recentPartyCasts[cleanName] = GetTime() end)
                 end
 
                 -- Try OnValueChanged laundering (StatusBar)
@@ -228,7 +228,7 @@ local function RegisterPartyWatchers()
                 local cleanName = UnitName(cleanOwner)
 
                 if cleanName then
-                    recentPartyCasts[cleanName] = GetTime()
+                    pcall(function() recentPartyCasts[cleanName] = GetTime() end)
                 end
 
                 onValueChangedResult = nil
@@ -743,7 +743,7 @@ function InterruptTracker:UNIT_SPELLCAST_SUCCEEDED(event, unit, castGUID, spellI
          StartCooldown(guid, name, class, spellId)
          
          -- Record for correlation fallback
-         recentPartyCasts[name] = GetTime()
+         pcall(function() recentPartyCasts[name] = GetTime() end)
          
          -- Try Addon Message (may not work in M+ in Midnight, but keep as fallback)
          -- Only send if we are the one who cast it
