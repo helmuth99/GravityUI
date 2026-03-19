@@ -665,6 +665,10 @@ ns.Defaults = {
         hideTalkingHead = false,
         muteTalkingHead = false,
         hideOnWorldQuestMinigame = true,
+        tools = {
+            guildInviteRanks = {}, -- [rankID] = true
+            autoAssistNames = "",
+        },
     },
     configPanelAlpha = 1,
     minimap =     {

@@ -1297,7 +1297,23 @@ local DifficultyState = {
     frame = nil,
     timer = nil,
     lastIsLeader = false,
+    lastTrigger = 0, -- NEW
 }
+
+local function SafeSetDifficulty(isRaid, diffID)
+    if isRaid then
+        if GetRaidDifficultyID() ~= diffID then
+            SetRaidDifficultyID(diffID)
+            return true
+        end
+    else
+        if GetDungeonDifficultyID() ~= diffID then
+            SetDungeonDifficultyID(diffID)
+            return true
+        end
+    end
+    return false
+end
 
 local function GetDifficultySettings()
     local db = ns.GetDB()
@@ -1369,11 +1385,13 @@ local function CreateDifficultyBar()
         
         btn:SetScript("OnClick", function()
             if IsInRaid() then
-                SetRaidDifficultyID(diffID_Raid)
-                ns.Print("Raid Difficulty set to " .. label)
+                if SafeSetDifficulty(true, diffID_Raid) then
+                    ns.Print("Raid Difficulty set to " .. label)
+                end
             else
-                SetDungeonDifficultyID(diffID_Dungeon)
-                ns.Print("Dungeon Difficulty set to " .. label)
+                if SafeSetDifficulty(false, diffID_Dungeon) then
+                    ns.Print("Dungeon Difficulty set to " .. label)
+                end
             end
             
             -- Close bar after selection
@@ -1472,17 +1490,28 @@ function Screen.TriggerDifficultyBar()
     local s = GetDifficultySettings()
     if not s or not s.enabled then return end
     
+    -- Ensure we NEVER trigger or auto-set while inside an instance (Dungeon/Raid)
+    local inInstance, _ = IsInInstance()
+    if inInstance then return end
+    
+    -- Debounce to prevent spam during roster updates
+    local now = GetTime()
+    if now - DifficultyState.lastTrigger < 5 then return end
+    DifficultyState.lastTrigger = now
+    
     -- Instant Mythic Logic
     if IsInRaid() then
         if s.instantRaid then
-            SetRaidDifficultyID(16) -- Mythic
-            ns.Print("Instant Set Raid to Mythic")
+            if SafeSetDifficulty(true, 16) then
+                ns.Print("Instant Set Raid to Mythic")
+            end
             return
         end
     elseif IsInGroup() then
         if s.instantDungeon then
-            SetDungeonDifficultyID(23) -- Mythic
-            ns.Print("Instant Set Dungeon to Mythic")
+            if SafeSetDifficulty(false, 23) then
+                ns.Print("Instant Set Dungeon to Mythic")
+            end
             return
         end
     end
@@ -1501,11 +1530,13 @@ function Screen.TriggerDifficultyBar()
         f:Hide()
         if s.autoMythic then
             if IsInRaid() then
-                SetRaidDifficultyID(16) -- Mythic Raid
-                ns.Print("Auto-Set Raid to Mythic")
+                if SafeSetDifficulty(true, 16) then
+                    ns.Print("Auto-Set Raid to Mythic")
+                end
             else
-                SetDungeonDifficultyID(23) -- Mythic Dungeon
-                ns.Print("Auto-Set Dungeon to Mythic")
+                if SafeSetDifficulty(false, 23) then
+                    ns.Print("Auto-Set Dungeon to Mythic")
+                end
             end
         end
     end)
@@ -1520,17 +1551,19 @@ local function CheckLeadership()
     local isLeader = UnitIsGroupLeader("player")
     
     -- If we become leader (and weren't before)
-    -- If we become leader (and weren't before)
     if isLeader and not DifficultyState.lastIsLeader then
+        -- Update state IMMEDIATELY to prevent race conditions during the same roster update window
+        DifficultyState.lastIsLeader = true
+        
         -- Only trigger if NOT inside an instance (raid/dungeon) AND NOT in a matchmaking queue/group
         local inInstance, _ = IsInInstance()
         local isLFG = HasLFGRestrictions() or IsInLFGDungeon()
         if not inInstance and not isLFG then
              Screen.TriggerDifficultyBar()
         end
+    elseif not isLeader then
+        DifficultyState.lastIsLeader = false
     end
-    
-    DifficultyState.lastIsLeader = isLeader
 end
 
 local diffListener = CreateFrame("Frame")

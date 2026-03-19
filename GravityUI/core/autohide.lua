@@ -148,6 +148,8 @@ local function ApplyHideSettings()
     -- Compact Raid Frame Manager
     if CompactRaidFrameManager then
         if settings.hideRaidFrameManager then
+             CompactRaidFrameManager:SetAlpha(0)
+             CompactRaidFrameManager:EnableMouse(false)
              if not InCombatLockdown() then
                  CompactRaidFrameManager:UnregisterAllEvents()
                  CompactRaidFrameManager:Hide()
@@ -159,19 +161,27 @@ local function ApplyHideSettings()
                  end)
              end
              
-             -- Also hook Show just in case external addons try to show it
+             -- Also hook Show and SetAlpha just in case external addons or Blizzard try to show it
              if not CompactRaidFrameManager._gui_ShowHooked then
                  CompactRaidFrameManager._gui_ShowHooked = true
                  hooksecurefunc(CompactRaidFrameManager, "Show", function(self)
                      local s = GetSettings()
                      if s and s.hideRaidFrameManager then
-                         if not InCombatLockdown() then
-                             self:Hide()
-                         end
+                         self:SetAlpha(0)
+                         if not InCombatLockdown() then self:Hide() end
+                     end
+                 end)
+                 hooksecurefunc(CompactRaidFrameManager, "SetAlpha", function(self, alpha)
+                     local s = GetSettings()
+                     if s and s.hideRaidFrameManager and alpha > 0 then
+                         self:SetAlpha(0)
                      end
                  end)
              end
         else
+            -- Restore visibility
+            CompactRaidFrameManager:SetAlpha(1)
+            CompactRaidFrameManager:EnableMouse(true)
             -- Restore events if re-enabled (basic set)
             if not InCombatLockdown() then
                  CompactRaidFrameManager:RegisterEvent("GROUP_ROSTER_UPDATE")

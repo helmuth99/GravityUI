@@ -139,9 +139,9 @@ local MAPID_TO_SPELL = {
     [78] = 131229,    -- Scarlet Monastery
 
     -- WoD
-    [161] = 159895,   -- Bloodmaul Slag Mines
-    [163] = 159897,   -- Auchindoun
-    [164] = 159898,   -- Skyreach
+    [161] = 159898,   -- Skyreach (Remapped for Midnight)
+    [163] = 159895,   -- Bloodmaul Slag Mines (Remapped for Midnight)
+    [164] = 159897,   -- Auchindoun (Remapped for Midnight)
     [165] = 159899,   -- Shadowmoon Burial Grounds
     [166] = 159900,   -- Grimrail Depot
     [167] = 159902,   -- Upper Blackrock Spire
@@ -209,11 +209,15 @@ local MAPID_TO_SPELL = {
     [438] = 410080,   -- Vortex Pinnacle
     [456] = 424142,   -- Throne of Tides
 
-    -- Retail expansion
+    -- Retail expansion (Midnight Season 1)
     [557] = 1254840,  -- Windrunner Spire
     [558] = 1254572,  -- Magisters' Terrace
     [559] = 1254563,  -- Nexus-Point Xenas
     [560] = 1255247,  -- Maisara Caverns
+    [561] = 1255255,  -- Den of Nalorakk
+    [562] = 1255257,  -- Voidscar Arena
+    [563] = 1255250,  -- Murder Row
+    [564] = 1255254,  -- The Blinding Vale
 }
 
 ---------------------------------------------------------------------------

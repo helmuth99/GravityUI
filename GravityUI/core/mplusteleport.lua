@@ -59,51 +59,58 @@ end
 -- SECURE OVERLAY LOGIC (ChallengesFrame Integration)
 ---------------------------------------------------------------------------
 local function CreateSecureOverlay(dungeonIcon)
-    if not dungeonIcon or not dungeonIcon.mapID or InCombatLockdown() or dungeonIcon.guiTeleportOverlay then return end
+    if not dungeonIcon or not dungeonIcon.mapID or InCombatLockdown() then return end
 
     local spellID = ns.DungeonData and ns.DungeonData.GetTeleportSpellID(dungeonIcon.mapID)
     if not spellID then return end
 
-    local overlay = CreateFrame("Button", nil, dungeonIcon, "SecureActionButtonTemplate")
-    overlay:SetAllPoints(dungeonIcon)
-    overlay:SetFrameLevel(dungeonIcon:GetFrameLevel() + 10)
+    local overlay = dungeonIcon.guiTeleportOverlay
+    if not overlay then
+        overlay = CreateFrame("Button", nil, dungeonIcon, "SecureActionButtonTemplate")
+        overlay:SetAllPoints(dungeonIcon)
+        overlay:SetFrameLevel(dungeonIcon:GetFrameLevel() + 10)
+        overlay:RegisterForClicks("AnyUp", "AnyDown")
+
+        local highlight = overlay:CreateTexture(nil, "OVERLAY")
+        highlight:SetAllPoints()
+        highlight:Hide()
+        overlay.highlight = highlight
+
+        overlay:SetScript("OnEnter", function(self)
+            local currentSpellID = self:GetAttribute("spell")
+            if not currentSpellID then return end
+
+            if IsSpellKnown(currentSpellID) then
+                local start, duration = 0, 0
+                if C_Spell and C_Spell.GetSpellCooldown then
+                    local info = C_Spell.GetSpellCooldown(currentSpellID)
+                    if info then start, duration = info.startTime, info.duration end
+                else
+                    start, duration = GetSpellCooldown(currentSpellID)
+                end
+                local isCooldown = false
+                if start and duration then
+                    local success, res = pcall(function() return duration > 1.5 end)
+                    if success then isCooldown = res end
+                end
+                highlight:SetColorTexture(unpack(isCooldown and {1, 0.8, 0, 0.3} or {0.3, 1, 0.5, 0.3}))
+            else
+                highlight:SetColorTexture(1, 0.2, 0.2, 0.3)
+            end
+            highlight:Show()
+            if dungeonIcon.OnEnter then dungeonIcon:OnEnter() end
+        end)
+
+        overlay:SetScript("OnLeave", function(self)
+            highlight:Hide()
+            if dungeonIcon.OnLeave then dungeonIcon:OnLeave() end
+        end)
+
+        dungeonIcon.guiTeleportOverlay = overlay
+    end
+
     overlay:SetAttribute("type", "spell")
     overlay:SetAttribute("spell", spellID)
-    overlay:RegisterForClicks("AnyUp", "AnyDown")
-
-    local highlight = overlay:CreateTexture(nil, "OVERLAY")
-    highlight:SetAllPoints()
-    highlight:Hide()
-    overlay.highlight = highlight
-
-    overlay:SetScript("OnEnter", function(self)
-        if IsSpellKnown(spellID) then
-            local start, duration = 0, 0
-            if C_Spell and C_Spell.GetSpellCooldown then
-                local info = C_Spell.GetSpellCooldown(spellID)
-                if info then start, duration = info.startTime, info.duration end
-            else
-                start, duration = GetSpellCooldown(spellID)
-            end
-            local isCooldown = false
-            if start and duration then
-                local success, res = pcall(function() return duration > 1.5 end)
-                if success then isCooldown = res end
-            end
-            highlight:SetColorTexture(unpack(isCooldown and {1, 0.8, 0, 0.3} or {0.3, 1, 0.5, 0.3}))
-        else
-            highlight:SetColorTexture(1, 0.2, 0.2, 0.3)
-        end
-        highlight:Show()
-        if dungeonIcon.OnEnter then dungeonIcon:OnEnter() end
-    end)
-
-    overlay:SetScript("OnLeave", function(self)
-        highlight:Hide()
-        if dungeonIcon.OnLeave then dungeonIcon:OnLeave() end
-    end)
-
-    dungeonIcon.guiTeleportOverlay = overlay
 end
 
 local function HookDungeonIcons()

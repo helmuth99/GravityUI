@@ -1,4 +1,4 @@
-﻿-- GravityUI - Quality of Life Page
+-- GravityUI - Quality of Life Page
 local ADDON_NAME, ns = ...
 
 local GUI = ns.GUI
@@ -634,6 +634,77 @@ local function BuildMailExtras(parent)
     content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
 end
 
+-- 13. Tools
+local function BuildTools(parent)
+    local scroll, content = GUI:CreateScrollableContent(parent)
+    scroll:SetAllPoints()
+    local db = ns.GetDB(); if not db then return end
+    local dbUI = db.uiimprovements
+    
+    -- Ensure subtable
+    if not dbUI.tools then
+        dbUI.tools = { guildInviteRanks = {}, autoAssistNames = "", autoTankNames = "" }
+    end
+    local dbTools = dbUI.tools
+    content.rowCount = 0
+
+    local header = GUI:CreateSectionHeader(content, "Group & Guild Tools")
+    header:SetPoint("TOPLEFT", 10, -10)
+    header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
+    content.rowCount = 1.3
+
+    CreateSubHeader(content, "Guild Invite Tool")
+    local guildInfo = GUI:CreateInfoBox(content, "Select the ranks to invite. Use |cffFFCC00/guiinv|r to automatically invite online members of these ranks.")
+    guildInfo:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
+    content.rowCount = content.rowCount + (guildInfo:GetHeight() / (ROW_HEIGHT+5)) + 0.2
+
+    if IsInGuild() and C_GuildInfo and C_GuildInfo.GuildRoster then 
+        C_GuildInfo.GuildRoster() 
+    end
+
+    local numRanks = 0
+    if C_GuildInfo and C_GuildInfo.GetNumRanks then
+        numRanks = C_GuildInfo.GetNumRanks()
+    elseif _G.GetNumGuildRanks then
+        numRanks = _G.GetNumGuildRanks()
+    end
+    
+    if not numRanks or numRanks == 0 then numRanks = 10 end
+
+    for i = 0, numRanks - 1 do
+        local name
+        if C_GuildInfo and C_GuildInfo.GetRankName then
+            name = C_GuildInfo.GetRankName(i + 1)
+        elseif _G.GuildControlGetRankName then
+            name = _G.GuildControlGetRankName(i + 1)
+        end
+
+        if name and name ~= "" then
+            local rankLabel = name .. " (|cffAAAAAARank " .. i .. "|r)"
+            AddRow(content, "   - Invite " .. rankLabel, "checkbox", i, dbTools.guildInviteRanks, nil)
+        elseif not IsInGuild() then
+            -- Only show generic ranks if not in a guild at all (fallback)
+            AddRow(content, "   - Invite Rank " .. i, "checkbox", i, dbTools.guildInviteRanks, nil)
+        end
+    end
+
+    content.rowCount = content.rowCount + 0.5
+    CreateSubHeader(content, "Role Promotion")
+    local roleInfo = GUI:CreateInfoBox(content, "Promotes players to Assistant automatically when they join your group/raid. (Requires Leader)")
+    roleInfo:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
+    content.rowCount = content.rowCount + (roleInfo:GetHeight() / (ROW_HEIGHT+5)) + 0.2
+
+    AddRow(content, "Auto Assist Names (comma separated)", "input", "autoAssistNames", dbTools, nil)
+
+    local btnUpdateRoles = GUI:CreateButton(content, "Update Roles Now", 160, 26, function()
+        if ns.UpdateGroupRoles then ns.UpdateGroupRoles() end
+    end)
+    btnUpdateRoles:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT+5)))
+    content.rowCount = content.rowCount + 1.2
+
+    content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
+end
+
 --==============================================================================================================================================================================================
 -- MAIN PAGE
 --==============================================================================================================================================================================================
@@ -649,6 +720,7 @@ ns.GUI:RegisterPage("uiimprovements", {
         { name = "M+ Teleport", builder = BuildTeleport },
         { name = "World Marks", builder = BuildWorldMarks },
         { name = "Mail", builder = BuildMailExtras },
+        { name = "Tools", builder = BuildTools },
     },
     OnBuild = function(content)
         -- Hide default scrollframe parent

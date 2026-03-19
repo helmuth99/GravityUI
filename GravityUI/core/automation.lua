@@ -703,6 +703,7 @@ end
 
 local wasLoggingBeforeRaid = false
 local isRaidLoggingActive = false
+local resumeLoggingPending = false
 
 local function CheckRaidLogging()
     local settings = GetSettings()
@@ -756,6 +757,7 @@ end
 ---------------------------------------------------------------------------
 
 local function CheckResumeLogging()
+    resumeLoggingPending = false
     -- M+ Check
     local settings = GetSettings()
     if settings and settings.autoCombatLog then
@@ -1126,6 +1128,147 @@ automationFrame:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
 automationFrame:RegisterEvent("AUCTION_HOUSE_SHOW")
 automationFrame:RegisterEvent("CHAT_MSG_WHISPER")
 automationFrame:RegisterEvent("CHAT_MSG_BN_WHISPER")
+automationFrame:RegisterEvent("GROUP_ROSTER_UPDATE")
+
+---------------------------------------------------------------------------
+-- GROUP TOOLS: GUILD INVITE & AUTO ROLES
+---------------------------------------------------------------------------
+
+local function InviteGuildRanks()
+    local settings = GetSettings()
+    if not settings or not settings.tools or not settings.tools.guildInviteRanks then return end
+    
+    local numMembers = GetNumGuildMembers()
+    local invited = 0
+    local playerName = UnitName("player")
+    
+    for i = 1, numMembers do
+        local name, _, rankIndex, _, _, _, _, _, online = GetGuildRosterInfo(i)
+        if online and name and settings.tools.guildInviteRanks[rankIndex] then
+            -- Handle potential realm name in name
+            local shortName = name:match("([^%-]+)") or name
+            if shortName ~= playerName then
+                C_PartyInfo.InviteUnit(name)
+                invited = invited + 1
+            end
+        end
+    end
+    
+    if invited > 0 then
+        ns.Print("Invited " .. invited .. " guild members based on selected ranks.")
+    else
+        ns.Print("No online members found for selected ranks.")
+    end
+end
+
+-- Slash command for guild invites
+SLASH_GUIINV1 = "/guiinv"
+SlashCmdList["GUIINV"] = function()
+    InviteGuildRanks()
+    -- Trigger role refresh in user context
+    if ns.UpdateGroupRoles then ns.UpdateGroupRoles() end
+end
+
+-- Manual function for role assignment (User-initiated to allow protected SetPartyAssignment)
+function ns.UpdateGroupRoles()
+    if not IsInGroup() or not UnitIsGroupLeader("player") then 
+        ns.Print("You must be the group leader to assign roles.")
+        return 
+    end
+    local settings = GetSettings()
+    if not settings or not settings.tools then return end
+    
+    local assistNames = settings.tools.autoAssistNames or ""
+    if assistNames == "" then 
+        ns.Print("Missing Auto Assist names in Tools configuration.")
+        return 
+    end
+    
+    local function IsInList(pName, pFullName, list)
+        if not pName or not list or list == "" then return false end
+        for part in string.gmatch(list, '([^,]+)') do
+            local cleanPart = part:gsub("^%s*(.-)%s*$", "%1"):lower()
+            if cleanPart == pName:lower() or (pFullName and cleanPart == pFullName:lower()) then
+                return true
+            end
+        end
+        return false
+    end
+    
+    local numMembers = GetNumGroupMembers()
+    local isRaid = IsInRaid()
+    local count = 0
+    
+    for i = 1, numMembers do
+        local unit = isRaid and ("raid"..i) or ("party"..i)
+        if not UnitIsUnit(unit, "player") then
+            local name = GetUnitName(unit, false)
+            local fullName = GetUnitName(unit, true)
+            
+            if name then
+                -- Assistant Promotion (Also check if missing)
+                if isRaid and IsInList(name, fullName, assistNames) then
+                    if not UnitIsGroupAssistant(unit) then
+                        PromoteToAssistant(unit)
+                        ns.Print("Promoted |cff00FF00" .. name .. "|r to Assistant.")
+                        count = count + 1
+                    end
+                end
+            end
+        end
+    end
+    if count == 0 then ns.Print("Role check complete: No changes needed.") end
+end
+
+SLASH_GUIROLE1 = "/guirole"
+SLASH_GUIROLE2 = "/guiroles"
+SlashCmdList["GUIROLE"] = function()
+    ns.UpdateGroupRoles()
+end
+
+local function AutoPromoteRoles()
+    if not IsInGroup() or not UnitIsGroupLeader("player") then return end
+    local settings = GetSettings()
+    if not settings or not settings.tools then return end
+    
+    local assistNames = settings.tools.autoAssistNames or ""
+    local tankNames = settings.tools.autoTankNames or ""
+    
+    if assistNames == "" and tankNames == "" then return end
+    
+    -- Helper to check if name is in comma-separated list
+    local function IsInList(name, fullName, list)
+        if not name or not list or list == "" then return false end
+        for part in string.gmatch(list, '([^,]+)') do
+            local cleanPart = part:gsub("^%s*(.-)%s*$", "%1"):lower()
+            if cleanPart == name:lower() or (fullName and cleanPart == fullName:lower()) then
+                return true
+            end
+        end
+        return false
+    end
+    
+    local numMembers = GetNumGroupMembers()
+    local isRaid = IsInRaid()
+    
+    for i = 1, numMembers do
+        local unit = isRaid and ("raid"..i) or ("party"..i)
+        if not UnitIsUnit(unit, "player") then
+            local name = GetUnitName(unit, false)
+            local fullName = GetUnitName(unit, true)
+            
+            if name then
+                -- Auto Assist (Raid only, typically not protected)
+                if isRaid and IsInList(name, fullName, assistNames) then
+                    if not UnitIsGroupAssistant(unit) then
+                        PromoteToAssistant(unit)
+                        ns.Print("Auto-Promoted |cff00FF00" .. name .. "|r to Assistant.")
+                    end
+                end
+            end
+        end
+    end
+end
 
 automationFrame:SetScript("OnEvent", function(self, event, ...)
     if event == "CHAT_MSG_WHISPER" then
@@ -1184,7 +1327,10 @@ automationFrame:SetScript("OnEvent", function(self, event, ...)
              OverrideLfgApplicationDialog()
              InjectRoleTogglesLFG()
         end
-        C_Timer.After(2, CheckResumeLogging)
+        if not resumeLoggingPending then
+            resumeLoggingPending = true
+            C_Timer.After(2, CheckResumeLogging)
+        end
     elseif event == "CHALLENGE_MODE_KEYSTONE_RECEPTABLE_OPEN" then
         OnKeyStoneInsert()
     elseif event == "LFG_LIST_SEARCH_RESULTS_RECEIVED" then
@@ -1202,5 +1348,7 @@ automationFrame:SetScript("OnEvent", function(self, event, ...)
         end
     elseif event == "AUCTION_HOUSE_SHOW" then
         OnAuctionHouseShow()
+    elseif event == "GROUP_ROSTER_UPDATE" then
+        AutoPromoteRoles()
     end
 end)
