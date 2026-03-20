@@ -1127,9 +1127,11 @@ local function UpdateDungeonEye()
                       QueueStatusButton:Hide()
                  end
 
-                 -- Trigger natural update
-                 if QueueStatusFrame and QueueStatusFrame.Update then
-                     pcall(QueueStatusFrame.Update, QueueStatusFrame)
+                 -- Do NOT call QueueStatusFrame:Update() directly! 
+                 -- Calling it from addon code taints the dropdown menu generation, causing ADDON_ACTION_FORBIDDEN 
+                 -- when the user clicks protected actions like "AcceptBattlefieldPort".
+                 if QueueStatusButton.Update then
+                     pcall(QueueStatusButton.Update, QueueStatusButton)
                  end
              end
         else
