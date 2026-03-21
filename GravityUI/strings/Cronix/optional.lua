@@ -1,4 +1,4 @@
--- Optional Addons Data Export
+﻿-- Optional Addons Data Export
 -- Extracted from User SavedVariables (21.02.2026)
 
 if not GravityUI.profiles["Cronix"] then return end
@@ -662,7 +662,7 @@ imports["Baganator"] = {
 }
 
 -- 3. NORTHERN SKY RAID TOOLS
--- Data from NSRT
+-- Data from NSRT (Updated 21.03.2026)
 imports["NorthernSkyRaidTools"] = {
     data = {
 ["CooldownList"] = {
@@ -684,6 +684,7 @@ imports["NorthernSkyRaidTools"] = {
 ["CraftedCheck"] = true,
 ["GatewayShardCheck"] = true,
 ["MissingItemCheck"] = true,
+["SourceOfMagicCheck"] = true,
 ["GemCheck"] = true,
 ["ItemLevelCheck"] = true,
 },
@@ -720,16 +721,91 @@ imports["NorthernSkyRaidTools"] = {
 },
 [3179] = {
 ["enabled"] = true,
+["CCAddsDisplay"] = true,
 },
 },
 ["ReminderSettings"] = {
+["ShowPersonalReminderFrame"] = false,
+["MRTNote"] = false,
+["ExtraReminderFrameMoveable"] = false,
+["TextSettings"] = {
+["FontSize"] = 40,
+["xOffset"] = 0,
+["yOffset"] = 213,
+["Width"] = 302.933349609375,
+["Font"] = "Gravity",
+["colors"] = {
+1,
+1,
+1,
+1,
+},
+["GrowDirection"] = "Up",
+["Anchor"] = "CENTER",
+["relativeTo"] = "CENTER",
+["Height"] = 40,
+["CenterAligned"] = true,
+},
+["PersonalReminderFrameMoveable"] = false,
+["PersNote"] = true,
+["enabled"] = true,
+["AnnounceTextDuration"] = true,
+["SpellTTS"] = true,
+["Bars"] = false,
+["PersonalReminderFrame"] = {
+["enabled"] = false,
+["FontSize"] = 14,
+["xOffset"] = 0,
+["Moveable"] = false,
+["Width"] = 428.0000305175781,
+["Font"] = "Gravity",
+["BGcolor"] = {
+0,
+0,
+0,
+0,
+},
+["Height"] = 192.0000152587891,
+["Anchor"] = "LEFT",
+["yOffset"] = 0,
+},
+["AnnounceSpellDuration"] = true,
+["GlowSettings"] = {
+["Thickness"] = 4,
+["Lines"] = 10,
+["colors"] = {
+0,
+1,
+0,
+1,
+},
+["xOffset"] = 0,
+["Length"] = 10,
+["Frequency"] = 0.2,
+["yOffset"] = 0,
+},
+["TextCountdown"] = 0,
+["TextInSharedNote"] = true,
+["SpellTTSTimer"] = 5,
+["OnlySpellReminders"] = false,
+["AutoShare"] = true,
+["ReminderFrameMoveable"] = false,
+["TextTTSTimer"] = 5,
+["SpellCountdown"] = 0,
+["UnitIconSettings"] = {
+["Position"] = "CENTER",
+["xOffset"] = 0,
+["yOffset"] = 0,
+["Height"] = 25,
+["Width"] = 25,
+},
 ["IconSettings"] = {
 ["yTimer"] = 0,
 ["relativeTo"] = "CENTER",
 ["FontSize"] = 24,
 ["xTimer"] = 0,
-["xOffset"] = 205,
-["yOffset"] = 153,
+["xOffset"] = 217,
+["yOffset"] = 150,
 ["xTextOffset"] = 0,
 ["Width"] = 50,
 ["yTextOffset"] = 0,
@@ -747,60 +823,53 @@ imports["NorthernSkyRaidTools"] = {
 ["Glow"] = 0,
 },
 ["ShowExtraReminderFrame"] = false,
-["SpellTTSTimer"] = 5,
-["TextTTS"] = false,
-["TextCountdown"] = 0,
-["UnitIconSettings"] = {
-["Position"] = "CENTER",
-["xOffset"] = 0,
-["yOffset"] = 0,
-["Height"] = 25,
-["Width"] = 25,
-},
-["Sticky"] = 5,
-["ExtraReminderFrame"] = {
-["enabled"] = false,
+["TextTTS"] = true,
+["ReminderFrame"] = {
+["enabled"] = true,
 ["relativeTo"] = "TOPLEFT",
-["xOffset"] = 5,
+["xOffset"] = 2,
 ["Moveable"] = false,
-["Width"] = 500,
+["Width"] = 413,
 ["Font"] = "Gravity",
 ["BGcolor"] = {
 0,
 0,
 0,
-0.3,
+0,
 },
-["Height"] = 600,
-["FontSize"] = 14,
-["yOffset"] = -54,
+["Height"] = 308,
 ["Anchor"] = "TOPLEFT",
+["yOffset"] = -59,
+["FontSize"] = 14,
 },
-["ExtraReminderFrameMoveable"] = false,
-["OnlySpellReminders"] = true,
-["TextSettings"] = {
-["FontSize"] = 40,
-["xOffset"] = 0,
-["yOffset"] = 213,
+["TextDuration"] = 10,
+["HidePlayerNames"] = false,
+["HideTimerText"] = false,
+["Sticky"] = 5,
+["ExtraReminderFrame"] = {
+["enabled"] = false,
+["relativeTo"] = "TOPLEFT",
+["xOffset"] = 8,
+["Moveable"] = false,
+["Width"] = 416,
 ["Font"] = "Gravity",
-["colors"] = {
-1,
-1,
-1,
-1,
+["BGcolor"] = {
+0,
+0,
+0,
+0,
 },
-["GrowDirection"] = "Up",
-["Anchor"] = "CENTER",
-["relativeTo"] = "CENTER",
-["Height"] = 40,
-["Width"] = 302.933349609375,
+["Height"] = 435,
+["FontSize"] = 14,
+["yOffset"] = -57,
+["Anchor"] = "TOPLEFT",
 },
 ["BarSettings"] = {
 ["yTimer"] = 0,
 ["FontSize"] = 20,
 ["xTimer"] = -2,
-["xOffset"] = -278,
-["yOffset"] = 16,
+["xOffset"] = -288,
+["yOffset"] = 29,
 ["GrowDirection"] = "Up",
 ["Anchor"] = "CENTER",
 ["TimerFontSize"] = 20,
@@ -813,96 +882,20 @@ imports["NorthernSkyRaidTools"] = {
 ["xIcon"] = 0,
 ["Height"] = 22,
 ["colors"] = {
-1,
 0,
-0,
+0.572549045085907,
+0.988235354423523,
 1,
 },
 ["Font"] = "Gravity",
 },
 ["SpellDuration"] = 10,
-["TextTTSTimer"] = 5,
 ["SpellName"] = true,
-["enabled"] = true,
-["MRTNote"] = false,
-["ReminderFrameMoveable"] = false,
-["GlowSettings"] = {
-["Thickness"] = 4,
-["Lines"] = 10,
-["colors"] = {
-0,
-1,
-0,
-1,
-},
-["xOffset"] = 0,
-["Length"] = 10,
-["Frequency"] = 0.2,
-["yOffset"] = 0,
-},
 ["ShowReminderFrame"] = true,
-["ReminderFrame"] = {
-["enabled"] = true,
-["relativeTo"] = "TOPLEFT",
-["xOffset"] = 0,
-["Moveable"] = false,
-["Width"] = 410,
-["Font"] = "Gravity",
-["BGcolor"] = {
-0,
-0,
-0,
-0.3,
-},
-["Height"] = 223,
-["Anchor"] = "TOPLEFT",
-["yOffset"] = -67,
-["FontSize"] = 14,
-},
-["SpellTTS"] = false,
-["TextDuration"] = 10,
-["AutoShare"] = true,
-["HideTimerText"] = false,
-["SpellCountdown"] = 0,
-["ShowPersonalReminderFrame"] = false,
-["PersNote"] = true,
-["Bars"] = false,
-["PersonalReminderFrameMoveable"] = false,
-["PersonalReminderFrame"] = {
-["enabled"] = false,
-["relativeTo"] = "LEFT",
-["xOffset"] = 0,
-["Moveable"] = false,
-["Width"] = 410,
-["Font"] = "Gravity",
-["BGcolor"] = {
-0,
-0,
-0,
-0.3,
-},
-["Height"] = 183,
-["Anchor"] = "LEFT",
-["yOffset"] = 207,
-["FontSize"] = 14,
-},
 },
 ["UseDefaultPASounds"] = true,
 ["NSUI"] = {
 ["scale"] = 1,
-["externals_anchor"] = {
-["settings"] = {
-["anchorPoint"] = {
-"CENTER",
-"UIParent",
-"CENTER",
-0,
-150,
-},
-["height"] = 70,
-["width"] = 70,
-},
-},
 ["AutoComplete"] = {
 ["WA"] = {
 "Northern Sky",
@@ -928,6 +921,19 @@ imports["NorthernSkyRaidTools"] = {
 ["scale"] = 1,
 },
 },
+["externals_anchor"] = {
+["settings"] = {
+["anchorPoint"] = {
+"CENTER",
+"UIParent",
+"CENTER",
+0,
+150,
+},
+["height"] = 70,
+["width"] = 70,
+},
+},
 },
 ["Settings"] = {
 ["SuF"] = false,
@@ -950,9 +956,9 @@ imports["NorthernSkyRaidTools"] = {
 ["WA"] = false,
 ["Translit"] = false,
 ["GlobalNickNames"] = false,
+["GlobalFontSize"] = 20,
 ["VersionCheckRemoveResponse"] = false,
-["RebuffCheck"] = false,
-["AutoUpdateWA"] = false,
+["GlobalEncounterFontSize"] = 20,
 ["VersionCheckPresets"] = {
 {
 "WA: Northern Sky Manaforge Omega",
@@ -962,31 +968,33 @@ imports["NorthernSkyRaidTools"] = {
 },
 },
 },
-["ShareNickNames"] = 4,
-["OmniCD"] = false,
-["WeakAurasImportAccept"] = 1,
-["MRT"] = false,
-["CheckCooldowns"] = true,
-["AcceptNickNames"] = 4,
-["Debug"] = false,
-["TTSVolume"] = 50,
-["MRTNoteComparison"] = false,
-["NickNamesSyncSend"] = 3,
-["LIQUID_MACRO"] = false,
-["Cell"] = false,
-["ElvUI"] = false,
-["Grid2"] = false,
-["ExternalSelfPing"] = false,
-["DebugLogs"] = false,
 ["GenericDisplay"] = {
 ["Anchor"] = "CENTER",
 ["relativeTo"] = "CENTER",
 ["xOffset"] = -200,
 ["yOffset"] = 400,
 },
-["PAExtraAction"] = false,
-["AutoUpdateRaidWA"] = false,
 ["MissingRaidBuffs"] = false,
+["ShareNickNames"] = 4,
+["AutoUpdateWA"] = false,
+["WeakAurasImportAccept"] = 1,
+["MRT"] = false,
+["CheckCooldowns"] = true,
+["Debug"] = false,
+["DebugLogs"] = false,
+["TTSVolume"] = 50,
+["Cell"] = false,
+["NickNamesSyncSend"] = 3,
+["MRTNoteComparison"] = false,
+["Grid2"] = false,
+["ElvUI"] = false,
+["LIQUID_MACRO"] = false,
+["ExternalSelfPing"] = false,
+["AcceptNickNames"] = 4,
+["AutoUpdateRaidWA"] = false,
+["PAExtraAction"] = false,
+["RebuffCheck"] = false,
+["OmniCD"] = false,
 },
 ["PATextSettings"] = {
 ["enabled"] = true,
@@ -998,32 +1006,78 @@ imports["NorthernSkyRaidTools"] = {
 },
 ["StoredSharedReminder"] = false,
 ["PASounds"] = {
+["UseDefaultMPlusPASounds"] = true,
+["UseDefaultPASounds"] = true,
+[1262772] = {
+["sound"] = "|cFF4BAAC8Targeted|r",
+["edited"] = false,
+},
+[1280023] = {
+["sound"] = "|cFF4BAAC8Targeted|r",
+["edited"] = false,
+},
+[1232470] = {
+["sound"] = "|cFF4BAAC8Targeted|r",
+["edited"] = false,
+},
+[1241339] = {
+["sound"] = "|cFF4BAAC8Void|r",
+["edited"] = false,
+},
 [1223958] = {
 ["sound"] = "|cFF4BAAC8Targeted|r",
+["edited"] = false,
+},
+[1248985] = {
+["sound"] = "|cFF4BAAC8Targeted|r",
+["edited"] = false,
+},
+[1253979] = {
+["sound"] = "|cFF4BAAC8Clear|r",
 ["edited"] = false,
 },
 [1215897] = {
 ["sound"] = "|cFF4BAAC8Targeted|r",
 ["edited"] = false,
 },
+[1282678] = {
+["sound"] = "|cFF4BAAC8Fixate|r",
+["edited"] = false,
+},
 [1249478] = {
 ["sound"] = "|cFF4BAAC8Charge|r",
 ["edited"] = false,
 },
-[1262772] = {
-["sound"] = "|cFF4BAAC8Targeted|r",
+[1253511] = {
+["sound"] = "|cFF4BAAC8Fixate|r",
 ["edited"] = false,
 },
 [1225792] = {
 ["sound"] = "|cFF4BAAC8Debuff|r",
 ["edited"] = false,
 },
+[1284527] = {
+["sound"] = "|cFF4BAAC8Targeted|r",
+["edited"] = false,
+},
 [1241292] = {
 ["sound"] = "|cFF4BAAC8Light|r",
 ["edited"] = false,
 },
-[1249609] = {
-["sound"] = "|cFF4BAAC8Rune|r",
+[1240222] = {
+["sound"] = "|cFF4BAAC8Targeted|r",
+["edited"] = false,
+},
+[1252675] = {
+["sound"] = "|cFF4BAAC8Targeted|r",
+["edited"] = false,
+},
+[474545] = {
+["sound"] = "|cFF4BAAC8Targeted|r",
+["edited"] = false,
+},
+[470966] = {
+["sound"] = "|cFF4BAAC8Fixate|r",
 ["edited"] = false,
 },
 [1265426] = {
@@ -1034,12 +1088,16 @@ imports["NorthernSkyRaidTools"] = {
 ["sound"] = "|cFF4BAAC8Linked|r",
 ["edited"] = false,
 },
-[1248985] = {
+[1241992] = {
 ["sound"] = "|cFF4BAAC8Targeted|r",
 ["edited"] = false,
 },
 [1283069] = {
 ["sound"] = "|cFF4BAAC8Fixate|r",
+["edited"] = false,
+},
+[1239111] = {
+["sound"] = "|cFF4BAAC8Break|r",
 ["edited"] = false,
 },
 [1260643] = {
@@ -1050,8 +1108,8 @@ imports["NorthernSkyRaidTools"] = {
 ["sound"] = "|cFF4BAAC8Soak|r",
 ["edited"] = false,
 },
-[1253531] = {
-["sound"] = "|cFF4BAAC8Beam|r",
+[1282911] = {
+["sound"] = "|cFF4BAAC8Targeted|r",
 ["edited"] = false,
 },
 [1281184] = {
@@ -1062,19 +1120,15 @@ imports["NorthernSkyRaidTools"] = {
 ["sound"] = "|cFF4BAAC8Targeted|r",
 ["edited"] = false,
 },
-[1280023] = {
-["sound"] = "|cFF4BAAC8Targeted|r",
-["edited"] = false,
-},
 [474129] = {
 ["sound"] = "|cFF4BAAC8Spread|r",
 ["edited"] = false,
 },
-[1284527] = {
-["sound"] = "|cFF4BAAC8Targeted|r",
+[1253531] = {
+["sound"] = "|cFF4BAAC8Beam|r",
 ["edited"] = false,
 },
-[1248994] = {
+[472793] = {
 ["sound"] = "|cFF4BAAC8Targeted|r",
 ["edited"] = false,
 },
@@ -1082,41 +1136,19 @@ imports["NorthernSkyRaidTools"] = {
 ["sound"] = "|cFF4BAAC8Targeted|r",
 ["edited"] = false,
 },
-[1241339] = {
-["sound"] = "|cFF4BAAC8Void|r",
+[1225011] = {
+["sound"] = "|cFF4BAAC8Debuff|r",
 ["edited"] = false,
 },
-[1232470] = {
+[1222098] = {
 ["sound"] = "|cFF4BAAC8Targeted|r",
 ["edited"] = false,
 },
-["UseDefaultMPlusPASounds"] = true,
+[1251785] = {
+["sound"] = "|cFF4BAAC8Targeted|r",
+["edited"] = false,
+},
 [1261286] = {
-["sound"] = "|cFF4BAAC8Targeted|r",
-["edited"] = false,
-},
-[1239111] = {
-["sound"] = "|cFF4BAAC8Break|r",
-["edited"] = false,
-},
-[1251775] = {
-["sound"] = "|cFF4BAAC8Fixate|r",
-["edited"] = false,
-},
-["UseDefaultPASounds"] = true,
-[472793] = {
-["sound"] = "|cFF4BAAC8Targeted|r",
-["edited"] = false,
-},
-[1264756] = {
-["sound"] = "|cFF4BAAC8Targeted|r",
-["edited"] = false,
-},
-[1246487] = {
-["sound"] = "|cFF4BAAC8Spread|r",
-["edited"] = false,
-},
-[153954] = {
 ["sound"] = "|cFF4BAAC8Targeted|r",
 ["edited"] = false,
 },
@@ -1124,12 +1156,36 @@ imports["NorthernSkyRaidTools"] = {
 ["sound"] = "|cFF4BAAC8Targeted|r",
 ["edited"] = false,
 },
-[1254113] = {
+[1251775] = {
 ["sound"] = "|cFF4BAAC8Fixate|r",
+["edited"] = false,
+},
+[1280064] = {
+["sound"] = "|cFF4BAAC8Phase Dash|r",
+["edited"] = false,
+},
+[1264756] = {
+["sound"] = "|cFF4BAAC8Targeted|r",
+["edited"] = false,
+},
+[1233887] = {
+["sound"] = "|cFF4BAAC8Debuff|r",
+["edited"] = false,
+},
+[153954] = {
+["sound"] = "|cFF4BAAC8Targeted|r",
 ["edited"] = false,
 },
 [1268992] = {
 ["sound"] = "|cFF4BAAC8Targeted|r",
+["edited"] = false,
+},
+[1254113] = {
+["sound"] = "|cFF4BAAC8Fixate|r",
+["edited"] = false,
+},
+[1246487] = {
+["sound"] = "|cFF4BAAC8Spread|r",
 ["edited"] = false,
 },
 [1248697] = {
@@ -1144,15 +1200,15 @@ imports["NorthernSkyRaidTools"] = {
 ["sound"] = "|cFF4BAAC8Spread|r",
 ["edited"] = false,
 },
-[466559] = {
-["sound"] = "|cFF4BAAC8Targeted|r",
+[1253541] = {
+["sound"] = "|cFF4BAAC8Debuff|r",
 ["edited"] = false,
 },
 [1252733] = {
 ["sound"] = "|cFF4BAAC8Targeted|r",
 ["edited"] = false,
 },
-[1282911] = {
+[466559] = {
 ["sound"] = "|cFF4BAAC8Targeted|r",
 ["edited"] = false,
 },
@@ -1160,19 +1216,19 @@ imports["NorthernSkyRaidTools"] = {
 ["sound"] = "|cFF4BAAC8Fixate|r",
 ["edited"] = false,
 },
-[1241992] = {
+[1248994] = {
 ["sound"] = "|cFF4BAAC8Targeted|r",
 ["edited"] = false,
 },
-[1233887] = {
-["sound"] = "|cFF4BAAC8Debuff|r",
+[1249020] = {
+["sound"] = "|cFF4BAAC8Spread|r",
 ["edited"] = false,
 },
 [1242091] = {
 ["sound"] = "|cFF4BAAC8Targeted|r",
 ["edited"] = false,
 },
-[1251785] = {
+[1261276] = {
 ["sound"] = "|cFF4BAAC8Targeted|r",
 ["edited"] = false,
 },
@@ -1180,8 +1236,8 @@ imports["NorthernSkyRaidTools"] = {
 ["sound"] = "|cFF4BAAC8Clear|r",
 ["edited"] = false,
 },
-[1253511] = {
-["sound"] = "|cFF4BAAC8Fixate|r",
+[1249609] = {
+["sound"] = "|cFF4BAAC8Rune|r",
 ["edited"] = false,
 },
 [1259861] = {
@@ -1201,37 +1257,7 @@ imports["NorthernSkyRaidTools"] = {
 ["edited"] = false,
 },
 },
-["QoL"] = {
-["TradeableItems"] = {
-["relativeTo"] = "TOP",
-["xOffset"] = 0,
-["yOffset"] = -400,
-["Anchor"] = "TOP",
-["Spacing"] = 5,
-["Height"] = 30,
-["Width"] = 30,
-["FontSize"] = 18,
-["GrowDirection"] = "DOWN",
-},
-["IconDisplay"] = {
-["Width"] = 40,
-["relativeTo"] = "TOP",
-["Scpaing"] = 5,
-["GrowDirection"] = "DOWN",
-["Height"] = 40,
-["Anchor"] = "TOP",
-["xOffset"] = 0,
-["yOffset"] = -350,
-},
-["AutoInvite"] = true,
-["TextDisplay"] = {
-["relativeTo"] = "CENTER",
-["Anchor"] = "CENTER",
-["FontSize"] = 30,
-["xOffset"] = 0,
-["yOffset"] = 0,
-},
-},
+["ActiveReminder"] = "Vanguard",
 ["PARaidSettings"] = {
 ["enabled"] = false,
 ["relativeTo"] = "BOTTOMLEFT",
@@ -1259,25 +1285,59 @@ imports["NorthernSkyRaidTools"] = {
 ["PersonalReminders"] = {
 },
 ["HasLoggedIntoMidnight"] = true,
-["PASettings"] = {
-["enabled"] = true,
+["QoL"] = {
+["AutoInvite"] = false,
+["TextDisplay"] = {
 ["relativeTo"] = "CENTER",
-["xOffset"] = -187,
+["Anchor"] = "CENTER",
+["FontSize"] = 30,
+["xOffset"] = -3,
+["yOffset"] = 142,
+},
+["TradeableItems"] = {
+["relativeTo"] = "TOP",
+["xOffset"] = 0,
+["yOffset"] = -400,
+["Anchor"] = "TOP",
+["Spacing"] = 5,
+["Height"] = 30,
+["Width"] = 30,
+["FontSize"] = 18,
+["GrowDirection"] = "DOWN",
+},
+["IconDisplay"] = {
+["Width"] = 40,
+["relativeTo"] = "TOP",
+["Scpaing"] = 5,
+["GrowDirection"] = "DOWN",
+["Height"] = 40,
+["Anchor"] = "TOP",
+["xOffset"] = 0,
+["yOffset"] = -350,
+},
+["ResetBossDisplay"] = false,
+},
+["PASettings"] = {
+["enabled"] = false,
+["relativeTo"] = "CENTER",
+["UpscaleDuration"] = false,
+["xOffset"] = -200,
+["yOffset"] = -70,
 ["RowGrowDirection"] = "UP",
 ["Width"] = 40,
-["UpscaleDuration"] = true,
-["GrowDirection"] = "LEFT",
-["Limit"] = 5,
-["Spacing"] = -1,
+["HideBorder"] = false,
 ["Height"] = 40,
+["Limit"] = 5,
+["GrowDirection"] = "LEFT",
 ["Anchor"] = "CENTER",
-["yOffset"] = -50,
+["Spacing"] = -1,
+["StackScale"] = 1,
 ["PerRow"] = 10,
 },
 ["PATankSettings"] = {
-["enabled"] = false,
+["enabled"] = true,
 ["relativeTo"] = "CENTER",
-["xOffset"] = -187,
+["xOffset"] = -202,
 ["MultiTankGrowDirection"] = "UP",
 ["Width"] = 40,
 ["Limit"] = 5,
@@ -1285,7 +1345,7 @@ imports["NorthernSkyRaidTools"] = {
 ["Height"] = 40,
 ["GrowDirection"] = "LEFT",
 ["Anchor"] = "CENTER",
-["yOffset"] = -101,
+["yOffset"] = -121,
 },
 ["AssignmentSettings"] = {
 [3178] = {
@@ -1294,7 +1354,7 @@ imports["NorthernSkyRaidTools"] = {
 ["OnPull"] = true,
 [3306] = {
 ["Soaks"] = true,
-["SplitSoaks"] = true,
+["SplitSoaks"] = false,
 },
 [3180] = {
 ["Soaks"] = true,
@@ -1303,7 +1363,6 @@ imports["NorthernSkyRaidTools"] = {
 }
 
 }
-
 -- 4. WARPDEPLETE
 -- Data from WarpDepleteDB.profiles["GravityUI"]
 imports["WarpDeplete"] = {
