@@ -1352,6 +1352,9 @@ Module.consumables:SetPoint("BOTTOM", ReadyCheckListenerFrame, "TOP", 0, 5)
 Module.consumables:SetSize(consumables_size * 5, consumables_size)
 Module.consumables:SetFrameStrata("DIALOG")
 Module.consumables:SetFrameLevel(100)
+Module.consumables:SetMovable(true)
+Module.consumables:EnableMouse(true)
+Module.consumables:RegisterForDrag("LeftButton")
 Module.consumables:Hide()
 Module.consumables.buttons = {}
 
@@ -1360,47 +1363,111 @@ Module.consumables.rlpointer:SetSize(1, 1)
 Module.consumables.rlpointer:SetPoint("CENTER")
 Module.consumables.rlpointer:Hide()
 
---- Close button
-Module.consumables.close = CreateFrame("Button", nil, Module.consumables,
-                                    "SecureHandlerClickTemplate")
-Module.consumables.close:SetSize(0, 20)
-Module.consumables.close:SetPoint("TOPLEFT", Module.consumables, "BOTTOMLEFT", 1, -3)
-Module.consumables.close:SetPoint("TOPRIGHT", Module.consumables, "BOTTOMRIGHT", -1, -3)
-Module.consumables.close:Hide()
+local function savePersonalPosition(self)
+    self:StopMovingOrSizing()
+    self.isMoving = false
 
-Module.consumables.close.bg = Module.consumables.close:CreateTexture(nil, "BACKGROUND")
-Module.consumables.close.bg:SetAllPoints()
-Module.consumables.close.bg:SetColorTexture(0.1, 0.1, 0.1, 0.9)
+    local db = ns.GetDB()
+    if not db or not db.screenindicators or not db.screenindicators.consumables then return end
 
-Module.consumables.close.border = Module.consumables.close:CreateTexture(nil, "BORDER")
-Module.consumables.close.border:SetPoint("TOPLEFT", -1, 1)
-Module.consumables.close.border:SetPoint("BOTTOMRIGHT", 1, -1)
-Module.consumables.close.border:SetColorTexture(0, 0, 0, 1)
+    local point, _, relPoint, x, y = self:GetPoint(1)
+    db.screenindicators.consumables.personalPos = {
+        point    = point,
+        relPoint = relPoint,
+        x        = x,
+        y        = y,
+    }
+end
 
-Module.consumables.close.highlight = Module.consumables.close:CreateTexture(nil, "ARTWORK")
-Module.consumables.close.highlight:SetAllPoints(Module.consumables.close.bg)
-Module.consumables.close.highlight:SetColorTexture(0.3, 0.3, 0.3, 0.5)
-Module.consumables.close.highlight:SetBlendMode("ADD")
-Module.consumables.close.highlight:Hide()
-
-Module.consumables.close.text = Module.consumables.close:CreateFontString(nil, "OVERLAY")
-Module.consumables.close.text:SetPoint("CENTER")
-Module.consumables.close.text:SetFont(FONT, 12, "OUTLINE")
-Module.consumables.close.text:SetText(CLOSE or "x")
-Module.consumables.close.text:SetTextColor(1, 1, 1)
-
-Module.consumables.close:SetScript("OnEnter", function(self)
-    self.highlight:Show()
+Module.consumables:SetScript("OnDragStart", function(self)
+    if not InCombatLockdown() then
+        self:StartMoving()
+        self.isMoving = true
+    end
 end)
 
-Module.consumables.close:SetScript("OnLeave", function(self)
-    self.highlight:Hide()
+Module.consumables:SetScript("OnDragStop", savePersonalPosition)
+
+Module.consumables:HookScript("OnHide", function(self)
+    if self.isMoving then
+        savePersonalPosition(self)
+    end
 end)
 
-Module.consumables.close:SetFrameRef("consumables", Module.consumables)
-Module.consumables.close:SetAttribute("_onclick", [[
+--- Drag handle (previously the close bar)
+Module.consumables.dragHandle = CreateFrame("Frame", nil, Module.consumables, "BackdropTemplate")
+Module.consumables.dragHandle:SetSize(0, 20)
+Module.consumables.dragHandle:SetPoint("TOPLEFT", Module.consumables, "BOTTOMLEFT", 1, -3)
+Module.consumables.dragHandle:SetPoint("TOPRIGHT", Module.consumables, "BOTTOMRIGHT", -1, -3)
+Module.consumables.dragHandle:Hide()
+
+Module.consumables.dragHandle.bg = Module.consumables.dragHandle:CreateTexture(nil, "BACKGROUND")
+Module.consumables.dragHandle.bg:SetAllPoints()
+Module.consumables.dragHandle.bg:SetColorTexture(0.1, 0.1, 0.1, 0.9)
+
+Module.consumables.dragHandle.border = Module.consumables.dragHandle:CreateTexture(nil, "BORDER")
+Module.consumables.dragHandle.border:SetPoint("TOPLEFT", -1, 1)
+Module.consumables.dragHandle.border:SetPoint("BOTTOMRIGHT", 1, -1)
+Module.consumables.dragHandle.border:SetColorTexture(0, 0, 0, 1)
+
+Module.consumables.dragHandle.text = Module.consumables.dragHandle:CreateFontString(nil, "OVERLAY")
+Module.consumables.dragHandle.text:SetPoint("LEFT", 5, 0)
+Module.consumables.dragHandle.text:SetFont(FONT, 10, "OUTLINE")
+Module.consumables.dragHandle.text:SetText("DRAG")
+Module.consumables.dragHandle.text:SetTextColor(0.5, 0.5, 0.5)
+
+Module.consumables.dragHandle:EnableMouse(true)
+Module.consumables.dragHandle:RegisterForDrag("LeftButton")
+Module.consumables.dragHandle:SetScript("OnMouseDown", function(self, button)
+    local p = self:GetParent()
+    if button == "LeftButton" and not InCombatLockdown() then
+        p:StartMoving()
+        p.isMoving = true
+    end
+end)
+Module.consumables.dragHandle:SetScript("OnMouseUp", function(self, button)
+    local p = self:GetParent()
+    if button == "LeftButton" and p.isMoving then
+        savePersonalPosition(p)
+    end
+end)
+
+--- Close button (small X on the right)
+Module.consumables.closeBtn = CreateFrame("Button", nil, Module.consumables.dragHandle, "SecureHandlerClickTemplate")
+Module.consumables.closeBtn:SetSize(20, 20)
+Module.consumables.closeBtn:SetPoint("RIGHT")
+
+Module.consumables.closeBtn.text = Module.consumables.closeBtn:CreateFontString(nil, "OVERLAY")
+Module.consumables.closeBtn.text:SetPoint("CENTER")
+Module.consumables.closeBtn.text:SetFont(FONT, 12, "OUTLINE")
+Module.consumables.closeBtn.text:SetText("X")
+Module.consumables.closeBtn.text:SetTextColor(1, 0.2, 0.2)
+
+Module.consumables.closeBtn:SetFrameRef("consumables", Module.consumables)
+Module.consumables.closeBtn:SetAttribute("_onclick", [[
     self:GetFrameRef("consumables"):Hide()
 ]])
+
+local function savePersonalPosition(self)
+    self:StopMovingOrSizing()
+
+    local db = ns.GetDB()
+    if not db or not db.screenindicators or not db.screenindicators.consumables then return end
+
+    local point, _, relPoint, x, y = self:GetPoint(1)
+    db.screenindicators.consumables.personalPos = {
+        point    = point,
+        relPoint = relPoint,
+        x        = x,
+        y        = y,
+    }
+end
+
+Module.consumables:SetScript("OnDragStart", function(self)
+    self:StartMoving()
+end)
+
+Module.consumables:SetScript("OnDragStop", savePersonalPosition)
 
 -------------------------------------------------------------------------------
 --- Combat state driver
@@ -2260,9 +2327,16 @@ function Module.consumables:Repos(isRL)
     if isRL then
         self:SetParent(UIParent)
         self:ClearAllPoints()
-        self:SetPoint("CENTER", UIParent, "CENTER", 0, -150)
 
-        self.close:Show()
+        local db = ns.GetDB()
+        local pos = db and db.screenindicators and db.screenindicators.consumables and db.screenindicators.consumables.personalPos
+        if pos then
+            self:SetPoint(pos.point, UIParent, pos.relPoint, pos.x, pos.y)
+        else
+            self:SetPoint("CENTER", UIParent, "CENTER", 0, -150)
+        end
+
+        self.dragHandle:Show()
 
         self.isRLpos = true
     elseif self.isRLpos then
@@ -2512,12 +2586,6 @@ frame.resizer = resizer
 local positionRestored = false
 
 local function restorePosition()
-    if positionRestored then
-        return
-    end
-
-    positionRestored = true
-
     local db = ns.GetDB()
     if not db or not db.screenindicators or not db.screenindicators.consumables then return end
     
@@ -3475,6 +3543,7 @@ Module.consumables:SetScript("OnEvent", function(self, event, unit, time_to_hide
             return
         end
 
+        self:Show()
         self:Update()
         self:RegisterEvent("UNIT_AURA")
         self:RegisterEvent("UNIT_INVENTORY_CHANGED")
@@ -3533,9 +3602,9 @@ Module.consumables:SetScript("OnHide", function(self)
     Module.consumables:OnHide()
 
     if not InCombatLockdown()
-        and self.close:IsShown()
+        and self.dragHandle:IsShown()
     then
-        self.close:Hide()
+        self.dragHandle:Hide()
     end
 end)
 
@@ -3632,10 +3701,10 @@ function Module.Initialize()
         Module.consumables:SetBackdropColor(bgr, bgg, bgb, bga)
     end
 
-    if Module.consumables and Module.consumables.close then
-        Module.consumables.close.bg:SetColorTexture(bgr, bgg, bgb, 0.9)
-        Module.consumables.close.border:SetColorTexture(sr, sg, sb, 1)
-        Module.consumables.close.text:SetFont(ns.GetFont(), 12, "OUTLINE")
+    if Module.consumables and Module.consumables.dragHandle then
+        Module.consumables.dragHandle.bg:SetColorTexture(bgr, bgg, bgb, 0.9)
+        Module.consumables.dragHandle.border:SetColorTexture(sr, sg, sb, 1)
+        Module.consumables.dragHandle.text:SetFont(ns.GetFont(), 12, "OUTLINE")
     end
 
     if Module.consumables and Module.consumables.buttons then
