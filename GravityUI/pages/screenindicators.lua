@@ -1314,7 +1314,41 @@ local function BuildAFKScreen(parent)
     content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
 end
 
-
+-- 9. Consumables
+local function BuildConsumables(parent)
+    local scroll, content = GUI:CreateScrollableContent(parent)
+    scroll:SetAllPoints()
+    local db = ns.GetDB(); if not db then return end
+    
+    if not db.screenindicators.consumables then
+        db.screenindicators.consumables = {
+            enabled = false,
+            showRaidFrame = false,
+        }
+    end
+    
+    local c = db.screenindicators.consumables
+    content.rowCount = 0
+    local refresh = function() if ns.Consumables and ns.Consumables.ApplySettings then ns.Consumables:ApplySettings() end end
+    
+    local header = GUI:CreateSectionHeader(content, "Consumables Tracker")
+    header:SetPoint("TOPLEFT", 10, -10)
+    header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
+    content.rowCount = 1.3
+    
+    local infoBox = GUI:CreateInfoBox(content, "Displays missing consumables like food and flasks for yourself and your group members during a Ready Check.")
+    infoBox:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
+    content.rowCount = content.rowCount + (infoBox:GetHeight() / (ROW_HEIGHT+5)) + 0.2
+    
+    CreateSubLabel(content, "Player Consumables Frame")
+    AddRow(content, "Enable Personal Frame", "checkbox", "enabled", c, refresh)
+    
+    content.rowCount = content.rowCount + 0.5
+    CreateSubLabel(content, "Raid Status Frame")
+    AddRow(content, "Enable Raid Frame", "checkbox", "showRaidFrame", c, refresh)
+    
+    content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
+end
 
 -- ═══════════════════════════════════════════════════════════════
 -- MAIN PAGE
@@ -1332,6 +1366,7 @@ ns.GUI:RegisterPage("screenindicators", {
         { name = "Interrupt Tracker", builder = BuildInterruptTracker },
         { name = "Difficulty Changer", builder = BuildDifficulty },
         { name = "AFK Screen", builder = BuildAFKScreen },
+        { name = "Consumables", builder = BuildConsumables },
     },
     OnBuild = function(content)
         -- Hide default scrollframe parent

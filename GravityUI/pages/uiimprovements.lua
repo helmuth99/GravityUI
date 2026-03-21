@@ -523,31 +523,6 @@ local function BuildTeleport(parent)
     btnGroupPreview:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT+5)))
     content.rowCount = content.rowCount + 1.2
 
-    content.rowCount = content.rowCount + 0.5
-    CreateSubHeader(content, "Dungeon Library")
-    AddRow(content, "Show Dungeon Library", "checkbox", "dungeonLibraryEnabled", dbUI, RefreshTP)
-    
-    if not dbUI.dungeonLibraryExpansions then dbUI.dungeonLibraryExpansions = {} end
-    for _, exp in ipairs(ns.TeleportData.Expansions) do
-        AddRow(content, "   - " .. exp.name, "checkbox", exp.name, dbUI.dungeonLibraryExpansions, function()
-             if ns.MPlusTeleport and ns.MPlusTeleport.RefreshLibrary then ns.MPlusTeleport:RefreshLibrary("Dungeon") end
-        end)
-    end
-
-    content.rowCount = content.rowCount + 0.5
-    CreateSubHeader(content, "Raid Library")
-    AddRow(content, "Show Raid Library", "checkbox", "raidLibraryEnabled", dbUI, RefreshTP)
-    
-    if not dbUI.raidLibraryExpansions then dbUI.raidLibraryExpansions = {} end
-    local raidExp = { "The War Within", "Dragonflight", "Shadowlands" }
-    for _, expName in ipairs(raidExp) do
-        AddRow(content, "   - " .. expName, "checkbox", expName, dbUI.raidLibraryExpansions, function()
-             if ns.MPlusTeleport and ns.MPlusTeleport.RefreshLibrary then ns.MPlusTeleport:RefreshLibrary("Raid") end
-        end)
-    end
-    
-    AddRow(content, "Library Window Scale", "slider", 0.5, 2.0, "libraryScale", dbUI, RefreshTP, 0.05)
-
     content.rowCount = content.rowCount + 1.2
     content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
 end

@@ -35,7 +35,6 @@ core\window.lua
 # Utilities
 core\utils.lua
 core\dungeondata.lua
-core\teleportdata.lua
 core\automation.lua
 core\quicksalvage.lua
 core\styling.lua
@@ -82,6 +81,7 @@ pages\profiles.lua
 core\buttons.lua
 core\skyriding.lua
 core\screenindicators.lua
+core\consumables.lua
 core\mail.lua
 
 # Strings

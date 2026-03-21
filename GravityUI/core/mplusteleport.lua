@@ -156,34 +156,6 @@ local function UpdateButtonCooldowns(frame)
     end
 end
 
-local function UpdateLibraryVisibility()
-    if InCombatLockdown() then return end
-    local settings = GetSettings()
-    local challengesOpen = ChallengesFrame and ChallengesFrame:IsVisible()
-    local inValidGroup = IsInGroup() and not IsInRaid() and not IsInInstance() and not (C_Scenario and C_Scenario.IsInScenario())
-
-    if libraryFrames.Dungeon then
-        local show = IsEnabled() and challengesOpen and settings.dungeonLibraryEnabled
-        libraryFrames.Dungeon:SetShown(show)
-        if show then UpdateButtonCooldowns(libraryFrames.Dungeon) end
-    end
-    if libraryFrames.Raid then
-        local show = IsEnabled() and challengesOpen and settings.raidLibraryEnabled
-        libraryFrames.Raid:SetShown(show)
-        if show then UpdateButtonCooldowns(libraryFrames.Raid) end
-    end
-    
-    local gKeys = libraryFrames.GroupKeys
-    if gKeys then
-        if IsEnabled() and (gKeys.isPreview or (settings.groupKeyListEnabled and inValidGroup)) then
-            gKeys:Show()
-            MPlusTeleport:UpdateGroupKeys()
-        else
-            gKeys:Hide()
-        end
-    end
-end
-
 ---------------------------------------------------------------------------
 -- GROUP KEY LIST CONTENT
 ---------------------------------------------------------------------------
@@ -228,6 +200,8 @@ function MPlusTeleport:UpdateGroupKeys()
         if not (frame.isPreview or (settings.groupKeyListEnabled and inValidGroup)) then
             frame:Hide()
             return
+        else
+            frame:Show()
         end
 
         if frame.rows then for _, row in ipairs(frame.rows) do row:Hide() end end
@@ -345,67 +319,7 @@ function MPlusTeleport:UpdateGroupKeys()
     if not success then Print("Error in UpdateGroupKeys:", err) end
 end
 
----------------------------------------------------------------------------
--- LIBRARY GENERATION
----------------------------------------------------------------------------
-function MPlusTeleport:RefreshLibrary(libType)
-    local frame = libraryFrames[libType]
-    if not frame or libType == "GroupKeys" or InCombatLockdown() then return end
-
-    local data = (libType == "Dungeon") and ns.TeleportData.Dungeons or ns.TeleportData.Raids
-    local settings = GetSettings()
-    local expansions = (libType == "Dungeon") and settings.dungeonLibraryExpansions or settings.raidLibraryExpansions
-
-    if frame.icons then for _, i in ipairs(frame.icons) do i:Hide() end end
-    if frame.headers then for _, h in ipairs(frame.headers) do h:Hide() end end
-    frame.icons, frame.headers = frame.icons or {}, frame.headers or {}
-
-    local iconIdx, headIdx, yOffset, absoluteMaxWidth = 1, 1, -40, 0
-    for _, expData in ipairs(ns.TeleportData.Expansions) do
-        local expName = expData.name
-        if (expansions[expName] ~= false) and data[expName] then
-            local header = frame.headers[headIdx] or frame:CreateFontString(nil, "OVERLAY")
-            header:SetFont(GetFont(), 11, "OUTLINE"); header:SetTextColor(0, 0.8, 1); header:SetText(expName); header:SetPoint("TOPLEFT", 15, yOffset); header:Show()
-            frame.headers[headIdx], headIdx, yOffset = header, headIdx + 1, yOffset - 20
-
-            local col, rowH = 0, ICON_SIZE + 25
-            for _, spellGroup in ipairs(data[expName]) do
-                local btn = frame.icons[iconIdx] or CreateFrame("Button", "GravityUI_"..libType.."Icon"..iconIdx, frame, "SecureActionButtonTemplate")
-                btn:SetSize(ICON_SIZE, ICON_SIZE); btn:SetAttribute("type", "spell"); btn:SetAttribute("spell", spellGroup.spellID); btn:RegisterForClicks("AnyUp", "AnyDown")
-                btn:EnableMouse(true)
-                if not btn.icon then 
-                    btn.icon = btn:CreateTexture(nil, "ARTWORK"); btn.icon:SetAllPoints(); btn.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
-                    btn.cd = CreateFrame("Cooldown", nil, btn, "CooldownFrameTemplate"); btn.cd:SetAllPoints(); btn.cd:SetDrawEdge(false)
-                    btn.text = btn:CreateFontString(nil, "OVERLAY"); btn.text:SetPoint("BOTTOM", 0, -12); btn.text:SetFont(GetFont(), 10, "OUTLINE")
-                    if ns.GUI and ns.GUI.SkinIcon then ns.GUI:SkinIcon(btn) end
-                    btn:SetScript("OnEnter", function(s) GameTooltip:SetOwner(s, "ANCHOR_RIGHT"); GameTooltip:SetSpellByID(spellGroup.spellID); GameTooltip:Show() end)
-                    btn:SetScript("OnLeave", function() GameTooltip:Hide() end)
-                end
-                btn:SetPoint("TOPLEFT", 15 + (col * (ICON_SIZE + SPACING + 5)), yOffset); btn:Show()
-                btn.text:SetText(spellGroup.name or "?")
-                
-                local icon = 136235
-                if C_Spell and C_Spell.GetSpellTexture then
-                    icon = C_Spell.GetSpellTexture(spellGroup.spellID) or icon
-                elseif GetSpellTexture then
-                    icon = GetSpellTexture(spellGroup.spellID) or icon
-                end
-                btn.icon:SetTexture(icon)
-
-                local known = IsSpellKnown(spellGroup.spellID)
-                btn.icon:SetVertexColor(known and 1 or 0.25, known and 1 or 0.25, known and 1 or 0.25, known and 1 or 0.8)
-                frame.icons[iconIdx], iconIdx, col = btn, iconIdx + 1, col + 1
-                if col >= COLS then col, yOffset = 0, yOffset - rowH end
-            end
-            if col > 0 then yOffset = yOffset - rowH end
-            local expW = 30 + (math.min(iconIdx-1, COLS) * (ICON_SIZE + SPACING + 5))
-            if expW > absoluteMaxWidth then absoluteMaxWidth = expW end
-            yOffset = yOffset - 15
-        end
-    end
-    frame:SetScale(settings.libraryScale or 1.0); frame:SetSize(math.max(absoluteMaxWidth, 200), math.abs(yOffset) + 10)
-    UpdateLibraryVisibility()
-end
+-- Library Generation Logic Removed
 
 function MPlusTeleport:CreateLibraryFrame(libType)
     if libraryFrames[libType] then return libraryFrames[libType] end
@@ -435,7 +349,7 @@ function MPlusTeleport:CreateLibraryFrame(libType)
     frame:SetScale(scale)
     if pos then frame:SetPoint(pos.point, UIParent, pos.relativePoint, pos.x, pos.y)
     else
-        local def = { Dungeon = {"CENTER", -150, 0}, Raid = {"CENTER", 150, 0}, GroupKeys = {"TOPLEFT", 100, -200} }
+        local def = { GroupKeys = {"TOPLEFT", 100, -200} }
         frame:SetPoint(unpack(def[libType] or {"CENTER", 0, 0}))
     end
 
@@ -515,7 +429,6 @@ function MPlusTeleport:CreateLibraryFrame(libType)
     end
 
     libraryFrames[libType] = frame
-    if libType ~= "GroupKeys" then self:RefreshLibrary(libType) end
     if libType == "GroupKeys" then self:ApplyGroupKeyAppearance(frame) end
     return frame
 end
@@ -549,16 +462,24 @@ end
 function MPlusTeleport:ApplySettings()
     local s = GetSettings()
     if IsEnabled() then
-        if s.dungeonLibraryEnabled then self:CreateLibraryFrame("Dungeon") end
-        if s.raidLibraryEnabled then self:CreateLibraryFrame("Raid") end
         if s.groupKeyListEnabled then self:CreateLibraryFrame("GroupKeys") end
     end
     self:ApplyGroupKeyAppearance()
-    UpdateLibraryVisibility()
+    -- Ensure visibility is updated based on current state after settings apply
+    local gKeys = libraryFrames.GroupKeys
+    if gKeys then
+        local inValidGroup = IsInGroup() and not IsInRaid() and not IsInInstance() and not (C_Scenario and C_Scenario.IsInScenario())
+        if IsEnabled() and (gKeys.isPreview or (s.groupKeyListEnabled and inValidGroup)) then
+            gKeys:Show()
+            MPlusTeleport:UpdateGroupKeys()
+        else
+            gKeys:Hide()
+        end
+    end
 end
 
 function MPlusTeleport:ToggleGroupKeyListPreview(show)
-    local f = self:CreateLibraryFrame("GroupKeys"); f.isPreview = show; UpdateLibraryVisibility()
+    local f = self:CreateLibraryFrame("GroupKeys"); f.isPreview = show; MPlusTeleport:UpdateGroupKeys()
 end
 
 -- Performance: Debounce SPELL_UPDATE_COOLDOWN (fires extremely frequently in instances)
@@ -573,56 +494,62 @@ local function ProcessCooldownUpdate()
 end
 
 local eventFrame = CreateFrame("Frame")
-eventFrame:RegisterEvent("ADDON_LOADED"); eventFrame:RegisterEvent("SPELL_UPDATE_COOLDOWN"); eventFrame:RegisterEvent("GROUP_ROSTER_UPDATE"); eventFrame:RegisterEvent("CHAT_MSG_ADDON"); eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD"); eventFrame:RegisterEvent("PLAYER_REGEN_DISABLED"); eventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
-eventFrame:RegisterEvent("BAG_UPDATE_DELAYED"); eventFrame:RegisterEvent("CHALLENGE_MODE_COMPLETED")
+eventFrame:RegisterEvent("ADDON_LOADED")
+eventFrame:RegisterEvent("SPELL_UPDATE_COOLDOWN")
+eventFrame:RegisterEvent("GROUP_ROSTER_UPDATE")
+eventFrame:RegisterEvent("CHAT_MSG_ADDON")
+eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
+eventFrame:RegisterEvent("PLAYER_REGEN_DISABLED")
+eventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
+eventFrame:RegisterEvent("BAG_UPDATE_DELAYED")
+eventFrame:RegisterEvent("CHALLENGE_MODE_COMPLETED")
+
 eventFrame:SetScript("OnEvent", function(_, event, ...)
     if event == "ADDON_LOADED" then
         local name = ...
         if name == ADDON_NAME then MPlusTeleport:ApplySettings()
         elseif name == "Blizzard_ChallengesUI" then
-            ChallengesFrame:HookScript("OnShow", UpdateLibraryVisibility); ChallengesFrame:HookScript("OnHide", UpdateLibraryVisibility)
-            hooksecurefunc(ChallengesFrame, "Update", HookDungeonIcons); HookDungeonIcons(); UpdateLibraryVisibility()
+            if ChallengesFrame then
+                ChallengesFrame:HookScript("OnShow", MPlusTeleport.UpdateGroupKeys) -- Or whatever visibility logic remains
+                ChallengesFrame:HookScript("OnHide", MPlusTeleport.UpdateGroupKeys)
+                hooksecurefunc(ChallengesFrame, "Update", HookDungeonIcons)
+                HookDungeonIcons()
+            end
         end
     elseif event == "SPELL_UPDATE_COOLDOWN" then
-        -- Performance: Debounce - SPELL_UPDATE_COOLDOWN fires for every spell/item CD in game
         if not spellCDUpdatePending then
             spellCDUpdatePending = true
             C_Timer.After(0.5, ProcessCooldownUpdate)
         end
     elseif event == "PLAYER_REGEN_DISABLED" then
-        for _, f in pairs(libraryFrames) do f:Hide() end
+        if libraryFrames.GroupKeys then libraryFrames.GroupKeys:Hide() end
     elseif event == "PLAYER_REGEN_ENABLED" then
-        UpdateLibraryVisibility()
-        if MPlusTeleport.pendingGroupUpdate and libraryFrames.GroupKeys then
-            MPlusTeleport:UpdateGroupKeys()
-        end
+        MPlusTeleport:UpdateGroupKeys()
         if ChallengesFrame and ChallengesFrame.DungeonIcons then
             for _, icon in ipairs(ChallengesFrame.DungeonIcons) do
                 if icon.mapID and not icon.guiTeleportOverlay then CreateSecureOverlay(icon) end
             end
         end
     elseif event == "GROUP_ROSTER_UPDATE" or event == "PLAYER_ENTERING_WORLD" then
-        BroadcastKey(true); UpdateLibraryVisibility()
+        BroadcastKey(true)
+        MPlusTeleport:UpdateGroupKeys()
     elseif event == "BAG_UPDATE_DELAYED" or event == "CHALLENGE_MODE_COMPLETED" then
-        BroadcastKey(false); UpdateLibraryVisibility()
+        BroadcastKey(false)
+        MPlusTeleport:UpdateGroupKeys()
     elseif event == "CHAT_MSG_ADDON" then
         local prefix, text, _, sender = ...
         if prefix == "GravityUI" or prefix == "AstralKeys" or prefix == "LibKeystone" or prefix == "LibKS" then
             local mid, lvl
-            
-            -- LibKeystone/BigWigs format: "level,mapID,rating"
             if prefix == "LibKS" and text ~= "R" then
                 local kLevel, kMapID = text:match("^(%d+),(%d+),")
-                if kLevel and kMapID then
-                    mid, lvl = kMapID, kLevel
-                end
+                if kLevel and kMapID then mid, lvl = kMapID, kLevel end
             else
-                mid, lvl = text:match("keystone:%d+:(%d+):(%d+)") -- Sniff for links
-                if not mid then mid, lvl = text:match("KEY:(%d+):(%d+)") end -- Sniff for our format
+                mid, lvl = text:match("keystone:%d+:(%d+):(%d+)")
+                if not mid then mid, lvl = text:match("KEY:(%d+):(%d+)") end
             end
-            
             if mid and tonumber(mid) > 0 then
-                groupKeys[Ambiguate(sender, "none")] = { mapID = tonumber(mid), level = tonumber(lvl) }; MPlusTeleport:UpdateGroupKeys()
+                groupKeys[Ambiguate(sender, "none")] = { mapID = tonumber(mid), level = tonumber(lvl) }
+                MPlusTeleport:UpdateGroupKeys()
             end
         end
     end
@@ -630,10 +557,7 @@ end)
 
 SLASH_GRAVITYTELEPORT1 = "/gtp"
 SlashCmdList["GRAVITYTELEPORT"] = function(msg)
-    if msg == "dungeon" or msg == "raid" then
-        local f = MPlusTeleport:CreateLibraryFrame(msg == "dungeon" and "Dungeon" or "Raid")
-        f:SetShown(not f:IsShown())
-    elseif msg == "debug" then
+    if msg == "debug" then
         Print("--- Keystone Debug ---")
         
         local apiMapID, apiLevel
@@ -666,5 +590,5 @@ SlashCmdList["GRAVITYTELEPORT"] = function(msg)
         end
         if not found then Print("Result: No Keystone found in bags 0-4.") end
         Print("--- End Debug ---")
-    else Print("Usage: /gtp dungeon | raid | debug") end
+    else Print("Usage: /gtp debug") end
 end

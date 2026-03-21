@@ -208,6 +208,10 @@ function Addon:OnEnable()
         if ns.InterruptTracker.ApplySettings then ns.InterruptTracker.ApplySettings() end
     end
     
+    if ns.Consumables and ns.Consumables.Initialize then 
+        ns.Consumables.Initialize()
+    end
+    
     if ns.Mail and ns.Mail.Initialize then
         ns.Mail.Initialize()
         if ns.Mail.ApplySettings then ns.Mail.ApplySettings() end
