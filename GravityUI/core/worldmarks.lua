@@ -159,6 +159,9 @@ local function CreateMarksBar()
     frame.buttons = {}
     
     frame:EnableMouse(true)
+    frame:SetMovable(true)
+    frame:SetClampedToScreen(true)
+    frame:SetUserPlaced(true)
     frame:SetFrameStrata("MEDIUM")
     
     -- Initial backdrop will be set by Refresh()
