@@ -556,8 +556,12 @@ function Module:Init()
     local function ApplyClickThrough()
         local obj = _G.BuffBarCooldownViewer
         if obj then
-            if obj.SetMouseClickThrough then obj:SetMouseClickThrough(true) end
-            if obj.EnableMouse then obj:EnableMouse(false) end
+            if obj.SetMouseClickThrough then 
+                pcall(function() obj:SetMouseClickThrough(true) end) 
+            end
+            if obj.EnableMouse and not (obj.IsProtected and obj:IsProtected()) then 
+                pcall(function() obj:EnableMouse(false) end) 
+            end
         end
     end
 
