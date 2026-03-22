@@ -10,7 +10,7 @@ function Module.GetSetting(key)
     local db = ns.GetDB()
     if not db or not db.screenindicators or not db.screenindicators.consumables then return true end
     if key == 'consumables_enabled' then return db.screenindicators.consumables.enabled end
-    if key == 'raid_frame_enabled' then return db.screenindicators.consumables.showRaidFrame end
+    if key == 'raid_frame_enabled' or key == 'raidFrame_enabled' then return db.screenindicators.consumables.showRaidFrame end
     return true
 end
 
@@ -3612,7 +3612,8 @@ end)
 Module.consumables:RegisterEvent("READY_CHECK")
 Module.consumables:RegisterEvent("READY_CHECK_FINISHED")
 Module.consumables:RegisterEvent("PLAYER_REGEN_DISABLED")
-Module.consumables:Show()
+-- Initialization handled via Module.Initialize -> ApplySettings
+-- Module.consumables:Show()
 
 -------------------------------------------------------------------------------
 --- Slash Commands
@@ -3658,15 +3659,17 @@ SlashCmdList["GUIC"] = function(msg)
     end
 end
 
-function    Module.ApplySettings()
-    
+function Module.ApplySettings()
     local db = ns.GetDB()
-    if db and db.screenindicators and db.screenindicators.consumables then
-        if db.screenindicators.consumables.raidFrameScale and Module.raidFrame then
-            Module.raidFrame:SetScale(db.screenindicators.consumables.raidFrameScale)
-        end
+    local c = db and db.screenindicators and db.screenindicators.consumables
+    if not c then return end
+
+    -- Raid Frame Scale
+    if c.raidFrameScale and Module.raidFrame then
+        Module.raidFrame:SetScale(c.raidFrameScale)
     end
-    
+
+    -- Personal Frame Toggles
     if Module.GetSetting('consumables_enabled') then
         Module.consumables:RegisterEvent("READY_CHECK")
         Module.consumables:RegisterEvent("READY_CHECK_FINISHED")
@@ -3676,7 +3679,22 @@ function    Module.ApplySettings()
         Module.consumables:UnregisterEvent("READY_CHECK_FINISHED")
         Module.consumables:UnregisterEvent("PLAYER_REGEN_DISABLED")
         Module.consumables:Hide()
-        if Module.raidFrame then Module.raidFrame:Hide() end
+    end
+
+    -- Raid Frame Toggles
+    if Module.GetSetting('raidFrame_enabled') then
+        if Module.raidFrame then
+            Module.raidFrame:RegisterEvent("READY_CHECK")
+            Module.raidFrame:RegisterEvent("READY_CHECK_FINISHED")
+            Module.raidFrame:RegisterEvent("PLAYER_REGEN_DISABLED")
+        end
+    else
+        if Module.raidFrame then
+            Module.raidFrame:UnregisterEvent("READY_CHECK")
+            Module.raidFrame:UnregisterEvent("READY_CHECK_FINISHED")
+            Module.raidFrame:UnregisterEvent("PLAYER_REGEN_DISABLED")
+            Module.raidFrame:Hide()
+        end
     end
 end
 

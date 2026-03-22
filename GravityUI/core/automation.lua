@@ -357,49 +357,46 @@ end
 -- PARTY INVITES: AUTO ACCEPT
 ---------------------------------------------------------------------------
 
-local function IsFriendOrBNet(name)
-    if not name then return false end
-    -- Check normal friends
-    if C_FriendList.IsFriend(name) then return true end
-    -- Check BattleNet friends
-    local numBNetTotal = C_BattleNet.GetNumFriends()
+local function IsFriendOrBNet(sender)
+    if not sender then return false end
+    
+    -- Split name and realm if present
+    local name, realm = sender:match("^(.-)%-(.*)$")
+    if not name then name = sender end
+    
+    -- Check Battle.net friends
+    local numBNetTotal = BNGetNumFriends()
     for i = 1, numBNetTotal do
-        local success, accountInfo = pcall(C_BattleNet.GetFriendAccountInfo, i)
-        if success and accountInfo and accountInfo.gameAccountInfo then
+        local accountInfo = C_BattleNet.GetFriendAccountInfo(i)
+        if accountInfo and accountInfo.gameAccountInfo and accountInfo.gameAccountInfo.isOnline then
             local charName = accountInfo.gameAccountInfo.characterName
-            local realmName = accountInfo.gameAccountInfo.realmName
+            local charRealm = accountInfo.gameAccountInfo.realmName
             if charName then
-                -- Whisper sender realm names have spaces removed (e.g., "TheMaelstrom")
-                local cleanRealm = realmName and realmName:gsub("%s+", "") or ""
-                local fullName = (cleanRealm ~= "") and (charName .. "-" .. cleanRealm) or charName
-                
-                local matchSuccess, isMatch = pcall(function()
-                    local searchName = name:gsub("%s+", "")
-                    -- Support matching both "Name-Realm" and just "Name"
-                    local nameOnly = name:match("^([^-]+)") or name
-                    return fullName == searchName or charName == nameOnly
-                end)
-                
-                if matchSuccess and isMatch then
-                    return true
-                end
+                local exactName = charRealm and (charName .. "-" .. charRealm) or charName
+                if sender == exactName then return true end
             end
         end
     end
+
+    -- Check regular friends
+    local numFriends = C_FriendList.GetNumFriends()
+    for i = 1, numFriends do
+        local friendInfo = C_FriendList.GetFriendInfoByIndex(i)
+        if friendInfo and friendInfo.name == sender then
+            return true
+        end
+    end
+
     return false
 end
 
-local function IsGuildMemberByName(name)
-    if not name or not IsInGuild() then return false end
-    local numMembers = GetNumGuildMembers()
-    local searchName = name:match("^([^-]+)") or name
-    for i = 1, numMembers do
-        local memberName = GetGuildRosterInfo(i)
-        if memberName then
-            local memberShort = memberName:match("^([^-]+)") or memberName
-            if memberShort == searchName then
-                return true
-            end
+local function IsGuildMemberByName(sender)
+    if not sender or not IsInGuild() then return false end
+
+    for i = 1, GetNumGuildMembers() do
+        local fullName = GetGuildRosterInfo(i) -- Returns Name-Realm
+        if fullName and fullName == sender then
+            return true
         end
     end
     return false
