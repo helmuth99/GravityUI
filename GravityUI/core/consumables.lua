@@ -3586,14 +3586,15 @@ Module.consumables:SetScript("OnEvent", function(self, event, unit, time_to_hide
             self:Hide()
         end
 
-    elseif event == "UNIT_AURA" then
+    elseif event == "UNIT_AURA" or event == "UNIT_INVENTORY_CHANGED" then
         if unit == "player" then
-            self:Update()
-        end
-
-    elseif event == "UNIT_INVENTORY_CHANGED" then
-        if unit == "player" then
-            C_Timer.After(0.2, function() self:Update() end)
+            if self.updateTimer then
+                self.updateTimer:Cancel()
+            end
+            self.updateTimer = C_Timer.NewTimer(0.2, function()
+                self:Update()
+                self.updateTimer = nil
+            end)
         end
     end
 end)

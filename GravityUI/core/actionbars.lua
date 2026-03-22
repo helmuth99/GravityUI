@@ -320,11 +320,23 @@ end
 
 local fadeFrame = CreateFrame("Frame")
 local barStates = {}
+local barMetadata = {}
+
+local function RefreshBarMetadata()
+    wipe(barMetadata)
+    for barKey, frameName in pairs(BAR_FRAMES) do
+        table.insert(barMetadata, {
+            key = barKey,
+            frame = _G[frameName],
+            buttons = GetBarButtons(barKey)
+        })
+    end
+end
 
 local function UpdateFade(self, elapsed)
     self.elapsed = (self.elapsed or 0) + elapsed
     if self.elapsed < 0.05 then return end
-    -- Pass the accumulated elapsed time to the Logic
+    
     local tick = self.elapsed
     self.elapsed = 0
     
@@ -336,124 +348,91 @@ local function UpdateFade(self, elapsed)
 
     local currentTime = GetTime()
     local inCombat = InCombatLockdown()
-    
-    -- OPTIMIZATION: Short-Circuit checks during combat if "Always Show in Combat" is enabled
-    -- No need to check individual mouseovers if everything must be visible anyway.
-    if inCombat and db.fade.alwaysShowInCombat then
-        for barKey, frameName in pairs(BAR_FRAMES) do
-            local frame = _G[frameName]
-            local buttons = GetBarButtons(barKey)
-            
-            -- Just enforce target alpha 1
-            local barState = barStates[barKey]
-            if not barState then 
-                barStates[barKey] = { currentAlpha = 1, lastHoverTime = 0 }
-                barState = barStates[barKey]
-            end
-            
-            -- Smooth fade in if needed, or snap if close
-            local targetAlpha = 1
-            if math.abs(barState.currentAlpha - targetAlpha) > 0.01 then
-                local duration = db.fade.fadeInDuration or 0.2
-                local step = tick / duration
-                barState.currentAlpha = math.min(targetAlpha, barState.currentAlpha + step)
-                
-                if frame then frame:SetAlpha(barState.currentAlpha) end
-                for _, btn in ipairs(buttons) do
-                    if not btn._guiHiddenEmpty then
-                        btn:SetAlpha(barState.currentAlpha)
-                    end
-                end
-            elseif barState.currentAlpha ~= targetAlpha then
-                barState.currentAlpha = targetAlpha
-                if frame then frame:SetAlpha(targetAlpha) end
-                for _, btn in ipairs(buttons) do
-                    if not btn._guiHiddenEmpty then
-                        btn:SetAlpha(targetAlpha)
-                    end
-                end
-            end
-        end
-        return -- SKIP ALL MOUSEOVER CHECKS
-    end
+    local linkBars = db.fade.linkBars1to8
+    local alwaysShowCombat = db.fade.alwaysShowInCombat
+    local fadeOutAlpha = db.fade.fadeOutAlpha or 0
+    local fadeOutDelay = db.fade.fadeOutDelay or 0
+    local fadeInDur = db.fade.fadeInDuration or 0.2
+    local fadeOutDur = db.fade.fadeOutDuration or 0.4
 
-    local isMouseOverAny = false
-    
-    -- Check if mouse is over any linked bar
-    if db.fade.linkBars1to8 then
+    if #barMetadata == 0 then RefreshBarMetadata() end
+
+    -- Link Bars Check
+    local isMouseOverAnyLink = false
+    if linkBars then
         for i = 1, 8 do
             if IsMouseOverBar("bar" .. i) then
-                isMouseOverAny = true
+                isMouseOverAnyLink = true
                 break
             end
         end
     end
 
-    for barKey, frameName in pairs(BAR_FRAMES) do
-        local frame = _G[frameName]
-        local buttons = GetBarButtons(barKey)
+    local isAnyBarDirty = false
+
+    for i = 1, #barMetadata do
+        local meta = barMetadata[i]
+        local barKey = meta.key
+        local frame = meta.frame
+        local buttons = meta.buttons
         
-        -- Proceed if either the frame exists OR we have buttons (fallback for missing MainMenuBar)
-        if frame or (buttons and #buttons > 0) then
-            local barDB = db.bars[barKey]
-            
-            -- OPTIMIZATION: If this specific bar is set to Always Show, skip mouseover checks for it
-            local forceShow = (barDB and barDB.alwaysShow)
-            
-            -- Initialize state
-            if not barStates[barKey] then 
-                local current = 1
-                if frame then
-                    current = frame:GetAlpha()
-                elseif buttons and buttons[1] then
-                    current = buttons[1]:GetAlpha()
-                end
-                barStates[barKey] = { lastHoverTime = 0, currentAlpha = current } 
+        -- Initialize state
+        local state = barStates[barKey]
+        if not state then 
+            local current = 1
+            if frame then
+                current = frame:GetAlpha()
+            elseif buttons and buttons[1] then
+                current = buttons[1]:GetAlpha()
             end
-            local state = barStates[barKey]
+            barStates[barKey] = { lastHoverTime = 0, currentAlpha = current } 
+            state = barStates[barKey]
+        end
 
-            local isHovered = false
-            if not forceShow then
-                 isHovered = IsMouseOverBar(barKey) or (db.fade.linkBars1to8 and isMouseOverAny and barKey:match("bar%d"))
-            end
-            
-            if isHovered then
-                state.lastHoverTime = currentTime
-            end
-            
-            -- Determine visibility respecting delay
-            local isVisible = isHovered
-            if not isVisible and (currentTime - state.lastHoverTime < (db.fade.fadeOutDelay or 0)) then
-                isVisible = true
-            end
+        local barDB = db.bars[barKey]
+        local forceShow = (barDB and barDB.alwaysShow) or (inCombat and alwaysShowCombat)
+        
+        local isHovered = false
+        if not forceShow then
+             isHovered = IsMouseOverBar(barKey) or (linkBars and isMouseOverAnyLink and barKey:match("bar%d"))
+        end
+        
+        if isHovered then
+            state.lastHoverTime = currentTime
+        end
+        
+        -- Determine visibility respecting delay
+        local isVisible = isHovered
+        if not isVisible and (currentTime - state.lastHoverTime < fadeOutDelay) then
+            isVisible = true
+        end
 
-            local shouldShow = isVisible or forceShow
+        local shouldShow = isVisible or forceShow
+        local targetAlpha = shouldShow and 1 or fadeOutAlpha
+        
+        local dirty = false
+        if math.abs(state.currentAlpha - targetAlpha) > 0.01 then
+            local duration = shouldShow and fadeInDur or fadeOutDur
+            local step = tick / duration
             
-            local targetAlpha = shouldShow and 1 or (db.fade.fadeOutAlpha or 0)
-            
-            local dirty = false
-            if math.abs(state.currentAlpha - targetAlpha) > 0.01 then
-                local duration = shouldShow and (db.fade.fadeInDuration or 0.2) or (db.fade.fadeOutDuration or 0.4)
-                -- Use tick (accumulated time) for smooth interpolation
-                local step = tick / duration
-                
-                if state.currentAlpha < targetAlpha then
-                    state.currentAlpha = math.min(targetAlpha, state.currentAlpha + step)
-                else
-                    state.currentAlpha = math.max(targetAlpha, state.currentAlpha - step)
-                end
-                dirty = true
-            elseif state.currentAlpha ~= targetAlpha then
-                state.currentAlpha = targetAlpha
-                dirty = true
+            if state.currentAlpha < targetAlpha then
+                state.currentAlpha = math.min(targetAlpha, state.currentAlpha + step)
+            else
+                state.currentAlpha = math.max(targetAlpha, state.currentAlpha - step)
             end
+            dirty = true
+        elseif state.currentAlpha ~= targetAlpha then
+            state.currentAlpha = targetAlpha
+            dirty = true
+        end
 
-            if dirty then
-                if frame then frame:SetAlpha(state.currentAlpha) end
-                for _, btn in ipairs(buttons) do
-                    if not btn._guiHiddenEmpty then
-                        btn:SetAlpha(state.currentAlpha)
-                    end
+        if dirty then
+            isAnyBarDirty = true
+            if frame then frame:SetAlpha(state.currentAlpha) end
+            for j = 1, #buttons do
+                local btn = buttons[j]
+                if not btn._guiHiddenEmpty then
+                    btn:SetAlpha(state.currentAlpha)
                 end
             end
         end
@@ -789,6 +768,7 @@ function ns.RefreshActionBars()
 
     -- Flush Cache
     buttonCache = {}
+    RefreshBarMetadata()
 
     -- Cleanup if disabled
     if not db.enabled then
