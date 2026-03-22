@@ -1379,7 +1379,8 @@ local function SetupTitleArea()
         local displayFrame = CreateFrame("Frame", nil, CharacterFrame)
         displayFrame:SetSize(400, 30)
         displayFrame:SetPoint("TOPLEFT", CharacterFrame, "TOPLEFT", 19, -10)  -- Aligned with first slot
-        displayFrame:SetFrameLevel(CharacterFrame:GetFrameLevel() + 10)
+        displayFrame:SetFrameStrata("DIALOG")
+        displayFrame:SetFrameLevel(50)
 
         -- Line 1: Character name
         local nameText = displayFrame:CreateFontString(nil, "OVERLAY")
@@ -1411,7 +1412,8 @@ local function SetupTitleArea()
         local centerFrame = CreateFrame("Frame", nil, CharacterFrame)
         centerFrame:SetSize(200, 20)
         centerFrame:SetPoint("TOPRIGHT", CharacterFrame, "TOPRIGHT", -132, -18)  -- Shifted Down to -18 for better centering
-        centerFrame:SetFrameLevel(CharacterFrame:GetFrameLevel() + 10)
+        centerFrame:SetFrameStrata("DIALOG")
+        centerFrame:SetFrameLevel(50)
 
         local centerText = centerFrame:CreateFontString(nil, "OVERLAY")
         centerText:SetFont(font, 18, "OUTLINE")  -- Adjusted from 21
@@ -2552,14 +2554,16 @@ local function UpdateILvlDisplay()
         -- Position: Check if title is prefix or suffix
         if pvpName:find("^" .. name) then
             -- Suffix: Name Title
+            displayFrame.text:ClearAllPoints()
+            displayFrame.text:SetPoint("TOPLEFT", displayFrame, "TOPLEFT", 0, 0)
             displayFrame.titleText:ClearAllPoints()
             displayFrame.titleText:SetPoint("LEFT", displayFrame.text, "RIGHT", 2, 0)
         else
             -- Prefix: Title Name
-            displayFrame.text:ClearAllPoints()
-            displayFrame.text:SetPoint("LEFT", displayFrame.titleText, "RIGHT", 2, 0)
             displayFrame.titleText:ClearAllPoints()
             displayFrame.titleText:SetPoint("TOPLEFT", displayFrame, "TOPLEFT", 0, 0)
+            displayFrame.text:ClearAllPoints()
+            displayFrame.text:SetPoint("LEFT", displayFrame.titleText, "RIGHT", 2, 0)
         end
     else
         displayFrame.text:SetText(name)
@@ -2739,17 +2743,22 @@ local function HookCharacterFrame()
 
     -- Initialize when character frame first shows
     CharacterFrame:HookScript("OnShow", function()
-        -- Delay check to allow tab frames to initialize their visibility
+        -- Apply structural layout synchronously to prevent 1-frame flash of unstyled content
+        local selectedTab = PanelTemplates_GetSelectedTab(CharacterFrame) or 1
+        if selectedTab == 1 then
+            ApplyCharacterPaneLayout()
+            InitializeCharacterOverlays()
+        end
+
+        -- Delay check to allow tab frames to initialize their visibility for updating dynamic data
         C_Timer.After(0.01, function()
             -- Check if we are on the first tab (Character Tab)
             -- checking PaperDollFrame:IsShown() can be unreliable on first show
-            local selectedTab = PanelTemplates_GetSelectedTab(CharacterFrame) or 1
-            local isCharacterTab = (selectedTab == 1)
+            local selectedTabDelayed = PanelTemplates_GetSelectedTab(CharacterFrame) or 1
+            local isCharacterTab = (selectedTabDelayed == 1)
             
             if isCharacterTab then
-                -- Character tab is active - apply custom layout
-                ApplyCharacterPaneLayout()
-                InitializeCharacterOverlays()
+                -- Character tab is active - data update
                 ScheduleGearUpdate() -- Full update on show
                 
                 -- FORCE APPLY SCALE: Ensure scale is set even if ApplyCharacterPaneLayout returned early

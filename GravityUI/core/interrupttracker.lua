@@ -37,8 +37,8 @@ local INTERRUPT_CONFIG = {
     { class = "SHAMAN", spellID = 57994, cd = 12, isDefault = true, overrides = { [264] = 30 } }, -- Resto 30s
     -- WARLOCK
     { class = "WARLOCK", spellID = 19647, cd = 24, isDefault = true }, -- Spell Lock
-    { class = "WARLOCK", spellID = 132409, cd = 24 }, -- Command Demon
-    { class = "WARLOCK", spellID = 119914, cd = 30 }, -- Axe Toss
+    { class = "WARLOCK", spellID = 132409, cd = 24 }, -- Spell Lock / Fel Ravager
+    { class = "WARLOCK", spellID = 119914, cd = 30, specID = 266 }, -- Axe Toss (Demonology Primary)
     -- WARRIOR
     { class = "WARRIOR", spellID = 6552, cd = 15, isDefault = true },
 }
@@ -54,14 +54,12 @@ local CD_ON_KICK_TALENTS = {       -- [talentID] = { reduction }
 }
 local SPEC_EXTRA_KICKS = {
     [266] = { -- Warlock Demonology
-        { id = 119914, cd = 30, name = "Axe Toss" }
-    },
-    [267] = { -- Warlock Destruction
-        { id = 119914, cd = 30, name = "Axe Toss" }
-    },
-    [265] = { -- Warlock Affliction
-        { id = 119914, cd = 30, name = "Axe Toss" }
+        { id = 132409, cd = 24, name = "Spell Lock" }
     }
+}
+local SPELL_ALIASES = {
+    [1276467] = 132409, -- Fel Ravager summon -> Spell Lock extra bar
+    [89766] = 119914,   -- Felguard Axe Toss (pet) -> Axe Toss (player)
 }
 -- Automatically register talents that grant an extra kick
 local EXTRA_KICK_TALENTS = {
@@ -97,6 +95,12 @@ local function BuildInterruptTables()
                     pctReduction = talentData.pctReduction
                 }
             end
+        end
+    end
+
+    for aliasID, targetID in pairs(SPELL_ALIASES) do
+        if INTERRUPTS[targetID] then
+            INTERRUPTS[aliasID] = INTERRUPTS[targetID]
         end
     end
 end
@@ -732,6 +736,10 @@ function InterruptTracker:UNIT_SPELLCAST_SUCCEEDED(event, unit, castGUID, spellI
 
     if not spellId or type(spellId) ~= "number" then return end
     
+    if SPELL_ALIASES and SPELL_ALIASES[spellId] then
+        spellId = SPELL_ALIASES[spellId]
+    end
+
     local success, val = pcall(function() return INTERRUPTS[spellId] end)
     if success and val then 
          local guid = UnitGUID(unit)
@@ -748,8 +756,24 @@ function InterruptTracker:UNIT_SPELLCAST_SUCCEEDED(event, unit, castGUID, spellI
          -- Try Addon Message (may not work in M+ in Midnight, but keep as fallback)
          -- Only send if we are the one who cast it
          if UnitIsUnit(unit, "player") then
+             local payload = tostring(spellId)
              local channel = IsInGroup(LE_PARTY_CATEGORY_INSTANCE) and "INSTANCE_CHAT" or "PARTY"
-             pcall(C_ChatInfo.SendAddonMessage, "GRV_INT", tostring(spellId), channel)
+             local ok, ret = pcall(C_ChatInfo.SendAddonMessage, "GRV_INT", payload, channel)
+             
+             -- Fallback: If channel send failed or is blocked, whisper each real player in the party.
+             -- We explicitly check UnitIsPlayer to avoid errors in Follower Dungeons (NPCs).
+             if not ok or ret == 0 then
+                 for i = 1, 4 do
+                     local pUnit = "party" .. i
+                     if UnitExists(pUnit) and UnitIsPlayer(pUnit) then
+                         local okName, pName, pRealm = pcall(UnitFullName, pUnit)
+                         if okName and pName then
+                             local target = (pRealm and pRealm ~= "") and (pName .. "-" .. pRealm) or pName
+                             pcall(C_ChatInfo.SendAddonMessage, "GRV_INT", payload, "WHISPER", target)
+                         end
+                     end
+                 end
+             end
          end
     end
 end
@@ -785,6 +809,10 @@ local function OnChatKickReceived(senderName, text)
     spellId = tonumber(spellId)
     if not spellId then return end
     
+    if SPELL_ALIASES and SPELL_ALIASES[spellId] then
+        spellId = SPELL_ALIASES[spellId]
+    end
+
     -- Only process known interrupt spells (prevents false positives from random chat)
     local ok2, val = pcall(function() return INTERRUPTS[spellId] end)
     if not ok2 or not val then return end
@@ -1102,6 +1130,12 @@ local inspectQueue = {}
 local function TryInspect()
     if InCombatLockdown() then return end
     if #inspectQueue == 0 then return end
+    
+    -- Safety: Do not hijack the global inspect buffer if the user is manually inspecting someone
+    if InspectFrame and InspectFrame:IsShown() then
+        C_Timer.After(2, TryInspect)
+        return
+    end
     
     local now = GetTime()
     if now - lastInspectTime < 2 then return end -- Throttle 2s

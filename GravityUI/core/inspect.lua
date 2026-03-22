@@ -830,6 +830,20 @@ local function UpdateInspectILvlDisplay()
     local specID = GetInspectSpecialization(unit)
     local specName = specID and select(2, GetSpecializationInfoByID(specID)) or ""
     
+    -- Safety: If backend returns stale spec from previous inspect (Rogue spec on Paladin unit)
+    if specID then
+        local _, _, _, _, _, _, classToken = GetSpecializationInfoByID(specID)
+        if classToken and classToken ~= class then
+            specName = ""
+        end
+    end
+    
+    -- Forcefully update 3D model to actually match the current unit
+    -- (Bypasses Blizzard bug where global inspect cache holds previous target's model)
+    if InspectModelFrame and InspectModelFrame.SetUnit then
+        InspectModelFrame:SetUnit(unit)
+    end
+    
     local color = RAID_CLASS_COLORS[class] or {r=1, g=1, b=1}
     
     -- Name & Title
@@ -841,15 +855,17 @@ local function UpdateInspectILvlDisplay()
         InspectFrame._guiILvlDisplay.titleText:Show()
 
         if pvpName:find("^" .. name) then
-            -- Suffix
+            -- Suffix (ex: Saftpresser the Patient)
+            InspectFrame._guiILvlDisplay.text:ClearAllPoints()
+            InspectFrame._guiILvlDisplay.text:SetPoint("TOPLEFT", InspectFrame._guiILvlDisplay, "TOPLEFT", 0, 0)
             InspectFrame._guiILvlDisplay.titleText:ClearAllPoints()
             InspectFrame._guiILvlDisplay.titleText:SetPoint("LEFT", InspectFrame._guiILvlDisplay.text, "RIGHT", 2, 0)
         else
-            -- Prefix
-            InspectFrame._guiILvlDisplay.text:ClearAllPoints()
-            InspectFrame._guiILvlDisplay.text:SetPoint("LEFT", InspectFrame._guiILvlDisplay.titleText, "RIGHT", 2, 0)
+            -- Prefix (ex: Firelord Saftpresser)
             InspectFrame._guiILvlDisplay.titleText:ClearAllPoints()
             InspectFrame._guiILvlDisplay.titleText:SetPoint("TOPLEFT", InspectFrame._guiILvlDisplay, "TOPLEFT", 0, 0)
+            InspectFrame._guiILvlDisplay.text:ClearAllPoints()
+            InspectFrame._guiILvlDisplay.text:SetPoint("LEFT", InspectFrame._guiILvlDisplay.titleText, "RIGHT", 2, 0)
         end
     else
         InspectFrame._guiILvlDisplay.text:SetText(name)
@@ -858,6 +874,9 @@ local function UpdateInspectILvlDisplay()
         if InspectFrame._guiILvlDisplay.titleText then InspectFrame._guiILvlDisplay.titleText:Hide() end
     end
     InspectFrame._guiILvlDisplay.text:SetTextColor(color.r, color.g, color.b, 1)
+    
+    -- Ensure it is not buried under TitleContainer
+    InspectFrame._guiILvlDisplay:SetFrameLevel(InspectFrame:GetFrameLevel() + 50)
     
     local classInfo = C_CreatureInfo.GetClassInfo(select(3, UnitClass(unit)))
     local className = classInfo and classInfo.className or ""
@@ -893,14 +912,19 @@ local function SetupInspectTitleArea()
     
     if InspectFrame.TitleContainer and InspectFrame.TitleContainer.TitleText then
         InspectFrame.TitleContainer.TitleText:Hide()
+        InspectFrame.TitleContainer.TitleText:SetAlpha(0)
     end
-    if InspectLevelText then InspectLevelText:Hide() end
+    if InspectLevelText then 
+        InspectLevelText:Hide() 
+        InspectLevelText:SetAlpha(0)
+    end
 
     if not InspectFrame._guiILvlDisplay then
         local display = CreateFrame("Frame", nil, InspectFrame)
         display:SetSize(400, 30)
         display:SetPoint("TOPLEFT", InspectFrame, "TOPLEFT", 19, -10)
-        display:SetFrameLevel(InspectFrame:GetFrameLevel()+10)
+        display:SetFrameStrata("DIALOG")
+        display:SetFrameLevel(50)
         
         local name = display:CreateFontString(nil, "OVERLAY")
         name:SetFont(GetGlobalFont(), 14, "OUTLINE")
@@ -926,7 +950,8 @@ local function SetupInspectTitleArea()
         local center = CreateFrame("Frame", nil, InspectFrame)
         center:SetSize(200, 20)
         center:SetPoint("TOPRIGHT", InspectFrame, "TOPRIGHT", -70, -18)  -- Shifted Down to -18 for better centering
-        center:SetFrameLevel(InspectFrame:GetFrameLevel()+10)
+        center:SetFrameStrata("DIALOG")
+        center:SetFrameLevel(50)
         local text = center:CreateFontString(nil, "OVERLAY")
         text:SetFont(GetGlobalFont(), 18, "OUTLINE")
         text:SetPoint("RIGHT")
@@ -1160,10 +1185,10 @@ end
 
 
 ---------------------------------------------------------------------------
--- Main Refresh
+-- One-time structural layout setup
 ---------------------------------------------------------------------------
-local function UpdateInspectFrame()
-    if not InspectFrame or not InspectFrame:IsShown() then return end
+local function InitializeInspectUI()
+    if not InspectFrame then return end
     
     local settings = GetSettings()
     if not settings.inspectEnabled then return end
@@ -1185,6 +1210,18 @@ local function UpdateInspectFrame()
         PositionInspectModelScene()
         inspectLayoutApplied = true
     end
+end
+
+---------------------------------------------------------------------------
+-- Main Refresh
+---------------------------------------------------------------------------
+local function UpdateInspectFrame()
+    if not InspectFrame or not InspectFrame:IsShown() then return end
+    
+    local settings = GetSettings()
+    if not settings.inspectEnabled then return end
+    
+    InitializeInspectUI()
     
     local unit = InspectFrame.unit or "target"
     if UnitExists(unit) then
@@ -1199,8 +1236,14 @@ local function UpdateInspectFrame()
         for slotID, _ in pairs(SLOT_INFO) do
             local link = GetInventoryItemLink(unit, slotID)
             if link then
-                if not cache[slotID] or cache[slotID].link ~= link then
-                    -- New or different item: Full scan
+                local isCached = cache[slotID] and cache[slotID].link == link
+                -- Force a re-scan if we previously cached it but data was missing (e.g., name was Loading or ilvl was nil)
+                if isCached and (cache[slotID].name == "Loading..." or not cache[slotID].ilvl) then
+                    isCached = false
+                end
+
+                if not isCached then
+                    -- New or different item, or data was missing: Full scan
                     local ilvl = GetSlotItemLevel(unit, slotID, link)
                     local track, cur, max = GetUpgradeTrack(unit, slotID)
                     local enchant, enchantable = GetEnchantText(unit, slotID)
@@ -1270,13 +1313,13 @@ end
 local eventFrame = CreateFrame("Frame")
 eventFrame:RegisterEvent("ADDON_LOADED")
 eventFrame:RegisterEvent("INSPECT_READY")
-eventFrame:RegisterEvent("PLAYER_TARGET_CHANGED")
 eventFrame:RegisterEvent("GET_ITEM_INFO_RECEIVED")
 eventFrame:RegisterEvent("UNIT_INVENTORY_CHANGED")
 
 local function OnEvent(self, event, arg1)
     if event == "ADDON_LOADED" and arg1 == "Blizzard_InspectUI" then
         InspectFrame:HookScript("OnShow", function()
+            InitializeInspectUI() -- Run synchronously to avoid FOUC
             TriggerInspectUpdates()
         end)
         InspectFrame:HookScript("OnHide", function()
@@ -1284,10 +1327,6 @@ local function OnEvent(self, event, arg1)
         end)
     elseif event == "INSPECT_READY" then
         TriggerInspectUpdates()
-    elseif event == "PLAYER_TARGET_CHANGED" then
-        if InspectFrame and InspectFrame:IsShown() then
-            TriggerInspectUpdates()
-        end
     elseif event == "GET_ITEM_INFO_RECEIVED" or event == "UNIT_INVENTORY_CHANGED" then
          -- Debounce update for item info flow
          if InspectFrame and InspectFrame:IsShown() and not self.updatePending then

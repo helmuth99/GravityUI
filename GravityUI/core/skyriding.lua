@@ -258,6 +258,11 @@ local function UpdateSegmentMarkers(maxCharges)
     end
 end
 
+local lastVigorTextString = nil
+local lastVigorTextCurrent = -1
+local lastVigorTextMax = -1
+local lastVigorTextFormat = nil
+
 local function UpdateVigorBar()
     local settings = GetSettings()
     local current, max = GetVigorInfo()
@@ -289,9 +294,20 @@ local function UpdateVigorBar()
     
     if settings.showVigorText then
         if settings.vigorTextFormat == "FRACTION" then
-            vigorText:SetText(string.format("%d/%d", current, max))
+            if current ~= lastVigorTextCurrent or max ~= lastVigorTextMax or settings.vigorTextFormat ~= lastVigorTextFormat then
+                lastVigorTextString = string.format("%d/%d", current, max)
+                lastVigorTextCurrent = current
+                lastVigorTextMax = max
+                lastVigorTextFormat = settings.vigorTextFormat
+                vigorText:SetText(lastVigorTextString)
+            end
         else
-            vigorText:SetText(tostring(current))
+            if current ~= lastVigorTextCurrent or settings.vigorTextFormat ~= lastVigorTextFormat then
+                lastVigorTextString = tostring(current)
+                lastVigorTextCurrent = current
+                lastVigorTextFormat = settings.vigorTextFormat
+                vigorText:SetText(lastVigorTextString)
+            end
         end
         vigorText:Show()
     else
@@ -330,6 +346,10 @@ local function UpdateRechargeAnimation()
     rechargeOverlay:SetVertexColor(color[1], color[2], color[3], (color[4] or 0.6) * pulse)
     rechargeOverlay:Show()
 end
+
+local lastSWTextString = nil
+local lastSWTextCurrent = -1
+local lastSWTextMax = -1
 
 local function UpdateSecondWind()
     local settings = GetSettings()
@@ -390,7 +410,12 @@ local function UpdateSecondWind()
         end
         
     elseif mode == "TEXT" then
-        secondWindText:SetText(string.format("SW: %d/%d", current, max))
+        if current ~= lastSWTextCurrent or max ~= lastSWTextMax then
+            lastSWTextString = string.format("SW: %d/%d", current, max)
+            lastSWTextCurrent = current
+            lastSWTextMax = max
+            secondWindText:SetText(lastSWTextString)
+        end
         secondWindText:SetTextColor(unpack(color))
         secondWindText:Show()
         
@@ -489,6 +514,10 @@ local function UpdateSecondWindRecharge()
     swRechargeOverlay:Show()
 end
 
+local lastSpeedValue = -1
+local lastSpeedFormat = nil
+local lastSpeedString = nil
+
 local function UpdateSpeed(speed)
     local settings = GetSettings()
     if not settings.showSpeed then
@@ -506,12 +535,23 @@ local function UpdateSpeed(speed)
         speed = GetUnitSpeed("player")
     end
     
-    local format = settings.speedFormat
-    if format == "PERCENT" then
-        -- Default run speed is ~7 y/s. Legacy typically formatted as * 10.
-        speedText:SetText(string.format("%d%%", math.floor(speed * 10)))
+    local formatMode = settings.speedFormat
+    local valueToCache
+    if formatMode == "PERCENT" then
+        valueToCache = math.floor(speed * 10)
     else
-        speedText:SetText(string.format("%.1f", speed))
+        valueToCache = math.floor(speed * 10) / 10
+    end
+    
+    if valueToCache ~= lastSpeedValue or formatMode ~= lastSpeedFormat then
+        if formatMode == "PERCENT" then
+            lastSpeedString = string.format("%d%%", math.floor(speed * 10))
+        else
+            lastSpeedString = string.format("%.1f", speed)
+        end
+        lastSpeedValue = valueToCache
+        lastSpeedFormat = formatMode
+        speedText:SetText(lastSpeedString)
     end
     speedText:Show()
 end
