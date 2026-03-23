@@ -48,7 +48,8 @@ EventFrame.ActiveSpell = nil
 EventFrame.CastBarInfo = {
     width = 0,
     height = 0,
-    anchor = nil,
+    anchor = nil,    -- The overlay Frame where ticks are created/parented
+    statusBar = nil, -- The StatusBar used for size/position reference
 }
 
 EventFrame.State = {
@@ -88,29 +89,28 @@ function EventFrame:UpdateLayout()
     local numMarks = math.max(0, self.State.numTicks - 1)
     
     local tickWidth = width / self.State.numTicks
+
+    -- Keep overlay frame sized to match the status bar
+    local overlay = self.CastBarInfo.anchor
+    local statusBar = self.CastBarInfo.statusBar or overlay
+    overlay:ClearAllPoints()
+    overlay:SetAllPoints(statusBar)
     
     for i = 1, numMarks do
-        -- Create if needed
-        if not self.Ticks[i] then self.Ticks[i] = self.CastBarInfo.anchor:CreateTexture(nil, "OVERLAY") end
-        local t = self.Ticks[i]
-        
-        -- Parent Check (if anchor changed newly)
-        if t:GetParent() ~= self.CastBarInfo.anchor then
-             t:Hide()
-             self.Ticks[i] = self.CastBarInfo.anchor:CreateTexture(nil, "OVERLAY")
-             t = self.Ticks[i]
+        -- Create tick texture on the overlay frame (not the StatusBar itself)
+        if not self.Ticks[i] or self.Ticks[i]:GetParent() ~= overlay then
+            if self.Ticks[i] then self.Ticks[i]:Hide() end
+            self.Ticks[i] = overlay:CreateTexture(nil, "OVERLAY", nil, 7)
         end
+        local t = self.Ticks[i]
         
         t:SetColorTexture(cColor[1], cColor[2], cColor[3], cColor[4] or 1)
         t:SetSize(cWidth, height * cHeight)
         t:ClearAllPoints()
+        -- Position relative to the overlay frame (which matches the status bar)
+        t:SetPoint("CENTER", overlay, "RIGHT", -(i * tickWidth), 0)
         
-        t:SetPoint("CENTER", self.CastBarInfo.anchor, "RIGHT", -(i * tickWidth), 0)
-        
-        -- Hide initially, shown in Channel Start usually, but let's hide here to be safe
         t:Hide()
-        
-        -- If we are ALREADY channeling, show it immediately (live update support)
         if self.State.isChanneling then t:Show() end
     end
     
@@ -241,27 +241,43 @@ function M:SetupHooks()
     if not cfg then return end
 
     -- Helper to attach
+    -- Creates a transparent overlay Frame as child of the status bar to ensure
+    -- ticks always render ABOVE the StatusBar's own bar texture.
+    local function GetOrCreateOverlay(statusBar)
+        if statusBar.__gravityTickOverlay then
+            return statusBar.__gravityTickOverlay
+        end
+        local overlay = CreateFrame("Frame", nil, statusBar)
+        overlay:SetAllPoints(statusBar)
+        overlay:SetFrameLevel(statusBar:GetFrameLevel() + 10)
+        statusBar.__gravityTickOverlay = overlay
+        return overlay
+    end
+
     local function Attach(bar, isBCDM)
         if not bar then return end
         
-        -- Hook Showing
         if not EventFrame.HookedBars then EventFrame.HookedBars = {} end
         if EventFrame.HookedBars[bar] then return end
         
         hooksecurefunc(bar, "Show", function(self)
-             local w, h = self:GetSize()
+             local statusBar = isBCDM and (self.Status or self) or self
+             local w, h = statusBar:GetSize()
              EventFrame.CastBarInfo.width = w
              EventFrame.CastBarInfo.height = h
-             EventFrame.CastBarInfo.anchor = isBCDM and (self.Status or self) or self
+             EventFrame.CastBarInfo.statusBar = statusBar
+             EventFrame.CastBarInfo.anchor = GetOrCreateOverlay(statusBar)
              EventFrame:UpdateLayout()
         end)
         
         -- Attach immediately if visible
         if bar:IsVisible() then
-             local w, h = bar:GetSize()
+             local statusBar = isBCDM and (bar.Status or bar) or bar
+             local w, h = statusBar:GetSize()
              EventFrame.CastBarInfo.width = w
              EventFrame.CastBarInfo.height = h
-             EventFrame.CastBarInfo.anchor = isBCDM and (bar.Status or bar) or bar
+             EventFrame.CastBarInfo.statusBar = statusBar
+             EventFrame.CastBarInfo.anchor = GetOrCreateOverlay(statusBar)
              EventFrame:UpdateLayout()
         end
         
@@ -300,6 +316,23 @@ function M:SetupHooks()
         end
         -- Try direct
         if BCDM_CastBar then Attach(BCDM_CastBar, true) end
+    end
+
+    -- Hook Ayije CDM
+    if cfg.enableAyije and C_AddOns.IsAddOnLoaded("Ayije_CDM") then
+        local CDM = _G["Ayije_CDM"]
+        if CDM then
+            -- Ayije CDM exposes its castbar as Ayije_CastBar or via CDM.CastBar
+            local function TryAttachAyije()
+                local bar = _G.Ayije_CastBar or (CDM and CDM.CastBar)
+                if bar then Attach(bar, false) end
+            end
+            TryAttachAyije()
+            -- Also hook OnEnable in case it loads later
+            if CDM.OnEnable then
+                hooksecurefunc(CDM, "OnEnable", TryAttachAyije)
+            end
+        end
     end
 end
 

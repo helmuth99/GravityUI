@@ -465,46 +465,58 @@ local function BuildGravityStringsTab(parent)
         -- List of keys
         local keys = {
             "EditMode", "Details", "Plater", "BigWigs", "DandersFrames", 
-            "Platynator", "BCDM", "UUF", "GravityUI"
+            "Platynator", "BCDM", "Ayije", "UUF", "GravityUI"
         }
         
         local lastHeader = nil
+        local shown = {}
+
+        local function AddStringHeader(key, d)
+            if not d or type(d) ~= "table" or type(d.data) ~= "string" then return end
+            if shown[key] then return end
+            shown[key] = true
+
+            local header = GUI:CreateCollapsibleHeader(stringsContainer, d.name or key, false)
+            if lastHeader then
+                header:SetPoint("TOPLEFT", lastHeader, "BOTTOMLEFT", 0, -10)
+            else
+                header:SetPoint("TOPLEFT", 0, 0)
+            end
+            header:SetPoint("RIGHT", 0, 0)
+            
+            header.OnToggle = function(expanded)
+                if expanded and not header.hasLoadedData then
+                    local box = GUI:CreateScrollableTextBox(header.content, 100, d.data, true)
+                    box:SetPoint("TOPLEFT", 5, -5)
+                    box:SetPoint("RIGHT", -25, 0)
+                    
+                    local copy = GUI:CreateButton(header.content, "Select String", 120, 20, function()
+                        box.editBox:SetFocus()
+                        box.editBox:HighlightText()
+                    end)
+                    copy:SetPoint("TOPRIGHT", box, "BOTTOMRIGHT", 0, -5)
+                    
+                    header.content:SetHeight(135)
+                    header.hasLoadedData = true
+                    header:SetHeight(30 + 135)
+                end
+                stringsContainer:RefreshLayout()
+            end
+            
+            table.insert(headers, header)
+            lastHeader = header
+        end
+
+        -- 1. Standard keys (ordered)
         for _, key in ipairs(keys) do
             local data = imports[key]
-            -- Fallback for legacy key GUIPROFILE
             if not data and key == "GravityUI" then data = imports["GUIPROFILE"] end
+            AddStringHeader(key, data)
+        end
 
-            if data then
-                local header = GUI:CreateCollapsibleHeader(stringsContainer, data.name or key, false)
-                if lastHeader then
-                    header:SetPoint("TOPLEFT", lastHeader, "BOTTOMLEFT", 0, -10)
-                else
-                    header:SetPoint("TOPLEFT", 0, 0)
-                end
-                header:SetPoint("RIGHT", 0, 0)
-                
-                header.OnToggle = function(expanded)
-                    if expanded and not header.hasLoadedData then
-                        local box = GUI:CreateScrollableTextBox(header.content, 100, data.data, true)
-                        box:SetPoint("TOPLEFT", 5, -5)
-                        box:SetPoint("RIGHT", -25, 0)
-                        
-                        local copy = GUI:CreateButton(header.content, "Select String", 120, 20, function()
-                            box.editBox:SetFocus()
-                            box.editBox:HighlightText()
-                        end)
-                        copy:SetPoint("TOPRIGHT", box, "BOTTOMRIGHT", 0, -5)
-                        
-                        header.content:SetHeight(135)
-                        header.hasLoadedData = true
-                        header:SetHeight(30 + 135)
-                    end
-                    stringsContainer:RefreshLayout()
-                end
-                
-                table.insert(headers, header)
-                lastHeader = header
-            end
+        -- 2. Dynamic keys (catch-all for any additional entries)
+        for key, data in pairs(imports) do
+            AddStringHeader(key, data)
         end
         stringsContainer:RefreshLayout()
     end
@@ -816,6 +828,11 @@ local function BuildInstallerTab(parent)
         -- Iterate the registry to find names matching our labels
         for _, addon in ipairs(GUI.Installer.registry) do
             -- If selectionState[addon.label] is true (or nil->true default)
+            local function AddStringHeader(key, d)
+            if not d or type(d) ~= "table" or type(d.data) ~= "string" then return end
+            if shown[key] then return end
+            shown[key] = true
+            end
             local s = selectionState[addon.label]
             if s == nil then s = true end
             

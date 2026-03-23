@@ -378,6 +378,87 @@ Installer.registry = {
         end
     },
     {
+        -- Ayije CDM: Fallback CDM when BCDM is not installed
+        name = "Ayije",
+        importKey = "ayije", -- Key used in imports table
+        label = "Ayije CDM",
+        category = "Optional",
+        replaces = "BCDM", -- Replaces BCDM in the UI when BCDM is not loaded
+        Check = function()
+            -- Only active if BCDM is NOT loaded but Ayije_CDM IS loaded
+            local bcdmLoaded = (_G.BCDM ~= nil) or C_AddOns.IsAddOnLoaded("BetterCooldownManager")
+            if bcdmLoaded then return false end
+            return C_AddOns.IsAddOnLoaded("Ayije_CDM")
+        end,
+        GetProfile = function()
+            local db = _G.Ayije_CDMDB
+            if db and db.profileKeys then
+                local key = UnitName("player") .. " - " .. GetRealmName()
+                return db.profileKeys[key]
+            end
+            return nil
+        end,
+        SetProfile = function(self, profileName)
+            local CDM = _G["Ayije_CDM"]
+            if CDM and CDM.SetProfile then
+                -- Ensure profile slot exists before switching
+                if _G.Ayije_CDMDB and _G.Ayije_CDMDB.profiles and not _G.Ayije_CDMDB.profiles[profileName] then
+                    _G.Ayije_CDMDB.profiles[profileName] = {}
+                end
+                pcall(CDM.SetProfile, CDM, profileName)
+                return true
+            end
+            -- Fallback: direct DB write
+            if _G.Ayije_CDMDB and _G.Ayije_CDMDB.profileKeys then
+                local key = UnitName("player") .. " - " .. GetRealmName()
+                _G.Ayije_CDMDB.profileKeys[key] = profileName
+                if not _G.Ayije_CDMDB.profiles then _G.Ayije_CDMDB.profiles = {} end
+                if not _G.Ayije_CDMDB.profiles[profileName] then _G.Ayije_CDMDB.profiles[profileName] = {} end
+                return true
+            end
+        end,
+        Import = function(self, data, profileName)
+            if type(data) ~= "string" then return end
+            local CDM = _G["Ayije_CDM"]
+            if not CDM or not CDM.ProfileIO then return end
+
+            -- 1. Decode the !ACDM: encoded string
+            local payload, decodeErr = CDM.ProfileIO:DecodePayload(data)
+            if not payload then
+                ns.Print("|cffff0000[GravityUI]|r Ayije import decode failed: " .. tostring(decodeErr))
+                return
+            end
+
+            -- 2. Extract the actual profile data table
+            local profileData = CDM.ProfileIO:ExtractProfileData(payload)
+            if type(profileData) ~= "table" then
+                ns.Print("|cffff0000[GravityUI]|r Ayije import: invalid profile data")
+                return
+            end
+
+            -- 3. Apply using ApplyProfileAtomic (creates or overwrites the named profile)
+            if CDM.ApplyProfileAtomic then
+                local ok, err = pcall(CDM.ApplyProfileAtomic, CDM, profileName, profileData, {
+                    rebuildOptions = false,
+                })
+                if not ok then
+                    ns.Print("|cffff0000[GravityUI]|r Ayije ApplyProfileAtomic failed: " .. tostring(err))
+                end
+            else
+                -- Fallback: write directly into Ayije_CDMDB
+                if _G.Ayije_CDMDB and _G.Ayije_CDMDB.profiles then
+                    _G.Ayije_CDMDB.profiles[profileName] = profileData
+                end
+            end
+        end,
+        HasProfile = function(self, profileName)
+            if _G.Ayije_CDMDB and _G.Ayije_CDMDB.profiles then
+                return _G.Ayije_CDMDB.profiles[profileName] ~= nil
+            end
+            return false
+        end,
+    },
+    {
         name = "UUF",
         label = "UnhaltedUnitFrames",
         Check = function() return (_G.UUF ~= nil) or C_AddOns.IsAddOnLoaded("UnhaltedUnitFrames") end,
@@ -814,6 +895,44 @@ function Installer:GetSystemStatus(targetProfile)
         end
     end
     
+    -- Post-Processing: Mutual Exclusion (e.g. BCDM vs Ayije CDM)
+    -- If BCDM is not loaded but its replacement IS loaded:
+    -- → Remove BCDM from the report, promote the replacement to Important
+    local replacements = {} -- { replacedName -> replacerIndex }
+    for i, item in ipairs(report) do
+        local regEntry = nil
+        for _, addon in ipairs(self.registry) do
+            if addon.name == item.name then regEntry = addon break end
+        end
+        if regEntry and regEntry.replaces then
+            replacements[regEntry.replaces] = i
+        end
+    end
+
+    if next(replacements) then
+        local toRemove = {}
+        for i, item in ipairs(report) do
+            local replacerIdx = replacements[item.name]
+            if replacerIdx then
+                if not item.loaded then
+                    -- BCDM not loaded → remove it, promote Ayije to Important
+                    toRemove[i] = true
+                    report[replacerIdx].category = nil -- Promote to Important
+                    -- Recalculate allGood now that Ayije is Important
+                    if not report[replacerIdx].match then
+                        allGood = false
+                    end
+                else
+                    -- Both loaded → keep both (Ayije stays Optional)
+                end
+            end
+        end
+        -- Remove suppressed entries (iterate backwards to keep indices valid)
+        for i = #report, 1, -1 do
+            if toRemove[i] then table.remove(report, i) end
+        end
+    end
+
     return allGood, report
 end
 
@@ -968,7 +1087,7 @@ function Installer:Install(targetProfile, sourceProfileName, allowList)
             pcall(addon.SetProfile, addon, targetProfile)
             
             -- 2. Import Data (if available and addon loaded)
-            local key = addon.name 
+            local key = addon.importKey or addon.name
             
             if imports[key] then
                  local ok, err = pcall(addon.Import, addon, imports[key].data, targetProfile)

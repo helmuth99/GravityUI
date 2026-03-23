@@ -167,47 +167,6 @@ local function BuildGUICDMKeybinds(parent)
     content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
 end
 
--- 2. CDM Centering
-local function BuildCDMCentering(parent)
-    local scroll, content = GUI:CreateScrollableContent(parent)
-    scroll:SetAllPoints()
-    local db = ns.GetDB(); if not db then return end
-    local centering = db.actionbars.cdmCentering
-    if not centering then
-        centering = { enabled = true, essential = true, utility = true }
-        db.actionbars.cdmCentering = centering
-    end
-
-    content.rowCount = 0
-    local refresh = function() 
-        -- Trigger centering logic (impl pending)
-        if ns.GUICDM_Keybinds and ns.GUICDM_Keybinds.UpdateCentering then
-            ns.GUICDM_Keybinds:UpdateCentering()
-        end
-    end
-    
-    local header = GUI:CreateSectionHeader(content, "Horizontal Centering")
-    header:SetPoint("TOPLEFT", 10, -10)
-    header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
-    content.rowCount = 1.3
-    
-    -- Info Box
-    local infoBox = GUI:CreateInfoBox(content, "Centers the second row of icons relative to the first row (if multiple rows exist).")
-    infoBox:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT + 5))
-    content.rowCount = content.rowCount + (infoBox:GetHeight() / (ROW_HEIGHT + 5)) + 0.2
-    
-    AddRow(content, "Enable Centering for BCDM", "checkbox", "enabled", centering, refresh)
-    content.rowCount = content.rowCount + 0.5
-    
-    CreateSubLabel(content, "Module Specific Settings")
-    AddRow(content, "Enable Centering for Essential Bar", "checkbox", "essential", centering, refresh)
-    AddRow(content, "Enable Centering for Utility Bar", "checkbox", "utility", centering, refresh)
-    
-
-    
-    content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
-end
-
 -- 3. Utils (Button Glow)
 local function BuildUtils(parent)
     local scroll, content = GUI:CreateScrollableContent(parent)
@@ -268,7 +227,7 @@ local function BuildCastbar(parent)
     dHeader:SetPoint("TOPLEFT", 10, -10)
     
     local dFrame = CreateFrame("Frame", nil, content)
-    dFrame:SetSize(600, 200) -- Increased height for vertical stack
+    dFrame:SetSize(600, 240) -- taller to fit 3 checkboxes
     dFrame:SetPoint("TOPLEFT", dHeader, "BOTTOMLEFT", 0, -10)
     
     GUI:CreateCheckbox(dFrame, "Enable on UnhaltedUnitFrames", "enableUUF", ticks.disintegrate, function(v) 
@@ -278,23 +237,27 @@ local function BuildCastbar(parent)
     GUI:CreateCheckbox(dFrame, "Enable on BetterCooldownManager", "enableBCDM", ticks.disintegrate, function(v) 
         refresh()
     end):SetPoint("TOPLEFT", 0, -30)
+
+    GUI:CreateCheckbox(dFrame, "Enable on Ayije CDM", "enableAyije", ticks.disintegrate, function(v) 
+        refresh()
+    end):SetPoint("TOPLEFT", 0, -60)
     
     local dWidth = GUI:CreateSlider(dFrame, "Width", 1, 10, "tickWidth", ticks.disintegrate, function(v)
         refresh()
     end)
-    dWidth:SetPoint("TOPLEFT", 0, -70)
+    dWidth:SetPoint("TOPLEFT", 0, -100)
     dWidth.label:SetText("Tick Width")
     
     local dHeight = GUI:CreateSlider(dFrame, "Height %", 0.1, 1.0, "tickHeight", ticks.disintegrate, function(v)
         refresh()
     end, 0.05)
-    dHeight:SetPoint("TOPLEFT", 0, -110)
+    dHeight:SetPoint("TOPLEFT", 0, -140)
     dHeight.label:SetText("Tick Height")
     
     local dColor = GUI:CreateColorPicker(dFrame, "Color", "tickColor", ticks.disintegrate, function(r, g, b, a)
         refresh()
     end)
-    dColor:SetPoint("TOPLEFT", 0, -150)
+    dColor:SetPoint("TOPLEFT", 0, -180)
     dColor.label:SetText("Tick Color")
 
     -- Mind Flay
@@ -302,7 +265,7 @@ local function BuildCastbar(parent)
     mHeader:SetPoint("TOPLEFT", dFrame, "BOTTOMLEFT", 0, -10)
     
     local mFrame = CreateFrame("Frame", nil, content)
-    mFrame:SetSize(600, 200)
+    mFrame:SetSize(600, 240) -- taller to fit 3 checkboxes
     mFrame:SetPoint("TOPLEFT", mHeader, "BOTTOMLEFT", 0, -10)
     
     GUI:CreateCheckbox(mFrame, "Enable on UnhaltedUnitFrames", "enableUUF", ticks.mindflay, function(v) 
@@ -312,23 +275,27 @@ local function BuildCastbar(parent)
     GUI:CreateCheckbox(mFrame, "Enable on BetterCooldownManager", "enableBCDM", ticks.mindflay, function(v) 
         refresh()
     end):SetPoint("TOPLEFT", 0, -30)
+
+    GUI:CreateCheckbox(mFrame, "Enable on Ayije CDM", "enableAyije", ticks.mindflay, function(v) 
+        refresh()
+    end):SetPoint("TOPLEFT", 0, -60)
     
     local mWidth = GUI:CreateSlider(mFrame, "Width", 1, 10, "tickWidth", ticks.mindflay, function(v)
         refresh()
     end)
-    mWidth:SetPoint("TOPLEFT", 0, -70)
+    mWidth:SetPoint("TOPLEFT", 0, -100)
     mWidth.label:SetText("Tick Width")
     
     local mHeight = GUI:CreateSlider(mFrame, "Height %", 0.1, 1.0, "tickHeight", ticks.mindflay, function(v)
         refresh()
     end, 0.05)
-    mHeight:SetPoint("TOPLEFT", 0, -110)
+    mHeight:SetPoint("TOPLEFT", 0, -140)
     mHeight.label:SetText("Tick Height")
     
     local mColor = GUI:CreateColorPicker(mFrame, "Color", "tickColor", ticks.mindflay, function(r, g, b, a)
         refresh()
     end)
-    mColor:SetPoint("TOPLEFT", 0, -150)
+    mColor:SetPoint("TOPLEFT", 0, -180)
     mColor.label:SetText("Tick Color")
     
     content.rowCount = 15
@@ -480,12 +447,11 @@ end
 ns.GUI:RegisterPage("cdmutils", {
     title = "UI Utilities",
     subTabs = {
-        { name = "CDM Keybindings", builder = BuildGUICDMKeybinds },
-        { name = "CDM Centering", builder = BuildCDMCentering },
-        { name = "CDM Button Glow", builder = BuildUtils },
-        { name = "Castbar Ticks", builder = BuildCastbar },
-        { name = "CDM Buffbar", builder = BuildCDMBuffbar },
-        { name = "Sound Alerts", builder = BuildSoundAlerts },
+        { name = "CDM Keybindings",  builder = BuildGUICDMKeybinds, bcdmOnly = true },
+        { name = "CDM Button Glow",  builder = BuildUtils,           bcdmOnly = true },
+        { name = "Castbar Ticks",    builder = BuildCastbar },
+        { name = "CDM Buffbar",      builder = BuildCDMBuffbar,      bcdmOnly = true },
+        { name = "Sound Alerts",     builder = BuildSoundAlerts },
     },
     OnBuild = function(content)
         -- Hide default scrollframe parent
@@ -498,7 +464,38 @@ ns.GUI:RegisterPage("cdmutils", {
         end
         
         local opts = GUI.pages["cdmutils"]
-        opts.subTabsContainer = GUI:CreateSubTabs(scrollFrame, opts.subTabs)
+
+        -- Filter subTabs based on BCDM availability
+        local bcdmLoaded = (_G.BCDM ~= nil) or C_AddOns.IsAddOnLoaded("BetterCooldownManager")
+
+        if not bcdmLoaded then
+            -- Force BCDM-only master settings to false
+            local db = ns.GetDB()
+            if db then
+                -- CDM Keybindings: Enable Keybinds on CDM = false
+                if db.actionbars and db.actionbars.guicdm then
+                    db.actionbars.guicdm.enabled = false
+                end
+                -- CDM Button Glow: Enable Button Glow on Keybind = false
+                if db.actionbars and db.actionbars.guicdm and db.actionbars.guicdm.utils then
+                    db.actionbars.guicdm.utils.buttonGlow = false
+                end
+                -- CDM Buffbar: Enable GUI Buffbar = false
+                if db.actionbars and db.actionbars.cdmBuffbar then
+                    db.actionbars.cdmBuffbar.enabled = false
+                end
+            end
+        end
+
+        -- Build visible tab list
+        local visibleTabs = {}
+        for _, tab in ipairs(opts.subTabs) do
+            if not tab.bcdmOnly or bcdmLoaded then
+                table.insert(visibleTabs, tab)
+            end
+        end
+
+        opts.subTabsContainer = GUI:CreateSubTabs(scrollFrame, visibleTabs)
         opts.subTabsContainer:SetPoint("TOPLEFT", 10, -10)
         opts.subTabsContainer:SetPoint("TOPRIGHT", -10, 0)
     end,
