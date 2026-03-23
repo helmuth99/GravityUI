@@ -255,14 +255,6 @@ local function CheckAndNuke(buttonFrame, regionParam, texParam)
         end
     end
     
-    -- Size check: Anonymous large textures (>= 90% of button) are borders/backgrounds
-    if not isBorder then
-        local rw = regionParam:GetWidth()
-        local bw = buttonFrame:GetWidth()
-        if rw and bw and rw > 0 and bw > 0 and (rw >= bw * 0.9) then
-            isBorder = true
-        end
-    end
     
     -- Explicit reference checks
     if regionParam == buttonFrame.border or regionParam == buttonFrame.background then
@@ -681,11 +673,7 @@ local function CatchExistingButtons()
                 -- Safely check for SetPoint to avoid Blizzard "forbidden table" access errors
                 local success, hasSetPoint = pcall(function() return v.SetPoint end)
                 if success and hasSetPoint then
-                    -- Only care about frames, minimize string.lower calls
-                    local lowerK = string.lower(k)
-                    if string.find(lowerK, "minimap") or string.find(lowerK, "button") or string.find(lowerK, "icon") then
-                        lowerGlobalMap[lowerK] = k
-                    end
+                    lowerGlobalMap[string.lower(k)] = k
                 end
             end
         end
