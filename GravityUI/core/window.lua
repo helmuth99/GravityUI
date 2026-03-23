@@ -1,4 +1,4 @@
-﻿-- GravityUI Main GUI Window
+-- GravityUI Main GUI Window
 local ADDON_NAME, ns = ...
 
 local GUI = ns.GUI
@@ -585,6 +585,9 @@ CreateButtonBar = function(parent)
     local cdmAddonBtn = GUI:CreateButton(buttonBar, "CDM", 50, 32, function()
         local opened = false
         
+        -- Ayije CDM
+        if not opened and OpenAddonConfig("Ayije_CDM", "ACDM") then opened = true end
+        
         -- Better Cooldown Manager (BCDM)
         if not opened and OpenAddonConfig("BetterCooldownManager", "BCDM") then opened = true end
         
@@ -595,7 +598,7 @@ CreateButtonBar = function(parent)
         if not opened and OpenAddonConfig("ArcUI", "ARCUI") then opened = true end
          
         if not opened then
-             print("|cFF30D1FFGravityUI:|r No supported CDM addon loaded (BetterCooldownManager, CenteredCooldownManager, ArcUI).")
+             print("|cFF30D1FFGravityUI:|r No supported CDM addon loaded (Ayije, BCDM, CCM, ArcUI).")
         end
     end)
     cdmAddonBtn:SetPoint("LEFT", npBtn, "RIGHT", 8, 0)
