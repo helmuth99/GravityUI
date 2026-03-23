@@ -39,7 +39,16 @@ Installer.registry = {
              if ns.db then ns.db:SetProfile(profileName) return true end
         end,
         Import = function(self, data, profileName)
-            if ns.ImportProfile then ns:ImportProfile(data, profileName) end
+            -- Use the correct Addon method (ns.ImportProfile does NOT exist)
+            -- SetProfile is called first by the installer, so ns.db.profile is
+            -- already pointing at 'profileName' when Import is called here.
+            local Addon = ns.Addon
+            if Addon and Addon.ImportProfileFromString then
+                local ok, err = pcall(Addon.ImportProfileFromString, Addon, data)
+                if not ok then
+                    ns.Print("|cffff0000[GravityUI]|r Profile import failed: " .. tostring(err))
+                end
+            end
         end,
          HasProfile = function(self, profileName)
              if ns.db then 
@@ -154,25 +163,23 @@ Installer.registry = {
         Check = function() return _G.DandersFrames_IsReady and _G.DandersFrames_IsReady() end,
         GetProfile = function() return _G.DandersFramesDB_v2 and _G.DandersFramesDB_v2.currentProfile end,
         SetProfile = function(self, profileName)
-
-             if _G.DandersFramesDB_v2 then 
-                 -- Ensure profile exists in storage (if it uses a profiles table)
-                 -- Assuming DandersFramesDB_v2 might have a 'profiles' key?
-                 -- Without source code, we assume 'currentProfile' switch is enough OR we need to init the table.
-                 -- Safer: If DandersFramesDB_v2.profiles exists, use it.
-                 if _G.DandersFramesDB_v2.profiles and type(_G.DandersFramesDB_v2.profiles) == "table" then
-                      if not _G.DandersFramesDB_v2.profiles[profileName] then
-                          -- Create copy of current or default?
-                          _G.DandersFramesDB_v2.profiles[profileName] = {} 
-                      end
+             -- Use Danders' own SetProfile() which creates+switches the profile and calls FullProfileRefresh.
+             -- This is the correct path for BOTH Sync (SetProfile only) and Install (SetProfile+Import).
+             if _G.DandersFrames and _G.DandersFrames.SetProfile then
+                 local ok = pcall(_G.DandersFrames.SetProfile, _G.DandersFrames, profileName)
+                 -- Also ensure per-character DB is set (Danders tracks profile per char)
+                 if _G.DandersFramesCharDB then
+                     _G.DandersFramesCharDB.currentProfile = profileName
                  end
-                 
-                 _G.DandersFramesDB_v2.currentProfile = profileName 
-                 
-                 -- FORCE UPDATE? Danders might need an update call
-                 if _G.DandersFrames_Update then _G.DandersFrames_Update() end
-                 
-                 return true 
+                 return ok
+             end
+             -- Fallback: direct DB write if DF object not available
+             if _G.DandersFramesDB_v2 then
+                 _G.DandersFramesDB_v2.currentProfile = profileName
+                 if _G.DandersFramesCharDB then
+                     _G.DandersFramesCharDB.currentProfile = profileName
+                 end
+                 return true
              end
         end,
         Import = function(self, data, profileName)
@@ -188,12 +195,11 @@ Installer.registry = {
                     local compressed = LibDeflate:DecodeForPrint(string.sub(data, 7)) -- Remove !DFP1! prefix
                     if compressed then
                         local serialized = LibDeflate:DecompressDeflate(compressed)
-                        -- Try Zlib if Deflate fails
                         if not serialized then serialized = LibDeflate:DecompressZlib(compressed) end
                         
                         if serialized then
-                            -- Try AceSerializer
-                             if LibAceSerializer then 
+                            -- Try AceSerializer first, then LibSerialize (Danders uses LibSerialize)
+                            if LibAceSerializer then 
                                 local ok, res = LibAceSerializer:Deserialize(serialized)
                                 if ok then decodedData = res end
                             end
@@ -205,84 +211,76 @@ Installer.registry = {
                                     if ok then decodedData = res end
                                 end
                             end
-                              -- DECODE STRATEGY 3: Json (Internal?)
-                             -- Sometimes simple tables.
                         else
-                             ns.Print("[GUI Debug] Danders: Decompress failed.")
+                            ns.Print("[GUI Debug] Danders: Decompress failed.")
                         end
                     else
-                         ns.Print("[GUI Debug] Danders: DecodeForPrint failed.")
+                        ns.Print("[GUI Debug] Danders: DecodeForPrint failed.")
                     end
                 else
                     ns.Print("[GUI Debug] Danders: LibDeflate missing.")
                 end
             elseif type(data) == "table" then
-                ns.Print("[GUI Debug] Danders: Data is already a table.")
                 decodedData = data
             end
             
             -- Use decodedData if available, otherwise fallback to raw string (maybe Apply handles string??)
             local finalData = decodedData or data 
 
-            -- TRY 1: Internal Method (ApplyImportedProfile)
-            if _G.DandersFrames and _G.DandersFrames.ApplyImportedProfile then
-                local options = nil
-                -- Try to DETECT categories first
-                if _G.DandersFrames.DetectImportedCategories then
-                     local ok, res = pcall(_G.DandersFrames.DetectImportedCategories, _G.DandersFrames, finalData)
-                     if ok then 
-                         if type(res) == "table" then
-                             -- Check if table is empty
-                             local hasKeys = false
-                             for k,v in pairs(res) do hasKeys = true break end
-                             
-                             if hasKeys then
-                                 options = res
-                             else
-                                 options = nil -- Trigger fallback
-                             end
-                         end
-                     end
-                end
-                
-                -- Fallback Options if Detection Failed OR Returned Empty
-                if not options then
-                     options = {
-                        -- Standard Case
-                        ["Position"] = true, ["Frame Layout"] = true, ["Bars"] = true,
-                        ["Auras"] = true, ["Text"] = true, ["Icons"] = true,
-                        ["Other"] = true, ["Party"] = true, ["Raid"] = true,
-                        ["Create New Profile"] = false, ["Name"] = profileName,
-                        
-                        -- Lowercase (Just in case)
-                        ["position"] = true, ["frame layout"] = true, ["bars"] = true,
-                        ["auras"] = true, ["text"] = true, ["icons"] = true,
-                        ["other"] = true, ["party"] = true, ["raid"] = true,
-                        ["create new profile"] = false, ["name"] = profileName,
-                        
-                        -- Variable Case (Common variations)
-                        ["Positions"] = true, ["Layout"] = true, ["Bar"] = true,
-                        ["Aura"] = true, ["Icon"] = true,
-                        
-                        -- Keys found in Actual Data (The "Golden" Keys)
-                        ["frameTypes"] = true, ["profileName"] = true, 
-                        ["exportedBy"] = true, ["version"] = true
-                    }
-                end
-                
-                -- Call Apply with Options
-                local ok, err = pcall(_G.DandersFrames.ApplyImportedProfile, _G.DandersFrames, finalData, options)
-                if ok then 
+            -- STRATEGY A: Use DF:SetProfile() to create+switch, then inject imported data.
+            -- DF:SetProfile(name) is the canonical profile-switch function (from Profile.lua).
+            -- It creates the profile from defaults + switches DF.db to it. We then overwrite
+            -- DF.db keys with our decoded import data and save back to the profiles table.
+            if _G.DandersFrames and _G.DandersFrames.SetProfile then
+                local ok, err = pcall(_G.DandersFrames.SetProfile, _G.DandersFrames, profileName)
+                if ok and _G.DandersFrames.db and decodedData then
+                    -- SetProfile switched to the new profile. Overwrite with import data.
+                    if decodedData.party  then _G.DandersFrames.db.party  = decodedData.party  end
+                    if decodedData.raid   then _G.DandersFrames.db.raid   = decodedData.raid   end
+                    if decodedData.classColors      then _G.DandersFrames.db.classColors      = decodedData.classColors      end
+                    if decodedData.powerColors      then _G.DandersFrames.db.powerColors      = decodedData.powerColors      end
+                    if decodedData.raidAutoProfiles then _G.DandersFrames.db.raidAutoProfiles = decodedData.raidAutoProfiles end
+                    if decodedData.auraBlacklist    then _G.DandersFrames.db.auraBlacklist    = decodedData.auraBlacklist    end
+                    -- Persist the overwritten data back to the profiles table on disk
+                    if _G.DandersFrames.SaveCurrentProfile then
+                        pcall(_G.DandersFrames.SaveCurrentProfile, _G.DandersFrames)
+                    end
+                    -- Also set per-character DB (DandersFramesCharDB tracks profile per char)
+                    if _G.DandersFramesCharDB then
+                        _G.DandersFramesCharDB.currentProfile = profileName
+                    end
                     success = true
+                    ns.Print("[Danders] SetProfile+inject complete → '" .. profileName .. "'")
                 else
-                    ns.Print("[GUI Debug] Danders Apply failed: " .. tostring(err))
+                    ns.Print("[GUI Debug] Danders SetProfile failed: " .. tostring(err))
                 end
             end
             
-            -- STRATEGY 2: DIRECT DB INJECTION (The "Nuclear Option")
-            -- If Apply failed OR if we want to be sure, we write directly to the DB.
-            if decodedData and _G.DandersFramesDB_v2 and _G.DandersFramesDB_v2.profiles then
-                 -- 1. Ensure profile table exists
+            -- STRATEGY B: ApplyImportedProfile with correct signature (fallback)
+            -- Signature: (importData, selectedCategories, selectedFrameTypes, newProfileName, createNewProfile, allowOverwrite)
+            if not success and _G.DandersFrames and _G.DandersFrames.ApplyImportedProfile then
+                local okB, errB = pcall(_G.DandersFrames.ApplyImportedProfile, _G.DandersFrames,
+                    finalData, nil, nil, profileName, true, true)
+                if okB then
+                    success = true
+                    if _G.DandersFramesDB_v2 then _G.DandersFramesDB_v2.currentProfile = profileName end
+                    if _G.DandersFramesCharDB then _G.DandersFramesCharDB.currentProfile = profileName end
+                    ns.Print("[Danders] ApplyImportedProfile complete → '" .. profileName .. "'")
+                else
+                    ns.Print("[GUI Debug] Danders ApplyImportedProfile failed: " .. tostring(errB))
+                end
+            end
+            
+            -- STRATEGY 2: DIRECT DB INJECTION (Nuclear Option)
+            -- Only run if ApplyImportedProfile failed, to avoid conflicting with a successful Apply.
+            if not success and decodedData and _G.DandersFramesDB_v2 then
+                 -- Ensure top-level profiles table exists (nil on fresh installs!)
+                 if not _G.DandersFramesDB_v2.profiles then
+                     ns.Print("[GUI Debug] Danders: profiles table missing, creating it.")
+                     _G.DandersFramesDB_v2.profiles = {}
+                 end
+
+                 -- 1. Ensure profile slot exists
                  if not _G.DandersFramesDB_v2.profiles[profileName] then
                       _G.DandersFramesDB_v2.profiles[profileName] = {}
                  end
@@ -295,15 +293,18 @@ Installer.registry = {
                      end
                  end
                  
-                 -- 3. Force Update
-                 if _G.DandersFrames_IsReady then _G.DandersFramesDB_v2.currentProfile = profileName end
+                 -- 3. Switch to the new profile
+                 _G.DandersFramesDB_v2.currentProfile = profileName
                  
-                 -- Bruteforce Refresh methods
-                 if _G.DandersFrames.FullProfileRefresh then pcall(_G.DandersFrames.FullProfileRefresh, _G.DandersFrames) end
+                 -- 4. Bruteforce Refresh methods
+                 if _G.DandersFrames then
+                     if _G.DandersFrames.FullProfileRefresh then pcall(_G.DandersFrames.FullProfileRefresh, _G.DandersFrames) end
+                     if _G.DandersFrames.Update then pcall(_G.DandersFrames.Update, _G.DandersFrames) end
+                 end
                  if _G.DandersFrames_Update then pcall(_G.DandersFrames_Update) end
-                 if _G.DandersFrames.Update then pcall(_G.DandersFrames.Update, _G.DandersFrames) end
                  
                  success = true
+                 ns.Print("[GUI Debug] Danders: Nuclear injection complete → '" .. profileName .. "'")
             end
 
             -- TRY 2: Legacy Global (DandersFrames_Import)
@@ -525,101 +526,57 @@ Installer.registry = {
                  _G.UUF:SetProfile(profileName)
              end
 
-             -- TRY Global UUF object
-             if _G.UUF and _G.UUF.ImportProfile then
-                  ns.Print("[GUI Debug] UUF calling ImportProfile...")
-                  local ok, err = pcall(_G.UUF.ImportProfile, _G.UUF, data)
-                  if ok then
-                      ns.Print("[GUI Debug] UUF Import Success. Calling Update...")
-                      if _G.UUF.ThrottledUpdateAll then pcall(_G.UUF.ThrottledUpdateAll, _G.UUF) end
-                      if _G.UUF.UpdateLayout then pcall(_G.UUF.UpdateLayout, _G.UUF) end
-                  else
-                      ns.Print("[GUI Debug] UUF Import Error: " .. tostring(err))
-                  end
-                  return
-             end
-             
-             -- Fallback to UUFG global
-             if _G.UUFG and _G.UUFG.ImportUUF then 
-                 -- Attempt 1: (data, profileName) using DOT syntax
-                 local ok, err = pcall(_G.UUFG.ImportUUF, data, profileName)
-                 if ok then 
-                     if _G.UUF and _G.UUF.ThrottledUpdateAll then pcall(_G.UUF.ThrottledUpdateAll, _G.UUF) end
-                     return 
+             -- STRATEGY A: UUF:ImportSavedVariables(encodedStr, profileName)
+             -- This is UUF's own import function (from Share.lua). It:
+             --   1. Decodes/decompresses/deserializes the !UUF_ string via AceSerializer
+             --   2. Calls UUF.db:SetProfile(profileName) to switch
+             --   3. Wipes current profile and copies imported data in
+             -- Passing profileName directly means it skips the StaticPopup dialog.
+             if _G.UUF and _G.UUF.ImportSavedVariables then
+                 local ok, err = pcall(_G.UUF.ImportSavedVariables, _G.UUF, data, profileName)
+                 if ok then
+                     ns.Print("[GUI Debug] UUF ImportSavedVariables success → '" .. profileName .. "'")
+                     return
+                 else
+                     ns.Print("[GUI Debug] UUF ImportSavedVariables failed: " .. tostring(err))
                  end
-                 
-                 -- Attempt 2: Swapped (profileName, data)
-                 local ok2, err2 = pcall(_G.UUFG.ImportUUF, profileName, data)
-                 if ok2 then return end
-
-                 -- Attempt 3: Just Data
-                 pcall(_G.UUFG.ImportUUF, data)
-                 if _G.UUF and _G.UUF.ThrottledUpdateAll then pcall(_G.UUF.ThrottledUpdateAll, _G.UUF) end
              end
              
-             -- STRATEGY: Direct DB Injection (Nuclear Option for UUF)
-             -- Step 1: Decode if string
-             if type(data) == "string" then
-                 local LibDeflate = LibStub("LibDeflate", true)
-                 if LibDeflate then
-                      -- Fix Prefix: !UUF_
-                      local clean = data
-                      if string.find(data, "^!UUF_") then
-                          clean = string.sub(data, 6) -- Strip !UUF_ (5 chars)
-                      elseif string.find(data, "^!UUF!") then
-                          clean = string.sub(data, 6) -- Strip !UUF! (5 chars)
-                      end
-                      
-                      local decoded = LibDeflate:DecodeForPrint(clean)
-                      if decoded then
-                          local decompressed = LibDeflate:DecompressDeflate(decoded)
-                          if decompressed then
-                              local AceSerializer = LibStub("AceSerializer-3.0", true)
-                              if AceSerializer then
-                                   local ok, res = AceSerializer:Deserialize(decompressed)
-                                   if ok then 
-                                       
-                                       data = res -- Promoted to table!
-                                   end
-                              end
-                              
-                              if type(data) == "string" then -- deserialization failed or not tried
-                                  local LibSerialize = LibStub("LibSerialize", true)
-                                  if LibSerialize then
-                                      local ok, res = LibSerialize:Deserialize(decompressed)
-                                      if ok then 
-                                          data = res 
-                                      end
-                                  end
-                               end
-                           end
-                       end
-                  end
+             -- STRATEGY B: UUFG:ImportUUF(importString, profileKey)
+             -- Alternative path that writes to UUF.db.profiles directly (also from Share.lua).
+             if _G.UUFG and _G.UUFG.ImportUUF then
+                 local ok, err = pcall(_G.UUFG.ImportUUF, _G.UUFG, data, profileName)
+                 if ok then
+                     ns.Print("[GUI Debug] UUF UUFG:ImportUUF success → '" .. profileName .. "'")
+                     return
+                 else
+                     ns.Print("[GUI Debug] UUF UUFG:ImportUUF failed: " .. tostring(err))
+                 end
              end
 
-             -- Step 2: Inject if table
-             if data and type(data) == "table" then
-                  -- Unwrap if coming from export that includes container
-                  if data.profile then 
-                      data = data.profile 
-                  end
-                  
-                  if _G.UUFDB and _G.UUFDB.profiles then
-                       if not _G.UUFDB.profiles[profileName] then _G.UUFDB.profiles[profileName] = {} end
-                       local target = _G.UUFDB.profiles[profileName]
-                       -- Merge
-                       for k,v in pairs(data) do target[k] = v end
-
-                       
-                       -- Force Update
-                       if _G.UUF then 
-                           if _G.UUF.db then _G.UUF.db:SetProfile(profileName) end
-                           if _G.UUF.UpdateLayout then pcall(_G.UUF.UpdateLayout, _G.UUF) end
-                           if _G.UUF.ThrottledUpdateAll then pcall(_G.UUF.ThrottledUpdateAll, _G.UUF) end
-                       end
-                  end
+             -- STRATEGY C: Nuclear — decode manually then inject via AceDB
+             -- Used if both UUF API methods fail.
+             local LibDeflate = LibStub("LibDeflate", true)
+             local AceSerializer = LibStub("AceSerializer-3.0", true)
+             if type(data) == "string" and LibDeflate and AceSerializer then
+                 local clean = data
+                 if string.find(data, "^!UUF_") then clean = string.sub(data, 6) end
+                 local decoded     = LibDeflate:DecodeForPrint(clean)
+                 local decompressed = decoded and LibDeflate:DecompressDeflate(decoded)
+                 if decompressed then
+                     local ok, res = AceSerializer:Deserialize(decompressed)
+                     if ok and type(res) == "table" then
+                         local profileData = res.profile or res
+                         if _G.UUF and _G.UUF.db then
+                             _G.UUF.db:SetProfile(profileName)
+                             wipe(_G.UUF.db.profile)
+                             for k, v in pairs(profileData) do _G.UUF.db.profile[k] = v end
+                             if _G.UUF.UpdateAllUnitFrames then pcall(_G.UUF.UpdateAllUnitFrames, _G.UUF) end
+                             ns.Print("[GUI Debug] UUF Nuclear injection complete → '" .. profileName .. "'")
+                         end
+                     end
+                 end
              end
-             
 
         end,
         HasProfile = function(self, profileName)
