@@ -1186,8 +1186,8 @@ local function OnGroupRosterUpdate()
     local function HandleMember(unit)
         if not UnitExists(unit) then return end
         
-        local guid = UnitGUID(unit)
-        if not guid then return end
+        local ok, guid = pcall(UnitGUID, unit)
+        if not ok or not guid then return end
         
         members[guid] = true
         
