@@ -456,6 +456,365 @@ DT.Types.gold = {
     end
 }
 
+-- ============================================================================
+-- GUILD POPUP PANEL
+-- ============================================================================
+local guildPopup = nil
+
+local GUILD_POPUP_WIDTH      = 460
+local GUILD_POPUP_ROW_HEIGHT = 18
+local GUILD_POPUP_MAX_H      = 400
+local GUILD_POPUP_PAD        = 6
+local GUILD_POPUP_HDR_H      = 18
+
+-- Column x-offsets (left-to-right inside the content frame)
+local GCOL_LEVEL  = 0
+local GCOL_NAME   = 34
+local GCOL_RANK   = 180
+local GCOL_ZONE   = 260
+local GCOL_NOTE   = 360
+
+local function GetGuildFontPath()
+    if ns.GetFont then
+        local path, _ = ns.GetFont()
+        return path
+    end
+    if ns.Styling and ns.Styling.GetFontPath then return ns.Styling:GetFontPath() end
+    return "Fonts\\FRIZQT__.TTF"
+end
+
+local function GuildPopupHide()
+    if guildPopup then guildPopup:Hide() end
+end
+
+local function GuildPopup_IsMouseOver()
+    if not guildPopup or not guildPopup:IsShown() then return false end
+    return guildPopup:IsMouseOver()
+end
+
+-- Creates a FontString label on a given parent
+local function MakeLabel(parent, fontSize, anchor, x, y, width, justify)
+    local fs = parent:CreateFontString(nil, "OVERLAY")
+    fs:SetFont(GetGuildFontPath(), fontSize or 11, "OUTLINE")
+    if anchor then fs:SetPoint("TOPLEFT", parent, anchor, x or 0, y or 0) end
+    if width then fs:SetWidth(width) end
+    fs:SetJustifyH(justify or "LEFT")
+    fs:SetWordWrap(false)  -- prevent multi-line overflow
+    return fs
+end
+
+-- Truncate plain text to fit a FontString's width, appending "..."
+local function TruncateText(fs, text)
+    if not text or text == "" then fs:SetText("") return end
+    fs:SetText(text)
+    if fs:GetStringWidth() <= fs:GetWidth() then return end
+    -- Strip trailing chars until it fits
+    local t = text
+    repeat
+        t = t:sub(1, -2)
+        fs:SetText(t .. "...")
+    until #t == 0 or fs:GetStringWidth() <= fs:GetWidth()
+end
+
+local function BuildGuildPopupFrame()
+    if guildPopup then return guildPopup end
+
+    local f = CreateFrame("Frame", "GravityUIGuildPopup", UIParent, "BackdropTemplate")
+    f:SetFrameStrata("DIALOG")
+    f:SetFrameLevel(200)
+    f:SetClampedToScreen(true)
+    f:EnableMouse(true)
+    f:SetBackdrop({
+        bgFile   = "Interface\\Buttons\\WHITE8x8",
+        edgeFile = "Interface\\Buttons\\WHITE8x8",
+        edgeSize = 1,
+    })
+    f:SetBackdropColor(0.05, 0.05, 0.05, 0.72)
+    f:SetBackdropBorderColor(0, 0, 0, 1)
+    f:Hide()
+
+    -- Close when mouse leaves the popup frame
+    f:SetScript("OnLeave", function(self)
+        C_Timer.After(0.05, function()
+            if guildPopup and not guildPopup:IsMouseOver() then
+                guildPopup:Hide()
+            end
+        end)
+    end)
+
+    -- Safety auto-close: if mouse isn't over the frame or anchor, hide after ~0.25s tick
+    f:SetScript("OnShow", function(self)
+        if self._ticker then self._ticker:Cancel() end
+        self._ticker = C_Timer.NewTicker(0.25, function()
+            local overPopup  = self:IsShown() and self:IsMouseOver()
+            local overAnchor = self._anchor and self._anchor:IsMouseOver()
+            if self:IsShown() and not overPopup and not overAnchor then
+                self:Hide()
+            end
+        end)
+    end)
+    f:SetScript("OnHide", function(self)
+        if self._ticker then
+            self._ticker:Cancel()
+            self._ticker = nil
+        end
+    end)
+
+    -- Title bar
+    local title = f:CreateFontString(nil, "OVERLAY")
+    title:SetFont(GetGuildFontPath(), 11, "OUTLINE")
+    title:SetPoint("TOPLEFT", f, "TOPLEFT", GUILD_POPUP_PAD, -GUILD_POPUP_PAD + 1)
+    title:SetTextColor(1, 1, 1, 1)
+    f.title = title
+
+    -- Hint line (bottom) – refreshed each PopulateGuildPopup call so accent color stays live
+    local hint = f:CreateFontString(nil, "OVERLAY")
+    hint:SetFont(GetGuildFontPath(), 10, "OUTLINE")
+    hint:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", GUILD_POPUP_PAD, GUILD_POPUP_PAD - 1)
+    hint:SetTextColor(0.65, 0.65, 0.65, 1)
+    f.hint = hint
+
+    -- Separator line below title
+    local sep = f:CreateTexture(nil, "OVERLAY")
+    sep:SetTexture("Interface\\Buttons\\WHITE8x8")
+    sep:SetVertexColor(0.15, 0.15, 0.15, 1)
+    sep:SetHeight(1)
+    sep:SetPoint("TOPLEFT",  f, "TOPLEFT",  1, -(GUILD_POPUP_PAD + GUILD_POPUP_HDR_H))
+    sep:SetPoint("TOPRIGHT", f, "TOPRIGHT", -1, -(GUILD_POPUP_PAD + GUILD_POPUP_HDR_H))
+    f.sep = sep
+
+    -- Column headers
+    local hdrY = -(GUILD_POPUP_PAD + GUILD_POPUP_HDR_H + 3)
+    local function MakeHdr(txt, x, w)
+        local h = f:CreateFontString(nil, "OVERLAY")
+        h:SetFont(GetGuildFontPath(), 9, "OUTLINE")
+        h:SetPoint("TOPLEFT", f, "TOPLEFT", GUILD_POPUP_PAD + x, hdrY)
+        h:SetWidth(w)
+        h:SetJustifyH("LEFT")
+        h:SetText(txt)
+        h:SetTextColor(0.70, 0.70, 0.70, 1)
+    end
+    MakeHdr("Lvl",  GCOL_LEVEL, 30)
+    MakeHdr("Name", GCOL_NAME,  120)
+    MakeHdr("Rang", GCOL_RANK,  75)
+    MakeHdr("Zone", GCOL_ZONE,  90)
+    MakeHdr("Note", GCOL_NOTE,  90)
+
+    -- Separator below headers
+    local sep2 = f:CreateTexture(nil, "OVERLAY")
+    sep2:SetTexture("Interface\\Buttons\\WHITE8x8")
+    sep2:SetVertexColor(0.12, 0.12, 0.12, 1)
+    sep2:SetHeight(1)
+    local hdrSepY = hdrY - 12
+    sep2:SetPoint("TOPLEFT",  f, "TOPLEFT",  1, hdrSepY)
+    sep2:SetPoint("TOPRIGHT", f, "TOPRIGHT", -1, hdrSepY)
+    f.sep2 = sep2
+
+    -- Inner content area (for rows)
+    local innerTop  = -(GUILD_POPUP_PAD + GUILD_POPUP_HDR_H + 2 + 12 + 4) -- below 2nd sep
+    local innerBot  = GUILD_POPUP_PAD + 14 -- above hint
+
+    -- ScrollFrame
+    local scroll = CreateFrame("ScrollFrame", nil, f, "UIPanelScrollFrameTemplate")
+    scroll:SetPoint("TOPLEFT",     f, "TOPLEFT",     1, innerTop)
+    scroll:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -20, innerBot)
+    if scroll.ScrollBar then scroll.ScrollBar:Hide() end -- use scrollbar only when needed
+    f.scroll = scroll
+
+    -- Content frame (child of scroll)
+    local content = CreateFrame("Frame", nil, scroll)
+    content:SetWidth(GUILD_POPUP_WIDTH - 22)
+    content:SetHeight(1)
+    scroll:SetScrollChild(content)
+    f.content = content
+
+    f.rows = {}
+
+    guildPopup = f
+    return f
+end
+
+local function PopulateGuildPopup(anchor)
+    if not IsInGuild() then return end
+    if GetTime() - guildCache.lastUpdate > 1 then BuildGuildCache() end
+
+    local f = BuildGuildPopupFrame()
+    local content = f.content
+    -- Remember the rankIndex is **stored inside guildCache** via BuildGuildCache.
+    -- GetGuildRosterInfo returns: name, rank, rankIndex, level, class, zone…
+    -- We stored rankIndex as info.rankIndex but BuildGuildCache uses rank=rank, not rankIndex.
+    -- We need to re-query rankIndex. We do that below from a re-sort pass on the existing cache.
+    -- Actually BuildGuildCache stores info.rank (string) but NOT rankIndex. We'll sort by doing a
+    -- fresh lightweight pass using GetGuildRosterInfo to get rankIndex per name for sorting.
+
+    -- Build sorted list: since we don't store rankIndex separately, rebuild it here quickly.
+    local sorted = {}
+    local total = GetNumGuildMembers()
+    for i = 1, total do
+        local name, rank, rankIndex, level, class, zone, note, _, connected, status, engClass, _, _, isMobile, _, _, guid = GetGuildRosterInfo(i)
+        if name and (connected or isMobile) then
+            table.insert(sorted, {
+                name      = name,
+                rank      = rank,
+                rankIndex = rankIndex,
+                level     = level,
+                class     = engClass,
+                zone      = zone,
+                note      = note,
+                online    = connected,
+                status    = status,
+                isMobile  = isMobile,
+                guid      = guid,
+            })
+        end
+    end
+    table.sort(sorted, function(a, b)
+        if a.rankIndex ~= b.rankIndex then return a.rankIndex < b.rankIndex end
+        return StripMyRealm(a.name) < StripMyRealm(b.name)
+    end)
+
+    -- Set title with accent-colored online count
+    local guildName = GetGuildInfo("player") or "Guild"
+    local ar, ag, ab = ns.GetAccentColor()
+    local accentHex = string.format("|cff%02x%02x%02x", ar*255, ag*255, ab*255)
+    f.title:SetText(string.format("%s  %s(%d online)|r", guildName, accentHex, #sorted))
+
+    -- Refresh hint text with live accent color
+    f.hint:SetText(string.format(
+        "|cffFFFFFFLeft-Click:|r %sWhisper|r    |cffFFFFFFRight-Click:|r %sInvite|r",
+        accentHex, accentHex))
+
+    -- Row pool: hide all, then reuse or create
+    for _, row in ipairs(f.rows) do row:Hide() end
+
+    local playerName  = UnitName("player")
+    local playerRealm = GetNormalizedRealmName()
+    local yOff = 0
+    local innerW = content:GetWidth()
+
+    for i, info in ipairs(sorted) do
+        local row = f.rows[i]
+        if not row then
+            row = CreateFrame("Button", nil, content)
+            row:SetHeight(GUILD_POPUP_ROW_HEIGHT)
+            row:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+
+            -- Hover highlight texture
+            local hl = row:CreateTexture(nil, "HIGHLIGHT")
+            hl:SetTexture("Interface\\Buttons\\WHITE8x8")
+            hl:SetVertexColor(1, 1, 1, 0.07)
+            hl:SetAllPoints()
+
+            -- Column FontStrings per row
+            row.fsLevel = MakeLabel(row, 11, "TOPLEFT", GUILD_POPUP_PAD + GCOL_LEVEL,  -2, 28)
+            row.fsName  = MakeLabel(row, 12, "TOPLEFT", GUILD_POPUP_PAD + GCOL_NAME,   -2, 140)
+            row.fsRank  = MakeLabel(row, 11, "TOPLEFT", GUILD_POPUP_PAD + GCOL_RANK,   -2, 74)
+            row.fsZone  = MakeLabel(row, 11, "TOPLEFT", GUILD_POPUP_PAD + GCOL_ZONE,   -2, 94)
+            row.fsNote  = MakeLabel(row, 11, "TOPLEFT", GUILD_POPUP_PAD + GCOL_NOTE,   -2, 94)
+
+            row.fsRank:SetTextColor(1.0, 1.0, 1.0, 1)
+            row.fsZone:SetTextColor(0.72, 0.72, 0.72, 1)
+            row.fsNote:SetTextColor(0.85, 0.85, 0.55, 1)
+
+            -- OnLeave propagation so the popup closes when leaving a row
+            row:SetScript("OnLeave", function()
+                C_Timer.After(0.05, function()
+                    if guildPopup and not guildPopup:IsMouseOver() then
+                        guildPopup:Hide()
+                    end
+                end)
+            end)
+
+            f.rows[i] = row
+        end
+
+        -- Fill data
+        local classColor = GetClassColor(info.class)
+        local levelColor = GetLevelColor(info.level)
+
+        local lvlR = levelColor.r or 1
+        local lvlG = levelColor.g or 1
+        local lvlB = levelColor.b or 1
+
+        row.fsLevel:SetText(string.format("|cff%02x%02x%02x%d|r", lvlR*255, lvlG*255, lvlB*255, info.level or 0))
+
+        local status = info.status == 1 and " |cffFFFF00[AFK]|r" or info.status == 2 and " |cffFF4444[DND]|r" or ""
+        local mobile = (info.isMobile and not info.online) and (" " .. MOBILE_ICON) or ""
+        -- Show realm suffix in grey for cross-realm members
+        local displayName = StripMyRealm(info.name)
+        local memberRealm = info.name:match("%-(.+)$")
+        local realmSuffix = (memberRealm and memberRealm ~= playerRealm)
+            and ("|cff555555-" .. memberRealm .. "|r") or ""
+        row.fsName:SetText(string.format("|cff%02x%02x%02x%s|r%s%s%s",
+            classColor.r*255, classColor.g*255, classColor.b*255,
+            displayName, realmSuffix, status, mobile))
+
+        row.fsRank:SetText(info.rank or "")
+        TruncateText(row.fsZone, info.zone or "")
+        TruncateText(row.fsNote, (info.note and info.note ~= "") and info.note or "")
+
+        row:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -yOff)
+        row:SetWidth(innerW)
+        row:Show()
+
+        -- Click handlers (capture locals)
+        local whisperName = info.name
+        local inviteGuid  = info.guid
+        -- Same-realm members have no "-Realm" suffix in info.name, so compare by bare name
+        local isMe = StripMyRealm(info.name) == playerName
+        row:SetScript("OnClick", function(self, btn)
+            if isMe then return end
+            if btn == "LeftButton" then
+                GuildPopupHide()
+                SendWhisperTo(whisperName, false)
+            elseif btn == "RightButton" then
+                GuildPopupHide()
+                InvitePlayerToGroup(whisperName, inviteGuid, false)
+            end
+        end)
+
+        row:SetScript("OnEnter", nil)
+        row:SetScript("OnLeave", function()
+            C_Timer.After(0.05, function()
+                if guildPopup and not guildPopup:IsMouseOver() then
+                    guildPopup:Hide()
+                end
+            end)
+        end)
+
+        yOff = yOff + GUILD_POPUP_ROW_HEIGHT
+    end
+
+    content:SetHeight(math.max(1, yOff))
+
+    -- Calculate popup height
+    local hdrRegion   = GUILD_POPUP_PAD + GUILD_POPUP_HDR_H + 2 + 12 + 4  -- title + sep + col-headers + sep
+    local footerH     = GUILD_POPUP_PAD + 14
+    local rowAreaH    = math.min(yOff, GUILD_POPUP_MAX_H - hdrRegion - footerH)
+    local totalH      = hdrRegion + rowAreaH + footerH + 4
+
+    f:SetSize(GUILD_POPUP_WIDTH, totalH)
+
+    -- Show/hide native scrollbar based on if content overflows
+    if f.scroll.ScrollBar then
+        f.scroll.ScrollBar:SetShown(yOff > rowAreaH)
+    end
+
+    -- Smart anchor: open upward if datatext is in the bottom half of the screen
+    local screenH = GetScreenHeight()
+    local _, anchorY = anchor:GetCenter()
+    f:ClearAllPoints()
+    if anchorY and (anchorY / screenH) < 0.5 then
+        f:SetPoint("BOTTOMLEFT", anchor, "TOPLEFT", 0, 4)
+    else
+        f:SetPoint("TOPLEFT", anchor, "BOTTOMLEFT", 0, -4)
+    end
+
+    f._anchor = anchor
+    f:Show()
+    f:Raise()
+end
+
 -- 4. GUILD
 DT.Types.guild = {
     Update = function(slot, config)
@@ -468,86 +827,26 @@ DT.Types.guild = {
     end,
     OnEnter = function(self)
         if not IsInGuild() then return end
-        if GetTime() - guildCache.lastUpdate > 1 then BuildGuildCache() end
-
-        GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
-        GameTooltip:ClearLines()
-        local guildName = GetGuildInfo("player") or "Guild"
-        local showNotes = IsShiftKeyDown()
-        GameTooltip:AddLine(guildName .. (showNotes and " (Notes)" or ""), 1, 1, 1)
-
-
-        local ar, ag, ab = GetValueColor()
-        GameTooltip:AddLine(" ")
-        GameTooltip:AddLine(showNotes and "Online Members (Notes)" or "Online Members", ar, ag, ab)
-
-        for i, info in ipairs(guildCache.members) do
-            if i > 30 then
-                GameTooltip:AddLine(string.format("... and %d more", #guildCache.members - 30), 0.7, 0.7, 0.7)
-                break
+        PopulateGuildPopup(self)
+    end,
+    OnLeave = function(self)
+        -- Give a brief moment so the mouse can move into the popup without it closing
+        C_Timer.After(0.1, function()
+            if guildPopup and not guildPopup:IsMouseOver() then
+                guildPopup:Hide()
             end
-            local classColor = GetClassColor(info.class)
-            local status = info.status == 1 and " |cffFFFF00(AFK)|r" or info.status == 2 and " |cffFF0000(DND)|r" or ""
-            local levelColor = GetLevelColor(info.level)
-            local levelStr = string.format("|cff%02x%02x%02x%d|r ", levelColor.r*255, levelColor.g*255, levelColor.b*255, info.level or 0)
-            local mobile = (info.isMobile and not info.online) and (" " .. MOBILE_ICON) or ""
-            local displayName = StripMyRealm(info.name)
-
-            local rightText, rr, rg, rb
-            if showNotes then
-                rightText = (info.note and info.note ~= "") and info.note or "No note"
-                rr, rg, rb = 0.9, 0.9, 0.6
-            else
-                rightText = info.zone or "Unknown"
-                rr, rg, rb = 0.7, 0.7, 0.7
-            end
-
-            GameTooltip:AddDoubleLine(
-                levelStr .. displayName .. status .. mobile .. " |cff999999-|cffffffff " .. info.rank .. "|r",
-                rightText, classColor.r, classColor.g, classColor.b, rr, rg, rb
-            )
-        end
-
-        GameTooltip:AddLine(" ")
-        GameTooltip:AddLine("|cffFFFFFFLeft Click:|r Open Guild", ar, ag, ab)
-        GameTooltip:AddLine("|cffFFFFFFRight Click:|r Whisper/Invite Menu", ar, ag, ab)
-        GameTooltip:AddLine(showNotes and "|cffFFFFFFRelease Shift:|r Show Zones" or "|cffFFFFFFHold Shift:|r Show Notes", ar, ag, ab)
-        GameTooltip:Show()
+        end)
     end,
     OnClick = function(self, button)
-        if button == "LeftButton" then ToggleGuildFrame()
-        elseif button == "RightButton" and IsInGuild() then
-            if GetTime() - guildCache.lastUpdate > 1 then BuildGuildCache() end
-            local playerName = UnitName("player") .. "-" .. GetNormalizedRealmName()
-            MenuUtil.CreateContextMenu(self, function(_, root)
-                root:CreateTitle("Guild Menu")
-                local whisperMenu = root:CreateButton("Whisper")
-                local inviteMenu = root:CreateButton("Invite")
-                local hasWhisper, hasInvite = false, false
-                for _, info in ipairs(guildCache.members) do
-                    if Ambiguate(info.name, "none") ~= Ambiguate(playerName, "none") then
-                        local classColor = GetClassColor(info.class)
-                        local colorCode = string.format("|cff%02x%02x%02x", classColor.r*255, classColor.g*255, classColor.b*255)
-                        if info.online or info.isMobile then
-                            hasWhisper = true
-                            local whisperName = info.name
-                            whisperMenu:CreateButton(colorCode .. StripMyRealm(info.name) .. "|r", function() SendWhisperTo(whisperName, false) end)
-                        end
-                        if info.online and not IsPlayerInGroup(info.name) then
-                            hasInvite = true
-                            local inviteName, inviteGuid = info.name, info.guid
-                            inviteMenu:CreateButton(colorCode .. StripMyRealm(info.name) .. "|r", function() InvitePlayerToGroup(inviteName, inviteGuid, false) end)
-                        end
-                    end
-                end
-                if not hasWhisper then whisperMenu:CreateButton("No members online"):SetEnabled(false) end
-                if not hasInvite then inviteMenu:CreateButton("No invitable members"):SetEnabled(false) end
-                root:CreateDivider()
-                root:CreateButton("Open Guild Panel", function() ToggleGuildFrame() end)
-            end)
+        if button == "LeftButton" then
+            GuildPopupHide()
+            ToggleGuildFrame()
+        elseif button == "RightButton" then
+            GuildPopupHide()
         end
-    end
+    end,
 }
+
 
 
 -- Friends Cache
@@ -664,89 +963,358 @@ DT.Types.durability = {
 
 -- 5. GUILD (already implemented above)
 
+-- ============================================================================
+-- FRIENDS POPUP PANEL
+-- ============================================================================
+local friendsPopup = nil
+
+local FPOP_WIDTH      = 480
+local FPOP_ROW_HEIGHT = 18
+local FPOP_MAX_H      = 420
+local FPOP_PAD        = 6
+local FPOP_HDR_H      = 18
+
+-- Column x-offsets
+local FCOL_LEVEL  = 0
+local FCOL_NAME   = 34   -- Charname (classcolored) + (BNetName)
+local FCOL_ZONE   = 270
+local FCOL_NOTE   = 370
+
+local function FriendsPopupHide()
+    if friendsPopup then friendsPopup:Hide() end
+end
+
+local function BuildFriendsPopupFrame()
+    if friendsPopup then return friendsPopup end
+
+    local f = CreateFrame("Frame", "GravityUIFriendsPopup", UIParent, "BackdropTemplate")
+    f:SetFrameStrata("DIALOG")
+    f:SetFrameLevel(200)
+    f:SetClampedToScreen(true)
+    f:EnableMouse(true)
+    f:SetBackdrop({
+        bgFile   = "Interface\\Buttons\\WHITE8x8",
+        edgeFile = "Interface\\Buttons\\WHITE8x8",
+        edgeSize = 1,
+    })
+    f:SetBackdropColor(0.05, 0.05, 0.05, 0.72)
+    f:SetBackdropBorderColor(0, 0, 0, 1)
+    f:Hide()
+
+    f:SetScript("OnLeave", function()
+        C_Timer.After(0.05, function()
+            if friendsPopup and not friendsPopup:IsMouseOver() then
+                friendsPopup:Hide()
+            end
+        end)
+    end)
+
+    -- Safety auto-close ticker: hides popup if mouse leaves without triggering OnLeave
+    f:SetScript("OnShow", function(self)
+        if self._ticker then self._ticker:Cancel() end
+        self._ticker = C_Timer.NewTicker(0.25, function()
+            local overPopup  = self:IsShown() and self:IsMouseOver()
+            local overAnchor = self._anchor and self._anchor:IsMouseOver()
+            if self:IsShown() and not overPopup and not overAnchor then
+                self:Hide()
+            end
+        end)
+    end)
+    f:SetScript("OnHide", function(self)
+        if self._ticker then
+            self._ticker:Cancel()
+            self._ticker = nil
+        end
+    end)
+
+    local title = f:CreateFontString(nil, "OVERLAY")
+    title:SetFont(GetGuildFontPath(), 11, "OUTLINE")
+    title:SetPoint("TOPLEFT", f, "TOPLEFT", FPOP_PAD, -FPOP_PAD + 1)
+    title:SetTextColor(1, 1, 1, 1)
+    f.title = title
+
+    local hint = f:CreateFontString(nil, "OVERLAY")
+    hint:SetFont(GetGuildFontPath(), 10, "OUTLINE")
+    hint:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", FPOP_PAD, FPOP_PAD - 1)
+    hint:SetTextColor(0.65, 0.65, 0.65, 1)
+    f.hint = hint
+
+    local sep = f:CreateTexture(nil, "OVERLAY")
+    sep:SetTexture("Interface\\Buttons\\WHITE8x8")
+    sep:SetVertexColor(0.15, 0.15, 0.15, 1)
+    sep:SetHeight(1)
+    sep:SetPoint("TOPLEFT",  f, "TOPLEFT",  1, -(FPOP_PAD + FPOP_HDR_H))
+    sep:SetPoint("TOPRIGHT", f, "TOPRIGHT", -1, -(FPOP_PAD + FPOP_HDR_H))
+
+    local hdrY = -(FPOP_PAD + FPOP_HDR_H + 3)
+    local function MakeHdr(txt, x, w)
+        local h = f:CreateFontString(nil, "OVERLAY")
+        h:SetFont(GetGuildFontPath(), 9, "OUTLINE")
+        h:SetPoint("TOPLEFT", f, "TOPLEFT", FPOP_PAD + x, hdrY)
+        h:SetWidth(w)
+        h:SetJustifyH("LEFT")
+        h:SetText(txt)
+        h:SetTextColor(0.70, 0.70, 0.70, 1)
+    end
+    MakeHdr("Lvl",  FCOL_LEVEL, 30)
+    MakeHdr("Name", FCOL_NAME,  230)
+    MakeHdr("Zone", FCOL_ZONE,  94)
+    MakeHdr("Note", FCOL_NOTE,  94)
+
+    local sep2 = f:CreateTexture(nil, "OVERLAY")
+    sep2:SetTexture("Interface\\Buttons\\WHITE8x8")
+    sep2:SetVertexColor(0.12, 0.12, 0.12, 1)
+    sep2:SetHeight(1)
+    local hdrSepY = hdrY - 12
+    sep2:SetPoint("TOPLEFT",  f, "TOPLEFT",  1, hdrSepY)
+    sep2:SetPoint("TOPRIGHT", f, "TOPRIGHT", -1, hdrSepY)
+
+    local innerTop = -(FPOP_PAD + FPOP_HDR_H + 2 + 12 + 4)
+    local innerBot = FPOP_PAD + 14
+
+    local scroll = CreateFrame("ScrollFrame", nil, f, "UIPanelScrollFrameTemplate")
+    scroll:SetPoint("TOPLEFT",     f, "TOPLEFT",     1, innerTop)
+    scroll:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -20, innerBot)
+    if scroll.ScrollBar then scroll.ScrollBar:Hide() end
+    f.scroll = scroll
+
+    local content = CreateFrame("Frame", nil, scroll)
+    content:SetWidth(FPOP_WIDTH - 22)
+    content:SetHeight(1)
+    scroll:SetScrollChild(content)
+    f.content = content
+
+    f.rows    = {}
+    f.sepTex  = {} -- section separator textures
+
+    friendsPopup = f
+    return f
+end
+
+-- Creates or reuses a row button in the friends popup
+local function GetFriendRow(f, i)
+    local row = f.rows[i]
+    if not row then
+        row = CreateFrame("Button", nil, f.content)
+        row:SetHeight(FPOP_ROW_HEIGHT)
+        row:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+
+        local hl = row:CreateTexture(nil, "HIGHLIGHT")
+        hl:SetTexture("Interface\\Buttons\\WHITE8x8")
+        hl:SetVertexColor(1, 1, 1, 0.07)
+        hl:SetAllPoints()
+
+        row.fsLevel = MakeLabel(row, 11, "TOPLEFT", FPOP_PAD + FCOL_LEVEL, -2, 28)
+        row.fsName  = MakeLabel(row, 12, "TOPLEFT", FPOP_PAD + FCOL_NAME,  -2, 230)
+        row.fsZone  = MakeLabel(row, 11, "TOPLEFT", FPOP_PAD + FCOL_ZONE,  -2, 94)
+        row.fsNote  = MakeLabel(row, 11, "TOPLEFT", FPOP_PAD + FCOL_NOTE,  -2, 94)
+
+        row.fsZone:SetTextColor(0.72, 0.72, 0.72, 1)
+        row.fsNote:SetTextColor(0.85, 0.85, 0.55, 1)
+
+        row:SetScript("OnEnter", nil)
+        row:SetScript("OnLeave", function()
+            C_Timer.After(0.05, function()
+                if friendsPopup and not friendsPopup:IsMouseOver() then
+                    friendsPopup:Hide()
+                end
+            end)
+        end)
+
+        f.rows[i] = row
+    end
+    return row
+end
+
+-- Section label (e.g. "WoW Friends", "Battle.net (Retail)")
+local function GetSectionLabel(f, idx)
+    if not f.sectionLabels then f.sectionLabels = {} end
+    local lbl = f.sectionLabels[idx]
+    if not lbl then
+        lbl = f.content:CreateFontString(nil, "OVERLAY")
+        lbl:SetFont(GetGuildFontPath(), 10, "OUTLINE")
+        lbl:SetJustifyH("LEFT")
+        f.sectionLabels[idx] = lbl
+    end
+    return lbl
+end
+
+local function PopulateFriendsPopup(anchor)
+    if GetTime() - friendsCache.lastUpdate > 1 then BuildFriendsCache() end
+
+    local f = BuildFriendsPopupFrame()
+    local content = f.content
+
+    -- Hide all rows and section labels
+    for _, row in ipairs(f.rows) do row:Hide() end
+    if f.sectionLabels then
+        for _, lbl in ipairs(f.sectionLabels) do lbl:Hide() end
+    end
+
+    local ar, ag, ab = ns.GetAccentColor()
+    local accentHex = string.format("|cff%02x%02x%02x", ar*255, ag*255, ab*255)
+
+    local totalCount = #friendsCache.wowFriends + #friendsCache.bnetRetail
+    f.title:SetText(string.format("Friends  %s(%d online)|r", accentHex, totalCount))
+    f.hint:SetText(string.format(
+        "|cffFFFFFFLeft-Click:|r %sWhisper|r    |cffFFFFFFRight-Click:|r %sInvite|r",
+        accentHex, accentHex))
+
+    local innerW = content:GetWidth()
+    local yOff   = 0
+    local rowIdx = 0
+
+    local SECTION_H = 14  -- height of section label row
+
+    local function AddRow(level, levelColor, nameText, zoneText, noteText, whisperFn, inviteFn)
+        rowIdx = rowIdx + 1
+        local row = GetFriendRow(f, rowIdx)
+
+        if level and levelColor then
+            row.fsLevel:SetText(string.format("|cff%02x%02x%02x%d|r",
+                levelColor.r*255, levelColor.g*255, levelColor.b*255, level))
+        else
+            row.fsLevel:SetText("")
+        end
+        row.fsName:SetText(nameText or "")
+        TruncateText(row.fsZone, zoneText or "")
+        TruncateText(row.fsNote, noteText or "")
+
+        row:SetPoint("TOPLEFT", content, "TOPLEFT", 0, -yOff)
+        row:SetWidth(innerW)
+        row:Show()
+
+        row:SetScript("OnClick", function(_, btn)
+            if btn == "LeftButton" and whisperFn then
+                FriendsPopupHide()
+                whisperFn()
+            elseif btn == "RightButton" and inviteFn then
+                FriendsPopupHide()
+                inviteFn()
+            end
+        end)
+
+        yOff = yOff + FPOP_ROW_HEIGHT
+    end
+
+    local function AddSection(txt, r, g, b)
+        local lbl = GetSectionLabel(f, (f._secIdx or 0) + 1)
+        f._secIdx = (f._secIdx or 0) + 1
+        lbl:SetPoint("TOPLEFT", content, "TOPLEFT", FPOP_PAD, -yOff)
+        lbl:SetWidth(innerW)
+        lbl:SetText(txt)
+        lbl:SetTextColor(r or ar, g or ag, b or ab)
+        lbl:Show()
+        yOff = yOff + SECTION_H
+    end
+
+    f._secIdx = 0
+
+    -- WoW Friends section
+    if #friendsCache.wowFriends > 0 then
+        AddSection("WoW Friends")
+        for _, info in ipairs(friendsCache.wowFriends) do
+            local cc = GetClassColor(info.className)
+            local lc = GetLevelColor(info.level)
+            local status = info.isAFK and " |cffFFFF00[AFK]|r" or info.isDND and " |cffFF4444[DND]|r" or ""
+            local nameStr = string.format("|cff%02x%02x%02x%s|r%s",
+                cc.r*255, cc.g*255, cc.b*255, info.name or "", status)
+            local wn = info.name
+            AddRow(
+                info.level, lc,
+                nameStr, info.area, info.notes ~= "" and info.notes or "",
+                function() SendWhisperTo(wn, false) end,
+                (not IsPlayerInGroup(info.name)) and
+                    function() InvitePlayerToGroup(wn, nil, false) end or nil
+            )
+        end
+    end
+
+    -- BNet Retail section
+    if #friendsCache.bnetRetail > 0 then
+        if #friendsCache.wowFriends > 0 then yOff = yOff + 4 end  -- small gap
+        AddSection("Battle.net (Retail)", 0.31, 0.69, 0.9)
+        for _, info in ipairs(friendsCache.bnetRetail) do
+            local cc = GetClassColor(info.className)
+            local lc = GetLevelColor(info.characterLevel)
+            local status = info.isAFK and " |cffFFFF00[AFK]|r" or info.isDND and " |cffFF4444[DND]|r" or ""
+            local charPart = (info.characterName and info.characterName ~= "")
+                and string.format("|cff%02x%02x%02x%s|r", cc.r*255, cc.g*255, cc.b*255, info.characterName)
+                or ""
+            local bnetPart = string.format("|cff888888(%s)|r", info.accountName or "")
+            local nameStr = charPart .. " " .. bnetPart .. status
+            local acctName = info.accountName
+            local charName = info.characterName
+            local gameID   = info.gameAccountID
+            AddRow(
+                (info.characterLevel and info.characterLevel > 0) and info.characterLevel or nil,
+                lc,
+                nameStr,
+                info.areaName,
+                info.note ~= "" and info.note or "",
+                function() SendWhisperTo(acctName, true) end,
+                (charName and charName ~= "" and not IsPlayerInGroup(charName)) and
+                    function() InvitePlayerToGroup(gameID, nil, true) end or nil
+            )
+        end
+    end
+
+    content:SetHeight(math.max(1, yOff))
+
+    local hdrRegion = FPOP_PAD + FPOP_HDR_H + 2 + 12 + 4
+    local footerH   = FPOP_PAD + 14
+    local rowAreaH  = math.min(yOff, FPOP_MAX_H - hdrRegion - footerH)
+    local totalH    = hdrRegion + rowAreaH + footerH + 4
+
+    f:SetSize(FPOP_WIDTH, totalH)
+
+    if f.scroll.ScrollBar then
+        f.scroll.ScrollBar:SetShown(yOff > rowAreaH)
+    end
+
+    local screenH = GetScreenHeight()
+    local _, anchorY = anchor:GetCenter()
+    f:ClearAllPoints()
+    if anchorY and (anchorY / screenH) < 0.5 then
+        f:SetPoint("BOTTOMLEFT", anchor, "TOPLEFT", 0, 4)
+    else
+        f:SetPoint("TOPLEFT", anchor, "BOTTOMLEFT", 0, -4)
+    end
+
+    f._anchor = anchor
+    f:Show()
+    f:Raise()
+end
+
 -- 6. FRIENDS
 DT.Types.friends = {
     Update = function(slot, config)
-        -- Verify cache currency, force update if older than 5s
         if GetTime() - friendsCache.lastUpdate > 5 then BuildFriendsCache() end
-        
-        -- Sum only WoW related friends (WoW Retail + WoW Classic + Native WoW Friends)
         local total = #friendsCache.wowFriends + #friendsCache.bnetRetail + #friendsCache.bnetClassic
-        
         local r, g, b = GetValueColor()
         local label = GetLabel("Friends: ", "Fr: ", config.shortLabel, config.noLabel)
         return string.format("%s|cff%02x%02x%02x%d|r", label, r*255, g*255, b*255, total)
     end,
     OnEnter = function(self)
-        if GetTime() - friendsCache.lastUpdate > 1 then BuildFriendsCache() end
-        GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
-        GameTooltip:ClearLines()
-        local showNotes = IsShiftKeyDown()
-        GameTooltip:AddLine(showNotes and "Friends (Notes)" or "Friends", 1, 1, 1)
-        
-        local ar, ag, ab = GetValueColor()
-        if #friendsCache.wowFriends > 0 then
-            GameTooltip:AddLine(" ")
-            GameTooltip:AddLine("WoW Friends", ar, ag, ab)
-            for _, info in ipairs(friendsCache.wowFriends) do
-                local classColor = GetClassColor(info.className)
-                local levelColor = GetLevelColor(info.level)
-                local levelStr = string.format("|cff%02x%02x%02x%d|r ", levelColor.r*255, levelColor.g*255, levelColor.b*255, info.level or 0)
-                local right = showNotes and (info.notes ~= "" and info.notes or "No note") or (info.area or "Unknown")
-                GameTooltip:AddDoubleLine(levelStr .. info.name, right, classColor.r, classColor.g, classColor.b, 0.7, 0.7, 0.7)
+        PopulateFriendsPopup(self)
+    end,
+    OnLeave = function(self)
+        C_Timer.After(0.1, function()
+            if friendsPopup and not friendsPopup:IsMouseOver() then
+                friendsPopup:Hide()
             end
-        end
-
-        if #friendsCache.bnetRetail > 0 then
-            GameTooltip:AddLine(" ")
-            GameTooltip:AddLine("Battle.net (Retail)", 0.31, 0.69, 0.9)
-            for _, info in ipairs(friendsCache.bnetRetail) do
-                local classColor = GetClassColor(info.className)
-                local levelColor = GetLevelColor(info.characterLevel)
-                local levelStr = string.format("|cff%02x%02x%02x%d|r ", levelColor.r*255, levelColor.g*255, levelColor.b*255, info.characterLevel or 0)
-                local name = info.characterName ~= "" and (levelStr .. info.characterName .. " (" .. info.accountName .. ")") or info.accountName
-                local right = showNotes and (info.note ~= "" and info.note or "No note") or (info.areaName or "Unknown")
-                GameTooltip:AddDoubleLine(name, right, classColor.r, classColor.g, classColor.b, 0.7, 0.7, 0.7)
-            end
-        end
-
-        GameTooltip:AddLine(" ")
-        GameTooltip:AddLine("|cffFFFFFFLeft Click:|r Open Friends", ar, ag, ab)
-        GameTooltip:AddLine("|cffFFFFFFRight Click:|r Whisper/Invite Menu", ar, ag, ab)
-        GameTooltip:AddLine(showNotes and "|cffFFFFFFRelease Shift:|r Show Zones" or "|cffFFFFFFHold Shift:|r Show Notes", ar, ag, ab)
-        GameTooltip:Show()
+        end)
     end,
     OnClick = function(self, button)
-        if button == "LeftButton" then ToggleFriendsFrame(1)
+        if button == "LeftButton" then
+            FriendsPopupHide()
+            ToggleFriendsFrame(1)
         elseif button == "RightButton" then
-            if GetTime() - friendsCache.lastUpdate > 1 then BuildFriendsCache() end
-            MenuUtil.CreateContextMenu(self, function(_, root)
-                root:CreateTitle("Friends Menu")
-                local whisperMenu = root:CreateButton("Whisper")
-                local inviteMenu = root:CreateButton("Invite")
-                -- Port simplified whisper/invite logic for friends
-                for _, info in ipairs(friendsCache.wowFriends) do
-                    local classColor = GetClassColor(info.className)
-                    local colorCode = string.format("|cff%02x%02x%02x", classColor.r*255, classColor.g*255, classColor.b*255)
-                    local whisperName = info.name
-                    whisperMenu:CreateButton(colorCode .. info.name .. "|r", function() SendWhisperTo(whisperName, false) end)
-                    if not IsPlayerInGroup(info.name) then
-                        inviteMenu:CreateButton(colorCode .. info.name .. "|r", function() InvitePlayerToGroup(whisperName, info.guid, false) end)
-                    end
-                end
-                for _, info in ipairs(friendsCache.bnetRetail) do
-                    local classColor = GetClassColor(info.className)
-                    local colorCode = string.format("|cff%02x%02x%02x", classColor.r*255, classColor.g*255, classColor.b*255)
-                    local whisperName = info.accountName
-                    whisperMenu:CreateButton(colorCode .. (info.characterName or info.accountName) .. "|r", function() SendWhisperTo(whisperName, true) end)
-                    if info.characterName and not IsPlayerInGroup(info.characterName) then
-                        inviteMenu:CreateButton(colorCode .. info.characterName .. "|r", function() InvitePlayerToGroup(info.gameAccountID, info.playerGuid, true) end)
-                    end
-                end
-            end)
+            FriendsPopupHide()
         end
-    end
+    end,
 }
+
 
 -- 7. BAGS
 DT.Types.bags = {
@@ -978,6 +1546,15 @@ function DT:HandleOnEnter(slotFrame, config)
 
     if DT.Types[type] and DT.Types[type].OnEnter then
         DT.Types[type].OnEnter(slotFrame)
+    end
+end
+
+function DT:HandleOnLeave(slotFrame, config)
+    GameTooltip:Hide()
+    if not config or not config.content then return end
+    local type = config.content
+    if DT.Types[type] and DT.Types[type].OnLeave then
+        DT.Types[type].OnLeave(slotFrame)
     end
 end
 

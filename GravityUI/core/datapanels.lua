@@ -185,7 +185,7 @@ local function UpdatePanelSlots(frame, config)
             slot:SetPoint("LEFT", frame, "LEFT", border + (i-1) * slotWidth, 0)
             
             slot:SetScript("OnEnter", function(self) if sCfg and sCfg.content ~= "" then DT:HandleOnEnter(self, sCfg) end end)
-            slot:SetScript("OnLeave", function() GameTooltip:Hide() end)
+            slot:SetScript("OnLeave", function(self) if sCfg and sCfg.content ~= "" then DT:HandleOnLeave(self, sCfg) else GameTooltip:Hide() end end)
             slot:SetScript("OnClick", function(self, btn) if sCfg and sCfg.content ~= "" then DT:HandleOnClick(self, btn, sCfg) end end)
             
             slot.Update = function()
