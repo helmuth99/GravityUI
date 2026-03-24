@@ -2904,7 +2904,7 @@ local function scanMemberAuras(unit, now)
 
         local sid = aura.spellId
 
-        if sid then
+        if sid and type(sid) == "number" then
             if db.foodBuffIDs[sid] or db.foodIconIDs[aura.icon] then
                 if not result.hasFood or aura.icon == db.foodWellFedIconID then
                     result.hasFood    = true

@@ -175,10 +175,15 @@ end
 local healthBarSetup = false
 
 local function GetClassColor(unit)
-    local _, classToken = UnitClass(unit)
-    if classToken then
-        local c = (CUSTOM_CLASS_COLORS or RAID_CLASS_COLORS)[classToken]
-        if c then return c.r, c.g, c.b end
+    -- Only apply class colour to actual players; NPCs can have a class token
+    -- (e.g. training dummies classified as Warrior/Paladin) which would give
+    -- them a misleading class colour.
+    if UnitIsPlayer(unit) then
+        local _, classToken = UnitClass(unit)
+        if classToken then
+            local c = (CUSTOM_CLASS_COLORS or RAID_CLASS_COLORS)[classToken]
+            if c then return c.r, c.g, c.b end
+        end
     end
     if UnitIsFriend("player", unit) then return 0.0, 0.8, 0.0 end
     if UnitIsEnemy("player", unit)  then return 0.9, 0.2, 0.2 end
@@ -418,8 +423,8 @@ local function InjectUnitInfo(tooltip, data, unit)
                 local text = fs:GetText()
                 if text and text ~= "" then
 
-                    -- 1. Name line (class color)
-                    if settings.classColorName and classColor and data.guid
+                    -- 1. Name line (class color – players only)
+                    if settings.classColorName and isPlayer and classColor and data.guid
                     and not IsSecretValue(data.guid) then
                         local uName = UnitName(unit)
                         if uName and type(uName) == "string" and text:find(uName, 1, true) then
