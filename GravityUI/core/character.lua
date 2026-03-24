@@ -2554,10 +2554,12 @@ local function UpdateILvlDisplay()
         -- Position: Check if title is prefix or suffix
         if pvpName:find("^" .. name) then
             -- Suffix: Name Title
+            -- If title starts with punctuation (e.g. ", Veteran" in German locale), use 0 gap
+            local suffixGap = title:match("^[%p]") and 0 or 2
             displayFrame.text:ClearAllPoints()
             displayFrame.text:SetPoint("TOPLEFT", displayFrame, "TOPLEFT", 0, 0)
             displayFrame.titleText:ClearAllPoints()
-            displayFrame.titleText:SetPoint("LEFT", displayFrame.text, "RIGHT", 2, 0)
+            displayFrame.titleText:SetPoint("LEFT", displayFrame.text, "RIGHT", suffixGap, 0)
         else
             -- Prefix: Title Name
             displayFrame.titleText:ClearAllPoints()

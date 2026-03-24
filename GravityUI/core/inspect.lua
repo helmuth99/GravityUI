@@ -828,14 +828,9 @@ local function UpdateInspectILvlDisplay()
     local level = UnitLevel(unit)
     local _, class = UnitClass(unit)
     local specID = GetInspectSpecialization(unit)
-    local specName = specID and select(2, GetSpecializationInfoByID(specID)) or ""
-    
-    -- Safety: If backend returns stale spec from previous inspect (Rogue spec on Paladin unit)
-    if specID then
-        local _, _, _, _, _, _, classToken = GetSpecializationInfoByID(specID)
-        if classToken and classToken ~= class then
-            specName = ""
-        end
+    local specName = ""
+    if specID and specID ~= 0 then
+        specName = select(2, GetSpecializationInfoByID(specID)) or ""
     end
     
     -- Forcefully update 3D model to actually match the current unit
@@ -855,11 +850,13 @@ local function UpdateInspectILvlDisplay()
         InspectFrame._guiILvlDisplay.titleText:Show()
 
         if pvpName:find("^" .. name) then
-            -- Suffix (ex: Saftpresser the Patient)
+            -- Suffix (ex: "Saftpresser the Patient" or "Cronîx, Veteran" in DE locale)
+            -- If title starts with punctuation (comma etc.), use 0 gap to avoid "Name , Title"
+            local suffixGap = title:match("^[%p]") and 0 or 2
             InspectFrame._guiILvlDisplay.text:ClearAllPoints()
             InspectFrame._guiILvlDisplay.text:SetPoint("TOPLEFT", InspectFrame._guiILvlDisplay, "TOPLEFT", 0, 0)
             InspectFrame._guiILvlDisplay.titleText:ClearAllPoints()
-            InspectFrame._guiILvlDisplay.titleText:SetPoint("LEFT", InspectFrame._guiILvlDisplay.text, "RIGHT", 2, 0)
+            InspectFrame._guiILvlDisplay.titleText:SetPoint("LEFT", InspectFrame._guiILvlDisplay.text, "RIGHT", suffixGap, 0)
         else
             -- Prefix (ex: Firelord Saftpresser)
             InspectFrame._guiILvlDisplay.titleText:ClearAllPoints()
@@ -880,9 +877,24 @@ local function UpdateInspectILvlDisplay()
     
     local classInfo = C_CreatureInfo.GetClassInfo(select(3, UnitClass(unit)))
     local className = classInfo and classInfo.className or ""
-    -- Level (white) + Spec/Class (class colored)
-    InspectFrame._guiILvlDisplay.spec:SetText(string.format("|cffffffff%s|r %s %s", level, specName, className))
+    -- Level (white) + Spec/Class (class colored) — avoid double space when spec is empty
+    local levelClassStr
+    if specName ~= "" then
+        levelClassStr = string.format("|cffffffff%s|r %s %s", level, specName, className)
+    else
+        levelClassStr = string.format("|cffffffff%s|r %s", level, className)
+    end
+    InspectFrame._guiILvlDisplay.spec:SetText(levelClassStr)
     InspectFrame._guiILvlDisplay.spec:SetTextColor(color.r, color.g, color.b, 1)
+    
+    -- If spec data wasn't ready yet (specID == 0), schedule a retry to pick it up once server delivers it
+    if (not specID or specID == 0) and InspectFrame:IsShown() then
+        C_Timer.After(1.0, function()
+            if InspectFrame and InspectFrame:IsShown() then
+                UpdateInspectILvlDisplay()
+            end
+        end)
+    end
     
     -- Always align with the left edge of the container
     InspectFrame._guiILvlDisplay.spec:ClearAllPoints()
@@ -1327,6 +1339,12 @@ local function OnEvent(self, event, arg1)
         end)
     elseif event == "INSPECT_READY" then
         TriggerInspectUpdates()
+        -- Spec data can arrive slightly after INSPECT_READY; always do a second pass to catch it
+        C_Timer.After(0.8, function()
+            if InspectFrame and InspectFrame:IsShown() then
+                UpdateInspectILvlDisplay()
+            end
+        end)
     elseif event == "GET_ITEM_INFO_RECEIVED" or event == "UNIT_INVENTORY_CHANGED" then
          -- Debounce update for item info flow
          if InspectFrame and InspectFrame:IsShown() and not self.updatePending then
