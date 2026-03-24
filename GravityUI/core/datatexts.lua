@@ -1290,7 +1290,7 @@ end
 DT.Types.friends = {
     Update = function(slot, config)
         if GetTime() - friendsCache.lastUpdate > 5 then BuildFriendsCache() end
-        local total = #friendsCache.wowFriends + #friendsCache.bnetRetail + #friendsCache.bnetClassic
+        local total = #friendsCache.wowFriends + #friendsCache.bnetRetail
         local r, g, b = GetValueColor()
         local label = GetLabel("Friends: ", "Fr: ", config.shortLabel, config.noLabel)
         return string.format("%s|cff%02x%02x%02x%d|r", label, r*255, g*255, b*255, total)
