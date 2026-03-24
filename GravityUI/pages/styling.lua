@@ -1,4 +1,4 @@
-﻿local ADDON_NAME, ns = ...
+local ADDON_NAME, ns = ...
 local GUI = ns.GUI
 local C = GUI.Colors
 
@@ -1330,7 +1330,7 @@ local function BuildTooltip(parent)
     scroll:SetAllPoints()
     local db = ns.GetDB(); if not db then return end
     local dbUI = db.uiimprovements
-    
+
     local yOffset = -10
     local PAD = 10
 
@@ -1338,12 +1338,12 @@ local function BuildTooltip(parent)
     local dbTT = dbUI.tooltip or {}
     if dbTT.enabled == nil then dbTT.enabled = true end
     if not dbTT.visibility then dbTT.visibility = {npcs="SHOW", abilities="SHOW", items="SHOW", frames="SHOW", cdm="SHOW", customTrackers="SHOW"} end
-    
+
     local header = GUI:CreateSectionHeader(content, "Tooltip")
     header:SetPoint("TOPLEFT", PAD, yOffset)
     yOffset = yOffset - header.gap - 10
 
-        local function MakeSubHeader(txt)
+    local function MakeSubHeader(txt)
         local h = CreateFrame("Frame", nil, content)
         h:SetSize(GUI.CONTENT_WIDTH - 20, 20)
         local t = h:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -1362,36 +1362,86 @@ local function BuildTooltip(parent)
         yOffset = yOffset - 35
         return row
     end
-    
-    MakeSubHeader("General Tooltip Settings")
+
+    -- -------------------------------------------------------
+    MakeSubHeader("General")
+    -- -------------------------------------------------------
     MakeRow("Enable Tooltip Module", "checkbox", "enabled", dbTT, RefreshTooltip)
     MakeRow("Anchor to Cursor", "checkbox", "anchorToCursor", dbTT, RefreshTooltip)
     MakeRow("Class Color Names", "checkbox", "classColorName", dbTT, RefreshTooltip)
-    MakeRow("Show IDs (Spells/Items)", "checkbox", "showIDs", dbTT, RefreshTooltip)
+
+    -- -------------------------------------------------------
+    MakeSubHeader("Player Info")
+    -- -------------------------------------------------------
+    MakeRow("Show Guild Name & Rank", "checkbox", "showGuildInfo", dbTT, RefreshTooltip)
+    MakeRow("Guild Name Color", "color", "guildColor", dbTT, RefreshTooltip)
+    MakeRow("Show Faction (Horde/Alliance)", "checkbox", "showFaction", dbTT, RefreshTooltip)
+    MakeRow("Color Level by Difficulty", "checkbox", "showColoredLevel", dbTT, RefreshTooltip)
+    MakeRow("Show Spec & Class", "checkbox", "showSpecAndClass", dbTT, RefreshTooltip)
+
+    -- -------------------------------------------------------
+    MakeSubHeader("Mount")
+    -- -------------------------------------------------------
+    MakeRow("Show Mount Name", "checkbox", "showMount", dbTT, RefreshTooltip)
+
+    -- -------------------------------------------------------
+    MakeSubHeader("Health Bar")
+    -- -------------------------------------------------------
+    MakeRow("Hide Health Bar", "checkbox", "hideHealthBar", dbTT, RefreshTooltip)
+    MakeRow("Class Color Health Bar", "checkbox", "useClassColorHealth", dbTT, RefreshTooltip)
+
+    -- Bar Texture dropdown via LSM
+    local LSM = LibStub and LibStub("LibSharedMedia-3.0", true)
+    local textureList = {}
+    if LSM then
+        for _, name in pairs(LSM:List("statusbar")) do
+            table.insert(textureList, { text = name, value = name })
+        end
+        table.sort(textureList, function(a, b) return a.text < b.text end)
+    end
+    if #textureList > 0 then
+        MakeRow("Health Bar Texture", "dropdown", textureList, "healthBarTexture", dbTT, RefreshTooltip)
+    end
+
+    -- -------------------------------------------------------
+    MakeSubHeader("ID Display")
+    -- -------------------------------------------------------
+    MakeRow("Show Spell ID", "checkbox", "showSpellID", dbTT, RefreshTooltip)
+    MakeRow("Show Aura ID", "checkbox", "showAuraID", dbTT, RefreshTooltip)
+    MakeRow("Show NPC ID", "checkbox", "showNPCID", dbTT, RefreshTooltip)
+    MakeRow("Show Item ID", "checkbox", "showIDs", dbTT, RefreshTooltip)
+    MakeRow("Show Icon ID", "checkbox", "showIconID", dbTT, RefreshTooltip)
+    MakeRow("Show Texture ID", "checkbox", "showTextureID", dbTT, RefreshTooltip)
     MakeRow("Use Theme Color for IDs", "checkbox", "useThemeColorID", dbTT, RefreshTooltip)
     MakeRow("Custom ID Color", "color", "idColor", dbTT, RefreshTooltip)
 
+    -- -------------------------------------------------------
     MakeSubHeader("Combat & Visibility")
+    -- -------------------------------------------------------
     MakeRow("Hide in Combat", "checkbox", "hideInCombat", dbTT, RefreshTooltip)
     local modOptions = {{value="NONE", text="None"}, {value="SHIFT", text="Shift"}, {value="CTRL", text="Ctrl"}, {value="ALT", text="Alt"}}
     MakeRow("Combat Override Key", "dropdown", modOptions, "combatKey", dbTT, RefreshTooltip)
 
+    -- -------------------------------------------------------
     MakeSubHeader("Context Visibility")
-    local visOptions = {{value="SHOW", text="Always Show"}, {value="HIDE", text="Always Hide"}, {value="SHIFT", text="Show on Shift"}, {value="CTRL", text="Show on Ctrl"}, {value="ALT", text="Show on Alt"}}
-    MakeRow("World Units (NPCs/Players)", "dropdown", visOptions, "npcs", dbTT.visibility, RefreshTooltip)
+    -- -------------------------------------------------------
+    local visOptions = {{value="SHOW", text="Always Show"}, {value="HIDE", text="Always Hide"}, {value="SHIFT", text="Shift"}, {value="CTRL", text="Ctrl"}, {value="ALT", text="Alt"}}
+    MakeRow("World (NPCs/Players)", "dropdown", visOptions, "npcs", dbTT.visibility, RefreshTooltip)
     MakeRow("Abilities (Action Bars)", "dropdown", visOptions, "abilities", dbTT.visibility, RefreshTooltip)
     MakeRow("Items (Bags/Bank)", "dropdown", visOptions, "items", dbTT.visibility, RefreshTooltip)
     MakeRow("Unit Frames", "dropdown", visOptions, "frames", dbTT.visibility, RefreshTooltip)
     MakeRow("CDM Icons", "dropdown", visOptions, "cdm", dbTT.visibility, RefreshTooltip)
 
+    -- -------------------------------------------------------
     MakeSubHeader("Tooltip Styling")
+    -- -------------------------------------------------------
     MakeRow("Enable Custom Square Style", "checkbox", "customStyle", dbTT, RefreshTooltip)
-    MakeRow("Hide Health Bar", "checkbox", "hideHealthBar", dbTT, RefreshTooltip)
     MakeRow("Font Size", "slider", 8, 24, "fontSize", dbTT, RefreshTooltip, 1)
     MakeRow("Background Opacity", "slider", 0, 1, "bgAlpha", dbTT, RefreshTooltip, 0.05)
     MakeRow("Background Color", "color", "bgColor", dbTT, RefreshTooltip)
     MakeRow("Use Theme Color for Border", "checkbox", "useThemeColor", dbTT, RefreshTooltip)
     MakeRow("Custom Border Color", "color", "borderColor", dbTT, RefreshTooltip)
+
 
     content:SetHeight(math.abs(yOffset) + 20)
 end

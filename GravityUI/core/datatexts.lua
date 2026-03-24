@@ -740,14 +740,11 @@ local function PopulateGuildPopup(anchor)
 
         local status = info.status == 1 and " |cffFFFF00[AFK]|r" or info.status == 2 and " |cffFF4444[DND]|r" or ""
         local mobile = (info.isMobile and not info.online) and (" " .. MOBILE_ICON) or ""
-        -- Show realm suffix in grey for cross-realm members
+        -- Show only the bare character name (no realm suffix) for cleaner display
         local displayName = StripMyRealm(info.name)
-        local memberRealm = info.name:match("%-(.+)$")
-        local realmSuffix = (memberRealm and memberRealm ~= playerRealm)
-            and ("|cff555555-" .. memberRealm .. "|r") or ""
-        row.fsName:SetText(string.format("|cff%02x%02x%02x%s|r%s%s%s",
+        row.fsName:SetText(string.format("|cff%02x%02x%02x%s|r%s%s",
             classColor.r*255, classColor.g*255, classColor.b*255,
-            displayName, realmSuffix, status, mobile))
+            displayName, status, mobile))
 
         row.fsRank:SetText(info.rank or "")
         TruncateText(row.fsZone, info.zone or "")

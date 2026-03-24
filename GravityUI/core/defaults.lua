@@ -429,10 +429,11 @@ ns.Defaults = {
         tooltip =         {
             enabled = true,
             fontSize = 12,
-            hideHealthBar = true,
+            hideHealthBar = false,
             bgAlpha = 0.6,
             useThemeColor = false,
-            showIDs = true,
+            -- Legacy: kept for backwards compat, use showSpellID etc. instead
+            showIDs = false,
             bgColor =             {
                 [1] = 0,
                 [2] = 0,
@@ -450,9 +451,9 @@ ns.Defaults = {
                 [4] = 1,
             },
             idColor =             {
-                [1] = 1,
-                [2] = 1,
-                [3] = 1,
+                [1] = 0.7,
+                [2] = 0.7,
+                [3] = 0.7,
                 [4] = 1,
             },
             hideInCombat = false,
@@ -465,6 +466,25 @@ ns.Defaults = {
                 cdm = "SHOW",
             },
             useThemeColorID = true,
+
+            -- Player Info
+            showGuildInfo = true,
+            guildColor = { 0.2, 0.9, 0.2, 1 },
+            showFaction = true,
+            showColoredLevel = true,
+            showSpecAndClass = true,
+            showMount = true,
+
+            -- Health Bar
+            useClassColorHealth = true,
+            healthBarTexture = "Gravity Normal",
+
+            -- ID Display (granular)
+            showSpellID = true,
+            showAuraID = true,
+            showNPCID = true,
+            showIconID = true,
+            showTextureID = false,
         },
 
 
