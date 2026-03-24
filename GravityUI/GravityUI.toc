@@ -63,6 +63,7 @@ core\iconcatcher.lua
 core\installer.lua
 core\trackedbuffbar.lua
 core\soundalerts.lua
+core\cooldowntext.lua
 
 # Pages
 pages\main.lua

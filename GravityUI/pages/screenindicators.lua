@@ -1367,6 +1367,7 @@ ns.GUI:RegisterPage("screenindicators", {
         { name = "Difficulty Changer", builder = BuildDifficulty },
         { name = "AFK Screen", builder = BuildAFKScreen },
         { name = "Consumables", builder = BuildConsumables },
+        { name = "Cooldown Text", builder = ns.CooldownText.AddOptions },
     },
     OnBuild = function(content)
         -- Hide default scrollframe parent
