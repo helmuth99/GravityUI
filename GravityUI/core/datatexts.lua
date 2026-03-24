@@ -1241,7 +1241,7 @@ local function PopulateFriendsPopup(anchor)
             local charPart = (info.characterName and info.characterName ~= "")
                 and string.format("|cff%02x%02x%02x%s|r", cc.r*255, cc.g*255, cc.b*255, info.characterName)
                 or ""
-            local bnetPart = string.format("|cff888888(%s)|r", info.accountName or "")
+            local bnetPart = string.format("|cffffffff(%s)|r", info.accountName or "")
             local nameStr = charPart .. " " .. bnetPart .. status
             local acctName = info.accountName
             local charName = info.characterName
