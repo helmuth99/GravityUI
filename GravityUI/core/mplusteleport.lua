@@ -578,7 +578,7 @@ eventFrame:SetScript("OnEvent", function(_, event, ...)
         postRunActive = true
         MPlusTeleport.pendingPostRunOpen = false -- cancel any stale pending flag
         if postRunTimer then postRunTimer:Cancel() end
-        postRunTimer = C_Timer.NewTimer(45, function()
+        postRunTimer = C_Timer.NewTimer(60, function()
             postRunActive = false
             postRunTimer = nil
             MPlusTeleport:UpdateGroupKeys()
