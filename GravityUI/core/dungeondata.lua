@@ -210,10 +210,10 @@ local MAPID_TO_SPELL = {
     [456] = 424142,   -- Throne of Tides
 
     -- Retail expansion (Midnight Season 1)
-    [557] = 1254840,  -- Windrunner Spire
+    [557] = 1254400,  -- Windrunner Spire
     [558] = 1254572,  -- Magisters' Terrace
     [559] = 1254563,  -- Nexus-Point Xenas
-    [560] = 1255247,  -- Maisara Caverns
+    [560] = 1254559,  -- Maisara Caverns
     [561] = 1255255,  -- Den of Nalorakk
     [562] = 1255257,  -- Voidscar Arena
     [563] = 1255250,  -- Murder Row

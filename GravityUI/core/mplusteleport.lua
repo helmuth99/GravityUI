@@ -38,6 +38,24 @@ local function GetOwnedKeystone()
     return nil, nil
 end
 
+-- IsSpellKnown() does not reliably detect newer Midnight teleport spells (IDs 1254xxx+).
+-- These are registered as player spells via a different mechanism.
+local function IsTeleportKnown(spellID)
+    if not spellID then return false end
+    -- Primary: IsPlayerSpell covers spells granted by achievements/completions
+    local ok1, r1 = pcall(IsPlayerSpell, spellID)
+    if ok1 and r1 then return true end
+    -- Fallback: classic spellbook check
+    local ok2, r2 = pcall(IsSpellKnown, spellID)
+    if ok2 and r2 then return true end
+    -- Fallback: C_SpellBook usability (covers some edge cases)
+    if C_SpellBook and C_SpellBook.IsSpellUsable then
+        local ok3, r3 = pcall(C_SpellBook.IsSpellUsable, spellID)
+        if ok3 and r3 then return true end
+    end
+    return false
+end
+
 local function IsEnabled()
     local db = ns.GetDB()
     return db and db.uiimprovements and db.uiimprovements.mplusTeleportEnabled ~= false
@@ -80,7 +98,7 @@ local function CreateSecureOverlay(dungeonIcon)
             local currentSpellID = self:GetAttribute("spell")
             if not currentSpellID then return end
 
-            if IsSpellKnown(currentSpellID) then
+            if IsTeleportKnown(currentSpellID) then
                 local start, duration = 0, 0
                 if C_Spell and C_Spell.GetSpellCooldown then
                     local info = C_Spell.GetSpellCooldown(currentSpellID)
@@ -306,7 +324,7 @@ function MPlusTeleport:UpdateGroupKeys()
     
             if spellID then
                 row.iconBtn:SetAttribute("type", "spell"); row.iconBtn:SetAttribute("spell", spellID)
-                local known = IsSpellKnown(spellID)
+                local known = IsTeleportKnown(spellID)
                 row.icon:SetDesaturated(not known); 
                 row.icon:SetVertexColor(known and 1 or 0.4, known and 1 or 0.4, known and 1 or 0.4, known and 1 or 0.8)
             else
@@ -581,7 +599,6 @@ SlashCmdList["GRAVITYTELEPORT"] = function(msg)
                     Print("Parsed:", "MapID="..tostring(mid), "Level="..tostring(lvl))
                     
                     if mid then
-                        -- Reconstruct simple text name (since we removed GetKeystoneLink)
                         local dungeonName = C_ChallengeMode.GetMapUIInfo(tonumber(mid))
                         Print("Reconstructed Name:", dungeonName, "(" .. lvl .. ")")
                     end
@@ -590,5 +607,28 @@ SlashCmdList["GRAVITYTELEPORT"] = function(msg)
         end
         if not found then Print("Result: No Keystone found in bags 0-4.") end
         Print("--- End Debug ---")
-    else Print("Usage: /gtp debug") end
+    elseif msg:match("^spell%s+(%d+)") then
+        -- /gtp spell <spellID> - test all known APIs for spell detection
+        local id = tonumber(msg:match("^spell%s+(%d+)"))
+        Print("--- Spell API Test for ID:", id, "---")
+        local ok, r
+        ok, r = pcall(IsPlayerSpell, id);       Print("IsPlayerSpell:        ", tostring(r), ok and "" or "(err)")
+        ok, r = pcall(IsSpellKnown, id);        Print("IsSpellKnown:         ", tostring(r), ok and "" or "(err)")
+        ok, r = pcall(IsSpellKnown, id, true);  Print("IsSpellKnown(pet):    ", tostring(r), ok and "" or "(err)")
+        if C_Spell then
+            ok, r = pcall(C_Spell.IsSpellUsable, id); Print("C_Spell.IsSpellUsable:", tostring(r), ok and "" or "(err)")
+            local info; ok, info = pcall(C_Spell.GetSpellInfo, id)
+            Print("C_Spell.GetSpellInfo: ", ok and (info and info.name or "nil") or "(err)")
+        end
+        if C_SpellBook and C_SpellBook.IsSpellUsable then
+            ok, r = pcall(C_SpellBook.IsSpellUsable, id); Print("C_SpellBook.IsSpellUsable:", tostring(r), ok and "" or "(err)")
+        end
+        -- Check if it appears in GetSpellCooldown (exists but might be on CD)
+        ok, r = pcall(GetSpellCooldown, id)
+        Print("GetSpellCooldown: ", ok and tostring(r) or "(err)")
+        Print("--- End ---")
+    else
+        Print("Usage: /gtp debug  |  /gtp spell <spellID>")
+    end
 end
+

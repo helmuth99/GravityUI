@@ -1049,35 +1049,44 @@ local function OnInspectReady(guid)
             
             local specInterrupt = SPEC_INTERRUPTS[specID]
             if specInterrupt then
-                -- Find existing bar for this GUID
+                -- Find existing bar for this GUID that uses the wrong (default class) spellId
                 for key, info in pairs(activeBars) do
                     if info.guid == guid and info.spellId ~= specInterrupt then
-                        -- Check if we need to update spellID
-                        info.spellId = specInterrupt
-                        -- Update Icon
-                        local icon = select(3, GetSpellInfo(specInterrupt)) or select(3, C_Spell.GetSpellInfo(specInterrupt))
-                        if icon and info.frame then
-                             info.frame.icon:SetTexture(icon)
-                        end
-                        
-                        -- Reset to Ready (Switching specs resets CDs usually)
-                        info.duration = 0
-                        info.expiration = 0
-                        
-                        local s = GetSettings()
-                        if s and s.showReadyText then
-                             info.frame.time:SetText("Ready")
+                        -- Re-key the bar so future UNIT_SPELLCAST_SUCCEEDED events find it correctly
+                        activeBars[key] = nil
+                        local newKey = guid .. specInterrupt
+                        -- If a bar already exists for the spec interrupt, hide the old frame
+                        if activeBars[newKey] then
+                            info.frame:Hide()
                         else
-                             info.frame.time:SetText("")
-                        end
+                            info.spellId = specInterrupt
+                            -- Update Icon
+                            local icon = C_Spell.GetSpellTexture(specInterrupt)
+                            if icon and info.frame then
+                                info.frame.icon:SetTexture(icon)
+                            end
 
-                        info.frame.bar:SetValue(1)
-                        local cr, cg, cb, ca = 1, 1, 1, 1
-                        if s and s.useSpecificCooldownColor then
-                           local c = s.cooldownTextColor or {1, 1, 1, 1}
-                           cr, cg, cb, ca = c[1] or 1, c[2] or 1, c[3] or 1, c[4] or 1
+                            -- Reset to Ready (Switching specs resets CDs usually)
+                            info.duration = 0
+                            info.expiration = 0
+
+                            local s = GetSettings()
+                            if s and s.showReadyText then
+                                info.frame.time:SetText("Ready")
+                            else
+                                info.frame.time:SetText("")
+                            end
+
+                            info.frame.bar:SetValue(1)
+                            local cr, cg, cb, ca = 1, 1, 1, 1
+                            if s and s.useSpecificCooldownColor then
+                               local c = s.cooldownTextColor or {1, 1, 1, 1}
+                               cr, cg, cb, ca = c[1] or 1, c[2] or 1, c[3] or 1, c[4] or 1
+                            end
+                            info.frame.time:SetTextColor(cr, cg, cb, ca)
+                            activeBars[newKey] = info
                         end
-                        info.frame.time:SetTextColor(cr, cg, cb, ca)
+                        break -- Only one default bar per GUID to replace
                     end
                 end
             end

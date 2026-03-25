@@ -152,7 +152,35 @@ local SELF_BUFFS = {
             return lethalCount < requiredLethal or nonLethalCount < requiredNonLethal
         end,
     },
-    { spellID = {232698, 194249, 391109, 228260}, key = "shadowform", name = "Shadowform", class = "PRIEST", missingText = "NO\nFORM" },
+    {
+        spellID = 232698, -- Shadowform (used for icon / IsPlayerSpell check)
+        key = "shadowform",
+        name = "Shadowform",
+        class = "PRIEST",
+        missingText = "NO\nFORM",
+        customCheck = function()
+            -- Shadowform is a shapeshift stance, NOT a normal aura.
+            -- C_UnitAuras.GetUnitAuraBySpellID will NOT detect it.
+            -- We must use the shapeshift API. Voidform and Dark Ascension
+            -- appear as normal buffs and count as valid "form" states.
+
+            -- 1. Check shapeshift forms (covers Shadowform stance)
+            local numForms = GetNumShapeshiftForms()
+            for i = 1, numForms do
+                local _, active = GetShapeshiftFormInfo(i)
+                if active then return false end -- In a form -> not missing
+            end
+
+            -- 2. Check Voidform / Dark Ascension buffs (replace Shadowform visually)
+            local voidformIDs = { 194249, 391109 } -- Voidform aura, Dark Ascension aura
+            for _, id in ipairs(voidformIDs) do
+                if C_UnitAuras.GetUnitAuraBySpellID("player", id) then return false end
+            end
+
+            -- Not in any shadow form -> show reminder
+            return true
+        end,
+    },
     {
         spellID = 382021,
         key = "earthlivingWeapon",
