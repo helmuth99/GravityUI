@@ -216,7 +216,13 @@ function MPlusTeleport:UpdateGroupKeys()
         if not frame then return end
     
         local settings = GetSettings()
-        local inValidGroup = IsInGroup() and not IsInRaid() and (not IsInInstance() or postRunActive) and not (C_Scenario and C_Scenario.IsInScenario())
+        local inValidGroup
+        if postRunActive then
+            -- Post-run: skip instance/scenario checks — player is still inside the dungeon
+            inValidGroup = IsInGroup() and not IsInRaid()
+        else
+            inValidGroup = IsInGroup() and not IsInRaid() and not IsInInstance() and not (C_Scenario and C_Scenario.IsInScenario())
+        end
         if not (frame.isPreview or (settings.groupKeyListEnabled and inValidGroup)) then
             frame:Hide()
             return
@@ -488,7 +494,8 @@ function MPlusTeleport:ApplySettings()
     -- Ensure visibility is updated based on current state after settings apply
     local gKeys = libraryFrames.GroupKeys
     if gKeys then
-        local inValidGroup = IsInGroup() and not IsInRaid() and not IsInInstance() and not (C_Scenario and C_Scenario.IsInScenario())
+        local inValidGroup = postRunActive and (IsInGroup() and not IsInRaid())
+            or (IsInGroup() and not IsInRaid() and not IsInInstance() and not (C_Scenario and C_Scenario.IsInScenario()))
         if IsEnabled() and (gKeys.isPreview or (s.groupKeyListEnabled and inValidGroup)) then
             gKeys:Show()
             MPlusTeleport:UpdateGroupKeys()
@@ -544,7 +551,15 @@ eventFrame:SetScript("OnEvent", function(_, event, ...)
     elseif event == "PLAYER_REGEN_DISABLED" then
         if libraryFrames.GroupKeys then libraryFrames.GroupKeys:Hide() end
     elseif event == "PLAYER_REGEN_ENABLED" then
-        MPlusTeleport:UpdateGroupKeys()
+        -- If we have a pending post-run open (combat ended after CHALLENGE_MODE_COMPLETED), show now
+        if MPlusTeleport.pendingPostRunOpen then
+            MPlusTeleport.pendingPostRunOpen = false
+            BroadcastKey(true)
+            MPlusTeleport:UpdateGroupKeys()
+        elseif not postRunActive then
+            -- Normal out-of-combat restore (not a post-run transition)
+            MPlusTeleport:UpdateGroupKeys()
+        end
         if ChallengesFrame and ChallengesFrame.DungeonIcons then
             for _, icon in ipairs(ChallengesFrame.DungeonIcons) do
                 if icon.mapID and not icon.guiTeleportOverlay then CreateSecureOverlay(icon) end
@@ -557,18 +572,31 @@ eventFrame:SetScript("OnEvent", function(_, event, ...)
         BroadcastKey(false)
         MPlusTeleport:UpdateGroupKeys()
     elseif event == "CHALLENGE_MODE_COMPLETED" then
-        -- Show group key list in dungeon end-screen for 45s
+        -- Mirror BigWigs pattern: set postRunActive immediately, delay 5s before opening.
+        -- CRITICAL: PLAYER_REGEN_ENABLED fires BEFORE this event, so postRunActive must be
+        -- set here (not on PLAYER_REGEN_ENABLED) to avoid the race condition.
         postRunActive = true
+        MPlusTeleport.pendingPostRunOpen = false -- cancel any stale pending flag
         if postRunTimer then postRunTimer:Cancel() end
         postRunTimer = C_Timer.NewTimer(45, function()
             postRunActive = false
             postRunTimer = nil
             MPlusTeleport:UpdateGroupKeys()
         end)
-        -- Delay slightly so keystones have time to update in bags
-        C_Timer.After(1.5, function()
-            BroadcastKey(true)
-            MPlusTeleport:UpdateGroupKeys()
+        -- Ensure frame exists (may not have been created if player logged in while inside the instance)
+        local s = GetSettings()
+        if IsEnabled() and s.groupKeyListEnabled then
+            MPlusTeleport:CreateLibraryFrame("GroupKeys")
+        end
+        -- Wait 5s (BigWigs pattern) for loot screen + keystone update, then show.
+        -- If player is still in combat (rare), defer to PLAYER_REGEN_ENABLED.
+        C_Timer.After(5, function()
+            if InCombatLockdown() then
+                MPlusTeleport.pendingPostRunOpen = true
+            else
+                BroadcastKey(true)
+                MPlusTeleport:UpdateGroupKeys()
+            end
         end)
     elseif event == "CHAT_MSG_ADDON" then
         local prefix, text, _, sender = ...

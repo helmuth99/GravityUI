@@ -125,7 +125,7 @@ local NAME_TO_SHORT = {
 ---------------------------------------------------------------------------
 local MAPID_TO_SPELL = {
     -- Wrath
-    [556] = 1254551,  -- Pit of Saron (Corrected ID placeholder from legacy logic)
+    [556] = 1254555,  -- Pit of Saron
 
     -- MoP
     [2] = 131204,     -- Temple of the Jade Serpent
@@ -156,7 +156,7 @@ local MAPID_TO_SPELL = {
     [210] = 393766,   -- Court of Stars
     [227] = 373262,   -- Lower Karazhan
     [234] = 373262,   -- Upper Karazhan
-    [239] = 1254551,  -- Seat of the Triumvirate
+    [583] = 1254551,  -- Seat of the Triumvirate (Midnight Season)
 
     -- BfA
     [244] = 424187,   -- Atal'Dazar
