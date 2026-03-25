@@ -96,6 +96,16 @@ local function CreateSecureOverlay(dungeonIcon)
         highlight:Hide()
         overlay.highlight = highlight
 
+        -- Short-name label centered on the icon (created once on the icon, not overlay)
+        if not dungeonIcon.guiShortLabel then
+            local lbl = dungeonIcon:CreateFontString(nil, "OVERLAY")
+            lbl:SetFont(GetFont(), 12, "OUTLINE")
+            lbl:SetPoint("CENTER", 0, 0)
+            lbl:SetJustifyH("CENTER")
+            lbl:SetTextColor(1, 1, 1, 1)
+            dungeonIcon.guiShortLabel = lbl
+        end
+
         overlay:SetScript("OnEnter", function(self)
             local currentSpellID = self:GetAttribute("spell")
             if not currentSpellID then return end
@@ -131,7 +141,18 @@ local function CreateSecureOverlay(dungeonIcon)
 
     overlay:SetAttribute("type", "spell")
     overlay:SetAttribute("spell", spellID)
+
+    -- Update label for current mapID
+    local lbl = dungeonIcon.guiShortLabel
+    if lbl and ns.DungeonData then
+        local short = ns.DungeonData.GetShortName(dungeonIcon.mapID)
+        if short then
+            lbl:SetFont(GetFont(), #short > 4 and 10 or 12, "OUTLINE")
+            lbl:SetText(short)
+        end
+    end
 end
+
 
 local function HookDungeonIcons()
     if not ChallengesFrame or not ChallengesFrame.DungeonIcons then return end

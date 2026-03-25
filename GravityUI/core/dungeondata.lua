@@ -139,7 +139,7 @@ local MAPID_TO_SPELL = {
     [78] = 131229,    -- Scarlet Monastery
 
     -- WoD
-    [161] = 159898,   -- Skyreach (Remapped for Midnight)
+    [161] = 159898,   -- Skyreach (WoD spell, backwards-compat — Midnight spell is 1254557 once earned)
     [163] = 159895,   -- Bloodmaul Slag Mines (Remapped for Midnight)
     [164] = 159897,   -- Auchindoun (Remapped for Midnight)
     [165] = 159899,   -- Shadowmoon Burial Grounds
@@ -156,7 +156,7 @@ local MAPID_TO_SPELL = {
     [210] = 393766,   -- Court of Stars
     [227] = 373262,   -- Lower Karazhan
     [234] = 373262,   -- Upper Karazhan
-    [583] = 1254551,  -- Seat of the Triumvirate (Midnight Season)
+    [239] = 1254551,  -- Seat of the Triumvirate (Midnight Season 1)
 
     -- BfA
     [244] = 424187,   -- Atal'Dazar
