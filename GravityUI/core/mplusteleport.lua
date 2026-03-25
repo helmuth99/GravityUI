@@ -9,6 +9,8 @@ local groupKeys = {} -- [playerName] = {mapID, level, isLeader}
 local ICON_SIZE = 32
 local SPACING = 4
 local COLS = 10
+local postRunActive = false  -- true for 45s after CHALLENGE_MODE_COMPLETED
+local postRunTimer = nil
 
 ---------------------------------------------------------------------------
 -- UTILS
@@ -214,7 +216,7 @@ function MPlusTeleport:UpdateGroupKeys()
         if not frame then return end
     
         local settings = GetSettings()
-        local inValidGroup = IsInGroup() and not IsInRaid() and not IsInInstance() and not (C_Scenario and C_Scenario.IsInScenario())
+        local inValidGroup = IsInGroup() and not IsInRaid() and (not IsInInstance() or postRunActive) and not (C_Scenario and C_Scenario.IsInScenario())
         if not (frame.isPreview or (settings.groupKeyListEnabled and inValidGroup)) then
             frame:Hide()
             return
@@ -551,9 +553,23 @@ eventFrame:SetScript("OnEvent", function(_, event, ...)
     elseif event == "GROUP_ROSTER_UPDATE" or event == "PLAYER_ENTERING_WORLD" then
         BroadcastKey(true)
         MPlusTeleport:UpdateGroupKeys()
-    elseif event == "BAG_UPDATE_DELAYED" or event == "CHALLENGE_MODE_COMPLETED" then
+    elseif event == "BAG_UPDATE_DELAYED" then
         BroadcastKey(false)
         MPlusTeleport:UpdateGroupKeys()
+    elseif event == "CHALLENGE_MODE_COMPLETED" then
+        -- Show group key list in dungeon end-screen for 45s
+        postRunActive = true
+        if postRunTimer then postRunTimer:Cancel() end
+        postRunTimer = C_Timer.NewTimer(45, function()
+            postRunActive = false
+            postRunTimer = nil
+            MPlusTeleport:UpdateGroupKeys()
+        end)
+        -- Delay slightly so keystones have time to update in bags
+        C_Timer.After(1.5, function()
+            BroadcastKey(true)
+            MPlusTeleport:UpdateGroupKeys()
+        end)
     elseif event == "CHAT_MSG_ADDON" then
         local prefix, text, _, sender = ...
         if prefix == "GravityUI" or prefix == "AstralKeys" or prefix == "LibKeystone" or prefix == "LibKS" then
