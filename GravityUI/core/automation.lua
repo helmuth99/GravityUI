@@ -432,7 +432,7 @@ end
 -- WHISPER INVITES: AUTO INVITE ON KEYWORD
 ---------------------------------------------------------------------------
 
-local function OnWhisper(msg, sender, isBNet)
+local function OnWhisper(msg, sender, isBNet, bnGameAccountID)
     local settings = GetSettings()
     if not settings or not settings.inviteOnWhisper then return end
     if not msg or not sender then return end
@@ -502,10 +502,10 @@ local function OnWhisper(msg, sender, isBNet)
     end
 
     if isBNet then
-        local accountInfo = C_BattleNet.GetAccountInfoByID(sender)
-        if accountInfo and accountInfo.gameAccountInfo and accountInfo.gameAccountInfo.gameAccountID then
-            print("|cFF30D1FFGravityUI:|r Sending BNet Invite to " .. (accountInfo.gameAccountInfo.characterName or "Unknown"))
-            BNInviteFriend(accountInfo.gameAccountInfo.gameAccountID)
+        -- bnGameAccountID is fetched cleanly in the event handler (not tainted).
+        if bnGameAccountID then
+            print("|cFF30D1FFGravityUI:|r Sending BNet Invite to " .. sender)
+            BNInviteFriend(bnGameAccountID)
         end
     else
         print("|cFF30D1FFGravityUI:|r Sending Invite to " .. sender)
@@ -1274,7 +1274,17 @@ automationFrame:SetScript("OnEvent", function(self, event, ...)
         return
     elseif event == "CHAT_MSG_BN_WHISPER" then
         local msg, _, _, _, _, _, _, _, _, _, _, _, presenceID = ...
-        OnWhisper(msg, presenceID, true)
+        -- presenceID is a protected BN secret value - never store it in addon Lua state.
+        -- Resolve to a plain character name + gameAccountID via the API (both are untainted).
+        local bnSenderName, bnGameAccountID
+        local ok, accountInfo = pcall(C_BattleNet.GetAccountInfoByID, presenceID)
+        if ok and accountInfo and accountInfo.gameAccountInfo then
+            bnSenderName = accountInfo.gameAccountInfo.characterName
+            bnGameAccountID = accountInfo.gameAccountInfo.gameAccountID
+        end
+        if bnSenderName then
+            OnWhisper(msg, bnSenderName, true, bnGameAccountID)
+        end
         return
     end
 
