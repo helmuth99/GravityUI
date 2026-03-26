@@ -174,6 +174,8 @@ end
 
 local healthBarSetup = false
 
+local C_ClassColor_GetClassColor = C_ClassColor and C_ClassColor.GetClassColor
+
 local function GetClassColor(unit)
     -- Only apply class colour to actual players; NPCs can have a class token
     -- (e.g. training dummies classified as Warrior/Paladin) which would give
@@ -181,8 +183,15 @@ local function GetClassColor(unit)
     if UnitIsPlayer(unit) then
         local _, classToken = UnitClass(unit)
         if classToken then
+            -- Prefer CUSTOM_CLASS_COLORS / RAID_CLASS_COLORS.
+            -- Fall back to C_ClassColor.GetClassColor for robustness
+            -- (works even when the unit token is tainted after M+/Raid).
             local c = (CUSTOM_CLASS_COLORS or RAID_CLASS_COLORS)[classToken]
             if c then return c.r, c.g, c.b end
+            if C_ClassColor_GetClassColor then
+                local cc = C_ClassColor_GetClassColor(classToken)
+                if cc then return cc.r, cc.g, cc.b end
+            end
         end
     end
     if UnitIsFriend("player", unit) then return 0.0, 0.8, 0.0 end
@@ -386,7 +395,9 @@ end
 local function InjectUnitInfo(tooltip, data, unit)
     local settings = GetSettings()
     if not settings or not settings.enabled then return end
-    if InCombatLockdown() then return end    -- reading unit info is restricted in combat
+    -- NOTE: No blanket InCombatLockdown() guard here.
+    -- UnitIsPlayer / UnitClass / UnitName / GetGuildInfo are all safe in combat.
+    -- Only the inspect-based spec lookup below is guarded individually.
 
     pcall(function()
         if not unit or type(unit) ~= "string" then return end
@@ -403,18 +414,42 @@ local function InjectUnitInfo(tooltip, data, unit)
 
         -- Spec (only GetSpecialization works without inspect)
         -- For the player: always works. For others: works if they've been inspected.
+        -- Inspect API is restricted in combat, so guard it individually.
         local specName
         pcall(function()
             if UnitIsUnit(unit, "player") and GetSpecialization then
                 local idx = GetSpecialization()
                 if idx then specName = select(2, GetSpecializationInfo(idx)) end
-            elseif GetInspectSpecialization then
+            elseif not InCombatLockdown() and GetInspectSpecialization then
                 local specID = GetInspectSpecialization(unit)
                 if specID and specID > 0 then
                     specName = select(2, GetSpecializationInfoByID(specID))
                 end
             end
         end)
+
+        -- 1. Name line – direct access, no region loop needed.
+        -- In TWW+ GetRegions() may not include dynamic pool FontStrings,
+        -- so we target GameTooltipTextLeft1 directly and bake the color
+        -- into the text so nothing can overwrite it with SetTextColor.
+        if settings.classColorName and isPlayer and classToken then
+            local cc = classColor
+            if not cc and C_ClassColor_GetClassColor then
+                cc = C_ClassColor_GetClassColor(classToken)
+            end
+            if cc then
+                local nameFS = _G["GameTooltipTextLeft1"]
+                if nameFS then
+                    local curText = nameFS:GetText()
+                    if curText and curText ~= "" then
+                        local hex = CHex(cc.r, cc.g, cc.b)
+                        local stripped = curText:match("^|c%x%x%x%x%x%x%x%x(.+)$") or curText
+                        nameFS:SetText(hex .. stripped .. "|r")
+                        nameFS:SetTextColor(1, 1, 1)
+                    end
+                end
+            end
+        end
 
         local regions = {tooltip:GetRegions()}
 
@@ -423,17 +458,7 @@ local function InjectUnitInfo(tooltip, data, unit)
                 local text = fs:GetText()
                 if text and text ~= "" then
 
-                    -- 1. Name line (class color – players only)
-                    -- NOTE: UnitIsPlayer(unit) already guards against NPCs, so we do NOT
-                    -- check data.guid here. After M+/Raid, Blizzard's taint system can
-                    -- temporarily mark GUIDs as secret values, which previously caused the
-                    -- class color to silently fall back to white for all players.
-                    if settings.classColorName and isPlayer and classColor then
-                        local uName = UnitName(unit)
-                        if uName and type(uName) == "string" and text:find(uName, 1, true) then
-                            fs:SetTextColor(classColor.r, classColor.g, classColor.b)
-                        end
-                    end
+                    -- 1. Name line already handled above via direct TextLeft1 access
 
                     -- 2. Guild line (green guild + grey rank)
                     if isPlayer and guildName and settings.showGuildInfo
@@ -509,9 +534,69 @@ end
 local function InitHooks()
     SetupHealthBar()
 
-    -- Reset mount guard on clear/hide
-    GameTooltip:HookScript("OnTooltipCleared", function(self) self.__guiMountAdded = nil end)
-    GameTooltip:HookScript("OnHide",           function(self) self.__guiMountAdded = nil end)
+    -- Reset state on clear/hide
+    GameTooltip:HookScript("OnTooltipCleared", function(self)
+        self.__guiMountAdded = nil
+        self.__guiNameHex    = nil
+    end)
+    GameTooltip:HookScript("OnHide", function(self)
+        self.__guiMountAdded = nil
+        self.__guiNameHex    = nil
+    end)
+
+    -- Class color the name line.
+    -- SetUnit() calls Show() internally, so OnShow fires BEFORE our hooksecurefunc
+    -- callback. C_Timer.After(0) defers to the next Lua tick, after every
+    -- addon PostCall, Show(), and OnShow have completed.
+    hooksecurefunc(GameTooltip, "SetUnit", function(self, unit)
+        self.__guiNameHex = nil
+        local settings = GetSettings()
+        if not settings or not settings.enabled or not settings.classColorName then return end
+
+        -- Resolve a safe unit token (unit arg may be tainted in M+/Raid)
+        local safeUnit = nil
+        if unit then
+            local ok, isP = pcall(UnitIsPlayer, unit)
+            if ok and isP then
+                safeUnit = unit
+            end
+        end
+        -- Fallback: mouseover is always a safe token
+        if not safeUnit then
+            local ok, ex = pcall(UnitExists, "mouseover")
+            if ok and ex then safeUnit = "mouseover" end
+        end
+        if not safeUnit then return end
+
+        local hex
+        pcall(function()
+            local _, classToken = UnitClass(safeUnit)
+            if not classToken then return end
+            local cc = (CUSTOM_CLASS_COLORS or RAID_CLASS_COLORS)[classToken]
+            if not cc and C_ClassColor_GetClassColor then
+                cc = C_ClassColor_GetClassColor(classToken)
+            end
+            if cc then hex = CHex(cc.r, cc.g, cc.b) end
+        end)
+        if not hex then return end
+
+        self.__guiNameHex = hex
+        -- Defer application to next tick so all addon hooks finish first
+        C_Timer.After(0, function()
+            if not self.__guiNameHex then return end   -- tooltip cleared/hidden
+            if not self:IsShown() then return end
+            pcall(function()
+                local nameFS = _G[self:GetName() .. "TextLeft1"]
+                if not nameFS then return end
+                local curText = nameFS:GetText()
+                if not curText or curText == "" then return end
+                -- Strip a leading color code to avoid double-wrapping
+                local stripped = curText:match("^|c%x%x%x%x%x%x%x%x(.+)$") or curText
+                nameFS:SetText(self.__guiNameHex .. stripped .. "|r")
+                nameFS:SetTextColor(1, 1, 1)
+            end)
+        end)
+    end)
 
     hooksecurefunc("GameTooltip_SetDefaultAnchor", function(tooltip, parent)
         tooltip.__guiLastID = nil
@@ -534,10 +619,52 @@ local function InitHooks()
             if not settings or not settings.enabled then return end
             pcall(function()
                 ApplyStyle(tooltip)
+
+                -- Resolve unit token safely for InjectUnitInfo
                 local unit
                 pcall(function() unit = select(2, tooltip:GetUnit()) end)
+                if unit then
+                    local ok, exists = pcall(UnitExists, unit)
+                    if not ok or not exists then unit = nil end
+                end
+                if not unit then
+                    local ok, exists = pcall(UnitExists, "mouseover")
+                    if ok and exists then unit = "mouseover" end
+                end
+
                 InjectUnitInfo(tooltip, data, unit)
                 AddIDLines(tooltip, data, "unit")
+
+                -- Class color the name line via C_Timer so we run AFTER all other
+                -- addon PostCalls (e.g. Raider.IO) that call SetText on line 1.
+                -- SetTextColor (vertex color) persists even after another addon's
+                -- SetText; confirmed working via debug testing in M+.
+                -- GetPlayerInfoByGUID uses data.guid which is never tainted.
+                if settings.classColorName and data and data.guid then
+                    pcall(function()
+                        if type(data.guid) ~= "string" then return end
+                        if not data.guid:match("^Player%-") then return end
+                        local _, classToken = GetPlayerInfoByGUID(data.guid)
+                        if not classToken then return end
+                        local cc = (CUSTOM_CLASS_COLORS or RAID_CLASS_COLORS)[classToken]
+                        if not cc and C_ClassColor_GetClassColor then
+                            cc = C_ClassColor_GetClassColor(classToken)
+                        end
+                        if not cc then return end
+                        local r, g, b = cc.r, cc.g, cc.b
+                        -- Apply immediately to prevent flash on own tooltip
+                        local nameFS = _G["GameTooltipTextLeft1"]
+                        if nameFS then nameFS:SetTextColor(r, g, b) end
+                        -- Defer as backup after other addon PostCalls (e.g. Raider.IO)
+                        C_Timer.After(0, function()
+                            if not GameTooltip:IsShown() then return end
+                            pcall(function()
+                                local nameFS2 = _G["GameTooltipTextLeft1"]
+                                if nameFS2 then nameFS2:SetTextColor(r, g, b) end
+                            end)
+                        end)
+                    end)
+                end
             end)
         end)
 

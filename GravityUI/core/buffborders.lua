@@ -45,26 +45,7 @@ local function ReapplyAuraTextSettings(text, isCount)
     if text.SetVertexColor then text:SetVertexColor(color[1], color[2], color[3], color[4] or 1) end
     text:SetShadowColor(0, 0, 0, 1)
     text:SetShadowOffset(1, -1)
-    
-    -- Position Management (Secret Number fix)
-    if not text._gui_OriginalPoint then
-        local p, rel, rp, x, y = text:GetPoint()
-        -- Scrub tainted/secret values: if it's not a normal number, it's a "secret" one.
-        local safeX = type(x) == "number" and x or 0
-        local safeY = type(y) == "number" and y or 0
-        -- Also scrub points just in case they are tainted (less common but possible)
-        local safeP = tostring(p or (isCount and "BOTTOMRIGHT" or "BOTTOM"))
-        local safeRP = tostring(rp or (isCount and "BOTTOMRIGHT" or "BOTTOM"))
-        
-        text._gui_OriginalPoint = { safeP, rel, safeRP, safeX, safeY }
-    end
 
-    if text._gui_OriginalPoint then
-        local p = text._gui_OriginalPoint
-        text:ClearAllPoints()
-        text:SetPoint(p[1], p[2], p[3], p[4], p[5]) -- Offsets removed as requested
-    end
-    
     text:SetDrawLayer("OVERLAY", 7)
     text._gui_Applying = nil
 end
