@@ -424,8 +424,11 @@ local function InjectUnitInfo(tooltip, data, unit)
                 if text and text ~= "" then
 
                     -- 1. Name line (class color – players only)
-                    if settings.classColorName and isPlayer and classColor and data.guid
-                    and not IsSecretValue(data.guid) then
+                    -- NOTE: UnitIsPlayer(unit) already guards against NPCs, so we do NOT
+                    -- check data.guid here. After M+/Raid, Blizzard's taint system can
+                    -- temporarily mark GUIDs as secret values, which previously caused the
+                    -- class color to silently fall back to white for all players.
+                    if settings.classColorName and isPlayer and classColor then
                         local uName = UnitName(unit)
                         if uName and type(uName) == "string" and text:find(uName, 1, true) then
                             fs:SetTextColor(classColor.r, classColor.g, classColor.b)
