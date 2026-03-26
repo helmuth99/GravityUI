@@ -7,10 +7,12 @@ ns.WorldMarks = WorldMarks
 
 local function GetSettings()
     local db = ns.GetDB()
-    if db and db.uiimprovements and db.uiimprovements.marks then
-        return db.uiimprovements.marks
-    end
-    return nil
+    return db and db.uiimprovements and db.uiimprovements.marks
+end
+
+local function GetAccentColor()
+    if ns.GetAccentColor then return ns.GetAccentColor() end
+    return 0, 0.5, 1, 1 -- Fallback Blue
 end
 
 ---------------------------------------------------------------------------
@@ -20,130 +22,83 @@ function WorldMarks.Refresh()
     local frame = WorldMarks.frame
     if not frame then return end
     
-    if InCombatLockdown() then return end
-    
     local settings = GetSettings()
     if not settings then return end
-    
-    local padding = settings.spacing -- Assuming padding is equal to spacing for layout calculations
 
-    -- Calculate Width/Height
-    -- Width = (9 buttons * size) + (8 spaces) + (2 padding)
-    local width = (9 * settings.size) + (8 * settings.spacing) + (padding * 2)
+    -- Visual Updates (Safe in Combat)
+    if settings.enabled then frame:Show() else frame:Hide() end
+    frame:SetAlpha(settings.mouseover and 0 or 1)
     
-    -- Height depends on showTimerBar
-    -- Base: (size) + (2 padding)
-    -- If timer bar: (size * 2) + (spacing) + (2 padding)
-    local height = settings.size + (padding * 2)
-    local showTimerBar = true
-    if settings.showTimerBar ~= nil then showTimerBar = settings.showTimerBar end
-
-    -- Height depends on showTimerBar
-    -- Base: (size) + (2 padding)
-    -- If timer bar: (size * 2) + (spacing) + (2 padding)
-    local height = settings.size + (padding * 2)
-    if showTimerBar then
-         height = (settings.size * 2) + settings.spacing + (padding * 2)
+    local r, g, b, a = 0, 0, 0, 1
+    if settings.useThemeColorBorder then
+        r, g, b, a = GetAccentColor()
+    elseif settings.borderColor then
+        r, g, b, a = unpack(settings.borderColor)
     end
+    
+    if not frame.bg then
+        frame.bg = frame:CreateTexture(nil, "BACKGROUND")
+        frame.bg:SetAllPoints()
+    end
+    frame.bg:SetColorTexture(0, 0, 0, 0.7)
+
+    if not frame.border then
+        frame.border = frame:CreateTexture(nil, "BACKGROUND", nil, 1)
+        frame.border:SetPoint("TOPLEFT", -1, 1)
+        frame.border:SetPoint("BOTTOMRIGHT", 1, -1)
+    end
+    
+    if settings.hideBorder then
+        frame.border:Hide()
+    else
+        frame.border:Show()
+        frame.border:SetColorTexture(r, g, b, a or 1)
+    end
+
+    -- Secure Updates (Deferred if in combat)
+    if InCombatLockdown() then
+        if not WorldMarks.isQueued then
+            WorldMarks.isQueued = true
+            local f = CreateFrame("Frame")
+            f:RegisterEvent("PLAYER_REGEN_ENABLED")
+            f:SetScript("OnEvent", function(self)
+                WorldMarks.Refresh()
+                WorldMarks.isQueued = nil
+                self:UnregisterAllEvents()
+            end)
+        end
+        return
+    end
+
+    local padding = settings.spacing or 2 
+    local size = settings.size or 32
+    local spacing = settings.spacing or 2
+    local width = (9 * size) + (8 * spacing) + (padding * 2)
+    local showTimerBar = settings.showTimerBar ~= false
+    local height = showTimerBar and ((size * 2) + spacing + (padding * 2)) or (size + (padding * 2))
     
     frame:SetSize(width, height)
-    
     frame:ClearAllPoints()
     frame:SetPoint("CENTER", UIParent, "CENTER", settings.offsetX or 0, settings.offsetY or 100)
-    
-    if settings.enabled then 
-        frame:Show() 
-    else 
-        frame:Hide() 
-    end
-    
-    if settings.mouseover then 
-        frame:SetAlpha(0) 
-    else 
-        frame:SetAlpha(1) 
-    end
 
-    -- Update Buttons
     for i = 1, 11 do
         local btn = frame.buttons[i]
         if btn then
-            -- Hide/Show Row 2 buttons based on settings.showTimerBar
-            if i >= 10 then
-                if showTimerBar then
-                    btn:Show()
-                else
-                    btn:Hide()
-                end
-            end
-
+            if i >= 10 then if showTimerBar then btn:Show() else btn:Hide() end end
             if i <= 9 then
-                -- Row 1: Markers (Square)
-                btn:SetSize(settings.size, settings.size)
+                btn:SetSize(size, size)
                 btn:ClearAllPoints()
-                local xOffset = padding + ((i-1) * (settings.size + settings.spacing))
-                btn:SetPoint("TOPLEFT", frame, "TOPLEFT", xOffset, -padding)
-                
-                if btn.text then btn.text:Hide() end
-                if btn.icon then btn.icon:Show() end
+                btn:SetPoint("TOPLEFT", frame, "TOPLEFT", padding + ((i-1)*(size+spacing)), -padding)
             else
-                -- Row 2: Tools (Wide Buttons)
-                local totalRow1Width = (9 * settings.size) + (8 * settings.spacing)
-                local btnWidth = (totalRow1Width - settings.spacing) / 2
-                
-                btn:SetSize(btnWidth, settings.size)
+                local btnWidth = ((9 * size) + (8 * spacing) - spacing) / 2
+                btn:SetSize(btnWidth, size)
                 btn:ClearAllPoints()
-                
-                -- yOffset = padding (top) + row1 height (size) + spacing
-                local yOffset = -(padding + settings.size + settings.spacing)
-                
-                if i == 10 then
-                    btn:SetPoint("TOPLEFT", frame, "TOPLEFT", padding, yOffset)
-                elseif i == 11 then
-                    btn:SetPoint("LEFT", frame.buttons[10], "RIGHT", settings.spacing, 0)
-                end
-                
-                if btn.text then btn.text:Show() end
-                if btn.icon then btn.icon:Hide() end
-                
-                -- Ensure backdrop for visibility
-                if not btn:GetBackdrop() then
-                    Mixin(btn, BackdropTemplateMixin)
-                    btn:SetBackdrop({
-                         bgFile = "Interface\\Buttons\\WHITE8x8",
-                         edgeFile = "Interface\\Buttons\\WHITE8x8",
-                         edgeSize = 1,
-                    })
-                end
-                btn:SetBackdropColor(0.1, 0.1, 0.1, 0.9)
-                btn:SetBackdropBorderColor(0, 0, 0, 1)
+                local yOffset = -(padding + size + spacing)
+                if i == 10 then btn:SetPoint("TOPLEFT", frame, "TOPLEFT", padding, yOffset)
+                else btn:SetPoint("LEFT", frame.buttons[10], "RIGHT", spacing, 0) end
             end
         end
     end
-    
-    -- Update Border
-    if settings.hideBorder then
-        frame:SetBackdrop({
-            bgFile = "Interface\\Buttons\\WHITE8x8",
-            edgeFile = nil,
-            edgeSize = 0,
-        })
-    else
-        frame:SetBackdrop({
-            bgFile = "Interface\\Buttons\\WHITE8x8",
-            edgeFile = "Interface\\Buttons\\WHITE8x8",
-            edgeSize = 1,
-        })
-        
-        local r, g, b, a
-        if settings.useThemeColorBorder then
-            r, g, b, a = ns.GetAccentColor()
-        else
-            r, g, b, a = unpack(settings.borderColor or {0, 0, 0, 1})
-        end
-        frame:SetBackdropBorderColor(r, g, b, a or 1)
-    end
-    
-    frame:SetBackdropColor(0, 0, 0, 0.6)
 end
 
 ---------------------------------------------------------------------------
@@ -151,251 +106,176 @@ end
 ---------------------------------------------------------------------------
 local function CreateMarksBar()
     if WorldMarks.frame then return end
-    
     local settings = GetSettings()
     if not settings then return end
 
-    local frame = CreateFrame("Frame", "GravityUI_MarksBar", UIParent, "BackdropTemplate")
+    local frame = CreateFrame("Frame", "GravityUI_MarksBar", UIParent)
     frame.buttons = {}
-    
     frame:EnableMouse(true)
     frame:SetMovable(true)
     frame:SetClampedToScreen(true)
     frame:SetUserPlaced(true)
-    frame:SetFrameStrata("MEDIUM")
+    frame:SetFrameStrata("TOOLTIP")
+    frame:SetFrameLevel(100)
     
-    -- Initial backdrop will be set by Refresh()
-    
-    local function UpdateAlpha(alpha)
+    local function UpdateAlpha(a)
         local s = GetSettings()
-        if s and s.mouseover then 
-            frame:SetAlpha(alpha) 
-        else 
-            frame:SetAlpha(1) 
-        end
+        if s and s.mouseover then frame:SetAlpha(a) else frame:SetAlpha(1) end
     end
 
     frame:SetScript("OnEnter", function() UpdateAlpha(1) end)
     frame:SetScript("OnLeave", function() if not frame:IsMouseOver() then UpdateAlpha(0) end end)
 
-    -- Button Creation
     for i = 1, 11 do
         local btn = CreateFrame("Button", "GravityUIMarkerBtn"..i, frame, "SecureActionButtonTemplate, BackdropTemplate")
-        btn:RegisterForClicks("AnyUp", "AnyDown") 
-        btn:SetAttribute("type", "macro") 
-
-        -- Icon Texture (std name 'icon' for easier handling)
-        btn.icon = btn:CreateTexture(nil, "ARTWORK")
-        btn.icon:SetPoint("TOPLEFT", 2, -2)
-        btn.icon:SetPoint("BOTTOMRIGHT", -2, 2)
+        btn:RegisterForClicks("AnyDown", "AnyUp") 
+        btn:SetFrameLevel(110)
+        btn:SetHighlightTexture([[Interface\Buttons\UI-Panel-MinimizeButton-Highlight]], "ADD")
         
-        -- Text Label (for wide buttons)
+        btn.icon = btn:CreateTexture(nil, "ARTWORK")
+        btn.icon:SetPoint("TOPLEFT", 2, -2); btn.icon:SetPoint("BOTTOMRIGHT", -2, 2)
+        
         btn.text = btn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-        btn.text:SetPoint("CENTER", 0, 0)
-        btn.text:Hide()
+        btn.text:SetPoint("CENTER", 0, 0); btn.text:Hide()
         
         if i < 9 then
-            btn.icon:SetTexture("Interface\\TargetingFrame\\UI-RaidTargetingIcons")
+            btn.icon:SetTexture([[Interface\TargetingFrame\UI-RaidTargetingIcons]])
             SetRaidTargetIconTexture(btn.icon, i)
-            local wmMap = { [1]=5, [2]=6, [3]=3, [4]=2, [5]=7, [6]=1, [7]=4, [8]=8 }
-            local wmID = wmMap[i] or i
+            
+            local iconToTargetID = { 1, 2, 3, 4, 5, 6, 7, 8 }
+            local iconToWorldID  = { 5, 6, 3, 2, 7, 1, 4, 8 }
+            
+            local targetID = iconToTargetID[i]
+            local worldID = iconToWorldID[i]
+            
+            -- LEFT CLICK: Target Marker
             btn:SetAttribute("type1", "macro")
-            btn:SetAttribute("macrotext1", "/tm " .. i)
+            btn:SetAttribute("macrotext1", "/tm " .. targetID)
+            
+            -- SHIFT+LEFT CLICK: World Marker
             btn:SetAttribute("shift-type1", "macro")
-            btn:SetAttribute("shift-macrotext1", "/wm " .. wmID)
+            btn:SetAttribute("shift-macrotext1", "/wm " .. worldID)
+
+            -- RIGHT CLICK: World Marker (Convenience)
+            btn:SetAttribute("type2", "macro")
+            btn:SetAttribute("macrotext2", "/wm " .. worldID)
+
         elseif i == 9 then
             -- Clear Button
-            btn.icon:SetTexture("Interface\\Buttons\\UI-GroupLoot-Pass-Up")
+            btn.icon:SetTexture([[Interface\Buttons\UI-GroupLoot-Pass-Up]])
+            -- Left (1): Clear Target
             btn:SetAttribute("type1", "macro")
-            btn:SetAttribute("macrotext1", "/tm player 0\n/tm 0\n/clearraidmarkers")
+            btn:SetAttribute("macrotext1", "/tm 0")
+            -- Shift+Left (1): Clear All World Markers
             btn:SetAttribute("shift-type1", "macro")
             btn:SetAttribute("shift-macrotext1", "/cwm all")
+            -- Right (2): Clear All World Markers
+            btn:SetAttribute("type2", "macro")
+            btn:SetAttribute("macrotext2", "/cwm all")
+
         elseif i == 10 then
-            -- Ready Check
-            btn:SetAttribute("macrotext", "/readycheck")
-            btn.text:SetText("Ready Check")
-            btn.text:Show()
-            btn.icon:Hide()
+            btn.text:SetText("Ready Check"); btn.text:Show(); btn.icon:Hide()
+            btn:SetAttribute("type1", "macro"); btn:SetAttribute("macrotext1", "/readycheck")
+
         elseif i == 11 then
-            -- Pull Timer
-            -- Default check
-            local settings = GetSettings()
-            if not settings.pullTimer then settings.pullTimer = 10 end
-            
+            local pSettings = settings
+            if not pSettings.pullTimer then pSettings.pullTimer = 10 end
             local function UpdatePullButton(val)
                 if InCombatLockdown() then return end
-                btn:SetAttribute("type1", "macro")
-                btn:SetAttribute("macrotext1", "/pull " .. val)
+                btn:SetAttribute("type1", "macro"); btn:SetAttribute("macrotext1", "/pull " .. val)
                 btn.text:SetText("Pull " .. val)
             end
-            
-            UpdatePullButton(settings.pullTimer)
-            
-            btn.text:Show()
-            btn.icon:Hide()
-            
-            -- Tooltip + Menu
-            btn:SetScript("OnEnter", function(self) 
+            UpdatePullButton(pSettings.pullTimer)
+            btn.text:Show(); btn.icon:Hide()
+
+            btn:SetScript("OnEnter", function(self)
                 if frame:GetAlpha() > 0 then
                     GameTooltip:SetOwner(self, "ANCHOR_TOP")
-                    GameTooltip:AddLine("Left-Click: Start Pull")
-                    GameTooltip:AddLine("Right-Click: Set Duration", 1, 1, 1)
+                    GameTooltip:AddLine("Left: Mark | Shift+Left or Right: World Mark")
                     GameTooltip:Show()
                 end
                 UpdateAlpha(1)
             end)
-            btn:SetScript("OnLeave", function() GameTooltip:Hide() if not frame:IsMouseOver() then UpdateAlpha(0) end end)
-            
+            btn:SetScript("OnLeave", function() GameTooltip:Hide(); if not frame:IsMouseOver() then UpdateAlpha(0) end end)
+
             btn:SetScript("OnMouseUp", function(self, button)
                 if button == "RightButton" and not InCombatLockdown() then
                     MenuUtil.CreateContextMenu(self, function(_, root)
-                        root:CreateTitle("Pull Timer Duration")
-                        local options = {5, 8, 10, 15}
-                        for _, v in ipairs(options) do
-                            root:CreateButton(v .. " seconds", function()
-                                settings.pullTimer = v
-                                UpdatePullButton(v)
-                            end)
+                        root:CreateTitle("Duration")
+                        for _, v in ipairs({5, 8, 10, 15}) do
+                            root:CreateButton(v .. "s", function() pSettings.pullTimer = v; UpdatePullButton(v) end)
                         end
                     end)
                 end
             end)
         end
         
-        -- Alpha hover only for icon buttons usually, but let's apply to all for consistency with bar
         btn:HookScript("OnEnter", function() UpdateAlpha(1) end)
         btn:HookScript("OnLeave", function() if not frame:IsMouseOver() then UpdateAlpha(0) end end)
-        
         frame.buttons[i] = btn
     end
 
     WorldMarks.frame = frame
     WorldMarks.Refresh()
-    
-    -- Hide if initially needed (Refesh handles it but let's be sure)
     UpdateAlpha(0)
-    
     if WorldMarks.RegisterMover then WorldMarks:RegisterMover() end
 end
 
 ---------------------------------------------------------------------------
--- MOVER LOGIC
+-- MOVER/INIT
 ---------------------------------------------------------------------------
 function WorldMarks:ToggleMover(forceState)
     if not self.mover then self:CreateMover() end
-    
-    local shouldShow = false
-    if forceState ~= nil then
-        shouldShow = forceState
-    else
-        shouldShow = not (self.mover and self.mover:IsShown())
-    end
-
+    local shouldShow = (forceState ~= nil) and forceState or not self.mover:IsShown()
     if self.mover then
         if shouldShow then
-            self.mover:Show()
-            self.frame:Show() -- Ensure frame is visible underlying
-            self.frame:SetAlpha(1)
-            
-            -- Apply Standard Edit Mode Style
-            if ns.Movers and ns.Movers.ApplyEditModeStyle then
-                if forceState == true then
-                    self.mover:SetBackdropColor(0, 0, 0, 0)
-                    self.mover:SetBackdropBorderColor(0, 0, 0, 0)
-                    ns.Movers:ApplyEditModeStyle(self.mover, true)
-                else
-                    self.mover:SetBackdropColor(0, 0.5, 0, 0.5)
-                    self.mover:SetBackdropBorderColor(0, 1, 0, 1)
-                    ns.Movers:ApplyEditModeStyle(self.mover, false)
-                end
-            end
+            self.mover:Show(); frame:Show(); frame:SetAlpha(1)
+            if ns.Movers and ns.Movers.ApplyEditModeStyle then ns.Movers:ApplyEditModeStyle(self.mover, forceState == true) end
         else
-            if ns.Movers and ns.Movers.ApplyEditModeStyle then
-                ns.Movers:ApplyEditModeStyle(self.mover, false)
-            end
-            self.mover:Hide()
-            self.Refresh() -- Restore alpha/visibility state
+            if ns.Movers and ns.Movers.ApplyEditModeStyle then ns.Movers:ApplyEditModeStyle(self.mover, false) end
+            self.mover:Hide(); self.Refresh()
         end
     end
 end
 
 function WorldMarks:CreateMover()
     if self.mover then return end
-    local frame = self.frame
-    if not frame then return end
-    
+    local f = self.frame
+    if not f then return end
     self.mover = CreateFrame("Frame", "GravityUI_WorldMarks_Mover", UIParent, "BackdropTemplate")
-    self.mover:SetAllPoints(frame)
-    self.mover:SetBackdrop({
-        bgFile = "Interface\\Buttons\\WHITE8x8",
-        edgeFile = "Interface\\Buttons\\WHITE8x8",
-        edgeSize = 1,
-    })
-    -- Default to Green (Manual)
-    self.mover:SetBackdropColor(0, 0.5, 0, 0.5)
-    self.mover:SetBackdropBorderColor(0, 1, 0, 1)
-    
-    self.mover:EnableMouse(true)
-    self.mover:SetMovable(true)
-    self.mover:RegisterForDrag("LeftButton")
-    self.mover:SetFrameStrata("DIALOG")
-    self.mover:Hide()
-    
+    self.mover:SetAllPoints(f)
+    self.mover:SetBackdrop({bgFile = [[Interface\ChatFrame\ChatFrameBackground]], edgeFile = [[Interface\ChatFrame\ChatFrameBackground]], edgeSize = 1})
+    self.mover:SetBackdropColor(0, 0.5, 0, 0.5); self.mover:SetBackdropBorderColor(0, 1, 0, 1)
+    self.mover:EnableMouse(true); self.mover:SetMovable(true); self.mover:RegisterForDrag("LeftButton")
+    self.mover:SetFrameStrata("DIALOG"); self.mover:Hide()
     local text = self.mover:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    text:SetPoint("CENTER")
-    text:SetText("World Marks")
-    
-    self.mover:SetScript("OnDragStart", function()
-        frame:StartMoving()
-        self.mover:SetAllPoints(frame)
-    end)
-    
+    text:SetPoint("CENTER"); text:SetText("World Marks")
+    self.mover:SetScript("OnDragStart", function() f:StartMoving(); self.mover:SetAllPoints(f) end)
     self.mover:SetScript("OnDragStop", function()
-        frame:StopMovingOrSizing()
-        
-        -- Calculate center offset to support existing logic
+        f:StopMovingOrSizing()
         local centerX, centerY = UIParent:GetCenter()
-        local frameX, frameY = frame:GetCenter()
-        if frameX and centerX then
-             local settings = GetSettings()
-             if settings then
-                 settings.offsetX = frameX - centerX
-                 settings.offsetY = frameY - centerY
-             end
-        end
-        
-        self.mover:ClearAllPoints()
-        self.mover:SetAllPoints(frame)
+        local frameX, frameY = f:GetCenter()
+        local s = GetSettings()
+        if s and frameX and centerX then s.offsetX, s.offsetY = frameX - centerX, frameY - centerY end
+        self.mover:ClearAllPoints(); self.mover:SetAllPoints(f)
     end)
-    
-    -- Sync Size
-    hooksecurefunc(frame, "SetSize", function() 
-        if self.mover then self.mover:SetSize(frame:GetSize()) end
-    end)
+    hooksecurefunc(f, "SetSize", function() if self.mover then self.mover:SetSize(f:GetSize()) end end)
 end
 
 function WorldMarks:RegisterMover()
     if ns.Movers and ns.Movers.Register then
-        ns.Movers:Register("WorldMarks", self.frame, function(frame, enabled, force) self:ToggleMover(force) end, "World Marks")
+        ns.Movers:Register("WorldMarks", self.frame, function(f, e, force) self:ToggleMover(force) end, "World Marks")
     end
 end
 
--- Export to ns for init
 ns.RefreshWorldMarks = WorldMarks.Refresh
-
--- Auto-Init
 local initFrame = CreateFrame("Frame")
 initFrame:RegisterEvent("PLAYER_LOGIN")
-initFrame:SetScript("OnEvent", function()
-    CreateMarksBar()
+initFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
+initFrame:SetScript("OnEvent", function(_, event)
+    if event == "PLAYER_LOGIN" then CreateMarksBar() else C_Timer.After(1, function() WorldMarks.Refresh() end) end
 end)
 
--- Hook into global color refresh
-local originalRefreshColors = ns.RefreshAccentColors
-ns.RefreshAccentColors = function()
-    if originalRefreshColors then originalRefreshColors() end
-    if WorldMarks.Refresh then WorldMarks.Refresh() end
-end
-
--- Export for GUI
+local orc = ns.RefreshAccentColors
+ns.RefreshAccentColors = function() if orc then orc() end; if WorldMarks.Refresh then WorldMarks.Refresh() end end
 _G.GravityUI_RefreshWorldMarks = WorldMarks.Refresh
