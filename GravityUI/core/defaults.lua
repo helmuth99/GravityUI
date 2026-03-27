@@ -1399,5 +1399,20 @@ ns.Defaults = {
         visibility = "AUTO",
         showAbilityIcon = false,
     },
+    cooldownText = {
+        enabled = true,
+        x = 0,
+        y = 18,
+        fontSize = 20,
+        spacing = 4,
+        tickInterval = 0.1,
+        growDirection = "DOWN",
+        onlyRaidDungeon = false,
+        spellsToTrack = {
+            { spellID = 1953,   class = "MAGE", text = "No Blink on cd" },
+            { spellID = 212653, class = "MAGE", text = "No Shimmer" },
+            { spellID = 1234796, class = "DEMONHUNTER", text = "No Shift" },
+        }
+    },
 }
 }

@@ -1,15 +1,19 @@
 local ADDON_NAME, ns = ...
-
 local CooldownText = {}
 ns.CooldownText = CooldownText
 
 local GetSpellCooldown = C_Spell.GetSpellCooldown
 local GetSpellCooldownDuration = C_Spell.GetSpellCooldownDuration
+local IsInInstance = IsInInstance
+local strformat = string.format
 
 local DB -- File scoped database variable
 local trackedList = {}
 local ticker
 local mainContainer
+
+-- Cache for instance type check (updated on zone change)
+local cachedIsInDungeonOrRaid = false
 
 local function GetSettings()
     if DB then return DB end
@@ -20,11 +24,12 @@ local function GetSettings()
         -- Guarantee our isolated cooldown data sub-table exists within the SavedVariables
         if type(mainDB.cooldownText) ~= "table" then
             mainDB.cooldownText = {
+                enabled = true,
                 x = 0,
                 y = 18,
                 fontSize = 20,
                 spacing = 4,
-                tickInterval = 0.1,
+                tickInterval = 0.2,
                 growDirection = "DOWN",
                 onlyRaidDungeon = false,
                 spellsToTrack = {
@@ -51,11 +56,12 @@ local function GetSettings()
     -- Absolute Fallback only if the UI Engine fails to find any DB entirely
     if not ns.cooldownTextFallback then
         ns.cooldownTextFallback = {
+            enabled = true,
             x = 0,
             y = 18,
             fontSize = 20,
             spacing = 4,
-            tickInterval = 0.1,
+            tickInterval = 0.2,
             growDirection = "DOWN",
             onlyRaidDungeon = false,
             spellsToTrack = {
@@ -81,9 +87,9 @@ local function GetFontPath()
     return "Fonts\\FRIZQT__.TTF"
 end
 
-local function IsInDungeonOrRaid()
+local function UpdateInstanceCache()
     local _, instanceType = IsInInstance()
-    return instanceType == "party" or instanceType == "raid"
+    cachedIsInDungeonOrRaid = instanceType == "party" or instanceType == "raid"
 end
 
 local function GetSpellNameFallback(spellID)
@@ -94,6 +100,23 @@ end
 function CooldownText:Initialize()
     local _, playerClass = UnitClass("player")
     DB = GetSettings()
+    UpdateInstanceCache()
+    
+    -- Ensure Base Frames exist (only once)
+    if not mainContainer then
+        self:CreateBaseFrames()
+    end
+
+    if not DB.enabled then
+        mainContainer:Hide()
+        if ticker then 
+            ticker:Cancel()
+            ticker = nil
+        end
+        return
+    end
+
+    mainContainer:Show()
 
     -- Clean up any active text fields before re-evaluating
     self.fsPool = self.fsPool or {}
@@ -119,27 +142,6 @@ function CooldownText:Initialize()
         ticker = nil 
     end
 
-    -- 2. Create the main Container Frame
-    if not mainContainer then
-        mainContainer = CreateFrame("Frame", "GravityUI_CooldownTextContainer", UIParent)
-        mainContainer:SetSize(400, 50)
-        mainContainer:SetFrameStrata("LOW")
-        mainContainer:Show()
-
-        self.frame = CreateFrame("Frame")
-        self.frame:RegisterEvent("TRAIT_CONFIG_UPDATED")
-        self.frame:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED")
-        self.frame:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
-        self.frame:RegisterEvent("SPELL_UPDATE_COOLDOWN")
-        self.frame:SetScript("OnEvent", function(selfFrame, event)
-            if event == "SPELL_UPDATE_COOLDOWN" then
-                self:UpdateCooldowns()
-            else
-                C_Timer.After(0.5, function() self:Initialize() end)
-            end
-        end)
-    end
-
     self:Refresh()
     if #trackedList > 0 then
         self:StartTicker()
@@ -147,8 +149,41 @@ function CooldownText:Initialize()
     self:UpdateCooldowns()
 end
 
+function CooldownText:CreateBaseFrames()
+    mainContainer = CreateFrame("Frame", "GravityUI_CooldownTextContainer", UIParent)
+    mainContainer:SetSize(400, 50)
+    mainContainer:SetFrameStrata("LOW")
+    -- Visibility is handled by Initialize/Refresh
+
+    self.frame = CreateFrame("Frame")
+    self.frame:RegisterEvent("TRAIT_CONFIG_UPDATED")
+    self.frame:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED")
+    self.frame:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
+    -- Zone change: update instance cache cheaply
+    self.frame:RegisterEvent("PLAYER_ENTERING_WORLD")
+    self.frame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
+    -- NOTE: SPELL_UPDATE_COOLDOWN is intentionally NOT registered here.
+    -- The ticker handles updates at a controlled rate (default 0.2s) to avoid
+    -- the event-storm caused by rapid GCD/cooldown fires during combat.
+    self.frame:SetScript("OnEvent", function(selfFrame, event)
+        if event == "PLAYER_ENTERING_WORLD" or event == "ZONE_CHANGED_NEW_AREA" then
+            UpdateInstanceCache()
+            C_Timer.After(0.5, function() self:Initialize() end)
+        else
+            -- Talent / spec change
+            C_Timer.After(0.5, function() self:Initialize() end)
+        end
+    end)
+end
+
 function CooldownText:Refresh()
     if not mainContainer or not DB then return end
+
+    if not DB.enabled then
+        mainContainer:Hide()
+        return
+    end
+    mainContainer:Show()
     
     mainContainer:ClearAllPoints()
     mainContainer:SetPoint("CENTER", UIParent, "CENTER", DB.x, DB.y)
@@ -189,24 +224,22 @@ end
 
 function CooldownText:UpdateCooldowns()
     if not mainContainer or not DB then return end
+    if not DB.enabled then return end
     
-    local shouldHideAll = DB.onlyRaidDungeon and not IsInDungeonOrRaid()
+    local shouldHideAll = DB.onlyRaidDungeon and not cachedIsInDungeonOrRaid
 
     for i, spellObj in ipairs(trackedList) do
         local fs = self.fsPool[i]
         if fs then
             local durationObject = GetSpellCooldownDuration(spellObj.spellID)
             local actualCooldown = durationObject and durationObject:GetRemainingDuration(1) or 0
-            local cdString = string.format("%.1f", actualCooldown)
-            
-            -- Assign text unconditionally, acting exactly like test.lua does (bypassing logic taints)
-            fs:SetText(string.format("%s: %s", spellObj.runtimeName, cdString))
             
             if shouldHideAll then
-                -- Hide entirely when tracking rule fails or spell is strictly off cooldown
                 fs:SetAlpha(0)
             else
-                -- Route perfectly through secure C variables without branching on the Tainted Table
+                -- Build formatted string only when visible
+                fs:SetText(strformat("%s: %.1f", spellObj.runtimeName, actualCooldown))
+                -- Route through secure C variables without branching on the Tainted Table
                 local state = GetSpellCooldown(spellObj.spellID).isOnGCD ~= false
                 fs:SetAlphaFromBoolean(state, 0, 1)
             end
@@ -219,7 +252,7 @@ function CooldownText:StartTicker()
     if ticker then
         ticker:Cancel()
     end
-    local interval = DB.tickInterval or 0.1
+    local interval = DB.tickInterval or 0.2
     ticker = C_Timer.NewTicker(interval, function() self:UpdateCooldowns() end)
 end
 
@@ -294,6 +327,10 @@ function CooldownText.AddOptions(parent)
     header:SetPoint("TOPLEFT", 10, yOffset)
     header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
     yOffset = yOffset - 40
+
+    local masterBtn = GUI:CreateCheckbox(content, "Enable Cooldown Tracker", "enabled", DB, FullRefresh)
+    masterBtn:SetPoint("TOPLEFT", 10, yOffset)
+    yOffset = yOffset - 35
     
     local raidChk = GUI:CreateCheckbox(content, "Only show in Raid/Dungeon", "onlyRaidDungeon", DB, RefreshSettings)
     raidChk:SetPoint("TOPLEFT", 10, yOffset)
@@ -321,8 +358,8 @@ function CooldownText.AddOptions(parent)
     local tickLabel = content:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     tickLabel:SetText("Refresh Rate (s):")
     tickLabel:SetPoint("TOPLEFT", 15, yOffset - 5)
-    -- Options from 0.05 to 1.0 seconds
-    local tickSlider = GUI:CreateSlider(content, "", 0.05, 1.0, "tickInterval", DB, RefreshSettings, 0.05)
+    -- Options from 0.1 to 1.0 seconds
+    local tickSlider = GUI:CreateSlider(content, "", 0.1, 1.0, "tickInterval", DB, RefreshSettings, 0.05)
     tickSlider:SetPoint("LEFT", tickLabel, "RIGHT", 15, 0)
     if tickSlider.slider then tickSlider.slider:SetWidth(150) end
     yOffset = yOffset - 40
@@ -449,7 +486,7 @@ function CooldownText.AddOptions(parent)
             end
             
             local displayName = spellItem.text or "Auto-Name"
-            row.text:SetText(string.format("[%s]  %s  (|cffAAAAAAID: %d|r)", spellItem.class, displayName, spellItem.spellID))
+            row.text:SetText(strformat("[%s]  %s  (|cffAAAAAAID: %d|r)", spellItem.class, displayName, spellItem.spellID))
             
             row.btnDel:SetScript("OnClick", function()
                 table.remove(DB.spellsToTrack, index)
