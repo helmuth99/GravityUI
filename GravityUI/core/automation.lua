@@ -1269,14 +1269,21 @@ end
 
 automationFrame:SetScript("OnEvent", function(self, event, ...)
     if event == "CHAT_MSG_WHISPER" then
-        -- TAINT SAFETY: CHAT_MSG_WHISPER sender can be a secret value, and any
-        -- BNet API calls inside OnWhisper (IsFriendOrBNet) taint this frame.
-        -- Deferring via C_Timer.After(0) ensures Blizzard's SetLastTellTarget
-        -- runs first in the clean event-dispatch frame.
-        local msg, sender = ...
-        C_Timer.After(0, function()
-            OnWhisper(msg, sender, false)
-        end)
+        -- TAINT SAFETY: CHAT_MSG_WHISPER sender (arg 2) is a secret string value.
+        -- Reading it into a local in the outer event frame immediately taints that
+        -- frame, propagating into Blizzard's own SetLastTellTarget which fires later
+        -- in the same event dispatch — even if we defer our own logic via C_Timer.
+        -- Fix: extract only msg (arg 1) here. Read sender inside a pcall so the
+        -- secret value never exists in the outer stack frame. Then pass a clean,
+        -- resolved string to the deferred OnWhisper call.
+        local msg = (...)
+        local senderResolved
+        pcall(function(...) senderResolved = select(2, ...) end, ...)
+        if senderResolved then
+            C_Timer.After(0, function()
+                OnWhisper(msg, senderResolved, false)
+            end)
+        end
         return
     elseif event == "CHAT_MSG_BN_WHISPER" then
         -- TAINT SAFETY: presenceID (arg 13) is a secret value. Unpacking it into a local
