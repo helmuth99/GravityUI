@@ -225,15 +225,40 @@ end
 -- MOVER/INIT
 ---------------------------------------------------------------------------
 function WorldMarks:ToggleMover(forceState)
+    -- Ensure the mover exists before operating on it
     if not self.mover then self:CreateMover() end
-    local shouldShow = (forceState ~= nil) and forceState or not self.mover:IsShown()
-    if self.mover then
-        if shouldShow then
-            self.mover:Show(); frame:Show(); frame:SetAlpha(1)
-            if ns.Movers and ns.Movers.ApplyEditModeStyle then ns.Movers:ApplyEditModeStyle(self.mover, forceState == true) end
-        else
-            if ns.Movers and ns.Movers.ApplyEditModeStyle then ns.Movers:ApplyEditModeStyle(self.mover, false) end
-            self.mover:Hide(); self.Refresh()
+    if not self.mover then return end -- CreateMover failed (no frame yet)
+
+    -- NOTE: Cannot use `A and B or C` ternary when B can be false (Lua pitfall).
+    local shouldShow
+    if forceState ~= nil then
+        shouldShow = forceState  -- Explicit forced state: true=show, false=hide
+    else
+        shouldShow = not self.mover:IsShown()  -- No force: toggle current state
+    end
+
+    if shouldShow then
+        -- Force the actual frame visible so it can be dragged
+        if self.frame then self.frame:Show(); self.frame:SetAlpha(1) end
+        self.mover:Show()
+        if ns.Movers and ns.Movers.ApplyEditModeStyle then
+            ns.Movers:ApplyEditModeStyle(self.mover, true)
+        end
+    else
+        -- Remove edit-mode styling and hide the mover
+        if ns.Movers and ns.Movers.ApplyEditModeStyle then
+            ns.Movers:ApplyEditModeStyle(self.mover, false)
+        end
+        self.mover:Hide()
+        -- Restore the actual frame to its settings-driven state
+        local settings = GetSettings()
+        if self.frame and settings then
+            if not settings.enabled then
+                self.frame:Hide()
+            else
+                self.frame:Show()
+                self.frame:SetAlpha(settings.mouseover and 0 or 1)
+            end
         end
     end
 end
@@ -244,8 +269,6 @@ function WorldMarks:CreateMover()
     if not f then return end
     self.mover = CreateFrame("Frame", "GravityUI_WorldMarks_Mover", UIParent, "BackdropTemplate")
     self.mover:SetAllPoints(f)
-    self.mover:SetBackdrop({bgFile = [[Interface\ChatFrame\ChatFrameBackground]], edgeFile = [[Interface\ChatFrame\ChatFrameBackground]], edgeSize = 1})
-    self.mover:SetBackdropColor(0, 0.5, 0, 0.5); self.mover:SetBackdropBorderColor(0, 1, 0, 1)
     self.mover:EnableMouse(true); self.mover:SetMovable(true); self.mover:RegisterForDrag("LeftButton")
     self.mover:SetFrameStrata("DIALOG"); self.mover:Hide()
     local text = self.mover:CreateFontString(nil, "OVERLAY", "GameFontNormal")

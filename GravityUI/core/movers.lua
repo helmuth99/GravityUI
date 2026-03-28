@@ -60,27 +60,21 @@ function Movers:UpdateDisplay()
     local shouldShow = self.isEditMode and self.showGravityElements
     
     for name, data in pairs(self.registry) do
-        -- If a custom toggle function acts as a "SetShown", use it
-        -- Otherwise, assuming toggleFunc switches state, but we want absolute state.
-        -- Most existing toggles are "Toggle", not "Set".
-        -- We might need to wrap them or check their current state.
-        
-        -- PROPOSAL: The toggleFuncs should accept a boolean (enable/disable)
-        -- Or we handle the overlay here if there is no custom logic.
-        
         if data.toggleFunc then
-            -- Safe call
             pcall(data.toggleFunc, data.frame, shouldShow, shouldShow)
         elseif data.frame then
-            -- Default behavior: Show/Hide frame if it's a mover, or show an overlay?
-            -- If it's a structural frame (like Loot), we don't want to hide it, we want to enable its mover overlay/preview.
-            -- This implies the toggleFunc is critical for complex frames.
             if shouldShow then
                 data.frame:Show()
             else
                 data.frame:Hide()
             end
         end
+    end
+
+    -- WorldMarks uses a custom mover not reliably reached via the registry loop.
+    -- Call it explicitly to guarantee correct state on every display update.
+    if ns.WorldMarks and ns.WorldMarks.ToggleMover then
+        pcall(function() ns.WorldMarks:ToggleMover(shouldShow) end)
     end
 end
 
@@ -204,3 +198,11 @@ SlashCmdList["GRAVITYMOVERS"] = function()
     Movers:SetShowGravityElements(true)
     print("GravityUI: Movers Force Enabled")
 end
+
+-- Auto-initialize on login so HookEditMode() actually runs
+local _initFrame = CreateFrame("Frame")
+_initFrame:RegisterEvent("PLAYER_LOGIN")
+_initFrame:SetScript("OnEvent", function(self)
+    Movers:Initialize()
+    self:UnregisterAllEvents()
+end)
