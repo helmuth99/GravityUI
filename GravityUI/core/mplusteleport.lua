@@ -588,7 +588,11 @@ eventFrame:SetScript("OnEvent", function(_, event, ...)
         end
     elseif event == "GROUP_ROSTER_UPDATE" or event == "PLAYER_ENTERING_WORLD" then
         BroadcastKey(true)
-        MPlusTeleport:UpdateGroupKeys()
+        MPlusTeleport:UpdateGroupKeys() -- immediate refresh with what we already know
+        -- Replies from group members arrive asynchronously via CHAT_MSG_ADDON.
+        -- Do a second refresh after a short delay so late replies are included.
+        C_Timer.After(2, function() MPlusTeleport:UpdateGroupKeys() end)
+        C_Timer.After(5, function() MPlusTeleport:UpdateGroupKeys() end)
     elseif event == "BAG_UPDATE_DELAYED" then
         BroadcastKey(false)
         MPlusTeleport:UpdateGroupKeys()
