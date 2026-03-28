@@ -153,6 +153,20 @@ local function BuildMinimapPanel(parent)
         AddRow(mmContainer, "Slot " .. i, "dropdown", dataOptions, "content", cfg, refreshMinimap)
     end
     
+    mmContainer.rowCount = mmContainer.rowCount + 0.5 -- Spacer
+
+    local rowOptions = {
+        {value = 0,  text = "Unlimited"},
+        {value = 10, text = "10"},
+        {value = 15, text = "15"},
+        {value = 20, text = "20"},
+        {value = 25, text = "25"},
+        {value = 30, text = "30"},
+        {value = 40, text = "40"},
+        {value = 50, text = "50"},
+    }
+    AddRow(mmContainer, "Rows for Guild/Friends Frame", "dropdown", rowOptions, "popupMaxRows", mDT, nil)
+
     mmContainer:SetHeight(10 + (mmContainer.rowCount * (ROW_HEIGHT + 5)))
     y = y - mmContainer:GetHeight() - 10
     

@@ -1269,19 +1269,30 @@ end
 
 automationFrame:SetScript("OnEvent", function(self, event, ...)
     if event == "CHAT_MSG_WHISPER" then
+        -- TAINT SAFETY: CHAT_MSG_WHISPER sender can be a secret value, and any
+        -- BNet API calls inside OnWhisper (IsFriendOrBNet) taint this frame.
+        -- Deferring via C_Timer.After(0) ensures Blizzard's SetLastTellTarget
+        -- runs first in the clean event-dispatch frame.
         local msg, sender = ...
-        OnWhisper(msg, sender, false)
+        C_Timer.After(0, function()
+            OnWhisper(msg, sender, false)
+        end)
         return
     elseif event == "CHAT_MSG_BN_WHISPER" then
-        local msg, _, _, _, _, _, _, _, _, _, _, _, presenceID = ...
-        -- presenceID is a protected BN secret value - never store it in addon Lua state.
-        -- Resolve to a plain character name + gameAccountID via the API (both are untainted).
+        -- TAINT SAFETY: presenceID (arg 13) is a secret value. Unpacking it into a local
+        -- variable taints the calling Lua frame, which then propagates to Blizzard's own
+        -- SetLastTellTarget later in the same event dispatch. We extract only msg (arg 1)
+        -- safely, then resolve the BN identity entirely inside a pcall so the secret value
+        -- never exists in the outer stack frame at all.
+        local msg = (...)
         local bnSenderName, bnGameAccountID
-        local ok, accountInfo = pcall(C_BattleNet.GetAccountInfoByID, presenceID)
-        if ok and accountInfo and accountInfo.gameAccountInfo then
-            bnSenderName = accountInfo.gameAccountInfo.characterName
-            bnGameAccountID = accountInfo.gameAccountInfo.gameAccountID
-        end
+        pcall(function(...)
+            local accountInfo = C_BattleNet.GetAccountInfoByID(select(13, ...))
+            if accountInfo and accountInfo.gameAccountInfo then
+                bnSenderName = accountInfo.gameAccountInfo.characterName
+                bnGameAccountID = accountInfo.gameAccountInfo.gameAccountID
+            end
+        end, ...)
         if bnSenderName then
             OnWhisper(msg, bnSenderName, true, bnGameAccountID)
         end

@@ -1976,7 +1976,9 @@ end
 local afkEventFrame = CreateFrame("Frame", nil, nil, "SecureHandlerStateTemplate")
 afkEventFrame:RegisterEvent("PLAYER_REGEN_DISABLED")
 afkEventFrame:RegisterEvent("PLAYER_LEAVING_WORLD")
-afkEventFrame:RegisterEvent("PLAYER_FLAGS_CHANGED")
+-- NOTE: PLAYER_FLAGS_CHANGED is intentionally NOT registered here.
+-- UnitIsAFK() returns a secret boolean and causes taint. AFK state is
+-- detected taint-safely via RegisterStateDriver (see below).
 
 -- Failsafes if standard UI frames are triggered
 afkEventFrame:RegisterEvent("AUCTION_HOUSE_SHOW")
@@ -2004,22 +2006,6 @@ afkEventFrame:SetScript("OnEvent", function(self, event, ...)
     elseif event == "LFG_PROPOSAL_SHOW" or event == "UPDATE_BATTLEFIELD_STATUS" or event == "READY_CHECK" or event == "LFG_ROLE_CHECK_SHOW" then
         if AFKState.isAFK then
             ExitAFK()
-        end
-    elseif event == "PLAYER_FLAGS_CHANGED" then
-        local unit = ...
-        if unit == "player" then
-            local inInstance, instanceType = IsInInstance()
-            if inInstance and (instanceType == "pvp" or instanceType == "arena") then return end
-            
-            if UnitIsAFK("player") then
-                if not AFKState.isAFK then
-                    EnterAFK()
-                end
-            else
-                if AFKState.isAFK then
-                    ExitAFK()
-                end
-            end
         end
     end
 end)

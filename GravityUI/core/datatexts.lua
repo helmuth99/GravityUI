@@ -163,6 +163,18 @@ end
 
 -- Guild Cache
 local guildCache = { members = {}, lastUpdate = 0 }
+
+local function GetPopupMaxRows()
+    local db = ns.GetDB()
+    if db and db.minimap and db.minimap.datatext then
+        local v = tonumber(db.minimap.datatext.popupMaxRows)
+        if v == nil then return 25 end        -- default
+        if v == 0  then return math.huge end  -- unlimited
+        return v
+    end
+    return 25
+end
+
 local function BuildGuildCache()
     if not IsInGuild() then return end
     C_GuildInfo.GuildRoster() -- Request refresh
@@ -463,7 +475,7 @@ local guildPopup = nil
 
 local GUILD_POPUP_WIDTH      = 460
 local GUILD_POPUP_ROW_HEIGHT = 18
-local GUILD_POPUP_MAX_H      = 400
+local GUILD_POPUP_MAX_H      = 600
 local GUILD_POPUP_PAD        = 6
 local GUILD_POPUP_HDR_H      = 18
 
@@ -692,6 +704,10 @@ local function PopulateGuildPopup(anchor)
     local yOff = 0
     local innerW = content:GetWidth()
 
+    local MAX_ROWS = GetPopupMaxRows()
+    local dynamicGuildMaxH = (MAX_ROWS == math.huge)
+        and GUILD_POPUP_MAX_H
+        or  (GUILD_POPUP_PAD + GUILD_POPUP_HDR_H + 2 + 12 + 4 + MAX_ROWS * GUILD_POPUP_ROW_HEIGHT + GUILD_POPUP_PAD + 14 + 4)
     for i, info in ipairs(sorted) do
         local row = f.rows[i]
         if not row then
@@ -787,7 +803,7 @@ local function PopulateGuildPopup(anchor)
     -- Calculate popup height
     local hdrRegion   = GUILD_POPUP_PAD + GUILD_POPUP_HDR_H + 2 + 12 + 4  -- title + sep + col-headers + sep
     local footerH     = GUILD_POPUP_PAD + 14
-    local rowAreaH    = math.min(yOff, GUILD_POPUP_MAX_H - hdrRegion - footerH)
+    local rowAreaH    = math.min(yOff, dynamicGuildMaxH - hdrRegion - footerH)
     local totalH      = hdrRegion + rowAreaH + footerH + 4
 
     f:SetSize(GUILD_POPUP_WIDTH, totalH)
@@ -967,7 +983,7 @@ local friendsPopup = nil
 
 local FPOP_WIDTH      = 480
 local FPOP_ROW_HEIGHT = 18
-local FPOP_MAX_H      = 420
+local FPOP_MAX_H      = 600
 local FPOP_PAD        = 6
 local FPOP_HDR_H      = 18
 
@@ -1163,6 +1179,10 @@ local function PopulateFriendsPopup(anchor)
 
     local SECTION_H = 14  -- height of section label row
 
+    local MAX_ROWS = GetPopupMaxRows()
+    local dynamicFriendsMaxH = (MAX_ROWS == math.huge)
+        and FPOP_MAX_H
+        or  (FPOP_PAD + FPOP_HDR_H + 2 + 12 + 4 + MAX_ROWS * FPOP_ROW_HEIGHT + FPOP_PAD + 14 + 4)
     local function AddRow(level, levelColor, nameText, zoneText, noteText, whisperFn, inviteFn)
         rowIdx = rowIdx + 1
         local row = GetFriendRow(f, rowIdx)
@@ -1260,7 +1280,7 @@ local function PopulateFriendsPopup(anchor)
 
     local hdrRegion = FPOP_PAD + FPOP_HDR_H + 2 + 12 + 4
     local footerH   = FPOP_PAD + 14
-    local rowAreaH  = math.min(yOff, FPOP_MAX_H - hdrRegion - footerH)
+    local rowAreaH  = math.min(yOff, dynamicFriendsMaxH - hdrRegion - footerH)
     local totalH    = hdrRegion + rowAreaH + footerH + 4
 
     f:SetSize(FPOP_WIDTH, totalH)
