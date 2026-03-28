@@ -479,18 +479,25 @@ local function InjectUnitInfo(tooltip, data)
             local name
             pcall(function()
                 if unit then
-                    -- PvP title if enabled (like RoamyTooltip showTitle)
+                    -- PvP title if enabled – guard against empty string returns in instance context
                     local pvpName = UnitPVPName(unit)
-                    if pvpName and type(pvpName) == "string" then name = pvpName end
-                    if not name then name = UnitName(unit) end
+                    if pvpName and type(pvpName) == "string" and pvpName ~= "" then name = pvpName end
+                    -- UnitName returns (name, realm) – capture only name explicitly
+                    if not name or name == "" then
+                        local n = UnitName(unit)
+                        if n and n ~= "" then name = n end
+                    end
                 end
-                -- Fallback: strip color from existing text
-                if not name or type(name) ~= "string" then
+                -- Fallback: strip color codes from existing tooltip text
+                if not name or name == "" then
                     local t = nameLine:GetText()
-                    if t then name = t:gsub("|c%x%x%x%x%x%x%x%x",""):gsub("|r","") end
+                    if t then
+                        local stripped = t:gsub("|c%x%x%x%x%x%x%x%x",""):gsub("|r","")
+                        if stripped ~= "" then name = stripped end
+                    end
                 end
             end)
-            if name then
+            if name and name ~= "" then
                 local status = ""
                 pcall(function()
                     if unit then
@@ -529,8 +536,11 @@ local function InjectUnitInfo(tooltip, data)
             end)
         end
 
-        -- ── Iterate remaining FontStrings ───────────────────────────────────
+        -- ── Iterate remaining FontStrings ────────────────────────────────────
+        -- Also tracks whether Blizzard rendered the guild line so we can
+        -- fall back to AddLine only when it's missing (e.g. raid/instance).
         local skipFirst = true
+        local guildFoundInTooltip = false
         for _, fs in ipairs(regions) do
             if fs:GetObjectType() == "FontString" then
                 if skipFirst then
@@ -539,9 +549,10 @@ local function InjectUnitInfo(tooltip, data)
                     local text = fs:GetText()
                     if text and text ~= "" then
 
-                        -- Guild line
+                        -- Guild line: recolor Blizzard's own rendered line
                         if isPlayer and guildName and settings.showGuildInfo
                         and text:find(guildName, 1, true) then
+                            guildFoundInTooltip = true
                             local gc = settings.guildColor or {0.2, 0.9, 0.2, 1}
                             local gText = CHex(tonumber(gc[1]) or 0.2, tonumber(gc[2]) or 0.9, tonumber(gc[3]) or 0.2)
                                        .. "<" .. guildName .. ">|r"
@@ -590,6 +601,36 @@ local function InjectUnitInfo(tooltip, data)
             end
         end
 
+        -- ── Guild fallback (only if Blizzard didn't render the line) ─────────
+        -- In instances/raids Blizzard omits the guild line entirely; inject it.
+        if unit and isPlayer and guildName and settings.showGuildInfo
+        and not guildFoundInTooltip and not tooltip.__guiGuildAdded then
+            pcall(function()
+                local gc = settings.guildColor or {0.2, 0.9, 0.2, 1}
+                local gText = CHex(tonumber(gc[1]) or 0.2, tonumber(gc[2]) or 0.9, tonumber(gc[3]) or 0.2)
+                           .. "<" .. guildName .. ">|r"
+                if guildRank and guildRank ~= "" then
+                    gText = gText .. " |cffb0b0b0[" .. guildRank .. "]|r"
+                end
+                tooltip:AddLine(gText)
+                tooltip.__guiGuildAdded = true
+            end)
+        end
+
+        -- ── Server / Realm (only for cross-realm players) ────────────────
+        if unit and settings.showServer and not tooltip.__guiServerAdded then
+            pcall(function()
+                if not UnitIsPlayer(unit) then return end
+                -- UnitName returns a non-nil realm only for cross-realm players.
+                -- Same-realm players always return nil here, so no line is added.
+                local _, unitRealm = UnitName(unit)
+                if unitRealm and unitRealm ~= "" then
+                    tooltip:AddLine("|cffaaaaaa" .. "Server:|r |cffffffff" .. unitRealm .. "|r")
+                    tooltip.__guiServerAdded = true
+                end
+            end)
+        end
+
         -- ── Mount ───────────────────────────────────────────────────────────
         if unit and settings.showMount and not tooltip.__guiMountAdded then
             local mName = GetMountName(unit)
@@ -608,9 +649,9 @@ end
 local function InitHooks()
     SetupHealthBar()
 
-    -- Reset mount flag on clear/hide
-    GameTooltip:HookScript("OnTooltipCleared", function(self) self.__guiMountAdded = nil end)
-    GameTooltip:HookScript("OnHide", function(self) self.__guiMountAdded = nil end)
+    -- Reset per-tooltip injection flags on clear/hide
+    GameTooltip:HookScript("OnTooltipCleared", function(self) self.__guiMountAdded = nil; self.__guiServerAdded = nil; self.__guiGuildAdded = nil end)
+    GameTooltip:HookScript("OnHide", function(self) self.__guiMountAdded = nil; self.__guiServerAdded = nil; self.__guiGuildAdded = nil end)
 
     -- When leaving combat, refresh the tooltip if it's still visible.
     -- Guild, rank, mount and spec are skipped in combat; this picks them up again.

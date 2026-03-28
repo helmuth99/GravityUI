@@ -1383,6 +1383,7 @@ local function BuildTooltip(parent)
     MakeSubHeader("Mount")
     -- -------------------------------------------------------
     MakeRow("Show Mount Name", "checkbox", "showMount", dbTT, RefreshTooltip)
+    MakeRow("Show Server Name (cross-realm only)", "checkbox", "showServer", dbTT, RefreshTooltip)
 
     -- -------------------------------------------------------
     MakeSubHeader("Health Bar")
@@ -1529,109 +1530,6 @@ local function BuildCharacter(parent)
 end
 
 --==============================================================================================================================================================================================
--- BUILDER: STATIC POPUPS
---==============================================================================================================================================================================================
-local function BuildStaticPopupsPanel(parent)
-    local scroll, content = GUI:CreateScrollableContent(parent)
-    scroll:SetAllPoints()
-
-    local yOffset = -10
-    local PAD = 10
-
-    -- Guard: initialize if this is an existing profile missing this key
-    if not ns.db.profile.styling.staticPopups then
-        ns.db.profile.styling.staticPopups = {
-            enabled = true,
-            disableThemeColorBackground = false,
-            customBackgroundColor = { 0.07, 0.07, 0.07, 0.97 },
-            disableThemeColorFont = false,
-            customFontColor = { 1, 1, 1, 1 },
-        }
-    end
-    local db = ns.db.profile.styling.staticPopups
-
-    local header = GUI:CreateSectionHeader(content, "Static Popup Dialogs")
-    header:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - header.gap
-    yOffset = yOffset - 10
-
-    local infoBox = GUI:CreateInfoBox(content, "Skins Blizzard's popup dialogs: Group Invite, Duel, Resurrection, Trade requests, and more.")
-    infoBox:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - infoBox:GetHeight() - 10
-
-    local row1 = CreateStylingRow(content, "Enable Popup Skinning", "checkbox", "enabled", db, function()
-        if ns.Styling and ns.Styling.SkinStaticPopups then ns.Styling:SkinStaticPopups() end
-    end)
-    row1:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - ROW_HEIGHT - 5
-
-    -- Background Color
-    local bgPickerRow
-    local rowBg = CreateStylingRow(content, "Don't Use Theme for BG", "checkbox", "disableThemeColorBackground", db, function(value)
-        if bgPickerRow then
-            if value then bgPickerRow:Show() else bgPickerRow:Hide() end
-        end
-        if ns.Styling and ns.Styling.RefreshStaticPopups then ns.Styling:RefreshStaticPopups() end
-    end)
-    rowBg:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - ROW_HEIGHT - 5
-
-    bgPickerRow = CreateStylingRow(content, "Background Color", "color", "customBackgroundColor", db, function()
-        if ns.Styling and ns.Styling.RefreshStaticPopups then ns.Styling:RefreshStaticPopups() end
-    end)
-    bgPickerRow:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - ROW_HEIGHT - 5
-
-    if not db.disableThemeColorBackground then bgPickerRow:Hide() end
-
-    -- Font Color
-    local fontPickerRow
-    local rowFn = CreateStylingRow(content, "Don't Use Theme for Font", "checkbox", "disableThemeColorFont", db, function(value)
-        if fontPickerRow then
-            if value then fontPickerRow:Show() else fontPickerRow:Hide() end
-        end
-        if ns.Styling and ns.Styling.RefreshStaticPopups then ns.Styling:RefreshStaticPopups() end
-    end)
-    rowFn:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - ROW_HEIGHT - 5
-
-    fontPickerRow = CreateStylingRow(content, "Font Color", "color", "customFontColor", db, function()
-        if ns.Styling and ns.Styling.RefreshStaticPopups then ns.Styling:RefreshStaticPopups() end
-    end)
-    fontPickerRow:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - ROW_HEIGHT - 5
-
-    if not db.disableThemeColorFont then fontPickerRow:Hide() end
-
-    -- Border
-    local borderPickerRow
-    local rowHideBorder = CreateStylingRow(content, "Hide Border", "checkbox", "hideBorder", db, function()
-        if ns.Styling and ns.Styling.RefreshStaticPopups then ns.Styling:RefreshStaticPopups() end
-    end)
-    rowHideBorder:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - ROW_HEIGHT - 5
-
-    local rowBorderCustom = CreateStylingRow(content, "Don't Use Theme for Border", "checkbox", "disableThemeColorBorder", db, function(value)
-        if borderPickerRow then
-            if value then borderPickerRow:Show() else borderPickerRow:Hide() end
-        end
-        if ns.Styling and ns.Styling.RefreshStaticPopups then ns.Styling:RefreshStaticPopups() end
-    end)
-    rowBorderCustom:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - ROW_HEIGHT - 5
-
-    borderPickerRow = CreateStylingRow(content, "Border Color", "color", "customBorderColor", db, function()
-        if ns.Styling and ns.Styling.RefreshStaticPopups then ns.Styling:RefreshStaticPopups() end
-    end)
-    borderPickerRow:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - ROW_HEIGHT - 5
-
-    if not db.disableThemeColorBorder then borderPickerRow:Hide() end
-
-    content:SetHeight(math.abs(yOffset) + 20)
-end
-
---==============================================================================================================================================================================================
 -- MAIN STYLING PAGE
 --==============================================================================================================================================================================================
 GUI:RegisterPage("Styling", {
@@ -1645,7 +1543,6 @@ GUI:RegisterPage("Styling", {
         { name = "Game Menu", builder = BuildGameMenuPanel },
         { name = "Ready Check", builder = BuildReadyCheckPanel },
         { name = "Keystone", builder = BuildKeystonePanel },
-        { name = "Popups", builder = BuildStaticPopupsPanel },
         { name = "Power Bar", builder = BuildPowerBarPanel },
         { name = "Alert Frames", builder = BuildAlertsPanel },
         { name = "Chat Bubbles", builder = BuildChatBubblesPanel },
