@@ -70,6 +70,16 @@ ns.Defaults = {
             disableThemeColorFont = true,
             customFontColor = { 1, 1, 1, 1 },
         },
+        staticPopups = {
+            enabled = true,
+            disableThemeColorBackground = false,
+            customBackgroundColor = { 0.07, 0.07, 0.07, 0.97 },
+            disableThemeColorFont = false,
+            customFontColor = { 1, 1, 1, 1 },
+            hideBorder = false,
+            disableThemeColorBorder = false,
+            customBorderColor = { 1, 1, 1, 1 },
+        },
         keystone = {
             enabled = true, -- Toggles the skinning
             disableThemeColorBackground = false,

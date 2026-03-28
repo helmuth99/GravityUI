@@ -1708,248 +1708,6 @@ function Styling:SkinInstanceFrames()
 end
 
 -------------------------------------------------------------------------------
--- STATIC POPUPS (Group Invite, Duel, Resurrect, Trade, etc.)
--------------------------------------------------------------------------------
-
-local staticPopupHooked = false
-
-local function HideStaticPopupDecorations(popup)
-    -- Hide NineSlice / standard frame chrome
-    if popup.NineSlice then popup.NineSlice:SetAlpha(0) end
-    if popup.Border then popup.Border:SetAlpha(0) end
-    if popup.TopTileStreaks then popup.TopTileStreaks:SetAlpha(0) end
-    if popup.portrait then popup.portrait:SetAlpha(0) end
-    -- Generic texture pass (catches BG textures etc.)
-    for _, region in ipairs({ popup:GetRegions() }) do
-        if region:GetObjectType() == "Texture" then
-            region:SetAlpha(0)
-        end
-    end
-end
-
-local function SkinStaticPopupButton(button, sr, sg, sb, bgr, bgg, bgb, bga, fontPath)
-    if not button then return end
-    if button._guiSkinned then
-        -- Just refresh colors
-        if button.guiBackdrop then
-            local btnBgr = math.min(bgr + 0.09, 1)
-            local btnBgg = math.min(bgg + 0.09, 1)
-            local btnBgb = math.min(bgb + 0.09, 1)
-            button.guiBackdrop:SetBackdropColor(btnBgr, btnBgg, btnBgb, 1)
-            button.guiBackdrop:SetBackdropBorderColor(sr, sg, sb, 1)
-            button.guiSkinColor = { sr, sg, sb, 1 }
-        end
-        return
-    end
-
-    -- Strip default button chrome
-    if button.Left then button.Left:SetAlpha(0) end
-    if button.Right then button.Right:SetAlpha(0) end
-    if button.Middle then button.Middle:SetAlpha(0) end
-    if button.NineSlice then button.NineSlice:SetAlpha(0) end
-    local hl = button:GetHighlightTexture()
-    if hl then hl:SetAlpha(0) end
-    local pushed = button:GetPushedTexture()
-    if pushed then pushed:SetAlpha(0) end
-
-    -- Create backdrop
-    button.guiBackdrop = CreateFrame("Frame", nil, button, "BackdropTemplate")
-    button.guiBackdrop:SetAllPoints()
-    button.guiBackdrop:SetFrameLevel(button:GetFrameLevel())
-    button.guiBackdrop:EnableMouse(false)
-    button.guiBackdrop:SetBackdrop({
-        bgFile   = "Interface\\Buttons\\WHITE8x8",
-        edgeFile = "Interface\\Buttons\\WHITE8x8",
-        edgeSize = 1,
-        insets   = { left = 1, right = 1, top = 1, bottom = 1 },
-    })
-
-    local btnBgr = math.min(bgr + 0.09, 1)
-    local btnBgg = math.min(bgg + 0.09, 1)
-    local btnBgb = math.min(bgb + 0.09, 1)
-    button.guiBackdrop:SetBackdropColor(btnBgr, btnBgg, btnBgb, 1)
-    button.guiBackdrop:SetBackdropBorderColor(sr, sg, sb, 1)
-    button.guiSkinColor = { sr, sg, sb, 1 }
-
-    -- Hover flash
-    button:HookScript("OnEnter", function(self)
-        if self.guiBackdrop and self.guiSkinColor then
-            local r, g, b, a = unpack(self.guiSkinColor)
-            self.guiBackdrop:SetBackdropColor(math.min(btnBgr + 0.10, 1), math.min(btnBgg + 0.10, 1), math.min(btnBgb + 0.10, 1), 1)
-            self.guiBackdrop:SetBackdropBorderColor(math.min(r * 1.35, 1), math.min(g * 1.35, 1), math.min(b * 1.35, 1), a)
-        end
-    end)
-    button:HookScript("OnLeave", function(self)
-        if self.guiBackdrop and self.guiSkinColor then
-            self.guiBackdrop:SetBackdropColor(btnBgr, btnBgg, btnBgb, 1)
-            self.guiBackdrop:SetBackdropBorderColor(unpack(self.guiSkinColor))
-        end
-    end)
-
-    -- Font
-    local text = button:GetFontString()
-    if text and fontPath then
-        text:SetFont(fontPath, 12, "OUTLINE")
-        text:SetTextColor(0.92, 0.92, 0.92, 1)
-        text:SetShadowColor(0, 0, 0, 0.8)
-        text:SetShadowOffset(1, -1)
-    end
-
-    button._guiSkinned = true
-end
-
-local function ApplySkinToStaticPopup(popup, db, fontPath)
-    if not popup then return end
-    if not popup:IsShown() then return end
-
-    local sr, sg, sb, sa = ns.GetAccentColor()
-    local bgr, bgg, bgb, bga = ns.GetThemeBgColor()
-
-    if db.disableThemeColorBackground then
-        local c = db.customBackgroundColor
-        if c then bgr, bgg, bgb, bga = c[1], c[2], c[3], c[4] end
-    end
-
-    -- Border color resolution
-    local brdr, brdg, brdb, brda = sr, sg, sb, sa
-    if db.hideBorder then
-        brdr, brdg, brdb, brda = 0, 0, 0, 0
-    elseif db.disableThemeColorBorder then
-        local c = db.customBorderColor
-        if c then brdr, brdg, brdb, brda = c[1], c[2], c[3], c[4] end
-    end
-
-    local textR, textG, textB, textA = 0.92, 0.92, 0.92, 1
-    if db.disableThemeColorFont then
-        local c = db.customFontColor
-        if c then textR, textG, textB, textA = c[1], c[2], c[3], c[4] end
-    end
-
-    -- Hide Blizzard chrome
-    HideStaticPopupDecorations(popup)
-
-    -- Backdrop
-    if not popup.guiBackdrop then
-        popup.guiBackdrop = CreateFrame("Frame", nil, popup, "BackdropTemplate")
-        popup.guiBackdrop:SetPoint("TOPLEFT",     popup, "TOPLEFT",     -1,  1)
-        popup.guiBackdrop:SetPoint("BOTTOMRIGHT", popup, "BOTTOMRIGHT",  1, -1)
-        popup.guiBackdrop:SetFrameLevel(popup:GetFrameLevel())
-        popup.guiBackdrop:EnableMouse(false)
-        popup.guiBackdrop:SetBackdrop({
-            bgFile   = "Interface\\Buttons\\WHITE8x8",
-            edgeFile = "Interface\\Buttons\\WHITE8x8",
-            edgeSize = 1,
-            insets   = { left = 1, right = 1, top = 1, bottom = 1 },
-        })
-    end
-    popup.guiBackdrop:SetBackdropColor(bgr, bgg, bgb, bga)
-    popup.guiBackdrop:SetBackdropBorderColor(brdr, brdg, brdb, brda)
-
-    -- Skin buttons (button1, button2, button3, button4 are standard)
-    for i = 1, 4 do
-        SkinStaticPopupButton(popup["button" .. i], sr, sg, sb, bgr, bgg, bgb, bga, fontPath)
-    end
-    -- Extra buttons with different names
-    SkinStaticPopupButton(popup.extraButton, sr, sg, sb, bgr, bgg, bgb, bga, fontPath)
-
-    -- Main text
-    if popup.text then
-        popup.text:SetFont(fontPath, 13, "OUTLINE")
-        popup.text:SetTextColor(textR, textG, textB, textA)
-        popup.text:SetShadowColor(0, 0, 0, 0.8)
-        popup.text:SetShadowOffset(1, -1)
-    end
-    -- Sub texts
-    if popup.nameText then
-        popup.nameText:SetFont(fontPath, 12, "OUTLINE")
-        popup.nameText:SetTextColor(sr, sg, sb, 1) -- Accent color for names
-    end
-    if popup.subText then
-        popup.subText:SetFont(fontPath, 11, "OUTLINE")
-        popup.subText:SetTextColor(textR * 0.75, textG * 0.75, textB * 0.75, 1)
-    end
-    -- Some popups have a countdown text
-    if popup.timerText then
-        popup.timerText:SetFont(fontPath, 11, "OUTLINE")
-        popup.timerText:SetTextColor(sr, sg, sb, 1)
-    end
-
-    popup._guiPopupSkinned = true
-end
-
-function Styling:SkinStaticPopups()
-    local db = GetDB()
-    if not db then return end
-
-    -- Guard: initialize for existing profiles that predate this feature
-    if not db.staticPopups then
-        db.staticPopups = {
-            enabled = true,
-            disableThemeColorBackground = false,
-            customBackgroundColor = { 0.07, 0.07, 0.07, 0.97 },
-            disableThemeColorFont = false,
-            customFontColor = { 1, 1, 1, 1 },
-            hideBorder = false,
-            disableThemeColorBorder = false,
-            customBorderColor = { 1, 1, 1, 1 },
-        }
-    else
-        -- Backfill missing border keys for profiles that have the table but lack new keys
-        if db.staticPopups.hideBorder == nil then db.staticPopups.hideBorder = false end
-        if db.staticPopups.disableThemeColorBorder == nil then db.staticPopups.disableThemeColorBorder = false end
-        if db.staticPopups.customBorderColor == nil then db.staticPopups.customBorderColor = { 1, 1, 1, 1 } end
-    end
-
-    if not db.staticPopups.enabled then return end
-    if staticPopupHooked then return end
-
-    local fontPath = GetFontPath()
-    if not fontPath then return end
-
-    -- Hook all 4 popup slots
-    for i = 1, 4 do
-        local popup = _G["StaticPopup" .. i]
-        if popup then
-            popup:HookScript("OnShow", function(self)
-                local currentDb = GetDB()
-                if not currentDb or not currentDb.staticPopups or not currentDb.staticPopups.enabled then return end
-                local fp = GetFontPath()
-                if fp then
-                    ApplySkinToStaticPopup(self, currentDb.staticPopups, fp)
-                end
-            end)
-            -- Skin immediately if already visible (rare but possible)
-            if popup:IsShown() then
-                ApplySkinToStaticPopup(popup, db.staticPopups, fontPath)
-            end
-        end
-    end
-
-    staticPopupHooked = true
-end
-
-function Styling:RefreshStaticPopups()
-    local db = GetDB()
-    if not db or not db.staticPopups then return end
-
-    local fontPath = GetFontPath()
-    if not fontPath then return end
-
-    for i = 1, 4 do
-        local popup = _G["StaticPopup" .. i]
-        if popup and popup:IsShown() and popup._guiPopupSkinned then
-            -- Reset button skin state so they get refreshed
-            for j = 1, 4 do
-                local btn = popup["button" .. j]
-                if btn then btn._guiSkinned = nil end
-            end
-            if popup.extraButton then popup.extraButton._guiSkinned = nil end
-            ApplySkinToStaticPopup(popup, db.staticPopups, fontPath)
-        end
-    end
-end
-
--------------------------------------------------------------------------------
 -- INITIALIZATION
 -------------------------------------------------------------------------------
 function Styling:Initialize()
@@ -1966,7 +1724,6 @@ function Styling:Initialize()
     self:SkinReputationCurrency()
     self:SkinObjectiveTracker()
     self:SkinInstanceFrames()
-    self:SkinStaticPopups()
     
     -- Event registration for LoD addons
     local frame = CreateFrame("Frame")
@@ -2016,6 +1773,230 @@ function Styling:RefreshKeystone()
         if c then titleR, titleG, titleB, titleA = c[1], c[2], c[3], c[4] end
     end
     if frame.DungeonName then frame.DungeonName:SetTextColor(titleR, titleG, titleB, titleA) end
+end
+
+-------------------------------------------------------------------------------
+-- STATIC POPUPS (Group Invite, Duel, Resurrect, Trade, etc.)
+-------------------------------------------------------------------------------
+
+local staticPopupHooked = false
+
+local function HideStaticPopupDecorations(popup)
+    if popup.NineSlice then popup.NineSlice:SetAlpha(0) end
+    if popup.Border then popup.Border:SetAlpha(0) end
+    if popup.TopTileStreaks then popup.TopTileStreaks:SetAlpha(0) end
+    if popup.portrait then popup.portrait:SetAlpha(0) end
+    for _, region in ipairs({ popup:GetRegions() }) do
+        if region:GetObjectType() == "Texture" then
+            region:SetAlpha(0)
+        end
+    end
+end
+
+local function SkinStaticPopupButton(button, sr, sg, sb, bgr, bgg, bgb, bga, fontPath)
+    if not button then return end
+    if button._guiSkinned then
+        if button.guiBackdrop then
+            local btnBgr = math.min(bgr + 0.09, 1)
+            local btnBgg = math.min(bgg + 0.09, 1)
+            local btnBgb = math.min(bgb + 0.09, 1)
+            button.guiBackdrop:SetBackdropColor(btnBgr, btnBgg, btnBgb, 1)
+            button.guiBackdrop:SetBackdropBorderColor(sr, sg, sb, 1)
+            button.guiSkinColor = { sr, sg, sb, 1 }
+            button.guiBtnBg = { btnBgr, btnBgg, btnBgb }  -- keep hover colors in sync
+        end
+        return
+    end
+
+    if button.Left   then button.Left:SetAlpha(0) end
+    if button.Right  then button.Right:SetAlpha(0) end
+    if button.Middle then button.Middle:SetAlpha(0) end
+    if button.NineSlice then button.NineSlice:SetAlpha(0) end
+    local hl = button:GetHighlightTexture()
+    if hl then hl:SetAlpha(0) end
+    local pushed = button:GetPushedTexture()
+    if pushed then pushed:SetAlpha(0) end
+
+    button.guiBackdrop = CreateFrame("Frame", nil, button, "BackdropTemplate")
+    button.guiBackdrop:SetAllPoints()
+    button.guiBackdrop:SetFrameLevel(button:GetFrameLevel())
+    button.guiBackdrop:EnableMouse(false)
+    button.guiBackdrop:SetBackdrop({
+        bgFile   = "Interface\\Buttons\\WHITE8x8",
+        edgeFile = "Interface\\Buttons\\WHITE8x8",
+        edgeSize = 1,
+        insets   = { left = 1, right = 1, top = 1, bottom = 1 },
+    })
+
+    local btnBgr = math.min(bgr + 0.09, 1)
+    local btnBgg = math.min(bgg + 0.09, 1)
+    local btnBgb = math.min(bgb + 0.09, 1)
+    button.guiBackdrop:SetBackdropColor(btnBgr, btnBgg, btnBgb, 1)
+    button.guiBackdrop:SetBackdropBorderColor(sr, sg, sb, 1)
+    button.guiSkinColor = { sr, sg, sb, 1 }
+    -- Store hover bg on the button so OnEnter always uses current values after refresh
+    button.guiBtnBg = { btnBgr, btnBgg, btnBgb }
+
+    button:HookScript("OnEnter", function(self)
+        if self.guiBackdrop and self.guiSkinColor and self.guiBtnBg then
+            local r, g, b, a = unpack(self.guiSkinColor)
+            local br, bg_, bb = unpack(self.guiBtnBg)
+            self.guiBackdrop:SetBackdropColor(math.min(br + 0.10, 1), math.min(bg_ + 0.10, 1), math.min(bb + 0.10, 1), 1)
+            self.guiBackdrop:SetBackdropBorderColor(math.min(r * 1.35, 1), math.min(g * 1.35, 1), math.min(b * 1.35, 1), a)
+        end
+    end)
+    button:HookScript("OnLeave", function(self)
+        if self.guiBackdrop and self.guiSkinColor and self.guiBtnBg then
+            self.guiBackdrop:SetBackdropColor(unpack(self.guiBtnBg))
+            self.guiBackdrop:SetBackdropBorderColor(unpack(self.guiSkinColor))
+        end
+    end)
+
+    local text = button:GetFontString()
+    if text and fontPath then
+        text:SetFont(fontPath, 12, "OUTLINE")
+        text:SetTextColor(0.92, 0.92, 0.92, 1)
+        text:SetShadowColor(0, 0, 0, 0.8)
+        text:SetShadowOffset(1, -1)
+    end
+
+    button._guiSkinned = true
+end
+
+local function ApplySkinToStaticPopup(popup, db, fontPath)
+    if not popup then return end
+    if not popup:IsShown() then return end
+
+    local sr, sg, sb, sa = ns.GetAccentColor()
+    local bgr, bgg, bgb, bga = ns.GetThemeBgColor()
+
+    if db.disableThemeColorBackground then
+        local c = db.customBackgroundColor
+        if c then bgr, bgg, bgb, bga = c[1], c[2], c[3], c[4] end
+    end
+
+    local brdr, brdg, brdb, brda = sr, sg, sb, sa
+    if db.hideBorder then
+        brdr, brdg, brdb, brda = 0, 0, 0, 0
+    elseif db.disableThemeColorBorder then
+        local c = db.customBorderColor
+        if c then brdr, brdg, brdb, brda = c[1], c[2], c[3], c[4] end
+    end
+
+    local textR, textG, textB, textA = 0.92, 0.92, 0.92, 1
+    if db.disableThemeColorFont then
+        local c = db.customFontColor
+        if c then textR, textG, textB, textA = c[1], c[2], c[3], c[4] end
+    end
+
+    HideStaticPopupDecorations(popup)
+
+    if not popup.guiBackdrop then
+        popup.guiBackdrop = CreateFrame("Frame", nil, popup, "BackdropTemplate")
+        popup.guiBackdrop:SetPoint("TOPLEFT",     popup, "TOPLEFT",      -1,  1)
+        popup.guiBackdrop:SetPoint("BOTTOMRIGHT", popup, "BOTTOMRIGHT",   1, -1)
+        popup.guiBackdrop:SetFrameLevel(popup:GetFrameLevel())
+        popup.guiBackdrop:EnableMouse(false)
+        popup.guiBackdrop:SetBackdrop({
+            bgFile   = "Interface\\Buttons\\WHITE8x8",
+            edgeFile = "Interface\\Buttons\\WHITE8x8",
+            edgeSize = 1,
+            insets   = { left = 1, right = 1, top = 1, bottom = 1 },
+        })
+    end
+    popup.guiBackdrop:SetBackdropColor(bgr, bgg, bgb, bga)
+    popup.guiBackdrop:SetBackdropBorderColor(brdr, brdg, brdb, brda)
+
+    for i = 1, 4 do
+        SkinStaticPopupButton(popup["button" .. i], sr, sg, sb, bgr, bgg, bgb, bga, fontPath)
+    end
+    SkinStaticPopupButton(popup.extraButton, sr, sg, sb, bgr, bgg, bgb, bga, fontPath)
+
+    if popup.text then
+        popup.text:SetFont(fontPath, 13, "OUTLINE")
+        popup.text:SetTextColor(textR, textG, textB, textA)
+        popup.text:SetShadowColor(0, 0, 0, 0.8)
+        popup.text:SetShadowOffset(1, -1)
+    end
+    if popup.nameText then
+        popup.nameText:SetFont(fontPath, 12, "OUTLINE")
+        popup.nameText:SetTextColor(sr, sg, sb, 1)
+    end
+    if popup.subText then
+        popup.subText:SetFont(fontPath, 11, "OUTLINE")
+        popup.subText:SetTextColor(textR * 0.75, textG * 0.75, textB * 0.75, 1)
+    end
+    if popup.timerText then
+        popup.timerText:SetFont(fontPath, 11, "OUTLINE")
+        popup.timerText:SetTextColor(sr, sg, sb, 1)
+    end
+
+    popup._guiPopupSkinned = true
+end
+
+function Styling:SkinStaticPopups()
+    local db = GetDB()
+    if not db then return end
+
+    if not db.staticPopups then
+        db.staticPopups = {
+            enabled = true,
+            disableThemeColorBackground = false,
+            customBackgroundColor = { 0.07, 0.07, 0.07, 0.97 },
+            disableThemeColorFont = false,
+            customFontColor = { 1, 1, 1, 1 },
+            hideBorder = false,
+            disableThemeColorBorder = false,
+            customBorderColor = { 1, 1, 1, 1 },
+        }
+    else
+        if db.staticPopups.hideBorder          == nil then db.staticPopups.hideBorder          = false end
+        if db.staticPopups.disableThemeColorBorder == nil then db.staticPopups.disableThemeColorBorder = false end
+        if db.staticPopups.customBorderColor   == nil then db.staticPopups.customBorderColor   = { 1, 1, 1, 1 } end
+    end
+
+    if not db.staticPopups.enabled then return end
+    if staticPopupHooked then return end
+
+    local fontPath = GetFontPath()
+    if not fontPath then return end
+
+    for i = 1, 4 do
+        local popup = _G["StaticPopup" .. i]
+        if popup then
+            popup:HookScript("OnShow", function(self)
+                local currentDb = GetDB()
+                if not currentDb or not currentDb.staticPopups or not currentDb.staticPopups.enabled then return end
+                local fp = GetFontPath()
+                if fp then ApplySkinToStaticPopup(self, currentDb.staticPopups, fp) end
+            end)
+            if popup:IsShown() then
+                ApplySkinToStaticPopup(popup, db.staticPopups, fontPath)
+            end
+        end
+    end
+
+    staticPopupHooked = true
+end
+
+function Styling:RefreshStaticPopups()
+    local db = GetDB()
+    if not db or not db.staticPopups then return end
+
+    local fontPath = GetFontPath()
+    if not fontPath then return end
+
+    for i = 1, 4 do
+        local popup = _G["StaticPopup" .. i]
+        if popup and popup:IsShown() and popup._guiPopupSkinned then
+            for j = 1, 4 do
+                local btn = popup["button" .. j]
+                if btn then btn._guiSkinned = nil end
+            end
+            if popup.extraButton then popup.extraButton._guiSkinned = nil end
+            ApplySkinToStaticPopup(popup, db.staticPopups, fontPath)
+        end
+    end
 end
 
 function Styling:Refresh()
