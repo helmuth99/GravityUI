@@ -207,6 +207,10 @@ function Addon:OnEnable()
         ns.InterruptTracker.Initialize() 
         if ns.InterruptTracker.ApplySettings then ns.InterruptTracker.ApplySettings() end
     end
+
+    if ns.CDTracker and ns.CDTracker.Initialize then
+        ns.CDTracker.Initialize()
+    end
     
     if ns.Consumables and ns.Consumables.Initialize then 
         ns.Consumables.Initialize()
@@ -334,6 +338,7 @@ function Addon:PLAYER_ENTERING_WORLD(event, isInitialLogin, isReloadingUi)
         if ns.RaidWarnings and ns.RaidWarnings.Initialize then ns.RaidWarnings:Initialize() end
         if ns.TrackedBuffBar and ns.TrackedBuffBar.Init then ns.TrackedBuffBar:Init() end
         if ns.InterruptTracker and ns.InterruptTracker.Initialize then ns.InterruptTracker:Initialize() end
+        if ns.CDTracker and ns.CDTracker.Initialize then ns.CDTracker.Initialize() end
     end)
     
     -- CHUNK 3: +1.5 Seconds (Secondary Systems, Objectives, XP)

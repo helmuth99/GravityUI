@@ -189,11 +189,6 @@ local function CreateMarksBar()
             btn.text:Show(); btn.icon:Hide()
 
             btn:SetScript("OnEnter", function(self)
-                if frame:GetAlpha() > 0 then
-                    GameTooltip:SetOwner(self, "ANCHOR_TOP")
-                    GameTooltip:AddLine("Left: Mark | Shift+Left or Right: World Mark")
-                    GameTooltip:Show()
-                end
                 UpdateAlpha(1)
             end)
             btn:SetScript("OnLeave", function() GameTooltip:Hide(); if not frame:IsMouseOver() then UpdateAlpha(0) end end)
