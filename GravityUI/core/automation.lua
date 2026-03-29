@@ -502,11 +502,17 @@ local function OnWhisper(msg, sender, isBNet, bnGameAccountID)
     end
 
     if isBNet then
-        -- bnGameAccountID is fetched cleanly in the event handler (not tainted).
         if bnGameAccountID then
-            print("|cFF30D1FFGravityUI:|r Sending BNet Invite to " .. sender)
-            BNInviteFriend(bnGameAccountID)
+            -- Prefer BNet invite for cross-realm accuracy
+            local ok = pcall(BNInviteFriend, bnGameAccountID)
+            if ok then
+                print("|cFF30D1FFGravityUI:|r BNet invite sent to " .. sender)
+                return
+            end
         end
+        -- Fallback: invite via character name (works for same-realm and cross-realm)
+        print("|cFF30D1FFGravityUI:|r Sending invite to " .. sender)
+        C_PartyInfo.InviteUnit(sender)
     else
         print("|cFF30D1FFGravityUI:|r Sending Invite to " .. sender)
         C_PartyInfo.InviteUnit(sender)
@@ -1286,13 +1292,16 @@ automationFrame:SetScript("OnEvent", function(self, event, ...)
         end
         return
     elseif event == "CHAT_MSG_BN_WHISPER" then
-        -- TAINT SAFETY: presenceID (arg 13) is a secret value. Unpacking it into a local
-        -- variable taints the calling Lua frame, which then propagates to Blizzard's own
-        -- SetLastTellTarget later in the same event dispatch. We extract only msg (arg 1)
-        -- safely, then resolve the BN identity entirely inside a pcall so the secret value
-        -- never exists in the outer stack frame at all.
+        -- TAINT SAFETY: arg 13 (presenceID) is protected in Midnight.
+        -- We extract arg 1 (msg) and arg 2 (sender character name) safely,
+        -- then try to resolve the full BNet account info inside a pcall.
         local msg = (...)
-        local bnSenderName, bnGameAccountID
+        local bnSenderName, bnGameAccountID, bnFallbackName
+
+        -- Arg 2 = sender character name — safe to read from BNet events
+        pcall(function(...) bnFallbackName = select(2, ...) end, ...)
+
+        -- Try full BNet account resolution (may fail if API changed)
         pcall(function(...)
             local accountInfo = C_BattleNet.GetAccountInfoByID(select(13, ...))
             if accountInfo and accountInfo.gameAccountInfo then
@@ -1300,8 +1309,14 @@ automationFrame:SetScript("OnEvent", function(self, event, ...)
                 bnGameAccountID = accountInfo.gameAccountInfo.gameAccountID
             end
         end, ...)
-        if bnSenderName then
-            OnWhisper(msg, bnSenderName, true, bnGameAccountID)
+
+        -- Use resolved name, fall back to arg 2
+        local effectiveName = bnSenderName or bnFallbackName
+        if effectiveName then
+            local capturedID = bnGameAccountID
+            C_Timer.After(0, function()
+                OnWhisper(msg, effectiveName, true, capturedID)
+            end)
         end
         return
     end

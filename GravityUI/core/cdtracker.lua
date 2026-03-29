@@ -1,930 +1,1019 @@
 local ADDON_NAME, ns = ...
-
--- ============================================================================
--- GravityUI CD Tracker — Defensive & Offensive Cooldowns
--- Tracks party member cooldowns and attaches icon badges to party frames.
--- ============================================================================
-
 local CDTracker = {}
 ns.CDTracker = CDTracker
-
 LibStub("AceEvent-3.0"):Embed(CDTracker)
 
 -- ============================================================================
--- SPELL DATABASE
+-- SPELL DATABASE  (specID → list of {id, cd, cat, name})
+-- cat: "DEF" = defensive, "OFF" = offensive
 -- ============================================================================
--- cat: "DEFENSIVE" | "OFFENSIVE"
--- specID: 0 = all specs, number = specific specID, table = list of specIDs
--- cd: cooldown in seconds
+local SYNC_SPELLS = {
 
-local CD_CONFIG = {
-    -- ══════════════════════════════════════════
-    -- DEATH KNIGHT
-    -- ══════════════════════════════════════════
-    -- Defensive
-    { class = "DEATHKNIGHT", cat = "DEFENSIVE", spellID = 48792,  cd = 120,              }, -- Icebound Fortitude
-    { class = "DEATHKNIGHT", cat = "DEFENSIVE", spellID = 48707,  cd = 40,               }, -- Anti-Magic Shell
-    { class = "DEATHKNIGHT", cat = "DEFENSIVE", spellID = 51052,  cd = 120,              }, -- Anti-Magic Zone
-    { class = "DEATHKNIGHT", cat = "DEFENSIVE", spellID = 55233,  cd = 90,  specID = 250 }, -- Vampiric Blood (Blood)
-    -- Offensive
-    { class = "DEATHKNIGHT", cat = "OFFENSIVE", spellID = 49028,  cd = 45,  specID = 250 }, -- Dancing Rune Weapon (Blood)
-    { class = "DEATHKNIGHT", cat = "OFFENSIVE", spellID = 51271,  cd = 60,  specID = 251 }, -- Pillar of Frost (Frost)
-    { class = "DEATHKNIGHT", cat = "OFFENSIVE", spellID = 279302, cd = 180, specID = 251 }, -- Frostwyrm's Fury (Frost)
-    { class = "DEATHKNIGHT", cat = "OFFENSIVE", spellID = 42650,  cd = 180, specID = 252 }, -- Army of the Dead (Unholy)
-    { class = "DEATHKNIGHT", cat = "OFFENSIVE", spellID = 63560,  cd = 45,  specID = 252 }, -- Dark Transformation (Unholy)
+    -- ── Death Knight ──────────────────────────────────────────────────────
+    [250] = { -- Blood
+        { id=49028,  cd=90,  cat="OFF", name="Dancing Rune Weapon"  },
+        { id=51052,  cd=120, cat="DEF", name="Anti-Magic Zone"      },
+        { id=49039,  cd=120, cat="DEF", name="Lichborne"            },
+        { id=55233,  cd=180, cat="DEF", name="Vampiric Blood"       },
+        { id=48707,  cd=60,  cat="DEF", name="Anti-Magic Shell"     },
+        { id=48792,  cd=120, cat="DEF", name="Icebound Fortitude"   },
+    },
+    [251] = { -- Frost
+        { id=51052,  cd=120, cat="DEF", name="Anti-Magic Zone"      },
+        { id=49039,  cd=120, cat="DEF", name="Lichborne"            },
+        { id=48707,  cd=60,  cat="DEF", name="Anti-Magic Shell"     },
+        { id=48792,  cd=120, cat="DEF", name="Icebound Fortitude"   },
+    },
+    [252] = { -- Unholy
+        { id=42650,    cd=90,  cat="OFF", name="Army of the Dead"      },
+        { id=1233448,  cd=45,  cat="OFF", name="Dark Transformation"   },
+        { id=51052,    cd=120, cat="DEF", name="Anti-Magic Zone"       },
+        { id=49039,    cd=120, cat="DEF", name="Lichborne"             },
+        { id=48707,    cd=60,  cat="DEF", name="Anti-Magic Shell"      },
+        { id=48792,    cd=120, cat="DEF", name="Icebound Fortitude"    },
+    },
 
-    -- ══════════════════════════════════════════
-    -- DEMON HUNTER
-    -- ══════════════════════════════════════════
-    { class = "DEMONHUNTER", cat = "DEFENSIVE", spellID = 198589, cd = 60,  specID = 577 }, -- Blur (Havoc)
-    { class = "DEMONHUNTER", cat = "DEFENSIVE", spellID = 196718, cd = 180               }, -- Darkness
-    { class = "DEMONHUNTER", cat = "DEFENSIVE", spellID = 212800, cd = 180, specID = 577 }, -- Netherwalk (Havoc)
-    { class = "DEMONHUNTER", cat = "DEFENSIVE", spellID = 187827, cd = 120, specID = 581 }, -- Metamorphosis (Vengeance)
-    { class = "DEMONHUNTER", cat = "DEFENSIVE", spellID = 204021, cd = 60,  specID = 581 }, -- Fiery Brand (Vengeance)
-    { class = "DEMONHUNTER", cat = "OFFENSIVE", spellID = 191427, cd = 120, specID = 577 }, -- Metamorphosis (Havoc)
-    { class = "DEMONHUNTER", cat = "OFFENSIVE", spellID = 212084, cd = 60,  specID = 581 }, -- Fel Devastation (Vengeance)
+    -- ── Demon Hunter ──────────────────────────────────────────────────────
+    [577] = { -- Havoc
+        { id=198589, cd=60,  cat="DEF", name="Blur"                 },
+        { id=196555, cd=180, cat="DEF", name="Netherwalk"           },
+    },
+    [581] = { -- Vengeance
+        { id=204021, cd=60,  cat="DEF", name="Fiery Brand"          },
+        { id=187827, cd=120, cat="DEF", name="Metamorphosis"        },
+        { id=196718, cd=300, cat="DEF", name="Darkness"             },
+    },
 
-    -- ══════════════════════════════════════════
-    -- DRUID
-    -- ══════════════════════════════════════════
-    { class = "DRUID", cat = "DEFENSIVE", spellID = 22812,  cd = 60               }, -- Barkskin
-    { class = "DRUID", cat = "DEFENSIVE", spellID = 61336,  cd = 180, specID = 104 }, -- Survival Instincts (Guardian)
-    { class = "DRUID", cat = "DEFENSIVE", spellID = 102342, cd = 90,  specID = 105 }, -- Ironbark (Restoration)
-    { class = "DRUID", cat = "OFFENSIVE", spellID = 102558, cd = 180, specID = 104 }, -- Incarnation: Ursoc (Guardian)
-    { class = "DRUID", cat = "OFFENSIVE", spellID = 102560, cd = 180, specID = 102 }, -- Incarnation: Chosen of Elune (Balance)
-    { class = "DRUID", cat = "OFFENSIVE", spellID = 323764, cd = 60               }, -- Convoke the Spirits
+    -- ── Druid ─────────────────────────────────────────────────────────────
+    [102] = { -- Balance
+        { id=22812,  cd=60,  cat="DEF", name="Barkskin"             },
+        { id=194223, cd=180, cat="OFF", name="Celestial Alignment"  },
+    },
+    [103] = { -- Feral
+        { id=106951, cd=180, cat="OFF", name="Berserk"              },
+        { id=61336,  cd=180, cat="DEF", name="Survival Instincts"   },
+    },
+    [104] = { -- Guardian
+        { id=22812,  cd=60,  cat="DEF", name="Barkskin"             },
+        { id=102558, cd=180, cat="DEF", name="Incarnation"          },
+        { id=61336,  cd=180, cat="DEF", name="Survival Instincts"   },
+        { id=22842,  cd=36,  cat="DEF", name="Frenzied Regeneration" },
+    },
+    [105] = { -- Restoration
+        { id=22812,  cd=60,  cat="DEF", name="Barkskin"             },
+        { id=102342, cd=90,  cat="DEF", name="Ironbark"             },
+    },
 
-    -- ══════════════════════════════════════════
-    -- EVOKER
-    -- ══════════════════════════════════════════
-    { class = "EVOKER", cat = "DEFENSIVE", spellID = 363916, cd = 90,               }, -- Obsidian Scales
-    { class = "EVOKER", cat = "DEFENSIVE", spellID = 374227, cd = 120,              }, -- Renewing Blaze
-    { class = "EVOKER", cat = "DEFENSIVE", spellID = 363534, cd = 180, specID = 1468 }, -- Rewind (Preservation)
-    { class = "EVOKER", cat = "DEFENSIVE", spellID = 370537, cd = 90,  specID = 1468 }, -- Stasis (Preservation)
-    { class = "EVOKER", cat = "DEFENSIVE", spellID = 357170, cd = 60,  specID = 1468 }, -- Emerald Communion (Preservation)
-    { class = "EVOKER", cat = "OFFENSIVE", spellID = 375087, cd = 120, specID = 1467 }, -- Dragonrage (Devastation)
-    { class = "EVOKER", cat = "OFFENSIVE", spellID = 403631, cd = 120, specID = 1473 }, -- Upheaval (Augmentation)
+    -- ── Evoker ────────────────────────────────────────────────────────────
+    [1467] = { -- Devastation
+        { id=375087, cd=120, cat="OFF", name="Dragonrage"           },
+        { id=363916, cd=90,  cat="DEF", name="Obsidian Scales"      },
+        { id=357210, cd=120, cat="OFF", name="Deep Breath"          },
+        { id=374227, cd=120, cat="DEF", name="Zephyr"               },
+    },
+    [1468] = { -- Preservation
+        { id=357170, cd=60,  cat="DEF", name="Rewind"               },
+        { id=363916, cd=90,  cat="DEF", name="Obsidian Scales"      },
+        { id=374227, cd=120, cat="DEF", name="Zephyr"               },
+    },
+    [1473] = { -- Augmentation
+        { id=363916, cd=90,  cat="DEF", name="Obsidian Scales"      },
+        { id=403631, cd=120, cat="OFF", name="Breath of Eons"       },
+        { id=374227, cd=120, cat="DEF", name="Zephyr"               },
+    },
 
-    -- ══════════════════════════════════════════
-    -- HUNTER
-    -- ══════════════════════════════════════════
-    { class = "HUNTER", cat = "DEFENSIVE", spellID = 186265, cd = 180              }, -- Aspect of the Turtle
-    { class = "HUNTER", cat = "DEFENSIVE", spellID = 264735, cd = 180              }, -- Survival of the Fittest
-    { class = "HUNTER", cat = "DEFENSIVE", spellID = 109304, cd = 120              }, -- Exhilaration
-    { class = "HUNTER", cat = "OFFENSIVE", spellID = 288613, cd = 120, specID = 254 }, -- Trueshot (Marksmanship)
+    -- ── Hunter ────────────────────────────────────────────────────────────
+    [253] = { -- Beast Mastery
+        { id=19574,  cd=90,  cat="OFF", name="Bestial Wrath"        },
+        { id=186265, cd=180, cat="DEF", name="Aspect of the Turtle" },
+        { id=264735, cd=180, cat="DEF", name="Survival of the Fittest" },
+        { id=109304, cd=120, cat="DEF", name="Exhilaration"         },
+    },
+    [254] = { -- Marksmanship
+        { id=288613, cd=120, cat="OFF", name="Trueshot"             },
+        { id=186265, cd=180, cat="DEF", name="Aspect of the Turtle" },
+        { id=264735, cd=180, cat="DEF", name="Survival of the Fittest" },
+        { id=109304, cd=120, cat="DEF", name="Exhilaration"         },
+    },
+    [255] = { -- Survival
+        { id=266779, cd=120, cat="OFF", name="Coordinated Assault"  },
+        { id=186265, cd=180, cat="DEF", name="Aspect of the Turtle" },
+        { id=264735, cd=180, cat="DEF", name="Survival of the Fittest" },
+        { id=109304, cd=120, cat="DEF", name="Exhilaration"         },
+    },
 
-    -- ══════════════════════════════════════════
-    -- MAGE
-    -- ══════════════════════════════════════════
-    { class = "MAGE", cat = "DEFENSIVE", spellID = 414658, cd = 180              }, -- Ice Cold / Ice Block
-    { class = "MAGE", cat = "DEFENSIVE", spellID = 45438,  cd = 240              }, -- Ice Block
-    { class = "MAGE", cat = "DEFENSIVE", spellID = 342245, cd = 50               }, -- Alter Time
-    { class = "MAGE", cat = "DEFENSIVE", spellID = 235450, cd = 24,  specID = 62  }, -- Prismatic Barrier (Arcane)
-    { class = "MAGE", cat = "DEFENSIVE", spellID = 235313, cd = 24,  specID = 63  }, -- Blazing Barrier (Fire)
-    { class = "MAGE", cat = "DEFENSIVE", spellID = 11426,  cd = 24,  specID = 64  }, -- Ice Barrier (Frost)
-    { class = "MAGE", cat = "OFFENSIVE", spellID = 365350, cd = 120, specID = 62  }, -- Arcane Surge (Arcane)
-    { class = "MAGE", cat = "OFFENSIVE", spellID = 190319, cd = 60,  specID = 63  }, -- Combustion (Fire)
-    { class = "MAGE", cat = "OFFENSIVE", spellID = 205021, cd = 60,  specID = 64  }, -- Icy Veins (Frost)
+    -- ── Mage ──────────────────────────────────────────────────────────────
+    [62] = { -- Arcane
+        { id=365350, cd=90,  cat="OFF", name="Arcane Surge"         },
+        { id=45438,  cd=180, cat="DEF", name="Ice Block"            },
+        { id=55342,  cd=120, cat="DEF", name="Mirror Image"         },
+        { id=110959, cd=120, cat="DEF", name="Greater Invisibility" },
+    },
+    [63] = { -- Fire
+        { id=190319, cd=120, cat="OFF", name="Combustion"           },
+        { id=45438,  cd=180, cat="DEF", name="Ice Block"            },
+        { id=55342,  cd=120, cat="DEF", name="Mirror Image"         },
+        { id=110959, cd=120, cat="DEF", name="Greater Invisibility" },
+    },
+    [64] = { -- Frost
+        { id=12472,  cd=120, cat="OFF", name="Icy Veins"            },
+        { id=45438,  cd=180, cat="DEF", name="Ice Block"            },
+        { id=55342,  cd=120, cat="DEF", name="Mirror Image"         },
+        { id=110959, cd=120, cat="DEF", name="Greater Invisibility" },
+    },
 
-    -- ══════════════════════════════════════════
-    -- MONK
-    -- ══════════════════════════════════════════
-    { class = "MONK", cat = "DEFENSIVE", spellID = 115203, cd = 240               }, -- Fortifying Brew
-    { class = "MONK", cat = "DEFENSIVE", spellID = 122470, cd = 90,  specID = 269  }, -- Touch of Karma (Windwalker)
-    { class = "MONK", cat = "DEFENSIVE", spellID = 119582, cd = 15,  specID = 268  }, -- Purifying Brew (Brewmaster)
-    { class = "MONK", cat = "DEFENSIVE", spellID = 322507, cd = 45,  specID = 268  }, -- Celestial Brew (Brewmaster)
-    { class = "MONK", cat = "OFFENSIVE", spellID = 137639, cd = 90,  specID = 269  }, -- Storm, Earth, and Fire (Windwalker)
+    -- ── Monk ──────────────────────────────────────────────────────────────
+    [268] = { -- Brewmaster
+        { id=322507, cd=60,  cat="DEF", name="Celestial Brew"       },
+        { id=115203, cd=420, cat="DEF", name="Fortifying Brew"      },
+    },
+    [269] = { -- Windwalker
+        { id=116844, cd=45,  cat="DEF", name="Touch of Karma"       },
+        { id=137639, cd=90,  cat="OFF", name="Storm, Earth, and Fire" },
+        { id=122783, cd=90,  cat="DEF", name="Diffuse Magic"        },
+    },
+    [270] = { -- Mistweaver
+        { id=116844, cd=45,  cat="DEF", name="Touch of Karma"       },
+        { id=115310, cd=180, cat="DEF", name="Revival"              },
+        { id=122783, cd=90,  cat="DEF", name="Diffuse Magic"        },
+        { id=116849, cd=120, cat="DEF", name="Life Cocoon"          },
+    },
 
-    -- ══════════════════════════════════════════
-    -- PALADIN
-    -- ══════════════════════════════════════════
-    { class = "PALADIN", cat = "DEFENSIVE", spellID = 642,   cd = 300              }, -- Divine Shield
-    { class = "PALADIN", cat = "DEFENSIVE", spellID = 1022,  cd = 300              }, -- Blessing of Protection
-    { class = "PALADIN", cat = "DEFENSIVE", spellID = 6940,  cd = 120              }, -- Blessing of Sacrifice
-    { class = "PALADIN", cat = "DEFENSIVE", spellID = 31821, cd = 180, specID = 65  }, -- Aura Mastery (Holy)
-    { class = "PALADIN", cat = "OFFENSIVE", spellID = 31884, cd = 120              }, -- Avenging Wrath
+    -- ── Paladin ───────────────────────────────────────────────────────────
+    [65] = { -- Holy
+        { id=31821,  cd=180, cat="DEF", name="Aura Mastery"         },
+        { id=1022,   cd=300, cat="DEF", name="Blessing of Protection" },
+        { id=642,    cd=300, cat="DEF", name="Divine Shield"        },
+        { id=633,    cd=600, cat="DEF", name="Lay on Hands"         },
+        { id=498,    cd=60,  cat="DEF", name="Divine Protection"    },
+    },
+    [66] = { -- Protection
+        { id=31850,  cd=120, cat="DEF", name="Ardent Defender"      },
+        { id=86659,  cd=300, cat="DEF", name="Guardian of Ancient Kings" },
+        { id=642,    cd=300, cat="DEF", name="Divine Shield"        },
+        { id=633,    cd=600, cat="DEF", name="Lay on Hands"         },
+    },
+    [70] = { -- Retribution
+        { id=1022,   cd=300, cat="DEF", name="Blessing of Protection" },
+        { id=642,    cd=300, cat="DEF", name="Divine Shield"        },
+        { id=633,    cd=600, cat="DEF", name="Lay on Hands"         },
+        { id=184662, cd=120, cat="DEF", name="Shield of Vengeance"  },
+    },
 
-    -- ══════════════════════════════════════════
-    -- PRIEST
-    -- ══════════════════════════════════════════
-    { class = "PRIEST", cat = "DEFENSIVE", spellID = 33206, cd = 180, specID = 256 }, -- Pain Suppression (Discipline)
-    { class = "PRIEST", cat = "DEFENSIVE", spellID = 62618, cd = 180, specID = 256 }, -- Power Word: Barrier (Discipline)
-    { class = "PRIEST", cat = "DEFENSIVE", spellID = 47788, cd = 180, specID = 257 }, -- Guardian Spirit (Holy)
-    { class = "PRIEST", cat = "OFFENSIVE", spellID = 10060, cd = 120              }, -- Power Infusion
+    -- ── Priest ────────────────────────────────────────────────────────────
+    [256] = { -- Discipline
+        { id=10060,  cd=120, cat="OFF", name="Power Infusion"       },
+        { id=19236,  cd=90,  cat="DEF", name="Desperate Prayer"     },
+        { id=33206,  cd=180, cat="DEF", name="Pain Suppression"     },
+    },
+    [257] = { -- Holy
+        { id=10060,  cd=120, cat="OFF", name="Power Infusion"       },
+        { id=19236,  cd=90,  cat="DEF", name="Desperate Prayer"     },
+        { id=47788,  cd=180, cat="DEF", name="Guardian Spirit"      },
+    },
+    [258] = { -- Shadow
+        { id=10060,  cd=120, cat="OFF", name="Power Infusion"       },
+        { id=19236,  cd=90,  cat="DEF", name="Desperate Prayer"     },
+        { id=47585,  cd=120, cat="DEF", name="Dispersion"           },
+    },
 
-    -- ══════════════════════════════════════════
-    -- ROGUE
-    -- ══════════════════════════════════════════
-    { class = "ROGUE", cat = "DEFENSIVE", spellID = 31224, cd = 120              }, -- Cloak of Shadows
-    { class = "ROGUE", cat = "DEFENSIVE", spellID = 5277,  cd = 120              }, -- Evasion
-    { class = "ROGUE", cat = "DEFENSIVE", spellID = 1856,  cd = 120              }, -- Vanish
-    { class = "ROGUE", cat = "OFFENSIVE", spellID = 121471, cd = 120, specID = 261 }, -- Shadow Blades (Subtlety)
+    -- ── Rogue ─────────────────────────────────────────────────────────────
+    [259] = { -- Assassination
+        { id=31224,  cd=120, cat="DEF", name="Cloak of Shadows"     },
+        { id=5277,   cd=120, cat="DEF", name="Evasion"              },
+        { id=1856,   cd=120, cat="DEF", name="Vanish"               },
+    },
+    [260] = { -- Outlaw
+        { id=13750,  cd=180, cat="OFF", name="Adrenaline Rush"      },
+        { id=31224,  cd=120, cat="DEF", name="Cloak of Shadows"     },
+        { id=5277,   cd=120, cat="DEF", name="Evasion"              },
+        { id=1856,   cd=120, cat="DEF", name="Vanish"               },
+    },
+    [261] = { -- Subtlety
+        { id=121471, cd=180, cat="OFF", name="Shadow Blades"        },
+        { id=31224,  cd=120, cat="DEF", name="Cloak of Shadows"     },
+        { id=5277,   cd=120, cat="DEF", name="Evasion"              },
+        { id=1856,   cd=120, cat="DEF", name="Vanish"               },
+    },
 
-    -- ══════════════════════════════════════════
-    -- SHAMAN
-    -- ══════════════════════════════════════════
-    { class = "SHAMAN", cat = "DEFENSIVE", spellID = 108271, cd = 90               }, -- Astral Shift
-    { class = "SHAMAN", cat = "DEFENSIVE", spellID = 98008,  cd = 180, specID = 264 }, -- Spirit Link Totem (Restoration)
-    { class = "SHAMAN", cat = "DEFENSIVE", spellID = 198838, cd = 60,  specID = 264 }, -- Earthen Wall Totem (Restoration)
-    { class = "SHAMAN", cat = "OFFENSIVE", spellID = 114050, cd = 120, specID = 262 }, -- Ascendance (Elemental)
+    -- ── Shaman ────────────────────────────────────────────────────────────
+    [262] = { -- Elemental
+        { id=191634, cd=60,  cat="OFF", name="Stormkeeper"          },
+        { id=114050, cd=180, cat="OFF", name="Ascendance"           },
+        { id=108271, cd=90,  cat="DEF", name="Astral Shift"         },
+        { id=198103, cd=300, cat="DEF", name="Earth Elemental"      },
+        { id=108270, cd=60,  cat="DEF", name="Stone Bulwark Totem"  },
+    },
+    [263] = { -- Enhancement
+        { id=114050, cd=180, cat="OFF", name="Ascendance"           },
+        { id=108271, cd=90,  cat="DEF", name="Astral Shift"         },
+        { id=198103, cd=300, cat="DEF", name="Earth Elemental"      },
+    },
+    [264] = { -- Restoration
+        { id=108271, cd=90,  cat="DEF", name="Astral Shift"         },
+        { id=98008,  cd=180, cat="DEF", name="Spirit Link Totem"    },
+        { id=198103, cd=300, cat="DEF", name="Earth Elemental"      },
+        { id=108270, cd=60,  cat="DEF", name="Stone Bulwark Totem"  },
+    },
 
-    -- ══════════════════════════════════════════
-    -- WARLOCK
-    -- ══════════════════════════════════════════
-    { class = "WARLOCK", cat = "DEFENSIVE", spellID = 108416, cd = 45               }, -- Dark Pact
-    { class = "WARLOCK", cat = "DEFENSIVE", spellID = 104773, cd = 180              }, -- Unending Resolve
-    { class = "WARLOCK", cat = "OFFENSIVE", spellID = 265187, cd = 60,  specID = 266 }, -- Doom (Demonology) / Doomguard
-    { class = "WARLOCK", cat = "OFFENSIVE", spellID = 1122,   cd = 120, specID = 267 }, -- Summon Infernal (Destruction)
-    { class = "WARLOCK", cat = "OFFENSIVE", spellID = 18540,  cd = 120             }, -- Summon Doomguard
+    -- ── Warlock ───────────────────────────────────────────────────────────
+    [265] = { -- Affliction
+        { id=108416, cd=60,  cat="DEF", name="Dark Pact"            },
+        { id=104773, cd=180, cat="DEF", name="Unending Resolve"     },
+    },
+    [266] = { -- Demonology
+        { id=108416, cd=60,  cat="DEF", name="Dark Pact"            },
+        { id=104773, cd=180, cat="DEF", name="Unending Resolve"     },
+    },
+    [267] = { -- Destruction
+        { id=108416, cd=60,  cat="DEF", name="Dark Pact"            },
+        { id=104773, cd=180, cat="DEF", name="Unending Resolve"     },
+    },
 
-    -- ══════════════════════════════════════════
-    -- WARRIOR
-    -- ══════════════════════════════════════════
-    { class = "WARRIOR", cat = "DEFENSIVE", spellID = 871,    cd = 180, specID = 73  }, -- Shield Wall (Protection)
-    { class = "WARRIOR", cat = "DEFENSIVE", spellID = 118038, cd = 180, specID = 71  }, -- Die by the Sword (Arms)
-    { class = "WARRIOR", cat = "DEFENSIVE", spellID = 184364, cd = 120, specID = 72  }, -- Enraged Regeneration (Fury)
-    { class = "WARRIOR", cat = "DEFENSIVE", spellID = 23920,  cd = 25               }, -- Spell Reflect
-    { class = "WARRIOR", cat = "OFFENSIVE", spellID = 107574, cd = 90               }, -- Avatar
-    { class = "WARRIOR", cat = "OFFENSIVE", spellID = 1719,   cd = 90,  specID = 72  }, -- Recklessness (Fury)
+    -- ── Warrior ───────────────────────────────────────────────────────────
+    [71] = { -- Arms
+        { id=118038, cd=120, cat="DEF", name="Die by the Sword"     },
+        { id=97462,  cd=180, cat="DEF", name="Rallying Cry"         },
+        { id=23920,  cd=18,  cat="DEF", name="Spell Reflection"     },
+    },
+    [72] = { -- Fury
+        { id=184364, cd=120, cat="DEF", name="Enraged Regeneration" },
+        { id=97462,  cd=180, cat="DEF", name="Rallying Cry"         },
+        { id=23920,  cd=18,  cat="DEF", name="Spell Reflection"     },
+    },
+    [73] = { -- Protection
+        { id=871,    cd=168, cat="DEF", name="Shield Wall"          },
+        { id=12975,  cd=180, cat="DEF", name="Last Stand"           },
+        { id=97462,  cd=180, cat="DEF", name="Rallying Cry"         },
+        { id=23920,  cd=18,  cat="DEF", name="Spell Reflection"     },
+    },
 }
 
--- Runtime lookup tables
-local DEFENSIVES = {}   -- [spellID] = cd
-local OFFENSIVES = {}   -- [spellID] = cd
-local SPELL_CLASS = {}  -- [spellID] = class
-local SPELL_SPEC  = {}  -- [spellID] = specID or table of specIDs
-
-local function BuildCDTables()
-    for _, data in ipairs(CD_CONFIG) do
-        if data.cat == "DEFENSIVE" then
-            DEFENSIVES[data.spellID] = data.cd
-        else
-            OFFENSIVES[data.spellID] = data.cd
-        end
-        SPELL_CLASS[data.spellID] = data.class
-        if data.specID then
-            SPELL_SPEC[data.spellID] = data.specID
+-- Fast reverse lookup: spellID → { cd, cat, name }
+local SPELL_LOOKUP = {}
+for specID, spells in pairs(SYNC_SPELLS) do
+    for _, s in ipairs(spells) do
+        if not SPELL_LOOKUP[s.id] then
+            SPELL_LOOKUP[s.id] = { cd = s.cd, cat = s.cat, name = s.name }
         end
     end
 end
-BuildCDTables()
+ns.CDTracker.SYNC_SPELLS  = SYNC_SPELLS
+ns.CDTracker.SPELL_LOOKUP = SPELL_LOOKUP
+
+-- specID to class mapping (for the settings panel spell list)
+local SPEC_TO_CLASS = {
+    [250]="DEATHKNIGHT", [251]="DEATHKNIGHT", [252]="DEATHKNIGHT",
+    [577]="DEMONHUNTER", [581]="DEMONHUNTER",
+    [102]="DRUID",       [103]="DRUID",       [104]="DRUID",   [105]="DRUID",
+    [1467]="EVOKER",     [1468]="EVOKER",     [1473]="EVOKER",
+    [253]="HUNTER",      [254]="HUNTER",      [255]="HUNTER",
+    [62]="MAGE",         [63]="MAGE",         [64]="MAGE",
+    [268]="MONK",        [269]="MONK",         [270]="MONK",
+    [65]="PALADIN",      [66]="PALADIN",       [70]="PALADIN",
+    [256]="PRIEST",      [257]="PRIEST",       [258]="PRIEST",
+    [259]="ROGUE",       [260]="ROGUE",        [261]="ROGUE",
+    [262]="SHAMAN",      [263]="SHAMAN",       [264]="SHAMAN",
+    [265]="WARLOCK",     [266]="WARLOCK",      [267]="WARLOCK",
+    [71]="WARRIOR",      [72]="WARRIOR",       [73]="WARRIOR",
+}
+ns.CDTracker.SPEC_TO_CLASS = SPEC_TO_CLASS
 
 -- ============================================================================
--- PARTY FRAME DETECTION (DandersFrames / UUF / ElvUI / Grid2 / Blizzard)
+-- CLASS COLORS
 -- ============================================================================
-local activeSpecs = {} -- [guid] = specID
+local CLASS_COLORS = {
+    DEATHKNIGHT = {0.77,0.12,0.23}, DEMONHUNTER = {0.64,0.19,0.79},
+    DRUID       = {1.00,0.49,0.04}, EVOKER      = {0.20,0.58,0.50},
+    HUNTER      = {0.67,0.83,0.45}, MAGE        = {0.25,0.78,0.92},
+    MONK        = {0.00,1.00,0.59}, PALADIN     = {0.96,0.55,0.73},
+    PRIEST      = {1.00,1.00,1.00}, ROGUE       = {1.00,0.96,0.41},
+    SHAMAN      = {0.00,0.44,0.87}, WARLOCK     = {0.53,0.53,0.93},
+    WARRIOR     = {0.78,0.61,0.43},
+}
+
+-- ============================================================================
+-- DATABASE DEFAULTS
+-- ============================================================================
+local function GetDB()
+    local db = ns.GetDB()
+    if not db then return nil end
+    return db.cdTracker
+end
+
+-- ============================================================================
+-- STATE
+-- ============================================================================
+local cdState      = {}  -- [playerName][spellID] = cdEndTime
+local knownUsers   = {}  -- [playerName] = { class, specID, _hasAddon }
+local attachedBars = {}  -- [unit] = { frame, icons={spellID→ico} }
+local myName       = nil
+local myClass      = nil
+local mySpecID     = nil
+local inspectQueue = {}
+local inspectBusy  = false
+local testMode     = false
+
+-- Taint-safe unit name extraction
+local function SafeUnitName(unit)
+    if not unit then return nil end
+    local raw = UnitName(unit)
+    if not raw then return nil end
+    local ok, clean = pcall(string.format, "%s", raw)
+    return ok and clean or nil
+end
+
+-- ============================================================================
+-- NETWORKING  (prefix GRV_CD)
+-- ============================================================================
+local NET_PREFIX = "GRV_CD"
+local NET_HDR    = "G1"
+local NET_SEP    = ";"
+
+local function Transmit(payload)
+    if not IsInGroup() then return end
+    local channel = IsInGroup(LE_PARTY_CATEGORY_INSTANCE) and "INSTANCE_CHAT" or "PARTY"
+    local ok, ret = pcall(C_ChatInfo.SendAddonMessage, NET_PREFIX, payload, channel)
+    if ok and ret == 0 then return end
+    -- fallback PARTY
+    if channel ~= "PARTY" then
+        pcall(C_ChatInfo.SendAddonMessage, NET_PREFIX, payload, "PARTY")
+    end
+end
+
+local function NetMsg(...)
+    return table.concat({NET_HDR, ...}, NET_SEP)
+end
+
+-- Announce we joined (1x per zone/group)
+local lastHelloTime = 0
+local function AnnounceHello()
+    if not myClass then return end
+    local now = GetTime()
+    if now - lastHelloTime < 5 then return end
+    lastHelloTime = now
+    Transmit(NetMsg("HELLO", myClass))
+end
+
+-- Broadcast own spell cast
+local function AnnounceSpellCast(spellID, duration)
+    Transmit(NetMsg("CAST", spellID, duration))
+end
+
+-- ============================================================================
+-- INSPECT QUEUE (spec detection)
+-- ============================================================================
+local function ProcessInspectQueue()
+    if inspectBusy then return end
+    while #inspectQueue > 0 do
+        local unit = table.remove(inspectQueue, 1)
+        if UnitExists(unit) and UnitIsConnected(unit) then
+            local name = SafeUnitName(unit)
+            if name then
+                inspectBusy = true
+                NotifyInspect(unit)
+                return
+            end
+        end
+    end
+end
+
+local function QueueInspect(unit)
+    for _, u in ipairs(inspectQueue) do
+        if u == unit then return end
+    end
+    table.insert(inspectQueue, unit)
+    ProcessInspectQueue()
+end
+
+-- ============================================================================
+-- SPELLS FOR PLAYER (spec-filtered, category-filtered)
+-- ============================================================================
+local function GetSpellsForPlayer(name)
+    local user = knownUsers[name]
+    if not user then return {} end
+    local specID = user.specID
+    if not specID or not SYNC_SPELLS[specID] then return {} end
+    local db = GetDB()
+    if not db then return {} end
+    local disabled = db.disabledSpells or {}
+    local out = {}
+    for _, s in ipairs(SYNC_SPELLS[specID]) do
+        if (s.cat == "DEF" and db.showDEF) or (s.cat == "OFF" and db.showOFF) then
+            if disabled[s.id] ~= false then   -- false = manually disabled
+                table.insert(out, s)
+            end
+        end
+    end
+    return out
+end
+
+-- ============================================================================
+-- PARTY FRAME DETECTION
+-- ============================================================================
+-- Helper: scan children of a container frame for a unit match
+local function ScanChildren(container, unit)
+    if not container then return nil end
+    local ok, n = pcall(container.GetNumChildren, container)
+    if not ok or not n or n == 0 then return nil end
+    local ok2, children = pcall(function() return {container:GetChildren()} end)
+    if not ok2 or not children then return nil end
+    for _, child in ipairs(children) do
+        if child then
+            local childUnit = child.unit or child.displayedUnit or child.unitId
+            if childUnit then
+                local uok, isU = pcall(UnitIsUnit, childUnit, unit)
+                if uok and isU then return child end
+            end
+        end
+    end
+    return nil
+end
 
 local function GetPartyUnitFrame(unit)
-    local function IsValid(f) return f and f:IsVisible() end
-    local function UnitMatch(f)
-        if not f then return false end
-        local fu = f.unit or (f.GetAttribute and f:GetAttribute("unit"))
-        return fu and UnitIsUnit(fu, unit)
-    end
+    local function vis(f) return f and f:IsShown() end
 
-    -- 1. DandersFrames / DUI
-    if _G["DandersPartyHeader"] or _G["DUI_PlayerFrame"] or _G["DandersPlayerFrame"] then
-        for i = 1, 5 do
-            local f = _G["DUI_PartyFrame"..i]
-                   or _G["DUI_UnitFrameParty"..i]
-                   or _G["DandersPartyHeaderUnitButton"..i]
-                   or _G["DUI_PartyGroup1UnitButton"..i]
-            if IsValid(f) and UnitMatch(f) then return f end
-        end
-        if unit == "player" then
-            local p = _G["DUI_PlayerFrame"] or _G["DandersPlayerFrame"] or _G["DandersPartyHeaderUnitButton0"]
-            if IsValid(p) then return p end
-        end
-    end
-
-    -- 2. ElvUI
+    -- Third-party unit frame addons (ElvUI)
     if _G["ElvUI"] then
-        for i = 1, 5 do
-            local f = _G["ElvUF_PartyGroup1UnitButton"..i]
-            if IsValid(f) and UnitMatch(f) then return f end
+        local group = _G["ElvUF_PartyGroup1"]
+        if group then
+            local f = ScanChildren(group, unit)
+            if vis(f) then return f end
         end
         if unit == "player" then
-            local p = _G["ElvUF_Player"]
-            if IsValid(p) then return p end
+            local pf = _G["ElvUF_Player"]
+            if vis(pf) then return pf end
         end
-    end
-
-    -- 3. Grid2
-    if _G["Grid2LayoutFrame"] then
         for i = 1, 5 do
-            local f = _G["Grid2LayoutHeader1UnitButton"..i]
-            if IsValid(f) and UnitMatch(f) then return f end
+            local f = _G["ElvUF_PartyGroup1UnitButton" .. i]
+            if vis(f) and f.unit and UnitIsUnit(f.unit, unit) then return f end
         end
     end
 
-    -- 4. Blizzard CompactParty
-    for i = 1, 5 do
-        local f = _G["CompactPartyFrameMember"..i]
-        if IsValid(f) and UnitMatch(f) then return f end
+    -- Unit frame addon support (scan known container globals)
+    local danContainers = {
+        "DandersPartyHeader",
+        "DandersPartyHeaderContainer",
+        "DandersPartyFrame",
+        "DandersGroupFrame",
+    }
+    for _, cname in ipairs(danContainers) do
+        local container = _G[cname]
+        if container then
+            -- Scan children of the container
+            local f = ScanChildren(container, unit)
+            if vis(f) then return f end
+            -- Also try numbered unit buttons
+            for i = 0, 5 do
+                local btn = _G[cname .. "UnitButton" .. i]
+                if btn then
+                    local btnUnit = btn.unit or btn.displayedUnit
+                    if btnUnit then
+                        local ok, isU = pcall(UnitIsUnit, btnUnit, unit)
+                        if ok and isU and vis(btn) then return btn end
+                    end
+                end
+            end
+        end
+    end
+    -- Scan numbered unit buttons
+    for i = 0, 5 do
+        local btn = _G["DandersPartyHeaderUnitButton" .. i]
+        if btn then
+            local btnUnit = btn.unit or btn.displayedUnit
+            if btnUnit then
+                local ok, isU = pcall(UnitIsUnit, btnUnit, unit)
+                if ok and isU and vis(btn) then return btn end
+            end
+        end
     end
     if unit == "player" then
-        local p = _G["PlayerFrame"]
-        if IsValid(p) then return p end
+        local pf = _G["DandersPlayerFrame"]
+        if vis(pf) then return pf end
+    end
+
+    -- Additional unit frame addon globals
+    for _, gname in ipairs({"UUF_PartyGroup", "UUFPartyGroup", "UUFPartyHeader"}) do
+        local container = _G[gname]
+        if container then
+            local f = ScanChildren(container, unit)
+            if vis(f) then return f end
+        end
+    end
+
+    -- Blizzard party frames
+    local pf = _G["PartyFrame"]
+    if pf then
+        for i = 1, 4 do
+            local f = pf["MemberFrame" .. i]
+            if f and f.unit then
+                local ok, isU = pcall(UnitIsUnit, f.unit, unit)
+                if ok and isU then return f end  -- show even if not visible
+            end
+        end
+        local f2 = ScanChildren(pf, unit)
+        if f2 then return f2 end
+    end
+
+    -- Blizzard Compact Frames
+    for i = 1, 5 do
+        local f = _G["CompactPartyFrameMember" .. i]
+        if f and f.unit then
+            local ok, isU = pcall(UnitIsUnit, f.unit, unit)
+            if ok and isU then return f end
+        end
+    end
+    for i = 1, 40 do
+        local f = _G["CompactRaidFrame" .. i]
+        if f and f.unit then
+            local ok, isU = pcall(UnitIsUnit, f.unit, unit)
+            if ok and isU then return f end
+        end
+    end
+
+    -- PlayerFrame fallback
+    if unit == "player" then
+        local pf2 = _G["PlayerFrame"]
+        if pf2 then return pf2 end  -- attach even if hidden
     end
 
     return nil
 end
 
+-- ICON CREATION
 -- ============================================================================
--- SETTINGS
--- ============================================================================
-local function GetSettings(trackerType)
-    local db = ns.GetDB()
-    if not db then return nil end
-    if trackerType == "DEFENSIVE" then
-        return db.defensiveTracker
-    else
-        return db.offensiveTracker
-    end
-end
+local function CreateSpellIcon(parent, spellID, cd)
+    local db = GetDB()
+    local sz = (db and db.iconSize) or 28
 
-local function IsSpellEnabled(trackerType, spellID)
-    local s = GetSettings(trackerType)
-    if not s then return true end
-    if s.disabledSpells and s.disabledSpells[spellID] == false then
-        return false
-    end
-    return true
-end
+    local f = CreateFrame("Frame", nil, parent)
+    f:SetSize(sz, sz)
 
--- ============================================================================
--- ICON MANAGEMENT (per-unit, per-spell icon badges on party frames)
--- ============================================================================
--- iconState[unit][spellID] = { frame, expiration, duration, class }
-local iconState = {}
-local UNITS = { "player", "party1", "party2", "party3", "party4" }
+    -- Spell icon texture
+    f.tex = f:CreateTexture(nil, "ARTWORK")
+    f.tex:SetAllPoints()
+    f.tex:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+    local iconFile = C_Spell.GetSpellTexture(spellID)
+    if iconFile then f.tex:SetTexture(iconFile) end
 
-local LSM = LibStub("LibSharedMedia-3.0", true)
+    -- 1px black border
+    local border = f:CreateTexture(nil, "BORDER")
+    border:SetPoint("TOPLEFT",     f, "TOPLEFT",     -1,  1)
+    border:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT",  1, -1)
+    border:SetColorTexture(0, 0, 0, 1)
+    f.border = border
 
-local function GetFont(s)
-    if not s then return "Fonts\\FRIZQT__.TTF", 10 end
-    local fontName = s.font or "Gravity"
-    local size = s.fontSize or 10
-    local path = "Fonts\\FRIZQT__.TTF"
-    if LSM then path = LSM:Fetch("font", fontName) or path end
-    return path, size
-end
+    -- Cooldown swipe (CooldownFrameTemplate)
+    f.cd = CreateFrame("Cooldown", nil, f, "CooldownFrameTemplate")
+    f.cd:SetAllPoints()
+    f.cd:SetDrawEdge(true)
+    f.cd:SetReverse(false)
+    f.cd:SetHideCountdownNumbers(true)
 
-local function CreateIconBadge(parent, spellID, trackerType)
-    local s = GetSettings(trackerType)
-    local iconSize = (s and s.iconSize) or 28
+    -- Text overlay above swipe
+    local textHolder = CreateFrame("Frame", nil, f)
+    textHolder:SetAllPoints()
+    textHolder:SetFrameLevel(f:GetFrameLevel() + 20)
 
-    local f = CreateFrame("Frame", nil, parent, "BackdropTemplate")
-    f:SetSize(iconSize, iconSize)
+    f.cdText = textHolder:CreateFontString(nil, "OVERLAY")
+    f.cdText:SetFont("Fonts\\FRIZQT__.TTF", (db and db.fontSize) or 11, "OUTLINE")
+    f.cdText:SetPoint("CENTER")
+    f.cdText:Hide()
 
-    -- Spell icon
-    f.icon = f:CreateTexture(nil, "ARTWORK")
-    f.icon:SetAllPoints()
-    f.icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
-    local tex = C_Spell.GetSpellTexture(spellID)
-    f.icon:SetTexture(tex)
-
-    -- Cooldown overlay (desaturated when on CD)
-    f.overlay = f:CreateTexture(nil, "OVERLAY")
-    f.overlay:SetAllPoints()
-    f.overlay:SetColorTexture(0, 0, 0, 0.55)
-    f.overlay:Hide()
-
-    -- Timer text
-    f.timer = f:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    local font, size = GetFont(s)
-    f.timer:SetFont(font, size, "OUTLINE")
-    f.timer:SetPoint("CENTER", 0, 0)
-    f.timer:SetText("")
-
-    -- Black border
-    f:SetBackdrop({
-        bgFile = "Interface\\Buttons\\WHITE8x8",
-        edgeFile = "Interface\\Buttons\\WHITE8x8",
-        edgeSize = 1,
-        insets = { left = 0, right = 0, top = 0, bottom = 0 }
-    })
-    f:SetBackdropColor(0, 0, 0, 0)
-    f:SetBackdropBorderColor(0, 0, 0, 1)
+    -- Tooltip
+    f:EnableMouse(true)
+    f:SetScript("OnEnter", function()
+        GameTooltip:SetOwner(f, "ANCHOR_RIGHT")
+        GameTooltip:SetSpellByID(spellID)
+        GameTooltip:Show()
+    end)
+    f:SetScript("OnLeave", function() GameTooltip:Hide() end)
 
     f.spellID = spellID
-    f.trackerType = trackerType
-    f.expiration = 0
-    f.duration = 0
-
+    f._cd     = cd or 30
+    f._cdRunning = false
     return f
 end
 
--- Lays out the icon badges for a unit next to its party frame.
--- anchorSide  = which side of the frame icons are attached to (LEFT/RIGHT/TOP/BOTTOM)
--- growDirection = which direction subsequent icons extend (LEFT/RIGHT/UP/DOWN)
-local function LayoutIconsForUnit(unit, trackerType)
-    local s = GetSettings(trackerType)
-    if not s or not s.enabled then return end
+-- ============================================================================
+-- ICON UPDATE  (called from ticker)
+-- ============================================================================
+local function FormatCdTime(sec)
+    if sec >= 60 then
+        return string.format("%d:%02d", math.floor(sec / 60), sec % 60)
+    end
+    return tostring(sec)
+end
 
-    local unitIcons = iconState[unit]
-    if not unitIcons then return end
+local function UpdateIcon(ico, cdEndTime)
+    local now = GetTime()
+    if cdEndTime > now then
+        local rem = cdEndTime - now
+        if not ico._cdRunning then
+            ico.cd:SetCooldown(cdEndTime - ico._cd, ico._cd)
+            ico._cdRunning = true
+        end
+        local sec = math.floor(rem + 0.5)
+        if ico._lastSec ~= sec then
+            ico._lastSec = sec
+            ico.cdText:SetText(sec > 0 and FormatCdTime(sec) or "")
+            ico.cdText:Show()
+        end
+        ico.tex:SetAlpha(0.35)
+    else
+        if ico._cdRunning then
+            ico.cd:Clear()
+            ico._cdRunning = false
+            ico._lastSec   = nil
+            ico.cdText:Hide()
+            ico.tex:SetAlpha(1.0)
+        end
+    end
+end
 
-    local partyFrame = GetPartyUnitFrame(unit)
-    if not partyFrame then
-        for _, info in pairs(unitIcons) do
-            if info.trackerType == trackerType and info.frame then
-                info.frame:Hide()
+-- ============================================================================
+-- BUILD ATTACHED BAR  (icons parented to party unit frame)
+-- ============================================================================
+local ATTACH_CFG = {
+    LEFT   = { anchor="RIGHT",  relAnchor="LEFT",   ox=-4, oy=0 },
+    RIGHT  = { anchor="LEFT",   relAnchor="RIGHT",  ox=4,  oy=0 },
+    TOP    = { anchor="BOTTOM", relAnchor="TOP",    ox=0,  oy=4 },
+    BOTTOM = { anchor="TOP",    relAnchor="BOTTOM", ox=0,  oy=-4 },
+}
+
+local function BuildAttachedBar(unit, name)
+    local db = GetDB()
+    if not db or not db.enabled then return end
+
+    local parentFrame = GetPartyUnitFrame(unit)
+    local user = knownUsers[name]
+    local specID = user and user.specID
+
+    -- Clean up old bar
+    local existing = attachedBars[unit]
+    if existing and existing.frame then
+        existing.frame:Hide()
+        attachedBars[unit] = nil
+    end
+
+    if not parentFrame then return end
+    if not user then return end
+
+    local spells = GetSpellsForPlayer(name)
+    if #spells == 0 then return end
+
+    local sz  = db.iconSize    or 28
+    local pad = db.iconSpacing or 4
+    local pos = db.attachPos   or "LEFT"
+    local cfg = ATTACH_CFG[pos] or ATTACH_CFG.LEFT
+    local oX  = (db.offsetX or 0)
+    local oY  = (db.offsetY or 0)
+
+    local bar = { icons = {} }
+    bar.frame = CreateFrame("Frame", nil, parentFrame)
+    bar.frame:SetFrameLevel(parentFrame:GetFrameLevel() + 10)
+    bar.frame:SetPoint(cfg.anchor, parentFrame, cfg.relAnchor, cfg.ox + oX, cfg.oy + oY)
+
+    -- Two rows: DEF (top), OFF (bottom) or single row depending on what's enabled
+    local defSpells, offSpells = {}, {}
+    for _, s in ipairs(spells) do
+        if s.cat == "DEF" then table.insert(defSpells, s)
+        else table.insert(offSpells, s) end
+    end
+
+    -- Per-position icon anchor so they stay flush to the party frame edge:
+    --   LEFT   -> bar.TOPRIGHT, icons grow leftward  (right-flush to frame)
+    --   RIGHT  -> bar.TOPLEFT,  icons grow rightward (left-flush to frame)
+    --   TOP    -> bar.BOTTOMLEFT, icons grow upward per row
+    --   BOTTOM -> bar.TOPLEFT,  icons grow downward
+    local function PlaceRow(spellList, rowIndex)
+        for i, s in ipairs(spellList) do
+            local ico = CreateSpellIcon(bar.frame, s.id, s.cd)
+            if pos == "LEFT" then
+                local xOff = -(i - 1) * (sz + pad)
+                local yOff = -rowIndex * (sz + 2)
+                ico:SetPoint("TOPRIGHT", bar.frame, "TOPRIGHT", xOff, yOff)
+            elseif pos == "RIGHT" then
+                local xOff = (i - 1) * (sz + pad)
+                local yOff = -rowIndex * (sz + 2)
+                ico:SetPoint("TOPLEFT", bar.frame, "TOPLEFT", xOff, yOff)
+            elseif pos == "TOP" then
+                local xOff = (i - 1) * (sz + pad)
+                local yOff = rowIndex * (sz + 2)
+                ico:SetPoint("BOTTOMLEFT", bar.frame, "BOTTOMLEFT", xOff, yOff)
+            else
+                local xOff = (i - 1) * (sz + pad)
+                local yOff = -rowIndex * (sz + 2)
+                ico:SetPoint("TOPLEFT", bar.frame, "TOPLEFT", xOff, yOff)
+            end
+            ico:Show()
+            bar.icons[s.id] = ico
+        end
+    end
+
+    local rowH = sz + 2
+    PlaceRow(defSpells, 0)
+    PlaceRow(offSpells, #defSpells > 0 and 1 or 0)
+
+    local maxPerRow = math.max(#defSpells, #offSpells, 1)
+    local rows = (#defSpells > 0 and 1 or 0) + (#offSpells > 0 and 1 or 0)
+    bar.frame:SetSize(maxPerRow * sz + math.max(0, maxPerRow - 1) * pad, rows * rowH)
+    bar.frame:Show()
+
+
+    attachedBars[unit] = bar
+end
+
+-- ============================================================================
+-- REBUILD ALL BARS
+-- ============================================================================
+local function RebuildAll()
+    -- Hide all existing
+    for unit, bar in pairs(attachedBars) do
+        if bar.frame then bar.frame:Hide() end
+    end
+    attachedBars = {}
+
+    local db = GetDB()
+    if not db or not db.enabled then return end
+    if not IsInGroup() and not testMode then return end
+
+    -- Own player
+    if myName then
+        BuildAttachedBar("player", myName)
+    end
+    -- Party members
+    for i = 1, 4 do
+        local unit = "party" .. i
+        if UnitExists(unit) then
+            local name = SafeUnitName(unit)
+            if name and knownUsers[name] then
+                BuildAttachedBar(unit, name)
             end
         end
-        return
-    end
-
-    local iconSize   = s.iconSize or 28
-    local spacing    = s.iconSpacing or 2
-    local side       = s.anchorSide or "LEFT"
-    local growDir    = s.growDirection or "DOWN"
-    local maxIcons   = s.maxIcons or 0       -- 0 = unlimited
-    local oX         = s.offsetX or 0
-    local oY         = s.offsetY or 0
-    local step       = iconSize + spacing
-
-    -- ── Step vector: direction each subsequent icon moves ──
-    local stepX, stepY = 0, 0
-    if     growDir == "DOWN"  then stepY = -step
-    elseif growDir == "UP"    then stepY =  step
-    elseif growDir == "LEFT"  then stepX = -step
-    elseif growDir == "RIGHT" then stepX =  step
-    end
-
-    -- ── Base anchor of the FIRST icon relative to partyFrame ──
-    -- point = corner of the ICON, relPoint = corner of the FRAME
-    local point, relPoint, baseX, baseY
-    if side == "LEFT" then
-        point    = "TOPRIGHT"
-        relPoint = "TOPLEFT"
-        baseX    = oX - 2
-        baseY    = oY
-    elseif side == "RIGHT" then
-        point    = "TOPLEFT"
-        relPoint = "TOPRIGHT"
-        baseX    = oX + 2
-        baseY    = oY
-    elseif side == "TOP" then
-        point    = "BOTTOMLEFT"
-        relPoint = "TOPLEFT"
-        baseX    = oX
-        baseY    = oY + 2
-    elseif side == "BOTTOM" then
-        point    = "TOPLEFT"
-        relPoint = "BOTTOMLEFT"
-        baseX    = oX
-        baseY    = oY - 2
-    end
-
-    -- ── Collect & sort icons for this trackerType ──
-    local ordered = {}
-    for _, info in pairs(unitIcons) do
-        if info.trackerType == trackerType and info.frame then
-            table.insert(ordered, info)
-        end
-    end
-    table.sort(ordered, function(a, b)
-        local aExp = a.expiration or 0
-        local bExp = b.expiration or 0
-        if aExp == 0 and bExp ~= 0 then return false end
-        if bExp == 0 and aExp ~= 0 then return true  end
-        return aExp < bExp
-    end)
-
-    -- ── Position icons ──
-    local shown = 0
-    local showOnlyOnCD = s.showOnlyOnCooldown
-
-    for idx, info in ipairs(ordered) do
-        local f = info.frame
-        if not f then break end
-
-        local onCD = (info.expiration or 0) > GetTime()
-
-        if showOnlyOnCD and not onCD then
-            f:Hide()
-        elseif maxIcons > 0 and shown >= maxIcons then
-            f:Hide()  -- over the limit
-        else
-            f:Show()
-            f:SetParent(partyFrame)
-            f:SetSize(iconSize, iconSize)
-            f:ClearAllPoints()
-            f:SetPoint(
-                point, partyFrame, relPoint,
-                baseX + stepX * shown,
-                baseY + stepY * shown
-            )
-            shown = shown + 1
-        end
     end
 end
 
 -- ============================================================================
--- COOLDOWN LOGIC
+-- OWN PLAYER DETECTION  (UNIT_SPELLCAST_SUCCEEDED for "player")
+-- No taint — own spell IDs are always clean!
 -- ============================================================================
+local playerWatcher = CreateFrame("Frame")
+playerWatcher:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player")
+playerWatcher:SetScript("OnEvent", function(_, _, _, _, spellId)
+    -- spellId from player is clean (no taint on own casts)
+    local ok, spellData = pcall(function() return SPELL_LOOKUP[spellId] end)
+    if not ok or not spellData then return end
 
-local function EnsureIconForUnit(unit, spellID, class, trackerType)
-    if not iconState[unit] then iconState[unit] = {} end
-    -- Key includes trackerType prefix so Defensive and Offensive never collide
-    local key = trackerType .. ":" .. spellID
-    if not iconState[unit][key] then
-        local icon = CreateIconBadge(UIParent, spellID, trackerType)
-        iconState[unit][key] = {
-            frame       = icon,
-            expiration  = 0,
-            duration    = 0,
-            class       = class,
-            trackerType = trackerType,
-            spellID     = spellID,
-        }
-    end
-    return iconState[unit][key]
-end
-
-local function StartCooldown(unit, guid, name, class, spellID, trackerType, isReady)
-    local s = GetSettings(trackerType)
-    if not s or not s.enabled then return end
-    if not IsSpellEnabled(trackerType, spellID) then return end
-
-    local baseCD = (trackerType == "DEFENSIVE") and DEFENSIVES[spellID] or OFFENSIVES[spellID]
-    if not baseCD then return end
-
-    local info = EnsureIconForUnit(unit, spellID, class, trackerType)
-    local f = info.frame
-    if not f then return end
-
-    -- Store trackerType on state entry (for filtering in layout)
-    info.trackerType = trackerType
-
-    if isReady then
-        info.expiration = 0
-        info.duration   = 0
-        f.overlay:Hide()
-        f.icon:SetDesaturated(false)
-        f.timer:SetText("")
-    else
-        local dur = baseCD
-        info.expiration = GetTime() + dur
-        info.duration   = dur
-        f.overlay:Show()
-        f.icon:SetDesaturated(true)
-        f.timer:SetText(string.format("%d", dur))
-    end
-
-    LayoutIconsForUnit(unit, trackerType)
-end
-
--- ============================================================================
--- UPDATE LOOP
--- ============================================================================
-local UPDATE_THROTTLE = 0.1
-local timeSinceUpdate = 0
-
-local updateFrame = CreateFrame("Frame", "GravityUI_CDTrackerUpdate", UIParent)
-updateFrame:Hide()
-updateFrame:SetScript("OnUpdate", function(self, elapsed)
-    timeSinceUpdate = timeSinceUpdate + elapsed
-    if timeSinceUpdate < UPDATE_THROTTLE then return end
-    timeSinceUpdate = 0
+    local db = GetDB()
+    if not db or not db.enabled then return end
+    if not ((spellData.cat == "DEF" and db.showDEF) or (spellData.cat == "OFF" and db.showOFF)) then return end
 
     local now = GetTime()
-    local anyActive = false
+    local cdEnd = now + spellData.cd
 
-    for _, unit in ipairs(UNITS) do
-        if iconState[unit] then
-            for spellID, info in pairs(iconState[unit]) do
-                local f = info.frame
-                if f and f:IsShown() then
-                    anyActive = true
-                    local exp = info.expiration or 0
-                    if exp > 0 then
-                        if now >= exp then
-                            -- Expired → Ready
-                            info.expiration = 0
-                            info.duration   = 0
-                            f.overlay:Hide()
-                            f.icon:SetDesaturated(false)
-                            f.timer:SetText("")
-                            -- Re-layout to potentially hide if showOnlyOnCooldown
-                            LayoutIconsForUnit(unit, info.frame.trackerType)
-                        else
-                            local remaining = exp - now
-                            local rem10 = math.ceil(remaining * 10)
-                            if info.lastRem ~= rem10 then
-                                info.lastRem = rem10
-                                if remaining >= 60 then
-                                    f.timer:SetText(string.format("%dm", math.floor(remaining / 60)))
-                                else
-                                    f.timer:SetText(string.format("%d", math.ceil(remaining)))
-                                end
-                            end
-                        end
-                    end
-                end
-            end
-        end
-    end
+    if not cdState[myName] then cdState[myName] = {} end
+    cdState[myName][spellId] = cdEnd
 
-    if not anyActive then
-        self:Hide()
+    -- Broadcast to party members with GravityUI
+    AnnounceSpellCast(spellId, spellData.cd)
+end)
+
+-- ============================================================================
+-- PARTY CAST WATCHER  (UNIT_SPELLCAST_SUCCEEDED for party1-4)
+-- Taint-safe: uses RegisterUnitEvent, no combat log needed
+-- ============================================================================
+local castWatcher = CreateFrame("Frame")
+castWatcher:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED",
+    "party1", "party2", "party3", "party4")
+castWatcher:SetScript("OnEvent", function(_, _, unit, _, spellId)
+    local spellData = SPELL_LOOKUP[spellId]
+    if not spellData then return end
+
+    local db = GetDB()
+    if not db or not db.enabled then return end
+    if not ((spellData.cat == "DEF" and db.showDEF) or (spellData.cat == "OFF" and db.showOFF)) then return end
+    if (db.disabledSpells or {})[spellId] == false then return end
+
+    local name = SafeUnitName(unit)
+    if not name then return end
+
+    local now = GetTime()
+    if not cdState[name] then cdState[name] = {} end
+    -- Only apply base CD if no addon-message-provided CD is already active
+    -- (addon messages arrive moments later with talent-adjusted duration and override)
+    local existing = cdState[name][spellId] or 0
+    if existing <= now then
+        cdState[name][spellId] = now + spellData.cd
     end
 end)
 
 -- ============================================================================
--- SPEC DETECTION
+-- NETWORK MESSAGE HANDLER
 -- ============================================================================
-local function ShouldShowSpellForUnit(unit, spellID)
-    local specFilter = SPELL_SPEC[spellID]
-    if not specFilter or specFilter == 0 then return true end
+function CDTracker:CHAT_MSG_ADDON(event, prefix, text, channel, senderFull)
+    if prefix ~= NET_PREFIX then return end
+    local sender = Ambiguate(senderFull, "short")
+    if sender == myName then return end
 
-    local guid = UnitGUID(unit)
-    local unitSpec = (guid and activeSpecs[guid]) or (unit == "player" and (function()
-        local idx = GetSpecialization()
-        return idx and GetSpecializationInfo(idx) or 0
-    end)()) or 0
+    local parts = { strsplit(NET_SEP, text) }
+    if parts[1] ~= NET_HDR then return end
+    local cmd = parts[2]
 
-    -- If spec is unknown (0), show spec-gated spells only for the player itself
-    -- For party members we haven't inspected yet, show all (optimistic default)
-    if unitSpec == 0 then
-        return unit == "player" and false or true
-    end
+    if cmd == "HELLO" then
+        local cls = parts[3]
+        if not cls or not CLASS_COLORS[cls] then return end
 
-    if type(specFilter) == "table" then
-        for _, sid in ipairs(specFilter) do
-            if sid == unitSpec then return true end
+        if not knownUsers[sender] then
+            knownUsers[sender] = { class = cls, _hasAddon = true }
+        else
+            knownUsers[sender].class     = cls
+            knownUsers[sender]._hasAddon = true
         end
-        return false
-    end
 
-    return unitSpec == specFilter
+        -- Reply so they know about us
+        AnnounceHello()
+
+        -- Queue inspect for specID
+        for i = 1, 4 do
+            local u = "party" .. i
+            if UnitExists(u) and SafeUnitName(u) == sender then
+                QueueInspect(u)
+                break
+            end
+        end
+
+        C_Timer.After(0.2, RebuildAll)
+
+    elseif cmd == "CAST" then
+        local sid = tonumber(parts[3])
+        local dur = tonumber(parts[4])
+        if not sid or not dur then return end
+
+        local db = GetDB()
+        if not db or not db.enabled then return end
+
+        local ok, spellData = pcall(function() return SPELL_LOOKUP[sid] end)
+        if not ok or not spellData then return end
+        if not ((spellData.cat == "DEF" and db.showDEF) or (spellData.cat == "OFF" and db.showOFF)) then return end
+
+        local now = GetTime()
+        if not cdState[sender] then cdState[sender] = {} end
+        cdState[sender][sid] = now + dur
+    end
 end
 
 -- ============================================================================
--- UNIT_SPELLCAST_SUCCEEDED
+-- INSPECT READY
 -- ============================================================================
-local function OnSpellCast(unit, rawSpellID)
-    if not IsInGroup() then return end
-    if IsInRaid() then return end
-    local _, instanceType = IsInInstance()
-    if instanceType == "raid" then return end
+function CDTracker:INSPECT_READY(event, guid)
+    inspectBusy = false
 
-    -- Launder the spellID to prevent 'table index is secret' taint
-    -- (Vehicle/NPC spell IDs from UNIT_SPELLCAST_SUCCEEDED can be tainted)
-    local ok, resolvedID = pcall(tonumber, rawSpellID)
-    if not ok or not resolvedID then return end
-
-    local guid = UnitGUID(unit)
-    if not guid then return end
-
-    -- Skip vehicle units — their casts are NPC/scenario casts, not player CDs
-    local okGuid, guidStr = pcall(tostring, guid)
-    if not okGuid or not guidStr then return end
-    if guidStr:sub(1, 7) == "Vehicle" then return end
-
-    -- Must be a real player
-    if not UnitIsPlayer(unit) then return end
-
-    local name = UnitName(unit)
-    local _, class = UnitClass(unit)
-
-    -- Check Defensive
-    local defS = GetSettings("DEFENSIVE")
-    if defS and defS.enabled then
-        local okD, inDef = pcall(function() return DEFENSIVES[resolvedID] end)
-        if okD and inDef then
-            local classMatch = SPELL_CLASS[resolvedID]
-            if classMatch == class and ShouldShowSpellForUnit(unit, resolvedID) then
-                StartCooldown(unit, guid, name, class, resolvedID, "DEFENSIVE")
-                updateFrame:Show()
-            end
-        end
-    end
-
-    -- Check Offensive
-    local offS = GetSettings("OFFENSIVE")
-    if offS and offS.enabled then
-        local okO, inOff = pcall(function() return OFFENSIVES[resolvedID] end)
-        if okO and inOff then
-            local classMatch = SPELL_CLASS[resolvedID]
-            if classMatch == class and ShouldShowSpellForUnit(unit, resolvedID) then
-                StartCooldown(unit, guid, name, class, resolvedID, "OFFENSIVE")
-                updateFrame:Show()
-            end
-        end
-    end
-end
-
--- Party watchers (same pattern as interrupt tracker)
-local playerWatcherCD = CreateFrame("Frame")
-local partyWatchersCD = {}
-for i = 1, 4 do partyWatchersCD[i] = CreateFrame("Frame") end
-
-local function RegisterCDWatchers()
-    playerWatcherCD:UnregisterAllEvents()
-    playerWatcherCD:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player")
-    playerWatcherCD:SetScript("OnEvent", function(_, _, unit, _, spellID)
-        -- Always pass raw; OnSpellCast handles laundering
-        OnSpellCast(unit, spellID)
-    end)
-
+    -- Find which unit matches the guid
     for i = 1, 4 do
-        local unit = "party"..i
-        partyWatchersCD[i]:UnregisterAllEvents()
-        if UnitExists(unit) then
-            partyWatchersCD[i]:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", unit)
-            local capturedIdx = i
-            partyWatchersCD[i]:SetScript("OnEvent", function(_, _, eUnit, _, eSpellID)
-                OnSpellCast("party"..capturedIdx, eSpellID)
-            end)
+        local u = "party" .. i
+        if UnitExists(u) then
+            local ok, uGuid = pcall(UnitGUID, u)
+            if ok and uGuid == guid then
+                local name = SafeUnitName(u)
+                if name then
+                    local ok2, specID = pcall(GetInspectSpecialization, u)
+                    if ok2 and specID and specID > 0 then
+                        if not knownUsers[name] then
+                            knownUsers[name] = {}
+                        end
+                        knownUsers[name].specID = specID
+                        -- Fill class if unknown
+                        if not knownUsers[name].class then
+                            local _, cls = UnitClass(u)
+                            if cls then knownUsers[name].class = cls end
+                        end
+                        -- Rebuild bar for this unit
+                        C_Timer.After(0.1, function()
+                            BuildAttachedBar(u, name)
+                        end)
+                    end
+                end
+                break
+            end
         end
     end
+
+    C_Timer.After(0.5, ProcessInspectQueue)
 end
 
 -- ============================================================================
 -- GROUP ROSTER UPDATE
 -- ============================================================================
-local function OnGroupRosterUpdate()
-    local inGroup = IsInGroup()
-    local _, instanceType = IsInInstance()
+function CDTracker:GROUP_ROSTER_UPDATE()
+    local db = GetDB()
+    if not db or not db.enabled then return end
 
-    if not inGroup or instanceType == "raid" or IsInRaid() then
-        -- Hide all icons
-        for _, unit in ipairs(UNITS) do
-            if iconState[unit] then
-                for _, info in pairs(iconState[unit]) do
-                    if info.frame then info.frame:Hide() end
-                end
-            end
-        end
-        return
-    end
-
-    RegisterCDWatchers()
-
-    -- Ensure icons exist for all current party members
-    local function HandleMember(unit)
-        if not UnitExists(unit) then return end
-        -- Skip NPC units (Follower Dungeons, vehicles, etc.)
-        if unit ~= "player" and not UnitIsPlayer(unit) then return end
-
-        local guid = UnitGUID(unit)
-        if not guid then return end
-        -- Extra safety: skip Vehicle GUIDs
-        local okG, guidStr = pcall(tostring, guid)
-        if not okG or not guidStr or guidStr:sub(1, 7) == "Vehicle" then return end
-
-        local _, class = UnitClass(unit)
-        if not class then return end
-        local name = UnitName(unit)
-
-        for _, data in ipairs(CD_CONFIG) do
-            if data.class == class then
-                -- Defensive
-                local defS = GetSettings("DEFENSIVE")
-                if defS and defS.enabled and data.cat == "DEFENSIVE" then
-                    if IsSpellEnabled("DEFENSIVE", data.spellID) and ShouldShowSpellForUnit(unit, data.spellID) then
-                        EnsureIconForUnit(unit, data.spellID, class, "DEFENSIVE")
-                        local key = "DEFENSIVE:" .. data.spellID
-                        local info = iconState[unit] and iconState[unit][key]
-                        if info and (info.expiration or 0) == 0 then
-                            StartCooldown(unit, guid, name, class, data.spellID, "DEFENSIVE", true)
-                        end
-                    end
-                end
-
-                -- Offensive
-                local offS = GetSettings("OFFENSIVE")
-                if offS and offS.enabled and data.cat == "OFFENSIVE" then
-                    if IsSpellEnabled("OFFENSIVE", data.spellID) and ShouldShowSpellForUnit(unit, data.spellID) then
-                        EnsureIconForUnit(unit, data.spellID, class, "OFFENSIVE")
-                        local key = "OFFENSIVE:" .. data.spellID
-                        local info = iconState[unit] and iconState[unit][key]
-                        if info and (info.expiration or 0) == 0 then
-                            StartCooldown(unit, guid, name, class, data.spellID, "OFFENSIVE", true)
-                        end
-                    end
-                end
-            end
-        end
-
-        LayoutIconsForUnit(unit, "DEFENSIVE")
-        LayoutIconsForUnit(unit, "OFFENSIVE")
-        updateFrame:Show()
-    end
-
-    HandleMember("player")
-    for i = 1, 4 do HandleMember("party"..i) end
-
-    -- Hide icons for units no longer in group or no longer players
-    for _, unit in ipairs(UNITS) do
-        local shouldHide = not UnitExists(unit)
-                        or (unit ~= "player" and not UnitIsPlayer(unit))
-        if shouldHide and iconState[unit] then
-            for _, info in pairs(iconState[unit]) do
-                if info.frame then info.frame:Hide() end
-            end
-        end
-    end
-end
-
--- ============================================================================
--- INSPECT for spec-specific CDs
--- ============================================================================
--- NOTE: INSPECT_READY is registered in ApplySettings/Initialize (not here at module
--- load) to avoid duplicates when settings are reapplied.
-
--- ============================================================================
--- EXPOSE DATA FOR SETTINGS PANEL
--- ============================================================================
-CDTracker.CD_CONFIG   = CD_CONFIG
-CDTracker.DEFENSIVES  = DEFENSIVES
-CDTracker.OFFENSIVES  = OFFENSIVES
-
--- ============================================================================
--- TEST MODE
--- ============================================================================
-local testModeActive = false
-
-local function ToggleTestMode()
-    local _, class = UnitClass("player")
-    local guid = UnitGUID("player")
-
-    if testModeActive then
-        -- Clear all test icons
-        if iconState["player"] then
-            for _, info in pairs(iconState["player"]) do
-                if info.frame then info.frame:Hide() end
-            end
-            iconState["player"] = {}
-        end
-        testModeActive = false
-        ns.Print("CD Tracker Test Mode: OFF")
-        updateFrame:Hide()
-        return
-    end
-
-    testModeActive = true
-    ns.Print("CD Tracker Test Mode: ON — Icons werden am Player Frame angezeigt.")
-
-    -- Find some defensive and offensive spells for testing (use generic ones if class not in DB)
-    local testDef = {
-        { spellID = 48792, cd = 120, cat = "DEFENSIVE" }, -- Icebound Fortitude (DK — any)
-        { spellID = 642,   cd = 300, cat = "DEFENSIVE" }, -- Divine Shield
-        { spellID = 22812, cd = 60,  cat = "DEFENSIVE" }, -- Barkskin
-    }
-    local testOff = {
-        { spellID = 107574, cd = 90,  cat = "OFFENSIVE" }, -- Avatar
-        { spellID = 31884,  cd = 120, cat = "OFFENSIVE" }, -- Avenging Wrath
-    }
-
-    -- Force enable temporarily
-    local defS = GetSettings("DEFENSIVE")
-    local offS = GetSettings("OFFENSIVE")
-    local defWasEnabled = defS and defS.enabled
-    local offWasEnabled = offS and offS.enabled
-    if defS then defS.enabled = true end
-    if offS then offS.enabled = true end
-
-    -- Inject test icons on player using the correct trackerType:spellID key format
-    if defS and defS.enabled then
-        for i, data in ipairs(testDef) do
-            if not iconState["player"] then iconState["player"] = {} end
-            local icon = CreateIconBadge(UIParent, data.spellID, "DEFENSIVE")
-            local onCD = (i % 2 == 0)
-            local key = "DEFENSIVE:" .. data.spellID
-            iconState["player"][key] = {
-                frame       = icon,
-                expiration  = onCD and (GetTime() + data.cd * 0.4) or 0,
-                duration    = data.cd,
-                class       = class,
-                trackerType = "DEFENSIVE",
-                spellID     = data.spellID,
-            }
-            if onCD then
-                icon.overlay:Show()
-                icon.icon:SetDesaturated(true)
-                icon.timer:SetText(string.format("%d", math.floor(data.cd * 0.4)))
-            end
-        end
-    end
-    if offS and offS.enabled then
-        for i, data in ipairs(testOff) do
-            if not iconState["player"] then iconState["player"] = {} end
-            local icon = CreateIconBadge(UIParent, data.spellID, "OFFENSIVE")
-            local onCD = (i == 1)
-            local key = "OFFENSIVE:" .. data.spellID
-            iconState["player"][key] = {
-                frame       = icon,
-                expiration  = onCD and (GetTime() + data.cd * 0.6) or 0,
-                duration    = data.cd,
-                class       = class,
-                trackerType = "OFFENSIVE",
-                spellID     = data.spellID,
-            }
-            if onCD then
-                icon.overlay:Show()
-                icon.icon:SetDesaturated(true)
-                icon.timer:SetText(string.format("%d", math.floor(data.cd * 0.6)))
-            end
-        end
-    end
-
-    LayoutIconsForUnit("player", "DEFENSIVE")
-    LayoutIconsForUnit("player", "OFFENSIVE")
-    updateFrame:Show()
-end
-
--- ============================================================================
--- DEBUG COMMAND
--- ============================================================================
-SLASH_GRAVITYDEBUGCD1 = "/gravitydebugcd"
-SlashCmdList["GRAVITYDEBUGCD"] = function()
-    print("GravityUI CD Tracker State:")
-    local total = 0
-    for _, unit in ipairs(UNITS) do
-        if iconState[unit] then
-            for key, info in pairs(iconState[unit]) do
-                total = total + 1
-                local exp = info.expiration or 0
-                local status = (exp > GetTime()) and string.format("%.1fs", exp - GetTime()) or "READY"
-                if info.frame then
-                    print(string.format("  [%s] %s  Status=%s  Shown=%s",
-                        unit, tostring(key), status, tostring(info.frame:IsShown())))
-                end
-            end
-        end
-    end
-    print("Total icons tracked:", total)
-end
-
-SLASH_GRAVITYTESTCD1 = "/gravitytestcd"
-SlashCmdList["GRAVITYTESTCD"] = function()
-    ToggleTestMode()
-end
-
--- ============================================================================
--- INITIALIZE
--- ============================================================================
-function CDTracker.Initialize()
-    local defS = GetSettings("DEFENSIVE")
-    local offS = GetSettings("OFFENSIVE")
-    if (not defS or not defS.enabled) and (not offS or not offS.enabled) then return end
-
-    CDTracker:RegisterEvent("GROUP_ROSTER_UPDATE", OnGroupRosterUpdate)
-    CDTracker:RegisterEvent("PLAYER_ENTERING_WORLD", OnGroupRosterUpdate)
-    CDTracker:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED", OnGroupRosterUpdate)
-
-    RegisterCDWatchers()
-    OnGroupRosterUpdate()
-    updateFrame:Show()
-end
-
-function CDTracker.ApplySettings()
-    CDTracker:UnregisterAllEvents()
-    playerWatcherCD:UnregisterAllEvents()
-    for i = 1, 4 do partyWatchersCD[i]:UnregisterAllEvents() end
-
-    -- Re-hide all icons, rebuild from scratch
-    for _, unit in ipairs(UNITS) do
-        if iconState[unit] then
-            for _, info in pairs(iconState[unit]) do
-                if info.frame then info.frame:Hide() end
-            end
-            iconState[unit] = {}
-        end
-    end
-
-    CDTracker:RegisterEvent("INSPECT_READY", function(_, guid)
-        -- re-register the same closure
-        if not guid then return end
-        local unit = nil
-        if UnitGUID("player") == guid then unit = "player" end
-        if not unit then
-            for i = 1, 4 do
-                if UnitGUID("party"..i) == guid then unit = "party"..i break end
-            end
-        end
-        if not unit then return end
-        local specID = GetInspectSpecialization(unit)
+    -- Update own info
+    myName  = SafeUnitName("player") or myName
+    local _, cls = UnitClass("player")
+    myClass = cls
+    local idx = GetSpecialization()
+    if idx then
+        local specID = GetSpecializationInfo(idx)
         if specID and specID > 0 then
-            activeSpecs[guid] = specID
-            OnGroupRosterUpdate()
+            mySpecID = specID
+            if not knownUsers[myName] then knownUsers[myName] = {} end
+            knownUsers[myName].class  = myClass
+            knownUsers[myName].specID = mySpecID
+            knownUsers[myName]._hasAddon = true
         end
-    end)
-
-    local defS = GetSettings("DEFENSIVE")
-    local offS = GetSettings("OFFENSIVE")
-    if (defS and defS.enabled) or (offS and offS.enabled) then
-        CDTracker:RegisterEvent("GROUP_ROSTER_UPDATE", OnGroupRosterUpdate)
-        CDTracker:RegisterEvent("PLAYER_ENTERING_WORLD", OnGroupRosterUpdate)
-        CDTracker:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED", OnGroupRosterUpdate)
-        RegisterCDWatchers()
-        OnGroupRosterUpdate()
-        updateFrame:Show()
-    else
-        updateFrame:Hide()
     end
+
+    -- Scan party members
+    for i = 1, 4 do
+        local u = "party" .. i
+        if UnitExists(u) then
+            local name = SafeUnitName(u)
+            if name then
+                if not knownUsers[name] then
+                    knownUsers[name] = {}
+                end
+                local _, unitCls = UnitClass(u)
+                if unitCls then knownUsers[name].class = unitCls end
+                -- Check spec immediately
+                local ok, sid = pcall(GetInspectSpecialization, u)
+                if ok and sid and sid > 0 then
+                    knownUsers[name].specID = sid
+                else
+                    QueueInspect(u)
+                end
+            end
+        end
+    end
+
+    -- Announce to other GravityUI users
+    AnnounceHello()
+
+    C_Timer.After(0.3, RebuildAll)
 end
 
+-- ============================================================================
+-- OnSettingsChanged (called from Settings panel)
+-- ============================================================================
+function CDTracker:ApplySettings()
+    RebuildAll()
+end
+
+-- ============================================================================
+-- TICKER: update icon timers
+-- ============================================================================
+local ticker = C_Timer.NewTicker(0.5, function()
+    local now = GetTime()
+    for unit, bar in pairs(attachedBars) do
+        for spellID, ico in pairs(bar.icons) do
+            -- Find name for this unit
+            local name = (unit == "player") and myName or SafeUnitName(unit)
+            local cdEnd = name and cdState[name] and cdState[name][spellID] or 0
+            UpdateIcon(ico, cdEnd)
+        end
+    end
+end)
+
+-- ============================================================================
+-- INITIALIZATION
+-- ============================================================================
+function CDTracker:OnInitialize()
+    local db = GetDB()
+    if not db then
+        print("|cFFFF4444GravityUI CDTracker:|r OnInitialize failed — DB not ready")
+        return
+    end
+
+    C_ChatInfo.RegisterAddonMessagePrefix(NET_PREFIX)
+
+    self:RegisterEvent("GROUP_ROSTER_UPDATE")
+    self:RegisterEvent("INSPECT_READY")
+    self:RegisterEvent("CHAT_MSG_ADDON")
+
+
+    -- Own player info
+    myName  = SafeUnitName("player")
+    local _, cls = UnitClass("player")
+    myClass = cls
+    local idx = GetSpecialization()
+    if idx then
+        local specID = GetSpecializationInfo(idx)
+        if specID and specID > 0 then
+            mySpecID = specID
+            if not knownUsers[myName] then knownUsers[myName] = {} end
+            knownUsers[myName].class     = myClass
+            knownUsers[myName].specID    = mySpecID
+            knownUsers[myName]._hasAddon = true
+        end
+    end
+
+    -- Fire group scan after a short delay to let the game settle
+    C_Timer.After(1, function()
+        CDTracker:GROUP_ROSTER_UPDATE()
+    end)
+end
+
+function CDTracker:Enable()
+    self:OnInitialize()
+end

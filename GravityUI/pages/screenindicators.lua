@@ -1350,124 +1350,112 @@ local function BuildConsumables(parent)
     content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
 end
 
--- ── CD Tracker ────────────────────────────────────────────────────────────────
--- Shared builder for both Defensive and Offensive CD Tracker settings
-local function BuildCDTrackerPanel(parent, trackerType)
+-- M+ CD Tracking
+local function BuildCDTracker(parent)
     local scroll, content = GUI:CreateScrollableContent(parent)
     scroll:SetAllPoints()
     local db = ns.GetDB(); if not db then return end
+    local s = db.cdTracker
 
-    -- Ensure defaults exist
-    local key = (trackerType == "DEFENSIVE") and "defensiveTracker" or "offensiveTracker"
-    if not db[key] then
-        db[key] = {
-            enabled = false, anchorSide = "LEFT", offsetX = 0, offsetY = 0,
-            iconSize = 28, iconSpacing = 2, fontSize = 10, font = "Gravity",
-            showOnlyOnCooldown = false, disabledSpells = {},
-        }
-    end
-    local s = db[key]
     content.rowCount = 0
 
     local function Refresh()
         if ns.CDTracker and ns.CDTracker.ApplySettings then
-            ns.CDTracker.ApplySettings()
+            ns.CDTracker:ApplySettings()
         end
     end
 
-    local label = (trackerType == "DEFENSIVE") and "Defensive CD Tracker" or "Offensive CD Tracker"
-    local header = GUI:CreateSectionHeader(content, label)
+    local header = GUI:CreateSectionHeader(content, "M+ CD Tracking")
     header:SetPoint("TOPLEFT", 10, -10)
     header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
     content.rowCount = 1.3
 
-    local infoText = (trackerType == "DEFENSIVE")
-        and "Shows defensive cooldown icons attached to party frames. Helps you see who has a big defensive ready."
-        or  "Shows offensive cooldown icons attached to party frames. Helps coordinate burst CDs in M+."
-    local infoBox = GUI:CreateInfoBox(content, infoText)
+    local infoBox = GUI:CreateInfoBox(content, "Shows cooldown icons attached to party member frames.\n" ..
+        "Real-time tracking works when all group members are using GravityUI.\n" ..
+        "Players without the addon show greyed-out icons based on their specialization.")
+
     infoBox:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
     content.rowCount = content.rowCount + (infoBox:GetHeight() / (ROW_HEIGHT+5)) + 0.2
 
-    -- ── General ──────────────────────────────────────────────────────────────
     CreateSubLabel(content, "General")
-    AddRow(content, "Enable CD Tracker", "checkbox", "enabled", s, Refresh)
-    AddRow(content, "Hide when Ready (Show on CD only)", "checkbox", "showOnlyOnCooldown", s, Refresh)
+    AddRow(content, "Enable M+ CD Tracking", "checkbox", "enabled", s, Refresh)
+    AddRow(content, "Show Defensive CDs",     "checkbox", "showDEF", s, Refresh)
+    AddRow(content, "Show Offensive CDs",     "checkbox", "showOFF", s, Refresh)
 
     content.rowCount = content.rowCount + 0.3
 
-    -- ── Icon Appearance ───────────────────────────────────────────────────────
     CreateSubLabel(content, "Icon Appearance")
-    AddRow(content, "Icon Size", "slider", 16, 60, "iconSize", s, Refresh, 1)
-    AddRow(content, "Icon Spacing", "slider", 0, 20, "iconSpacing", s, Refresh, 1)
-    AddRow(content, "Timer Font Size", "slider", 7, 20, "fontSize", s, Refresh, 1)
+    AddRow(content, "Icon Size",       "slider", 16, 60, "iconSize",    s, Refresh, 1)
+    AddRow(content, "Icon Spacing",    "slider",  0, 20, "iconSpacing", s, Refresh, 1)
+    AddRow(content, "Timer Font Size", "slider",  7, 20, "fontSize",    s, Refresh, 1)
 
     content.rowCount = content.rowCount + 0.3
 
-    -- ── Positioning ───────────────────────────────────────────────────────────
     CreateSubLabel(content, "Party Frame Attachment")
-    local sideOptions = {
-        { value = "LEFT",   text = "Left of Frame"   },
-        { value = "RIGHT",  text = "Right of Frame"  },
-        { value = "TOP",    text = "Above Frame"     },
-        { value = "BOTTOM", text = "Below Frame"     },
+    local posOptions = {
+        { value = "LEFT",   text = "Left of Frame"  },
+        { value = "RIGHT",  text = "Right of Frame" },
+        { value = "TOP",    text = "Above Frame"    },
+        { value = "BOTTOM", text = "Below Frame"    },
     }
-    AddRow(content, "Anchor Side", "dropdown", sideOptions, "anchorSide", s, Refresh)
-
-    local growOptions = {
-        { value = "DOWN",  text = "Down  ↓" },
-        { value = "UP",    text = "Up    ↑" },
-        { value = "LEFT",  text = "Left  ←" },
-        { value = "RIGHT", text = "Right →" },
-    }
-    AddRow(content, "Grow Direction", "dropdown", growOptions, "growDirection", s, Refresh)
-    AddRow(content, "Max Icons  (0 = Alle)", "slider", 0, 10, "maxIcons", s, Refresh, 1)
+    AddRow(content, "Attach Position", "dropdown", posOptions, "attachPos", s, Refresh)
     AddRow(content, "X Offset", "slider", -200, 200, "offsetX", s, Refresh, 1)
     AddRow(content, "Y Offset", "slider", -200, 200, "offsetY", s, Refresh, 1)
 
     content.rowCount = content.rowCount + 0.5
 
-    -- ── Spell Filter (by class) ───────────────────────────────────────────────
-    CreateSubLabel(content, "Spells — Enable/Disable per Class")
+    -- ── Spell List (per class, DEF/OFF) ───────────────────────────────────────
+    CreateSubLabel(content, "Spells per Class")
 
-    local infoBox2 = GUI:CreateInfoBox(content, "Toggle individual spells. Disabled spells are hidden from all party members of that class.")
+    local infoBox2 = GUI:CreateInfoBox(content, "Enable or disable individual spells. Disabled spells are hidden from all party member frames.")
     infoBox2:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
     content.rowCount = content.rowCount + (infoBox2:GetHeight() / (ROW_HEIGHT+5)) + 0.2
 
-    -- Group spells by class
     local CLASSES_ORDER = {
-        "DEATHKNIGHT", "DEMONHUNTER", "DRUID", "EVOKER",
-        "HUNTER", "MAGE", "MONK", "PALADIN",
-        "PRIEST", "ROGUE", "SHAMAN", "WARLOCK", "WARRIOR",
+        "DEATHKNIGHT","DEMONHUNTER","DRUID","EVOKER",
+        "HUNTER","MAGE","MONK","PALADIN",
+        "PRIEST","ROGUE","SHAMAN","WARLOCK","WARRIOR",
     }
     local CLASS_DISPLAY = {
-        DEATHKNIGHT = "Death Knight", DEMONHUNTER = "Demon Hunter", DRUID = "Druid",
-        EVOKER = "Evoker", HUNTER = "Hunter", MAGE = "Mage", MONK = "Monk",
-        PALADIN = "Paladin", PRIEST = "Priest", ROGUE = "Rogue",
-        SHAMAN = "Shaman", WARLOCK = "Warlock", WARRIOR = "Warrior",
+        DEATHKNIGHT="Death Knight", DEMONHUNTER="Demon Hunter", DRUID="Druid",
+        EVOKER="Evoker", HUNTER="Hunter", MAGE="Mage", MONK="Monk",
+        PALADIN="Paladin", PRIEST="Priest", ROGUE="Rogue",
+        SHAMAN="Shaman", WARLOCK="Warlock", WARRIOR="Warrior",
     }
-    local CLASS_COLORS = {
-        DEATHKNIGHT = {0.77,0.12,0.23}, DEMONHUNTER = {0.64,0.19,0.79}, DRUID = {1,0.49,0.04},
-        EVOKER = {0.20,0.58,0.50}, HUNTER = {0.67,0.83,0.45}, MAGE = {0.25,0.78,0.92},
-        MONK = {0,1,0.59}, PALADIN = {0.96,0.55,0.73}, PRIEST = {1,1,1},
-        ROGUE = {1,0.96,0.41}, SHAMAN = {0,0.44,0.87}, WARLOCK = {0.53,0.53,0.93},
-        WARRIOR = {0.78,0.61,0.43},
+    local CLASS_COLORS_UI = {
+        DEATHKNIGHT={0.77,0.12,0.23}, DEMONHUNTER={0.64,0.19,0.79}, DRUID={1,0.49,0.04},
+        EVOKER={0.20,0.58,0.50},      HUNTER={0.67,0.83,0.45},      MAGE={0.25,0.78,0.92},
+        MONK={0,1,0.59},              PALADIN={0.96,0.55,0.73},      PRIEST={1,1,1},
+        ROGUE={1,0.96,0.41},          SHAMAN={0,0.44,0.87},         WARLOCK={0.53,0.53,0.93},
+        WARRIOR={0.78,0.61,0.43},
     }
 
-    if not s.disabledSpells then s.disabledSpells = {} end
-
-    --  group CD_CONFIG entries by class
+    -- Build class → { DEF={spells}, OFF={spells} } from SYNC_SPELLS (deduped by spellID)
     local byClass = {}
-    if ns.CDTracker and ns.CDTracker.CD_CONFIG then
-        for _, data in ipairs(ns.CDTracker.CD_CONFIG) do
-            if data.cat == trackerType then
-                if not byClass[data.class] then byClass[data.class] = {} end
-                table.insert(byClass[data.class], data)
+    local SYNC  = ns.CDTracker and ns.CDTracker.SYNC_SPELLS
+    local S2C   = ns.CDTracker and ns.CDTracker.SPEC_TO_CLASS
+    if SYNC and S2C then
+        for specID, spells in pairs(SYNC) do
+            local cls = S2C[specID]
+            if cls then
+                if not byClass[cls] then byClass[cls] = { DEF={}, OFF={}, seen={} } end
+                local entry = byClass[cls]
+                for _, sp in ipairs(spells) do
+                    if not entry.seen[sp.id] then
+                        entry.seen[sp.id] = true
+                        if sp.cat == "DEF" then table.insert(entry.DEF, sp)
+                        else                    table.insert(entry.OFF, sp) end
+                    end
+                end
             end
         end
     end
 
-    local function CreateSpellToggleRow(spellData)
-        local sid = spellData.spellID
+    -- Per-spell toggle row
+    local function CreateSpellToggleRow(sp)
+        if not s.disabledSpells then s.disabledSpells = {} end
+        local sid = sp.id
+
         local row = CreateFrame("Frame", nil, content)
         row:SetSize(GUI.CONTENT_WIDTH - 20, 24)
         row:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT + 5)))
@@ -1476,27 +1464,25 @@ local function BuildCDTrackerPanel(parent, trackerType)
         local cb = CreateFrame("Button", nil, row, "BackdropTemplate")
         cb:SetSize(20, 20)
         cb:SetPoint("LEFT", 4, 0)
-        cb:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8", edgeFile = "Interface\\Buttons\\WHITE8x8", edgeSize = 1 })
+        cb:SetBackdrop({ bgFile="Interface\\Buttons\\WHITE8x8", edgeFile="Interface\\Buttons\\WHITE8x8", edgeSize=1 })
         cb:SetBackdropColor(0.10, 0.10, 0.10, 1)
         cb:SetBackdropBorderColor(0.3, 0.3, 0.3, 1)
+
+        local ar, ag, ab = GUI.Colors.accent[1], GUI.Colors.accent[2], GUI.Colors.accent[3]
 
         local check = cb:CreateTexture(nil, "OVERLAY")
         check:SetTexture("Interface\\Buttons\\UI-CheckBox-Check")
         check:SetPoint("CENTER")
         check:SetSize(16, 16)
         check:SetDesaturated(true)
-        local ar = GUI.Colors.accent[1]
-        local ag = GUI.Colors.accent[2]
-        local ab = GUI.Colors.accent[3]
         check:SetVertexColor(ar, ag, ab, 1)
 
-        -- disabledSpells[sid] == false  →  disabled (unchecked)
-        -- disabledSpells[sid] == nil    →  enabled  (checked)
         local function UpdateState()
-            if s.disabledSpells[sid] == false then
+            local disabled = s.disabledSpells[sid] == false
+            if disabled then
                 check:Hide()
-                cb:SetBackdropColor(0.08, 0.08, 0.08, 1)
-                cb:SetBackdropBorderColor(0.25, 0.25, 0.25, 1)
+                cb:SetBackdropColor(0.06, 0.06, 0.06, 1)
+                cb:SetBackdropBorderColor(0.22, 0.22, 0.22, 1)
             else
                 check:Show()
                 cb:SetBackdropColor(0.10, 0.10, 0.10, 1)
@@ -1507,84 +1493,109 @@ local function BuildCDTrackerPanel(parent, trackerType)
 
         cb:SetScript("OnClick", function()
             if s.disabledSpells[sid] == false then
-                s.disabledSpells[sid] = nil     -- re-enable
+                s.disabledSpells[sid] = nil   -- re-enable
             else
-                s.disabledSpells[sid] = false   -- disable
+                s.disabledSpells[sid] = false  -- disable
             end
             UpdateState()
             Refresh()
         end)
-        cb:SetScript("OnEnter", function(self)
-            self:SetBackdropBorderColor(ar, ag, ab, 1)
-        end)
-        cb:SetScript("OnLeave", function(self)
-            UpdateState()
-        end)
+        cb:SetScript("OnEnter", function(self) self:SetBackdropBorderColor(ar, ag, ab, 1) end)
+        cb:SetScript("OnLeave", function() UpdateState() end)
 
         -- Spell icon
         local icon = row:CreateTexture(nil, "ARTWORK")
         icon:SetSize(18, 18)
         icon:SetPoint("LEFT", cb, "RIGHT", 6, 0)
-        icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
+        icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
         local tex = C_Spell.GetSpellTexture(sid)
         icon:SetTexture(tex)
 
-        -- Spell name label
+        -- Spell name
         local lbl = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
         lbl:SetPoint("LEFT", icon, "RIGHT", 6, 0)
-        lbl:SetWidth(260)
+        lbl:SetWidth(240)
         lbl:SetJustifyH("LEFT")
-        local spellName = C_Spell.GetSpellName(sid) or ("Spell "..sid)
-        -- Append spec tag if spec-specific
-        if spellData.specID and spellData.specID ~= 0 then
-            local specTag = ""
-            if type(spellData.specID) == "table" then
-                specTag = " [Multi-Spec]"
-            else
-                local _, specName = pcall(GetSpecializationInfoByID, spellData.specID)
-                specTag = specName and (" ["..specName.."]") or ""
-            end
-            lbl:SetText(spellName .. "|cff888888" .. specTag .. "|r")
-        else
-            lbl:SetText(spellName)
-        end
+        local spellName = C_Spell.GetSpellName(sid) or sp.name or ("Spell "..sid)
+        lbl:SetText(spellName)
 
-        -- CD label (right)
+        -- CD (right side)
         local cdlbl = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
         cdlbl:SetPoint("RIGHT", row, "RIGHT", -8, 0)
-        cdlbl:SetTextColor(0.6, 0.6, 0.6, 1)
-        cdlbl:SetText(string.format("%ds", spellData.cd))
+        cdlbl:SetTextColor(0.55, 0.55, 0.55, 1)
+        local cdSec = sp.cd
+        cdlbl:SetText(cdSec >= 60 and string.format("%dm", math.floor(cdSec/60+0.5)) or cdSec.."s")
 
         content.rowCount = content.rowCount + 0.75
     end
 
-    for _, cls in ipairs(CLASSES_ORDER) do
-        if byClass[cls] then
-            -- Class header row
-            local clsRow = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-            clsRow:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT + 5)))
-            local cc = CLASS_COLORS[cls] or {1,1,1}
-            clsRow:SetTextColor(cc[1], cc[2], cc[3], 1)
-            clsRow:SetText("-- " .. (CLASS_DISPLAY[cls] or cls))
-            content.rowCount = content.rowCount + 0.85
+    -- Sort spells by CD descending within each class/category
+    local function sortByCd(a, b) return a.cd > b.cd end
 
-            for _, data in ipairs(byClass[cls]) do
-                CreateSpellToggleRow(data)
+    for _, cls in ipairs(CLASSES_ORDER) do
+        local entry = byClass[cls]
+        if entry and (#entry.DEF > 0 or #entry.OFF > 0) then
+            local cc = CLASS_COLORS_UI[cls] or {1,1,1}
+
+            -- Thin separator + class name header
+            local headerFrame = CreateFrame("Frame", nil, content)
+            headerFrame:SetSize(GUI.CONTENT_WIDTH - 20, 16)
+            headerFrame:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT + 5)))
+
+            -- Colored horizontal line
+            local line = headerFrame:CreateTexture(nil, "ARTWORK")
+            line:SetHeight(1)
+            line:SetPoint("LEFT", headerFrame, "LEFT", 0, 0)
+            line:SetPoint("RIGHT", headerFrame, "RIGHT", 0, 0)
+            line:SetColorTexture(cc[1], cc[2], cc[3], 0.4)
+
+            -- Class name text (sits above the line)
+            local clsTxt = headerFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+            clsTxt:SetPoint("LEFT", headerFrame, "LEFT", 0, 5)
+            clsTxt:SetTextColor(cc[1], cc[2], cc[3], 1)
+            clsTxt:SetText(CLASS_DISPLAY[cls] or cls)
+
+            content.rowCount = content.rowCount + 1.0
+
+            -- DEFENSIVE section
+            if #entry.DEF > 0 then
+                table.sort(entry.DEF, sortByCd)
+                local defLbl = content:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+                defLbl:SetPoint("TOPLEFT", 12, -8 - (content.rowCount * (ROW_HEIGHT + 5)))
+                defLbl:SetTextColor(0.3, 0.75, 1, 1)
+                defLbl:SetText("Defensive")
+                content.rowCount = content.rowCount + 0.6
+                for _, sp in ipairs(entry.DEF) do
+                    CreateSpellToggleRow(sp)
+                end
             end
-            content.rowCount = content.rowCount + 0.25
+
+            -- Small gap between DEF and OFF
+            if #entry.DEF > 0 and #entry.OFF > 0 then
+                content.rowCount = content.rowCount + 0.15
+            end
+
+            -- OFFENSIVE section
+            if #entry.OFF > 0 then
+                table.sort(entry.OFF, sortByCd)
+                local offLbl = content:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+                offLbl:SetPoint("TOPLEFT", 12, -8 - (content.rowCount * (ROW_HEIGHT + 5)))
+                offLbl:SetTextColor(1, 0.55, 0.15, 1)
+                offLbl:SetText("Offensive")
+                content.rowCount = content.rowCount + 0.6
+                for _, sp in ipairs(entry.OFF) do
+                    CreateSpellToggleRow(sp)
+                end
+            end
+
+            content.rowCount = content.rowCount + 0.5
         end
     end
+
 
     content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
 end
 
-local function BuildDefensiveTracker(parent)
-    BuildCDTrackerPanel(parent, "DEFENSIVE")
-end
-
-local function BuildOffensiveTracker(parent)
-    BuildCDTrackerPanel(parent, "OFFENSIVE")
-end
 
 -- ═══════════════════════════════════════════════════════════════
 -- MAIN PAGE
@@ -1600,8 +1611,7 @@ ns.GUI:RegisterPage("screenindicators", {
         { name = "Missing Buffs", builder = BuildMissingBuffs },
         { name = "Raid Warnings", builder = BuildRaidWarnings },
         { name = "Interrupt Tracker", builder = BuildInterruptTracker },
-        { name = "Defensive CDs", builder = BuildDefensiveTracker },
-        { name = "Offensive CDs", builder = BuildOffensiveTracker },
+        { name = "M+ CD Tracking", builder = BuildCDTracker },
         { name = "Difficulty Changer", builder = BuildDifficulty },
         { name = "AFK Screen", builder = BuildAFKScreen },
         { name = "Consumables", builder = BuildConsumables },
