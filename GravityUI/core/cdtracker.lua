@@ -545,6 +545,12 @@ local function ShouldShowSpellForUnit(unit, spellID)
         return idx and GetSpecializationInfo(idx) or 0
     end)()) or 0
 
+    -- If spec is unknown (0), show spec-gated spells only for the player itself
+    -- For party members we haven't inspected yet, show all (optimistic default)
+    if unitSpec == 0 then
+        return unit == "player" and false or true
+    end
+
     if type(specFilter) == "table" then
         for _, sid in ipairs(specFilter) do
             if sid == unitSpec then return true end
@@ -552,7 +558,7 @@ local function ShouldShowSpellForUnit(unit, spellID)
         return false
     end
 
-    return unitSpec == specFilter or unitSpec == 0
+    return unitSpec == specFilter
 end
 
 -- ============================================================================
@@ -723,29 +729,11 @@ local function OnGroupRosterUpdate()
     end
 end
 
-
 -- ============================================================================
 -- INSPECT for spec-specific CDs
 -- ============================================================================
-CDTracker:RegisterEvent("INSPECT_READY", function(_, guid)
-    if not guid then return end
-    -- Find unit for this guid
-    local unit = nil
-    if UnitGUID("player") == guid then unit = "player" end
-    if not unit then
-        for i = 1, 4 do
-            if UnitGUID("party"..i) == guid then unit = "party"..i break end
-        end
-    end
-    if not unit then return end
-
-    local specID = GetInspectSpecialization(unit)
-    if specID and specID > 0 then
-        activeSpecs[guid] = specID
-        -- Re-evaluate icons for this unit
-        OnGroupRosterUpdate()
-    end
-end)
+-- NOTE: INSPECT_READY is registered in ApplySettings/Initialize (not here at module
+-- load) to avoid duplicates when settings are reapplied.
 
 -- ============================================================================
 -- EXPOSE DATA FOR SETTINGS PANEL
@@ -799,17 +787,20 @@ local function ToggleTestMode()
     if defS then defS.enabled = true end
     if offS then offS.enabled = true end
 
-    -- Inject test icons on player
+    -- Inject test icons on player using the correct trackerType:spellID key format
     if defS and defS.enabled then
         for i, data in ipairs(testDef) do
             if not iconState["player"] then iconState["player"] = {} end
             local icon = CreateIconBadge(UIParent, data.spellID, "DEFENSIVE")
-            local onCD = (i % 2 == 0) -- alternate ready/on-cd
-            iconState["player"][data.spellID] = {
-                frame      = icon,
-                expiration = onCD and (GetTime() + data.cd * 0.4) or 0,
-                duration   = data.cd,
-                class      = class,
+            local onCD = (i % 2 == 0)
+            local key = "DEFENSIVE:" .. data.spellID
+            iconState["player"][key] = {
+                frame       = icon,
+                expiration  = onCD and (GetTime() + data.cd * 0.4) or 0,
+                duration    = data.cd,
+                class       = class,
+                trackerType = "DEFENSIVE",
+                spellID     = data.spellID,
             }
             if onCD then
                 icon.overlay:Show()
@@ -823,14 +814,15 @@ local function ToggleTestMode()
             if not iconState["player"] then iconState["player"] = {} end
             local icon = CreateIconBadge(UIParent, data.spellID, "OFFENSIVE")
             local onCD = (i == 1)
-            iconState["player"][data.spellID + 100000] = {  -- offset key to avoid collision
-                frame      = icon,
-                expiration = onCD and (GetTime() + data.cd * 0.6) or 0,
-                duration   = data.cd,
-                class      = class,
+            local key = "OFFENSIVE:" .. data.spellID
+            iconState["player"][key] = {
+                frame       = icon,
+                expiration  = onCD and (GetTime() + data.cd * 0.6) or 0,
+                duration    = data.cd,
+                class       = class,
+                trackerType = "OFFENSIVE",
+                spellID     = data.spellID,
             }
-            -- store real spellID reference on frame for icon lookup
-            icon.spellID = data.spellID
             if onCD then
                 icon.overlay:Show()
                 icon.icon:SetDesaturated(true)
@@ -853,13 +845,13 @@ SlashCmdList["GRAVITYDEBUGCD"] = function()
     local total = 0
     for _, unit in ipairs(UNITS) do
         if iconState[unit] then
-            for spellID, info in pairs(iconState[unit]) do
+            for key, info in pairs(iconState[unit]) do
                 total = total + 1
                 local exp = info.expiration or 0
                 local status = (exp > GetTime()) and string.format("%.1fs", exp - GetTime()) or "READY"
                 if info.frame then
-                    print(string.format("  [%s] SpellID=%d  Status=%s  Shown=%s",
-                        unit, spellID, status, tostring(info.frame:IsShown())))
+                    print(string.format("  [%s] %s  Status=%s  Shown=%s",
+                        unit, tostring(key), status, tostring(info.frame:IsShown())))
                 end
             end
         end
