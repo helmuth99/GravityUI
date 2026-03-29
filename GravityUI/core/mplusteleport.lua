@@ -9,8 +9,8 @@ local groupKeys = {} -- [playerName] = {mapID, level, isLeader}
 local ICON_SIZE = 32
 local SPACING = 4
 local COLS = 10
-local postRunActive = false  -- true for 45s after CHALLENGE_MODE_COMPLETED
-local postRunTimer = nil
+local postRunActive = false  -- true after CHALLENGE_MODE_COMPLETED until player leaves the instance
+local postRunTimer = nil     -- kept for cancellation safety only
 
 ---------------------------------------------------------------------------
 -- UTILS
@@ -547,6 +547,7 @@ eventFrame:RegisterEvent("SPELL_UPDATE_COOLDOWN")
 eventFrame:RegisterEvent("GROUP_ROSTER_UPDATE")
 eventFrame:RegisterEvent("CHAT_MSG_ADDON")
 eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
+eventFrame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
 eventFrame:RegisterEvent("PLAYER_REGEN_DISABLED")
 eventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
 eventFrame:RegisterEvent("BAG_UPDATE_DELAYED")
@@ -586,28 +587,35 @@ eventFrame:SetScript("OnEvent", function(_, event, ...)
                 if icon.mapID and not icon.guiTeleportOverlay then CreateSecureOverlay(icon) end
             end
         end
-    elseif event == "GROUP_ROSTER_UPDATE" or event == "PLAYER_ENTERING_WORLD" then
+    elseif event == "GROUP_ROSTER_UPDATE" then
         BroadcastKey(true)
         MPlusTeleport:UpdateGroupKeys() -- immediate refresh with what we already know
         -- Replies from group members arrive asynchronously via CHAT_MSG_ADDON.
         -- Do a second refresh after a short delay so late replies are included.
         C_Timer.After(2, function() MPlusTeleport:UpdateGroupKeys() end)
         C_Timer.After(5, function() MPlusTeleport:UpdateGroupKeys() end)
+    elseif event == "PLAYER_ENTERING_WORLD" or event == "ZONE_CHANGED_NEW_AREA" then
+        -- If the post-run list was showing while inside the dungeon, hide it now that the player has left.
+        if postRunActive and not IsInInstance() then
+            postRunActive = false
+            if postRunTimer then postRunTimer:Cancel(); postRunTimer = nil end
+        end
+        BroadcastKey(true)
+        MPlusTeleport:UpdateGroupKeys()
+        C_Timer.After(2, function() MPlusTeleport:UpdateGroupKeys() end)
+        C_Timer.After(5, function() MPlusTeleport:UpdateGroupKeys() end)
     elseif event == "BAG_UPDATE_DELAYED" then
         BroadcastKey(false)
         MPlusTeleport:UpdateGroupKeys()
     elseif event == "CHALLENGE_MODE_COMPLETED" then
-        -- Mirror BigWigs pattern: set postRunActive immediately, delay 5s before opening.
+        -- Set postRunActive immediately so the Group Key List remains visible while inside the dungeon.
         -- CRITICAL: PLAYER_REGEN_ENABLED fires BEFORE this event, so postRunActive must be
         -- set here (not on PLAYER_REGEN_ENABLED) to avoid the race condition.
+        -- postRunActive is cleared in PLAYER_ENTERING_WORLD / ZONE_CHANGED_NEW_AREA once the
+        -- player actually leaves the instance — no fixed timer needed anymore.
         postRunActive = true
         MPlusTeleport.pendingPostRunOpen = false -- cancel any stale pending flag
-        if postRunTimer then postRunTimer:Cancel() end
-        postRunTimer = C_Timer.NewTimer(60, function()
-            postRunActive = false
-            postRunTimer = nil
-            MPlusTeleport:UpdateGroupKeys()
-        end)
+        if postRunTimer then postRunTimer:Cancel(); postRunTimer = nil end
         -- Ensure frame exists (may not have been created if player logged in while inside the instance)
         local s = GetSettings()
         if IsEnabled() and s.groupKeyListEnabled then
