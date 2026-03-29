@@ -2010,17 +2010,28 @@ afkEventFrame:SetScript("OnEvent", function(self, event, ...)
     end
 end)
 
--- Secure AFK Detection via State Driver (Taint-Safe)
-RegisterStateDriver(afkEventFrame, "afk", "[afk] 1; 0")
-afkEventFrame:SetAttribute("_onstate-afk", "self:SetAttribute('isafk', newstate)")
-afkEventFrame:HookScript("OnAttributeChanged", function(self, name, value)
-    if name == "isafk" then
-        if value == "1" then
-            EnterAFK()
-        else
-            ExitAFK()
-        end
+-- Secure AFK Detection via PLAYER_FLAGS_CHANGED
+-- NOTE: [afk] is not a valid RegisterStateDriver condition in TWW → removed.
+-- UnitIsAFK() returns a secret boolean, so we comparisons via pcall to avoid taint.
+local function CheckAFKState()
+    local ok, isAfk = pcall(UnitIsAFK, "player")
+    if not ok then return end  -- failed = tainted, skip
+    if isAfk then
+        EnterAFK()
+    else
+        if AFKState.isAFK then ExitAFK() end
     end
+end
+
+afkEventFrame:RegisterEvent("PLAYER_FLAGS_CHANGED")
+local _origOnEvent = afkEventFrame:GetScript("OnEvent")
+afkEventFrame:SetScript("OnEvent", function(self, event, ...)
+    if event == "PLAYER_FLAGS_CHANGED" then
+        local unit = ...
+        if unit == "player" then CheckAFKState() end
+        return
+    end
+    if _origOnEvent then _origOnEvent(self, event, ...) end
 end)
 
 -- Hook UIParent OnShow to prevent locking out if user forces UI open
