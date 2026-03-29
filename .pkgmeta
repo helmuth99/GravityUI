@@ -31,7 +31,7 @@ move-folders:
 required-dependencies:
   - unhaltedunitframes
   - danders-frames
-  - bettercooldownmanager
+  - ayijecdm
   - bigwigs
   - details
   - plater-nameplates
