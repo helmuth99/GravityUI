@@ -778,12 +778,21 @@ local function OnKeyStoneInsert()
     local settings = GetSettings()
     if not settings or not settings.autoInsertKey then return end
 
+    -- Guard: already slotted
+    if C_ChallengeMode.HasSlottedKeystone() then return end
+
+    -- Verify the keystone matches this dungeon (mirrors BigWigs' approach)
+    local _, _, _, _, _, _, _, instanceID = GetInstanceInfo()
+    local ownedMapID = C_MythicPlus.GetOwnedKeystoneMapID and C_MythicPlus.GetOwnedKeystoneMapID()
+    if ownedMapID and instanceID and ownedMapID ~= instanceID then return end
+
     for bag = 0, 4 do
         for slot = 1, C_Container.GetContainerNumSlots(bag) do
-            local id = C_Container.GetContainerItemID(bag, slot)
-            if (id and C_Item.IsItemKeystoneByID(id)) then
-                -- Bypass protected right-click UseContainerItem using left-click PickupContainerItem
+            -- Use item link check (same method as BigWigs) for reliability
+            local link = C_Container.GetContainerItemLink(bag, slot)
+            if link and link:find("Hkeystone", nil, true) then
                 C_Container.PickupContainerItem(bag, slot)
+                C_ChallengeMode.SlotKeystone()
                 print("|cFF30D1FFGravityUI:|r Auto-inserted Keystone")
                 return
             end

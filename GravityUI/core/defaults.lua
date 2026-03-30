@@ -326,7 +326,7 @@ ns.Defaults = {
         y = 0,
     },
     cdTracker = {
-        enabled        = true,
+        enabled        = false,
         showDEF        = true,
         showOFF        = true,
         iconSize       = 28,

@@ -261,6 +261,26 @@ end
 ns.CDTracker.SYNC_SPELLS  = SYNC_SPELLS
 ns.CDTracker.SPELL_LOOKUP = SPELL_LOOKUP
 
+-- ============================================================================
+-- BUFF LOOKUP  (buffID → spellData)
+-- For most spells, buffID == spellID. Exceptions are listed explicitly.
+-- Only spells that grant a visible, persistent aura on the caster work here.
+-- Spells that don't leave a buff (e.g. instant-use reactives) won't fire.
+-- ============================================================================
+local BUFF_ID_OVERRIDE = {
+    -- spellID (cast)  →  buffID (aura on caster)
+    -- Add overrides here if buff ID differs from spell ID
+    -- e.g. [191634] = 191634,  -- Stormkeeper (same, no override needed)
+}
+
+local BUFF_LOOKUP = {}
+for spellID, data in pairs(SPELL_LOOKUP) do
+    local buffID = BUFF_ID_OVERRIDE[spellID] or spellID
+    if not BUFF_LOOKUP[buffID] then
+        BUFF_LOOKUP[buffID] = { cd = data.cd, cat = data.cat, name = data.name, spellID = spellID }
+    end
+end
+
 -- specID to class mapping (for the settings panel spell list)
 local SPEC_TO_CLASS = {
     [250]="DEATHKNIGHT", [251]="DEATHKNIGHT", [252]="DEATHKNIGHT",
@@ -1019,6 +1039,52 @@ local ticker = C_Timer.NewTicker(0.5, function()
 end)
 
 -- ============================================================================
+-- UNIT_AURA FALLBACK  (taint-free, no combat log needed)
+-- Detects CD usage via buff appearances for party members without any addon.
+-- Works because many tracked spells leave a visible buff on the caster
+-- (e.g. Stormkeeper, Ascendance, Combustion, Icy Veins, Dragonrage, …).
+-- Priority: lowest — LibOpenRaid / GRV_CD data always takes precedence.
+-- ============================================================================
+local auraWatcher = CreateFrame("Frame")
+auraWatcher:SetScript("OnEvent", function(_, _, unit, updateInfo)
+    -- updateInfo.addedAuras contains only newly-appeared auras this frame
+    if not updateInfo or not updateInfo.addedAuras then return end
+
+    local db = GetDB()
+    if not db or not db.enabled then return end
+
+    local name = (unit == "player") and myName or SafeUnitName(unit)
+    if not name then return end
+
+    -- We need at least class/specID to know this player is in our tracker
+    if not knownUsers[name] then return end
+
+    for _, auraData in ipairs(updateInfo.addedAuras) do
+        local buffID = auraData.spellId
+        if buffID then
+            local spellData = BUFF_LOOKUP[buffID]
+            if spellData then
+                -- Category filter
+                local show = (spellData.cat == "DEF" and db.showDEF)
+                          or (spellData.cat == "OFF" and db.showOFF)
+                if show and (db.disabledSpells or {})[spellData.spellID] ~= false then
+                    -- Only update if this fallback would set a *later* end time
+                    -- (LibOpenRaid / GRV_CD messages are more precise and may have
+                    --  already set a slightly longer value)
+                    local now    = GetTime()
+                    local newEnd = now + spellData.cd
+                    local existing = cdState[name] and cdState[name][spellData.spellID] or 0
+                    if newEnd > existing then
+                        if not cdState[name] then cdState[name] = {} end
+                        cdState[name][spellData.spellID] = newEnd
+                    end
+                end
+            end
+        end
+    end
+end)
+
+-- ============================================================================
 -- INITIALIZATION
 -- ============================================================================
 function CDTracker:OnInitialize()
@@ -1033,6 +1099,9 @@ function CDTracker:OnInitialize()
     self:RegisterEvent("GROUP_ROSTER_UPDATE")
     self:RegisterEvent("INSPECT_READY")
     self:RegisterEvent("CHAT_MSG_ADDON")
+
+    -- UNIT_AURA fallback: watch party buffs to detect CD usage without addons
+    auraWatcher:RegisterUnitEvent("UNIT_AURA", "player", "party1", "party2", "party3", "party4")
 
 
     -- Own player info
