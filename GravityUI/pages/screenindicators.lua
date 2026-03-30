@@ -1371,8 +1371,9 @@ local function BuildCDTracker(parent)
     content.rowCount = 1.3
 
     local infoBox = GUI:CreateInfoBox(content, "Shows cooldown icons attached to party member frames.\n" ..
-        "Real-time tracking works when all group members are using GravityUI.\n" ..
-        "Players without the addon show greyed-out icons based on their specialization.")
+        "Real-time tracking requires all group members to use GravityUI.\n" ..
+        "Players without GravityUI show static icons only (Midnight API limitation).")
+
 
     infoBox:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
     content.rowCount = content.rowCount + (infoBox:GetHeight() / (ROW_HEIGHT+5)) + 0.2

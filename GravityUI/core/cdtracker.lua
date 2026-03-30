@@ -737,6 +737,7 @@ local function RebuildAll()
     local db = GetDB()
     if not db or not db.enabled then return end
     if not IsInGroup() and not testMode then return end
+    if IsInRaid() and not testMode then return end  -- M+ only, not raids
 
     -- Own player
     if myName then
@@ -779,14 +780,30 @@ playerWatcher:SetScript("OnEvent", function(_, _, _, _, spellId)
     AnnounceSpellCast(spellId, spellData.cd)
 end)
 
+
 -- ============================================================================
--- PARTY CAST WATCHER  (UNIT_SPELLCAST_SUCCEEDED for party1-4)
--- Taint-safe: uses RegisterUnitEvent, no combat log needed
+-- LIBOPENRAID INTEGRATION
+-- Receives CD data from ANY party member running an OpenRaid-enabled addon:
+-- BigWigs, WeakAuras, DBM, Details, etc. — no GravityUI required on their side.
 -- ============================================================================
-local castWatcher = CreateFrame("Frame")
-castWatcher:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED",
-    "party1", "party2", "party3", "party4")
-castWatcher:SetScript("OnEvent", function(_, _, unit, _, spellId)
+
+-- Resolve a LibOpenRaid unitId to a clean player name for cdState lookup.
+-- unitId is either "player" or a full player name (e.g. "Axtn-Ravencrest").
+local function OpenRaidUnitToName(unitId)
+    if unitId == "player" then
+        return myName
+    end
+    -- unitId may be a full name with realm; strip realm suffix
+    local ok, clean = pcall(string.format, "%s", unitId or "")
+    if not ok or clean == "" then return nil end
+    return (clean:match("^([^%-]+)") or clean)  -- keep short name only
+end
+
+-- Shared helper: write a single spell's timeLeft into cdState.
+local function ApplyOpenRaidCD(unitId, spellId, cooldownInfo)
+    local timeLeft = cooldownInfo and cooldownInfo[1]
+    if not timeLeft then return end
+
     local spellData = SPELL_LOOKUP[spellId]
     if not spellData then return end
 
@@ -795,18 +812,37 @@ castWatcher:SetScript("OnEvent", function(_, _, unit, _, spellId)
     if not ((spellData.cat == "DEF" and db.showDEF) or (spellData.cat == "OFF" and db.showOFF)) then return end
     if (db.disabledSpells or {})[spellId] == false then return end
 
-    local name = SafeUnitName(unit)
+    local name = OpenRaidUnitToName(unitId)
     if not name then return end
 
-    local now = GetTime()
     if not cdState[name] then cdState[name] = {} end
-    -- Only apply base CD if no addon-message-provided CD is already active
-    -- (addon messages arrive moments later with talent-adjusted duration and override)
-    local existing = cdState[name][spellId] or 0
-    if existing <= now then
-        cdState[name][spellId] = now + spellData.cd
+    if timeLeft <= 0 then
+        cdState[name][spellId] = nil  -- spell is ready, clear the entry
+    else
+        -- Only override if our existing data doesn't already have a longer CD
+        -- (GravityUI messages are more precise and may have already set this)
+        local existing = cdState[name][spellId] or 0
+        local newEnd   = GetTime() + timeLeft
+        if newEnd > existing then
+            cdState[name][spellId] = newEnd
+        end
     end
-end)
+end
+
+-- Callback: a single cooldown was triggered for a unit (cast detected by OpenRaid)
+function CDTracker:OnOpenRaidCooldownUpdate(unitId, spellId, cooldownInfo)
+    if IsInRaid() then return end
+    ApplyOpenRaidCD(unitId, spellId, cooldownInfo)
+end
+
+-- Callback: a full cooldown list was received from a unit (join / reload)
+function CDTracker:OnOpenRaidCooldownListUpdate(unitId, unitCooldownTable)
+    if IsInRaid() then return end
+    if not unitCooldownTable then return end
+    for spellId, cooldownInfo in pairs(unitCooldownTable) do
+        ApplyOpenRaidCD(unitId, spellId, cooldownInfo)
+    end
+end
 
 -- ============================================================================
 -- NETWORK MESSAGE HANDLER
@@ -908,6 +944,13 @@ end
 function CDTracker:GROUP_ROSTER_UPDATE()
     local db = GetDB()
     if not db or not db.enabled then return end
+    if IsInRaid() then  -- M+ only, hide/clear all bars in raids
+        for _, bar in pairs(attachedBars) do
+            if bar.frame then bar.frame:Hide() end
+        end
+        attachedBars = {}
+        return
+    end
 
     -- Update own info
     myName  = SafeUnitName("player") or myName
@@ -1011,6 +1054,16 @@ function CDTracker:OnInitialize()
     -- Fire group scan after a short delay to let the game settle
     C_Timer.After(1, function()
         CDTracker:GROUP_ROSTER_UPDATE()
+    end)
+
+    -- Register with LibOpenRaid for cross-addon CD tracking
+    -- (BigWigs, WeakAuras, DBM, Details, etc. all share via OpenRaid messages)
+    C_Timer.After(2, function()
+        local openRaid = LibStub and LibStub("LibOpenRaid-1.0", true)
+        if openRaid then
+            openRaid.RegisterCallback(CDTracker, "CooldownUpdate",     "OnOpenRaidCooldownUpdate")
+            openRaid.RegisterCallback(CDTracker, "CooldownListUpdate", "OnOpenRaidCooldownListUpdate")
+        end
     end)
 end
 
