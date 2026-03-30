@@ -1301,16 +1301,15 @@ automationFrame:SetScript("OnEvent", function(self, event, ...)
         end
         return
     elseif event == "CHAT_MSG_BN_WHISPER" then
-        -- TAINT SAFETY: arg 13 (presenceID) is protected in Midnight.
-        -- We extract arg 1 (msg) and arg 2 (sender character name) safely,
-        -- then try to resolve the full BNet account info inside a pcall.
+        -- TAINT SAFETY: arg 13 (presenceID) may be secret in Midnight.
+        -- Extract msg (arg1) and fallback character name (arg2) safely.
         local msg = (...)
         local bnSenderName, bnGameAccountID, bnFallbackName
 
-        -- Arg 2 = sender character name — safe to read from BNet events
+        -- Arg 2 = sender character name in most WoW versions
         pcall(function(...) bnFallbackName = select(2, ...) end, ...)
 
-        -- Try full BNet account resolution (may fail if API changed)
+        -- Method 1: Direct presenceID resolution (classic approach, may fail in Midnight)
         pcall(function(...)
             local accountInfo = C_BattleNet.GetAccountInfoByID(select(13, ...))
             if accountInfo and accountInfo.gameAccountInfo then
@@ -1319,7 +1318,26 @@ automationFrame:SetScript("OnEvent", function(self, event, ...)
             end
         end, ...)
 
-        -- Use resolved name, fall back to arg 2
+        -- Method 2: Scan BNet friend list by character name (Midnight-safe fallback)
+        -- Runs when Method 1 fails to get a gameAccountID.
+        if not bnGameAccountID and bnFallbackName then
+            pcall(function()
+                local numFriends = C_BattleNet.GetFriendNumFriends()
+                for i = 1, numFriends do
+                    local info = C_BattleNet.GetFriendAccountInfo(i)
+                    if info and info.gameAccountInfo and info.gameAccountInfo.isOnline then
+                        local charName = info.gameAccountInfo.characterName
+                        if charName == bnFallbackName or info.accountName == bnFallbackName then
+                            bnSenderName = charName
+                            bnGameAccountID = info.gameAccountInfo.gameAccountID
+                            break
+                        end
+                    end
+                end
+            end)
+        end
+
+        -- Use best resolved name, fall back to arg 2
         local effectiveName = bnSenderName or bnFallbackName
         if effectiveName then
             local capturedID = bnGameAccountID

@@ -258,28 +258,18 @@ for specID, spells in pairs(SYNC_SPELLS) do
         end
     end
 end
+
+-- String-keyed version: SPELL_LOOKUP_STR["115203"] = {...}
+-- Used for party member lookup where the numeric spellId may be soft-tainted.
+-- tostring() on a tainted number often produces a clean string in WoW.
+local SPELL_LOOKUP_STR = {}
+for sid, data in pairs(SPELL_LOOKUP) do
+    SPELL_LOOKUP_STR[tostring(sid)] = data
+end
+
 ns.CDTracker.SYNC_SPELLS  = SYNC_SPELLS
 ns.CDTracker.SPELL_LOOKUP = SPELL_LOOKUP
 
--- ============================================================================
--- BUFF LOOKUP  (buffID → spellData)
--- For most spells, buffID == spellID. Exceptions are listed explicitly.
--- Only spells that grant a visible, persistent aura on the caster work here.
--- Spells that don't leave a buff (e.g. instant-use reactives) won't fire.
--- ============================================================================
-local BUFF_ID_OVERRIDE = {
-    -- spellID (cast)  →  buffID (aura on caster)
-    -- Add overrides here if buff ID differs from spell ID
-    -- e.g. [191634] = 191634,  -- Stormkeeper (same, no override needed)
-}
-
-local BUFF_LOOKUP = {}
-for spellID, data in pairs(SPELL_LOOKUP) do
-    local buffID = BUFF_ID_OVERRIDE[spellID] or spellID
-    if not BUFF_LOOKUP[buffID] then
-        BUFF_LOOKUP[buffID] = { cd = data.cd, cat = data.cat, name = data.name, spellID = spellID }
-    end
-end
 
 -- specID to class mapping (for the settings panel spell list)
 local SPEC_TO_CLASS = {
@@ -326,13 +316,17 @@ end
 -- ============================================================================
 local cdState      = {}  -- [playerName][spellID] = cdEndTime
 local knownUsers   = {}  -- [playerName] = { class, specID, _hasAddon }
-local attachedBars = {}  -- [unit] = { frame, icons={spellID→ico} }
-local myName       = nil
-local myClass      = nil
-local mySpecID     = nil
-local inspectQueue = {}
-local inspectBusy  = false
-local testMode     = false
+local attachedBars    = {}  -- [unit] = { frame, icons={spellID→ico} }
+local myName          = nil
+local myClass         = nil
+local mySpecID        = nil
+local inspectQueue    = {}
+local inspectBusy     = false
+local testMode        = false
+local initialized     = false  -- guard against double-init
+local unitBuffPresence = {}    -- [unit][spellID] = bool  (for aura state tracking)
+local SPELL_ID_TO_NAME = {}   -- spellID → "SpellName" (populated on init)
+
 
 -- Taint-safe unit name extraction
 local function SafeUnitName(unit)
@@ -342,6 +336,57 @@ local function SafeUnitName(unit)
     local ok, clean = pcall(string.format, "%s", raw)
     return ok and clean or nil
 end
+
+-- ============================================================================
+-- UNIT_AURA FALLBACK  (name-based, avoids all secret spell IDs from aura data)
+-- For party members without ANY LibOpenRaid addon.
+-- Strategy: query each tracked spell BY NAME using our own clean strings.
+-- We only check nil vs non-nil — never read secret fields from the result.
+-- State transitions (not present → present) indicate a cast happened.
+-- ============================================================================
+
+local function ScanUnitBuffs(unit)
+    local name = (unit == "player") and myName or SafeUnitName(unit)
+    if not name then return end
+    local user = knownUsers[name]
+    if not user or not user.specID then return end
+    local spells = SYNC_SPELLS[user.specID]
+    if not spells then return end
+
+    local db = GetDB()
+    if not db or not db.enabled then return end
+    if not unitBuffPresence[unit] then unitBuffPresence[unit] = {} end
+
+    for _, s in ipairs(spells) do
+        local show = (s.cat == "DEF" and db.showDEF) or (s.cat == "OFF" and db.showOFF)
+        if show and (db.disabledSpells or {})[s.id] ~= false then
+            local spellName = SPELL_ID_TO_NAME[s.id]
+            if spellName then
+                local ok, isPresent = pcall(function()
+                    return C_UnitAuras.GetAuraDataBySpellName(unit, spellName, "HELPFUL") ~= nil
+                end)
+                if not ok then isPresent = false end
+
+                local wasPresent = unitBuffPresence[unit][s.id] or false
+                if isPresent and not wasPresent then
+                    local now    = GetTime()
+                    local newEnd = now + s.cd
+                    if not cdState[name] then cdState[name] = {} end
+                    local existing = cdState[name][s.id] or 0
+                    if newEnd > existing then
+                        cdState[name][s.id] = newEnd
+                    end
+                end
+                unitBuffPresence[unit][s.id] = isPresent or false
+            end
+        end
+    end
+end
+
+local auraWatcher = CreateFrame("Frame")
+auraWatcher:SetScript("OnEvent", function(_, _, unit)
+    ScanUnitBuffs(unit)
+end)
 
 -- ============================================================================
 -- NETWORKING  (prefix GRV_CD)
@@ -381,6 +426,38 @@ local function AnnounceSpellCast(spellID, duration)
 end
 
 -- ============================================================================
+-- PLAYER SPELL CAST HANDLER
+-- Tracks the local player's own cooldowns and broadcasts to party members.
+-- ============================================================================
+local playerWatcher = CreateFrame("Frame")
+playerWatcher:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player")
+playerWatcher:SetScript("OnEvent", function(_, _, unitTarget, _, spellID)
+    if unitTarget ~= "player" then return end
+
+
+    local spellData = SPELL_LOOKUP[spellID]
+    if not spellData then return end
+
+    local db = GetDB()
+    if not db or not db.enabled then return end
+    if not ((spellData.cat == "DEF" and db.showDEF) or (spellData.cat == "OFF" and db.showOFF)) then return end
+    if (db.disabledSpells or {})[spellID] == false then return end
+
+    local name = myName
+    if not name then return end
+
+    -- Update local cdState
+    local now    = GetTime()
+    local newEnd = now + spellData.cd
+    if not cdState[name] then cdState[name] = {} end
+    cdState[name][spellID] = newEnd
+
+
+    -- Broadcast to GravityUI party members
+    AnnounceSpellCast(spellID, spellData.cd)
+end)
+
+-- ============================================================================
 -- INSPECT QUEUE (spec detection)
 -- ============================================================================
 local function ProcessInspectQueue()
@@ -409,7 +486,7 @@ end
 -- ============================================================================
 -- SPELLS FOR PLAYER (spec-filtered, category-filtered)
 -- ============================================================================
-local function GetSpellsForPlayer(name)
+local function GetSpellsForPlayer(name, unit)
     local user = knownUsers[name]
     if not user then return {} end
     local specID = user.specID
@@ -417,11 +494,20 @@ local function GetSpellsForPlayer(name)
     local db = GetDB()
     if not db then return {} end
     local disabled = db.disabledSpells or {}
+    local isOwnPlayer = (unit == "player")
     local out = {}
     for _, s in ipairs(SYNC_SPELLS[specID]) do
         if (s.cat == "DEF" and db.showDEF) or (s.cat == "OFF" and db.showOFF) then
-            if disabled[s.id] ~= false then   -- false = manually disabled
-                table.insert(out, s)
+            if disabled[s.id] ~= false then
+                if isOwnPlayer then
+                    -- Only include spells the player has actually learned/talented
+                    local ok, known = pcall(IsPlayerSpell, s.id)
+                    if ok and known then
+                        table.insert(out, s)
+                    end
+                else
+                    table.insert(out, s)
+                end
             end
         end
     end
@@ -562,7 +648,7 @@ end
 
 -- ICON CREATION
 -- ============================================================================
-local function CreateSpellIcon(parent, spellID, cd)
+local function CreateSpellIcon(parent, spellID, cd, confirmed)
     local db = GetDB()
     local sz = (db and db.iconSize) or 28
 
@@ -609,9 +695,13 @@ local function CreateSpellIcon(parent, spellID, cd)
     end)
     f:SetScript("OnLeave", function() GameTooltip:Hide() end)
 
-    f.spellID = spellID
-    f._cd     = cd or 30
+    f.spellID    = spellID
+    f._cd        = cd or 30
     f._cdRunning = false
+    -- _confirmed: player icons start confirmed (filtered by IsPlayerSpell);
+    -- party icons start unconfirmed (invisible) until the spell is actually cast.
+    f._confirmed = (confirmed ~= false)
+    if not f._confirmed then f:SetAlpha(0) end
     return f
 end
 
@@ -626,6 +716,7 @@ local function FormatCdTime(sec)
 end
 
 local function UpdateIcon(ico, cdEndTime)
+    if not ico._confirmed then return end  -- invisible until first cast detected
     local now = GetTime()
     if cdEndTime > now then
         local rem = cdEndTime - now
@@ -679,7 +770,7 @@ local function BuildAttachedBar(unit, name)
     if not parentFrame then return end
     if not user then return end
 
-    local spells = GetSpellsForPlayer(name)
+    local spells = GetSpellsForPlayer(name, unit)
     if #spells == 0 then return end
 
     local sz  = db.iconSize    or 28
@@ -706,9 +797,12 @@ local function BuildAttachedBar(unit, name)
     --   RIGHT  -> bar.TOPLEFT,  icons grow rightward (left-flush to frame)
     --   TOP    -> bar.BOTTOMLEFT, icons grow upward per row
     --   BOTTOM -> bar.TOPLEFT,  icons grow downward
+    local isPlayer = (unit == "player")
     local function PlaceRow(spellList, rowIndex)
         for i, s in ipairs(spellList) do
-            local ico = CreateSpellIcon(bar.frame, s.id, s.cd)
+            -- player icons are confirmed (IsPlayerSpell already filtered);
+            -- party icons start hidden until the spell is actually detected as cast.
+            local ico = CreateSpellIcon(bar.frame, s.id, s.cd, isPlayer)
             if pos == "LEFT" then
                 local xOff = -(i - 1) * (sz + pad)
                 local yOff = -rowIndex * (sz + 2)
@@ -775,14 +869,29 @@ local function RebuildAll()
     end
 end
 
+-- Unified helper: set cdState and confirm+show the icon for this spell.
+local function ConfirmAndSetCD(name, spellId, cdEnd)
+    if not cdState[name] then cdState[name] = {} end
+    cdState[name][spellId] = cdEnd
+    -- If the icon was hidden (unconfirmed party member), reveal it now.
+    for unit, bar in pairs(attachedBars) do
+        local uName = (unit == "player") and myName or SafeUnitName(unit)
+        if uName == name then
+            local ico = bar.icons[spellId]
+            if ico and not ico._confirmed then
+                ico._confirmed = true
+                ico:SetAlpha(1.0)
+            end
+        end
+    end
+end
+
 -- ============================================================================
--- OWN PLAYER DETECTION  (UNIT_SPELLCAST_SUCCEEDED for "player")
--- No taint — own spell IDs are always clean!
+-- OWN PLAYER DETECTION
 -- ============================================================================
 local playerWatcher = CreateFrame("Frame")
 playerWatcher:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player")
 playerWatcher:SetScript("OnEvent", function(_, _, _, _, spellId)
-    -- spellId from player is clean (no taint on own casts)
     local ok, spellData = pcall(function() return SPELL_LOOKUP[spellId] end)
     if not ok or not spellData then return end
 
@@ -790,14 +899,59 @@ playerWatcher:SetScript("OnEvent", function(_, _, _, _, spellId)
     if not db or not db.enabled then return end
     if not ((spellData.cat == "DEF" and db.showDEF) or (spellData.cat == "OFF" and db.showOFF)) then return end
 
-    local now = GetTime()
-    local cdEnd = now + spellData.cd
-
-    if not cdState[myName] then cdState[myName] = {} end
-    cdState[myName][spellId] = cdEnd
-
-    -- Broadcast to party members with GravityUI
+    -- Note: C_Spell.GetSpellCooldown returns tainted fields in Midnight WoW,
+    -- so we use our DB cooldown value directly.
+    ConfirmAndSetCD(myName, spellId, GetTime() + spellData.cd)
     AnnounceSpellCast(spellId, spellData.cd)
+end)
+
+-- ============================================================================
+-- PARTY MEMBER CD DETECTION via UNIT_AURA buff presence
+-- UNIT_SPELLCAST_SUCCEEDED party spellId is "secret" in Midnight WoW and
+-- cannot be used as a table key even after tostring(). Instead, we detect
+-- when a tracked spell's buff APPEARS on a party unit via GetAuraDataBySpellName,
+-- which is callable with clean strings and returns a non-nil result (detectable)
+-- even though its fields are tainted.
+-- ============================================================================
+local lastBuffPresent = {}  -- [unit][spellId] = bool
+
+local partyAuraWatcher = CreateFrame("Frame")
+partyAuraWatcher:RegisterUnitEvent("UNIT_AURA", "party1", "party2", "party3", "party4")
+partyAuraWatcher:SetScript("OnEvent", function(_, _, unit)
+    local name = SafeUnitName(unit)
+    if not name then return end
+    local user = knownUsers[name]
+    if not user or not user.specID then return end
+    local spells = SYNC_SPELLS[user.specID]
+    if not spells then return end
+
+    local db = GetDB()
+    if not db or not db.enabled then return end
+
+    if not lastBuffPresent[unit] then lastBuffPresent[unit] = {} end
+    local prev = lastBuffPresent[unit]
+
+    for _, s in ipairs(spells) do
+        if (s.cat == "DEF" and db.showDEF) or (s.cat == "OFF" and db.showOFF) then
+            local spellName = SPELL_ID_TO_NAME[s.id]
+            if spellName then
+                -- Check buff presence via clean string name (pcall for any edge-case errors)
+                -- The returned aura table has tainted FIELDS but its existence (~= nil) is readable.
+                local isPresent = false
+                pcall(function()
+                    local aura = C_UnitAuras.GetAuraDataBySpellName(unit, spellName, "HELPFUL")
+                    isPresent = (aura ~= nil)
+                end)
+
+                -- Buff just appeared → spell was cast → confirm icon + start CD timer
+                if isPresent and not prev[s.id] then
+                    ConfirmAndSetCD(name, s.id, GetTime() + s.cd)
+                end
+
+                prev[s.id] = isPresent
+            end
+        end
+    end
 end)
 
 
@@ -839,12 +993,28 @@ local function ApplyOpenRaidCD(unitId, spellId, cooldownInfo)
     if timeLeft <= 0 then
         cdState[name][spellId] = nil  -- spell is ready, clear the entry
     else
-        -- Only override if our existing data doesn't already have a longer CD
-        -- (GravityUI messages are more precise and may have already set this)
         local existing = cdState[name][spellId] or 0
         local newEnd   = GetTime() + timeLeft
         if newEnd > existing then
             cdState[name][spellId] = newEnd
+        end
+    end
+
+    -- If the bar for this player doesn't exist yet (LibOpenRaid data arrived
+    -- before the inspect queue completed), trigger a build now.
+    local hasBar = false
+    for unit, bar in pairs(attachedBars) do
+        local bName = (unit == "player") and myName or SafeUnitName(unit)
+        if bName == name then hasBar = true; break end
+    end
+    if not hasBar and knownUsers[name] and knownUsers[name].specID then
+        -- Find which unit token this player is
+        for i = 1, 4 do
+            local u = "party" .. i
+            if UnitExists(u) and SafeUnitName(u) == name then
+                C_Timer.After(0.1, function() BuildAttachedBar(u, name) end)
+                break
+            end
         end
     end
 end
@@ -855,13 +1025,19 @@ function CDTracker:OnOpenRaidCooldownUpdate(unitId, spellId, cooldownInfo)
     ApplyOpenRaidCD(unitId, spellId, cooldownInfo)
 end
 
--- Callback: a full cooldown list was received from a unit (join / reload)
+-- Callback: full cooldown list received for a unit (join/reload sync from Details/BigWigs)
 function CDTracker:OnOpenRaidCooldownListUpdate(unitId, unitCooldownTable)
     if IsInRaid() then return end
     if not unitCooldownTable then return end
     for spellId, cooldownInfo in pairs(unitCooldownTable) do
         ApplyOpenRaidCD(unitId, spellId, cooldownInfo)
     end
+end
+
+-- Callback: same as CooldownUpdate but fires for remote units when they enter the group
+function CDTracker:OnOpenRaidCooldownAdded(unitId, spellId, cooldownInfo)
+    if IsInRaid() then return end
+    ApplyOpenRaidCD(unitId, spellId, cooldownInfo)
 end
 
 -- ============================================================================
@@ -1039,55 +1215,12 @@ local ticker = C_Timer.NewTicker(0.5, function()
 end)
 
 -- ============================================================================
--- UNIT_AURA FALLBACK  (taint-free, no combat log needed)
--- Detects CD usage via buff appearances for party members without any addon.
--- Works because many tracked spells leave a visible buff on the caster
--- (e.g. Stormkeeper, Ascendance, Combustion, Icy Veins, Dragonrage, …).
--- Priority: lowest — LibOpenRaid / GRV_CD data always takes precedence.
--- ============================================================================
-local auraWatcher = CreateFrame("Frame")
-auraWatcher:SetScript("OnEvent", function(_, _, unit, updateInfo)
-    -- updateInfo.addedAuras contains only newly-appeared auras this frame
-    if not updateInfo or not updateInfo.addedAuras then return end
-
-    local db = GetDB()
-    if not db or not db.enabled then return end
-
-    local name = (unit == "player") and myName or SafeUnitName(unit)
-    if not name then return end
-
-    -- We need at least class/specID to know this player is in our tracker
-    if not knownUsers[name] then return end
-
-    for _, auraData in ipairs(updateInfo.addedAuras) do
-        local buffID = auraData.spellId
-        if buffID then
-            local spellData = BUFF_LOOKUP[buffID]
-            if spellData then
-                -- Category filter
-                local show = (spellData.cat == "DEF" and db.showDEF)
-                          or (spellData.cat == "OFF" and db.showOFF)
-                if show and (db.disabledSpells or {})[spellData.spellID] ~= false then
-                    -- Only update if this fallback would set a *later* end time
-                    -- (LibOpenRaid / GRV_CD messages are more precise and may have
-                    --  already set a slightly longer value)
-                    local now    = GetTime()
-                    local newEnd = now + spellData.cd
-                    local existing = cdState[name] and cdState[name][spellData.spellID] or 0
-                    if newEnd > existing then
-                        if not cdState[name] then cdState[name] = {} end
-                        cdState[name][spellData.spellID] = newEnd
-                    end
-                end
-            end
-        end
-    end
-end)
-
--- ============================================================================
 -- INITIALIZATION
 -- ============================================================================
 function CDTracker:OnInitialize()
+    if initialized then return end  -- prevent double-init
+    initialized = true
+
     local db = GetDB()
     if not db then
         print("|cFFFF4444GravityUI CDTracker:|r OnInitialize failed — DB not ready")
@@ -1100,9 +1233,14 @@ function CDTracker:OnInitialize()
     self:RegisterEvent("INSPECT_READY")
     self:RegisterEvent("CHAT_MSG_ADDON")
 
-    -- UNIT_AURA fallback: watch party buffs to detect CD usage without addons
-    auraWatcher:RegisterUnitEvent("UNIT_AURA", "player", "party1", "party2", "party3", "party4")
+    -- Build spell-name cache (needs game spell DB, not available at file-load time)
+    for spellID in pairs(SPELL_LOOKUP) do
+        local ok, n = pcall(C_Spell.GetSpellName, spellID)
+        if ok and n then SPELL_ID_TO_NAME[spellID] = n end
+    end
 
+    -- UNIT_AURA fallback: name-based buff presence detection for non-LibOpenRaid users
+    auraWatcher:RegisterUnitEvent("UNIT_AURA", "player", "party1", "party2", "party3", "party4")
 
     -- Own player info
     myName  = SafeUnitName("player")
@@ -1132,10 +1270,160 @@ function CDTracker:OnInitialize()
         if openRaid then
             openRaid.RegisterCallback(CDTracker, "CooldownUpdate",     "OnOpenRaidCooldownUpdate")
             openRaid.RegisterCallback(CDTracker, "CooldownListUpdate", "OnOpenRaidCooldownListUpdate")
+            openRaid.RegisterCallback(CDTracker, "CooldownAdded",      "OnOpenRaidCooldownAdded")
+            -- Request full data dump from all party members who have LibOpenRaid
+            -- This triggers Details/BigWigs to broadcast their current CD state
+            if openRaid.RequestAllData then
+                C_Timer.After(1, function()
+                    if IsInGroup() then
+                        openRaid.RequestAllData()
+                    end
+                end)
+            end
+        else
         end
     end)
+
+    -- Inspect retry ticker: keeps trying for party members still missing specID
+    -- Runs every 5s for the first 60s after init, then stops
+    local retryCount = 0
+    C_Timer.NewTicker(5, function(ticker)
+        retryCount = retryCount + 1
+        if retryCount > 12 then ticker:Cancel(); return end
+        local needsRebuild = false
+        for i = 1, 4 do
+            local u = "party" .. i
+            if UnitExists(u) then
+                local name = SafeUnitName(u)
+                if name and knownUsers[name] and not knownUsers[name].specID then
+                    QueueInspect(u)
+                    needsRebuild = true
+                end
+            end
+        end
+        if needsRebuild then
+            C_Timer.After(1.5, RebuildAll)
+        end
+    end)
+    -- /gravitycdebug — dump internal state to chat
+    SLASH_GRAVITYCDEBUG1 = "/gravitycdebug"
+    SlashCmdList["GRAVITYCDEBUG"] = function()
+        local p = function(msg) print("|cFF30D1FFGravityUI CD Debug:|r " .. msg) end
+        local db = GetDB()
+        p("=== CDTracker Debug ===")
+        p("enabled: " .. tostring(db and db.enabled))
+        p("showDEF: " .. tostring(db and db.showDEF) .. "  showOFF: " .. tostring(db and db.showOFF))
+        p("IsInGroup: " .. tostring(IsInGroup()) .. "  IsInRaid: " .. tostring(IsInRaid()))
+        p("myName: " .. tostring(myName) .. "  mySpecID: " .. tostring(mySpecID))
+
+        -- knownUsers
+        p("--- knownUsers ---")
+        for name, u in pairs(knownUsers) do
+            p("  " .. name .. " class=" .. tostring(u.class) .. " spec=" .. tostring(u.specID) .. " addon=" .. tostring(u._hasAddon))
+        end
+
+        -- attachedBars
+        p("--- attachedBars ---")
+        local barCount = 0
+        for unit, bar in pairs(attachedBars) do
+            barCount = barCount + 1
+            local icons = 0
+            for _ in pairs(bar.icons) do icons = icons + 1 end
+            local visible = bar.frame and bar.frame:IsShown() and "shown" or "HIDDEN"
+            p("  " .. unit .. " → " .. icons .. " icons, frame " .. visible)
+        end
+        if barCount == 0 then p("  (none)") end
+
+        -- cdState
+        p("--- cdState ---")
+        local now = GetTime()
+        for name, spells in pairs(cdState) do
+            for sid, endT in pairs(spells) do
+                local rem = math.max(0, endT - now)
+                if rem > 0 then
+                    p("  " .. name .. " spell=" .. sid .. " rem=" .. string.format("%.1f", rem) .. "s")
+                end
+            end
+        end
+
+        -- party unit frames
+        p("--- PartyFrames ---")
+        for i = 1, 4 do
+            local u = "party" .. i
+            if UnitExists(u) then
+                local n = SafeUnitName(u) or "?"
+                local f = GetPartyUnitFrame(u)
+                p("  " .. u .. " (" .. n .. ") → frame=" .. tostring(f ~= nil))
+            end
+        end
+
+        -- LibOpenRaid
+        local openRaid = LibStub and LibStub("LibOpenRaid-1.0", true)
+        p("LibOpenRaid: " .. (openRaid and ("v" .. tostring(openRaid.VERSION or "?")) or "NOT FOUND"))
+        if openRaid then
+            local allData = openRaid.CooldownManager and openRaid.CooldownManager.UnitData
+            if allData then
+                p("--- OpenRaid UnitData ---")
+                for unitName, spellTable in pairs(allData) do
+                    local cnt = 0
+                    for _ in pairs(spellTable) do cnt = cnt + 1 end
+                    if cnt > 0 then p("  " .. unitName .. ": " .. cnt .. " spells tracked") end
+                end
+            end
+        end
+        p("======================")
+    end
 end
 
 function CDTracker:Enable()
     self:OnInitialize()
 end
+
+-- /gravitycdtest — manually inject CDs for all bars to test visual display
+SLASH_GRAVITYCDTEST1 = "/gravitycdtest"
+SlashCmdList["GRAVITYCDTEST"] = function(arg)
+    local p = function(msg) print("|cFF30D1FFGravityUI CD Test:|r " .. msg) end
+    if arg == "clear" then
+        for name in pairs(cdState) do cdState[name] = {} end
+        p("cdState cleared")
+        return
+    end
+
+    local injected = 0
+    -- Test für den eigenen Player-Bar
+    local ownSpells = mySpecID and SYNC_SPELLS[mySpecID]
+    if ownSpells and #ownSpells > 0 and myName then
+        if not cdState[myName] then cdState[myName] = {} end
+        local s = ownSpells[1]
+        cdState[myName][s.id] = GetTime() + 60
+        p("Player: " .. myName .. " → spell " .. s.id .. " (" .. (s.name or "?") .. ") 60s")
+        injected = injected + 1
+    end
+
+    -- Test für alle Party-Bars
+    for i = 1, 4 do
+        local u = "party" .. i
+        if UnitExists(u) and attachedBars[u] then
+            local name = SafeUnitName(u)
+            local user = name and knownUsers[name]
+            local specSpells = user and user.specID and SYNC_SPELLS[user.specID]
+            if specSpells and #specSpells > 0 and name then
+                if not cdState[name] then cdState[name] = {} end
+                local s = specSpells[1]
+                cdState[name][s.id] = GetTime() + 60
+                p(u .. " (" .. name .. "): spell " .. s.id .. " (" .. (s.name or "?") .. ") 60s")
+                injected = injected + 1
+            else
+                p(u .. " → kein Bar oder keine Spells (spec=" .. tostring(user and user.specID) .. ")")
+            end
+        end
+    end
+
+    if injected == 0 then
+        p("Keine Bars gefunden! Erst /reload probieren.")
+    else
+        p(injected .. " CDs gesetzt — Icons sollten jetzt auf CD gehen.")
+        p("Wenn nicht → Display-Bug. '/gravitycdtest clear' zum Zurücksetzen.")
+    end
+end
+
