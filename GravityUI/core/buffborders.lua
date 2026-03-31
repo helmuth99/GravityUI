@@ -209,8 +209,9 @@ end
 
 local function ProcessAuraContainer(container, isBuff)
     if not container then return end
-    for i = 1, select("#", container:GetChildren()) do
-        local frame = select(i, container:GetChildren())
+    local children = {container:GetChildren()}  -- einmalig cachen statt O(N²) GetChildren()
+    for i = 1, #children do
+        local frame = children[i]
         if frame and (frame.Icon or frame.icon) then
             AddBorderToButton(frame, isBuff)
             StyleAuraButton(frame)

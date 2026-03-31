@@ -152,6 +152,7 @@ launderSlider:SetSize(1, 1)
 launderSlider:Hide()
 
 local onSliderChangedResult = nil
+local onValueChangedResult = nil  -- war versehentlich global, jetzt local
 launderSlider:SetScript("OnValueChanged", function(self, value)
     onSliderChangedResult = value
 end)
@@ -884,7 +885,7 @@ local function OnMobInterrupted(unit)
                         if newExpiration < now then newExpiration = now end
                         info.expiration = newExpiration
                         -- Avoid updating the text here, OnUpdate will smoothly catch it
-                        if not NS_TEST_MODE then updateFrame:Show() end
+                        if not testModeActive then updateFrame:Show() end
                     end
                 end
                 break
@@ -916,6 +917,8 @@ nameplateFrame:SetScript("OnEvent", function(self, event, unit)
     elseif event == "NAME_PLATE_UNIT_REMOVED" then
         if nameplateCastFrames[unit] then
             nameplateCastFrames[unit]:UnregisterAllEvents()
+            nameplateCastFrames[unit]:SetScript("OnEvent", nil)
+            nameplateCastFrames[unit] = nil  -- Frame-Leak-Fix: Referenz freigeben
         end
     end
 end)
@@ -1124,7 +1127,7 @@ local function OnInspectReady(guid)
                         local info = activeBars[guid .. extraSpellID]
                         if info then
                             info.expiration = 0 -- Ready immediately
-                            if not NS_TEST_MODE then updateFrame:Show() end
+                            if not testModeActive then updateFrame:Show() end
                         end
                     end
                 end
