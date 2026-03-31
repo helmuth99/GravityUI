@@ -474,20 +474,25 @@ end
 -- Timestamps & URLs
 ---------------------------------------------------------------------------
 
-local function AddTimestamp(text)
+-- Timestamp positioning via Blizzard's showTimestamps CVar.
+-- We do NOT inject timestamps into the message text ourselves — that would
+-- put them AFTER the "[Raid] [Name]:" prefix which Blizzard appends later.
+-- The CVar places the stamp at the very beginning of the line, which is
+-- what the user expects. We simply sync it to GravityUI's setting.
+local function ApplyTimestampCVar()
     local settings = GetSettings()
-    if not settings or not settings.timestamps or not settings.timestamps.enabled then
-        return text
+    if not settings or not settings.timestamps then
+        SetCVar("showTimestamps", "none")
+        return
     end
-
-    local fmt = settings.timestamps.format == "12h" and "%I:%M %p" or "%H:%M"
-    local timestamp = date(fmt)
-    local color = settings.timestamps.color
-    if color then
-        local hex = string.format("%02x%02x%02x", color[1]*255, color[2]*255, color[3]*255)
-        return string.format("|cff%s[%s]|r %s", hex, timestamp, text)
+    if settings.timestamps.enabled then
+        -- CVar value is passed directly to Lua's date(), so needs strftime % codes.
+        -- Append " |" as a literal separator between the timestamp and channel/sender.
+        local fmt = (settings.timestamps.format == "12h") and "%I:%M %p | " or "%H:%M | "
+        SetCVar("showTimestamps", fmt)
+    else
+        SetCVar("showTimestamps", "none")
     end
-    return string.format("[%s] %s", timestamp, text)
 end
 
 local function MakeURLsClickable(text)
@@ -514,25 +519,50 @@ local function MakeURLsClickable(text)
     if success then return result else return text end
 end
 
+-- TAINT-SAFE MESSAGE PROCESSING
+-- ChatFrame_AddMessageEventFilter is Blizzard's purpose-built API for addon
+-- message pre-processing. Filters are called inside Blizzard's secure event
+-- dispatch chain, BEFORE AddMessage runs. They can modify the 'text' argument
+-- directly and return the new value — no addon code ever sits on the call
+-- stack when SetLastTellTarget(sender) fires. This eliminates the WHISPER
+-- "attempt to perform string conversion on a secret string value" taint crash.
+local guiMessageFilterRegistered = false
+local function RegisterMessageFilter()
+    if guiMessageFilterRegistered then return end
+    guiMessageFilterRegistered = true
+
+    -- This filter runs for every chat event on every registered chat frame.
+    -- Return false (or nil) to pass through; return true to suppress the message.
+    -- The signature is: function(chatFrame, event, text, ...) return suppress, newText, ...
+    ChatFrame_AddMessageEventFilter("CHAT_MSG_WHISPER",         function(_, event, text, ...) return false, HookTransformText(text), ... end)
+    ChatFrame_AddMessageEventFilter("CHAT_MSG_WHISPER_INFORM",  function(_, event, text, ...) return false, HookTransformText(text), ... end)
+    ChatFrame_AddMessageEventFilter("CHAT_MSG_SAY",             function(_, event, text, ...) return false, HookTransformText(text), ... end)
+    ChatFrame_AddMessageEventFilter("CHAT_MSG_YELL",            function(_, event, text, ...) return false, HookTransformText(text), ... end)
+    ChatFrame_AddMessageEventFilter("CHAT_MSG_PARTY",           function(_, event, text, ...) return false, HookTransformText(text), ... end)
+    ChatFrame_AddMessageEventFilter("CHAT_MSG_PARTY_LEADER",    function(_, event, text, ...) return false, HookTransformText(text), ... end)
+    ChatFrame_AddMessageEventFilter("CHAT_MSG_RAID",            function(_, event, text, ...) return false, HookTransformText(text), ... end)
+    ChatFrame_AddMessageEventFilter("CHAT_MSG_RAID_LEADER",     function(_, event, text, ...) return false, HookTransformText(text), ... end)
+    ChatFrame_AddMessageEventFilter("CHAT_MSG_GUILD",           function(_, event, text, ...) return false, HookTransformText(text), ... end)
+    ChatFrame_AddMessageEventFilter("CHAT_MSG_OFFICER",         function(_, event, text, ...) return false, HookTransformText(text), ... end)
+    ChatFrame_AddMessageEventFilter("CHAT_MSG_INSTANCE_CHAT",   function(_, event, text, ...) return false, HookTransformText(text), ... end)
+    ChatFrame_AddMessageEventFilter("CHAT_MSG_CHANNEL",         function(_, event, text, ...) return false, HookTransformText(text), ... end)
+    ChatFrame_AddMessageEventFilter("CHAT_MSG_EMOTE",           function(_, event, text, ...) return false, HookTransformText(text), ... end)
+    ChatFrame_AddMessageEventFilter("CHAT_MSG_TEXT_EMOTE",      function(_, event, text, ...) return false, HookTransformText(text), ... end)
+end
+
+-- URL transform only — timestamps are handled by the showTimestamps CVar.
+function HookTransformText(text)
+    if not text or type(text) ~= "string" then return text end
+    local success, result = pcall(MakeURLsClickable, text)
+    return success and result or text
+end
+
+-- Per-frame hook: now just ensures we've registered filters once.
+-- The actual work is done by RegisterMessageFilter / HookTransformText above.
 local function HookChatMessages(chatFrame)
     if chatFrame.__guiChatMessageHooked then return end
     chatFrame.__guiChatMessageHooked = true
-
-    local origAddMessage = chatFrame.AddMessage
-    chatFrame.AddMessage = function(self, text, ...)
-        if text and type(text) == "string" then
-            local success, newText = pcall(function(msg)
-                msg = AddTimestamp(msg)
-                msg = MakeURLsClickable(msg)
-                return msg
-            end, text)
-            
-            if success then
-                text = newText
-            end
-        end
-        return origAddMessage(self, text, ...)
-    end
+    RegisterMessageFilter()
 end
 
 ---------------------------------------------------------------------------
@@ -1329,8 +1359,9 @@ function ns.Chat.Init()
     local settings = GetSettings()
     if settings and settings.enabled == false then return end
 
-    -- Reset Blizzard timestamps to none (to fix double timestamp after revert)
-    SetCVar("showTimestamps", "none")
+    -- Sync Blizzard's showTimestamps CVar to GravityUI's timestamp setting.
+    -- This puts the stamp at the very start of each line (before sender prefix).
+    ApplyTimestampCVar()
 
     SetupURLClickHandler()
     
