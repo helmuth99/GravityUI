@@ -297,28 +297,26 @@ local function HandleChatCommand(event, msg, sender)
     end
 
     if cmd == "!key" or cmd == "!keys" then
-        local lines = {}
-        -- Own key
+        -- Always respond with OUR OWN key only.
+        -- When someone else asks (!key), we tell them what WE have.
+        -- When we ask ourselves, we announce our own key to the group.
+        -- We never dump the full groupKeys cache into chat.
         local myMapID, myLevel = GetOwnedKeystone()
         if myMapID then
             local dn = C_ChallengeMode.GetMapUIInfo(myMapID) or ("Map "..myMapID)
             dn = dn:gsub("Operation: ",""):gsub("Tazavesh: ","")
-            table.insert(lines, string.format("[GravityUI] %s: %s +%d", UnitName("player"), dn, myLevel))
-        end
-        -- Group keys from cache
-        if IsInGroup() then
-            for name, kd in pairs(groupKeys) do
-                if kd.mapID and kd.mapID > 0 then
-                    local dn2 = C_ChallengeMode.GetMapUIInfo(kd.mapID) or ("Map "..kd.mapID)
-                    dn2 = dn2:gsub("Operation: ",""):gsub("Tazavesh: ","")
-                    table.insert(lines, string.format("[GravityUI] %s: %s +%d", name, dn2, kd.level))
-                end
-            end
-        end
-        if #lines == 0 then
-            Reply("[GravityUI] No keystones found.")
+            Reply(string.format("[GravityUI] %s: %s +%d", UnitName("player"), dn, myLevel))
         else
-            for _, line in ipairs(lines) do Reply(line) end
+            -- Only bother saying "no key" if we ourselves typed the command
+            local isSelf = false
+            pcall(function()
+                local playerName = UnitName("player") or ""
+                local senderShort = Ambiguate(sender, "short")
+                isSelf = (senderShort == playerName or senderShort == Ambiguate(playerName, "short"))
+            end)
+            if isSelf then
+                Reply("[GravityUI] You have no keystone.")
+            end
         end
 
     elseif cmd == "!score" then
