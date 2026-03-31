@@ -259,6 +259,13 @@ for specID, spells in pairs(SYNC_SPELLS) do
     end
 end
 
+-- Reverse lookup: spellData pointer → clean integer DB spellID
+-- Used by GetRealCDSafe so we never pass a potentially tainted event ID.
+local SPELL_DATA_TO_ID = {}
+for cleanId, spellData in pairs(SPELL_LOOKUP) do
+    SPELL_DATA_TO_ID[spellData] = cleanId
+end
+
 -- String-keyed version: SPELL_LOOKUP_STR["115203"] = {...}
 -- Used for party member lookup where the numeric spellId may be soft-tainted.
 -- tostring() on a tainted number often produces a clean string in WoW.
@@ -345,6 +352,11 @@ end
 -- State transitions (not present → present) indicate a cast happened.
 -- ============================================================================
 
+-- Throttle: don't scan same unit more than once per 100ms.
+-- UNIT_AURA fires very frequently in combat (every buff application/removal).
+local auraThrottle    = {}  -- [unit] = last scan timestamp
+local AURA_THROTTLE   = 0.1
+
 local function ScanUnitBuffs(unit)
     local name = (unit == "player") and myName or SafeUnitName(unit)
     if not name then return end
@@ -385,6 +397,9 @@ end
 
 local auraWatcher = CreateFrame("Frame")
 auraWatcher:SetScript("OnEvent", function(_, _, unit)
+    local now = GetTime()
+    if (now - (auraThrottle[unit] or 0)) < AURA_THROTTLE then return end
+    auraThrottle[unit] = now
     ScanUnitBuffs(unit)
 end)
 
@@ -837,6 +852,25 @@ local function ConfirmAndSetCD(name, spellId, cdEnd)
 end
 
 -- ============================================================================
+-- REAL COOLDOWN READER  (taint-safe, TrySafeNumber pattern)
+-- Reads the actual in-game cooldown for a clean DB spellID.
+-- Uses tostring()->tonumber() to scrub tainted return values.
+-- Returns remaining seconds, or nil if unavailable / GCD-only (<= 1.5s).
+-- ============================================================================
+local function GetRealCDSafe(cleanSpellId)
+    local ok, info = pcall(C_Spell.GetSpellCooldown, cleanSpellId)
+    if not ok or not info then return nil end
+    -- Clean potentially tainted fields via tostring() → tonumber()
+    local dur   = tonumber(tostring(info.duration))
+    local start = tonumber(tostring(info.startTime))
+    if not dur or not start then return nil end
+    if dur <= 1.5 then return nil end  -- GCD-only, not a real CD
+    local remaining = (start + dur) - GetTime()
+    if remaining < 0 then remaining = 0 end
+    return math.ceil(remaining), math.ceil(dur)
+end
+
+-- ============================================================================
 -- OWN PLAYER DETECTION
 -- ============================================================================
 local playerWatcher = CreateFrame("Frame")
@@ -849,10 +883,24 @@ playerWatcher:SetScript("OnEvent", function(_, _, _, _, spellId)
     if not db or not db.enabled then return end
     if not ((spellData.cat == "DEF" and db.showDEF) or (spellData.cat == "OFF" and db.showOFF)) then return end
 
-    -- Note: C_Spell.GetSpellCooldown returns tainted fields in Midnight WoW,
-    -- so we use our DB cooldown value directly.
-    ConfirmAndSetCD(myName, spellId, GetTime() + spellData.cd)
-    AnnounceSpellCast(spellId, spellData.cd)
+    -- Resolve clean integer ID via reverse lookup (never trust tainted event spellId).
+    -- Then try to read the real in-game cooldown (talent reductions, etc.).
+    local usedCD = spellData.cd
+    local cleanId = SPELL_DATA_TO_ID[spellData]
+    if cleanId then
+        local rem, realDur = GetRealCDSafe(cleanId)
+        if realDur and realDur > 0 then
+            -- Use real CD if it differs >15% from our DB value
+            -- (covers talent reductions like Anger Management, etc.)
+            local deviation = math.abs(realDur - spellData.cd) / spellData.cd
+            if deviation > 0.15 then
+                usedCD = realDur
+            end
+        end
+    end
+
+    ConfirmAndSetCD(myName, spellId, GetTime() + usedCD)
+    AnnounceSpellCast(spellId, usedCD)
 end)
 
 -- ============================================================================
@@ -862,47 +910,7 @@ end)
 -- when a tracked spell's buff APPEARS on a party unit via GetAuraDataBySpellName,
 -- which is callable with clean strings and returns a non-nil result (detectable)
 -- even though its fields are tainted.
--- ============================================================================
-local lastBuffPresent = {}  -- [unit][spellId] = bool
 
-local partyAuraWatcher = CreateFrame("Frame")
-partyAuraWatcher:RegisterUnitEvent("UNIT_AURA", "party1", "party2", "party3", "party4")
-partyAuraWatcher:SetScript("OnEvent", function(_, _, unit)
-    local name = SafeUnitName(unit)
-    if not name then return end
-    local user = knownUsers[name]
-    if not user or not user.specID then return end
-    local spells = SYNC_SPELLS[user.specID]
-    if not spells then return end
-
-    local db = GetDB()
-    if not db or not db.enabled then return end
-
-    if not lastBuffPresent[unit] then lastBuffPresent[unit] = {} end
-    local prev = lastBuffPresent[unit]
-
-    for _, s in ipairs(spells) do
-        if (s.cat == "DEF" and db.showDEF) or (s.cat == "OFF" and db.showOFF) then
-            local spellName = SPELL_ID_TO_NAME[s.id]
-            if spellName then
-                -- Check buff presence via clean string name (pcall for any edge-case errors)
-                -- The returned aura table has tainted FIELDS but its existence (~= nil) is readable.
-                local isPresent = false
-                pcall(function()
-                    local aura = C_UnitAuras.GetAuraDataBySpellName(unit, spellName, "HELPFUL")
-                    isPresent = (aura ~= nil)
-                end)
-
-                -- Buff just appeared → spell was cast → confirm icon + start CD timer
-                if isPresent and not prev[s.id] then
-                    ConfirmAndSetCD(name, s.id, GetTime() + s.cd)
-                end
-
-                prev[s.id] = isPresent
-            end
-        end
-    end
-end)
 
 
 -- ============================================================================
@@ -1150,16 +1158,43 @@ function CDTracker:ApplySettings()
 end
 
 -- ============================================================================
--- TICKER: update icon timers
+-- TICKER: update icon timers + sync own real cooldowns every 2s
 -- ============================================================================
+local REAL_SYNC_INTERVAL  = 2.0   -- seconds between real-CD checks
+local REAL_SYNC_THRESHOLD = 0.5   -- minimum deviation (s) to trigger correction
+local lastRealSync = 0
+
 local ticker = C_Timer.NewTicker(0.5, function()
     local now = GetTime()
+
+    -- Icon display update
     for unit, bar in pairs(attachedBars) do
         for spellID, ico in pairs(bar.icons) do
-            -- Find name for this unit
             local name = (unit == "player") and myName or SafeUnitName(unit)
             local cdEnd = name and cdState[name] and cdState[name][spellID] or 0
             UpdateIcon(ico, cdEnd)
+        end
+    end
+
+    -- Real cooldown sync for own player (every 2s)
+    -- Reads actual in-game CD and corrects stored value + broadcasts if off by >0.5s.
+    if myName and cdState[myName] and (now - lastRealSync) >= REAL_SYNC_INTERVAL then
+        lastRealSync = now
+        for spellID, cdEnd in pairs(cdState[myName]) do
+            local trackedRemaining = cdEnd - now
+            if trackedRemaining > 0 then
+                local cleanId = spellID  -- cdState keys are always our clean DB integers
+                local realRemaining, realDur = GetRealCDSafe(cleanId)
+                if realRemaining and realDur and realDur > 1.5 then
+                    local drift = math.abs(realRemaining - trackedRemaining)
+                    if drift >= REAL_SYNC_THRESHOLD then
+                        -- Correct stored value
+                        cdState[myName][spellID] = now + realRemaining
+                        -- Broadcast correction to party so others sync up too
+                        AnnounceSpellCast(spellID, realRemaining)
+                    end
+                end
+            end
         end
     end
 end)
