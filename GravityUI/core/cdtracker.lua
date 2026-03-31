@@ -11,10 +11,10 @@ local SYNC_SPELLS = {
 
     -- ── Death Knight ──────────────────────────────────────────────────────
     [250] = { -- Blood
-        { id=49028,  cd=90,  cat="OFF", name="Dancing Rune Weapon"  },
+        { id=49028,  cd=120, cat="OFF", name="Dancing Rune Weapon"  },
         { id=51052,  cd=120, cat="DEF", name="Anti-Magic Zone"      },
         { id=49039,  cd=120, cat="DEF", name="Lichborne"            },
-        { id=55233,  cd=180, cat="DEF", name="Vampiric Blood"       },
+        { id=55233,  cd=90,  cat="DEF", name="Vampiric Blood"       },
         { id=48707,  cd=60,  cat="DEF", name="Anti-Magic Shell"     },
         { id=48792,  cd=120, cat="DEF", name="Icebound Fortitude"   },
     },
@@ -72,7 +72,7 @@ local SYNC_SPELLS = {
         { id=374227, cd=120, cat="DEF", name="Zephyr"               },
     },
     [1468] = { -- Preservation
-        { id=357170, cd=60,  cat="DEF", name="Rewind"               },
+        { id=363534, cd=240, cat="DEF", name="Rewind"               },
         { id=363916, cd=90,  cat="DEF", name="Obsidian Scales"      },
         { id=374227, cd=120, cat="DEF", name="Zephyr"               },
     },
@@ -86,54 +86,54 @@ local SYNC_SPELLS = {
     [253] = { -- Beast Mastery
         { id=19574,  cd=90,  cat="OFF", name="Bestial Wrath"        },
         { id=186265, cd=180, cat="DEF", name="Aspect of the Turtle" },
-        { id=264735, cd=180, cat="DEF", name="Survival of the Fittest" },
+        { id=264735, cd=90,  cat="DEF", name="Survival of the Fittest" },
         { id=109304, cd=120, cat="DEF", name="Exhilaration"         },
     },
     [254] = { -- Marksmanship
         { id=288613, cd=120, cat="OFF", name="Trueshot"             },
         { id=186265, cd=180, cat="DEF", name="Aspect of the Turtle" },
-        { id=264735, cd=180, cat="DEF", name="Survival of the Fittest" },
+        { id=264735, cd=90,  cat="DEF", name="Survival of the Fittest" },
         { id=109304, cd=120, cat="DEF", name="Exhilaration"         },
     },
     [255] = { -- Survival
         { id=266779, cd=120, cat="OFF", name="Coordinated Assault"  },
         { id=186265, cd=180, cat="DEF", name="Aspect of the Turtle" },
-        { id=264735, cd=180, cat="DEF", name="Survival of the Fittest" },
+        { id=264735, cd=90,  cat="DEF", name="Survival of the Fittest" },
         { id=109304, cd=120, cat="DEF", name="Exhilaration"         },
     },
 
     -- ── Mage ──────────────────────────────────────────────────────────────
     [62] = { -- Arcane
         { id=365350, cd=90,  cat="OFF", name="Arcane Surge"         },
-        { id=45438,  cd=180, cat="DEF", name="Ice Block"            },
+        { id=45438,  cd=240, cat="DEF", name="Ice Block"            },
         { id=55342,  cd=120, cat="DEF", name="Mirror Image"         },
         { id=110959, cd=120, cat="DEF", name="Greater Invisibility" },
     },
     [63] = { -- Fire
         { id=190319, cd=120, cat="OFF", name="Combustion"           },
-        { id=45438,  cd=180, cat="DEF", name="Ice Block"            },
+        { id=45438,  cd=240, cat="DEF", name="Ice Block"            },
         { id=55342,  cd=120, cat="DEF", name="Mirror Image"         },
         { id=110959, cd=120, cat="DEF", name="Greater Invisibility" },
     },
     [64] = { -- Frost
         { id=12472,  cd=120, cat="OFF", name="Icy Veins"            },
-        { id=45438,  cd=180, cat="DEF", name="Ice Block"            },
+        { id=45438,  cd=240, cat="DEF", name="Ice Block"            },
         { id=55342,  cd=120, cat="DEF", name="Mirror Image"         },
         { id=110959, cd=120, cat="DEF", name="Greater Invisibility" },
     },
 
     -- ── Monk ──────────────────────────────────────────────────────────────
     [268] = { -- Brewmaster
-        { id=322507, cd=60,  cat="DEF", name="Celestial Brew"       },
-        { id=115203, cd=420, cat="DEF", name="Fortifying Brew"      },
+        { id=322507, cd=45,  cat="DEF", name="Celestial Brew"       },
+        { id=115203, cd=360, cat="DEF", name="Fortifying Brew"      },
     },
     [269] = { -- Windwalker
-        { id=116844, cd=45,  cat="DEF", name="Touch of Karma"       },
+        { id=122470, cd=90,  cat="DEF", name="Touch of Karma"       },
         { id=137639, cd=90,  cat="OFF", name="Storm, Earth, and Fire" },
         { id=122783, cd=90,  cat="DEF", name="Diffuse Magic"        },
     },
     [270] = { -- Mistweaver
-        { id=116844, cd=45,  cat="DEF", name="Touch of Karma"       },
+        { id=122470, cd=90,  cat="DEF", name="Touch of Karma"       },
         { id=115310, cd=180, cat="DEF", name="Revival"              },
         { id=122783, cd=90,  cat="DEF", name="Diffuse Magic"        },
         { id=116849, cd=120, cat="DEF", name="Life Cocoon"          },
@@ -148,7 +148,7 @@ local SYNC_SPELLS = {
         { id=498,    cd=60,  cat="DEF", name="Divine Protection"    },
     },
     [66] = { -- Protection
-        { id=31850,  cd=120, cat="DEF", name="Ardent Defender"      },
+        { id=31850,  cd=90,  cat="DEF", name="Ardent Defender"      },
         { id=86659,  cd=300, cat="DEF", name="Guardian of Ancient Kings" },
         { id=642,    cd=300, cat="DEF", name="Divine Shield"        },
         { id=633,    cd=600, cat="DEF", name="Lay on Hands"         },
@@ -157,7 +157,7 @@ local SYNC_SPELLS = {
         { id=1022,   cd=300, cat="DEF", name="Blessing of Protection" },
         { id=642,    cd=300, cat="DEF", name="Divine Shield"        },
         { id=633,    cd=600, cat="DEF", name="Lay on Hands"         },
-        { id=184662, cd=120, cat="DEF", name="Shield of Vengeance"  },
+        { id=184662, cd=90,  cat="DEF", name="Shield of Vengeance"  },
     },
 
     -- ── Priest ────────────────────────────────────────────────────────────
@@ -190,7 +190,7 @@ local SYNC_SPELLS = {
         { id=1856,   cd=120, cat="DEF", name="Vanish"               },
     },
     [261] = { -- Subtlety
-        { id=121471, cd=180, cat="OFF", name="Shadow Blades"        },
+        { id=121471, cd=90,  cat="OFF", name="Shadow Blades"        },
         { id=31224,  cd=120, cat="DEF", name="Cloak of Shadows"     },
         { id=5277,   cd=120, cat="DEF", name="Evasion"              },
         { id=1856,   cd=120, cat="DEF", name="Vanish"               },
@@ -200,20 +200,20 @@ local SYNC_SPELLS = {
     [262] = { -- Elemental
         { id=191634, cd=60,  cat="OFF", name="Stormkeeper"          },
         { id=114050, cd=180, cat="OFF", name="Ascendance"           },
-        { id=108271, cd=90,  cat="DEF", name="Astral Shift"         },
-        { id=198103, cd=300, cat="DEF", name="Earth Elemental"      },
-        { id=108270, cd=60,  cat="DEF", name="Stone Bulwark Totem"  },
+        { id=108271, cd=120, cat="DEF", name="Astral Shift"         },
+        { id=198103, cd=180, cat="DEF", name="Earth Elemental"      },
+        { id=108270, cd=180, cat="DEF", name="Stone Bulwark Totem"  },
     },
     [263] = { -- Enhancement
         { id=114050, cd=180, cat="OFF", name="Ascendance"           },
-        { id=108271, cd=90,  cat="DEF", name="Astral Shift"         },
-        { id=198103, cd=300, cat="DEF", name="Earth Elemental"      },
+        { id=108271, cd=120, cat="DEF", name="Astral Shift"         },
+        { id=198103, cd=180, cat="DEF", name="Earth Elemental"      },
     },
     [264] = { -- Restoration
-        { id=108271, cd=90,  cat="DEF", name="Astral Shift"         },
+        { id=108271, cd=120, cat="DEF", name="Astral Shift"         },
         { id=98008,  cd=180, cat="DEF", name="Spirit Link Totem"    },
-        { id=198103, cd=300, cat="DEF", name="Earth Elemental"      },
-        { id=108270, cd=60,  cat="DEF", name="Stone Bulwark Totem"  },
+        { id=198103, cd=180, cat="DEF", name="Earth Elemental"      },
+        { id=108270, cd=180, cat="DEF", name="Stone Bulwark Totem"  },
     },
 
     -- ── Warlock ───────────────────────────────────────────────────────────
@@ -234,18 +234,18 @@ local SYNC_SPELLS = {
     [71] = { -- Arms
         { id=118038, cd=120, cat="DEF", name="Die by the Sword"     },
         { id=97462,  cd=180, cat="DEF", name="Rallying Cry"         },
-        { id=23920,  cd=18,  cat="DEF", name="Spell Reflection"     },
+        { id=23920,  cd=25,  cat="DEF", name="Spell Reflection"     },
     },
     [72] = { -- Fury
         { id=184364, cd=120, cat="DEF", name="Enraged Regeneration" },
         { id=97462,  cd=180, cat="DEF", name="Rallying Cry"         },
-        { id=23920,  cd=18,  cat="DEF", name="Spell Reflection"     },
+        { id=23920,  cd=25,  cat="DEF", name="Spell Reflection"     },
     },
     [73] = { -- Protection
-        { id=871,    cd=168, cat="DEF", name="Shield Wall"          },
+        { id=871,    cd=180, cat="DEF", name="Shield Wall"          },
         { id=12975,  cd=180, cat="DEF", name="Last Stand"           },
         { id=97462,  cd=180, cat="DEF", name="Rallying Cry"         },
-        { id=23920,  cd=18,  cat="DEF", name="Spell Reflection"     },
+        { id=23920,  cd=25,  cat="DEF", name="Spell Reflection"     },
     },
 }
 
@@ -424,38 +424,6 @@ end
 local function AnnounceSpellCast(spellID, duration)
     Transmit(NetMsg("CAST", spellID, duration))
 end
-
--- ============================================================================
--- PLAYER SPELL CAST HANDLER
--- Tracks the local player's own cooldowns and broadcasts to party members.
--- ============================================================================
-local playerWatcher = CreateFrame("Frame")
-playerWatcher:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player")
-playerWatcher:SetScript("OnEvent", function(_, _, unitTarget, _, spellID)
-    if unitTarget ~= "player" then return end
-
-
-    local spellData = SPELL_LOOKUP[spellID]
-    if not spellData then return end
-
-    local db = GetDB()
-    if not db or not db.enabled then return end
-    if not ((spellData.cat == "DEF" and db.showDEF) or (spellData.cat == "OFF" and db.showOFF)) then return end
-    if (db.disabledSpells or {})[spellID] == false then return end
-
-    local name = myName
-    if not name then return end
-
-    -- Update local cdState
-    local now    = GetTime()
-    local newEnd = now + spellData.cd
-    if not cdState[name] then cdState[name] = {} end
-    cdState[name][spellID] = newEnd
-
-
-    -- Broadcast to GravityUI party members
-    AnnounceSpellCast(spellID, spellData.cd)
-end)
 
 -- ============================================================================
 -- INSPECT QUEUE (spec detection)
@@ -648,7 +616,7 @@ end
 
 -- ICON CREATION
 -- ============================================================================
-local function CreateSpellIcon(parent, spellID, cd, confirmed)
+local function CreateSpellIcon(parent, spellID, cd)
     local db = GetDB()
     local sz = (db and db.iconSize) or 28
 
@@ -698,10 +666,7 @@ local function CreateSpellIcon(parent, spellID, cd, confirmed)
     f.spellID    = spellID
     f._cd        = cd or 30
     f._cdRunning = false
-    -- _confirmed: player icons start confirmed (filtered by IsPlayerSpell);
-    -- party icons start unconfirmed (invisible) until the spell is actually cast.
-    f._confirmed = (confirmed ~= false)
-    if not f._confirmed then f:SetAlpha(0) end
+    f._confirmed = true  -- always visible; UNIT_AURA only starts the CD timer
     return f
 end
 
@@ -716,7 +681,6 @@ local function FormatCdTime(sec)
 end
 
 local function UpdateIcon(ico, cdEndTime)
-    if not ico._confirmed then return end  -- invisible until first cast detected
     local now = GetTime()
     if cdEndTime > now then
         local rem = cdEndTime - now
@@ -797,12 +761,9 @@ local function BuildAttachedBar(unit, name)
     --   RIGHT  -> bar.TOPLEFT,  icons grow rightward (left-flush to frame)
     --   TOP    -> bar.BOTTOMLEFT, icons grow upward per row
     --   BOTTOM -> bar.TOPLEFT,  icons grow downward
-    local isPlayer = (unit == "player")
     local function PlaceRow(spellList, rowIndex)
         for i, s in ipairs(spellList) do
-            -- player icons are confirmed (IsPlayerSpell already filtered);
-            -- party icons start hidden until the spell is actually detected as cast.
-            local ico = CreateSpellIcon(bar.frame, s.id, s.cd, isPlayer)
+            local ico = CreateSpellIcon(bar.frame, s.id, s.cd)
             if pos == "LEFT" then
                 local xOff = -(i - 1) * (sz + pad)
                 local yOff = -rowIndex * (sz + 2)
@@ -869,21 +830,10 @@ local function RebuildAll()
     end
 end
 
--- Unified helper: set cdState and confirm+show the icon for this spell.
+-- Unified helper: set cdState for this spell.
 local function ConfirmAndSetCD(name, spellId, cdEnd)
     if not cdState[name] then cdState[name] = {} end
     cdState[name][spellId] = cdEnd
-    -- If the icon was hidden (unconfirmed party member), reveal it now.
-    for unit, bar in pairs(attachedBars) do
-        local uName = (unit == "player") and myName or SafeUnitName(unit)
-        if uName == name then
-            local ico = bar.icons[spellId]
-            if ico and not ico._confirmed then
-                ico._confirmed = true
-                ico:SetAlpha(1.0)
-            end
-        end
-    end
 end
 
 -- ============================================================================
