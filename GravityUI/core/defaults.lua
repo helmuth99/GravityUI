@@ -325,18 +325,6 @@ ns.Defaults = {
         x = 0, 
         y = 0,
     },
-    cdTracker = {
-        enabled        = false,
-        showDEF        = true,
-        showOFF        = true,
-        iconSize       = 28,
-        iconSpacing    = 4,
-        fontSize       = 11,
-        attachPos      = "LEFT",
-        offsetX        = 0,
-        offsetY        = 0,
-        disabledSpells = {},
-    },
     raidBuffs = {
         enabled = true,
         showOnlyInGroup = true,

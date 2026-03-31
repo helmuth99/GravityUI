@@ -205,6 +205,29 @@ C_ChatInfo.RegisterAddonMessagePrefix("AstralKeys")
 C_ChatInfo.RegisterAddonMessagePrefix("LibKeystone")
 C_ChatInfo.RegisterAddonMessagePrefix("LibKS")
 
+-- LibKeystone integration: register a callback to receive keys from ALL players
+-- using BigWigs/LittleWigs/any LibKeystone-compatible addon.
+-- This fires for every group member who has any LibKeystone addon installed.
+local libKeystoneRegistered = false
+local function TryRegisterLibKeystone()
+    if libKeystoneRegistered then return end
+    local LKS = LibStub and LibStub("LibKeystone", true)
+    if not LKS then return end
+    LKS.Register(MPlusTeleport, function(keyLevel, keyChallengeMapID, playerRating, playerName, channel)
+        if keyChallengeMapID and keyChallengeMapID > 0 and keyLevel and keyLevel > 0 then
+            -- playerName from LibKeystone may include realm ("Name-Realm").
+            -- Normalize to short name so groupKeys keys are consistent with
+            -- what UpdateGroupKeys looks up via Ambiguate(UnitName(), "short").
+            local ok, shortName = pcall(Ambiguate, playerName, "short")
+            if ok and shortName and shortName ~= "" then
+                groupKeys[shortName] = { mapID = keyChallengeMapID, level = keyLevel }
+                MPlusTeleport:UpdateGroupKeys()
+            end
+        end
+    end)
+    libKeystoneRegistered = true
+end
+
 local lastMapID, lastLevel = nil, nil
 local function BroadcastKey(force)
     if not IsInGroup() then return end
@@ -217,9 +240,17 @@ local function BroadcastKey(force)
 
     local channel = IsInGroup(LE_PARTY_CATEGORY_INSTANCE) and "INSTANCE_CHAT" or (IsInRaid() and "RAID" or "PARTY")
     
-    -- Request keys from others (AstralKeys/LibKeystone support)
+    -- Request keys from others:
+    -- LibKeystone handles LibKS internally after TryRegisterLibKeystone() is called.
+    -- We still send LibKS "R" as a fallback for players who have LibKeystone but we registered late.
     C_ChatInfo.SendAddonMessage("AstralKeys", "request", channel)
     C_ChatInfo.SendAddonMessage("LibKS", "R", channel)
+    
+    -- Also use LibKeystone.Request() if available — this triggers callbacks for everyone in group
+    local LKS = LibStub and LibStub("LibKeystone", true)
+    if LKS and LKS.Request then
+        pcall(LKS.Request, "PARTY")
+    end
     
     if mapID then
         C_ChatInfo.SendAddonMessage("GravityUI", string.format("KEY:%d:%d", mapID, level), channel)
@@ -243,7 +274,14 @@ local function HandleChatCommand(event, msg, sender)
     local s = GetSettings()
     if not s or not s.groupChatCommands then return end
 
-    local cmd = msg and msg:lower():match("^(!%w+)")
+    -- msg is a "secret string" (tainted by WoW engine) in chat events.
+    -- Indexing a tainted string crashes (attempt to index a secret value).
+    -- Use pcall to safely extract the command prefix.
+    local cmd
+    local ok, result = pcall(function()
+        return msg and string.lower(msg):match("^(!%w+)")
+    end)
+    if ok then cmd = result end
     if not cmd then return end
 
     local replyChannel = CHAT_CMD_REPLY[event]
@@ -342,10 +380,19 @@ function MPlusTeleport:UpdateGroupKeys()
                     local unit = (IsInRaid() and "raid"..i) or "party"..i
                     if i > num then break end
                     if not UnitIsUnit(unit, "player") then
-                        local name = Ambiguate(UnitName(unit) or "", "none")
-                        if name ~= "" and groupKeys[name] then
+                        local name = Ambiguate(UnitName(unit) or "", "short")
+                        if name ~= "" then
                             local _, class = UnitClass(unit)
-                            table.insert(data, { name = name, mapID = groupKeys[name].mapID, level = groupKeys[name].level, isLeader = UnitIsGroupLeader(unit), class = class })
+                            local kd = groupKeys[name]
+                            -- Show all group members; kd may be nil for players without a compatible addon
+                            table.insert(data, {
+                                name     = name,
+                                mapID    = kd and kd.mapID or nil,
+                                level    = kd and kd.level or nil,
+                                isLeader = UnitIsGroupLeader(unit),
+                                class    = class,
+                                noKey    = (kd == nil), -- true = no addon response yet
+                            })
                         end
                     end
                 end
@@ -383,36 +430,44 @@ function MPlusTeleport:UpdateGroupKeys()
                 frame.rows[i] = row
             end
     
-            local dungeonName, _, CMIconID = C_ChallengeMode.GetMapUIInfo(info.mapID)
-            local spellID = ns.DungeonData and ns.DungeonData.GetTeleportSpellID(info.mapID)
+            local dungeonName, _, CMIconID = info.mapID and C_ChallengeMode.GetMapUIInfo(info.mapID) or nil
+            local spellID = info.mapID and ns.DungeonData and ns.DungeonData.GetTeleportSpellID(info.mapID)
             
-            -- Store link for tooltip
-            row.iconBtn.link = string.format("item:180653:::::::::::::keystone:%d:%d:0:0:0:0", info.mapID, info.level)
-            -- If it's the player, try to get the real bag link for better accuracy (affixes)
-            if info.name == UnitName("player") then
-                for bag = 0, 4 do
-                    local numSlots = C_Container.GetContainerNumSlots(bag) or 0
-                    for slot = 1, numSlots do
-                        local itemLink = C_Container.GetContainerItemLink(bag, slot)
-                        if itemLink and itemLink:find("keystone:") then
-                            row.iconBtn.link = itemLink
-                            break
+            -- Store link for tooltip (only if we have real keystone data)
+            if info.mapID and info.level then
+                row.iconBtn.link = string.format("item:180653:::::::::::::keystone:%d:%d:0:0:0:0", info.mapID, info.level)
+                -- If it's the player, try to get the real bag link for better accuracy (affixes)
+                if info.name == UnitName("player") then
+                    for bag = 0, 4 do
+                        local numSlots = C_Container.GetContainerNumSlots(bag) or 0
+                        for slot = 1, numSlots do
+                            local itemLink = C_Container.GetContainerItemLink(bag, slot)
+                            if itemLink and itemLink:find("keystone:") then
+                                row.iconBtn.link = itemLink
+                                break
+                            end
                         end
                     end
                 end
+            else
+                row.iconBtn.link = nil -- No key data available
             end
 
-            local finalIcon = 136235
-            if CMIconID then finalIcon = CMIconID end
+            local finalIcon = 136235 -- default: question mark / missing texture fallback
+            if info.noKey then
+                finalIcon = 134400 -- Interface/Icons/INV_Misc_QuestionMark — no addon
+            elseif CMIconID then
+                finalIcon = CMIconID
+            end
             if spellID then
                 local tex = (C_Spell and C_Spell.GetSpellTexture and C_Spell.GetSpellTexture(spellID)) or (GetSpellTexture and GetSpellTexture(spellID))
                 if tex then finalIcon = tex end
             end
     
             row.icon:SetTexture(finalIcon)
-            row.lvlText:SetText("+" .. (info.level or "?"))
+            row.lvlText:SetText(info.level and ("+" .. info.level) or (info.noKey and "?" or "?"))
             row.leaderIcon:SetShown(info.isLeader)
-            row.dungeonName:SetText((dungeonName or info.fallback or "Unknown"):gsub("Operation: ", ""):gsub("Tazavesh: ", ""))
+            row.dungeonName:SetText((dungeonName or info.fallback or (info.noKey and "No Addon" or "Unknown")):gsub("Operation: ", ""):gsub("Tazavesh: ", ""))
             local c = (info.class and RAID_CLASS_COLORS[info.class]) or NORMAL_FONT_COLOR
             row.playerName:SetText(info.name); row.playerName:SetTextColor(c.r, c.g, c.b)
     
@@ -631,6 +686,8 @@ eventFrame:SetScript("OnEvent", function(_, event, ...)
     end
     if event == "ADDON_LOADED" then
         local name = ...
+        -- Always try to register LibKeystone when any addon loads — BigWigs may load later than GravityUI
+        TryRegisterLibKeystone()
         if name == ADDON_NAME then MPlusTeleport:ApplySettings()
         elseif name == "Blizzard_ChallengesUI" then
             if ChallengesFrame then
