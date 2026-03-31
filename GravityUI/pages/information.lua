@@ -105,17 +105,18 @@ local function BuildInformationTab(parent)
     y = y - 10
 
     local changeLogs = {
-        { version = "3.92", date = "18.03.2026", changes = {
-            "Added Demonic Gateway (ID 111771) to Raid Warnings with the unique message 'Demonic Gateway placed by [PlayerName]'",
-            "Added a 'Demonic Gateway' toggle to the Raid Warnings settings tab",
+        { version = "3.95", date = "31.03.2026", changes = {
+            "Removed M+ CD Tracking module (CDTracker) entirely — WoW Midnight taint system prevents reliable cooldown tracking in instances",
+            "Deleted cdtracker.lua, cleaned up GravityUI.toc, defaults.lua, and all CDTracker references in init.lua",
+            "Removed M+ CD Tracking subtab from UI Indicators settings page",
+            "Removed M+ CD Tracking entry from Information Feature Hub and corrected all subsequent tabIndex references",
         } },
-        { version = "3.91", date = "18.03.2026", changes = {
-            "Added new Feast spell IDs (242745 and 266985) to the Raid Warnings tracking list",
+        { version = "3.94", date = "31.03.2026", changes = {
+            "Fixed critical deployment path bug — all addon files now correctly sync to Interface\\AddOns\\GravityUI\\core\\ (was incorrectly targeting nested GravityUI\\GravityUI\\core\\)",
+            "Resolved persistent 'secret string' taint crash in M+ Teleport chat handler (mplusteleport.lua) causing 20+ repeated errors per session in party",
         } },
-        { version = "3.90", date = "05.03.2026", changes = {
-            "Re-enabled and completely overhauled the Interrupt Tracker (modernized de-duplication logic)",
-            "Improved Edit Mode synchronization during specialization switch (uses standard installer sync)",
-            "Forced Sound Alerts to play through the 'Master' audio channel for guaranteed audibility",
+        { version = "3.93", date = "31.03.2026", changes = {
+            "Fixed Group Key List not showing all keystones — standardized all name lookups to Ambiguate(name, 'short') to resolve realm-suffix mismatches from LibKeystone callbacks",
         } },
         { version = "3.88", date = "04.03.2026", changes = {
             "Added GravityUI skinning for Dominos action bars (Bars 1-14, all button types)",
@@ -216,11 +217,10 @@ local function BuildInformationTab(parent)
         { name = "Missing Buffs (Raid)", desc = "Tracks missing raid buffs dynamically based on group class composition.\nExamines exactly who is present and what buffs are missing pre-pull.", stateTable = db.raidBuffs, stateKey = "enabled", pageId = "screenindicators", tabIndex = 5 },
         { name = "Raid Warnings", desc = "Displays centralized large text alerts for helpful utility spells.\nWarns for newly dropped Soulwells, Feasts, Mage Tables, and Rituals.", stateTable = db.raidWarnings, stateKey = "enabled", pageId = "screenindicators", tabIndex = 6 },
         { name = "Interrupt Tracker", desc = "Tracks interrupt cooldowns of party members in M+ dungeons.\nUses Say/Party chat as a fallback broadcast when addon comms are unavailable.", stateTable = db.screenindicators and db.screenindicators.interruptTracker, stateKey = "enabled", pageId = "screenindicators", tabIndex = 7 },
-        { name = "M+ CD Tracking", desc = "Tracks defensive and offensive cooldowns for party members in M+.\nAttaches icon timers directly to UnitFrames for at-a-glance awareness.", stateTable = db.cdTracker, stateKey = "enabled", pageId = "screenindicators", tabIndex = 8 },
-        { name = "Difficulty Indicator", desc = "Visual status bar tracking the currently selected instance difficulty.\nIncludes a dropdown for rapidly changing difficulties out-of-world.", stateTable = db.screenindicators and db.screenindicators.difficulty, stateKey = "enabled", pageId = "screenindicators", tabIndex = 9 },
-        { name = "AFK Screen", desc = "An immersive, cinematic character orbit view when Away From Keyboard.\nDisplays real time, guild, character rank, and a moving camera.", stateTable = db.screenindicators and db.screenindicators.afkScreen, stateKey = "enabled", pageId = "screenindicators", tabIndex = 10 },
-        { name = "Consumables Tracker", desc = "Displays missing consumables like food and flasks for yourself and your group members during a Ready Check.", stateTable = db.screenindicators and db.screenindicators.consumables, stateKey = "enabled", pageId = "screenindicators", tabIndex = 11 },
-        { name = "Cooldown Text", desc = "Displays on-screen text when tracked party spells go on cooldown.\nConfigurable per class with custom spell IDs, display names, and grow direction.", stateTable = db.cooldownText, stateKey = "enabled", pageId = "screenindicators", tabIndex = 12 },
+        { name = "Difficulty Indicator", desc = "Visual status bar tracking the currently selected instance difficulty.\nIncludes a dropdown for rapidly changing difficulties out-of-world.", stateTable = db.screenindicators and db.screenindicators.difficulty, stateKey = "enabled", pageId = "screenindicators", tabIndex = 8 },
+        { name = "AFK Screen", desc = "An immersive, cinematic character orbit view when Away From Keyboard.\nDisplays real time, guild, character rank, and a moving camera.", stateTable = db.screenindicators and db.screenindicators.afkScreen, stateKey = "enabled", pageId = "screenindicators", tabIndex = 9 },
+        { name = "Consumables Tracker", desc = "Displays missing consumables like food and flasks for yourself and your group members during a Ready Check.", stateTable = db.screenindicators and db.screenindicators.consumables, stateKey = "enabled", pageId = "screenindicators", tabIndex = 10 },
+        { name = "Cooldown Text", desc = "Displays on-screen text when tracked party spells go on cooldown.\nConfigurable per class with custom spell IDs, display names, and grow direction.", stateTable = db.cooldownText, stateKey = "enabled", pageId = "screenindicators", tabIndex = 11 },
 
         
         -- UI Utilities (cdmutils.lua)
