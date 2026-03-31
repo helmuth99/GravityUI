@@ -513,6 +513,11 @@ local function BuildTeleport(parent)
             ns.MPlusTeleport:ApplyGroupKeyAppearance()
         end
     end)
+    AddRow(content, "Enable !key / !keys / !score", "checkbox", "groupChatCommands", dbUI, nil)
+    content.rowCount = content.rowCount + 0.2
+    local cmdInfo = GUI:CreateInfoBox(content, "Responds to !key or !keys in party/raid/whisper with all group keystones.\n!score posts your own M+ rating.")
+    cmdInfo:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
+    content.rowCount = content.rowCount + (cmdInfo:GetHeight() / (ROW_HEIGHT+5)) + 0.2
     
     local btnGroupPreview = GUI:CreateButton(content, "Toggle Mover & Preview", 180, 26, function()
         if ns.MPlusTeleport and ns.MPlusTeleport.ToggleGroupKeyListPreview then

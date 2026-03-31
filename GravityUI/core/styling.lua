@@ -1797,6 +1797,7 @@ end
 local function SkinStaticPopupButton(button, sr, sg, sb, bgr, bgg, bgb, bga, fontPath)
     if not button then return end
     if button._guiSkinned then
+        -- Refresh colors only on theme change
         if button.guiBackdrop then
             local btnBgr = math.min(bgr + 0.09, 1)
             local btnBgg = math.min(bgg + 0.09, 1)
@@ -1804,20 +1805,45 @@ local function SkinStaticPopupButton(button, sr, sg, sb, bgr, bgg, bgb, bga, fon
             button.guiBackdrop:SetBackdropColor(btnBgr, btnBgg, btnBgb, 1)
             button.guiBackdrop:SetBackdropBorderColor(sr, sg, sb, 1)
             button.guiSkinColor = { sr, sg, sb, 1 }
-            button.guiBtnBg = { btnBgr, btnBgg, btnBgb }  -- keep hover colors in sync
+            button.guiBtnBg = { btnBgr, btnBgg, btnBgb }
         end
         return
     end
 
-    if button.Left   then button.Left:SetAlpha(0) end
-    if button.Right  then button.Right:SetAlpha(0) end
-    if button.Middle then button.Middle:SetAlpha(0) end
-    if button.NineSlice then button.NineSlice:SetAlpha(0) end
-    local hl = button:GetHighlightTexture()
-    if hl then hl:SetAlpha(0) end
-    local pushed = button:GetPushedTexture()
-    if pushed then pushed:SetAlpha(0) end
+    -- Hide native Blizzard button art (Left/Right/Middle slices + NineSlice)
+    -- Use hooksecurefunc so Blizzard can't re-show them after OnShow resets
+    local function HideRegion(region)
+        if not region then return end
+        region:SetAlpha(0)
+        if not region._guiAlphaHooked then
+            region._guiAlphaHooked = true
+            hooksecurefunc(region, "SetAlpha", function(self, a)
+                if self._guiSupressingAlpha then return end
+                if a > 0 then
+                    self._guiSupressingAlpha = true
+                    self:SetAlpha(0)
+                    self._guiSupressingAlpha = nil
+                end
+            end)
+        end
+    end
+    HideRegion(button.Left)
+    HideRegion(button.Right)
+    HideRegion(button.Middle)
+    HideRegion(button.NineSlice)
+    HideRegion(button:GetHighlightTexture())
+    HideRegion(button:GetPushedTexture())
+    -- Also scan all textures as fallback (covers atlas-based buttons in Midnight)
+    for _, region in ipairs({ button:GetRegions() }) do
+        if region:GetObjectType() == "Texture" then
+            HideRegion(region)
+        end
+    end
 
+    -- Custom backdrop at same FrameLevel as the button.
+    -- Child frames at the same level render ABOVE parent BACKGROUND textures,
+    -- but the parent's OVERLAY layer (where the FontString lives) renders on top.
+    -- Using +2 would cover the text — same level is correct.
     button.guiBackdrop = CreateFrame("Frame", nil, button, "BackdropTemplate")
     button.guiBackdrop:SetAllPoints()
     button.guiBackdrop:SetFrameLevel(button:GetFrameLevel())
@@ -1835,7 +1861,6 @@ local function SkinStaticPopupButton(button, sr, sg, sb, bgr, bgg, bgb, bga, fon
     button.guiBackdrop:SetBackdropColor(btnBgr, btnBgg, btnBgb, 1)
     button.guiBackdrop:SetBackdropBorderColor(sr, sg, sb, 1)
     button.guiSkinColor = { sr, sg, sb, 1 }
-    -- Store hover bg on the button so OnEnter always uses current values after refresh
     button.guiBtnBg = { btnBgr, btnBgg, btnBgb }
 
     button:HookScript("OnEnter", function(self)
@@ -1909,9 +1934,24 @@ local function ApplySkinToStaticPopup(popup, db, fontPath)
     popup.guiBackdrop:SetBackdropBorderColor(brdr, brdg, brdb, brda)
 
     for i = 1, 4 do
-        SkinStaticPopupButton(popup["button" .. i], sr, sg, sb, bgr, bgg, bgb, bga, fontPath)
+        -- Skin button1..4 AND extraButton
+        -- Buttons in StaticPopup frames are accessible via both .button1 (old API)
+        -- AND the global name StaticPopup{n}Button{j} (modern/fallback).
+        -- We check both to be safe across WoW versions.
+        local function getBtn(popup, popupIndex, btnIndex)
+            return popup["button" .. btnIndex]
+                or _G["StaticPopup" .. popupIndex .. "Button" .. btnIndex]
+        end
+        -- (popupIndex is loop var i from outer scope — referenced in closure below)
+        SkinStaticPopupButton(getBtn(popup, i, 1), sr, sg, sb, bgr, bgg, bgb, bga, fontPath)
+        SkinStaticPopupButton(getBtn(popup, i, 2), sr, sg, sb, bgr, bgg, bgb, bga, fontPath)
+        SkinStaticPopupButton(getBtn(popup, i, 3), sr, sg, sb, bgr, bgg, bgb, bga, fontPath)
+        SkinStaticPopupButton(getBtn(popup, i, 4), sr, sg, sb, bgr, bgg, bgb, bga, fontPath)
+        SkinStaticPopupButton(
+            popup.extraButton or _G["StaticPopup" .. i .. "ExtraButton"],
+            sr, sg, sb, bgr, bgg, bgb, bga, fontPath
+        )
     end
-    SkinStaticPopupButton(popup.extraButton, sr, sg, sb, bgr, bgg, bgb, bga, fontPath)
 
     if popup.text then
         popup.text:SetFont(fontPath, 13, "OUTLINE")

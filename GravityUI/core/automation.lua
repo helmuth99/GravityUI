@@ -917,7 +917,8 @@ local SafeRelease = {
     label = nil,
     holdTime = 1.0,
     startTime = 0,
-    released = false
+    released = false,
+    mouseHeld = false,   -- tracks left/right mouse button hold on overlay
 }
 
 function SafeRelease:Build(btnTarget)
@@ -935,7 +936,19 @@ function SafeRelease:Build(btnTarget)
     self.overlay.label = self.overlay:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     self.overlay.label:SetPoint("CENTER")
     self.overlay.label:SetTextColor(1, 0.5, 0)
-    
+
+    -- Track mouse hold on the overlay itself
+    self.overlay:SetScript("OnMouseDown", function(_, btn)
+        if btn == "LeftButton" or btn == "RightButton" then
+            self.mouseHeld = true
+        end
+    end)
+    self.overlay:SetScript("OnMouseUp", function(_, btn)
+        if btn == "LeftButton" or btn == "RightButton" then
+            self.mouseHeld = false
+        end
+    end)
+
     self.overlay:SetScript("OnClick", function() end)
 end
 
@@ -948,8 +961,6 @@ function SafeRelease:Update()
     -- Ensure we are only blocking the "DEATH" popup.
     -- If the popup was recycled for a Resurrection offer (e.g. Battle Rezz),
     -- we disable our overlay so we don't block the "Accept" button.
-    -- We use SetAlpha/EnableMouse instead of Hide() to keep OnUpdate running
-    -- in case the resurrect is declined and the DEATH popup returns!
     if not StaticPopup_Visible("DEATH") then
         self.overlay:SetAlpha(0)
         self.overlay:EnableMouse(false)
@@ -959,24 +970,29 @@ function SafeRelease:Update()
         self.overlay:EnableMouse(true)
     end
     
-    if IsAltKeyDown() then
+    -- ALT key OR mouse button held both count
+    local holding = IsAltKeyDown() or self.mouseHeld
+    local mode = IsAltKeyDown() and "ALT" or (self.mouseHeld and "Mouse" or "ALT")
+
+    if holding then
         if self.startTime == 0 then self.startTime = GetTime() end
         local diff = self.holdTime - (GetTime() - self.startTime)
         if diff <= 0 then
             self.released = true
             self.overlay:Hide()
         else
-            self.overlay.label:SetText(string.format("Hold ALT (%.1fs)", diff))
+            self.overlay.label:SetText(string.format("Hold %s (%.1fs)", mode, diff))
         end
     else
         self.startTime = 0
-        self.overlay.label:SetText(string.format("Hold ALT (%.1fs)", self.holdTime))
+        self.overlay.label:SetText(string.format("Hold ALT or Mouse (%.1fs)", self.holdTime))
     end
 end
 
 function SafeRelease:Reset()
     self.startTime = 0
     self.released = false
+    self.mouseHeld = false
     if self.overlay then
         self.overlay:SetScript("OnUpdate", nil)
         self.overlay:Hide()
@@ -998,7 +1014,7 @@ function SafeRelease:Trigger()
     
     -- In case the popup was reused, ensure we show it now because the type is DEATH again
     self.overlay:Show()
-    self.overlay.label:SetText(string.format("Hold ALT (%.1fs)", self.holdTime))
+    self.overlay.label:SetText(string.format("Hold ALT or Mouse (%.1fs)", self.holdTime))
     self.overlay:SetScript("OnUpdate", function() self:Update() end)
 end
 
@@ -1419,3 +1435,79 @@ automationFrame:SetScript("OnEvent", function(self, event, ...)
         AutoPromoteRoles()
     end
 end)
+
+---------------------------------------------------------------------------
+-- DEBUG: /gravitycombatlog  (alias: /gcl)
+---------------------------------------------------------------------------
+local DIFFICULTY_NAMES = {
+    [1]  = "Normal (Dungeon)",
+    [2]  = "Heroic (Dungeon)",
+    [14] = "Normal (Raid)",
+    [15] = "Heroic (Raid)",
+    [16] = "Mythic (Raid)",
+    [23] = "Mythic (Dungeon)",
+    [24] = "Timewalking (Dungeon)",
+    [33] = "Timewalking (Raid)",
+}
+
+local function CombatLogDebug()
+    local settings = GetSettings()
+    local p = ns.Print or function(m) print("|cFF30D1FFGravityUI:|r " .. m) end
+
+    p("=== Combat Log Debug ===")
+
+    -- Instance info
+    local name, instanceType, difficultyID, difficultyName = GetInstanceInfo()
+    local inChallenge = C_ChallengeMode and C_ChallengeMode.IsChallengeModeActive and C_ChallengeMode.IsChallengeModeActive()
+    local isLogging = LoggingCombat()
+
+    p(string.format("Instance:   |cFFFFFF00%s|r  (type: %s)", name or "None", instanceType or "none"))
+    p(string.format("Difficulty: |cFFFFFF00%s|r  (ID: %d)", difficultyName or "Unknown", difficultyID or 0))
+    p(string.format("M+ Active:  |cFF%s%s|r", inChallenge and "00FF00" or "FF4444", inChallenge and "YES" or "NO"))
+    p(string.format("Logging:    |cFF%s%s|r", isLogging and "00FF00" or "FF4444", isLogging and "ACTIVE ✓" or "INACTIVE ✗"))
+
+    p("--- Settings ---")
+    if not settings then
+        p("|cFFFF4444Settings not found!|r")
+        return
+    end
+
+    -- M+
+    local mLog = settings.autoCombatLog
+    p(string.format("Auto Log M+:            |cFF%s%s|r", mLog and "00FF00" or "FF4444", mLog and "ON" or "OFF"))
+
+    -- Raid
+    local rN = settings.autoCombatLogRaidNormal
+    local rH = settings.autoCombatLogRaidHeroic
+    local rM = settings.autoCombatLogRaidMythic
+    p(string.format("Auto Log Raid Normal:   |cFF%s%s|r", rN and "00FF00" or "FF4444", rN and "ON" or "OFF"))
+    p(string.format("Auto Log Raid Heroic:   |cFF%s%s|r", rH and "00FF00" or "FF4444", rH and "ON" or "OFF"))
+    p(string.format("Auto Log Raid Mythic:   |cFF%s%s|r", rM and "00FF00" or "FF4444", rM and "ON" or "OFF"))
+
+    -- Would it log?
+    p("--- Logic Check ---")
+    local wouldLog = false
+    local reason = "No condition matched"
+    if instanceType == "party" and inChallenge and mLog then
+        wouldLog = true; reason = "M+ is active + Auto Log M+ = ON"
+    elseif instanceType == "raid" then
+        if difficultyID == 14 and rN then wouldLog = true; reason = "Raid Normal + Auto Log Normal = ON"
+        elseif difficultyID == 15 and rH then wouldLog = true; reason = "Raid Heroic + Auto Log Heroic = ON"
+        elseif difficultyID == 16 and rM then wouldLog = true; reason = "Raid Mythic + Auto Log Mythic = ON"
+        end
+        if not wouldLog then
+            reason = string.format("Raid (diff %d) but matching toggle is OFF", difficultyID or 0)
+        end
+    end
+    p(string.format("Should Log: |cFF%s%s|r  → %s",
+        wouldLog and "00FF00" or "FF4444",
+        wouldLog and "YES ✓" or "NO ✗",
+        reason))
+    p("========================")
+end
+
+SLASH_GRAVITYCOMBATLOG1 = "/gravitycombatlog"
+SLASH_GRAVITYCOMBATLOG2 = "/gcl"
+SlashCmdList["GRAVITYCOMBATLOG"] = function()
+    CombatLogDebug()
+end

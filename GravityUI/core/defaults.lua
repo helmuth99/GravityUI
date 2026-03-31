@@ -671,6 +671,7 @@ ns.Defaults = {
         hideObjectiveTrackerAlways = false,
         mplusTeleportEnabled = true,
         groupKeyListEnabled = true,
+        groupChatCommands = true,
         autoInsertKey = true,
         hideErrorMessages = true,
         autoTurnInQuest = true,

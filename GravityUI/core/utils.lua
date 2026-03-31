@@ -1,6 +1,12 @@
 -- GravityUI Utility Functions
 local ADDON_NAME, ns = ...
 
+-- Print a message to chat with the GravityUI prefix
+function ns.Print(msg)
+    if type(msg) ~= "string" then msg = tostring(msg) end
+    print("|cFF30D1FFGravityUI:|r " .. msg)
+end
+
 -- Pixel perfect scaling helper
 function ns.Scale(value)
     local scale = UIParent:GetEffectiveScale()

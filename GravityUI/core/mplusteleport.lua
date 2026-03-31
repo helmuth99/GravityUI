@@ -226,6 +226,71 @@ local function BroadcastKey(force)
     end
 end
 
+local CHAT_CMD_EVENTS = {
+    CHAT_MSG_PARTY = true, CHAT_MSG_PARTY_LEADER = true,
+    CHAT_MSG_RAID = true, CHAT_MSG_RAID_LEADER = true,
+    CHAT_MSG_INSTANCE_CHAT = true, CHAT_MSG_INSTANCE_CHAT_LEADER = true,
+    CHAT_MSG_WHISPER = true,
+}
+local CHAT_CMD_REPLY = {
+    CHAT_MSG_PARTY = "PARTY", CHAT_MSG_PARTY_LEADER = "PARTY",
+    CHAT_MSG_RAID = "RAID", CHAT_MSG_RAID_LEADER = "RAID",
+    CHAT_MSG_INSTANCE_CHAT = "INSTANCE_CHAT", CHAT_MSG_INSTANCE_CHAT_LEADER = "INSTANCE_CHAT",
+    CHAT_MSG_WHISPER = "WHISPER",
+}
+
+local function HandleChatCommand(event, msg, sender)
+    local s = GetSettings()
+    if not s or not s.groupChatCommands then return end
+
+    local cmd = msg and msg:lower():match("^(!%w+)")
+    if not cmd then return end
+
+    local replyChannel = CHAT_CMD_REPLY[event]
+    if not replyChannel then return end
+    local target = (replyChannel == "WHISPER") and Ambiguate(sender, "none") or nil
+
+    local function Reply(text)
+        if replyChannel == "WHISPER" then
+            pcall(SendChatMessage, text, "WHISPER", nil, target)
+        else
+            pcall(SendChatMessage, text, replyChannel)
+        end
+    end
+
+    if cmd == "!key" or cmd == "!keys" then
+        local lines = {}
+        -- Own key
+        local myMapID, myLevel = GetOwnedKeystone()
+        if myMapID then
+            local dn = C_ChallengeMode.GetMapUIInfo(myMapID) or ("Map "..myMapID)
+            dn = dn:gsub("Operation: ",""):gsub("Tazavesh: ","")
+            table.insert(lines, string.format("[GravityUI] %s: %s +%d", UnitName("player"), dn, myLevel))
+        end
+        -- Group keys from cache
+        if IsInGroup() then
+            for name, kd in pairs(groupKeys) do
+                if kd.mapID and kd.mapID > 0 then
+                    local dn2 = C_ChallengeMode.GetMapUIInfo(kd.mapID) or ("Map "..kd.mapID)
+                    dn2 = dn2:gsub("Operation: ",""):gsub("Tazavesh: ","")
+                    table.insert(lines, string.format("[GravityUI] %s: %s +%d", name, dn2, kd.level))
+                end
+            end
+        end
+        if #lines == 0 then
+            Reply("[GravityUI] No keystones found.")
+        else
+            for _, line in ipairs(lines) do Reply(line) end
+        end
+
+    elseif cmd == "!score" then
+        local summary = C_PlayerInfo and C_PlayerInfo.GetPlayerMythicPlusRatingSummary
+            and C_PlayerInfo.GetPlayerMythicPlusRatingSummary("player")
+        local rating = (summary and summary.currentSeasonScore) or 0
+        Reply(string.format("[GravityUI] %s M+ Score: %d", UnitName("player"), math.floor(rating)))
+    end
+end
+
 function MPlusTeleport:UpdateGroupKeys()
     if InCombatLockdown() then
         MPlusTeleport.pendingGroupUpdate = true
@@ -552,8 +617,18 @@ eventFrame:RegisterEvent("PLAYER_REGEN_DISABLED")
 eventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
 eventFrame:RegisterEvent("BAG_UPDATE_DELAYED")
 eventFrame:RegisterEvent("CHALLENGE_MODE_COMPLETED")
+-- Chat command events
+for evt in pairs(CHAT_CMD_EVENTS) do
+    eventFrame:RegisterEvent(evt)
+end
 
 eventFrame:SetScript("OnEvent", function(_, event, ...)
+    -- Chat command routing (highest priority, early return)
+    if CHAT_CMD_EVENTS[event] then
+        local msg, sender = ...
+        HandleChatCommand(event, msg, sender)
+        return
+    end
     if event == "ADDON_LOADED" then
         local name = ...
         if name == ADDON_NAME then MPlusTeleport:ApplySettings()
@@ -632,15 +707,27 @@ eventFrame:SetScript("OnEvent", function(_, event, ...)
             end
         end)
     elseif event == "CHAT_MSG_ADDON" then
-        local prefix, text, _, sender = ...
+        local prefix, text, channel, sender = ...
         if prefix == "GravityUI" or prefix == "AstralKeys" or prefix == "LibKeystone" or prefix == "LibKS" then
             local mid, lvl
-            if prefix == "LibKS" and text ~= "R" then
-                local kLevel, kMapID = text:match("^(%d+),(%d+),")
-                if kLevel and kMapID then mid, lvl = kMapID, kLevel end
-            else
+            if prefix == "LibKS" then
+                -- LibKS format: "keyLevel,keyChallengeMapID,playerRating"
+                -- "R" = request broadcast — ignore it, we already sent "R" in BroadcastKey()
+                if text == "R" then return end
+                -- Parse: first number = level, second = mapID, third = rating (ignored)
+                local kLevel, kMapID = text:match("^(%d+),(%d+),?%d*$")
+                if kLevel and kMapID then
+                    mid  = tonumber(kMapID)
+                    lvl  = tonumber(kLevel)
+                end
+            elseif prefix == "AstralKeys" or prefix == "LibKeystone" then
+                -- AstralKeys/LibKeystone embed link format: keystone:itemID:mapID:level
                 mid, lvl = text:match("keystone:%d+:(%d+):(%d+)")
-                if not mid then mid, lvl = text:match("KEY:(%d+):(%d+)") end
+            else
+                -- GravityUI own format: "KEY:mapID:level"
+                mid, lvl = text:match("KEY:(%d+):(%d+)")
+                -- Fallback: link format in case someone forwards link text
+                if not mid then mid, lvl = text:match("keystone:%d+:(%d+):(%d+)") end
             end
             if mid and tonumber(mid) > 0 then
                 groupKeys[Ambiguate(sender, "none")] = { mapID = tonumber(mid), level = tonumber(lvl) }
