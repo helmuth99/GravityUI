@@ -2012,11 +2012,17 @@ end)
 
 -- Secure AFK Detection via PLAYER_FLAGS_CHANGED
 -- NOTE: [afk] is not a valid RegisterStateDriver condition in TWW → removed.
--- UnitIsAFK() returns a secret boolean, so we comparisons via pcall to avoid taint.
+-- UnitIsAFK() returns a secret boolean. We MUST NOT let it escape pcall into an
+-- addon local — even reading it via `if isAfk` triggers taint. Instead, run the
+-- entire boolean test inside the closure so the secret value dies in pcall scope.
 local function CheckAFKState()
-    local ok, isAfk = pcall(UnitIsAFK, "player")
-    if not ok then return end  -- failed = tainted, skip
-    if isAfk then
+    -- ok == true  → pcall succeeded; the closure returned 1 (truthy) or nil.
+    -- ok == false → UnitIsAFK itself threw (tainted call), skip entirely.
+    local ok, result = pcall(function()
+        if UnitIsAFK("player") then return 1 end
+    end)
+    if not ok then return end  -- tainted call, bail out
+    if result then
         EnterAFK()
     else
         if AFKState.isAFK then ExitAFK() end
