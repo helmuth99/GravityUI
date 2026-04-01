@@ -3436,13 +3436,21 @@ function frame:OnReadyCheckFinished()
     cancelHideTimer()
 
     hideTimer = C_Timer.NewTimer(15, function()
-        frame:Hide()
+        if InCombatLockdown() then
+            frame:SetAlpha(0)
+            frame.pendingHide = true
+        else
+            frame:Hide()
+        end
     end)
 end
 
 function frame:OnCombat()
     cancelHideTimer()
-    self:Hide()
+    -- Cannot call :Hide() during combat lockdown (ADDON_ACTION_BLOCKED).
+    -- Suppress visually and defer the actual Hide() to PLAYER_REGEN_ENABLED.
+    self:SetAlpha(0)
+    self.pendingHide = true
 end
 
 function frame:OnUnitAura(unit)
@@ -3504,6 +3512,16 @@ frame:SetScript("OnEvent", function(self, event, arg1, arg2)
         return
     end
 
+    if event == "PLAYER_REGEN_ENABLED" then
+        if self.pendingHide then
+            self.pendingHide = nil
+            self:SetAlpha(1)
+            self:Hide()
+        end
+
+        return
+    end
+
     if event == "UNIT_AURA" then
         local unit = arg1
         self:OnUnitAura(unit)
@@ -3529,6 +3547,7 @@ end)
 frame:RegisterEvent("READY_CHECK")
 frame:RegisterEvent("READY_CHECK_FINISHED")
 frame:RegisterEvent("PLAYER_REGEN_DISABLED")
+frame:RegisterEvent("PLAYER_REGEN_ENABLED")
 frame:RegisterEvent("ADDON_LOADED")
 
 
@@ -3582,7 +3601,7 @@ Module.consumables:SetScript("OnEvent", function(self, event, unit, time_to_hide
 
         if event == "PLAYER_REGEN_DISABLED" then
             self:Hide()
-            if Module.raidFrame then Module.raidFrame:Hide() end
+            -- raidFrame:Hide() is guarded in frame:OnCombat() via alpha suppression
         end
 
         if self.isRLpos
@@ -3698,7 +3717,12 @@ function Module.ApplySettings()
             Module.raidFrame:UnregisterEvent("READY_CHECK")
             Module.raidFrame:UnregisterEvent("READY_CHECK_FINISHED")
             Module.raidFrame:UnregisterEvent("PLAYER_REGEN_DISABLED")
-            Module.raidFrame:Hide()
+            if not InCombatLockdown() then
+                Module.raidFrame:Hide()
+            else
+                Module.raidFrame:SetAlpha(0)
+                Module.raidFrame.pendingHide = true
+            end
         end
     end
 end
