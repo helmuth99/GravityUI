@@ -1014,8 +1014,10 @@ local function StyleEditBox(chatFrame)
     -- Force Arrow Keys to work without Alt
     editBox:SetAltArrowKeyMode(false)
     
-    -- Backdrop
-     if not chatFrame.__guiEditBoxBackdrop then
+    -- Backdrop (only create once)
+    local isNewBackdrop = false
+    if not chatFrame.__guiEditBoxBackdrop then
+        isNewBackdrop = true
         local backdrop = CreateFrame("Frame", nil, chatFrame, "BackdropTemplate")
         backdrop:SetBackdrop({
             bgFile = "Interface\\Buttons\\WHITE8x8",
@@ -1072,10 +1074,14 @@ local function StyleEditBox(chatFrame)
         -- Horizontal insets only
         editBox:SetTextInsets(0, 0, 0, 0)
         
-        -- Start hidden in top mode
-        backdrop:Hide()
+        -- Only hide backdrop on first creation (not on every Refresh).
+        -- Calling backdrop:Hide() on a re-Refresh would close the editbox mid-type
+        -- when PLAYER_ENTERING_WORLD fires on dungeon/raid entry.
+        if isNewBackdrop then
+            backdrop:Hide()
+        end
         
-         if not editBox.__guiTopModeHooked then
+        if not editBox.__guiTopModeHooked then
             editBox.__guiTopModeHooked = true
             editBox:HookScript("OnEditFocusGained", function() 
                 local s = GetSettings()
@@ -1085,7 +1091,6 @@ local function StyleEditBox(chatFrame)
         end
     else
         -- Bottom / Default position
-        -- To center text here, we make the EditBox shorter than requested 'height' and center it inside backdrop
         backdrop:SetHeight(height)
         
         if width > 0 then
@@ -1103,8 +1108,12 @@ local function StyleEditBox(chatFrame)
         editBox:SetHeight(fontSize + 2)
         editBox:SetTextInsets(0, 0, 0, 0)
         
-        -- Default to hidden, show on focus
-        backdrop:Hide()
+        -- Only hide backdrop on first creation (not on every Refresh).
+        -- Calling backdrop:Hide() on a re-Refresh would close the editbox mid-type
+        -- when PLAYER_ENTERING_WORLD fires on dungeon/raid entry.
+        if isNewBackdrop then
+            backdrop:Hide()
+        end
         
         if not editBox.__guiFocusModeHooked then
             editBox.__guiFocusModeHooked = true
