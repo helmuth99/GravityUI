@@ -1376,10 +1376,16 @@ local function BuildCooldownTracker(parent)
             },
             GrowDirection = "RIGHT",
             AnchorOffset = { X = 0, Y = 0 },
+            DisabledSpells = {},
+            CustomSpells = {},
+            SelectedClass = "PALADIN",
         }
     end
     
     local c = db.screenindicators.cooldownTracker
+    c.DisabledSpells = c.DisabledSpells or {}
+    c.CustomSpells = c.CustomSpells or {}
+    
     local cIcons = c.Icons
     local cOffset = c.AnchorOffset
     
@@ -1439,7 +1445,193 @@ local function BuildCooldownTracker(parent)
     testBtn:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT+5)))
     content.rowCount = content.rowCount + 1.2
     
-    content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
+    CreateSubLabel(content, "Custom Tracked Spells")
+    
+    local rowAdd = CreateFrame("Frame", nil, content)
+    rowAdd:SetSize(GUI.CONTENT_WIDTH - 20, ROW_HEIGHT * 2)
+    rowAdd:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT + 5)))
+    
+    local tempDB = { id = "", duration = "", cooldown = "" }
+    
+    local inputID = GUI:CreateInput(rowAdd, "Spell ID", "id", tempDB, function() end)
+    inputID:SetPoint("LEFT", 0, 0)
+    inputID:SetWidth(60)
+    inputID.editBox:SetWidth(60)
+    inputID.editBox:SetNumeric(true)
+    
+    local inputDur = GUI:CreateInput(rowAdd, "Dur.", "duration", tempDB, function() end)
+    inputDur:SetPoint("LEFT", inputID.editBox, "RIGHT", 10, 0)
+    inputDur:SetWidth(40)
+    inputDur.editBox:SetWidth(40)
+    inputDur.editBox:SetNumeric(true)
+    inputDur.tooltip = "Active buff duration in seconds (optional)."
+
+    local inputCD = GUI:CreateInput(rowAdd, "CD", "cooldown", tempDB, function() end)
+    inputCD:SetPoint("LEFT", inputDur.editBox, "RIGHT", 10, 0)
+    inputCD:SetWidth(30)
+    inputCD.editBox:SetWidth(40)
+    inputCD.editBox:SetNumeric(true)
+    inputCD.tooltip = "Cooldown in seconds (optional)."
+    
+    local btnAdd = GUI:CreateButton(rowAdd, "+ Add", 70, 24, function() 
+        local id = tonumber(inputID.editBox:GetText())
+        local dur = tonumber(inputDur.editBox:GetText()) or 0
+        local cd = tonumber(inputCD.editBox:GetText()) or 0
+        if id and id > 0 then
+            c.CustomSpells = c.CustomSpells or {}
+            c.CustomSpells[id] = { duration = dur, cooldown = cd }
+            inputID.editBox:SetText("")
+            inputDur.editBox:SetText("")
+            inputCD.editBox:SetText("")
+            if scroll then scroll:Hide() end
+            BuildCooldownTracker(parent)
+            refresh()
+        end
+    end)
+    btnAdd:SetPoint("LEFT", inputCD.editBox, "RIGHT", 10, 0)
+    
+    content.rowCount = content.rowCount + 1.7
+    
+    if c.CustomSpells then
+        local sorted = {}
+        for id in pairs(c.CustomSpells) do table.insert(sorted, id) end
+        table.sort(sorted)
+        
+        for _, id in ipairs(sorted) do
+             local row = CreateFrame("Frame", nil, content)
+             row:SetSize(GUI.CONTENT_WIDTH - 20, 24)
+             row:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT + 5)))
+             
+             local label = row:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+             label:SetPoint("LEFT", 0, 0)
+             
+             local name = "Unknown"
+             local iconTex = nil
+             if C_Spell and C_Spell.GetSpellInfo then
+                 local spellInfo = C_Spell.GetSpellInfo(id)
+                 if spellInfo then 
+                     name = spellInfo.name 
+                     if spellInfo.iconID then iconTex = spellInfo.iconID end
+                 end
+             else
+                 local spName, _, spIcon = GetSpellInfo(id)
+                 if spName then name = spName; iconTex = spIcon end
+             end
+             
+             local iconStr = iconTex and ("|T"..iconTex..":16|t ") or ""
+             local cData = c.CustomSpells[id]
+             local durText = (type(cData) == "table" and cData.duration and cData.duration > 0) and (cData.duration.."s Dur") or "No Dur"
+             local cdText = (type(cData) == "table" and cData.cooldown and cData.cooldown > 0) and (cData.cooldown.."s CD") or "Auto CD"
+             label:SetText(string.format("%s|cff00ccff%s|r: %s |cFF888888(%s / %s)|r", iconStr, id, name, durText, cdText))
+             
+             local btnDel = GUI:CreateButton(row, "X", 20, 20, function()
+                 c.CustomSpells[id] = nil
+                 if scroll then scroll:Hide() end
+                 BuildCooldownTracker(parent)
+                 refresh()
+             end)
+             btnDel:SetPoint("RIGHT", row, "RIGHT", -35, 0)
+             
+             content.rowCount = content.rowCount + 0.8
+        end
+    end
+    
+    content.rowCount = content.rowCount + 0.5
+
+    local classOptions = {
+        {text="Death Knight", value="DEATHKNIGHT"}, {text="Demon Hunter", value="DEMONHUNTER"},
+        {text="Druid", value="DRUID"}, {text="Evoker", value="EVOKER"}, {text="Hunter", value="HUNTER"},
+        {text="Mage", value="MAGE"}, {text="Monk", value="MONK"}, {text="Paladin", value="PALADIN"},
+        {text="Priest", value="PRIEST"}, {text="Rogue", value="ROGUE"}, {text="Shaman", value="SHAMAN"},
+        {text="Warlock", value="WARLOCK"}, {text="Warrior", value="WARRIOR"}
+    }
+    
+    local spellContainer = CreateFrame("Frame", nil, content)
+    spellContainer:SetPoint("RIGHT", -10, 0)
+    spellContainer:SetHeight(1)
+    
+    local function UpdateSpellRows()
+        if not ns.CooldownTracker or not ns.CooldownTracker.Modules or not ns.CooldownTracker.Modules.CooldownTracker then return end
+        local getDb = ns.CooldownTracker.Modules.CooldownTracker.GetRulesDatabase
+        if not getDb then return end
+        
+        local rulesDb = getDb()
+        if not rulesDb then return end
+        
+        -- Clear previous children
+        for _, child in ipairs({spellContainer:GetChildren()}) do child:Hide() end
+        local rCount = 0
+        local seenSpells = {}
+        
+        local function addSpellCheckbox(spellId, isGlobal)
+            if not spellId or seenSpells[spellId] then return end
+            seenSpells[spellId] = true
+            
+            local name, _, icon
+            if C_Spell and C_Spell.GetSpellInfo then
+                local sInfo = C_Spell.GetSpellInfo(spellId)
+                if sInfo then name, icon = sInfo.name, sInfo.iconID end
+            else
+                name, _, icon = GetSpellInfo(spellId)
+            end
+            if not name then name = "Unknown Spell ("..spellId..")" end
+            
+            local cbFrame = CreateFrame("Frame", nil, spellContainer)
+            cbFrame:SetSize(400, 24)
+            cbFrame:SetPoint("TOPLEFT", 0, -(rCount * 26))
+            
+            local cb = CreateFrame("CheckButton", nil, cbFrame, "ChatConfigCheckButtonTemplate")
+            cb:SetPoint("LEFT", 0, 0)
+            cb.tooltip = "Uncheck to disable tracking for this spell."
+            
+            -- Inverted logic: Checked = Enabled (DisabledSpells is false)
+            cb:SetChecked(not c.DisabledSpells[spellId])
+            cb:SetScript("OnClick", function(self)
+                local isChecked = self:GetChecked()
+                if isChecked then c.DisabledSpells[spellId] = nil else c.DisabledSpells[spellId] = true end
+                refresh()
+            end)
+            
+            local iconTex = cbFrame:CreateTexture(nil, "ARTWORK")
+            iconTex:SetSize(20, 20)
+            iconTex:SetPoint("LEFT", cb, "RIGHT", 5, 0)
+            if icon then iconTex:SetTexture(icon) end
+            
+            local text = cbFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+            text:SetPoint("LEFT", iconTex, "RIGHT", 8, 0)
+            local txt = name .. " |cFF888888(" .. spellId .. ")|r"
+            if isGlobal then txt = txt .. " |cFF00FF00[Class]|r" end
+            text:SetText(txt)
+            
+            rCount = rCount + 1
+        end
+
+        local selClass = c.SelectedClass or "PALADIN"
+        if rulesDb.byClass[selClass] then
+            for _, rule in ipairs(rulesDb.byClass[selClass]) do addSpellCheckbox(rule.SpellId, true) end
+        end
+        
+        -- Specs
+        for specId, rules in pairs(rulesDb.bySpec) do
+            local id, _, _, _, _, classToken = GetSpecializationInfoByID(specId)
+            if classToken == selClass then
+                for _, rule in ipairs(rules) do addSpellCheckbox(rule.SpellId, false) end
+            end
+        end
+        
+        local containerH = math.max(1, (rCount * 26) + 10)
+        spellContainer:SetHeight(containerH)
+        content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT+5)) + containerH)
+    end
+    
+    AddRow(content, "Filter by Class", "dropdown", classOptions, "SelectedClass", c, UpdateSpellRows)
+    content.rowCount = content.rowCount + 0.5
+    
+    spellContainer:ClearAllPoints()
+    spellContainer:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT+5)))
+    spellContainer:SetPoint("RIGHT", -10, 0)
+    
+    UpdateSpellRows()
 end
 
 -- ═══════════════════════════════════════════════════════════════

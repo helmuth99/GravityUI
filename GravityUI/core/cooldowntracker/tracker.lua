@@ -100,6 +100,7 @@ local rules = {
 			{ BuffDuration = 10, Cooldown = 90, BigDefensive = true, ExternalDefensive = false, Important = true, RequiresEvidence = "Cast", SpellId = 55233 },
 			{ BuffDuration = 12, Cooldown = 90, BigDefensive = true, ExternalDefensive = false, Important = true, RequiresEvidence = "Cast", SpellId = 55233 },
 			{ BuffDuration = 14, Cooldown = 90, BigDefensive = true, ExternalDefensive = false, Important = true, RequiresEvidence = "Cast", SpellId = 55233 },
+			{ BuffDuration = 8, Cooldown = 120, BigDefensive = true, ExternalDefensive = false, Important = true, RequiresEvidence = "Cast", MinDuration = true, SpellId = 49028 },
 		},
 		[256] = { { BuffDuration = 8, Cooldown = 180, ExternalDefensive = true, BigDefensive = false, Important = false, RequiresEvidence = "Cast", SpellId = 33206 } },
 		[257] = {
@@ -124,7 +125,11 @@ local rules = {
 		[270] = { { BuffDuration = 12, Cooldown = 120, ExternalDefensive = true, BigDefensive = false, Important = false, CanCancelEarly = true, RequiresEvidence = "Cast", SpellId = 116849 } },
 		[577] = { { BuffDuration = 10, Cooldown = 60, BigDefensive = true, ExternalDefensive = false, Important = true, RequiresEvidence = "Cast", SpellId = 198589 } },
 		[1480] = { { BuffDuration = 10, Cooldown = 60, BigDefensive = true, ExternalDefensive = false, Important = false, RequiresEvidence = "Cast", SpellId = 198589 } },
-		[581] = { { BuffDuration = 12, Cooldown = 60, BigDefensive = true, ExternalDefensive = false, Important = false, MinDuration = true, RequiresEvidence = "Cast", SpellId = 204021 } },
+		[581] = {
+			{ BuffDuration = 12, Cooldown = 60, BigDefensive = true, ExternalDefensive = false, Important = false, MinDuration = true, RequiresEvidence = "Cast", SpellId = 204021 },
+			{ BuffDuration = 15, Cooldown = 120, Important = true, BigDefensive = false, ExternalDefensive = false, RequiresEvidence = "Cast", SpellId = 187827 },
+			{ BuffDuration = 20, Cooldown = 120, Important = true, BigDefensive = false, ExternalDefensive = false, RequiresEvidence = "Cast", SpellId = 187827 },
+		},
 		[254] = {
 			{ BuffDuration = 15, Cooldown = 120, Important = true, BigDefensive = false, ExternalDefensive = false, RequiresEvidence = "Cast", SpellId = 288613 },
 			{ BuffDuration = 17, Cooldown = 120, Important = true, BigDefensive = false, ExternalDefensive = false, RequiresEvidence = "Cast", SpellId = 288613 },
@@ -141,6 +146,16 @@ local rules = {
 		[1467] = { { BuffDuration = 18, Cooldown = 120, Important = true, BigDefensive = false, ExternalDefensive = false, RequiresEvidence = "Cast", MinDuration = true, SpellId = 375087 } },
 		[1468] = { { BuffDuration = 8, Cooldown = 60, ExternalDefensive = true, BigDefensive = false, Important = false, RequiresEvidence = "Cast", SpellId = 357170 } },
 		[1473] = { { BuffDuration = 13.4, Cooldown = 90, BigDefensive = true, ExternalDefensive = false, Important = true, RequiresEvidence = "Cast", MinDuration = true, SpellId = 363916 } },
+		[264] = { { BuffDuration = 15, Cooldown = 180, Important = true, BigDefensive = false, ExternalDefensive = false, RequiresEvidence = "Cast", SpellId = 114052, RequiresTalent = 114052 } },
+		[262] = {
+			{ BuffDuration = 15, Cooldown = 180, Important = true, BigDefensive = false, ExternalDefensive = false, RequiresEvidence = "Cast", SpellId = 114050, RequiresTalent = 114050 },
+			{ BuffDuration = 18, Cooldown = 180, Important = true, BigDefensive = false, ExternalDefensive = false, RequiresEvidence = "Cast", SpellId = 114050, RequiresTalent = 114050 },
+		},
+		[263] = {
+			{ BuffDuration = 8, Cooldown = 60, Important = true, BigDefensive = false, ExternalDefensive = false, RequiresEvidence = "Cast", SpellId = 384352, RequiresTalent = 384352, ExcludeIfTalent = { 114051, 378270 } },
+			{ BuffDuration = 10, Cooldown = 60, Important = true, BigDefensive = false, ExternalDefensive = false, RequiresEvidence = "Cast", SpellId = 384352, RequiresTalent = 384352, ExcludeIfTalent = { 114051, 378270 } },
+			{ BuffDuration = 15, Cooldown = 180, Important = true, BigDefensive = false, ExternalDefensive = false, RequiresEvidence = "Cast", SpellId = 114051, RequiresTalent = 114051 },
+		},
 	},
 	byClass = {
 		PALADIN = {
@@ -174,11 +189,15 @@ local rules = {
 			{ BuffDuration = 8, Cooldown = 120, BigDefensive = true, ExternalDefensive = false, Important = true, RequiresEvidence = "Cast", SpellId = 48792 },
 			{ BuffDuration = 5, Cooldown = 60, BigDefensive = false, Important = true, ExternalDefensive = false, CanCancelEarly = true, SpellId = 48707, RequiresEvidence = { "Cast", "Shield" } },
 			{ BuffDuration = 7, Cooldown = 60, BigDefensive = false, Important = true, ExternalDefensive = false, CanCancelEarly = true, SpellId = 48707, RequiresEvidence = { "Cast", "Shield" } },
+			{ BuffDuration = 8, Cooldown = 120, BigDefensive = true, ExternalDefensive = false, Important = true, RequiresEvidence = "Cast", MinDuration = true, SpellId = 49028 },
 		},
 		DEMONHUNTER = {},
 		MONK = { { BuffDuration = 15, Cooldown = 120, BigDefensive = true, ExternalDefensive = false, Important = false, RequiresEvidence = "Cast", SpellId = 115203 } },
 		SHAMAN = { { BuffDuration = 12, Cooldown = 120, BigDefensive = true, ExternalDefensive = false, Important = true, RequiresEvidence = "Cast", SpellId = 108271 } },
-		WARLOCK = { { BuffDuration = 8, Cooldown = 180, BigDefensive = true, ExternalDefensive = false, Important = true, RequiresEvidence = "Cast", SpellId = 104773 } },
+		WARLOCK = {
+			{ BuffDuration = 8, Cooldown = 180, BigDefensive = true, ExternalDefensive = false, Important = true, RequiresEvidence = "Cast", SpellId = 104773 },
+			{ BuffDuration = 3, Cooldown = 45, Important = true, BigDefensive = false, ExternalDefensive = false, CanCancelEarly = true, RequiresEvidence = "Cast", SpellId = 212295, RequiresTalent = 3624 },
+		},
 		PRIEST = {
 			{ BuffDuration = 10, Cooldown = 90, BigDefensive = true, ExternalDefensive = false, Important = true, RequiresEvidence = "Cast", SpellId = 19236 },
 		},
@@ -191,11 +210,16 @@ local rules = {
 local offensiveSpellIds = {
 	[375087] = true, [107574] = true, [121471] = true, [31884]  = true, [216331] = true, [190319] = true,
 	[288613] = true, [228260] = true, [102560] = true, [102543] = true, [106951] = true, [102558] = true, [1250646] = true,
+	[384352] = true, [114051] = true, [114050] = true,
 }
 
 ---@class CooldownTrackerModule
 local M = {}
 addon.Modules.CooldownTracker = M
+
+function M.GetRulesDatabase()
+	return rules, offensiveSpellIds
+end
 
 local watchEntries = {}
 local eventsFrame
@@ -223,15 +247,27 @@ local function GetStaticAbilities(unit)
 	local seen = {}
 	local result = {}
 
+	local customSpells = {}
+	if db and db.CustomSpells and type(db.CustomSpells) == "table" then
+		for id in pairs(db.CustomSpells) do
+			customSpells[id] = true
+		end
+	end
+
 	local function addRules(ruleList)
 		if not ruleList then return end
 		for _, rule in ipairs(ruleList) do
 			if rule.SpellId and not seen[rule.SpellId] then
-				local excluded = rule.ExcludeIfTalent and fcdTalents:UnitHasTalent(unit, rule.ExcludeIfTalent, specId)
-				local required = rule.RequiresTalent and not fcdTalents:UnitHasTalent(unit, rule.RequiresTalent, specId)
-				if not excluded and not required then
-					seen[rule.SpellId] = true
-					result[#result + 1] = { SpellId = rule.SpellId, IsOffensive = offensiveSpellIds[rule.SpellId] == true }
+				-- Check if the user has explicitly disabled this spell in the settings panel
+				local isDisabled = db and db.DisabledSpells and db.DisabledSpells[rule.SpellId]
+				if not isDisabled then
+					local excluded = rule.ExcludeIfTalent and fcdTalents:UnitHasTalent(unit, rule.ExcludeIfTalent, specId)
+					local required = rule.RequiresTalent and not fcdTalents:UnitHasTalent(unit, rule.RequiresTalent, specId)
+					if not excluded and not required then
+						seen[rule.SpellId] = true
+						local isOffensive = offensiveSpellIds[rule.SpellId] == true or customSpells[rule.SpellId] == true
+						result[#result + 1] = { SpellId = rule.SpellId, IsOffensive = isOffensive }
+					end
 				end
 			end
 		end
@@ -239,6 +275,13 @@ local function GetStaticAbilities(unit)
 
 	addRules(specId and rules.bySpec[specId])
 	addRules(rules.byClass[classToken])
+
+	for customId in pairs(customSpells) do
+		if not seen[customId] then
+			seen[customId] = true
+			result[#result + 1] = { SpellId = customId, IsOffensive = true }
+		end
+	end
 
 	return result
 end
@@ -465,6 +508,23 @@ local function UpdateDisplay(entry)
 
 					if isOwner and rule and rule.SpellId then
 						activeOwnedAuras[rule.SpellId] = aura
+					end
+				end
+			end
+		end
+	end
+
+	-- Inject synthetic auras for active custom spells that have a duration
+	if options.CustomSpells then
+		for customId, cdata in pairs(options.CustomSpells) do
+			if type(cdata) == "table" then
+				local activeCd = entry.ActiveCooldowns[customId]
+				if activeCd and activeCd.StartTime then
+					local dur = tonumber(cdata.duration) or 0
+					if dur > 0 and now < activeCd.StartTime + dur then
+						activeOwnedAuras[customId] = {
+							DurationObject = wowEx:CreateDuration(activeCd.StartTime, dur)
+						}
 					end
 				end
 			end
@@ -755,6 +815,32 @@ local function EnsureEntry(anchor, unit)
 				local uTarget, castGUID, spellID = ...
 				local now = GetTime()
 				lastCastTime[u] = { Time = now, SpellId = spellID }
+				
+				local currentDb = addon.Core.Framework:GetSavedVars()
+				if currentDb and currentDb.CustomSpells then
+					local matchedId = nil
+					local matchedData = nil
+					for cId, data in pairs(currentDb.CustomSpells) do
+						local ok, res = pcall(function() return cId == spellID end)
+						if ok and res then
+							matchedId = cId
+							matchedData = data
+							break
+						end
+					end
+					
+					if matchedId and type(matchedData) == "table" then
+						local cd = tonumber(matchedData.cooldown) or 0
+						if cd == 0 and C_Spell and C_Spell.GetSpellBaseCooldown then
+							local baseCd = C_Spell.GetSpellBaseCooldown(matchedId)
+							if baseCd and baseCd > 0 then cd = baseCd / 1000 end
+						end
+						
+						local cdData = { StartTime = now, Cooldown = cd, SpellId = matchedId, IsOffensive = true }
+						entry.ActiveCooldowns[matchedId] = cdData
+						UpdateDisplay(entry)
+					end
+				end
 			elseif event == "UNIT_FLAGS" then
 				local now = GetTime()
 				local isFeign = UnitIsFeignDeath(u)

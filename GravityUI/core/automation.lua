@@ -503,15 +503,20 @@ local function OnWhisper(msg, sender, isBNet, bnGameAccountID)
 
     if isBNet then
         if bnGameAccountID then
-            -- Prefer BNet invite for cross-realm accuracy
-            local ok = pcall(BNInviteFriend, bnGameAccountID)
+            -- Prefer modern API invite if accessible
+            local ok = false
+            if C_BattleNet and C_BattleNet.InviteFriend then
+                ok = pcall(C_BattleNet.InviteFriend, bnGameAccountID)
+            elseif BNInviteFriend then
+                ok = pcall(BNInviteFriend, bnGameAccountID)
+            end
             if ok then
                 print("|cFF30D1FFGravityUI:|r BNet invite sent to " .. sender)
                 return
             end
         end
-        -- Fallback: invite via character name (works for same-realm and cross-realm)
-        print("|cFF30D1FFGravityUI:|r Sending invite to " .. sender)
+        -- Fallback: invite via fully qualified character name (Player-Realm)
+        print("|cFF30D1FFGravityUI:|r Sending cross-realm invite to " .. sender)
         C_PartyInfo.InviteUnit(sender)
     else
         print("|cFF30D1FFGravityUI:|r Sending Invite to " .. sender)
@@ -926,16 +931,17 @@ function SafeRelease:Build(btnTarget)
     self.overlay = CreateFrame("Button", "GravityUI_SafeReleaseBtn", btnTarget)
     self.overlay:SetAllPoints()
     self.overlay:SetFrameStrata("DIALOG")
+    self.overlay:SetFrameLevel(btnTarget:GetFrameLevel() + 10)
     self.overlay:EnableMouse(true)
     self.overlay:RegisterForClicks("AnyUp", "AnyDown")
     
-    local tex = self.overlay:CreateTexture(nil, "BACKGROUND")
+    local tex = self.overlay:CreateTexture(nil, "ARTWORK")
     tex:SetAllPoints()
-    tex:SetColorTexture(0.05, 0.05, 0.05, 0.9)
+    tex:SetColorTexture(0.08, 0.08, 0.08, 0.98)
     
-    self.overlay.label = self.overlay:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    self.overlay.label = self.overlay:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     self.overlay.label:SetPoint("CENTER")
-    self.overlay.label:SetTextColor(1, 0.5, 0)
+    self.overlay.label:SetTextColor(1, 0.7, 0.1)
 
     -- Track mouse hold on the overlay itself
     self.overlay:SetScript("OnMouseDown", function(_, btn)
@@ -972,7 +978,7 @@ function SafeRelease:Update()
     
     -- ALT key OR mouse button held both count
     local holding = IsAltKeyDown() or self.mouseHeld
-    local mode = IsAltKeyDown() and "ALT" or (self.mouseHeld and "Mouse" or "ALT")
+    local mode = IsAltKeyDown() and "ALT" or (self.mouseHeld and "Click" or "ALT")
 
     if holding then
         if self.startTime == 0 then self.startTime = GetTime() end
@@ -981,11 +987,11 @@ function SafeRelease:Update()
             self.released = true
             self.overlay:Hide()
         else
-            self.overlay.label:SetText(string.format("Hold %s (%.1fs)", mode, diff))
+            self.overlay.label:SetText(string.format("Hold %s  (%.1fs)", mode, diff))
         end
     else
         self.startTime = 0
-        self.overlay.label:SetText(string.format("Hold ALT or Mouse (%.1fs)", self.holdTime))
+        self.overlay.label:SetText("Hold ALT or Click")
     end
 end
 
@@ -1014,7 +1020,7 @@ function SafeRelease:Trigger()
     
     -- In case the popup was reused, ensure we show it now because the type is DEATH again
     self.overlay:Show()
-    self.overlay.label:SetText(string.format("Hold ALT or Mouse (%.1fs)", self.holdTime))
+    self.overlay.label:SetText(string.format("Hold ALT or Click"))
     self.overlay:SetScript("OnUpdate", function() self:Update() end)
 end
 
@@ -1325,28 +1331,25 @@ automationFrame:SetScript("OnEvent", function(self, event, ...)
         -- Arg 2 = sender character name in most WoW versions
         pcall(function(...) bnFallbackName = select(2, ...) end, ...)
 
-        -- Method 1: Direct presenceID resolution (classic approach, may fail in Midnight)
-        pcall(function(...)
-            local accountInfo = C_BattleNet.GetAccountInfoByID(select(13, ...))
-            if accountInfo and accountInfo.gameAccountInfo then
-                bnSenderName = accountInfo.gameAccountInfo.characterName
-                bnGameAccountID = accountInfo.gameAccountInfo.gameAccountID
-            end
-        end, ...)
-
-        -- Method 2: Scan BNet friend list by character name (Midnight-safe fallback)
-        -- Runs when Method 1 fails to get a gameAccountID.
-        if not bnGameAccountID and bnFallbackName then
+        -- We cannot rely on C_BattleNet.GetAccountInfoByID(select(13, ...)) because arg 13 is deeply tainted in 11.0.
+        -- We must dynamically resolve the BattleTag base name dynamically across our friend list.
+        if bnFallbackName then
             pcall(function()
-                local numFriends = C_BattleNet.GetFriendNumFriends()
+                local numFriends = BNGetNumFriends()
                 for i = 1, numFriends do
                     local info = C_BattleNet.GetFriendAccountInfo(i)
                     if info and info.gameAccountInfo and info.gameAccountInfo.isOnline then
-                        local charName = info.gameAccountInfo.characterName
-                        if charName == bnFallbackName or info.accountName == bnFallbackName then
-                            bnSenderName = charName
-                            bnGameAccountID = info.gameAccountInfo.gameAccountID
-                            break
+                        -- Isolate the "dpx" part from "dpx#1234"
+                        local baseTag = info.accountName and string.match(info.accountName, "^([^#]+)") or ""
+                        if baseTag == bnFallbackName or info.accountName == bnFallbackName then
+                            local charName = info.gameAccountInfo.characterName
+                            local realmName = info.gameAccountInfo.realmName
+                            
+                            if charName then
+                                bnSenderName = realmName and (charName .. "-" .. realmName) or charName
+                                bnGameAccountID = info.gameAccountInfo.gameAccountID
+                                break
+                            end
                         end
                     end
                 end
