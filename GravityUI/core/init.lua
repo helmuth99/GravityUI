@@ -335,6 +335,9 @@ function Addon:PLAYER_ENTERING_WORLD(event, isInitialLogin, isReloadingUi)
         if ns.RaidWarnings and ns.RaidWarnings.Initialize then ns.RaidWarnings:Initialize() end
         if ns.TrackedBuffBar and ns.TrackedBuffBar.Init then ns.TrackedBuffBar:Init() end
         if ns.InterruptTracker and ns.InterruptTracker.Initialize then ns.InterruptTracker:Initialize() end
+        if ns.CooldownTracker and ns.CooldownTracker.Modules and ns.CooldownTracker.Modules.CooldownTracker and ns.CooldownTracker.Modules.CooldownTracker.Init then
+            ns.CooldownTracker.Modules.CooldownTracker:Init()
+        end
     end)
     
     -- CHUNK 3: +1.5 Seconds (Secondary Systems, Objectives, XP)

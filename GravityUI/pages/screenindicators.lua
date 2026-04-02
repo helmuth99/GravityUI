@@ -1,4 +1,4 @@
-﻿-- GravityUI - UI Indicators Page
+-- GravityUI - UI Indicators Page
 local ADDON_NAME, ns = ...
 
 local GUI = ns.GUI
@@ -1351,6 +1351,97 @@ local function BuildConsumables(parent)
 end
 
 
+-- 10. Cooldown Tracker
+local function BuildCooldownTracker(parent)
+    local scroll, content = GUI:CreateScrollableContent(parent)
+    scroll:SetAllPoints()
+    local db = ns.GetDB(); if not db then return end
+    
+    if not db.screenindicators.cooldownTracker then
+        db.screenindicators.cooldownTracker = {
+            Enabled = true,
+            ShowTooltips = true,
+            ShowOffensiveCooldowns = false,
+            ShowCC = true,
+            ShowImportant = true,
+            ExcludePlayer = true,
+            IconSpacing = 2,
+            FontScale = 1.0,
+            Icons = {
+                MaxIcons = 3,
+                Size = 25,
+                ReverseCooldown = false,
+                Glow = true,
+                ColorByDispelType = true,
+            },
+            GrowDirection = "RIGHT",
+            AnchorOffset = { X = 0, Y = 0 },
+        }
+    end
+    
+    local c = db.screenindicators.cooldownTracker
+    local cIcons = c.Icons
+    local cOffset = c.AnchorOffset
+    
+    content.rowCount = 0
+    local refresh = function()
+        if ns.CooldownTracker and ns.CooldownTracker.Modules and ns.CooldownTracker.Modules.CooldownTracker then
+            if ns.CooldownTracker.Modules.CooldownTracker.Refresh then
+                ns.CooldownTracker.Modules.CooldownTracker:Refresh()
+            end
+        end
+    end
+    
+    local header = GUI:CreateSectionHeader(content, "Cooldown Tracker (Party CDs & Auras)")
+    header:SetPoint("TOPLEFT", 10, -10)
+    header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
+    content.rowCount = 1.3
+    
+    local infoBox = GUI:CreateInfoBox(content, "Displays offensive and defensive cooldowns next to party frames. Also shows CC and Important debuffs with glowing durations until they expire.")
+    infoBox:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
+    content.rowCount = content.rowCount + (infoBox:GetHeight() / (ROW_HEIGHT+5)) + 0.2
+    
+    CreateSubLabel(content, "General")
+    AddRow(content, "Enable Cooldown Tracker", "checkbox", "Enabled", c, refresh)
+    AddRow(content, "Show Tooltips on Hover", "checkbox", "ShowTooltips", c, refresh)
+    AddRow(content, "Exclude Player (Self)", "checkbox", "ExcludePlayer", c, refresh)
+    
+    content.rowCount = content.rowCount + 0.5
+    
+    content.rowCount = content.rowCount + 0.5
+
+    CreateSubLabel(content, "Appearance")
+    AddRow(content, "Max Icons Per Member", "slider", 1, 10, "MaxIcons", cIcons, refresh, 1)
+    AddRow(content, "Icon Size", "slider", 10, 64, "Size", cIcons, refresh, 1)
+    AddRow(content, "Icon Spacing", "slider", 0, 10, "IconSpacing", c, refresh, 1)
+    
+    content.rowCount = content.rowCount + 0.5
+    
+    CreateSubLabel(content, "Glows & Animations")
+    AddRow(content, "Reverse Cooldown Swipe", "checkbox", "ReverseCooldown", cIcons, refresh)
+    AddRow(content, "Enable Active Aura Glow", "checkbox", "Glow", cIcons, refresh)
+    
+    content.rowCount = content.rowCount + 0.5
+    
+    CreateSubLabel(content, "Layout & Position")
+    local dirOptions = {{value="RIGHT", text="Grow Right"},{value="LEFT", text="Grow Left"},{value="CENTER", text="Centered"}}
+    AddRow(content, "Direction", "dropdown", dirOptions, "GrowDirection", c, refresh)
+    AddRow(content, "X Offset", "slider", -500, 500, "X", cOffset, refresh, 1)
+    AddRow(content, "Y Offset", "slider", -500, 500, "Y", cOffset, refresh, 1)
+
+    content.rowCount = content.rowCount + 0.8
+    
+    local testBtn = GUI:CreateButton(content, "Toggle Test Mode", 140, 24, function()
+        if ns.CooldownTracker and ns.CooldownTracker.Modules and ns.CooldownTracker.Modules.CooldownTracker and ns.CooldownTracker.Modules.CooldownTracker.ToggleTestMode then
+            ns.CooldownTracker.Modules.CooldownTracker:ToggleTestMode()
+        end
+    end)
+    testBtn:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT+5)))
+    content.rowCount = content.rowCount + 1.2
+    
+    content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
+end
+
 -- ═══════════════════════════════════════════════════════════════
 -- MAIN PAGE
 -- ═══════════════════════════════════════════════════════════════
@@ -1368,6 +1459,7 @@ ns.GUI:RegisterPage("screenindicators", {
         { name = "Difficulty Changer", builder = BuildDifficulty },
         { name = "AFK Screen", builder = BuildAFKScreen },
         { name = "Consumables", builder = BuildConsumables },
+        { name = "Cooldown Tracker", builder = BuildCooldownTracker },
         { name = "Cooldown Text", builder = ns.CooldownText.AddOptions },
     },
     OnBuild = function(content)
