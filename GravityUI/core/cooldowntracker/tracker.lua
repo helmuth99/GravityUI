@@ -280,17 +280,27 @@ local function MatchRule(unit, auraTypes, measuredDuration, context, auraSpellId
 
 	local function tryRuleList(ruleList)
 		if not ruleList then return nil end
+		
+		-- Pass 1: Strict Exact ID Matching
+		-- If we have an explicit securely-readable auraSpellId or castSpellId, look for a perfect match first.
+		-- This MUST be a separate pass so that a fuzzy heuristic from an earlier rule doesn't hijack the result.
+		for _, rule in ipairs(ruleList) do
+			local excluded = rule.ExcludeIfTalent and fcdTalents:UnitHasTalent(unit, rule.ExcludeIfTalent, specId)
+			local required = rule.RequiresTalent and not fcdTalents:UnitHasTalent(unit, rule.RequiresTalent, specId)
+			if not excluded and not required then
+				if isSameSpellSecure(auraSpellId, rule.SpellId) or isSameSpellSecure(castSpellId, rule.SpellId) then
+					return rule
+				end
+			end
+		end
+
+		-- Pass 2: Fuzzy Heuristic Guessing (Fallback)
+		-- Used primarily when Blizzard completely masks both aura and cast data (e.g., hidden auras/passive procs).
 		local fallback = nil
 		for _, rule in ipairs(ruleList) do
 			local excluded = rule.ExcludeIfTalent and fcdTalents:UnitHasTalent(unit, rule.ExcludeIfTalent, specId)
 			local required = rule.RequiresTalent and not fcdTalents:UnitHasTalent(unit, rule.RequiresTalent, specId)
 			if not excluded and not required then
-				-- If we have an explicit securely-readable auraSpellId or castSpellId, and it perfectly matches the database rule,
-				-- we can bypass ALL heuristical guessing and instantly resolve ownership.
-				if isSameSpellSecure(auraSpellId, rule.SpellId) or isSameSpellSecure(castSpellId, rule.SpellId) then
-					return rule
-				end
-
 				local expectedDuration = rule.SpellId and fcdTalents:GetUnitBuffDuration(unit, specId, classToken, rule.SpellId, rule.BuffDuration) or rule.BuffDuration
 				local typeMatch = AuraTypeMatchesRule(auraTypes, rule)
 				if typeMatch then
@@ -627,9 +637,10 @@ local function TrackNewAura(unit, trackedAuras, id, info, now)
 			tracked.Evidence = tracked.Evidence or {}
 			for k in pairs(ev) do tracked.Evidence[k] = true end
 		end
-		for snapshotUnit, snapshotTime in pairs(lastCastTime) do
-			if math.abs(snapshotTime - now) <= castWindow and not tracked.CastSnapshot[snapshotUnit] then
-				tracked.CastSnapshot[snapshotUnit] = snapshotTime
+		for snapshotUnit, data in pairs(lastCastTime) do
+			local timeVal = type(data) == "table" and data.Time or data
+			if math.abs(timeVal - now) <= castWindow and not tracked.CastSnapshot[snapshotUnit] then
+				tracked.CastSnapshot[snapshotUnit] = type(data) == "table" and { Time = data.Time, SpellId = data.SpellId } or { Time = data }
 			end
 		end
 	end)
