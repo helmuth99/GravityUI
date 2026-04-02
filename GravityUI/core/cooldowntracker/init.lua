@@ -65,16 +65,17 @@ addon.Utils.ModuleUtil = {
 		-- Driven by the GravityUI config checkboxes
 		local db = addon.Core.Framework:GetSavedVars()
 		if db.Enabled == false then return false end
-		
-		local opts = db.Enabled
-		if type(opts) ~= "table" then return true end
 
-		if addon.Core.InstanceOptions.IsArena() then return opts.Arena end
-		if addon.Core.InstanceOptions.IsBattleground() then return opts.BattleGrounds end
-		if addon.Core.InstanceOptions.IsDungeon() then return opts.Dungeons end
-		if addon.Core.InstanceOptions.IsRaid() then return opts.Raid end
+		-- User requested: Not in Raid, ONLY for Party / M+ / Dungeons
+		if addon.Core.InstanceOptions.IsRaid() then return false end
+		if addon.Core.InstanceOptions.IsDungeon() then return true end
 		
-		return opts.World
+		-- Allow in open world if in a non-raid party (Party)
+		if addon.Core.InstanceOptions.IsWorld() and IsInGroup() and not IsInRaid() then
+			return true
+		end
+
+		return false
 	end
 }
 
