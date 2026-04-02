@@ -431,7 +431,7 @@ local function UpdateDisplay(entry)
 	local showOffensive = false
 	local showDefensive = true
 
-	if not options or not addon.Utils.ModuleUtil.IsModuleEnabled() then
+	if not options or (not addon.Utils.ModuleUtil.IsModuleEnabled() and not testModeActive) then
 		container.Frame:Hide()
 		return
 	end
@@ -784,7 +784,7 @@ local function EnsureEntry(anchor, unit)
 
 	db = addon.Core.Framework:GetSavedVars()
 	local options = db
-	if not options or not addon.Utils.ModuleUtil.IsModuleEnabled() then return nil end
+	if not options or (not addon.Utils.ModuleUtil.IsModuleEnabled() and not testModeActive) then return nil end
 
 	-- We no longer abort EnsureEntry here for ExcludePlayer, 
 	-- because we must keep the Watcher running on the player to track 
@@ -918,7 +918,7 @@ function M:Refresh()
 	local options = db
 	if not options then return end
 
-	if not addon.Utils.ModuleUtil.IsModuleEnabled() then
+	if not addon.Utils.ModuleUtil.IsModuleEnabled() and not testModeActive then
 		for _, entry in pairs(watchEntries) do
 			entry.Watcher:Disable()
 			entry.CastEventFrame:UnregisterAllEvents()
@@ -1042,7 +1042,7 @@ function M:Init()
 		hooksecurefunc("CompactUnitFrame_SetUnit", function(frame, unit)
 			if not frames:IsFriendlyCuf(frame) then return end
 			db = addon.Core.Framework:GetSavedVars()
-			if not addon.Utils.ModuleUtil.IsModuleEnabled() then return end
+			if not addon.Utils.ModuleUtil.IsModuleEnabled() and not testModeActive then return end
 			EnsureEntry(frame, unit)
 		end)
 	end
@@ -1052,7 +1052,7 @@ function M:Init()
 			local entry = watchEntries[frame]
 			if not entry then return end
 			db = addon.Core.Framework:GetSavedVars()
-			if not addon.Utils.ModuleUtil.IsModuleEnabled() then
+			if not addon.Utils.ModuleUtil.IsModuleEnabled() and not testModeActive then
 				entry.Container.Frame:Hide()
 				return
 			end

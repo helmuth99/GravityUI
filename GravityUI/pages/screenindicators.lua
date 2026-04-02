@@ -1446,34 +1446,51 @@ local function BuildCooldownTracker(parent)
     content.rowCount = content.rowCount + 1.2
     
     CreateSubLabel(content, "Custom Tracked Spells")
+    content.rowCount = content.rowCount + 0.2
     
-    local rowAdd = CreateFrame("Frame", nil, content)
-    rowAdd:SetSize(GUI.CONTENT_WIDTH - 20, ROW_HEIGHT * 2)
-    rowAdd:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT + 5)))
+    local infoBoxCustom = GUI:CreateInfoBox(content, "Add missing auras, trinkets or externals here.\nLeave Duration or CD empty for automatic detection.")
+    infoBoxCustom:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
+    content.rowCount = content.rowCount + (infoBoxCustom:GetHeight() / (ROW_HEIGHT+5)) + 0.4
+    
+    local rowAdd = CreateFrame("Frame", nil, content, "BackdropTemplate")
+    rowAdd:SetSize(GUI.CONTENT_WIDTH - 20, 65)
+    rowAdd:SetPoint("TOPLEFT", 10, -(content.rowCount * (ROW_HEIGHT + 5)))
+    
+    rowAdd:SetBackdrop({
+        bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
+        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+        edgeSize = 14,
+        insets = { left = 3, right = 3, top = 3, bottom = 3 }
+    })
+    rowAdd:SetBackdropColor(0, 0, 0, 0.4)
+    rowAdd:SetBackdropBorderColor(1, 1, 1, 0.1)
     
     local tempDB = { id = "", duration = "", cooldown = "" }
     
     local inputID = GUI:CreateInput(rowAdd, "Spell ID", "id", tempDB, function() end)
-    inputID:SetPoint("LEFT", 0, 0)
-    inputID:SetWidth(60)
-    inputID.editBox:SetWidth(60)
+    inputID:SetPoint("TOPLEFT", 15, -15)
+    inputID:SetWidth(70)
+    inputID.editBox:SetWidth(70)
     inputID.editBox:SetNumeric(true)
+    inputID.editBox:SetScript("OnEnterPressed", function(self) self:ClearFocus() end)
     
-    local inputDur = GUI:CreateInput(rowAdd, "Dur.", "duration", tempDB, function() end)
-    inputDur:SetPoint("LEFT", inputID.editBox, "RIGHT", 10, 0)
-    inputDur:SetWidth(40)
-    inputDur.editBox:SetWidth(40)
+    local inputDur = GUI:CreateInput(rowAdd, "Dur. (sec)", "duration", tempDB, function() end)
+    inputDur:SetPoint("TOPLEFT", inputID, "TOPRIGHT", 20, 0)
+    inputDur:SetWidth(60)
+    inputDur.editBox:SetWidth(60)
     inputDur.editBox:SetNumeric(true)
+    inputDur.editBox:SetScript("OnEnterPressed", function(self) self:ClearFocus() end)
     inputDur.tooltip = "Active buff duration in seconds (optional)."
 
-    local inputCD = GUI:CreateInput(rowAdd, "CD", "cooldown", tempDB, function() end)
-    inputCD:SetPoint("LEFT", inputDur.editBox, "RIGHT", 10, 0)
-    inputCD:SetWidth(30)
-    inputCD.editBox:SetWidth(40)
+    local inputCD = GUI:CreateInput(rowAdd, "CD (sec)", "cooldown", tempDB, function() end)
+    inputCD:SetPoint("TOPLEFT", inputDur, "TOPRIGHT", 20, 0)
+    inputCD:SetWidth(55)
+    inputCD.editBox:SetWidth(55)
     inputCD.editBox:SetNumeric(true)
+    inputCD.editBox:SetScript("OnEnterPressed", function(self) self:ClearFocus() end)
     inputCD.tooltip = "Cooldown in seconds (optional)."
     
-    local btnAdd = GUI:CreateButton(rowAdd, "+ Add", 70, 24, function() 
+    local btnAdd = GUI:CreateButton(rowAdd, "+ Add Spell", 110, 24, function() 
         local id = tonumber(inputID.editBox:GetText())
         local dur = tonumber(inputDur.editBox:GetText()) or 0
         local cd = tonumber(inputCD.editBox:GetText()) or 0
@@ -1488,9 +1505,9 @@ local function BuildCooldownTracker(parent)
             refresh()
         end
     end)
-    btnAdd:SetPoint("LEFT", inputCD.editBox, "RIGHT", 10, 0)
+    btnAdd:SetPoint("LEFT", inputCD.editBox, "RIGHT", 25, 0)
     
-    content.rowCount = content.rowCount + 1.7
+    content.rowCount = content.rowCount + 3.0
     
     if c.CustomSpells then
         local sorted = {}
