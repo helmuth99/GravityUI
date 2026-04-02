@@ -24,7 +24,7 @@ addon.Core.Framework = {
 		-- Fallback if DB not ready yet
 		if not ns.CooldownTracker.db then
 			ns.CooldownTracker.db = {
-				Enabled = true,
+				Enabled = false,
 				ShowTooltips = true,
 				ShowOffensiveCooldowns = false,
 				ShowCC = true,
@@ -64,8 +64,10 @@ addon.Utils.ModuleUtil = {
 	IsModuleEnabled = function(moduleName)
 		-- Driven by the GravityUI config checkboxes
 		local db = addon.Core.Framework:GetSavedVars()
+		if db.Enabled == false then return false end
+		
 		local opts = db.Enabled
-		if not opts then return true end
+		if type(opts) ~= "table" then return true end
 
 		if addon.Core.InstanceOptions.IsArena() then return opts.Arena end
 		if addon.Core.InstanceOptions.IsBattleground() then return opts.BattleGrounds end
