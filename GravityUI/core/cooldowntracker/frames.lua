@@ -361,11 +361,18 @@ local function CreateLayer(parentFrame, level, iconSize, noBorder)
 	f:SetAllPoints()
 	if level then f:SetFrameLevel(level) end
 
+	local bg = f:CreateTexture(nil, "BACKGROUND", nil, 0)
+	bg:SetAllPoints()
+	bg:SetColorTexture(0, 0, 0, 1)
+
 	local icon = f:CreateTexture(nil, "BACKGROUND", nil, 1)
-	icon:SetAllPoints()
+	icon:SetPoint("TOPLEFT", f, "TOPLEFT", 1, -1)
+	icon:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -1, 1)
+	icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
 
 	local cd = CreateFrame("Cooldown", NextFrameName("Cooldown"), f, "CooldownFrameTemplate")
-	cd:SetAllPoints()
+	cd:SetPoint("TOPLEFT", f, "TOPLEFT", 1, -1)
+	cd:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -1, 1)
 	cd:SetDrawEdge(false)
 	cd:SetDrawBling(false)
 	cd:SetHideCountdownNumbers(false)
@@ -373,12 +380,11 @@ local function CreateLayer(parentFrame, level, iconSize, noBorder)
 
 	local border
 	if not noBorder then
-		border = f:CreateTexture(nil, "OVERLAY")
-		border:SetPoint("TOPLEFT", f, "TOPLEFT", -1, 1)
-		border:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", 1, -1)
-		border:SetTexture("Interface\\Buttons\\UI-Debuff-Overlays")
-		border:SetTexCoord(0.296875, 0.5703125, 0, 0.515625)
+		border = CreateFrame("Frame", nil, f, "BackdropTemplate")
+		border:SetAllPoints()
+		border:SetBackdrop({ edgeFile = "Interface\\Buttons\\WHITE8X8", edgeSize = 1 })
 		border:Hide()
+		border.SetVertexColor = function(self, r, g, b, a) self:SetBackdropBorderColor(r, g, b, a) end
 	end
 
 	if iconSize then

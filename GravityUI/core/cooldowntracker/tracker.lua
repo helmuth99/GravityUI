@@ -416,7 +416,7 @@ local function FindBestCandidate(entry, tracked, measuredDuration, auraSpellId)
 	return rule, ruleUnit
 end
 
-local function UpdateDisplay(entry)
+local function UpdateDisplayNow(entry)
 	local container = entry.Container
 	container:ResetAllSlots()
 
@@ -602,6 +602,27 @@ local function UpdateDisplay(entry)
 	
 	container:SetCount(#slots)
 	frames:ShowHideFrame(container.Frame, entry.Anchor, testModeActive, false)
+end
+
+local pendingUpdates = {}
+local isUpdateQueued = false
+
+local function DoQueuedUpdate()
+	isUpdateQueued = false
+	local toUpdate = pendingUpdates
+	pendingUpdates = {}
+	for entry in pairs(toUpdate) do
+		UpdateDisplayNow(entry)
+	end
+end
+
+local function UpdateDisplay(entry)
+	if not entry then return end
+	pendingUpdates[entry] = true
+	if not isUpdateQueued then
+		isUpdateQueued = true
+		C_Timer.After(0, DoQueuedUpdate)
+	end
 end
 
 local function CommitCooldown(entry, tracked, rule, ruleUnit, measuredDuration)
