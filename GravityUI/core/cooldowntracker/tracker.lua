@@ -614,39 +614,67 @@ local function CommitCooldown(entry, tracked, rule, ruleUnit, measuredDuration)
 		if classToken then cooldown = fcdTalents:GetUnitCooldown(ruleUnit, specId, classToken, rule.SpellId, cooldown, measuredDuration) end
 	end
 
+	local MultiChargeSpells = {
+		[264735] = true, -- Survival of the Fittest
+		[6940] = true,   -- Blessing of Sacrifice
+		[31850] = true,  -- Ardent Defender
+		[61336] = true,  -- Survival Instincts
+		[186265] = true, -- Aspect of the Turtle (sometimes 2 charges with talents)
+		[498] = true,    -- Divine Protection
+		[22812] = true,  -- Barkskin
+		[47585] = true,  -- Dispersion
+		[1250646] = true,-- Fortifying Brew (some monks)
+	}
+
 	local auraTypesKey = tracked.AuraTypes["BIG_DEFENSIVE"] and "BIG_DEFENSIVE" or tracked.AuraTypes["EXTERNAL_DEFENSIVE"] and "EXTERNAL_DEFENSIVE" or "IMPORTANT"
 	local cdKey = rule.SpellId or (auraTypesKey .. "_" .. rule.BuffDuration .. "_" .. rule.Cooldown)
-	local cdData = { StartTime = tracked.StartTime, Cooldown = cooldown, SpellId = tracked.SpellId, IsOffensive = rule.SpellId ~= nil and offensiveSpellIds[rule.SpellId] == true }
+	local cdData = { StartTime = tracked.StartTime, Cooldown = cooldown, SpellId = tracked.SpellId, IsOffensive = rule.SpellId ~= nil and offensiveSpellIds[rule.SpellId] == true, EndTime = tracked.StartTime + cooldown }
 
 	local casterEntries = {}
+	local cdCommitted = false
+	local isChargeSpell = rule.SpellId and MultiChargeSpells[rule.SpellId]
+
 	for _, e in pairs(watchEntries) do
 		if UnitIsUnit(e.Unit, ruleUnit) then
 			local existing = e.ActiveCooldowns[cdKey]
-			if existing and existing.Timer then existing.Timer:Cancel(); existing.Timer = nil end
-			e.ActiveCooldowns[cdKey] = cdData
-			casterEntries[#casterEntries + 1] = e
+			if isChargeSpell and existing and existing.EndTime and (existing.EndTime < cdData.EndTime) then
+				-- Keep tracking the earliest charge recovery so it correctly shows when it's next available
+				casterEntries[#casterEntries + 1] = e
+			else
+				if existing and existing.Timer then existing.Timer:Cancel(); existing.Timer = nil end
+				e.ActiveCooldowns[cdKey] = cdData
+				casterEntries[#casterEntries + 1] = e
+				cdCommitted = true
+			end
 		end
 	end
 	if #casterEntries == 0 then
 		local existing = targetEntry.ActiveCooldowns[cdKey]
-		if existing and existing.Timer then existing.Timer:Cancel(); existing.Timer = nil end
-		targetEntry.ActiveCooldowns[cdKey] = cdData
-		casterEntries[1] = targetEntry
+		if isChargeSpell and existing and existing.EndTime and (existing.EndTime < cdData.EndTime) then
+			casterEntries[1] = targetEntry
+		else
+			if existing and existing.Timer then existing.Timer:Cancel(); existing.Timer = nil end
+			targetEntry.ActiveCooldowns[cdKey] = cdData
+			casterEntries[1] = targetEntry
+			cdCommitted = true
+		end
 	end
 
 	for _, e in ipairs(casterEntries) do
 		if e ~= entry then UpdateDisplay(e); frames:ShowHideFrame(e.Container.Frame, e.Anchor) end
 	end
 
-	local remaining = cooldown - measuredDuration
-	if remaining <= 0 then
-		for _, e in ipairs(casterEntries) do e.ActiveCooldowns[cdKey] = nil end
-		return
+	if cdCommitted then
+		local remaining = cooldown - measuredDuration
+		if remaining <= 0 then
+			for _, e in ipairs(casterEntries) do e.ActiveCooldowns[cdKey] = nil end
+			return
+		end
+		cdData.Timer = C_Timer.NewTimer(remaining, function()
+			cdData.Timer = nil
+			for _, e in ipairs(casterEntries) do e.ActiveCooldowns[cdKey] = nil; UpdateDisplay(e) end
+		end)
 	end
-	cdData.Timer = C_Timer.NewTimer(remaining, function()
-		cdData.Timer = nil
-		for _, e in ipairs(casterEntries) do e.ActiveCooldowns[cdKey] = nil; UpdateDisplay(e) end
-	end)
 end
 
 local function OnAuraRemoved(entry, tracked, now)
