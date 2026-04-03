@@ -357,10 +357,12 @@ local function UpdateSecondWind()
     local current, max = GetSecondWindInfo()
     
     -- Color
-    local color = settings.secondWindColor or DEFAULT_SW_COLOR
+    local cr, cg, cb, ca
     if settings.useThemeColorSecondWind then
-        local r, g, b, a = ns.GetAccentColor()
-        color = {r, g, b, a}
+        cr, cg, cb, ca = ns.GetAccentColor()
+    else
+        local c = settings.secondWindColor or DEFAULT_SW_COLOR
+        cr, cg, cb, ca = c[1], c[2], c[3], c[4] or 1
     end
     
     -- Hide all
@@ -397,10 +399,10 @@ local function UpdateSecondWind()
             end
             
             if i <= current then
-                pip:SetVertexColor(unpack(color))
+                pip:SetVertexColor(cr, cg, cb, ca)
                 pip:Show()
                 if pip.glow then
-                    pip.glow:SetVertexColor(color[1], color[2], color[3], 0.5)
+                    pip.glow:SetVertexColor(cr, cg, cb, 0.5)
                     pip.glow:Show()
                 end
             else
@@ -416,7 +418,7 @@ local function UpdateSecondWind()
             lastSWTextMax = max
             secondWindText:SetText(lastSWTextString)
         end
-        secondWindText:SetTextColor(unpack(color))
+        secondWindText:SetTextColor(cr, cg, cb, ca)
         secondWindText:Show()
         
     elseif mode == "MINIBAR" then
@@ -435,7 +437,7 @@ local function UpdateSecondWind()
         swTargetValue = current / max
         swMaxCharges = max
         
-        secondWindMiniBar:SetStatusBarColor(unpack(color))
+        secondWindMiniBar:SetStatusBarColor(cr, cg, cb, ca)
         secondWindMiniBar:Show()
         
         -- Segments
@@ -444,7 +446,7 @@ local function UpdateSecondWind()
         local thickness = settings.segmentThickness or 1
         
         -- Calculate soft color directly (NO TABLE CREATION)
-        local sr, sg, sb, sa = color[1]*0.25, color[2]*0.25, color[3]*0.25, 0.6
+        local sr, sg, sb, sa = cr*0.25, cg*0.25, cb*0.25, 0.6
         
         for i=1,5 do
             if i < max then
