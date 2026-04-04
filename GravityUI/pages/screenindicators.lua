@@ -1469,7 +1469,7 @@ local function BuildCooldownTracker(parent)
     rowAdd:SetBackdropColor(0, 0, 0, 0.4)
     rowAdd:SetBackdropBorderColor(1, 1, 1, 0.1)
     
-    local tempDB = { id = "", duration = "", cooldown = "" }
+    local tempDB = { id = "", duration = "", cooldown = "", isOffensive = true }
     
     local inputID = GUI:CreateInput(rowAdd, "Spell ID", "id", tempDB, function() end)
     inputID:SetPoint("TOPLEFT", 15, -15)
@@ -1493,14 +1493,19 @@ local function BuildCooldownTracker(parent)
     inputCD.editBox:SetNumeric(true)
     inputCD.editBox:SetScript("OnEnterPressed", function(self) self:ClearFocus() end)
     inputCD.tooltip = "Cooldown in seconds (optional)."
+
+    local checkOff = GUI:CreateCheckbox(rowAdd, "Offensive", "isOffensive", tempDB, function() end)
+    checkOff:SetPoint("LEFT", inputCD.editBox, "RIGHT", 35, 0)
+    checkOff.tooltip = "Uncheck if this is a Defensive cooldown (e.g. Trinket, External)."
     
-    local btnAdd = GUI:CreateButton(rowAdd, "+ Add Spell", 110, 24, function() 
+    local btnAdd = GUI:CreateButton(rowAdd, "+ Add", 80, 24, function() 
         local id = tonumber(inputID.editBox:GetText())
         local dur = tonumber(inputDur.editBox:GetText()) or 0
         local cd = tonumber(inputCD.editBox:GetText()) or 0
+        local isOff = tempDB.isOffensive
         if id and id > 0 then
             c.CustomSpells = c.CustomSpells or {}
-            c.CustomSpells[id] = { duration = dur, cooldown = cd }
+            c.CustomSpells[id] = { duration = dur, cooldown = cd, isOffensive = isOff }
             inputID.editBox:SetText("")
             inputDur.editBox:SetText("")
             inputCD.editBox:SetText("")
@@ -1509,7 +1514,7 @@ local function BuildCooldownTracker(parent)
             refresh()
         end
     end)
-    btnAdd:SetPoint("LEFT", inputCD.editBox, "RIGHT", 25, 0)
+    btnAdd:SetPoint("LEFT", checkOff, "RIGHT", 80, 0)
     
     content.rowCount = content.rowCount + 3.0
     
@@ -1543,7 +1548,9 @@ local function BuildCooldownTracker(parent)
              local cData = c.CustomSpells[id]
              local durText = (type(cData) == "table" and cData.duration and cData.duration > 0) and (cData.duration.."s Dur") or "No Dur"
              local cdText = (type(cData) == "table" and cData.cooldown and cData.cooldown > 0) and (cData.cooldown.."s CD") or "Auto CD"
-             label:SetText(string.format("%s|cff00ccff%s|r: %s |cFF888888(%s / %s)|r", iconStr, id, name, durText, cdText))
+             local typeText = (type(cData) == "table" and (cData.isOffensive == nil or cData.isOffensive == true)) and "|cFFFF4444[Off]|r " or "|cFF44FF44[Def]|r "
+             
+             label:SetText(string.format("%s%s|cff00ccff%s|r: %s |cFF888888(%s / %s)|r", iconStr, typeText, id, name, durText, cdText))
              
              local btnDel = GUI:CreateButton(row, "X", 20, 20, function()
                  c.CustomSpells[id] = nil

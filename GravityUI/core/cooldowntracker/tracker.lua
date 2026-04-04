@@ -885,7 +885,12 @@ local function EnsureEntry(anchor, unit)
 							if baseCd and baseCd > 0 then cd = baseCd / 1000 end
 						end
 						
-						local cdData = { StartTime = now, Cooldown = cd, SpellId = matchedId, IsOffensive = true }
+						local isOff = true
+						if type(matchedData) == "table" and matchedData.isOffensive ~= nil then
+							isOff = matchedData.isOffensive
+						end
+						
+						local cdData = { StartTime = now, Cooldown = cd, SpellId = matchedId, IsOffensive = isOff }
 						entry.ActiveCooldowns[matchedId] = cdData
 						UpdateDisplay(entry)
 					end
