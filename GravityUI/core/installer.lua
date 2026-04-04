@@ -93,7 +93,7 @@ Installer.registry = {
         end,
         Import = function(self, data, profileName)
             if _G.Details then 
-                local res = _G.Details:ImportProfile(data, profileName, false, true, true) 
+                local res = _G.Details:ImportProfile(data, profileName, true, true, true) 
             end
         end,
         HasProfile = function(self, profileName)
@@ -440,7 +440,7 @@ Installer.registry = {
             -- 3. Apply using ApplyProfileAtomic (creates or overwrites the named profile)
             if CDM.ApplyProfileAtomic then
                 local ok, err = pcall(CDM.ApplyProfileAtomic, CDM, profileName, profileData, {
-                    rebuildOptions = false,
+                    rebuildOptions = true,
                 })
                 if not ok then
                     ns.Print("|cffff0000[GravityUI]|r Ayije ApplyProfileAtomic failed: " .. tostring(err))
