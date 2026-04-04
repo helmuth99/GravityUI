@@ -1403,7 +1403,7 @@ local function BuildCooldownTracker(parent)
     header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
     content.rowCount = 1.3
     
-    local infoBox = GUI:CreateInfoBox(content, "Displays offensive and defensive cooldowns next to party frames. Also shows CC and Important debuffs with glowing durations until they expire.")
+    local infoBox = GUI:CreateInfoBox(content, "Displays offensive and defensive cooldowns next to party frames. You can toggle each category independently.")
     infoBox:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
     content.rowCount = content.rowCount + (infoBox:GetHeight() / (ROW_HEIGHT+5)) + 0.2
     
@@ -1412,7 +1412,11 @@ local function BuildCooldownTracker(parent)
     AddRow(content, "Show Tooltips on Hover", "checkbox", "ShowTooltips", c, refresh)
     AddRow(content, "Exclude Player (Self)", "checkbox", "ExcludePlayer", c, refresh)
     
-    content.rowCount = content.rowCount + 0.5
+    content.rowCount = content.rowCount + 0.4
+
+    CreateSubLabel(content, "Filter")
+    AddRow(content, "Show Offensive Cooldowns", "checkbox", "ShowOffensiveCooldowns", c, refresh)
+    AddRow(content, "Show Defensive Cooldowns", "checkbox", "ShowDefensiveCooldowns", c, refresh)
     
     content.rowCount = content.rowCount + 0.5
 

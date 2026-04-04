@@ -428,8 +428,8 @@ local function UpdateDisplayNow(entry)
 	local iconsGlow = iconOptions.Glow
 	local maxIcons = iconOptions.MaxIcons or 3
 
-	local showOffensive = false
-	local showDefensive = true
+	local showOffensive = options.ShowOffensiveCooldowns ~= false
+	local showDefensive = options.ShowDefensiveCooldowns ~= false
 
 	if not options or (not addon.Utils.ModuleUtil.IsModuleEnabled() and not testModeActive) then
 		container.Frame:Hide()
