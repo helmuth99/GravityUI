@@ -404,7 +404,6 @@ end
 
 -- Additional slash commands for convenience
 SLASH_GUICDM1 = "/cdm"
-SLASH_GUICDM2 = "/wa"
 SlashCmdList["GUICDM"] = function()
     if CooldownViewerSettings then
         CooldownViewerSettings:SetShown(not CooldownViewerSettings:IsShown())
