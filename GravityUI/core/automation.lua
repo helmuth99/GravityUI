@@ -9,6 +9,13 @@ local function GetSettings()
     return nil
 end
 
+local function GetRoleSettings()
+    if ns.db and ns.db.char then
+        return ns.db.char.lfgQuickJoinRoles
+    end
+    return nil
+end
+
 local automationFrame = CreateFrame("Frame")
 
 ---------------------------------------------------------------------------
@@ -71,10 +78,8 @@ end
 ---------------------------------------------------------------------------
 
 local function ForceApplyLfgRolesNow()
-    local cfg = GetSettings()
-    if not cfg or not cfg.lfgQuickJoinRoles or not _G.LFGListApplicationDialog or not _G.LFGListApplicationDialog:IsShown() then return end
-    
-    local roles = cfg.lfgQuickJoinRoles
+    local roles = GetRoleSettings()
+    if not roles or not _G.LFGListApplicationDialog or not _G.LFGListApplicationDialog:IsShown() then return end
     local function SetRole(btn, desiredState)
         if btn and btn.CheckButton and btn.CheckButton:IsEnabled() then
             local checked = btn.CheckButton:GetChecked() and true or false
@@ -98,8 +103,9 @@ local function HandleGravityLfgClick(self)
     if not cfg or not cfg.lfgQuickJoin then return end
     
     -- Validation: Check if at least one role is selected
-    if cfg.lfgQuickJoinRoles then
-        if not cfg.lfgQuickJoinRoles.tank and not cfg.lfgQuickJoinRoles.healer and not cfg.lfgQuickJoinRoles.dps then
+    local roles = GetRoleSettings()
+    if roles then
+        if not roles.tank and not roles.healer and not roles.dps then
             print("|cffFFCC00GravityUI:|r LFG Quick-Join abgebrochen! Bitte wähle oben rechts mindestens eine Rolle (Tank/Heal/DD) aus.")
             return
         end
@@ -255,19 +261,19 @@ local function CreateRoleCheckbox(parent, roleName, texCoord, anchorFrame, ancho
     
     -- Load saved state and re-apply visual theme just in case user changed it in the options
     btn:SetScript("OnShow", function(self)
-        local cfg = GetSettings()
+        local roles = GetRoleSettings()
         -- State
-        if cfg and cfg.lfgQuickJoinRoles then
-            self:SetChecked(cfg.lfgQuickJoinRoles[configKey])
+        if roles then
+            self:SetChecked(roles[configKey])
         end
         UpdateThemeColor()
     end)
     
     -- Save state on click
     btn:SetScript("OnClick", function(self)
-        local cfg = GetSettings()
-        if cfg and cfg.lfgQuickJoinRoles then
-            cfg.lfgQuickJoinRoles[configKey] = self:GetChecked()
+        local roles = GetRoleSettings()
+        if roles then
+            roles[configKey] = self:GetChecked()
         end
     end)
     
@@ -329,19 +335,11 @@ local function InjectRoleTogglesLFG()
     if canHeal then
         LfgRoleCheckboxes.healer = CreateRoleCheckbox(sp, "Healer", {0.75, 1, 0, 1}, currentAnchor, currentPoint, currentRelPoint, currentX, currentY, "healer")
         currentAnchor = LfgRoleCheckboxes.healer
-    else
-        -- Hide the healer option if the class can't heal, and also ensure the config is false
-        local cfg = GetSettings()
-        if cfg and cfg.lfgQuickJoinRoles then cfg.lfgQuickJoinRoles.healer = false end
     end
     
     if canTank then
         LfgRoleCheckboxes.tank = CreateRoleCheckbox(sp, "Tank", {0.5, 0.75, 0, 1}, currentAnchor, currentPoint, currentRelPoint, currentX, currentY, "tank")
         currentAnchor = LfgRoleCheckboxes.tank
-    else
-        -- Hide the tank option if the class can't tank
-        local cfg = GetSettings()
-        if cfg and cfg.lfgQuickJoinRoles then cfg.lfgQuickJoinRoles.tank = false end
     end
     
     local label = sp:CreateFontString(nil, "OVERLAY", "GameFontNormal_NoShadow")

@@ -650,7 +650,6 @@ ns.Defaults = {
         showDamageNumbers = true,
         autoRoleAccept = true,
         lfgQuickJoin = true,
-        lfgQuickJoinRoles = { tank = false, healer = false, dps = true },
         autoRepair = "personal",
         hideRaidFrameManager = true,
         sellJunk = true,
@@ -1439,5 +1438,8 @@ ns.Defaults = {
             { spellID = 1234796, class = "DEMONHUNTER", text = "No Shift" },
         }
     },
+    char = {
+        lfgQuickJoinRoles = { tank = false, healer = false, dps = true },
+    }
 }
 }

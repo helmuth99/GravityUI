@@ -36,23 +36,16 @@ function WorldMarks.Refresh()
         r, g, b, a = unpack(settings.borderColor)
     end
     
-    if not frame.bg then
-        frame.bg = frame:CreateTexture(nil, "BACKGROUND")
-        frame.bg:SetAllPoints()
-    end
-    frame.bg:SetColorTexture(0, 0, 0, 0.7)
+    -- Cleanup old texture-based background/border if they exist
+    if frame.bg then frame.bg:Hide(); frame.bg = nil end
+    if frame.border and frame.border.SetColorTexture then frame.border:Hide(); frame.border = nil end
 
-    if not frame.border then
-        frame.border = frame:CreateTexture(nil, "BACKGROUND", nil, 1)
-        frame.border:SetPoint("TOPLEFT", -1, 1)
-        frame.border:SetPoint("BOTTOMRIGHT", 1, -1)
-    end
-    
-    if settings.hideBorder then
-        frame.border:Hide()
-    else
-        frame.border:Show()
-        frame.border:SetColorTexture(r, g, b, a or 1)
+    -- Use standard GravityUI backdrop system
+    if ns.GUI and ns.GUI.CreateBackdrop then
+        ns.GUI:CreateBackdrop(frame, {0, 0, 0, 0.7}, settings.hideBorder and nil or {r, g, b, a or 1})
+        if frame.border then
+            if settings.hideBorder then frame.border:Hide() else frame.border:Show() end
+        end
     end
 
     -- Secure Updates (Deferred if in combat)
