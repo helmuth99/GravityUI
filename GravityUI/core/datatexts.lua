@@ -1267,8 +1267,10 @@ local function PopulateFriendsPopup(anchor)
             local cc = GetClassColor(info.className)
             local lc = GetLevelColor(info.characterLevel)
             local status = info.isAFK and " |cffFFFF00[AFK]|r" or info.isDND and " |cffFF4444[DND]|r" or ""
+            local myRealm = GetNormalizedRealmName()
+            local realmPart = (info.realmName and info.realmName ~= "" and info.realmName ~= myRealm) and string.format("|cff888888-%s|r", info.realmName) or ""
             local charPart = (info.characterName and info.characterName ~= "")
-                and string.format("|cff%02x%02x%02x%s|r", cc.r*255, cc.g*255, cc.b*255, info.characterName)
+                and string.format("|cff%02x%02x%02x%s|r%s", cc.r*255, cc.g*255, cc.b*255, info.characterName, realmPart)
                 or ""
             local bnetPart = string.format("|cffffffff(%s)|r", info.accountName or "")
             local nameStr = charPart .. " " .. bnetPart .. status
