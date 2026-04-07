@@ -377,7 +377,7 @@ DT.Types.gold = {
         local gold = math.floor(money / 10000)
         local silver = math.floor((money % 10000) / 100)
         local copper = money % 100
-        GameTooltip:AddDoubleLine("Current:", string.format("%dg %ds %dc", gold, silver, copper), 0.8, 0.8, 0.8, 1, 1, 1)
+        GameTooltip:AddDoubleLine("Current:", string.format("%dg %ds %dc", gold, silver, copper), 0.8, 0.8, 0.8, 1, 0.82, 0)
 
         -- Global Characters
         local db = ns.GetAceDB()
@@ -397,9 +397,16 @@ DT.Types.gold = {
                 GameTooltip:AddLine("All Characters", 1, 1, 1)
                 local currentKey = GetCharacterKey()
                 for _, char in ipairs(list) do
-                    local cr, cg, cb = GetClassColor(char.class)
-                    local name = (char.key == currentKey) and ("• " .. char.key) or char.key
-                    GameTooltip:AddDoubleLine(name, FormatGold(char.money), cr, cg, cb, 1, 1, 1)
+                    local color = GetClassColor(char.class)
+                    local realm, nameOnly = char.key:match("^(.*)%-(.*)$")
+                    realm = realm or "Unknown"
+                    nameOnly = nameOnly or char.key
+                    
+                    local classHex = string.format("|cff%02x%02x%02x", color.r*255, color.g*255, color.b*255)
+                    local bullet = (char.key == currentKey) and "• " or ""
+                    local displayText = string.format("%s%s%s|r (|cffcccccc%s|r)", bullet, classHex, nameOnly, realm)
+                    
+                    GameTooltip:AddDoubleLine(displayText, FormatGold(char.money), 1, 1, 1, 1, 0.82, 0)
                 end
                 local vr, vg, vb = GetValueColor()
                 GameTooltip:AddLine(" ")
@@ -451,7 +458,12 @@ DT.Types.gold = {
                     local class = type(data) == "table" and data.class or nil
                     local c = GetClassColor(class)
                     local colorCode = string.format("|cff%02x%02x%02x", c.r*255, c.g*255, c.b*255)
-                    local btn = root:CreateButton(colorCode .. key .. "|r - " .. FormatGold(money), function()
+                    local realm, nameOnly = key:match("^(.*)%-(.*)$")
+                    realm = realm or "Unknown"
+                    nameOnly = nameOnly or key
+                    local displayText = string.format("%s%s|r (|cffcccccc%s|r)", colorCode, nameOnly, realm)
+                    
+                    local btn = root:CreateButton(displayText .. " - " .. FormatGold(money), function()
                         db.global.goldData[key] = nil
                         print("|cff30D1FFGravityUI:|r Removed gold data for " .. key)
                     end)
