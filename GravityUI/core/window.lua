@@ -12,19 +12,48 @@ GUI.currentPageIndex = 1
 ---------------------------------------------------------------------------
 -- CREATE MAIN WINDOW
 ---------------------------------------------------------------------------
+-- Reset Window Command
+_G.SlashCmdList["GRAVITYUI_RESETWINDOW"] = function()
+    local db = ns.GetDB()
+    if db and db.general then
+        db.general.windowSize = { width = 980, height = 680 }
+        if GUI.MainFrame then
+            GUI.MainFrame:SetSize(980, 680)
+            GUI.MainFrame:SetPoint("CENTER")
+        end
+        print("|cFF30D1FFGravityUI:|r Window size has been reset to default (980x680).")
+    end
+end
+_G.SLASH_GRAVITYUI_RESETWINDOW1 = "/gravityreset"
+
 -- Forward Declarations
 local CreateTopBar, CreateButtonBar, CreateSidebar, CreateContentArea, UpdateButtonSelection
 local function CreateMainWindow()
     if GUI.MainFrame then return end
 
     local db = ns.GetDB()
+    local width = db and db.general and db.general.windowSize and db.general.windowSize.width or 980
+    local height = db and db.general and db.general.windowSize and db.general.windowSize.height or 680
+    
+    -- Safety Clamping: Ensure it fits the screen on load
+    local screenW, screenH = UIParent:GetSize()
+    width = math.min(width, screenW * 0.9)
+    height = math.min(height, screenH * 0.9)
+    -- Also ensure it respects our defined bounds (80% of screen size)
+    local maxW = screenW * 0.8
+    local maxH = screenH * 0.8
+    width = math.max(920, math.min(maxW, width))
+    height = math.max(600, math.min(maxH, height))
+    
     local frame = CreateFrame("Frame", "GravityUIFrame", UIParent, "BackdropTemplate")
-    frame:SetSize(980, 680)
+    frame:SetSize(width, height)
     frame:SetPoint("CENTER")
     frame:SetFrameStrata("HIGH")
     frame:SetFrameLevel(100)
     frame:EnableMouse(true)
     frame:SetMovable(true)
+    frame:SetResizable(true)
+    frame:SetResizeBounds(920, 600, maxW, maxH)
     frame:RegisterForDrag("LeftButton")
     frame:SetClampedToScreen(true)
     frame:Hide()
@@ -36,6 +65,11 @@ local function CreateMainWindow()
     frame:SetScript("OnDragStart", function(self) self:StartMoving() end)
     frame:SetScript("OnDragStop", function(self) 
         self:StopMovingOrSizing()
+        -- Save size if it was a resize operation
+        if db and db.general then
+            local w, h = self:GetSize()
+            db.general.windowSize = { width = w, height = h }
+        end
     end)
 
     -- REFRESH COLORS METHOD (Recursive)
@@ -91,7 +125,23 @@ local function CreateMainWindow()
     CreateContentArea(frame)
     
     -- Resize Grip
-
+    local resizeGrip = CreateFrame("Button", nil, frame)
+    resizeGrip:SetSize(16, 16)
+    resizeGrip:SetPoint("BOTTOMRIGHT", -2, 2)
+    resizeGrip:SetNormalTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Up")
+    resizeGrip:SetHighlightTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Highlight")
+    resizeGrip:SetPushedTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Down")
+    
+    resizeGrip:SetScript("OnMouseDown", function(self)
+        frame:StartSizing("BOTTOMRIGHT")
+    end)
+    resizeGrip:SetScript("OnMouseUp", function(self)
+        frame:StopMovingOrSizing()
+        if db and db.general then
+            local w, h = frame:GetSize()
+            db.general.windowSize = { width = w, height = h }
+        end
+    end)
 end
 
 ---------------------------------------------------------------------------
@@ -889,65 +939,70 @@ CreateSidebarButtons = function()
                 local db = ns.GetDB()
                 if db.general.menuStyle ~= "SIDE_TOP" then
                     for subIdx, tabInfo in ipairs(opts.subTabs) do
-                    buttonIndex = buttonIndex + 1
-                    
-                    local btn = CreateFrame("Button", nil, frame.sidebar, "BackdropTemplate")
-                    btn:SetSize(160, 28)
-                    btn:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8" })
-                    btn:SetBackdropColor(0, 0, 0, 0)
-                    
-                    local indicator = btn:CreateTexture(nil, "OVERLAY")
-                    indicator:SetWidth(2)
-                    indicator:SetPoint("TOPLEFT", 0, 0)
-                    indicator:SetPoint("BOTTOMLEFT", 0, 0)
-                    indicator:SetColorTexture(C.accent[1], C.accent[2], C.accent[3], 1)
-                    indicator:Hide()
-                    btn.indicator = indicator
-                    
-                    local btnText = btn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-                    GUI:SetFont(btnText, 13, "")
-                    btnText:SetTextColor(1, 1, 1, 1)
-                    btnText:SetText(tabInfo.name)
-                    btnText:SetPoint("LEFT", 15, 0)
-                    
-                    btn.text = btnText
-                    btn.pageIndex = i
-                    btn.subTabIndex = subIdx
-                    
-                    btn.RefreshColors = function(self)
-                        local isSelected = (GUI.currentPageIndex == self.pageIndex and GUI.currentSubTabIndex == self.subTabIndex)
-                        if isSelected then
-                            self.indicator:SetColorTexture(C.accent[1], C.accent[2], C.accent[3], 1)
+                        -- Visibility Filtering for Consolidated Layout
+                        local bcdmLoaded = (_G.BCDM ~= nil) or C_AddOns.IsAddOnLoaded("BetterCooldownManager")
+                        local isVisible = not tabInfo.bcdmOnly or bcdmLoaded
+                        if isVisible and (not tabInfo.showIf or tabInfo.showIf()) then
+                            buttonIndex = buttonIndex + 1
+                            
+                            local btn = CreateFrame("Button", nil, frame.sidebar, "BackdropTemplate")
+                            btn:SetSize(160, 28)
+                            btn:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8" })
+                            btn:SetBackdropColor(0, 0, 0, 0)
+                            
+                            local indicator = btn:CreateTexture(nil, "OVERLAY")
+                            indicator:SetWidth(2)
+                            indicator:SetPoint("TOPLEFT", 0, 0)
+                            indicator:SetPoint("BOTTOMLEFT", 0, 0)
+                            indicator:SetColorTexture(C.accent[1], C.accent[2], C.accent[3], 1)
+                            indicator:Hide()
+                            btn.indicator = indicator
+                            
+                            local btnText = btn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+                            GUI:SetFont(btnText, 13, "")
+                            btnText:SetTextColor(1, 1, 1, 1)
+                            btnText:SetText(tabInfo.name)
+                            btnText:SetPoint("LEFT", 15, 0)
+                            
+                            btn.text = btnText
+                            btn.pageIndex = i
+                            btn.subTabIndex = subIdx
+                            
+                            btn.RefreshColors = function(self)
+                                local isSelected = (GUI.currentPageIndex == self.pageIndex and GUI.currentSubTabIndex == self.subTabIndex)
+                                if isSelected then
+                                    self.indicator:SetColorTexture(C.accent[1], C.accent[2], C.accent[3], 1)
+                                end
+                            end
+                            
+                            btn:SetScript("OnClick", function()
+                                GUI:ShowPage(i, subIdx)
+                                if tabInfo.fn then
+                                    tabInfo.fn()
+                                end
+                            end)
+                            
+                            btn:SetScript("OnEnter", function(self)
+                                if GUI.currentPageIndex ~= self.pageIndex or GUI.currentSubTabIndex ~= self.subTabIndex then
+                                    self:SetBackdropColor(C.tabHover[1], C.tabHover[2], C.tabHover[3], C.tabHover[4])
+                                    self.text:SetTextColor(C.textBright[1], C.textBright[2], C.textBright[3], 1)
+                                end
+                            end)
+                            
+                            btn:SetScript("OnLeave", function(self)
+                                if GUI.currentPageIndex ~= self.pageIndex or GUI.currentSubTabIndex ~= self.subTabIndex then
+                                    self:SetBackdropColor(0, 0, 0, 0)
+                                    self.text:SetTextColor(1, 1, 1, 1)
+                                end
+                            end)
+                            
+                            btn.type = "subtab"
+                            btn.pageId = pageId
+                            frame.sidebarButtons[buttonIndex] = btn
+                            table.insert(frame.sidebarItems, btn)
                         end
                     end
-                    
-                    btn:SetScript("OnClick", function()
-                        GUI:ShowPage(i, subIdx)
-                        if tabInfo.fn then
-                            tabInfo.fn()
-                        end
-                    end)
-                    
-                    btn:SetScript("OnEnter", function(self)
-                        if GUI.currentPageIndex ~= self.pageIndex or GUI.currentSubTabIndex ~= self.subTabIndex then
-                            self:SetBackdropColor(C.tabHover[1], C.tabHover[2], C.tabHover[3], C.tabHover[4])
-                            self.text:SetTextColor(C.textBright[1], C.textBright[2], C.textBright[3], 1)
-                        end
-                    end)
-                    
-                    btn:SetScript("OnLeave", function(self)
-                        if GUI.currentPageIndex ~= self.pageIndex or GUI.currentSubTabIndex ~= self.subTabIndex then
-                            self:SetBackdropColor(0, 0, 0, 0)
-                            self.text:SetTextColor(1, 1, 1, 1)
-                        end
-                    end)
-                    
-                    btn.type = "subtab"
-                    btn.pageId = pageId
-                    frame.sidebarButtons[buttonIndex] = btn
-                    table.insert(frame.sidebarItems, btn)
                 end
-            end
                 
                 table.insert(frame.sidebarItems, { type = "spacer", pageId = pageId })
             else
@@ -1123,6 +1178,23 @@ function GUI:ShowPage(index, subIndex)
     if type(index) == "string" then
         for i, id in ipairs(self.pageOrder) do
             if id == index then index = i; break end
+        end
+    end
+
+    -- Visibility Check for Subtabs (Fallback to first visible if target is hidden)
+    local opts = self.pages[pageId]
+    if opts and opts.subTabs and subIndex then
+        local bcdmLoaded = (_G.BCDM ~= nil) or C_AddOns.IsAddOnLoaded("BetterCooldownManager")
+        local tabInfo = opts.subTabs[subIndex]
+        local isVisible = not tabInfo or ((not tabInfo.bcdmOnly or bcdmLoaded) and (not tabInfo.showIf or tabInfo.showIf()))
+        
+        if not isVisible then
+            for i, tab in ipairs(opts.subTabs) do
+                if (not tab.bcdmOnly or bcdmLoaded) and (not tab.showIf or tab.showIf()) then
+                    subIndex = i
+                    break
+                end
+            end
         end
     end
     

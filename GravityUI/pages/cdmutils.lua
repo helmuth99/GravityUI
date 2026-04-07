@@ -464,38 +464,7 @@ ns.GUI:RegisterPage("cdmutils", {
         end
         
         local opts = GUI.pages["cdmutils"]
-
-        -- Filter subTabs based on BCDM availability
-        local bcdmLoaded = (_G.BCDM ~= nil) or C_AddOns.IsAddOnLoaded("BetterCooldownManager")
-
-        if not bcdmLoaded then
-            -- Force BCDM-only master settings to false
-            local db = ns.GetDB()
-            if db then
-                -- CDM Keybindings: Enable Keybinds on CDM = false
-                if db.actionbars and db.actionbars.guicdm then
-                    db.actionbars.guicdm.enabled = false
-                end
-                -- CDM Button Glow: Enable Button Glow on Keybind = false
-                if db.actionbars and db.actionbars.guicdm and db.actionbars.guicdm.utils then
-                    db.actionbars.guicdm.utils.buttonGlow = false
-                end
-                -- CDM Buffbar: Enable GUI Buffbar = false
-                if db.actionbars and db.actionbars.cdmBuffbar then
-                    db.actionbars.cdmBuffbar.enabled = false
-                end
-            end
-        end
-
-        -- Build visible tab list
-        local visibleTabs = {}
-        for _, tab in ipairs(opts.subTabs) do
-            if not tab.bcdmOnly or bcdmLoaded then
-                table.insert(visibleTabs, tab)
-            end
-        end
-
-        opts.subTabsContainer = GUI:CreateSubTabs(scrollFrame, visibleTabs)
+        opts.subTabsContainer = GUI:CreateSubTabs(scrollFrame, opts.subTabs)
         opts.subTabsContainer:SetPoint("TOPLEFT", 10, -10)
         opts.subTabsContainer:SetPoint("TOPRIGHT", -10, 0)
     end,

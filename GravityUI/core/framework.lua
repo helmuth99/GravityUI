@@ -1447,66 +1447,72 @@ function GUI:CreateSubTabs(parent, tabs)
         local maxWidth = (parent:GetWidth() > 0) and (parent:GetWidth() - 20) or (GUI.CONTENT_WIDTH - 20)
         
         for i, tabInfo in ipairs(tabs) do
-            local btn = CreateFrame("Button", nil, container, "BackdropTemplate")
+            -- Visibility Check
+            local bcdmLoaded = (_G.BCDM ~= nil) or C_AddOns.IsAddOnLoaded("BetterCooldownManager")
+            local isVisible = (not tabInfo.bcdmOnly or bcdmLoaded) and (not tabInfo.showIf or tabInfo.showIf())
             
-            -- Calculate width based on text or use a minimum
-            -- More compact padding (20px total)
-            local textWidth = tabInfo.name and (string.len(tabInfo.name) * 8) or 60
-            local btnWidth = math.max(60, textWidth + 20)
-            
-            -- Wrap to next row?
-            if xOffset + btnWidth > maxWidth then
-                xOffset = 0
-                yOffset = yOffset - rowHeight - spacing
+            if isVisible then
+                local btn = CreateFrame("Button", nil, container, "BackdropTemplate")
+                
+                -- Calculate width based on text or use a minimum
+                -- More compact padding (20px total)
+                local textWidth = tabInfo.name and (string.len(tabInfo.name) * 8) or 60
+                local btnWidth = math.max(60, textWidth + 20)
+                
+                -- Wrap to next row?
+                if xOffset + btnWidth > maxWidth then
+                    xOffset = 0
+                    yOffset = yOffset - rowHeight - spacing
+                end
+                
+                btn:SetSize(btnWidth, rowHeight)
+                btn:SetPoint("TOPLEFT", xOffset, yOffset)
+                
+                xOffset = xOffset + btnWidth + spacing
+                
+                local text = btn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+                GUI:SetFont(text, 12, "")
+                text:SetPoint("CENTER", 0, 0)
+                text:SetText(tabInfo.name or ("Tab " .. i))
+                text:SetTextColor(C.textMuted[1], C.textMuted[2], C.textMuted[3], 1)
+                btn.text = text
+                
+                local activeLine = btn:CreateTexture(nil, "OVERLAY")
+                activeLine:SetHeight(1)
+                activeLine:SetPoint("BOTTOMLEFT", 4, 1)
+                activeLine:SetPoint("BOTTOMRIGHT", -4, 1)
+                activeLine:SetColorTexture(C.accent[1], C.accent[2], C.accent[3], 0.8)
+                activeLine:Hide()
+                btn.activeLine = activeLine
+    
+                btn:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8" })
+                btn:SetBackdropColor(0, 0, 0, 0)
+                
+                btn:SetScript("OnEnter", function(self)
+                    if not self.isActive then
+                        self:SetBackdropColor(C.tabHover[1], C.tabHover[2], C.tabHover[3], C.tabHover[4])
+                        self.text:SetTextColor(C.textBright[1], C.textBright[2], C.textBright[3], 1)
+                    end
+                end)
+                
+                btn:SetScript("OnLeave", function(self)
+                    if not self.isActive then
+                        self:SetBackdropColor(0, 0, 0, 0)
+                        self.text:SetTextColor(C.textMuted[1], C.textMuted[2], C.textMuted[3], 1)
+                    end
+                end)
+                
+                btn:SetScript("OnClick", function()
+                    local pageId = GUI.currentPageId
+                    if pageId then
+                         local idx
+                         for t, id in ipairs(GUI.pageOrder) do if id == pageId then idx = t; break end end
+                         if idx then GUI:ShowPage(idx, i) end
+                    end
+                end)
+                
+                tabButtons[i] = btn
             end
-            
-            btn:SetSize(btnWidth, rowHeight)
-            btn:SetPoint("TOPLEFT", xOffset, yOffset)
-            
-            xOffset = xOffset + btnWidth + spacing
-            
-            local text = btn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-            GUI:SetFont(text, 12, "")
-            text:SetPoint("CENTER", 0, 0)
-            text:SetText(tabInfo.name or ("Tab " .. i))
-            text:SetTextColor(C.textMuted[1], C.textMuted[2], C.textMuted[3], 1)
-            btn.text = text
-            
-            local activeLine = btn:CreateTexture(nil, "OVERLAY")
-            activeLine:SetHeight(1)
-            activeLine:SetPoint("BOTTOMLEFT", 4, 1)
-            activeLine:SetPoint("BOTTOMRIGHT", -4, 1)
-            activeLine:SetColorTexture(C.accent[1], C.accent[2], C.accent[3], 0.8)
-            activeLine:Hide()
-            btn.activeLine = activeLine
-
-            btn:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8" })
-            btn:SetBackdropColor(0, 0, 0, 0)
-            
-            btn:SetScript("OnEnter", function(self)
-                if not self.isActive then
-                    self:SetBackdropColor(C.tabHover[1], C.tabHover[2], C.tabHover[3], C.tabHover[4])
-                    self.text:SetTextColor(C.textBright[1], C.textBright[2], C.textBright[3], 1)
-                end
-            end)
-            
-            btn:SetScript("OnLeave", function(self)
-                if not self.isActive then
-                    self:SetBackdropColor(0, 0, 0, 0)
-                    self.text:SetTextColor(C.textMuted[1], C.textMuted[2], C.textMuted[3], 1)
-                end
-            end)
-            
-            btn:SetScript("OnClick", function()
-                local pageId = GUI.currentPageId
-                if pageId then
-                     local idx
-                     for t, id in ipairs(GUI.pageOrder) do if id == pageId then idx = t; break end end
-                     if idx then GUI:ShowPage(idx, i) end
-                end
-            end)
-            
-            tabButtons[i] = btn
         end
         
         -- Set container height based on rows used
@@ -1539,7 +1545,7 @@ function GUI:CreateSubTabs(parent, tabs)
     -- Function to update button states (called by ShowPage)
     container.UpdateButtons = function(self, activeIndex)
         if not isSideTop then return end
-        for i, btn in ipairs(self.tabButtons) do
+        for i, btn in pairs(self.tabButtons) do
             if i == activeIndex then
                 btn.isActive = true
                 btn.text:SetTextColor(C.accent[1], C.accent[2], C.accent[3], 1)
