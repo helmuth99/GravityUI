@@ -153,16 +153,28 @@ local function BuildInformationTab(parent)
         { version = "3.76", date = "26.02.2026", changes = {"Fixed an issue where the GravityUI Installer failed to sync UnhaltedUnitFrames", "Fixed 'Death Release Protection' blocking clicks on recycled 'Accept Resurrection' popups", "Added a 'Clear Alts List' button to the Mail Module Address Book"} },
     }
 
-    for i = 1, math.min(#changeLogs, 3) do
+    -- Calculation for dynamic text width based on content frame
+    local textWidth = parent:GetWidth() - (PAD * 3)
+    if textWidth < 400 then textWidth = 600 end -- Fallback for initial load
+    
+    for i = 1, math.min(#changeLogs, 4) do
         local log = changeLogs[i]
         local vLabel = GUI:CreateLabel(content, "|cFF30D1FFv" .. log.version .. "|r - " .. log.date, 13, C.accent)
         vLabel:SetPoint("TOPLEFT", PAD, y)
+        vLabel:SetWidth(textWidth)
+        vLabel:SetJustifyH("LEFT")
         y = y - 20
         
         for _, change in ipairs(log.changes) do
             local bullet = GUI:CreateLabel(content, " • " .. change, 11, C.text)
             bullet:SetPoint("TOPLEFT", PAD + 10, y)
-            y = y - 16
+            bullet:SetWidth(textWidth - 10)
+            bullet:SetJustifyH("LEFT")
+            bullet:SetSpacing(2)
+            
+            -- Dynamic height decrement to prevent overlap on wrap
+            local h = bullet:GetStringHeight()
+            y = y - (h > 0 and h or 16) - 4
         end
         y = y - 10
     end
