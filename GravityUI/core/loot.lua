@@ -209,7 +209,8 @@ local function CreateLootWindow()
     f:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8", edgeFile = "Interface\\Buttons\\WHITE8x8", edgeSize = 1 })
 
     f.header = f:CreateFontString(nil, "OVERLAY")
-    table.insert(ns.trackedFonts, f.header) -- Track for global font changes
+    local _, defaultFlags = ns.GetFont()
+    ns.trackedFonts[f.header] = {size = 11, flags = defaultFlags} -- Track for global font changes
     f.header:SetFont(GetFont())
     f.header:SetPoint("TOP", 0, -8)
     f.header:SetText("Loot")
