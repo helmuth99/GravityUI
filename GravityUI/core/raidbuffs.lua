@@ -333,6 +333,17 @@ local testModeData = nil
 local playerClass = nil
 local optionsPanel
 
+-- PERF: Hoisted to module scope to avoid per-call table allocation (GC pressure).
+-- wipe() is called at the start of each UpdateDisplay pass.
+local visibleBuffs = {
+    main = {},
+    raid = {},
+    presence = {},
+    targeted = {},
+    self = {},
+    custom = {},
+}
+
 -- ============================================================================
 -- HELPERS
 -- ============================================================================
@@ -638,14 +649,13 @@ local function UpdateDisplay()
         end
     end
 
-    local visibleBuffs = {
-        main = {},
-        raid = {},
-        presence = {},
-        targeted = {},
-        self = {},
-        custom = {}
-    }
+    -- PERF: Reuse module-scope table instead of allocating a new one each call.
+    wipe(visibleBuffs.main)
+    wipe(visibleBuffs.raid)
+    wipe(visibleBuffs.presence)
+    wipe(visibleBuffs.targeted)
+    wipe(visibleBuffs["self"])
+    wipe(visibleBuffs.custom)
 
     local function ProcessBuffFrame(buff, frame, isGroupCategory, catKey, unitList)
         if not frame then return end

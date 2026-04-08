@@ -274,7 +274,9 @@ local buffBorderPending = false
 local function ScheduleBuffBorders()
     if buffBorderPending then return end
     buffBorderPending = true
-    C_Timer.After(0.1, function()
+    -- 0.3s throttle: Buff borders don't need sub-100ms reactivity.
+    -- Previously 0.1s (10Hz) which was excessive in high-aura raid environments.
+    C_Timer.After(0.3, function()
         buffBorderPending = false
         ApplyBuffBorders()
     end)
@@ -287,11 +289,14 @@ local function HookAuraUpdates()
     if DebuffFrame and DebuffFrame.AuraContainer and DebuffFrame.AuraContainer.Update then hooksecurefunc(DebuffFrame.AuraContainer, "Update", ScheduleBuffBorders) end
     
     -- Hook Aura Button Updates
+    -- PERF FIX: Previously called StyleAuraButton() directly (unthrottled, fires per-button per-aura-change).
+    -- In a 40-man raid this could fire hundreds of times/sec. Now routes through ScheduleBuffBorders()
+    -- which is a single pending-flag throttle at 0.3s, collapsing all button updates into one pass.
     if type(AuraButton_Update) == "function" then
-        hooksecurefunc("AuraButton_Update", function(button) StyleAuraButton(button) end)
+        hooksecurefunc("AuraButton_Update", function() ScheduleBuffBorders() end)
     end
     if type(AuraButton_UpdateDuration) == "function" then
-        hooksecurefunc("AuraButton_UpdateDuration", function(button) StyleAuraButton(button) end)
+        hooksecurefunc("AuraButton_UpdateDuration", function() ScheduleBuffBorders() end)
     end
 end
 
@@ -306,13 +311,17 @@ ns.BuffBorders = {
 
 -- Init
 local eventFrame = CreateFrame("Frame")
-eventFrame:RegisterEvent("UNIT_AURA")
+-- PERF FIX: RegisterUnitEvent instead of RegisterEvent for UNIT_AURA.
+-- This means only the player's own aura changes reach this handler.
+-- Previously RegisterEvent fired for all 40 raid members (39x wasted dispatches).
+eventFrame:RegisterUnitEvent("UNIT_AURA", "player")
 eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 eventFrame:SetScript("OnEvent", function(self, event, arg)
     if event == "PLAYER_ENTERING_WORLD" then
         HookAuraUpdates()
         C_Timer.After(1, ApplyBuffBorders)
-    elseif event == "UNIT_AURA" and arg == "player" then
+    elseif event == "UNIT_AURA" then
+        -- arg is always "player" due to RegisterUnitEvent above
         ScheduleBuffBorders()
     end
 end)
