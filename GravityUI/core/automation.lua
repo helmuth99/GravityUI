@@ -129,6 +129,9 @@ local function HandleGravityLfgClick(self)
     
     local isAvailable = not LFGListFrame.SearchPanel.SignUpButton.tooltip
     if isAvailable and _G.LFGListSearchPanel_SignUp then
+        -- Signal that this open was triggered by our automation (enables role auto-apply)
+        _gravityAutoMode = true
+        
         -- 1. Gruppe auswählen (öffnet den Rollen-Dialog)
         _G.LFGListSearchPanel_SignUp(self:GetParent():GetParent():GetParent())
         
@@ -146,8 +149,14 @@ local function HandleGravityLfgClick(self)
 end
 
 local HooksState = {}
+-- Flag: true only when the dialog was opened via GravityUI double-click automation.
+-- When false (normal Sign-Up button click), we do NOT override manual role selections.
+local _gravityAutoMode = false
+
 local lfgRolePending = false
 local function ScheduleForceApplyLfgRoles()
+    -- Only auto-apply roles when triggered by our own double-click path
+    if not _gravityAutoMode then return end
     if lfgRolePending then return end
     lfgRolePending = true
     C_Timer.After(0.15, function()
@@ -165,12 +174,12 @@ local function OverrideLfgApplicationDialog()
         end
 
         _G.LFGListApplicationDialog:HookScript("OnShow", ScheduleForceApplyLfgRoles)
+        -- Clear the flag whenever the dialog is closed/hidden so it doesn't
+        -- bleed into a subsequent manual open.
+        _G.LFGListApplicationDialog:HookScript("OnHide", function()
+            _gravityAutoMode = false
+        end)
         HooksState.lfgAppDialog = true
-    end
-    
-    if not HooksState.lfgSearchSignup and _G.LFGListFrame and _G.LFGListFrame.SearchPanel and _G.LFGListFrame.SearchPanel.SignUpButton then
-        _G.LFGListFrame.SearchPanel.SignUpButton:HookScript("OnClick", ScheduleForceApplyLfgRoles)
-        HooksState.lfgSearchSignup = true
     end
     
     if not HooksState.lfdRolePopup and _G.LFDRoleCheckPopupAcceptButton then
