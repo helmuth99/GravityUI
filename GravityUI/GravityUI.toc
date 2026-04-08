@@ -84,13 +84,6 @@ core\skyriding.lua
 core\screenindicators.lua
 core\consumables.lua
 core\mail.lua
-core\cooldowntracker\init.lua
-core\cooldowntracker\utils.lua
-core\cooldowntracker\talents.lua
-core\cooldowntracker\inspector.lua
-core\cooldowntracker\aura_watcher.lua
-core\cooldowntracker\frames.lua
-core\cooldowntracker\tracker.lua
 
 # Strings
 strings\strings.xml
