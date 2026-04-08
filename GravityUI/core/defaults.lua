@@ -1139,7 +1139,8 @@ ns.Defaults = {
             displaySeconds = true,
             timeFormat = 1, -- 1: 24h, 2: 12h, 3: 12h no leading 0
             showAmPm = false,
-            showTimer = true,
+            showClock = true,  -- Show current time
+            showTimer = true,  -- Show AFK duration timer
         },
     },
     main =     {
@@ -1426,7 +1427,9 @@ ns.Defaults = {
         }
     },
     char = {
-        lfgQuickJoinRoles = { tank = false, healer = false, dps = true },
+        lfgRole_tank = false,
+        lfgRole_healer = false,
+        lfgRole_dps = true,
     }
 }
 }

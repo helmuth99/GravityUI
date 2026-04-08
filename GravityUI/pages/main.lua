@@ -200,42 +200,7 @@ local function BuildWelcome(parent)
     welcomeText:SetPoint("TOPLEFT", PADDING, yOffset)
     welcomeText:SetWidth(640)
     welcomeText:SetJustifyH("LEFT")
-    yOffset = yOffset - 40
-    
-    -- Menu Style Settings
-    local styleHeader = ns.GUI:CreateSectionHeader(content, "Navigation Style")
-    styleHeader:SetPoint("TOPLEFT", PADDING, yOffset)
-    yOffset = yOffset - styleHeader.gap - 5
-    
-    local styleInfo = ns.GUI:CreateInfoBox(content, "|cFFFFD100Note:|r Changing the Menu Style requires a UI Reload to take effect.")
-    styleInfo:SetPoint("TOPLEFT", PADDING, yOffset)
-    yOffset = yOffset - styleInfo:GetHeight() - 15
-    
-    local styleOptions = {
-        { text = "Side Menu (Consolidated)", value = "SIDE" },
-        { text = "Side + Top Tabs (Legacy)", value = "SIDE_TOP" },
-    }
-    
-    local initialStyle = db.general.menuStyle
-    local styleDropdown = ns.GUI:CreateDropdown(content, "Select Menu Layout", styleOptions, "menuStyle", db.general, function(val)
-        if val ~= initialStyle then
-            ns.GUI:ShowConfirmation({
-                title = "UI Reload Required",
-                message = "Changing the menu layout style requires a UI Reload to take effect. This will restart the interface.",
-                warningText = "Would you like to reload now?",
-                acceptText = "Yes",
-                cancelText = "No Later",
-                onAccept = function()
-                    ReloadUI()
-                end,
-            })
-            initialStyle = val
-        end
-    end)
-    styleDropdown:SetPoint("TOPLEFT", PADDING, yOffset)
-    yOffset = yOffset - 50
-
-    yOffset = yOffset - 5
+    yOffset = yOffset - 20
     
     -- GravityUI Logo
     local logoWidth = 640
@@ -512,6 +477,109 @@ local function BuildFPSSettings(parent)
     content:SetHeight(math.abs(yOffset) + 20)
 end
 
+---------------------------------------------------------------------------
+-- COMBAT
+---------------------------------------------------------------------------
+local function BuildCombat(parent)
+    local scroll, content = ns.GUI:CreateScrollableContent(parent)
+    scroll:SetAllPoints()
+    local db = ns.GetDB(); if not db then return end
+    local dbUI = db.uiimprovements
+    
+    local yOffset = -10
+    local header = ns.GUI:CreateSectionHeader(content, "Combat Settings")
+    header:SetPoint("TOPLEFT", PADDING, yOffset)
+    yOffset = yOffset - header.gap - 10
+    
+    local cb1 = ns.GUI:CreateCheckbox(content, "Show Damage Numbers", "showDamageNumbers", dbUI, function(enabled) SetCVar("floatingCombatTextCombatDamage", enabled and "1" or "0") end)
+    cb1:SetPoint("TOPLEFT", PADDING, yOffset)
+    yOffset = yOffset - 30
+
+    local cb2 = ns.GUI:CreateCheckbox(content, "Show Healing Numbers", "showHealingNumbers", dbUI, function(enabled) SetCVar("floatingCombatTextCombatHealing", enabled and "1" or "0") end)
+    cb2:SetPoint("TOPLEFT", PADDING, yOffset)
+    yOffset = yOffset - 40
+    
+    if dbUI.spellQueueWindow == nil then dbUI.spellQueueWindow = tonumber(GetCVar("SpellQueueWindow")) or 400 end
+    local slider = ns.GUI:CreateSlider(content, "Spell Queue Window (ms)", 0, 400, "spellQueueWindow", dbUI, function(val) SetCVar("SpellQueueWindow", tostring(val)) end, 10)
+    slider:SetPoint("TOPLEFT", PADDING, yOffset)
+    slider:SetWidth(400)
+    yOffset = yOffset - 60
+    
+    content:SetHeight(math.abs(yOffset) + 20)
+end
+
+---------------------------------------------------------------------------
+-- BUFFS & DEBUFFS (Icons)
+---------------------------------------------------------------------------
+local function BuildBuffs(parent)
+    local scroll, content = ns.GUI:CreateScrollableContent(parent)
+    scroll:SetAllPoints()
+    local db = ns.GetDB(); if not db then return end
+    local dbUI = db.uiimprovements
+    
+    local yOffset = -10
+    local header = ns.GUI:CreateSectionHeader(content, "Standard Buff & Debuff Styling")
+    header:SetPoint("TOPLEFT", PADDING, yOffset)
+    yOffset = yOffset - header.gap - 10
+    
+    local info = ns.GUI:CreateInfoBox(content, "Modifies borders and font size of Blizzard default Buff and Debuff frames.")
+    info:SetPoint("TOPLEFT", PADDING, yOffset)
+    yOffset = yOffset - info:GetHeight() - 15
+
+    if not dbUI.buffBorders then dbUI.buffBorders = {} end
+    local dbBuffs = dbUI.buffBorders
+    local function RefreshBuffs() if ns.BuffBorders and ns.BuffBorders.Refresh then ns.BuffBorders.Refresh() end end
+
+    local cb_b = ns.GUI:CreateCheckbox(content, "Enable Buff Borders", "enableBuffs", dbBuffs, RefreshBuffs)
+    cb_b:SetPoint("TOPLEFT", PADDING, yOffset)
+    yOffset = yOffset - 30
+
+    local cb_d = ns.GUI:CreateCheckbox(content, "Enable Debuff Borders", "enableDebuffs", dbBuffs, RefreshBuffs)
+    cb_d:SetPoint("TOPLEFT", PADDING, yOffset)
+    yOffset = yOffset - 40
+
+    local sizeSlider = ns.GUI:CreateSlider(content, "Border Size", 0, 5, "borderSize", dbBuffs, RefreshBuffs, 0.5)
+    sizeSlider:SetPoint("TOPLEFT", PADDING, yOffset)
+    sizeSlider:SetWidth(400)
+    yOffset = yOffset - 50
+    
+    local cb_s = ns.GUI:CreateCheckbox(content, "Enable Styling (Fonts/Effects)", "enableStyling", dbBuffs, RefreshBuffs)
+    cb_s:SetPoint("TOPLEFT", PADDING, yOffset)
+    yOffset = yOffset - 40
+    
+    local cb_n = ns.GUI:CreateCheckbox(content, "Disable Blinking", "noBlink", dbBuffs, RefreshBuffs)
+    cb_n:SetPoint("TOPLEFT", PADDING, yOffset)
+    yOffset = yOffset - 40
+    
+    local subHeader = ns.GUI:CreateLabel(content, "Font Settings", 14, C.accent)
+    subHeader:SetPoint("TOPLEFT", PADDING, yOffset)
+    yOffset = yOffset - 25
+
+    local fontList = {}
+    local LSM = LibStub("LibSharedMedia-3.0", true)
+    if LSM then
+        for name in pairs(LSM:HashTable("font")) do
+            table.insert(fontList, {value = name, text = name})
+        end
+        table.sort(fontList, function(a, b) return a.text < b.text end)
+    else
+        fontList = {{value = "Friz Quadrata TT", text = "Friz Quadrata TT"}}
+    end
+
+    local fontDropdown = ns.GUI:CreateDropdown(content, "Duration Font", fontList, "font", dbBuffs, RefreshBuffs) 
+    fontDropdown:SetPoint("TOPLEFT", PADDING, yOffset)
+    fontDropdown:SetWidth(400)
+    yOffset = yOffset - 50
+
+    local sizeSlider2 = ns.GUI:CreateSlider(content, "Duration Font Size", 8, 24, "fontSize", dbBuffs, RefreshBuffs, 1)
+    sizeSlider2:SetPoint("TOPLEFT", PADDING, yOffset)
+    sizeSlider2:SetWidth(400)
+    yOffset = yOffset - 50
+
+    content:SetHeight(math.abs(yOffset) + 20)
+end
+
+
 local function BuildEditMode(parent)
     local scroll, content = ns.GUI:CreateScrollableContent(parent)
     scroll:SetAllPoints()
@@ -680,8 +748,10 @@ ns.GUI:RegisterPage("main", {
         { name = "Welcome",       builder = BuildWelcome },
         { name = "Theme Color",   builder = BuildThemeColor },
         { name = "UI Scale",      builder = BuildUIScale },
-        { name = "Font Settings", builder = BuildFontSettings },
+        { name = "Font Settings",  builder = BuildFontSettings },
         { name = "FPS Settings",  builder = BuildFPSSettings },
+        { name = "Combat",        builder = BuildCombat },
+        { name = "Buffs & Debuffs", builder = BuildBuffs },
         { name = "Edit Mode",     builder = BuildEditMode },
     },
     OnBuild = function(content)

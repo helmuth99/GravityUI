@@ -44,6 +44,8 @@ function ns.ResetDB()
     end
 end
 
+-- (Invalidate defined above, this duplicate removed)
+
 -- Get accent color (with class color option and caching)
 ns.accentCache = nil
 function ns.GetAccentColor()
@@ -91,6 +93,12 @@ function ns.RefreshAccentColors()
     if ns.GUI and ns.GUI.RefreshColors then
         ns.GUI:RefreshColors()
     end
+    
+    -- Refresh Sidebar Style if Open
+    if ns.GUI and ns.GUI.RefreshSidebarStyle then
+        ns.GUI:RefreshSidebarStyle()
+    end
+    
     -- explicitly refresh modules that rely on accent color
     if ns.RefreshMinimap then ns.RefreshMinimap() end
     if ns.RefreshDatapanels then ns.RefreshDatapanels() end
@@ -103,7 +111,6 @@ function ns.RefreshAccentColors()
     if ns.Styling and ns.Styling.Refresh then ns.Styling:Refresh() end
     if ns.Alerts and ns.Alerts.Initialize then ns.Alerts:Initialize() end -- Alerts re-init resets colors
     if ns.Loot and ns.Loot.RefreshStyling then ns.Loot:RefreshStyling() end
-    if ns.Loot and ns.Loot.RefreshHistoryStyling then ns.Loot:RefreshHistoryStyling() end
     if ns.Loot and ns.Loot.RefreshHistoryStyling then ns.Loot:RefreshHistoryStyling() end
     if ns.InstanceFrames and ns.InstanceFrames.Initialize then ns.InstanceFrames:Initialize() end
     if ns.Objectives and ns.Objectives.Initialize then ns.Objectives:Initialize() end
@@ -248,12 +255,9 @@ function Addon:SlashCommandOpen(input)
         -- Toggle Cooldown Settings
         if CooldownViewerSettings then
             CooldownViewerSettings:SetShown(not CooldownViewerSettings:IsShown())
-            CooldownViewerSettings:SetShown(not CooldownViewerSettings:IsShown())
         else
             ns.Print("Cooldown Settings not available.")
         end
-        -- Print welcome message
-        ns.Print("Version " .. (C_AddOns.GetAddOnMetadata("GravityUI", "Version") or "Dev") .. " Loaded.")
         return
     end
     

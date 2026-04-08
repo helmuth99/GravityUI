@@ -15,19 +15,19 @@ local GlobalColors = ns.Colors
 -- This ensures the options UI stays consistent regardless of user's UnitFrame theme choices
 local C = {
     -- Glassmorphic Backgrounds
-    bg = {0.11, 0.11, 0.13, 0.98}, -- Charcoal Dark Gray (Main Shell)
-    bgGlass = {0.11, 0.11, 0.13, 0.98}, -- Added missing key
-    bgLight = {0.15, 0.15, 0.18, 1}, -- Solid Widgets (Buttons)
-    bgDark = {0.07, 0.07, 0.09, 1}, -- Inset Panels
+    bg = {0, 0, 0, 0.9}, -- Black (Main Shell)
+    bgGlass = {0, 0, 0, 0.85}, -- Black Transparent
+    bgLight = {0.1, 0.1, 0.1, 1}, -- Solid Widgets (Buttons)
+    bgDark = {0, 0, 0, 1}, -- Inset Panels
     
     -- Branding
     accent = {0, 0.6, 1, 1}, -- Gravity Blue (Dynamic)
-    accentLight = {0.4, 0.8, 1, 1}, -- Highlight
+    accentLight = {0.3, 0.7, 1, 1}, -- Richer Sidebar Hover (Gravity Azure)
     accentHover = {0.2, 0.8, 1, 1}, -- Interaction
     
     -- Typography
     text = {0.9, 0.92, 0.95, 1},
-    textMuted = {0.6, 0.65, 0.7, 1},
+    textMuted = {0.9, 0.9, 0.9, 1}, -- Resting State (Bright Light Gray)
     textBright = {1, 1, 1, 1},
     
     -- UI Elements
@@ -104,13 +104,30 @@ end
 
 -- Helper: Set font on fontstring
 local function SetFont(fontString, size, flags, color)
-    fontString:SetFont(FONT_PATH, size or 12, flags or "")
+    local path, defaultFlags = ns.GetFont()
+    fontString:SetFont(path, size or 12, flags or defaultFlags)
     if color then
         fontString:SetTextColor(unpack(color))
+    end
+    
+    -- Track fontstring for real-time refreshes
+    if ns.trackedFonts then
+        ns.trackedFonts[fontString] = {size = size or 12, flags = flags or defaultFlags}
     end
 end
 
 function GUI:SetFont(...) SetFont(...) end
+
+function GUI:RefreshFonts()
+    local path, defaultFlags = ns.GetFont()
+    for fs, data in pairs(ns.trackedFonts) do
+        if fs:IsObjectType("FontString") then
+            fs:SetFont(path, data.size, data.flags or defaultFlags)
+        else
+            ns.trackedFonts[fs] = nil -- Clean up garbage
+        end
+    end
+end
 
 -- Helper: Create Standard Backdrop (Flat)
 local function CreateBackdrop(frame, bgColor, borderColor)
@@ -1681,8 +1698,6 @@ end
 ---------------------------------------------------------------------------
 function GUI:RefreshColors()
     -- Update GLOBAL palette for other modules (UnitFrames, etc.)
-    -- The Framework itself (C) remains static
-    
     local r, g, b, a = ns.GetAccentColor()
     GlobalColors.accent = {r, g, b, a}
     GlobalColors.borderAccent = {r, g, b, a}
@@ -1691,10 +1706,26 @@ function GUI:RefreshColors()
     local br, bg, bb, ba = ns.GetThemeBgColor()
     GlobalColors.bg = {br, bg, bb, ba}
 
-    -- We intentionally do NOT update MainWindow style here to preserve branding
+    -- Update internal Framework Palette (C) with Hardcoded GravityUI Blue
+    -- This ensures the Options UI maintains branding regardless of theme
+    local gr, gg, gb, ga = 0, 0.6, 1, 1 
+    C.accent = {gr, gg, gb, ga}
+    C.accentLight = {gr + 0.2, gg + 0.2, gb + 0.2, ga}
+    C.accentHover = {gr + 0.1, gg + 0.1, gb + 0.1, ga}
+    C.borderAccent = {gr, gg, gb, ga}
+    C.sectionHeader = {gr, gg, gb, ga}
+    C.sliderThumb = {gr, gg, gb, ga}
+    C.tabSelectedText = {gr + 0.2, gg + 0.2, gb + 0.2, ga}
+    
+    -- Sync Typography with Branding
+    C.textMuted = {0.9, 0.9, 0.9, 1} -- Normal (Light Gray/White)
+    C.accentLight = {0.3, 0.7, 1, 1} -- Hover (Gravity Azure)
 end
 
 function GUI:RefreshAll()
+    -- Sync Framework Typography Caches
+    self:RefreshFonts()
+
     -- Explicitly refresh core modules
     if ns.RefreshMinimap then ns.RefreshMinimap() end
     if ns.RefreshDatapanels then ns.RefreshDatapanels() end

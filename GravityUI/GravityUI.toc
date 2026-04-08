@@ -70,13 +70,14 @@ pages\main.lua
 pages\minimap.lua
 pages\actionbars.lua
 pages\datapanels.lua
-pages\uiimprovements.lua
-pages\screenindicators.lua
-pages\cdmutils.lua
+pages\qol.lua
+pages\features.lua
+pages\indicators.lua
+pages\utilities.lua
 pages\styling.lua
-pages\search.lua
 pages\information.lua
 pages\profiles.lua
+pages\search.lua
 
 # Special Features
 core\buttons.lua

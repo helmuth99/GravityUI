@@ -10,10 +10,30 @@ local function GetSettings()
 end
 
 local function GetRoleSettings()
+    local char = ns.db and ns.db.char
+    if not char then return nil end
+    -- Return a proxy that reads/writes flat keys in ns.db.char directly
+    -- This avoids the AceDB nested-table bug where sub-table refs point to defaults
+    return {
+        get = function(key) return char["lfgRole_" .. key] end,
+        set = function(key, val) char["lfgRole_" .. key] = val end,
+        tank   = char.lfgRole_tank,
+        healer = char.lfgRole_healer,
+        dps    = char.lfgRole_dps,
+    }
+end
+
+local function SaveRole(key, val)
     if ns.db and ns.db.char then
-        return ns.db.char.lfgQuickJoinRoles
+        ns.db.char["lfgRole_" .. key] = val
     end
-    return nil
+end
+
+local function GetRole(key)
+    if ns.db and ns.db.char then
+        return ns.db.char["lfgRole_" .. key]
+    end
+    return false
 end
 
 local automationFrame = CreateFrame("Frame")
@@ -78,8 +98,7 @@ end
 ---------------------------------------------------------------------------
 
 local function ForceApplyLfgRolesNow()
-    local roles = GetRoleSettings()
-    if not roles or not _G.LFGListApplicationDialog or not _G.LFGListApplicationDialog:IsShown() then return end
+    if not _G.LFGListApplicationDialog or not _G.LFGListApplicationDialog:IsShown() then return end
     local function SetRole(btn, desiredState)
         if btn and btn.CheckButton and btn.CheckButton:IsEnabled() then
             local checked = btn.CheckButton:GetChecked() and true or false
@@ -93,9 +112,9 @@ local function ForceApplyLfgRolesNow()
     local healerBtn = _G.LFGListApplicationDialog.HealerButton or _G.LFGListApplicationDialog.RoleButtonHealer
     local dpsBtn = _G.LFGListApplicationDialog.DamagerButton or _G.LFGListApplicationDialog.RoleButtonDPS
     
-    SetRole(tankBtn, roles.tank)
-    SetRole(healerBtn, roles.healer)
-    SetRole(dpsBtn, roles.dps)
+    SetRole(tankBtn,   GetRole("tank"))
+    SetRole(healerBtn, GetRole("healer"))
+    SetRole(dpsBtn,    GetRole("dps"))
 end
 
 local function HandleGravityLfgClick(self)
@@ -103,12 +122,9 @@ local function HandleGravityLfgClick(self)
     if not cfg or not cfg.lfgQuickJoin then return end
     
     -- Validation: Check if at least one role is selected
-    local roles = GetRoleSettings()
-    if roles then
-        if not roles.tank and not roles.healer and not roles.dps then
-            print("|cffFFCC00GravityUI:|r LFG Quick-Join abgebrochen! Bitte wähle oben rechts mindestens eine Rolle (Tank/Heal/DD) aus.")
-            return
-        end
+    if not GetRole("tank") and not GetRole("healer") and not GetRole("dps") then
+        print("|cffFFCC00GravityUI:|r LFG Quick-Join abgebrochen! Bitte wähle oben rechts mindestens eine Rolle (Tank/Heal/DD) aus.")
+        return
     end
     
     local isAvailable = not LFGListFrame.SearchPanel.SignUpButton.tooltip
@@ -199,6 +215,9 @@ local function CreateRoleCheckbox(parent, roleName, texCoord, anchorFrame, ancho
     btn:SetSize(22, 22)
     btn:SetPoint(anchorPoint, anchorFrame, anchorRelPoint, offsetX, offsetY)
     
+    -- Guard: prevents OnClick from firing when SetChecked() is called programmatically
+    local isProgrammatic = false
+    
     -- Dark background for contrast
     local bg = btn:CreateTexture(nil, "BACKGROUND")
     bg:SetSize(24, 24)
@@ -259,22 +278,19 @@ local function CreateRoleCheckbox(parent, roleName, texCoord, anchorFrame, ancho
     -- Run it immediately so that the color is already registered before OnShow
     UpdateThemeColor()
     
-    -- Load saved state and re-apply visual theme just in case user changed it in the options
+    -- Load saved state on show
     btn:SetScript("OnShow", function(self)
-        local roles = GetRoleSettings()
-        -- State
-        if roles then
-            self:SetChecked(roles[configKey])
-        end
+        isProgrammatic = true
+        self:SetChecked(GetRole(configKey))
+        isProgrammatic = false
         UpdateThemeColor()
     end)
     
-    -- Save state on click
+    -- Save state on click (only when user actually clicks, not programmatic)
     btn:SetScript("OnClick", function(self)
-        local roles = GetRoleSettings()
-        if roles then
-            roles[configKey] = self:GetChecked()
-        end
+        if isProgrammatic then return end
+        -- GetChecked() returns 1 or nil — convert to explicit boolean
+        SaveRole(configKey, self:GetChecked() and true or false)
     end)
     
     -- Tooltip

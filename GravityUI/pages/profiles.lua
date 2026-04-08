@@ -236,7 +236,7 @@ local function BuildAceDBProfilesTab(parent)
         if val and val ~= "" then
             if val == db:GetCurrentProfile() then
                 print("|cffff0000GravityUI:|r Cannot delete active profile.")
-                deleteDropdown.SetValue("")
+                deleteDropdown:SetValue("")
                 return
             end
             GUI:ShowConfirmation({
@@ -248,11 +248,11 @@ local function BuildAceDBProfilesTab(parent)
                     db:DeleteProfile(val)
                     RefreshProfileDisplay()
                     deleteWrapper.selected = ""
-                    if deleteDropdown then deleteDropdown.SetValue("") end
+                    if deleteDropdown then deleteDropdown:SetValue("") end
                 end,
                 onCancel = function()
                     deleteWrapper.selected = ""
-                    if deleteDropdown then deleteDropdown.SetValue("") end
+                    if deleteDropdown then deleteDropdown:SetValue("") end
                 end
             })
         end
@@ -995,9 +995,9 @@ ns.GUI:RegisterPage("profiles", {
     title = "Profiles",
     subTabs = {
         { name = "Manage Profiles", builder = BuildAceDBProfilesTab },
-        { name = "Import/Export", builder = BuildImportExportTab },
+        { name = "Import / Export", builder = BuildImportExportTab },
         { name = "Gravity Strings", builder = BuildGravityStringsTab },
-        { name = "Installers", builder = BuildInstallerTab },
+        { name = "Installers",      builder = BuildInstallerTab },
     },
     OnBuild = function(content)
         -- We don't want the default scrollframe to interfere with our sub-tabs

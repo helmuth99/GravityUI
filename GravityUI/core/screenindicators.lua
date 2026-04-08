@@ -1610,7 +1610,7 @@ local function GetAFKSettings()
         preventInAh = true, fpView = false, resetCamera = false, showCharacter = true,
         showRealm = false, showTitle = true, showGuild = true, showBrackets = true,
         showRank = false, displaySeconds = true, timeFormat = 1, showAmPm = false,
-        showTimer = true, showLabel = true
+        showTimer = true, showLabel = true, showClock = true
     }
 end
 
@@ -1728,7 +1728,11 @@ local function CreateAFKFrame()
         local s = GetAFKSettings()
         
         -- Update Clock
-        self.clockText:SetText(GetFormattedClock())
+        if s.showClock ~= false then
+            self.clockText:SetText(GetFormattedClock())
+        else
+            self.clockText:SetText("")
+        end
         
         -- Update AFK Timer
         if s.showTimer then
