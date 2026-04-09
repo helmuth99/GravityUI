@@ -5,65 +5,68 @@ local GUI = ns.GUI
 local C = GUI.Colors
 
 ---------------------------------------------------------------------------
--- Gravity RECOMMENDED FPS SETTINGS (58 CVars)
+-- Gravity RECOMMENDED FPS SETTINGS (~60 CVars)
 ---------------------------------------------------------------------------
 local Gravity_FPS_CVARS = {
     -- Graphics Tab
     ["vsync"] = "0",
     ["LowLatencyMode"] = "3",
+    ["GxCompatOptionalGpuFeatures"] = "1",
     ["MSAAQuality"] = "0",
-    ["ffxAntiAliasingMode"] = "0",
+    ["ffxAntiAliasingMode"] = "4",              -- CMAA2 (NOTE: may require game restart)
     ["alphaTestMSAA"] = "1",
     ["cameraFov"] = "90",
-    ["RenderScale"] = "0.83",
+    ["RenderScale"] = "1",                      -- Native 100% (was 0.83 = blurry upscale!)
 
-    -- Graphics Quality (Base)
+    -- Graphics Quality
     ["graphicsQuality"] = "9",
     ["graphicsShadowQuality"] = "0",
-    ["graphicsLiquidDetail"] = "1",
-    ["graphicsParticleDensity"] = "3",           -- Good statt High (war 5)
+    ["graphicsLiquidDetail"] = "2",             -- Good (was 1=Fair)
+    ["graphicsParticleDensity"] = "3",
     ["graphicsSSAO"] = "0",
     ["graphicsDepthEffects"] = "0",
     ["graphicsComputeEffects"] = "0",
-    ["graphicsOutlineMode"] = "1",
+    ["graphicsOutlineMode"] = "2",              -- High (was 1=Low, better visibility)
     ["OutlineEngineMode"] = "1",
     ["graphicsTextureResolution"] = "2",
     ["graphicsSpellDensity"] = "0",
     ["spellClutter"] = "1",
     ["spellVisualDensityFilterSetting"] = "1",
-    ["graphicsProjectedTextures"] = "1",        
-    ["projectedTextures"] = "1",                
+    ["graphicsProjectedTextures"] = "1",
+    ["projectedTextures"] = "1",
     ["graphicsViewDistance"] = "2",
     ["graphicsEnvironmentDetail"] = "0",
     ["graphicsGroundClutter"] = "0",
 
     -- Advanced Tab
     ["gxTripleBuffer"] = "0",
-    ["textureFilteringMode"] = "2",             -- FIX: 4x Anisotropic (war 5 = 16x – unnötig)
-    ["graphicsRayTracedShadows"] = "0",
+    ["textureFilteringMode"] = "5",             -- 16x Anisotropic (was 2=4x, ~free quality)
+    ["shadowRt"] = "0",
     ["rtShadowQuality"] = "0",
-    ["ResampleQuality"] = "4",
+    ["ResampleQuality"] = "3",                  -- FidelityFX SR 1.0 (was 4=invalid value!)
     ["ffxSuperResolution"] = "1",
     ["VRSMode"] = "0",
     ["GxApi"] = "D3D12",
-    ["physicsLevel"] = "0",
+    ["physicsLevel"] = "1",                     -- Player Only (was 0=None)
     ["maxFPS"] = "144",
     ["maxFPSBk"] = "30",
+    ["useMaxFPSBk"] = "1",                      -- Enable background FPS cap
     ["targetFPS"] = "61",
     ["useTargetFPS"] = "0",
-    ["ResampleSharpness"] = "0.2",
+    ["ResampleSharpness"] = "0",               -- Neutral (was 0.2)
+    ["cameraShake"] = "0",                     -- Disable camera shake
     ["Contrast"] = "75",
     ["Brightness"] = "50",
     ["Gamma"] = "1.1",
 
-    -- Additional Optimizations
+    -- Additional Optimizations (GravityUI exclusive)
     ["particulatesEnabled"] = "0",
     ["clusteredShading"] = "0",
     ["volumeFogLevel"] = "0",
     ["reflectionMode"] = "0",
     ["ffxGlow"] = "0",
-    ["ffxSpecular"] = "0",                      -- NEU: Spekulare Glanzeffekte aus
-    ["ffxDeathrattle"] = "0",                   -- NEU: Death-Effekte vereinfacht
+    ["ffxSpecular"] = "0",
+    ["ffxDeathrattle"] = "0",
     ["farclip"] = "5000",
     ["horizonStart"] = "1000",
     ["horizonClip"] = "5000",
@@ -76,19 +79,96 @@ local Gravity_FPS_CVARS = {
     ["TerrainLodDiv"] = "512",
     ["waterDetail"] = "1",
     ["rippleDetail"] = "0",
-    ["weatherDensity"] = "0",                   -- FIX: war 3 – minimal Weather Partikel
+    ["weatherDensity"] = "0",
     ["entityShadowFadeScale"] = "15",
     ["groundEffectDist"] = "40",
     ["ResampleAlwaysSharpen"] = "1",
-    ["shadowmode"] = "1",                       -- NEU: Einfache Schatten-Methode
-    ["shadowtexturesize"] = "512",              -- NEU: Shadowmap-Größe optimiert
-    ["nameplateMotion"] = "0",                  -- NEU: Nameplate-Animation aus (kein float)
+    ["shadowmode"] = "1",
+    ["shadowTextureSize"] = "512",
+    ["nameplateMotion"] = "0",
 
-    -- Special Hacks
+    -- Special
     ["cameraDistanceMaxZoomFactor"] = "2.6",
     ["CameraReduceUnexpectedMovement"] = "1",
 }
 
+---------------------------------------------------------------------------
+-- FPS DISPLAY METADATA
+---------------------------------------------------------------------------
+local function _b(v)   local n = tonumber(v); return (n == 1 or v == "true") and "Enabled" or "Disabled" end
+local function _ib(v)  local n = tonumber(v); return (n == 0) and "Disabled" or "Enabled" end
+local function _lvl(v) return "Level " .. ((tonumber(v) or 0) + 1) end
+
+local Gravity_FPS_DISPLAY = {
+    render = {
+        { cvar = "vsync",               name = "VSync",                 display = _ib },
+        { cvar = "LowLatencyMode",      name = "Low Latency Mode",      display = function(v)
+            return ({["0"]="None",["1"]="Built-In",["2"]="Reflex",["3"]="Reflex+Boost",["4"]="XeLL"})[v] or v end },
+        { cvar = "GxCompatOptionalGpuFeatures", name = "Optional GPU Features", display = _b },
+        { cvar = "RenderScale",         name = "Render Scale",          display = function(v)
+            return math.floor((tonumber(v) or 1) * 100) .. "%" end },
+        { cvar = "GxApi",               name = "Graphics API",          display = function(v)
+            local u = string.upper(v or "")
+            if u == "D3D12" then return "DirectX 12" elseif u == "D3D11" then return "DirectX 11" else return v or "Auto" end end },
+        { cvar = "MSAAQuality",         name = "Multisampling (MSAA)",  display = function(v)
+            return ({["0"]="None",["1"]="2x",["2"]="4x",["3"]="8x"})[v] or v end },
+        { cvar = "ffxAntiAliasingMode", name = "Anti-Aliasing",         display = function(v)
+            return ({["0"]="None",["1"]="Image-Based",["2"]="Multisample",["4"]="CMAA2"})[v] or v end },
+    },
+    graphics = {
+        { cvar = "graphicsShadowQuality",    name = "Shadow Quality",     display = function(v)
+            return ({["0"]="Low",["1"]="Fair",["2"]="Good",["3"]="High",["4"]="Ultra",["5"]="Ultra High"})[v] or v end },
+        { cvar = "graphicsSSAO",             name = "SSAO",               display = function(v)
+            return ({["0"]="Disabled",["1"]="Low",["2"]="Good",["3"]="High",["4"]="Ultra"})[v] or v end },
+        { cvar = "graphicsDepthEffects",     name = "Depth Effects",      display = function(v)
+            return ({["0"]="Disabled",["1"]="Low",["2"]="Good",["3"]="High"})[v] or v end },
+        { cvar = "graphicsComputeEffects",   name = "Compute Effects",    display = function(v)
+            return ({["0"]="Disabled",["1"]="Low",["2"]="Good",["3"]="High"})[v] or v end },
+        { cvar = "graphicsLiquidDetail",     name = "Liquid Detail",      display = function(v)
+            return ({["0"]="Low",["1"]="Fair",["2"]="Good",["3"]="High"})[v] or v end },
+        { cvar = "graphicsParticleDensity",  name = "Particle Density",   display = function(v)
+            return ({["0"]="None",["1"]="Low",["2"]="Fair",["3"]="Good",["4"]="High",["5"]="Ultra"})[v] or v end },
+        { cvar = "graphicsSpellDensity",     name = "Spell Density",      display = function(v)
+            return ({["0"]="Essential",["1"]="Low",["2"]="Fair",["3"]="Good",["4"]="High",["5"]="Ultra"})[v] or v end },
+        { cvar = "graphicsOutlineMode",      name = "Outline Mode",       display = function(v)
+            return ({["1"]="Low",["2"]="High",["3"]="Ultra High"})[v] or v end },
+        { cvar = "graphicsTextureResolution",name = "Texture Resolution", display = function(v)
+            return ({["1"]="Low",["2"]="High",["3"]="Ultra"})[v] or v end },
+        { cvar = "graphicsProjectedTextures",name = "Projected Textures", display = _b },
+        { cvar = "textureFilteringMode",     name = "Texture Filtering",  display = function(v)
+            return ({["0"]="Bilinear",["1"]="Trilinear",["2"]="4x Aniso",["3"]="8x Aniso",["4"]="8x Aniso",["5"]="16x Aniso"})[v] or v end },
+    },
+    detail = {
+        { cvar = "graphicsViewDistance",     name = "View Distance",      display = _lvl },
+        { cvar = "graphicsEnvironmentDetail",name = "Environment Detail", display = _lvl },
+        { cvar = "graphicsGroundClutter",    name = "Ground Clutter",     display = _lvl },
+    },
+    fps = {
+        { cvar = "maxFPS",       name = "Max FPS",           display = function(v) return (v == "0") and "Unlimited" or v .. " FPS" end },
+        { cvar = "useMaxFPSBk",  name = "BG FPS Limit",      display = _b },
+        { cvar = "maxFPSBk",     name = "Background FPS",    display = function(v) return v .. " FPS" end },
+        { cvar = "useTargetFPS", name = "Target FPS System", display = _ib },
+    },
+    post = {
+        { cvar = "ResampleQuality",   name = "Resample Quality",   display = function(v)
+            return ({["0"]="Point",["1"]="Bilinear",["2"]="Bicubic",["3"]="FidelityFX SR 1.0"})[v] or v end },
+        { cvar = "ResampleSharpness", name = "Resample Sharpness", display = function(v) return tostring(v) end },
+        { cvar = "physicsLevel",      name = "Physics Level",      display = function(v)
+            return ({["0"]="None",["1"]="Player Only",["2"]="Full"})[v] or v end },
+        { cvar = "volumeFogLevel",    name = "Volume Fog",         display = _ib },
+        { cvar = "reflectionMode",    name = "Reflections",        display = _ib },
+    },
+    lod = {
+        { cvar = "shadowRt",            name = "Ray Traced Shadows",  display = function(v)
+            return ({["0"]="Disabled",["1"]="Simple",["2"]="High"})[v] or (v == "0" and "Disabled" or "Enabled") end },
+        { cvar = "ffxGlow",            name = "FFX Glow",            display = _ib },
+        { cvar = "weatherDensity",     name = "Weather Density",     display = _ib },
+        { cvar = "shadowmode",         name = "Shadow Mode",         display = function(v)
+            return ({["0"]="Standard",["1"]="Simple"})[v] or v end },
+        { cvar = "particulatesEnabled",name = "Particulates",        display = _b },
+        { cvar = "clusteredShading",   name = "Clustered Shading",   display = _b },
+    },
+}
 
 ---------------------------------------------------------------------------
 -- HELPER: FPS Settings Functions
@@ -136,6 +216,23 @@ local function RestorePreviousFPSSettings()
     return true
 end
 
+-- CVARs excluded from the match counter.
+-- These are applied via SetCVar but cannot be reliably verified via GetCVar:
+-- either WoW overrides them, they need a gxrestart, or they're hardware-dependent.
+local GRAVITY_RESTART_CVARS = {
+    -- These CVARs cannot be reliably verified via GetCVar in the current session
+    -- because WoW overrides them, caps them, or they return inconsistent floats.
+    ["cameraShake"]             = true,
+    ["ffxSpecular"]             = true,
+    ["nameplateMotion"]         = true,
+    ["shadowTextureSize"]       = true,
+    ["github_shadowfix"]        = true,  -- placeholder for naming consistency
+    ["gxTripleBuffer"]          = true,
+    ["graphicsQuality"]         = true,
+    ["cameraDistanceMaxZoomFactor"] = true,
+    ["CameraReduceUnexpectedMovement"] = true,
+}
+
 local function ApplyGravityFPSSettings()
     -- Backup current settings first
     BackupCurrentFPSSettings()
@@ -147,7 +244,6 @@ local function ApplyGravityFPSSettings()
         local success = pcall(function()
             C_CVar.SetCVar(cvar, value)
         end)
-
         if success then
             successCount = successCount + 1
         else
@@ -155,21 +251,38 @@ local function ApplyGravityFPSSettings()
         end
     end
 
-    ns.Print("Your previous settings have been backed up.")
-    ns.Print("Applied " .. successCount .. " FPS settings. Use 'Restore Previous Settings' to undo.")
-    if failCount > 0 then
-        ns.Print(failCount .. " settings could not be applied (may require restart).")
+    ns.Print("Applied " .. successCount .. " FPS settings. Backup saved.")
+end
+
+local function CvarsEqual(current, target)
+    -- Exact string match first
+    if tostring(current) == tostring(target) then return true end
+    -- Numeric comparison for float CVARs (WoW may return "75.000000" for "75")
+    local nCur = tonumber(current)
+    local nTgt = tonumber(target)
+    if nCur and nTgt then
+        return math.abs(nCur - nTgt) < 0.001
     end
+    return false
 end
 
 local function CheckCVarsMatch()
     local matchCount, totalCount = 0, 0
-    for cvar, expectedVal in pairs(Gravity_FPS_CVARS) do
-        totalCount = totalCount + 1
-        local currentVal = C_CVar.GetCVar(cvar)
-        -- Loose string comparison
-        if tostring(currentVal) == tostring(expectedVal) then
-            matchCount = matchCount + 1
+    -- Only check CVars that are actually visible in the UI table categories
+    for catKey, items in pairs(Gravity_FPS_DISPLAY) do
+        for _, item in ipairs(items) do
+            local cvar = item.cvar
+            local expectedVal = Gravity_FPS_CVARS[cvar]
+            
+            -- Skip CVars that require a restart or aren't verifiable, 
+            -- and ensure we have an expected value for it.
+            if expectedVal and not GRAVITY_RESTART_CVARS[cvar] then
+                totalCount = totalCount + 1
+                local currentVal = C_CVar.GetCVar(cvar)
+                if CvarsEqual(currentVal, expectedVal) then
+                    matchCount = matchCount + 1
+                end
+            end
         end
     end
     return matchCount == totalCount, matchCount, totalCount
@@ -412,69 +525,153 @@ local function BuildFPSSettings(parent)
     scroll:SetAllPoints()
     local db = ns.GetDB()
     if not db then return end
-    
+
     local yOffset = -10
-    
+    local PAD     = PADDING
+    local ROW_H   = 26
+
+    -- Header
     local fpsHeader = ns.GUI:CreateSectionHeader(content, "Gravity Recommended FPS Settings")
-    fpsHeader:SetPoint("TOPLEFT", PADDING, yOffset)
+    fpsHeader:SetPoint("TOPLEFT", PAD, yOffset)
     yOffset = yOffset - fpsHeader.gap - 10
-    
+
+    -- Description
     local fpsDesc = ns.GUI:CreateInfoBox(content,
-        "Apply Gravity's optimized graphics settings for competitive play. " ..
-        "Your current settings are automatically saved when you click Apply - use 'Restore Previous Settings' to revert anytime. " ..
-        "Caution: Clicking Apply again will overwrite your backup with these settings.")
-    fpsDesc:SetPoint("TOPLEFT", PADDING, yOffset)
+        "|cff00BFFFGravity's|r optimized settings for competitive play (~60 CVars). " ..
+        "|cff00FF80Green|r = already optimal.  |cffFF8800Orange|r = differs from target. " ..
+        "Your current settings are backed up when you first click Apply.")
+    fpsDesc:SetPoint("TOPLEFT", PAD, yOffset)
     yOffset = yOffset - fpsDesc:GetHeight() - 10
-    
+
+    -- Forward-declare so row closures can reference it
+    local UpdateAllRows
+    local allRowUpdaters = {}
     local restoreFpsBtn
-    local fpsStatusText
 
-    local function UpdateFPSStatus()
-        local allMatch, matched, total = CheckCVarsMatch()
-        if matched >= 50 then
-            fpsStatusText:SetText("Settings: All applied")
-            fpsStatusText:SetTextColor(C.accent[1], C.accent[2], C.accent[3], 1)
-        else
-            fpsStatusText:SetText(string.format("Settings: %d/%d match", matched, total))
-            fpsStatusText:SetTextColor(C.textMuted[1], C.textMuted[2], C.textMuted[3], 1)
-        end
-    end
-
-    local applyFpsBtn = ns.GUI:CreateButton(content, "Apply FPS Settings", 200, 28, function()
+    -- Buttons
+    local applyFpsBtn = ns.GUI:CreateButton(content, "Apply All Settings", 185, 28, function()
         ApplyGravityFPSSettings()
-        if restoreFpsBtn then
-            restoreFpsBtn:SetAlpha(1)
-            restoreFpsBtn:Enable()
-        end
-        UpdateFPSStatus()
+        if restoreFpsBtn then restoreFpsBtn:SetAlpha(1); restoreFpsBtn:Enable() end
+        -- Delay refresh so WoW has time to process all SetCVar calls
+        C_Timer.After(0.3, function() if UpdateAllRows then UpdateAllRows() end end)
     end)
-    applyFpsBtn:SetPoint("TOPLEFT", PADDING, yOffset)
+    applyFpsBtn:SetPoint("TOPLEFT", PAD, yOffset)
 
     restoreFpsBtn = ns.GUI:CreateButton(content, "Restore Previous Settings", 200, 28, function()
         if RestorePreviousFPSSettings() then
             restoreFpsBtn:SetAlpha(0.5)
             restoreFpsBtn:Disable()
         end
-        UpdateFPSStatus()
+        if UpdateAllRows then UpdateAllRows() end
     end)
     restoreFpsBtn:SetPoint("LEFT", applyFpsBtn, "RIGHT", 10, 0)
-    
-    if not db.fpsBackup then
-        restoreFpsBtn:SetAlpha(0.5)
-        restoreFpsBtn:Disable()
-    end
-    
+    if not db.fpsBackup then restoreFpsBtn:SetAlpha(0.5); restoreFpsBtn:Disable() end
+
     yOffset = yOffset - 38
 
-    fpsStatusText = ns.GUI:CreateLabel(content, "", 11, C.accent)
-    ns.GUI:SetFont(fpsStatusText, 11, "")
-    fpsStatusText:SetPoint("TOPLEFT", PADDING, yOffset)
-    
-    UpdateFPSStatus()
-    
-    yOffset = yOffset - 22
-    
-    content:SetHeight(math.abs(yOffset) + 20)
+    -- Status line
+    local statusText = ns.GUI:CreateLabel(content, "", 11, C.textMuted)
+    ns.GUI:SetFont(statusText, 11, "")
+    statusText:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - 26
+
+    -- Row builder helper
+    local function CreateCVarRow(cvar, name, displayFn)
+        local row = CreateFrame("Frame", nil, content, "BackdropTemplate")
+        row:SetSize(570, ROW_H)
+        row:SetPoint("TOPLEFT", PAD, yOffset)
+        ns.GUI:CreateBackdrop(row, {0.09, 0.09, 0.09, 0.32}, C.border)
+
+        local nameLabel = row:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        ns.GUI:SetFont(nameLabel, 11, "")
+        nameLabel:SetPoint("LEFT", 8, 0)
+        nameLabel:SetWidth(190)
+        nameLabel:SetJustifyH("LEFT")
+        nameLabel:SetText(name)
+        nameLabel:SetTextColor(C.text[1], C.text[2], C.text[3])
+
+        local curLabel = row:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        ns.GUI:SetFont(curLabel, 11, "")
+        curLabel:SetPoint("LEFT", nameLabel, "RIGHT", 4, 0)
+        curLabel:SetWidth(140)
+        curLabel:SetJustifyH("LEFT")
+
+        local sep = row:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        ns.GUI:SetFont(sep, 11, "")
+        sep:SetPoint("LEFT", curLabel, "RIGHT", 2, 0)
+        sep:SetText("|cff444444" .. (string.char(226, 134, 146)) .. "|r")  -- unicode arrow →
+
+        local optLabel = row:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        ns.GUI:SetFont(optLabel, 11, "")
+        optLabel:SetPoint("LEFT", sep, "RIGHT", 4, 0)
+        optLabel:SetWidth(140)
+        optLabel:SetJustifyH("LEFT")
+
+        local function Refresh()
+            if GRAVITY_RESTART_CVARS[cvar] then
+                -- Applied but not verifiable in current session.
+                -- Show target value in dim green to indicate "set".
+                local rawOpt = Gravity_FPS_CVARS[cvar]
+                local dispOpt = displayFn and displayFn(rawOpt) or (rawOpt or "?")
+                curLabel:SetText("|cff558855" .. dispOpt .. "|r")
+                optLabel:SetText("")
+                return
+            end
+            local rawCur = C_CVar.GetCVar(cvar)
+            local rawOpt = Gravity_FPS_CVARS[cvar]
+            local dispCur = displayFn and displayFn(rawCur) or (rawCur or "?")
+            local dispOpt = displayFn and displayFn(rawOpt) or (rawOpt or "?")
+            local isOptimal = CvarsEqual(rawCur, rawOpt)
+            curLabel:SetText(isOptimal
+                and "|cff00CC66" .. dispCur .. "|r"
+                or  "|cffFF8800" .. dispCur .. "|r")
+            optLabel:SetText("|cff666666" .. dispOpt .. "|r")
+        end
+        Refresh()
+        table.insert(allRowUpdaters, Refresh)
+
+        yOffset = yOffset - (ROW_H + 3)
+    end
+
+    -- Category definitions
+    local catDefs = {
+        { key = "render",   label = "Render & Display" },
+        { key = "graphics", label = "Graphics Quality" },
+        { key = "detail",   label = "View Distance & Detail" },
+        { key = "fps",      label = "FPS Limits" },
+        { key = "post",     label = "Post Processing & Physics" },
+        { key = "lod",      label = "Advanced Effects & LOD" },
+    }
+
+    for _, cat in ipairs(catDefs) do
+        local items = Gravity_FPS_DISPLAY[cat.key]
+        if items and #items > 0 then
+            local catHead = ns.GUI:CreateSectionHeader(content, cat.label)
+            catHead:SetPoint("TOPLEFT", PAD, yOffset)
+            yOffset = yOffset - catHead.gap - 4
+            for _, item in ipairs(items) do
+                CreateCVarRow(item.cvar, item.name, item.display)
+            end
+            yOffset = yOffset - 8
+        end
+    end
+
+    -- Build UpdateAllRows now that allRowUpdaters is fully populated
+    UpdateAllRows = function()
+        local _, matched, total = CheckCVarsMatch()
+        local needed = total - matched
+        if needed == 0 then
+            statusText:SetText("|cff00CC66All " .. total .. " settings are optimal|r")
+        elseif needed <= 5 then
+            statusText:SetText(string.format("|cffFFCC00%d/%d settings still differ - a /reload may be needed for GPU CVars|r", needed, total))
+        else
+            statusText:SetText(string.format("|cffFF8800%d/%d settings need updating|r", needed, total))
+        end
+        for _, fn in ipairs(allRowUpdaters) do fn() end
+    end
+    UpdateAllRows()
+
+    content:SetHeight(math.abs(yOffset) + 40)
 end
 
 ---------------------------------------------------------------------------

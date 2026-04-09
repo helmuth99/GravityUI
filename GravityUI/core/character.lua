@@ -668,11 +668,36 @@ local function CreateSlotOverlay(slotFrame, slotInfo, unit)
     duraBg:SetAllPoints()
     duraBg:SetColorTexture(0, 0, 0, 0.5)
 
+    -- === ITEM BAR BACKDROP ===
+    -- Subtle soft-fading bar for text readability
+    -- Moved to sub-level 5 to ensure it sits ON TOP of the background image
+    overlay.backdropBar = overlay:CreateTexture(nil, "BACKGROUND", nil, 5)
+    overlay.backdropBar:SetTexture("Interface\\AddOns\\GravityUI\\assets\\media\\vignette.tga")
+    overlay.backdropBar:SetHeight(40)
+    overlay.backdropBar:SetWidth(160)
+    overlay.backdropBar:Hide()
+
+    if slotInfo.side == "left" then
+        -- Anchor starting from the right side of the icon (approx 40px in)
+        overlay.backdropBar:SetPoint("LEFT", overlay, "LEFT", 40, 0)
+        overlay.backdropBar:SetTexCoord(0, 1, 0, 1)
+    elseif slotInfo.side == "right" then
+        -- Anchor starting from the left side of the icon (approx 40px in)
+        overlay.backdropBar:SetPoint("RIGHT", overlay, "RIGHT", -40, 0)
+        overlay.backdropBar:SetTexCoord(1, 0, 0, 1)
+    elseif slotInfo.id == INVSLOT_MAINHAND then
+        overlay.backdropBar:SetPoint("RIGHT", overlay, "RIGHT", -40, 0)
+        overlay.backdropBar:SetTexCoord(1, 0, 0, 1)
+    else
+        overlay.backdropBar:SetPoint("LEFT", overlay, "LEFT", 40, 0)
+        overlay.backdropBar:SetTexCoord(0, 1, 0, 1)
+    end
     overlay.slotInfo = slotInfo
     return overlay
 end
 
 ---------------------------------------------------------------------------
+
 -- Update a single slot overlay
 ---------------------------------------------------------------------------
 local function UpdateSlotOverlay(overlay, unit)
@@ -876,6 +901,27 @@ local function UpdateSlotOverlay(overlay, unit)
     else
         overlay.durabilityBar:Hide()
     end
+
+    -- Update Item Bar Backdrop
+    if overlay.backdropBar then
+        if itemLink then
+            local _, _, quality = GetItemInfo(itemLink)
+            local r, g, b = 0, 0, 0
+            local alpha = 0.4
+            
+            -- If quality >= rare (3), use a more distinct quality tint
+            if quality and quality >= 3 then
+                local qr, qg, qb = C_Item.GetItemQualityColor(quality)
+                r, g, b = qr * 0.4, qg * 0.4, qb * 0.4 -- More distinct tint
+                alpha = 0.7
+            end
+            
+            overlay.backdropBar:SetVertexColor(r, g, b, alpha)
+            overlay.backdropBar:Show()
+        else
+            overlay.backdropBar:Hide()
+        end
+    end
 end
 
 ---------------------------------------------------------------------------
@@ -887,6 +933,7 @@ end
 local layoutApplied = false
 local repositionPending = false  -- Debounce for slot repositioning hook
 local customBg = nil
+local modelBg
 local equipMgrPopup = nil  -- Floating Equipment Manager container
 local titlesPopup = nil      -- Floating Titles container
 local allEquipmentSlots = {}  -- Stores all equipment slot frames for border updates
@@ -922,6 +969,23 @@ local function HideBlizzardDecorations()
         -- Move sidebar tabs 30px right to align with extended panel
         PaperDollSidebarTabs:ClearAllPoints()
         PaperDollSidebarTabs:SetPoint("TOPRIGHT", CharacterFrame, "TOPRIGHT", 50, -30)
+
+        -- Add 1px border to each tab icon
+        for i = 1, 3 do
+            local tab = _G["PaperDollSidebarTab"..i]
+            if tab and not tab._guiBorder then
+                local border = CreateFrame("Frame", nil, tab, "BackdropTemplate")
+                border:SetPoint("TOPLEFT", tab, "TOPLEFT", 1, -1)
+                border:SetPoint("BOTTOMRIGHT", tab, "BOTTOMRIGHT", -1, 1)
+                border:SetBackdrop({
+                    edgeFile = "Interface\\Buttons\\WHITE8X8",
+                    edgeSize = 1,
+                })
+                border:SetBackdropBorderColor(0.5, 0.5, 0.5, 0.8) -- Subtle Grey border
+                border:SetFrameLevel(tab:GetFrameLevel() - 1)    -- Sit behind the icon
+                tab._guiBorder = border
+            end
+        end
     end
 
     -- Move close button 30px right to align with extended panel
@@ -1130,6 +1194,20 @@ local function HideBlizzardDecorations()
 end
 
 ---------------------------------------------------------------------------
+-- Setup model background with transparency
+---------------------------------------------------------------------------
+local function SetupModelBackground()
+    if modelBg or not CharacterModelScene then return end
+    
+    -- Parent to ModelScene so it hides automatically with the character model on other tabs
+    modelBg = CharacterModelScene:CreateTexture(nil, "BACKGROUND", nil, -1)
+    modelBg:SetTexture("Interface\\AddOns\\GravityUI\\assets\\media\\character_bg_midnight.png")
+    modelBg:SetVertexColor(0.2, 0.1, 0.8, 1) -- Vibrant Midnight
+    modelBg:SetAlpha(0.20) -- More transparent per user request
+    modelBg:SetTexCoord(0, 1, 0.3, 1)
+end
+
+---------------------------------------------------------------------------
 -- Create custom GravityUI background
 ---------------------------------------------------------------------------
 local function CreateCustomBackground()
@@ -1333,6 +1411,14 @@ local function PositionModelScene()
     CharacterModelScene:SetFrameLevel(2)
     CharacterModelScene:Show()
 
+    if modelBg then 
+        modelBg:ClearAllPoints()
+        -- Anchor to slots for width
+        modelBg:SetPoint("TOPLEFT", CharacterHeadSlot, "TOPLEFT", 0, 0)
+        modelBg:SetPoint("TOPRIGHT", CharacterHandsSlot, "TOPRIGHT", 0, 0)
+        -- Back to the BOTTOM edge of the weapons (as requested)
+        modelBg:SetPoint("BOTTOM", CharacterMainHandSlot, "BOTTOM", 0, 0)
+    end
 end
 
 ---------------------------------------------------------------------------
@@ -1441,6 +1527,7 @@ local function ApplyCharacterPaneLayout()
     -- Delay repositioning to allow Blizzard to finish slot setup first
     C_Timer.After(0.1, function()
         RepositionSlots()
+        SetupModelBackground()
         PositionModelScene()
         PositionStatsPanelForLayout()
     end)
