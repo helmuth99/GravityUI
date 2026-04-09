@@ -425,6 +425,10 @@ ns.Defaults = {
             showDurability = false,
             headerClassColor = false,
             showGems = true,
+            -- Backdrop Bar Settings
+            showBackdrops = true,
+            backdropFixedColor = false,
+            backdropColor = { 0, 0, 0, 0.4 },
         },
         hideObjectiveTrackerInstanceTypes =         {
             mythicPlus = false,

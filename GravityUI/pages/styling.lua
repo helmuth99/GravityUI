@@ -1506,6 +1506,15 @@ local function BuildCharacter(parent)
     MakeRow("Show Enchant Status", "checkbox", "showEnchants", dbChar, RefreshChar)
     MakeRow("Show Gem Indicators", "checkbox", "showGems", dbChar, RefreshChar)
     MakeRow("Show Durability Bars", "checkbox", "showDurability", dbChar, RefreshChar)
+    
+    local bpRow -- Forward declare
+    MakeRow("Show Item Color Backdrop", "checkbox", "showBackdrops", dbChar, RefreshChar)
+    MakeRow("Use Fixed Backdrop Color", "checkbox", "backdropFixedColor", dbChar, function(val)
+        if bpRow then if val then bpRow:Show() else bpRow:Hide() end end
+        RefreshChar()
+    end)
+    bpRow = MakeRow("Fixed Backdrop Color", "color", "backdropColor", dbChar, RefreshChar)
+    if not dbChar.backdropFixedColor then bpRow:Hide() end
 
     MakeSubHeader("Stats Panel")
     MakeRow("Show Stat Tooltips", "checkbox", "showTooltips", dbChar, RefreshChar)

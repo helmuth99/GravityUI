@@ -630,6 +630,13 @@ local function CreateSlotOverlay(slotFrame, slotInfo, unit)
         table.insert(overlay.gems, gem)
     end
 
+    -- === ITEM BAR BACKDROP ===
+    overlay.backdropBar = overlay:CreateTexture(nil, "BACKGROUND", nil, 5)
+    overlay.backdropBar:SetTexture("Interface\\AddOns\\GravityUI\\assets\\media\\vignette.tga")
+    overlay.backdropBar:SetHeight(40)
+    overlay.backdropBar:SetWidth(160)
+    overlay.backdropBar:Hide()
+
     -- Positioning
     if slotInfo.side == "left" then
         overlay.itemName:SetPoint("TOPLEFT", overlay, "TOPRIGHT", 4, 2)
@@ -641,6 +648,9 @@ local function CreateSlotOverlay(slotFrame, slotInfo, unit)
         for i, gem in ipairs(overlay.gems) do
             gem:SetPoint("TOPRIGHT", overlay, "TOPLEFT", -2, -(i-1)*(GEM_SIZE+GEM_SPACING))
         end
+        -- Anchor backdropBar
+        overlay.backdropBar:SetPoint("LEFT", overlay, "LEFT", 40, 0)
+        overlay.backdropBar:SetTexCoord(0, 1, 0, 1)
     elseif slotInfo.side == "right" then
         overlay.itemName:SetPoint("TOPRIGHT", overlay, "TOPLEFT", -4, 2)
         overlay.itemName:SetJustifyH("RIGHT")
@@ -651,6 +661,9 @@ local function CreateSlotOverlay(slotFrame, slotInfo, unit)
         for i, gem in ipairs(overlay.gems) do
             gem:SetPoint("TOPLEFT", overlay, "TOPRIGHT", 2, -(i-1)*(GEM_SIZE+GEM_SPACING))
         end
+        -- Anchor backdropBar
+        overlay.backdropBar:SetPoint("RIGHT", overlay, "RIGHT", -40, 0)
+        overlay.backdropBar:SetTexCoord(1, 0, 0, 1)
     elseif slotInfo.id == 16 then -- Mainhand
         overlay.itemName:SetPoint("TOPRIGHT", overlay, "TOPLEFT", -4, 2)
         overlay.itemName:SetJustifyH("RIGHT")
@@ -661,6 +674,9 @@ local function CreateSlotOverlay(slotFrame, slotInfo, unit)
         for i, gem in ipairs(overlay.gems) do
             gem:SetPoint("TOPLEFT", overlay, "TOPRIGHT", 2, -(i-1)*(GEM_SIZE+GEM_SPACING))
         end
+        -- Anchor backdropBar
+        overlay.backdropBar:SetPoint("RIGHT", overlay, "RIGHT", -40, 0)
+        overlay.backdropBar:SetTexCoord(1, 0, 0, 1)
     else -- Offhand
         overlay.itemName:SetPoint("TOPLEFT", overlay, "TOPRIGHT", 4, 2)
         overlay.itemName:SetJustifyH("LEFT")
@@ -671,6 +687,9 @@ local function CreateSlotOverlay(slotFrame, slotInfo, unit)
         for i, gem in ipairs(overlay.gems) do
             gem:SetPoint("TOPRIGHT", overlay, "TOPLEFT", -2, -(i-1)*(GEM_SIZE+GEM_SPACING))
         end
+        -- Anchor backdropBar
+        overlay.backdropBar:SetPoint("LEFT", overlay, "LEFT", 40, 0)
+        overlay.backdropBar:SetTexCoord(0, 1, 0, 1)
     end
 
     return overlay
@@ -769,6 +788,32 @@ local function UpdateSlotOverlay(overlay, unit, cachedData)
         for _, gemBtn in ipairs(overlay.gems) do 
             gemBtn:Hide() 
             gemBtn.link = nil
+        end
+    end
+
+    -- Update Item Bar Backdrop
+    if overlay.backdropBar then
+        if settings.showBackdrops ~= false and cachedData.link then
+            local r, g, b = 0, 0, 0
+            local alpha = 0.4
+            
+            if settings.backdropFixedColor and settings.backdropColor then
+                local c = settings.backdropColor
+                r, g, b, alpha = c[1], c[2], c[3], c[4]
+            else
+                local quality = cachedData.quality or 1
+                -- If quality >= uncommon (2), use a more distinct quality tint
+                if quality >= 2 then
+                    local qr, qg, qb = C_Item.GetItemQualityColor(quality)
+                    r, g, b = qr * 0.4, qg * 0.4, qb * 0.4 -- More distinct tint
+                    alpha = 0.7
+                end
+            end
+            
+            overlay.backdropBar:SetVertexColor(r, g, b, alpha)
+            overlay.backdropBar:Show()
+        else
+            overlay.backdropBar:Hide()
         end
     end
 end
