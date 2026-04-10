@@ -25,6 +25,7 @@ core\media.lua
 core\character.lua
 core\inspect.lua
 core\init.lua
+core\performance_shield.lua
 core\profiles_logic.lua
 
 # Framework

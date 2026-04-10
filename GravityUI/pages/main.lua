@@ -541,7 +541,30 @@ local function BuildFPSSettings(parent)
         "|cff00FF80Green|r = already optimal.  |cffFF8800Orange|r = differs from target. " ..
         "Your current settings are backed up when you first click Apply.")
     fpsDesc:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - fpsDesc:GetHeight() - 10
+    yOffset = yOffset - fpsDesc:GetHeight() - 20
+
+    -- GravityUI Performance Shield
+    local shieldHeader = ns.GUI:CreateSectionHeader(content, "GravityUI Performance Shield")
+    shieldHeader:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - shieldHeader.gap - 10
+
+    local shieldInfo = ns.GUI:CreateInfoBox(content,
+        "|cff00BFFFMaximizes combat stability|r by disabling Blizzard's internal AddOn CPU profiling and suppressing " ..
+        "expensive performance telemetry. This prevents micro-stutters in high-intensity situations.\n\n" ..
+        "|cffFFCC00Note:|r This will also disable the 'Addon Memory' display in some tooltips to save CPU cycles.")
+    shieldInfo:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - shieldInfo:GetHeight() - 10
+
+    local shieldToggle = ns.GUI:CreateCheckbox(content, "Enable GravityUI Performance Shield", "performanceShield", db.uiimprovements, function(enabled)
+        -- The logic is handled in core/performance_shield.lua, but we can print a courtesy note
+        if enabled then
+            ns.Print("Performance Shield enabled. Profiling suppressed.")
+        else
+            ns.Print("Performance Shield disabled. Profiling restored after /reload.")
+        end
+    end)
+    shieldToggle:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - 40
 
     -- Forward-declare so row closures can reference it
     local UpdateAllRows

@@ -680,6 +680,7 @@ ns.Defaults = {
         hideTalkingHead = false,
         muteTalkingHead = false,
         hideOnWorldQuestMinigame = true,
+        performanceShield = true,
         tools = {
             guildInviteRanks = {}, -- [rankID] = true
             autoAssistNames = "",
