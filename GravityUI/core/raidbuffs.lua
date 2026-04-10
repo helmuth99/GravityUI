@@ -344,6 +344,10 @@ local visibleBuffs = {
     custom = {},
 }
 
+-- PERF: Cache group class composition to avoid O(N) scans per buff check.
+-- Repopulated once per UpdateDisplay cycle.
+local providerCache = {}
+
 -- ============================================================================
 -- HELPERS
 -- ============================================================================
@@ -508,22 +512,7 @@ end
 
 local function IsProviderAvailable(requiredClass)
     if not requiredClass then return true end
-    if playerClass == requiredClass then return true end
-    
-    if not IsInGroup() then return false end
-    
-    if IsInRaid() then
-        for i = 1, GetNumGroupMembers() do
-             local _, cls = UnitClass("raid"..i)
-             if cls == requiredClass then return true end
-        end
-    else
-        for i = 1, GetNumGroupMembers() - 1 do
-             local _, cls = UnitClass("party"..i)
-             if cls == requiredClass then return true end
-        end
-    end
-    return false
+    return providerCache[requiredClass] == true
 end
 
 -- ============================================================================
@@ -646,6 +635,22 @@ local function UpdateDisplay()
             mainFrame:Hide()
             for _, f in pairs(categoryFrames) do f:Hide() end
             return
+        end
+    end
+
+    -- PERF: Refresh provider cache once per cycle to avoid O(N) scans in IsProviderAvailable loops.
+    wipe(providerCache)
+    if playerClass then providerCache[playerClass] = true end
+    if IsInGroup() then
+        local num = GetNumGroupMembers()
+        local isRaid = IsInRaid()
+        local prefix = isRaid and "raid" or "party"
+        -- Party loop covers 1 to (num-1) as player is separate usually in party APIs, 
+        -- but UnitClass("partyN") works for N=1 to num-1.
+        local iterations = isRaid and num or (num - 1)
+        for i = 1, iterations do
+            local _, cls = UnitClass(prefix .. i)
+            if cls then providerCache[cls] = true end
         end
     end
 

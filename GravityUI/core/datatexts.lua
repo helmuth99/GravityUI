@@ -15,6 +15,31 @@ local function GetValueColor()
     return r, g, b
 end
 
+-- Optimization: Table Pooling for Zero-Allocation standard
+local tablePool = {}
+local function GetPooledTable()
+    local t = next(tablePool)
+    if t then
+        tablePool[t] = nil
+        return t
+    end
+    return {}
+end
+
+local function ReleaseTable(t)
+    if not t then return end
+    wipe(t)
+    tablePool[t] = true
+end
+
+local function ReleaseTableList(list)
+    if not list then return end
+    for i = #list, 1, -1 do
+        ReleaseTable(list[i])
+        list[i] = nil
+    end
+end
+
 local function GetLabel(fullLabel, shortLabel, useShortLabel, useNoLabel)
     if useNoLabel then return "" end
     if useShortLabel then return shortLabel end
@@ -178,16 +203,27 @@ end
 local function BuildGuildCache()
     if not IsInGuild() then return end
     C_GuildInfo.GuildRoster() -- Request refresh
-    wipe(guildCache.members)
+    
+    -- Release old members to pool
+    ReleaseTableList(guildCache.members)
+    
     local total, online = GetNumGuildMembers()
     for i = 1, total do
         local name, rank, rankIndex, level, class, zone, note, offNote, connected, status, engClass, _, _, isMobile, _, _, guid = GetGuildRosterInfo(i)
         if name and (connected or isMobile) then
-            table.insert(guildCache.members, {
-                name = name, rank = rank, level = level, class = engClass, zone = zone,
-                note = note, offNote = offNote, online = connected, status = status,
-                isMobile = isMobile, guid = guid
-            })
+            local info = GetPooledTable()
+            info.name = name
+            info.rank = rank
+            info.level = level
+            info.class = engClass
+            info.zone = zone
+            info.note = note
+            info.offNote = offNote
+            info.online = connected
+            info.status = status
+            info.isMobile = isMobile
+            info.guid = guid
+            table.insert(guildCache.members, info)
         end
     end
     guildCache.lastUpdate = GetTime()
@@ -383,12 +419,17 @@ DT.Types.gold = {
         local db = ns.GetAceDB()
         if db and db.global and db.global.goldData then
             local total = 0
-            local list = {}
+            local list = {} -- Local list (not pooled itself but its entries are)
+            
             for k, v in pairs(db.global.goldData) do
                 local m = type(v) == "table" and v.money or v
                 local c = type(v) == "table" and v.class or nil
                 total = total + m
-                table.insert(list, {key = k, money = m, class = c})
+                local entry = GetPooledTable()
+                entry.key = k
+                entry.money = m
+                entry.class = c
+                table.insert(list, entry)
             end
             
             if #list > 1 then
@@ -412,6 +453,8 @@ DT.Types.gold = {
                 GameTooltip:AddLine(" ")
                 GameTooltip:AddDoubleLine("Total:", FormatGold(total), vr, vg, vb, 1, 0.82, 0)
             end
+            -- Cleanup
+            ReleaseTableList(list)
         end
 
         -- Warbound Bank
@@ -664,32 +707,24 @@ local function PopulateGuildPopup(anchor)
 
     local f = BuildGuildPopupFrame()
     local content = f.content
-    -- Remember the rankIndex is **stored inside guildCache** via BuildGuildCache.
-    -- GetGuildRosterInfo returns: name, rank, rankIndex, level, class, zone…
-    -- We stored rankIndex as info.rankIndex but BuildGuildCache uses rank=rank, not rankIndex.
-    -- We need to re-query rankIndex. We do that below from a re-sort pass on the existing cache.
-    -- Actually BuildGuildCache stores info.rank (string) but NOT rankIndex. We'll sort by doing a
-    -- fresh lightweight pass using GetGuildRosterInfo to get rankIndex per name for sorting.
-
-    -- Build sorted list: since we don't store rankIndex separately, rebuild it here quickly.
     local sorted = {}
-    local total = GetNumGuildMembers()
-    for i = 1, total do
+    local totalMembers = GetNumGuildMembers()
+    for i = 1, totalMembers do
         local name, rank, rankIndex, level, class, zone, note, _, connected, status, engClass, _, _, isMobile, _, _, guid = GetGuildRosterInfo(i)
         if name and (connected or isMobile) then
-            table.insert(sorted, {
-                name      = name,
-                rank      = rank,
-                rankIndex = rankIndex,
-                level     = level,
-                class     = engClass,
-                zone      = zone,
-                note      = note,
-                online    = connected,
-                status    = status,
-                isMobile  = isMobile,
-                guid      = guid,
-            })
+            local info = GetPooledTable()
+            info.name      = name
+            info.rank      = rank
+            info.rankIndex = rankIndex
+            info.level     = level
+            info.class     = engClass
+            info.zone      = zone
+            info.note      = note
+            info.online    = connected
+            info.status    = status
+            info.isMobile  = isMobile
+            info.guid      = guid
+            table.insert(sorted, info)
         end
     end
     table.sort(sorted, function(a, b)
@@ -838,6 +873,9 @@ local function PopulateGuildPopup(anchor)
     f._anchor = anchor
     f:Show()
     f:Raise()
+
+    -- Cleanup pooled tables used during sort
+    ReleaseTableList(sorted)
 end
 
 -- 4. GUILD

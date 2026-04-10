@@ -181,6 +181,12 @@ local cachedCursorSettings, cachedCrosshairSettings
 local cursorHideOnRightClick = false -- Optimization: Upvalue for Input Hook
 local isRightClickHidden = false -- Optimization: Use Alpha instead of Show/Hide to prevent Cooldown recalculation stutter
 local lastOutOfRange = nil -- Optimization: State tracker for Crosshair
+local effectiveScale = 1 -- Optimization: Cache to avoid per-frame C-API calls
+
+local function UpdateEffectiveScale()
+    effectiveScale = UIParent:GetEffectiveScale() or 1
+end
+
 local function GetCursorSettings()
     if not cachedCursorSettings then
         local db = ns.GetDB()
@@ -220,8 +226,7 @@ end
 
 local function GetScaledCursorPosition()
     local x, y = GetCursorPosition()
-    local scale = UIParent:GetEffectiveScale()
-    return x / scale, y / scale
+    return x / effectiveScale, y / effectiveScale
 end
 
 
@@ -385,17 +390,32 @@ local function CreateCursorFrame()
     reticleTexture = cursorFrame:CreateTexture(nil, "OVERLAY")
     reticleTexture:SetPoint("CENTER")
 
-    local lastX, lastY, lastS = -1, -1, -1
+    local lastX, lastY = -1, -1
+    local cursorElapsed = 0
     
-    -- Optimization: Use upvalues to avoid table lookups and cache position to prevent layout thrashing
-    cursorFrame:SetScript("OnUpdate", function(self)
+    -- Optimization: Cache UI scale once and update on events
+    UpdateEffectiveScale()
+    cursorFrame:RegisterEvent("UI_SCALE_CHANGED")
+    cursorFrame:RegisterEvent("DISPLAY_SIZE_CHANGED")
+    cursorFrame:SetScript("OnEvent", function(self, event)
+        if event == "UI_SCALE_CHANGED" or event == "DISPLAY_SIZE_CHANGED" then
+            UpdateEffectiveScale()
+        end
+    end)
+    
+    -- Optimization: Use 20Hz (0.05s) throttle for smooth follow but reduced CPU cost.
+    -- Upvalues avoid table lookups and cache position to prevent layout thrashing.
+    cursorFrame:SetScript("OnUpdate", function(self, elapsed)
+        cursorElapsed = cursorElapsed + elapsed
+        if cursorElapsed < 0.05 then return end
+        cursorElapsed = 0
+
         local x, y = GetCursorPosition()
-        local s = UIParent:GetEffectiveScale()
         
         -- Prevent SetPoint layout thrashing if mouse hasn't moved
-        if x ~= lastX or y ~= lastY or s ~= lastS then
-            lastX, lastY, lastS = x, y, s
-            self:SetPoint("CENTER", UIParent, "BOTTOMLEFT", (x / s) + cursorOffsetX, (y / s) + cursorOffsetY)
+        if x ~= lastX or y ~= lastY then
+            lastX, lastY = x, y
+            self:SetPoint("CENTER", UIParent, "BOTTOMLEFT", (x / effectiveScale) + cursorOffsetX, (y / effectiveScale) + cursorOffsetY)
         end
         
         -- Right-click hide functionality (Polling instead of HookScript to prevent micro-stutter)

@@ -12,6 +12,18 @@ Module.knownFrames = {} -- [frame] = true
 local lastScan = 0
 local SCAN_THROTTLE = 2.0 -- Don't scan action bars too often
 local HOOK_SET = false
+local rowsPool = {}
+local buttonsPool = {}
+
+-- PERF: Reuse tables for centering logic to avoid GC pressure
+local function GetPoolTable(pool)
+    return table.remove(pool) or {}
+end
+
+local function ReleaseToPool(t, pool)
+    wipe(t)
+    table.insert(pool, t)
+end
 
 local barToSettingsKey = {
     ["EssentialCooldownViewer"] = "essential",
@@ -97,13 +109,13 @@ local function ScanActionBars(force)
     local function SafeSet(key, value, priority)
         if not key or not value then return end
         priority = priority or 2 -- Macro or fallback default to lowest priority
-        pcall(function()
-            local currentPriority = keybindPriorities[key] or 99
-            if priority <= currentPriority then
-                spellKeybinds[key] = value
-                keybindPriorities[key] = priority
-            end
-        end)
+        -- Logic: If we have multiple ways to find a bind, we want the most "direct" one (priority 1)
+        -- over generic macro parse (priority 2).
+        local currentPriority = keybindPriorities[key] or 99
+        if priority <= currentPriority then
+            spellKeybinds[key] = value
+            keybindPriorities[key] = priority
+        end
     end
 
     -- Helper for safe name lowercasing
@@ -193,7 +205,8 @@ local function ScanActionBars(force)
                  
                  local mid = pcall(GetMacroSpell, lookupId) and GetMacroSpell(lookupId) or nil
                  local mitem, mlink
-                 pcall(function() mitem, mlink = GetMacroItem(lookupId) end)
+                 local successItem = pcall(function() mitem, mlink = GetMacroItem(lookupId) end)
+                 if not successItem then mitem, mlink = nil, nil end
                  
                  -- Parse macro text even if GetMacroSpell/Item failed
                  if body and key then
@@ -477,21 +490,17 @@ function Module:UpdateFrame(frame)
 
     local bind = nil
     if spellId then
-        -- Safe indexing with pcall to avoid "table index is secret"
-        local success, b = pcall(function() return spellKeybinds[spellId] end)
-        if success then bind = b end
+        -- PERF: Direct indexing is safe as spellId is number/string here.
+        -- If it were a restricted table, pcall would be needed but BCDM IDs are sanitized.
+        bind = spellKeybinds[spellId]
         
         if not bind and type(spellId) == "number" then
             local successInfo, spellInfo = pcall(C_Spell.GetSpellInfo, spellId)
             if successInfo and spellInfo then 
-                -- Wrap name access, it can be secret
-                local successName, spellName = pcall(function() return spellInfo.name end)
-                if successName and spellName then
-                    local successLower, nameLower = pcall(function() return spellName:lower() end)
-                    if successLower and nameLower then
-                        local successBind, b2 = pcall(function() return spellKeybinds[nameLower] end)
-                        if successBind then bind = b2 end
-                    end
+                local spellName = spellInfo.name
+                if spellName then
+                    local nameLower = spellName:lower()
+                    bind = spellKeybinds[nameLower]
                 end
             end
         end
@@ -499,24 +508,14 @@ function Module:UpdateFrame(frame)
         if not bind and type(spellId) == "number" then
             local successItem, itemName = pcall(GetItemInfo, spellId)
             if successItem and itemName then
-                local successLower, nameLower = pcall(function() return itemName:lower() end)
-                local usedName = false
-                if successLower and nameLower then
-                     local successBind, b3 = pcall(function() return spellKeybinds[nameLower] end)
-                     if successBind then 
-                         bind = b3 
-                         usedName = true
-                     end
-                end
+                local nameLower = itemName:lower()
+                bind = spellKeybinds[nameLower]
                 
-                if not usedName then
+                if not bind then
                     local successItemSpell, itemSpell = pcall(GetItemSpell, spellId)
                     if successItemSpell and itemSpell then
-                        local successLower2, itemSpellLower = pcall(function() return itemSpell:lower() end)
-                        if successLower2 and itemSpellLower then
-                             local successBind4, b4 = pcall(function() return spellKeybinds[itemSpellLower] end)
-                             if successBind4 then bind = b4 end
-                        end
+                        local itemSpellLower = itemSpell:lower()
+                        bind = spellKeybinds[itemSpellLower]
                     end
                 end
             end
@@ -524,31 +523,19 @@ function Module:UpdateFrame(frame)
     end
     
     if not bind and itemId then
-        -- Safe indexing with pcall to avoid "table index is secret"
-        local success, b = pcall(function() return spellKeybinds[itemId] end)
-        if success then bind = b end
+        bind = spellKeybinds[itemId]
         
         if not bind then
             local successItem, itemName = pcall(GetItemInfo, itemId)
             if successItem and itemName then
-                local successLower, nameLower = pcall(function() return itemName:lower() end)
-                local usedName = false
-                if successLower and nameLower then
-                     local successBind, b3 = pcall(function() return spellKeybinds[nameLower] end)
-                     if successBind then 
-                         bind = b3 
-                         usedName = true
-                     end
-                end
+                local nameLower = itemName:lower()
+                bind = spellKeybinds[nameLower]
                 
-                if not usedName then
+                if not bind then
                     local successItemSpell, itemSpell = pcall(GetItemSpell, itemId)
                     if successItemSpell and itemSpell then
-                        local successLower2, itemSpellLower = pcall(function() return itemSpell:lower() end)
-                        if successLower2 and itemSpellLower then
-                             local successBind4, b4 = pcall(function() return spellKeybinds[itemSpellLower] end)
-                             if successBind4 then bind = b4 end
-                        end
+                        local itemSpellLower = itemSpell:lower()
+                        bind = spellKeybinds[itemSpellLower]
                     end
                 end
             end
@@ -633,7 +620,7 @@ function Module:UpdateFrameLayout(frameName, shouldCenter)
     if not frame then return end
     
     -- Collect and group children by row (Y-coordinate)
-    local rows = {}
+    local rows = GetPoolTable(rowsPool)
     local tolerance = 5 -- Y-pixel tolerance to be in same row
     
     for i = 1, select("#", frame:GetChildren()) do
@@ -653,14 +640,27 @@ function Module:UpdateFrameLayout(frameName, shouldCenter)
                     end
                 end
                 if not inserted then
-                    table.insert(rows, { y = y, buttons = {child} })
+                    local newRow = GetPoolTable(rowsPool)
+                    newRow.y = y
+                    newRow.buttons = GetPoolTable(buttonsPool)
+                    table.insert(newRow.buttons, child)
+                    table.insert(rows, newRow)
                 end
             end
         end
     end
     
     -- Need at least 2 rows to have something to align relative to the first
-    if #rows < 2 then return end
+    if #rows < 2 then 
+        -- PERF: Cleanup pooled tables
+        for _, row in ipairs(rows) do
+            ReleaseToPool(row.buttons, buttonsPool)
+            row.buttons = nil
+            ReleaseToPool(row, rowsPool)
+        end
+        ReleaseToPool(rows, rowsPool)
+        return 
+    end
     
     -- Sort rows by valid Y
     table.sort(rows, function(a, b) return a.y > b.y end) -- Top first
@@ -714,6 +714,14 @@ function Module:UpdateFrameLayout(frameName, shouldCenter)
             end
         end
     end
+
+    -- PERF: Cleanup pooled tables
+    for _, row in ipairs(rows) do
+        ReleaseToPool(row.buttons, buttonsPool)
+        row.buttons = nil
+        ReleaseToPool(row, rowsPool)
+    end
+    ReleaseToPool(rows, rowsPool)
 end
 
 function Module:UpdateCentering()

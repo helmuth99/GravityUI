@@ -174,220 +174,7 @@ end
 ---------------------------------------------------------------------------
 -- Background
 ---------------------------------------------------------------------------
-local function CreateInspectBackground()
-    local settings = GetSettings()
-    local customColor = settings.panelBgColor
-    local opacity = (settings.panelOpacity or 80) / 100
-    
-    local sr, sg, sb, sa = C.border[1], C.border[2], C.border[3], 1
-    local bgr, bgg, bgb, bga
-    
-    if customColor then
-        bgr, bgg, bgb, bga = customColor[1], customColor[2], customColor[3], opacity
-    else
-        bgr, bgg, bgb, bga = C.bg[1], C.bg[2], C.bg[3], opacity
-        local gui = ns.GUI
-        if gui and gui.GetSkinColor then
-            sr, sg, sb, sa = gui:GetSkinColor()
-        end
-        if gui and gui.GetSkinBgColor then
-            local skinR, skinG, skinB = gui:GetSkinBgColor()
-            bgr, bgg, bgb, bga = skinR, skinG, skinB, opacity
-        end
-    end
-
-    if not InspectFrame.customBg then
-        InspectFrame.customBg = CreateFrame("Frame", nil, InspectFrame, "BackdropTemplate")
-        InspectFrame.customBg:SetBackdrop({
-            bgFile = "Interface\\Buttons\\WHITE8X8",
-            edgeFile = "Interface\\Buttons\\WHITE8X8",
-            edgeSize = 1,
-        })
-        InspectFrame.customBg:SetFrameStrata("BACKGROUND")
-        InspectFrame.customBg:SetFrameLevel(0)
-    end
-
-    InspectFrame.customBg:ClearAllPoints()
-    InspectFrame.customBg:SetPoint("TOPLEFT", InspectFrame, "TOPLEFT", 0, 0)
-    InspectFrame.customBg:SetPoint("BOTTOMRIGHT", InspectFrame, "BOTTOMRIGHT", 2, -50)
-    
-    InspectFrame.customBg:SetBackdropColor(bgr, bgg, bgb, bga)
-    InspectFrame.customBg:SetBackdropBorderColor(sr, sg, sb, sa)
-    InspectFrame.customBg:Show()
-    
-    -- Create a hidden gravity well for unwanted frames
-    if not ns.HiddenFrame then
-        ns.HiddenFrame = CreateFrame("Frame")
-        ns.HiddenFrame:Hide()
-    end
-
-    -- Candidate frames to banish (Strings for globals, tables for parent keys)
-    -- We use this structure to avoid ipairs stopping at the first nil value
-    local banishCandidates = {
-        "InspectFramePortrait", "InspectFrameBg", "InspectFrameInset", "InspectModelFrameBorder",
-        "InspectModelFrameBackgroundTopLeft", "InspectModelFrameBackgroundBotLeft",
-        "InspectModelFrameBackgroundTopRight", "InspectModelFrameBackgroundBotRight",
-        "InspectModelFrameBackgroundOverlay",
-        "InspectFrameTitleBg", "InspectFrameTopBorder", 
-        "InspectFrameBottomBorder", "InspectFrameLeftBorder", "InspectFrameRightBorder",
-        -- Legacy GravityUI targets (Frames that are children, not layers)
-        "InspectModelFrameBorderTopLeft", "InspectModelFrameBorderTopRight", 
-        "InspectModelFrameBorderTop", "InspectModelFrameBorderLeft", 
-        "InspectModelFrameBorderRight", "InspectModelFrameBorderBottomLeft", 
-        "InspectModelFrameBorderBottomRight", "InspectModelFrameBorderBottom", 
-        "InspectModelFrameBorderBottom2",
-        "InspectFramePortraitFrame", "InspectFrameTitleBg", "InspectFrameTopBorder",
-        "InspectFrame.PortraitContainer", "InspectFrame.TitleContainer"
-    }
-    
-    -- Process globals
-    for _, name in ipairs(banishCandidates) do
-        local frame = _G[name]
-        if frame and frame:GetParent() ~= ns.HiddenFrame then
-            frame:SetParent(ns.HiddenFrame)
-            frame:Hide()
-            frame:SetAlpha(0)
-        end
-    end
-
-    -- Process nested keys safely
-    local nestedCandidates = {
-        { InspectFrame, "Background" }, { InspectFrame, "NineSlice" },
-        { InspectFrame, "Inset" }, { InspectFrame, "TitleBg" },
-        { InspectFrame, "TopTileStreaks" }, { InspectFrame, "Bg" },
-        { InspectPaperDollItemsFrame, "InspectTalents" },
-        { InspectModelFrame, "BackgroundOverlay" },
-        { InspectPaperDollFrame, "ClassBackground" },
-    }
-
-    for _, entry in ipairs(nestedCandidates) do
-        local parent, key = entry[1], entry[2]
-        if parent and parent[key] then
-            local frame = parent[key]
-            if frame:GetParent() ~= ns.HiddenFrame then
-                frame:SetParent(ns.HiddenFrame)
-                frame:Hide()
-                frame:SetAlpha(0)
-            end
-        end
-    end
-
-    -- Helper to banish a texture by re-parenting
-    local function BanishRegion(region)
-        if not region then return end
-        if region:GetParent() ~= ns.HiddenFrame then
-            region:SetParent(ns.HiddenFrame)
-        end
-        region:SetAlpha(0)
-    end
-
-    -- Banish InspectFrame native regions (borders, backgrounds)
-    for i = 1, InspectFrame:GetNumRegions() do
-        local region = select(i, InspectFrame:GetRegions())
-        if region and region.GetObjectType and region:GetObjectType() == "Texture" then
-            if region ~= InspectFrame.customBg then
-                BanishRegion(region)
-            end
-        end
-    end
-
-    -- Banish InspectPaperDollFrame regions (Class Background)
-    if InspectPaperDollFrame then
-        for i = 1, InspectPaperDollFrame:GetNumRegions() do
-            local region = select(i, InspectPaperDollFrame:GetRegions())
-            if region and region.GetObjectType and region:GetObjectType() == "Texture" then
-                 BanishRegion(region)
-            end
-        end
-    end
-
-    -- Clean InspectModelFrame
-    if InspectModelFrame then
-        InspectModelFrame:SetAlpha(1)
-        -- Disable ALL draw layers
-        if InspectModelFrame.DisableDrawLayer then
-            InspectModelFrame:DisableDrawLayer("BACKGROUND")
-            InspectModelFrame:DisableDrawLayer("BORDER")
-            InspectModelFrame:DisableDrawLayer("ARTWORK")
-            InspectModelFrame:DisableDrawLayer("OVERLAY")
-        end
-        
-        -- Banish background regions
-        for i = 1, InspectModelFrame:GetNumRegions() do
-            local region = select(i, InspectModelFrame:GetRegions())
-            if region and region.GetObjectType and region:GetObjectType() == "Texture" then
-                BanishRegion(region)
-            end
-        end
-        
-        -- Handle Children
-        for i = 1, InspectModelFrame:GetNumChildren() do
-            local child = select(i, InspectModelFrame:GetChildren())
-            if child and child ~= InspectModelFrame.ControlFrame then 
-                 if child:GetObjectType() == "Frame" or child:GetObjectType() == "Button" then
-                      if child:GetParent() ~= ns.HiddenFrame then
-                          child:SetParent(ns.HiddenFrame)
-                      end
-                 end
-            end
-        end
-
-        if InspectModelFrame.SetBackdrop then
-            InspectModelFrame:SetBackdrop(nil)
-        end
-        if InspectModelFrame.ControlFrame then
-            InspectModelFrame.ControlFrame:Hide()
-            InspectModelFrame.ControlFrame:SetAlpha(0)
-        end
-    end
-
-    if InspectPaperDollFrame and InspectPaperDollFrame.DisableDrawLayer then
-        InspectPaperDollFrame:DisableDrawLayer("BACKGROUND")
-        InspectPaperDollFrame:DisableDrawLayer("BORDER")
-        InspectPaperDollFrame:DisableDrawLayer("ARTWORK")
-        InspectPaperDollFrame:DisableDrawLayer("OVERLAY")
-    end
-
-    -- Texture Hunter: Periodic check to kill any large textures that reappear
-    -- This handles dynamically created backgrounds or those that reset on Unit change
-    if not InspectFrame._textureHunterHooked then
-        InspectFrame:HookScript("OnUpdate", function(self, elapsed)
-            self._timer = (self._timer or 0) + elapsed
-            if self._timer > 1.0 then -- Check every 1.0s (Optimization)
-                self._timer = 0
-                
-                -- Hunt in InspectModelFrame
-                if InspectModelFrame then
-                    for i = 1, InspectModelFrame:GetNumRegions() do
-                        local region = select(i, InspectModelFrame:GetRegions())
-                        if region and region.GetObjectType and region:GetObjectType() == "Texture" then
-                            -- Any texture on the model frame is a background candidate
-                            -- The model itself is NOT a texture
-                            if region:GetAlpha() > 0 then
-                                region:SetAlpha(0)
-                                region:SetTexture("")
-                            end
-                        end
-                    end
-                end
-
-                -- Hunt in InspectPaperDollFrame
-                if InspectPaperDollFrame then
-                    for i = 1, InspectPaperDollFrame:GetNumRegions() do
-                        local region = select(i, InspectPaperDollFrame:GetRegions())
-                        if region and region.GetObjectType and region:GetObjectType() == "Texture" then
-                             if region:GetAlpha() > 0 then
-                                region:SetAlpha(0)
-                                region:SetTexture("")
-                             end
-                        end
-                    end
-                end
-            end
-        end)
-        InspectFrame._textureHunterHooked = true
-    end
-end
+-- (Duplicate function removed, merged into refined Version below)
 
 ---------------------------------------------------------------------------
 -- Helper: Enchant Detection
@@ -1159,13 +946,6 @@ local function CreateInspectBackground()
     InspectFrame.customBg:SetBackdropBorderColor(sr, sg, sb, sa)
     InspectFrame.customBg:Show()
     
-    if InspectFramePortrait then InspectFramePortrait:Hide() end
-    if InspectFrame.Background then InspectFrame.Background:Hide() end
-    if InspectFrame.NineSlice then InspectFrame.NineSlice:Hide() end
-    if InspectFrameBg then InspectFrameBg:Hide() end
-    if InspectFrameInset then InspectFrameInset:Hide() end
-    if InspectFrame.Inset then InspectFrame.Inset:Hide() end
-
     -- Create a hidden gravity well if needed
     if not ns.HiddenFrame then
         ns.HiddenFrame = CreateFrame("Frame")
@@ -1208,7 +988,8 @@ local function CreateInspectBackground()
         { InspectFrame, "TopTileStreaks" }, { InspectFrame, "Bg" },
         { InspectModelFrame, "BackgroundOverlay" },
         { InspectPaperDollFrame, "ClassBackground" },
-        { InspectModelFrame, "ControlFrame" }
+        { InspectModelFrame, "ControlFrame" },
+        { InspectPaperDollItemsFrame, "InspectTalents" }
     }
 
     for _, entry in ipairs(nestedCandidates) do
@@ -1223,6 +1004,15 @@ local function CreateInspectBackground()
         end
     end
 
+    -- Helper to banish a texture by re-parenting and stripping
+    local function BanishRegion(region)
+        if not region then return end
+        if region:GetParent() ~= ns.HiddenFrame then
+            pcall(region.SetParent, region, ns.HiddenFrame)
+        end
+        region:SetAlpha(0)
+    end
+
     -- Nuclear Option: Disable Draw Layers on Model/PaperDoll
     if InspectModelFrame then
         if InspectModelFrame.DisableDrawLayer then
@@ -1231,12 +1021,48 @@ local function CreateInspectBackground()
             InspectModelFrame:DisableDrawLayer("ARTWORK")
             InspectModelFrame:DisableDrawLayer("OVERLAY")
         end
+        -- Banish background regions
+        for i = 1, InspectModelFrame:GetNumRegions() do
+            BanishRegion(select(i, InspectModelFrame:GetRegions()))
+        end
     end
-    if InspectPaperDollFrame and InspectPaperDollFrame.DisableDrawLayer then
-        InspectPaperDollFrame:DisableDrawLayer("BACKGROUND")
-        InspectPaperDollFrame:DisableDrawLayer("BORDER")
-        InspectPaperDollFrame:DisableDrawLayer("ARTWORK")
-        InspectPaperDollFrame:DisableDrawLayer("OVERLAY")
+    if InspectPaperDollFrame then
+        if InspectPaperDollFrame.DisableDrawLayer then
+            InspectPaperDollFrame:DisableDrawLayer("BACKGROUND")
+            InspectPaperDollFrame:DisableDrawLayer("BORDER")
+            InspectPaperDollFrame:DisableDrawLayer("ARTWORK")
+            InspectPaperDollFrame:DisableDrawLayer("OVERLAY")
+        end
+        for i = 1, InspectPaperDollFrame:GetNumRegions() do
+            BanishRegion(select(i, InspectPaperDollFrame:GetRegions()))
+        end
+    end
+
+    -- Texture Hunter: Periodic check to kill any large textures that reappear
+    if not InspectFrame._textureHunterHooked then
+        InspectFrame:HookScript("OnUpdate", function(self, elapsed)
+            self._timer = (self._timer or 0) + elapsed
+            if self._timer > 1.0 then 
+                self._timer = 0
+                if InspectModelFrame then
+                    for i = 1, InspectModelFrame:GetNumRegions() do
+                        local region = select(i, InspectModelFrame:GetRegions())
+                        if region and region.GetObjectType and region:GetObjectType() == "Texture" then
+                            if region:GetAlpha() > 0 then region:SetAlpha(0); region:SetTexture("") end
+                        end
+                    end
+                end
+                if InspectPaperDollFrame then
+                    for i = 1, InspectPaperDollFrame:GetNumRegions() do
+                        local region = select(i, InspectPaperDollFrame:GetRegions())
+                        if region and region.GetObjectType and region:GetObjectType() == "Texture" then
+                             if region:GetAlpha() > 0 then region:SetAlpha(0); region:SetTexture("") end
+                        end
+                    end
+                end
+            end
+        end)
+        InspectFrame._textureHunterHooked = true
     end
 end
 
