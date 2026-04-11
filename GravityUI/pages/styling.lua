@@ -1317,6 +1317,9 @@ local function BuildChat(parent)
     MakeRow("Format", "dropdown", timeOptions, "format", dbChat.timestamps, RefreshChat)
     MakeRow("Timestamp Color", "color", "color", dbChat.timestamps, RefreshChat)
 
+    MakeSubHeader("Chat History")
+    MakeRow("Enable Chat History", "checkbox", "enabled", dbChat.history, RefreshChat)
+
     MakeSubHeader("UI Cleanup")
     MakeRow("Hide Chat Buttons", "checkbox", "hideButtons", dbChat, RefreshChat)
     MakeRow("Unclamp Chat (Allow off-screen)", "checkbox", "unclamp", dbChat, RefreshChat)

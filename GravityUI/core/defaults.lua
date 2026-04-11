@@ -602,7 +602,7 @@ ns.Defaults = {
                 },
             },
             history = {
-                enabled = true,
+                enabled = false,
                 maxLines = 100,
                 saveLoot = false,
             },
