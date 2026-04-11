@@ -836,10 +836,11 @@ local function SaveChatMessage(event, ...)
     if not ns.db.char.chatHistory then ns.db.char.chatHistory = {} end
     local history = ns.db.char.chatHistory
     
-    -- Store timestamp and raw event arguments
+    -- Store timestamp, raw event arguments, and the exact count (n) to handle nil holes
     tinsert(history, {
         time = time(),
         event = event,
+        n = select("#", ...),
         args = { ... }
     })
     
@@ -868,12 +869,24 @@ local function RestoreChatHistory()
     
     -- Re-trigger events for each chat frame
     for _, entry in ipairs(history) do
+        -- SANITIZATION: GUIDs (arg12) and BNSenderIDs (arg13) are 'secret' values
+        -- that cause 'string conversion on secret string' crashes when touched by addons.
+        -- We nullify them to allow taint-safe replay while keeping the text and sender.
+        if entry.args then
+            entry.args[12] = nil -- senderGUID
+            entry.args[13] = nil -- bnSenderID
+        end
+
         for i = 1, 10 do
             local chatFrame = _G["ChatFrame"..i]
-            if chatFrame and chatFrame:IsEventRegistered(entry.event) then
+            -- Validate entry has an event and text (arg1) before attempting replay
+            if chatFrame and chatFrame:IsEventRegistered(entry.event) and entry.args and entry.args[1] then
                 local onEvent = chatFrame:GetScript("OnEvent")
                 if onEvent then
-                    onEvent(chatFrame, entry.event, unpack(entry.args))
+                    -- Use pcall to prevent one corrupt entry from breaking the whole restoration
+                    -- Use entry.n (if available) or #entry.args for unpack range
+                    local count = entry.n or #entry.args
+                    pcall(onEvent, chatFrame, entry.event, unpack(entry.args, 1, count))
                 end
             end
         end
