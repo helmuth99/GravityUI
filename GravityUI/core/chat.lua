@@ -871,7 +871,10 @@ local function RestoreChatHistory()
         for i = 1, 10 do
             local chatFrame = _G["ChatFrame"..i]
             if chatFrame and chatFrame:IsEventRegistered(entry.event) then
-                ChatFrame_MessageEventHandler(chatFrame, entry.event, unpack(entry.args))
+                local onEvent = chatFrame:GetScript("OnEvent")
+                if onEvent then
+                    onEvent(chatFrame, entry.event, unpack(entry.args))
+                end
             end
         end
     end
