@@ -259,6 +259,7 @@ local function GetGemInfo(unit, slotId)
     if not itemLink then return {}, 0 end
     local gems = {}
     local totalSockets = 0
+
     -- Count sockets via tooltip
     local data = C_TooltipInfo.GetInventoryItem(unit, slotId)
     if data and data.lines then
@@ -266,20 +267,23 @@ local function GetGemInfo(unit, slotId)
             if line.type == 3 then totalSockets = totalSockets + 1 end
         end
     end
-    -- Get filled
+
+    -- Get filled gems
     local filled = 0
-    for i=1, 4 do
-        local _, gemLink = GetItemGem(itemLink, i)
-        if gemLink then
+    for i = 1, 4 do
+        -- Use C_Item.GetItemGemID for Retail stability
+        local gemID = C_Item.GetItemGemID(itemLink, i)
+        if gemID then
             filled = filled + 1
-            local itemID = GetItemInfoInstant(gemLink)
-            local texture = itemID and C_Item.GetItemIconByID(itemID)
-            table.insert(gems, { filled=true, icon=texture, link=gemLink })
+            local texture = C_Item.GetItemIconByID(gemID)
+            local _, gemLink = GetItemInfo(gemID)
+            table.insert(gems, { filled = true, icon = texture, link = gemLink or ("item:"..gemID) })
         end
     end
+
     if totalSockets < filled then totalSockets = filled end
-    for i=1, totalSockets - filled do
-        table.insert(gems, { filled=false, type="Empty" })
+    for i = 1, totalSockets - filled do
+        table.insert(gems, { filled = false, type = "Empty" })
     end
     return gems, totalSockets
 end
@@ -667,8 +671,12 @@ local function UpdateInspectILvlDisplay()
     
     -- Forcefully update 3D model to actually match the current unit
     -- (Bypasses Blizzard bug where global inspect cache holds previous target's model)
+    -- Added guard to prevent jitter by redundant loading
     if InspectModelFrame and InspectModelFrame.SetUnit then
-        InspectModelFrame:SetUnit(unit)
+        if InspectModelFrame._guiGUID ~= guid then
+            InspectModelFrame:SetUnit(unit)
+            InspectModelFrame._guiGUID = guid
+        end
     end
     
     local color = RAID_CLASS_COLORS[class] or {r=1, g=1, b=1}

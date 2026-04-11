@@ -6,8 +6,7 @@ local ADDON_NAME, ns = ...
 local C = ns.Colors
 
 ns.Chat = {}
-
--- Local references
+local historyFrame = nil
 local skinnedFrames = {}
 local urlPopup = nil
 local chatCopyFrame = nil
@@ -794,7 +793,6 @@ local function CreateChatCopyFrame()
     selectAllBtn:SetScript("OnLeave", function(self)
         self:SetBackdropBorderColor(0.2, 0.2, 0.2, 1)
     end)
-    
     selectAllBtn:SetScript("OnClick", function()
         editBox:SetFocus()
         editBox:HighlightText()
@@ -814,6 +812,89 @@ local function CreateChatCopyFrame()
     resizeBtn:SetScript("OnMouseUp", function() chatCopyFrame:StopMovingOrSizing() end)
 
     return chatCopyFrame
+end
+
+---------------------------------------------------------------------------
+-- Chat History (Persistence)
+---------------------------------------------------------------------------
+
+local HISTORY_EVENTS = {
+    ["CHAT_MSG_SAY"] = true, ["CHAT_MSG_YELL"] = true,
+    ["CHAT_MSG_WHISPER"] = true, ["CHAT_MSG_WHISPER_INFORM"] = true,
+    ["CHAT_MSG_PARTY"] = true, ["CHAT_MSG_PARTY_LEADER"] = true,
+    ["CHAT_MSG_RAID"] = true, ["CHAT_MSG_RAID_LEADER"] = true,
+    ["CHAT_MSG_GUILD"] = true, ["CHAT_MSG_OFFICER"] = true,
+    ["CHAT_MSG_INSTANCE_CHAT"] = true, ["CHAT_MSG_INSTANCE_CHAT_LEADER"] = true,
+    ["CHAT_MSG_EMOTE"] = true,
+}
+
+local function SaveChatMessage(event, ...)
+    local settings = GetSettings()
+    if not settings or not settings.history or not settings.history.enabled then return end
+    if not ns.db or not ns.db.char then return end
+    
+    if not ns.db.char.chatHistory then ns.db.char.chatHistory = {} end
+    local history = ns.db.char.chatHistory
+    
+    -- Store timestamp and raw event arguments
+    tinsert(history, {
+        time = time(),
+        event = event,
+        args = { ... }
+    })
+    
+    -- Prune
+    local max = settings.history.maxLines or 100
+    while #history > max do
+        table.remove(history, 1)
+    end
+end
+
+local function RestoreChatHistory()
+    local settings = GetSettings()
+    if not settings or not settings.history or not settings.history.enabled then return end
+    if not ns.db or not ns.db.char or not ns.db.char.chatHistory then return end
+    
+    local history = ns.db.char.chatHistory
+    if #history == 0 then return end
+    
+    -- Block our own capture during restoration to avoid loops
+    if historyFrame then historyFrame:UnregisterAllEvents() end
+    
+    -- Restoration Header
+    local r, g, b = ns.GetAccentColor()
+    local hex = string.format("%02x%02x%02x", r*255, g*255, b*255)
+    ChatFrame1:AddMessage("|cff"..hex.."--- GravityUI: History Loaded ---|r")
+    
+    -- Re-trigger events for each chat frame
+    for _, entry in ipairs(history) do
+        for i = 1, 10 do
+            local chatFrame = _G["ChatFrame"..i]
+            if chatFrame and chatFrame:IsEventRegistered(entry.event) then
+                ChatFrame_MessageEventHandler(chatFrame, entry.event, unpack(entry.args))
+            end
+        end
+    end
+    
+    -- Re-register capture events
+    if historyFrame then
+        for event in pairs(HISTORY_EVENTS) do
+            historyFrame:RegisterEvent(event)
+        end
+    end
+end
+
+local function SetupChatHistory()
+    if historyFrame then return end
+    
+    historyFrame = CreateFrame("Frame")
+    historyFrame:SetScript("OnEvent", function(self, event, ...)
+        SaveChatMessage(event, ...)
+    end)
+    
+    for event in pairs(HISTORY_EVENTS) do
+        historyFrame:RegisterEvent(event)
+    end
 end
 
 local function ShowChatCopyFrame(chatFrame)
@@ -1373,6 +1454,12 @@ function ns.Chat.Init()
     ApplyTimestampCVar()
 
     SetupURLClickHandler()
+    SetupChatHistory()
+    
+    -- Restore history after a small delay to ensure frames are ready
+    if settings and settings.history and settings.history.enabled then
+        C_Timer.After(1.5, RestoreChatHistory)
+    end
     
     -- Ensure newly created or modified windows are styled
     hooksecurefunc("FCF_OpenNewWindow", function() ns.Chat.Refresh() end)

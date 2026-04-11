@@ -601,6 +601,11 @@ ns.Defaults = {
                     [4] = 1,
                 },
             },
+            history = {
+                enabled = true,
+                maxLines = 100,
+                saveLoot = false,
+            },
             unclamp = true,
             editBox =             {
                 enabled = true,
