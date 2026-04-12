@@ -200,7 +200,7 @@ local function SkinHeaderFrame(header, isMain)
         end
     end
     
-    -- 2. Hide Native Art (Textures)
+    -- 2. Hide Native Art (Textures) - SAFETY CHECK: Don't hide textures if they look like Icons or Widgets
     local regions = {header:GetRegions()}
     for _, region in ipairs(regions) do
         if region:IsObjectType("Texture") then
@@ -209,18 +209,24 @@ local function SkinHeaderFrame(header, isMain)
             if header.GuiBg and region == header.GuiBg then isSafe = true end
             if header.AccentBar and region == header.AccentBar then isSafe = true end
             
+            -- PROTECT: If texture has a specific name or is part of a widget, don't nuke it
+            local name = region:GetName() or ""
+            if name:find("Icon") or name:find("Widget") or name:find("Timer") then
+                isSafe = true
+            end
+
             if not isSafe then
                 region:SetAlpha(0)
-                region:SetTexture(nil)
+                -- region:SetTexture(nil) -- Too aggressive, might break things that are shown later
                 region:Hide()
             end
         end
     end
     
-    -- Explicit Nuke
+    -- Explicit Nuke (Only known Blizzard header art)
     if header.Background then header.Background:Hide(); header.Background:SetAlpha(0) end
     if header.Line then header.Line:Hide(); header.Line:SetAlpha(0) end
-    if header.Bar then header.Bar:Hide(); header.Bar:SetAlpha(0) end
+    -- if header.Bar then header.Bar:Hide(); header.Bar:SetAlpha(0) end -- Some widgets use .Bar!
     
     -- 3. Style Text
     if textRegion then
@@ -329,22 +335,28 @@ local function FindHeadersRecursive(frame, depth)
         local isHeader = false
         local isMain = false
         
-        -- Method A: Structure Check (Most Reliable)
-        -- Headers typically have a MinimizeButton and a Background (even if we hide it)
-        if child.MinimizeButton and child.Background then
-            isHeader = true
-        end
+        -- EXCLUSION: Skip frames that are known to be part of the content (Widgets, Timers, etc.)
+        local name = child:GetName() or ""
+        local isContent = name:find("Timer") or name:find("Widget") or name:find("Block")
         
-        -- Method B: Keywords (Fallback)
-        if not isHeader then
-            for j = 1, select("#", child:GetRegions()) do
-                local r = select(j, child:GetRegions())
-                if r:IsObjectType("FontString") then
-                    local t = r:GetText()
-                    if t then
-                        if t == "All Objectives" or t == "Alle Ziele" then
-                            isHeader = true
-                            isMain = true
+        if not isContent then
+            -- Method A: Structure Check (Most Reliable)
+            -- Headers typically have a MinimizeButton and a Background (even if we hide it)
+            if child.MinimizeButton and child.Background then
+                isHeader = true
+            end
+            
+            -- Method B: Keywords (Fallback)
+            if not isHeader then
+                for j = 1, select("#", child:GetRegions()) do
+                    local r = select(j, child:GetRegions())
+                    if r:IsObjectType("FontString") then
+                        local t = r:GetText()
+                        if t then
+                            if t == "All Objectives" or t == "Alle Ziele" then
+                                isHeader = true
+                                isMain = true
+                            end
                         end
                     end
                 end
@@ -356,6 +368,7 @@ local function FindHeadersRecursive(frame, depth)
             if child == ObjectiveTrackerFrame.HeaderMenu then isMain = true end
             SkinHeaderFrame(child, isMain)
         else
+            -- If it's a content frame, specifically look into it for widgets but don't skin as header
             FindHeadersRecursive(child, depth + 1)
         end
     end
