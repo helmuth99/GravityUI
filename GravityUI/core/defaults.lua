@@ -970,7 +970,7 @@ ns.Defaults = {
         LowLatencyMode = "3",
         maxFPSBk = "30",
         spellVisualDensityFilterSetting = "1",
-        RenderScale = "0.83",
+        RenderScale = "0.86",
         rippleDetail = "0",
         graphicsLiquidDetail = "1",
         graphicsShadowQuality = "0",
@@ -1020,7 +1020,7 @@ ns.Defaults = {
         graphicsEnvironmentDetail = "0",
         TerrainLodDiv = "512",
         physicsLevel = "1",
-        textureFilteringMode = "5",
+        textureFilteringMode = "3",
     },
 -- Legacy QOL table removed
     datapanels =     {

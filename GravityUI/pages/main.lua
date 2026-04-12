@@ -13,10 +13,10 @@ local Gravity_FPS_CVARS = {
     ["LowLatencyMode"] = "3",
     ["GxCompatOptionalGpuFeatures"] = "1",
     ["MSAAQuality"] = "0",
-    ["ffxAntiAliasingMode"] = "4",              -- CMAA2 (NOTE: may require game restart)
+    ["ffxAntiAliasingMode"] = "0",              -- None (was CMAA2)
     ["alphaTestMSAA"] = "1",
     ["cameraFov"] = "90",
-    ["RenderScale"] = "1",                      -- Native 100% (was 0.83 = blurry upscale!)
+    ["RenderScale"] = "0.86",                   -- 86% Render Scale (was 1.0)
 
     -- Graphics Quality
     ["graphicsQuality"] = "9",
@@ -40,7 +40,7 @@ local Gravity_FPS_CVARS = {
 
     -- Advanced Tab
     ["gxTripleBuffer"] = "0",
-    ["textureFilteringMode"] = "5",             -- 16x Anisotropic (was 2=4x, ~free quality)
+    ["textureFilteringMode"] = "3",             -- 8x Anisotropic (was 16x)
     ["shadowRt"] = "0",
     ["rtShadowQuality"] = "0",
     ["ResampleQuality"] = "3",                  -- FidelityFX SR 1.0 (was 4=invalid value!)
@@ -53,7 +53,7 @@ local Gravity_FPS_CVARS = {
     ["useMaxFPSBk"] = "1",                      -- Enable background FPS cap
     ["targetFPS"] = "61",
     ["useTargetFPS"] = "0",
-    ["ResampleSharpness"] = "0",               -- Neutral (was 0.2)
+    ["ResampleSharpness"] = "0.2",               -- Sharpness (was 0)
     ["cameraShake"] = "0",                     -- Disable camera shake
     ["Contrast"] = "75",
     ["Brightness"] = "50",
