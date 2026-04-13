@@ -249,7 +249,15 @@ end
 
 -- 5. Missing Buffs
 local function BuildMissingBuffs(parent)
+    -- Prevent overlapping elements by clearing existing content if we are rebuilding
+    if parent.scroll then
+        parent.scroll:Hide()
+        parent.scroll:SetParent(nil)
+        parent.scroll = nil
+    end
+
     local scroll, content = GUI:CreateScrollableContent(parent)
+    parent.scroll = scroll
     scroll:SetAllPoints()
     local db = ns.GetDB(); if not db then return end
     local rbDb = db.raidBuffs
@@ -305,7 +313,7 @@ local function BuildMissingBuffs(parent)
         local cbSplit = CreateStyledCheck(row, "Detach / Split", rbDb.splitCategories, key, refresh); cbSplit:SetPoint("LEFT", 220, 0)
         content.rowCount = content.rowCount + 0.8
     end
-    AddCategoryControl("Raid Buffs", "raid"); AddCategoryControl("Self Buffs", "self"); AddCategoryControl("Presence Buffs", "presence"); AddCategoryControl("Targeted Buffs", "targeted"); AddCategoryControl("Custom Buffs", "custom")
+    AddCategoryControl("Raid Buffs", "raid"); AddCategoryControl("Self Buffs", "self"); AddCategoryControl("Presence Buffs", "presence"); AddCategoryControl("Targeted Buffs", "targeted"); AddCategoryControl("Consumables", "consumables"); AddCategoryControl("Custom Buffs", "custom")
     local function AddBuffToggle(buff)
         local row = CreateFrame("Frame", nil, content); row:SetSize(GUI.CONTENT_WIDTH-20, 24); row:SetPoint("TOPLEFT", 10, -10-(content.rowCount*(ROW_HEIGHT + 5)))
         local cb = CreateFrame("Button", nil, row, "BackdropTemplate"); cb:SetSize(20, 20); cb:SetPoint("LEFT", 0, 0); cb:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8x8", edgeFile="Interface\\Buttons\\WHITE8x8", edgeSize=1}); cb:SetBackdropColor(0.15, 0.15, 0.15, 1); cb:SetBackdropBorderColor(0, 0, 0, 1)
@@ -321,7 +329,18 @@ local function BuildMissingBuffs(parent)
     content.rowCount = content.rowCount + 0.8; if RB.RAID_BUFFS then CreateSubLabel(content, "Raid Buffs (Group)"); for _, buff in ipairs(RB.RAID_BUFFS) do AddBuffToggle(buff) end end
     content.rowCount = content.rowCount + 0.5; if RB.PRESENCE_BUFFS then CreateSubLabel(content, "Presence Buffs (One Per Group)"); for _, buff in ipairs(RB.PRESENCE_BUFFS) do AddBuffToggle(buff) end end
     content.rowCount = content.rowCount + 0.5; if RB.TARGETED_BUFFS then CreateSubLabel(content, "Targeted Buffs (On Others)"); for _, buff in ipairs(RB.TARGETED_BUFFS) do AddBuffToggle(buff) end end
-    content.rowCount = content.rowCount + 0.5; if RB.SELF_BUFFS then CreateSubLabel(content, "Self Buffs (Personal)"); for _, buff in ipairs(RB.SELF_BUFFS) do AddBuffToggle(buff) end end
+    content.rowCount = content.rowCount + 0.5; 
+    if RB.SELF_BUFFS then 
+        CreateSubLabel(content, "Self Buffs (Personal)")
+        for _, buff in ipairs(RB.SELF_BUFFS) do 
+            if buff.groupId ~= "consumables" then AddBuffToggle(buff) end
+        end
+        content.rowCount = content.rowCount + 0.5
+        CreateSubLabel(content, "Self Buffs (Consumables)")
+        for _, buff in ipairs(RB.SELF_BUFFS) do 
+            if buff.groupId == "consumables" then AddBuffToggle(buff) end
+        end
+    end
     content.rowCount = content.rowCount + 0.8; CreateSubLabel(content, "Custom Buffs")
     local infoBox = GUI:CreateInfoBox(content, "|cffFFCC00Info:|r Add custom spellids for buffs, food or potions.\nYou can track multiple buffs (e.g. food) by separating their IDs with a comma.\nUse |cff00ccff/guienchants|r to find your weapon enchant and add your enchantid like this: |cff00ccff7495:224107|r (enchantid:itemid)")
     infoBox:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT + 5))); content.rowCount = content.rowCount + (infoBox:GetHeight() / (ROW_HEIGHT + 5)) + 0.2

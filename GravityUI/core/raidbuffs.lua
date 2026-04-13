@@ -88,6 +88,7 @@ local TARGETED_BUFFS = {
         name = "Earth Shield",
         class = "SHAMAN",
         missingText = "NO\nES",
+        requiresTalentSpellID = 974,
         infoTooltip = "May Show Extra Icon|Until you cast this, you might see both this and the Water/Lightning Shield reminder.",
     },
     {
@@ -104,6 +105,7 @@ local TARGETED_BUFFS = {
         name = "Symbiotic Relationship",
         class = "DRUID",
         missingText = "NO\nLINK",
+        requiresTalentSpellID = 474750,
     },
 }
 
@@ -115,6 +117,7 @@ local SELF_BUFFS = {
         class = "PALADIN",
         missingText = "NO\nRITE",
         enchantID = 7144,
+        requiresTalentSpellID = 433583,
         groupId = "paladinRites",
     },
     {
@@ -124,6 +127,7 @@ local SELF_BUFFS = {
         class = "PALADIN",
         missingText = "NO\nRITE",
         enchantID = 7143,
+        requiresTalentSpellID = 433568,
         groupId = "paladinRites",
     },
     {
@@ -158,6 +162,7 @@ local SELF_BUFFS = {
         name = "Shadowform",
         class = "PRIEST",
         missingText = "NO\nFORM",
+        requiresTalentSpellID = 232698,
         customCheck = function()
             -- Shadowform is a shapeshift stance, NOT a normal aura.
             -- C_UnitAuras.GetUnitAuraBySpellID will NOT detect it.
@@ -188,6 +193,7 @@ local SELF_BUFFS = {
         class = "SHAMAN",
         missingText = "NO\nEL",
         enchantID = 6498,
+        requiresTalentSpellID = 382021,
         groupId = "shamanImbues",
     },
     {
@@ -209,34 +215,74 @@ local SELF_BUFFS = {
         groupId = "shamanImbues",
     },
     {
-        spellID = 974,
-        buffIdOverride = 383648,
-        key = "earthShieldSelfEO",
-        name = "Earth Shield (Self)",
-        class = "SHAMAN",
-        missingText = "NO\nSELF ES",
-        requiresTalentSpellID = 383010,
-        groupId = "shamanShields",
-    },
-    {
         spellID = { 192106, 52127 },
-        key = "waterLightningShieldEO",
+        key = "shamanShieldBasic",
         name = "Water/Lightning Shield",
         class = "SHAMAN",
         missingText = "NO\nSHIELD",
-        requiresTalentSpellID = 383010,
         groupId = "shamanShields",
         iconByRole = { HEALER = 52127, DAMAGER = 192106, TANK = 192106 },
     },
     {
-        spellID = { 974, 192106, 52127 },
-        key = "shamanShieldBasic",
-        name = "Shield (No Talent)",
+        spellID = 974,
+        buffIdOverride = 383648,
+        key = "earthShieldSelf",
+        name = "Earth Shield (Self)",
         class = "SHAMAN",
-        missingText = "NO\nSHIELD",
-        excludeTalentSpellID = 383010,
+        missingText = "NO\nSELF ES",
+        requiresTalentSpellID = 974,
         groupId = "shamanShields",
-        iconByRole = { HEALER = 52127, DAMAGER = 192106, TANK = 192106 },
+    },
+    {
+        spellID = { 192106, 52127, 383648 },
+        key = "shamanShieldExtra",
+        name = "Extra Shield (Elemental Orbit)",
+        class = "SHAMAN",
+        missingText = "NO\nEXTRA",
+        requiresTalentSpellID = 383010,
+        groupId = "shamanShields",
+        customCheck = function()
+            local count = 0
+            local shields = { 192106, 52127, 383648 }
+            for _, id in ipairs(shields) do
+                if C_UnitAuras.GetUnitAuraBySpellID("player", id) then count = count + 1 end
+            end
+            return count < 2
+        end,
+    },
+    -- ============================================================================
+    -- CONSUMABLES (Midnight Expansion)
+    -- ============================================================================
+    {
+        spellID = 136000, -- Well Fed Icon
+        iconOverride = 136000,
+        key = "midnightFood",
+        name = "Food (Midnight)",
+        missingText = "NO\nFOOD",
+        groupId = "consumables",
+        customCheck = function()
+            -- Check for any aura with the canonical Well Fed icon (136000)
+            for i = 1, 40 do
+                local aura = C_UnitAuras.GetAuraDataByIndex("player", i, "HELPFUL")
+                if not aura then break end
+                if aura.icon == 136000 then return false end -- Found food
+            end
+            return true -- Missing food
+        end,
+    },
+    {
+        spellID = { 1235111, 1235110, 1235108, 1235057 }, -- Midnight Flasks
+        key = "midnightFlask",
+        name = "Flask (Midnight)",
+        missingText = "NO\nFLASK",
+        groupId = "consumables",
+    },
+    {
+        spellID = 1264426, -- Void-Touched Augment Rune
+        key = "midnightRune",
+        name = "Augment Rune",
+        missingText = "NO\nRUNE",
+        groupId = "consumables",
     },
 }
 
@@ -245,6 +291,7 @@ local BUFF_GROUPS = {
     shamanImbues = { displayName = "Shaman Imbues" },
     paladinRites = { displayName = "Paladin Rites" },
     shamanShields = { displayName = "Shaman Shields" },
+    consumables = { displayName = "Consumables" },
 }
 
 -- Expose for Options Page
@@ -254,12 +301,13 @@ RaidBuffs.TARGETED_BUFFS = TARGETED_BUFFS
 RaidBuffs.SELF_BUFFS = SELF_BUFFS
 RaidBuffs.BUFF_GROUPS = BUFF_GROUPS
 
-local CATEGORIES = { "raid", "presence", "targeted", "self", "custom" }
+local CATEGORIES = { "raid", "presence", "targeted", "self", "consumables", "custom" }
 local CATEGORY_LABELS = {
     raid = "Raid",
     presence = "Presence",
     targeted = "Targeted",
     self = "Self",
+    consumables = "Consumables",
     custom = "Custom",
 }
 
@@ -290,6 +338,7 @@ local DEFAULTS = {
         presence = false,
         targeted = false,
         self = false,
+        consumables = false,
         custom = false,
     },
     categorySettings = {
@@ -300,12 +349,14 @@ local DEFAULTS = {
             growDirection = "CENTER",
             iconZoom = 8,
             borderSize = 2,
+            enabled = true,
         },
         raid = { position = { point = "CENTER", x = 0, y = 60 } },
         presence = { position = { point = "CENTER", x = 0, y = 20 } },
         targeted = { position = { point = "CENTER", x = 0, y = -20 } },
         self = { position = { point = "CENTER", x = 0, y = -60 } },
-        custom = { position = { point = "CENTER", x = 0, y = -100 } },
+        consumables = { position = { point = "CENTER", x = 0, y = -100 } },
+        custom = { position = { point = "CENTER", x = 0, y = -140 } },
     },
 }
 
@@ -341,6 +392,7 @@ local visibleBuffs = {
     presence = {},
     targeted = {},
     self = {},
+    consumables = {},
     custom = {},
 }
 
@@ -362,6 +414,20 @@ local function GetSettings()
          local old = CopyTable(ns.db.profile.raidBuffs)
          ns.db.profile.raidBuffs = CopyTable(DEFAULTS)
          if old.position then ns.db.profile.raidBuffs.position = old.position end
+    end
+    -- Safe Check for Categories (Migration for existing users)
+    if ns.db.profile.raidBuffs.categorySettings then
+        for _, catKey in ipairs(CATEGORIES) do
+            if not ns.db.profile.raidBuffs.categorySettings[catKey] then
+                ns.db.profile.raidBuffs.categorySettings[catKey] = DEFAULTS.categorySettings[catKey] or { position = { point = "CENTER", x = 0, y = 0 } }
+            end
+        end
+    end
+    if not ns.db.profile.raidBuffs.splitCategories then ns.db.profile.raidBuffs.splitCategories = CopyTable(DEFAULTS.splitCategories) end
+    for _, catKey in ipairs(CATEGORIES) do
+        if ns.db.profile.raidBuffs.splitCategories[catKey] == nil then
+            ns.db.profile.raidBuffs.splitCategories[catKey] = false
+        end
     end
     return ns.db.profile.raidBuffs
 end
@@ -487,20 +553,16 @@ local function CountMissingBuff(spellIDs, buffKey, playerOnly, checkAny, unitLis
 end
 
 local function ShouldShowSelfBuff(spellID, requiredClass, enchantID, requiresTalent, excludeTalent, buffIdOverride, customCheck)
-    if playerClass ~= requiredClass then return nil end
+    if requiredClass and playerClass ~= requiredClass then return nil end
     if requiresTalent and not IsPlayerSpell(requiresTalent) then return nil end
     if excludeTalent and IsPlayerSpell(excludeTalent) then return nil end
+
     if customCheck then return customCheck() end
 
     if enchantID then
         local _, _, _, mainHandEnchantID, _, _, _, offHandEnchantID = GetWeaponEnchantInfo()
         return mainHandEnchantID ~= enchantID and offHandEnchantID ~= enchantID
     end
-
-    local ids = type(spellID) == "table" and spellID or { spellID }
-    local knowsAny = false
-    for _, id in ipairs(ids) do if IsPlayerSpell(id) then knowsAny = true break end end
-    if not knowsAny then return nil end
 
     local hasBuff = UnitHasBuff("player", buffIdOverride or spellID)
     return not hasBuff
@@ -594,7 +656,8 @@ local function GetFrameForCategory(cat)
     if not categoryFrames[cat] then
          categoryFrames[cat] = CreateFrame("Frame", "GravityUI_RaidBuffs_"..cat, UIParent)
          categoryFrames[cat]:SetSize(1,1)
-         local pos = db.categorySettings[cat].position or { point = "CENTER", x = 0, y = 0 }
+         local catData = db.categorySettings[cat] or { position = { point = "CENTER", x = 0, y = 0 } }
+         local pos = catData.position or { point = "CENTER", x = 0, y = 0 }
          categoryFrames[cat]:SetPoint(pos.point, UIParent, pos.point, pos.x, pos.y)
          categoryFrames[cat].catKey = cat
          categoryFrames[cat]:EnableMouse(false)
@@ -660,6 +723,7 @@ local function UpdateDisplay()
     wipe(visibleBuffs.presence)
     wipe(visibleBuffs.targeted)
     wipe(visibleBuffs["self"])
+    wipe(visibleBuffs.consumables)
     wipe(visibleBuffs.custom)
 
     local function ProcessBuffFrame(buff, frame, isGroupCategory, catKey, unitList)
@@ -836,7 +900,10 @@ local function UpdateDisplay()
         else if buffFrames[buff.key] then buffFrames[buff.key]:Hide() end end
     end
     for _, buff in ipairs(TARGETED_BUFFS) do ProcessBuffFrame(buff, buffFrames[buff.key], false, "targeted", validUnits) end
-    for _, buff in ipairs(SELF_BUFFS) do ProcessBuffFrame(buff, buffFrames[buff.key], false, "self", validUnits) end
+    for _, buff in ipairs(SELF_BUFFS) do 
+        local catKey = (buff.groupId == "consumables") and "consumables" or "self"
+        ProcessBuffFrame(buff, buffFrames[buff.key], false, catKey, validUnits) 
+    end
     if db.customBuffs then for k, b in pairs(db.customBuffs) do ProcessBuffFrame(b, buffFrames[k], false, "custom", validUnits) end end
 
     -- Layout Function
