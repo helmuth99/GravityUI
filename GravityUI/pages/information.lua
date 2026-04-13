@@ -105,52 +105,24 @@ local function BuildInformationTab(parent)
     y = y - 10
 
     local changeLogs = {
-        { version = "3.95", date = "31.03.2026", changes = {
+        { version = "3.94.68", date = "13.04.2026", changes = {
+            "Integrated Midnight expansion consumables (Food, Flasks, Augment Runes) into RaidBuffs module with persistent detection",
+            "Implemented smart talent filtering for class-specific reminders (Shaman Shields, Paladin Rites, Druid Symbiotic Relationship)",
+            "Fixed UI overlapping bug in 'Missing Buffs' settings page during custom buff manipulation",
+            "Added '/glog' and '/gravitylog' commands with 'toggle' support for manual combat log control",
+            "Enhanced Combat Log automation with clearer chat feedback for M+ and Raid transitions",
+            "Optimized 'Elemental Orbit' shield logic to prevent false-positives for multi-shield classes",
+        } },
+        { version = "3.94.67", date = "31.03.2026", changes = {
             "Removed M+ CD Tracking module (CDTracker) entirely — WoW Midnight taint system prevents reliable cooldown tracking in instances",
             "Deleted cdtracker.lua, cleaned up GravityUI.toc, defaults.lua, and all CDTracker references in init.lua",
             "Removed M+ CD Tracking subtab from UI Indicators settings page",
             "Removed M+ CD Tracking entry from Information Feature Hub and corrected all subsequent tabIndex references",
         } },
-        { version = "3.94", date = "31.03.2026", changes = {
+        { version = "3.94.66", date = "31.03.2026", changes = {
             "Fixed critical deployment path bug — all addon files now correctly sync to Interface\\AddOns\\GravityUI\\core\\ (was incorrectly targeting nested GravityUI\\GravityUI\\core\\)",
             "Resolved persistent 'secret string' taint crash in M+ Teleport chat handler (mplusteleport.lua) causing 20+ repeated errors per session in party",
         } },
-        { version = "3.93", date = "31.03.2026", changes = {
-            "Fixed Group Key List not showing all keystones — standardized all name lookups to Ambiguate(name, 'short') to resolve realm-suffix mismatches from LibKeystone callbacks",
-        } },
-        { version = "3.88", date = "04.03.2026", changes = {
-            "Added GravityUI skinning for Dominos action bars (Bars 1-14, all button types)",
-            "Added GravityUI skinning for Bartender4 action bars (BT4Button1-120)",
-            "Added 'Enable GravityUI Skinning' to Icon Catcher: removes gold ring, applies square backdrop + border",
-            "Icon Catcher GravityUI skinning is zero-cost after load (no OnUpdate, no event overhead)",
-            "Added missing defaults for skinDominos, skinBartender4, guiSkinning, groupkeysHideBackground, groupkeysHideTitleBar",
-        } },
-        { version = "3.87", date = "04.03.2026", changes = {
-            "Added 'Hide Background' and 'Hide Label Bar' options to M+ Teleport Group Key List",
-            "Lock/Unlock and Reset Scale icons are now also hidden when Hide Label Bar is active",
-        } },
-        { version = "3.86", date = "02.03.2026", changes = {
-            "Overhauled 'Group Key List' visibility - now strictly restricted to 5-man parties outside of instances",
-            "Added 'Lock/Unlock' frame functionality to the Group Key List to prevent accidental movement and resizing",
-            "Added a 'Scale Reset' button to the Group Key List header to quickly restore the 1.0 scale factor",
-            "Implemented hover tooltips for all keystones in the Group Key List for rapid affix and level inspection",
-            "Cleaned up legacy chat commands: Removed !key and !keys to reduce internal and shared chat noise"
-        } },
-        { version = "3.85", date = "01.03.2026", changes = {
-            "Added Sound Alerts module to 'UI Utilities' for replacing game sounds with custom SharedMedia files",
-            "Added manual 'Play' buttons for instant sound previews in the Sound Alerts menu",
-            "Resolved 'ADDON_ACTION_BLOCKED' taint in the main window by utilizing UISpecialFrames for Escape handling",
-            "Harden 'Messages' subsystem against Retail 12.0 secret spellID crashes using iteration-based pcall guards"
-        } },
-        { version = "3.84", date = "01.03.2026", changes = {"Fixed a UI layout anchoring bug preventing Options from drawing correctly", "Fixed a nil value crash in the Messages subsystem when iterating buff slots"} },
-        { version = "3.83", date = "01.03.2026", changes = {"Overhauled Misdirection and Tricks of the Trade tracking logic to circumvent hidden API limitations", "Expanded Ranged Crosshair checks to cover all class rotations (e.g. Aimed Shot, Chaos Bolt)", "Fixed a bug where existing UI profiles failed to load Stealth settings in the Messages module", "Synced Midnight enchantable slots (Head/Shoulder) to the Inspect Panel"} },
-        { version = "3.82", date = "28.02.2026", changes = {"Added UIWidgetPowerBarContainerFrame (Widget Power Bar) to EditMode Custom Movers", "Fixed false positive 'No Enchant' displayed on Held-in-off-hand items and shields in Character Panel"} },
-        { version = "3.81", date = "27.02.2026", changes = {"Added 'Messages' subtab to UI Indicators with Trackers for Misdirection, Tricks of the Trade, Durability, Stealth, and Shroud", "Fixed 'Details' Profile Installation not applying custom strings correctly", "Updated Character Panel enchant logic for the Midnight expansion (Head/Shoulder)"} },
-        { version = "3.80", date = "27.02.2026", changes = {"Integrated Extra Action Button and Zone Ability into the custom Edit Mode movers", "Fixed an issue where Blizzard's Minimap overlay blocked clicks in Edit Mode"} },
-        { version = "3.79", date = "26.02.2026", changes = {"Updated Gravity Font with kyrillic support"} },
-        { version = "3.78", date = "26.02.2026", changes = {"Added an option to automatically prompt and restore GravityUI Edit Mode Layout upon specialization switch", "Added a quick 'Disable Check' option into the Edit Mode popup"} },
-        { version = "3.77", date = "26.02.2026", changes = {"Fixed missing or incorrect sound file assets paths across the UI"} },
-        { version = "3.76", date = "26.02.2026", changes = {"Fixed an issue where the GravityUI Installer failed to sync UnhaltedUnitFrames", "Fixed 'Death Release Protection' blocking clicks on recycled 'Accept Resurrection' popups", "Added a 'Clear Alts List' button to the Mail Module Address Book"} },
     }
 
     -- Calculation for dynamic text width based on content frame
@@ -209,38 +181,33 @@ local function BuildInformationTab(parent)
         { name = "Minimap Datapanel", desc = "Information bar anchored below the minimap showing tracked metrics.\nDisplays dynamically updating durability, gold, latency, or time.", stateTable = db.minimap and db.minimap.datatext, stateKey = "enabled", pageId = "datapanels", tabIndex = 1 },
         { name = "Custom Panels", desc = "Create highly customizable, floating text strings for any tracked data.\nBuild personalized dashboards anywhere on your screen.", pageId = "datapanels", tabIndex = 2 },
         
-        -- UI Improvements (uiimprovements.lua)
-        { name = "Automation / Stuff", desc = "Automates tedious tasks out of sight: auto-repair, fast loot, and sell junk.\nIncludes auto-accepting quests, skips for movies, and dialogue routing.", pageId = "uiimprovements", tabIndex = 1 },
-        { name = "Autohide Setup", desc = "Configure contextual hiding rules based on game events (e.g. Minigames).\nAutomatically hides specific UI frames to preserve immersion.", pageId = "uiimprovements", tabIndex = 2 },
-        { name = "Combat Settings", desc = "Visual combat lockouts, screen flashes on aggro, and threat coloring.\nReplaces aggressive default red flashes with customized indicators.", pageId = "uiimprovements", tabIndex = 3 },
-        { name = "Blizzard Buffs & Debuffs", desc = "Enhances the default player buff/debuff frames with modern borders.\nRemoves the rigid Blizzard texture wrapping.", stateTable = db.uiimprovements and db.uiimprovements.buffBorders, stateKey = "enableBuffs", pageId = "uiimprovements", tabIndex = 4 },
-        { name = "Skyriding Tracking", desc = "A smooth, customizable Vigor trackingHUD with visual animations.\nReplaces the disjointed default UI with a unified, centered layout.", stateTable = db.skyriding, stateKey = "enabled", pageId = "uiimprovements", tabIndex = 5 },
-        { name = "Combat Timer", desc = "A visual stopwatch tracking the duration spent in combat or encounters.\nExcellent for visualizing long raid bosses or Mythic+ pack length.", stateTable = db.uiimprovements and db.uiimprovements.combatTimer, stateKey = "enabled", pageId = "uiimprovements", tabIndex = 6 },
-        { name = "M+ Teleport Icons", desc = "Clickable dungeon portals embedded directly into the Mythic+ LFG UI.\nRapidly port to dungeons without searching through your spellbook.", stateTable = db.uiimprovements, stateKey = "mplusTeleportEnabled", pageId = "uiimprovements", tabIndex = 7 },
-        { name = "World Marks", desc = "A streamlined interface for dropping world markers and flare tools.\nProvides quick access to ready-checks and countdown pull timers.", stateTable = db.uiimprovements and db.uiimprovements.marks, stateKey = "enabled", pageId = "uiimprovements", tabIndex = 8 },
-        { name = "Mail Extras", desc = "Adds an 'Open All' button, an Address Book for alts and friends, and gold loot messages.\nImproves mailbox efficiency natively without extra addons.", stateTable = db.uiimprovements and db.uiimprovements.mail, stateKey = "enabled", pageId = "uiimprovements", tabIndex = 9 },
-        { name = "Group & Guild Tools", desc = "A collection of utility features like the Guild Invite tool and automatic role promotion for assistants.", pageId = "uiimprovements", tabIndex = 10 },
-        
-        -- Screen Indicators (screenindicators.lua)
-        { name = "Cursor Utilities", desc = "Attach GCD Rings, Cursor Castbars, and highlights to your mouse.\nSuperb for tracking mechanics instantly without looking away from the action.", stateTable = db.screenindicators and db.screenindicators.cursor, stateKey = "enabled", pageId = "screenindicators", tabIndex = 1 },
-        { name = "Crosshair", desc = "Provides dynamic class-specific targeting crosshairs emphasizing range.\nColor translates combat and spell-range availability in real-time.", stateTable = db.screenindicators and db.screenindicators.crosshair, stateKey = "enabled", pageId = "screenindicators", tabIndex = 2 },
-        { name = "Combat Indicator", desc = "Displays a visual screen pulse indicating combat enter/exit status.\nHighly useful confirmation for aggressive aggro state changes.", stateTable = db.screenindicators and db.screenindicators.combatStatus, stateKey = "enabled", pageId = "screenindicators", tabIndex = 3 },
-        { name = "Pet Info", desc = "Quick pet management tools and large status warnings (Pet Dead).\nCrucial for Hunters and Warlocks who need rapid reminders.", stateTable = db.screenindicators and db.screenindicators.petWarnings, stateKey = "enabled", pageId = "screenindicators", tabIndex = 4 },
-        { name = "Missing Buffs (Raid)", desc = "Tracks missing raid buffs dynamically based on group class composition.\nExamines exactly who is present and what buffs are missing pre-pull.", stateTable = db.raidBuffs, stateKey = "enabled", pageId = "screenindicators", tabIndex = 5 },
-        { name = "Raid Warnings", desc = "Displays centralized large text alerts for helpful utility spells.\nWarns for newly dropped Soulwells, Feasts, Mage Tables, and Rituals.", stateTable = db.raidWarnings, stateKey = "enabled", pageId = "screenindicators", tabIndex = 6 },
-        { name = "Interrupt Tracker", desc = "Tracks interrupt cooldowns of party members in M+ dungeons.\nUses Say/Party chat as a fallback broadcast when addon comms are unavailable.", stateTable = db.screenindicators and db.screenindicators.interruptTracker, stateKey = "enabled", pageId = "screenindicators", tabIndex = 7 },
-        { name = "Difficulty Indicator", desc = "Visual status bar tracking the currently selected instance difficulty.\nIncludes a dropdown for rapidly changing difficulties out-of-world.", stateTable = db.screenindicators and db.screenindicators.difficulty, stateKey = "enabled", pageId = "screenindicators", tabIndex = 8 },
-        { name = "AFK Screen", desc = "An immersive, cinematic character orbit view when Away From Keyboard.\nDisplays real time, guild, character rank, and a moving camera.", stateTable = db.screenindicators and db.screenindicators.afkScreen, stateKey = "enabled", pageId = "screenindicators", tabIndex = 9 },
-        { name = "Consumables Tracker", desc = "Displays missing consumables like food and flasks for yourself and your group members during a Ready Check.", stateTable = db.screenindicators and db.screenindicators.consumables, stateKey = "enabled", pageId = "screenindicators", tabIndex = 10 },
-        { name = "Cooldown Text", desc = "Displays on-screen text when tracked party spells go on cooldown.\nConfigurable per class with custom spell IDs, display names, and grow direction.", stateTable = db.cooldownText, stateKey = "enabled", pageId = "screenindicators", tabIndex = 11 },
+        -- Quality of Life (qol.lua)
+        { name = "Automation / Stuff", desc = "Automates tedious tasks out of sight: auto-repair, fast loot, and sell junk.\nIncludes auto-accepting quests, skips for movies, and dialogue routing.", pageId = "qol", tabIndex = 1 },
+        { name = "Autohide Setup", desc = "Configure contextual hiding rules based on game events (e.g. Minigames).\nAutomatically hides specific UI frames to preserve immersion.", pageId = "qol", tabIndex = 2 },
 
+        -- Feature Hub (features.lua)
+        { name = "Skyriding Tracking", desc = "A smooth, customizable Vigor trackingHUD with visual animations.\nReplaces the disjointed default UI with a unified, centered layout.", stateTable = db.skyriding, stateKey = "enabled", pageId = "features", tabIndex = 1 },
+        { name = "M+ Teleport Icons", desc = "Clickable dungeon portals embedded directly into the Mythic+ LFG UI.\nRapidly port to dungeons without searching through your spellbook.", stateTable = db.uiimprovements, stateKey = "mplusTeleportEnabled", pageId = "features", tabIndex = 2 },
+        { name = "World Marks", desc = "A streamlined interface for dropping world markers and flare tools.\nProvides quick access to ready-checks and countdown pull timers.", stateTable = db.uiimprovements and db.uiimprovements.marks, stateKey = "enabled", pageId = "features", tabIndex = 3 },
+        { name = "Mail Extras", desc = "Adds an 'Open All' button, an Address Book for alts and friends, and gold loot messages.\nImproves mailbox efficiency natively without extra addons.", stateTable = db.uiimprovements and db.uiimprovements.mail, stateKey = "enabled", pageId = "features", tabIndex = 4 },
+        { name = "Group & Guild Tools", desc = "A collection of utility features like the Guild Invite tool and automatic role promotion for assistants.", pageId = "features", tabIndex = 5 },
+        { name = "Interrupt Tracker", desc = "Tracks interrupt cooldowns of party members in M+ dungeons.\nUses Say/Party chat as a fallback broadcast when addon comms are unavailable.", stateTable = db.screenindicators and db.screenindicators.interruptTracker, stateKey = "enabled", pageId = "features", tabIndex = 6 },
+
+        -- Screen Indicators (indicators.lua)
+        { name = "Cursor Utilities", desc = "Attach GCD Rings, Cursor Castbars, and highlights to your mouse.\nSuperb for tracking mechanics instantly without looking away from the action.", stateTable = db.screenindicators and db.screenindicators.cursor, stateKey = "enabled", pageId = "indicators", tabIndex = 1 },
+        { name = "Crosshair", desc = "Provides dynamic class-specific targeting crosshairs emphasizing range.\nColor translates combat and spell-range availability in real-time.", stateTable = db.screenindicators and db.screenindicators.crosshair, stateKey = "enabled", pageId = "indicators", tabIndex = 2 },
+        { name = "Pet Info", desc = "Quick pet management tools and large status warnings (Pet Dead).\nCrucial for Hunters and Warlocks who need rapid reminders.", stateTable = db.screenindicators and db.screenindicators.petWarnings, stateKey = "enabled", pageId = "indicators", tabIndex = 3 },
+        { name = "Combat Timer", desc = "A visual stopwatch tracking the duration spent in combat or encounters.\nExcellent for visualizing long raid bosses or Mythic+ pack length.", stateTable = db.uiimprovements and db.uiimprovements.combatTimer, stateKey = "enabled", pageId = "indicators", tabIndex = 4 },
+        { name = "Cooldown Text", desc = "Displays on-screen text when tracked party spells go on cooldown.\nConfigurable per class with custom_spell IDs, display names, and grow direction.", stateTable = db.cooldownText, stateKey = "enabled", pageId = "indicators", tabIndex = 5 },
+        { name = "Missing Buffs (Raid)", desc = "Tracks missing raid buffs dynamically based on group class composition.\nExamines exactly who is present and what buffs are missing pre-pull.", stateTable = db.raidBuffs, stateKey = "enabled", pageId = "indicators", tabIndex = 6 },
+        { name = "Raid Warnings", desc = "Displays centralized large text alerts for helpful utility spells.\nWarns for newly dropped Soulwells, Feasts, Mage Tables, and Rituals.", stateTable = db.raidWarnings, stateKey = "enabled", pageId = "indicators", tabIndex = 7 },
+        { name = "Consumables Tracker", desc = "Displays missing consumables like food and flasks for yourself and your group members during a Ready Check.", stateTable = db.screenindicators and db.screenindicators.consumables, stateKey = "enabled", pageId = "indicators", tabIndex = 8 },
+        { name = "Difficulty Indicator", desc = "Visual status bar tracking the currently selected instance difficulty.\nIncludes a dropdown for rapidly changing difficulties out-of-world.", stateTable = db.screenindicators and db.screenindicators.difficulty, stateKey = "enabled", pageId = "indicators", tabIndex = 9 },
+        { name = "AFK Screen", desc = "An immersive, cinematic character orbit view when Away From Keyboard.\nDisplays real time, guild, character rank, and a moving camera.", stateTable = db.screenindicators and db.screenindicators.afkScreen, stateKey = "enabled", pageId = "indicators", tabIndex = 10 },
         
-        -- UI Utilities (cdmutils.lua)
-        { name = "CDM Keybindings", desc = "Maps action bar keybind text directly onto the BetterCooldownManager frames.\nAllows custom coloring and hiding of the text on the cooling timeline icons.", stateTable = db.actionbars and db.actionbars.guicdm, stateKey = "enabled", pageId = "cdmutils", tabIndex = 1 },
-        { name = "CDM Button Glow", desc = "Customizes the Proc, Alert, and Auto-attack glow on all action buttons.\nAllows re-coloring or overriding the highly noisy default animations.", stateTable = db.actionbars and db.actionbars.guicdm and db.actionbars.guicdm.utils, stateKey = "buttonGlow", pageId = "cdmutils", tabIndex = 2 },
-        { name = "Castbar Ticks", desc = "Adds channeling tick marks (e.g., Evoker Disintegrate) to Unit Frames.\nTracks intervals mathematically to avoid clipping spells prematurely.", stateTable = db.general and db.general.castbarTicks and db.general.castbarTicks.disintegrate, stateKey = "enableUUF", pageId = "cdmutils", tabIndex = 3 },
-        { name = "CDM Buffbar Integration", desc = "Enhances specific buff trackers with GravityUI styling logic.\nForces precise borders, shadows, and coloring onto third-party icons.", stateTable = db.actionbars and db.actionbars.cdmBuffbar, stateKey = "enabled", pageId = "cdmutils", tabIndex = 4 },
-        { name = "Sound Alerts", desc = "Integrates custom SharedMedia sounds directly into Blizzard's CooldownViewer.\nSeamlessly replaces specific Blizzard sounds with your own media files.", stateTable = db.soundAlerts, stateKey = "enabled", pageId = "cdmutils", tabIndex = 5 },
+        -- UI Utilities (utilities.lua)
+        { name = "Sound Alerts", desc = "Integrates custom SharedMedia sounds directly into Blizzard's CooldownViewer.\nSeamlessly replaces specific Blizzard sounds with your own media files.", stateTable = db.soundAlerts, stateKey = "enabled", pageId = "utilities", tabIndex = 4 },
+        { name = "Castbar Ticks", desc = "Adds channeling tick marks (e.g., Evoker Disintegrate) to Unit Frames.\nTracks intervals mathematically to avoid clipping spells prematurely.", stateTable = db.general and db.general.castbarTicks and db.general.castbarTicks.disintegrate, stateKey = "enableUUF", pageId = "utilities", tabIndex = 3 },
 
         -- Styling Tab (styling.lua)
         { name = "Game Menu", desc = "Generates a fully customized Escape Key menu overriding the Blizzard UI.\nApplies unified structural gradients and dark-mode styling.", stateTable = db.styling and db.styling.gamemenu, stateKey = "enabled", pageId = "Styling", tabIndex = 6 },
@@ -264,6 +231,12 @@ local function BuildInformationTab(parent)
         { name = "Gravity Strings (WA)", desc = "Import critical integrated WeakAuras (Class UI, M+ Automarks, Utilities).\nSyncs directly with the custom GravityUI WeakAura system packages.", pageId = "profiles", tabIndex = 3 },
         { name = "Installers", desc = "Relaunch the First-Time initial setup and addon dependency installers.\nResyncs layout profiles for Detail, Plater, UUF and BCDM instantly.", pageId = "profiles", tabIndex = 4 },
     }
+
+    -- Add BCDM related items only if loaded
+    if C_AddOns.IsAddOnLoaded("BetterCooldownManager") then
+        table.insert(features, { name = "CDM Keybindings", desc = "Maps action bar keybind text directly onto the BetterCooldownManager frames.\nAllows custom coloring and hiding of the text on the cooling timeline icons.", stateTable = db.actionbars and db.actionbars.guicdm, stateKey = "enabled", pageId = "utilities", tabIndex = 1 })
+        table.insert(features, { name = "CDM Button Glow", desc = "Customizes the Proc, Alert, and Auto-attack glow on all action buttons.\nAllows re-coloring or overriding the highly noisy default animations.", stateTable = db.actionbars and db.actionbars.guicdm and db.actionbars.guicdm.utils, stateKey = "buttonGlow", pageId = "utilities", tabIndex = 2 })
+    end
 
     table.sort(features, function(a, b)
         return (a.name or "") < (b.name or "")

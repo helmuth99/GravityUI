@@ -69,7 +69,6 @@ local function ProcessNextMail()
     
     if (CODAmount and CODAmount > 0) or isGM then
         -- Skip COD or GM mail, but continue to next index
-        ns.Print("Skipped COD/GM mail from " .. tostring(sender) .. ".")
         currentMailIndex = currentMailIndex + 1
         ProcessNextMail()
         return
@@ -112,20 +111,25 @@ local function ProcessNextMail()
         return -- Stay on same index
     end
     
-    -- 3. Check for text content if unread
-    -- If it's unread and has no loot, but might have text, we skip it to prevent deletion
-    -- (Actually, Blizzard's Inbox doesn't tell us "hasText" easily without opening, 
-    -- but usually 'empty' mail from system/players comes with text)
-    if not wasRead and (not hasItem or hasItem == 0) and (not money or money == 0) then
-        -- This is likely a text-only letter. Skip it.
+    -- 3. Safety Check: Only delete mail from NPCs/Systems (Auction House)
+    -- Players and other senders should stay in the inbox after looting.
+    local isSafeToDelete = false
+    if sender then
+        local ahSender = _G["AUCTION_HOUSE_MAIL_SENDER"]
+        if ahSender and sender == ahSender then
+            isSafeToDelete = true
+        end
+    end
+
+    if isSafeToDelete then
+        -- Empty and Safe? Delete.
+        DeleteInboxItem(currentMailIndex)
+        -- currentMailIndex stays same because the inbox shifts
+    else
+        -- Not a system mail? Just skip to next index to keep the letter.
         currentMailIndex = currentMailIndex + 1
-        ProcessNextMail()
-        return
     end
     
-    -- 4. Empty and Read? Delete.
-    DeleteInboxItem(currentMailIndex)
-    -- currentMailIndex stays same because the inbox shifts
     lootUpdateFrame.waitTimer = 0.4
     lootUpdateFrame:Show()
 end
