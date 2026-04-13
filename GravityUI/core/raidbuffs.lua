@@ -71,6 +71,7 @@ local TARGETED_BUFFS = {
         class = "PALADIN",
         missingText = "NO\nFAITH",
         groupId = "beacons",
+        requiresTalentSpellID = 156910,
     },
     {
         spellID = 53563,
@@ -79,6 +80,7 @@ local TARGETED_BUFFS = {
         class = "PALADIN",
         missingText = "NO\nLIGHT",
         groupId = "beacons",
+        requiresTalentSpellID = 53563,
         excludeTalentSpellID = 200025,
         iconOverride = 236247,
     },
@@ -98,6 +100,7 @@ local TARGETED_BUFFS = {
         class = "EVOKER",
         beneficiaryRole = "HEALER",
         missingText = "NO\nSOURCE",
+        requiresTalentSpellID = 369459,
     },
     {
         spellID = 474750,
@@ -203,6 +206,7 @@ local SELF_BUFFS = {
         class = "SHAMAN",
         missingText = "NO\nFT",
         enchantID = 5400,
+        requiresTalentSpellID = 318038,
         groupId = "shamanImbues",
     },
     {
@@ -212,6 +216,7 @@ local SELF_BUFFS = {
         class = "SHAMAN",
         missingText = "NO\nWF",
         enchantID = 5401,
+        requiresTalentSpellID = 33757,
         groupId = "shamanImbues",
     },
     {
@@ -265,7 +270,8 @@ local SELF_BUFFS = {
             for i = 1, 40 do
                 local aura = C_UnitAuras.GetAuraDataByIndex("player", i, "HELPFUL")
                 if not aura then break end
-                if aura.icon == 136000 then return false end -- Found food
+                local success, isFood = pcall(function() return aura.icon == 136000 end)
+                if success and isFood then return false end -- Found food
             end
             return true -- Missing food
         end,
