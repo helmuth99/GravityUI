@@ -714,6 +714,8 @@ local function OnChallengeModeStart()
     if not wasLoggingBeforeChallenge then
         LoggingCombat(true)
         print("|cFF30D1FFGravityUI:|r Combat logging started for M+")
+    else
+        print("|cFF30D1FFGravityUI:|r Combat logging is |cFF00FF00ACTIVE|r (already running)")
     end
 end
 
@@ -724,6 +726,8 @@ local function OnChallengeModeEnd()
     if not wasLoggingBeforeChallenge and LoggingCombat() then
         LoggingCombat(false)
         print("|cFF30D1FFGravityUI:|r Combat logging stopped")
+    else
+        print("|cFF30D1FFGravityUI:|r Combat logging session ended")
     end
     wasLoggingBeforeChallenge = false
 end
@@ -769,6 +773,7 @@ local function CheckRaidLogging()
             -- Already logging, but not stored by us (User manually enabled)
             wasLoggingBeforeRaid = true
             isRaidLoggingActive = true
+            print("|cFF30D1FFGravityUI:|r Combat logging is |cFF00FF00ACTIVE|r for Raid")
         end
     else
         -- Should NOT log (left raid or disabled)
@@ -1534,6 +1539,15 @@ end
 
 SLASH_GRAVITYCOMBATLOG1 = "/gravitycombatlog"
 SLASH_GRAVITYCOMBATLOG2 = "/gcl"
-SlashCmdList["GRAVITYCOMBATLOG"] = function()
-    CombatLogDebug()
+SLASH_GRAVITYCOMBATLOG3 = "/glog"
+SLASH_GRAVITYCOMBATLOG4 = "/gravitylog"
+
+SlashCmdList["GRAVITYCOMBATLOG"] = function(msg)
+    if msg and msg:lower() == "toggle" then
+        local newState = not LoggingCombat()
+        LoggingCombat(newState)
+        print(string.format("|cFF30D1FFGravityUI:|r Combat logging manually %s.", newState and "|cFF00FF00STARTED|r" or "|cFFFF4444STOPPED|r"))
+    else
+        CombatLogDebug()
+    end
 end
