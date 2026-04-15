@@ -125,6 +125,8 @@ local CLASS_COLORS = {
 -- Active Bars State
 local activeBars = {}
 local framePool = {}
+-- PERF: Hoisted to module scope – wipe() instead of new-table allocation in UpdateLayout.
+local sortedBars = {}
 -- ============================================================================
 -- DYNAMIC COOLDOWN DATA
 -- ============================================================================
@@ -184,8 +186,10 @@ local function RegisterPartyWatchers()
                 local cleanUnit = "party" .. i
                 local cleanName = UnitName(cleanUnit)
 
+                -- PERF: Replaced pcall-closure with a direct nil-guard.
+                -- Anonymous closures allocate GC objects on every spellcast event.
                 if cleanName then
-                    pcall(function() recentPartyCasts[cleanName] = GetTime() end)
+                    recentPartyCasts[cleanName] = GetTime()
                 end
 
                 -- Try OnValueChanged laundering (StatusBar)
@@ -200,18 +204,14 @@ local function RegisterPartyWatchers()
                 pcall(launderSlider.SetValue, launderSlider, eSpellID)
                 local sliderResult = onSliderChangedResult
 
+                -- PERF: Replaced pcall-closures with direct table lookups.
+                -- INTERRUPTS is a plain Lua table; indexing it never raises an error.
                 local cleanID = nil
-                if barResult then
-                    local ok, data = pcall(function() return INTERRUPTS[barResult] end)
-                    if ok and data then
-                        cleanID = barResult
-                    end
+                if barResult and INTERRUPTS[barResult] then
+                    cleanID = barResult
                 end
-                if not cleanID and sliderResult then
-                    local ok, data = pcall(function() return INTERRUPTS[sliderResult] end)
-                    if ok and data then
-                        cleanID = sliderResult
-                    end
+                if not cleanID and sliderResult and INTERRUPTS[sliderResult] then
+                    cleanID = sliderResult
                 end
 
                 if cleanID and cleanName then
@@ -232,8 +232,9 @@ local function RegisterPartyWatchers()
                 local cleanOwner = "party" .. i
                 local cleanName = UnitName(cleanOwner)
 
+                -- PERF: Replaced pcall-closure with a direct nil-guard.
                 if cleanName then
-                    pcall(function() recentPartyCasts[cleanName] = GetTime() end)
+                    recentPartyCasts[cleanName] = GetTime()
                 end
 
                 onValueChangedResult = nil
@@ -241,12 +242,10 @@ local function RegisterPartyWatchers()
                 pcall(launderBar.SetValue, launderBar, eSpellID)
                 local barResult = onValueChangedResult
 
+                -- PERF: Replaced pcall-closure with direct table lookup.
                 local cleanID = nil
-                if barResult then
-                    local ok, data = pcall(function() return INTERRUPTS[barResult] end)
-                    if ok and data then
-                        cleanID = barResult
-                    end
+                if barResult and INTERRUPTS[barResult] then
+                    cleanID = barResult
                 end
 
                 if cleanID and cleanName then
@@ -490,10 +489,10 @@ local function UpdateLayout()
     local spacing = s.spacing or 2
     local height = s.height or 20
     
-    -- Sort active bars by expiration time
-    local sortedBars = {}
+    -- PERF: Reuse module-scope table instead of allocating a new one each call.
+    wipe(sortedBars)
     for _, info in pairs(activeBars) do
-        table.insert(sortedBars, info)
+        sortedBars[#sortedBars + 1] = info
     end
     
     table.sort(sortedBars, function(a, b)
@@ -532,19 +531,48 @@ local timeSinceLastUpdate = 0
 
 local DEFAULT_COLOR = {1, 1, 1, 1}
 
+-- PERF: Cached settings for the OnUpdate hot-path.
+-- Avoids calling GetSettings() (a multi-level table lookup) 20x per second.
+-- Invalidated by calling InvalidateOnUpdateCache() whenever settings change.
+local _cachedShowReadyText = true
+local _cachedUseSpecificColor = false
+local _cachedCooldownColor = DEFAULT_COLOR
+local _settingsCacheValid = false
+
+local function InvalidateOnUpdateCache()
+    _settingsCacheValid = false
+end
+
+local function RefreshOnUpdateCache()
+    local s = GetSettings()
+    if s then
+        _cachedShowReadyText      = s.showReadyText ~= false
+        _cachedUseSpecificColor   = s.useSpecificCooldownColor == true
+        _cachedCooldownColor      = (s.useSpecificCooldownColor and s.cooldownTextColor) or DEFAULT_COLOR
+    end
+    _settingsCacheValid = true
+end
+
 local function OnUpdate(self, elapsed)
     timeSinceLastUpdate = timeSinceLastUpdate + elapsed
     if timeSinceLastUpdate < UPDATE_THROTTLE then return end
     timeSinceLastUpdate = 0
 
-    local now = GetTime()
-    local dirty = false
-    local s = GetSettings()
-    
     if not next(activeBars) then
         self:Hide()
         return
     end
+
+    -- PERF: Refresh cache only when invalidated, not every tick.
+    if not _settingsCacheValid then RefreshOnUpdateCache() end
+
+    local now = GetTime()
+    local dirty = false
+    local readyText = _cachedShowReadyText and "Ready" or ""
+    local cr = _cachedCooldownColor[1] or 1
+    local cg = _cachedCooldownColor[2] or 1
+    local cb = _cachedCooldownColor[3] or 1
+    local ca = _cachedCooldownColor[4] or 1
     
     -- Check expiration
     for key, info in pairs(activeBars) do
@@ -556,17 +584,11 @@ local function OnUpdate(self, elapsed)
                 info.expiration = 0
                 info.frame.bar:SetValue(1) -- Set bar to full
                 
-                local readyText = (s and s.showReadyText) and "Ready" or ""
                 if info.frame.time:GetText() ~= readyText then
                     info.frame.time:SetText(readyText)
                 end
                 
                 -- Reset Color to Ready Color
-                local cr, cg, cb, ca = 1, 1, 1, 1
-                if s and s.useSpecificCooldownColor then
-                    local c = s.cooldownTextColor or DEFAULT_COLOR
-                     cr, cg, cb, ca = c[1] or 1, c[2] or 1, c[3] or 1, c[4] or 1
-                end
                 info.frame.time:SetTextColor(cr, cg, cb, ca)
                 
                 dirty = true
@@ -585,9 +607,8 @@ local function OnUpdate(self, elapsed)
             end
         else
             -- Already Ready
-            local targetText = (s and s.showReadyText) and "Ready" or ""
-            if info.frame.time:GetText() ~= targetText then
-                 info.frame.time:SetText(targetText)
+            if info.frame.time:GetText() ~= readyText then
+                info.frame.time:SetText(readyText)
             end
         end
     end
@@ -1329,6 +1350,8 @@ function InterruptTracker.Initialize()
     container = CreateFrame("Frame", "GravityUI_InterruptTracker", UIParent, "BackdropTemplate")
     local s = GetSettings()
     if not s then return end
+    -- PERF: Populate the OnUpdate cache with the initial settings on first load.
+    InvalidateOnUpdateCache()
     
     container:SetSize(220, 100) -- dynamic height usually
     container:SetPoint("CENTER", UIParent, "CENTER", s.x or 0, s.y or 0)
@@ -1448,6 +1471,9 @@ function InterruptTracker.ApplySettings()
      for key, info in pairs(activeBars) do
           StyleBar(info.frame, info.class)
      end
+     
+     -- PERF: Settings changed – force the OnUpdate cache to re-read on next tick.
+     InvalidateOnUpdateCache()
      
      UpdateLayout()
 end
