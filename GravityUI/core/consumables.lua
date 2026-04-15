@@ -1665,11 +1665,17 @@ local function scanPlayerAuras(buttons, now)
 
         if not auraData then break end
 
-        local sid = auraData.spellId
+        -- TAINT FIX: auraData.spellId and auraData.icon can be 'secret number values'
+        -- when the aura originates from a Blizzard-protected source. Using a secret
+        -- value as a table index crashes with "table index is secret". tonumber()
+        -- strips the secret flag and returns a plain Lua number safe for table indexing.
+        local sid    = tonumber(auraData.spellId)
+        local icon   = tonumber(auraData.icon)
         local expiry = auraData.expirationTime
-        local READY = "Interface\\RaidFrame\\ReadyCheck-Ready"
+        local READY  = "Interface\\RaidFrame\\ReadyCheck-Ready"
 
-        if Module.db.foodBuffIDs[sid] or Module.db.foodIconIDs[auraData.icon] then
+        if not sid then -- skip entirely if spellId is unreadable
+        elseif Module.db.foodBuffIDs[sid] or Module.db.foodIconIDs[icon] then
             buttons.food.statustexture:SetTexture(READY)
             buttons.food.texture:SetDesaturated(false)
             buttons.food.timeleft:SetFormattedText(GARRISON_DURATION_MINUTES,
@@ -1681,7 +1687,7 @@ local function scanPlayerAuras(buttons, now)
             buttons.flask.texture:SetDesaturated(false)
             buttons.flask.timeleft:SetFormattedText(GARRISON_DURATION_MINUTES,
                                                     ceil((expiry - now) / 60))
-            buttons.flask.texture:SetTexture(auraData.icon)
+            if icon then buttons.flask.texture:SetTexture(icon) end
             isFlask = true
 
             if expiry - now <= 600 then
@@ -1691,7 +1697,7 @@ local function scanPlayerAuras(buttons, now)
         elseif Module.db.runeBuffIDs[sid] then
             buttons.rune.statustexture:SetTexture(READY)
             buttons.rune.texture:SetDesaturated(false)
-            buttons.rune.texture:SetTexture(auraData.icon)
+            if icon then buttons.rune.texture:SetTexture(icon) end
             buttons.rune.timeleft:SetFormattedText(GARRISON_DURATION_MINUTES,
                                                    ceil((expiry - now) / 60))
             isRune = true

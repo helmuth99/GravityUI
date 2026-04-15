@@ -116,6 +116,25 @@ local function Kill(frame, force)
     end
 end
 
+-- Suppress only the visual appearance of a frame but DO NOT block Show().
+-- This is critical for ScrollBar / ScrollToBottomButton: Blizzard calls Show()
+-- on these internally to trigger the auto-scroll-to-bottom mechanic.
+-- Blocking Show() via Kill() would permanently break chat auto-scrolling.
+local function HideVisually(frame)
+    if not frame then return end
+    if type(frame) == "string" then frame = _G[frame] end
+    if not frame then return end
+
+    frame:SetAlpha(0)
+    -- Hook SetAlpha only to keep it invisible, but never block Show()
+    if not frame.__guiScrollHidden then
+        frame.__guiScrollHidden = true
+        hooksecurefunc(frame, "SetAlpha", function(self, alpha)
+            if alpha > 0 then self:SetAlpha(0) end
+        end)
+    end
+end
+
 ---------------------------------------------------------------------------
 -- Visual Styling (Glass, Fonts)
 ---------------------------------------------------------------------------
@@ -1015,14 +1034,38 @@ local function preventShow(self) self:Hide() end
 local function UpdateChatButtons(chatFrame)
     -- This handles per-frame buttons (Social, Scroll)
     Kill(chatFrame.buttonFrame)
-    Kill(chatFrame.ScrollBar)
-    Kill(chatFrame.ScrollToBottomButton)
-    
+
+    -- ScrollBar and ScrollToBottomButton: use HideVisually instead of Kill.
+    -- Kill() hooks Show() which breaks Blizzard's auto-scroll-to-bottom mechanic.
+    -- HideVisually keeps Alpha=0 at all times while still allowing Show() calls,
+    -- so new messages cause the chat to scroll down automatically as expected.
+    HideVisually(chatFrame.ScrollBar)
+    HideVisually(chatFrame.ScrollToBottomButton)
+
+    -- Auto-scroll fix: whenever a new message is added and the frame was already
+    -- at the bottom (or the user hasn't manually scrolled up), scroll to bottom.
+    if not chatFrame.__guiAutoScrollHooked then
+        chatFrame.__guiAutoScrollHooked = true
+        hooksecurefunc(chatFrame, "AddMessage", function(self)
+            -- Only auto-scroll if the user hasn't intentionally scrolled up
+            if self.ScrollBar then
+                local atBottom = not self.ScrollBar:IsShown() or
+                                 (self.ScrollBar.GetValue and
+                                  self.ScrollBar:GetValue() >= (self.ScrollBar:GetMinMaxValues()))
+                if atBottom then
+                    self:ScrollToBottom()
+                end
+            else
+                self:ScrollToBottom()
+            end
+        end)
+    end
+
     local frameName = chatFrame:GetName()
     if frameName then
         Kill(frameName.."ButtonFrame")
-        Kill(frameName.."ScrollBar")
-        Kill(frameName.."ScrollToBottomButton")
+        HideVisually(frameName.."ScrollBar")
+        HideVisually(frameName.."ScrollToBottomButton")
         -- These are permanently hidden (force=true)
         Kill(frameName.."ChannelButton", true)
         Kill(frameName.."VoiceChatButton", true)
@@ -1409,10 +1452,16 @@ function ns.Chat.Refresh()
     if not ns.Chat.hookedAlignment then
         ns.Chat.hookedAlignment = true
         
-        -- Hook relevant functions to keep alignment
-        -- Point to NEW module function
-        local function SafeAlign() 
-             if ns.Chat and ns.Chat.RepositionTabs then ns.Chat.RepositionTabs() end
+        -- TAINT FIX: RepositionTabs manipulates tab anchor points (ClearAllPoints/SetPoint).
+        -- When called synchronously inside FCF_DockUpdate, this code runs inside Blizzard's
+        -- secure execution stack (FCFDock_UpdateTabs → PanelTemplates_TabResize), where
+        -- 'textWidth' is a secret number value. Any addon interaction with tab geometry
+        -- at that point causes the 231x taint crash. C_Timer.After(0) defers execution
+        -- to the next frame, safely outside the protected stack.
+        local function SafeAlign()
+            C_Timer.After(0, function()
+                if ns.Chat and ns.Chat.RepositionTabs then ns.Chat.RepositionTabs() end
+            end)
         end
         hooksecurefunc("FCF_DockUpdate", SafeAlign)
         hooksecurefunc("FCF_OpenNewWindow", SafeAlign)
@@ -1477,16 +1526,28 @@ function ns.Chat.Init()
         C_Timer.After(1.5, RestoreChatHistory)
     end
     
-    -- Ensure newly created or modified windows are styled
-    hooksecurefunc("FCF_OpenNewWindow", function() ns.Chat.Refresh() end)
-    hooksecurefunc("FCF_OpenTemporaryWindow", function() ns.Chat.Refresh() end)
-    hooksecurefunc("FCF_DockFrame", function() ns.Chat.Refresh() end)
-    hooksecurefunc("FCF_UnDockFrame", function() ns.Chat.Refresh() end)
-    
-    -- Prevents Blizzard from resetting alpha/colors on tab selection/deselection
-    -- This fixes the "Active Tab Alpha 1.0" issue
+    -- TAINT FIX: These hooks previously called Refresh() synchronously inside Blizzard's
+    -- protected FCF_* execution stack. That stack includes FCFDock_UpdateTabs →
+    -- PanelTemplates_TabResize, where 'textWidth' is a secret/tainted number.
+    -- Calling addon code (StyleChatTab, RepositionTabs, etc.) at that point caused the
+    -- 231x "attempt to perform arithmetic on local 'textWidth' (a secret number value
+    -- tainted by 'AccWideUILayoutSelection')" error.
+    -- C_Timer.After(0) defers all work to the next frame, safely outside the stack.
+    local function DeferredRefresh()
+        C_Timer.After(0, function() if ns.Chat and ns.Chat.Refresh then ns.Chat.Refresh() end end)
+    end
+    hooksecurefunc("FCF_OpenNewWindow",      DeferredRefresh)
+    hooksecurefunc("FCF_OpenTemporaryWindow", DeferredRefresh)
+    hooksecurefunc("FCF_DockFrame",           DeferredRefresh)
+    hooksecurefunc("FCF_UnDockFrame",         DeferredRefresh)
+
+    -- Prevents Blizzard from resetting alpha/colors on tab selection/deselection.
+    -- This fixes the "Active Tab Alpha 1.0" issue.
+    -- TAINT FIX: FCFTab_UpdateColors also runs in a secure context. Defer via timer.
     hooksecurefunc("FCFTab_UpdateColors", function(tab, selected)
-        if ns.Chat and ns.Chat.Refresh then UpdateTabColors(tab) end
+        C_Timer.After(0, function()
+            if ns.Chat and tab and tab.__guiBackdrop then UpdateTabColors(tab) end
+        end)
     end)
 
     -- Initial Refresh after a short delay to let SVs load
