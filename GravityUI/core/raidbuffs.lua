@@ -819,7 +819,7 @@ local function UpdateDisplay()
                     end
                 end
             else
-                local playerOnly = (catKey == "self") or (catKey == "custom") or db.showOnlyPlayerMissing
+                local playerOnly = (catKey == "self") or (catKey == "custom") or (catKey == "consumables") or db.showOnlyPlayerMissing
                 local checkAny = (catKey == "targeted" or catKey == "presence")
                 missing, total, minRem = CountMissingBuff(buff.spellID, buff.key, playerOnly, checkAny, unitList)
             end
