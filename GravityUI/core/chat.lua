@@ -504,9 +504,11 @@ local function ApplyTimestampCVar()
         return
     end
     if settings.timestamps.enabled then
-        -- CVar value is passed directly to Lua's date(), so needs strftime % codes.
+        local c = settings.timestamps.color
+        local hex = c and string.format("%02x%02x%02x", (c[1] or 0.76)*255, (c[2] or 0.77)*255, (c[3] or 0.73)*255) or "c2c5bc"
+        local timeFmt = (settings.timestamps.format == "12h") and "%I:%M %p" or "%H:%M"
         -- Append " |" as a literal separator between the timestamp and channel/sender.
-        local fmt = (settings.timestamps.format == "12h") and "%I:%M %p | " or "%H:%M | "
+        local fmt = "|cff"..hex..timeFmt.."|r | "
         SetCVar("showTimestamps", fmt)
     else
         SetCVar("showTimestamps", "none")
@@ -848,75 +850,16 @@ local HISTORY_EVENTS = {
 }
 
 local function SaveChatMessage(event, ...)
-    local settings = GetSettings()
-    if not settings or not settings.history or not settings.history.enabled then return end
-    if not ns.db or not ns.db.char then return end
-    
-    if not ns.db.char.chatHistory then ns.db.char.chatHistory = {} end
-    local history = ns.db.char.chatHistory
-    
-    -- Store timestamp, raw event arguments, and the exact count (n) to handle nil holes
-    tinsert(history, {
-        time = time(),
-        event = event,
-        n = select("#", ...),
-        args = { ... }
-    })
-    
-    -- Prune
-    local max = settings.history.maxLines or 100
-    while #history > max do
-        table.remove(history, 1)
-    end
+    -- History saving completely disabled as per user request
+    return
 end
 
 local function RestoreChatHistory()
-    local settings = GetSettings()
-    if not settings or not settings.history or not settings.history.enabled then return end
-    if not ns.db or not ns.db.char or not ns.db.char.chatHistory then return end
-    
-    local history = ns.db.char.chatHistory
-    if #history == 0 then return end
-    
-    -- Block our own capture during restoration to avoid loops
-    if historyFrame then historyFrame:UnregisterAllEvents() end
-    
-    -- Restoration Header
-    local r, g, b = ns.GetAccentColor()
-    local hex = string.format("%02x%02x%02x", r*255, g*255, b*255)
-    ChatFrame1:AddMessage("|cff"..hex.."--- GravityUI: History Loaded ---|r")
-    
-    -- Re-trigger events for each chat frame
-    for _, entry in ipairs(history) do
-        -- SANITIZATION: GUIDs (arg12) and BNSenderIDs (arg13) are 'secret' values
-        -- that cause 'string conversion on secret string' crashes when touched by addons.
-        -- We nullify them to allow taint-safe replay while keeping the text and sender.
-        if entry.args then
-            entry.args[12] = nil -- senderGUID
-            entry.args[13] = nil -- bnSenderID
-        end
-
-        for i = 1, 10 do
-            local chatFrame = _G["ChatFrame"..i]
-            -- Validate entry has an event and text (arg1) before attempting replay
-            if chatFrame and chatFrame:IsEventRegistered(entry.event) and entry.args and entry.args[1] then
-                local onEvent = chatFrame:GetScript("OnEvent")
-                if onEvent then
-                    -- Use pcall to prevent one corrupt entry from breaking the whole restoration
-                    -- Use entry.n (if available) or #entry.args for unpack range
-                    local count = entry.n or #entry.args
-                    pcall(onEvent, chatFrame, entry.event, unpack(entry.args, 1, count))
-                end
-            end
-        end
+    -- Completely delete chat history from the DB as per user request
+    if ns.db and ns.db.char and ns.db.char.chatHistory then
+        ns.db.char.chatHistory = nil
     end
-    
-    -- Re-register capture events
-    if historyFrame then
-        for event in pairs(HISTORY_EVENTS) do
-            historyFrame:RegisterEvent(event)
-        end
-    end
+    return
 end
 
 local function SetupChatHistory()
@@ -1031,6 +974,83 @@ end
 
 local function preventShow(self) self:Hide() end
 
+local function EnsureScrollButton(chatFrame)
+    if chatFrame.__guiScrollBtn then return chatFrame.__guiScrollBtn end
+
+    local btn = CreateFrame("Button", nil, chatFrame, "BackdropTemplate")
+    btn:SetSize(22, 22)
+    btn:SetPoint("BOTTOMRIGHT", chatFrame, "BOTTOMRIGHT", 4, -2)
+    btn:SetFrameLevel(chatFrame:GetFrameLevel() + 10)
+    btn:SetAlpha(0)
+    btn:Hide()
+    
+    btn:SetBackdrop({
+        bgFile = "Interface\\Buttons\\WHITE8x8",
+        edgeFile = "Interface\\Buttons\\WHITE8x8",
+        edgeSize = 1,
+    })
+    btn:SetBackdropColor(0.15, 0.15, 0.15, 0.9)
+    btn:SetBackdropBorderColor(0.2, 0.2, 0.2, 1)
+    
+    local icon = btn:CreateTexture(nil, "ARTWORK")
+    icon:SetSize(22, 22)
+    icon:SetPoint("CENTER", 0, -1)
+    icon:SetTexture("Interface\\ChatFrame\\UI-ChatIcon-ScrollEnd-Up")
+    
+    btn:SetScript("OnEnter", function(self)
+        self.isHovering = true
+        local r, g, b = ns.GetAccentColor()
+        self:SetBackdropBorderColor(r, g, b, 1)
+        UIFrameFadeIn(self, 0.1, self:GetAlpha(), 1)
+    end)
+    btn:SetScript("OnLeave", function(self)
+        self.isHovering = false
+        self:SetBackdropBorderColor(0.2, 0.2, 0.2, 1)
+        if not chatFrame:IsMouseOver() then
+            UIFrameFadeOut(self, 0.4, self:GetAlpha(), 0)
+        end
+    end)
+    
+    btn:SetScript("OnClick", function()
+        chatFrame:ScrollToBottom()
+    end)
+    
+    chatFrame.__guiScrollBtn = btn
+    
+    local function UpdateVis()
+        -- Only show if scrolled up
+        if chatFrame:GetNumMessages() == 0 then return end
+        
+        local isScrolledUp = chatFrame:GetScrollOffset() > 0
+        if isScrolledUp then
+            if chatFrame:IsMouseOver() or btn.isHovering then
+                btn:Show()
+                UIFrameFadeIn(btn, 0.2, btn:GetAlpha(), 1)
+            else
+                UIFrameFadeOut(btn, 0.4, btn:GetAlpha(), 0)
+            end
+        else
+            btn:SetAlpha(0)
+            btn:Hide()
+        end
+    end
+    
+    chatFrame:HookScript("OnEnter", UpdateVis)
+    chatFrame:HookScript("OnLeave", function()
+        C_Timer.After(0.1, UpdateVis)
+    end)
+    
+    -- Hook scrolling actions
+    hooksecurefunc(chatFrame, "ScrollUp", UpdateVis)
+    hooksecurefunc(chatFrame, "ScrollDown", UpdateVis)
+    hooksecurefunc(chatFrame, "ScrollToTop", UpdateVis)
+    hooksecurefunc(chatFrame, "ScrollToBottom", UpdateVis)
+    hooksecurefunc(chatFrame, "PageUp", UpdateVis)
+    hooksecurefunc(chatFrame, "PageDown", UpdateVis)
+    
+    return btn
+end
+
 local function UpdateChatButtons(chatFrame)
     -- This handles per-frame buttons (Social, Scroll)
     Kill(chatFrame.buttonFrame)
@@ -1060,6 +1080,9 @@ local function UpdateChatButtons(chatFrame)
             end
         end)
     end
+
+    -- Gravity Scroll to Bottom Button
+    EnsureScrollButton(chatFrame)
 
     local frameName = chatFrame:GetName()
     if frameName then

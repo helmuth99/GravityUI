@@ -12,4 +12,5 @@
     <Script file="platynator.lua" />
     <Script file="optional.lua" />
     <Script file="ayije.lua" />
+    <Script file="mrt.lua" />
 </Ui>

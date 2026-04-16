@@ -11,9 +11,9 @@ local BORDER = MediaType.BORDER
 -- Dynamic path based on folder name to avoid mismatches
 local assetPath = "Interface/AddOns/" .. ADDON_NAME .. "/assets/"
 
--- ═══════════════════════════════════════════════════════════════
+-- 
 -- FONTS REGISTRATION
--- ═══════════════════════════════════════════════════════════════
+-- 
 LSM:Register(FONT, "Gravity", assetPath .. "Gravity.ttf")
 LSM:Register(FONT, "Gravity ExtraBold", assetPath .. "Gravity-ExtraBold.ttf")
 LSM:Register(FONT, "Gravity Bold", assetPath .. "Gravity-Bold.ttf")
@@ -23,9 +23,9 @@ LSM:Register(FONT, "Gravity Regular", assetPath .. "Gravity-Regular.ttf")
 LSM:Register(FONT, "Gravity Thin", assetPath .. "Gravity-Thin.ttf")
 LSM:Register(FONT, "Gravity Gotham", assetPath .. "Gravity-Gotham.ttf")
 
--- ═══════════════════════════════════════════════════════════════
+-- 
 -- TEXTURES REGISTRATION
--- ═══════════════════════════════════════════════════════════════
+-- 
 -- Each texture is registered as Background, Statusbar, and Border for maximum flexibility
 
 local function RegisterTexture(name, file)
@@ -56,9 +56,9 @@ RegisterTexture("Square", "Square.tga")
 LSM:Register(STATUSBAR, "GUI Stripes", assetPath .. "absorb_stripe.tga")
 
 
--- ═══════════════════════════════════════════════════════════════
+-- 
 -- SOUNDS REGISTRATION
--- ═══════════════════════════════════════════════════════════════
+-- 
 local SOUND = LSM.MediaType.SOUND
 
 local function RegisterSound(name, file)
@@ -171,3 +171,78 @@ RegisterSound("Wilhelm", "wilhelm.ogg")
 RegisterSound("Wlaugh", "wlaugh.ogg")
 RegisterSound("Wolf 5", "wolf5.ogg")
 RegisterSound("Yeehaw", "yeehaw.ogg")
+
+
+
+RegisterSound("10", "10.ogg")
+RegisterSound("6", "6.ogg")
+RegisterSound("7", "7.ogg")
+RegisterSound("8", "8.ogg")
+RegisterSound("9", "9.ogg")
+RegisterSound("Absorb", "Absorb.ogg")
+RegisterSound("Add", "Add.ogg")
+RegisterSound("AoE", "AoE.ogg")
+RegisterSound("Avoid", "Avoid.ogg")
+RegisterSound("Bait", "Bait.ogg")
+RegisterSound("Beam", "Beam.ogg")
+RegisterSound("Behind", "Behind.ogg")
+RegisterSound("bigkiss", "bigkiss.ogg")
+RegisterSound("Bloodlust", "Bloodlust.ogg")
+RegisterSound("Bomb", "Bomb.ogg")
+RegisterSound("Breath", "Breath.ogg")
+RegisterSound("Buff", "Buff.ogg")
+RegisterSound("CC", "CC.ogg")
+RegisterSound("Charge", "Charge.ogg")
+RegisterSound("Clear", "Clear.ogg")
+RegisterSound("ClearIn", "ClearIn.ogg")
+RegisterSound("Collect", "Collect.ogg")
+RegisterSound("Combat", "Combat.ogg")
+RegisterSound("Dance", "Dance.ogg")
+RegisterSound("Debuff", "Debuff.ogg")
+RegisterSound("Destroy", "Destroy.ogg")
+RegisterSound("Dispell", "Dispell.ogg")
+RegisterSound("Dodge", "Dodge.ogg")
+RegisterSound("DodgeInc", "DodgeInc.ogg")
+RegisterSound("Dot", "Dot.ogg")
+RegisterSound("External", "External.ogg")
+RegisterSound("Fixate", "Fixate.ogg")
+RegisterSound("Freedom", "Freedom.ogg")
+RegisterSound("Frontal", "Frontal.ogg")
+RegisterSound("Green", "Green.ogg")
+RegisterSound("Hide", "Hide.ogg")
+RegisterSound("HighStacks", "HighStacks.ogg")
+RegisterSound("Immune", "Immune.ogg")
+RegisterSound("In", "In.ogg")
+RegisterSound("Inc", "Inc.ogg")
+RegisterSound("Inside", "Inside.ogg")
+RegisterSound("Intermission", "Intermission.ogg")
+RegisterSound("Kick", "Kick.ogg")
+RegisterSound("Knock", "Knock.ogg")
+RegisterSound("Linked", "Linked.ogg")
+RegisterSound("LoS", "LoS.ogg")
+RegisterSound("Melee", "Melee.ogg")
+RegisterSound("Mount", "Mount.ogg")
+RegisterSound("Move", "Move.ogg")
+RegisterSound("Nuke", "Nuke.ogg")
+RegisterSound("Orb", "Orb.ogg")
+RegisterSound("Orbs", "Orbs.ogg")
+RegisterSound("Out", "Out.ogg")
+RegisterSound("Outrange", "Outrange.ogg")
+RegisterSound("Personal", "Personal.ogg")
+RegisterSound("Pot", "Pot.ogg")
+RegisterSound("Pull", "Pull.ogg")
+RegisterSound("Push", "Push.ogg")
+RegisterSound("Ranged", "Ranged.ogg")
+RegisterSound("Ready", "Ready.ogg")
+RegisterSound("Red", "Red.ogg")
+RegisterSound("Reflect", "Reflect.ogg")
+RegisterSound("Run", "Run.ogg")
+RegisterSound("Sac", "Sac.ogg")
+RegisterSound("Shield", "Shield.ogg")
+RegisterSound("Soak", "Soak.ogg")
+RegisterSound("Spike", "Spike.ogg")
+RegisterSound("Stop", "Stop.ogg")
+RegisterSound("StopCast", "StopCast.ogg")
+RegisterSound("Totem", "Totem.ogg")
+RegisterSound("Trap", "Trap.ogg")
+RegisterSound("Turn", "Turn.ogg")
