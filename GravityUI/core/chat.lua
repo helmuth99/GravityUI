@@ -1209,9 +1209,11 @@ local function StyleEditBox(chatFrame)
     backdrop:SetBackdropBorderColor(bgColor[1], bgColor[2], bgColor[3], bgAlpha)
     
     -- Font
+    -- TAINT FIX: editBox:GetFont() returns a Blizzard "secret number value" for the height
+    -- that cannot be passed back into SetFont() from addon code (causes taint crash).
+    -- Use a hardcoded safe value instead of reading it from the protected frame.
     local fontPath, fontOutline = ns.GetFont()
-    local _, fontSize, _ = editBox:GetFont()
-    fontSize = fontSize or 12
+    local fontSize = 12
     editBox:SetFont(fontPath, fontSize, fontOutline or "")
 
     if posTop then
