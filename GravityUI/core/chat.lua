@@ -675,15 +675,19 @@ local function ShowCopyPopup(url)
 end
 
 local function SetupURLClickHandler()
-    -- Register for hyperlink clicks
-    EventRegistry:RegisterCallback("SetItemRef", function(_, link, text, button)
-        if not link then return end
-        local url = link:match("^addon:GravityUIChat:(.*)")
-        if url then
-            ShowCopyPopup(url)
-            return true
-        end
-    end)
+    -- Hook the global SetItemRef function, which WoW calls whenever a chat hyperlink
+    -- is clicked. EventRegistry is NOT the correct API for this — SetItemRef is a
+    -- plain global that the engine invokes directly, so hooksecurefunc is the right approach.
+    if not ns.Chat._urlClickHooked then
+        ns.Chat._urlClickHooked = true
+        hooksecurefunc("SetItemRef", function(link, text, button)
+            if not link then return end
+            local url = link:match("^addon:GravityUIChat:(.*)")
+            if url then
+                ShowCopyPopup(url)
+            end
+        end)
+    end
 end
 
 ---------------------------------------------------------------------------
@@ -1211,9 +1215,13 @@ local function StyleEditBox(chatFrame)
     -- Font
     -- TAINT FIX: editBox:GetFont() returns a Blizzard "secret number value" for the height
     -- that cannot be passed back into SetFont() from addon code (causes taint crash).
-    -- Use a hardcoded safe value instead of reading it from the protected frame.
+    -- SAFE: ChatFontNormal is a global Font object (not a protected frame), so GetFont()
+    -- on it does NOT produce a secret value and can be freely read by addon code.
+    -- This gives us the actual chat font size the user configured in Blizzard's settings,
+    -- keeping the EditBox in sync with the chat frame text size.
     local fontPath, fontOutline = ns.GetFont()
-    local fontSize = 12
+    local _, fontSize, _ = ChatFontNormal:GetFont()
+    fontSize = fontSize or 12
     editBox:SetFont(fontPath, fontSize, fontOutline or "")
 
     if posTop then
