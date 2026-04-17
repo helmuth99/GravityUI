@@ -263,10 +263,12 @@ local SELF_BUFFS = {
     -- ============================================================================
     -- CONSUMABLES (Midnight Expansion)
     -- ============================================================================
-    -- NOTE: All three use customCheck + GetAuraDataByIndex + tonumber() for detection.
-    -- C_UnitAuras.GetUnitAuraBySpellID is unreliable inside M+ dungeons (returns nil
-    -- for some buffs due to instance-specific secure state). GetAuraDataByIndex with
-    -- tonumber() to strip the secret-value flag is confirmed reliable in all contexts.
+    -- TAINT SAFETY: Blizzard marks some aura fields (spellId, icon) as "secret number
+    -- values" inside instances. tonumber() does NOT strip this flag -- it propagates it.
+    -- Using a secret value in == or as a table key raises "attempt to compare a secret
+    -- number value". Fix: wrap each field access + comparison in pcall so tainted auras
+    -- are silently skipped and the scan continues on the next aura.
+    -- Pattern mirrors scanMemberAuras() in consumables.lua which handles this correctly.
     {
         spellID = 1285644, -- Hearty Well Fed (primary; used for frame icon display)
         iconOverride = 136000,
@@ -275,13 +277,11 @@ local SELF_BUFFS = {
         missingText = "NO\nFOOD",
         groupId = "consumables",
         customCheck = function()
-            -- Detect any "Well Fed" aura by its canonical icon ID (136000).
-            -- tonumber() strips the secret-value flag that Blizzard may set on
-            -- aura.icon for instance-applied buffs, making comparison safe.
             for i = 1, 60 do
                 local aura = C_UnitAuras.GetAuraDataByIndex("player", i, "HELPFUL")
                 if not aura then break end
-                if tonumber(aura.icon) == 136000 then return false end -- Found food
+                local ok, isFood = pcall(function() return tonumber(aura.icon) == 136000 end)
+                if ok and isFood then return false end -- Found food
             end
             return true -- Missing food
         end,
@@ -293,12 +293,11 @@ local SELF_BUFFS = {
         missingText = "NO\nFLASK",
         groupId = "consumables",
         customCheck = function()
-            -- Scan all HELPFUL auras via GetAuraDataByIndex and match against
-            -- MIDNIGHT_FLASK_IDS. tonumber() strips any secret-value flag on spellId.
             for i = 1, 60 do
                 local aura = C_UnitAuras.GetAuraDataByIndex("player", i, "HELPFUL")
                 if not aura then break end
-                if MIDNIGHT_FLASK_IDS[tonumber(aura.spellId)] then return false end -- Found flask
+                local ok, found = pcall(function() return MIDNIGHT_FLASK_IDS[tonumber(aura.spellId)] end)
+                if ok and found then return false end -- Found flask
             end
             return true -- Missing flask
         end,
@@ -310,12 +309,11 @@ local SELF_BUFFS = {
         missingText = "NO\nRUNE",
         groupId = "consumables",
         customCheck = function()
-            -- Scan all HELPFUL auras via GetAuraDataByIndex and match against
-            -- MIDNIGHT_RUNE_IDS. tonumber() strips any secret-value flag on spellId.
             for i = 1, 60 do
                 local aura = C_UnitAuras.GetAuraDataByIndex("player", i, "HELPFUL")
                 if not aura then break end
-                if MIDNIGHT_RUNE_IDS[tonumber(aura.spellId)] then return false end -- Found rune
+                local ok, found = pcall(function() return MIDNIGHT_RUNE_IDS[tonumber(aura.spellId)] end)
+                if ok and found then return false end -- Found rune
             end
             return true -- Missing rune
         end,
