@@ -112,10 +112,63 @@ local TARGETED_BUFFS = {
     },
 }
 
--- Hoisted lookup sets for consumable SpellIDs.
--- Using module-scope tables avoids per-call allocation inside customCheck closures.
-local MIDNIGHT_FLASK_IDS = { [1235057]=true, [1235108]=true, [1235110]=true, [1235111]=true }
-local MIDNIGHT_RUNE_IDS  = { [1264426]=true }
+-- Hoisted lookup sets for consumable SpellIDs (all Midnight 12.0 flasks + TWW 11.0).
+-- Module-scope avoids per-call allocation inside customCheck closures.
+local MIDNIGHT_FLASK_IDS = {
+    -- 12.0 Midnight
+    [1235057]=true, [1235108]=true, [1235110]=true, [1235111]=true,
+    -- 11.0 The War Within (fallback for cross-expansion play)
+    [432021]=true, [432473]=true, [431971]=true, [431972]=true, [431974]=true, [431973]=true,
+}
+local MIDNIGHT_RUNE_IDS = { [1264426]=true }
+
+-- CONSUMABLE DETECTION GUARD
+-- Blizzard marks all consumable aura fields as "secret number values" during an active
+-- Mythic+ run (CHALLENGE_MODE_START … COMPLETED/RESET). This makes both
+-- GetAuraDataByIndex field reads and GetUnitAuraBySpellID unreliable for consumable buffs.
+-- We track the key state via Challenge Mode events so we suppress detection only during
+-- an active timer -- regular heroic/normal dungeons are unaffected.
+local inChallengeMode = false
+
+local function IsInsideMythicPlus()
+    return inChallengeMode
+end
+
+local function ScanConsumableByIcon(iconID)
+    if inChallengeMode then return false end  -- active M+ key: assume present
+    for i = 1, 60 do
+        local aura = C_UnitAuras.GetAuraDataByIndex("player", i, "HELPFUL")
+        if not aura then break end
+        local ok, match = pcall(function() return tonumber(aura.icon) == iconID end)
+        if ok and match then
+            -- Also retrieve remaining time; may be tainted on some auras so wrap in pcall.
+            local _, rem = pcall(function()
+                local exp = aura.expirationTime
+                return (exp and exp > 0) and (exp - GetTime()) or nil
+            end)
+            return false, rem  -- found: (missing=false, remaining)
+        end
+    end
+    return true  -- missing
+end
+
+local function ScanConsumableBySpellIDs(idTable)
+    if inChallengeMode then return false end  -- active M+ key: assume present
+    for i = 1, 60 do
+        local aura = C_UnitAuras.GetAuraDataByIndex("player", i, "HELPFUL")
+        if not aura then break end
+        local ok, match = pcall(function() return idTable[tonumber(aura.spellId)] end)
+        if ok and match then
+            -- Also retrieve remaining time; may be tainted on some auras so wrap in pcall.
+            local _, rem = pcall(function()
+                local exp = aura.expirationTime
+                return (exp and exp > 0) and (exp - GetTime()) or nil
+            end)
+            return false, rem  -- found: (missing=false, remaining)
+        end
+    end
+    return true  -- missing
+end
 
 local SELF_BUFFS = {
     {
@@ -263,60 +316,33 @@ local SELF_BUFFS = {
     -- ============================================================================
     -- CONSUMABLES (Midnight Expansion)
     -- ============================================================================
-    -- TAINT SAFETY: Blizzard marks some aura fields (spellId, icon) as "secret number
-    -- values" inside instances. tonumber() does NOT strip this flag -- it propagates it.
-    -- Using a secret value in == or as a table key raises "attempt to compare a secret
-    -- number value". Fix: wrap each field access + comparison in pcall so tainted auras
-    -- are silently skipped and the scan continues on the next aura.
-    -- Pattern mirrors scanMemberAuras() in consumables.lua which handles this correctly.
+    -- Detection is delegated to ScanConsumableByIcon / ScanConsumableBySpellIDs.
+    -- Both helpers return false immediately (assume present) when IsInsideMythicPlus()
+    -- because Blizzard marks all consumable aura fields as secret inside party instances.
     {
-        spellID = 1285644, -- Hearty Well Fed (primary; used for frame icon display)
+        spellID = 1285644, -- Hearty Well Fed (for frame icon display)
         iconOverride = 136000,
         key = "midnightFood",
         name = "Food (Midnight)",
         missingText = "NO\nFOOD",
         groupId = "consumables",
-        customCheck = function()
-            for i = 1, 60 do
-                local aura = C_UnitAuras.GetAuraDataByIndex("player", i, "HELPFUL")
-                if not aura then break end
-                local ok, isFood = pcall(function() return tonumber(aura.icon) == 136000 end)
-                if ok and isFood then return false end -- Found food
-            end
-            return true -- Missing food
-        end,
+        customCheck = function() return ScanConsumableByIcon(136000) end,
     },
     {
-        spellID = 1235111, -- Flask of the Shattered Sun (primary; for icon display)
+        spellID = 1235111, -- Flask of the Shattered Sun (for frame icon display)
         key = "midnightFlask",
         name = "Flask (Midnight)",
         missingText = "NO\nFLASK",
         groupId = "consumables",
-        customCheck = function()
-            for i = 1, 60 do
-                local aura = C_UnitAuras.GetAuraDataByIndex("player", i, "HELPFUL")
-                if not aura then break end
-                local ok, found = pcall(function() return MIDNIGHT_FLASK_IDS[tonumber(aura.spellId)] end)
-                if ok and found then return false end -- Found flask
-            end
-            return true -- Missing flask
-        end,
+        customCheck = function() return ScanConsumableBySpellIDs(MIDNIGHT_FLASK_IDS) end,
     },
     {
-        spellID = 1264426, -- Void-Touched Augment Rune (primary; for icon display)
+        spellID = 1264426, -- Void-Touched Augment Rune (for frame icon display)
         key = "midnightRune",
         name = "Augment Rune",
         missingText = "NO\nRUNE",
         groupId = "consumables",
-        customCheck = function()
-            for i = 1, 60 do
-                local aura = C_UnitAuras.GetAuraDataByIndex("player", i, "HELPFUL")
-                if not aura then break end
-                local ok, found = pcall(function() return MIDNIGHT_RUNE_IDS[tonumber(aura.spellId)] end)
-                if ok and found then return false end -- Found rune
-            end
-            return true -- Missing rune
-        end,
+        customCheck = function() return ScanConsumableBySpellIDs(MIDNIGHT_RUNE_IDS) end,
     },
 }
 
@@ -807,16 +833,31 @@ local function UpdateDisplay()
                  end
             end
             
+            -- consumableRem: set when a consumable is found + we have its remaining time.
+            -- Allows the expiration glow to work for Flask/Food/Rune without going through
+            -- CountMissingBuff (which uses GetUnitAuraBySpellID, unreliable for consumables).
+            local consumableRem = nil
+
             if not isGroupCategory and not buff.isCustom then
-                 local shouldShow = ShouldShowSelfBuff(buff.spellID, buff.class, buff.enchantID, buff.requiresTalentSpellID, buff.excludeTalentSpellID, buff.buffIdOverride, buff.customCheck)
-                 if not shouldShow then 
-                     frame:Hide(); StopGlow(frame); return 
+                 local shouldShow, selfRem = ShouldShowSelfBuff(buff.spellID, buff.class, buff.enchantID, buff.requiresTalentSpellID, buff.excludeTalentSpellID, buff.buffIdOverride, buff.customCheck)
+                 if not shouldShow then
+                     if catKey == "consumables" and selfRem then
+                         -- Buff IS present AND we have remaining time.
+                         -- Don't early-return: fall through so expiration glow can fire.
+                         consumableRem = selfRem
+                     else
+                         frame:Hide(); StopGlow(frame); return
+                     end
                  end
             end
 
             local missing, total, minRem
 
-            if buff.isCustom and buff.enchantID then
+            if consumableRem then
+                -- Consumable confirmed present with remaining time: bypass CountMissingBuff.
+                missing = 0
+                minRem  = consumableRem
+            elseif buff.isCustom and buff.enchantID then
                 local _, mainHandExp, _, mainHandEnchantID, _, offHandExp, _, offHandEnchantID = GetWeaponEnchantInfo()
                 
                 -- Check for Offhand Weapon (not Shield/Offhand Item)
@@ -1303,6 +1344,9 @@ eventFrame:RegisterEvent("UNIT_INVENTORY_CHANGED") -- For weapon enchants
 eventFrame:RegisterEvent("READY_CHECK")
 eventFrame:RegisterEvent("READY_CHECK_FINISHED")
 eventFrame:RegisterEvent("READY_CHECK_CONFIRM")
+eventFrame:RegisterEvent("CHALLENGE_MODE_START")     -- M+ key timer started
+eventFrame:RegisterEvent("CHALLENGE_MODE_COMPLETED") -- M+ key finished
+eventFrame:RegisterEvent("CHALLENGE_MODE_RESET")     -- M+ key abandoned/reset
 
 eventFrame:SetScript("OnEvent", function(self, event, arg1)
     if event == "PLAYER_LOGIN" then
@@ -1313,6 +1357,12 @@ eventFrame:SetScript("OnEvent", function(self, event, arg1)
         UpdateDisplay() -- Instant update on combat start (usually to hide)
     elseif event == "PLAYER_REGEN_ENABLED" then
         inCombat = false
+        RequestUpdate(event)
+    elseif event == "CHALLENGE_MODE_START" then
+        inChallengeMode = true   -- Key timer active: suppress consumable detection
+        RequestUpdate(event)
+    elseif event == "CHALLENGE_MODE_COMPLETED" or event == "CHALLENGE_MODE_RESET" then
+        inChallengeMode = false  -- Key over: restore normal consumable detection
         RequestUpdate(event)
     elseif event == "UNIT_AURA" or event == "UNIT_INVENTORY_CHANGED" then
         -- Simple filter: only care about player/party/raid
