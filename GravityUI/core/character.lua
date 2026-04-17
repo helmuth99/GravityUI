@@ -669,10 +669,9 @@ local function CreateSlotOverlay(slotFrame, slotInfo, unit)
     duraBg:SetColorTexture(0, 0, 0, 0.5)
 
     -- === ITEM BAR BACKDROP ===
-    -- Subtle soft-fading bar for text readability
-    -- Moved to sub-level 5 to ensure it sits ON TOP of the background image
+    -- Subtle soft-fading bar for text readability (gradient via WHITE8X8 + SetGradient)
     overlay.backdropBar = overlay:CreateTexture(nil, "BACKGROUND", nil, 5)
-    overlay.backdropBar:SetTexture("Interface\\AddOns\\GravityUI\\assets\\media\\vignette.tga")
+    overlay.backdropBar:SetTexture("Interface\\Buttons\\WHITE8X8")
     overlay.backdropBar:SetHeight(40)
     overlay.backdropBar:SetWidth(160)
     overlay.backdropBar:Hide()
@@ -910,18 +909,32 @@ local function UpdateSlotOverlay(overlay, unit)
             
             if settings.backdropFixedColor and settings.backdropColor then
                 local c = settings.backdropColor
-                r, g, b, alpha = c[1], c[2], c[3], c[4]
+                r, g, b, alpha = c[1], c[2], c[3], c[4] or 0.4
             else
                 local _, _, quality = GetItemInfo(itemLink)
                 -- If quality >= uncommon (2), use a more distinct quality tint
                 if quality and quality >= 2 then
                     local qr, qg, qb = C_Item.GetItemQualityColor(quality)
-                    r, g, b = qr * 0.4, qg * 0.4, qb * 0.4 -- More distinct tint
+                    r, g, b = qr * 0.4, qg * 0.4, qb * 0.4
                     alpha = 0.7
                 end
             end
-            
-            overlay.backdropBar:SetVertexColor(r, g, b, alpha)
+
+            -- Apply gradient: fade from solid color to transparent
+            -- Left-column slots: text is on the RIGHT, so fade LEFT→RIGHT (opaque left edge, transparent right)
+            -- Right-column/Mainhand: text is on the LEFT, so fade RIGHT→LEFT
+            local side = overlay.slotInfo and overlay.slotInfo.side
+            local slotId = overlay.slotInfo and overlay.slotInfo.id
+            local solidColor = CreateColor(r, g, b, alpha)
+            local clearColor  = CreateColor(r, g, b, 0)
+            if side == "left" or slotId == INVSLOT_OFFHAND then
+                -- Text on right: gradient goes LEFT (opaque) → RIGHT (transparent)
+                overlay.backdropBar:SetGradient("HORIZONTAL", solidColor, clearColor)
+            else
+                -- Text on left (right column + mainhand): gradient goes RIGHT (opaque) → LEFT (transparent)
+                overlay.backdropBar:SetGradient("HORIZONTAL", clearColor, solidColor)
+            end
+
             overlay.backdropBar:Show()
         else
             overlay.backdropBar:Hide()
