@@ -112,6 +112,11 @@ local TARGETED_BUFFS = {
     },
 }
 
+-- Hoisted lookup sets for consumable SpellIDs.
+-- Using module-scope tables avoids per-call allocation inside customCheck closures.
+local MIDNIGHT_FLASK_IDS = { [1235057]=true, [1235108]=true, [1235110]=true, [1235111]=true }
+local MIDNIGHT_RUNE_IDS  = { [1264426]=true }
+
 local SELF_BUFFS = {
     {
         spellID = 433583,
@@ -258,37 +263,62 @@ local SELF_BUFFS = {
     -- ============================================================================
     -- CONSUMABLES (Midnight Expansion)
     -- ============================================================================
+    -- NOTE: All three use customCheck + GetAuraDataByIndex + tonumber() for detection.
+    -- C_UnitAuras.GetUnitAuraBySpellID is unreliable inside M+ dungeons (returns nil
+    -- for some buffs due to instance-specific secure state). GetAuraDataByIndex with
+    -- tonumber() to strip the secret-value flag is confirmed reliable in all contexts.
     {
-        spellID = 136000, -- Well Fed Icon
+        spellID = 1285644, -- Hearty Well Fed (primary; used for frame icon display)
         iconOverride = 136000,
         key = "midnightFood",
         name = "Food (Midnight)",
         missingText = "NO\nFOOD",
         groupId = "consumables",
         customCheck = function()
-            -- Check for any aura with the canonical Well Fed icon (136000)
-            for i = 1, 40 do
+            -- Detect any "Well Fed" aura by its canonical icon ID (136000).
+            -- tonumber() strips the secret-value flag that Blizzard may set on
+            -- aura.icon for instance-applied buffs, making comparison safe.
+            for i = 1, 60 do
                 local aura = C_UnitAuras.GetAuraDataByIndex("player", i, "HELPFUL")
                 if not aura then break end
-                local success, isFood = pcall(function() return aura.icon == 136000 end)
-                if success and isFood then return false end -- Found food
+                if tonumber(aura.icon) == 136000 then return false end -- Found food
             end
             return true -- Missing food
         end,
     },
     {
-        spellID = { 1235111, 1235110, 1235108, 1235057 }, -- Midnight Flasks
+        spellID = 1235111, -- Flask of the Shattered Sun (primary; for icon display)
         key = "midnightFlask",
         name = "Flask (Midnight)",
         missingText = "NO\nFLASK",
         groupId = "consumables",
+        customCheck = function()
+            -- Scan all HELPFUL auras via GetAuraDataByIndex and match against
+            -- MIDNIGHT_FLASK_IDS. tonumber() strips any secret-value flag on spellId.
+            for i = 1, 60 do
+                local aura = C_UnitAuras.GetAuraDataByIndex("player", i, "HELPFUL")
+                if not aura then break end
+                if MIDNIGHT_FLASK_IDS[tonumber(aura.spellId)] then return false end -- Found flask
+            end
+            return true -- Missing flask
+        end,
     },
     {
-        spellID = 1264426, -- Void-Touched Augment Rune
+        spellID = 1264426, -- Void-Touched Augment Rune (primary; for icon display)
         key = "midnightRune",
         name = "Augment Rune",
         missingText = "NO\nRUNE",
         groupId = "consumables",
+        customCheck = function()
+            -- Scan all HELPFUL auras via GetAuraDataByIndex and match against
+            -- MIDNIGHT_RUNE_IDS. tonumber() strips any secret-value flag on spellId.
+            for i = 1, 60 do
+                local aura = C_UnitAuras.GetAuraDataByIndex("player", i, "HELPFUL")
+                if not aura then break end
+                if MIDNIGHT_RUNE_IDS[tonumber(aura.spellId)] then return false end -- Found rune
+            end
+            return true -- Missing rune
+        end,
     },
 }
 
@@ -1314,3 +1344,26 @@ SlashCmdList["GUIENCHANTS"] = function()
     print("Main Hand: Has=", hasMain, "ID=", mainID)
     print("Off Hand: Has=", hasOff, "ID=", offID)
 end
+
+-- Debug: Dump all player auras to find correct Spell IDs for consumables
+SLASH_GUIAURAS1 = "/guiauras"
+SlashCmdList["GUIAURAS"] = function()
+    print("|cff00ccffGravityUI Aura Dump|r (searching for Food/Flask/Rune keywords):")
+    local found = 0
+    for i = 1, 60 do
+        local aura = C_UnitAuras.GetAuraDataByIndex("player", i, "HELPFUL")
+        if not aura then break end
+        local sid  = tonumber(aura.spellId) or "?"
+        local icon = tonumber(aura.icon) or "?"
+        local name = aura.name or "?"
+        local expiry = aura.expirationTime or 0
+        local remaining = expiry > 0 and math.ceil(expiry - GetTime()) or 0
+        -- Print all auras so user can identify flask/food/rune
+        print(string.format("  [%d] SpellID=|cffff9900%s|r Icon=|cffcccccc%s|r Name=|cffffff00%s|r Rem=%ds",
+            i, tostring(sid), tostring(icon), name, remaining))
+        found = found + 1
+    end
+    if found == 0 then print("  No auras found.") end
+    print(string.format("|cff00ccff--- %d auras total. Copy SpellIDs above for Flask/Food/Rune to fix detection. ---|r", found))
+end
+
