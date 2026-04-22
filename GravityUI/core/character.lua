@@ -2060,6 +2060,11 @@ local GENERAL_STATS_DEF = {
     { label = "Avoidance", statKey = "AVOIDANCE" },
 }
 
+-- Cached combat state: if the state hasn't changed between calls we skip
+-- the full panel rebuild to prevent bar flickering caused by frequent
+-- UNIT_AURA / UNIT_HEALTH event spam during combat.
+local lastStatsCombatState = nil  -- nil = never built, true/false = last known state
+
 ---------------------------------------------------------------------------
 -- Update stats panel content
 ---------------------------------------------------------------------------
@@ -2067,6 +2072,18 @@ local function UpdateStatsPanel(panel, unit)
     if not panel or not panel.scrollChild then return end
 
     if updatingStatsPanel then return end
+
+    -- Skip rebuild when the combat state hasn't changed: the displayed content
+    -- (N/A rows vs real values) will be identical, so there's nothing to gain
+    -- from destroying and recreating every frame — which causes bar flickering.
+    local currentCombatState = InCombatLockdown() or
+                               (C_ChallengeMode and C_ChallengeMode.IsChallengeModeActive and
+                                C_ChallengeMode.IsChallengeModeActive())
+    if currentCombatState == lastStatsCombatState and currentCombatState ~= nil then
+        return  -- already showing the correct combat/non-combat view
+    end
+    lastStatsCombatState = currentCombatState
+
     updatingStatsPanel = true
 
     local success, err = pcall(function()
@@ -2158,21 +2175,29 @@ local function UpdateStatsPanel(panel, unit)
     y = y - 5
 
     -- ATTRIBUTES
-    -- In M+ (Challenge Mode) since 12.0.5, UnitStat and all primary-stat APIs
-    -- return tainted "secret numbers" — they cannot be converted, compared, or
-    -- formatted without crashing. Skip them entirely and show a notice instead.
-    local inChallengeMode = C_ChallengeMode and C_ChallengeMode.IsChallengeModeActive and
-                            C_ChallengeMode.IsChallengeModeActive()
+    -- Since patch 12.0.5, UnitStat and all primary-stat APIs return tainted
+    -- "secret numbers" during ANY combat (InCombatLockdown). They cannot be
+    -- converted, compared, or formatted without crashing. Skip them entirely
+    -- while in combat and show a notice instead.
+    -- Additionally, in M+ (Challenge Mode) stats are secret for the entire key,
+    -- even between pulls when InCombatLockdown() is false.
+    local inCombat = InCombatLockdown() or
+                     (C_ChallengeMode and C_ChallengeMode.IsChallengeModeActive and
+                      C_ChallengeMode.IsChallengeModeActive())
 
     local _, headerHeight = CreateSectionHeader(scrollChild, "Attributes", y)
     y = y - headerHeight
 
-    if inChallengeMode then
+    if inCombat then
         -- Single notice row instead of broken stat rows
+        local inMplus = C_ChallengeMode and C_ChallengeMode.IsChallengeModeActive and
+                        C_ChallengeMode.IsChallengeModeActive()
         row = CreateStatRow(scrollChild, y)
-        row.label:SetText("|cFFFFCC00M+ Active|r")
+        row.label:SetText(inMplus and "|cFFFFCC00M+ Active|r" or "|cFFFFCC00In Combat|r")
         row.value:SetText("|cFF888888N/A|r")
-        row.tooltip = "|cFFFFCC00Mythic+ (Challenge Mode)|r\nPrimary stat values are protected by\nBlizzard since patch 12.0.5 and cannot\nbe displayed inside a Mythic+ key."
+        row.tooltip = inMplus
+            and "|cFFFFCC00Mythic+ (Challenge Mode)|r\nPrimary stat values are protected by\nBlizzard since patch 12.0.5 and cannot\nbe displayed inside a Mythic+ key."
+            or  "|cFFFFCC00Combat Lockdown|r\nPrimary stat values are protected by\nBlizzard since patch 12.0.5 and cannot\nbe read while in combat."
         y = y - ROW_HEIGHT
     else
         -- Primary stats vary by class, but we show all and let WoW hide irrelevant ones.
@@ -2302,31 +2327,38 @@ local function UpdateStatsPanel(panel, unit)
     _, headerHeight = CreateSectionHeader(scrollChild, "Secondary", y)
     y = y - headerHeight
 
-    -- In M+: force percent-only for secondary stats.
-    -- GetCritChance/GetHaste/etc. return normal (untainted) floats even in Challenge Mode.
-    -- Rating values come from GetCombatRating which CAN be secret — avoid in M+.
-    local statFormat = inChallengeMode and "percent" or (settings.secondaryStatFormat or "percent")
+    -- In combat: force percent-only for secondary stats.
+    -- NOTE: GetHaste/GetMasteryEffect/GetVersatilityBonus may also return
+    -- tainted values in combat — FormatPercent/string.format do internal
+    -- arithmetic and will crash. Use per-stat pcall so one failure never
+    -- aborts the loop (same pattern as primary stats).
+    local statFormat = inCombat and "percent" or (settings.secondaryStatFormat or "percent")
 
     for _, stat in ipairs(SECONDARY_STATS_DEF) do
-        local percentValue = SafeGetStat(stat.percentFunc) or 0
-        local ratingValue = inChallengeMode and 0 or (SafeGetStat(stat.ratingFunc) or 0)
+        -- Always create the row and advance y; one tainted stat must not kill the rest.
         row = CreateStatBar(scrollChild, y, stat.color)
         row.label:SetText(stat.label)
+        row.value:SetText("-")
 
-        -- Format based on setting
-        if statFormat == "percent" then
-            row.value:SetText(FormatPercent(percentValue))
-        elseif statFormat == "rating" then
-            row.value:SetText(FormatNumber(ratingValue))
-        else -- "both"
-            row.value:SetText(string.format("%s (%s)", FormatNumber(ratingValue), FormatPercent(percentValue, 1)))
-        end
+        pcall(function()
+            local percentValue = SafeGetStat(stat.percentFunc) or 0
+            local ratingValue = inCombat and 0 or (SafeGetStat(stat.ratingFunc) or 0)
 
-        row.bar:SetValue(math.min(percentValue, 100))
+            -- Format based on setting
+            if statFormat == "percent" then
+                row.value:SetText(FormatPercent(percentValue))
+            elseif statFormat == "rating" then
+                row.value:SetText(FormatNumber(ratingValue))
+            else -- "both"
+                row.value:SetText(string.format("%s (%s)", FormatNumber(ratingValue), FormatPercent(percentValue, 1)))
+            end
+
+            row.bar:SetValue(math.min(percentValue, 100))
+        end)
 
         -- Tooltip: GetCombatRating / GetCombatRatingBonus return tainted secret numbers
-        -- in M+ (Challenge Mode) since 12.0.5. Wrap each block in a pcall so a crash here
-        -- never aborts the loop and the remaining stats still render.
+        -- in combat since 12.0.5. Each tooltip block is individually pcall'd so a crash
+        -- here never aborts the loop and the remaining stats still render.
         if stat.statKey == "CRIT" then
             row.tooltip = HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, STAT_CRITICAL_STRIKE)..FONT_COLOR_CODE_CLOSE
             pcall(function()
@@ -2389,47 +2421,56 @@ local function UpdateStatsPanel(panel, unit)
     end
 
 
+
     y = y - 5
 
     -- ATTACK
     _, headerHeight = CreateSectionHeader(scrollChild, "Attack", y)
     y = y - headerHeight
 
-    for _, stat in ipairs(ATTACK_STATS_DEF) do
-        local value
-        if stat.statKey == "ATTACK_POWER" then
-            value = SafeGetStat(UnitAttackPower, unit)
-        elseif stat.statKey == "SPELLPOWER" then
-            value = SafeGetStat(GetSpellBonusDamage, 2)
-        elseif stat.statKey == "ATTACK_SPEED" then
-            value = SafeGetStat(UnitAttackSpeed, unit)
-        end
-        if value and value > 0 then
-            row = CreateStatRow(scrollChild, y)
-            row.label:SetText(stat.label)
-            row.value:SetText(stat.format(value))
-            
-            -- Set tooltips (Blizzard format)
+    if inCombat then
+        row = CreateStatRow(scrollChild, y)
+        local inMplus2 = C_ChallengeMode and C_ChallengeMode.IsChallengeModeActive and C_ChallengeMode.IsChallengeModeActive()
+        row.label:SetText(inMplus2 and "|cFFFFCC00M+ Active|r" or "|cFFFFCC00In Combat|r")
+        row.value:SetText("|cFF888888N/A|r")
+        y = y - ROW_HEIGHT
+    else
+        for _, stat in ipairs(ATTACK_STATS_DEF) do
+            local value
             if stat.statKey == "ATTACK_POWER" then
-                if PaperDollFormatStat then
-                    local base, posBuff, negBuff = UnitAttackPower(unit)
-                    local damageBonus = BreakUpLargeNumbers(max((base+posBuff+negBuff), 0)/ATTACK_POWER_MAGIC_NUMBER)
-                    local tag, tooltip = MELEE_ATTACK_POWER, MELEE_ATTACK_POWER_TOOLTIP
-                    local valueText, tooltipText = PaperDollFormatStat(tag, base, posBuff, negBuff)
-                    row.tooltip = tooltipText
-                    row.tooltip2 = format(tooltip, damageBonus)
-                end
+                value = SafeGetStat(UnitAttackPower, unit)
             elseif stat.statKey == "SPELLPOWER" then
-                row.tooltip = STAT_SPELLPOWER
-                row.tooltip2 = STAT_SPELLPOWER_TOOLTIP
+                value = SafeGetStat(GetSpellBonusDamage, 2)
             elseif stat.statKey == "ATTACK_SPEED" then
-                local speed = UnitAttackSpeed(unit)
-                local displaySpeed = format("%.2F", speed)
-                row.tooltip = HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, ATTACK_SPEED).." "..displaySpeed..FONT_COLOR_CODE_CLOSE
-                local meleeHaste = GetMeleeHaste()
-                row.tooltip2 = format(STAT_ATTACK_SPEED_BASE_TOOLTIP, BreakUpLargeNumbers(meleeHaste))
+                value = SafeGetStat(UnitAttackSpeed, unit)
             end
-            y = y - ROW_HEIGHT
+            if value and value > 0 then
+                row = CreateStatRow(scrollChild, y)
+                row.label:SetText(stat.label)
+                row.value:SetText(stat.format(value))
+
+                -- Set tooltips (Blizzard format)
+                if stat.statKey == "ATTACK_POWER" then
+                    if PaperDollFormatStat then
+                        local base, posBuff, negBuff = UnitAttackPower(unit)
+                        local damageBonus = BreakUpLargeNumbers(max((base+posBuff+negBuff), 0)/ATTACK_POWER_MAGIC_NUMBER)
+                        local tag, tooltip = MELEE_ATTACK_POWER, MELEE_ATTACK_POWER_TOOLTIP
+                        local valueText, tooltipText = PaperDollFormatStat(tag, base, posBuff, negBuff)
+                        row.tooltip = tooltipText
+                        row.tooltip2 = format(tooltip, damageBonus)
+                    end
+                elseif stat.statKey == "SPELLPOWER" then
+                    row.tooltip = STAT_SPELLPOWER
+                    row.tooltip2 = STAT_SPELLPOWER_TOOLTIP
+                elseif stat.statKey == "ATTACK_SPEED" then
+                    local speed = UnitAttackSpeed(unit)
+                    local displaySpeed = format("%.2F", speed)
+                    row.tooltip = HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, ATTACK_SPEED).." "..displaySpeed..FONT_COLOR_CODE_CLOSE
+                    local meleeHaste = GetMeleeHaste()
+                    row.tooltip2 = format(STAT_ATTACK_SPEED_BASE_TOOLTIP, BreakUpLargeNumbers(meleeHaste))
+                end
+                y = y - ROW_HEIGHT
+            end
         end
     end
 
@@ -2439,60 +2480,68 @@ local function UpdateStatsPanel(panel, unit)
     _, headerHeight = CreateSectionHeader(scrollChild, "Defense", y)
     y = y - headerHeight
 
-    local baselineArmor, effectiveArmor = UnitArmor(unit)
-    local dodge = SafeGetStat(GetDodgeChance)
-    local parry = SafeGetStat(GetParryChance)
-    local block = SafeGetStat(GetBlockChance)
-
-    local defenseValues = {
-        ARMOR = FormatNumber(effectiveArmor or 0),
-        DODGE = FormatPercent(dodge),
-        PARRY = FormatPercent(parry),
-        BLOCK = FormatPercent(block),
-    }
-
-    for _, stat in ipairs(DEFENSE_STATS_DEF) do
+    if inCombat then
         row = CreateStatRow(scrollChild, y)
-        row.label:SetText(stat.label)
-        row.value:SetText(defenseValues[stat.statKey] or "-")
-        
-        -- Set tooltips (Blizzard format)
-        if stat.statKey == "ARMOR" then
-            row.tooltip = HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, ARMOR).." "..BreakUpLargeNumbers(effectiveArmor)..FONT_COLOR_CODE_CLOSE
-            if PaperDollFrame_GetArmorReduction then
-                local armorReduction = PaperDollFrame_GetArmorReduction(effectiveArmor, UnitEffectiveLevel(unit))
-                row.tooltip2 = format(STAT_ARMOR_TOOLTIP, armorReduction)
-                if PaperDollFrame_GetArmorReductionAgainstTarget then
-                    local armorReductionAgainstTarget = PaperDollFrame_GetArmorReductionAgainstTarget(effectiveArmor)
-                    if armorReductionAgainstTarget then
-                        row.tooltip3 = format(STAT_ARMOR_TARGET_TOOLTIP, armorReductionAgainstTarget)
-                    end
-                end
-            end
-        elseif stat.statKey == "DODGE" then
-            local chance = GetDodgeChance()
-            row.tooltip = HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, DODGE_CHANCE).." "..string.format("%.2F", chance).."%"..FONT_COLOR_CODE_CLOSE
-            row.tooltip2 = format(CR_DODGE_TOOLTIP, GetCombatRating(CR_DODGE), GetCombatRatingBonus(CR_DODGE))
-        elseif stat.statKey == "PARRY" then
-            local chance = GetParryChance()
-            row.tooltip = HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, PARRY_CHANCE).." "..string.format("%.2F", chance).."%"..FONT_COLOR_CODE_CLOSE
-            row.tooltip2 = format(CR_PARRY_TOOLTIP, GetCombatRating(CR_PARRY), GetCombatRatingBonus(CR_PARRY))
-        elseif stat.statKey == "BLOCK" then
-            local chance = GetBlockChance()
-            row.tooltip = HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, BLOCK_CHANCE).." "..string.format("%.2F", chance).."%"..FONT_COLOR_CODE_CLOSE
-            if GetShieldBlock and PaperDollFrame_GetArmorReduction then
-                local shieldBlockArmor = GetShieldBlock()
-                local blockArmorReduction = PaperDollFrame_GetArmorReduction(shieldBlockArmor, UnitEffectiveLevel(unit))
-                row.tooltip2 = CR_BLOCK_TOOLTIP:format(blockArmorReduction)
-                if PaperDollFrame_GetArmorReductionAgainstTarget then
-                    local blockArmorReductionAgainstTarget = PaperDollFrame_GetArmorReductionAgainstTarget(shieldBlockArmor)
-                    if blockArmorReductionAgainstTarget then
-                        row.tooltip3 = format(STAT_BLOCK_TARGET_TOOLTIP, blockArmorReductionAgainstTarget)
-                    end
-                end
-            end
-        end
+        local inMplus3 = C_ChallengeMode and C_ChallengeMode.IsChallengeModeActive and C_ChallengeMode.IsChallengeModeActive()
+        row.label:SetText(inMplus3 and "|cFFFFCC00M+ Active|r" or "|cFFFFCC00In Combat|r")
+        row.value:SetText("|cFF888888N/A|r")
         y = y - ROW_HEIGHT
+    else
+        local baselineArmor, effectiveArmor = UnitArmor(unit)
+        local dodge = SafeGetStat(GetDodgeChance)
+        local parry = SafeGetStat(GetParryChance)
+        local block = SafeGetStat(GetBlockChance)
+
+        local defenseValues = {
+            ARMOR = FormatNumber(effectiveArmor or 0),
+            DODGE = FormatPercent(dodge),
+            PARRY = FormatPercent(parry),
+            BLOCK = FormatPercent(block),
+        }
+
+        for _, stat in ipairs(DEFENSE_STATS_DEF) do
+            row = CreateStatRow(scrollChild, y)
+            row.label:SetText(stat.label)
+            row.value:SetText(defenseValues[stat.statKey] or "-")
+
+            -- Set tooltips (Blizzard format)
+            if stat.statKey == "ARMOR" then
+                row.tooltip = HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, ARMOR).." "..BreakUpLargeNumbers(effectiveArmor)..FONT_COLOR_CODE_CLOSE
+                if PaperDollFrame_GetArmorReduction then
+                    local armorReduction = PaperDollFrame_GetArmorReduction(effectiveArmor, UnitEffectiveLevel(unit))
+                    row.tooltip2 = format(STAT_ARMOR_TOOLTIP, armorReduction)
+                    if PaperDollFrame_GetArmorReductionAgainstTarget then
+                        local armorReductionAgainstTarget = PaperDollFrame_GetArmorReductionAgainstTarget(effectiveArmor)
+                        if armorReductionAgainstTarget then
+                            row.tooltip3 = format(STAT_ARMOR_TARGET_TOOLTIP, armorReductionAgainstTarget)
+                        end
+                    end
+                end
+            elseif stat.statKey == "DODGE" then
+                local chance = GetDodgeChance()
+                row.tooltip = HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, DODGE_CHANCE).." "..string.format("%.2F", chance).."%"..FONT_COLOR_CODE_CLOSE
+                row.tooltip2 = format(CR_DODGE_TOOLTIP, GetCombatRating(CR_DODGE), GetCombatRatingBonus(CR_DODGE))
+            elseif stat.statKey == "PARRY" then
+                local chance = GetParryChance()
+                row.tooltip = HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, PARRY_CHANCE).." "..string.format("%.2F", chance).."%"..FONT_COLOR_CODE_CLOSE
+                row.tooltip2 = format(CR_PARRY_TOOLTIP, GetCombatRating(CR_PARRY), GetCombatRatingBonus(CR_PARRY))
+            elseif stat.statKey == "BLOCK" then
+                local chance = GetBlockChance()
+                row.tooltip = HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, BLOCK_CHANCE).." "..string.format("%.2F", chance).."%"..FONT_COLOR_CODE_CLOSE
+                if GetShieldBlock and PaperDollFrame_GetArmorReduction then
+                    local shieldBlockArmor = GetShieldBlock()
+                    local blockArmorReduction = PaperDollFrame_GetArmorReduction(shieldBlockArmor, UnitEffectiveLevel(unit))
+                    row.tooltip2 = CR_BLOCK_TOOLTIP:format(blockArmorReduction)
+                    if PaperDollFrame_GetArmorReductionAgainstTarget then
+                        local blockArmorReductionAgainstTarget = PaperDollFrame_GetArmorReductionAgainstTarget(shieldBlockArmor)
+                        if blockArmorReductionAgainstTarget then
+                            row.tooltip3 = format(STAT_BLOCK_TARGET_TOOLTIP, blockArmorReductionAgainstTarget)
+                        end
+                    end
+                end
+            end
+            y = y - ROW_HEIGHT
+        end
     end
 
     y = y - 5
@@ -2755,17 +2804,25 @@ ScheduleStatUpdate = function()
     end)
 end
 
--- Refresh stats panel when entering/leaving a Mythic+ key so the
--- panel switches between normal view and M+ percent-only view.
+-- Refresh stats panel when entering/leaving combat so the panel switches
+-- between the normal view and the combat percent-only view.
+-- Since 12.0.5, UnitStat returns tainted values during ALL combat.
+-- Also refresh on M+ key start/end since stats are secret for the entire key.
 do
-    local cmEventFrame = CreateFrame("Frame")
-    cmEventFrame:RegisterEvent("CHALLENGE_MODE_START")
-    cmEventFrame:RegisterEvent("CHALLENGE_MODE_COMPLETED")
-    cmEventFrame:RegisterEvent("CHALLENGE_MODE_RESET")
-    cmEventFrame:SetScript("OnEvent", function()
+    local combatEventFrame = CreateFrame("Frame")
+    combatEventFrame:RegisterEvent("PLAYER_REGEN_DISABLED")   -- entering combat
+    combatEventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")    -- leaving combat
+    combatEventFrame:RegisterEvent("CHALLENGE_MODE_START")    -- M+ key started
+    combatEventFrame:RegisterEvent("CHALLENGE_MODE_COMPLETED") -- M+ key done
+    combatEventFrame:RegisterEvent("CHALLENGE_MODE_RESET")    -- M+ key reset
+    combatEventFrame:SetScript("OnEvent", function()
+        -- Reset the combat-state cache so the next UpdateStatsPanel call always
+        -- performs a full rebuild when transitioning in or out of combat.
+        lastStatsCombatState = nil
         ScheduleStatUpdate()
     end)
 end
+
 
 -- GEAR UPDATE: Low frequency, high cost (Frames, Textures, Overlays)
 -- Note: Gear changes usually affect stats, so this triggers a stat update too.
