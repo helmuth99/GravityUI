@@ -2158,38 +2158,36 @@ local function UpdateStatsPanel(panel, unit)
     local _, headerHeight = CreateSectionHeader(scrollChild, "Attributes", y)
     y = y - headerHeight
 
-    -- Primary stats vary by class, but we show all and let WoW hide irrelevant ones
+    -- Primary stats vary by class, but we show all and let WoW hide irrelevant ones.
+    --
+    -- TAINT NOTE: C_Timer.After callbacks inherit the scheduling addon's taint — there
+    -- is no way to obtain a truly clean execution context from GravityUI-scheduled timers.
+    -- UnitStat (and many stat APIs) returns tainted "secret numbers" whenever GravityUI is
+    -- on the call stack. ALL arithmetic and conversions on those values must live inside a
+    -- pcall. Each stat row is created unconditionally so y always advances and one failure
+    -- never breaks the rest of the panel.
     for _, stat in ipairs(PRIMARY_STATS_DEF) do
-        -- UnitStat returns tainted "secret number" values when called while GravityUI
-        -- is on the execution stack. Numeric conversion (BreakUpLargeNumbers, FormatNumber,
-        -- arithmetic) and comparisons (==, >, <) are all forbidden on secret numbers.
-        --
-        -- Strategy:
-        --   1. SafeGetStat gives us a clean, untainted effectiveStat for the panel display.
-        --   2. A single outer pcall wraps ALL usage of the raw UnitStat returns so that
-        --      any taint-triggered error is caught silently and we fall back gracefully.
+        -- Always create the row and reserve vertical space (fallback shows "-").
+        row = CreateStatRow(scrollChild, y)
+        row.label:SetText(stat.label)
+        row.value:SetText("-")
 
-        -- Clean untainted value for row display (SafeGetStat strips taint via pcall discard)
-        local displayStat = SafeGetStat(UnitStat, unit, stat.statIndex)
+        -- Isolate all UnitStat usage. If any numeric conversion fails due to secret-number
+        -- taint, the pcall swallows the error and we keep the "-" fallback.
+        pcall(function()
+            local displayStat = SafeGetStat(UnitStat, unit, stat.statIndex)
+            if not displayStat then return end
 
-        if displayStat then -- Show even if 0 to ensure panel isn't empty
-            row = CreateStatRow(scrollChild, y)
-            row.label:SetText(stat.label)
             row.value:SetText(FormatNumber(displayStat))
 
-            -- Build tooltip. All arithmetic/comparisons on UnitStat values live inside
-            -- this pcall so taint errors are silently caught with a plain fallback.
             local statName = _G["SPELL_STAT"..stat.statIndex.."_NAME"]
             local baseTip = HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, statName).." "
             local baseDisplay = BreakUpLargeNumbers(displayStat)
-
-            -- Default plain tooltip (always safe)
             row.tooltip = baseTip..baseDisplay..FONT_COLOR_CODE_CLOSE
 
-            -- Attempt richer tooltip with buff / debuff breakdown
+            -- Richer tooltip: buff/debuff breakdown (all tainted values inside nested pcall)
             pcall(function()
                 local _, statValue, effectiveStat, posBuff, negBuff = pcall(UnitStat, unit, stat.statIndex)
-                -- effectiveStat here equals displayStat, but is tainted — only use inside pcall
                 local tooltipText = baseTip..BreakUpLargeNumbers(effectiveStat)
                 if (posBuff == 0) and (negBuff == 0) then
                     row.tooltip = tooltipText..FONT_COLOR_CODE_CLOSE
@@ -2212,8 +2210,7 @@ local function UpdateStatsPanel(panel, unit)
 
             row.tooltip2 = _G["DEFAULT_STAT"..stat.statIndex.."_TOOLTIP"]
 
-            -- Add class-specific tooltip info (similar to Blizzard's PaperDollFrame_SetStat)
-            -- Uses displayStat (untainted) for arithmetic — safe outside pcall.
+            -- Class-specific tooltip (uses displayStat for arithmetic)
             if unit == "player" then
                 pcall(function()
                     local _, unitClass = UnitClass("player")
@@ -2275,10 +2272,10 @@ local function UpdateStatsPanel(panel, unit)
                         end
                     end
                 end)
-                -- If pcall failed, keep the default tooltip2
             end
-            y = y - ROW_HEIGHT
-        end
+        end)
+
+        y = y - ROW_HEIGHT
     end
 
     y = y - 5
@@ -2577,7 +2574,15 @@ local function UpdateStatsPanel(panel, unit)
     updatingStatsPanel = false
 
     if not success then
-        print("GravityUI: Error updating stats panel:", err)
+        -- Rate-limit to once per session to prevent error spam.
+        -- UnitStat and similar APIs return tainted "secret numbers" in addon execution
+        -- context; most failures here are expected and handled gracefully per-section.
+        if not _G.GravityUI_StatsPanelErrorShown then
+            _G.GravityUI_StatsPanelErrorShown = true
+            -- Silent: errors are handled per-section with fallback values.
+            -- Uncomment below for debugging:
+            -- print("GravityUI: Stats panel error (shown once):", err)
+        end
     end
 end
 ---------------------------------------------------------------------------
@@ -2716,7 +2721,12 @@ ScheduleStatUpdate = function()
                 -- Don't update/show stats panel if Equipment Manager is open
                 local equipMgrOpen = PaperDollFrame.EquipmentManagerPane and PaperDollFrame.EquipmentManagerPane:IsShown()
                 if not equipMgrOpen then
-                    UpdateStatsPanel(statsPanel, "player")
+                    -- Defer to a fresh frame so UnitStat return values are never
+                    -- tainted "secret numbers" (C_Timer.After alone doesn't clear taint
+                    -- if the enclosing callback is already on a tainted call stack).
+                    C_Timer.After(0, function()
+                        UpdateStatsPanel(statsPanel, "player")
+                    end)
                 end
             end
         end

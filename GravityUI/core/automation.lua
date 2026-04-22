@@ -1551,3 +1551,94 @@ SlashCmdList["GRAVITYCOMBATLOG"] = function(msg)
         CombatLogDebug()
     end
 end
+
+---------------------------------------------------------------------------
+-- BONUS ROLL FRAME: MOVABLE
+-- BonusRollFrame sometimes overlaps action bars or other UI elements,
+-- blocking the Roll / Pass buttons. Make it draggable with position memory.
+---------------------------------------------------------------------------
+
+local bonusRollHooked = false
+
+local function SaveBonusRollPosition()
+    if not BonusRollFrame then return end
+    local point, _, relPoint, x, y = BonusRollFrame:GetPoint()
+    if point then
+        GravityUI_BonusRollPos = { point = point, relPoint = relPoint, x = x, y = y }
+    end
+end
+
+local function RestoreBonusRollPosition()
+    if not BonusRollFrame then return end
+    local pos = GravityUI_BonusRollPos
+    if pos and pos.point then
+        BonusRollFrame:ClearAllPoints()
+        BonusRollFrame:SetPoint(pos.point, UIParent, pos.relPoint, pos.x, pos.y)
+    end
+end
+
+local function MakeBonusRollMovable()
+    if bonusRollHooked then return end
+    if not BonusRollFrame then return end
+    bonusRollHooked = true
+
+    BonusRollFrame:SetMovable(true)
+    BonusRollFrame:EnableMouse(true)
+    BonusRollFrame:RegisterForDrag("LeftButton")
+    BonusRollFrame:SetClampedToScreen(true)
+
+    BonusRollFrame:HookScript("OnDragStart", function(self)
+        self:StartMoving()
+    end)
+
+    BonusRollFrame:HookScript("OnDragStop", function(self)
+        self:StopMovingOrSizing()
+        SaveBonusRollPosition()
+    end)
+
+    -- Restore saved position each time the frame shows
+    BonusRollFrame:HookScript("OnShow", function()
+        RestoreBonusRollPosition()
+    end)
+
+    -- Tooltip hint on hover
+    BonusRollFrame:HookScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_TOP")
+        GameTooltip:AddLine("Bonus Loot", 1, 0.82, 0)
+        GameTooltip:AddLine("|cFFAAAAAADrag to move  •  /bonusroll reset|r")
+        GameTooltip:Show()
+    end)
+    BonusRollFrame:HookScript("OnLeave", function()
+        GameTooltip:Hide()
+    end)
+end
+
+-- Hook on first appearance (BonusRollFrame may not yet exist at load time)
+local bonusRollInitFrame = CreateFrame("Frame")
+bonusRollInitFrame:RegisterEvent("PLAYER_LOGIN")
+bonusRollInitFrame:RegisterEvent("BONUS_ROLL_STARTED")
+bonusRollInitFrame:SetScript("OnEvent", function(self, event)
+    if BonusRollFrame then
+        MakeBonusRollMovable()
+        self:UnregisterEvent("BONUS_ROLL_STARTED")
+    end
+    if event == "PLAYER_LOGIN" and BonusRollFrame then
+        self:UnregisterEvent("PLAYER_LOGIN")
+    end
+end)
+
+-- Slash command to reset Bonus Roll frame position
+SLASH_GRAVITYBONUSROLL1 = "/gravitybonusroll"
+SLASH_GRAVITYBONUSROLL2 = "/bonusroll"
+SlashCmdList["GRAVITYBONUSROLL"] = function(msg)
+    if msg and msg:lower() == "reset" then
+        if BonusRollFrame then
+            BonusRollFrame:ClearAllPoints()
+            BonusRollFrame:SetPoint("CENTER", UIParent, "CENTER", 0, -150)
+            SaveBonusRollPosition()
+            print("|cFF30D1FFGravityUI:|r Bonus Roll position reset.")
+        end
+    else
+        print("|cFF30D1FFGravityUI:|r /bonusroll reset — resets Bonus Roll frame to default position.")
+    end
+end

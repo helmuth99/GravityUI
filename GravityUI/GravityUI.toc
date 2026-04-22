@@ -9,7 +9,7 @@
 ## Version: @project-version@
 ## DefaultState: Enabled
 ## LoadOnDemand: 0
-## SavedVariables: GravityUI_DB
+## SavedVariables: GravityUI_DB GravityUI_BonusRollPos
 ## X-License: GPLv3
 ## X-Website: https://Gravity-Guild.eu
 ## X-Curse-Project-ID: 1102290
