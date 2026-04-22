@@ -2174,23 +2174,33 @@ local function UpdateStatsPanel(panel, unit)
             local tooltipText = HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, statName).." "
             local effectiveStatDisplay = BreakUpLargeNumbers(effectiveStat)
             
-            if (posBuff == 0) and (negBuff == 0) then
+            -- posBuff/negBuff are tainted "secret numbers" from UnitStat.
+            -- Comparing them directly (==, >, <) while GravityUI is on the
+            -- execution stack causes "attempt to compare secret number" crashes.
+            -- Wrap the entire comparison block in its own pcall to isolate taints.
+            local tooltipOk = pcall(function()
+                if (posBuff == 0) and (negBuff == 0) then
+                    row.tooltip = tooltipText..effectiveStatDisplay..FONT_COLOR_CODE_CLOSE
+                else
+                    tooltipText = tooltipText..effectiveStatDisplay
+                    if (posBuff > 0 or negBuff < 0) then
+                        tooltipText = tooltipText.." ("..BreakUpLargeNumbers(statValue - posBuff - negBuff)..FONT_COLOR_CODE_CLOSE
+                    end
+                    if (posBuff > 0) then
+                        tooltipText = tooltipText..FONT_COLOR_CODE_CLOSE..GREEN_FONT_COLOR_CODE.."+"..BreakUpLargeNumbers(posBuff)..FONT_COLOR_CODE_CLOSE
+                    end
+                    if (negBuff < 0) then
+                        tooltipText = tooltipText..RED_FONT_COLOR_CODE.." "..BreakUpLargeNumbers(negBuff)..FONT_COLOR_CODE_CLOSE
+                    end
+                    if (posBuff > 0 or negBuff < 0) then
+                        tooltipText = tooltipText..HIGHLIGHT_FONT_COLOR_CODE..")"..FONT_COLOR_CODE_CLOSE
+                    end
+                    row.tooltip = tooltipText
+                end
+            end)
+            if not tooltipOk then
+                -- Fallback: plain tooltip without buff breakdown (taint-safe)
                 row.tooltip = tooltipText..effectiveStatDisplay..FONT_COLOR_CODE_CLOSE
-            else
-                tooltipText = tooltipText..effectiveStatDisplay
-                if (posBuff > 0 or negBuff < 0) then
-                    tooltipText = tooltipText.." ("..BreakUpLargeNumbers(statValue - posBuff - negBuff)..FONT_COLOR_CODE_CLOSE
-                end
-                if (posBuff > 0) then
-                    tooltipText = tooltipText..FONT_COLOR_CODE_CLOSE..GREEN_FONT_COLOR_CODE.."+"..BreakUpLargeNumbers(posBuff)..FONT_COLOR_CODE_CLOSE
-                end
-                if (negBuff < 0) then
-                    tooltipText = tooltipText..RED_FONT_COLOR_CODE.." "..BreakUpLargeNumbers(negBuff)..FONT_COLOR_CODE_CLOSE
-                end
-                if (posBuff > 0 or negBuff < 0) then
-                    tooltipText = tooltipText..HIGHLIGHT_FONT_COLOR_CODE..")"..FONT_COLOR_CODE_CLOSE
-                end
-                row.tooltip = tooltipText
             end
             
             row.tooltip2 = _G["DEFAULT_STAT"..stat.statIndex.."_TOOLTIP"]
