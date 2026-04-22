@@ -1553,92 +1553,185 @@ SlashCmdList["GRAVITYCOMBATLOG"] = function(msg)
 end
 
 ---------------------------------------------------------------------------
--- BONUS ROLL FRAME: MOVABLE
--- BonusRollFrame sometimes overlaps action bars or other UI elements,
--- blocking the Roll / Pass buttons. Make it draggable with position memory.
+-- BONUS ROLL FRAME: SAFE REPOSITIONING + EDIT MODE MOVER
+--
+-- BonusRollFrame contains SecureActionButtons (Roll / Pass). Any direct
+-- modification (SetMovable, child frames, RegisterForDrag) taints the secure
+-- hierarchy and makes those buttons unclickable.
+--
+-- Solution: a non-secure PROXY FRAME that:
+--   1. Appears in Blizzard's Edit Mode under "GravityUI Elements"
+--   2. Is freely draggable (not secure → no taint)
+--   3. Saves its position to GravityUI_BonusRollPos on drag-stop
+--   4. When the REAL BonusRollFrame appears, it is silently repositioned
+--      to that saved location without touching its mouse handlers.
 ---------------------------------------------------------------------------
 
-local bonusRollHooked = false
+local BONUS_ROLL_DEFAULT_POINT    = "TOP"
+local BONUS_ROLL_DEFAULT_RELPOINT = "TOP"
+local BONUS_ROLL_DEFAULT_X        = 0
+local BONUS_ROLL_DEFAULT_Y        = -200   -- 200px below top edge
 
-local function SaveBonusRollPosition()
-    if not BonusRollFrame then return end
-    local point, _, relPoint, x, y = BonusRollFrame:GetPoint()
-    if point then
-        GravityUI_BonusRollPos = { point = point, relPoint = relPoint, x = x, y = y }
-    end
-end
+local bonusRollRepositionHooked = false
+local bonusRollPreview          = nil
 
-local function RestoreBonusRollPosition()
-    if not BonusRollFrame then return end
+-- Returns the saved anchor or the default one
+local function GetBonusRollPos()
     local pos = GravityUI_BonusRollPos
-    if pos and pos.point then
-        BonusRollFrame:ClearAllPoints()
-        BonusRollFrame:SetPoint(pos.point, UIParent, pos.relPoint, pos.x, pos.y)
+    if pos and pos.point and pos.x and pos.y then
+        return pos.point, pos.relPoint or pos.point, pos.x, pos.y
+    end
+    return BONUS_ROLL_DEFAULT_POINT, BONUS_ROLL_DEFAULT_RELPOINT,
+           BONUS_ROLL_DEFAULT_X,     BONUS_ROLL_DEFAULT_Y
+end
+
+-- Save position from any frame to GravityUI_BonusRollPos
+local function SaveBonusRollPos(frame)
+    local p, _, rp, ox, oy = frame:GetPoint()
+    if p then
+        GravityUI_BonusRollPos = { point = p, relPoint = rp or p, x = ox, y = oy }
     end
 end
 
-local function MakeBonusRollMovable()
-    if bonusRollHooked then return end
+-- Move the REAL bonus roll frame to the saved position
+local function RepositionBonusRollFrame()
     if not BonusRollFrame then return end
-    bonusRollHooked = true
-
-    BonusRollFrame:SetMovable(true)
-    BonusRollFrame:EnableMouse(true)
-    BonusRollFrame:RegisterForDrag("LeftButton")
-    BonusRollFrame:SetClampedToScreen(true)
-
-    BonusRollFrame:HookScript("OnDragStart", function(self)
-        self:StartMoving()
-    end)
-
-    BonusRollFrame:HookScript("OnDragStop", function(self)
-        self:StopMovingOrSizing()
-        SaveBonusRollPosition()
-    end)
-
-    -- Restore saved position each time the frame shows
-    BonusRollFrame:HookScript("OnShow", function()
-        RestoreBonusRollPosition()
-    end)
-
-    -- Tooltip hint on hover
-    BonusRollFrame:HookScript("OnEnter", function(self)
-        GameTooltip:SetOwner(self, "ANCHOR_TOP")
-        GameTooltip:AddLine("Bonus Loot", 1, 0.82, 0)
-        GameTooltip:AddLine("|cFFAAAAAADrag to move  •  /bonusroll reset|r")
-        GameTooltip:Show()
-    end)
-    BonusRollFrame:HookScript("OnLeave", function()
-        GameTooltip:Hide()
+    local point, relPoint, x, y = GetBonusRollPos()
+    C_Timer.After(0, function()
+        if BonusRollFrame and BonusRollFrame:IsShown() then
+            BonusRollFrame:ClearAllPoints()
+            BonusRollFrame:SetPoint(point, UIParent, relPoint, x, y)
+        end
     end)
 end
 
--- Hook on first appearance (BonusRollFrame may not yet exist at load time)
+-- Hook BonusRollFrame:OnShow once it exists
+local function HookBonusRollReposition()
+    if bonusRollRepositionHooked then return end
+    if not BonusRollFrame then return end
+    bonusRollRepositionHooked = true
+    BonusRollFrame:HookScript("OnShow", RepositionBonusRollFrame)
+end
+
+-- -----------------------------------------------------------------------
+-- EDIT MODE PROXY FRAME
+-- A draggable placeholder that looks like BonusRollFrame and is shown
+-- only when the user enables "Show GravityUI Elements" in Edit Mode.
+-- -----------------------------------------------------------------------
+local function CreateBonusRollPreview()
+    if bonusRollPreview then return bonusRollPreview end
+
+    local f = CreateFrame("Frame", "GravityUI_BonusRollPreview", UIParent, "BackdropTemplate")
+    -- Approximate BonusRollFrame dimensions (350 x 54px in Retail)
+    f:SetSize(350, 54)
+    f:SetClampedToScreen(true)
+    f:SetMovable(true)
+    f:EnableMouse(true)
+    f:RegisterForDrag("LeftButton")
+    f:SetFrameStrata("HIGH")
+
+    -- Visual: styled to look like the real frame
+    f:SetBackdrop({
+        bgFile   = "Interface\\Buttons\\WHITE8x8",
+        edgeFile = "Interface\\Buttons\\WHITE8x8",
+        edgeSize = 1,
+    })
+    f:SetBackdropColor(0.05, 0.05, 0.08, 0.85)
+    f:SetBackdropBorderColor(0.85, 0.65, 0.1, 1)
+
+    local icon = f:CreateTexture(nil, "ARTWORK")
+    icon:SetSize(40, 40)
+    icon:SetPoint("LEFT", f, "LEFT", 7, 0)
+    icon:SetTexture("Interface\\Icons\\INV_Misc_Dice_02")
+    icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+
+    local title = f:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    title:SetPoint("LEFT", icon, "RIGHT", 8, 4)
+    title:SetText("|cFFFFCC00Bonus Loot|r")
+    title:SetTextColor(1, 0.82, 0)
+
+    local sub = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    sub:SetPoint("LEFT", icon, "RIGHT", 8, -10)
+    sub:SetText("|cFFAAAAAAgravityUI Edit Mode Mover|r")
+
+    -- Drag behaviour: save position on release
+    f:SetScript("OnDragStart", f.StartMoving)
+    f:SetScript("OnDragStop", function(self)
+        self:StopMovingOrSizing()
+        SaveBonusRollPos(self)
+    end)
+
+    f:Hide() -- hidden by default; Movers toggles visibility
+    bonusRollPreview = f
+    return f
+end
+
+-- Register the proxy with the Movers system so it appears in Edit Mode.
+-- Called after PLAYER_LOGIN so ns.Movers is guaranteed to exist.
+local function RegisterBonusRollMover()
+    if not ns.Movers then return end
+    local preview = CreateBonusRollPreview()
+
+    ns.Movers:Register("BonusRoll", preview, function(frame, shouldShow)
+        if shouldShow then
+            -- Snap preview to current saved position before showing
+            local point, relPoint, x, y = GetBonusRollPos()
+            frame:ClearAllPoints()
+            frame:SetPoint(point, UIParent, relPoint, x, y)
+            frame:Show()
+            ns.Movers:ApplyEditModeStyle(frame, true)
+        else
+            ns.Movers:ApplyEditModeStyle(frame, false)
+            frame:Hide()
+        end
+    end, "Bonus Loot")
+end
+
+-- Init: hook BonusRollFrame reposition + register mover on login
 local bonusRollInitFrame = CreateFrame("Frame")
 bonusRollInitFrame:RegisterEvent("PLAYER_LOGIN")
 bonusRollInitFrame:RegisterEvent("BONUS_ROLL_STARTED")
 bonusRollInitFrame:SetScript("OnEvent", function(self, event)
-    if BonusRollFrame then
-        MakeBonusRollMovable()
+    if event == "PLAYER_LOGIN" then
+        RegisterBonusRollMover()
+        if BonusRollFrame then HookBonusRollReposition() end
+    elseif event == "BONUS_ROLL_STARTED" then
+        if BonusRollFrame then HookBonusRollReposition() end
         self:UnregisterEvent("BONUS_ROLL_STARTED")
-    end
-    if event == "PLAYER_LOGIN" and BonusRollFrame then
-        self:UnregisterEvent("PLAYER_LOGIN")
     end
 end)
 
--- Slash command to reset Bonus Roll frame position
+---------------------------------------------------------------------------
+-- Slash: /bonusroll [reset|top|center|bottom]
+---------------------------------------------------------------------------
 SLASH_GRAVITYBONUSROLL1 = "/gravitybonusroll"
 SLASH_GRAVITYBONUSROLL2 = "/bonusroll"
 SlashCmdList["GRAVITYBONUSROLL"] = function(msg)
-    if msg and msg:lower() == "reset" then
-        if BonusRollFrame then
+    msg = msg and msg:lower():match("^%s*(.-)%s*$") or ""
+
+    local presets = {
+        reset  = { "TOP",    "TOP",    0,  -200 },
+        top    = { "TOP",    "TOP",    0,  -100 },
+        center = { "CENTER", "CENTER", 0,     0 },
+        bottom = { "BOTTOM", "BOTTOM", 0,   100 },
+    }
+
+    local preset = presets[msg]
+    if preset then
+        GravityUI_BonusRollPos = { point = preset[1], relPoint = preset[2],
+                                   x = preset[3],     y = preset[4] }
+        -- Move real frame if currently visible
+        if BonusRollFrame and BonusRollFrame:IsShown() then
             BonusRollFrame:ClearAllPoints()
-            BonusRollFrame:SetPoint("CENTER", UIParent, "CENTER", 0, -150)
-            SaveBonusRollPosition()
-            print("|cFF30D1FFGravityUI:|r Bonus Roll position reset.")
+            BonusRollFrame:SetPoint(preset[1], UIParent, preset[2], preset[3], preset[4])
         end
+        -- Snap preview too if Edit Mode is open
+        if bonusRollPreview and bonusRollPreview:IsShown() then
+            bonusRollPreview:ClearAllPoints()
+            bonusRollPreview:SetPoint(preset[1], UIParent, preset[2], preset[3], preset[4])
+        end
+        print(string.format("|cFF30D1FFGravityUI:|r Bonus Roll position set to '%s'.", msg))
     else
-        print("|cFF30D1FFGravityUI:|r /bonusroll reset — resets Bonus Roll frame to default position.")
+        print("|cFF30D1FFGravityUI:|r Usage: /bonusroll [reset|top|center|bottom]")
     end
 end
