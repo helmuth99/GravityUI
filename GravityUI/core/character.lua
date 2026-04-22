@@ -2160,29 +2160,40 @@ local function UpdateStatsPanel(panel, unit)
 
     -- Primary stats vary by class, but we show all and let WoW hide irrelevant ones
     for _, stat in ipairs(PRIMARY_STATS_DEF) do
-        -- Use pcall directly to capture all return values (SafeGetStat only returns one)
-        local ok, statValue, effectiveStat, posBuff, negBuff = pcall(UnitStat, unit, stat.statIndex)
-        if not ok then effectiveStat = 0 end
-        
-        if effectiveStat then -- Show even if 0 to ensure panel isn't empty
+        -- UnitStat returns tainted "secret number" values when called while GravityUI
+        -- is on the execution stack. Numeric conversion (BreakUpLargeNumbers, FormatNumber,
+        -- arithmetic) and comparisons (==, >, <) are all forbidden on secret numbers.
+        --
+        -- Strategy:
+        --   1. SafeGetStat gives us a clean, untainted effectiveStat for the panel display.
+        --   2. A single outer pcall wraps ALL usage of the raw UnitStat returns so that
+        --      any taint-triggered error is caught silently and we fall back gracefully.
+
+        -- Clean untainted value for row display (SafeGetStat strips taint via pcall discard)
+        local displayStat = SafeGetStat(UnitStat, unit, stat.statIndex)
+
+        if displayStat then -- Show even if 0 to ensure panel isn't empty
             row = CreateStatRow(scrollChild, y)
             row.label:SetText(stat.label)
-            row.value:SetText(FormatNumber(effectiveStat))
-            
-            -- Set tooltip (Blizzard format)
+            row.value:SetText(FormatNumber(displayStat))
+
+            -- Build tooltip. All arithmetic/comparisons on UnitStat values live inside
+            -- this pcall so taint errors are silently caught with a plain fallback.
             local statName = _G["SPELL_STAT"..stat.statIndex.."_NAME"]
-            local tooltipText = HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, statName).." "
-            local effectiveStatDisplay = BreakUpLargeNumbers(effectiveStat)
-            
-            -- posBuff/negBuff are tainted "secret numbers" from UnitStat.
-            -- Comparing them directly (==, >, <) while GravityUI is on the
-            -- execution stack causes "attempt to compare secret number" crashes.
-            -- Wrap the entire comparison block in its own pcall to isolate taints.
-            local tooltipOk = pcall(function()
+            local baseTip = HIGHLIGHT_FONT_COLOR_CODE..format(PAPERDOLLFRAME_TOOLTIP_FORMAT, statName).." "
+            local baseDisplay = BreakUpLargeNumbers(displayStat)
+
+            -- Default plain tooltip (always safe)
+            row.tooltip = baseTip..baseDisplay..FONT_COLOR_CODE_CLOSE
+
+            -- Attempt richer tooltip with buff / debuff breakdown
+            pcall(function()
+                local _, statValue, effectiveStat, posBuff, negBuff = pcall(UnitStat, unit, stat.statIndex)
+                -- effectiveStat here equals displayStat, but is tainted — only use inside pcall
+                local tooltipText = baseTip..BreakUpLargeNumbers(effectiveStat)
                 if (posBuff == 0) and (negBuff == 0) then
-                    row.tooltip = tooltipText..effectiveStatDisplay..FONT_COLOR_CODE_CLOSE
+                    row.tooltip = tooltipText..FONT_COLOR_CODE_CLOSE
                 else
-                    tooltipText = tooltipText..effectiveStatDisplay
                     if (posBuff > 0 or negBuff < 0) then
                         tooltipText = tooltipText.." ("..BreakUpLargeNumbers(statValue - posBuff - negBuff)..FONT_COLOR_CODE_CLOSE
                     end
@@ -2198,16 +2209,13 @@ local function UpdateStatsPanel(panel, unit)
                     row.tooltip = tooltipText
                 end
             end)
-            if not tooltipOk then
-                -- Fallback: plain tooltip without buff breakdown (taint-safe)
-                row.tooltip = tooltipText..effectiveStatDisplay..FONT_COLOR_CODE_CLOSE
-            end
-            
+
             row.tooltip2 = _G["DEFAULT_STAT"..stat.statIndex.."_TOOLTIP"]
-            
+
             -- Add class-specific tooltip info (similar to Blizzard's PaperDollFrame_SetStat)
+            -- Uses displayStat (untainted) for arithmetic — safe outside pcall.
             if unit == "player" then
-                local success, result = pcall(function()
+                pcall(function()
                     local _, unitClass = UnitClass("player")
                     unitClass = strupper(unitClass)
                     local primaryStat, spec, role
@@ -2216,10 +2224,10 @@ local function UpdateStatsPanel(panel, unit)
                         role = GetSpecializationRole(spec)
                         primaryStat = select(6, C_SpecializationInfo.GetSpecializationInfo(spec, false, false, nil, UnitSex("player")))
                     end
-                    
+
                     if stat.statIndex == 1 then -- Strength
                         if GetAttackPowerForStat then
-                            local attackPower = GetAttackPowerForStat(1, effectiveStat)
+                            local attackPower = GetAttackPowerForStat(1, displayStat)
                             if HasAPEffectsSpellPower and HasAPEffectsSpellPower() then
                                 row.tooltip2 = STAT_TOOLTIP_BONUS_AP_SP
                             end
@@ -2253,7 +2261,7 @@ local function UpdateStatsPanel(panel, unit)
                         end
                     elseif stat.statIndex == 3 then -- Stamina
                         if UnitHPPerStamina and GetUnitMaxHealthModifier then
-                            row.tooltip2 = format(row.tooltip2, BreakUpLargeNumbers(((effectiveStat*UnitHPPerStamina("player")))*GetUnitMaxHealthModifier("player")))
+                            row.tooltip2 = format(row.tooltip2, BreakUpLargeNumbers(((displayStat*UnitHPPerStamina("player")))*GetUnitMaxHealthModifier("player")))
                         end
                     elseif stat.statIndex == 4 then -- Intellect
                         if HasAPEffectsSpellPower and HasAPEffectsSpellPower() then
@@ -2261,7 +2269,7 @@ local function UpdateStatsPanel(panel, unit)
                         elseif HasSPEffectsAttackPower and HasSPEffectsAttackPower() then
                             row.tooltip2 = STAT_TOOLTIP_BONUS_AP_SP
                         elseif (not primaryStat or primaryStat == 4) then
-                            row.tooltip2 = format(row.tooltip2, max(0, effectiveStat))
+                            row.tooltip2 = format(row.tooltip2, max(0, displayStat))
                         else
                             row.tooltip2 = STAT_NO_BENEFIT_TOOLTIP
                         end
