@@ -2493,6 +2493,7 @@ frame:SetBackdropColor(0.05, 0.05, 0.05, 0.9)
 frame:SetBackdropBorderColor(0, 0, 0, 1)
 
 frame:SetScript("OnDragStart", function(self)
+    if InCombatLockdown() then return end
     self:StartMoving()
 end)
 
