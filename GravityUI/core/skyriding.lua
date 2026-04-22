@@ -526,37 +526,51 @@ local function UpdateSpeed(speed)
         speedText:Hide()
         return
     end
-    
-    if speed == nil then
-         local _, _, s = GetGlidingInfo()
-         speed = s
-    end
-    
-    -- Fallback: If GetGlidingInfo returns 0 or nil, use real unit speed
-    if not speed or speed == 0 then
-        speed = GetUnitSpeed("player")
-    end
-    
-    local formatMode = settings.speedFormat
-    local valueToCache
-    if formatMode == "PERCENT" then
-        valueToCache = math.floor(speed * 10)
-    else
-        valueToCache = math.floor(speed * 10) / 10
-    end
-    
-    if valueToCache ~= lastSpeedValue or formatMode ~= lastSpeedFormat then
-        if formatMode == "PERCENT" then
-            lastSpeedString = string.format("%d%%", math.floor(speed * 10))
-        else
-            lastSpeedString = string.format("%.1f", speed)
+
+    -- GetGlidingInfo / GetUnitSpeed can return tainted "secret number" values when
+    -- GravityUI is on the call stack. Wrap ALL arithmetic on speed in a pcall so a
+    -- crash here silently hides the display rather than killing OnUpdate / ApplySettings.
+    local ok = pcall(function()
+        if speed == nil then
+            local _, _, s = GetGlidingInfo()
+            speed = s
         end
-        lastSpeedValue = valueToCache
-        lastSpeedFormat = formatMode
-        speedText:SetText(lastSpeedString)
+
+        -- Fallback: If GetGlidingInfo returns 0 or nil, use real unit speed
+        if not speed or speed == 0 then
+            speed = GetUnitSpeed("player")
+        end
+
+        local formatMode = settings.speedFormat
+        local valueToCache
+        if formatMode == "PERCENT" then
+            valueToCache = math.floor(speed * 10)
+        else
+            valueToCache = math.floor(speed * 10) / 10
+        end
+
+        if valueToCache ~= lastSpeedValue or formatMode ~= lastSpeedFormat then
+            if formatMode == "PERCENT" then
+                lastSpeedString = string.format("%d%%", math.floor(speed * 10))
+            else
+                lastSpeedString = string.format("%.1f", speed)
+            end
+            lastSpeedValue = valueToCache
+            lastSpeedFormat = formatMode
+            speedText:SetText(lastSpeedString)
+        end
+        speedText:Show()
+    end)
+
+    if not ok then
+        -- Speed value was tainted; keep last displayed string if available,
+        -- otherwise hide to avoid stale/wrong data.
+        if not lastSpeedString then
+            speedText:Hide()
+        end
     end
-    speedText:Show()
 end
+
 
 local function UpdateAbilityIcon()
     local settings = GetSettings()
