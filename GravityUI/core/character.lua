@@ -2076,11 +2076,15 @@ local function UpdateStatsPanel(panel, unit)
     -- Skip rebuild when the combat state hasn't changed: the displayed content
     -- (N/A rows vs real values) will be identical, so there's nothing to gain
     -- from destroying and recreating every frame — which causes bar flickering.
+    -- Only skip rebuild when we are (and were) in combat: in that state the panel
+    -- shows a static "In Combat" notice with no real stat values, so rebuilding would
+    -- produce the exact same output. Out-of-combat always rebuilds to reflect stat
+    -- changes from item swaps, buffs, and spec changes.
     local currentCombatState = InCombatLockdown() or
                                (C_ChallengeMode and C_ChallengeMode.IsChallengeModeActive and
                                 C_ChallengeMode.IsChallengeModeActive())
-    if currentCombatState == lastStatsCombatState and currentCombatState ~= nil then
-        return  -- already showing the correct combat/non-combat view
+    if currentCombatState and currentCombatState == lastStatsCombatState then
+        return  -- already showing the combat-lockdown view, nothing to update
     end
     lastStatsCombatState = currentCombatState
 

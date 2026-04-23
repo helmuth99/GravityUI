@@ -529,12 +529,13 @@ local function ApplyHideSettings()
                     frame._gui_AutohideHooked = true
                     hooksecurefunc(frame, "Show", function(self)
                          local s = GetSettings()
-                         -- Recalculate 'inVehicle' here to be sure, or pass it?
-                         -- Ideally we check the global/helper function, but we can just re-check vehicle state
                          local v = HasOverrideActionBar() or (C_Vehicle and C_Vehicle.IsVehicleUIShowing())
                          local pb = C_PetBattles and C_PetBattles.IsInBattle()
                          if s and s.hideOnWorldQuestMinigame and (v or pb) then
-                             self:Hide()
+                             -- Alpha-only suppression: never call Hide() here.
+                             -- This hook may fire from Blizzard's SecureStateDriver which runs
+                             -- in a protected context — calling HideBase() on PlayerFrame etc.
+                             -- causes ADDON_ACTION_BLOCKED. SetAlpha(0) is always safe.
                              self:SetAlpha(0)
                          end
                     end)
