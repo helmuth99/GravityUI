@@ -222,6 +222,8 @@ local function GetEnchantText(unit, slotId)
                 -- Detect "Enchanted: +Stat" or just "+Stat" or "Scope"
                 if text:match(ENCHANTED_PREFIX) or text:match(ENCHANT_PREFIX) or text:match(SCOPE_PREFIX) then
                      local enchant = text:gsub("Enchanted: ", ""):gsub("Enchant: ", ""):gsub("Scope: ", "")
+                     -- Strip "Enchant SlotType - " prefix (e.g. "Enchant Helm - ", "Enchant Ring - ")
+                     enchant = enchant:gsub("^Enchant%s+.-%s*%-%s*", "")
                      return enchant, true
                 end
             end
