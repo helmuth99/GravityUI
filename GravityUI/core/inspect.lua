@@ -900,16 +900,27 @@ local function RepositionInspectSlots()
         InspectSecondaryHandSlot:SetPoint("LEFT", InspectMainHandSlot, "RIGHT", INSPECT_CONFIG.OFFHAND_SPACING, 0)
     end
     
-    local tabs = { InspectFrameTab1, InspectFrameTab2, InspectFrameTab3 }
-    if tabs[1] then
-        tabs[1]:ClearAllPoints()
-        tabs[1]:SetPoint("BOTTOMLEFT", InspectFrame, "BOTTOMLEFT", 15, -75)
+    -- Position all 3 tabs at the bottom of the background (bg extends to y=-60)
+    local allTabs = { InspectFrameTab1, InspectFrameTab2, InspectFrameTab3 }
+    local prevTab = nil
+    for _, tab in ipairs(allTabs) do
+        if tab then
+            tab:ClearAllPoints()
+            if prevTab then
+                tab:SetPoint("LEFT", prevTab, "RIGHT", 2, 0)
+            else
+                tab:SetPoint("BOTTOMLEFT", InspectFrame, "BOTTOMLEFT", 10, -92)
+            end
+            prevTab = tab
+        end
     end
-    
+
+    -- Show InspectTalents button at bottom right
     local talentsBtn = InspectPaperDollItemsFrame and InspectPaperDollItemsFrame.InspectTalents
-    if talentsBtn and InspectTrinket1Slot then
+    if talentsBtn then
         talentsBtn:ClearAllPoints()
-        talentsBtn:SetPoint("TOP", InspectTrinket1Slot, "BOTTOM", -12, -31)
+        talentsBtn:SetPoint("BOTTOMRIGHT", InspectFrame, "BOTTOMRIGHT", -10, -35)
+        talentsBtn:Show()
     end
 end
 
@@ -961,7 +972,7 @@ local function CreateInspectBackground()
 
     InspectFrame.customBg:ClearAllPoints()
     InspectFrame.customBg:SetPoint("TOPLEFT", InspectFrame, "TOPLEFT", 0, 0)
-    InspectFrame.customBg:SetPoint("BOTTOMRIGHT", InspectFrame, "BOTTOMRIGHT", 2, -50)
+    InspectFrame.customBg:SetPoint("BOTTOMRIGHT", InspectFrame, "BOTTOMRIGHT", 2, -60)
     
     InspectFrame.customBg:SetBackdropColor(bgr, bgg, bgb, bga)
     InspectFrame.customBg:SetBackdropBorderColor(sr, sg, sb, sa)
@@ -1010,7 +1021,6 @@ local function CreateInspectBackground()
         { InspectModelFrame, "BackgroundOverlay" },
         { InspectPaperDollFrame, "ClassBackground" },
         { InspectModelFrame, "ControlFrame" },
-        { InspectPaperDollItemsFrame, "InspectTalents" }
     }
 
     for _, entry in ipairs(nestedCandidates) do
