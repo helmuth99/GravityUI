@@ -172,6 +172,8 @@ ns.Defaults = {
             nameFontSize = 12,
             nameFontOutline = "OUTLINE",
             nameFontColor = { 1, 1, 1, 1 },
+            skinBonusRoll = true,
+            bonusRollPos = nil,  -- BonusRollFrame saved position (migrated from GravityUI_BonusRollPos)
         },
         lootResults = {
             enabled = true,

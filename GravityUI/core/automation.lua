@@ -1577,7 +1577,15 @@ local bonusRollPreview          = nil
 
 -- Returns the saved anchor or the default one
 local function GetBonusRollPos()
-    local pos = GravityUI_BonusRollPos
+    -- One-time migration from old standalone SavedVariable
+    if GravityUI_BonusRollPos and ns.db and ns.db.profile and ns.db.profile.styling and ns.db.profile.styling.lootRoll then
+        if not ns.db.profile.styling.lootRoll.bonusRollPos then
+            ns.db.profile.styling.lootRoll.bonusRollPos = GravityUI_BonusRollPos
+        end
+        GravityUI_BonusRollPos = nil  -- clear old global
+    end
+    local pos = ns.db and ns.db.profile and ns.db.profile.styling and
+                ns.db.profile.styling.lootRoll and ns.db.profile.styling.lootRoll.bonusRollPos
     if pos and pos.point and pos.x and pos.y then
         return pos.point, pos.relPoint or pos.point, pos.x, pos.y
     end
@@ -1585,11 +1593,11 @@ local function GetBonusRollPos()
            BONUS_ROLL_DEFAULT_X,     BONUS_ROLL_DEFAULT_Y
 end
 
--- Save position from any frame to GravityUI_BonusRollPos
+-- Save position from any frame into the main GravityUI_DB
 local function SaveBonusRollPos(frame)
     local p, _, rp, ox, oy = frame:GetPoint()
-    if p then
-        GravityUI_BonusRollPos = { point = p, relPoint = rp or p, x = ox, y = oy }
+    if p and ns.db and ns.db.profile and ns.db.profile.styling and ns.db.profile.styling.lootRoll then
+        ns.db.profile.styling.lootRoll.bonusRollPos = { point = p, relPoint = rp or p, x = ox, y = oy }
     end
 end
 
@@ -1718,8 +1726,10 @@ SlashCmdList["GRAVITYBONUSROLL"] = function(msg)
 
     local preset = presets[msg]
     if preset then
-        GravityUI_BonusRollPos = { point = preset[1], relPoint = preset[2],
-                                   x = preset[3],     y = preset[4] }
+        if ns.db and ns.db.profile and ns.db.profile.styling and ns.db.profile.styling.lootRoll then
+            ns.db.profile.styling.lootRoll.bonusRollPos = { point = preset[1], relPoint = preset[2],
+                                                            x = preset[3],     y = preset[4] }
+        end
         -- Move real frame if currently visible
         if BonusRollFrame and BonusRollFrame:IsShown() then
             BonusRollFrame:ClearAllPoints()

@@ -1363,6 +1363,119 @@ function Loot:UpdateRollPositions()
 end
 
 -------------------------------------------------------------------------------
+-- BONUS ROLL FRAME
+-------------------------------------------------------------------------------
+local function SkinBonusRollFrame()
+    local f = _G.BonusRollFrame
+    if not f then return end
+    if f.IsForbidden and f:IsForbidden() then return end
+
+    local db = GetDB()
+    if not db or not db.lootRoll or not db.lootRoll.enabled then return end
+    -- Respect the 'Skin Bonus Roll Window' toggle (default true if key missing)
+    if db.lootRoll.skinBonusRoll == false then return end
+
+    local sr, sg, sb = GetAccent()
+    local bgr, bgg, bgb, bga = ns.GetThemeBgColor()
+
+    local prompt = f.PromptFrame
+    if not prompt then return end
+
+    -- 1. Hide only specifically-named chrome textures/frames (safe — no accidental hiding)
+    local function HideNamedChrome(frame)
+        for _, key in ipairs({"NineSlice","Bg","Background","Border","FrameDecor","Shadow","GlowOverlay"}) do
+            local obj = frame[key]
+            if obj and obj.SetAlpha then obj:SetAlpha(0) end
+        end
+    end
+    HideNamedChrome(f)
+    HideNamedChrome(prompt)
+
+    -- 2. EXTERNAL BACKDROP: parented to UIParent, anchored to prompt, FrameLevel BELOW f.
+    --    By being a sibling of BonusRollFrame (not a child), it is guaranteed to render
+    --    BELOW the entire BonusRollFrame subtree — spec icon, timer bar, buttons, everything.
+    if not f.guiBackdrop then
+        local bd = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
+        bd:SetPoint("TOPLEFT",     prompt, "TOPLEFT",     0,  0)
+        bd:SetPoint("BOTTOMRIGHT", prompt, "BOTTOMRIGHT", 0,  0)
+        bd:SetFrameStrata(f:GetFrameStrata())
+        bd:SetFrameLevel(math.max(1, f:GetFrameLevel() - 1))
+        bd:SetBackdrop({
+            bgFile   = "Interface\\Buttons\\WHITE8x8",
+            edgeFile = "Interface\\Buttons\\WHITE8x8",
+            edgeSize = 1,
+        })
+        bd:Hide() -- default hidden; shown when f shows
+        f.guiBackdrop = bd
+
+        -- Accent line on the backdrop
+        bd.topLine = bd:CreateTexture(nil, "OVERLAY", nil, 7)
+        bd.topLine:SetHeight(2)
+        bd.topLine:SetPoint("TOPLEFT",  bd, "TOPLEFT",  1, -1)
+        bd.topLine:SetPoint("TOPRIGHT", bd, "TOPRIGHT", -1, -1)
+        bd.topLine:SetTexture("Interface\\Buttons\\WHITE8x8")
+
+        -- Sync visibility with BonusRollFrame
+        f:HookScript("OnShow", function(self)
+            if self.guiBackdrop then self.guiBackdrop:Show() end
+        end)
+        f:HookScript("OnHide", function(self)
+            if self.guiBackdrop then self.guiBackdrop:Hide() end
+        end)
+    end
+
+    -- Show backdrop if f is currently shown (e.g. test command)
+    if f:IsShown() then f.guiBackdrop:Show() end
+
+    f.guiBackdrop:SetBackdropColor(bgr, bgg, bgb, bga)
+    f.guiBackdrop:SetBackdropBorderColor(sr, sg, sb, 1)
+    f.guiBackdrop.topLine:SetVertexColor(sr, sg, sb, 0.85)
+
+    -- 3. GravityUI font on text elements
+    local font, size, outline = GetFont()
+    for _, fs in ipairs({ prompt.prompt, prompt.currencyName, prompt.rollLabel, prompt.passLabel }) do
+        if fs and fs.SetFont then
+            pcall(function() fs:SetFont(font, size, outline) end)
+        end
+    end
+
+    -- 4. Currency icon: clean crop
+    if prompt.currencyTexture and prompt.currencyTexture.SetTexCoord then
+        pcall(function() prompt.currencyTexture:SetTexCoord(0.08, 0.92, 0.08, 0.92) end)
+    end
+
+    -- 5. Button chrome: hide named chrome only, keep dice/pass icon visible
+    for _, btn in ipairs({ prompt.rollButton, prompt.passButton }) do
+        if btn and not btn.guiSkinned then
+            btn.guiSkinned = true
+            if btn.NineSlice  then btn.NineSlice:SetAlpha(0)  end
+            if btn.Border     then btn.Border:SetAlpha(0)     end
+            if btn.Background then btn.Background:SetAlpha(0) end
+        end
+    end
+
+    -- 6. Anti-Dominos: raise BonusRollFrame above action bar addons and ensure
+    --    buttons are always on top and clickable.
+    --    Dominos/Bartender typically use MEDIUM strata; DIALOG is always above those.
+    pcall(function() f:SetFrameStrata("DIALOG") end)
+
+    for _, btn in ipairs({ prompt.rollButton, prompt.passButton }) do
+        if btn then
+            pcall(function()
+                -- TOOLTIP is the highest interactive strata (above FULLSCREEN_DIALOG)
+                btn:SetFrameStrata("TOOLTIP")
+                btn:SetFrameLevel(100)
+            end)
+        end
+    end
+
+    f.guiSkinned = true
+end
+
+-- Export so styling panel can call it
+Loot.SkinBonusRollFrame = SkinBonusRollFrame
+
+-------------------------------------------------------------------------------
 -- INITIALIZATION
 -------------------------------------------------------------------------------
 
@@ -1511,6 +1624,34 @@ function Loot:Initialize()
         
         Loot:UpdateRollPositions()
     end
+
+    -- Bonus Roll Frame
+    if db.lootRoll and db.lootRoll.enabled then
+        if _G.BonusRollFrame then
+            SkinBonusRollFrame()
+            _G.BonusRollFrame:HookScript("OnShow", SkinBonusRollFrame)
+        else
+            -- BonusRollFrame is part of Blizzard_BonusRoll in some versions
+            local bonusFrame = CreateFrame("Frame")
+            bonusFrame:RegisterEvent("ADDON_LOADED")
+            bonusFrame:RegisterEvent("BONUS_ROLL_STARTED")
+            bonusFrame:SetScript("OnEvent", function(self, event, arg1)
+                if event == "ADDON_LOADED" and arg1 == "Blizzard_BonusRoll" then
+                    self:UnregisterEvent("ADDON_LOADED")
+                end
+                if _G.BonusRollFrame then
+                    SkinBonusRollFrame()
+                    if not _G.BonusRollFrame._guiShowHooked then
+                        _G.BonusRollFrame._guiShowHooked = true
+                        _G.BonusRollFrame:HookScript("OnShow", SkinBonusRollFrame)
+                    end
+                    if event ~= "ADDON_LOADED" then
+                        self:UnregisterAllEvents()
+                    end
+                end
+            end)
+        end
+    end
 end
 
 
@@ -1578,4 +1719,40 @@ SlashCmdList["GRAVITYLOOTTEST"] = function()
     
     Loot:UpdateRollPositions()
     print("|cff00ccffGravityUI|r: Test Loot Frames Updated.")
+end
+
+-- Bonus Roll Test Command
+SLASH_GRAVITYBONUSTEST1 = "/gravitytestbonus"
+SlashCmdList["GRAVITYBONUSTEST"] = function()
+    local f = _G.BonusRollFrame
+    if not f then
+        print("|cff00ccffGravityUI|r: BonusRollFrame nicht gefunden.")
+        return
+    end
+
+    -- Show the frame itself (don't touch children — Blizzard manages their state)
+    f:SetAlpha(1)
+    f:Show()
+
+    local prompt = f.PromptFrame
+    if prompt then
+        prompt:Show()
+        prompt:SetAlpha(1)
+
+        -- Populate known text/icon fields only
+        if prompt.prompt     then pcall(function() prompt.prompt:SetText("Auf Bonus-Loot würfeln?") end) end
+        if prompt.currencyName then pcall(function() prompt.currencyName:SetText("Münze des Glücks (x1)") end) end
+        if prompt.currencyTexture then pcall(function() prompt.currencyTexture:SetTexture(133784) end) end
+
+        -- Show rollButton and passButton (they may be hidden in default state)
+        if prompt.rollButton then pcall(function() prompt.rollButton:Show() end) end
+        if prompt.passButton then pcall(function() prompt.passButton:Show() end) end
+    end
+
+    -- Apply fresh skinning
+    f.guiSkinned = nil
+    if f.guiBackdrop then f.guiBackdrop:Hide() end
+    SkinBonusRollFrame()
+
+    print("|cff00ccffGravityUI|r: BonusRollFrame Vorschau. Spec-Icon wird erst beim echten Bonus-Roll befüllt.")
 end

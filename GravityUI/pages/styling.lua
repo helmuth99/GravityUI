@@ -754,6 +754,28 @@ local function BuildLootPanel(parent)
     
     yOffset = yOffset - 50
 
+    -- Bonus Roll skinning toggle
+    local rowBonus = CreateStylingRow(content, "Skin Bonus Roll Window", "checkbox", "skinBonusRoll", db.lootRoll, function(value)
+        local f = _G.BonusRollFrame
+        if f then
+            if value then
+                if ns.Loot and ns.Loot.SkinBonusRollFrame then
+                    f.guiSkinned = nil
+                    if f.guiBackdrop then f.guiBackdrop:Hide() end
+                    ns.Loot.SkinBonusRollFrame()
+                end
+            else
+                -- Restore Blizzard default: remove our backdrop
+                if f.guiBackdrop then f.guiBackdrop:Hide() end
+                f.guiSkinned = nil
+            end
+        end
+    end)
+    rowBonus:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
+
+    yOffset = yOffset - 10
+
     -- 3. LOOT HISTORY
     local header2 = GUI:CreateSectionHeader(content, "Loot History")
     header2:SetPoint("TOPLEFT", PAD, yOffset)
