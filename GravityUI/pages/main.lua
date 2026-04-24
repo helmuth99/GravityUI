@@ -723,8 +723,57 @@ local function BuildCombat(parent)
     local slider = ns.GUI:CreateSlider(content, "Spell Queue Window (ms)", 0, 400, "spellQueueWindow", dbUI, function(val) SetCVar("SpellQueueWindow", tostring(val)) end, 10)
     slider:SetPoint("TOPLEFT", PADDING, yOffset)
     slider:SetWidth(400)
-    yOffset = yOffset - 60
-    
+    yOffset = yOffset - 55
+
+    -- Info box
+    local sqInfo = ns.GUI:CreateInfoBox(content,
+        "Adjust your Spell Queue Window (0–400ms) to roughly 100ms above your average latency (ping) for optimal performance. " ..
+        "Example: 40ms ping → set to ~140ms. Too low = missed inputs. Too high = delayed response.")
+    sqInfo:SetPoint("TOPLEFT", PADDING, yOffset)
+    yOffset = yOffset - sqInfo:GetHeight() - 10
+
+    -- Ping label + optimal button on the same row
+    local pingLabel = ns.GUI:CreateLabel(content, "", 11, C.textMuted)
+    ns.GUI:SetFont(pingLabel, 11, "")
+    pingLabel:SetPoint("TOPLEFT", PADDING, yOffset)
+    pingLabel:SetWidth(240)
+
+    local function GetCurrentPing()
+        local _, _, homeMs = GetNetStats()
+        return tonumber(homeMs) or 0
+    end
+
+    local function UpdatePingLabel()
+        local ms = GetCurrentPing()
+        pingLabel:SetText(string.format("|cffaaaaaa Current Ping:|r |cff%s%d ms|r",
+            ms > 150 and "ff6644" or ms > 80 and "ffcc44" or "44ff88", ms))
+    end
+    UpdatePingLabel()
+
+    local optBtn = ns.GUI:CreateButton(content, "Set Optimal  (Ping + 100ms)", 200, 26, function()
+        local ms = GetCurrentPing()
+        local optimal = math.min(400, math.max(0, ms + 100))
+        -- Round to nearest 10 to match slider step
+        optimal = math.floor(optimal / 10 + 0.5) * 10
+        dbUI.spellQueueWindow = optimal
+        SetCVar("SpellQueueWindow", tostring(optimal))
+        -- container.SetValue has no self-wrapper → must use dot syntax, not colon
+        -- Also directly update the raw slider thumb (x100 multiplier) + editbox text
+        if slider then
+            if slider.SetValue then slider.SetValue(optimal, true) end
+            if slider.slider then slider.slider:SetValue(optimal * 100) end  -- thumb position
+            if slider.editBox then slider.editBox:SetText(string.format("%.2f", optimal)) end
+        end
+        UpdatePingLabel()
+        ns.Print(string.format("Spell Queue set to |cff00ccff%dms|r (ping %dms + 100ms)", optimal, ms))
+    end)
+    optBtn:SetPoint("LEFT", pingLabel, "RIGHT", 12, 0)
+
+    -- Refresh ping label when panel is shown (live value each visit)
+    content:HookScript("OnShow", UpdatePingLabel)
+
+    yOffset = yOffset - 36
+
     content:SetHeight(math.abs(yOffset) + 20)
 end
 
