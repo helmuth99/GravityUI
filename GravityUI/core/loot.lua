@@ -1391,21 +1391,23 @@ local function SkinBonusRollFrame()
     HideNamedChrome(f)
     HideNamedChrome(prompt)
 
-    -- 2. EXTERNAL BACKDROP: parented to UIParent, anchored to prompt, FrameLevel BELOW f.
-    --    By being a sibling of BonusRollFrame (not a child), it is guaranteed to render
-    --    BELOW the entire BonusRollFrame subtree — spec icon, timer bar, buttons, everything.
+    -- 2. BACKDROP: parented to UIParent (sibling of BonusRollFrame), anchored to prompt.
+    --    Must NOT be a child of f: child frames ride along with every FrameLevel bump Blizzard
+    --    applies (e.g. when GroupLootHistoryFrame opens and reshuffles DIALOG strata), which would
+    --    push the backdrop ABOVE the prompt buttons and eat their clicks.
+    --    EnableMouse(false) ensures it can never intercept clicks even if level order drifts.
+    --    The OnShow hook re-syncs strata + level each time f appears so it always sits just below.
     if not f.guiBackdrop then
         local bd = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
         bd:SetPoint("TOPLEFT",     prompt, "TOPLEFT",     0,  0)
         bd:SetPoint("BOTTOMRIGHT", prompt, "BOTTOMRIGHT", 0,  0)
-        bd:SetFrameStrata(f:GetFrameStrata())
-        bd:SetFrameLevel(math.max(1, f:GetFrameLevel() - 1))
+        bd:EnableMouse(false) -- never intercept clicks
         bd:SetBackdrop({
             bgFile   = "Interface\\Buttons\\WHITE8x8",
             edgeFile = "Interface\\Buttons\\WHITE8x8",
             edgeSize = 1,
         })
-        bd:Hide() -- default hidden; shown when f shows
+        bd:Hide()
         f.guiBackdrop = bd
 
         -- Accent line on the backdrop
@@ -1415,14 +1417,27 @@ local function SkinBonusRollFrame()
         bd.topLine:SetPoint("TOPRIGHT", bd, "TOPRIGHT", -1, -1)
         bd.topLine:SetTexture("Interface\\Buttons\\WHITE8x8")
 
-        -- Sync visibility with BonusRollFrame
+        -- Re-sync strata + level each time f shows so we always track f's current position.
+        -- This guards against GroupLootHistoryFrame (and others) reshuffling DIALOG levels.
         f:HookScript("OnShow", function(self)
-            if self.guiBackdrop then self.guiBackdrop:Show() end
+            if not self.guiBackdrop then return end
+            local bd2 = self.guiBackdrop
+            local strata = self:GetFrameStrata()
+            local level  = math.max(1, self:GetFrameLevel() - 1)
+            pcall(function() bd2:SetFrameStrata(strata) end)
+            pcall(function() bd2:SetFrameLevel(level)   end)
+            bd2:Show()
         end)
         f:HookScript("OnHide", function(self)
             if self.guiBackdrop then self.guiBackdrop:Hide() end
         end)
     end
+
+    -- Re-sync level now (covers the test command / initial skin path where OnShow already fired)
+    pcall(function()
+        f.guiBackdrop:SetFrameStrata(f:GetFrameStrata())
+        f.guiBackdrop:SetFrameLevel(math.max(1, f:GetFrameLevel() - 1))
+    end)
 
     -- Show backdrop if f is currently shown (e.g. test command)
     if f:IsShown() then f.guiBackdrop:Show() end
