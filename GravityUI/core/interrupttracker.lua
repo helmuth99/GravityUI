@@ -216,6 +216,27 @@ local function RegisterPartyWatchers()
 
                 if cleanID and cleanName then
                     InterruptTracker:UNIT_SPELLCAST_SUCCEEDED("UNIT_SPELLCAST_SUCCEEDED", cleanUnit, eCastGUID, cleanID)
+                elseif cleanName then
+                    -- Fallback: spellID was tainted (Midnight 12.x) but we know this unit cast something.
+                    -- If their registered interrupt is NOT on cooldown, start it now — this covers
+                    -- "kick without an interrupted cast" where UNIT_SPELLCAST_INTERRUPTED never fires.
+                    local guid = UnitGUID(cleanUnit)
+                    if guid then
+                        local _, cls = UnitClass(cleanUnit)
+                        local interruptID = CLASS_INTERRUPTS[cls]
+                        if activeSpecs[guid] and SPEC_INTERRUPTS[activeSpecs[guid]] then
+                            interruptID = SPEC_INTERRUPTS[activeSpecs[guid]]
+                        end
+                        if interruptID then
+                            local key = guid .. interruptID
+                            local existing = activeBars[key]
+                            local isOnCD = existing and existing.expiration and existing.expiration > GetTime()
+                            if not isOnCD then
+                                -- Kick detected via tainted spellID fallback
+                                InterruptTracker:UNIT_SPELLCAST_SUCCEEDED("UNIT_SPELLCAST_SUCCEEDED", cleanUnit, eCastGUID, interruptID)
+                            end
+                        end
+                    end
                 end
             end)
         end
