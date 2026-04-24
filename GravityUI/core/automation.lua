@@ -1703,6 +1703,21 @@ bonusRollInitFrame:SetScript("OnEvent", function(self, event)
     if event == "PLAYER_LOGIN" then
         RegisterBonusRollMover()
         if BonusRollFrame then HookBonusRollReposition() end
+
+        -- Guard: when GroupLootHistoryFrame opens/closes, Blizzard reshuffles
+        -- DIALOG frame-levels which can cause BonusRollFrame to lose its anchor.
+        -- Re-apply our saved position after each shuffle.
+        C_Timer.After(2, function()
+            local hist = _G.GroupLootHistoryFrame
+            if hist then
+                hist:HookScript("OnShow", function()
+                    RepositionBonusRollFrame()
+                end)
+                hist:HookScript("OnHide", function()
+                    RepositionBonusRollFrame()
+                end)
+            end
+        end)
     elseif event == "BONUS_ROLL_STARTED" then
         if BonusRollFrame then HookBonusRollReposition() end
         self:UnregisterEvent("BONUS_ROLL_STARTED")

@@ -1469,17 +1469,15 @@ local function SkinBonusRollFrame()
         end
     end
 
-    -- 6. Anti-Dominos: raise BonusRollFrame above action bar addons and ensure
-    --    buttons are always on top and clickable.
-    --    Dominos/Bartender typically use MEDIUM strata; DIALOG is always above those.
-    pcall(function() f:SetFrameStrata("DIALOG") end)
-
+    -- 6. Buttons: ensure roll/pass are on a high frame level so they're always clickable.
+    --    We do NOT call SetFrameStrata() on BonusRollFrame itself – Blizzard internally
+    --    clears the frame's anchor points whenever strata is set, even to the same value,
+    --    which causes the position to be lost when GroupLootHistoryFrame reshuffles levels.
+    --    BonusRollFrame is already on DIALOG by default, so the call was redundant.
     for _, btn in ipairs({ prompt.rollButton, prompt.passButton }) do
         if btn then
             pcall(function()
-                -- TOOLTIP is the highest interactive strata (above FULLSCREEN_DIALOG)
-                btn:SetFrameStrata("TOOLTIP")
-                btn:SetFrameLevel(100)
+                btn:SetFrameLevel(math.max(1, f:GetFrameLevel() + 10))
             end)
         end
     end
