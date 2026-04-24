@@ -16,17 +16,17 @@ local INTERRUPT_CONFIG = {
     { class = "DEMONHUNTER", spellID = 183752, cd = 15, isDefault = true },
     -- DRUID
     { class = "DRUID", spellID = 106839, cd = 15, isDefault = true },
-    { class = "DRUID", spellID = 78675, cd = 45, specID = 102 },   -- Balance: Solar Beam (45s in Midnight)
+    { class = "DRUID", spellID = 78675, cd = 60, specID = 102 }, -- Balance (Solar Beam)
     -- EVOKER
-    { class = "EVOKER", spellID = 351338, cd = 18, isDefault = true, talents = { [412713] = { pctReduction = 0.1 } } }, -- Quell: 18s base in Midnight (was 40s pre-12.0)
+    { class = "EVOKER", spellID = 351338, cd = 40, isDefault = true, talents = { [412713] = { pctReduction = 0.1 } } }, -- Interwoven Threads
     -- HUNTER
     { class = "HUNTER", spellID = 147362, cd = 24, isDefault = true, talents = { [388039] = { reduction = 2 } } }, -- Lone Survivor (Counter Shot)
     { class = "HUNTER", spellID = 187707, cd = 15, specID = 255, talents = { [388039] = { reduction = 2 } } }, -- Lone Survivor (Muzzle)
     -- MAGE
-    { class = "MAGE", spellID = 2139, cd = 20, isDefault = true }, -- Counterspell: 20s in Midnight (was 24s)
+    { class = "MAGE", spellID = 2139, cd = 24, isDefault = true },
     -- MONK
     { class = "MONK", spellID = 116705, cd = 15, isDefault = true },
-    -- PALADIN  (spec 65 = Holy: no interrupt)
+    -- PALADIN
     { class = "PALADIN", spellID = 96231, cd = 15, isDefault = true },
     { class = "PALADIN", spellID = 420090, cd = 15 }, -- NPC Rebuke (Follower Dungeon)
     -- PRIEST
@@ -36,9 +36,9 @@ local INTERRUPT_CONFIG = {
     -- SHAMAN
     { class = "SHAMAN", spellID = 57994, cd = 12, isDefault = true, overrides = { [264] = 30 } }, -- Resto 30s
     -- WARLOCK
-    { class = "WARLOCK", spellID = 19647, cd = 24, isDefault = true }, -- Spell Lock (Affliction/Destruction)
-    { class = "WARLOCK", spellID = 132409, cd = 24 },                  -- Spell Lock pet (Felguard)
-    { class = "WARLOCK", spellID = 119914, cd = 30, specID = 266 },    -- Axe Toss (Demonology primary, pet)
+    { class = "WARLOCK", spellID = 19647, cd = 24, isDefault = true }, -- Spell Lock
+    { class = "WARLOCK", spellID = 132409, cd = 24 }, -- Spell Lock / Fel Ravager
+    { class = "WARLOCK", spellID = 119914, cd = 30, specID = 266 }, -- Axe Toss (Demonology Primary)
     -- WARRIOR
     { class = "WARRIOR", spellID = 6552, cd = 15, isDefault = true },
 }
@@ -52,15 +52,19 @@ local CD_REDUCTION_TALENTS = {}    -- [talentID] = { affects, reduction, pctRedu
 local CD_ON_KICK_TALENTS = {       -- [talentID] = { reduction }
     [378848] = { reduction = 3 }   -- DK: Coldthirst
 }
--- No spec-specific extra kicks in Midnight 12.0.5
--- (Demonology Fel Ravager extra bar was tied to Grimoire of Sacrifice which no longer exists)
-local SPEC_EXTRA_KICKS = {}
-local SPELL_ALIASES = {
-    [89766]  = 119914, -- Felguard Axe Toss (pet server-side ID) → Axe Toss (player-facing)
-    [132409] = 132409, -- identity alias so Spell Lock pet resolves cleanly via Slider/Bar launder
+local SPEC_EXTRA_KICKS = {
+    [266] = { -- Warlock Demonology
+        { id = 132409, cd = 24, name = "Spell Lock" }
+    }
 }
--- No extra-kick talents in Midnight 12.0.5 (Grimoire of Sacrifice / Fel Ravager was removed)
-local EXTRA_KICK_TALENTS = {}
+local SPELL_ALIASES = {
+    [1276467] = 132409, -- Fel Ravager summon -> Spell Lock extra bar
+    [89766] = 119914,   -- Felguard Axe Toss (pet) -> Axe Toss (player)
+}
+-- Automatically register talents that grant an extra kick
+local EXTRA_KICK_TALENTS = {
+    [385110] = { id = 1276467, cd = 25, name = "Fel Ravager" }, -- Warlock Grimoire of Sacrifice
+}
 
 local function BuildInterruptTables()
     for _, data in ipairs(INTERRUPT_CONFIG) do
@@ -212,27 +216,6 @@ local function RegisterPartyWatchers()
 
                 if cleanID and cleanName then
                     InterruptTracker:UNIT_SPELLCAST_SUCCEEDED("UNIT_SPELLCAST_SUCCEEDED", cleanUnit, eCastGUID, cleanID)
-                elseif cleanName then
-                    -- Fallback: spellID was tainted (Midnight 12.x) but we know this unit cast something.
-                    -- If their registered interrupt is NOT on cooldown, start it now — this covers
-                    -- "kick without an interrupted cast" where UNIT_SPELLCAST_INTERRUPTED never fires.
-                    local guid = UnitGUID(cleanUnit)
-                    if guid then
-                        local _, cls = UnitClass(cleanUnit)
-                        local interruptID = CLASS_INTERRUPTS[cls]
-                        if activeSpecs[guid] and SPEC_INTERRUPTS[activeSpecs[guid]] then
-                            interruptID = SPEC_INTERRUPTS[activeSpecs[guid]]
-                        end
-                        if interruptID then
-                            local key = guid .. interruptID
-                            local existing = activeBars[key]
-                            local isOnCD = existing and existing.expiration and existing.expiration > GetTime()
-                            if not isOnCD then
-                                -- Kick detected via tainted spellID fallback
-                                InterruptTracker:UNIT_SPELLCAST_SUCCEEDED("UNIT_SPELLCAST_SUCCEEDED", cleanUnit, eCastGUID, interruptID)
-                            end
-                        end
-                    end
                 end
             end)
         end
@@ -795,10 +778,6 @@ function InterruptTracker:UNIT_SPELLCAST_SUCCEEDED(event, unit, castGUID, spellI
          -- Try Addon Message (may not work in M+ in Midnight, but keep as fallback)
          -- Only send if we are the one who cast it
          if UnitIsUnit(unit, "player") then
-             -- Mark own kick timestamp so the heuristic in OnMobInterrupted
-             -- skips party attribution for this interrupt (own player gets credit)
-             InterruptTracker._pendingOwnKickAt = GetTime()
-
              local payload = tostring(spellId)
              local channel = IsInGroup(LE_PARTY_CATEGORY_INSTANCE) and "INSTANCE_CHAT" or "PARTY"
              local ok, ret = pcall(C_ChatInfo.SendAddonMessage, "GRV_INT", payload, channel)
@@ -884,12 +863,9 @@ end
 local function OnMobInterrupted(unit)
     if not IsTrackerAllowed() then return end
     local now = GetTime()
+    local bestName = nil
+    local bestDelta = 999
 
-    -- -----------------------------------------------------------------------
-    -- PATH 1: Cast-correlation (works when UNIT_SPELLCAST_SUCCEEDED still fires).
-    -- Takes priority if fresh (<0.5s).
-    -- -----------------------------------------------------------------------
-    local bestName, bestDelta = nil, 999
     for name, ts in pairs(recentPartyCasts) do
         local delta = now - ts
         if delta > 1.0 then
@@ -901,137 +877,43 @@ local function OnMobInterrupted(unit)
     end
 
     if bestName and bestDelta < 0.5 then
+        -- We found the likely kicker
+        -- Fallback to default class interrupt
         for idx = 1, 4 do
             local u = "party" .. idx
-            if UnitExists(u) and UnitIsPlayer(u) and UnitName(u) == bestName then
+            if UnitExists(u) and UnitName(u) == bestName then
                 local guid = UnitGUID(u)
                 local _, class = UnitClass(u)
                 local role = UnitGroupRolesAssigned(u)
+                
+                -- Skip healers that aren't shamans
                 if not (role == "HEALER" and class ~= "SHAMAN") then
+                    -- Priority: Spec-specific interrupt > Class interrupt
                     local interruptID = CLASS_INTERRUPTS[class]
                     if activeSpecs[guid] and SPEC_INTERRUPTS[activeSpecs[guid]] then
                         interruptID = SPEC_INTERRUPTS[activeSpecs[guid]]
                     end
+                    
                     if interruptID and guid then
                         StartCooldown(guid, bestName, class, interruptID)
-                        local key = guid .. interruptID
-                        local info = activeBars[key]
-                        if info and activeReductions[guid] and activeReductions[guid].onKick then
-                            info.expiration = math.max(now, info.expiration - activeReductions[guid].onKick)
-                            if not testModeActive then updateFrame:Show() end
-                        end
+                    end
+                    
+                    -- Handle on-kick conditional CD reductions (e.g. DK Coldthirst)
+                    local key = guid .. (interruptID or CLASS_INTERRUPTS[class])
+                    local info = activeBars[key]
+                    if info and activeReductions[guid] and activeReductions[guid].onKick then
+                        local newExpiration = info.expiration - activeReductions[guid].onKick
+                        if newExpiration < now then newExpiration = now end
+                        info.expiration = newExpiration
+                        -- Avoid updating the text here, OnUpdate will smoothly catch it
+                        if not testModeActive then updateFrame:Show() end
                     end
                 end
                 break
             end
         end
-        return
-    end
-
-    -- -----------------------------------------------------------------------
-    -- PATH 2: Heuristic attribution for Midnight 12.0.5.
-    -- UNIT_SPELLCAST_SUCCEEDED no longer fires for party members in 12.0.5,
-    -- so recentPartyCasts is empty. We attribute by targeting and distance only.
-    --
-    -- NOTE: Tier 3 (sole off-CD candidate) is intentionally omitted.
-    -- In Follower Dungeons, NPC followers interrupt constantly — attributing
-    -- every NPC kick to the "sole off-CD player" causes rapid false resets.
-    -- We require at least one positive signal (targeting OR proximity).
-    -- -----------------------------------------------------------------------
-
-    -- Own-player guard: if the player targeted this mob and kicked within 300ms
-    if unit and UnitIsUnit("playertarget", unit) then
-        if InterruptTracker._pendingOwnKickAt and (now - InterruptTracker._pendingOwnKickAt) < 0.3 then
-            InterruptTracker._pendingOwnKickAt = nil
-            return
-        end
-    end
-
-    -- Mob position for distance filtering
-    local mobX, mobY, mobMap
-    if unit then
-        local ok, x, y, _, m = pcall(UnitPosition, unit)
-        if ok and x then mobX, mobY, mobMap = x, y, m end
-    end
-    local MAX_RANGE = 35
-
-    local function GetDist(pu)
-        if not mobX or not mobMap then return nil end
-        local ok, px, py, _, pm = pcall(UnitPosition, pu)
-        if not ok or not px or pm ~= mobMap then return nil end
-        local dx, dy = mobX - px, mobY - py
-        return math.sqrt(dx * dx + dy * dy)
-    end
-
-    -- Build candidate list: real players whose interrupt is off CD
-    local targeting = {}
-    local inRange   = {}
-
-    for idx = 1, 4 do
-        local pu = "party" .. idx
-        -- UnitIsPlayer: excludes NPC followers in Follower Dungeons
-        if UnitExists(pu) and UnitIsPlayer(pu) then
-            local guid = UnitGUID(pu)
-            local pName = UnitName(pu)
-            local _, cls = UnitClass(pu)
-            local role = UnitGroupRolesAssigned(pu)
-            local isHealer = (role == "HEALER" and cls ~= "SHAMAN")
-
-            if not isHealer then
-                local interruptID = CLASS_INTERRUPTS[cls]
-                if activeSpecs[guid] and SPEC_INTERRUPTS[activeSpecs[guid]] then
-                    interruptID = SPEC_INTERRUPTS[activeSpecs[guid]]
-                end
-
-                if interruptID and guid and pName then
-                    -- Must not be on cooldown
-                    local key = guid .. interruptID
-                    local existing = activeBars[key]
-                    local isOnCD = existing and existing.expiration and existing.expiration > now
-
-                    if not isOnCD then
-                        local dist = GetDist(pu)
-                        local entry = { unit=pu, guid=guid, name=pName, class=cls, id=interruptID, dist=dist }
-
-                        if dist and dist <= MAX_RANGE then
-                            inRange[#inRange + 1] = entry
-                        end
-
-                        if unit and UnitIsUnit(pu .. "target", unit) then
-                            targeting[#targeting + 1] = entry
-                        end
-                    end
-                end
-            end
-        end
-    end
-
-    -- Attribution: Tier 1 (targeting) → Tier 2 (in-range), no Tier 3
-    local winner = nil
-    if #targeting == 1 then
-        winner = targeting[1]
-    elseif #targeting > 1 then
-        table.sort(targeting, function(a, b) return (a.dist or 9999) < (b.dist or 9999) end)
-        winner = targeting[1]
-    elseif #inRange == 1 then
-        winner = inRange[1]
-    elseif #inRange > 1 then
-        table.sort(inRange, function(a, b) return (a.dist or 9999) < (b.dist or 9999) end)
-        winner = inRange[1]
-    end
-    -- Ambiguous or no positive signal → no attribution (prevents false Follower Dungeon resets)
-
-    if winner then
-        StartCooldown(winner.guid, winner.name, winner.class, winner.id)
-        local key = winner.guid .. winner.id
-        local info = activeBars[key]
-        if info and activeReductions[winner.guid] and activeReductions[winner.guid].onKick then
-            info.expiration = math.max(now, info.expiration - activeReductions[winner.guid].onKick)
-            if not testModeActive then updateFrame:Show() end
-        end
     end
 end
-
 
 local mobInterruptFrame = CreateFrame("Frame")
 mobInterruptFrame:RegisterUnitEvent("UNIT_SPELLCAST_INTERRUPTED", "target", "focus")
