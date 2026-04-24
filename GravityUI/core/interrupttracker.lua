@@ -975,32 +975,34 @@ local function OnMobInterrupted(unit)
             local pName = UnitName(pu)
             local _, cls = UnitClass(pu)
             local role = UnitGroupRolesAssigned(pu)
+            local isHealer = (role == "HEALER" and cls ~= "SHAMAN")
 
-            if role == "HEALER" and cls ~= "SHAMAN" then goto continue end
+            if not isHealer then
+                local interruptID = CLASS_INTERRUPTS[cls]
+                if activeSpecs[guid] and SPEC_INTERRUPTS[activeSpecs[guid]] then
+                    interruptID = SPEC_INTERRUPTS[activeSpecs[guid]]
+                end
 
-            local interruptID = CLASS_INTERRUPTS[cls]
-            if activeSpecs[guid] and SPEC_INTERRUPTS[activeSpecs[guid]] then
-                interruptID = SPEC_INTERRUPTS[activeSpecs[guid]]
+                if interruptID and guid and pName then
+                    -- Must not be on cooldown
+                    local key = guid .. interruptID
+                    local existing = activeBars[key]
+                    local isOnCD = existing and existing.expiration and existing.expiration > now
+
+                    if not isOnCD then
+                        local dist = GetDist(pu)
+                        local entry = { unit=pu, guid=guid, name=pName, class=cls, id=interruptID, dist=dist }
+
+                        if dist and dist <= MAX_RANGE then
+                            inRange[#inRange + 1] = entry
+                        end
+
+                        if unit and UnitIsUnit(pu .. "target", unit) then
+                            targeting[#targeting + 1] = entry
+                        end
+                    end
+                end
             end
-            if not interruptID or not guid or not pName then goto continue end
-
-            -- Must not be on cooldown
-            local key = guid .. interruptID
-            local existing = activeBars[key]
-            if existing and existing.expiration and existing.expiration > now then goto continue end
-
-            local dist = GetDist(pu)
-            local entry = { unit=pu, guid=guid, name=pName, class=cls, id=interruptID, dist=dist }
-
-            if dist and dist <= MAX_RANGE then
-                inRange[#inRange + 1] = entry
-            end
-
-            if unit and UnitIsUnit(pu .. "target", unit) then
-                targeting[#targeting + 1] = entry
-            end
-
-            ::continue::
         end
     end
 
