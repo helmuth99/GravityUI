@@ -23,7 +23,6 @@ ns.Defaults = {
         uiScale = 0.64,
         configPanelScale = 1,
         windowSize = { width = 980, height = 680 },
-        menuStyle = "SIDE_TOP",
         castbarTicks = {
             disintegrate = {
                 enableUUF = false,

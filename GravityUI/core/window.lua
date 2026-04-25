@@ -1131,32 +1131,22 @@ end
 UpdateButtonSelection = function()
     local frame = GUI.MainFrame
     if not frame then return end
-    
-    local db = ns.GetDB()
-    local isSideTop = db and db.general.menuStyle == "SIDE_TOP"
-    
+
+    local curPage = GUI.currentPageIndex
+    local curSub  = GUI.currentSubTabIndex or 1
+
     for _, btn in ipairs(frame.sidebarButtons) do
-        local isSelected
-        if isSideTop then
-            -- In SIDE_TOP, we only care about the main page index in the sidebar
-            isSelected = (btn.pageIndex == GUI.currentPageIndex)
-        else
-            -- Standard mode: Headers are not in this list, but if they were, they shouldn't match
-            if btn.type == "header" then
-                isSelected = false
-            else
-                isSelected = (btn.pageIndex == GUI.currentPageIndex and btn.subTabIndex == GUI.currentSubTabIndex)
-            end
-        end
-        
+        -- Headers are never "selected"; subtabs match only if BOTH page AND subtab index match.
+        local isSelected = (btn.type ~= "header")
+            and (btn.pageIndex == curPage)
+            and (btn.subTabIndex == curSub)
+
         if isSelected then
-            -- Selected state: Bright & Highlighted
             btn.indicator:Show()
             btn.indicator:SetColorTexture(C.accent[1], C.accent[2], C.accent[3], 1)
             btn:SetBackdropColor(C.accent[1], C.accent[2], C.accent[3], 0.08)
             btn.text:SetTextColor(C.accent[1], C.accent[2], C.accent[3], 1)
         else
-            -- Normal state: Dimmed
             btn.indicator:Hide()
             btn:SetBackdropColor(0, 0, 0, 0)
             btn.text:SetTextColor(C.textMuted[1], C.textMuted[2], C.textMuted[3], 1)
@@ -1293,9 +1283,8 @@ function GUI:ShowPage(index, subIndex)
         end
     end
 
-    -- Ensure the category is expanded in the sidebar if it was collapsed (ONLY in SIDE mode)
-    local db = ns.GetDB()
-    if db.general.menuStyle ~= "SIDE_TOP" and self.expandedCategories[pageId] == false then
+    -- Ensure the category is expanded in the sidebar if it was collapsed
+    if self.expandedCategories[pageId] == false then
         self.expandedCategories[pageId] = true
         self:UpdateSidebarLayout()
     end
