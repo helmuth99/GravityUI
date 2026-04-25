@@ -1022,20 +1022,13 @@ local function EnsureScrollButton(chatFrame)
     chatFrame.__guiScrollBtn = btn
     
     local function UpdateVis()
-        -- Only show if scrolled up
         if chatFrame:GetNumMessages() == 0 then return end
-        
         local isScrolledUp = chatFrame:GetScrollOffset() > 0
         if isScrolledUp then
-            if chatFrame:IsMouseOver() or btn.isHovering then
-                btn:Show()
-                UIFrameFadeIn(btn, 0.2, btn:GetAlpha(), 1)
-            else
-                UIFrameFadeOut(btn, 0.4, btn:GetAlpha(), 0)
-            end
+            btn:Show()
+            UIFrameFadeIn(btn, 0.2, btn:GetAlpha(), 1)
         else
-            btn:SetAlpha(0)
-            btn:Hide()
+            UIFrameFadeOut(btn, 0.3, btn:GetAlpha(), 0)
         end
     end
     
