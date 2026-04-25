@@ -775,11 +775,6 @@ end
 
 
 -- ============================================================================
--- HEALER FILTER
--- ============================================================================
-local HEALER_KEEPS_KICK = { ["SHAMAN"] = true }
-
--- ============================================================================
 -- HANDLE PARTY CAST (triggered by correlation or mob-attribution)
 -- ============================================================================
 local function HandlePartyCast(memberName, spellID)
@@ -797,6 +792,16 @@ end
 -- ============================================================================
 -- AUTO-REGISTER PARTY MEMBERS BY CLASS
 -- ============================================================================
+-- Classes that CAN have healer specs and must wait for spec confirmation before being registered.
+-- Registering them immediately (when spec is unknown) risks showing bars for Holy Paladins, Resto Druids, etc.
+local HEALER_CAPABLE_CLASS = {
+    PALADIN = true,  -- Holy / Prot / Ret
+    PRIEST  = true,  -- Discipline / Holy / Shadow
+    MONK    = true,  -- Mistweaver / Brewmaster / Windwalker
+    DRUID   = true,  -- Restoration / Balance / Feral / Guardian
+    -- NOTE: SHAMAN excluded intentionally — Resto Shaman keeps Wind Shear (HEALER_KEEPS_KICK)
+}
+
 local function AutoRegisterPartyByClass()
     for i = 1, 4 do
         local u = "party" .. i
@@ -817,6 +822,13 @@ local function AutoRegisterPartyByClass()
                             noKick = true
                         elseif SPEC_INTERRUPTS[specID] then
                             sid = SPEC_INTERRUPTS[specID]
+                        end
+                    else
+                        -- Spec not yet available.
+                        -- For classes that CAN be healers (Paladin, Priest, Monk, Druid),
+                        -- defer registration to the retry loop to avoid false-positive healer bars.
+                        if HEALER_CAPABLE_CLASS[cls] then
+                            noKick = true  -- skip now; retry loop will register if they turn out to be DPS/Tank
                         end
                     end
                     if not noKick then
@@ -840,11 +852,26 @@ local function AutoRegisterPartyByClass()
                 local u = "party" .. i
                 if UnitExists(u) then
                     local name = UnitName(u)
-                    local entry = name and partyRegistry[name]
-                    if entry then
-                        local specID = GetInspectSpecialization(u)
-                        if specID and specID > 0 then
+                    local _, cls = UnitClass(u)
+                    if not name or not cls then break end
+                    local role = UnitGroupRolesAssigned(u)
+                    local entry = partyRegistry[name]
+                    local specID = GetInspectSpecialization(u)
+                    if specID and specID > 0 then
+                        if entry then
+                            -- Already registered: upgrade/demote as needed
                             if SPEC_NO_INTERRUPT[specID] then
+                                -- Confirmed healer spec → remove bar + registry entry
+                                local guid = entry.guid
+                                if guid then
+                                    for key, info in pairs(activeBars) do
+                                        if info.guid == guid then
+                                            info.frame:Hide()
+                                            activeBars[key] = nil
+                                        end
+                                    end
+                                    UpdateLayout()
+                                end
                                 partyRegistry[name] = nil
                                 noKickPlayers[name] = true
                             else
@@ -853,6 +880,23 @@ local function AutoRegisterPartyByClass()
                                     entry.spellID = ov
                                     entry.baseCd  = INTERRUPTS[ov] or 15
                                 end
+                            end
+                        elseif not noKickPlayers[name] and CLASS_INTERRUPTS[cls] then
+                            -- Not yet registered (was deferred because HEALER_CAPABLE_CLASS + spec unknown).
+                            -- Now we have spec data — register if appropriate.
+                            if SPEC_NO_INTERRUPT[specID] then
+                                noKickPlayers[name] = true
+                            elseif role ~= "HEALER" or HEALER_KEEPS_KICK[cls] then
+                                local guid = UnitGUID(u)
+                                local sid  = SPEC_INTERRUPTS[specID] or CLASS_INTERRUPTS[cls]
+                                partyRegistry[name] = {
+                                    class   = cls,
+                                    spellID = sid,
+                                    baseCd  = INTERRUPTS[sid] or 15,
+                                    cdEnd   = 0,
+                                    guid    = guid,
+                                    unit    = u,
+                                }
                             end
                         end
                     end
@@ -1249,6 +1293,22 @@ local function OnInspectReady(guid)
         if specID and specID > 0 then
             activeSpecs[guid] = specID
             
+            -- If this is a confirmed healer spec with no interrupt, remove any existing bar immediately
+            if SPEC_NO_INTERRUPT[specID] then
+                local _, cls = UnitClass(unit)
+                local name = UnitName(unit)
+                if name then noKickPlayers[name] = true end
+                if partyRegistry and name then partyRegistry[name] = nil end
+                for key, info in pairs(activeBars) do
+                    if info.guid == guid then
+                        info.frame:Hide()
+                        activeBars[key] = nil
+                    end
+                end
+                UpdateLayout()
+                return  -- No further processing needed for this unit
+            end
+            
             local specInterrupt = SPEC_INTERRUPTS[specID]
             if specInterrupt then
                 -- Find existing bar for this GUID that uses the wrong (default class) spellId
@@ -1415,8 +1475,17 @@ local function OnGroupRosterUpdate()
         local role = UnitGroupRolesAssigned(unit)
         
         -- Skip healers that aren't shamans (they usually don't have interrupts by default)
-        -- Holy Paladins specifically are reported as having an incorrect interrupt bar
-        if role == "HEALER" and class ~= "SHAMAN" then return end
+        -- Filter 1: Explicit LFG healer role
+        if role == "HEALER" and not HEALER_KEEPS_KICK[class] then return end
+        
+        -- Filter 2: Spec-based check (catches healers with role "NONE", e.g. manually formed groups)
+        local specID = activeSpecs[guid] or (GetInspectSpecialization and UnitExists(unit) and GetInspectSpecialization(unit))
+        if specID and specID > 0 then
+            if SPEC_NO_INTERRUPT[specID] then return end
+        else
+            -- Spec not yet known: if class CAN be a healer, skip until spec is confirmed
+            if HEALER_CAPABLE_CLASS[class] then return end
+        end
         
         -- Priority: Spec-specific interrupt > Class interrupt
         local interruptID = CLASS_INTERRUPTS[class]

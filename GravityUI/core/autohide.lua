@@ -565,30 +565,55 @@ local function ApplyHideSettings()
                 -- if n:find("BCDM") then print("Restoring BCDM Frame: "..n) end
 
                 if frame == PlayerFrame then
-                     frame:Show()
-                     if not InCombatLockdown() then RegisterStateDriver(frame, "visibility", "[@player,exists] show; hide") end
+                    -- PlayerFrame is protected: Show() is blocked in combat
+                    if not InCombatLockdown() then
+                        frame:Show()
+                        RegisterStateDriver(frame, "visibility", "[@player,exists] show; hide")
+                    else
+                        ns.QueueOOCAction(function()
+                            if frame and frame.Show then frame:Show() end
+                            RegisterStateDriver(frame, "visibility", "[@player,exists] show; hide")
+                        end)
+                    end
                 elseif frame == TargetFrame then
-                     if UnitExists("target") then frame:Show() end
-                     if not InCombatLockdown() then RegisterStateDriver(frame, "visibility", "[@target,exists] show; hide") end
+                    if not InCombatLockdown() then
+                        if UnitExists("target") then frame:Show() end
+                        RegisterStateDriver(frame, "visibility", "[@target,exists] show; hide")
+                    else
+                        ns.QueueOOCAction(function()
+                            if frame and frame.Show and UnitExists("target") then frame:Show() end
+                            RegisterStateDriver(frame, "visibility", "[@target,exists] show; hide")
+                        end)
+                    end
                 elseif frame == FocusFrame then
-                     if UnitExists("focus") then frame:Show() end
-                     if not InCombatLockdown() then RegisterStateDriver(frame, "visibility", "[@focus,exists] show; hide") end
-                
+                    if not InCombatLockdown() then
+                        if UnitExists("focus") then frame:Show() end
+                        RegisterStateDriver(frame, "visibility", "[@focus,exists] show; hide")
+                    else
+                        ns.QueueOOCAction(function()
+                            if frame and frame.Show and UnitExists("focus") then frame:Show() end
+                            RegisterStateDriver(frame, "visibility", "[@focus,exists] show; hide")
+                        end)
+                    end
+
                 -- UUF Frames
                 elseif frame.GetName and frame:GetName():find("UUF_") then
-                     frame:Show()
-                     if frame.Update then frame:Update() end
-                     -- UUF usually restores its own driver on Update or OnEvent? 
-                     -- We can try to trigger its update.
-                     if not InCombatLockdown() and frame.RegisterStateDriver then
-                         -- Best guess restore for UUF Player
-                         if frame == _G["UUF_Player"] then
-                             RegisterStateDriver(frame, "visibility", "[@player,exists] show; hide")
-                         end
-                     end
-                -- BCDM Frames
+                    if not InCombatLockdown() then
+                        frame:Show()
+                        if frame.Update then frame:Update() end
+                        if frame.RegisterStateDriver and frame == _G["UUF_Player"] then
+                            RegisterStateDriver(frame, "visibility", "[@player,exists] show; hide")
+                        end
+                    else
+                        ns.QueueOOCAction(function()
+                            if frame and frame.Show then frame:Show() end
+                            if frame and frame.Update then frame:Update() end
+                        end)
+                    end
+
+                -- BCDM Frames (not protected, safe to Show() anytime)
                 elseif frame.GetName and (frame:GetName():find("CooldownViewer") or frame:GetName():find("BCDM_")) then
-                     frame:Show()
+                    frame:Show()
                 end
             end
             end
