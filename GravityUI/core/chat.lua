@@ -554,8 +554,11 @@ local function RegisterMessageFilter()
     -- This filter runs for every chat event on every registered chat frame.
     -- Return false (or nil) to pass through; return true to suppress the message.
     -- The signature is: function(chatFrame, event, text, ...) return suppress, newText, ...
-    ChatFrame_AddMessageEventFilter("CHAT_MSG_WHISPER",         function(_, event, text, ...) return false, HookTransformText(text), ... end)
-    ChatFrame_AddMessageEventFilter("CHAT_MSG_WHISPER_INFORM",  function(_, event, text, ...) return false, HookTransformText(text), ... end)
+    -- TAINT: CHAT_MSG_WHISPER / WHISPER_INFORM are NOT registered here.
+    -- The 'text' argument for whisper events is a Blizzard-protected secret string value.
+    -- Calling string.find/gsub on it from addon code inside the filter chain propagates
+    -- taint onto chatEditLastTell, which then crashes GetLastTellTarget on /reply.
+    -- URL linkification is intentionally skipped for whispers to preserve taint safety.
     ChatFrame_AddMessageEventFilter("CHAT_MSG_SAY",             function(_, event, text, ...) return false, HookTransformText(text), ... end)
     ChatFrame_AddMessageEventFilter("CHAT_MSG_YELL",            function(_, event, text, ...) return false, HookTransformText(text), ... end)
     ChatFrame_AddMessageEventFilter("CHAT_MSG_PARTY",           function(_, event, text, ...) return false, HookTransformText(text), ... end)
@@ -1061,21 +1064,50 @@ local function UpdateChatButtons(chatFrame)
 
     -- Auto-scroll fix: whenever a new message is added and the frame was already
     -- at the bottom (or the user hasn't manually scrolled up), scroll to bottom.
+    --
+    -- TAINT FIX: We must NOT hook AddMessage with hooksecurefunc.
+    -- AddMessage is a protected ChatFrame method. When a WHISPER arrives, Blizzard calls
+    -- SetLastTellTarget(sender) inside AddMessage's secure execution chain.
+    -- If GravityUI code is on the call stack at that point, it taints the entire chain,
+    -- making chatEditLastTell entries "secret string values" — this crashes GetLastTellTarget
+    -- when the player presses /reply (REPLY macro).
+    -- Solution: use OnMessageScrollChanged (a safe scroll event) + a lightweight event
+    -- listener on CHAT_MSG_* to defer the scroll check one frame via C_Timer.After(0).
     if not chatFrame.__guiAutoScrollHooked then
         chatFrame.__guiAutoScrollHooked = true
-        hooksecurefunc(chatFrame, "AddMessage", function(self)
-            -- Only auto-scroll if the user hasn't intentionally scrolled up
-            if self.ScrollBar then
+
+        local function DeferredAutoScroll(self)
+            C_Timer.After(0, function()
+                if not self or not self.ScrollBar then
+                    self:ScrollToBottom()
+                    return
+                end
                 local atBottom = not self.ScrollBar:IsShown() or
                                  (self.ScrollBar.GetValue and
                                   self.ScrollBar:GetValue() >= (self.ScrollBar:GetMinMaxValues()))
                 if atBottom then
                     self:ScrollToBottom()
                 end
-            else
-                self:ScrollToBottom()
-            end
+            end)
+        end
+
+        -- Use OnEvent on a dedicated listener frame so we never touch AddMessage's stack.
+        local scrollListener = CreateFrame("Frame")
+        local SCROLL_EVENTS = {
+            "CHAT_MSG_SAY", "CHAT_MSG_YELL", "CHAT_MSG_WHISPER", "CHAT_MSG_WHISPER_INFORM",
+            "CHAT_MSG_PARTY", "CHAT_MSG_PARTY_LEADER", "CHAT_MSG_RAID", "CHAT_MSG_RAID_LEADER",
+            "CHAT_MSG_GUILD", "CHAT_MSG_OFFICER", "CHAT_MSG_INSTANCE_CHAT",
+            "CHAT_MSG_INSTANCE_CHAT_LEADER", "CHAT_MSG_CHANNEL", "CHAT_MSG_EMOTE",
+            "CHAT_MSG_TEXT_EMOTE", "CHAT_MSG_SYSTEM", "CHAT_MSG_COMBAT_XP_GAIN",
+            "CHAT_MSG_LOOT", "CHAT_MSG_BN_WHISPER", "CHAT_MSG_BN_WHISPER_INFORM",
+        }
+        for _, evt in ipairs(SCROLL_EVENTS) do
+            scrollListener:RegisterEvent(evt)
+        end
+        scrollListener:SetScript("OnEvent", function()
+            DeferredAutoScroll(chatFrame)
         end)
+        chatFrame.__guiScrollListener = scrollListener
     end
 
     -- Gravity Scroll to Bottom Button
