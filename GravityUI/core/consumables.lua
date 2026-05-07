@@ -3281,12 +3281,17 @@ local function refreshAllRows()
         frame.rows[i]:Hide()
     end
 
-    local height = FRAME_PAD * 2
-        + TITLE_HEIGHT + FRAME_PAD
-        + activeCount * ROW_HEIGHT
-        + (activeCount > 1 and (activeCount - 1) * V_PAD or 0)
+    -- SetHeight is protected during combat lockdown (ADDON_ACTION_BLOCKED).
+    -- The frame is already alpha-suppressed in OnCombat(), so skip the resize.
+    if not InCombatLockdown() then
+        local height = FRAME_PAD * 2
+            + TITLE_HEIGHT + FRAME_PAD
+            + activeCount * ROW_HEIGHT
+            + (activeCount > 1 and (activeCount - 1) * V_PAD or 0)
 
-    frame:SetHeight(height)
+        frame:SetHeight(height)
+    end
+
     refreshTitleBar()
 end
 
