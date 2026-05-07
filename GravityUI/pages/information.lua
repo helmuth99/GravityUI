@@ -229,14 +229,8 @@ local function BuildInformationTab(parent)
         { name = "Manage Profiles", desc = "Create, delete, and copy persistent addon profile hierarchies entirely.\nManages different character needs from a unified interface.", pageId = "profiles", tabIndex = 1 },
         { name = "Import / Export", desc = "Share and backup profiles via export hash strings securely.\nSeamlessly send an entire UI array directly to friends via web strings.", pageId = "profiles", tabIndex = 2 },
         { name = "Gravity Strings (WA)", desc = "Import critical integrated WeakAuras (Class UI, M+ Automarks, Utilities).\nSyncs directly with the custom GravityUI WeakAura system packages.", pageId = "profiles", tabIndex = 3 },
-        { name = "Installers", desc = "Relaunch the First-Time initial setup and addon dependency installers.\nResyncs layout profiles for Detail, Plater, UUF and BCDM instantly.", pageId = "profiles", tabIndex = 4 },
+        { name = "Installers", desc = "Relaunch the First-Time initial setup and addon dependency installers.\nResyncs layout profiles for Details, Plater, and UUF instantly.", pageId = "profiles", tabIndex = 4 },
     }
-
-    -- Add BCDM related items only if loaded
-    if C_AddOns.IsAddOnLoaded("BetterCooldownManager") then
-        table.insert(features, { name = "CDM Keybindings", desc = "Maps action bar keybind text directly onto the BetterCooldownManager frames.\nAllows custom coloring and hiding of the text on the cooling timeline icons.", stateTable = db.actionbars and db.actionbars.guicdm, stateKey = "enabled", pageId = "utilities", tabIndex = 1 })
-        table.insert(features, { name = "CDM Button Glow", desc = "Customizes the Proc, Alert, and Auto-attack glow on all action buttons.\nAllows re-coloring or overriding the highly noisy default animations.", stateTable = db.actionbars and db.actionbars.guicdm and db.actionbars.guicdm.utils, stateKey = "buttonGlow", pageId = "utilities", tabIndex = 2 })
-    end
 
     table.sort(features, function(a, b)
         return (a.name or "") < (b.name or "")

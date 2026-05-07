@@ -84,72 +84,7 @@ local anchorOptions = { {value = "TOPLEFT", text = "Top Left"}, {value = "TOP", 
 -- BUILDERS
 --==============================================================================================================================================================================================
 
--- 1. CDM Keybindings
-local function BuildGUICDMKeybinds(parent)
-    local scroll, content = GUI:CreateScrollableContent(parent)
-    scroll:SetAllPoints()
-    local db = ns.GetDB(); if not db then return end
-    local abs = db.actionbars
-    local guicdm = abs.guicdm
-    if not guicdm then guicdm = { enabled = true, fontSize = 12, anchor = "TOPRIGHT", offsetX = 0, offsetY = 0, color = {1,1,1,1} }; abs.guicdm = guicdm end
-    if not guicdm.barStyles then guicdm.barStyles = { essential = { fontSize = 12, color = {1, 1, 1, 1} }, utility = { fontSize = 12, color = {1, 1, 1, 1} }, custom = { fontSize = 12, color = {1, 1, 1, 1} }, additionalCustom = { fontSize = 12, color = {1, 1, 1, 1} }, trinket = { fontSize = 12, color = {1, 1, 1, 1} }, item = { fontSize = 12, color = {1, 1, 1, 1} }, itemSpell = { fontSize = 12, color = {1, 1, 1, 1} } } end
 
-    content.rowCount = 0
-    local refresh = function() if ns.RefreshGUICDMKeybinds then ns.RefreshGUICDMKeybinds() end end
-
-    local header = GUI:CreateSectionHeader(content, "Cooldown Manager Keybindings")
-    header:SetPoint("TOPLEFT", 10, -10)
-    header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
-    content.rowCount = 1.3
-
-    local infoBox = GUI:CreateInfoBox(content, "Maps your Action Bar keybinds to the cooldown icons.")
-    infoBox:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT + 5))
-    content.rowCount = content.rowCount + (infoBox:GetHeight() / (ROW_HEIGHT + 5)) + 0.5
-
-    AddRow(content, "Enable Keybinds on CDM", "checkbox", "enabled", guicdm, refresh)
-    CreateSubLabel(content, "Global Appearance (Fallback)")
-    AddRow(content, "Global Font Size", "slider", 8, 32, "fontSize", guicdm, refresh, 1)
-    AddRow(content, "Global Text Color", "color", "color", guicdm, refresh)
-    
-    CreateSubLabel(content, "Global Position")
-    AddRow(content, "Anchor Point", "dropdown", anchorOptions, "anchor", guicdm, refresh)
-    AddRow(content, "X-Offset", "slider", -20, 20, "offsetX", guicdm, refresh, 1)
-    AddRow(content, "Y-Offset", "slider", -20, 20, "offsetY", guicdm, refresh, 1)
-
-    local barList = { { key = "essential", label = "Essential Bar" }, { key = "utility", label = "Utility Bar" }, { key = "custom", label = "Custom Bar" }, { key = "additionalCustom", label = "Additional Custom Bar" }, { key = "trinket", label = "Trinket Bar" }, { key = "item", label = "Item Bar" }, { key = "itemSpell", label = "Item Spell Bar" } }
-    for _, barInfo in ipairs(barList) do
-        CreateSubLabel(content, barInfo.label)
-        local barStyle = guicdm.barStyles[barInfo.key]
-        AddRow(content, "Enable on " .. barInfo.label, "checkbox", barInfo.key, guicdm.bars, refresh)
-        AddRow(content, "Font Size", "slider", 8, 32, "fontSize", barStyle, refresh, 1)
-        AddRow(content, "Text Color", "color", "color", barStyle, refresh)
-        content.rowCount = content.rowCount + 0.5
-    end
-    content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
-end
-
--- 2. Button Glow
-local function BuildUtils(parent)
-    local scroll, content = GUI:CreateScrollableContent(parent)
-    scroll:SetAllPoints()
-    local db = ns.GetDB(); if not db then return end
-    local utils = db.actionbars.guicdm.utils or { buttonGlow = false }; db.actionbars.guicdm.utils = utils
-    content.rowCount = 0
-    local refresh = function() if ns.GUICDM_Keybinds and ns.GUICDM_Keybinds.UpdateUtils then ns.GUICDM_Keybinds:UpdateUtils() end end
-    local header = GUI:CreateSectionHeader(content, "Button Glow on Key press")
-    header:SetPoint("TOPLEFT", 10, -10)
-    header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
-    content.rowCount = 1.3
-    local infoBox = GUI:CreateInfoBox(content, "Shows a highlight on BCDM icons when their keybind is pressed.\n\n|cffFFCC00Note:|r Keybindings and the specific bar (Essential, Utility, etc.) must be enabled for this to work.")
-    infoBox:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT + 5))
-    content.rowCount = content.rowCount + (infoBox:GetHeight() / (ROW_HEIGHT + 5)) + 0.2
-    AddRow(content, "Enable Button Glow on Keybind Press", "checkbox", "buttonGlow", utils, refresh)
-    AddRow(content, "Hide Keybind Text (Glow still works)", "checkbox", "hideKeybindText", utils, refresh)
-    AddRow(content, "Glow Color", "color", "buttonGlowColor", utils, refresh)
-    content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
-end
-
--- 3. Castbar Ticks
 local function BuildCastbar(parent)
     local scroll, content = GUI:CreateScrollableContent(parent)
     scroll:SetAllPoints()
@@ -162,8 +97,7 @@ local function BuildCastbar(parent)
         header:SetPoint("TOPLEFT", 10, startY)
         local frame = CreateFrame("Frame", nil, content); frame:SetSize(GUI.CONTENT_WIDTH - 20, 240); frame:SetPoint("TOPLEFT", header, "BOTTOMLEFT", 0, -10)
         GUI:CreateCheckbox(frame, "Enable on UnhaltedUnitFrames", "enableUUF", dbPath, refresh):SetPoint("TOPLEFT", 0, 0)
-        GUI:CreateCheckbox(frame, "Enable on BetterCooldownManager", "enableBCDM", dbPath, refresh):SetPoint("TOPLEFT", 0, -30)
-        GUI:CreateCheckbox(frame, "Enable on Ayije CDM", "enableAyije", dbPath, refresh):SetPoint("TOPLEFT", 0, -60)
+        GUI:CreateCheckbox(frame, "Enable on Ayije CDM", "enableAyije", dbPath, refresh):SetPoint("TOPLEFT", 0, -30)
         local slW = GUI:CreateSlider(frame, "Tick Width", 1, 10, "tickWidth", dbPath, refresh, 1); slW:SetPoint("TOPLEFT", 0, -100); slW.label:SetText("Tick Width")
         local slH = GUI:CreateSlider(frame, "Tick Height %", 0.1, 1.0, "tickHeight", dbPath, refresh, 0.05); slH:SetPoint("TOPLEFT", 0, -140); slH.label:SetText("Tick Height")
         local cp = GUI:CreateColorPicker(frame, "Tick Color", "tickColor", dbPath, refresh); cp:SetPoint("TOPLEFT", 0, -180); cp.label:SetText("Tick Color")
@@ -202,8 +136,6 @@ end
 ns.GUI:RegisterPage("utilities", {
     title = "Utilities",
     subTabs = {
-        { name = "CDM Keybindings", builder = BuildGUICDMKeybinds, bcdmOnly = true },
-        { name = "CDM Button Glow", builder = BuildUtils,           bcdmOnly = true },
         { name = "Castbar Ticks",    builder = BuildCastbar },
         { name = "Sound Alerts",     builder = BuildSoundAlerts },
     },

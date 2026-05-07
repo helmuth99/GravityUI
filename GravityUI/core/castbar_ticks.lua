@@ -297,22 +297,6 @@ function M:SetupHooks()
         if UUF_Player_CastBar then Attach(UUF_Player_CastBar, false) end
     end
 
-    -- Hook BCDM
-    if cfg.enableBCDM and C_AddOns.IsAddOnLoaded("BetterCooldownManager") then
-        local ace = LibStub("AceAddon-3.0", true)
-        if ace then
-            local ok, BCDM = pcall(ace.GetAddon, ace, "BetterCooldownManager", true)
-            if ok and BCDM then
-                if BCDM.OnEnable then
-                     hooksecurefunc(BCDM, "OnEnable", function()
-                        if BCDM_CastBar then Attach(BCDM_CastBar, true) end
-                     end)
-                end
-            end
-        end
-        -- Try direct
-        if BCDM_CastBar then Attach(BCDM_CastBar, true) end
-    end
 
     -- Hook Ayije CDM
     if cfg.enableAyije and C_AddOns.IsAddOnLoaded("Ayije_CDM") then

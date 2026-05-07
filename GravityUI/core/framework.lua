@@ -1460,8 +1460,7 @@ function GUI:CreateSubTabs(parent, tabs)
     local maxWidth = (parent:GetWidth() > 0) and (parent:GetWidth() - 20) or (GUI.CONTENT_WIDTH - 20)
 
     for i, tabInfo in ipairs(tabs) do
-        local bcdmLoaded = (_G.BCDM ~= nil) or C_AddOns.IsAddOnLoaded("BetterCooldownManager")
-        local isVisible = (not tabInfo.bcdmOnly or bcdmLoaded) and (not tabInfo.showIf or tabInfo.showIf())
+        local isVisible = not tabInfo.bcdmOnly and (not tabInfo.showIf or tabInfo.showIf())
 
         if isVisible then
             local btn = CreateFrame("Button", nil, container, "BackdropTemplate")

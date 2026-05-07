@@ -703,8 +703,8 @@ CreateButtonBar = function(parent)
         -- Ayije CDM
         if not opened and OpenAddonConfig("Ayije_CDM", "ACDM") then opened = true end
         
-        -- Better Cooldown Manager (BCDM)
-        if not opened and OpenAddonConfig("BetterCooldownManager", "BCDM") then opened = true end
+        -- Better Cooldown Manager (BCDM) - no longer supported
+        -- if not opened and OpenAddonConfig("BetterCooldownManager", "BCDM") then opened = true end
         
         -- Centered Cooldown Manager
         if not opened and OpenAddonConfig("CenteredCooldownManager", "CCM") then opened = true end
@@ -713,7 +713,7 @@ CreateButtonBar = function(parent)
         if not opened and OpenAddonConfig("ArcUI", "ARCUI") then opened = true end
          
         if not opened then
-             print("|cFF30D1FFGravityUI:|r No supported CDM addon loaded (Ayije, BCDM, CCM, ArcUI).")
+             print("|cFF30D1FFGravityUI:|r No supported CDM addon loaded (Ayije, CCM, ArcUI).")
         end
     end)
     cdmAddonBtn:SetPoint("LEFT", npBtn, "RIGHT", 8, 0)
@@ -972,8 +972,7 @@ CreateSidebarButtons = function()
                 -- 2. Create nested subtab buttons
                 for subIdx, tabInfo in ipairs(opts.subTabs) do
                     -- Visibility Filtering
-                    local bcdmLoaded = (_G.BCDM ~= nil) or C_AddOns.IsAddOnLoaded("BetterCooldownManager")
-                    local isVisible = not tabInfo.bcdmOnly or bcdmLoaded
+                    local isVisible = not tabInfo.bcdmOnly and (not tabInfo.showIf or tabInfo.showIf())
                     if isVisible and (not tabInfo.showIf or tabInfo.showIf()) then
                         buttonIndex = buttonIndex + 1
                         
@@ -1228,13 +1227,12 @@ function GUI:ShowPage(index, subIndex)
     -- Visibility Check for Subtabs (Fallback to first visible if target is hidden)
     local opts = self.pages[pageId]
     if opts and opts.subTabs and subIndex then
-        local bcdmLoaded = (_G.BCDM ~= nil) or C_AddOns.IsAddOnLoaded("BetterCooldownManager")
         local tabInfo = opts.subTabs[subIndex]
-        local isVisible = not tabInfo or ((not tabInfo.bcdmOnly or bcdmLoaded) and (not tabInfo.showIf or tabInfo.showIf()))
+        local isVisible = not tabInfo or (not tabInfo.bcdmOnly and (not tabInfo.showIf or tabInfo.showIf()))
         
         if not isVisible then
             for i, tab in ipairs(opts.subTabs) do
-                if (not tab.bcdmOnly or bcdmLoaded) and (not tab.showIf or tab.showIf()) then
+                if not tab.bcdmOnly and (not tab.showIf or tab.showIf()) then
                     subIndex = i
                     break
                 end

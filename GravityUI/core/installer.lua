@@ -320,75 +320,12 @@ Installer.registry = {
         end
     },
     {
-        name = "BCDM",
-        label = "Better Cooldown Manager",
-        Check = function() return (_G.BCDM ~= nil) or C_AddOns.IsAddOnLoaded("BetterCooldownManager") end,
-        GetProfile = function() 
-             -- 1. Try Direct DB Global (Raw Data)
-             local p1 = GetAceProfileFromGlobal("BCDMDB")
-             if p1 then return p1 end
-             local p2 = GetAceProfileFromGlobal("BetterCooldownManagerDB")
-             if p2 then return p2 end
-
-             -- 2. Try AceAddon Object (Method)
-             local LibStub = _G.LibStub
-             if LibStub then 
-                  local AceAddon = LibStub("AceAddon-3.0", true)
-                  if AceAddon then
-                       local addon = AceAddon:GetAddon("BetterCooldownManager", true) or AceAddon:GetAddon("BCDM", true)
-                       if addon and addon.db then return addon.db:GetCurrentProfile() end
-                  end
-             end
-             return nil 
-        end,
-        SetProfile = function(self, profileName)
-             -- Primary Method: Global Object
-             if _G.BCDM and _G.BCDM.db then 
-                _G.BCDM.db:SetProfile(profileName) 
-                if _G.BCDM.UpdateBCDM then _G.BCDM:UpdateBCDM() end
-                return true 
-            end
-            
-            -- Fallback: AceAddon Registry
-             local LibStub = _G.LibStub
-             if LibStub then 
-                  local AceAddon = LibStub("AceAddon-3.0", true)
-                  if AceAddon then
-                       local addon = AceAddon:GetAddon("BetterCooldownManager", true) or AceAddon:GetAddon("BCDM", true)
-                       if addon and addon.db then 
-                           addon.db:SetProfile(profileName)
-                           if addon.UpdateBCDM then addon:UpdateBCDM() end
-                           return true 
-                       end
-                  end
-             end
-             
-             -- Ultimate Fallback: Direct DB Write
-             if SetAceProfileInGlobal("BCDMDB", profileName) then return true end
-             if SetAceProfileInGlobal("BetterCooldownManagerDB", profileName) then return true end
-        end,
-        Import = function(self, data, profileName)
-            if _G.BCDMG and _G.BCDMG.ImportBCDM then _G.BCDMG:ImportBCDM(data, profileName) end
-        end,
-        HasProfile = function(self, profileName)
-             if _G.BCDM and _G.BCDM.db then
-                  for _, v in ipairs(_G.BCDM.db:GetProfiles()) do if v == profileName then return true end end
-             end
-             -- Add fallback check for HasProfile too ??
-             return true -- Assume true to not block validation if global missing
-        end
-    },
-    {
-        -- Ayije CDM: Fallback CDM when BCDM is not installed
+        -- Ayije CDM
         name = "Ayije",
         importKey = "ayije", -- Key used in imports table
         label = "Ayije CDM",
-        category = "Optional",
-        replaces = "BCDM", -- Replaces BCDM in the UI when BCDM is not loaded
+        category = "Important",
         Check = function()
-            -- Only active if BCDM is NOT loaded but Ayije_CDM IS loaded
-            local bcdmLoaded = (_G.BCDM ~= nil) or C_AddOns.IsAddOnLoaded("BetterCooldownManager")
-            if bcdmLoaded then return false end
             return C_AddOns.IsAddOnLoaded("Ayije_CDM")
         end,
         GetProfile = function()

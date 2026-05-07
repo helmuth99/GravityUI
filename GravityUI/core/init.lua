@@ -345,7 +345,6 @@ function Addon:PLAYER_ENTERING_WORLD(event, isInitialLogin, isReloadingUi)
     C_Timer.After(1.5, function()
         if ns.Objectives and ns.Objectives.Initialize then ns.Objectives:Initialize() end
         if ns.XPRep and ns.XPRep.Initialize then ns.XPRep:Initialize() end
-        if ns.GUICDM_Keybinds and ns.GUICDM_Keybinds.Init then ns.GUICDM_Keybinds:Init() end
         if ns.Mail and ns.Mail.Initialize then ns.Mail.Initialize() end
     end)
 
@@ -529,7 +528,6 @@ SlashCmdList["GUITESTCLEANUP"] = function()
                 elseif addon.name == "Plater" and _G.Plater then dbObj = _G.Plater.db
                 elseif addon.name == "BigWigs" and _G.BigWigs3DB then -- BigWigs manual key deletion
                      if _G.BigWigs3DB.profiles then _G.BigWigs3DB.profiles[profile] = nil deleted = true end
-                elseif addon.name == "BCDM" and _G.BCDM then dbObj = _G.BCDM.db
                 elseif addon.name == "UUF" and _G.UUF then dbObj = _G.UUF.db
                 end
                 

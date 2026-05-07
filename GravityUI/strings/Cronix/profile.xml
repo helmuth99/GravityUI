@@ -6,7 +6,7 @@
     <Script file="details.lua" />
     <Script file="bigwigs.lua" />
     <Script file="plater.lua" />
-    <Script file="bcdm.lua" />
+
     <Script file="uuf.lua" />
     <Script file="gravityui.lua" />
     <Script file="platynator.lua" />

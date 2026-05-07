@@ -24,7 +24,6 @@ local UNIT_FRAME_PATTERNS = {
     "NamePlate", "Gravity.*Frame", "UUF", "Unhalted"
 }
 local CDM_PATTERNS = {
-    "BCD", "BetterCooldown",
     "EssentialCooldownViewer", "UtilityCooldownViewer", "BuffIconCooldownViewer"
 }
 local ACTION_BUTTON_PATTERNS = {
