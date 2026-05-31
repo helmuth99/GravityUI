@@ -368,7 +368,15 @@ end
 
 -- 6. Raid Warnings
 local function BuildRaidWarnings(parent)
+    -- Prevent overlapping elements by clearing existing content if we are rebuilding
+    if parent.scroll then
+        parent.scroll:Hide()
+        parent.scroll:SetParent(nil)
+        parent.scroll = nil
+    end
+
     local scroll, content = GUI:CreateScrollableContent(parent)
+    parent.scroll = scroll
     scroll:SetAllPoints()
     local db = ns.GetDB(); if not db then return end
     local dbRW = db.raidWarnings
