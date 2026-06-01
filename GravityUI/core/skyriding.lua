@@ -166,7 +166,11 @@ local function UpdateVisibility(gliding, canGlideNow)
     end
 
     if gliding == nil then
-        gliding, canGlideNow, _ = GetGlidingInfo()
+        -- Note: GetGlidingInfo() also returns forwardSpeed as 3rd value, but it is
+        -- not needed here. Do NOT assign it to _ without 'local' — numbers are truthy
+        -- in Lua, which causes DF:NewSpecialLuaEditorEntry (used by other addons like
+        -- NorthernSkyRaidTools) to execute parent[_]=borderframe, corrupting the frame.
+        gliding, canGlideNow = GetGlidingInfo()
     end
     isGliding = gliding
     canGlide = canGlideNow
