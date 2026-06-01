@@ -76,6 +76,8 @@ local TRACKED_SPELLS = {
     [462213] = "feast", -- Hearty Feast of the Midnight Masquerade
     [242745] = "feast", 
     [266985] = "feast", 
+    [127892] = "feast", 
+    [1278895] = "feast", 
 }
 
 -- ============================================================================
