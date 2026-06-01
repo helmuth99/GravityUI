@@ -115,7 +115,6 @@ function ns.RefreshAccentColors()
     if ns.InstanceFrames and ns.InstanceFrames.Initialize then ns.InstanceFrames:Initialize() end
     if ns.Objectives and ns.Objectives.Initialize then ns.Objectives:Initialize() end
     if ns.XPRep and ns.XPRep.Refresh then ns.XPRep:Refresh() end
-    if ns.TrackedBuffBar and ns.TrackedBuffBar.Refresh then ns.TrackedBuffBar:Refresh() end
 end
 
 -- Get global font settings
@@ -337,7 +336,6 @@ function Addon:PLAYER_ENTERING_WORLD(event, isInitialLogin, isReloadingUi)
     C_Timer.After(1.0, function()
         if ns.Loot and ns.Loot.Initialize then ns.Loot:Initialize() end
         if ns.RaidWarnings and ns.RaidWarnings.Initialize then ns.RaidWarnings:Initialize() end
-        if ns.TrackedBuffBar and ns.TrackedBuffBar.Init then ns.TrackedBuffBar:Init() end
         if ns.InterruptTracker and ns.InterruptTracker.Initialize then ns.InterruptTracker:Initialize() end
     end)
     
