@@ -1,6 +1,10 @@
 -- GravityUI Performance Shield
--- Mimics the "Disable Addon Profiler" WeakAura to maximize combat FPS by suppressing
--- engine-level CPU profiling and intrusive telemetry.
+-- Suppresses intrusive addon telemetry and performance-display overhead.
+-- NOTE: scriptProfile CVar is intentionally NOT changed here.
+-- Setting scriptProfile=0 removes WoW's 'debug' library from the Lua sandbox,
+-- which breaks error reporting for all addons (e.g. NSRT import popups).
+-- Users who want to disable addon profiling should do so via WoW's own
+-- /console scriptProfile 0 after understanding the trade-off.
 
 local ADDON_NAME, ns = ...
 
@@ -8,12 +12,8 @@ local function EnforceShield()
     local db = ns.GetDB()
     if not db or not db.uiimprovements or not db.uiimprovements.performanceShield then return end
 
-    -- 1. Disable Engine-level CPU profiling (The expensive part)
-    if GetCVar("scriptProfile") ~= "0" then
-        SetCVar("scriptProfile", 0)
-    end
-
-    -- 2. Disable Addon Performance Display (The UI overlay)
+    -- 1. Disable Addon Performance Display (The UI overlay)
+    -- (scriptProfile is intentionally left untouched - see file header comment)
     -- This CVar might be restricted or removed in some versions, pcall for safety
     pcall(function()
         if GetCVar("SetAddonPerformanceDisplay") ~= "0" then
@@ -21,9 +21,8 @@ local function EnforceShield()
         end
     end)
 
-    -- 3. Suppress "Addon is using too much memory" or other analytics hooks
-    -- We hook UpdateAddOnCPUUsage to prevent other addons from triggering 
-    -- the engine's expensive bookkeeping logic.
+    -- 2. Suppress UpdateAddOnCPUUsage calls from other addons
+    -- This prevents engine-side profiling bookkeeping when triggered externally.
     if not ns.ShieldHooked then
         hooksecurefunc("UpdateAddOnCPUUsage", function()
             -- By hooking this, we ensure that even if an addon calls it,
