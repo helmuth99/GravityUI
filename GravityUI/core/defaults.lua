@@ -1282,6 +1282,7 @@ ns.Defaults = {
                 scale = 1,
                 overrideEnabled = false,
                 hideArtwork = true,
+                mirrorExtraKeybind = false, -- Mirror ExtraActionButton1 keybind onto Zone Ability
             },
             microbar =             {
                 alwaysShow = false,

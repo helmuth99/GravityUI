@@ -354,6 +354,11 @@ local function BuildSpecialButtons(parent)
     local zb = abs.bars.zoneAbility
     AddRow(content, "Zone Ability Scale", "slider", 0.5, 2.0, "scale", zb, refresh, 0.05)
     AddRow(content, "Hide Zone Ability Art", "checkbox", "hideArtwork", zb, refresh)
+    AddRow(content, "Mirror Zone/ExtraActionButton Keybind", "checkbox", "mirrorExtraKeybind", zb, function()
+        if ns.ActionBars and ns.ActionBars.RefreshZoneAbilityKeybind then
+            ns.ActionBars.RefreshZoneAbilityKeybind()
+        end
+    end)
     content.rowCount = content.rowCount + 0.5
     
     local movRow = CreateFrame("Frame", nil, content)

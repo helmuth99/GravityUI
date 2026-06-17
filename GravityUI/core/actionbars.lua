@@ -759,6 +759,186 @@ function ActionBars.ToggleExtraButtonMovers()
     end
 end
 
+-- ---------------------------------------------------------------------------
+-- ZONE ABILITY KEYBIND MIRROR
+-- ---------------------------------------------------------------------------
+-- In WoW 12.x, ZoneAbilityFrame.SpellButton is nil — the button lives inside
+-- ZoneAbilityFrame.SpellButtonContainer (object pool). Use EnumerateActive().
+-- IMPORTANT: The proxy must be SHOWN (not hidden) for SetOverrideBindingClick.
+local zoneKeybindOwner = CreateFrame("Frame")
+local zoneAbilityProxy = CreateFrame("Button", "GravityUI_ZoneAbilityProxy", UIParent, "SecureActionButtonTemplate")
+zoneAbilityProxy:SetSize(1, 1)
+zoneAbilityProxy:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", 0, 0) -- off-screen
+zoneAbilityProxy:SetAlpha(0) -- invisible but shown
+zoneAbilityProxy:RegisterForClicks("AnyDown", "AnyUp")
+zoneAbilityProxy:SetAttribute("type", "macro")
+
+local function GetZoneAbilityButton()
+    if not ZoneAbilityFrame then return nil end
+    if ZoneAbilityFrame.SpellButton then
+        return ZoneAbilityFrame.SpellButton
+    end
+    local container = ZoneAbilityFrame.SpellButtonContainer
+    if container then
+        if container.EnumerateActive then
+            for btn in container:EnumerateActive() do
+                return btn
+            end
+        elseif container.GetChildren then
+            local btn = select(1, container:GetChildren())
+            if btn then return btn end
+        end
+    end
+    return nil
+end
+
+-- Formats a raw keybind string the same way GravityUI's UpdateButtonText does
+local function FormatKeyText(key)
+    if not key then return "" end
+    key = key:gsub("(s%-)", "S")
+    key = key:gsub("(a%-)", "A")
+    key = key:gsub("(c%-)", "C")
+    key = key:gsub("(st%-)", "C")
+    key = key:gsub("(KEY_)", "")
+    key = key:gsub("MOUSEWHEELUP", "WU")
+    key = key:gsub("MOUSEWHEELDOWN", "WD")
+    key = key:gsub("BUTTON3", "M3")
+    key = key:gsub("BUTTON4", "M4")
+    key = key:gsub("BUTTON5", "M5")
+    key = key:gsub("NUMPAD", "N")
+    key = key:gsub("PAGEUP", "PU")
+    key = key:gsub("PAGEDOWN", "PD")
+    key = key:gsub("SPACE", "Spc")
+    key = key:gsub("INSERT", "Ins")
+    key = key:gsub("HOME", "Hm")
+    key = key:gsub("DELETE", "Del")
+    return key
+end
+
+-- Adds or updates the keybind label on the zone ability button
+local function UpdateZoneAbilityKeybindText(spellBtn, keyText)
+    if not spellBtn then return end
+    -- Create FontString if it doesn't exist yet
+    if not spellBtn._guiHotKey then
+        spellBtn._guiHotKey = spellBtn:CreateFontString(nil, "OVERLAY")
+        spellBtn._guiHotKey:SetFont("Fonts/FRIZQT__.TTF", 12, "OUTLINE")
+        spellBtn._guiHotKey:SetTextColor(1, 1, 1, 1)
+        spellBtn._guiHotKey:SetPoint("TOPRIGHT", spellBtn, "TOPRIGHT", 0, -2)
+    end
+    if keyText and keyText ~= "" then
+        spellBtn._guiHotKey:SetText(keyText)
+        spellBtn._guiHotKey:Show()
+    else
+        spellBtn._guiHotKey:SetText("")
+        spellBtn._guiHotKey:Hide()
+    end
+end
+
+local function ApplyZoneAbilityKeybind()
+    ClearOverrideBindings(zoneKeybindOwner)
+
+    local db = GetDB()
+    if not db or not db.bars or not db.bars.zoneAbility then return end
+
+    -- If disabled, clear the keybind label too
+    if not db.bars.zoneAbility.mirrorExtraKeybind then
+        UpdateZoneAbilityKeybindText(GetZoneAbilityButton(), nil)
+        return
+    end
+
+    local key1 = GetBindingKey("EXTRAACTIONBUTTON1")
+    local key2 = select(2, GetBindingKey("EXTRAACTIONBUTTON1"))
+    if not key1 then return end
+
+    local spellBtn = GetZoneAbilityButton()
+    if not spellBtn then return end
+
+    -- Strategy 1: button has a global name → bind directly
+    local btnName = spellBtn:GetName()
+    if btnName then
+        SetOverrideBindingClick(zoneKeybindOwner, false, key1, btnName, "LeftButton")
+        if key2 then SetOverrideBindingClick(zoneKeybindOwner, false, key2, btnName, "LeftButton") end
+        UpdateZoneAbilityKeybindText(spellBtn, FormatKeyText(key1))
+        return
+    end
+
+    -- Strategy 2: cast by spell name via macro (C_Spell.GetSpellInfo for TWW)
+    local spellID = spellBtn.spellID
+    local spellName
+    if spellID then
+        if C_Spell and C_Spell.GetSpellInfo then
+            local info = C_Spell.GetSpellInfo(spellID)
+            spellName = info and info.name
+        end
+        if not spellName and GetSpellInfo then
+            spellName = GetSpellInfo(spellID)
+        end
+    end
+
+    if spellName then
+        zoneAbilityProxy:SetAttribute("type", "macro")
+        zoneAbilityProxy:SetAttribute("macrotext", "/cast " .. spellName)
+        SetOverrideBindingClick(zoneKeybindOwner, false, key1, "GravityUI_ZoneAbilityProxy", "LeftButton")
+        if key2 then SetOverrideBindingClick(zoneKeybindOwner, false, key2, "GravityUI_ZoneAbilityProxy", "LeftButton") end
+        UpdateZoneAbilityKeybindText(spellBtn, FormatKeyText(key1))
+        return
+    end
+
+    -- Strategy 3: fallback — forward click to zone ability button
+    zoneAbilityProxy:SetAttribute("type", "click")
+    zoneAbilityProxy:SetAttribute("clickbutton", spellBtn)
+    SetOverrideBindingClick(zoneKeybindOwner, false, key1, "GravityUI_ZoneAbilityProxy", "LeftButton")
+    if key2 then SetOverrideBindingClick(zoneKeybindOwner, false, key2, "GravityUI_ZoneAbilityProxy", "LeftButton") end
+    UpdateZoneAbilityKeybindText(spellBtn, FormatKeyText(key1))
+end
+
+-- Public wrapper exposed to settings page (with combat guard)
+function ActionBars.RefreshZoneAbilityKeybind()
+    if InCombatLockdown() then
+        local f = CreateFrame("Frame")
+        f:RegisterEvent("PLAYER_REGEN_ENABLED")
+        f:SetScript("OnEvent", function(self)
+            ApplyZoneAbilityKeybind()
+            self:UnregisterAllEvents()
+        end)
+        return
+    end
+    ApplyZoneAbilityKeybind()
+end
+
+-- Debug slash command: /gravitydebugzone
+SLASH_GRAVITYDEBUGZONE1 = "/gravitydebugzone"
+SlashCmdList["GRAVITYDEBUGZONE"] = function()
+    print("|cFF30D1FFGravityUI ZoneAbility Debug:|r")
+    local spellBtn = GetZoneAbilityButton()
+    print("  SpellButton:", spellBtn and "found" or "|cFFFF4444nil|r")
+    if spellBtn and spellBtn.spellID then
+        local info = C_Spell and C_Spell.GetSpellInfo and C_Spell.GetSpellInfo(spellBtn.spellID)
+        print("  Spell:", tostring(info and info.name), "(ID=" .. tostring(spellBtn.spellID) .. ")")
+    end
+    local key1 = GetBindingKey("EXTRAACTIONBUTTON1")
+    print("  ExtraActionButton1 key:", tostring(key1))
+    local db = GetDB()
+    print("  mirrorExtraKeybind:", tostring(db and db.bars and db.bars.zoneAbility and db.bars.zoneAbility.mirrorExtraKeybind))
+    ApplyZoneAbilityKeybind()
+    print("  >> ApplyZoneAbilityKeybind() forced.")
+end
+
+-- Hook ZoneAbilityFrame:OnShow to reapply when zone ability becomes active
+if ZoneAbilityFrame then
+    ZoneAbilityFrame:HookScript("OnShow", function()
+        C_Timer.After(0.2, ApplyZoneAbilityKeybind)
+    end)
+end
+
+-- Zone change events
+local zoneAbilityHookFrame = CreateFrame("Frame")
+zoneAbilityHookFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
+zoneAbilityHookFrame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
+zoneAbilityHookFrame:SetScript("OnEvent", function()
+    C_Timer.After(1.0, ApplyZoneAbilityKeybind)
+end)
+
 ---------------------------------------------------------------------------
 -- REFRESH / PUBLIC API
 ---------------------------------------------------------------------------
@@ -940,8 +1120,14 @@ initFrame:RegisterEvent("UPDATE_VEHICLE_ACTIONBAR")
 initFrame:SetScript("OnEvent", function(self, event)
     if event == "PLAYER_LOGIN" then
         ns.RefreshActionBars()
+        -- Apply zone keybind mirror after initial bindings are loaded
+        C_Timer.After(0.5, function() ApplyZoneAbilityKeybind() end)
     elseif event == "ACTIONBAR_SLOT_CHANGED" or event == "UPDATE_BINDINGS" or event == "ACTIONBAR_PAGE_CHANGED" or event == "UPDATE_BONUS_ACTIONBAR" or event == "UPDATE_VEHICLE_ACTIONBAR" then
         RequestRefresh()
+        -- Re-mirror zone keybind whenever bindings change (e.g. player re-bound ExtraActionButton1)
+        if event == "UPDATE_BINDINGS" then
+            ApplyZoneAbilityKeybind()
+        end
     else
         RequestUsabilityUpdate()
     end
