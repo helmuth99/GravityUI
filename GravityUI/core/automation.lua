@@ -744,18 +744,26 @@ local function CheckRaidLogging()
     local settings = GetSettings()
     if not settings then return end
     
-    local _, instanceType, difficultyID = GetInstanceInfo()
+    local _, instanceType, difficultyID, difficultyName = GetInstanceInfo()
     local isRaid = (instanceType == "raid")
     
     local shouldLog = false
+    local lowerName = difficultyName and difficultyName:lower() or ""
     
     if isRaid then
-        -- Difficulty Checks
+        -- Difficulty Checks (ID-based, primary)
         if difficultyID == 14 and settings.autoCombatLogRaidNormal then -- Normal
             shouldLog = true
         elseif difficultyID == 15 and settings.autoCombatLogRaidHeroic then -- Heroic
             shouldLog = true
-        elseif difficultyID == 16 and settings.autoCombatLogRaidMythic then -- Mythic
+        elseif difficultyID == 16 and settings.autoCombatLogRaidMythic then -- Mythic (fixed 20)
+            shouldLog = true
+        -- Fallback: name-based matching for new/unknown IDs (e.g. Mythic Flex in 12.0.7 Sporefall)
+        elseif settings.autoCombatLogRaidNormal and lowerName:find("normal") then
+            shouldLog = true
+        elseif settings.autoCombatLogRaidHeroic and lowerName:find("heroic") then
+            shouldLog = true
+        elseif settings.autoCombatLogRaidMythic and lowerName:find("mythic") then
             shouldLog = true
         end
     end
@@ -1475,10 +1483,11 @@ local DIFFICULTY_NAMES = {
     [2]  = "Heroic (Dungeon)",
     [14] = "Normal (Raid)",
     [15] = "Heroic (Raid)",
-    [16] = "Mythic (Raid)",
+    [16] = "Mythic (Raid, fixed 20)",
     [23] = "Mythic (Dungeon)",
     [24] = "Timewalking (Dungeon)",
     [33] = "Timewalking (Raid)",
+    -- 12.0.7+: Mythic Flex (Sporefall) uses a new ID, resolved by name-fallback
 }
 
 local function CombatLogDebug()
@@ -1522,12 +1531,17 @@ local function CombatLogDebug()
     if instanceType == "party" and inChallenge and mLog then
         wouldLog = true; reason = "M+ is active + Auto Log M+ = ON"
     elseif instanceType == "raid" then
+        local lowerDiffName = difficultyName and difficultyName:lower() or ""
         if difficultyID == 14 and rN then wouldLog = true; reason = "Raid Normal + Auto Log Normal = ON"
         elseif difficultyID == 15 and rH then wouldLog = true; reason = "Raid Heroic + Auto Log Heroic = ON"
         elseif difficultyID == 16 and rM then wouldLog = true; reason = "Raid Mythic + Auto Log Mythic = ON"
+        -- Fallback name-match for new IDs like Mythic Flex (12.0.7 Sporefall)
+        elseif rN and lowerDiffName:find("normal") then wouldLog = true; reason = "Raid Normal (name match) + Auto Log Normal = ON"
+        elseif rH and lowerDiffName:find("heroic") then wouldLog = true; reason = "Raid Heroic (name match) + Auto Log Heroic = ON"
+        elseif rM and lowerDiffName:find("mythic") then wouldLog = true; reason = "Raid Mythic Flex (name match) + Auto Log Mythic = ON"
         end
         if not wouldLog then
-            reason = string.format("Raid (diff %d) but matching toggle is OFF", difficultyID or 0)
+            reason = string.format("Raid (diff %d / '%s') but matching toggle is OFF", difficultyID or 0, difficultyName or "?")
         end
     end
     p(string.format("Should Log: |cFF%s%s|r  → %s",
