@@ -661,6 +661,7 @@ local function CatchExistingButtons()
         BtwQuestsMinimapButton = true,
         BTWQuestsMinimapButton = true,
         BtWQuestsMinimapButton = true,
+        ExpansionLandingPageMinimapButton = true, -- Patch 12.0.7: Expansion Landing Page
     }
     
     -- Load Custom Frames from settings (Case-Insensitive Support)
