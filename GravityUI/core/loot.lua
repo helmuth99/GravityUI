@@ -307,6 +307,7 @@ local function SkinGroupLootHistoryFrame()
         f.guiBackdrop = CreateFrame("Frame", nil, f, "BackdropTemplate")
         f.guiBackdrop:SetAllPoints()
         f.guiBackdrop:SetFrameLevel(f:GetFrameLevel())
+        f.guiBackdrop:EnableMouse(false) -- never intercept clicks
         f.guiBackdrop:SetBackdrop({
             bgFile = "Interface\\Buttons\\WHITE8x8",
             edgeFile = "Interface\\Buttons\\WHITE8x8",
@@ -363,6 +364,26 @@ local function SkinGroupLootHistoryFrame()
             end)
         end)
     end
+
+    -- FIX: When this frame shows, re-bump BonusRollFrame prompt buttons so they are always
+    -- ABOVE this frame's level. Blizzard can reshuffle DIALOG strata levels when a new DIALOG
+    -- frame appears (SetToplevel / Raise), which may push this frame above the BonusRoll buttons.
+    f:HookScript("OnShow", function(self)
+        local bonus = _G.BonusRollFrame
+        if not bonus or not bonus:IsShown() then return end
+        local prompt = bonus.PromptFrame
+        if not prompt then return end
+        -- Target level: above both BonusRollFrame and GroupLootHistoryFrame
+        local targetLevel = math.max(
+            bonus:GetFrameLevel() + 10,
+            self:GetFrameLevel() + 1
+        )
+        for _, btn in ipairs({ prompt.rollButton, prompt.passButton }) do
+            if btn then
+                pcall(function() btn:SetFrameLevel(targetLevel) end)
+            end
+        end
+    end)
     
     f.guiSkinned = true
 end
