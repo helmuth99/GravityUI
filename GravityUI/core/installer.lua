@@ -360,30 +360,23 @@ Installer.registry = {
             local CDM = _G["Ayije_CDM"]
             if not CDM or not CDM.ProfileIO then return end
 
-            -- 1. Decode the !ACDM: encoded string
-            local payload, decodeErr = CDM.ProfileIO:DecodePayload(data)
-            if not payload then
+            -- 1. Decode: DecodeProfileString extrahiert payload.data direkt,
+            --    ohne Key-Filterung (BuildImportProfile würde alle Keys rausfiltern
+            --    weil wir keine categoryDefs haben → leeres Profil)
+            local profileData, decodeErr = CDM.ProfileIO:DecodeProfileString(data)
+            if type(profileData) ~= "table" then
                 ns.Print("|cffff0000[GravityUI]|r Ayije import decode failed: " .. tostring(decodeErr))
                 return
             end
 
-            -- 2. Extract the actual profile data table
-            local profileData = CDM.ProfileIO:ExtractProfileData(payload)
-            if type(profileData) ~= "table" then
-                ns.Print("|cffff0000[GravityUI]|r Ayije import: invalid profile data")
-                return
-            end
-
-            -- 3. Apply using ApplyProfileAtomic (creates or overwrites the named profile)
-            if CDM.ApplyProfileAtomic then
-                local ok, err = pcall(CDM.ApplyProfileAtomic, CDM, profileName, profileData, {
-                    rebuildOptions = true,
-                })
+            -- 2. Apply via CDM:ImportProfileData (erstellt/überschreibt das benannte Profil)
+            if CDM.ImportProfileData then
+                local ok, err = pcall(CDM.ImportProfileData, CDM, profileName, profileData)
                 if not ok then
-                    ns.Print("|cffff0000[GravityUI]|r Ayije ApplyProfileAtomic failed: " .. tostring(err))
+                    ns.Print("|cffff0000[GravityUI]|r Ayije ImportProfileData failed: " .. tostring(err))
                 end
             else
-                -- Fallback: write directly into Ayije_CDMDB
+                -- Fallback: direkt in Ayije_CDMDB schreiben
                 if _G.Ayije_CDMDB and _G.Ayije_CDMDB.profiles then
                     _G.Ayije_CDMDB.profiles[profileName] = profileData
                 end
