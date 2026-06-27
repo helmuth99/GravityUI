@@ -1137,7 +1137,9 @@ _interruptFrame:SetScript("OnEvent", function(_, event, unit, ...)
         end
 
     elseif event == "UNIT_AURA" then
-        if unit and unit:find("^nameplate") then PushSignal("aura", unit) end
+        -- PERF: sub(1,9) avoids pattern-engine overhead for every UNIT_AURA dispatch.
+        -- In a 40-man raid this fires 40+ times/sec for players, pets, npcs etc.
+        if unit and unit:sub(1, 9) == "nameplate" then PushSignal("aura", unit) end
     end
 end)
 

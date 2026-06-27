@@ -1365,8 +1365,11 @@ eventFrame:SetScript("OnEvent", function(self, event, arg1)
         inChallengeMode = false  -- Key over: restore normal consumable detection
         RequestUpdate(event)
     elseif event == "UNIT_AURA" or event == "UNIT_INVENTORY_CHANGED" then
+        -- PERF: Guard before string.find – avoids pattern matching for every UNIT_AURA dispatch
+        -- in a 40-man raid when an update is already pending (most common case).
+        if pendingUpdate then return end
         -- Simple filter: only care about player/party/raid
-        if arg1 and (arg1 == "player" or string.find(arg1, "^party") or string.find(arg1, "^raid")) then
+        if arg1 and (arg1 == "player" or arg1:sub(1, 5) == "party" or arg1:sub(1, 4) == "raid") then
             RequestUpdate(event)
         end
     elseif event == "READY_CHECK" then

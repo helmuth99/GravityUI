@@ -609,10 +609,11 @@ local function BuildGuildPopupFrame()
         end)
     end)
 
-    -- Safety auto-close: if mouse isn't over the frame or anchor, hide after ~0.25s tick
+    -- Safety auto-close: if mouse isn't over the frame or anchor, hide after ~0.5s tick
+    -- PERF: 0.5s (2Hz) is sufficient for a mouseover check; was 0.25s (4Hz).
     f:SetScript("OnShow", function(self)
         if self._ticker then self._ticker:Cancel() end
-        self._ticker = C_Timer.NewTicker(0.25, function()
+        self._ticker = C_Timer.NewTicker(0.5, function()
             local overPopup  = self:IsShown() and self:IsMouseOver()
             local overAnchor = self._anchor and self._anchor:IsMouseOver()
             if self:IsShown() and not overPopup and not overAnchor then
@@ -1073,9 +1074,10 @@ local function BuildFriendsPopupFrame()
     end)
 
     -- Safety auto-close ticker: hides popup if mouse leaves without triggering OnLeave
+    -- PERF: 0.5s (2Hz) is sufficient for a mouseover check; was 0.25s (4Hz).
     f:SetScript("OnShow", function(self)
         if self._ticker then self._ticker:Cancel() end
-        self._ticker = C_Timer.NewTicker(0.25, function()
+        self._ticker = C_Timer.NewTicker(0.5, function()
             local overPopup  = self:IsShown() and self:IsMouseOver()
             local overAnchor = self._anchor and self._anchor:IsMouseOver()
             if self:IsShown() and not overPopup and not overAnchor then

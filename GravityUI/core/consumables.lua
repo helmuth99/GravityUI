@@ -3360,7 +3360,8 @@ local function startProgressBar(duration)
     titleBar.progress:Show()
 
     cancelRcTick()
-    rcTickTimer = C_Timer.NewTicker(0.1, tickProgressBar)
+    -- PERF: 0.2s (5Hz) is visually identical to 0.1s for a countdown bar; halves SetWidth calls.
+    rcTickTimer = C_Timer.NewTicker(0.2, tickProgressBar)
 end
 
 function frame:OnReadyCheck(initiatorUnit, timeToHide)
