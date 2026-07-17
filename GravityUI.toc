@@ -1,0 +1,91 @@
+## Interface: 120100, 120007, 120005, 120001, 120000
+## Title: |cFF30D1FFGravityUI|r
+## IconTexture: Interface\AddOns\GravityUI\assets\Gravity_UI_Logo.jpg
+## AddonCompartmentFunc: GravityUI_CompartmentClick
+## AddonCompartmentFuncOnEnter: GravityUI_CompartmentOnEnter
+## AddonCompartmentFuncOnLeave: GravityUI_CompartmentOnLeave
+## Notes: Modern UI configuration addon for World of Warcraft
+## Author: Gravity
+## Version: @project-version@
+## DefaultState: Enabled
+## LoadOnDemand: 0
+## SavedVariables: GravityUI_DB
+## X-License: GPLv3
+## X-Website: https://Gravity-Guild.eu
+## X-Curse-Project-ID: 1102290
+## X-Wago-ID: 96E7e8Gg
+
+# External Libraries
+Libs\libs.xml
+
+# Core
+core\constants.lua
+core\defaults.lua
+core\media.lua
+core\character.lua
+core\inspect.lua
+core\init.lua
+core\performance_shield.lua
+core\profiles_logic.lua
+
+# Framework
+core\framework.lua
+core\movers.lua
+core\window.lua
+
+# Utilities
+core\utils.lua
+core\dungeondata.lua
+core\automation.lua
+core\quicksalvage.lua
+core\styling.lua
+core\xpreputation.lua
+core\alerts.lua
+core\loot.lua
+core\objectives.lua
+core\instanceframes.lua
+core\raidbuffs.lua
+core\raidwarnings.lua
+core\interrupttracker.lua
+
+
+core\combattimer.lua
+core\mplusteleport.lua
+core\worldmarks.lua
+core\autohide.lua
+core\buffborders.lua
+core\chat.lua
+core\datatexts.lua
+core\datapanels.lua
+core\minimap.lua
+core\actionbars.lua
+
+core\tooltip.lua
+core\iconcatcher.lua
+core\installer.lua
+core\soundalerts.lua
+core\cooldowntext.lua
+
+# Pages
+pages\main.lua
+pages\minimap.lua
+pages\actionbars.lua
+pages\datapanels.lua
+pages\qol.lua
+pages\features.lua
+pages\indicators.lua
+pages\utilities.lua
+pages\styling.lua
+pages\information.lua
+pages\profiles.lua
+pages\search.lua
+
+# Special Features
+core\buttons.lua
+core\skyriding.lua
+core\screenindicators.lua
+core\consumables.lua
+core\mail.lua
+
+# Strings
+strings\strings.xml
