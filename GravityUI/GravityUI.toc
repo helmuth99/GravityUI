@@ -6,7 +6,7 @@
 ## AddonCompartmentFuncOnLeave: GravityUI_CompartmentOnLeave
 ## Notes: Modern UI configuration addon for World of Warcraft
 ## Author: Gravity
-## Version: v3.95.25
+## Version: @project-version@
 ## DefaultState: Enabled
 ## LoadOnDemand: 0
 ## SavedVariables: GravityUI_DB

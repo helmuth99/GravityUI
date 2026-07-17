@@ -1,4 +1,4 @@
--- GravityUI - Installer Module
+﻿-- GravityUI - Installer Module
 local ADDON_NAME, ns = ...
 
 local Addon = ns.Addon
@@ -56,7 +56,60 @@ Installer.registry = {
     },
 
     {
-        -- EllesmereUI â€“ uses its own Lite DB framework (NOT AceDB).
+        name = "EditMode",
+        label = "Edit Mode",
+        isCore = true,
+        Check = function() return C_EditMode and C_EditMode.GetLayouts end,
+        GetProfile = function()
+            local layoutInfo = C_EditMode.GetLayouts()
+            if layoutInfo and layoutInfo.activeLayout then
+                for _, layout in ipairs(layoutInfo.layouts) do
+                    local id = layout.layoutIdentifier or layout.layoutID or layout.id
+                    if id and id == layoutInfo.activeLayout then
+                        return layout.layoutName
+                    end
+                end
+                local assumedIndex = layoutInfo.activeLayout - 2
+                if assumedIndex > 0 and layoutInfo.layouts[assumedIndex] then
+                    return layoutInfo.layouts[assumedIndex].layoutName
+                end
+                return "Unknown ID: " .. tostring(layoutInfo.activeLayout)
+            end
+            return nil
+        end,
+        SetProfile = function(self, profileName)
+            local layoutInfo = C_EditMode.GetLayouts()
+            
+            for i, layout in ipairs(layoutInfo.layouts) do
+                if layout.layoutName == profileName then
+                    if layout.layoutIdentifier then
+                         C_EditMode.SetActiveLayout(layout.layoutIdentifier)
+                    else 
+                        C_EditMode.SetActiveLayout(i + 2)
+                    end
+                    return true
+                end
+            end
+            return false
+        end,
+        Import = function(self, data, profileName)
+            if InCombatLockdown() then return end
+             local layoutInfo = C_EditMode.ConvertStringToLayoutInfo(data)
+             pcall(function() EditModeManagerFrame:ImportLayout(layoutInfo, Enum.EditModeLayoutType.Account, profileName) end)
+        end,
+        HasProfile = function(self, profileName)
+            local layoutInfo = C_EditMode.GetLayouts()
+            if layoutInfo and layoutInfo.layouts then
+                for _, layout in ipairs(layoutInfo.layouts) do
+                    if layout.layoutName == profileName then return true end
+                end
+            end
+            return false
+        end
+    },
+
+    {
+        -- EllesmereUI Ã¢â‚¬â€œ uses its own Lite DB framework (NOT AceDB).
         -- Profile storage: EllesmereUIDB.activeProfile (string, account-wide)
         --                  EllesmereUIDB.profiles[name] (profile table)
         -- API: EllesmereUI.GetActiveProfileName() / SwitchProfile(name) / ImportProfile(str, name)
@@ -112,6 +165,7 @@ Installer.registry = {
     {
         name = "Plater",
         label = "Plater",
+        category = "Optional",
         Check = function() return _G.Plater and _G.Plater.db end,
         GetProfile = function() return _G.Plater.db:GetCurrentProfile() end,
         SetProfile = function(self, profileName)
@@ -135,6 +189,7 @@ Installer.registry = {
     {
         name = "BigWigs",
         label = "BigWigs",
+        category = "Optional",
         Check = function() return (_G.BigWigs3DB ~= nil) or C_AddOns.IsAddOnLoaded("BigWigs") end,
         GetProfile = function() 
             local db = _G.BigWigs3DB
@@ -157,59 +212,6 @@ Installer.registry = {
         HasProfile = function(self, profileName)
             if _G.BigWigs3DB and _G.BigWigs3DB.profiles then
                  return _G.BigWigs3DB.profiles[profileName] ~= nil
-            end
-            return false
-        end
-    },
-
-    {
-        name = "EditMode",
-        label = "Edit Mode",
-        isCore = true,
-        Check = function() return C_EditMode and C_EditMode.GetLayouts end,
-        GetProfile = function()
-            local layoutInfo = C_EditMode.GetLayouts()
-            if layoutInfo and layoutInfo.activeLayout then
-                for _, layout in ipairs(layoutInfo.layouts) do
-                    local id = layout.layoutIdentifier or layout.layoutID or layout.id
-                    if id and id == layoutInfo.activeLayout then
-                        return layout.layoutName
-                    end
-                end
-                local assumedIndex = layoutInfo.activeLayout - 2
-                if assumedIndex > 0 and layoutInfo.layouts[assumedIndex] then
-                    return layoutInfo.layouts[assumedIndex].layoutName
-                end
-                return "Unknown ID: " .. tostring(layoutInfo.activeLayout)
-            end
-            return nil
-        end,
-        SetProfile = function(self, profileName)
-            local layoutInfo = C_EditMode.GetLayouts()
-            
-            for i, layout in ipairs(layoutInfo.layouts) do
-                if layout.layoutName == profileName then
-                    if layout.layoutIdentifier then
-                         C_EditMode.SetActiveLayout(layout.layoutIdentifier)
-                    else 
-                        C_EditMode.SetActiveLayout(i + 2)
-                    end
-                    return true
-                end
-            end
-            return false
-        end,
-        Import = function(self, data, profileName)
-            if InCombatLockdown() then return end
-             local layoutInfo = C_EditMode.ConvertStringToLayoutInfo(data)
-             pcall(function() EditModeManagerFrame:ImportLayout(layoutInfo, Enum.EditModeLayoutType.Account, profileName) end)
-        end,
-        HasProfile = function(self, profileName)
-            local layoutInfo = C_EditMode.GetLayouts()
-            if layoutInfo and layoutInfo.layouts then
-                for _, layout in ipairs(layoutInfo.layouts) do
-                    if layout.layoutName == profileName then return true end
-                end
             end
             return false
         end
@@ -298,7 +300,6 @@ Installer.registry = {
         name = "DandersFrames",
         label = "Dander's Frames",
         category = "Optional",
-        hideWhenNotLoaded = true,   -- Only show when addon is actually loaded
         Check = function() return _G.DandersFrames_IsReady and _G.DandersFrames_IsReady() end,
         GetProfile = function() return _G.DandersFramesDB_v2 and _G.DandersFramesDB_v2.currentProfile end,
         SetProfile = function(self, profileName)
@@ -429,7 +430,6 @@ Installer.registry = {
         name = "Details",
         label = "Details!",
         category = "Optional",
-        hideWhenNotLoaded = true,   -- Only show when addon is actually loaded
         Check = function() return _G.Details and _G.Details.ApplyProfile end,
         GetProfile = function() 
             -- Details usually stores profile in _G.Details.profile (string) or _G.Details.db:GetCurrentProfile()
@@ -543,7 +543,7 @@ function Installer:GetSystemStatus(targetProfile)
     
     -- Post-Processing: Mutual Exclusion (e.g. BCDM vs replacement CDM)
     -- If BCDM is not loaded but its replacement IS loaded:
-    -- â†’ Remove BCDM from the report, promote the replacement to Important
+    -- Ã¢â€ â€™ Remove BCDM from the report, promote the replacement to Important
     local replacements = {} -- { replacedName -> replacerIndex }
     for i, item in ipairs(report) do
         local regEntry = nil
@@ -561,7 +561,7 @@ function Installer:GetSystemStatus(targetProfile)
             local replacerIdx = replacements[item.name]
             if replacerIdx then
                 if not item.loaded then
-                    -- Original not loaded â†’ remove it, promote replacement to Important
+                    -- Original not loaded Ã¢â€ â€™ remove it, promote replacement to Important
                     toRemove[i] = true
                     report[replacerIdx].category = nil -- Promote to Important
                     -- Recalculate allGood now that replacement is Important
@@ -569,7 +569,7 @@ function Installer:GetSystemStatus(targetProfile)
                         allGood = false
                     end
                 else
-                    -- Both loaded â†’ keep both (replacement stays Optional)
+                    -- Both loaded Ã¢â€ â€™ keep both (replacement stays Optional)
                 end
             end
         end

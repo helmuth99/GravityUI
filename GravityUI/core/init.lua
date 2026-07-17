@@ -340,7 +340,7 @@ end
 -- one-time reload prompt.
 --
 -- Mapping (mirrors the sidebar-hide conditions exactly):
---   Always disabled     : EllesmereUIQoL, EllesmereUIDataBars
+--   Always disabled     : EllesmereUIQoL
 --   When GravityUI Chat is enabled      → EllesmereUIChat
 --   When GravityUI Minimap is enabled   → EllesmereUIMinimap
 --   When GravityUI Tracker styling on   → EllesmereUIQuestTracker
@@ -369,7 +369,6 @@ do
             -- Always disabled: GravityUI fully replaces these.
             -- ---------------------------------------------------------------
             Disable("EllesmereUIQoL")
-            Disable("EllesmereUIDataBars")
 
             -- ---------------------------------------------------------------
             -- Conditionally disabled: only when the matching GravityUI
@@ -454,7 +453,6 @@ do
         -- because GravityUI fully manages these features.
         local ALWAYS_HIDDEN_FOLDERS = {
             "EllesmereUIQoL",      -- Quality of Life (managed by GravityUI)
-            "EllesmereUIDataBars", -- DataBars (managed by GravityUI)
         }
 
         -- NAV colors (mirrored from EllesmereUI.lua file-scope constants)
