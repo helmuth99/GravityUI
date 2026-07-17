@@ -39,9 +39,6 @@ Installer.registry = {
              if ns.db then ns.db:SetProfile(profileName) return true end
         end,
         Import = function(self, data, profileName)
-            -- Use the correct Addon method (ns.ImportProfile does NOT exist)
-            -- SetProfile is called first by the installer, so ns.db.profile is
-            -- already pointing at 'profileName' when Import is called here.
             local Addon = ns.Addon
             if Addon and Addon.ImportProfileFromString then
                 local ok, err = pcall(Addon.ImportProfileFromString, Addon, data)
@@ -58,10 +55,381 @@ Installer.registry = {
         end
     },
 
+    {
+        -- EllesmereUI â€“ uses its own Lite DB framework (NOT AceDB).
+        -- Profile storage: EllesmereUIDB.activeProfile (string, account-wide)
+        --                  EllesmereUIDB.profiles[name] (profile table)
+        -- API: EllesmereUI.GetActiveProfileName() / SwitchProfile(name) / ImportProfile(str, name)
+        name = "EllesmereUI",
+        label = "EllesmereUI",
+        category = "Important",
+        Check = function()
+            return C_AddOns.IsAddOnLoaded("EllesmereUI") and _G.EllesmereUI ~= nil
+        end,
+        GetProfile = function()
+            local E = _G.EllesmereUI
+            if E and E.GetActiveProfileName then
+                return E.GetActiveProfileName()
+            end
+            return _G.EllesmereUIDB and _G.EllesmereUIDB.activeProfile or nil
+        end,
+        SetProfile = function(self, profileName)
+            local E = _G.EllesmereUI
+            if E and E.SwitchProfile then
+                pcall(E.SwitchProfile, profileName)
+                return true
+            end
+            if _G.EllesmereUIDB then
+                _G.EllesmereUIDB.activeProfile = profileName
+                return true
+            end
+        end,
+        Import = function(self, data, profileName)
+            if type(data) ~= "string" then return end
+            local E = _G.EllesmereUI
+            if E and E.ImportProfile then
+                local ok, err = pcall(E.ImportProfile, data, profileName)
+                if ok then
+                    ns.Print("[GUI Debug] EllesmereUI ImportProfile success \226\134\146 '" .. profileName .. "'")
+                else
+                    ns.Print("[GUI Debug] EllesmereUI ImportProfile failed: " .. tostring(err))
+                end
+            end
+        end,
+        HasProfile = function(self, profileName)
+            if _G.EllesmereUIDB and _G.EllesmereUIDB.profiles then
+                return _G.EllesmereUIDB.profiles[profileName] ~= nil
+            end
+            local E = _G.EllesmereUI
+            if E and E.GetProfileList then
+                local _, profiles = E.GetProfileList()
+                return profiles and profiles[profileName] ~= nil
+            end
+            return false
+        end,
+    },
+
+    {
+        name = "Plater",
+        label = "Plater",
+        Check = function() return _G.Plater and _G.Plater.db end,
+        GetProfile = function() return _G.Plater.db:GetCurrentProfile() end,
+        SetProfile = function(self, profileName)
+             if _G.Plater then _G.Plater.db:SetProfile(profileName) return true end
+        end,
+        Import = function(self, data, profileName)
+             if _G.Plater then 
+                _G.Plater.ImportAndSwitchProfile(profileName, data, false, true, true, true)
+             end
+        end,
+        HasProfile = function(self, profileName)
+            if _G.Plater and _G.Plater.db and _G.Plater.db.GetProfiles then 
+                 for _, v in ipairs(_G.Plater.db:GetProfiles()) do
+                     if v == profileName then return true end
+                 end
+            end
+            return false
+        end
+    },
+
+    {
+        name = "BigWigs",
+        label = "BigWigs",
+        Check = function() return (_G.BigWigs3DB ~= nil) or C_AddOns.IsAddOnLoaded("BigWigs") end,
+        GetProfile = function() 
+            local db = _G.BigWigs3DB
+            if not db then return nil end
+            local hasProfile = db["profileKeys"] and db["profileKeys"][UnitName("PLAYER") .. " - " .. GetRealmName()]
+            return hasProfile
+        end,
+        SetProfile = function(self, profileName)
+             if _G.BigWigs3DB then 
+                local key = UnitName("PLAYER") .. " - " .. GetRealmName()
+                _G.BigWigs3DB["profileKeys"][key] = profileName 
+                return true
+             end
+        end,
+        Import = function(self, data, profileName)
+             if _G.BigWigsAPI then 
+                _G.BigWigsAPI.RegisterProfile(profileName, data, profileName, function() end)
+             end
+        end,
+        HasProfile = function(self, profileName)
+            if _G.BigWigs3DB and _G.BigWigs3DB.profiles then
+                 return _G.BigWigs3DB.profiles[profileName] ~= nil
+            end
+            return false
+        end
+    },
+
+    {
+        name = "EditMode",
+        label = "Edit Mode",
+        isCore = true,
+        Check = function() return C_EditMode and C_EditMode.GetLayouts end,
+        GetProfile = function()
+            local layoutInfo = C_EditMode.GetLayouts()
+            if layoutInfo and layoutInfo.activeLayout then
+                for _, layout in ipairs(layoutInfo.layouts) do
+                    local id = layout.layoutIdentifier or layout.layoutID or layout.id
+                    if id and id == layoutInfo.activeLayout then
+                        return layout.layoutName
+                    end
+                end
+                local assumedIndex = layoutInfo.activeLayout - 2
+                if assumedIndex > 0 and layoutInfo.layouts[assumedIndex] then
+                    return layoutInfo.layouts[assumedIndex].layoutName
+                end
+                return "Unknown ID: " .. tostring(layoutInfo.activeLayout)
+            end
+            return nil
+        end,
+        SetProfile = function(self, profileName)
+            local layoutInfo = C_EditMode.GetLayouts()
+            
+            for i, layout in ipairs(layoutInfo.layouts) do
+                if layout.layoutName == profileName then
+                    if layout.layoutIdentifier then
+                         C_EditMode.SetActiveLayout(layout.layoutIdentifier)
+                    else 
+                        C_EditMode.SetActiveLayout(i + 2)
+                    end
+                    return true
+                end
+            end
+            return false
+        end,
+        Import = function(self, data, profileName)
+            if InCombatLockdown() then return end
+             local layoutInfo = C_EditMode.ConvertStringToLayoutInfo(data)
+             pcall(function() EditModeManagerFrame:ImportLayout(layoutInfo, Enum.EditModeLayoutType.Account, profileName) end)
+        end,
+        HasProfile = function(self, profileName)
+            local layoutInfo = C_EditMode.GetLayouts()
+            if layoutInfo and layoutInfo.layouts then
+                for _, layout in ipairs(layoutInfo.layouts) do
+                    if layout.layoutName == profileName then return true end
+                end
+            end
+            return false
+        end
+    },
+
+    -- -----------------------------------------------------------------------
+    -- Optional Addons
+    -- -----------------------------------------------------------------------
+    {
+        name = "Baganator",
+        label = "Baganator",
+        category = "Optional",
+        Check = function() return C_AddOns.IsAddOnLoaded("Baganator") end,
+        GetProfile = function() 
+             if _G.BAGANATOR_CONFIG and _G.BAGANATOR_CONFIG.Profiles and _G.BAGANATOR_CURRENT_PROFILE then
+                 return _G.BAGANATOR_CURRENT_PROFILE
+             end
+             return nil
+        end,
+        SetProfile = function(self, profileName)
+             if _G.BAGANATOR_CONFIG and _G.BAGANATOR_CONFIG.Profiles then
+                  if not _G.BAGANATOR_CONFIG.Profiles[profileName] then
+                      _G.BAGANATOR_CONFIG.Profiles[profileName] = {}
+                      if _G.BAGANATOR_CONFIG.Profiles["Default"] then
+                          for k,v in pairs(_G.BAGANATOR_CONFIG.Profiles["Default"]) do
+                              _G.BAGANATOR_CONFIG.Profiles[profileName][k] = v
+                          end
+                      end
+                  end
+                  _G.BAGANATOR_CURRENT_PROFILE = profileName
+                  if Baganator and Baganator.API and Baganator.API.FireProfileChanged then 
+                      pcall(Baganator.API.FireProfileChanged) 
+                  end
+                  return true
+             end
+        end,
+        Import = function(self, data, profileName)
+             if _G.BAGANATOR_CONFIG and _G.BAGANATOR_CONFIG.Profiles then
+                  if not _G.BAGANATOR_CONFIG.Profiles[profileName] then _G.BAGANATOR_CONFIG.Profiles[profileName] = {} end
+                  local target = _G.BAGANATOR_CONFIG.Profiles[profileName]
+                  if type(data) == "table" then
+                      for k,v in pairs(data) do target[k] = v end
+                  end
+                  _G.BAGANATOR_CURRENT_PROFILE = profileName
+             end
+        end,
+        HasProfile = function(self, profileName)
+             if _G.BAGANATOR_CONFIG and _G.BAGANATOR_CONFIG.Profiles then
+                 return _G.BAGANATOR_CONFIG.Profiles[profileName] ~= nil
+             end
+             return false
+        end
+    },
+
+    {
+        name = "WarpDeplete",
+        label = "WarpDeplete",
+        category = "Optional",
+        Check = function() return C_AddOns.IsAddOnLoaded("WarpDeplete") end,
+        GetProfile = function()
+             local db = _G.WarpDepleteDB
+             if db and db.profileKeys then
+                  return db.profileKeys[UnitName("player").." - "..GetRealmName()]
+             end
+             return nil
+        end,
+        SetProfile = function(self, profileName)
+             return SetAceProfileInGlobal("WarpDepleteDB", profileName)
+        end,
+        Import = function(self, data, profileName)
+             if _G.WarpDepleteDB then
+                 if not _G.WarpDepleteDB.profiles then _G.WarpDepleteDB.profiles = {} end
+                 _G.WarpDepleteDB.profiles[profileName] = data
+                 SetAceProfileInGlobal("WarpDepleteDB", profileName)
+             end
+        end,
+        HasProfile = function(self, profileName)
+             if _G.WarpDepleteDB and _G.WarpDepleteDB.profiles then
+                  return _G.WarpDepleteDB.profiles[profileName] ~= nil
+             end
+             return false
+        end
+    },
+
+    {
+        name = "DandersFrames",
+        label = "Dander's Frames",
+        category = "Optional",
+        hideWhenNotLoaded = true,   -- Only show when addon is actually loaded
+        Check = function() return _G.DandersFrames_IsReady and _G.DandersFrames_IsReady() end,
+        GetProfile = function() return _G.DandersFramesDB_v2 and _G.DandersFramesDB_v2.currentProfile end,
+        SetProfile = function(self, profileName)
+             if _G.DandersFrames and _G.DandersFrames.SetProfile then
+                 local ok = pcall(_G.DandersFrames.SetProfile, _G.DandersFrames, profileName)
+                 if _G.DandersFramesCharDB then
+                     _G.DandersFramesCharDB.currentProfile = profileName
+                 end
+                 return ok
+             end
+             if _G.DandersFramesDB_v2 then
+                 _G.DandersFramesDB_v2.currentProfile = profileName
+                 if _G.DandersFramesCharDB then
+                     _G.DandersFramesCharDB.currentProfile = profileName
+                 end
+                 return true
+             end
+        end,
+        Import = function(self, data, profileName)
+            local success = false
+            
+            local decodedData = nil
+            if type(data) == "string" and string.find(data, "^!DFP1!") then
+                local LibDeflate = LibStub:GetLibrary("LibDeflate", true)
+                local LibAceSerializer = LibStub:GetLibrary("AceSerializer-3.0", true)
+                
+                if LibDeflate then
+                    local compressed = LibDeflate:DecodeForPrint(string.sub(data, 7))
+                    if compressed then
+                        local serialized = LibDeflate:DecompressDeflate(compressed)
+                        if not serialized then serialized = LibDeflate:DecompressZlib(compressed) end
+                        
+                        if serialized then
+                            if LibAceSerializer then 
+                                local ok, res = LibAceSerializer:Deserialize(serialized)
+                                if ok then decodedData = res end
+                            end
+                            if not decodedData then
+                                local LibSerialize = LibStub:GetLibrary("LibSerialize", true)
+                                if LibSerialize then
+                                    local ok, res = LibSerialize:Deserialize(serialized)
+                                    if ok then decodedData = res end
+                                end
+                            end
+                        else
+                            ns.Print("[GUI Debug] Danders: Decompress failed.")
+                        end
+                    else
+                        ns.Print("[GUI Debug] Danders: DecodeForPrint failed.")
+                    end
+                else
+                    ns.Print("[GUI Debug] Danders: LibDeflate missing.")
+                end
+            elseif type(data) == "table" then
+                decodedData = data
+            end
+            
+            local finalData = decodedData or data 
+
+            if _G.DandersFrames and _G.DandersFrames.SetProfile then
+                local ok, err = pcall(_G.DandersFrames.SetProfile, _G.DandersFrames, profileName)
+                if ok and _G.DandersFrames.db and decodedData then
+                    if decodedData.party  then _G.DandersFrames.db.party  = decodedData.party  end
+                    if decodedData.raid   then _G.DandersFrames.db.raid   = decodedData.raid   end
+                    if decodedData.classColors      then _G.DandersFrames.db.classColors      = decodedData.classColors      end
+                    if decodedData.powerColors      then _G.DandersFrames.db.powerColors      = decodedData.powerColors      end
+                    if decodedData.raidAutoProfiles then _G.DandersFrames.db.raidAutoProfiles = decodedData.raidAutoProfiles end
+                    if decodedData.auraBlacklist    then _G.DandersFrames.db.auraBlacklist    = decodedData.auraBlacklist    end
+                    if _G.DandersFrames.SaveCurrentProfile then
+                        pcall(_G.DandersFrames.SaveCurrentProfile, _G.DandersFrames)
+                    end
+                    if _G.DandersFramesCharDB then
+                        _G.DandersFramesCharDB.currentProfile = profileName
+                    end
+                    success = true
+                    ns.Print("[Danders] SetProfile+inject complete \226\134\146 '" .. profileName .. "'")
+                else
+                    ns.Print("[GUI Debug] Danders SetProfile failed: " .. tostring(err))
+                end
+            end
+            
+            if not success and _G.DandersFrames and _G.DandersFrames.ApplyImportedProfile then
+                local okB, errB = pcall(_G.DandersFrames.ApplyImportedProfile, _G.DandersFrames,
+                    finalData, nil, nil, profileName, true, true)
+                if okB then
+                    success = true
+                    if _G.DandersFramesDB_v2 then _G.DandersFramesDB_v2.currentProfile = profileName end
+                    if _G.DandersFramesCharDB then _G.DandersFramesCharDB.currentProfile = profileName end
+                    ns.Print("[Danders] ApplyImportedProfile complete \226\134\146 '" .. profileName .. "'")
+                else
+                    ns.Print("[GUI Debug] Danders ApplyImportedProfile failed: " .. tostring(errB))
+                end
+            end
+            
+            if not success and decodedData and _G.DandersFramesDB_v2 then
+                 if not _G.DandersFramesDB_v2.profiles then
+                     ns.Print("[GUI Debug] Danders: profiles table missing, creating it.")
+                     _G.DandersFramesDB_v2.profiles = {}
+                 end
+                 if not _G.DandersFramesDB_v2.profiles[profileName] then
+                      _G.DandersFramesDB_v2.profiles[profileName] = {}
+                 end
+                 local target = _G.DandersFramesDB_v2.profiles[profileName]
+                 for k, v in pairs(decodedData) do
+                     if k ~= "profileName" and k ~= "exportedBy" and k ~= "exportTime" then
+                        target[k] = v
+                     end
+                 end
+                 _G.DandersFramesDB_v2.currentProfile = profileName
+                 if _G.DandersFrames then
+                     if _G.DandersFrames.FullProfileRefresh then pcall(_G.DandersFrames.FullProfileRefresh, _G.DandersFrames) end
+                     if _G.DandersFrames.Update then pcall(_G.DandersFrames.Update, _G.DandersFrames) end
+                 end
+                 if _G.DandersFrames_Update then pcall(_G.DandersFrames_Update) end
+                 success = true
+                 ns.Print("[GUI Debug] Danders: Nuclear injection complete \226\134\146 '" .. profileName .. "'")
+            end
+
+            if not success and _G.DandersFrames_Import then 
+                local ok, err = pcall(_G.DandersFrames_Import, data, profileName)
+                if ok then success = true end
+                if not ok then pcall(_G.DandersFrames_Import, data) end
+            end
+        end
+    },
 
     {
         name = "Details",
         label = "Details!",
+        category = "Optional",
+        hideWhenNotLoaded = true,   -- Only show when addon is actually loaded
         Check = function() return _G.Details and _G.Details.ApplyProfile end,
         GetProfile = function() 
             -- Details usually stores profile in _G.Details.profile (string) or _G.Details.db:GetCurrentProfile()
@@ -104,474 +472,11 @@ Installer.registry = {
              end
              return false
         end
-    },
-    {
-        name = "Plater",
-        label = "Plater",
-        Check = function() return _G.Plater and _G.Plater.db end,
-        GetProfile = function() return _G.Plater.db:GetCurrentProfile() end,
-        SetProfile = function(self, profileName)
-             if _G.Plater then _G.Plater.db:SetProfile(profileName) return true end
-        end,
-        Import = function(self, data, profileName)
-             if _G.Plater then 
-                -- ImportAndSwitchProfile(profileName, dataString, showConfirmation, isFnc, isNewProfile, force)
-                _G.Plater.ImportAndSwitchProfile(profileName, data, false, true, true, true)
-             end
-        end,
-        HasProfile = function(self, profileName)
-            if _G.Plater and _G.Plater.db and _G.Plater.db.GetProfiles then 
-                 for _, v in ipairs(_G.Plater.db:GetProfiles()) do
-                     if v == profileName then return true end
-                 end
-            end
-            return false
-        end
-    },
-    {
-        -- EllesmereUI – uses its own Lite DB framework (NOT AceDB).
-        -- Profile storage: EllesmereUIDB.activeProfile (string, account-wide)
-        --                  EllesmereUIDB.profiles[name] (profile table)
-        -- API: EllesmereUI.GetActiveProfileName() / SwitchProfile(name) / ImportProfile(str, name)
-        name = "EllesmereUI",
-        label = "EllesmereUI",
-        category = "Important",
-        Check = function()
-            return C_AddOns.IsAddOnLoaded("EllesmereUI") and _G.EllesmereUI ~= nil
-        end,
-        GetProfile = function()
-            -- EllesmereUI exposes GetActiveProfileName() as the canonical getter.
-            local E = _G.EllesmereUI
-            if E and E.GetActiveProfileName then
-                return E.GetActiveProfileName()
-            end
-            -- Fallback: read directly from the central SavedVariables
-            return _G.EllesmereUIDB and _G.EllesmereUIDB.activeProfile or nil
-        end,
-        SetProfile = function(self, profileName)
-            local E = _G.EllesmereUI
-            -- SwitchProfile checks if the profile exists before switching.
-            -- For Sync (profile already exists), this is the correct path.
-            if E and E.SwitchProfile then
-                pcall(E.SwitchProfile, profileName)
-                return true
-            end
-            -- Fallback: direct write into EllesmereUIDB
-            if _G.EllesmereUIDB then
-                _G.EllesmereUIDB.activeProfile = profileName
-                return true
-            end
-        end,
-        Import = function(self, data, profileName)
-            if type(data) ~= "string" then return end
-            local E = _G.EllesmereUI
-            -- EllesmereUI.ImportProfile(importStr, profileName) is the official API.
-            -- It decodes (LibDeflate), creates the profile in EllesmereUIDB.profiles[name],
-            -- and optionally auto-switches. We pass profileName so it lands in the right slot.
-            if E and E.ImportProfile then
-                local ok, err = pcall(E.ImportProfile, data, profileName)
-                if ok then
-                    ns.Print("[GUI Debug] EllesmereUI ImportProfile success → '" .. profileName .. "'")
-                else
-                    ns.Print("[GUI Debug] EllesmereUI ImportProfile failed: " .. tostring(err))
-                end
-            end
-        end,
-        HasProfile = function(self, profileName)
-            -- Check EllesmereUIDB.profiles directly (the definitive store).
-            if _G.EllesmereUIDB and _G.EllesmereUIDB.profiles then
-                return _G.EllesmereUIDB.profiles[profileName] ~= nil
-            end
-            -- Secondary: use the API if available
-            local E = _G.EllesmereUI
-            if E and E.GetProfileList then
-                local _, profiles = E.GetProfileList()
-                return profiles and profiles[profileName] ~= nil
-            end
-            return false
-        end,
-    },
-
-    {
-        name = "BigWigs",
-        label = "BigWigs",
-
-        Check = function() return (_G.BigWigs3DB ~= nil) or C_AddOns.IsAddOnLoaded("BigWigs") end,
-        GetProfile = function() 
-            local db = _G.BigWigs3DB
-            if not db then return nil end
-            local hasProfile = db["profileKeys"] and db["profileKeys"][UnitName("PLAYER") .. " - " .. GetRealmName()]
-            return hasProfile
-        end,
-        SetProfile = function(self, profileName)
-             if _G.BigWigs3DB then 
-                local key = UnitName("PLAYER") .. " - " .. GetRealmName()
-                _G.BigWigs3DB["profileKeys"][key] = profileName 
-                return true
-             end
-        end,
-        Import = function(self, data, profileName)
-             if _G.BigWigsAPI then 
-                _G.BigWigsAPI.RegisterProfile(profileName, data, profileName, function() end)
-             end
-        end,
-        HasProfile = function(self, profileName)
-            if _G.BigWigs3DB and _G.BigWigs3DB.profiles then
-                 return _G.BigWigs3DB.profiles[profileName] ~= nil
-            end
-            return false
-        end
-    },
-    {
-        name = "DandersFrames",
-        label = "Dander's Frames",
-        Check = function() return _G.DandersFrames_IsReady and _G.DandersFrames_IsReady() end,
-        GetProfile = function() return _G.DandersFramesDB_v2 and _G.DandersFramesDB_v2.currentProfile end,
-        SetProfile = function(self, profileName)
-             -- Use Danders' own SetProfile() which creates+switches the profile and calls FullProfileRefresh.
-             -- This is the correct path for BOTH Sync (SetProfile only) and Install (SetProfile+Import).
-             if _G.DandersFrames and _G.DandersFrames.SetProfile then
-                 local ok = pcall(_G.DandersFrames.SetProfile, _G.DandersFrames, profileName)
-                 -- Also ensure per-character DB is set (Danders tracks profile per char)
-                 if _G.DandersFramesCharDB then
-                     _G.DandersFramesCharDB.currentProfile = profileName
-                 end
-                 return ok
-             end
-             -- Fallback: direct DB write if DF object not available
-             if _G.DandersFramesDB_v2 then
-                 _G.DandersFramesDB_v2.currentProfile = profileName
-                 if _G.DandersFramesCharDB then
-                     _G.DandersFramesCharDB.currentProfile = profileName
-                 end
-                 return true
-             end
-        end,
-        Import = function(self, data, profileName)
-            local success = false
-            
-            -- Helper: Decode data if it's a string
-            local decodedData = nil
-            if type(data) == "string" and string.find(data, "^!DFP1!") then
-                local LibDeflate = LibStub:GetLibrary("LibDeflate", true)
-                local LibAceSerializer = LibStub:GetLibrary("AceSerializer-3.0", true)
-                
-                if LibDeflate then
-                    local compressed = LibDeflate:DecodeForPrint(string.sub(data, 7)) -- Remove !DFP1! prefix
-                    if compressed then
-                        local serialized = LibDeflate:DecompressDeflate(compressed)
-                        if not serialized then serialized = LibDeflate:DecompressZlib(compressed) end
-                        
-                        if serialized then
-                            -- Try AceSerializer first, then LibSerialize (Danders uses LibSerialize)
-                            if LibAceSerializer then 
-                                local ok, res = LibAceSerializer:Deserialize(serialized)
-                                if ok then decodedData = res end
-                            end
-
-                            if not decodedData then
-                                local LibSerialize = LibStub:GetLibrary("LibSerialize", true)
-                                if LibSerialize then
-                                    local ok, res = LibSerialize:Deserialize(serialized)
-                                    if ok then decodedData = res end
-                                end
-                            end
-                        else
-                            ns.Print("[GUI Debug] Danders: Decompress failed.")
-                        end
-                    else
-                        ns.Print("[GUI Debug] Danders: DecodeForPrint failed.")
-                    end
-                else
-                    ns.Print("[GUI Debug] Danders: LibDeflate missing.")
-                end
-            elseif type(data) == "table" then
-                decodedData = data
-            end
-            
-            -- Use decodedData if available, otherwise fallback to raw string (maybe Apply handles string??)
-            local finalData = decodedData or data 
-
-            -- STRATEGY A: Use DF:SetProfile() to create+switch, then inject imported data.
-            -- DF:SetProfile(name) is the canonical profile-switch function (from Profile.lua).
-            -- It creates the profile from defaults + switches DF.db to it. We then overwrite
-            -- DF.db keys with our decoded import data and save back to the profiles table.
-            if _G.DandersFrames and _G.DandersFrames.SetProfile then
-                local ok, err = pcall(_G.DandersFrames.SetProfile, _G.DandersFrames, profileName)
-                if ok and _G.DandersFrames.db and decodedData then
-                    -- SetProfile switched to the new profile. Overwrite with import data.
-                    if decodedData.party  then _G.DandersFrames.db.party  = decodedData.party  end
-                    if decodedData.raid   then _G.DandersFrames.db.raid   = decodedData.raid   end
-                    if decodedData.classColors      then _G.DandersFrames.db.classColors      = decodedData.classColors      end
-                    if decodedData.powerColors      then _G.DandersFrames.db.powerColors      = decodedData.powerColors      end
-                    if decodedData.raidAutoProfiles then _G.DandersFrames.db.raidAutoProfiles = decodedData.raidAutoProfiles end
-                    if decodedData.auraBlacklist    then _G.DandersFrames.db.auraBlacklist    = decodedData.auraBlacklist    end
-                    -- Persist the overwritten data back to the profiles table on disk
-                    if _G.DandersFrames.SaveCurrentProfile then
-                        pcall(_G.DandersFrames.SaveCurrentProfile, _G.DandersFrames)
-                    end
-                    -- Also set per-character DB (DandersFramesCharDB tracks profile per char)
-                    if _G.DandersFramesCharDB then
-                        _G.DandersFramesCharDB.currentProfile = profileName
-                    end
-                    success = true
-                    ns.Print("[Danders] SetProfile+inject complete → '" .. profileName .. "'")
-                else
-                    ns.Print("[GUI Debug] Danders SetProfile failed: " .. tostring(err))
-                end
-            end
-            
-            -- STRATEGY B: ApplyImportedProfile with correct signature (fallback)
-            -- Signature: (importData, selectedCategories, selectedFrameTypes, newProfileName, createNewProfile, allowOverwrite)
-            if not success and _G.DandersFrames and _G.DandersFrames.ApplyImportedProfile then
-                local okB, errB = pcall(_G.DandersFrames.ApplyImportedProfile, _G.DandersFrames,
-                    finalData, nil, nil, profileName, true, true)
-                if okB then
-                    success = true
-                    if _G.DandersFramesDB_v2 then _G.DandersFramesDB_v2.currentProfile = profileName end
-                    if _G.DandersFramesCharDB then _G.DandersFramesCharDB.currentProfile = profileName end
-                    ns.Print("[Danders] ApplyImportedProfile complete → '" .. profileName .. "'")
-                else
-                    ns.Print("[GUI Debug] Danders ApplyImportedProfile failed: " .. tostring(errB))
-                end
-            end
-            
-            -- STRATEGY 2: DIRECT DB INJECTION (Nuclear Option)
-            -- Only run if ApplyImportedProfile failed, to avoid conflicting with a successful Apply.
-            if not success and decodedData and _G.DandersFramesDB_v2 then
-                 -- Ensure top-level profiles table exists (nil on fresh installs!)
-                 if not _G.DandersFramesDB_v2.profiles then
-                     ns.Print("[GUI Debug] Danders: profiles table missing, creating it.")
-                     _G.DandersFramesDB_v2.profiles = {}
-                 end
-
-                 -- 1. Ensure profile slot exists
-                 if not _G.DandersFramesDB_v2.profiles[profileName] then
-                      _G.DandersFramesDB_v2.profiles[profileName] = {}
-                 end
-                 
-                 -- 2. Merge/Overwrite Data
-                 local target = _G.DandersFramesDB_v2.profiles[profileName]
-                 for k, v in pairs(decodedData) do
-                     if k ~= "profileName" and k ~= "exportedBy" and k ~= "exportTime" then
-                        target[k] = v
-                     end
-                 end
-                 
-                 -- 3. Switch to the new profile
-                 _G.DandersFramesDB_v2.currentProfile = profileName
-                 
-                 -- 4. Bruteforce Refresh methods
-                 if _G.DandersFrames then
-                     if _G.DandersFrames.FullProfileRefresh then pcall(_G.DandersFrames.FullProfileRefresh, _G.DandersFrames) end
-                     if _G.DandersFrames.Update then pcall(_G.DandersFrames.Update, _G.DandersFrames) end
-                 end
-                 if _G.DandersFrames_Update then pcall(_G.DandersFrames_Update) end
-                 
-                 success = true
-                 ns.Print("[GUI Debug] Danders: Nuclear injection complete → '" .. profileName .. "'")
-            end
-
-            -- TRY 2: Legacy Global (DandersFrames_Import)
-            if not success and _G.DandersFrames_Import then 
-                local ok, err = pcall(_G.DandersFrames_Import, data, profileName)
-                if ok then success = true end
-                
-                -- Fallback: Just Data
-                if not ok then
-                    pcall(_G.DandersFrames_Import, data)
-                end
-            end
-        end
-    },
-    {
-        name = "EditMode",
-        label = "Edit Mode",
-        isCore = true,
-        Check = function() return C_EditMode and C_EditMode.GetLayouts end,
-        GetProfile = function()
-            local layoutInfo = C_EditMode.GetLayouts()
-            if layoutInfo and layoutInfo.activeLayout then
-                for _, layout in ipairs(layoutInfo.layouts) do
-                    local id = layout.layoutIdentifier or layout.layoutID or layout.id
-                    if id and id == layoutInfo.activeLayout then
-                        return layout.layoutName
-                    end
-                end
-                local assumedIndex = layoutInfo.activeLayout - 2
-                if assumedIndex > 0 and layoutInfo.layouts[assumedIndex] then
-                    return layoutInfo.layouts[assumedIndex].layoutName
-                end
-                return "Unknown ID: " .. tostring(layoutInfo.activeLayout)
-            end
-            return nil
-        end,
-        SetProfile = function(self, profileName)
-            local layoutInfo = C_EditMode.GetLayouts()
-            
-            for i, layout in ipairs(layoutInfo.layouts) do
-                if layout.layoutName == profileName then
-                    -- EditModeManagerFrame:Show() -- REMOVED to prevent Taint
-                    
-                    if layout.layoutIdentifier then
-                         C_EditMode.SetActiveLayout(layout.layoutIdentifier)
-                    else 
-                         -- Fallback to heuristic
-                        C_EditMode.SetActiveLayout(i + 2)
-                    end
-                    
-                    -- EditModeManagerFrame:Hide() -- REMOVED to prevent Taint
-                    return true
-                end
-            end
-            return false
-        end,
-        Import = function(self, data, profileName)
-            if InCombatLockdown() then return end
-            -- Attempt Safe Import
-             local layoutInfo = C_EditMode.ConvertStringToLayoutInfo(data)
-             -- EditModeManagerFrame:Show() -- REMOVED
-             pcall(function() EditModeManagerFrame:ImportLayout(layoutInfo, Enum.EditModeLayoutType.Account, profileName) end)
-        end,
-        HasProfile = function(self, profileName)
-            local layoutInfo = C_EditMode.GetLayouts()
-            if layoutInfo and layoutInfo.layouts then
-                for _, layout in ipairs(layoutInfo.layouts) do
-                    if layout.layoutName == profileName then return true end
-                end
-            end
-            return false
-        end
-    },
-    {
-        name = "Baganator",
-        label = "Baganator",
-        category = "Optional",
-        Check = function() return C_AddOns.IsAddOnLoaded("Baganator") end,
-        GetProfile = function() 
-             if _G.BAGANATOR_CONFIG and _G.BAGANATOR_CONFIG.Profiles and _G.BAGANATOR_CURRENT_PROFILE then
-                 return _G.BAGANATOR_CURRENT_PROFILE
-             end
-             return nil
-        end,
-        SetProfile = function(self, profileName)
-             -- Custom Injection: Baganator doesn't use AceDB
-             if _G.BAGANATOR_CONFIG and _G.BAGANATOR_CONFIG.Profiles then
-                  -- 1. Create if missing (copy current or empty?)
-                  if not _G.BAGANATOR_CONFIG.Profiles[profileName] then
-                      _G.BAGANATOR_CONFIG.Profiles[profileName] = {} -- Empty init, data import usually fills it
-                      -- Or should we copy Default?
-                      if _G.BAGANATOR_CONFIG.Profiles["Default"] then
-                          -- Shallow copy
-                          for k,v in pairs(_G.BAGANATOR_CONFIG.Profiles["Default"]) do
-                              _G.BAGANATOR_CONFIG.Profiles[profileName][k] = v
-                          end
-                      end
-                  end
-                  
-                  -- 2. Switch
-                  _G.BAGANATOR_CURRENT_PROFILE = profileName
-                  
-                  -- 3. Force UI Refresh
-                  if Baganator and Baganator.API and Baganator.API.FireProfileChanged then 
-                      pcall(Baganator.API.FireProfileChanged) 
-                  end
-                  return true
-             end
-        end,
-        Import = function(self, data, profileName)
-             -- Baganator Data is usually a table of settings
-             if _G.BAGANATOR_CONFIG and _G.BAGANATOR_CONFIG.Profiles then
-                  if not _G.BAGANATOR_CONFIG.Profiles[profileName] then _G.BAGANATOR_CONFIG.Profiles[profileName] = {} end
-                  local target = _G.BAGANATOR_CONFIG.Profiles[profileName]
-                  
-                  -- Merge Data
-                  if type(data) == "table" then
-                      for k,v in pairs(data) do target[k] = v end
-                  end
-                  
-                  -- Switch to it?
-                  _G.BAGANATOR_CURRENT_PROFILE = profileName
-             end
-        end,
-        HasProfile = function(self, profileName)
-             if _G.BAGANATOR_CONFIG and _G.BAGANATOR_CONFIG.Profiles then
-                 return _G.BAGANATOR_CONFIG.Profiles[profileName] ~= nil
-             end
-             return false
-        end
-    },
-
-    {
-        name = "NorthernSkyRaidTools",
-        label = "NSRT", -- Shortened label to fit UI
-        category = "Optional",
-        Check = function() return C_AddOns.IsAddOnLoaded("NorthernSkyRaidTools") end,
-        GetProfile = function()
-             -- Check for our injected marker
-             if _G.NSRT and _G.NSRT.GravityUIProfile == "GravityUI" then
-                 return "GravityUI"
-             end
-             return "Manual"
-        end,
-        SetProfile = function(self, profileName)
-             -- Inject marker
-             if _G.NSRT then _G.NSRT.GravityUIProfile = profileName end
-             return true
-        end,
-        Import = function(self, data, profileName)
-             if _G.NSRT and type(data) == "table" then
-                  for k,v in pairs(data) do
-                      _G.NSRT[k] = v
-                  end
-                  _G.NSRT.GravityUIProfile = profileName
-                  
-                  if _G.ReloadUI then 
-                       -- Should we reload? Installer usually asks at end.
-                  end
-             end
-        end,
-        HasProfile = function(self, profileName)
-             return true 
-        end
-    },
-    {
-        name = "WarpDeplete",
-        label = "WarpDeplete",
-        category = "Optional",
-        Check = function() return C_AddOns.IsAddOnLoaded("WarpDeplete") end,
-        GetProfile = function()
-             local db = _G.WarpDepleteDB
-             if db and db.profileKeys then
-                  return db.profileKeys[UnitName("player").." - "..GetRealmName()]
-             end
-             return nil
-        end,
-        SetProfile = function(self, profileName)
-             -- WarpDeplete uses standard AceDB usually: WarpDepleteDB
-             return SetAceProfileInGlobal("WarpDepleteDB", profileName)
-             -- Need to tell WarpDeplete to refresh?
-             -- It probably listens to OnProfileChanged if using AceDB
-        end,
-        Import = function(self, data, profileName)
-             -- Direct DB Injection
-             if _G.WarpDepleteDB then
-                 if not _G.WarpDepleteDB.profiles then _G.WarpDepleteDB.profiles = {} end
-                 
-                 _G.WarpDepleteDB.profiles[profileName] = data
-                 
-                 -- Set Active
-                 SetAceProfileInGlobal("WarpDepleteDB", profileName)
-             end
-        end,
-        HasProfile = function(self, profileName)
-             if _G.WarpDepleteDB and _G.WarpDepleteDB.profiles then
-                  return _G.WarpDepleteDB.profiles[profileName] ~= nil
-             end
-             return false
-        end
-    },
+    },  -- end Details entry
 }
+
+
+
 
 -- Returns the system status
 -- @param targetProfile (string) The profile name to check against (default: ADDON_NAME)
@@ -618,14 +523,19 @@ function Installer:GetSystemStatus(targetProfile)
             })
         else
             -- Addon Not Loaded
-            table.insert(report, {
-                label = addon.label,
-                name = addon.name,
-                category = addon.category,
-                current = "Not Loaded",
-                match = false,
-                loaded = false
-            })
+            -- Entries with hideWhenNotLoaded skip the report entirely (not shown in UI when missing)
+            if addon.hideWhenNotLoaded then
+                -- Do nothing: addon is optional and should not clutter the status display
+            else
+                table.insert(report, {
+                    label = addon.label,
+                    name = addon.name,
+                    category = addon.category,
+                    current = "Not Loaded",
+                    match = false,
+                    loaded = false
+                })
+            end
             -- Unloaded addons don't fail the check for "System Configured" 
             -- (because if you didn't install the addon, it's fine)
         end
@@ -633,7 +543,7 @@ function Installer:GetSystemStatus(targetProfile)
     
     -- Post-Processing: Mutual Exclusion (e.g. BCDM vs replacement CDM)
     -- If BCDM is not loaded but its replacement IS loaded:
-    -- → Remove BCDM from the report, promote the replacement to Important
+    -- â†’ Remove BCDM from the report, promote the replacement to Important
     local replacements = {} -- { replacedName -> replacerIndex }
     for i, item in ipairs(report) do
         local regEntry = nil
@@ -651,7 +561,7 @@ function Installer:GetSystemStatus(targetProfile)
             local replacerIdx = replacements[item.name]
             if replacerIdx then
                 if not item.loaded then
-                    -- Original not loaded → remove it, promote replacement to Important
+                    -- Original not loaded â†’ remove it, promote replacement to Important
                     toRemove[i] = true
                     report[replacerIdx].category = nil -- Promote to Important
                     -- Recalculate allGood now that replacement is Important
@@ -659,7 +569,7 @@ function Installer:GetSystemStatus(targetProfile)
                         allGood = false
                     end
                 else
-                    -- Both loaded → keep both (replacement stays Optional)
+                    -- Both loaded â†’ keep both (replacement stays Optional)
                 end
             end
         end
