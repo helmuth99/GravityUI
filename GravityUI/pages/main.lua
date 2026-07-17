@@ -20,23 +20,23 @@ local Gravity_FPS_CVARS = {
 
     -- Graphics Quality
     ["graphicsQuality"] = "9",
-    ["graphicsShadowQuality"] = "0",
-    ["graphicsLiquidDetail"] = "2",             -- Good (was 1=Fair)
-    ["graphicsParticleDensity"] = "3",
+    ["graphicsShadowQuality"] = "1",            -- Fair
+    ["graphicsLiquidDetail"] = "0",             -- Low
+    ["graphicsParticleDensity"] = "5",          -- Ultra
     ["graphicsSSAO"] = "0",
     ["graphicsDepthEffects"] = "0",
     ["graphicsComputeEffects"] = "0",
-    ["graphicsOutlineMode"] = "2",              -- High (was 1=Low, better visibility)
+    ["graphicsOutlineMode"] = "0",              -- 0 (Off)
     ["OutlineEngineMode"] = "1",
     ["graphicsTextureResolution"] = "2",
-    ["graphicsSpellDensity"] = "0",
+    ["graphicsSpellDensity"] = "1",             -- Low
     ["spellClutter"] = "1",
     ["spellVisualDensityFilterSetting"] = "1",
     ["graphicsProjectedTextures"] = "1",
     ["projectedTextures"] = "1",
-    ["graphicsViewDistance"] = "2",
-    ["graphicsEnvironmentDetail"] = "0",
-    ["graphicsGroundClutter"] = "0",
+    ["graphicsViewDistance"] = "1",             -- Level 2
+    ["graphicsEnvironmentDetail"] = "1",        -- Level 2
+    ["graphicsGroundClutter"] = "1",            -- Level 2
 
     -- Advanced Tab
     ["gxTripleBuffer"] = "0",
@@ -79,7 +79,7 @@ local Gravity_FPS_CVARS = {
     ["TerrainLodDiv"] = "512",
     ["waterDetail"] = "1",
     ["rippleDetail"] = "0",
-    ["weatherDensity"] = "0",
+    ["weatherDensity"] = "3",                  -- Enabled
     ["entityShadowFadeScale"] = "15",
     ["groundEffectDist"] = "40",
     ["ResampleAlwaysSharpen"] = "1",

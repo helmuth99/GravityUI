@@ -207,7 +207,8 @@ local function BuildInformationTab(parent)
         
         -- UI Utilities (utilities.lua)
         { name = "Sound Alerts", desc = "Integrates custom SharedMedia sounds directly into Blizzard's CooldownViewer.\nSeamlessly replaces specific Blizzard sounds with your own media files.", stateTable = db.soundAlerts, stateKey = "enabled", pageId = "utilities", tabIndex = 4 },
-        { name = "Castbar Ticks", desc = "Adds channeling tick marks (e.g., Evoker Disintegrate) to Unit Frames.\nTracks intervals mathematically to avoid clipping spells prematurely.", stateTable = db.general and db.general.castbarTicks and db.general.castbarTicks.disintegrate, stateKey = "enableUUF", pageId = "utilities", tabIndex = 3 },
+
+
 
         -- Styling Tab (styling.lua)
         { name = "Game Menu", desc = "Generates a fully customized Escape Key menu overriding the Blizzard UI.\nApplies unified structural gradients and dark-mode styling.", stateTable = db.styling and db.styling.gamemenu, stateKey = "enabled", pageId = "Styling", tabIndex = 6 },
@@ -229,7 +230,7 @@ local function BuildInformationTab(parent)
         { name = "Manage Profiles", desc = "Create, delete, and copy persistent addon profile hierarchies entirely.\nManages different character needs from a unified interface.", pageId = "profiles", tabIndex = 1 },
         { name = "Import / Export", desc = "Share and backup profiles via export hash strings securely.\nSeamlessly send an entire UI array directly to friends via web strings.", pageId = "profiles", tabIndex = 2 },
         { name = "Gravity Strings (WA)", desc = "Import critical integrated WeakAuras (Class UI, M+ Automarks, Utilities).\nSyncs directly with the custom GravityUI WeakAura system packages.", pageId = "profiles", tabIndex = 3 },
-        { name = "Installers", desc = "Relaunch the First-Time initial setup and addon dependency installers.\nResyncs layout profiles for Details, Plater, and UUF instantly.", pageId = "profiles", tabIndex = 4 },
+        { name = "Installers", desc = "Relaunch the First-Time initial setup and addon dependency installers.\nResyncs layout profiles for Details and Plater instantly.", pageId = "profiles", tabIndex = 4 },
     }
 
     table.sort(features, function(a, b)

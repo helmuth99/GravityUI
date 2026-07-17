@@ -464,9 +464,10 @@ local function BuildGravityStringsTab(parent)
 
         -- List of keys
         local keys = {
-            "EditMode", "Details", "Plater", "BigWigs", "DandersFrames", 
-            "Ayije", "CDM_UnholyDK", "UUF", "GravityUI", "MethodRaidTools"
+            "EditMode", "Details", "Plater", "BigWigs", "DandersFrames",
+            "EllesmereUI", "GravityUI", "MethodRaidTools"
         }
+
         
         local lastHeader = nil
         local shown = {}

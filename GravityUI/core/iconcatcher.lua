@@ -662,6 +662,7 @@ local function CatchExistingButtons()
         BTWQuestsMinimapButton = true,
         BtWQuestsMinimapButton = true,
         ExpansionLandingPageMinimapButton = true, -- Patch 12.0.7: Expansion Landing Page
+        EllesmereUIMinimapButton = C_AddOns.IsAddOnLoaded("EllesmereUI") or nil,
     }
     
     -- Load Custom Frames from settings (Case-Insensitive Support)

@@ -129,8 +129,73 @@ Installer.registry = {
         end
     },
     {
+        -- EllesmereUI – uses its own Lite DB framework (NOT AceDB).
+        -- Profile storage: EllesmereUIDB.activeProfile (string, account-wide)
+        --                  EllesmereUIDB.profiles[name] (profile table)
+        -- API: EllesmereUI.GetActiveProfileName() / SwitchProfile(name) / ImportProfile(str, name)
+        name = "EllesmereUI",
+        label = "EllesmereUI",
+        category = "Important",
+        Check = function()
+            return C_AddOns.IsAddOnLoaded("EllesmereUI") and _G.EllesmereUI ~= nil
+        end,
+        GetProfile = function()
+            -- EllesmereUI exposes GetActiveProfileName() as the canonical getter.
+            local E = _G.EllesmereUI
+            if E and E.GetActiveProfileName then
+                return E.GetActiveProfileName()
+            end
+            -- Fallback: read directly from the central SavedVariables
+            return _G.EllesmereUIDB and _G.EllesmereUIDB.activeProfile or nil
+        end,
+        SetProfile = function(self, profileName)
+            local E = _G.EllesmereUI
+            -- SwitchProfile checks if the profile exists before switching.
+            -- For Sync (profile already exists), this is the correct path.
+            if E and E.SwitchProfile then
+                pcall(E.SwitchProfile, profileName)
+                return true
+            end
+            -- Fallback: direct write into EllesmereUIDB
+            if _G.EllesmereUIDB then
+                _G.EllesmereUIDB.activeProfile = profileName
+                return true
+            end
+        end,
+        Import = function(self, data, profileName)
+            if type(data) ~= "string" then return end
+            local E = _G.EllesmereUI
+            -- EllesmereUI.ImportProfile(importStr, profileName) is the official API.
+            -- It decodes (LibDeflate), creates the profile in EllesmereUIDB.profiles[name],
+            -- and optionally auto-switches. We pass profileName so it lands in the right slot.
+            if E and E.ImportProfile then
+                local ok, err = pcall(E.ImportProfile, data, profileName)
+                if ok then
+                    ns.Print("[GUI Debug] EllesmereUI ImportProfile success → '" .. profileName .. "'")
+                else
+                    ns.Print("[GUI Debug] EllesmereUI ImportProfile failed: " .. tostring(err))
+                end
+            end
+        end,
+        HasProfile = function(self, profileName)
+            -- Check EllesmereUIDB.profiles directly (the definitive store).
+            if _G.EllesmereUIDB and _G.EllesmereUIDB.profiles then
+                return _G.EllesmereUIDB.profiles[profileName] ~= nil
+            end
+            -- Secondary: use the API if available
+            local E = _G.EllesmereUI
+            if E and E.GetProfileList then
+                local _, profiles = E.GetProfileList()
+                return profiles and profiles[profileName] ~= nil
+            end
+            return false
+        end,
+    },
+
+    {
         name = "BigWigs",
         label = "BigWigs",
+
         Check = function() return (_G.BigWigs3DB ~= nil) or C_AddOns.IsAddOnLoaded("BigWigs") end,
         GetProfile = function() 
             local db = _G.BigWigs3DB
@@ -317,222 +382,6 @@ Installer.registry = {
                     pcall(_G.DandersFrames_Import, data)
                 end
             end
-        end
-    },
-    {
-        -- Ayije CDM
-        name = "Ayije",
-        importKey = "ayije", -- Key used in imports table
-        label = "Ayije CDM",
-        category = "Important",
-        Check = function()
-            return C_AddOns.IsAddOnLoaded("Ayije_CDM")
-        end,
-        GetProfile = function()
-            local db = _G.Ayije_CDMDB
-            if db and db.profileKeys then
-                local key = UnitName("player") .. " - " .. GetRealmName()
-                return db.profileKeys[key]
-            end
-            return nil
-        end,
-        SetProfile = function(self, profileName)
-            local CDM = _G["Ayije_CDM"]
-            if CDM and CDM.SetProfile then
-                -- Ensure profile slot exists before switching
-                if _G.Ayije_CDMDB and _G.Ayije_CDMDB.profiles and not _G.Ayije_CDMDB.profiles[profileName] then
-                    _G.Ayije_CDMDB.profiles[profileName] = {}
-                end
-                pcall(CDM.SetProfile, CDM, profileName)
-                return true
-            end
-            -- Fallback: direct DB write
-            if _G.Ayije_CDMDB and _G.Ayije_CDMDB.profileKeys then
-                local key = UnitName("player") .. " - " .. GetRealmName()
-                _G.Ayije_CDMDB.profileKeys[key] = profileName
-                if not _G.Ayije_CDMDB.profiles then _G.Ayije_CDMDB.profiles = {} end
-                if not _G.Ayije_CDMDB.profiles[profileName] then _G.Ayije_CDMDB.profiles[profileName] = {} end
-                return true
-            end
-        end,
-        Import = function(self, data, profileName)
-            if type(data) ~= "string" then return end
-            local CDM = _G["Ayije_CDM"]
-            if not CDM or not CDM.ProfileIO then return end
-
-            -- 1. Decode: DecodeProfileString extrahiert payload.data direkt,
-            --    ohne Key-Filterung (BuildImportProfile würde alle Keys rausfiltern
-            --    weil wir keine categoryDefs haben → leeres Profil)
-            local profileData, decodeErr = CDM.ProfileIO:DecodeProfileString(data)
-            if type(profileData) ~= "table" then
-                ns.Print("|cffff0000[GravityUI]|r Ayije import decode failed: " .. tostring(decodeErr))
-                return
-            end
-
-            -- 2. Apply via CDM:ImportProfileData (erstellt/überschreibt das benannte Profil)
-            if CDM.ImportProfileData then
-                local ok, err = pcall(CDM.ImportProfileData, CDM, profileName, profileData)
-                if not ok then
-                    ns.Print("|cffff0000[GravityUI]|r Ayije ImportProfileData failed: " .. tostring(err))
-                end
-            else
-                -- Fallback: direkt in Ayije_CDMDB schreiben
-                if _G.Ayije_CDMDB and _G.Ayije_CDMDB.profiles then
-                    _G.Ayije_CDMDB.profiles[profileName] = profileData
-                end
-            end
-        end,
-        HasProfile = function(self, profileName)
-            if _G.Ayije_CDMDB and _G.Ayije_CDMDB.profiles then
-                return _G.Ayije_CDMDB.profiles[profileName] ~= nil
-            end
-            return false
-        end,
-    },
-    {
-        name = "UUF",
-        label = "UnhaltedUnitFrames",
-        Check = function() return (_G.UUF ~= nil) or C_AddOns.IsAddOnLoaded("UnhaltedUnitFrames") end,
-        GetProfile = function()
-             -- 1. Try Direct DB Global (Raw Data)
-             local p1 = GetAceProfileFromGlobal("UUFDB")
-             if p1 then return p1 end
-             local p2 = GetAceProfileFromGlobal("UnhaltedUnitFramesDB")
-             if p2 then return p2 end
-
-             -- 1.5 Try directly on UUF object
-             if _G.UUF and _G.UUF.db and _G.UUF.db.GetCurrentProfile then
-                 return _G.UUF.db:GetCurrentProfile()
-             end
-             
-             -- 2. Try AceAddon Object (Method)
-             local LibStub = _G.LibStub
-             if LibStub then 
-                  local AceAddon = LibStub("AceAddon-3.0", true)
-                  if AceAddon then
-                       local addon = AceAddon:GetAddon("UnhaltedUnitFrames", true)
-                       if addon and addon.db then return addon.db:GetCurrentProfile() end
-                  end
-             end
-             return nil
-        end,
-         SetProfile = function(self, profileName)
-             if _G.UUF and _G.UUF.db then 
-                  _G.UUF.db:SetProfile(profileName) 
-                  return true 
-             end
-             -- Fallback set
-             local LibStub = _G.LibStub
-             if LibStub then 
-                  local AceAddon = LibStub("AceAddon-3.0", true)
-                  if AceAddon then
-                       local addon = AceAddon:GetAddon("UnhaltedUnitFrames", true)
-                       if addon and addon.db then addon.db:SetProfile(profileName) return true end
-                  end
-             end
-             
-             -- Ultimate Fallback: Direct DB Write
-             local s1 = SetAceProfileInGlobal("UUFDB", profileName)
-             local s2 = SetAceProfileInGlobal("UnhaltedUnitFramesDB", profileName)
-             
-             -- If we force set it in global, we need to tell UUF to update if it exists
-             if (s1 or s2) and _G.UUF and _G.UUF.UpdateLayout then
-                 pcall(_G.UUF.UpdateLayout, _G.UUF)
-                 return true
-             end
-             return s1 or s2
-        end,
-        Import = function(self, data, profileName)
-             ns.Print("[GUI Debug] UUF Import specific profile: " .. tostring(profileName))
-             
-             -- Force Direct Profile Keys injection before anything else
-             SetAceProfileInGlobal("UUFDB", profileName)
-             SetAceProfileInGlobal("UnhaltedUnitFramesDB", profileName)
-             
-             -- Ensure profile is set before import (just in case)
-             if _G.UUF and _G.UUF.db then 
-                 _G.UUF.db:SetProfile(profileName)
-             elseif _G.UUF and _G.UUF.SetProfile then
-                 _G.UUF:SetProfile(profileName)
-             end
-
-             -- STRATEGY A: UUF:ImportSavedVariables(encodedStr, profileName)
-             -- This is UUF's own import function (from Share.lua). It:
-             --   1. Decodes/decompresses/deserializes the !UUF_ string via AceSerializer
-             --   2. Calls UUF.db:SetProfile(profileName) to switch
-             --   3. Wipes current profile and copies imported data in
-             -- Passing profileName directly means it skips the StaticPopup dialog.
-             if _G.UUF and _G.UUF.ImportSavedVariables then
-                 local ok, err = pcall(_G.UUF.ImportSavedVariables, _G.UUF, data, profileName)
-                 if ok then
-                     ns.Print("[GUI Debug] UUF ImportSavedVariables success → '" .. profileName .. "'")
-                     return
-                 else
-                     ns.Print("[GUI Debug] UUF ImportSavedVariables failed: " .. tostring(err))
-                 end
-             end
-             
-             -- STRATEGY B: UUFG:ImportUUF(importString, profileKey)
-             -- Alternative path that writes to UUF.db.profiles directly (also from Share.lua).
-             if _G.UUFG and _G.UUFG.ImportUUF then
-                 local ok, err = pcall(_G.UUFG.ImportUUF, _G.UUFG, data, profileName)
-                 if ok then
-                     ns.Print("[GUI Debug] UUF UUFG:ImportUUF success → '" .. profileName .. "'")
-                     return
-                 else
-                     ns.Print("[GUI Debug] UUF UUFG:ImportUUF failed: " .. tostring(err))
-                 end
-             end
-
-             -- STRATEGY C: Nuclear — decode manually then inject via AceDB
-             -- Used if both UUF API methods fail.
-             local LibDeflate = LibStub("LibDeflate", true)
-             local AceSerializer = LibStub("AceSerializer-3.0", true)
-             if type(data) == "string" and LibDeflate and AceSerializer then
-                 local clean = data
-                 if string.find(data, "^!UUF_") then clean = string.sub(data, 6) end
-                 local decoded     = LibDeflate:DecodeForPrint(clean)
-                 local decompressed = decoded and LibDeflate:DecompressDeflate(decoded)
-                 if decompressed then
-                     local ok, res = AceSerializer:Deserialize(decompressed)
-                     if ok and type(res) == "table" then
-                         local profileData = res.profile or res
-                         if _G.UUF and _G.UUF.db then
-                             _G.UUF.db:SetProfile(profileName)
-                             wipe(_G.UUF.db.profile)
-                             for k, v in pairs(profileData) do _G.UUF.db.profile[k] = v end
-                             if _G.UUF.UpdateAllUnitFrames then pcall(_G.UUF.UpdateAllUnitFrames, _G.UUF) end
-                             ns.Print("[GUI Debug] UUF Nuclear injection complete → '" .. profileName .. "'")
-                         end
-                     end
-                 end
-             end
-
-        end,
-        HasProfile = function(self, profileName)
-             -- Check raw SavedVariables first
-             if _G.UUFDB and _G.UUFDB.profiles and _G.UUFDB.profiles[profileName] then return true end
-             if _G.UnhaltedUnitFramesDB and _G.UnhaltedUnitFramesDB.profiles and _G.UnhaltedUnitFramesDB.profiles[profileName] then return true end
-             
-             if _G.UUF and _G.UUF.db then -- Global check
-                  for _, v in ipairs(_G.UUF.db:GetProfiles()) do if v == profileName then return true end end
-             else
-                 -- Fallback check
-                 local LibStub = _G.LibStub
-                 if LibStub then
-                      local AceAddon = LibStub("AceAddon-3.0", true)
-                      if AceAddon then
-                           local addon = AceAddon:GetAddon("UnhaltedUnitFrames", true)
-                           if addon and addon.db then 
-                               for _, v in ipairs(addon.db:GetProfiles()) do if v == profileName then return true end end
-                           end
-                      end
-                 end
-             end
-             return false -- Only return false if we checked and didn't find it. 
-             -- But if we couldn't check (addons not found), we should probably return false too? 
-             -- Actually, installer IsConfigured logic: if HasProfile missing, assume true. if returns false, fail.
-             -- If we can't find addon, we return false.
         end
     },
     {
@@ -782,7 +631,7 @@ function Installer:GetSystemStatus(targetProfile)
         end
     end
     
-    -- Post-Processing: Mutual Exclusion (e.g. BCDM vs Ayije CDM)
+    -- Post-Processing: Mutual Exclusion (e.g. BCDM vs replacement CDM)
     -- If BCDM is not loaded but its replacement IS loaded:
     -- → Remove BCDM from the report, promote the replacement to Important
     local replacements = {} -- { replacedName -> replacerIndex }
@@ -802,15 +651,15 @@ function Installer:GetSystemStatus(targetProfile)
             local replacerIdx = replacements[item.name]
             if replacerIdx then
                 if not item.loaded then
-                    -- BCDM not loaded → remove it, promote Ayije to Important
+                    -- Original not loaded → remove it, promote replacement to Important
                     toRemove[i] = true
                     report[replacerIdx].category = nil -- Promote to Important
-                    -- Recalculate allGood now that Ayije is Important
+                    -- Recalculate allGood now that replacement is Important
                     if not report[replacerIdx].match then
                         allGood = false
                     end
                 else
-                    -- Both loaded → keep both (Ayije stays Optional)
+                    -- Both loaded → keep both (replacement stays Optional)
                 end
             end
         end

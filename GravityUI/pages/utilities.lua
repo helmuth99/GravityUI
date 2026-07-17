@@ -85,31 +85,6 @@ local anchorOptions = { {value = "TOPLEFT", text = "Top Left"}, {value = "TOP", 
 --==============================================================================================================================================================================================
 
 
-local function BuildCastbar(parent)
-    local scroll, content = GUI:CreateScrollableContent(parent)
-    scroll:SetAllPoints()
-    local db = ns.GetDB(); if not db then return end
-    local ticks = db.general.castbarTicks; if not ticks then return end 
-    content.rowCount = 0
-    local refresh = function() if ns.CastbarTicks and ns.CastbarTicks.SetupHooks then ns.CastbarTicks:SetupHooks() end end
-    local function CreateSpecSection(title, dbPath, startY)
-        local header = GUI:CreateSectionHeader(content, title)
-        header:SetPoint("TOPLEFT", 10, startY)
-        local frame = CreateFrame("Frame", nil, content); frame:SetSize(GUI.CONTENT_WIDTH - 20, 240); frame:SetPoint("TOPLEFT", header, "BOTTOMLEFT", 0, -10)
-        GUI:CreateCheckbox(frame, "Enable on UnhaltedUnitFrames", "enableUUF", dbPath, refresh):SetPoint("TOPLEFT", 0, 0)
-        GUI:CreateCheckbox(frame, "Enable on Ayije CDM", "enableAyije", dbPath, refresh):SetPoint("TOPLEFT", 0, -30)
-        local slW = GUI:CreateSlider(frame, "Tick Width", 1, 10, "tickWidth", dbPath, refresh, 1); slW:SetPoint("TOPLEFT", 0, -100); slW.label:SetText("Tick Width")
-        local slH = GUI:CreateSlider(frame, "Tick Height %", 0.1, 1.0, "tickHeight", dbPath, refresh, 0.05); slH:SetPoint("TOPLEFT", 0, -140); slH.label:SetText("Tick Height")
-        local cp = GUI:CreateColorPicker(frame, "Tick Color", "tickColor", dbPath, refresh); cp:SetPoint("TOPLEFT", 0, -180); cp.label:SetText("Tick Color")
-        return 280
-    end
-    local y = -10
-    y = y - CreateSpecSection("Disintegrate Ticks (Evoker)", ticks.disintegrate, y)
-    y = y - CreateSpecSection("Mind Flay Ticks (Priest)", ticks.mindflay, y)
-    content:SetHeight(-y + 50)
-end
-
--- 4. Sound Alerts
 local function BuildSoundAlerts(parent)
     local scroll, content = GUI:CreateScrollableContent(parent)
     scroll:SetAllPoints()
@@ -136,8 +111,7 @@ end
 ns.GUI:RegisterPage("utilities", {
     title = "Utilities",
     subTabs = {
-        { name = "Castbar Ticks",    builder = BuildCastbar },
-        { name = "Sound Alerts",     builder = BuildSoundAlerts },
+        { name = "Sound Alerts", builder = BuildSoundAlerts },
     },
     OnBuild = function(content)
         local scrollFrame = content:GetParent()

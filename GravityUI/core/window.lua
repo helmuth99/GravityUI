@@ -680,9 +680,12 @@ CreateButtonBar = function(parent)
         
         -- Platynator
         if not opened and OpenAddonConfig("Platynator", "PLATYNATOR") then opened = true end
+
+        -- EllesmereUI (Nameplates module)
+        if not opened and OpenAddonConfig("EllesmereUI", "ELLESMEREUI") then opened = true end
          
         if not opened then
-             print("|cFF30D1FFGravityUI:|r No supported Nameplates addon loaded (Plater, Platynator).")
+             print("|cFF30D1FFGravityUI:|r No supported Nameplates addon loaded (Plater, Platynator, EllesmereUI).")
         end
     end)
     npBtn:SetPoint("LEFT", bossBtn, "RIGHT", 8, 0)
@@ -700,20 +703,17 @@ CreateButtonBar = function(parent)
     local cdmAddonBtn = GUI:CreateButton(buttonBar, "CDM", 50, 32, function()
         local opened = false
         
-        -- Ayije CDM
-        if not opened and OpenAddonConfig("Ayije_CDM", "ACDM") then opened = true end
-        
-        -- Better Cooldown Manager (BCDM) - no longer supported
-        -- if not opened and OpenAddonConfig("BetterCooldownManager", "BCDM") then opened = true end
-        
         -- Centered Cooldown Manager
         if not opened and OpenAddonConfig("CenteredCooldownManager", "CCM") then opened = true end
         
         -- Arc UI
         if not opened and OpenAddonConfig("ArcUI", "ARCUI") then opened = true end
+
+        -- EllesmereUI (Cooldown Manager module)
+        if not opened and OpenAddonConfig("EllesmereUI", "ELLESMEREUI") then opened = true end
          
         if not opened then
-             print("|cFF30D1FFGravityUI:|r No supported CDM addon loaded (Ayije, CCM, ArcUI).")
+             print("|cFF30D1FFGravityUI:|r No supported CDM addon loaded (CCM, ArcUI, EllesmereUI).")
         end
     end)
     cdmAddonBtn:SetPoint("LEFT", npBtn, "RIGHT", 8, 0)
@@ -731,14 +731,14 @@ CreateButtonBar = function(parent)
     local ufBtn = GUI:CreateButton(buttonBar, "Unitframes", 90, 32, function()
         local opened = false
         
-        -- Unhalted UnitFrames
-        if not opened and OpenAddonConfig("UnhaltedUnitFrames", "UUF") then opened = true end
+        -- EllesmereUI
+        if not opened and OpenAddonConfig("EllesmereUI", "ELLESMEREUI") then opened = true end
         
         -- MidnightSimpleUnitframes
         if not opened and OpenAddonConfig("MidnightSimpleUnitframes", "MSUF") then opened = true end
          
         if not opened then
-             print("|cFF30D1FFGravityUI:|r No supported Unitframes addon loaded (Unhalted, Midnight).")
+             print("|cFF30D1FFGravityUI:|r No supported Unitframes addon loaded (EllesmereUI, Midnight).")
         end
     end)
     ufBtn:SetPoint("LEFT", cdmAddonBtn, "RIGHT", 8, 0)
@@ -764,9 +764,12 @@ CreateButtonBar = function(parent)
         
         -- Cell
         if not opened and OpenAddonConfig("Cell", "CELL") then opened = true end
+
+        -- EllesmereUI (Raid Frames module)
+        if not opened and OpenAddonConfig("EllesmereUI", "ELLESMEREUI") then opened = true end
  
         if not opened then
-            print("|cFF30D1FFGravityUI:|r No supported Party/Raid addon loaded (DandersFrames, Grid2, Cell).")
+            print("|cFF30D1FFGravityUI:|r No supported Party/Raid addon loaded (DandersFrames, Grid2, Cell, EllesmereUI).")
         end
     end)
     prBtn:SetPoint("LEFT", ufBtn, "RIGHT", 8, 0)
