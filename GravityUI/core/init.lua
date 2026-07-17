@@ -491,7 +491,27 @@ do
             return db and db.actionbars and (db.actionbars.enabled ~= false)
         end
 
+        -- Characters that are exempt from the Blizz UI Enhanced lock.
+        -- Format: "CharacterName-RealmName" (realm with no spaces, as returned by GetRealmName())
+        local BLIZZ_LOCK_EXEMPT = {
+            ["Cron\195\174x-Blackhand"] = true,   -- Cronîx (î = UTF-8 C3 AE)
+        }
+
+        -- Returns true if the currently logged-in character should bypass the lock.
+        local function IsBlizzLockExemptChar()
+            local name  = UnitName("player")
+            local realm = GetRealmName()
+            if not name or not realm then return false end
+            -- Realm name may contain spaces (e.g. "Blackhand"); normalise to dash-joined key
+            local key = name .. "-" .. realm
+            return BLIZZ_LOCK_EXEMPT[key] == true
+        end
+
         local function ApplyBlizzSkinLock()
+            -- Exempt characters bypass the lock so they can freely configure
+            -- EllesmereUI's Blizz UI Enhanced section.
+            if IsBlizzLockExemptChar() then return end
+
             local E = _G.EllesmereUI
             if not (E and E._sidebarButtons) then return end
             local btn = E._sidebarButtons[LOCK_FOLDER]
@@ -578,7 +598,7 @@ do
                 scriptsPatched = true
 
                 local blizzBtn = E._sidebarButtons[LOCK_FOLDER]
-                if blizzBtn then
+                if blizzBtn and not IsBlizzLockExemptChar() then
                     -- Row: block navigation, show locked tooltip
                     blizzBtn:SetScript("OnClick", nil)
                     blizzBtn:SetScript("OnEnter", function(self)
