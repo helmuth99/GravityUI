@@ -280,40 +280,6 @@ function M:SetupHooks()
         EventFrame.HookedBars[bar] = true
     end
 
-    -- Hook UUF
-    if cfg.enableUUF and C_AddOns.IsAddOnLoaded("UnhaltedUnitFrames") then
-        local ace = LibStub("AceAddon-3.0", true)
-        if ace then
-            local ok, UUF = pcall(ace.GetAddon, ace, "UnhaltedUnitFrames", true)
-            if ok and UUF then
-                if UUF.OnEnable then
-                    hooksecurefunc(UUF, "OnEnable", function()
-                        if UUF_Player_CastBar then Attach(UUF_Player_CastBar, false) end
-                    end)
-                end
-            end
-        end
-        -- Try direct if already loaded
-        if UUF_Player_CastBar then Attach(UUF_Player_CastBar, false) end
-    end
-
-
-    -- Hook Ayije CDM
-    if cfg.enableAyije and C_AddOns.IsAddOnLoaded("Ayije_CDM") then
-        local CDM = _G["Ayije_CDM"]
-        if CDM then
-            -- Ayije CDM exposes its castbar as Ayije_CastBar or via CDM.CastBar
-            local function TryAttachAyije()
-                local bar = _G.Ayije_CastBar or (CDM and CDM.CastBar)
-                if bar then Attach(bar, false) end
-            end
-            TryAttachAyije()
-            -- Also hook OnEnable in case it loads later
-            if CDM.OnEnable then
-                hooksecurefunc(CDM, "OnEnable", TryAttachAyije)
-            end
-        end
-    end
 end
 
 function M:Initialize()

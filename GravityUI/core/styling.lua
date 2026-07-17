@@ -264,11 +264,7 @@ function Styling:SkinGameMenu()
         end
     end
 
-    -- Suppress the UnhaltedUnitFrames GameMenu button.
-    -- UUF injects a direct child button (GameMenuFrame.UUF) outside the buttonPool
-    -- and hooks GameMenuFrame:Layout to manually reposition it and resize the frame.
-    -- We hide it here and undo the extra height it added so the menu looks normal.
-    SuppressUUFGameMenuButton()
+
 
     if GameMenuFrame.MarkDirty then GameMenuFrame:MarkDirty() end
 end
@@ -279,44 +275,6 @@ function Styling:RefreshGameMenu()
     end
 end
 
--- Hides the UUF GameMenu button and undoes ALL changes UUF's Layout hook made.
--- UUF's PositionGameMenuButton shifts every pool button on every Layout call:
---   * Normal buttons (non-logout) → Y + 10
---   * Logout/Exit/Return buttons  → Y - 25
--- We reverse those offsets so buttons sit at their native Blizzard positions.
--- Safe to call repeatedly; no-ops if UUF is not loaded or button not yet created.
-function SuppressUUFGameMenuButton()
-    if not GameMenuFrame or not GameMenuFrame.UUF then return end
-
-    -- Hide the UUF button
-    GameMenuFrame.UUF:Hide()
-
-    -- Undo the extra height UUF added to the frame
-    if GameMenuFrame.UUFAddedHeight and GameMenuFrame.UUFAddedHeight > 0 then
-        local currentHeight = GameMenuFrame:GetHeight()
-        GameMenuFrame:SetHeight(currentHeight - GameMenuFrame.UUFAddedHeight)
-        GameMenuFrame.UUFAddedHeight = 0
-        GameMenuFrame.UUFAdjustedHeight = nil
-    end
-
-    -- Reverse the per-button position offsets UUF applied
-    if GameMenuFrame.buttonPool then
-        for button in GameMenuFrame.buttonPool:EnumerateActive() do
-            local text = button:GetText()
-            local point, relativeTo, relativePoint, offsetX, offsetY = button:GetPoint()
-            if point and offsetY then
-                button:ClearAllPoints()
-                if text and (text == LOGOUT or text == LOG_OUT or text == EXIT_GAME or text == RETURN_TO_GAME) then
-                    -- UUF subtracted 25; add it back
-                    button:SetPoint(point, relativeTo, relativePoint, offsetX, offsetY + 25)
-                else
-                    -- UUF added 10; subtract it back
-                    button:SetPoint(point, relativeTo, relativePoint, offsetX, offsetY - 10)
-                end
-            end
-        end
-    end
-end
 
 -- One-time Hook
 local hasHookedGameMenu = false
@@ -327,11 +285,6 @@ function Styling:HookGameMenu()
              if InCombatLockdown() then return end
              InjectGravityUIButton()
              C_Timer.After(0, function() Styling:SkinGameMenu() end)
-        end)
-        -- Hook Layout AFTER UUF's own Layout hook so we always run last.
-        -- UUF's hook shows its button and expands the frame; we immediately undo that.
-        hooksecurefunc(GameMenuFrame, "Layout", function()
-            SuppressUUFGameMenuButton()
         end)
         hasHookedGameMenu = true
     end

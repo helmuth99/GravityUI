@@ -394,7 +394,21 @@ local function BuildUIScale(parent)
     
     local function ApplyPreset(val, name)
         db.general.uiScale = val
-        pcall(function() UIParent:SetScale(val) end)
+        -- Sync EllesmereUI first (it handles UIParent:SetScale internally)
+        if C_AddOns.IsAddOnLoaded("EllesmereUI") then
+            local E = _G.EllesmereUI
+            if E and E.PP and E.PP.SetUIScale then
+                E.PP.SetUIScale(val)
+            else
+                pcall(function() UIParent:SetScale(val) end)
+            end
+            if _G.EllesmereUIDB then
+                _G.EllesmereUIDB.ppUIScale = val
+                _G.EllesmereUIDB.ppUIScaleAuto = false
+            end
+        else
+            pcall(function() UIParent:SetScale(val) end)
+        end
         if scaleSlider and scaleSlider.SetValue then scaleSlider.SetValue(val) end
         local msg = "UI scale set to " .. string.format("%.4f", val)
         if name then msg = msg .. " (" .. name .. ")" end
@@ -460,7 +474,21 @@ local function BuildUIScale(parent)
     yOffset = yOffset - 32 - 10
     
     scaleSlider = ns.GUI:CreateSlider(content, "Global UI Scale", 0.3, 2.0, "uiScale", db.general, function(val)
-        pcall(function() UIParent:SetScale(val) end)
+        -- Sync EllesmereUI when loaded (same logic as ApplyPreset)
+        if C_AddOns.IsAddOnLoaded("EllesmereUI") then
+            local E = _G.EllesmereUI
+            if E and E.PP and E.PP.SetUIScale then
+                E.PP.SetUIScale(val)
+            else
+                pcall(function() UIParent:SetScale(val) end)
+            end
+            if _G.EllesmereUIDB then
+                _G.EllesmereUIDB.ppUIScale = val
+                _G.EllesmereUIDB.ppUIScaleAuto = false
+            end
+        else
+            pcall(function() UIParent:SetScale(val) end)
+        end
     end, 0.01)
     scaleSlider:SetPoint("TOPLEFT", PADDING, yOffset)
     scaleSlider:SetWidth(400)

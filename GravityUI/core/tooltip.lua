@@ -21,7 +21,7 @@ local C_UnitAuras = C_UnitAuras
 local UNIT_FRAME_PATTERNS = {
     "UnitFrame", "PlayerFrame", "TargetFrame", "FocusFrame",
     "PartyMemberFrame", "CompactRaidFrame", "CompactPartyFrame",
-    "NamePlate", "Gravity.*Frame", "UUF", "Unhalted"
+    "NamePlate", "Gravity.*Frame"
 }
 local CDM_PATTERNS = {
     "EssentialCooldownViewer", "UtilityCooldownViewer", "BuffIconCooldownViewer"

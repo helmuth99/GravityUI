@@ -424,15 +424,10 @@ local function ApplyHideSettings()
     lastHideForMinigame = hideForMinigame
 
     -- UnitFrames (Player, Target, Focus)
-    -- Also try to handle UnhaltedUnitFrames if present (they usually recycle these names or hook them)
     local framesToHide = {
         -- Blizzard
         PlayerFrame, TargetFrame, FocusFrame,
         CompactRaidFrameManager, 
-        
-        -- UnhaltedUnitFrames (UUF)
-        _G["UUF_Player"], _G["UUF_Target"], _G["UUF_Focus"], 
-        _G["UUF_TargetTarget"], _G["UUF_Pet"],
     }
     
     
@@ -536,21 +531,6 @@ local function ApplyHideSettings()
                         ns.QueueOOCAction(function()
                             if frame and frame.Show and UnitExists("focus") then frame:Show() end
                             RegisterStateDriver(frame, "visibility", "[@focus,exists] show; hide")
-                        end)
-                    end
-
-                -- UUF Frames
-                elseif frame.GetName and frame:GetName():find("UUF_") then
-                    if not InCombatLockdown() then
-                        frame:Show()
-                        if frame.Update then frame:Update() end
-                        if frame.RegisterStateDriver and frame == _G["UUF_Player"] then
-                            RegisterStateDriver(frame, "visibility", "[@player,exists] show; hide")
-                        end
-                    else
-                        ns.QueueOOCAction(function()
-                            if frame and frame.Show then frame:Show() end
-                            if frame and frame.Update then frame:Update() end
                         end)
                     end
 

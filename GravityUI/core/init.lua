@@ -150,10 +150,29 @@ function Addon:OnInitialize()
     if ns.db.profile.minimap and ns.db.profile.minimap.dungeonEye then
         ns.db.profile.minimap.dungeonEye.preview = false
     end
+
+    -- Disable GravityUI Instance Styling when EllesmereUI is loaded,
+    -- because EllesmereUI ships its own instance frame styling and
+    -- running both simultaneously causes visual conflicts.
+    if C_AddOns.IsAddOnLoaded("EllesmereUI") then
+        local idb = ns.db.profile.styling and ns.db.profile.styling.instanceFrames
+        if idb and idb.enabled then
+            idb.enabled = false
+            ns.Print("EllesmereUI detected – |cFFFFFF00Enable Custom Instance Styling|r automatically disabled to avoid conflicts.")
+        end
+    end
     
     -- Register for profile change events
     for _, event in ipairs({"OnProfileChanged", "OnProfileCopied", "OnProfileReset"}) do
         ns.db.RegisterCallback(ns, event, function()
+            -- Re-apply EllesmereUI compat guard after profile switches too
+            if C_AddOns.IsAddOnLoaded("EllesmereUI") then
+                local idb = ns.db.profile.styling and ns.db.profile.styling.instanceFrames
+                if idb and idb.enabled then
+                    idb.enabled = false
+                end
+            end
+
             -- Refresh in-game UI elements (Minimap, Datapanels, Colors, local changes)
             ns.RefreshAccentColors()
             
@@ -177,15 +196,45 @@ function Addon:OnInitialize()
 end
 
 -- Apply UI Scale from DB
+-- If EllesmereUI is loaded we route through PP.SetUIScale() so that
+-- EllesmereUIDB.ppUIScale stays in sync and EllesmereUI's pixel-snap
+-- callbacks (SnapProfilePositions, ApplyAllWidthHeightMatches, …) fire
+-- correctly. Without this EllesmereUI's Startup listener would re-apply
+-- its own saved scale on UI_SCALE_CHANGED and overwrite ours.
 function ns.ApplyUIScale()
     local db = ns.GetDB()
-    if db and db.general and db.general.uiScale then
-        pcall(function()
-            if math.abs(UIParent:GetScale() - db.general.uiScale) > 0.001 then
-                UIParent:SetScale(db.general.uiScale)
+    if not (db and db.general and db.general.uiScale) then return end
+    local targetScale = db.general.uiScale
+
+    -- Route through EllesmereUI when it is available
+    if C_AddOns.IsAddOnLoaded("EllesmereUI") then
+        local E = _G.EllesmereUI
+        if E and E.PP and E.PP.SetUIScale then
+            -- PP.SetUIScale handles combat-deferred, UpdateMult,
+            -- SnapProfilePositions and ApplyAllWidthHeightMatches internally.
+            E.PP.SetUIScale(targetScale)
+            -- Also keep EllesmereUIDB aligned so the Startup listener
+            -- does not clobber our value after a UI_SCALE_CHANGED event.
+            if _G.EllesmereUIDB then
+                _G.EllesmereUIDB.ppUIScale = targetScale
+                _G.EllesmereUIDB.ppUIScaleAuto = false
             end
-        end)
+            return
+        end
+        -- EllesmereUI is loaded but PP is not ready yet (very early in boot).
+        -- Fall through to direct SetScale and keep EllesmereUIDB in sync.
+        if _G.EllesmereUIDB then
+            _G.EllesmereUIDB.ppUIScale = targetScale
+            _G.EllesmereUIDB.ppUIScaleAuto = false
+        end
     end
+
+    -- Vanilla path (EllesmereUI not loaded, or PP not ready yet)
+    pcall(function()
+        if math.abs(UIParent:GetScale() - targetScale) > 0.001 then
+            UIParent:SetScale(targetScale)
+        end
+    end)
 end
 
 -- Refresh functions
@@ -237,7 +286,518 @@ function Addon:OnEnable()
     end
 end
 
--- Slash command handler
+
+-------------------------------------------------------------------------------
+-- EllesmereUI – "Managed by GravityUI" label beneath the sidebar logo
+--
+-- EllesmereUI._sidebar is the sidebar frame (SIDEBAR_W wide, full panel height).
+-- The logo area occupies the top ~114 px (NAV_TOP = -114). We place a small
+-- FontString centred horizontally, anchored at Y = -95 from the sidebar top,
+-- just below the EllesmereUI logo text.
+-- The label is created once on the first Show/Toggle and then persists.
+-------------------------------------------------------------------------------
+do
+    if C_AddOns.IsAddOnLoaded("EllesmereUI") then
+        local labelCreated = false
+
+        local function PlaceManagedLabel()
+            local E = _G.EllesmereUI
+            if not (E and E._sidebar) then return end
+            if labelCreated then return end
+            labelCreated = true
+
+            local sidebar = E._sidebar
+
+            local lbl = sidebar:CreateFontString(nil, "OVERLAY")
+            lbl:SetFont("Fonts\\FRIZQT__.TTF", 9, "OUTLINE")
+            lbl:SetTextColor(1, 0.82, 0.0, 0.85)   -- GravityUI gold
+            lbl:SetText("Managed by GravityUI")
+            -- Centre horizontally in the sidebar, just below the logo (~Y -95)
+            lbl:SetPoint("TOP", sidebar, "TOP", 0, -95)
+            lbl:SetJustifyH("CENTER")
+        end
+
+        local E = _G.EllesmereUI
+        if E then
+            hooksecurefunc(E, "Show",       function() PlaceManagedLabel() end)
+            hooksecurefunc(E, "Toggle",     function() PlaceManagedLabel() end)
+            hooksecurefunc(E, "ShowModule", function() PlaceManagedLabel() end)
+        end
+    end
+end
+
+
+-------------------------------------------------------------------------------
+-- EllesmereUI – Auto-disable conflicting sub-addons at PLAYER_LOGIN
+--
+-- When GravityUI manages a feature that EllesmereUI also provides (Chat,
+-- Minimap, Action Bars, etc.), the corresponding EllesmereUI sub-addon must be
+-- disabled to prevent both systems from running simultaneously and causing
+-- conflicts (duplicate frames, double-skinning, event handler clashes).
+--
+-- C_AddOns.DisableAddOn() writes to WoW's AddOns.txt and takes effect on the
+-- NEXT session. If an addon is still loaded in the current session we print a
+-- one-time reload prompt.
+--
+-- Mapping (mirrors the sidebar-hide conditions exactly):
+--   Always disabled     : EllesmereUIQoL, EllesmereUIDataBars
+--   When GravityUI Chat is enabled      → EllesmereUIChat
+--   When GravityUI Minimap is enabled   → EllesmereUIMinimap
+--   When GravityUI Tracker styling on   → EllesmereUIQuestTracker
+--   When GravityUI Action Bars enabled  → EllesmereUIActionBars
+-------------------------------------------------------------------------------
+do
+    if C_AddOns.IsAddOnLoaded("EllesmereUI") then
+        local function AutoDisableEllesmereModules()
+            local reloadNeeded = false
+
+            -- Disable an EllesmereUI sub-addon if it should not run alongside GravityUI.
+            -- Returns true if the addon was still loaded this session (= reload required).
+            local function Disable(addonName)
+                -- Only act if the addon is actually installed
+                local name = C_AddOns.GetAddOnInfo(addonName)
+                if not name then return end
+                -- Disable for next session
+                C_AddOns.DisableAddOn(addonName)
+                -- If it's still loaded right now, a reload is needed to fully remove it
+                if C_AddOns.IsAddOnLoaded(addonName) then
+                    reloadNeeded = true
+                end
+            end
+
+            -- ---------------------------------------------------------------
+            -- Always disabled: GravityUI fully replaces these.
+            -- ---------------------------------------------------------------
+            Disable("EllesmereUIQoL")
+            Disable("EllesmereUIDataBars")
+
+            -- ---------------------------------------------------------------
+            -- Conditionally disabled: only when the matching GravityUI
+            -- feature is active.
+            -- ---------------------------------------------------------------
+            local db = ns.GetDB()
+            if db then
+                -- Chat
+                if db.uiimprovements and db.uiimprovements.chat
+                   and (db.uiimprovements.chat.enabled ~= false) then
+                    Disable("EllesmereUIChat")
+                end
+
+                -- Minimap
+                if db.minimap and (db.minimap.enabled ~= false) then
+                    Disable("EllesmereUIMinimap")
+                end
+
+                -- Quest Tracker / Objective Tracker styling
+                if db.styling and db.styling.objectives
+                   and db.styling.objectives.objectiveTrackerSkinning == true then
+                    Disable("EllesmereUIQuestTracker")
+                end
+
+                -- Action Bars
+                if db.actionbars and (db.actionbars.enabled ~= false) then
+                    Disable("EllesmereUIActionBars")
+                end
+            end
+
+            -- Notify once if a reload is required to fully remove a module
+            if reloadNeeded then
+                C_Timer.After(3, function()
+                    ns.Print("|cffFFCC00EllesmereUI Integration:|r Conflicting modules have been disabled. Please |cff00CCFF/reload|r to fully apply the changes.")
+                end)
+            end
+        end
+
+        -- Run after all SavedVariables are loaded (PLAYER_LOGIN fires after
+        -- all addon OnLoad events and DB initialisation).
+        local f = CreateFrame("Frame")
+        f:RegisterEvent("PLAYER_LOGIN")
+        f:SetScript("OnEvent", function(self)
+            self:UnregisterAllEvents()
+            AutoDisableEllesmereModules()
+        end)
+    end
+end
+
+-------------------------------------------------------------------------------
+-- EllesmereUI – Lock "Blizz UI Enhanced" sidebar row when GravityUI is active
+--
+-- Root problem: EllesmereUI.lua calls CreateMainFrame() lazily on the first
+-- EllesmereUI:Show() / :Toggle() / :ShowModule(). Inside CreateMainFrame() the
+-- sidebar buttons are built AND EllesmereUI.RefreshSidebarOverrideLocks is
+-- (re)defined. A PLAYER_LOGIN hook that patches RefreshSidebarOverrideLocks
+-- runs BEFORE CreateMainFrame(), so CreateMainFrame() overwrites our patch on
+-- the first panel open.
+--
+-- Correct strategy:
+--  1. Use hooksecurefunc on EllesmereUI.Show / Toggle / ShowModule.
+--     hooksecurefunc fires AFTER the original, so by the time our callback
+--     runs, CreateMainFrame() has already completed and _sidebarButtons exists.
+--  2. In the hook callback, directly manipulate the button's Script handlers
+--     and visual properties. We also wrap RefreshSidebarOverrideLocks AT THAT
+--     POINT (after it has been created) so future RefreshSidebarStates calls
+--     cannot wash out our changes.
+--  3. Use a "once" guard so we only patch the scripts once; on subsequent
+--     Show/Toggle calls we just call ApplyBlizzSkinLock() to re-assert the
+--     visual state (RefreshSidebarStates recolors rows on every panel open).
+-------------------------------------------------------------------------------
+do
+    if C_AddOns.IsAddOnLoaded("EllesmereUI") then
+        local LOCK_FOLDER         = "EllesmereUIBlizzardSkin"
+        local LOCK_TOOLTIP        = "Managed by GravityUI \226\128\147 Blizz UI styling is handled by GravityUI's Styling module."
+        local CHAT_FOLDER          = "EllesmereUIChat"
+        local MINIMAP_FOLDER       = "EllesmereUIMinimap"
+        local QUEST_TRACKER_FOLDER = "EllesmereUIQuestTracker"
+        local ACTION_BARS_FOLDER   = "EllesmereUIActionBars"
+
+        -- These buttons are always hidden when EllesmereUI is loaded alongside GravityUI,
+        -- because GravityUI fully manages these features.
+        local ALWAYS_HIDDEN_FOLDERS = {
+            "EllesmereUIQoL",      -- Quality of Life (managed by GravityUI)
+            "EllesmereUIDataBars", -- DataBars (managed by GravityUI)
+        }
+
+        -- NAV colors (mirrored from EllesmereUI.lua file-scope constants)
+        local DISABLED_R, DISABLED_G, DISABLED_B, DISABLED_A = 1, 1, 1, 0.11
+        local DISABLED_ICON_A = 0.20
+
+        local scriptsPatched = false  -- only replace Script handlers once
+
+        -- Returns true when GravityUI's GUI Chatbox is enabled
+        local function IsGravityUIChatEnabled()
+            local db = ns.GetDB()
+            return db and db.uiimprovements and db.uiimprovements.chat
+                       and (db.uiimprovements.chat.enabled ~= false)
+        end
+
+        -- Returns true when GravityUI's Minimap is enabled
+        local function IsGravityUIMinimapEnabled()
+            local db = ns.GetDB()
+            return db and db.minimap and (db.minimap.enabled ~= false)
+        end
+
+        -- Returns true when GravityUI's Objective Tracker styling is enabled
+        -- Full path: ns.db.profile.styling.objectives.objectiveTrackerSkinning
+        local function IsGravityUITrackerEnabled()
+            local db = ns.GetDB()
+            return db and db.styling and db.styling.objectives
+                       and (db.styling.objectives.objectiveTrackerSkinning ~= false)
+                       and db.styling.objectives.objectiveTrackerSkinning ~= nil
+        end
+
+        -- Returns true when GravityUI's Action Bars are enabled
+        local function IsGravityUIActionBarsEnabled()
+            local db = ns.GetDB()
+            return db and db.actionbars and (db.actionbars.enabled ~= false)
+        end
+
+        local function ApplyBlizzSkinLock()
+            local E = _G.EllesmereUI
+            if not (E and E._sidebarButtons) then return end
+            local btn = E._sidebarButtons[LOCK_FOLDER]
+            if not btn then return end
+
+            -- Always re-assert visual state (RefreshSidebarStates recolors on
+            -- every panel open, so we must redo this each time)
+            btn._ovLocked = true
+            if btn._label then
+                btn._label:SetTextColor(DISABLED_R, DISABLED_G, DISABLED_B, DISABLED_A)
+            end
+            if btn._icon then
+                btn._icon:SetDesaturated(true)
+                btn._icon:SetAlpha(DISABLED_ICON_A)
+            end
+            if btn._pwrBtn and btn._pwrBtn._tex then
+                btn._pwrBtn._tex:SetAlpha(0.20)
+            end
+        end
+
+        -- Hides the EllesmereUI Chat sidebar button when GravityUI's own
+        -- chatbox is active, to prevent conflicting chat settings.
+        local function ApplyChatHide()
+            if not IsGravityUIChatEnabled() then return end
+            local E = _G.EllesmereUI
+            if not (E and E._sidebarButtons) then return end
+            local btn = E._sidebarButtons[CHAT_FOLDER]
+            if btn then btn:Hide() end
+        end
+
+        -- Hides the EllesmereUI Minimap sidebar button when GravityUI's own
+        -- minimap is active, to prevent conflicting minimap settings.
+        local function ApplyMinimapHide()
+            if not IsGravityUIMinimapEnabled() then return end
+            local E = _G.EllesmereUI
+            if not (E and E._sidebarButtons) then return end
+            local btn = E._sidebarButtons[MINIMAP_FOLDER]
+            if btn then btn:Hide() end
+        end
+
+        -- Hides the EllesmereUI Quest Tracker sidebar button when GravityUI's
+        -- Objective Tracker styling is active, to prevent conflicting tracker settings.
+        local function ApplyTrackerHide()
+            if not IsGravityUITrackerEnabled() then return end
+            local E = _G.EllesmereUI
+            if not (E and E._sidebarButtons) then return end
+            local btn = E._sidebarButtons[QUEST_TRACKER_FOLDER]
+            if btn then btn:Hide() end
+        end
+
+        -- Hides the EllesmereUI Action Bars sidebar button when GravityUI's
+        -- own action bars are enabled, to prevent conflicting bar settings.
+        local function ApplyActionBarsHide()
+            if not IsGravityUIActionBarsEnabled() then return end
+            local E = _G.EllesmereUI
+            if not (E and E._sidebarButtons) then return end
+            local btn = E._sidebarButtons[ACTION_BARS_FOLDER]
+            if btn then btn:Hide() end
+        end
+
+        -- Hides all buttons in ALWAYS_HIDDEN_FOLDERS unconditionally.
+        local function ApplyAlwaysHidden()
+            local E = _G.EllesmereUI
+            if not (E and E._sidebarButtons) then return end
+            for _, folder in ipairs(ALWAYS_HIDDEN_FOLDERS) do
+                local btn = E._sidebarButtons[folder]
+                if btn then btn:Hide() end
+            end
+        end
+
+        local function ApplyAllSidebarLocks()
+            local E = _G.EllesmereUI
+            if not (E and E._sidebarButtons) then return end
+
+            ApplyBlizzSkinLock()
+            ApplyAlwaysHidden()
+            ApplyChatHide()
+            ApplyMinimapHide()
+            ApplyTrackerHide()
+            ApplyActionBarsHide()
+
+            -- Replace Script handlers and wrap RefreshSidebarOverrideLocks only once
+            if not scriptsPatched then
+                scriptsPatched = true
+
+                local blizzBtn = E._sidebarButtons[LOCK_FOLDER]
+                if blizzBtn then
+                    -- Row: block navigation, show locked tooltip
+                    blizzBtn:SetScript("OnClick", nil)
+                    blizzBtn:SetScript("OnEnter", function(self)
+                        if E.ShowWidgetTooltip then
+                            E.ShowWidgetTooltip(self, LOCK_TOOLTIP)
+                        end
+                    end)
+                    blizzBtn:SetScript("OnLeave", function()
+                        if E.HideWidgetTooltip then E.HideWidgetTooltip() end
+                    end)
+
+                    -- Power button: block enable/disable popup, show locked tooltip
+                    if blizzBtn._pwrBtn then
+                        blizzBtn._pwrBtn:SetScript("OnClick", nil)
+                        blizzBtn._pwrBtn:SetScript("OnEnter", function(self)
+                            if E.ShowWidgetTooltip then
+                                E.ShowWidgetTooltip(self, LOCK_TOOLTIP)
+                            end
+                        end)
+                        blizzBtn._pwrBtn:SetScript("OnLeave", function()
+                            if E.HideWidgetTooltip then E.HideWidgetTooltip() end
+                        end)
+                    end
+                end
+
+                -- Wrap RefreshSidebarOverrideLocks so all locks re-assert
+                -- after every future RefreshSidebarStates call.
+                if E.RefreshSidebarOverrideLocks then
+                    local orig = E.RefreshSidebarOverrideLocks
+                    E.RefreshSidebarOverrideLocks = function(...)
+                        orig(...)
+                        ApplyBlizzSkinLock()
+                        ApplyAlwaysHidden()
+                        ApplyChatHide()
+                        ApplyMinimapHide()
+                        ApplyTrackerHide()
+                        ApplyActionBarsHide()
+                    end
+                end
+            end
+        end
+
+
+        -- Hook all three entry points that call CreateMainFrame() internally.
+        -- hooksecurefunc fires AFTER the original function returns, so
+        -- _sidebarButtons is guaranteed to exist by the time we run.
+        local E = _G.EllesmereUI
+        if E then
+            hooksecurefunc(E, "Show",       function() ApplyAllSidebarLocks() end)
+            hooksecurefunc(E, "Toggle",     function() ApplyAllSidebarLocks() end)
+            hooksecurefunc(E, "ShowModule", function() ApplyAllSidebarLocks() end)
+        end
+    end
+end
+
+
+
+-------------------------------------------------------------------------------
+-- EllesmereUI – Lock specific Global Settings sliders managed by GravityUI
+--
+-- GravityUI owns both UI Scale (General → uiScale) and Lag Tolerance
+-- (Combat → spellQueueWindow). Allowing users to also change these from
+-- EllesmereUI's Global Settings panel creates two-master conflicts.
+--
+-- Architecture:
+--  Layer 1 – Functional wraps (PP.SetUIScale etc.) prevent persistent changes.
+--  Layer 2 – Visual overlays cover the relevant half of each DualRow so the
+--    controls look disabled and show an explanatory tooltip.
+--
+-- Frame path (discovered via EllesmereUI source analysis):
+--   EllesmereUI._pageCache["_EUIGlobal::General"].wrapper
+--     :GetChildren()  →  DualRow frames
+--       [i]._leftRegion  or  [i]._rightRegion  →  target half-region
+--         ._label:GetText()  ==  locked label text
+-------------------------------------------------------------------------------
+do
+    if C_AddOns.IsAddOnLoaded("EllesmereUI") then
+        local GLOBAL_CACHE_KEY = "_EUIGlobal::General"
+
+        -- Each entry: which DualRow half to lock and what tooltip to show.
+        -- "side" = "left" | "right"
+        local LOCKED_WIDGETS = {
+            {
+                label   = "UI Scale",
+                side    = "left",
+                tooltip = "UI Scale is managed by GravityUI \226\128\148 change it under General \226\134\146 UI Scale.",
+            },
+            {
+                label   = "Lag Tolerance",
+                side    = "right",
+                tooltip = "Lag Tolerance (Spell Queue Window) is managed by GravityUI \226\128\148 change it under Combat \226\134\146 Spell Queue Window.",
+            },
+        }
+
+        -----------------------------------------------------------------------
+        -- Layer 1: Wrap PP.SetUIScale to re-assert GravityUI's value.
+        -----------------------------------------------------------------------
+        local ppWrapped = false
+        local function WrapPPSetUIScale()
+            if ppWrapped then return end
+            local E = _G.EllesmereUI
+            if not (E and E.PP and E.PP.SetUIScale) then return end
+            ppWrapped = true
+            local origSetUIScale = E.PP.SetUIScale
+            E.PP.SetUIScale = function(newScale)
+                origSetUIScale(newScale)
+                local db = ns.GetDB()
+                if db and db.general and db.general.uiScale then
+                    local guiScale = db.general.uiScale
+                    if math.abs((UIParent:GetScale() or 1) - guiScale) > 0.001 then
+                        if _G.EllesmereUIDB then
+                            _G.EllesmereUIDB.ppUIScale    = guiScale
+                            _G.EllesmereUIDB.ppUIScaleAuto = false
+                        end
+                        pcall(function() UIParent:SetScale(guiScale) end)
+                    end
+                end
+            end
+        end
+        do
+            local wf = CreateFrame("Frame")
+            wf:RegisterEvent("PLAYER_LOGIN")
+            wf:SetScript("OnEvent", function(self) self:UnregisterAllEvents(); WrapPPSetUIScale() end)
+        end
+
+        -----------------------------------------------------------------------
+        -- Layer 2: Generic visual overlay system.
+        -----------------------------------------------------------------------
+
+        -- Returns the wrapper frame for the General page (or nil if not built)
+        local function GetGeneralWrapper()
+            local E = _G.EllesmereUI
+            if not (E and E._pageCache) then return nil end
+            local entry = E._pageCache[GLOBAL_CACHE_KEY]
+            return entry and entry.wrapper or nil
+        end
+
+        -- Walk wrapper children and return the region frame (left or right)
+        -- whose label text matches the given string.
+        local function FindRegion(wrapper, labelText, side)
+            if not wrapper then return nil end
+            for _, child in next, {wrapper:GetChildren()} do
+                local rgn = (side == "right") and child._rightRegion or child._leftRegion
+                if rgn and rgn._label then
+                    if rgn._label:GetText() == labelText then
+                        return rgn
+                    end
+                end
+            end
+            return nil
+        end
+
+        -- Creates a locked overlay frame parented to (and covering) `rgn`.
+        local function MakeOverlay(rgn, tooltip)
+            local E = _G.EllesmereUI
+            local ov = CreateFrame("Frame", nil, rgn)
+            ov:EnableMouse(true)
+            ov:SetFrameStrata("DIALOG")
+            ov:SetFrameLevel(200)
+            ov:SetAllPoints(rgn)
+
+            local bg = ov:CreateTexture(nil, "BACKGROUND")
+            bg:SetAllPoints()
+            bg:SetColorTexture(0.02, 0.02, 0.06, 0.82)
+
+            local lbl = ov:CreateFontString(nil, "OVERLAY")
+            lbl:SetFont("Fonts\\FRIZQT__.TTF", 11, "OUTLINE")
+            lbl:SetTextColor(1, 0.82, 0.0, 1)
+            lbl:SetText("Managed by GravityUI")
+            lbl:SetPoint("CENTER", ov, "CENTER", 0, 0)
+
+            ov:SetScript("OnEnter", function(self)
+                if E and E.ShowWidgetTooltip then
+                    E.ShowWidgetTooltip(self, tooltip)
+                end
+            end)
+            ov:SetScript("OnLeave", function()
+                if E and E.HideWidgetTooltip then E.HideWidgetTooltip() end
+            end)
+            return ov
+        end
+
+        -- Per-widget overlay cache (keyed by label text)
+        local overlays = {}
+
+        local function PlaceAllOverlays()
+            local wrapper = GetGeneralWrapper()
+            if not wrapper then return end  -- General page not yet built
+
+            for _, cfg in ipairs(LOCKED_WIDGETS) do
+                local rgn = FindRegion(wrapper, cfg.label, cfg.side)
+                if rgn then
+                    local ov = overlays[cfg.label]
+                    if not ov then
+                        ov = MakeOverlay(rgn, cfg.tooltip)
+                        overlays[cfg.label] = ov
+                    end
+                    -- Re-parent/anchor each call (wrapper may be rebuilt)
+                    ov:SetParent(rgn)
+                    ov:ClearAllPoints()
+                    ov:SetAllPoints(rgn)
+                    ov:Show()
+                end
+            end
+        end
+
+        local E = _G.EllesmereUI
+        if E then
+            hooksecurefunc(E, "Show",         function() C_Timer.After(0, PlaceAllOverlays) end)
+            hooksecurefunc(E, "Toggle",       function() C_Timer.After(0, PlaceAllOverlays) end)
+            hooksecurefunc(E, "ShowModule",   function() C_Timer.After(0, PlaceAllOverlays) end)
+            hooksecurefunc(E, "SelectModule", function() C_Timer.After(0, PlaceAllOverlays) end)
+        end
+    end
+end
+
+
+
+
 function Addon:SlashCommandOpen(input)
     input = input and input:lower():trim() or ""
     
@@ -526,7 +1086,6 @@ SlashCmdList["GUITESTCLEANUP"] = function()
                 elseif addon.name == "Plater" and _G.Plater then dbObj = _G.Plater.db
                 elseif addon.name == "BigWigs" and _G.BigWigs3DB then -- BigWigs manual key deletion
                      if _G.BigWigs3DB.profiles then _G.BigWigs3DB.profiles[profile] = nil deleted = true end
-                elseif addon.name == "UUF" and _G.UUF then dbObj = _G.UUF.db
                 end
                 
                 if dbObj and dbObj.DeleteProfile then
@@ -554,7 +1113,7 @@ SlashCmdList["GUISCAN"] = function()
     for k, v in pairs(_G) do
         if type(k) == "string" then
             local lower = string.lower(k)
-            if string.find(lower, "danders") or string.find(lower, "uuf") or string.find(lower, "unhalted") then
+            if string.find(lower, "danders") then
                 print("Key: " .. k .. " (" .. type(v) .. ")")
                 found = found + 1
             end
@@ -565,7 +1124,7 @@ end
 
 SLASH_GUIDEEP1 = "/guideep"
 SlashCmdList["GUIDEEP"] = function()
-    print("=== Deep Scan: DandersFrames & UUFG ===")
+    print("=== Deep Scan: DandersFrames ===")
     
     local function ScanTable(name, tbl)
         if not tbl or type(tbl) ~= "table" then
@@ -584,6 +1143,4 @@ SlashCmdList["GUIDEEP"] = function()
     end
 
     ScanTable("DandersFrames", _G.DandersFrames)
-    ScanTable("UUFG", _G.UUFG)
-    ScanTable("UUF", _G.UUF)
 end
