@@ -29,10 +29,7 @@ move-folders:
   GravityUI/GravityUI: GravityUI
 
 required-dependencies:
-  - unhaltedunitframes
-  - danders-frames
-  - ayijecdm
+  - ellesmereui
   - bigwigs
-  - details
   - plater-nameplates
   - blizzmove
