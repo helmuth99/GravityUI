@@ -1,4 +1,4 @@
-﻿-- GravityUI - Installer Module
+-- GravityUI - Installer Module
 local ADDON_NAME, ns = ...
 
 local Addon = ns.Addon
@@ -475,6 +475,149 @@ Installer.registry = {
     },  -- end Details entry
 }
 
+-- ---------------------------------------------------------------------------
+-- Apply EllesmereUI account-wide Global Settings
+-- ---------------------------------------------------------------------------
+-- These settings live in EllesmereUIDB (account-wide root table) and are NOT
+-- part of the per-character profile string. They are only applied ONCE on the
+-- first installation so that subsequent profile switches don't overwrite any
+-- changes the user made manually.
+--
+-- Keys confirmed via /run for k,v in pairs(EllesmereUIDB) do ... end on
+-- a live GravityUI client (2026-07-18).
+function Installer:ApplyEllesmereGlobalSettings()
+    if not C_AddOns.IsAddOnLoaded("EllesmereUI") then return end
+    local db = _G.EllesmereUIDB
+    if not db then return end
+
+    -- ── EllesmereUIDB account-wide keys (Global Settings → General) ──────
+    db.activeTheme          = "Dark"         -- EUI Options Theme
+    db.hideSyncIcons        = true           -- Disable Sync Icons
+    db.fctFont              = "smf:Gravity"  -- Combat Text Font
+    db.tutorialTipsDisabled = true           -- Suppress Tutorial Tips
+    db.colorsPullFrom       = "GravityUI"    -- Pull Colors From: GravityUI profile
+    db.colorsApplyToAllProfiles = true       -- Apply to All Profiles (global palette)
+    db.accentReskinElements = true           -- Recolour UI elements with accent colour
+    db.hideGameMenuButton   = true
+    db.merchantShowItemLevel= true
+    db.autoOpenContainers   = true
+    db.firstInstallPopupShown = true     -- Suppress EllesmereUI first-install popup (GravityUI handles setup)
+
+    -- ── Global Settings → Fonts & Colors ─────────────────────────────────
+    -- Source: GetFontsDB() in EllesmereUI.lua (stores in EllesmereUIDB.fonts).
+    -- Dark Mode is per-profile (GetDarkModeDB reads from the active profile),
+    -- so it is already carried by the ImportProfile string – no manual seeding needed.
+    -- Global Colors (Pull Colors From / Apply to All Profiles) are already set above.
+    if not db.fonts then db.fonts = {} end
+    db.fonts.global           = "Gravity"    -- Global Font
+    db.fonts.outlineMode      = "outline"    -- Outline Mode: Outline
+    db.fonts.applyToAllGameText = true       -- Apply to All Game Text: on
+    db.fonts.neverShowSlug    = false        -- Disable Slug Outline: off (per screenshot)
+
+    -- ── Blizz UI Enhanced – Blizzard Window Skins ────────────────────────
+    -- Source: WINDOW_ENABLE_KEYS in EllesmereUIBlizzardSkin.lua.
+    -- BlizzardSkin stores ALL its settings account-wide in EllesmereUIDB
+    -- (NOT in the per-character profile string), so ImportProfile never
+    -- touches them. We must set them explicitly on first install.
+    db.themedCharacterSheet  = false  -- off: GravityUI has its own character sheet
+    db.themedInspectSheet    = false  -- off: GravityUI has its own inspect sheet
+    db.reskinLFGMenu         = true
+    db.reskinGreatVault       = true
+    db.reskinCollections      = true
+    db.reskinPlayerSpells     = true
+    db.reskinAdventureGuide   = true
+    db.reskinProfessionsBook  = true
+    db.reskinGuild            = true
+    db.reskinCalendar         = true
+    db.reskinAchievements     = true
+    db.reskinMail             = true
+    db.reskinCatalyst         = true
+    db.reskinSocket           = true
+    db.reskinMicroMenu        = true
+    db.reskinHousing          = true
+    db.reskinProfessions      = true
+    db.reskinWorldMap         = true
+    db.reskinDressUp          = true
+    db.reskinTransmog         = true
+    db.reskinMerchant         = true
+    db.reskinAuctionHouse     = true
+    db.reskinMacros           = true
+    db.reskinSettings         = true
+    db.reskinAddonList        = true
+    db.reskinCraftOrders      = true
+    db.reskinTrainer          = true
+    db.reskinGossip           = true
+    db.reskinQuest            = true
+    db.reskinInspectRecipe    = true
+    db.reskinDelves           = true
+
+    -- ── Blizz UI Enhanced – Tooltips, Menus & Popups ─────────────────────
+    -- Source: EUI_BlizzardSkin_Options.lua (BuildTooltipsPage)
+    db.reskinPopupsMenus    = true        -- Reskin Popups and Menus
+    db.accentReskinElements = true        -- Accent Colored Elements
+    db.tooltipFontScale     = 1.0         -- Font Size Scale (1.0 = 100%)
+    db.reskinQueuePopup     = true        -- Reskin Queue Popup
+    db.showQueueTimer       = true        -- Show Queue Timer
+    db.reskinGameMenu       = false       -- Reskin Pause Menu (off per screenshot)
+    db.customTooltips       = false       -- Reskin Tooltip (off per screenshot)
+    db.tooltipAnchorCursor  = false       -- Anchor to Cursor (off)
+    db.tooltipBgOpacity     = 0.92        -- Background Opacity (92%)
+    db.tooltipShowMode      = "always"    -- Show Tooltips: Always
+    db.showSpellID          = false       -- Show Spell ID on Tooltip
+    db.tooltipBorderSize    = 1           -- Border size = 1
+    db.showItemMaxStacks    = false       -- Show Max Stack for Items
+
+    -- ── CVars set by EllesmereUI's Global Settings panel ─────────────────
+    -- UI Scale + Lag Tolerance are intentionally SKIPPED – GravityUI owns those.
+    pcall(SetCVar, "cameraDistanceMaxZoomFactor", 2.6)   -- Max Camera Distance
+    pcall(SetCVar, "ActionButtonUseKeyDown",      1)     -- Cast Actions on Key Down
+    pcall(SetCVar, "enableFloatingCombatText",    1)     -- Show Combat Damage Text
+    pcall(SetCVar, "floatingCombatTextCombatHealing", 0) -- Show Combat Healing Text (off)
+    pcall(SetCVar, "ScriptErrors",               "HIDE") -- Suppress Lua Errors
+
+    -- ── Blizz UI Enhanced – Dragon Riding (EllesmereUIDragonRidingDB) ─────
+    -- Dragon Riding uses a REAL per-profile DB (EllesmereUIDragonRidingDB),
+    -- but the profile string import may produce an empty/default profile.
+    -- We seed the defaults here to match the screenshot settings (bar disabled,
+    -- layout values as shown). Source: DB_DEFAULTS in
+    -- EllesmereUIBlizzardSkin_DragonRiding.lua
+    if C_AddOns.IsAddOnLoaded("EllesmereUIBlizzardSkin") then
+        local drdb = _G.EllesmereUIDragonRidingDB
+        if not drdb then
+            _G.EllesmereUIDragonRidingDB = {}
+            drdb = _G.EllesmereUIDragonRidingDB
+        end
+        if not drdb.profiles then drdb.profiles = {} end
+        local profileName = (_G.EllesmereUIDB and _G.EllesmereUIDB.activeProfile) or "GravityUI"
+        if not drdb.profiles[profileName] then drdb.profiles[profileName] = {} end
+        local p = drdb.profiles[profileName]
+
+        p.enabled          = false   -- Enable Dragon Riding Bar (off: GravityUI has its own)
+        p.hideInCombat     = false   -- Hide in Combat
+        p.width            = 240     -- Width
+        p.gap              = 2       -- Element Spacing
+        p.stackSpacing     = 2       -- Stack Spacing
+        p.borderThickness  = 0       -- Border Size
+        p.speedHeight      = 14      -- Speed Bar Height
+        p.skyridingHeight  = 10      -- Charge Height
+        p.secondWindHeight = 6       -- Second Wind Height
+        p.thrillColorToggle = true   -- Thrill Color Change
+        -- Show Icon Cooldown Text (whirlingSurgeText sub-key)
+        if not p.whirlingSurgeText then p.whirlingSurgeText = {} end
+        p.whirlingSurgeText.enabled = true
+        -- Show Speed Text
+        if not p.speedText then p.speedText = {} end
+        p.speedText.enabled = true
+        p.speedText.justify = "CENTER"  -- Text Align: Center
+        -- Colors (from screenshot: charge=green/teal, secondWind=yellow, speed=cyan, thrill=orange)
+        p.skyridingFilled  = { r = 0.047, g = 0.824, b = 0.624, a = 1.0 } -- Charge Color
+        p.secondWindFilled = { r = 0.902, g = 0.706, b = 0.133, a = 1.0 } -- Second Wind Color
+        p.normalColor      = { r = 0.055, g = 0.667, b = 0.761, a = 1.0 } -- Speed Color (cyan)
+        p.thrillColor      = { r = 0.902, g = 0.494, b = 0.133, a = 1.0 } -- Thrill Color (orange)
+    end
+
+    ns.Print("EllesmereUI Global Settings + Blizz UI Enhanced applied.")
+end
 
 
 
@@ -751,8 +894,14 @@ function Installer:Install(targetProfile, sourceProfileName, allowList)
     local globalDB = ns.GetAceDB() and ns.GetAceDB().global
     if globalDB then
         if not globalDB.installer then globalDB.installer = {} end
-        globalDB.installer.setupBy = UnitName("player") .. " - " .. GetRealmName()
+        globalDB.installer.setupBy   = UnitName("player") .. " - " .. GetRealmName()
         globalDB.installer.setupDate = date("%d.%m.%Y %H:%M")
+
+        -- Apply EllesmereUI Global Settings once per account (not per profile switch)
+        if not globalDB.installer.ellesmereGlobalsApplied then
+            self:ApplyEllesmereGlobalSettings()
+            globalDB.installer.ellesmereGlobalsApplied = true
+        end
     end
     
     -- Finish
@@ -762,4 +911,36 @@ function Installer:Install(targetProfile, sourceProfileName, allowList)
         acceptText = "Reload UI",
         onAccept = function() ReloadUI() end
     })
+end
+
+-- ---------------------------------------------------------------------------
+-- Early suppression of EllesmereUI's First-Install popup
+-- ---------------------------------------------------------------------------
+-- EllesmereUI_FirstInstall.lua checks EllesmereUIDB.firstInstallPopupShown on
+-- ADDON_LOADED "EllesmereUI" and fires the popup 0.5 s after PLAYER_LOGIN.
+-- GravityUI handles the full setup, so the popup must never appear.
+--
+-- Belt-and-braces strategy:
+--  1. ADDON_LOADED "EllesmereUI" – set the flag immediately so
+--     ComputeShowOnLogin() returns false.
+--  2. PLAYER_LOGIN – set the flag again so the PLAYER_LOGIN guard at line 594
+--     of EllesmereUI_FirstInstall.lua aborts before calling ShowFirstInstallPopup().
+do
+    local _euiSuppressor = CreateFrame("Frame")
+    _euiSuppressor:RegisterEvent("ADDON_LOADED")
+    _euiSuppressor:RegisterEvent("PLAYER_LOGIN")
+    _euiSuppressor:SetScript("OnEvent", function(self, event, arg1)
+        if event == "ADDON_LOADED" then
+            if arg1 ~= "EllesmereUI" then return end
+            self:UnregisterEvent("ADDON_LOADED")
+        elseif event == "PLAYER_LOGIN" then
+            self:UnregisterEvent("PLAYER_LOGIN")
+        end
+        -- Suppress EllesmereUI first-install popup
+        if not _G.EllesmereUIDB then _G.EllesmereUIDB = {} end
+        _G.EllesmereUIDB.firstInstallPopupShown = true
+        if _G.EllesmereUI then
+            _G.EllesmereUI._firstInstallPending = nil
+        end
+    end)
 end

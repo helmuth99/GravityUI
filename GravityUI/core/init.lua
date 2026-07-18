@@ -489,45 +489,8 @@ do
             return db and db.actionbars and (db.actionbars.enabled ~= false)
         end
 
-        -- Characters that are exempt from the Blizz UI Enhanced lock.
-        -- Format: "CharacterName-RealmName" (realm with no spaces, as returned by GetRealmName())
-        local BLIZZ_LOCK_EXEMPT = {
-            ["Cron\195\174x-Blackhand"] = true,   -- Cronîx (î = UTF-8 C3 AE)
-        }
-
-        -- Returns true if the currently logged-in character should bypass the lock.
-        local function IsBlizzLockExemptChar()
-            local name  = UnitName("player")
-            local realm = GetRealmName()
-            if not name or not realm then return false end
-            -- Realm name may contain spaces (e.g. "Blackhand"); normalise to dash-joined key
-            local key = name .. "-" .. realm
-            return BLIZZ_LOCK_EXEMPT[key] == true
-        end
-
         local function ApplyBlizzSkinLock()
-            -- Exempt characters bypass the lock so they can freely configure
-            -- EllesmereUI's Blizz UI Enhanced section.
-            if IsBlizzLockExemptChar() then return end
-
-            local E = _G.EllesmereUI
-            if not (E and E._sidebarButtons) then return end
-            local btn = E._sidebarButtons[LOCK_FOLDER]
-            if not btn then return end
-
-            -- Always re-assert visual state (RefreshSidebarStates recolors on
-            -- every panel open, so we must redo this each time)
-            btn._ovLocked = true
-            if btn._label then
-                btn._label:SetTextColor(DISABLED_R, DISABLED_G, DISABLED_B, DISABLED_A)
-            end
-            if btn._icon then
-                btn._icon:SetDesaturated(true)
-                btn._icon:SetAlpha(DISABLED_ICON_A)
-            end
-            if btn._pwrBtn and btn._pwrBtn._tex then
-                btn._pwrBtn._tex:SetAlpha(0.20)
-            end
+            -- Lock removed: Blizz UI Enhanced is accessible for all users.
         end
 
         -- Hides the EllesmereUI Chat sidebar button when GravityUI's own
@@ -594,33 +557,6 @@ do
             -- Replace Script handlers and wrap RefreshSidebarOverrideLocks only once
             if not scriptsPatched then
                 scriptsPatched = true
-
-                local blizzBtn = E._sidebarButtons[LOCK_FOLDER]
-                if blizzBtn and not IsBlizzLockExemptChar() then
-                    -- Row: block navigation, show locked tooltip
-                    blizzBtn:SetScript("OnClick", nil)
-                    blizzBtn:SetScript("OnEnter", function(self)
-                        if E.ShowWidgetTooltip then
-                            E.ShowWidgetTooltip(self, LOCK_TOOLTIP)
-                        end
-                    end)
-                    blizzBtn:SetScript("OnLeave", function()
-                        if E.HideWidgetTooltip then E.HideWidgetTooltip() end
-                    end)
-
-                    -- Power button: block enable/disable popup, show locked tooltip
-                    if blizzBtn._pwrBtn then
-                        blizzBtn._pwrBtn:SetScript("OnClick", nil)
-                        blizzBtn._pwrBtn:SetScript("OnEnter", function(self)
-                            if E.ShowWidgetTooltip then
-                                E.ShowWidgetTooltip(self, LOCK_TOOLTIP)
-                            end
-                        end)
-                        blizzBtn._pwrBtn:SetScript("OnLeave", function()
-                            if E.HideWidgetTooltip then E.HideWidgetTooltip() end
-                        end)
-                    end
-                end
 
                 -- Wrap RefreshSidebarOverrideLocks so all locks re-assert
                 -- after every future RefreshSidebarStates call.
