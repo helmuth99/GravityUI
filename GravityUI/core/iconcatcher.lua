@@ -662,7 +662,7 @@ local function CatchExistingButtons()
         BTWQuestsMinimapButton = true,
         BtWQuestsMinimapButton = true,
         ExpansionLandingPageMinimapButton = true, -- Patch 12.0.7: Expansion Landing Page
-        EllesmereUIMinimapButton = C_AddOns.IsAddOnLoaded("EllesmereUI") or nil,
+        -- EllesmereUIMinimapButton is always hidden (not caught), see block below.
     }
     
     -- Load Custom Frames from settings (Case-Insensitive Support)
@@ -1132,4 +1132,36 @@ if ns.Movers then
              CatcherFrame:SetScript("OnDragStop", nil)
          end
     end, "Icon Catcher")
+end
+
+-- ---------------------------------------------------------------------------
+-- Always hide EllesmereUI's minimap button
+-- ---------------------------------------------------------------------------
+-- EllesmereUI registers a LibDBIcon minimap button that GravityUI doesn't need.
+-- We hide it unconditionally and prevent EUI from ever showing it again via hooks.
+do
+    local function HideEUIMinimapButton()
+        local btn = _G.EllesmereUIMinimapButton
+        if not btn then return end
+        btn:Hide()
+        if not btn._gravityEUIHidden then
+            btn._gravityEUIHidden = true
+            hooksecurefunc(btn, "Show", function(self)
+                if not self._gravityAllowShow then self:Hide() end
+            end)
+            if btn.SetShown then
+                hooksecurefunc(btn, "SetShown", function(self, show)
+                    if show and not self._gravityAllowShow then self:Hide() end
+                end)
+            end
+        end
+    end
+
+    local _euiMapBtnHider = CreateFrame("Frame")
+    _euiMapBtnHider:RegisterEvent("PLAYER_LOGIN")
+    _euiMapBtnHider:RegisterEvent("PLAYER_ENTERING_WORLD")
+    _euiMapBtnHider:SetScript("OnEvent", function(self, event)
+        if event == "PLAYER_LOGIN" then self:UnregisterEvent("PLAYER_LOGIN") end
+        C_Timer.After(3, HideEUIMinimapButton)
+    end)
 end

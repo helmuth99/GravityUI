@@ -616,6 +616,34 @@ function Installer:ApplyEllesmereGlobalSettings()
         p.thrillColor      = { r = 0.902, g = 0.494, b = 0.133, a = 1.0 } -- Thrill Color (orange)
     end
 
+    -- ── EllesmereUI Cooldown Manager – CDM: Cooldowns bar X = 0 ──────────
+    -- The CDM bar position is stored per-profile in EllesmereUICooldownManagerDB.
+    -- Format: profile.cdmBarPositions["cooldowns"] = { point, relPoint, x, y }
+    -- We force x=0 (centered horizontally) and leave y unchanged.
+    -- Source: SaveCDMBarPosition() in EllesmereUICooldownManager.lua line 3244.
+    if C_AddOns.IsAddOnLoaded("EllesmereUICooldownManager") then
+        local cdmDB = _G.EllesmereUICooldownManagerDB
+        if cdmDB and cdmDB.profiles then
+            local profileName = "GravityUI"
+            if not cdmDB.profiles[profileName] then cdmDB.profiles[profileName] = {} end
+            local cp = cdmDB.profiles[profileName]
+            if not cp.cdmBarPositions then cp.cdmBarPositions = {} end
+            local pos = cp.cdmBarPositions["cooldowns"]
+            if pos then
+                -- Preserve y; only snap x to 0
+                pos.x = 0
+            else
+                -- No saved position yet – create a centered entry
+                cp.cdmBarPositions["cooldowns"] = {
+                    point    = "CENTER",
+                    relPoint = "CENTER",
+                    x        = 0,
+                    y        = -264,  -- default y from screenshot
+                }
+            end
+        end
+    end
+
     ns.Print("EllesmereUI Global Settings + Blizz UI Enhanced applied.")
 end
 
@@ -903,7 +931,7 @@ function Installer:Install(targetProfile, sourceProfileName, allowList)
             globalDB.installer.ellesmereGlobalsApplied = true
         end
     end
-    
+
     -- Finish
     GUI:ShowConfirmation({
         title = "Installation Complete",
@@ -936,11 +964,100 @@ do
         elseif event == "PLAYER_LOGIN" then
             self:UnregisterEvent("PLAYER_LOGIN")
         end
-        -- Suppress EllesmereUI first-install popup
         if not _G.EllesmereUIDB then _G.EllesmereUIDB = {} end
         _G.EllesmereUIDB.firstInstallPopupShown = true
-        if _G.EllesmereUI then
-            _G.EllesmereUI._firstInstallPending = nil
+        if _G.EllesmereUI then _G.EllesmereUI._firstInstallPending = nil end
+    end)
+end
+
+-- ---------------------------------------------------------------------------
+-- CDM: Cooldowns – enforce X = 0 on every character login
+-- ---------------------------------------------------------------------------
+-- Problem: CDM saves bar positions keyed to the bar's anchor edge (LEFT/RIGHT
+-- or CENTER). When a character has a different icon count the bar width changes,
+-- so a LEFT-anchored save for 8 icons will not center a 7-icon bar.
+-- We enforce x=0 (CENTER/CENTER) on every PLAYER_ENTERING_WORLD.
+--
+-- Strategy:
+--  • Immediately seed the DB with CENTER/x=0 so CDM reads it on its first
+--    layout pass (synchronous, before CDM's PLAYER_LOGIN handler completes).
+--  • Fire three enforcement passes at 1 s, 3 s, and 6 s to catch all of
+--    CDM's deferred layout / re-anchor callbacks.
+--  • Each pass only repositions if the bar center is >1 px off screen-center.
+--  • Also writes back to EllesmereUI._cdmBarPositions (the live pointer CDM
+--    uses internally) so any subsequent CDM read stays consistent.
+do
+    local function EnforceCooldownsX()
+        if InCombatLockdown() then return end
+
+        local cdmDB = _G.EllesmereUICooldownManagerDB
+        local cp    = cdmDB and cdmDB.profiles and cdmDB.profiles["GravityUI"]
+
+        -- Update SavedVariables DB
+        if cp then
+            if not cp.cdmBarPositions then cp.cdmBarPositions = {} end
+            local pos = cp.cdmBarPositions["cooldowns"]
+            if pos then
+                pos.x = 0; pos.point = "CENTER"; pos.relPoint = "CENTER"
+            else
+                cp.cdmBarPositions["cooldowns"] = {
+                    point = "CENTER", relPoint = "CENTER", x = 0, y = -264,
+                }
+            end
         end
+
+        -- Update live pointer EllesmereUI._cdmBarPositions
+        local eui = _G.EllesmereUI
+        if eui and eui._cdmBarPositions then
+            local lp = eui._cdmBarPositions["cooldowns"]
+            if lp then lp.x = 0; lp.point = "CENTER"; lp.relPoint = "CENTER" end
+        end
+
+        -- Physically re-anchor frame if it is off-center
+        -- Frame name: "ECME_CDMBar_" .. key  (EllesmereUICooldownManager.lua:3322)
+        local bar = _G["ECME_CDMBar_cooldowns"]
+        if not (bar and bar.GetLeft) then return end
+        local uiParent = UIParent
+        local uiW      = uiParent:GetWidth()
+        local uiH      = uiParent:GetHeight()
+        local ratio    = bar:GetEffectiveScale() / uiParent:GetEffectiveScale()
+        local bL, bR   = bar:GetLeft(),  bar:GetRight()
+        local bT, bB   = bar:GetTop(),   bar:GetBottom()
+        if not (bL and bR and bT and bB) then return end
+        local cx = ((bL + bR) * 0.5 * ratio) - uiW * 0.5
+        local cy = ((bT + bB) * 0.5 * ratio) - uiH * 0.5
+        if math.abs(cx) > 1 then   -- >1 px off center: correct it
+            bar:ClearAllPoints()
+            bar:SetPoint("CENTER", uiParent, "CENTER", 0, cy)
+            if cp and cp.cdmBarPositions and cp.cdmBarPositions["cooldowns"] then
+                cp.cdmBarPositions["cooldowns"].y = cy
+            end
+            if eui and eui._cdmBarPositions and eui._cdmBarPositions["cooldowns"] then
+                eui._cdmBarPositions["cooldowns"].y = cy
+            end
+        end
+    end
+
+    local _cdmCenterFrame = CreateFrame("Frame")
+    _cdmCenterFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
+    _cdmCenterFrame:SetScript("OnEvent", function()
+        -- Seed DB immediately before CDM's first layout pass
+        local cdmDB = _G.EllesmereUICooldownManagerDB
+        local cp    = cdmDB and cdmDB.profiles and cdmDB.profiles["GravityUI"]
+        if cp then
+            if not cp.cdmBarPositions then cp.cdmBarPositions = {} end
+            local pos = cp.cdmBarPositions["cooldowns"]
+            if pos then
+                pos.x = 0; pos.point = "CENTER"; pos.relPoint = "CENTER"
+            else
+                cp.cdmBarPositions["cooldowns"] = {
+                    point = "CENTER", relPoint = "CENTER", x = 0, y = -264,
+                }
+            end
+        end
+        -- Three deferred passes to catch CDM's deferred layout callbacks
+        C_Timer.After(1.0, EnforceCooldownsX)
+        C_Timer.After(3.0, EnforceCooldownsX)
+        C_Timer.After(6.0, EnforceCooldownsX)
     end)
 end
