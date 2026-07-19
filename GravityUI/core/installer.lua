@@ -567,8 +567,22 @@ function Installer:ApplyEllesmereGlobalSettings()
     db.tooltipBorderSize    = 1           -- Border size = 1
     db.showItemMaxStacks    = false       -- Show Max Stack for Items
 
+    -- ── UI Scale: push GravityUI's value into EllesmereUI ────────────────
+    -- EllesmereUI stores its scale in EllesmereUIDB.ppUIScale (account-wide).
+    -- On a first install the value defaults to "auto" (ppUIScaleAuto = true),
+    -- which would overwrite our preferred scale after the next UI reload.
+    -- We write our scale here so EllesmereUI picks it up immediately instead.
+    do
+        local guiDB = ns.GetDB()
+        local guiScale = guiDB and guiDB.general and guiDB.general.uiScale
+        if guiScale then
+            db.ppUIScale     = guiScale
+            db.ppUIScaleAuto = false
+        end
+    end
+
     -- ── CVars set by EllesmereUI's Global Settings panel ─────────────────
-    -- UI Scale + Lag Tolerance are intentionally SKIPPED – GravityUI owns those.
+    -- UI Scale CVar is managed through ppUIScale above; Lag Tolerance via GravityUI.
     pcall(SetCVar, "cameraDistanceMaxZoomFactor", 2.6)   -- Max Camera Distance
     pcall(SetCVar, "ActionButtonUseKeyDown",      1)     -- Cast Actions on Key Down
     pcall(SetCVar, "enableFloatingCombatText",    1)     -- Show Combat Damage Text
