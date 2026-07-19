@@ -345,6 +345,7 @@ end
 --   When GravityUI Minimap is enabled   → EllesmereUIMinimap
 --   When GravityUI Tracker styling on   → EllesmereUIQuestTracker
 --   When GravityUI Action Bars enabled  → EllesmereUIActionBars
+--   When Plater is loaded               → EllesmereUINameplates
 -------------------------------------------------------------------------------
 do
     if C_AddOns.IsAddOnLoaded("EllesmereUI") then
@@ -399,6 +400,12 @@ do
                 end
             end
 
+            -- Nameplates: disable EllesmereUINameplates when Plater is loaded,
+            -- because Plater fully replaces Blizzard/EllesmereUI nameplates.
+            if C_AddOns.IsAddOnLoaded("Plater") then
+                Disable("EllesmereUINameplates")
+            end
+
             -- Notify once if a reload is required to fully remove a module
             if reloadNeeded then
                 C_Timer.After(3, function()
@@ -448,6 +455,7 @@ do
         local MINIMAP_FOLDER       = "EllesmereUIMinimap"
         local QUEST_TRACKER_FOLDER = "EllesmereUIQuestTracker"
         local ACTION_BARS_FOLDER   = "EllesmereUIActionBars"
+        local NAMEPLATES_FOLDER    = "EllesmereUINameplates"
 
         -- These buttons are always hidden when EllesmereUI is loaded alongside GravityUI,
         -- because GravityUI fully manages these features.
@@ -533,6 +541,16 @@ do
             if btn then btn:Hide() end
         end
 
+        -- Hides the EllesmereUI Nameplates sidebar button when Plater is loaded,
+        -- because Plater fully replaces nameplate functionality.
+        local function ApplyNameplatesHide()
+            if not C_AddOns.IsAddOnLoaded("Plater") then return end
+            local E = _G.EllesmereUI
+            if not (E and E._sidebarButtons) then return end
+            local btn = E._sidebarButtons[NAMEPLATES_FOLDER]
+            if btn then btn:Hide() end
+        end
+
         -- Hides all buttons in ALWAYS_HIDDEN_FOLDERS unconditionally.
         local function ApplyAlwaysHidden()
             local E = _G.EllesmereUI
@@ -553,6 +571,7 @@ do
             ApplyMinimapHide()
             ApplyTrackerHide()
             ApplyActionBarsHide()
+            ApplyNameplatesHide()
 
             -- Replace Script handlers and wrap RefreshSidebarOverrideLocks only once
             if not scriptsPatched then
@@ -570,6 +589,7 @@ do
                         ApplyMinimapHide()
                         ApplyTrackerHide()
                         ApplyActionBarsHide()
+                        ApplyNameplatesHide()
                     end
                 end
             end
