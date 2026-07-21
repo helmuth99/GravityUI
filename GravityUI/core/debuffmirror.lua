@@ -554,9 +554,9 @@ function DebuffMirror:ToggleMover()
     moverActive = not moverActive
     self:ShowMoverPreview(moverActive)
     if moverActive then
-        print("|cff00c8ffGravityUI|r Debuff Mirror: |cffFFCC00Mover aktiv|r — verschiebe den Frame, dann klick nochmal auf Toggle Mover.")
+        print("|cff00c8ffGravityUI|r Debuff Mirror: |cffFFCC00Mover active|r — drag the frame, then click Toggle Mover again.")
     else
-        print("|cff00c8ffGravityUI|r Debuff Mirror: |cff00ff00Position gespeichert.|r")
+        print("|cff00c8ffGravityUI|r Debuff Mirror: |cff00ff00Position saved.|r")
     end
 end
 
@@ -566,7 +566,7 @@ function DebuffMirror:ResetPosition()
     mirrorFrame:ClearAllPoints()
     mirrorFrame:SetPoint("CENTER", UIParent, "CENTER", 0, -200)
     SavePosition()
-    print("|cff00c8ffGravityUI|r Debuff Mirror: Position zurückgesetzt.")
+    print("|cff00c8ffGravityUI|r Debuff Mirror: |cff00ff00Position reset.|r")
 end
 
 -- ============================================================================
