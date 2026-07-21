@@ -253,7 +253,9 @@ local function UpdateMirror()
     for _, ic in ipairs(activeIcons) do ReleaseIcon(ic) end
     wipe(activeIcons)
 
-    local maxDebuffs = db.maxDebuffs or 16
+    local maxDebuffs  = db.maxDebuffs    or 16
+    local showCount   = db.showCount    ~= false
+    local showDur     = db.showDuration == true  -- explicit opt-in only
     local count = 0
     local index = 1
 
@@ -267,13 +269,15 @@ local function UpdateMirror()
             ic.icon:SetTexture(aura.icon)
             ic.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
 
-            if aura.applications and aura.applications > 1 then
+            -- Stack count
+            if showCount and aura.applications and aura.applications > 1 then
                 ic.count:SetText(aura.applications) ; ic.count:Show()
             else
                 ic.count:SetText("") ; ic.count:Hide()
             end
 
-            if aura.expirationTime and aura.expirationTime > 0 then
+            -- Duration
+            if showDur and aura.expirationTime and aura.expirationTime > 0 then
                 local rem = aura.expirationTime - GetTime()
                 ic.duration:SetText(FormatDuration(rem)) ; ic.duration:Show()
             else
@@ -331,6 +335,13 @@ local function StartDurationTicker()
     durationTicker = C_Timer.NewTicker(0.2, function()
         local db = GetDB()
         if not db or not db.enabled or #activeIcons == 0 then return end
+        -- If showDuration is off, make sure all duration texts are hidden
+        if not (db.showDuration == true) then
+            for _, ic in ipairs(activeIcons) do
+                ic.duration:Hide()
+            end
+            return
+        end
         local now = GetTime()
         local index = 1
         for _, ic in ipairs(activeIcons) do
