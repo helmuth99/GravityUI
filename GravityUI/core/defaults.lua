@@ -1374,6 +1374,7 @@ ns.Defaults = {
         showCount = true,
         showDuration = true,
         showTooltip = false,
+        blacklist = {},               -- [spellName or tostring(spellId)] = true
         countAnchor = "BOTTOMRIGHT",  -- BOTTOMRIGHT, BOTTOMLEFT, TOPRIGHT, TOPLEFT
         durationAnchor = "TOP",       -- TOP, BOTTOM, CENTER
         position = {

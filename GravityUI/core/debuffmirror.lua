@@ -286,6 +286,7 @@ local function UpdateMirror()
     local maxDebuffs  = db.maxDebuffs    or 16
     local showCount   = db.showCount    ~= false
     local showDur     = db.showDuration == true  -- explicit opt-in only
+    local blacklist   = db.blacklist    or {}
     local count = 0
     local index = 1
 
@@ -294,38 +295,43 @@ local function UpdateMirror()
         if not aura or not aura.auraInstanceID then break end
 
         if aura.icon then
-            count = count + 1
-            local ic = AcquireIcon(mirrorFrame)
-            ic.icon:SetTexture(aura.icon)
-            ic.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+            -- Skip blacklisted debuffs (check by name and by spellId string)
+            local isBlacklisted = blacklist[aura.name]
+                or (aura.spellId and blacklist[tostring(aura.spellId)])
+            if not isBlacklisted then
+                count = count + 1
+                local ic = AcquireIcon(mirrorFrame)
+                ic.icon:SetTexture(aura.icon)
+                ic.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
 
-            -- Stack count
-            if showCount and aura.applications and aura.applications > 1 then
-                ic.count:SetText(aura.applications) ; ic.count:Show()
-            else
-                ic.count:SetText("") ; ic.count:Hide()
-            end
+                -- Stack count
+                if showCount and aura.applications and aura.applications > 1 then
+                    ic.count:SetText(aura.applications) ; ic.count:Show()
+                else
+                    ic.count:SetText("") ; ic.count:Hide()
+                end
 
-            -- Duration
-            if showDur and aura.expirationTime and aura.expirationTime > 0 then
-                local rem = aura.expirationTime - GetTime()
-                ic.duration:SetText(FormatDuration(rem)) ; ic.duration:Show()
-            else
-                ic.duration:SetText("") ; ic.duration:Hide()
-            end
+                -- Duration
+                if showDur and aura.expirationTime and aura.expirationTime > 0 then
+                    local rem = aura.expirationTime - GetTime()
+                    ic.duration:SetText(FormatDuration(rem)) ; ic.duration:Show()
+                else
+                    ic.duration:SetText("") ; ic.duration:Hide()
+                end
 
-            local dc = aura.dispelName and DISPEL_COLORS[aura.dispelName]
-            if dc then
-                ic.dispelColor:SetColorTexture(dc[1], dc[2], dc[3], dc[4])
-            else
-                ic.dispelColor:SetColorTexture(0, 0, 0, 0)
-            end
+                local dc = aura.dispelName and DISPEL_COLORS[aura.dispelName]
+                if dc then
+                    ic.dispelColor:SetColorTexture(dc[1], dc[2], dc[3], dc[4])
+                else
+                    ic.dispelColor:SetColorTexture(0, 0, 0, 0)
+                end
 
-            -- Store for tooltip lookup on hover
-            ic.auraInstanceID = aura.auraInstanceID
+                -- Store for tooltip lookup on hover
+                ic.auraInstanceID = aura.auraInstanceID
 
-            activeIcons[#activeIcons + 1] = ic
-        end
+                activeIcons[#activeIcons + 1] = ic
+            end -- if not isBlacklisted
+        end -- if aura.icon
 
         index = index + 1
         if index > 64 then break end
