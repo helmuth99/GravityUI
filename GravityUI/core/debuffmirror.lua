@@ -60,8 +60,12 @@ local function CreateMirrorIcon(parent)
     f.dispelColor:SetAllPoints(f)
     f.dispelColor:SetColorTexture(0, 0, 0, 0)
 
+    -- Default fallback font (will be overridden by LayoutIcons on every display)
+    local defaultFont = ns.FONT_PATH or "Fonts\\FRIZQT__.TTF"
+
     -- Count
     f.count = f:CreateFontString(nil, "OVERLAY")
+    f.count:SetFont(defaultFont, 11, "OUTLINE")
     f.count:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", 1, 1)
     f.count:SetTextColor(1, 1, 1, 1)
     f.count:SetShadowColor(0, 0, 0, 1)
@@ -69,6 +73,7 @@ local function CreateMirrorIcon(parent)
 
     -- Duration
     f.duration = f:CreateFontString(nil, "OVERLAY")
+    f.duration:SetFont(defaultFont, 10, "OUTLINE")
     f.duration:SetPoint("TOP", f, "TOP", 0, -1)
     f.duration:SetTextColor(1, 1, 1, 1)
     f.duration:SetShadowColor(0, 0, 0, 1)
