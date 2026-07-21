@@ -41,29 +41,49 @@ local function CreateMirrorIcon(parent)
     local f = CreateFrame("Frame", nil, parent)
     f:SetSize(32, 32)
 
+    -- Icon fills the whole frame
     f.icon = f:CreateTexture(nil, "ARTWORK")
     f.icon:SetAllPoints(f)
     f.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
 
-    -- 1px border using a solid overlay texture + inner clip
-    f.border = f:CreateTexture(nil, "OVERLAY", nil, 5)
-    f.border:SetAllPoints(f)
-    f.border:SetColorTexture(0, 0, 0, 1)
+    -- 4 separate 1px border textures (same technique as buffborders.lua)
+    -- These sit OVER the icon on OVERLAY, so the icon stays fully visible.
+    f.borderTop = f:CreateTexture(nil, "OVERLAY", nil, 6)
+    f.borderTop:SetPoint("TOPLEFT",  f, "TOPLEFT",  0,  0)
+    f.borderTop:SetPoint("TOPRIGHT", f, "TOPRIGHT", 0,  0)
+    f.borderTop:SetHeight(1)
+    f.borderTop:SetColorTexture(0, 0, 0, 1)
 
-    f.innerCover = f:CreateTexture(nil, "OVERLAY", nil, 6)
-    f.innerCover:SetPoint("TOPLEFT",     f, "TOPLEFT",      1, -1)
-    f.innerCover:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -1,  1)
-    f.innerCover:SetColorTexture(0, 0, 0, 0)
+    f.borderBottom = f:CreateTexture(nil, "OVERLAY", nil, 6)
+    f.borderBottom:SetPoint("BOTTOMLEFT",  f, "BOTTOMLEFT",  0, 0)
+    f.borderBottom:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", 0, 0)
+    f.borderBottom:SetHeight(1)
+    f.borderBottom:SetColorTexture(0, 0, 0, 1)
 
-    -- Coloured dispel-type line (1px inset, drawn on top of the black border)
+    f.borderLeft = f:CreateTexture(nil, "OVERLAY", nil, 6)
+    f.borderLeft:SetPoint("TOPLEFT",    f, "TOPLEFT",    0,  0)
+    f.borderLeft:SetPoint("BOTTOMLEFT", f, "BOTTOMLEFT", 0,  0)
+    f.borderLeft:SetWidth(1)
+    f.borderLeft:SetColorTexture(0, 0, 0, 1)
+
+    f.borderRight = f:CreateTexture(nil, "OVERLAY", nil, 6)
+    f.borderRight:SetPoint("TOPRIGHT",    f, "TOPRIGHT",    0, 0)
+    f.borderRight:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", 0, 0)
+    f.borderRight:SetWidth(1)
+    f.borderRight:SetColorTexture(0, 0, 0, 1)
+
+    -- Dispel-type colour: thin coloured line on top of the black border
+    -- (reuses the top edge as a coloured indicator)
     f.dispelColor = f:CreateTexture(nil, "OVERLAY", nil, 7)
-    f.dispelColor:SetAllPoints(f)
+    f.dispelColor:SetPoint("TOPLEFT",  f, "TOPLEFT",  0,  0)
+    f.dispelColor:SetPoint("TOPRIGHT", f, "TOPRIGHT", 0,  0)
+    f.dispelColor:SetHeight(2)
     f.dispelColor:SetColorTexture(0, 0, 0, 0)
 
-    -- Default fallback font (will be overridden by LayoutIcons on every display)
+    -- Default fallback font (overridden by LayoutIcons on every display)
     local defaultFont = ns.FONT_PATH or "Fonts\\FRIZQT__.TTF"
 
-    -- Count
+    -- Count (bottom-right)
     f.count = f:CreateFontString(nil, "OVERLAY")
     f.count:SetFont(defaultFont, 11, "OUTLINE")
     f.count:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", 1, 1)
@@ -71,7 +91,7 @@ local function CreateMirrorIcon(parent)
     f.count:SetShadowColor(0, 0, 0, 1)
     f.count:SetShadowOffset(1, -1)
 
-    -- Duration
+    -- Duration (top-center)
     f.duration = f:CreateFontString(nil, "OVERLAY")
     f.duration:SetFont(defaultFont, 10, "OUTLINE")
     f.duration:SetPoint("TOP", f, "TOP", 0, -1)
@@ -97,6 +117,7 @@ local function ReleaseIcon(f)
     f.count:SetText("")
     f.duration:SetText("")
     f.dispelColor:SetColorTexture(0, 0, 0, 0)
+    f.dispelColor:Hide()
     iconPool[#iconPool + 1] = f
 end
 
@@ -300,8 +321,21 @@ end
 local function SavePosition()
     local db = GetDB()
     if not db or not mirrorFrame then return end
-    local point, _, relPoint, x, y = mirrorFrame:GetPoint()
-    db.position = { point = point or "CENTER", relPoint = relPoint or "CENTER", x = x or 0, y = y or -200 }
+    -- Convert current position to screen-space CENTER coordinates.
+    -- Using CENTER as anchor means the visual midpoint of the icon block
+    -- is what gets saved/restored, regardless of how many icons are visible.
+    local cx = mirrorFrame:GetLeft()  + mirrorFrame:GetWidth()  * 0.5
+    local cy = mirrorFrame:GetBottom() + mirrorFrame:GetHeight() * 0.5
+    if not cx or not cy then
+        -- Frame not yet on screen, fall back to GetPoint
+        local point, _, relPoint, x, y = mirrorFrame:GetPoint()
+        db.position = { point = point or "CENTER", relPoint = relPoint or "CENTER", x = x or 0, y = y or -200 }
+        return
+    end
+    -- Express as offset from UIParent CENTER
+    local uiCX = UIParent:GetWidth()  * 0.5
+    local uiCY = UIParent:GetHeight() * 0.5
+    db.position = { point = "CENTER", relPoint = "CENTER", x = cx - uiCX, y = cy - uiCY }
 end
 
 local function RestorePosition()
