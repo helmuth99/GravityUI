@@ -327,26 +327,11 @@ local function CreateMirrorFrame()
 
     RestorePosition()
 
-    -- Mover registration
+    -- Mover registration: toggleFunc is called with (frame, enabled, force)
+    -- by both the Blizzard Edit-Mode checkbox AND the GravityUI Edit Mode panel.
     if ns.Movers then
         ns.Movers:Register("DebuffMirror", mirrorFrame, function(frame, show)
-            frame:EnableMouse(show and true or false)
-            if show then
-                if not frame.dragLabel then
-                    local bg = CreateFrame("Frame", nil, frame, "BackdropTemplate")
-                    bg:SetAllPoints(frame)
-                    bg:SetFrameLevel(frame:GetFrameLevel() - 1)
-                    frame.dragLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-                    frame.dragLabel:SetPoint("BOTTOM", frame, "TOP", 0, 3)
-                    frame.dragLabel:SetText("|cff00c8ffDebuff Mirror|r (Drag)")
-                    frame.dragLabel:SetShadowColor(0, 0, 0, 1)
-                    frame.dragLabel:SetShadowOffset(1, -1)
-                    frame.dragLabelBg = bg
-                end
-                frame.dragLabel:Show()
-            else
-                if frame.dragLabel then frame.dragLabel:Hide() end
-            end
+            DebuffMirror:ShowMoverPreview(show)
         end, "Debuff Mirror")
     end
 end
@@ -372,35 +357,32 @@ function DebuffMirror:ApplySettings()
     self:Refresh()
 end
 
--- Mover state
-local moverActive = false
-
-function DebuffMirror:ToggleMover()
+-- ShowMoverPreview: shared helper used by toggleFunc AND ToggleMover()
+-- show=true  → display placeholder icons, make frame draggable
+-- show=false → hide placeholders, restore real debuffs
+function DebuffMirror:ShowMoverPreview(show)
     CreateMirrorFrame()
     if not mirrorFrame then return end
 
-    moverActive = not moverActive
-
-    if moverActive then
-        -- Show the frame with placeholder icons so it's draggable
+    if show then
         mirrorFrame:Show()
         mirrorFrame:EnableMouse(true)
 
-        -- Release real icons and show placeholders
+        -- Swap to placeholder icons
         for _, ic in ipairs(activeIcons) do ReleaseIcon(ic) end
         wipe(activeIcons)
 
         local db = GetDB()
-        local iconSize  = (db and db.iconSize)    or 32
-        local spacing   = (db and db.spacing)     or 4
-        local perRow    = (db and db.iconsPerRow) or 8
-        local count     = math.min((db and db.maxDebuffs) or 16, perRow * 2) -- 2 rows of placeholders
+        local iconSize = (db and db.iconSize)    or 32
+        local spacing  = (db and db.spacing)     or 4
+        local perRow   = (db and db.iconsPerRow) or 8
+        local count    = math.min((db and db.maxDebuffs) or 16, perRow * 2)
 
         for i = 1, count do
             local ic = AcquireIcon(mirrorFrame)
             ic.icon:SetTexture("Interface\\Icons\\INV_Misc_QuestionMark")
             ic.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
-            ic.count:SetText("") ; ic.count:Hide()
+            ic.count:SetText("")    ; ic.count:Hide()
             ic.duration:SetText("") ; ic.duration:Hide()
             ic.dispelColor:SetColorTexture(0, 0, 0, 0)
             activeIcons[#activeIcons + 1] = ic
@@ -408,7 +390,6 @@ function DebuffMirror:ToggleMover()
 
         LayoutIcons()
 
-        -- Resize to show all placeholders
         local cols = math.min(count, perRow)
         local rows = math.ceil(count / perRow)
         mirrorFrame:SetSize(
@@ -416,7 +397,7 @@ function DebuffMirror:ToggleMover()
             rows * (iconSize + spacing) - spacing
         )
 
-        -- Label
+        -- Drag label
         if not mirrorFrame.dragLabel then
             mirrorFrame.dragLabel = mirrorFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
             mirrorFrame.dragLabel:SetPoint("BOTTOM", mirrorFrame, "TOP", 0, 4)
@@ -425,13 +406,22 @@ function DebuffMirror:ToggleMover()
             mirrorFrame.dragLabel:SetShadowOffset(1, -1)
         end
         mirrorFrame.dragLabel:Show()
-
-        print("|cff00c8ffGravityUI|r Debuff Mirror: |cffFFCC00Mover aktiv|r — verschiebe den Frame, dann klick nochmal auf Toggle Mover.")
     else
-        -- Done moving: restore real debuffs
         mirrorFrame:EnableMouse(false)
         if mirrorFrame.dragLabel then mirrorFrame.dragLabel:Hide() end
         self:Refresh()
+    end
+end
+
+-- Mover state
+local moverActive = false
+
+function DebuffMirror:ToggleMover()
+    moverActive = not moverActive
+    self:ShowMoverPreview(moverActive)
+    if moverActive then
+        print("|cff00c8ffGravityUI|r Debuff Mirror: |cffFFCC00Mover aktiv|r — verschiebe den Frame, dann klick nochmal auf Toggle Mover.")
+    else
         print("|cff00c8ffGravityUI|r Debuff Mirror: |cff00ff00Position gespeichert.|r")
     end
 end
@@ -451,10 +441,14 @@ end
 
 local evtFrame = CreateFrame("Frame")
 evtFrame:RegisterUnitEvent("UNIT_AURA", "player")
-evtFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
+evtFrame:RegisterEvent("PLAYER_LOGIN")         -- early: create frame + register mover
+evtFrame:RegisterEvent("PLAYER_ENTERING_WORLD") -- refresh on zone change
 evtFrame:SetScript("OnEvent", function(self, event)
-    if event == "PLAYER_ENTERING_WORLD" then
+    if event == "PLAYER_LOGIN" then
+        -- Create the frame at login so the GravityUI Edit Mode panel
+        -- can find it in Movers.registry when it builds its list.
         CreateMirrorFrame()
+    elseif event == "PLAYER_ENTERING_WORLD" then
         C_Timer.After(1.0, function() DebuffMirror:Refresh() end)
     elseif event == "UNIT_AURA" then
         local db = GetDB()
