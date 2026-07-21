@@ -148,16 +148,16 @@ local function BuildDebuffs(parent)
     content.rowCount = content.rowCount + 0.3
 
     -- Icon Size
-    AddRow(content, "Icon-Größe", "slider", "iconSize", dmDB, Refresh, 16, 64, 2)
+    AddRow(content, "Icon-Größe",             "slider", 16, 64, "iconSize",   dmDB, Refresh, 2)
 
     -- Spacing
-    AddRow(content, "Abstand zwischen Icons", "slider", "spacing", dmDB, Refresh, 0, 20, 1)
+    AddRow(content, "Abstand zwischen Icons", "slider", 0,  20, "spacing",    dmDB, Refresh, 1)
 
     -- Icons per row
-    AddRow(content, "Icons pro Reihe", "slider", "iconsPerRow", dmDB, Refresh, 1, 32, 1)
+    AddRow(content, "Icons pro Reihe",        "slider", 1,  32, "iconsPerRow", dmDB, Refresh, 1)
 
     -- Max debuffs
-    AddRow(content, "Maximale Anzahl Debuffs", "slider", "maxDebuffs", dmDB, Refresh, 1, 40, 1)
+    AddRow(content, "Maximale Anzahl Debuffs","slider", 1,  40, "maxDebuffs", dmDB, Refresh, 1)
 
     content.rowCount = content.rowCount + 0.5
     CreateSubLabel(content, "Layout")
