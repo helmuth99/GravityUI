@@ -159,8 +159,10 @@ end
 
 local function FormatDuration(secs)
     if not secs or secs <= 0 then return "" end
-    if secs >= 3600 then return string.format("%dh", math.floor(secs / 3600))
-    elseif secs >= 60 then return string.format("%dm", math.floor(secs / 60))
+    -- Use math.ceil to match Blizzard's timer display:
+    -- 395s → ceil(395/60)=7 → "7m", not floor=6 → "6m"
+    if secs >= 3600 then return string.format("%dh", math.ceil(secs / 3600))
+    elseif secs >= 60 then return string.format("%dm", math.ceil(secs / 60))
     elseif secs >= 10 then return string.format("%d",  math.floor(secs))
     else                    return string.format("%.1f", secs)
     end
