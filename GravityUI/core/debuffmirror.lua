@@ -34,6 +34,38 @@ local activeIcons = {}
 local updatePending = false
 
 -- ============================================================================
+-- POSITION HELPERS  (declared early so all later functions can call them)
+-- ============================================================================
+
+local function SavePosition()
+    local db = GetDB()
+    if not db or not mirrorFrame then return end
+    local x = mirrorFrame:GetLeft()
+    local y = mirrorFrame:GetTop()
+    if x and y then
+        db.position = { point = "TOPLEFT", relPoint = "BOTTOMLEFT", x = x, y = y }
+    else
+        local point, _, relPoint, ox, oy = mirrorFrame:GetPoint()
+        db.position = { point = point or "TOPLEFT", relPoint = relPoint or "BOTTOMLEFT", x = ox or 100, y = oy or 500 }
+    end
+end
+
+local function RestorePosition()
+    local db = GetDB()
+    if not db or not mirrorFrame then return end
+    local pos = db.position or {}
+    mirrorFrame:ClearAllPoints()
+    mirrorFrame:SetPoint(
+        pos.point    or "CENTER",
+        UIParent,
+        pos.relPoint or "CENTER",
+        pos.x or 0,
+        pos.y or -200
+    )
+end
+
+
+-- ============================================================================
 -- ICON FACTORY
 -- ============================================================================
 
@@ -155,8 +187,8 @@ local function LayoutIcons()
     local growDir    = db.growDirection or "RIGHT"
     local step       = iconSize + spacing
 
-    -- Text settings
-    local fontPath   = (ns.GetFont and ns.GetFont()) or "Fonts\\FRIZQT__.TTF"
+    -- Use the module-local GetFont() which safely wraps ns.GetFont
+    local fontPath   = GetFont()
     local fontSize   = db.textFontSize  or math.max(8, math.floor(iconSize * 0.33))
     local outline    = db.textOutline   or "OUTLINE"
     local showCount  = db.showCount  ~= false
@@ -341,38 +373,6 @@ end
 -- MIRROR FRAME (DRAGGABLE CONTAINER)
 -- ============================================================================
 
-local function SavePosition()
-    local db = GetDB()
-    if not db or not mirrorFrame then return end
-    -- Store the absolute screen-space TOPLEFT of the frame.
-    -- After StartMoving()/StopMovingOrSizing() WoW converts the frame to
-    -- a BOTTOMLEFT-relative anchor. GetLeft()/GetTop() always return the
-    -- actual pixel coordinates regardless of anchor, so we use those.
-    local x = mirrorFrame:GetLeft()
-    local y = mirrorFrame:GetTop()
-    if x and y then
-        -- TOPLEFT anchor relative to UIParent BOTTOMLEFT:
-        --   SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", GetLeft(), GetTop())
-        db.position = { point = "TOPLEFT", relPoint = "BOTTOMLEFT", x = x, y = y }
-    else
-        -- Fallback if frame has no screen coordinates yet
-        local point, _, relPoint, ox, oy = mirrorFrame:GetPoint()
-        db.position = { point = point or "TOPLEFT", relPoint = relPoint or "BOTTOMLEFT", x = ox or 100, y = oy or 500 }
-    end
-end
-
-local function RestorePosition()
-    local db = GetDB()
-    if not db or not mirrorFrame then return end
-    local pos = db.position or {}
-    mirrorFrame:ClearAllPoints()
-    -- Default to a sensible position if nothing is saved yet
-    local pt  = pos.point    or "CENTER"
-    local rpt = pos.relPoint or "CENTER"
-    local ox  = pos.x or 0
-    local oy  = pos.y or -200
-    mirrorFrame:SetPoint(pt, UIParent, rpt, ox, oy)
-end
 
 local function CreateMirrorFrame()
     if mirrorFrame then return end
