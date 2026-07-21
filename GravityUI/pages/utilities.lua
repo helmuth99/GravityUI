@@ -127,7 +127,7 @@ local function BuildDebuffs(parent)
     content.rowCount = 1.3
 
     -- Info
-    local infoBox = GUI:CreateInfoBox(content, "|cffFFCC00Info:|r Erstellt eine 1:1 Kopie deiner aktiven Debuffs mit einem sauberen 1px-Border an einer frei positionierbaren Stelle.\n\n|cFFFFFFFFNote:|r Nutze den Button \"Toggle Mover\" unten um den Frame zu verschieben.")
+    local infoBox = GUI:CreateInfoBox(content, "|cffFFCC00Info:|r Creates a 1:1 copy of your active debuffs with a clean 1px border, freely positionable anywhere on screen.\n\n|cFFFFFFFFNote:|r Use the 'Toggle Mover' button below to drag the frame to your desired position.")
     infoBox:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT + 5))
     infoBox:SetPoint("RIGHT", content, "RIGHT", -10, 0)
     content.rowCount = content.rowCount + (infoBox:GetHeight() / (ROW_HEIGHT + 5)) + 0.3
@@ -140,92 +140,72 @@ local function BuildDebuffs(parent)
     end
 
     -- Master enable
-    AddRow(content, "Debuff Mirror aktivieren", "checkbox", "enabled", dmDB, Refresh)
+    AddRow(content, "Enable Debuff Mirror", "checkbox", "enabled", dmDB, Refresh)
     content.rowCount = content.rowCount + 0.5
 
-    -- Sub-label: Darstellung
-    CreateSubLabel(content, "Darstellung")
+    CreateSubLabel(content, "Appearance")
     content.rowCount = content.rowCount + 0.3
 
-    -- Icon Size
-    AddRow(content, "Icon-Größe",             "slider", 16, 64, "iconSize",   dmDB, Refresh, 2)
-
-    -- Spacing
-    AddRow(content, "Abstand zwischen Icons", "slider", 0,  20, "spacing",    dmDB, Refresh, 1)
-
-    -- Icons per row
-    AddRow(content, "Icons pro Reihe",        "slider", 1,  32, "iconsPerRow", dmDB, Refresh, 1)
-
-    -- Max debuffs
-    AddRow(content, "Maximale Anzahl Debuffs","slider", 1,  40, "maxDebuffs", dmDB, Refresh, 1)
+    AddRow(content, "Icon Size",            "slider", 16, 64, "iconSize",    dmDB, Refresh, 2)
+    AddRow(content, "Icon Spacing",         "slider", 0,  20, "spacing",     dmDB, Refresh, 1)
+    AddRow(content, "Icons per Row",        "slider", 1,  32, "iconsPerRow", dmDB, Refresh, 1)
+    AddRow(content, "Max Debuffs",          "slider", 1,  40, "maxDebuffs",  dmDB, Refresh, 1)
 
     content.rowCount = content.rowCount + 0.5
     CreateSubLabel(content, "Layout")
     content.rowCount = content.rowCount + 0.3
 
-    -- Grow direction
     local growOptions = {
-        { value = "RIGHT", text = "Nach rechts" },
-        { value = "LEFT",  text = "Nach links" },
-        { value = "DOWN",  text = "Nach unten" },
-        { value = "UP",    text = "Nach oben" },
+        { value = "RIGHT", text = "Right" },
+        { value = "LEFT",  text = "Left"  },
+        { value = "DOWN",  text = "Down"  },
+        { value = "UP",    text = "Up"    },
     }
-    AddRow(content, "Wachstumsrichtung", "dropdown", growOptions, "growDirection", dmDB, Refresh)
+    AddRow(content, "Grow Direction", "dropdown", growOptions, "growDirection", dmDB, Refresh)
 
     content.rowCount = content.rowCount + 0.5
     CreateSubLabel(content, "Original Frame")
     content.rowCount = content.rowCount + 0.3
 
-    AddRow(content, "Blizzard Debuff-Frame ausblenden", "checkbox", "hideOriginal", dmDB, Refresh)
+    AddRow(content, "Hide Blizzard Debuff Frame", "checkbox", "hideOriginal", dmDB, Refresh)
 
     content.rowCount = content.rowCount + 0.5
     CreateSubLabel(content, "Text")
     content.rowCount = content.rowCount + 0.3
 
-    -- Duration font size
-    AddRow(content, "Dauer Schriftgröße",           "slider", 6, 24, "textFontSize",  dmDB, Refresh, 1)
+    AddRow(content, "Duration Font Size", "slider", 6, 24, "textFontSize",  dmDB, Refresh, 1)
+    AddRow(content, "Stack Count Font Size", "slider", 6, 24, "countFontSize", dmDB, Refresh, 1)
 
-    -- Count (stacks) font size
-    AddRow(content, "Stacks Schriftgröße",          "slider", 6, 24, "countFontSize", dmDB, Refresh, 1)
-
-    -- Outline
     local outlineOptions = {
         { value = "OUTLINE",      text = "Outline" },
         { value = "THICKOUTLINE", text = "Thick Outline" },
         { value = "MONOCHROME",   text = "Monochrome" },
-        { value = "",             text = "Kein Outline" },
+        { value = "",             text = "No Outline" },
     }
-    AddRow(content, "Text-Outline", "dropdown", outlineOptions, "textOutline", dmDB, Refresh)
+    AddRow(content, "Text Outline", "dropdown", outlineOptions, "textOutline", dmDB, Refresh)
 
-    -- Show count
-    AddRow(content, "Anzahl anzeigen (Stacks)",   "checkbox", "showCount",    dmDB, Refresh)
+    AddRow(content, "Show Stack Count", "checkbox", "showCount",    dmDB, Refresh)
+    AddRow(content, "Show Duration",    "checkbox", "showDuration", dmDB, Refresh)
 
-    -- Show duration
-    AddRow(content, "Dauer anzeigen",             "checkbox", "showDuration", dmDB, Refresh)
-
-    -- Count anchor
     local countAnchorOptions = {
-        { value = "BOTTOMRIGHT", text = "Unten-Rechts" },
-        { value = "BOTTOMLEFT",  text = "Unten-Links" },
-        { value = "TOPRIGHT",    text = "Oben-Rechts" },
-        { value = "TOPLEFT",     text = "Oben-Links" },
+        { value = "BOTTOMRIGHT", text = "Bottom Right" },
+        { value = "BOTTOMLEFT",  text = "Bottom Left"  },
+        { value = "TOPRIGHT",    text = "Top Right"    },
+        { value = "TOPLEFT",     text = "Top Left"     },
     }
-    AddRow(content, "Stacks-Position", "dropdown", countAnchorOptions, "countAnchor", dmDB, Refresh)
+    AddRow(content, "Stack Count Position", "dropdown", countAnchorOptions, "countAnchor", dmDB, Refresh)
 
-    -- Duration anchor
     local durAnchorOptions = {
-        { value = "TOP",    text = "Oben" },
-        { value = "BOTTOM", text = "Unten" },
-        { value = "CENTER", text = "Mitte" },
+        { value = "TOP",    text = "Top"    },
+        { value = "BOTTOM", text = "Bottom" },
+        { value = "CENTER", text = "Center" },
     }
-    AddRow(content, "Dauer-Position", "dropdown", durAnchorOptions, "durationAnchor", dmDB, Refresh)
-
+    AddRow(content, "Duration Position", "dropdown", durAnchorOptions, "durationAnchor", dmDB, Refresh)
 
     content.rowCount = content.rowCount + 0.5
     CreateSubLabel(content, "Position")
     content.rowCount = content.rowCount + 0.3
 
-    -- Toggle Mover Button
     local moverBtn = GUI:CreateButton(content, "Toggle Mover", 160, 24, function()
         if ns.DebuffMirror and ns.DebuffMirror.ToggleMover then
             ns.DebuffMirror:ToggleMover()
@@ -233,7 +213,6 @@ local function BuildDebuffs(parent)
     end)
     moverBtn:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT + 5)))
 
-    -- Reset Position Button
     local resetBtn = GUI:CreateButton(content, "Reset Position", 160, 24, function()
         if ns.DebuffMirror and ns.DebuffMirror.ResetPosition then
             ns.DebuffMirror:ResetPosition()
