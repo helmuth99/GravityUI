@@ -133,6 +133,13 @@ local function CreateMirrorIcon(parent)
 
     f:Hide()
 
+    -- SetPassThroughButtons is a protected function that cannot be called
+    -- during combat (ADDON_ACTION_BLOCKED). Call it ONCE at creation time
+    -- (always out-of-combat) so clicks always pass through to the world.
+    -- EnableMouse(true/false) in LayoutIcons still gates whether hover
+    -- events fire, so tooltips remain opt-in without needing this call again.
+    f:SetPassThroughButtons("LeftButton", "RightButton", "MiddleButton")
+
     -- Tooltip: OnEnter/OnLeave are always registered but gated on db.showTooltip
     f:SetScript("OnEnter", function(self)
         local db = GetDB()
@@ -237,14 +244,10 @@ local function LayoutIcons()
 
         ic:ClearAllPoints()
         ic:SetPoint("TOPLEFT", mirrorFrame, "TOPLEFT", x, y)
-        if showTooltip then
-            -- EnableMouse for OnEnter/OnLeave (tooltip), but pass all clicks
-            -- through to the world so the frame never blocks interaction.
-            ic:EnableMouse(true)
-            ic:SetPassThroughButtons("LeftButton", "RightButton", "MiddleButton")
-        else
-            ic:EnableMouse(false)
-        end
+        -- SetPassThroughButtons is called once at icon-creation time (safe, out-of-combat).
+        -- Only toggle EnableMouse here; calling SetPassThroughButtons here would
+        -- trigger ADDON_ACTION_BLOCKED when LayoutIcons runs during combat.
+        ic:EnableMouse(showTooltip)
 
         -- Count
         ic.count:SetFont(fontPath, cntFontSize, outline)
