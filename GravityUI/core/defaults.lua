@@ -1373,6 +1373,7 @@ ns.Defaults = {
         textOutline = "OUTLINE",  -- OUTLINE, THICKOUTLINE, MONOCHROME, or ""
         showCount = true,
         showDuration = true,
+        showTooltip = false,
         countAnchor = "BOTTOMRIGHT",  -- BOTTOMRIGHT, BOTTOMLEFT, TOPRIGHT, TOPLEFT
         durationAnchor = "TOP",       -- TOP, BOTTOM, CENTER
         position = {

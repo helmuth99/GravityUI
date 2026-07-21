@@ -132,6 +132,22 @@ local function CreateMirrorIcon(parent)
     f.duration:SetShadowOffset(1, -1)
 
     f:Hide()
+
+    -- Tooltip: OnEnter/OnLeave are always registered but gated on db.showTooltip
+    f:SetScript("OnEnter", function(self)
+        local db = GetDB()
+        if not db or not db.showTooltip then return end
+        if not self.auraInstanceID then return end
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        GameTooltip:SetUnitAuraByAuraInstanceID("player", self.auraInstanceID)
+        GameTooltip:Show()
+    end)
+    f:SetScript("OnLeave", function(self)
+        if GameTooltip:GetOwner() == self then
+            GameTooltip:Hide()
+        end
+    end)
+
     return f
 end
 
@@ -145,11 +161,13 @@ end
 local function ReleaseIcon(f)
     f:Hide()
     f:ClearAllPoints()
+    f:EnableMouse(false)
     f.icon:SetTexture(nil)
     f.count:SetText("")
     f.duration:SetText("")
     f.dispelColor:SetColorTexture(0, 0, 0, 0)
     f.dispelColor:Hide()
+    f.auraInstanceID = nil
     iconPool[#iconPool + 1] = f
 end
 
@@ -196,7 +214,8 @@ local function LayoutIcons()
     local outline    = db.textOutline   or "OUTLINE"
     local showCount  = db.showCount  ~= false
     local showDur    = db.showDuration ~= false
-    local cAnchor    = db.countAnchor    or "BOTTOMRIGHT"
+    local showTooltip = db.showTooltip == true
+    local cAnchor     = db.countAnchor    or "BOTTOMRIGHT"
     local dAnchor    = db.durationAnchor or "TOP"
 
     for idx, ic in ipairs(activeIcons) do
@@ -218,6 +237,7 @@ local function LayoutIcons()
 
         ic:ClearAllPoints()
         ic:SetPoint("TOPLEFT", mirrorFrame, "TOPLEFT", x, y)
+        ic:EnableMouse(showTooltip)  -- only capture mouse when tooltips are on
 
         -- Count
         ic.count:SetFont(fontPath, cntFontSize, outline)
@@ -293,6 +313,9 @@ local function UpdateMirror()
             else
                 ic.dispelColor:SetColorTexture(0, 0, 0, 0)
             end
+
+            -- Store for tooltip lookup on hover
+            ic.auraInstanceID = aura.auraInstanceID
 
             activeIcons[#activeIcons + 1] = ic
         end

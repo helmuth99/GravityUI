@@ -186,6 +186,7 @@ local function BuildDebuffs(parent)
 
     AddRow(content, "Show Stack Count", "checkbox", "showCount",    dmDB, Refresh)
     AddRow(content, "Show Duration",    "checkbox", "showDuration", dmDB, Refresh)
+    AddRow(content, "Show Tooltips",    "checkbox", "showTooltip",  dmDB, Refresh)
 
     local countAnchorOptions = {
         { value = "BOTTOMRIGHT", text = "Bottom Right" },
