@@ -1,4 +1,4 @@
-﻿-- GravityUI - Debuff Mirror Module
+-- GravityUI - Debuff Mirror Module
 -- Creates a movable 1:1 copy of Blizzard player debuffs
 -- with configurable icon size, spacing, icons-per-row, grow direction.
 local ADDON_NAME, ns = ...
@@ -365,6 +365,79 @@ end
 
 function DebuffMirror:ApplySettings()
     self:Refresh()
+end
+
+-- Mover state
+local moverActive = false
+
+function DebuffMirror:ToggleMover()
+    CreateMirrorFrame()
+    if not mirrorFrame then return end
+
+    moverActive = not moverActive
+
+    if moverActive then
+        -- Show the frame with placeholder icons so it's draggable
+        mirrorFrame:Show()
+        mirrorFrame:EnableMouse(true)
+
+        -- Release real icons and show placeholders
+        for _, ic in ipairs(activeIcons) do ReleaseIcon(ic) end
+        wipe(activeIcons)
+
+        local db = GetDB()
+        local iconSize  = (db and db.iconSize)    or 32
+        local spacing   = (db and db.spacing)     or 4
+        local perRow    = (db and db.iconsPerRow) or 8
+        local count     = math.min((db and db.maxDebuffs) or 16, perRow * 2) -- 2 rows of placeholders
+
+        for i = 1, count do
+            local ic = AcquireIcon(mirrorFrame)
+            ic.icon:SetTexture("Interface\\Icons\\INV_Misc_QuestionMark")
+            ic.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+            ic.count:SetText("") ; ic.count:Hide()
+            ic.duration:SetText("") ; ic.duration:Hide()
+            ic.dispelColor:SetColorTexture(0, 0, 0, 0)
+            activeIcons[#activeIcons + 1] = ic
+        end
+
+        LayoutIcons()
+
+        -- Resize to show all placeholders
+        local cols = math.min(count, perRow)
+        local rows = math.ceil(count / perRow)
+        mirrorFrame:SetSize(
+            cols * (iconSize + spacing) - spacing,
+            rows * (iconSize + spacing) - spacing
+        )
+
+        -- Label
+        if not mirrorFrame.dragLabel then
+            mirrorFrame.dragLabel = mirrorFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+            mirrorFrame.dragLabel:SetPoint("BOTTOM", mirrorFrame, "TOP", 0, 4)
+            mirrorFrame.dragLabel:SetText("|cff00c8ffDebuff Mirror|r  — Drag me!")
+            mirrorFrame.dragLabel:SetShadowColor(0, 0, 0, 1)
+            mirrorFrame.dragLabel:SetShadowOffset(1, -1)
+        end
+        mirrorFrame.dragLabel:Show()
+
+        print("|cff00c8ffGravityUI|r Debuff Mirror: |cffFFCC00Mover aktiv|r — verschiebe den Frame, dann klick nochmal auf Toggle Mover.")
+    else
+        -- Done moving: restore real debuffs
+        mirrorFrame:EnableMouse(false)
+        if mirrorFrame.dragLabel then mirrorFrame.dragLabel:Hide() end
+        self:Refresh()
+        print("|cff00c8ffGravityUI|r Debuff Mirror: |cff00ff00Position gespeichert.|r")
+    end
+end
+
+function DebuffMirror:ResetPosition()
+    CreateMirrorFrame()
+    if not mirrorFrame then return end
+    mirrorFrame:ClearAllPoints()
+    mirrorFrame:SetPoint("CENTER", UIParent, "CENTER", 0, -200)
+    SavePosition()
+    print("|cff00c8ffGravityUI|r Debuff Mirror: Position zurückgesetzt.")
 end
 
 -- ============================================================================

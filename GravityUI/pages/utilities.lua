@@ -127,7 +127,7 @@ local function BuildDebuffs(parent)
     content.rowCount = 1.3
 
     -- Info
-    local infoBox = GUI:CreateInfoBox(content, "|cffFFCC00Info:|r Erstellt eine 1:1 Kopie deiner aktiven Debuffs mit einem sauberen 1px-Border an einer frei positionierbaren Stelle.\n\n|cFFFFFFFFNote:|r Den Frame kannst du im Blizzard Edit-Mode verschieben (Checkbox \"Show GravityUI Elements\" aktivieren).")
+    local infoBox = GUI:CreateInfoBox(content, "|cffFFCC00Info:|r Erstellt eine 1:1 Kopie deiner aktiven Debuffs mit einem sauberen 1px-Border an einer frei positionierbaren Stelle.\n\n|cFFFFFFFFNote:|r Nutze den Button \"Toggle Mover\" unten um den Frame zu verschieben.")
     infoBox:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT + 5))
     infoBox:SetPoint("RIGHT", content, "RIGHT", -10, 0)
     content.rowCount = content.rowCount + (infoBox:GetHeight() / (ROW_HEIGHT + 5)) + 0.3
@@ -178,6 +178,27 @@ local function BuildDebuffs(parent)
 
     -- Hide original
     AddRow(content, "Blizzard Debuff-Frame ausblenden", "checkbox", "hideOriginal", dmDB, Refresh)
+
+    content.rowCount = content.rowCount + 0.5
+    CreateSubLabel(content, "Position")
+    content.rowCount = content.rowCount + 0.3
+
+    -- Toggle Mover Button
+    local moverBtn = GUI:CreateButton(content, "Toggle Mover", 160, 24, function()
+        if ns.DebuffMirror and ns.DebuffMirror.ToggleMover then
+            ns.DebuffMirror:ToggleMover()
+        end
+    end)
+    moverBtn:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT + 5)))
+
+    -- Reset Position Button
+    local resetBtn = GUI:CreateButton(content, "Reset Position", 160, 24, function()
+        if ns.DebuffMirror and ns.DebuffMirror.ResetPosition then
+            ns.DebuffMirror:ResetPosition()
+        end
+    end)
+    resetBtn:SetPoint("LEFT", moverBtn, "RIGHT", 10, 0)
+    content.rowCount = content.rowCount + 1.2
 
     content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
 end
