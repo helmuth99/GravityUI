@@ -408,6 +408,24 @@ local function ApplyOriginalVisibility()
     if not DebuffFrame or not db then return end
 
     local shouldHide = db.enabled and db.hideOriginal
+
+    -- Guard: DebuffFrame:SetShown can interact with protected frames in combat.
+    -- Defer visibility change to out-of-combat if necessary.
+    if InCombatLockdown() then
+        -- Register a one-shot PLAYER_REGEN_ENABLED to apply after combat
+        if not DebuffFrame._gMirrorCombatPending then
+            DebuffFrame._gMirrorCombatPending = true
+            local f = CreateFrame("Frame")
+            f:RegisterEvent("PLAYER_REGEN_ENABLED")
+            f:SetScript("OnEvent", function(self)
+                self:UnregisterAllEvents()
+                DebuffFrame._gMirrorCombatPending = nil
+                ApplyOriginalVisibility()
+            end)
+        end
+        return
+    end
+
     DebuffFrame:SetShown(not shouldHide)
 
     if not DebuffFrame._gMirrorHooked then
@@ -529,6 +547,10 @@ end
 local moverActive = false
 
 function DebuffMirror:ToggleMover()
+    if InCombatLockdown() then
+        print("|cff00c8ffGravityUI|r Debuff Mirror: |cffFF4444Cannot move frames in combat.|r")
+        return
+    end
     moverActive = not moverActive
     self:ShowMoverPreview(moverActive)
     if moverActive then
