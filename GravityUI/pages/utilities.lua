@@ -182,8 +182,11 @@ local function BuildDebuffs(parent)
     CreateSubLabel(content, "Text")
     content.rowCount = content.rowCount + 0.3
 
-    -- Font size
-    AddRow(content, "Schriftgröße",             "slider", 6, 24, "textFontSize", dmDB, Refresh, 1)
+    -- Duration font size
+    AddRow(content, "Dauer Schriftgröße",           "slider", 6, 24, "textFontSize",  dmDB, Refresh, 1)
+
+    -- Count (stacks) font size
+    AddRow(content, "Stacks Schriftgröße",          "slider", 6, 24, "countFontSize", dmDB, Refresh, 1)
 
     -- Outline
     local outlineOptions = {

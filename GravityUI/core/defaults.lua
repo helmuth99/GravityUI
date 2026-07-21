@@ -1369,6 +1369,7 @@ ns.Defaults = {
         hideOriginal = false,
         -- Text
         textFontSize = 11,
+        countFontSize = 14,
         textOutline = "OUTLINE",  -- OUTLINE, THICKOUTLINE, MONOCHROME, or ""
         showCount = true,
         showDuration = true,

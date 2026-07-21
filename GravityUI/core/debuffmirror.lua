@@ -191,7 +191,8 @@ local function LayoutIcons()
 
     -- Use the module-local GetFont() which safely wraps ns.GetFont
     local fontPath   = GetFont()
-    local fontSize   = db.textFontSize  or math.max(8, math.floor(iconSize * 0.33))
+    local durFontSize = db.textFontSize  or math.max(8, math.floor(iconSize * 0.33))
+    local cntFontSize = db.countFontSize or math.max(9, math.floor(iconSize * 0.40))
     local outline    = db.textOutline   or "OUTLINE"
     local showCount  = db.showCount  ~= false
     local showDur    = db.showDuration ~= false
@@ -219,13 +220,13 @@ local function LayoutIcons()
         ic:SetPoint("TOPLEFT", mirrorFrame, "TOPLEFT", x, y)
 
         -- Count
-        ic.count:SetFont(fontPath, fontSize, outline)
+        ic.count:SetFont(fontPath, cntFontSize, outline)
         ic.count:ClearAllPoints()
         ic.count:SetPoint(cAnchor, ic, cAnchor, 1, 1)
         if showCount then ic.count:Show() else ic.count:Hide() end
 
         -- Duration
-        ic.duration:SetFont(fontPath, math.max(7, fontSize - 1), outline)
+        ic.duration:SetFont(fontPath, math.max(7, durFontSize), outline)
         ic.duration:ClearAllPoints()
         -- Map anchor string to position + offset
         local dAnchorMap = {
