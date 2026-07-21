@@ -1358,6 +1358,21 @@ ns.Defaults = {
         lfgRole_tank = false,
         lfgRole_healer = false,
         lfgRole_dps = true,
-    }
+    },
+    debuffMirror = {
+        enabled = false,
+        iconSize = 32,
+        spacing = 4,
+        iconsPerRow = 8,
+        maxDebuffs = 16,
+        growDirection = "RIGHT", -- RIGHT, LEFT, UP, DOWN
+        hideOriginal = false,
+        position = {
+            point = "CENTER",
+            relPoint = "CENTER",
+            x = 0,
+            y = -200,
+        },
+    },
 }
 }

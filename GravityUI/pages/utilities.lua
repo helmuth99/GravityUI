@@ -106,12 +106,90 @@ local function BuildSoundAlerts(parent)
 end
 
 --==============================================================================================================================================================================================
+-- DEBUFFS
+--==============================================================================================================================================================================================
+
+local function BuildDebuffs(parent)
+    local scroll, content = GUI:CreateScrollableContent(parent)
+    scroll:SetAllPoints()
+    local db = ns.GetDB(); if not db then return end
+    if not db.debuffMirror then
+        db.debuffMirror = { enabled = false, iconSize = 32, spacing = 4, iconsPerRow = 8, maxDebuffs = 16, growDirection = "RIGHT", hideOriginal = false,
+            position = { point = "CENTER", relPoint = "CENTER", x = 0, y = -200 } }
+    end
+    local dmDB = db.debuffMirror
+    content.rowCount = 0
+
+    -- Header
+    local header = GUI:CreateSectionHeader(content, "Debuff Mirror")
+    header:SetPoint("TOPLEFT", 10, -10)
+    header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
+    content.rowCount = 1.3
+
+    -- Info
+    local infoBox = GUI:CreateInfoBox(content, "|cffFFCC00Info:|r Erstellt eine 1:1 Kopie deiner aktiven Debuffs mit einem sauberen 1px-Border an einer frei positionierbaren Stelle.\n\n|cFFFFFFFFNote:|r Den Frame kannst du im Blizzard Edit-Mode verschieben (Checkbox \"Show GravityUI Elements\" aktivieren).")
+    infoBox:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT + 5))
+    infoBox:SetPoint("RIGHT", content, "RIGHT", -10, 0)
+    content.rowCount = content.rowCount + (infoBox:GetHeight() / (ROW_HEIGHT + 5)) + 0.3
+
+    -- Refresh helper
+    local function Refresh()
+        if ns.DebuffMirror and ns.DebuffMirror.ApplySettings then
+            ns.DebuffMirror:ApplySettings()
+        end
+    end
+
+    -- Master enable
+    AddRow(content, "Debuff Mirror aktivieren", "checkbox", "enabled", dmDB, Refresh)
+    content.rowCount = content.rowCount + 0.5
+
+    -- Sub-label: Darstellung
+    CreateSubLabel(content, "Darstellung")
+    content.rowCount = content.rowCount + 0.3
+
+    -- Icon Size
+    AddRow(content, "Icon-Größe", "slider", "iconSize", dmDB, Refresh, 16, 64, 2)
+
+    -- Spacing
+    AddRow(content, "Abstand zwischen Icons", "slider", "spacing", dmDB, Refresh, 0, 20, 1)
+
+    -- Icons per row
+    AddRow(content, "Icons pro Reihe", "slider", "iconsPerRow", dmDB, Refresh, 1, 32, 1)
+
+    -- Max debuffs
+    AddRow(content, "Maximale Anzahl Debuffs", "slider", "maxDebuffs", dmDB, Refresh, 1, 40, 1)
+
+    content.rowCount = content.rowCount + 0.5
+    CreateSubLabel(content, "Layout")
+    content.rowCount = content.rowCount + 0.3
+
+    -- Grow direction
+    local growOptions = {
+        { value = "RIGHT", text = "Nach rechts" },
+        { value = "LEFT",  text = "Nach links" },
+        { value = "DOWN",  text = "Nach unten" },
+        { value = "UP",    text = "Nach oben" },
+    }
+    AddRow(content, "Wachstumsrichtung", "dropdown", growOptions, "growDirection", dmDB, Refresh)
+
+    content.rowCount = content.rowCount + 0.5
+    CreateSubLabel(content, "Original Frame")
+    content.rowCount = content.rowCount + 0.3
+
+    -- Hide original
+    AddRow(content, "Blizzard Debuff-Frame ausblenden", "checkbox", "hideOriginal", dmDB, Refresh)
+
+    content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
+end
+
+--==============================================================================================================================================================================================
 -- PAGE REGISTRATION
 --==============================================================================================================================================================================================
 ns.GUI:RegisterPage("utilities", {
     title = "Utilities",
     subTabs = {
         { name = "Sound Alerts", builder = BuildSoundAlerts },
+        { name = "Debuffs",      builder = BuildDebuffs },
     },
     OnBuild = function(content)
         local scrollFrame = content:GetParent()

@@ -6,7 +6,7 @@
 ## AddonCompartmentFuncOnLeave: GravityUI_CompartmentOnLeave
 ## Notes: Modern UI configuration addon for World of Warcraft
 ## Author: Gravity
-## Version: @project-version@
+## Version: v4.00.11
 ## DefaultState: Enabled
 ## LoadOnDemand: 0
 ## SavedVariables: GravityUI_DB
@@ -53,6 +53,7 @@ core\mplusteleport.lua
 core\worldmarks.lua
 core\autohide.lua
 core\buffborders.lua
+core\debuffmirror.lua
 core\chat.lua
 core\datatexts.lua
 core\datapanels.lua
