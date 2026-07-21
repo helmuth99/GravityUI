@@ -237,7 +237,14 @@ local function LayoutIcons()
 
         ic:ClearAllPoints()
         ic:SetPoint("TOPLEFT", mirrorFrame, "TOPLEFT", x, y)
-        ic:EnableMouse(showTooltip)  -- only capture mouse when tooltips are on
+        if showTooltip then
+            -- EnableMouse for OnEnter/OnLeave (tooltip), but pass all clicks
+            -- through to the world so the frame never blocks interaction.
+            ic:EnableMouse(true)
+            ic:SetPassThroughButtons("LeftButton", "RightButton", "MiddleButton")
+        else
+            ic:EnableMouse(false)
+        end
 
         -- Count
         ic.count:SetFont(fontPath, cntFontSize, outline)
