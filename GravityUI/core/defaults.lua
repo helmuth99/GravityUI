@@ -1375,10 +1375,10 @@ ns.Defaults = {
         countAnchor = "BOTTOMRIGHT",  -- BOTTOMRIGHT, BOTTOMLEFT, TOPRIGHT, TOPLEFT
         durationAnchor = "TOP",       -- TOP, BOTTOM, CENTER
         position = {
-            point = "CENTER",
-            relPoint = "CENTER",
-            x = 0,
-            y = -200,
+            point = "TOPLEFT",
+            relPoint = "BOTTOMLEFT",
+            x = 400,
+            y = 400,
         },
     },
 }

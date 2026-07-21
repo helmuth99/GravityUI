@@ -264,7 +264,7 @@ local function UpdateMirror()
 
     LayoutIcons()
 
-    -- Resize container
+    -- Resize container to fit current icons
     local iconSize = db.iconSize    or 32
     local spacing  = db.spacing     or 4
     local perRow   = db.iconsPerRow or 8
@@ -276,14 +276,8 @@ local function UpdateMirror()
         cols * (iconSize + spacing) - spacing,
         rows * (iconSize + spacing) - spacing
     )
-
-    -- CRITICAL: Re-apply the saved CENTER anchor after every size change.
-    -- After StartMoving()/StopMovingOrSizing() WoW switches the frame to a
-    -- TOPLEFT anchor. When SetSize is then called the frame shrinks from
-    -- the right/bottom corner, not from the center. Calling RestorePosition
-    -- here re-applies the CENTER anchor so the icon block always appears
-    -- centered on the position the user dragged it to.
-    RestorePosition()
+    -- Note: NO RestorePosition here. TOPLEFT anchor means the frame grows
+    -- right/down from its fixed top-left corner. That is the correct behaviour.
 end
 
 local function ScheduleUpdate()
@@ -350,21 +344,21 @@ end
 local function SavePosition()
     local db = GetDB()
     if not db or not mirrorFrame then return end
-    -- Convert current position to screen-space CENTER coordinates.
-    -- Using CENTER as anchor means the visual midpoint of the icon block
-    -- is what gets saved/restored, regardless of how many icons are visible.
-    local cx = mirrorFrame:GetLeft()  + mirrorFrame:GetWidth()  * 0.5
-    local cy = mirrorFrame:GetBottom() + mirrorFrame:GetHeight() * 0.5
-    if not cx or not cy then
-        -- Frame not yet on screen, fall back to GetPoint
-        local point, _, relPoint, x, y = mirrorFrame:GetPoint()
-        db.position = { point = point or "CENTER", relPoint = relPoint or "CENTER", x = x or 0, y = y or -200 }
-        return
+    -- Store the absolute screen-space TOPLEFT of the frame.
+    -- After StartMoving()/StopMovingOrSizing() WoW converts the frame to
+    -- a BOTTOMLEFT-relative anchor. GetLeft()/GetTop() always return the
+    -- actual pixel coordinates regardless of anchor, so we use those.
+    local x = mirrorFrame:GetLeft()
+    local y = mirrorFrame:GetTop()
+    if x and y then
+        -- TOPLEFT anchor relative to UIParent BOTTOMLEFT:
+        --   SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", GetLeft(), GetTop())
+        db.position = { point = "TOPLEFT", relPoint = "BOTTOMLEFT", x = x, y = y }
+    else
+        -- Fallback if frame has no screen coordinates yet
+        local point, _, relPoint, ox, oy = mirrorFrame:GetPoint()
+        db.position = { point = point or "TOPLEFT", relPoint = relPoint or "BOTTOMLEFT", x = ox or 100, y = oy or 500 }
     end
-    -- Express as offset from UIParent CENTER
-    local uiCX = UIParent:GetWidth()  * 0.5
-    local uiCY = UIParent:GetHeight() * 0.5
-    db.position = { point = "CENTER", relPoint = "CENTER", x = cx - uiCX, y = cy - uiCY }
 end
 
 local function RestorePosition()
@@ -372,7 +366,12 @@ local function RestorePosition()
     if not db or not mirrorFrame then return end
     local pos = db.position or {}
     mirrorFrame:ClearAllPoints()
-    mirrorFrame:SetPoint(pos.point or "CENTER", UIParent, pos.relPoint or "CENTER", pos.x or 0, pos.y or -200)
+    -- Default to a sensible position if nothing is saved yet
+    local pt  = pos.point    or "CENTER"
+    local rpt = pos.relPoint or "CENTER"
+    local ox  = pos.x or 0
+    local oy  = pos.y or -200
+    mirrorFrame:SetPoint(pt, UIParent, rpt, ox, oy)
 end
 
 local function CreateMirrorFrame()
