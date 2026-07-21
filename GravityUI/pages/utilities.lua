@@ -176,8 +176,47 @@ local function BuildDebuffs(parent)
     CreateSubLabel(content, "Original Frame")
     content.rowCount = content.rowCount + 0.3
 
-    -- Hide original
     AddRow(content, "Blizzard Debuff-Frame ausblenden", "checkbox", "hideOriginal", dmDB, Refresh)
+
+    content.rowCount = content.rowCount + 0.5
+    CreateSubLabel(content, "Text")
+    content.rowCount = content.rowCount + 0.3
+
+    -- Font size
+    AddRow(content, "Schriftgröße",             "slider", 6, 24, "textFontSize", dmDB, Refresh, 1)
+
+    -- Outline
+    local outlineOptions = {
+        { value = "OUTLINE",      text = "Outline" },
+        { value = "THICKOUTLINE", text = "Thick Outline" },
+        { value = "MONOCHROME",   text = "Monochrome" },
+        { value = "",             text = "Kein Outline" },
+    }
+    AddRow(content, "Text-Outline", "dropdown", outlineOptions, "textOutline", dmDB, Refresh)
+
+    -- Show count
+    AddRow(content, "Anzahl anzeigen (Stacks)",   "checkbox", "showCount",    dmDB, Refresh)
+
+    -- Show duration
+    AddRow(content, "Dauer anzeigen",             "checkbox", "showDuration", dmDB, Refresh)
+
+    -- Count anchor
+    local countAnchorOptions = {
+        { value = "BOTTOMRIGHT", text = "Unten-Rechts" },
+        { value = "BOTTOMLEFT",  text = "Unten-Links" },
+        { value = "TOPRIGHT",    text = "Oben-Rechts" },
+        { value = "TOPLEFT",     text = "Oben-Links" },
+    }
+    AddRow(content, "Stacks-Position", "dropdown", countAnchorOptions, "countAnchor", dmDB, Refresh)
+
+    -- Duration anchor
+    local durAnchorOptions = {
+        { value = "TOP",    text = "Oben" },
+        { value = "BOTTOM", text = "Unten" },
+        { value = "CENTER", text = "Mitte" },
+    }
+    AddRow(content, "Dauer-Position", "dropdown", durAnchorOptions, "durationAnchor", dmDB, Refresh)
+
 
     content.rowCount = content.rowCount + 0.5
     CreateSubLabel(content, "Position")

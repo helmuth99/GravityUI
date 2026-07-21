@@ -1367,6 +1367,13 @@ ns.Defaults = {
         maxDebuffs = 16,
         growDirection = "RIGHT", -- RIGHT, LEFT, UP, DOWN
         hideOriginal = false,
+        -- Text
+        textFontSize = 11,
+        textOutline = "OUTLINE",  -- OUTLINE, THICKOUTLINE, MONOCHROME, or ""
+        showCount = true,
+        showDuration = true,
+        countAnchor = "BOTTOMRIGHT",  -- BOTTOMRIGHT, BOTTOMLEFT, TOPRIGHT, TOPLEFT
+        durationAnchor = "TOP",       -- TOP, BOTTOM, CENTER
         position = {
             point = "CENTER",
             relPoint = "CENTER",

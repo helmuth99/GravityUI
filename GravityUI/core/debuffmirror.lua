@@ -149,12 +149,20 @@ local function LayoutIcons()
     local db = GetDB()
     if not db then return end
 
-    local iconSize = db.iconSize    or 32
-    local spacing  = db.spacing     or 4
-    local perRow   = db.iconsPerRow or 8
-    local growDir  = db.growDirection or "RIGHT"
-    local step     = iconSize + spacing
-    local fontPath, _, fontOutline = GetFont()
+    local iconSize   = db.iconSize      or 32
+    local spacing    = db.spacing       or 4
+    local perRow     = db.iconsPerRow   or 8
+    local growDir    = db.growDirection or "RIGHT"
+    local step       = iconSize + spacing
+
+    -- Text settings
+    local fontPath   = (ns.GetFont and ns.GetFont()) or "Fonts\\FRIZQT__.TTF"
+    local fontSize   = db.textFontSize  or math.max(8, math.floor(iconSize * 0.33))
+    local outline    = db.textOutline   or "OUTLINE"
+    local showCount  = db.showCount  ~= false
+    local showDur    = db.showDuration ~= false
+    local cAnchor    = db.countAnchor    or "BOTTOMRIGHT"
+    local dAnchor    = db.durationAnchor or "TOP"
 
     for idx, ic in ipairs(activeIcons) do
         ic:SetSize(iconSize, iconSize)
@@ -167,20 +175,33 @@ local function LayoutIcons()
             x =  col * step ; y = -row * step
         elseif growDir == "LEFT" then
             x = -col * step ; y = -row * step
-        elseif growDir == "DOWN" then
-            x =  col * step ; y = -row * step
         elseif growDir == "UP" then
             x =  col * step ; y =  row * step
-        else
+        else -- DOWN or default
             x =  col * step ; y = -row * step
         end
 
         ic:ClearAllPoints()
         ic:SetPoint("TOPLEFT", mirrorFrame, "TOPLEFT", x, y)
 
-        local fs = math.max(8, math.floor(iconSize * 0.33))
-        ic.count:SetFont(fontPath, fs, fontOutline)
-        ic.duration:SetFont(fontPath, math.max(7, math.floor(iconSize * 0.28)), fontOutline)
+        -- Count
+        ic.count:SetFont(fontPath, fontSize, outline)
+        ic.count:ClearAllPoints()
+        ic.count:SetPoint(cAnchor, ic, cAnchor, 1, 1)
+        if showCount then ic.count:Show() else ic.count:Hide() end
+
+        -- Duration
+        ic.duration:SetFont(fontPath, math.max(7, fontSize - 1), outline)
+        ic.duration:ClearAllPoints()
+        -- Map anchor string to position + offset
+        local dAnchorMap = {
+            TOP    = {"TOP",    0, -1},
+            BOTTOM = {"BOTTOM", 0,  2},
+            CENTER = {"CENTER", 0,  0},
+        }
+        local dm = dAnchorMap[dAnchor] or {"TOP", 0, -1}
+        ic.duration:SetPoint(dm[1], ic, dm[1], dm[2], dm[3])
+        if showDur then ic.duration:Show() else ic.duration:Hide() end
     end
 end
 
@@ -255,6 +276,14 @@ local function UpdateMirror()
         cols * (iconSize + spacing) - spacing,
         rows * (iconSize + spacing) - spacing
     )
+
+    -- CRITICAL: Re-apply the saved CENTER anchor after every size change.
+    -- After StartMoving()/StopMovingOrSizing() WoW switches the frame to a
+    -- TOPLEFT anchor. When SetSize is then called the frame shrinks from
+    -- the right/bottom corner, not from the center. Calling RestorePosition
+    -- here re-applies the CENTER anchor so the icon block always appears
+    -- centered on the position the user dragged it to.
+    RestorePosition()
 end
 
 local function ScheduleUpdate()
