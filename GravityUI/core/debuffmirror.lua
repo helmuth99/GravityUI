@@ -130,15 +130,30 @@ local function CreateMirrorIcon(parent)
     f.duration:SetTextColor(1, 1, 1, 1)
     f.duration:SetShadowColor(0, 0, 0, 1)
     f.duration:SetShadowOffset(1, -1)
+    f.duration:Hide() -- superseded by the Cooldown frame below
+
+    -- Cooldown frame: engine-driven swipe + countdown text.
+    -- SetCooldown() is a C function that accepts secret numbers directly,
+    -- avoiding any Lua arithmetic on Blizzard's protected aura values.
+    f.cooldown = CreateFrame("Cooldown", nil, f, "CooldownFrameTemplate")
+    f.cooldown:SetAllPoints(f)
+    f.cooldown:SetDrawSwipe(true)
+    f.cooldown:SetDrawBling(false)
+    f.cooldown:SetDrawEdge(false)
+    f.cooldown:SetHideCountdownNumbers(false) -- let OmniCC / native countdown show
+    f.cooldown:SetReverse(false)
+    f.cooldown:SetFrameLevel(f:GetFrameLevel() + 1)
 
     f:Hide()
 
-    -- SetPassThroughButtons is a protected function that cannot be called
-    -- during combat (ADDON_ACTION_BLOCKED). Call it ONCE at creation time
-    -- (always out-of-combat) so clicks always pass through to the world.
-    -- EnableMouse(true/false) in LayoutIcons still gates whether hover
-    -- events fire, so tooltips remain opt-in without needing this call again.
-    f:SetPassThroughButtons("LeftButton", "RightButton", "MiddleButton")
+    -- SetPassThroughButtons is protected: cannot be called during combat.
+    -- We guard here and flag any frame created during lockdown so it can
+    -- be fixed up by the PLAYER_REGEN_ENABLED handler below.
+    if not InCombatLockdown() then
+        f:SetPassThroughButtons("LeftButton", "RightButton", "MiddleButton")
+    else
+        f._needsPassThrough = true
+    end
 
     -- Tooltip: OnEnter/OnLeave are always registered but gated on db.showTooltip
     f:SetScript("OnEnter", function(self)
@@ -174,6 +189,7 @@ local function ReleaseIcon(f)
     f.duration:SetText("")
     f.dispelColor:SetColorTexture(0, 0, 0, 0)
     f.dispelColor:Hide()
+    f.cooldown:Clear()
     f.auraInstanceID = nil
     iconPool[#iconPool + 1] = f
 end
@@ -298,28 +314,55 @@ local function UpdateMirror()
         if not aura or not aura.auraInstanceID then break end
 
         if aura.icon then
-            -- Skip blacklisted debuffs (check by name and by spellId string)
-            local isBlacklisted = blacklist[aura.name]
-                or (aura.spellId and blacklist[tostring(aura.spellId)])
+            -- Skip blacklisted debuffs (check by name and by spellId string).
+            -- aura.name and aura.spellId may be secret values (Blizzard API protection),
+            -- which cannot be used as table keys. pcall guards against that crash.
+            local isBlacklisted = false
+            local ok, val
+            ok, val = pcall(function() return blacklist[aura.name] end)
+            if ok and val then isBlacklisted = true end
+            if not isBlacklisted and aura.spellId then
+                ok, val = pcall(function() return blacklist[tostring(aura.spellId)] end)
+                if ok and val then isBlacklisted = true end
+            end
             if not isBlacklisted then
                 count = count + 1
                 local ic = AcquireIcon(mirrorFrame)
                 ic.icon:SetTexture(aura.icon)
                 ic.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
 
-                -- Stack count
-                if showCount and aura.applications and aura.applications > 1 then
-                    ic.count:SetText(aura.applications) ; ic.count:Show()
+                -- Stack count.
+                -- applications is a secret number; SetText() is a C function
+                -- that accepts secret values directly — no Lua comparison needed.
+                if showCount then
+                    pcall(function()
+                        if aura.applications and aura.applications > 1 then
+                            ic.count:SetText(aura.applications)
+                            ic.count:Show()
+                        else
+                            ic.count:SetText("") ; ic.count:Hide()
+                        end
+                    end)
                 else
                     ic.count:SetText("") ; ic.count:Hide()
                 end
 
-                -- Duration
-                if showDur and aura.expirationTime and aura.expirationTime > 0 then
-                    local rem = aura.expirationTime - GetTime()
-                    ic.duration:SetText(FormatDuration(rem)) ; ic.duration:Show()
+                -- Duration: pass secret expirationTime/duration directly to
+                -- the C-level SetCooldown — no Lua arithmetic on secret values.
+                -- The Cooldown frame drives its own swipe + countdown text.
+                if showDur then
+                    pcall(function()
+                        if aura.expirationTime and aura.duration then
+                            ic.cooldown:SetCooldown(
+                                aura.expirationTime - aura.duration,
+                                aura.duration
+                            )
+                        else
+                            ic.cooldown:Clear()
+                        end
+                    end)
                 else
-                    ic.duration:SetText("") ; ic.duration:Hide()
+                    ic.cooldown:Clear()
                 end
 
                 local dc = aura.dispelName and DISPEL_COLORS[aura.dispelName]
@@ -367,40 +410,9 @@ local function ScheduleUpdate()
     end)
 end
 
--- ============================================================================
--- DURATION TICKER
--- ============================================================================
-
-local durationTicker
-local function StartDurationTicker()
-    if durationTicker then return end
-    durationTicker = C_Timer.NewTicker(0.2, function()
-        local db = GetDB()
-        if not db or not db.enabled or #activeIcons == 0 then return end
-        -- If showDuration is off, make sure all duration texts are hidden
-        if not (db.showDuration == true) then
-            for _, ic in ipairs(activeIcons) do
-                ic.duration:Hide()
-            end
-            return
-        end
-        local now = GetTime()
-        local index = 1
-        for _, ic in ipairs(activeIcons) do
-            local aura = C_UnitAuras.GetDebuffDataByIndex("player", index)
-            if aura and aura.expirationTime and aura.expirationTime > 0 then
-                local rem = aura.expirationTime - now
-                if rem > 0 then
-                    ic.duration:SetText(FormatDuration(rem)) ; ic.duration:Show()
-                else
-                    ic.duration:SetText("") ; ic.duration:Hide()
-                end
-            end
-            index = index + 1
-            if index > 64 then break end
-        end
-    end)
-end
+-- Duration display is handled entirely by each icon's Cooldown frame
+-- (engine-driven; no ticker needed). Stub kept for call-site compatibility.
+local function StartDurationTicker() end
 
 -- ============================================================================
 -- ORIGINAL FRAME VISIBILITY
@@ -578,17 +590,41 @@ end
 
 local evtFrame = CreateFrame("Frame")
 evtFrame:RegisterUnitEvent("UNIT_AURA", "player")
-evtFrame:RegisterEvent("PLAYER_LOGIN")         -- early: create frame + register mover
-evtFrame:RegisterEvent("PLAYER_ENTERING_WORLD") -- refresh on zone change
+evtFrame:RegisterEvent("PLAYER_LOGIN")
+evtFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
+evtFrame:RegisterEvent("PLAYER_REGEN_ENABLED") -- fix up any icons created during combat
 evtFrame:SetScript("OnEvent", function(self, event)
     if event == "PLAYER_LOGIN" then
         -- Create the frame at login so the GravityUI Edit Mode panel
         -- can find it in Movers.registry when it builds its list.
         CreateMirrorFrame()
+        -- Pre-warm the icon pool so CreateMirrorIcon is never called during
+        -- combat (which would trigger ADDON_ACTION_BLOCKED on SetPassThroughButtons).
+        local db = GetDB()
+        local warmCount = (db and db.maxDebuffs) or 16
+        for i = 1, warmCount do
+            local ic = CreateMirrorIcon(UIParent)
+            ic:Hide()
+            iconPool[#iconPool + 1] = ic
+        end
     elseif event == "PLAYER_ENTERING_WORLD" then
         C_Timer.After(1.0, function() DebuffMirror:Refresh() end)
     elseif event == "UNIT_AURA" then
         local db = GetDB()
         if db and db.enabled then ScheduleUpdate() end
+    elseif event == "PLAYER_REGEN_ENABLED" then
+        -- Apply SetPassThroughButtons to any icons that were created during combat.
+        for _, ic in ipairs(activeIcons) do
+            if ic._needsPassThrough then
+                ic:SetPassThroughButtons("LeftButton", "RightButton", "MiddleButton")
+                ic._needsPassThrough = nil
+            end
+        end
+        for _, ic in ipairs(iconPool) do
+            if ic._needsPassThrough then
+                ic:SetPassThroughButtons("LeftButton", "RightButton", "MiddleButton")
+                ic._needsPassThrough = nil
+            end
+        end
     end
 end)
