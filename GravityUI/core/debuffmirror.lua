@@ -365,11 +365,18 @@ local function UpdateMirror()
                     ic.cooldown:Clear()
                 end
 
-                local dc = aura.dispelName and DISPEL_COLORS[aura.dispelName]
+                -- aura.dispelName is a secret string; indexing DISPEL_COLORS
+                -- with it causes "cannot be indexed with secret keys". pcall guards.
+                local dc
+                if aura.dispelName then
+                    pcall(function() dc = DISPEL_COLORS[aura.dispelName] end)
+                end
                 if dc then
                     ic.dispelColor:SetColorTexture(dc[1], dc[2], dc[3], dc[4])
+                    ic.dispelColor:Show()
                 else
                     ic.dispelColor:SetColorTexture(0, 0, 0, 0)
+                    ic.dispelColor:Hide()
                 end
 
                 -- Store for tooltip lookup on hover
