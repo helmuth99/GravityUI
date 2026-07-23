@@ -662,7 +662,7 @@ local function CatchExistingButtons()
         BTWQuestsMinimapButton = true,
         BtWQuestsMinimapButton = true,
         ExpansionLandingPageMinimapButton = true, -- Patch 12.0.7: Expansion Landing Page
-        -- EllesmereUIMinimapButton is always hidden (not caught), see block below.
+        -- EllesmereUIMinimapButton is handled separately below (caught or hidden depending on Catcher state).
     }
     
     -- Load Custom Frames from settings (Case-Insensitive Support)
@@ -1135,33 +1135,55 @@ if ns.Movers then
 end
 
 -- ---------------------------------------------------------------------------
--- Always hide EllesmereUI's minimap button
+-- EllesmereUI minimap button: catch in Icon Catcher (if enabled), else hide
 -- ---------------------------------------------------------------------------
--- EllesmereUI registers a LibDBIcon minimap button that GravityUI doesn't need.
--- We hide it unconditionally and prevent EUI from ever showing it again via hooks.
+-- EllesmereUI always creates EllesmereUIMinimapButton on login regardless of
+-- settings. When the user disables it inside EUI (EllesmereUIDB.showMinimapButton
+-- == false), EUI just calls Hide() on it – the frame still exists in _G.
+-- We therefore check the EUI setting ourselves before deciding what to do:
+--   • EUI button enabled  + Catcher enabled  → catch it in the Catcher
+--   • EUI button enabled  + Catcher disabled → suppress it (old behaviour)
+--   • EUI button disabled (any Catcher state) → suppress it silently
 do
-    local function HideEUIMinimapButton()
+    local function HandleEUIMinimapButton()
         local btn = _G.EllesmereUIMinimapButton
-        if not btn then return end
-        btn:Hide()
-        if not btn._gravityEUIHidden then
-            btn._gravityEUIHidden = true
-            hooksecurefunc(btn, "Show", function(self)
-                if not self._gravityAllowShow then self:Hide() end
-            end)
-            if btn.SetShown then
-                hooksecurefunc(btn, "SetShown", function(self, show)
-                    if show and not self._gravityAllowShow then self:Hide() end
+        if not btn then return end  -- Frame doesn't exist at all – nothing to do
+
+        -- Respect EUI's own setting: nil means the key was never written (default = show)
+        local euiWantsVisible = _G.EllesmereUIDB == nil
+            or _G.EllesmereUIDB.showMinimapButton ~= false
+
+        local s = GetSettings()
+        if s and s.enabled and euiWantsVisible then
+            -- Hand it off to the Icon Catcher exactly like any other addon button
+            if not Catcher.caughtIcons[btn] then
+                CatchButton(btn, "EllesmereUIMinimapButton")
+                LayoutGrid()
+            end
+        else
+            -- Catcher is off OR EUI itself disabled the button – suppress it
+            btn:Hide()
+            if not btn._gravityEUIHidden then
+                btn._gravityEUIHidden = true
+                hooksecurefunc(btn, "Show", function(self)
+                    if not self._gravityAllowShow then self:Hide() end
                 end)
+                if btn.SetShown then
+                    hooksecurefunc(btn, "SetShown", function(self, show)
+                        if show and not self._gravityAllowShow then self:Hide() end
+                    end)
+                end
             end
         end
     end
 
-    local _euiMapBtnHider = CreateFrame("Frame")
-    _euiMapBtnHider:RegisterEvent("PLAYER_LOGIN")
-    _euiMapBtnHider:RegisterEvent("PLAYER_ENTERING_WORLD")
-    _euiMapBtnHider:SetScript("OnEvent", function(self, event)
+    local _euiMapBtnHandler = CreateFrame("Frame")
+    _euiMapBtnHandler:RegisterEvent("PLAYER_LOGIN")
+    _euiMapBtnHandler:RegisterEvent("PLAYER_ENTERING_WORLD")
+    _euiMapBtnHandler:SetScript("OnEvent", function(self, event)
         if event == "PLAYER_LOGIN" then self:UnregisterEvent("PLAYER_LOGIN") end
-        C_Timer.After(3, HideEUIMinimapButton)
+        -- Delay slightly longer than CatchExistingButtons (which runs at +2 s) so
+        -- we don't race with the main ticker that also scans LibDBIcon buttons.
+        C_Timer.After(3, HandleEUIMinimapButton)
     end)
 end
