@@ -33,10 +33,6 @@ local iconPool = {}
 local activeIcons = {}
 local updatePending = false
 
--- Cache für expirationTime/duration: wird direkt aus dem UNIT_AURA-Payload befüllt
--- bevor der 0.15s-Timer abläuft, damit M+/Raid-Debuffs ihre Duration behalten.
--- key = auraInstanceID (Zahl), value = {expirationTime, duration}
-local auraTimeCache = {}
 
 -- ============================================================================
 -- POSITION HELPERS  (declared early so all later functions can call them)
@@ -221,6 +217,7 @@ local DISPEL_COLORS = {
     Curse   = {0.60, 0.00, 1.00, 1},
 }
 
+
 -- ============================================================================
 -- LAYOUT
 -- ============================================================================
@@ -270,11 +267,12 @@ local function LayoutIcons()
         -- trigger ADDON_ACTION_BLOCKED when LayoutIcons runs during combat.
         ic:EnableMouse(showTooltip)
 
-        -- Count
+        -- Count: font/position always applied; Show/Hide is per-icon (set by UpdateMirror
+        -- based on applications value). Only force-hide if globally disabled.
         ic.count:SetFont(fontPath, cntFontSize, outline)
         ic.count:ClearAllPoints()
         ic.count:SetPoint(cAnchor, ic, cAnchor, 1, 1)
-        if showCount then ic.count:Show() else ic.count:Hide() end
+        if not showCount then ic.count:Hide() end
 
         -- Duration
         ic.duration:SetFont(fontPath, math.max(7, durFontSize), outline)
@@ -309,7 +307,7 @@ local function UpdateMirror()
 
     local maxDebuffs  = db.maxDebuffs    or 16
     local showCount   = db.showCount    ~= false
-    local showDur     = db.showDuration ~= false  -- opt-out (konsistent mit LayoutIcons)
+    local showDur     = db.showDuration ~= false
     local blacklist   = db.blacklist    or {}
     local count = 0
     local index = 1
@@ -319,69 +317,62 @@ local function UpdateMirror()
         if not aura or not aura.auraInstanceID then break end
 
         if aura.icon then
-            -- Skip blacklisted debuffs (check by name and by spellId string).
-            -- aura.name and aura.spellId may be secret values (Blizzard API protection),
-            -- which cannot be used as table keys. pcall guards against that crash.
+            -- Blacklist check: aura.name / aura.spellId are secret values and cannot
+            -- be used as table keys. Guard with issecretvalue() before indexing.
             local isBlacklisted = false
-            local ok, val
-            ok, val = pcall(function() return blacklist[aura.name] end)
-            if ok and val then isBlacklisted = true end
-            if not isBlacklisted and aura.spellId then
-                ok, val = pcall(function() return blacklist[tostring(aura.spellId)] end)
-                if ok and val then isBlacklisted = true end
-            end
+            local name    = not issecretvalue(aura.name)    and aura.name
+            local spellId = not issecretvalue(aura.spellId) and aura.spellId
+            if name    and blacklist[name]             then isBlacklisted = true end
+            if spellId and blacklist[tostring(spellId)] then isBlacklisted = true end
+
             if not isBlacklisted then
                 count = count + 1
                 local ic = AcquireIcon(mirrorFrame)
                 ic.icon:SetTexture(aura.icon)
                 ic.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
 
-                -- Stack count.
-                -- applications is a secret number; SetText() is a C function
-                -- that accepts secret values directly — no Lua comparison needed.
+                -- Stack count: use pcall only for the comparison (forbidden on secret
+                -- values). Result stored in a normal boolean so Show/Hide happens
+                -- outside pcall without LayoutIcons being able to override it.
+                --   apps = 0 or 1  → pcall ok, false → hide ✓
+                --   apps = 5       → pcall ok, true  → show ✓
+                --   secret value   → pcall fails     → hide ✓
                 if showCount then
-                    pcall(function()
-                        if aura.applications and aura.applications > 1 then
-                            ic.count:SetText(aura.applications)
-                            ic.count:Show()
-                        else
-                            ic.count:SetText("") ; ic.count:Hide()
-                        end
-                    end)
+                    local apps = aura.applications
+                    local showStack = false
+                    if apps then
+                        pcall(function() if apps > 1 then showStack = true end end)
+                    end
+                    if showStack then
+                        ic.count:SetText(apps)
+                        ic.count:Show()
+                    else
+                        ic.count:SetText("") ; ic.count:Hide()
+                    end
                 else
                     ic.count:SetText("") ; ic.count:Hide()
                 end
 
-                -- Duration: zuerst Cache prüfen (direkt aus UNIT_AURA-Payload befüllt),
-                -- dann Fallback auf aura-Felder. C-Level SetCooldown akzeptiert secret values.
+                -- Duration: use GetAuraDuration() + SetCooldownFromDurationObject().
+                -- This is the same approach as oUF/UUF: the DurationObject is an opaque
+                -- C struct that SetCooldownFromDurationObject() reads natively — no Lua
+                -- comparison on secret expirationTime/duration values needed at all.
                 if showDur then
-                    pcall(function()
-                        local expT, dur
-                        -- Cache hat Vorrang (zuverlässiger in M+/Raid)
-                        local cached = aura.auraInstanceID and auraTimeCache[aura.auraInstanceID]
-                        if cached then
-                            expT = cached[1]
-                            dur  = cached[2]
-                        else
-                            expT = aura.expirationTime
-                            dur  = aura.duration
-                        end
-                        if expT and expT > 0 and dur and dur > 0 then
-                            ic.cooldown:SetCooldown(expT - dur, dur)
-                        else
-                            ic.cooldown:Clear()
-                        end
-                    end)
+                    local duration = C_UnitAuras.GetAuraDuration("player", aura.auraInstanceID)
+                    if duration then
+                        ic.cooldown:SetCooldownFromDurationObject(duration)
+                        ic.cooldown:Show()
+                    else
+                        ic.cooldown:Hide()
+                    end
                 else
                     ic.cooldown:Clear()
                 end
 
-                -- aura.dispelName is a secret string; indexing DISPEL_COLORS
-                -- with it causes "cannot be indexed with secret keys". pcall guards.
-                local dc
-                if aura.dispelName then
-                    pcall(function() dc = DISPEL_COLORS[aura.dispelName] end)
-                end
+                -- Dispel color: guard with issecretvalue() before indexing DISPEL_COLORS
+                -- (same pattern UUF uses for name/spellId). If dispelName is secret, skip.
+                local dispelName = not issecretvalue(aura.dispelName) and aura.dispelName
+                local dc = dispelName and DISPEL_COLORS[dispelName]
                 if dc then
                     ic.dispelColor:SetColorTexture(dc[1], dc[2], dc[3], dc[4])
                     ic.dispelColor:Show()
@@ -419,24 +410,16 @@ local function UpdateMirror()
     -- right/down from its fixed top-left corner. That is the correct behaviour.
 end
 
-local function ScheduleUpdate(immediate)
-    if immediate then
-        -- Sofort-Update (z.B. bei isFullUpdate in M+/Raid-Encounter-Start)
-        updatePending = false
-        UpdateMirror()
-        return
-    end
+local function ScheduleUpdate()
     if updatePending then return end
     updatePending = true
-    C_Timer.After(0.05, function()  -- 0.05s statt 0.15s: schneller, aber noch im selben Frame-Batch
+    C_Timer.After(0.05, function()
         updatePending = false
         UpdateMirror()
     end)
 end
 
--- Duration display is handled entirely by each icon's Cooldown frame
--- (engine-driven; no ticker needed). Stub kept for call-site compatibility.
-local function StartDurationTicker() end
+
 
 -- ============================================================================
 -- ORIGINAL FRAME VISIBILITY
@@ -516,7 +499,6 @@ function DebuffMirror:Refresh()
     ApplyOriginalVisibility()
     if db.enabled then
         UpdateMirror()
-        StartDurationTicker()
     else
         if mirrorFrame then mirrorFrame:Hide() end
     end
@@ -632,49 +614,10 @@ evtFrame:SetScript("OnEvent", function(self, event, unit, updateInfo)
             iconPool[#iconPool + 1] = ic
         end
     elseif event == "PLAYER_ENTERING_WORLD" then
-        wipe(auraTimeCache)
         C_Timer.After(1.0, function() DebuffMirror:Refresh() end)
     elseif event == "UNIT_AURA" then
         local db = GetDB()
         if not db or not db.enabled then return end
-
-        -- UNIT_AURA-Payload direkt auswerten:
-        -- expirationTime/duration sofort cachen, BEVOR der Timer abläuft.
-        -- In M+/Raid liefert der Server diese Werte nur im Event-Moment zuverlässig.
-        if updateInfo then
-            if updateInfo.isFullUpdate then
-                -- Vollständiges Rescan nötig (z.B. Encounter-Start, Instanz-Betreten).
-                -- Cache leeren und sofort updaten.
-                wipe(auraTimeCache)
-                ScheduleUpdate(true)
-                return
-            end
-            -- Neue Auras: expirationTime/duration sofort cachen
-            if updateInfo.addedAuras then
-                for _, auraData in ipairs(updateInfo.addedAuras) do
-                    if auraData.isHelpful == false or not auraData.isHelpful then
-                        -- Debuff (nicht Buff)
-                        pcall(function()
-                            if auraData.auraInstanceID and auraData.expirationTime
-                               and auraData.duration and auraData.expirationTime > 0
-                               and auraData.duration > 0 then
-                                auraTimeCache[auraData.auraInstanceID] = {
-                                    auraData.expirationTime,
-                                    auraData.duration
-                                }
-                            end
-                        end)
-                    end
-                end
-            end
-            -- Entfernte Auras aus Cache löschen
-            if updateInfo.removedAuraInstanceIDs then
-                for _, id in ipairs(updateInfo.removedAuraInstanceIDs) do
-                    auraTimeCache[id] = nil
-                end
-            end
-        end
-
         ScheduleUpdate()
     elseif event == "PLAYER_REGEN_ENABLED" then
         -- Apply SetPassThroughButtons to any icons that were created during combat.
