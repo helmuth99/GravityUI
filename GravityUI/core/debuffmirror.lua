@@ -33,6 +33,11 @@ local iconPool = {}
 local activeIcons = {}
 local updatePending = false
 
+-- Cache für expirationTime/duration: wird direkt aus dem UNIT_AURA-Payload befüllt
+-- bevor der 0.15s-Timer abläuft, damit M+/Raid-Debuffs ihre Duration behalten.
+-- key = auraInstanceID (Zahl), value = {expirationTime, duration}
+local auraTimeCache = {}
+
 -- ============================================================================
 -- POSITION HELPERS  (declared early so all later functions can call them)
 -- ============================================================================
@@ -304,7 +309,7 @@ local function UpdateMirror()
 
     local maxDebuffs  = db.maxDebuffs    or 16
     local showCount   = db.showCount    ~= false
-    local showDur     = db.showDuration == true  -- explicit opt-in only
+    local showDur     = db.showDuration ~= false  -- opt-out (konsistent mit LayoutIcons)
     local blacklist   = db.blacklist    or {}
     local count = 0
     local index = 1
@@ -347,16 +352,22 @@ local function UpdateMirror()
                     ic.count:SetText("") ; ic.count:Hide()
                 end
 
-                -- Duration: pass secret expirationTime/duration directly to
-                -- the C-level SetCooldown — no Lua arithmetic on secret values.
-                -- The Cooldown frame drives its own swipe + countdown text.
+                -- Duration: zuerst Cache prüfen (direkt aus UNIT_AURA-Payload befüllt),
+                -- dann Fallback auf aura-Felder. C-Level SetCooldown akzeptiert secret values.
                 if showDur then
                     pcall(function()
-                        if aura.expirationTime and aura.duration then
-                            ic.cooldown:SetCooldown(
-                                aura.expirationTime - aura.duration,
-                                aura.duration
-                            )
+                        local expT, dur
+                        -- Cache hat Vorrang (zuverlässiger in M+/Raid)
+                        local cached = aura.auraInstanceID and auraTimeCache[aura.auraInstanceID]
+                        if cached then
+                            expT = cached[1]
+                            dur  = cached[2]
+                        else
+                            expT = aura.expirationTime
+                            dur  = aura.duration
+                        end
+                        if expT and expT > 0 and dur and dur > 0 then
+                            ic.cooldown:SetCooldown(expT - dur, dur)
                         else
                             ic.cooldown:Clear()
                         end
@@ -408,10 +419,16 @@ local function UpdateMirror()
     -- right/down from its fixed top-left corner. That is the correct behaviour.
 end
 
-local function ScheduleUpdate()
+local function ScheduleUpdate(immediate)
+    if immediate then
+        -- Sofort-Update (z.B. bei isFullUpdate in M+/Raid-Encounter-Start)
+        updatePending = false
+        UpdateMirror()
+        return
+    end
     if updatePending then return end
     updatePending = true
-    C_Timer.After(0.15, function()
+    C_Timer.After(0.05, function()  -- 0.05s statt 0.15s: schneller, aber noch im selben Frame-Batch
         updatePending = false
         UpdateMirror()
     end)
@@ -600,7 +617,7 @@ evtFrame:RegisterUnitEvent("UNIT_AURA", "player")
 evtFrame:RegisterEvent("PLAYER_LOGIN")
 evtFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 evtFrame:RegisterEvent("PLAYER_REGEN_ENABLED") -- fix up any icons created during combat
-evtFrame:SetScript("OnEvent", function(self, event)
+evtFrame:SetScript("OnEvent", function(self, event, unit, updateInfo)
     if event == "PLAYER_LOGIN" then
         -- Create the frame at login so the GravityUI Edit Mode panel
         -- can find it in Movers.registry when it builds its list.
@@ -615,10 +632,50 @@ evtFrame:SetScript("OnEvent", function(self, event)
             iconPool[#iconPool + 1] = ic
         end
     elseif event == "PLAYER_ENTERING_WORLD" then
+        wipe(auraTimeCache)
         C_Timer.After(1.0, function() DebuffMirror:Refresh() end)
     elseif event == "UNIT_AURA" then
         local db = GetDB()
-        if db and db.enabled then ScheduleUpdate() end
+        if not db or not db.enabled then return end
+
+        -- UNIT_AURA-Payload direkt auswerten:
+        -- expirationTime/duration sofort cachen, BEVOR der Timer abläuft.
+        -- In M+/Raid liefert der Server diese Werte nur im Event-Moment zuverlässig.
+        if updateInfo then
+            if updateInfo.isFullUpdate then
+                -- Vollständiges Rescan nötig (z.B. Encounter-Start, Instanz-Betreten).
+                -- Cache leeren und sofort updaten.
+                wipe(auraTimeCache)
+                ScheduleUpdate(true)
+                return
+            end
+            -- Neue Auras: expirationTime/duration sofort cachen
+            if updateInfo.addedAuras then
+                for _, auraData in ipairs(updateInfo.addedAuras) do
+                    if auraData.isHelpful == false or not auraData.isHelpful then
+                        -- Debuff (nicht Buff)
+                        pcall(function()
+                            if auraData.auraInstanceID and auraData.expirationTime
+                               and auraData.duration and auraData.expirationTime > 0
+                               and auraData.duration > 0 then
+                                auraTimeCache[auraData.auraInstanceID] = {
+                                    auraData.expirationTime,
+                                    auraData.duration
+                                }
+                            end
+                        end)
+                    end
+                end
+            end
+            -- Entfernte Auras aus Cache löschen
+            if updateInfo.removedAuraInstanceIDs then
+                for _, id in ipairs(updateInfo.removedAuraInstanceIDs) do
+                    auraTimeCache[id] = nil
+                end
+            end
+        end
+
+        ScheduleUpdate()
     elseif event == "PLAYER_REGEN_ENABLED" then
         -- Apply SetPassThroughButtons to any icons that were created during combat.
         for _, ic in ipairs(activeIcons) do
