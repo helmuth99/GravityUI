@@ -940,9 +940,13 @@ CreateSidebarButtons = function()
                 local headerBtn = CreateFrame("Button", nil, frame.sidebar, "BackdropTemplate")
                 headerBtn:SetSize(175, 30)
                 
-                -- Arrow Icon (Modern Font-based to prevent skinner bugs)
+                -- Arrow Icon: use Blizzard's built-in font directly so that the
+                -- ▼/▶ Unicode triangle glyphs are always available, regardless of
+                -- whatever custom font the user has selected (custom fonts often
+                -- lack these code-points and display rectangles instead).
                 local headerIcon = headerBtn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-                GUI:SetFont(headerIcon, 10, "", C.sectionHeader)
+                headerIcon:SetFont("Fonts\\FRIZQT__.TTF", 10, "")
+                headerIcon:SetTextColor(C.sectionHeader[1], C.sectionHeader[2], C.sectionHeader[3], 1)
                 headerIcon:SetPoint("LEFT", 0, 0)
                 headerBtn.icon = headerIcon
                 
