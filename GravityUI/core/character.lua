@@ -967,8 +967,17 @@ end
 ---------------------------------------------------------------------------
 -- Hide Blizzard CharacterFrame decorations
 ---------------------------------------------------------------------------
+local _blizzardDecorationsApplied = false  -- Guard: run full styling only once
 local function HideBlizzardDecorations()
     local settings = GetSettings()
+    if _blizzardDecorationsApplied then
+        -- Already ran — only redo things that Blizzard may restore on re-show
+        if CharacterFrame and CharacterFrame.TopTileStreaks then CharacterFrame.TopTileStreaks:Hide() end
+        if CharacterFrameTitleText then CharacterFrameTitleText:Hide() end
+        if CharacterFrame and CharacterFrame.TitleText then CharacterFrame.TitleText:Hide() end
+        return
+    end
+    _blizzardDecorationsApplied = true
 
     -- Main frame decorations (only hide elements specific to Character tab)
     -- NOTE: Don't hide CharacterFrame.NineSlice, CharacterFrame.Bg, or CharacterFramePortrait globally
@@ -983,26 +992,99 @@ local function HideBlizzardDecorations()
     if PaperDollSidebarTabs then
         if PaperDollSidebarTabs.DecorLeft then PaperDollSidebarTabs.DecorLeft:Hide() end
         if PaperDollSidebarTabs.DecorRight then PaperDollSidebarTabs.DecorRight:Hide() end
-        -- Move sidebar tabs 30px right to align with extended panel
+        -- Move sidebar tabs right to align with extended panel
         PaperDollSidebarTabs:ClearAllPoints()
         PaperDollSidebarTabs:SetPoint("TOPRIGHT", CharacterFrame, "TOPRIGHT", 50, -30)
 
-        -- Add 1px border to each tab icon
-        for i = 1, 3 do
-            local tab = _G["PaperDollSidebarTab"..i]
-            if tab and not tab._guiBorder then
-                local border = CreateFrame("Frame", nil, tab, "BackdropTemplate")
-                border:SetPoint("TOPLEFT", tab, "TOPLEFT", 1, -1)
-                border:SetPoint("BOTTOMRIGHT", tab, "BOTTOMRIGHT", -1, 1)
-                border:SetBackdrop({
-                    edgeFile = "Interface\\Buttons\\WHITE8X8",
-                    edgeSize = 1,
-                })
-                border:SetBackdropBorderColor(0.5, 0.5, 0.5, 0.8) -- Subtle Grey border
-                border:SetFrameLevel(tab:GetFrameLevel() - 1)    -- Sit behind the icon
-                tab._guiBorder = border
+        -- Style sidebar tabs: transparent, theme-color hover + underline
+        local TAB_LABELS = { "Stats", "Titles", "Sets" }
+        local font = GetGlobalFont and GetGlobalFont() or "Fonts\\FRIZQT__.TTF"
+
+        -- Get primary theme color (user-configured, falls back to C.accent)
+        local function GetThemeColor() return ns.GetAccentColor() end
+
+        -- Track active tab (GetChecked() unavailable on these frames)
+        local activeSidebarTab = 1
+
+        local function UpdateSidebarTabVisuals()
+            local tr, tg, tb = GetThemeColor()
+            for i = 1, 3 do
+                local tab = _G["PaperDollSidebarTab" .. i]
+                if tab and tab._guiSkinned then
+                    local isActive = (activeSidebarTab == i)
+                    -- Text always full white
+                    if tab._guiLabel then
+                        tab._guiLabel:SetTextColor(1, 1, 1, 1)
+                    end
+                    -- Only underline shown on active tab
+                    if tab._guiUnderline then
+                        tab._guiUnderline:SetColorTexture(tr, tg, tb, 1)
+                        tab._guiUnderline:SetShown(isActive)
+                    end
+                end
             end
         end
+
+        for i = 1, 3 do
+            local tab = _G["PaperDollSidebarTab" .. i]
+            if tab and not tab._guiSkinned then
+                tab._guiSkinned = true
+
+                -- Blank Blizzard textures
+                for j = 1, select("#", tab:GetRegions()) do
+                    local region = select(j, tab:GetRegions())
+                    if region and region:IsObjectType("Texture") then region:SetAlpha(0) end
+                end
+                if tab.GetCheckedTexture then
+                    local ct = tab:GetCheckedTexture()
+                    if ct then ct:SetAlpha(0) end
+                end
+                if tab.GetHighlightTexture then
+                    local ht = tab:GetHighlightTexture()
+                    if ht then ht:SetAlpha(0) end
+                end
+
+                -- Hover: semi-transparent theme tint (18% opacity keeps text fully readable)
+                local tr, tg, tb = GetThemeColor()
+
+                -- Dark background behind each tab
+                local tabBg = tab:CreateTexture(nil, "BACKGROUND", nil, -1)
+                tabBg:SetAllPoints(tab)
+                tabBg:SetColorTexture(C.bg[1] * 1.2, C.bg[2] * 1.2, C.bg[3] * 1.2, 0.92)
+
+                local hoverBg = tab:CreateTexture(nil, "HIGHLIGHT")
+                hoverBg:SetAllPoints(tab)
+                hoverBg:SetColorTexture(tr, tg, tb, 0.18)
+
+                -- Active indicator: 2px theme-color underline
+                local underline = tab:CreateTexture(nil, "OVERLAY", nil, 6)
+                underline:SetHeight(2)
+                underline:SetPoint("BOTTOMLEFT",  tab, "BOTTOMLEFT",  1, 1)
+                underline:SetPoint("BOTTOMRIGHT", tab, "BOTTOMRIGHT", -1, 1)
+                underline:SetColorTexture(tr, tg, tb, 1)
+                underline:Hide()
+                tab._guiUnderline = underline
+
+                -- Label — always full white
+                local blizLabel = tab:GetFontString()
+                if blizLabel then blizLabel:SetTextColor(0, 0, 0, 0) end
+                local label = tab:CreateFontString(nil, "OVERLAY")
+                label:SetFont(font, 9, "OUTLINE")
+                label:SetPoint("CENTER", tab, "CENTER", 0, 0)
+                label:SetJustifyH("CENTER")
+                label:SetText(TAB_LABELS[i] or "")
+                label:SetTextColor(1, 1, 1, 1)
+                tab._guiLabel = label
+                -- No border
+
+                local idx = i
+                tab:HookScript("OnClick", function()
+                    activeSidebarTab = idx
+                    C_Timer.After(0, UpdateSidebarTabVisuals)
+                end)
+            end
+        end
+        C_Timer.After(0.05, UpdateSidebarTabVisuals)
     end
 
     -- Move close button 30px right to align with extended panel
@@ -1016,6 +1098,107 @@ local function HideBlizzardDecorations()
         CharacterFrameTab1:ClearAllPoints()
         CharacterFrameTab1:SetPoint("TOPLEFT", CharacterFrame, "BOTTOMLEFT", 11, -48)
     end
+
+    -- Style bottom tabs (Character / Reputation / Currency) in GravityUI design
+    local BOTTOM_TAB_COUNT = 3
+    local function GetThemeColorBT() return ns.GetAccentColor() end
+
+    local function UpdateBottomTabVisuals()
+        local selected = PanelTemplates_GetSelectedTab(CharacterFrame) or 1
+        local tr, tg, tb = GetThemeColorBT()
+        for i = 1, BOTTOM_TAB_COUNT do
+            local tab = _G["CharacterFrameTab" .. i]
+            if tab and tab._guiSkinned then
+                local isActive = (selected == i)
+                -- Keep Blizzard's own text white (survives PanelTemplates resets)
+                local txt = tab.Text or (tab.GetFontString and tab:GetFontString())
+                if txt then txt:SetTextColor(1, 1, 1, 1) end
+                -- Underline: shown only on active tab
+                if tab._guiUnderline then
+                    tab._guiUnderline:SetColorTexture(tr, tg, tb, 1)
+                    tab._guiUnderline:SetShown(isActive)
+                end
+            end
+        end
+    end
+    _updateBottomTabs = UpdateBottomTabVisuals  -- expose to module scope
+
+    -- Expose sidebar reset for use in tab-switch hooks
+    _resetSidebarToStats = function()
+        activeSidebarTab = 1
+        UpdateSidebarTabVisuals()
+    end
+
+    for i = 1, BOTTOM_TAB_COUNT do
+        local tab = _G["CharacterFrameTab" .. i]
+        if tab and not tab._guiSkinned then
+            tab._guiSkinned = true
+
+            -- Suppress Blizzard tab art textures (preserve font strings)
+            for j = 1, select("#", tab:GetRegions()) do
+                local region = select(j, tab:GetRegions())
+                if region and region:IsObjectType("Texture") then
+                    region:SetAlpha(0)
+                end
+            end
+            if tab.GetHighlightTexture then
+                local ht = tab:GetHighlightTexture()
+                if ht then ht:SetAlpha(0) end
+            end
+            -- Re-suppress on show — but skip our own custom textures
+            tab:HookScript("OnShow", function(self)
+                for j = 1, select("#", self:GetRegions()) do
+                    local region = select(j, self:GetRegions())
+                    if region and region:IsObjectType("Texture") and not region._guiCustom then
+                        region:SetAlpha(0)
+                    end
+                end
+            end)
+
+            -- Dark background behind the tab (marked _guiCustom so OnShow skips it)
+            local tr, tg, tb = GetThemeColorBT()
+            local tabBg = tab:CreateTexture(nil, "BACKGROUND", nil, -1)
+            tabBg:SetAllPoints(tab)
+            tabBg:SetColorTexture(C.bg[1] * 1.2, C.bg[2] * 1.2, C.bg[3] * 1.2, 0.92)
+            tabBg._guiCustom = true
+            tab._guiTabBg = tabBg
+
+            -- Hover: semi-transparent theme tint
+            local hoverBg = tab:CreateTexture(nil, "HIGHLIGHT")
+            hoverBg:SetAllPoints(tab)
+            hoverBg:SetColorTexture(tr, tg, tb, 0.18)
+            hoverBg._guiCustom = true
+
+            -- Active indicator: 2px theme-color underline at bottom
+            local underline = tab:CreateTexture(nil, "OVERLAY", nil, 6)
+            underline:SetHeight(2)
+            underline:SetPoint("BOTTOMLEFT",  tab, "BOTTOMLEFT",  2, 2)
+            underline:SetPoint("BOTTOMRIGHT", tab, "BOTTOMRIGHT", -2, 2)
+            underline:SetColorTexture(tr, tg, tb, 1)
+            underline:Hide()
+            underline._guiCustom = true
+            tab._guiUnderline = underline
+
+            -- Recolor Blizzard's own text white (don't replace it — PanelTemplates owns it)
+            local txt = tab.Text or (tab.GetFontString and tab:GetFontString())
+            if txt then
+                txt:SetTextColor(1, 1, 1, 1)
+                -- Hook to maintain white after any Blizzard reset
+                hooksecurefunc(txt, "SetTextColor", function(self, r, g, b, a)
+                    if not (r == 1 and g == 1 and b == 1) then
+                        rawset(self, "_guiColorLocked", true)
+                        self:SetTextColor(1, 1, 1, 1)
+                        rawset(self, "_guiColorLocked", false)
+                    end
+                end)
+            end
+
+            tab:HookScript("OnClick", function()
+                C_Timer.After(0, UpdateBottomTabVisuals)
+            end)
+        end
+    end
+    C_Timer.After(0.05, UpdateBottomTabVisuals)
 
     -- Character frame inset decorations
     if CharacterFrameInset then
@@ -2856,10 +3039,11 @@ end
 local function CreateEquipMgrPopup()
     if equipMgrPopup then return equipMgrPopup end
 
-    -- Position accounts for extended character pane (55px width extension + 10px gap)
+    local function GetThemeColor() return ns.GetAccentColor() end
+
     local PANEL_WIDTH_EXTENSION = 55
     equipMgrPopup = CreateFrame("Frame", "GravityUI_EquipMgrPopup", UIParent, "BackdropTemplate")
-    equipMgrPopup:SetSize(205, 400)
+    equipMgrPopup:SetSize(215, 430)
     equipMgrPopup:SetPoint("TOPLEFT", CharacterFrame, "TOPRIGHT", PANEL_WIDTH_EXTENSION + 10, 0)
     equipMgrPopup:SetFrameStrata("DIALOG")
     equipMgrPopup:EnableMouse(true)
@@ -2869,26 +3053,185 @@ local function CreateEquipMgrPopup()
     equipMgrPopup:SetScript("OnDragStop", equipMgrPopup.StopMovingOrSizing)
     equipMgrPopup:Hide()
 
-    -- Default Blizzard backdrop (skinning module will override if enabled)
+    -- GravityUI-style backdrop: dark panel + theme border
+    local tr, tg, tb = GetThemeColor()
     equipMgrPopup:SetBackdrop({
-        bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
-        edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
-        tile = true,
-        tileSize = 32,
-        edgeSize = 32,
-        insets = { left = 8, right = 8, top = 8, bottom = 8 }
+        bgFile   = "Interface\\Buttons\\WHITE8X8",
+        edgeFile = "Interface\\Buttons\\WHITE8X8",
+        edgeSize = 1,
     })
+    equipMgrPopup:SetBackdropColor(C.bg[1], C.bg[2], C.bg[3], 0.97)
+    equipMgrPopup:SetBackdropBorderColor(tr, tg, tb, 0.7)
 
-    -- Title bar (text only - styling in skinning module)
-    local title = equipMgrPopup:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    title:SetPoint("TOP", 0, -15)
+    -- Header gradient bar
+    local headerBg = equipMgrPopup:CreateTexture(nil, "ARTWORK")
+    headerBg:SetPoint("TOPLEFT",  equipMgrPopup, "TOPLEFT",  1, -1)
+    headerBg:SetPoint("TOPRIGHT", equipMgrPopup, "TOPRIGHT", -1, -1)
+    headerBg:SetHeight(28)
+    headerBg:SetColorTexture(tr * 0.15, tg * 0.15, tb * 0.15, 1)
+    equipMgrPopup.headerBg = headerBg
+
+    -- Theme-color top accent line
+    local topLine = equipMgrPopup:CreateTexture(nil, "OVERLAY")
+    topLine:SetPoint("TOPLEFT",  equipMgrPopup, "TOPLEFT",  1, -1)
+    topLine:SetPoint("TOPRIGHT", equipMgrPopup, "TOPRIGHT", -1, -1)
+    topLine:SetHeight(2)
+    topLine:SetColorTexture(tr, tg, tb, 1)
+
+    -- Header separator line
+    local sepLine = equipMgrPopup:CreateTexture(nil, "OVERLAY")
+    sepLine:SetPoint("TOPLEFT",  equipMgrPopup, "TOPLEFT",  1, -29)
+    sepLine:SetPoint("TOPRIGHT", equipMgrPopup, "TOPRIGHT", -1, -29)
+    sepLine:SetHeight(1)
+    sepLine:SetColorTexture(tr, tg, tb, 0.35)
+
+    -- Title text
+    local font = GetGlobalFont and GetGlobalFont() or "Fonts\\FRIZQT__.TTF"
+    local title = equipMgrPopup:CreateFontString(nil, "OVERLAY")
+    title:SetFont(font, 13, "OUTLINE")
+    title:SetPoint("TOP", equipMgrPopup, "TOP", 0, -9)
+    title:SetTextColor(tr, tg, tb, 1)
     title:SetText("Equipment Manager")
     equipMgrPopup.title = title
 
-    -- Expose globally for skinning module to access
+    -- Expose globally for skinning module
     _G.GravityUI_EquipMgrPopup = equipMgrPopup
 
     return equipMgrPopup
+end
+
+---------------------------------------------------------------------------
+-- Skin EquipmentManagerPane set rows for GravityUI look
+---------------------------------------------------------------------------
+local equipMgrPaneSkinned = false
+
+local function SkinEquipMgrPane(popup, pane)
+    if equipMgrPaneSkinned then return end
+    equipMgrPaneSkinned = true
+
+    local function GetThemeColor() return ns.GetAccentColor() end
+
+    -- Skin the "Equip" / "Save" tab buttons inside the pane
+    local function SkinEquipMgrButtons()
+        local tr, tg, tb = GetThemeColor()
+        local font = GetGlobalFont and GetGlobalFont() or "Fonts\\FRIZQT__.TTF"
+        -- Equip/Save tabs sit directly on the pane
+        for _, child in ipairs({ pane:GetChildren() }) do
+            if child and child.GetText then
+                local txt = child:GetText()
+                if txt == EQUIP_CONTAINER or txt == SAVE_CONTAINER
+                   or txt == "Equip" or txt == "Save" then
+                    if not child._guiSkinned then
+                        child._guiSkinned = true
+                        -- Suppress Blizzard textures
+                        for j = 1, select("#", child:GetRegions()) do
+                            local r = select(j, child:GetRegions())
+                            if r and r:IsObjectType("Texture") then r:SetAlpha(0) end
+                        end
+                        -- Dark bg
+                        local bg = child:CreateTexture(nil, "BACKGROUND")
+                        bg:SetAllPoints(child)
+                        bg:SetColorTexture(tr * 0.1, tg * 0.1, tb * 0.1, 1)
+                        -- Hover
+                        local hov = child:CreateTexture(nil, "HIGHLIGHT")
+                        hov:SetAllPoints(child)
+                        hov:SetColorTexture(tr, tg, tb, 0.18)
+                        -- Border
+                        local brd = CreateFrame("Frame", nil, child, "BackdropTemplate")
+                        brd:SetAllPoints(child)
+                        brd:SetBackdrop({ edgeFile = "Interface\\Buttons\\WHITE8X8", edgeSize = 1 })
+                        brd:SetBackdropBorderColor(tr * 0.4, tg * 0.4, tb * 0.4, 0.6)
+                        brd:SetFrameLevel(child:GetFrameLevel() + 1)
+                        -- Label
+                        if child:GetFontString() then
+                            child:GetFontString():SetFont(font, 10, "OUTLINE")
+                            child:GetFontString():SetTextColor(1, 1, 1, 0.8)
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    -- Skin set rows in ScrollBox
+    local function SkinRows()
+        if not pane or not pane.ScrollBox then return end
+        local tr, tg, tb = GetThemeColor()
+        local font = GetGlobalFont and GetGlobalFont() or "Fonts\\FRIZQT__.TTF"
+
+        pane.ScrollBox:ForEachFrame(function(row)
+            if row and not row._guiSkinned then
+                row._guiSkinned = true
+
+                -- Suppress Blizzard highlight/checked textures
+                for j = 1, select("#", row:GetRegions()) do
+                    local region = select(j, row:GetRegions())
+                    if region and region:IsObjectType("Texture") then
+                        local atl = region:GetAtlas() or ""
+                        if atl:find("highlight") or atl:find("checked") or atl:find("stripe") then
+                            region:SetAlpha(0)
+                        end
+                    end
+                end
+                if row.GetHighlightTexture then
+                    local ht = row:GetHighlightTexture()
+                    if ht then ht:SetAlpha(0) end
+                end
+                if row.GetCheckedTexture then
+                    local ct = row:GetCheckedTexture()
+                    if ct then ct:SetAlpha(0) end
+                end
+
+                -- Hover tint
+                local hoverTex = row:CreateTexture(nil, "HIGHLIGHT")
+                hoverTex:SetAllPoints(row)
+                hoverTex:SetColorTexture(tr, tg, tb, 0.12)
+
+                -- Selected/active tint
+                local selTex = row:CreateTexture(nil, "BACKGROUND")
+                selTex:SetAllPoints(row)
+                selTex:SetColorTexture(tr, tg, tb, 0.20)
+                selTex:Hide()
+                row._guiSelTex = selTex
+
+                -- Style set name text
+                local label = row.setName or row.Name or row.Label
+                if label then
+                    label:SetFont(font, 11, "")
+                    label:SetTextColor(0.88, 0.88, 0.88, 1)
+                end
+
+                -- Hook checked state
+                if row.SetChecked then
+                    hooksecurefunc(row, "SetChecked", function(self, checked)
+                        if self._guiSelTex then
+                            self._guiSelTex:SetShown(checked and true or false)
+                        end
+                        local lbl = self.setName or self.Name or self.Label
+                        if lbl then
+                            if checked then
+                                local tr2, tg2, tb2 = GetThemeColor()
+                                lbl:SetTextColor(tr2, tg2, tb2, 1)
+                            else
+                                lbl:SetTextColor(0.88, 0.88, 0.88, 1)
+                            end
+                        end
+                    end)
+                end
+            end
+        end)
+    end
+
+    C_Timer.After(0.05, function()
+        SkinEquipMgrButtons()
+        SkinRows()
+    end)
+    if pane.ScrollBox then
+        -- ScrollBox uses callback system, not HookScript
+        if pane.ScrollBox.RegisterCallback then
+            pane.ScrollBox:RegisterCallback("OnUpdate", function() C_Timer.After(0, SkinRows) end, "GUIEquipSkin")
+        end
+    end
 end
 
 ---------------------------------------------------------------------------
@@ -2897,10 +3240,11 @@ end
 local function CreateTitlesPopup()
     if titlesPopup then return titlesPopup end
 
-    -- Position accounts for extended character pane (55px width extension + 10px gap)
+    local function GetThemeColor() return ns.GetAccentColor() end
+
     local PANEL_WIDTH_EXTENSION = 55
     titlesPopup = CreateFrame("Frame", "GravityUI_TitlesPopup", UIParent, "BackdropTemplate")
-    titlesPopup:SetSize(205, 400)
+    titlesPopup:SetSize(215, 430)
     titlesPopup:SetPoint("TOPLEFT", CharacterFrame, "TOPRIGHT", PANEL_WIDTH_EXTENSION + 10, 0)
     titlesPopup:SetFrameStrata("DIALOG")
     titlesPopup:EnableMouse(true)
@@ -2910,32 +3254,151 @@ local function CreateTitlesPopup()
     titlesPopup:SetScript("OnDragStop", titlesPopup.StopMovingOrSizing)
     titlesPopup:Hide()
 
-    -- Default Blizzard backdrop (skinning module will override if enabled)
+    -- GravityUI-style backdrop: dark panel
+    local tr, tg, tb = GetThemeColor()
     titlesPopup:SetBackdrop({
-        bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
-        edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
-        tile = true,
-        tileSize = 32,
-        edgeSize = 32,
-        insets = { left = 8, right = 8, top = 8, bottom = 8 }
+        bgFile   = "Interface\\Buttons\\WHITE8X8",
+        edgeFile = "Interface\\Buttons\\WHITE8X8",
+        edgeSize = 1,
     })
+    titlesPopup:SetBackdropColor(C.bg[1], C.bg[2], C.bg[3], 0.97)
+    titlesPopup:SetBackdropBorderColor(tr, tg, tb, 0.7)
 
-    -- Title bar (text only - styling in skinning module)
-    local title = titlesPopup:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    title:SetPoint("TOP", 0, -15)
+    -- Header gradient bar
+    local headerBg = titlesPopup:CreateTexture(nil, "ARTWORK")
+    headerBg:SetPoint("TOPLEFT",  titlesPopup, "TOPLEFT",  1, -1)
+    headerBg:SetPoint("TOPRIGHT", titlesPopup, "TOPRIGHT", -1, -1)
+    headerBg:SetHeight(28)
+    headerBg:SetColorTexture(tr * 0.15, tg * 0.15, tb * 0.15, 1)
+    titlesPopup.headerBg = headerBg
+
+    -- Theme-color top accent line
+    local topLine = titlesPopup:CreateTexture(nil, "OVERLAY")
+    topLine:SetPoint("TOPLEFT",  titlesPopup, "TOPLEFT",  1, -1)
+    topLine:SetPoint("TOPRIGHT", titlesPopup, "TOPRIGHT", -1, -1)
+    topLine:SetHeight(2)
+    topLine:SetColorTexture(tr, tg, tb, 1)
+
+    -- Header separator line
+    local sepLine = titlesPopup:CreateTexture(nil, "OVERLAY")
+    sepLine:SetPoint("TOPLEFT",  titlesPopup, "TOPLEFT",  1, -29)
+    sepLine:SetPoint("TOPRIGHT", titlesPopup, "TOPRIGHT", -1, -29)
+    sepLine:SetHeight(1)
+    sepLine:SetColorTexture(tr, tg, tb, 0.35)
+
+    -- Title text
+    local font = GetGlobalFont and GetGlobalFont() or "Fonts\\FRIZQT__.TTF"
+    local title = titlesPopup:CreateFontString(nil, "OVERLAY")
+    title:SetFont(font, 13, "OUTLINE")
+    title:SetPoint("TOP", titlesPopup, "TOP", 0, -9)
+    title:SetTextColor(tr, tg, tb, 1)
     title:SetText("Titles")
     titlesPopup.title = title
 
-    -- Expose globally for skinning module to access
+    -- Expose globally for skinning module
     _G.GravityUI_TitlesPopup = titlesPopup
 
     return titlesPopup
 end
 
 ---------------------------------------------------------------------------
+-- Skin TitleManagerPane rows for GravityUI look
+---------------------------------------------------------------------------
+local titlesPaneSkinned = false
+
+local function SkinTitleManagerPane(popup, pane)
+    if titlesPaneSkinned then return end
+    titlesPaneSkinned = true
+
+    local function GetThemeColor() return ns.GetAccentColor() end
+
+    -- Skin the ScrollBox rows via a delayed scan (rows are created lazily by Blizzard)
+    local function SkinRows()
+        if not pane or not pane.ScrollBox then return end
+        local tr, tg, tb = GetThemeColor()
+        local font = GetGlobalFont and GetGlobalFont() or "Fonts\\FRIZQT__.TTF"
+
+        pane.ScrollBox:ForEachFrame(function(row)
+            if row and not row._guiSkinned then
+                row._guiSkinned = true
+
+                -- Hide Blizzard's default highlight/checked textures
+                for _, region in ipairs({ row:GetRegions() }) do
+                    if region and region:IsObjectType("Texture") then
+                        local name = region:GetAtlas() or ""
+                        if name:find("highlight") or name:find("checked") or name:find("stripe") then
+                            region:SetAlpha(0)
+                        end
+                    end
+                end
+                if row.GetHighlightTexture then
+                    local ht = row:GetHighlightTexture()
+                    if ht then ht:SetAlpha(0) end
+                end
+                if row.GetCheckedTexture then
+                    local ct = row:GetCheckedTexture()
+                    if ct then ct:SetAlpha(0) end
+                end
+
+                -- Custom hover tint
+                local hoverTex = row:CreateTexture(nil, "HIGHLIGHT")
+                hoverTex:SetAllPoints(row)
+                hoverTex:SetColorTexture(tr, tg, tb, 0.12)
+
+                -- Custom "active/selected" tint (shown when this title is equipped)
+                local selTex = row:CreateTexture(nil, "BACKGROUND")
+                selTex:SetAllPoints(row)
+                selTex:SetColorTexture(tr, tg, tb, 0.20)
+                selTex:Hide()
+                row._guiSelTex = selTex
+
+                -- Style the label text
+                if row.titleName then
+                    row.titleName:SetFont(font, 11, "")
+                    row.titleName:SetTextColor(0.88, 0.88, 0.88, 1)
+                elseif row.Label then
+                    row.Label:SetFont(font, 11, "")
+                    row.Label:SetTextColor(0.88, 0.88, 0.88, 1)
+                end
+
+                -- Hook for selected state
+                if row.SetChecked then
+                    hooksecurefunc(row, "SetChecked", function(self, checked)
+                        if self._guiSelTex then
+                            self._guiSelTex:SetShown(checked and true or false)
+                        end
+                        local label = self.titleName or self.Label
+                        if label then
+                            if checked then
+                                local tr2, tg2, tb2 = GetThemeColor()
+                                label:SetTextColor(tr2, tg2, tb2, 1)
+                            else
+                                label:SetTextColor(0.88, 0.88, 0.88, 1)
+                            end
+                        end
+                    end)
+                end
+            end
+        end)
+    end
+
+    -- Run once immediately + hook scrolling to catch newly visible rows
+    C_Timer.After(0.05, SkinRows)
+    if pane.ScrollBox then
+        -- ScrollBox uses callback system, not HookScript
+        if pane.ScrollBox.RegisterCallback then
+            pane.ScrollBox:RegisterCallback("OnUpdate", function() C_Timer.After(0, SkinRows) end, "GUITitlesSkin")
+        end
+    end
+end
+
+
+---------------------------------------------------------------------------
 -- Hook character frame
 ---------------------------------------------------------------------------
 local characterFrameHooked = false  -- Prevent duplicate hook registration
+local _updateBottomTabs = nil       -- Forward ref: set by HideBlizzardDecorations
+local _resetSidebarToStats = nil    -- Forward ref: resets sidebar to Tab1 visually
 
 local function HookCharacterFrame()
     if not CharacterFrame then return end
@@ -3068,6 +3531,9 @@ local function HookCharacterFrame()
 
                 popup:Show()
 
+                -- Apply GravityUI row skinning
+                SkinEquipMgrPane(popup, pane)
+
                 -- Trigger skinning module to apply styles (if enabled)
                 local skinningAPI = _G.CharacterFrameSkinning_GravityUI
                 if skinningAPI and skinningAPI.SkinEquipmentManager then
@@ -3121,6 +3587,9 @@ local function HookCharacterFrame()
                 end
 
                 popup:Show()
+
+                -- Apply GravityUI row skinning
+                SkinTitleManagerPane(popup, pane)
 
                 -- Trigger skinning module to apply styles (if enabled)
                 local skinningAPI = _G.CharacterFrameSkinning_GravityUI
@@ -3216,11 +3685,27 @@ local function HookCharacterFrame()
         for _, overlay in pairs(slotOverlays) do
             if overlay then overlay:Hide() end
         end
-        -- Hide Equipment Manager popup when leaving Character tab
+
+        -- Close both floating popups and restore panes to original parents
         if equipMgrPopup then equipMgrPopup:Hide() end
+        local equipPane = PaperDollFrame and PaperDollFrame.EquipmentManagerPane
+        if equipPane and equipPane._guiOriginalParent then
+            equipPane:SetParent(equipPane._guiOriginalParent)
+        end
+
+        if titlesPopup then titlesPopup:Hide() end
+        local titlesPane = PaperDollFrame and PaperDollFrame.TitleManagerPane
+        if titlesPane and titlesPane._guiOriginalParent then
+            titlesPane:SetParent(titlesPane._guiOriginalParent)
+        end
+
+        -- Reset sidebar visuals to Stats (Tab1) without triggering Blizzard's click
+        if _resetSidebarToStats then _resetSidebarToStats() end
+
         -- Hide ilvl display, center ilvl, and settings button on non-Character tabs
         if CharacterFrame._guiILvlDisplay then CharacterFrame._guiILvlDisplay:Hide() end
         if CharacterFrame._guiCenterILvl then CharacterFrame._guiCenterILvl:Hide() end
+
 
         -- Handle background and decorations based on skinning state
         if IsSkinningHandlingBackground() then
@@ -3243,6 +3728,8 @@ local function HookCharacterFrame()
         CharacterFrame:SetScale(1.0)
         -- Adjust tab and close button positions for Rep/Currency tabs
         AdjustForNonCharacterTab()
+        -- Update bottom tab underline to reflect newly-selected tab
+        if _updateBottomTabs then C_Timer.After(0, _updateBottomTabs) end
     end
 
     -- Hide when Reputation tab opens
@@ -3315,6 +3802,12 @@ local function HookCharacterFrame()
                 C_Timer.After(0.15, function()
                     if statsPanel then
                         statsPanel:Show()
+                    end
+                end)
+                -- Restore Blizzard's sidebar to Stats (Tab1) so content panes are correct
+                C_Timer.After(0.05, function()
+                    if PaperDollSidebarTab1 then
+                        PaperDollSidebarTab1:Click()
                     end
                 end)
             end

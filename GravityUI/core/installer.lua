@@ -473,6 +473,34 @@ Installer.registry = {
              return false
         end
     },  -- end Details entry
+
+    {
+        name = "Dominos",
+        label = "Dominos",
+        category = "Optional",
+        Check = function()
+            return C_AddOns.IsAddOnLoaded("Dominos") and _G.DominosDB ~= nil
+        end,
+        GetProfile = function()
+            return GetAceProfileFromGlobal("DominosDB")
+        end,
+        SetProfile = function(self, profileName)
+            return SetAceProfileInGlobal("DominosDB", profileName)
+        end,
+        Import = function(self, data, profileName)
+            local db = _G.DominosDB
+            if not db then return end
+            if not db.profiles then db.profiles = {} end
+            -- Deep-copy the import data into the profile slot
+            db.profiles[profileName] = data
+            -- Activate it for the current character
+            SetAceProfileInGlobal("DominosDB", profileName)
+        end,
+        HasProfile = function(self, profileName)
+            local db = _G.DominosDB
+            return db and db.profiles and db.profiles[profileName] ~= nil
+        end,
+    },
 }
 
 -- ---------------------------------------------------------------------------

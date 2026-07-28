@@ -13,6 +13,10 @@ local chatCopyFrame = nil
 local copyButtons = {}
 local hookedChatFrames = {}
 
+-- Jump-Down: track when user last scrolled away from bottom (per chat frame)
+local _scrolledUpSince  = {}   -- [chatFrame] = GetTime() when scrolled up
+local _jumpDownTicker   = nil  -- single shared C_Timer ticker
+
 local tinsert = table.insert
 local tconcat = table.concat
 
@@ -25,11 +29,17 @@ local CHAT_FRAME_TEXTURES = {
     "LeftTexture", "RightTexture",
 }
 
--- URL Patterns
+-- URL Patterns — each has two variants:
+--   %f[%S]  matches URLs preceded by whitespace (mid-message)
+--   ^       matches URLs at the very start of the message text
+--   (Lua treats \0 as non-whitespace, so %f[%S] fails at string position 1)
 local URL_PATTERNS = {
-    "%f[%S](%a[%w+.-]+://%S+)",             -- protocol://path
-    "%f[%S](www%.[-%w_%%]+%.%a%a+/%S+)",    -- www.domain.tld/path
-    "%f[%S](www%.[-%w_%%]+%.%a%a+)",        -- www.domain.tld
+    "%f[%S](%a[%w+.-]+://%S+)",             -- protocol://path  (mid-message)
+    "^(%a[%w+.-]+://%S+)",                  -- protocol://path  (start of message)
+    "%f[%S](www%.[-%w_%%]+%.%a%a+/%S+)",    -- www.domain.tld/path  (mid)
+    "^(www%.[-%w_%%]+%.%a%a+/%S+)",         -- www.domain.tld/path  (start)
+    "%f[%S](www%.[-%w_%%]+%.%a%a+)",        -- www.domain.tld  (mid)
+    "^(www%.[-%w_%%]+%.%a%a+)",             -- www.domain.tld  (start)
 }
 
 -- EditBox textures to strip
@@ -223,7 +233,40 @@ local function UpdateTabColors(tab)
     -- Debugging Alpha Issues
     -- print("UpdateTabColors: ID="..tab:GetID().." settings="..(settings and "OK" or "NIL").." active="..activeAlpha.." inactive="..inactiveAlpha)
     
-    -- Determine colors
+    -- Modern Design mode: dark background, top accent bar, no border
+    local modernDesign = settings and settings.tabs and settings.tabs.modernDesign
+    if modernDesign then
+        local tr, tg, tb = ns.GetAccentColor()
+        local bgR, bgG, bgB = 0.08, 0.08, 0.10
+        local inactiveAlpha = settings.tabs.inactiveTab and settings.tabs.inactiveTab.alpha or 0.7
+
+        tab.__guiIgnoreAlpha = true
+        tab:SetAlpha(1)
+        tab.__guiIgnoreAlpha = false
+
+        if isSelected then
+            tab.__guiBackdrop:SetBackdropColor(bgR, bgG, bgB, 0.92)
+            tab.__guiBackdrop:SetBackdropBorderColor(0, 0, 0, 0)
+            if tab.__guiTopBar then
+                tab.__guiTopBar:SetVertexColor(tr, tg, tb, 1)
+                tab.__guiTopBar:Show()
+            end
+            if tab.__guiMyText then tab.__guiMyText:SetTextColor(1, 1, 1, 1) end
+        elseif isHovered then
+            tab.__guiBackdrop:SetBackdropColor(bgR * 1.5, bgG * 1.5, bgB * 1.5, 0.80)
+            tab.__guiBackdrop:SetBackdropBorderColor(0, 0, 0, 0)
+            if tab.__guiTopBar then tab.__guiTopBar:SetVertexColor(tr, tg, tb, 0.5) tab.__guiTopBar:Show() end
+            if tab.__guiMyText then tab.__guiMyText:SetTextColor(1, 1, 1, 1) end
+        else
+            tab.__guiBackdrop:SetBackdropColor(bgR, bgG, bgB, inactiveAlpha * 0.8)
+            tab.__guiBackdrop:SetBackdropBorderColor(0, 0, 0, 0)
+            if tab.__guiTopBar then tab.__guiTopBar:Hide() end
+            if tab.__guiMyText then tab.__guiMyText:SetTextColor(0.75, 0.75, 0.75, 1) end
+        end
+        return
+    end
+
+    -- Classic mode (existing logic)
     local bgAlpha = 0
     local borderR, borderG, borderB, borderA = 0, 0, 0, 0
     local textR, textG, textB = 1, 1, 1 -- Default White Text
@@ -418,7 +461,20 @@ local function StyleChatTab(tab)
         text.__guiIgnoreColorHook = false
     end
     
-    -- 2. Create Backdrop (Wider & Centered)
+    -- 2b. Create top accent bar (for Modern Design mode)
+    -- Use white base texture so SetVertexColor is the sole color source
+    if not tab.__guiTopBar then
+        local bar = tab:CreateTexture(nil, "OVERLAY", nil, 6)
+        bar:SetHeight(2)
+        bar:SetPoint("TOPLEFT",  tab, "TOPLEFT",  2, -4)
+        bar:SetPoint("TOPRIGHT", tab, "TOPRIGHT", -2, -4)
+        bar:SetColorTexture(1, 1, 1, 1)  -- White base; actual color set via SetVertexColor
+        bar:Hide()
+        bar._guiCustom = true
+        tab.__guiTopBar = bar
+    end
+
+    -- 2c. Create Backdrop (Wider & Centered)
     if not tab.__guiBackdrop then
         local bd = CreateFrame("Frame", nil, tab, "BackdropTemplate")
         bd:SetFrameLevel(tab:GetFrameLevel() - 1)
@@ -516,68 +572,117 @@ local function ApplyTimestampCVar()
 end
 
 local function MakeURLsClickable(text)
+    if not text then return text end
+
     local settings = GetSettings()
-    if not settings or not settings.urls or not settings.urls.enabled then
+    -- Only skip if explicitly disabled (nil/missing = enabled by default)
+    if settings and settings.urls and settings.urls.enabled == false then
         return text
     end
 
-    local success, result = pcall(function()
-        local r, g, b = 0.078, 0.608, 0.992  -- Default blue
-        if settings.urls.color then
-            r, g, b = settings.urls.color[1] or r, settings.urls.color[2] or g, settings.urls.color[3] or b
-        end
-        local colorHex = string.format("%02x%02x%02x", r * 255, g * 255, b * 255)
-        local linkFormat = "|cff" .. colorHex .. "|Haddon:GravityUIChat:%1|h[%1]|h|r"
+    -- Cheap pre-check: skip regex for 99% of messages that have no URL
+    if not text:find("://", 1, true) and not text:find("www.", 1, true) then
+        return text
+    end
 
-        local processed = text
-        for _, pattern in ipairs(URL_PATTERNS) do
-            processed = processed:gsub(pattern, linkFormat)
-        end
-        return processed
-    end)
+    local r, g, b = 0.078, 0.608, 0.992  -- Default blue
+    if settings and settings.urls and settings.urls.color then
+        r = settings.urls.color[1] or r
+        g = settings.urls.color[2] or g
+        b = settings.urls.color[3] or b
+    end
+    local colorHex = string.format("%02x%02x%02x", r * 255, g * 255, b * 255)
+    local linkFormat = "|cff" .. colorHex .. "|Haddon:GravityUIChat:%1|h[%1]|h|r"
 
-    if success then return result else return text end
+    local processed = text
+    for _, pattern in ipairs(URL_PATTERNS) do
+        processed = processed:gsub(pattern, linkFormat)
+    end
+    return processed
 end
 
--- TAINT-SAFE MESSAGE PROCESSING
--- ChatFrame_AddMessageEventFilter is Blizzard's purpose-built API for addon
--- message pre-processing. Filters are called inside Blizzard's secure event
--- dispatch chain, BEFORE AddMessage runs. They can modify the 'text' argument
--- directly and return the new value — no addon code ever sits on the call
--- stack when SetLastTellTarget(sender) fires. This eliminates the WHISPER
--- "attempt to perform string conversion on a secret string value" taint crash.
+-- URL message filter — registered once, covers ALL channels including whisper.
+-- EllesmereUI (field-tested 2026-07-25) confirms CHAT_MSG_WHISPER is safe to
+-- filter directly in Midnight 12.x without tainting chatEditLastTell.
 local guiMessageFilterRegistered = false
 local function RegisterMessageFilter()
     if guiMessageFilterRegistered then return end
     guiMessageFilterRegistered = true
 
-    -- This filter runs for every chat event on every registered chat frame.
-    -- Return false (or nil) to pass through; return true to suppress the message.
-    -- The signature is: function(chatFrame, event, text, ...) return suppress, newText, ...
-    -- TAINT: CHAT_MSG_WHISPER / WHISPER_INFORM are NOT registered here.
-    -- The 'text' argument for whisper events is a Blizzard-protected secret string value.
-    -- Calling string.find/gsub on it from addon code inside the filter chain propagates
-    -- taint onto chatEditLastTell, which then crashes GetLastTellTarget on /reply.
-    -- URL linkification is intentionally skipped for whispers to preserve taint safety.
-    ChatFrame_AddMessageEventFilter("CHAT_MSG_SAY",             function(_, event, text, ...) return false, HookTransformText(text), ... end)
-    ChatFrame_AddMessageEventFilter("CHAT_MSG_YELL",            function(_, event, text, ...) return false, HookTransformText(text), ... end)
-    ChatFrame_AddMessageEventFilter("CHAT_MSG_PARTY",           function(_, event, text, ...) return false, HookTransformText(text), ... end)
-    ChatFrame_AddMessageEventFilter("CHAT_MSG_PARTY_LEADER",    function(_, event, text, ...) return false, HookTransformText(text), ... end)
-    ChatFrame_AddMessageEventFilter("CHAT_MSG_RAID",            function(_, event, text, ...) return false, HookTransformText(text), ... end)
-    ChatFrame_AddMessageEventFilter("CHAT_MSG_RAID_LEADER",     function(_, event, text, ...) return false, HookTransformText(text), ... end)
-    ChatFrame_AddMessageEventFilter("CHAT_MSG_GUILD",           function(_, event, text, ...) return false, HookTransformText(text), ... end)
-    ChatFrame_AddMessageEventFilter("CHAT_MSG_OFFICER",         function(_, event, text, ...) return false, HookTransformText(text), ... end)
-    ChatFrame_AddMessageEventFilter("CHAT_MSG_INSTANCE_CHAT",   function(_, event, text, ...) return false, HookTransformText(text), ... end)
-    ChatFrame_AddMessageEventFilter("CHAT_MSG_CHANNEL",         function(_, event, text, ...) return false, HookTransformText(text), ... end)
-    ChatFrame_AddMessageEventFilter("CHAT_MSG_EMOTE",           function(_, event, text, ...) return false, HookTransformText(text), ... end)
-    ChatFrame_AddMessageEventFilter("CHAT_MSG_TEXT_EMOTE",      function(_, event, text, ...) return false, HookTransformText(text), ... end)
+    local URL_EVENTS = {
+        "CHAT_MSG_SAY", "CHAT_MSG_YELL",
+        "CHAT_MSG_PARTY", "CHAT_MSG_PARTY_LEADER",
+        "CHAT_MSG_RAID", "CHAT_MSG_RAID_LEADER",
+        "CHAT_MSG_GUILD", "CHAT_MSG_OFFICER",
+        "CHAT_MSG_INSTANCE_CHAT", "CHAT_MSG_INSTANCE_CHAT_LEADER",
+        "CHAT_MSG_WHISPER", "CHAT_MSG_BN_WHISPER",
+        "CHAT_MSG_CHANNEL", "CHAT_MSG_EMOTE", "CHAT_MSG_TEXT_EMOTE",
+    }
+    local function Filter(_, event, text, ...)
+        return false, HookTransformText(text), ...
+    end
+    for _, ev in ipairs(URL_EVENTS) do
+        ChatFrame_AddMessageEventFilter(ev, Filter)
+    end
+
+    -- WHISPER_INFORM (outgoing whispers) taint workaround:
+    -- The message text is a Blizzard-protected secret string inside the filter chain.
+    -- gsub on it silently fails (Blizzard internally pcalls all filters).
+    -- Solution: hook OnEvent AFTER the event chain, defer via C_Timer.After(0),
+    -- read the rendered message via GetMessageInfo() (clean string, safe to gsub),
+    -- and inject a second clickable link line directly below the whisper.
+    local whisperOutHooked = {}
+    local function HookOutgoingWhisperForFrame(chatFrame)
+        if whisperOutHooked[chatFrame] then return end
+        whisperOutHooked[chatFrame] = true
+
+        chatFrame:HookScript("OnEvent", function(self, event)
+            if event ~= "CHAT_MSG_WHISPER_INFORM" and event ~= "CHAT_MSG_BN_WHISPER_INFORM" then
+                return
+            end
+            C_Timer.After(0, function()
+                local num = self:GetNumMessages()
+                if num == 0 then return end
+                local msg = self:GetMessageInfo(num)
+                if not msg then return end
+
+                -- Find a URL in the already-rendered message line.
+                -- GetMessageInfo() returns a plain clean string — safe to gsub here.
+                local url
+                for _, pattern in ipairs(URL_PATTERNS) do
+                    url = msg:match(pattern)
+                    if url then break end
+                end
+                if not url then return end
+
+                -- Build clickable hyperlink and inject it as a second line.
+                local r, g, b = 0.078, 0.608, 0.992
+                local settings = GetSettings()
+                if settings and settings.urls and settings.urls.color then
+                    r = settings.urls.color[1] or r
+                    g = settings.urls.color[2] or g
+                    b = settings.urls.color[3] or b
+                end
+                local hex = string.format("%02x%02x%02x", r * 255, g * 255, b * 255)
+                local clickable = "|cff" .. hex
+                    .. "|Haddon:GravityUIChat:" .. url .. "|h[" .. url .. "]|h|r"
+                self:AddMessage("  >> " .. clickable, 0.55, 0.55, 0.55)
+            end)
+        end)
+    end
+
+    -- Apply to all currently existing chat frames.
+    for i = 1, 10 do
+        local cf = _G["ChatFrame" .. i]
+        if cf then HookOutgoingWhisperForFrame(cf) end
+    end
 end
 
--- URL transform only — timestamps are handled by the showTimestamps CVar.
+-- URL transform only — called from the message filter.
+-- Direct gsub like EllesmereUI — no pcall wrapping.
 function HookTransformText(text)
     if not text or type(text) ~= "string" then return text end
-    local success, result = pcall(MakeURLsClickable, text)
-    return success and result or text
+    return MakeURLsClickable(text)
 end
 
 -- Per-frame hook: now just ensures we've registered filters once.
@@ -1048,6 +1153,23 @@ local function EnsureScrollButton(chatFrame)
     hooksecurefunc(chatFrame, "PageUp", UpdateVis)
     hooksecurefunc(chatFrame, "PageDown", UpdateVis)
     
+    -- Track scroll-up time for Auto Jump Down
+    local function OnScrolledUp(self)
+        if not _scrolledUpSince[self] then
+            _scrolledUpSince[self] = GetTime()
+        end
+    end
+    local function OnScrolledDown(self)
+        _scrolledUpSince[self] = nil
+    end
+    hooksecurefunc(chatFrame, "ScrollUp",       function(self) OnScrolledUp(self) end)
+    hooksecurefunc(chatFrame, "PageUp",         function(self) OnScrolledUp(self) end)
+    hooksecurefunc(chatFrame, "ScrollToTop",    function(self) OnScrolledUp(self) end)
+    hooksecurefunc(chatFrame, "ScrollToBottom", function(self) OnScrolledDown(self) end)
+    hooksecurefunc(chatFrame, "ScrollDown",     function(self)
+        if self:GetScrollOffset() == 0 then OnScrolledDown(self) end
+    end)
+
     return btn
 end
 
@@ -1202,10 +1324,59 @@ local function StyleEditBox(chatFrame)
             end
         end
     end
-    
-    -- Force Arrow Keys to work without Alt
+    -- Plain Up/Down = chat input recall (EllesmereUI pattern: hook AddHistoryLine instance method)
+    -- SetAltArrowKeyMode(false): paired with OnKeyDown hook so plain Up/Down reach our handler
+    -- Alt+Up/Down stays untouched (engine's own recall for secure commands)
     editBox:SetAltArrowKeyMode(false)
-    
+
+    if not editBox._guiHistData then
+        editBox._guiHistData = { history = {}, histIdx = 0 }
+
+        -- Blizzard calls AddHistoryLine on the editbox when text is submitted.
+        -- Hook the INSTANCE method (not global SendChatMessage) to stay taint-safe.
+        hooksecurefunc(editBox, "AddHistoryLine", function(self, text)
+            if not text or #text == 0 then return end
+            -- Skip secure slash commands to avoid ADDON_ACTION_FORBIDDEN on re-send
+            local cmd = text:match("^%s*(/%S+)")
+            if cmd and IsSecureCmd and IsSecureCmd(cmd) then return end
+            local h = self._guiHistData.history
+            -- Store oldest-first (newest entry at end)
+            if h[#h] ~= text then
+                h[#h + 1] = text
+                if #h > 50 then table.remove(h, 1) end
+            end
+        end)
+
+        -- Up/Down: navigate history (only plain arrow, not Alt+arrow)
+        editBox:HookScript("OnKeyDown", function(self, key)
+            if key ~= "UP" and key ~= "DOWN" then return end
+            if IsAltKeyDown() then return end  -- leave Alt+arrow to Blizzard's own recall
+            local d = self._guiHistData
+            if not d then return end
+            local h = d.history
+            if #h == 0 then return end
+            if key == "UP" then
+                d.histIdx = d.histIdx + 1
+                if d.histIdx > #h then d.histIdx = #h end
+            else
+                d.histIdx = d.histIdx - 1
+                if d.histIdx < 0 then d.histIdx = 0 end
+            end
+            -- Newest entry = h[#h], oldest = h[1]; histIdx 1 = newest
+            if d.histIdx == 0 then
+                self:SetText("")
+            else
+                local entry = h[#h - d.histIdx + 1]
+                self:SetText(entry or "")
+            end
+        end)
+
+        -- Reset index when editbox loses focus
+        editBox:HookScript("OnEditFocusLost", function(self)
+            self._guiHistData.histIdx = 0
+        end)
+    end
+
     -- Backdrop (only create once)
     local isNewBackdrop = false
     if not chatFrame.__guiEditBoxBackdrop then
@@ -1532,6 +1703,47 @@ function ns.Chat.Refresh()
     if ns.Chat.RepositionTabs then
         ns.Chat.RepositionTabs()
     end
+
+    -- 9. Auto Jump Down ticker
+    local jd = settings.jumpDown
+    if jd and jd.enabled then
+        if not _jumpDownTicker then
+            _jumpDownTicker = C_Timer.NewTicker(1, function()
+                local s = GetSettings()
+                if not s or not s.jumpDown or not s.jumpDown.enabled then
+                    _jumpDownTicker:Cancel()
+                    _jumpDownTicker = nil
+                    return
+                end
+                local delay = s.jumpDown.delay or 10
+                local now   = GetTime()
+                for i = 1, 10 do
+                    local cf = _G["ChatFrame" .. i]
+                    if cf and cf:IsShown() then
+                        if cf:GetScrollOffset() > 0 then
+                            -- Scrolled up — start timer on first detection
+                            if not _scrolledUpSince[cf] then
+                                _scrolledUpSince[cf] = now
+                            elseif (now - _scrolledUpSince[cf]) >= delay then
+                                cf:ScrollToBottom()
+                                _scrolledUpSince[cf] = nil
+                            end
+                        else
+                            -- At bottom — clear timer
+                            _scrolledUpSince[cf] = nil
+                        end
+                    end
+                end
+            end)
+        end
+    else
+        if _jumpDownTicker then
+            _jumpDownTicker:Cancel()
+            _jumpDownTicker = nil
+        end
+        wipe(_scrolledUpSince)
+    end
+
 end
  
 -- Module Function: Reposition Chat Tabs
@@ -1577,6 +1789,7 @@ function ns.Chat.Init()
     ApplyTimestampCVar()
 
     SetupURLClickHandler()
+    RegisterMessageFilter()   -- register URL filters immediately, not lazily
     SetupChatHistory()
     
     -- Restore history after a small delay to ensure frames are ready

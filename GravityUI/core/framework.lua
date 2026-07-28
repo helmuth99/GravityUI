@@ -206,6 +206,9 @@ function GUI:UpdateThemeColors()
         r, g, b = c[1], c[2], c[3]
     end
     
+    -- Invalidate accent color cache so ns.GetAccentColor() re-reads on next call
+    ns.accentCache = nil
+
     -- Update Palette
     C.accent = {r, g, b, 1}
     C.accentLight = {math.min(r*1.3, 1), math.min(g*1.3, 1), math.min(b*1.3, 1), 1}

@@ -928,11 +928,25 @@ end
 
 local function PositionInspectModelScene()
     if not InspectModelFrame then return end
-    InspectModelFrame:ClearAllPoints()
-    InspectModelFrame:SetPoint("TOPLEFT", InspectFrame, "TOPLEFT", 55, -85)
-    InspectModelFrame:SetPoint("BOTTOMRIGHT", InspectFrame, "BOTTOMRIGHT", -55, 65)
-    InspectModelFrame:SetFrameLevel(2)
+    -- Suppress Blizzard model control frame
     if InspectModelFrame.ControlFrame then InspectModelFrame.ControlFrame:Hide() end
+
+    -- Anchor to slot frames so the model stands on the ground (not fixed pixels)
+    InspectModelFrame:ClearAllPoints()
+    if InspectHeadSlot and InspectHandsSlot then
+        InspectModelFrame:SetPoint("TOPLEFT",  InspectHeadSlot,  "TOPRIGHT",  0, 0)
+        InspectModelFrame:SetPoint("TOPRIGHT", InspectHandsSlot, "TOPLEFT",   0, 0)
+        if InspectMainHandSlot then
+            InspectModelFrame:SetPoint("BOTTOM", InspectMainHandSlot, "TOP", 0, 0)
+        else
+            InspectModelFrame:SetPoint("BOTTOM", InspectFrame, "BOTTOM", 0, 80)
+        end
+    else
+        -- Fallback: improved fixed offsets that reduce floating
+        InspectModelFrame:SetPoint("TOPLEFT",     InspectFrame, "TOPLEFT",     55, -80)
+        InspectModelFrame:SetPoint("BOTTOMRIGHT", InspectFrame, "BOTTOMRIGHT", -55, 55)
+    end
+    InspectModelFrame:SetFrameLevel(2)
     InspectModelFrame:Show()
 end
 

@@ -1270,6 +1270,7 @@ local function BuildChat(parent)
     if dbChat.tabs.activeTab.disableBox == nil then dbChat.tabs.activeTab.disableBox = false end
     if dbChat.tabs.activeTab.disableBackground == nil then dbChat.tabs.activeTab.disableBackground = false end
     if not dbChat.tabs.inactiveTab then dbChat.tabs.inactiveTab = {alpha = 0.5} end
+    if dbChat.tabs.modernDesign == nil then dbChat.tabs.modernDesign = false end
 
         local function MakeSubHeader(txt)
         local h = CreateFrame("Frame", nil, content)
@@ -1297,6 +1298,7 @@ local function BuildChat(parent)
     MakeRow("Background Color", "color", "bgColor", dbChat.glass, RefreshChat)
 
     MakeSubHeader("Chat Tabs")
+    MakeRow("Enable Modern GUI Design", "checkbox", "modernDesign", dbChat.tabs, RefreshChat)
     MakeRow("Disable Box Base & Border", "checkbox", "disableBox", dbChat.tabs.activeTab, RefreshChat)
     MakeRow("Disable Background Entirely", "checkbox", "disableBackground", dbChat.tabs.activeTab, RefreshChat)
     MakeRow("Use Theme Color for Active Tab", "checkbox", "useThemeColor", dbChat.tabs.activeTab, RefreshChat)
@@ -1344,6 +1346,11 @@ local function BuildChat(parent)
     MakeSubHeader("UI Cleanup")
     MakeRow("Hide Chat Buttons", "checkbox", "hideButtons", dbChat, RefreshChat)
     MakeRow("Unclamp Chat (Allow off-screen)", "checkbox", "unclamp", dbChat, RefreshChat)
+
+    MakeSubHeader("Auto Jump Down")
+    if not dbChat.jumpDown then dbChat.jumpDown = {enabled = false, delay = 10} end
+    MakeRow("Jump to Bottom After Inactivity", "checkbox", "enabled", dbChat.jumpDown, RefreshChat)
+    MakeRow("Delay (seconds)", "slider", 3, 60, "delay", dbChat.jumpDown, RefreshChat, 1)
 
     content:SetHeight(math.abs(yOffset) + 20)
 end

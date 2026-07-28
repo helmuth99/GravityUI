@@ -568,6 +568,7 @@ ns.Defaults = {
                 inactiveTab = {
                     alpha = 0.7,
                 },
+                modernDesign = false,
             },
             fade =             {
                 enabled = false,
@@ -614,6 +615,10 @@ ns.Defaults = {
                     [3] = 0.73725491762161,
                     [4] = 1,
                 },
+            },
+            jumpDown = {
+                enabled = false,
+                delay = 10,
             },
         },
         mail = {
