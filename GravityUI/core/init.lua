@@ -188,6 +188,7 @@ function Addon:OnInitialize()
     self:RegisterChatCommand("gravityui", "SlashCommandOpen")
     self:RegisterChatCommand("rl", "SlashCommandReload")
     self:RegisterChatCommand("kb", "SlashCommandKeybind")
+    self:RegisterChatCommand("guiinstall", "SlashCommandInstall")
     
     ns.Print("loaded. Type |cFFFFFF00/gui|r to open settings.")
     ns.Print("using profile: |cFF00BFFF" .. ns.db:GetCurrentProfile() .. "|r")
@@ -805,6 +806,16 @@ end
 -- Reload UI command
 function Addon:SlashCommandReload()
     ReloadUI()
+end
+
+-- Open the Setup Wizard on demand (/guiinstall)
+-- Works even if setupDone is already set – useful for re-running setup.
+function Addon:SlashCommandInstall()
+    if ns.GUI and ns.GUI.Wizard and ns.GUI.Wizard.Show then
+        ns.GUI.Wizard:Show()
+    else
+        ns.Print("Setup Wizard not available.")
+    end
 end
 
 -- Toggle Quick Keybind Mode
