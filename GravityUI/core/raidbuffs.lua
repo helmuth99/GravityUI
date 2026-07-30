@@ -115,8 +115,9 @@ local TARGETED_BUFFS = {
 -- Hoisted lookup sets for consumable SpellIDs (all Midnight 12.0 flasks + TWW 11.0).
 -- Module-scope avoids per-call allocation inside customCheck closures.
 local MIDNIGHT_FLASK_IDS = {
-    -- 12.0 Midnight
+    -- 12.0 Midnight (Season 1 + Season 2 variants tracked by MRT/EllesmereUI)
     [1235057]=true, [1235108]=true, [1235110]=true, [1235111]=true,
+    [1236763]=true, [1239355]=true, [1239755]=true, [1236767]=true,
     -- 11.0 The War Within (fallback for cross-expansion play)
     [432021]=true, [432473]=true, [431971]=true, [431972]=true, [431974]=true, [431973]=true,
 }
@@ -136,38 +137,48 @@ end
 
 local function ScanConsumableByIcon(iconID)
     if inChallengeMode then return false end  -- active M+ key: assume present
-    for i = 1, 60 do
-        local aura = C_UnitAuras.GetAuraDataByIndex("player", i, "HELPFUL")
-        if not aura then break end
-        local ok, match = pcall(function() return tonumber(aura.icon) == iconID end)
-        if ok and match then
-            -- Also retrieve remaining time; may be tainted on some auras so wrap in pcall.
-            local _, rem = pcall(function()
-                local exp = aura.expirationTime
-                return (exp and exp > 0) and (exp - GetTime()) or nil
-            end)
-            return false, rem  -- found: (missing=false, remaining)
+    -- 12.1: GetAuraDataByIndex hard-errors under aura restrictions even outside of combat.
+    -- Wrap the entire loop in pcall and treat errors as "assume present" (return false).
+    local ok, result = pcall(function()
+        for i = 1, 60 do
+            local aura = C_UnitAuras.GetAuraDataByIndex("player", i, "HELPFUL")
+            if not aura then return true end  -- reached end of aura list: missing
+            local matched, match = pcall(function() return tonumber(aura.icon) == iconID end)
+            if matched and match then
+                local _, rem = pcall(function()
+                    local exp = aura.expirationTime
+                    return (exp and exp > 0) and (exp - GetTime()) or nil
+                end)
+                return false, rem  -- found
+            end
         end
-    end
-    return true  -- missing
+        return true  -- missing
+    end)
+    if not ok then return false end  -- scan failed (aura restricted): assume present
+    return result
 end
 
 local function ScanConsumableBySpellIDs(idTable)
     if inChallengeMode then return false end  -- active M+ key: assume present
-    for i = 1, 60 do
-        local aura = C_UnitAuras.GetAuraDataByIndex("player", i, "HELPFUL")
-        if not aura then break end
-        local ok, match = pcall(function() return idTable[tonumber(aura.spellId)] end)
-        if ok and match then
-            -- Also retrieve remaining time; may be tainted on some auras so wrap in pcall.
-            local _, rem = pcall(function()
-                local exp = aura.expirationTime
-                return (exp and exp > 0) and (exp - GetTime()) or nil
-            end)
-            return false, rem  -- found: (missing=false, remaining)
+    -- 12.1: GetAuraDataByIndex hard-errors under aura restrictions even outside of combat.
+    -- Wrap the entire loop in pcall and treat errors as "assume present" (return false).
+    local ok, result = pcall(function()
+        for i = 1, 60 do
+            local aura = C_UnitAuras.GetAuraDataByIndex("player", i, "HELPFUL")
+            if not aura then return true end  -- reached end of aura list: missing
+            local matched, match = pcall(function() return idTable[tonumber(aura.spellId)] end)
+            if matched and match then
+                local _, rem = pcall(function()
+                    local exp = aura.expirationTime
+                    return (exp and exp > 0) and (exp - GetTime()) or nil
+                end)
+                return false, rem  -- found
+            end
         end
-    end
-    return true  -- missing
+        return true  -- missing
+    end)
+    if not ok then return false end  -- scan failed (aura restricted): assume present
+    return result
 end
 
 local SELF_BUFFS = {

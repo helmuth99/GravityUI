@@ -77,7 +77,15 @@ local TRACKED_SPELLS = {
     [242745] = "feast", 
     [266985] = "feast", 
     [127892] = "feast", 
-    [1278895] = "feast", 
+    -- Midnight Feasts (12.0)
+    [1259657] = "feast", -- Quel'dorei Medley
+    [1278915] = "feast", -- Hearty Quel'dorei Medley
+    [1259658] = "feast", -- Harandar Celebration
+    [1278929] = "feast", -- Hearty Harandar Celebration
+    [1237104] = "feast", -- Blooming Feast
+    [1278909] = "feast", -- Hearty Blooming Feast
+    [1259659] = "feast", -- Silvermoon Parade
+    [1278895] = "feast", -- Hearty Silvermoon Parade
 }
 
 -- ============================================================================
@@ -417,9 +425,6 @@ local function UpdateWatchers()
     end
 end
 
--- ============================================================================
--- EVENT HANDLE (UNIT_SPELLCAST_SUCCEEDED & COMM)
--- ============================================================================
 -- ============================================================================
 -- SPELL PROCESSING (Laundered)
 -- ============================================================================

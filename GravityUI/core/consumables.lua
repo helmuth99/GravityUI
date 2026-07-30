@@ -415,11 +415,15 @@ Module.db = Module.db or {}
 -------------------------------------------------------------------------------
 
 Module.db.flaskBuffIDs = {
-    -- 12.0.0 - Midnight
+    -- 12.0.0 - Midnight (Season 1 + Season 2 variants)
     [1235057] = true, -- Flask of Thalassian Resistance (Vers)
     [1235108] = true, -- Flask of the Magisters (Mastery)
     [1235110] = true, -- Flask of the Blood Knights (Haste)
     [1235111] = true, -- Flask of the Shattered Sun (Crit)
+    [1236763] = true, -- Flask variant (Midnight S2)
+    [1239355] = true, -- Flask variant (Midnight S2)
+    [1239755] = true, -- Flask variant (Midnight S2)
+    [1236767] = true, -- Flask variant (Midnight S2)
 
     -- 11.0.0 - The War Within
     [432021] = true, -- Flask of Alchemical Chaos
@@ -535,6 +539,12 @@ Module.db.runeBuffIDs = {
 Module.db.vantusBuffIDs = {
     ----------------------------------------------------------------------------
     --- Midnight
+
+    -- 12.1.0 - The Venomous Abyss (Season 2)
+    -- SpellID 1303164 confirmed via PTR (wowhead.com/ptr/spell=1303164)
+    [1303164] = true, -- Vantus Rune: Tides (Ula'tek, EncounterID 3492)
+    -- TODO: Remaining 7 bosses (Sszorak, Sentinels, Nekzali, Vashnik, Explorers, Twin Fangs, The Bargained Crown)
+    --       Add their Vantus Rune spell IDs once available on PTR/live.
 
     -- 12.0.0 - Voidspire
     [1276687] = true, [1276688] = true, -- Imperator Averzian

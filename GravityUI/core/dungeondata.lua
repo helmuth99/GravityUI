@@ -57,8 +57,8 @@ local NAME_TO_SHORT = {
     ["Freehold"] = "FH",
     ["The MOTHERLODE!!"] = "ML",
     ["Waycrest Manor"] = "WM",
-    ["Kings' Rest"] = "KR",
-    ["Temple of Sethraliss"] = "SETH",
+    ["Kings' Rest"] = "REST",
+    ["Temple of Sethraliss"] = "TEMPLE",
     ["The Underrot"] = "UNDR",
     ["Shrine of the Storm"] = "SHRINE",
     ["Siege of Boralus"] = "SIEGE",
@@ -78,7 +78,7 @@ local NAME_TO_SHORT = {
     ["Tazavesh: So'leah's Gambit"] = "GMBT",
 
     -- Dragonflight
-    ["Ruby Life Pools"] = "RLP",
+    ["Ruby Life Pools"] = "POOLS",
     ["The Nokhud Offensive"] = "NO",
     ["The Azure Vault"] = "AV",
     ["Algeth'ar Academy"] = "AA",
@@ -106,18 +106,21 @@ local NAME_TO_SHORT = {
     ["Vortex Pinnacle"] = "VP",
     ["Throne of the Tides"] = "TOTT",
 
-    -- Retail (12.x)
-    ["Windrunner Spire"] = "WIND",
-    ["Magisters' Terrace"] = "MAGI",
+    -- Midnight Season 1 (12.0)
+    ["Windrunner Spire"] = "SPIRE",
+    ["Magisters' Terrace"] = "MT",
     ["Nexus-Point Xenas"] = "XENAS",
-    ["Maisara Caverns"] = "CAVNS",
-    ["Murder Row"] = "MURDR",
-    ["The Blinding Vale"] = "BLIND",
-    ["Den of Nalorakk"] = "NALO",
-    ["The Foraging"] = "FORAG",
-    ["Voidscar Arena"] = "VSCAR",
-    ["The Heart of Rage"] = "RAGE",
-    ["Voidstorm"] = "VSTORM",
+    ["Maisara Caverns"] = "CAVERN",
+
+    -- Midnight Season 2 / Sporefall (12.1)
+    ["Voidscar Arena"] = "ARENA",
+    ["The Blinding Vale"] = "VALE",
+    ["Temple of Sethraliss"] = "TEMPLE",
+    ["Ruby Life Pools"] = "POOLS",
+    ["Murder Row"] = "MURDER",
+    ["Kings' Rest"] = "REST",
+    ["Den of Nalorakk"] = "DEN",
+    ["Altar of Fangs"] = "ALTAR",
 }
 
 ---------------------------------------------------------------------------
@@ -209,15 +212,23 @@ local MAPID_TO_SPELL = {
     [438] = 410080,   -- Vortex Pinnacle
     [456] = 424142,   -- Throne of Tides
 
-    -- Retail expansion (Midnight Season 1)
+    -- Midnight Season 1 (12.0)
     [557] = 1254400,  -- Windrunner Spire
     [558] = 1254572,  -- Magisters' Terrace
     [559] = 1254563,  -- Nexus-Point Xenas
     [560] = 1254559,  -- Maisara Caverns
-    [561] = 1255255,  -- Den of Nalorakk
-    [562] = 1255257,  -- Voidscar Arena
-    [563] = 1255250,  -- Murder Row
-    [564] = 1255254,  -- The Blinding Vale
+
+    -- Midnight Season 2 / Sporefall (12.1)
+    -- Kings' Rest and Temple of Sethraliss reuse their BfA ChallengeMode MapIDs (249, 250)
+    -- but get new Midnight-era teleport spells. Ruby Life Pools (399) keeps its DF spell.
+    [249] = 1286831,  -- Kings' Rest
+    [250] = 1286828,  -- Temple of Sethraliss
+    -- [399] = 393256 already defined above (Ruby Life Pools — DF spell still valid)
+    [584] = 1286801,  -- The Blinding Vale
+    [585] = 1286804,  -- Voidscar Arena
+    [586] = 1286807,  -- Den of Nalorakk
+    [587] = 1286809,  -- Murder Row
+    [588] = 1286812,  -- Altar of Fangs
 }
 
 ---------------------------------------------------------------------------
