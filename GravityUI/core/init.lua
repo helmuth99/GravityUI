@@ -395,17 +395,22 @@ do
             local function TryHookBlizzardCard()
                 local mod = ns.TrackedBuffBar
                 if not (mod and mod.HookBlizzardCard) then return end
-                if mod.blizzCardHooked then return end
-                -- Try immediately
+                -- HookBlizzardCard() is safe to call every time – it deduplicates
+                -- via the _blizzCardFrame pointer and only re-hooks when EUI has
+                -- built a new card frame (e.g. after a page rebuild).
                 mod:HookBlizzardCard()
-                if mod.blizzCardHooked then return end
-                -- Card not found yet (page not built) - retry every 0.5s for 10s
-                if _blizzRetryTicker then _blizzRetryTicker:Cancel() end
+                if mod._blizzCardFrame then
+                    -- Card found: stop any pending retry ticker.
+                    if _blizzRetryTicker then _blizzRetryTicker:Cancel(); _blizzRetryTicker = nil end
+                    return
+                end
+                -- Card not found yet (Tracking Bars tab not visited) – retry.
+                if _blizzRetryTicker then return end  -- already ticking
                 local retries = 0
                 _blizzRetryTicker = C_Timer.NewTicker(0.5, function()
                     retries = retries + 1
                     mod:HookBlizzardCard()
-                    if mod.blizzCardHooked or retries >= 20 then
+                    if mod._blizzCardFrame or retries >= 20 then
                         _blizzRetryTicker:Cancel()
                         _blizzRetryTicker = nil
                     end
@@ -942,10 +947,14 @@ do
         end
 
         -----------------------------------------------------------------------
-        -- Layer 2: Generic visual overlay system.
+        -- Layer 2: Visual overlay – mirrors the working Tooltip overlay pattern
+        -- exactly (see "Managed by GravityUI overlay for BLIZZARD TOOLTIP" block).
+        --
+        -- Key insight: SetParent() resets FrameStrata in WoW. The overlay must
+        -- re-assert SetFrameStrata + SetFrameLevel on *every* PlaceAllOverlays
+        -- call, not just at creation time. That is what makes the Tooltip overlay
+        -- work on 2nd+ opens while this one was failing.
         -----------------------------------------------------------------------
-
-        -- Returns the wrapper frame for the General page (or nil if not built)
         local function GetGeneralWrapper()
             local E = _G.EllesmereUI
             if not (E and E._pageCache) then return nil end
@@ -954,80 +963,142 @@ do
         end
 
         -- Walk wrapper children and return the region frame (left or right)
-        -- whose label text matches the given string.
+        -- whose label text matches, plus the DualRow parent frame.
         local function FindRegion(wrapper, labelText, side)
-            if not wrapper then return nil end
+            if not wrapper then return nil, nil end
             for _, child in next, {wrapper:GetChildren()} do
                 local rgn = (side == "right") and child._rightRegion or child._leftRegion
                 if rgn and rgn._label then
                     if rgn._label:GetText() == labelText then
-                        return rgn
+                        return rgn, child  -- region, dualrow
                     end
                 end
             end
-            return nil
+            return nil, nil
         end
 
-        -- Creates a locked overlay frame parented to (and covering) `rgn`.
-        local function MakeOverlay(rgn, tooltip)
-            local E = _G.EllesmereUI
-            local ov = CreateFrame("Frame", nil, rgn)
-            ov:EnableMouse(true)
-            ov:SetFrameStrata("DIALOG")
-            ov:SetFrameLevel(200)
-            ov:SetAllPoints(rgn)
-
-            local bg = ov:CreateTexture(nil, "BACKGROUND")
-            bg:SetAllPoints()
-            bg:SetColorTexture(0.02, 0.02, 0.06, 0.82)
-
-            local lbl = ov:CreateFontString(nil, "OVERLAY")
-            lbl:SetFont("Fonts\\FRIZQT__.TTF", 11, "OUTLINE")
-            lbl:SetTextColor(ns.GetAccentColor())  -- GravityUI accent
-            lbl:SetText("Managed by GravityUI")
-            lbl:SetPoint("CENTER", ov, "CENTER", 0, 0)
-
-            ov:SetScript("OnEnter", function(self)
-                if E and E.ShowWidgetTooltip then
-                    E.ShowWidgetTooltip(self, tooltip)
-                end
-            end)
-            ov:SetScript("OnLeave", function()
-                if E and E.HideWidgetTooltip then E.HideWidgetTooltip() end
-            end)
-            return ov
-        end
-
-        -- Per-widget overlay cache (keyed by label text)
-        local overlays = {}
+        -- One cached overlay per locked widget (keyed by label).
+        -- Created once; re-anchored and re-strataed on every open.
+        local sliderOverlays = {}
+        local sliderHooksInstalled = false
 
         local function PlaceAllOverlays()
             local wrapper = GetGeneralWrapper()
-            if not wrapper then return end  -- General page not yet built
+            if not wrapper then return end
+
+            local E = _G.EllesmereUI
 
             for _, cfg in ipairs(LOCKED_WIDGETS) do
-                local rgn = FindRegion(wrapper, cfg.label, cfg.side)
-                if rgn then
-                    local ov = overlays[cfg.label]
+                local rgn, dualrow = FindRegion(wrapper, cfg.label, cfg.side)
+                if rgn and dualrow then
+
+                    -- Create the overlay frame once; reuse it every call.
+                    local ov = sliderOverlays[cfg.label]
                     if not ov then
-                        ov = MakeOverlay(rgn, cfg.tooltip)
-                        overlays[cfg.label] = ov
+                        ov = CreateFrame("Frame", nil, wrapper)
+                        ov:EnableMouse(true)
+
+                        local bg = ov:CreateTexture(nil, "BACKGROUND")
+                        bg:SetAllPoints()
+                        bg:SetColorTexture(0.02, 0.02, 0.06, 0.82)
+
+                        local lbl = ov:CreateFontString(nil, "OVERLAY")
+                        lbl:SetFont("Fonts\\FRIZQT__.TTF", 11, "OUTLINE")
+                        lbl:SetTextColor(ns.GetAccentColor())
+                        lbl:SetText("Managed by GravityUI")
+                        lbl:SetPoint("CENTER", ov, "CENTER", 0, 0)
+
+                        local tip = cfg.tooltip
+                        ov:SetScript("OnEnter", function(self)
+                            if E and E.ShowWidgetTooltip then
+                                E.ShowWidgetTooltip(self, tip)
+                            end
+                        end)
+                        ov:SetScript("OnLeave", function()
+                            if E and E.HideWidgetTooltip then E.HideWidgetTooltip() end
+                        end)
+
+                        sliderOverlays[cfg.label] = ov
                     end
-                    -- Re-parent/anchor each call (wrapper may be rebuilt)
-                    ov:SetParent(rgn)
+
+                    -- Re-parent to the current wrapper (may change between opens).
+                    -- Then immediately re-assert strata + level:
+                    -- SetParent() RESETS FrameStrata in WoW – this was the root
+                    -- cause of the "works on 1st open, breaks on 2nd" bug.
+                    ov:SetParent(wrapper)
+                    ov:SetFrameStrata("DIALOG")
+                    ov:SetFrameLevel(200)
+
+                    -- Anchor to cover the full DualRow half (label + slider).
                     ov:ClearAllPoints()
-                    ov:SetAllPoints(rgn)
+                    if cfg.side == "left" then
+                        ov:SetPoint("TOPLEFT",     dualrow, "TOPLEFT",     0, 0)
+                        ov:SetPoint("BOTTOMRIGHT", dualrow, "BOTTOM",      0, 0)
+                    else
+                        ov:SetPoint("TOPLEFT",     dualrow, "TOP",         0, 0)
+                        ov:SetPoint("BOTTOMRIGHT", dualrow, "BOTTOMRIGHT", 0, 0)
+                    end
+
                     ov:Show()
                 end
             end
         end
 
-        local E = _G.EllesmereUI
-        if E then
-            hooksecurefunc(E, "Show",         function() C_Timer.After(0, PlaceAllOverlays) end)
-            hooksecurefunc(E, "Toggle",       function() C_Timer.After(0, PlaceAllOverlays) end)
-            hooksecurefunc(E, "ShowModule",   function() C_Timer.After(0, PlaceAllOverlays) end)
-            hooksecurefunc(E, "SelectModule", function() C_Timer.After(0, PlaceAllOverlays) end)
+        -- Install hooks on PLAYER_LOGIN (mirrors Tooltip overlay pattern).
+        local sliderHookFrame = CreateFrame("Frame")
+        sliderHookFrame:RegisterEvent("PLAYER_LOGIN")
+        sliderHookFrame:SetScript("OnEvent", function(self)
+            self:UnregisterAllEvents()
+            if sliderHooksInstalled then return end
+            local E = _G.EllesmereUI
+            if not E then return end
+            sliderHooksInstalled = true
+            -- C_Timer.After(0) is sufficient – page-cache is populated synchronously
+            -- by PP.Point during buildPage; no render pass is needed.
+            local function Schedule() C_Timer.After(0, PlaceAllOverlays) end
+            hooksecurefunc(E, "Show",         Schedule)
+            hooksecurefunc(E, "Toggle",       Schedule)
+            hooksecurefunc(E, "ShowModule",   Schedule)
+            hooksecurefunc(E, "SelectModule", Schedule)
+            -- SelectPage fires when the user clicks a tab inside a module;
+            -- it actually builds + caches the page, so it must be hooked too.
+            if E.SelectPage then
+                hooksecurefunc(E, "SelectPage", Schedule)
+            end
+        end)
+
+        -- Debug slash: /guisliderdbg
+        SLASH_GUISLIDERDBG1 = "/guisliderdbg"
+        SlashCmdList["GUISLIDERDBG"] = function()
+            local E = _G.EllesmereUI
+            if not E then print("EllesmereUI not loaded"); return end
+            print("GLOBAL_CACHE_KEY = " .. GLOBAL_CACHE_KEY)
+            local cache = E._pageCache
+            if not cache then print("_pageCache is nil"); return end
+            local found = {}
+            for k in pairs(cache) do found[#found+1] = k end
+            table.sort(found)
+            print("Cache keys (" .. #found .. "):")
+            for _, k in ipairs(found) do print("  " .. k) end
+            local entry = cache[GLOBAL_CACHE_KEY]
+            local wrapper = entry and entry.wrapper
+            print("Wrapper: " .. tostring(wrapper))
+            if wrapper then
+                local children = {wrapper:GetChildren()}
+                print("Children: " .. #children)
+                for i, ch in ipairs(children) do
+                    local lr = ch._leftRegion
+                    local rr = ch._rightRegion
+                    local lt = (lr and lr._label and lr._label:GetText()) or "?"
+                    local rt = (rr and rr._label and rr._label:GetText()) or "?"
+                    print(string.format("  [%d] L=%q  R=%q", i, lt, rt))
+                end
+            end
+            print("sliderOverlays:")
+            for k, ov in pairs(sliderOverlays) do
+                print(string.format("  [%s] strata=%s lvl=%d shown=%s",
+                    k, ov:GetFrameStrata(), ov:GetFrameLevel(), tostring(ov:IsShown())))
+            end
         end
     end
 end

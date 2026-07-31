@@ -657,14 +657,17 @@ local function ScanForCardByTitle(frame, title, depth)
 end
 
 function Module:HookBlizzardCard()
-    if self.blizzCardHooked then return end
-
     local EUI = _G.EllesmereUI
     local root = EUI and EUI._mainFrame
     if not root then return end
 
     local card = ScanForCardByTitle(root, "Use Blizzard CDM Bars", 0)
     if not card then return end  -- page not built yet; will retry via Toggle hook
+
+    -- EUI rebuilds the card frame on every page visit. Only hook the *new*
+    -- frame pointer; skip if we already hooked this exact frame object.
+    if self._blizzCardFrame == card then return end
+    self._blizzCardFrame = card
 
     card:HookScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_TOP")
@@ -678,8 +681,6 @@ function Module:HookBlizzardCard()
     card:HookScript("OnLeave", function()
         GameTooltip:Hide()
     end)
-
-    self.blizzCardHooked = true
 end
 
 
@@ -689,7 +690,7 @@ SlashCmdList["GUITRACKED"] = function()
     print("|cff00ccffGravityUI Tracked Bars Debug:|r")
     local db = GetSettings()
     print("  enabled:", db and db.enabled)
-    print("  blizzCardHooked:", Module.blizzCardHooked)
+    print("  _blizzCardFrame:", tostring(Module._blizzCardFrame))
 
     local EUI = _G.EllesmereUI
     local root = EUI and EUI._mainFrame
