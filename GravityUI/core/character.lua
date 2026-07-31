@@ -3971,11 +3971,8 @@ local ENCHANT_SLOT_KEYWORDS = {
     -- Rings
     Ring       = {"CharacterFinger0Slot", "CharacterFinger1Slot"},
     Finger     = {"CharacterFinger0Slot", "CharacterFinger1Slot"},
-    -- Weapons
-    Weapon     = {"CharacterMainHandSlot", "CharacterSecondaryHandSlot"},
-    Shield     = {"CharacterSecondaryHandSlot"},
-    Offhand    = {"CharacterSecondaryHandSlot"},
-    Off        = {"CharacterSecondaryHandSlot"},
+    -- Weapons intentionally omitted: permanent enchants, oils, whetstones and
+    -- runeforging all target weapon slots. Dimming is skipped for these entirely.
 }
 
 -- Capture the last bag item used (for enchant item name → slot detection)
@@ -3999,12 +3996,8 @@ end)
 
 local function GetCompatibleSlotsFromItem(itemID)
     if not itemID then
-        -- No bag item used (e.g. DK Runeforging).
-        -- Runeforging is DK-exclusive → always targets a weapon slot.
-        local _, class = UnitClass("player")
-        if class == "DEATHKNIGHT" then
-            return {"CharacterMainHandSlot", "CharacterSecondaryHandSlot"}
-        end
+        -- No bag item used (e.g. DK Runeforging, oils, whetstones).
+        -- Don't dim for weapon-slot interactions.
         return nil
     end
     local itemName = GetItemInfo(itemID)
@@ -4040,6 +4033,12 @@ end
 
 local function ApplyEnchantDim()
     if enchantDimActive then return end
+
+    local compatSlots = GetCompatibleSlotsFromItem(_enchantLastItemID)
+    -- No slot mapping found (oils, whetstones, runeforging, unknown items):
+    -- skip dimming entirely to avoid wrongly dimming all slots.
+    if not compatSlots then return end
+
     enchantDimActive = true
 
     -- Safety timer: guarantee dim clears after 60s even if all cancel signals are missed
@@ -4047,11 +4046,8 @@ local function ApplyEnchantDim()
         if enchantDimActive then ClearEnchantDim() end
     end)
 
-    local compatSlots = GetCompatibleSlotsFromItem(_enchantLastItemID)
-    local compatMap   = {}
-    if compatSlots then
-        for _, n in ipairs(compatSlots) do compatMap[n] = true end
-    end
+    local compatMap = {}
+    for _, n in ipairs(compatSlots) do compatMap[n] = true end
 
     for _, name in ipairs(CHAR_SLOT_NAMES) do
         local s = _G[name]
