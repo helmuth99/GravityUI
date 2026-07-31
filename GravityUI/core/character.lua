@@ -316,7 +316,7 @@ local function GetEnchantText(unit, slotId)
                 local text = line.leftText or ""
                 -- Try to match "Enchanted: X" pattern using WoW's localized constant
                 local enchant = text:match(ENCHANT_PATTERN)
-                
+
                 -- Fallback pattern matching
                 if not enchant and not ENCHANTED_TOOLTIP_LINE then
                     enchant = text:match("Enchanted:%s*(.+)")
@@ -333,6 +333,34 @@ local function GetEnchantText(unit, slotId)
                     enchant = enchant:match("^%s*(.-)%s*$")
                     if enchant and enchant ~= "" then
                         return enchant, true  -- Return enchant text, slot is enchantable
+                    end
+                end
+            end
+
+            -- ── Temporary weapon enchants: Oils / Whetstones ──────────────────────
+            -- GetWeaponEnchantInfo() reports temporary enchants (oils, whetstones).
+            -- They don't produce an "Enchanted:" line; instead they appear in the
+            -- weapon tooltip as a standalone line with a remaining duration in
+            -- parentheses, e.g. "Thalassian Phoenix Oil (1 hr 58 min)".
+            if slotId == INVSLOT_MAINHAND or slotId == INVSLOT_OFFHAND then
+                local hasMain, _, _, mainID, hasOff, _, _, offID = GetWeaponEnchantInfo()
+                local hasTempEnchant = (slotId == INVSLOT_MAINHAND and hasMain) or
+                                       (slotId == INVSLOT_OFFHAND  and hasOff)
+
+                if hasTempEnchant then
+                    -- Scan tooltip lines for a duration-bearing line: "Name (X min)" / "Name (Xh Xm)"
+                    for _, line in ipairs(tooltipData.lines) do
+                        local text = line.leftText or ""
+                        -- Match any line that ends with a parenthesised time expression
+                        local name = text:match("^(.-)%s*%(%d[%d%s%a]*%)%s*$")
+                        if name and name ~= "" then
+                            -- Strip colour codes
+                            name = name:gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", "")
+                            name = name:match("^%s*(.-)%s*$")
+                            if name and name ~= "" then
+                                return name, true
+                            end
+                        end
                     end
                 end
             end

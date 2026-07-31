@@ -428,7 +428,7 @@ local function BuildTrackedBars(parent)
     growRow:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT + 5))
     content.rowCount = content.rowCount + 1
 
-    AddRow(content, "Bar Spacing", "slider", 0, 20, "spacing", DB(), Refresh, 1)
+    AddRow(content, "Bar Spacing", "slider", -50, 50, "spacing", DB(), Refresh, 1)
 
     content:SetHeight(content.rowCount * (ROW_HEIGHT + 5) + 20)
 end
