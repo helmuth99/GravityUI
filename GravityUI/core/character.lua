@@ -1257,17 +1257,12 @@ local function HideBlizzardDecorations()
     end
 
     -- Block Blizzard's IconBorder from showing (prevent double borders)
+    -- NOTE: Do NOT hook SetAtlas permanently - Blizzard uses it for enchant eligibility glow.
     local function BlockIconBorder(iconBorder)
         if not iconBorder or iconBorder._guiBlocked then return end
         iconBorder._guiBlocked = true
         iconBorder:SetAlpha(0)
         if iconBorder.SetTexture then iconBorder:SetTexture(nil) end
-        if iconBorder.SetAtlas then
-            hooksecurefunc(iconBorder, "SetAtlas", function(self)
-                if self.SetTexture then self:SetTexture(nil) end
-                if self.SetAlpha then self:SetAlpha(0) end
-            end)
-        end
     end
 
     -- Skin equipment slot icons (same pattern as CDM/buff bar)
@@ -1283,12 +1278,18 @@ local function HideBlizzardDecorations()
             slot.BottomRightSlotTexture:Hide()
         end
 
-        -- Hide ALL non-icon regions (decorative textures)
+        -- Hide ALL non-icon regions EXCEPT DisabledTexture and HighlightTexture.
+        -- Blizzard uses HighlightTexture for enchant slot eligibility glow (ENCHANT_SPELL_SELECTED).
+        -- Hiding it makes the native enchant highlighting invisible.
+        local disabledTex = slot.GetDisabledTexture and slot:GetDisabledTexture()
+        local hlTex = slot.GetHighlightTexture and slot:GetHighlightTexture()
         for i = 1, select("#", slot:GetRegions()) do
             local region = select(i, slot:GetRegions())
             if region and region.GetObjectType and region:GetObjectType() == "Texture" then
-                local isIcon = region == slot.icon or region == slot.Icon
-                if not isIcon then
+                local isIcon     = region == slot.icon or region == slot.Icon
+                local isDisabled = disabledTex and (region == disabledTex)
+                local isHighlight = hlTex and (region == hlTex)
+                if not isIcon and not isDisabled and not isHighlight then
                     region:SetAlpha(0)
                 end
             end
@@ -1749,6 +1750,28 @@ local function InitializeCharacterOverlays(forceRecreate)
 
     currentOverlayScale = newScale
     characterPaneInitialized = true
+
+    -- Right-click on a socketed item should open the socket window directly.
+    -- In TWW, Blizzard moved this to Shift+RightClick. Restore expected behavior:
+    -- regular right-click → close any dropdown → SocketInventoryItem.
+    for _, slotInfo in ipairs(EQUIPMENT_SLOTS) do
+        local btn = _G["Character" .. slotInfo.name .. "Slot"]
+        if btn and not btn._guiSocketHooked then
+            btn._guiSocketHooked = true
+            btn:HookScript("OnClick", function(self, button)
+                if button == "RightButton" and not IsShiftKeyDown() then
+                    local slotID = self:GetID()
+                    if slotID and slotID > 0 then
+                        -- Next frame: dismiss Blizzard's dropdown then open socket window
+                        C_Timer.After(0, function()
+                            CloseDropDownMenus()
+                            SocketInventoryItem(slotID)
+                        end)
+                    end
+                end
+            end)
+        end
+    end
 end
 
 ---------------------------------------------------------------------------
@@ -3856,11 +3879,165 @@ eventFrame:RegisterEvent("UPDATE_INVENTORY_DURABILITY")
 eventFrame:RegisterEvent("SOCKET_INFO_UPDATE")
 eventFrame:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
 eventFrame:RegisterEvent("UNIT_STATS")
-eventFrame:RegisterUnitEvent("UNIT_AURA", "player") -- PERF: Only care about player auras; avoids 40+ dispatches/sec in raids
-
+eventFrame:RegisterUnitEvent("UNIT_AURA", "player")
 eventFrame:RegisterEvent("UNIT_SPELL_HASTE")
 eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 eventFrame:RegisterEvent("INSPECT_READY")
+-- Enchant events
+pcall(function() eventFrame:RegisterEvent("ENCHANT_SPELL_SELECTED") end)  -- player-local
+pcall(function() eventFrame:RegisterEvent("ENCHANT_SPELL_COMPLETED") end)  -- success
+eventFrame:RegisterEvent("CURRENT_SPELL_CAST_CHANGED")   -- player-local targeting cursor state
+pcall(function() eventFrame:RegisterEvent("ITEM_INTERACTION_CLOSE") end)  -- Runeforging cancel
+
+---------------------------------------------------------------------------
+-- Enchant slot filter
+-- START:  ENCHANT_SPELL_SELECTED → ApplyEnchantDim immediately
+-- STOP:   CURRENT_SPELL_CAST_CHANGED=true → ClearEnchantDim (ESC / cancel)
+--         ENCHANT_SPELL_COMPLETED / ITEM_INTERACTION_CLOSE engine event → ClearEnchantDim
+-- NOTE:   CSCC=true fires on cancel/ESC; CSCC=false fires before SELECTED (ignored)
+---------------------------------------------------------------------------
+local enchantDimActive = false
+
+
+local ENCHANT_DIM_ALPHA = 0.15
+local CHAR_SLOT_NAMES   = {
+    "CharacterHeadSlot","CharacterNeckSlot","CharacterShoulderSlot","CharacterBackSlot",
+    "CharacterChestSlot","CharacterShirtSlot","CharacterTabardSlot","CharacterWristSlot",
+    "CharacterHandsSlot","CharacterWaistSlot","CharacterLegsSlot","CharacterFeetSlot",
+    "CharacterFinger0Slot","CharacterFinger1Slot","CharacterTrinket0Slot","CharacterTrinket1Slot",
+    "CharacterMainHandSlot","CharacterSecondaryHandSlot",
+}
+local ENCHANT_SLOT_KEYWORDS = {
+    -- Head
+    Helm       = {"CharacterHeadSlot"},
+    Head       = {"CharacterHeadSlot"},
+    -- Neck
+    Neck       = {"CharacterNeckSlot"},
+    Necklace   = {"CharacterNeckSlot"},
+    -- Shoulders
+    Shoulder   = {"CharacterShoulderSlot"},
+    Shoulders  = {"CharacterShoulderSlot"},
+    -- Back / Cloak
+    Cloak      = {"CharacterBackSlot"},
+    Back       = {"CharacterBackSlot"},
+    -- Chest
+    Chest      = {"CharacterChestSlot"},
+    -- Wrist
+    Bracer     = {"CharacterWristSlot"},
+    Wrist      = {"CharacterWristSlot"},
+    Bracers    = {"CharacterWristSlot"},
+    -- Hands
+    Gloves     = {"CharacterHandsSlot"},
+    Glove      = {"CharacterHandsSlot"},
+    Hands      = {"CharacterHandsSlot"},
+    -- Waist
+    Belt       = {"CharacterWaistSlot"},
+    Waist      = {"CharacterWaistSlot"},
+    -- Legs
+    Legs       = {"CharacterLegsSlot"},
+    Leg        = {"CharacterLegsSlot"},
+    -- Feet / Boots
+    Boots      = {"CharacterFeetSlot"},
+    Boot       = {"CharacterFeetSlot"},
+    Feet       = {"CharacterFeetSlot"},
+    -- Rings
+    Ring       = {"CharacterFinger0Slot", "CharacterFinger1Slot"},
+    Finger     = {"CharacterFinger0Slot", "CharacterFinger1Slot"},
+    -- Weapons
+    Weapon     = {"CharacterMainHandSlot", "CharacterSecondaryHandSlot"},
+    Shield     = {"CharacterSecondaryHandSlot"},
+    Offhand    = {"CharacterSecondaryHandSlot"},
+    Off        = {"CharacterSecondaryHandSlot"},
+}
+
+-- Capture the last bag item used (for enchant item name → slot detection)
+-- In TWW, C_Container.UseContainerItem is called directly (new bag system)
+local _enchantLastItemID = nil
+pcall(function()
+    -- Primary: TWW new bag system
+    hooksecurefunc(C_Container, "UseContainerItem", function(bag, slot)
+        local id = C_Container.GetContainerItemID(bag, slot)
+        if id then _enchantLastItemID = id end
+    end)
+end)
+pcall(function()
+    -- Fallback: old global shim (might not fire in TWW but harmless to hook)
+    hooksecurefunc("UseContainerItem", function(bag, slot)
+        local id = (C_Container and C_Container.GetContainerItemID(bag, slot))
+                or (GetContainerItemID and GetContainerItemID(bag, slot))
+        if id then _enchantLastItemID = id end
+    end)
+end)
+
+local function GetCompatibleSlotsFromItem(itemID)
+    if not itemID then
+        -- No bag item used (e.g. DK Runeforging).
+        -- Runeforging is DK-exclusive → always targets a weapon slot.
+        local _, class = UnitClass("player")
+        if class == "DEATHKNIGHT" then
+            return {"CharacterMainHandSlot", "CharacterSecondaryHandSlot"}
+        end
+        return nil
+    end
+    local itemName = GetItemInfo(itemID)
+    if not itemName then return nil end
+
+    -- Standard enchant scrolls: "Enchant Keyword - Description"
+    local keyword = itemName:match("^Enchant (%a+)")
+    if keyword then
+        for k, slots in pairs(ENCHANT_SLOT_KEYWORDS) do
+            if keyword == k then return slots end
+        end
+    end
+
+    -- Leg-specific enchants (non-standard naming):
+    --   "X Armor Kit"     → legs
+    --   "X Spellthread"   → legs
+    if itemName:find("Armor Kit", 1, true) or itemName:find("Spellthread", 1, true) then
+        return {"CharacterLegsSlot"}
+    end
+
+    return nil
+end
+
+local function ClearEnchantDim()
+    if not enchantDimActive then return end
+    enchantDimActive = false
+    _enchantLastItemID = nil  -- prevent stale item from affecting next enchant session
+    for _, name in ipairs(CHAR_SLOT_NAMES) do
+        local s = _G[name]
+        if s then s:SetAlpha(1.0) end
+    end
+end
+
+local function ApplyEnchantDim()
+    if enchantDimActive then return end
+    enchantDimActive = true
+
+    -- Safety timer: guarantee dim clears after 60s even if all cancel signals are missed
+    C_Timer.After(60, function()
+        if enchantDimActive then ClearEnchantDim() end
+    end)
+
+    local compatSlots = GetCompatibleSlotsFromItem(_enchantLastItemID)
+    local compatMap   = {}
+    if compatSlots then
+        for _, n in ipairs(compatSlots) do compatMap[n] = true end
+    end
+
+    for _, name in ipairs(CHAR_SLOT_NAMES) do
+        local s = _G[name]
+        if s then
+            s:SetAlpha(compatMap[name] and 1.0 or ENCHANT_DIM_ALPHA)
+        end
+    end
+end
+
+-- EventRegistry backup for ENCHANT_SPELL_SELECTED (fires on click, player-local)
+local _enchantEvtOwner = {}
+EventRegistry:RegisterCallback("ENCHANT_SPELL_SELECTED", function()
+    ApplyEnchantDim()
+end, _enchantEvtOwner)
 
 eventFrame:SetScript("OnEvent", function(self, event, arg1)
     if event == "ADDON_LOADED" then
@@ -3893,6 +4070,25 @@ eventFrame:SetScript("OnEvent", function(self, event, arg1)
         
     elseif event == "INSPECT_READY" then
         ScheduleGearUpdate()
+
+    elseif event == "ENCHANT_SPELL_SELECTED" then
+        -- Fires when enchant scroll is clicked → apply dim immediately
+        ApplyEnchantDim()
+
+    elseif event == "ENCHANT_SPELL_COMPLETED" then
+        -- Enchant successfully applied to a slot
+        ClearEnchantDim()
+
+    elseif event == "ITEM_INTERACTION_CLOSE" then
+        -- Runeforging frame closed (cancel or success fallback)
+        ClearEnchantDim()
+
+    elseif event == "CURRENT_SPELL_CAST_CHANGED" then
+        -- arg1=true fires on ESC / right-click cancel (confirmed via debug)
+        -- arg1=false fires BEFORE SELECTED during click init → ignore
+        if arg1 and enchantDimActive then
+            ClearEnchantDim()
+        end
     end
 end)
 
