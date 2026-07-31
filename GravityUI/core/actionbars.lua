@@ -660,9 +660,13 @@ InitializeExtraButtons = function()
                 ExtraActionButton1.style:SetAlpha(1)
             end
         end
-        
-    -- Create/Update Movers
-    if not movers["extraActionButton"] then
+
+        -- Apply same skinning as regular action buttons (border, backdrop, icon zoom)
+        if ExtraActionButton1 then
+            SkinButton(ExtraActionButton1, { showBorders = true, showBackdrop = true })
+        end
+
+        if not movers["extraActionButton"] then
         local mover = CreateMover("extraActionButton", frame, "Extra Action Button")
         if ns.Movers and ns.Movers.Register then
             ns.Movers:Register("ExtraActionButton", mover, function(f, enabled, force)
@@ -712,7 +716,21 @@ InitializeExtraButtons = function()
                 zoneFrame.SpellButton.Style:SetAlpha(1)
             end
         end
-        
+
+        -- Apply same skinning as regular action buttons (border, backdrop, icon zoom)
+        local function SkinZoneBtn(btn)
+            if btn then SkinButton(btn, { showBorders = true, showBackdrop = true }) end
+        end
+        if zoneFrame.SpellButton then
+            SkinZoneBtn(zoneFrame.SpellButton)
+        elseif zoneFrame.SpellButtonContainer then
+            if zoneFrame.SpellButtonContainer.EnumerateActive then
+                for btn in zoneFrame.SpellButtonContainer:EnumerateActive() do
+                    SkinZoneBtn(btn)
+                end
+            end
+        end
+
         if not movers["zoneAbility"] then
             local mover = CreateMover("zoneAbility", zoneFrame, "Zone Ability")
             if ns.Movers and ns.Movers.Register then

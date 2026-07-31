@@ -1440,8 +1440,9 @@ function GUI:CreateSubTabs(parent, tabs)
     container:SetPoint("TOPLEFT", 0, 0)
     container:SetPoint("TOPRIGHT", 0, 0)
 
-    local tabButtons = {}
+    local tabButtons  = {}
     local tabContents = {}
+    local visibleBtns = {}   -- ordered list of visible buttons for layout
 
     container:SetHeight(36)
 
@@ -1456,11 +1457,8 @@ function GUI:CreateSubTabs(parent, tabs)
     underline:SetPoint("BOTTOMRIGHT", 0, 0)
     underline:SetColorTexture(C.border[1], C.border[2], C.border[3], 0.5)
 
-    local xOffset = 0
-    local yOffset = 0
     local rowHeight = 28
-    local spacing = 2
-    local maxWidth = (parent:GetWidth() > 0) and (parent:GetWidth() - 20) or (GUI.CONTENT_WIDTH - 20)
+    local spacing   = 2
 
     for i, tabInfo in ipairs(tabs) do
         local isVisible = not tabInfo.bcdmOnly and (not tabInfo.showIf or tabInfo.showIf())
@@ -1468,17 +1466,16 @@ function GUI:CreateSubTabs(parent, tabs)
         if isVisible then
             local btn = CreateFrame("Button", nil, container, "BackdropTemplate")
 
-            local textWidth = tabInfo.name and (string.len(tabInfo.name) * 8) or 60
-            local btnWidth = math.max(60, textWidth + 20)
+            -- Measure real text width using a hidden FontString
+            local measurer = container:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+            GUI:SetFont(measurer, 12, "")
+            measurer:SetText(tabInfo.name or ("Tab " .. i))
+            local textWidth = measurer:GetStringWidth()
+            measurer:Hide()
 
-            if xOffset + btnWidth > maxWidth then
-                xOffset = 0
-                yOffset = yOffset - rowHeight - spacing
-            end
-
+            local btnWidth = math.max(60, textWidth + 24)
             btn:SetSize(btnWidth, rowHeight)
-            btn:SetPoint("TOPLEFT", xOffset, yOffset)
-            xOffset = xOffset + btnWidth + spacing
+            btn._btnWidth = btnWidth   -- cache for LayoutTabs
 
             local text = btn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
             GUI:SetFont(text, 12, "")
@@ -1522,11 +1519,38 @@ function GUI:CreateSubTabs(parent, tabs)
             end)
 
             tabButtons[i] = btn
+            visibleBtns[#visibleBtns + 1] = btn
         end
     end
 
-    -- Set container height based on rows used
-    container:SetHeight(math.abs(yOffset) + rowHeight + 4)
+    -- ── Layout function – called at creation and on every resize ────────────
+    local function LayoutTabs()
+        local maxWidth = container:GetWidth()
+        if maxWidth <= 0 then
+            maxWidth = (parent:GetWidth() > 0) and (parent:GetWidth() - 20) or (GUI.CONTENT_WIDTH - 20)
+        end
+
+        local xOffset  = 0
+        local yOffset  = 0
+
+        for _, btn in ipairs(visibleBtns) do
+            local bw = btn._btnWidth
+            if xOffset + bw > maxWidth then
+                xOffset = 0
+                yOffset = yOffset - rowHeight - spacing
+            end
+            btn:ClearAllPoints()
+            btn:SetPoint("TOPLEFT", xOffset, yOffset)
+            xOffset = xOffset + bw + spacing
+        end
+
+        local totalH = math.abs(yOffset) + rowHeight + 4
+        container:SetHeight(totalH)
+    end
+
+    LayoutTabs()
+    container:HookScript("OnSizeChanged", function() LayoutTabs() end)
+    -- ────────────────────────────────────────────────────────────────────────
 
     for i, tabInfo in ipairs(tabs) do
         local contentFrame = CreateFrame("Frame", nil, parent)
@@ -1534,7 +1558,7 @@ function GUI:CreateSubTabs(parent, tabs)
         contentFrame:SetPoint("BOTTOMRIGHT", 0, 0)
         contentFrame:Hide()
         tabContents[i] = contentFrame
-        
+
         if tabInfo.builder then
             if GUI.currentSearchContext then
                 GUI:SetSearchContext(GUI.currentSearchContext.pageId, i)
@@ -1545,10 +1569,10 @@ function GUI:CreateSubTabs(parent, tabs)
             end
         end
     end
-    
+
     container.tabContents = tabContents
-    container.tabButtons = tabButtons
-    
+    container.tabButtons  = tabButtons
+
     -- Function to update button states (called by ShowPage)
     container.UpdateButtons = function(self, activeIndex)
         for i, btn in pairs(self.tabButtons) do

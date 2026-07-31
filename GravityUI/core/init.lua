@@ -115,6 +115,8 @@ function ns.RefreshAccentColors()
     if ns.InstanceFrames and ns.InstanceFrames.Initialize then ns.InstanceFrames:Initialize() end
     if ns.Objectives and ns.Objectives.Initialize then ns.Objectives:Initialize() end
     if ns.XPRep and ns.XPRep.Refresh then ns.XPRep:Refresh() end
+    -- Sync EllesmereUI accent color whenever GravityUI's theme color changes.
+    if ns.SyncEllesmereAccentColor then ns.SyncEllesmereAccentColor() end
 end
 
 -- Get global font settings
@@ -160,6 +162,16 @@ function Addon:OnInitialize()
             idb.enabled = false
             ns.Print("EllesmereUI detected – |cFFFFFF00Enable Custom Instance Styling|r automatically disabled to avoid conflicts.")
         end
+        -- Sync tooltip ownership: if GravityUI's Tooltip Module is on,
+        -- immediately disable EllesmereUI's Blizzard Tooltip reskin.
+        -- ns.SyncEllesmereTooltip is defined later in this file (in its own
+        -- do-block), so we defer one frame to let all do-blocks finish loading.
+        C_Timer.After(0, function()
+            if ns.SyncEllesmereTooltip     then ns.SyncEllesmereTooltip()     end
+            if ns.SyncEllesmereVigorBar    then ns.SyncEllesmereVigorBar()    end
+            if ns.SyncEllesmereCharSheet   then ns.SyncEllesmereCharSheet()   end
+            if ns.SyncEllesmereAccentColor then ns.SyncEllesmereAccentColor() end
+        end)
     end
     
     -- Register for profile change events
@@ -171,6 +183,11 @@ function Addon:OnInitialize()
                 if idb and idb.enabled then
                     idb.enabled = false
                 end
+                -- Re-sync all EllesmereUI compat states on profile switch
+                if ns.SyncEllesmereTooltip     then ns.SyncEllesmereTooltip()     end
+                if ns.SyncEllesmereVigorBar    then ns.SyncEllesmereVigorBar()    end
+                if ns.SyncEllesmereCharSheet   then ns.SyncEllesmereCharSheet()   end
+                if ns.SyncEllesmereAccentColor then ns.SyncEllesmereAccentColor() end
             end
 
             -- Refresh in-game UI elements (Minimap, Datapanels, Colors, local changes)
@@ -238,9 +255,52 @@ function ns.ApplyUIScale()
     end)
 end
 
--- Refresh functions
+-------------------------------------------------------------------------------
+-- Combat Text CVar Sync
+-- Both GravityUI and EllesmereUI use the same WoW CVars for showing/hiding
+-- floating combat damage and healing numbers. By keeping GravityUI's DB aligned
+-- with the CVars we get seamless bidirectional sync without touching EllesmereUI.
+--
+--  GravityUI → WoW/EllesmereUI : ns.ApplyCombatTextSettings() at startup
+--  EllesmereUI → GravityUI      : CVAR_UPDATE listener updates the DB
+-------------------------------------------------------------------------------
+
+-- Push GravityUI's saved combat-text flags to the WoW CVars.
+-- Called at startup so EllesmereUI (and Blizzard) picks up our saved values.
+function ns.ApplyCombatTextSettings()
+    local db = ns.GetDB()
+    if not (db and db.uiimprovements) then return end
+    local ui = db.uiimprovements
+    if ui.showDamageNumbers ~= nil then
+        SetCVar("floatingCombatTextCombatDamage_v2",  ui.showDamageNumbers  and "1" or "0")
+    end
+    if ui.showHealingNumbers ~= nil then
+        SetCVar("floatingCombatTextCombatHealing_v2", ui.showHealingNumbers and "1" or "0")
+    end
+end
+
+-- CVAR_UPDATE: when EllesmereUI (or any source) flips these CVars, mirror the
+-- new value back into GravityUI's DB so both sides stay in sync.
+do
+    local combatCVarFrame = CreateFrame("Frame")
+    combatCVarFrame:RegisterEvent("CVAR_UPDATE")
+    combatCVarFrame:SetScript("OnEvent", function(_, _, cvarName, value)
+        if cvarName ~= "floatingCombatTextCombatDamage_v2"
+           and cvarName ~= "floatingCombatTextCombatHealing_v2" then return end
+        local db = ns.GetDB()
+        if not (db and db.uiimprovements) then return end
+        local enabled = (value == "1")
+        if cvarName == "floatingCombatTextCombatDamage_v2" then
+            db.uiimprovements.showDamageNumbers  = enabled
+        else
+            db.uiimprovements.showHealingNumbers = enabled
+        end
+    end)
+end
+
 ns.RefreshEverything = function()
     ns.ApplyUIScale()
+    ns.ApplyCombatTextSettings()
     if ns.Styling then ns.Styling:Refresh() end
     if ns.Media then ns.Media:Update() end
     
@@ -309,11 +369,15 @@ do
 
             local sidebar = E._sidebar
 
+            -- Icon texture embedded inline so the whole unit centres as one string
+            local GRAV_ICON = "Interface\\AddOns\\GravityUI\\assets\\GRAVITY_UI_Icon.blp"
+            local iconTag   = "|T" .. GRAV_ICON .. ":14:14:0:-1|t"
+
             local lbl = sidebar:CreateFontString(nil, "OVERLAY")
-            lbl:SetFont("Fonts\\FRIZQT__.TTF", 9, "OUTLINE")
-            lbl:SetTextColor(1, 0.82, 0.0, 0.85)   -- GravityUI gold
-            lbl:SetText("Managed by GravityUI")
-            -- Centre horizontally in the sidebar, just below the logo (~Y -95)
+            lbl:SetFont("Fonts\\FRIZQT__.TTF", 11, "OUTLINE")
+            do local _r,_g,_b = ns.GetAccentColor(); lbl:SetTextColor(_r,_g,_b, 0.90) end
+            lbl:SetText("In collaboration with GravityUI  " .. iconTag)
+            -- Centre horizontally in the sidebar, just below the EllesmereUI logo
             lbl:SetPoint("TOP", sidebar, "TOP", 0, -95)
             lbl:SetJustifyH("CENTER")
         end
@@ -323,6 +387,33 @@ do
             hooksecurefunc(E, "Show",       function() PlaceManagedLabel() end)
             hooksecurefunc(E, "Toggle",     function() PlaceManagedLabel() end)
             hooksecurefunc(E, "ShowModule", function() PlaceManagedLabel() end)
+
+            -- Retry hooking the "Use Blizzard CDM Bars" card each time EUI opens.
+            -- The card is built lazily (first visit to Tracking Bars tab), so we
+            -- keep retrying until Module:HookBlizzardCard() succeeds.
+            local _blizzRetryTicker = nil
+            local function TryHookBlizzardCard()
+                local mod = ns.TrackedBuffBar
+                if not (mod and mod.HookBlizzardCard) then return end
+                if mod.blizzCardHooked then return end
+                -- Try immediately
+                mod:HookBlizzardCard()
+                if mod.blizzCardHooked then return end
+                -- Card not found yet (page not built) - retry every 0.5s for 10s
+                if _blizzRetryTicker then _blizzRetryTicker:Cancel() end
+                local retries = 0
+                _blizzRetryTicker = C_Timer.NewTicker(0.5, function()
+                    retries = retries + 1
+                    mod:HookBlizzardCard()
+                    if mod.blizzCardHooked or retries >= 20 then
+                        _blizzRetryTicker:Cancel()
+                        _blizzRetryTicker = nil
+                    end
+                end)
+            end
+            hooksecurefunc(E, "Show",       function() TryHookBlizzardCard() end)
+            hooksecurefunc(E, "Toggle",     function() TryHookBlizzardCard() end)
+            hooksecurefunc(E, "ShowModule", function() TryHookBlizzardCard() end)
         end
     end
 end
@@ -347,6 +438,9 @@ end
 --   When GravityUI Tracker styling on   → EllesmereUIQuestTracker
 --   When GravityUI Action Bars enabled  → EllesmereUIActionBars
 --   When Plater is loaded               → EllesmereUINameplates
+--   When Baganator is loaded            → EllesmereUIBags
+--   When Details is loaded              → EllesmereUIDamageMeters
+--   When WarpDeplete is loaded          → EllesmereUIMythicTimer
 -------------------------------------------------------------------------------
 do
     if C_AddOns.IsAddOnLoaded("EllesmereUI") then
@@ -399,12 +493,34 @@ do
                 if db.actionbars and (db.actionbars.enabled ~= false) then
                     Disable("EllesmereUIActionBars")
                 end
+
+                -- AuraBuff Reminders: disable when GravityUI Missing Buffs is active
+                if db.raidBuffs and (db.raidBuffs.enabled ~= false) then
+                    Disable("EllesmereUIAuraBuffReminders")
+                end
             end
 
             -- Nameplates: disable EllesmereUINameplates when Plater is loaded,
             -- because Plater fully replaces Blizzard/EllesmereUI nameplates.
             if C_AddOns.IsAddOnLoaded("Plater") then
                 Disable("EllesmereUINameplates")
+            end
+
+            -- Bags: disable EllesmereUIBags when Baganator is loaded,
+            -- because Baganator fully replaces the bag UI.
+            if C_AddOns.IsAddOnLoaded("Baganator") then
+                Disable("EllesmereUIBags")
+            end
+
+            -- Damage Meters: disable EllesmereUIDamageMeters when Details is loaded.
+            if C_AddOns.IsAddOnLoaded("Details") then
+                Disable("EllesmereUIDamageMeters")
+            end
+
+            -- Mythic+ Timer: disable EllesmereUIMythicTimer when WarpDeplete is loaded,
+            -- because WarpDeplete fully replaces the Mythic+ timer UI.
+            if C_AddOns.IsAddOnLoaded("WarpDeplete") then
+                Disable("EllesmereUIMythicTimer")
             end
 
             -- Notify once if a reload is required to fully remove a module
@@ -452,11 +568,15 @@ do
     if C_AddOns.IsAddOnLoaded("EllesmereUI") then
         local LOCK_FOLDER         = "EllesmereUIBlizzardSkin"
         local LOCK_TOOLTIP        = "Managed by GravityUI \226\128\147 Blizz UI styling is handled by GravityUI's Styling module."
+        local AURABUFF_FOLDER     = "EllesmereUIAuraBuffReminders"
+        local BAGS_FOLDER          = "EllesmereUIBags"
         local CHAT_FOLDER          = "EllesmereUIChat"
         local MINIMAP_FOLDER       = "EllesmereUIMinimap"
         local QUEST_TRACKER_FOLDER = "EllesmereUIQuestTracker"
         local ACTION_BARS_FOLDER   = "EllesmereUIActionBars"
         local NAMEPLATES_FOLDER    = "EllesmereUINameplates"
+        local DAMAGE_METERS_FOLDER = "EllesmereUIDamageMeters"
+        local MYTHIC_TIMER_FOLDER  = "EllesmereUIMythicTimer"
 
         -- These buttons are always hidden when EllesmereUI is loaded alongside GravityUI,
         -- because GravityUI fully manages these features.
@@ -498,67 +618,201 @@ do
             return db and db.actionbars and (db.actionbars.enabled ~= false)
         end
 
+        -- Returns true when GravityUI's Missing Buffs (Raid Buff Reminders) is enabled
+        local function IsGravityUIAuraBuffEnabled()
+            local db = ns.GetDB()
+            return db and db.raidBuffs and (db.raidBuffs.enabled ~= false)
+        end
+
         local function ApplyBlizzSkinLock()
             -- Lock removed: Blizz UI Enhanced is accessible for all users.
         end
 
-        -- Hides the EllesmereUI Chat sidebar button when GravityUI's own
-        -- chatbox is active, to prevent conflicting chat settings.
+        -----------------------------------------------------------------------
+        -- MakePlaceholder: converts a sidebar button into a "managed by X"
+        -- placeholder that is still visible and clickable, but navigates to
+        -- the controlling settings panel instead of EllesmereUI's own page.
+        --
+        -- • btn       – the EllesmereUI sidebar Button frame
+        -- • byText    – right-side annotation, e.g. "by GravityUI"
+        -- • pageId    – GravityUI page string ID to navigate to (or nil)
+        -- • openFn    – optional override callback (used for Plater)
+        --
+        -- Idempotent: the _isGravityUIPlaceholder flag prevents double-patching
+        -- so it is safe to call from the RefreshSidebarOverrideLocks wrapper.
+        -----------------------------------------------------------------------
+        local function MakePlaceholder(btn, byText, pageId, openFn)
+            if not btn or btn._isGravityUIPlaceholder then return end
+            btn._isGravityUIPlaceholder = true
+
+            -- Dim the module name to signal "managed externally"
+            btn._label:SetTextColor(1, 1, 1, 0.38)
+
+            -- Hide power/sync buttons – irrelevant for managed features
+            if btn._pwrBtn  then btn._pwrBtn:Hide()  end
+            if btn._syncBtn then btn._syncBtn:Hide() end
+
+            -- Right-aligned "by X" annotation (where the power button was)
+            local tag = btn:CreateFontString(nil, "OVERLAY")
+            tag:SetFont("Fonts\\FRIZQT__.TTF", 9, "")
+            if pageId then
+                local r, g, b = ns.GetAccentColor()
+                tag:SetTextColor(r, g, b, 0.90)
+            else
+                tag:SetTextColor(0.50, 0.80, 1.00, 0.90)  -- Plater: light blue
+            end
+            tag:SetText(byText)
+            tag:SetPoint("RIGHT", btn, "RIGHT", -10, 0)
+            btn._placeholderTag = tag
+
+            -- Click: close EllesmereUI first, then open GravityUI/external addon
+            btn:SetScript("OnClick", function()
+                -- Close EllesmereUI so GravityUI/Plater/Baganator opens in front
+                local E = _G.EllesmereUI
+                if E and E.Toggle then
+                    pcall(function() E:Toggle() end)
+                end
+
+                C_Timer.After(0.05, function()
+                    if openFn then
+                        openFn()
+                    elseif pageId and ns.GUI then
+                        ns.GUI:Show()
+                        C_Timer.After(0, function() ns.GUI:ShowPage(pageId) end)
+                    end
+                end)
+            end)
+
+            -- Hover: glow + tooltip explaining why it is managed externally
+            btn:SetScript("OnEnter", function(self)
+                local E = _G.EllesmereUI
+                if self._hoverGlow      then self._hoverGlow:Show()      end
+                if self._hoverIndicator then self._hoverIndicator:Show() end
+                if E and E.ShowWidgetTooltip then
+                    local addonLabel = (byText:match("^by (.+)$")) or byText
+                    local tip = openFn
+                        and ("Managed by " .. addonLabel .. ".\n\nClick to open " .. addonLabel .. " settings.")
+                        or  "Managed by GravityUI.\n\nClick to configure in GravityUI."
+                    E.ShowWidgetTooltip(self, tip)
+                end
+            end)
+
+            btn:SetScript("OnLeave", function(self)
+                local E = _G.EllesmereUI
+                if self._hoverGlow      then self._hoverGlow:Hide()      end
+                if self._hoverIndicator then self._hoverIndicator:Hide() end
+                if E and E.HideWidgetTooltip then E.HideWidgetTooltip() end
+            end)
+        end
+
+        -- Chat: managed by GravityUI → navigate to UI Styling (contains Chat tab)
         local function ApplyChatHide()
             if not IsGravityUIChatEnabled() then return end
             local E = _G.EllesmereUI
             if not (E and E._sidebarButtons) then return end
-            local btn = E._sidebarButtons[CHAT_FOLDER]
-            if btn then btn:Hide() end
+            MakePlaceholder(E._sidebarButtons[CHAT_FOLDER], "by GravityUI", "Styling")
         end
 
-        -- Hides the EllesmereUI Minimap sidebar button when GravityUI's own
-        -- minimap is active, to prevent conflicting minimap settings.
+        -- Minimap: managed by GravityUI → navigate to Minimap page
         local function ApplyMinimapHide()
             if not IsGravityUIMinimapEnabled() then return end
             local E = _G.EllesmereUI
             if not (E and E._sidebarButtons) then return end
-            local btn = E._sidebarButtons[MINIMAP_FOLDER]
-            if btn then btn:Hide() end
+            MakePlaceholder(E._sidebarButtons[MINIMAP_FOLDER], "by GravityUI", "minimap")
         end
 
-        -- Hides the EllesmereUI Quest Tracker sidebar button when GravityUI's
-        -- Objective Tracker styling is active, to prevent conflicting tracker settings.
+        -- Quest Tracker: managed by GravityUI → navigate to UI Styling page
         local function ApplyTrackerHide()
             if not IsGravityUITrackerEnabled() then return end
             local E = _G.EllesmereUI
             if not (E and E._sidebarButtons) then return end
-            local btn = E._sidebarButtons[QUEST_TRACKER_FOLDER]
-            if btn then btn:Hide() end
+            MakePlaceholder(E._sidebarButtons[QUEST_TRACKER_FOLDER], "by GravityUI", "Styling")
         end
 
-        -- Hides the EllesmereUI Action Bars sidebar button when GravityUI's
-        -- own action bars are enabled, to prevent conflicting bar settings.
+        -- Action Bars: managed by GravityUI → navigate to Action Bars page
         local function ApplyActionBarsHide()
             if not IsGravityUIActionBarsEnabled() then return end
             local E = _G.EllesmereUI
             if not (E and E._sidebarButtons) then return end
-            local btn = E._sidebarButtons[ACTION_BARS_FOLDER]
-            if btn then btn:Hide() end
+            MakePlaceholder(E._sidebarButtons[ACTION_BARS_FOLDER], "by GravityUI", "actionbars")
         end
 
-        -- Hides the EllesmereUI Nameplates sidebar button when Plater is loaded,
-        -- because Plater fully replaces nameplate functionality.
+        -- Nameplates: managed by Plater → open Plater directly
         local function ApplyNameplatesHide()
             if not C_AddOns.IsAddOnLoaded("Plater") then return end
             local E = _G.EllesmereUI
             if not (E and E._sidebarButtons) then return end
-            local btn = E._sidebarButtons[NAMEPLATES_FOLDER]
-            if btn then btn:Hide() end
+            MakePlaceholder(E._sidebarButtons[NAMEPLATES_FOLDER], "by Plater", nil, function()
+                if SlashCmdList["PLATER"] then SlashCmdList["PLATER"]("") end
+            end)
         end
 
-        -- Hides all buttons in ALWAYS_HIDDEN_FOLDERS unconditionally.
+        -- Bags: managed by Baganator → open Baganator directly
+        local function ApplyBagsHide()
+            if not C_AddOns.IsAddOnLoaded("Baganator") then return end
+            local E = _G.EllesmereUI
+            if not (E and E._sidebarButtons) then return end
+            MakePlaceholder(E._sidebarButtons[BAGS_FOLDER], "by Baganator", nil, function()
+                if SlashCmdList["Baganator"] then SlashCmdList["Baganator"]("") end
+            end)
+        end
+
+        -- Mythic+ Timer: managed by WarpDeplete → open WarpDeplete directly
+        local function ApplyMythicTimerHide()
+            if not C_AddOns.IsAddOnLoaded("WarpDeplete") then return end
+            local E = _G.EllesmereUI
+            if not (E and E._sidebarButtons) then return end
+            MakePlaceholder(E._sidebarButtons[MYTHIC_TIMER_FOLDER], "by WarpDeplete", nil, function()
+                -- Brute-force scan: find any SLASH_*N = "/warp*" and run its handler
+                local opened = false
+                for k, v in pairs(_G) do
+                    if type(k) == "string" and k:match("^SLASH_") and type(v) == "string"
+                       and v:lower():match("^/warp") then
+                        local key = k:match("^SLASH_(.+)%d+$")
+                        if key and SlashCmdList[key] then
+                            SlashCmdList[key]("")
+                            opened = true
+                            break
+                        end
+                    end
+                end
+                -- Fallback: call WarpDeplete addon object directly
+                if not opened then
+                    local WD = _G.WarpDeplete
+                    if WD then
+                        if WD.ToggleOptions then WD:ToggleOptions()
+                        elseif WD.OpenOptions then WD:OpenOptions()
+                        elseif WD.Toggle      then WD:Toggle() end
+                    end
+                end
+            end)
+        end
+
+        -- Damage Meters: managed by Details → open Details directly
+        local function ApplyDamageMetersHide()
+            if not C_AddOns.IsAddOnLoaded("Details") then return end
+            local E = _G.EllesmereUI
+            if not (E and E._sidebarButtons) then return end
+            MakePlaceholder(E._sidebarButtons[DAMAGE_METERS_FOLDER], "by Details", nil, function()
+                if SlashCmdList["DETAILS"] then SlashCmdList["DETAILS"]("options")
+                elseif _G.Details and _G.Details.Show then _G.Details:Show() end
+            end)
+        end
+
+        -- AuraBuff Reminders: managed by GravityUI Missing Buffs → navigate to Indicators page
+        local function ApplyAuraBuffHide()
+            if not IsGravityUIAuraBuffEnabled() then return end
+            local E = _G.EllesmereUI
+            if not (E and E._sidebarButtons) then return end
+            MakePlaceholder(E._sidebarButtons[AURABUFF_FOLDER], "by GravityUI", "indicators")
+        end
+
+        -- QoL: always managed by GravityUI → show placeholder pointing to GravityUI's QoL page
         local function ApplyAlwaysHidden()
             local E = _G.EllesmereUI
             if not (E and E._sidebarButtons) then return end
             for _, folder in ipairs(ALWAYS_HIDDEN_FOLDERS) do
-                local btn = E._sidebarButtons[folder]
-                if btn then btn:Hide() end
+                MakePlaceholder(E._sidebarButtons[folder], "deactivated by GravityUI", "qol")
             end
         end
 
@@ -573,6 +827,10 @@ do
             ApplyTrackerHide()
             ApplyActionBarsHide()
             ApplyNameplatesHide()
+            ApplyBagsHide()
+            ApplyMythicTimerHide()
+            ApplyDamageMetersHide()
+            ApplyAuraBuffHide()
 
             -- Replace Script handlers and wrap RefreshSidebarOverrideLocks only once
             if not scriptsPatched then
@@ -591,6 +849,10 @@ do
                         ApplyTrackerHide()
                         ApplyActionBarsHide()
                         ApplyNameplatesHide()
+                        ApplyBagsHide()
+                        ApplyMythicTimerHide()
+                        ApplyDamageMetersHide()
+                        ApplyAuraBuffHide()
                     end
                 end
             end
@@ -639,12 +901,12 @@ do
             {
                 label   = "UI Scale",
                 side    = "left",
-                tooltip = "UI Scale is managed by GravityUI \226\128\148 change it under General \226\134\146 UI Scale.",
+                tooltip = "UI Scale is managed by GravityUI \226\128\148 change it under General > UI Scale.",
             },
             {
                 label   = "Lag Tolerance",
                 side    = "right",
-                tooltip = "Lag Tolerance (Spell Queue Window) is managed by GravityUI \226\128\148 change it under Combat \226\134\146 Spell Queue Window.",
+                tooltip = "Lag Tolerance (Spell Queue Window) is managed by GravityUI \226\128\148 change it under Combat > Spell Queue Window.",
             },
         }
 
@@ -721,7 +983,7 @@ do
 
             local lbl = ov:CreateFontString(nil, "OVERLAY")
             lbl:SetFont("Fonts\\FRIZQT__.TTF", 11, "OUTLINE")
-            lbl:SetTextColor(1, 0.82, 0.0, 1)
+            lbl:SetTextColor(ns.GetAccentColor())  -- GravityUI accent
             lbl:SetText("Managed by GravityUI")
             lbl:SetPoint("CENTER", ov, "CENTER", 0, 0)
 
@@ -767,6 +1029,571 @@ do
             hooksecurefunc(E, "ShowModule",   function() C_Timer.After(0, PlaceAllOverlays) end)
             hooksecurefunc(E, "SelectModule", function() C_Timer.After(0, PlaceAllOverlays) end)
         end
+    end
+end
+
+
+-------------------------------------------------------------------------------
+-- ns.SyncEllesmereTooltip – always defined (even without EllesmereUI)
+-- so pages/styling.lua can call it unconditionally from RefreshTooltip().
+-- When GravityUI's Tooltip Module is on and EllesmereUI is loaded, this
+-- writes EllesmereUIDB.customTooltips = false to prevent dual-tooltip conflicts.
+-------------------------------------------------------------------------------
+do
+    local function IsGravityUITooltipEnabled()
+        local db = ns.GetDB()
+        if not db then return false end
+        local tt = db.uiimprovements and db.uiimprovements.tooltip
+        return tt and (tt.enabled ~= false)
+    end
+
+    ns.SyncEllesmereTooltip = function()
+        if not C_AddOns.IsAddOnLoaded("EllesmereUI") then return end
+        if not IsGravityUITooltipEnabled() then return end
+        if _G.EllesmereUIDB and _G.EllesmereUIDB.customTooltips ~= false then
+            _G.EllesmereUIDB.customTooltips = false
+            local E = _G.EllesmereUI
+            if E and E.SyncAuraTooltipSkin then E.SyncAuraTooltipSkin() end
+        end
+    end
+end
+
+-------------------------------------------------------------------------------
+-- ns.SyncEllesmereVigorBar – always defined (even without EllesmereUI).
+-- When GravityUI's Vigor Bar is on and EllesmereUI is loaded, this writes
+-- EllesmereUIDB.profiles[activeProfile].addons.EllesmereUIDragonRiding.enabled
+-- = false to prevent the two skyriding HUDs running simultaneously.
+-------------------------------------------------------------------------------
+do
+    ns.SyncEllesmereVigorBar = function()
+        if not C_AddOns.IsAddOnLoaded("EllesmereUI") then return end
+        local db = ns.GetDB()
+        if not db then return end
+        local skyEnabled = db.skyriding and (db.skyriding.enabled ~= false)
+        if not skyEnabled then return end
+        if not _G.EllesmereUIDB then return end
+        local profileName = _G.EllesmereUIDB.activeProfile or "Default"
+        local profiles = _G.EllesmereUIDB.profiles
+        if not profiles or not profiles[profileName] then return end
+        local addons = profiles[profileName].addons
+        if not addons then return end
+        if not addons["EllesmereUIDragonRiding"] then
+            addons["EllesmereUIDragonRiding"] = {}
+        end
+        if addons["EllesmereUIDragonRiding"].enabled ~= false then
+            addons["EllesmereUIDragonRiding"].enabled = false
+            -- _EDR_Rebuild is a global exported by EllesmereUIBlizzardSkin_DragonRiding.lua.
+            -- It triggers a runtime rebuild so the HUD hides immediately.
+            if _G._EDR_Rebuild then _G._EDR_Rebuild() end
+        end
+    end
+end
+
+-------------------------------------------------------------------------------
+-- ns.SyncEllesmereCharSheet – always defined (even without EllesmereUI).
+-- When GravityUI's Character Panel Styling is on and EllesmereUI is loaded,
+-- this writes EllesmereUIDB.themedCharacterSheet = false (and themedInspectSheet)
+-- so EllesmereUI's Character Sheet reskin doesn't conflict with GravityUI's.
+-------------------------------------------------------------------------------
+do
+    ns.SyncEllesmereCharSheet = function()
+        if not C_AddOns.IsAddOnLoaded("EllesmereUI") then return end
+        local db = ns.GetDB()
+        if not db then return end
+        local charEnabled = db.uiimprovements and db.uiimprovements.character and
+                            (db.uiimprovements.character.enabled ~= false)
+        if not charEnabled then return end
+        if not _G.EllesmereUIDB then return end
+        if _G.EllesmereUIDB.themedCharacterSheet ~= false then
+            _G.EllesmereUIDB.themedCharacterSheet = false
+            _G.EllesmereUIDB.themedInspectSheet   = false
+            local E = _G.EllesmereUI
+            -- Trigger a widget refresh so the dropdown re-reads the DB value.
+            if E and E.RefreshWidgets then E:RefreshWidgets() end
+        end
+    end
+end
+
+-------------------------------------------------------------------------------
+-- ns.SyncEllesmereAccentColor – always defined (even without EllesmereUI).
+-- Mirrors GravityUI's current resolved accent color (custom or class) into
+-- EllesmereUI's per-profile euiAccent so both UIs stay visually consistent.
+--
+-- Uses EllesmereUI.SetActiveProfileAccent + ApplyAccentColorLive when the
+-- Widgets module is loaded (i.e. after the EllesmereUI settings panel has
+-- been opened once). Falls back to a direct SavedVariables write + live
+-- ELLESMERE_GREEN update otherwise.
+-------------------------------------------------------------------------------
+do
+    ns.SyncEllesmereAccentColor = function()
+        if not C_AddOns.IsAddOnLoaded("EllesmereUI") then return end
+        local E = _G.EllesmereUI
+        if not E then return end
+
+        -- Resolve the current GravityUI accent (handles class-color mode internally).
+        local r, g, b = ns.GetAccentColor()
+        local db = ns.GetDB()
+        local useClass = db and db.general and (db.general.useClassColorTheme == true)
+
+        -- High-level API is available once EllesmereUI_Widgets.lua has been
+        -- EnsureLoaded (i.e. the settings panel was opened at least once).
+        if E.SetActiveProfileAccent and E.ApplyAccentColorLive then
+            E.SetActiveProfileAccent(
+                useClass and nil or { r = r, g = g, b = b },
+                useClass
+            )
+            E.ApplyAccentColorLive(r, g, b)
+            return
+        end
+
+        -- Fallback: write directly into the SavedVariables profile table
+        -- and update ELLESMERE_GREEN so the color takes effect live even
+        -- without the Widgets module being loaded yet.
+        local edb = _G.EllesmereUIDB
+        if not edb then return end
+        local profileName = edb.activeProfile or "Default"
+        edb.profiles = edb.profiles or {}
+        local p = edb.profiles[profileName]
+        if not p then p = {}; edb.profiles[profileName] = p end
+        p.euiAccent = p.euiAccent or {}
+        p.euiAccent.useClass = useClass
+        if not useClass then
+            p.euiAccent.custom = { r = r, g = g, b = b }
+        end
+        -- Live update: ELLESMERE_GREEN is the shared accent table that all
+        -- EllesmereUI modules read from for tinting.
+        local EG = E.ELLESMERE_GREEN
+        if EG then EG.r, EG.g, EG.b = r, g, b end
+    end
+end
+
+-------------------------------------------------------------------------------
+-- EllesmereUI – "Managed by GravityUI" overlay for the BLIZZARD TOOLTIP
+-- section inside Blizz UI Enhanced → Tooltips, Menus & Popups.
+--
+-- Architecture (same as the Global Settings UI Scale overlay above):
+--   • PLAYER_LOGIN: hooksecurefunc EllesmereUI.Show/Toggle/ShowModule/SelectModule
+--     (deferred to PLAYER_LOGIN so all EllesmereUI functions are guaranteed
+--     to exist; the sidebar-lock block above works the same way at file-load
+--     time only because EllesmereUI is loaded before GravityUI in that run).
+--   • PlaceTooltipOverlay() fires C_Timer.After(0) deferred so the page
+--     cache is populated before we read it.
+--   • Header detected via frame._isSectionHeader + frame._sectionName
+--     (EllesmereUI_Widgets.lua WidgetFactory:SectionHeader sets both).
+--   • Overlay sized from section-header bottom to wrapper bottom.
+-------------------------------------------------------------------------------
+do
+    if C_AddOns.IsAddOnLoaded("EllesmereUI") then
+        local TOOLTIP_CACHE_KEY   = "EllesmereUIBlizzardSkin::Tooltips, Menus & Popups"
+        local TOOLTIP_SECTION_KEY = "BLIZZARD TOOLTIP"   -- frame._sectionName value
+        local tooltipSectionOverlay = nil  -- single frame, reused across page rebuilds
+        local hooksInstalled = false
+
+        local function IsGravityUITooltipEnabled()
+            local db = ns.GetDB()
+            if not db then return false end
+            local tt = db.uiimprovements and db.uiimprovements.tooltip
+            return tt and (tt.enabled ~= false)
+        end
+
+        -- Returns the wrapper frame for the Tooltips page (or nil if not built yet)
+        local function GetTooltipsWrapper()
+            local E = _G.EllesmereUI
+            if not (E and E._pageCache) then return nil end
+            local entry = E._pageCache[TOOLTIP_CACHE_KEY]
+            return entry and entry.wrapper or nil
+        end
+
+        -- Scan wrapper children for the SectionHeader whose _sectionName matches.
+        -- EllesmereUI_Widgets.lua WidgetFactory:SectionHeader sets:
+        --   frame._isSectionHeader = true
+        --   frame._sectionName     = text  (raw English key, before L() translation)
+        local function FindTooltipSectionHeader(wrapper)
+            if not wrapper then return nil end
+            for _, child in next, {wrapper:GetChildren()} do
+                if child._isSectionHeader and child._sectionName == TOOLTIP_SECTION_KEY then
+                    return child
+                end
+            end
+            return nil
+        end
+
+        local function PlaceTooltipOverlay()
+            ns.SyncEllesmereTooltip()
+
+            local E = _G.EllesmereUI
+            if not E then return end
+
+            if not IsGravityUITooltipEnabled() then
+                if tooltipSectionOverlay then tooltipSectionOverlay:Hide() end
+                return
+            end
+
+            local wrapper = GetTooltipsWrapper()
+            if not wrapper then return end
+
+            local header = FindTooltipSectionHeader(wrapper)
+            if not header then return end
+
+            if not tooltipSectionOverlay then
+                tooltipSectionOverlay = CreateFrame("Frame", nil, wrapper)
+                tooltipSectionOverlay:EnableMouse(true)
+                tooltipSectionOverlay:SetFrameStrata("DIALOG")
+                tooltipSectionOverlay:SetFrameLevel(200)
+
+                local bg = tooltipSectionOverlay:CreateTexture(nil, "BACKGROUND")
+                bg:SetAllPoints()
+                bg:SetColorTexture(0.02, 0.02, 0.06, 0.82)
+
+                local lbl = tooltipSectionOverlay:CreateFontString(nil, "OVERLAY")
+                lbl:SetFont("Fonts\\FRIZQT__.TTF", 13, "OUTLINE")
+                lbl:SetTextColor(ns.GetAccentColor())  -- GravityUI accent
+                lbl:SetText("Managed by GravityUI")
+                lbl:SetPoint("CENTER", tooltipSectionOverlay, "CENTER", 0, 10)
+
+                local sub = tooltipSectionOverlay:CreateFontString(nil, "OVERLAY")
+                sub:SetFont("Fonts\\FRIZQT__.TTF", 10, "")
+                sub:SetTextColor(0.75, 0.75, 0.75, 1)
+                sub:SetText("Change it under UI Styling > Tooltip")
+                sub:SetPoint("TOP", lbl, "BOTTOM", 0, -5)
+
+                tooltipSectionOverlay:SetScript("OnEnter", function(self)
+                    if E and E.ShowWidgetTooltip then
+                        E.ShowWidgetTooltip(self,
+                            "This section is managed by GravityUI.\n" ..
+                            "To configure tooltips, open GravityUI (|cffFFCC00/gui|r)\n" ..
+                            "and go to |cffFFCC00UI Styling > Tooltip|r.")
+                    end
+                end)
+                tooltipSectionOverlay:SetScript("OnLeave", function()
+                    if E and E.HideWidgetTooltip then E.HideWidgetTooltip() end
+                end)
+            end
+
+            -- Two-anchor stretch: no coordinate math needed at all.
+            -- TOPLEFT snaps to the section header's bottom-left edge.
+            -- BOTTOMRIGHT snaps to the wrapper's bottom-right corner.
+            -- Re-assert strata/level every call: SetParent can reset them in WoW,
+            -- which caused the overlay to be behind content frames on 2nd+ opens.
+            tooltipSectionOverlay:SetParent(wrapper)
+            tooltipSectionOverlay:SetFrameStrata("DIALOG")
+            tooltipSectionOverlay:SetFrameLevel(200)
+            tooltipSectionOverlay:ClearAllPoints()
+            tooltipSectionOverlay:SetPoint("TOPLEFT",    header,  "BOTTOMLEFT",  0, 0)
+            tooltipSectionOverlay:SetPoint("BOTTOMRIGHT", wrapper, "BOTTOMRIGHT", 0, 0)
+            tooltipSectionOverlay:Show()
+        end
+
+
+
+
+        -- Install hooks on PLAYER_LOGIN to guarantee all EllesmereUI functions exist.
+        local hookFrame = CreateFrame("Frame")
+        hookFrame:RegisterEvent("PLAYER_LOGIN")
+        hookFrame:SetScript("OnEvent", function(self)
+            self:UnregisterAllEvents()
+            if hooksInstalled then return end
+            local E = _G.EllesmereUI
+            if not E then return end
+            hooksInstalled = true
+            -- Single C_Timer.After(0) is sufficient: GetPoint values are set
+            -- synchronously by PP.Point during buildPage (no render pass needed).
+            local function Schedule() C_Timer.After(0, PlaceTooltipOverlay) end
+            hooksecurefunc(E, "Show",         Schedule)
+            hooksecurefunc(E, "Toggle",       Schedule)
+            hooksecurefunc(E, "ShowModule",   Schedule)
+            hooksecurefunc(E, "SelectModule", Schedule)
+            -- SelectPage is called when the user clicks a page TAB within a module
+            -- (e.g. "Tooltips, Menus & Popups" tab in Blizz UI Enhanced).
+            -- This is the function that actually builds + caches the page, so it
+            -- MUST be hooked – SelectModule only handles sidebar MODULE clicks.
+            if E.SelectPage then
+                hooksecurefunc(E, "SelectPage", Schedule)
+            end
+        end)
+
+        -- Debug slash command: /guitooltipdbg
+        -- Prints cache key, wrapper state, and header scan results to chat.
+        SLASH_GUITOOLTIPDBG1 = "/guitooltipdbg"
+        SlashCmdList["GUITOOLTIPDBG"] = function()
+            local E = _G.EllesmereUI
+            if not E then print("EllesmereUI not loaded"); return end
+            print("GravityUI Tooltip enabled: " .. tostring(IsGravityUITooltipEnabled()))
+            local cache = E._pageCache
+            if cache then
+                local found = {}
+                for k in pairs(cache) do found[#found+1] = k end
+                table.sort(found)
+                print("Cache keys (" .. #found .. "):")
+                for _, k in ipairs(found) do print("  " .. k) end
+            else
+                print("_pageCache is nil")
+            end
+            local wrapper = GetTooltipsWrapper()
+            print("Wrapper: " .. tostring(wrapper))
+            if wrapper then
+                local children = {wrapper:GetChildren()}
+                print("Children: " .. #children)
+                for i, ch in ipairs(children) do
+                    if ch._isSectionHeader then
+                        print("  SectionHeader [" .. i .. "] _sectionName=" .. tostring(ch._sectionName))
+                    end
+                end
+                local hdr = FindTooltipSectionHeader(wrapper)
+                print("Header found: " .. tostring(hdr))
+            end
+        end
+    end
+end
+
+-------------------------------------------------------------------------------
+-- EllesmereUI – "Managed by GravityUI" overlay for the GENERAL section
+-- inside Blizz UI Enhanced → Dragon Riding.
+--
+-- When GravityUI's Vigor Bar (Features > Dragonriding > Enable Vigor Bar) is
+-- enabled, EllesmereUI's Dragon Riding bar is disabled via SyncEllesmereVigorBar
+-- and this overlay locks the Dragon Riding settings page so the user cannot
+-- re-enable it through EllesmereUI.
+-------------------------------------------------------------------------------
+do
+    if C_AddOns.IsAddOnLoaded("EllesmereUI") then
+        local DR_CACHE_KEY   = "EllesmereUIBlizzardSkin::Dragon Riding"
+        local DR_SECTION_KEY = "GENERAL"   -- frame._sectionName value
+        local drSectionOverlay = nil
+        local drHooksInstalled = false
+
+        local function IsGravityUIVigorBarEnabled()
+            local db = ns.GetDB()
+            if not db then return false end
+            return db.skyriding and (db.skyriding.enabled ~= false)
+        end
+
+        local function GetDragonRidingWrapper()
+            local E = _G.EllesmereUI
+            if not (E and E._pageCache) then return nil end
+            local entry = E._pageCache[DR_CACHE_KEY]
+            return entry and entry.wrapper or nil
+        end
+
+        local function FindDrGeneralHeader(wrapper)
+            if not wrapper then return nil end
+            for _, child in next, {wrapper:GetChildren()} do
+                if child._isSectionHeader and child._sectionName == DR_SECTION_KEY then
+                    return child
+                end
+            end
+            return nil
+        end
+
+        local function PlaceDragonRidingOverlay()
+            ns.SyncEllesmereVigorBar()
+
+            local E = _G.EllesmereUI
+            if not E then return end
+
+            if not IsGravityUIVigorBarEnabled() then
+                if drSectionOverlay then drSectionOverlay:Hide() end
+                return
+            end
+
+            local wrapper = GetDragonRidingWrapper()
+            if not wrapper then return end
+
+            local header = FindDrGeneralHeader(wrapper)
+            if not header then return end
+
+            if not drSectionOverlay then
+                drSectionOverlay = CreateFrame("Frame", nil, wrapper)
+                drSectionOverlay:EnableMouse(true)
+                drSectionOverlay:SetFrameStrata("DIALOG")
+                drSectionOverlay:SetFrameLevel(200)
+
+                local bg = drSectionOverlay:CreateTexture(nil, "BACKGROUND")
+                bg:SetAllPoints()
+                bg:SetColorTexture(0.02, 0.02, 0.06, 0.82)
+
+                local lbl = drSectionOverlay:CreateFontString(nil, "OVERLAY")
+                lbl:SetFont("Fonts\\FRIZQT__.TTF", 13, "OUTLINE")
+                lbl:SetTextColor(ns.GetAccentColor())  -- GravityUI accent
+                lbl:SetText("Managed by GravityUI")
+                lbl:SetPoint("CENTER", drSectionOverlay, "CENTER", 0, 10)
+
+                local sub = drSectionOverlay:CreateFontString(nil, "OVERLAY")
+                sub:SetFont("Fonts\\FRIZQT__.TTF", 10, "")
+                sub:SetTextColor(0.75, 0.75, 0.75, 1)
+                sub:SetText("Change it under Features > Dragonriding")
+                sub:SetPoint("TOP", lbl, "BOTTOM", 0, -5)
+
+                drSectionOverlay:SetScript("OnEnter", function(self)
+                    if E and E.ShowWidgetTooltip then
+                        E.ShowWidgetTooltip(self,
+                            "This section is managed by GravityUI.\n" ..
+                            "To configure the Dragonriding HUD, open GravityUI (|cffFFCC00/gui|r)\n" ..
+                            "and go to |cffFFCC00Features > Dragonriding|r.")
+                    end
+                end)
+                drSectionOverlay:SetScript("OnLeave", function()
+                    if E and E.HideWidgetTooltip then E.HideWidgetTooltip() end
+                end)
+            end
+
+            -- Two-anchor stretch (same pattern as Tooltip overlay):
+            -- Re-assert strata/level every call – SetParent can reset them.
+            drSectionOverlay:SetParent(wrapper)
+            drSectionOverlay:SetFrameStrata("DIALOG")
+            drSectionOverlay:SetFrameLevel(200)
+            drSectionOverlay:ClearAllPoints()
+            drSectionOverlay:SetPoint("TOPLEFT",    header,  "BOTTOMLEFT",  0, 0)
+            drSectionOverlay:SetPoint("BOTTOMRIGHT", wrapper, "BOTTOMRIGHT", 0, 0)
+            drSectionOverlay:Show()
+        end
+
+        -- Install hooks on PLAYER_LOGIN.
+        local drHookFrame = CreateFrame("Frame")
+        drHookFrame:RegisterEvent("PLAYER_LOGIN")
+        drHookFrame:SetScript("OnEvent", function(self)
+            self:UnregisterAllEvents()
+            if drHooksInstalled then return end
+            local E = _G.EllesmereUI
+            if not E then return end
+            drHooksInstalled = true
+            local function DrSchedule() C_Timer.After(0, PlaceDragonRidingOverlay) end
+            hooksecurefunc(E, "Show",         DrSchedule)
+            hooksecurefunc(E, "Toggle",       DrSchedule)
+            hooksecurefunc(E, "ShowModule",   DrSchedule)
+            hooksecurefunc(E, "SelectModule", DrSchedule)
+            if E.SelectPage then
+                hooksecurefunc(E, "SelectPage", DrSchedule)
+            end
+        end)
+    end
+end
+
+-------------------------------------------------------------------------------
+-- EllesmereUI – "Managed by GravityUI" overlay for the Character Sheet window
+-- card inside Blizz UI Enhanced → Blizzard Window Skins.
+--
+-- When GravityUI's Character Panel Styling is enabled, EllesmereUI's Character
+-- Sheet reskin is disabled via SyncEllesmereCharSheet and this overlay locks
+-- the window card row so the user cannot re-enable it through EllesmereUI.
+--
+-- The window card header has _isSectionHeader = true and
+-- _sectionName = "Character Sheet <desc>" (title .. " " .. desc),
+-- so we find it with a prefix search and use SetAllPoints to cover exactly
+-- the card header row (not the entire page).
+-------------------------------------------------------------------------------
+do
+    if C_AddOns.IsAddOnLoaded("EllesmereUI") then
+        local CS_CACHE_KEY = "EllesmereUIBlizzardSkin::Blizzard Window Skins"
+        local csOverlay = nil
+        local csHooksInstalled = false
+
+        local function IsGravityUICharPanelEnabled()
+            local db = ns.GetDB()
+            if not db then return false end
+            return db.uiimprovements and db.uiimprovements.character and
+                   (db.uiimprovements.character.enabled ~= false)
+        end
+
+        local function GetWindowSkinsWrapper()
+            local E = _G.EllesmereUI
+            if not (E and E._pageCache) then return nil end
+            local entry = E._pageCache[CS_CACHE_KEY]
+            return entry and entry.wrapper or nil
+        end
+
+        local function FindCharSheetCard(wrapper)
+            if not wrapper then return nil end
+            for _, child in next, {wrapper:GetChildren()} do
+                -- Window cards set _isSectionHeader = true and _sectionName = title .. " " .. desc
+                if child._isSectionHeader and child._sectionName and
+                   child._sectionName:find("^Character Sheet") then
+                    return child
+                end
+            end
+            return nil
+        end
+
+        local function PlaceCharSheetOverlay()
+            ns.SyncEllesmereCharSheet()
+
+            local E = _G.EllesmereUI
+            if not E then return end
+
+            if not IsGravityUICharPanelEnabled() then
+                if csOverlay then csOverlay:Hide() end
+                return
+            end
+
+            local wrapper = GetWindowSkinsWrapper()
+            if not wrapper then return end
+
+            local card = FindCharSheetCard(wrapper)
+            if not card then return end
+
+            if not csOverlay then
+                csOverlay = CreateFrame("Frame", nil, card)
+                csOverlay:EnableMouse(true)
+                csOverlay:SetFrameStrata("DIALOG")
+                csOverlay:SetFrameLevel(200)
+
+                local bg = csOverlay:CreateTexture(nil, "BACKGROUND")
+                bg:SetAllPoints()
+                bg:SetColorTexture(0.02, 0.02, 0.06, 0.82)
+
+                local lbl = csOverlay:CreateFontString(nil, "OVERLAY")
+                lbl:SetFont("Fonts\\FRIZQT__.TTF", 13, "OUTLINE")
+                lbl:SetTextColor(ns.GetAccentColor())  -- GravityUI accent
+                lbl:SetText("Managed by GravityUI")
+                lbl:SetPoint("CENTER", csOverlay, "CENTER", 0, 8)
+
+                local sub = csOverlay:CreateFontString(nil, "OVERLAY")
+                sub:SetFont("Fonts\\FRIZQT__.TTF", 10, "")
+                sub:SetTextColor(0.75, 0.75, 0.75, 1)
+                sub:SetText("Change it under UI Styling > Character Panel")
+                sub:SetPoint("TOP", lbl, "BOTTOM", 0, -4)
+
+                csOverlay:SetScript("OnEnter", function(self)
+                    if E and E.ShowWidgetTooltip then
+                        E.ShowWidgetTooltip(self,
+                            "This section is managed by GravityUI.\n" ..
+                            "To configure the Character Panel, open GravityUI (|cffFFCC00/gui|r)\n" ..
+                            "and go to |cffFFCC00UI Styling > Character Panel|r.")
+                    end
+                end)
+                csOverlay:SetScript("OnLeave", function()
+                    if E and E.HideWidgetTooltip then E.HideWidgetTooltip() end
+                end)
+            end
+
+            -- Cover the card header row exactly.
+            -- Re-assert strata/level every call: SetParent can reset them.
+            csOverlay:SetParent(card)
+            csOverlay:SetFrameStrata("DIALOG")
+            csOverlay:SetFrameLevel(card:GetFrameLevel() + 20)
+            csOverlay:ClearAllPoints()
+            csOverlay:SetAllPoints(card)
+            csOverlay:Show()
+        end
+
+        -- Install hooks on PLAYER_LOGIN.
+        local csHookFrame = CreateFrame("Frame")
+        csHookFrame:RegisterEvent("PLAYER_LOGIN")
+        csHookFrame:SetScript("OnEvent", function(self)
+            self:UnregisterAllEvents()
+            if csHooksInstalled then return end
+            local E = _G.EllesmereUI
+            if not E then return end
+            csHooksInstalled = true
+            local function CsSchedule() C_Timer.After(0, PlaceCharSheetOverlay) end
+            hooksecurefunc(E, "Show",         CsSchedule)
+            hooksecurefunc(E, "Toggle",       CsSchedule)
+            hooksecurefunc(E, "ShowModule",   CsSchedule)
+            hooksecurefunc(E, "SelectModule", CsSchedule)
+            if E.SelectPage then
+                hooksecurefunc(E, "SelectPage", CsSchedule)
+            end
+        end)
     end
 end
 
@@ -882,6 +1709,7 @@ function Addon:PLAYER_ENTERING_WORLD(event, isInitialLogin, isReloadingUi)
         if ns.Loot and ns.Loot.Initialize then ns.Loot:Initialize() end
         if ns.RaidWarnings and ns.RaidWarnings.Initialize then ns.RaidWarnings:Initialize() end
         if ns.InterruptTracker and ns.InterruptTracker.Initialize then ns.InterruptTracker:Initialize() end
+        if ns.TrackedBuffBar and ns.TrackedBuffBar.Init then ns.TrackedBuffBar:Init() end
     end)
     
     -- CHUNK 3: +1.5 Seconds (Secondary Systems, Objectives, XP)

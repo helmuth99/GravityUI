@@ -1781,6 +1781,19 @@ CreateStatsPanel = function(parent, unit)
     scrollFrame:SetPoint("TOPLEFT", 5, -5)
     scrollFrame:SetPoint("BOTTOMRIGHT", -25, 5)
 
+    -- Wrap OnScrollRangeChanged in pcall to suppress Auctionator taint errors.
+    -- UIPanelScrollFrameTemplate uses SecureScrollFrameTemplate internally. When
+    -- Auctionator taints the execution context, xrange/yrange become "secret
+    -- numbers" and Blizzard's SecureScrollTemplates.lua:72 throws on every update.
+    do
+        local orig = scrollFrame:GetScript("OnScrollRangeChanged")
+        if orig then
+            scrollFrame:SetScript("OnScrollRangeChanged", function(self, xrange, yrange)
+                pcall(orig, self, xrange, yrange)
+            end)
+        end
+    end
+
     local scrollChild = CreateFrame("Frame", nil, scrollFrame)
     scrollChild:SetSize(130, 1)  -- Width matches scroll area (160 - 30 padding), height set dynamically
     scrollFrame:SetScrollChild(scrollChild)
@@ -3229,7 +3242,15 @@ local function SkinEquipMgrPane(popup, pane)
     if pane.ScrollBox then
         -- ScrollBox uses callback system, not HookScript
         if pane.ScrollBox.RegisterCallback then
-            pane.ScrollBox:RegisterCallback("OnUpdate", function() C_Timer.After(0, SkinRows) end, "GUIEquipSkin")
+            local _equipSkinPending = false
+            pane.ScrollBox:RegisterCallback("OnUpdate", function()
+                -- PERF: Debounced - only spawn one timer per scroll event, not one per frame
+                if not _equipSkinPending then
+                    _equipSkinPending = true
+                    C_Timer.After(0, function() _equipSkinPending = false; SkinRows() end)
+                end
+            end, "GUIEquipSkin")
+
         end
     end
 end
@@ -3387,7 +3408,15 @@ local function SkinTitleManagerPane(popup, pane)
     if pane.ScrollBox then
         -- ScrollBox uses callback system, not HookScript
         if pane.ScrollBox.RegisterCallback then
-            pane.ScrollBox:RegisterCallback("OnUpdate", function() C_Timer.After(0, SkinRows) end, "GUITitlesSkin")
+            local _titleSkinPending = false
+            pane.ScrollBox:RegisterCallback("OnUpdate", function()
+                -- PERF: Debounced - only spawn one timer per scroll event, not one per frame
+                if not _titleSkinPending then
+                    _titleSkinPending = true
+                    C_Timer.After(0, function() _titleSkinPending = false; SkinRows() end)
+                end
+            end, "GUITitlesSkin")
+
         end
     end
 end
@@ -3827,7 +3856,8 @@ eventFrame:RegisterEvent("UPDATE_INVENTORY_DURABILITY")
 eventFrame:RegisterEvent("SOCKET_INFO_UPDATE")
 eventFrame:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
 eventFrame:RegisterEvent("UNIT_STATS")
-eventFrame:RegisterEvent("UNIT_AURA")
+eventFrame:RegisterUnitEvent("UNIT_AURA", "player") -- PERF: Only care about player auras; avoids 40+ dispatches/sec in raids
+
 eventFrame:RegisterEvent("UNIT_SPELL_HASTE")
 eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 eventFrame:RegisterEvent("INSPECT_READY")

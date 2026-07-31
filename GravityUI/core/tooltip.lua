@@ -726,6 +726,33 @@ local function InitHooks()
             end)
         end
     end
+
+    ---------------------------------------------------------------------------
+    -- Macro button SpellID fix
+    -- Macros surface as their own tooltip type (Enum.TooltipDataType.Macro),
+    -- so the Spell/Ability hooks above never fire for them. GetSpell() also
+    -- returns nil on a macro tooltip. The spell #showtooltip resolved to
+    -- (honoring conditionals) is exposed as the FIRST tooltip line's tooltipID,
+    -- which we read from tooltip:GetTooltipData(). Approach mirrors EllesmereUI.
+    ---------------------------------------------------------------------------
+    if Enum.TooltipDataType.Macro then
+        TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Macro, function(tooltip, _data)
+            if not tooltip or tooltip:IsForbidden() then return end
+            local settings = GetSettings()
+            if not settings or not settings.enabled then return end
+            if not (settings.showSpellID or settings.showIconID) then return end
+
+            pcall(function()
+                if not tooltip.GetTooltipData then return end
+                local ok, info = pcall(tooltip.GetTooltipData, tooltip)
+                if not ok or type(info) ~= "table" or not info.lines then return end
+                local line = info.lines[1]
+                local spellId = line and line.tooltipID
+                if not spellId then return end  -- item-only macro / nothing castable
+                AddIDLines(tooltip, { spellId = spellId }, "spell")
+            end)
+        end)
+    end
 end
 
 ---------------------------------------------------------------------------

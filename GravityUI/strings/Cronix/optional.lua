@@ -1,5 +1,5 @@
 ﻿-- Optional Addons Data Export
--- Extracted from User SavedVariables (21.02.2026)
+-- Extracted from User SavedVariables (31.07.2026)
 
 if not GravityUI.profiles["Cronix"] then return end
 
@@ -68,15 +68,25 @@ imports["Baganator"] = {
 ["upgrade_plugin_ignored"] = {
 },
 ["category_hidden"] = {
-["1"] = false,
-["18"] = false,
-["14"] = false,
-["default_hearthstone"] = false,
-["27"] = false,
-["26"] = false,
-["20"] = false,
-["11"] = false,
 ["default_housing"] = false,
+["default_hearthstone"] = false,
+["28"] = false,
+["1"] = false,
+["14"] = false,
+["11"] = false,
+["21"] = false,
+["24"] = false,
+["18"] = false,
+["7"] = false,
+["26"] = false,
+["25"] = false,
+["8"] = false,
+["27"] = false,
+["default_auto_equipment_sets"] = false,
+["20"] = false,
+["12"] = false,
+["22"] = false,
+["23"] = false,
 },
 ["junk_plugin_ignored"] = {
 },
@@ -108,12 +118,14 @@ imports["Baganator"] = {
 "21",
 "25",
 "24",
+"28",
 "2",
 "11",
-"12",
+"6",
 "15",
 "__end",
 "_3",
+"12",
 "20",
 "22",
 "3",
@@ -158,8 +170,8 @@ imports["Baganator"] = {
 },
 ["bank_view_position"] = {
 "BOTTOMLEFT",
-11.11108112335205,
-235.0554504394531,
+3.611170053482056,
+124.6664047241211,
 },
 ["recent_timeout"] = 15,
 ["currency_headers_collapsed"] = {
@@ -202,7 +214,7 @@ imports["Baganator"] = {
 0,
 },
 ["category_edit_search_mode"] = "visual",
-["category_horizontal_spacing_2"] = 0.3,
+["category_horizontal_spacing_2"] = 0.26,
 ["bag_view_show_bag_slots"] = false,
 ["category_default_import"] = 3,
 ["debug_categories"] = false,
@@ -212,66 +224,6 @@ imports["Baganator"] = {
 ["upgrade_plugin"] = "none",
 ["junk_plugin"] = "poor_quality",
 ["category_modifications"] = {
-["23"] = {
-["priority"] = -1,
-["addedItems"] = {
-["i:133301"] = true,
-["i:178780"] = true,
-},
-},
-["default_miscellaneous"] = {
-["addedItems"] = {
-["i:244465"] = true,
-["i:233186"] = true,
-["i:259361"] = true,
-["i:253580"] = true,
-["i:255826"] = true,
-["i:260531"] = true,
-},
-},
-["22"] = {
-["priority"] = -1,
-["addedItems"] = {
-["i:222548"] = true,
-["i:222551"] = true,
-["i:256645"] = true,
-},
-},
-["21"] = {
-["priority"] = 3,
-},
-["20"] = {
-["showGroupPrefix"] = true,
-["priority"] = 0,
-["addedItems"] = {
-["i:231756"] = true,
-["i:231757"] = true,
-["i:211297"] = true,
-["i:211296"] = true,
-},
-},
-["17"] = {
-["addedItems"] = {
-["i:180653"] = true,
-},
-["priority"] = -1,
-},
-["27"] = {
-["showGroupPrefix"] = true,
-["priority"] = -1,
-["addedItems"] = {
-["i:264882"] = true,
-},
-},
-["default_housing"] = {
-["showGroupPrefix"] = true,
-["priority"] = -1,
-["addedItems"] = {
-["i:246838"] = true,
-["i:252041"] = true,
-["i:252039"] = true,
-},
-},
 ["default_hearthstone"] = {
 ["showGroupPrefix"] = true,
 ["priority"] = -1,
@@ -286,40 +238,6 @@ imports["Baganator"] = {
 ["i:232049"] = true,
 },
 },
-["8"] = {
-["priority"] = 0,
-},
-["25"] = {
-["priority"] = 0,
-},
-["15"] = {
-["priority"] = -1,
-},
-["14"] = {
-["showGroupPrefix"] = true,
-["priority"] = 3,
-},
-["18"] = {
-["priority"] = -1,
-["addedItems"] = {
-["i:86143"] = true,
-["i:163036"] = true,
-["i:127755"] = true,
-["i:92682"] = true,
-["i:116374"] = true,
-["i:92683"] = true,
-["i:98114"] = true,
-["i:98715"] = true,
-["i:116421"] = true,
-["i:116420"] = true,
-["i:89906"] = true,
-["i:122457"] = true,
-["i:116429"] = true,
-["i:71153"] = true,
-["i:116424"] = true,
-["i:116418"] = true,
-},
-},
 ["1"] = {
 ["showGroupPrefix"] = true,
 ["priority"] = -1,
@@ -329,6 +247,12 @@ imports["Baganator"] = {
 ["i:235897"] = true,
 },
 },
+["3"] = {
+["priority"] = -1,
+},
+["2"] = {
+["priority"] = 3,
+},
 ["19"] = {
 ["priority"] = -1,
 ["addedItems"] = {
@@ -336,22 +260,12 @@ imports["Baganator"] = {
 ["i:258138"] = true,
 },
 },
-["3"] = {
-["priority"] = -1,
-},
-["2"] = {
-["priority"] = 3,
-},
-["5"] = {
-["priority"] = -1,
-["addedItems"] = {
-["i:132514"] = true,
-},
-},
 ["4"] = {
 ["priority"] = 3,
 },
 ["7"] = {
+["showGroupPrefix"] = true,
+["priority"] = -1,
 ["addedItems"] = {
 ["i:159972"] = true,
 ["i:133299"] = true,
@@ -363,7 +277,6 @@ imports["Baganator"] = {
 ["i:133306"] = true,
 ["i:159429"] = true,
 },
-["priority"] = -1,
 },
 ["6"] = {
 ["priority"] = -1,
@@ -375,8 +288,125 @@ imports["Baganator"] = {
 ["9"] = {
 ["priority"] = -1,
 },
-["24"] = {
+["8"] = {
+["showGroupPrefix"] = true,
+["priority"] = 0,
+},
+["27"] = {
+["showGroupPrefix"] = true,
+["priority"] = -1,
+["addedItems"] = {
+["i:264882"] = true,
+["i:242241"] = true,
+},
+},
+["17"] = {
+["addedItems"] = {
+["i:180653"] = true,
+},
+["priority"] = -1,
+},
+["13"] = {
+["priority"] = -1,
+["addedItems"] = {
+["i:242744"] = true,
+["i:222778"] = true,
+["i:242764"] = true,
+["i:266985"] = true,
+["i:266996"] = true,
+["i:242745"] = true,
+["i:242747"] = true,
+["i:242753"] = true,
+["i:222781"] = true,
+["i:222776"] = true,
+["i:222768"] = true,
+},
+},
+["21"] = {
+["showGroupPrefix"] = true,
 ["priority"] = 3,
+},
+["11"] = {
+["showGroupPrefix"] = true,
+["priority"] = 3,
+},
+["23"] = {
+["showGroupPrefix"] = true,
+["priority"] = -1,
+["addedItems"] = {
+["i:133301"] = true,
+["i:178780"] = true,
+},
+},
+["default_miscellaneous"] = {
+["addedItems"] = {
+["i:244465"] = true,
+["i:233186"] = true,
+["i:259361"] = true,
+["i:253580"] = true,
+["i:255826"] = true,
+["i:249689"] = true,
+["i:260531"] = true,
+},
+},
+["default_housing"] = {
+["showGroupPrefix"] = true,
+["priority"] = -1,
+["addedItems"] = {
+["i:246838"] = true,
+["i:252041"] = true,
+["i:252039"] = true,
+},
+},
+["28"] = {
+["showGroupPrefix"] = true,
+["priority"] = 1,
+},
+["default_auto_equipment_sets"] = {
+["showGroupPrefix"] = true,
+["priority"] = -1,
+},
+["5"] = {
+["priority"] = -1,
+["addedItems"] = {
+["i:132514"] = true,
+},
+},
+["18"] = {
+["priority"] = -1,
+["addedItems"] = {
+["i:86143"] = true,
+["i:98114"] = true,
+["i:127755"] = true,
+["i:92682"] = true,
+["i:116418"] = true,
+["i:92683"] = true,
+["i:163036"] = true,
+["i:98715"] = true,
+["i:116421"] = true,
+["i:116420"] = true,
+["i:89906"] = true,
+["i:122457"] = true,
+["i:116429"] = true,
+["i:71153"] = true,
+["i:116424"] = true,
+["i:116374"] = true,
+},
+},
+["25"] = {
+["showGroupPrefix"] = true,
+["priority"] = 0,
+},
+["15"] = {
+["priority"] = -1,
+},
+["14"] = {
+["showGroupPrefix"] = true,
+["priority"] = 3,
+},
+["24"] = {
+["showGroupPrefix"] = true,
+["priority"] = 0,
 },
 ["16"] = {
 ["priority"] = -1,
@@ -393,26 +423,35 @@ imports["Baganator"] = {
 ["i:178736"] = true,
 },
 },
-["13"] = {
-["priority"] = -1,
+["20"] = {
+["showGroupPrefix"] = true,
+["priority"] = 0,
 ["addedItems"] = {
-["i:222781"] = true,
-["i:222778"] = true,
-["i:242764"] = true,
-["i:222776"] = true,
-["i:266985"] = true,
-["i:222768"] = true,
+["i:268650"] = true,
+["i:231756"] = true,
+["i:231757"] = true,
+["i:211297"] = true,
+["i:211296"] = true,
 },
 },
 ["12"] = {
+["showGroupPrefix"] = true,
 ["priority"] = -1,
 ["addedItems"] = {
 ["i:222738"] = true,
 },
 },
-["11"] = {
+["22"] = {
 ["showGroupPrefix"] = true,
-["priority"] = 3,
+["priority"] = -1,
+["addedItems"] = {
+["i:245757"] = true,
+["i:246329"] = true,
+["i:256645"] = true,
+["i:222548"] = true,
+["i:222551"] = true,
+["i:245760"] = true,
+},
 },
 ["10"] = {
 ["addedItems"] = {
@@ -438,22 +477,6 @@ imports["Baganator"] = {
 },
 ["category_migration"] = 5,
 ["currencies_tracked"] = {
-["CronÃ¬x-Blackhand"] = {
-},
-["Givemeloot-Blackhand"] = {
-},
-["CrÃ²nÃ­x-Onyxia"] = {
-},
-["Givemeloot-Eredar"] = {
-},
-["CrÃ²nÃ­x-Blackhand"] = {
-},
-["CronÃ®x-Blackhand"] = {
-},
-["Evonix-Blackhand"] = {
-},
-["BlÃ¡ckstar-Kel'Thuzad"] = {
-},
 },
 ["guild_bank_sort_method"] = "unset",
 ["warband_bank_view_width"] = 16,
@@ -472,12 +495,7 @@ imports["Baganator"] = {
 ["disabled_skins"] = {
 },
 ["view_alpha"] = 1,
-["sort_ignore_slots_count_2"] = {
-["CronÃ®x-Blackhand"] = 0,
-},
-["sort_ignore_bank_slots_count"] = {
-["CronÃ®x-Blackhand"] = 0,
-},
+["setting_anchors"] = false,
 ["category_group_empty_slots"] = true,
 ["debug_keywords"] = false,
 ["skins"] = {
@@ -489,6 +507,9 @@ imports["Baganator"] = {
 ["view_transparency"] = 0,
 ["empty_slot_background"] = true,
 },
+["blizzard_black"] = {
+["empty_slot_background"] = false,
+},
 ["dark"] = {
 ["view_transparency"] = 0.2,
 ["square_icons"] = true,
@@ -497,14 +518,13 @@ imports["Baganator"] = {
 },
 },
 ["recent_characters_main_view"] = {
-"CronÃ®x-Blackhand",
-"CronÃ¬x-Blackhand",
-"CrÃ´nix-Blackhand",
-"CrÃ²nÃ­x-Blackhand",
+"Cronix-Blackhand",
+"Cronix-Blackhand",
+"Cronix-Blackhand",
+"Cronix-Blackhand",
 },
 ["auto_sort_on_open"] = false,
 ["bag_view_width"] = 16,
-["setting_anchors"] = false,
 ["show_buttons_on_alt"] = false,
 ["category_section_toggled"] = {
 ["1"] = false,
@@ -512,13 +532,14 @@ imports["Baganator"] = {
 ["Crafting"] = false,
 ["General"] = false,
 ["Equipment"] = false,
+["3"] = false,
 },
 ["guild_view_dialog_position"] = {
 "TOP",
 "UIParent",
 "TOP",
--5.999967098236084,
--170.9444885253906,
+63.99988174438477,
+-170.1110534667969,
 },
 ["saved_searches"] = {
 },
@@ -529,8 +550,8 @@ imports["Baganator"] = {
 },
 ["bag_view_position"] = {
 "BOTTOMRIGHT",
--8.66845703125,
-22.88926315307617,
+-9.501708984375,
+23.72253036499023,
 },
 ["show_sort_button_2"] = true,
 ["currencies_tracked_imported"] = {
@@ -553,11 +574,11 @@ imports["Baganator"] = {
 },
 ["11"] = {
 ["name"] = "Legacy",
-["search"] = "#gear&!tww",
+["search"] = "#gear&!midnight",
 },
 ["12"] = {
 ["name"] = "Mats",
-["search"] = "#tradeskill || #reagent",
+["search"] = "#tradeskill|#reagent",
 },
 ["20"] = {
 ["name"] = "Sparks",
@@ -570,6 +591,10 @@ imports["Baganator"] = {
 ["16"] = {
 ["name"] = "Toys",
 ["search"] = "#toy",
+},
+["28"] = {
+["name"] = "Warbound",
+["search"] = "#warbound until equipped|#warbound",
 },
 ["15"] = {
 ["name"] = "Gems",
@@ -645,7 +670,7 @@ imports["Baganator"] = {
 },
 ["21"] = {
 ["name"] = "Trade",
-["search"] = "tradable loot || tradeable loot",
+["search"] = "tradable loot|tradeable loot",
 },
 ["22"] = {
 ["name"] = "Prof",
@@ -657,1128 +682,11 @@ imports["Baganator"] = {
 },
 },
 ["sort_start_at_bottom"] = false,
-}
-
-}
-
--- 3. NORTHERN SKY RAID TOOLS
--- Data from NSRT (Updated 12.06.2026)
-imports["NorthernSkyRaidTools"] = {
-    data = {
-["CooldownList"] = {
-[252] = {
-["spell"] = {
-[42650] = {
-["offset"] = 0,
-["name"] = "Army of the Dead",
-},
-},
-},
-},
-["ReadyCheckSettings"] = {
-["TierCheck"] = true,
-["RepairCheck"] = true,
-["SoulstoneCheck"] = true,
-["EnchantCheck"] = true,
-["RaidBuffCheck"] = true,
-["SkipGatewayKeybindCheck"] = false,
-["CraftedCheck"] = true,
-["SymbioticRelationshipCheck"] = false,
-["BlisteringScalesCheck"] = false,
-["GatewayShardCheck"] = true,
-["MissingItemCheck"] = true,
-["SourceOfMagicCheck"] = true,
-["GemCheck"] = true,
-["ItemLevelCheck"] = true,
-},
-["HasNewAlertStructure"] = true,
-["ReminderSettings"] = {
-["ShowExtraReminderFrame"] = false,
-["ShowOutsideOfRaid"] = false,
-["CircleSettings"] = {
-["FontSize"] = 18,
-["xOffset"] = 2,
-["yOffset"] = -84,
-["ringColors"] = {
-1,
-1,
-1,
-1,
-},
-["Spacing"] = 5,
-["Anchor"] = "CENTER",
-["TextPosition"] = "Top",
-["Size"] = 80,
-["relativeTo"] = "CENTER",
-["Decimals"] = 3,
-["GrowDirection"] = "Up",
-["yTextOffset"] = 4,
-["Font"] = "Gravity",
-["textColors"] = {
-1,
-1,
-1,
-1,
-},
-["HideTimerText"] = false,
-["Sticky"] = 5,
-["showBackground"] = false,
-["xTextOffset"] = 0,
-["Texture"] = "Interface\\AddOns\\NorthernSkyRaidTools\\Media\\Textures\\circle_8px.png",
-},
-["MRTNote"] = false,
-["ExtraReminderFrameMoveable"] = false,
-["TextSettings"] = {
-["relativeTo"] = "CENTER",
-["FontSize"] = 40,
-["Decimals"] = 3,
-["Width"] = 302.933349609375,
-["xOffset"] = 0,
-["textColors"] = {
-1,
-1,
-1,
-1,
-},
-["Anchor"] = "CENTER",
-["yOffset"] = 213,
-["GrowDirection"] = "Up",
-["HideTimerText"] = false,
-["colors"] = {
-1,
-1,
-1,
-1,
-},
-["Spacing"] = 1,
-["Height"] = 40,
-["Sticky"] = 5,
-["Font"] = "Gravity",
-["CenterAligned"] = true,
-},
-["BarSettings"] = {
-["yTimer"] = 0,
-["FontSize"] = 20,
-["borderColors"] = {
-0,
-0,
-0,
-1,
-},
-["xTimer"] = -2,
-["xOffset"] = -288,
-["yOffset"] = 29,
-["barColors"] = {
-1,
-0,
-0,
-1,
-},
-["GrowDirection"] = "Up",
-["Anchor"] = "CENTER",
-["TimerFontSize"] = 20,
-["Texture"] = "Gravity Normal",
-["relativeTo"] = "CENTER",
-["Decimals"] = 3,
-["Font"] = "Gravity",
-["backgroundColors"] = {
-0,
-0,
-0,
-0.8,
-},
-["yIcon"] = 0,
-["colors"] = {
-0,
-0.572549045085907,
-0.988235354423523,
-1,
-},
-["Width"] = 220,
-["yTextOffset"] = 0,
-["xTextOffset"] = 2,
-["textColors"] = {
-1,
-1,
-1,
-1,
-},
-["HideTimerText"] = false,
-["Height"] = 22,
-["Sticky"] = 5,
-["xIcon"] = 0,
-["Spacing"] = -1,
-},
-["SpellDuration"] = 10,
-["enabled"] = true,
-["ClearOnKill"] = true,
-["AnnounceTextDuration"] = true,
-["SpellTTS"] = true,
-["Sticky"] = 5,
-["PersonalReminderFrame"] = {
-["enabled"] = false,
-["FontSize"] = 14,
-["xOffset"] = 3,
-["Moveable"] = false,
-["Width"] = 428.0000305175781,
-["Font"] = "Gravity",
-["BGcolor"] = {
-0,
-0,
-0,
-0,
-},
-["Height"] = 192.0000152587891,
-["relativeTo"] = "LEFT",
-["yOffset"] = 101,
-["Anchor"] = "LEFT",
-},
-["AnnounceSpellDuration"] = true,
-["NoteCountdown"] = false,
-["TextTTS"] = true,
-["TextCountdown"] = 0,
-["TextInSharedNote"] = true,
-["HideTextTimerText"] = false,
-["SpellName"] = true,
-["SpellTTSTimer"] = 5,
-["OnlySpellReminders"] = false,
-["PersNote"] = true,
-["AutoShare"] = true,
-["ReminderFrameMoveable"] = false,
-["TextTTSTimer"] = 5,
-["SpellCountdown"] = 0,
-["PersonalReminderFrameMoveable"] = false,
-["TTSOverSoundfile"] = false,
-["SpellDisplayType"] = "Icon",
-["OnlyReceiveGuild"] = true,
-["ExtraReminderFrame"] = {
-["enabled"] = false,
-["relativeTo"] = "TOPLEFT",
-["xOffset"] = 8,
-["Moveable"] = false,
-["Width"] = 416,
-["Font"] = "Gravity",
-["BGcolor"] = {
-0,
-0,
-0,
-0,
-},
-["Height"] = 435,
-["Anchor"] = "TOPLEFT",
-["yOffset"] = -57,
-["FontSize"] = 14,
-},
-["TextInPersonalNote"] = false,
-["ReminderFrame"] = {
-["enabled"] = true,
-["relativeTo"] = "TOPLEFT",
-["xOffset"] = 2,
-["Moveable"] = false,
-["Width"] = 413,
-["Font"] = "Gravity",
-["BGcolor"] = {
-0,
-0,
-0,
-0,
-},
-["Height"] = 308,
-["FontSize"] = 14,
-["yOffset"] = -59,
-["Anchor"] = "TOPLEFT",
-},
-["TextDuration"] = 10,
-["HidePlayerNames"] = false,
-["HideTimerText"] = false,
-["ShowPersonalReminderFrame"] = false,
-["IconSettings"] = {
-["yTimer"] = 0,
-["FontSize"] = 24,
-["borderColors"] = {
-0,
-0,
-0,
-1,
-},
-["xTimer"] = 0,
-["xOffset"] = 217,
-["yOffset"] = 150,
-["GrowDirection"] = "Down",
-["Anchor"] = "CENTER",
-["TimerFontSize"] = 30,
-["relativeTo"] = "CENTER",
-["Decimals"] = 3,
-["HideTimerText"] = false,
-["HideSwipe"] = false,
-["xTextOffset"] = 0,
-["textColors"] = {
-1,
-1,
-1,
-1,
-},
-["Width"] = 50,
-["yTextOffset"] = 0,
-["Font"] = "Gravity",
-["colors"] = {
-1,
-1,
-1,
-1,
-},
-["Zoom"] = 0,
-["Height"] = 50,
-["Sticky"] = 5,
-["Glow"] = 0,
-["Spacing"] = -1,
-},
-["GlowSettings"] = {
-["Thickness"] = 4,
-["Lines"] = 10,
-["colors"] = {
-0,
-1,
-0,
-1,
-},
-["xOffset"] = 0,
-["Length"] = 10,
-["yOffset"] = 0,
-["Frequency"] = 0.2,
-},
-["UnitIconSettings"] = {
-["Position"] = "CENTER",
-["Height"] = 25,
-["Width"] = 25,
-["xOffset"] = 0,
-["yOffset"] = 0,
-},
-["ShowReminderFrame"] = true,
-["Bars"] = false,
-},
-["UseDefaultPASounds"] = true,
-["Alerts"] = {
-["Groups"] = {
-["3183|Lura P3"] = {
-["collapsed"] = false,
-},
-["3183|Lura Tanks"] = {
-["collapsed"] = false,
-},
-["3183|Lura P3 Right"] = {
-["collapsed"] = false,
-},
-["3183|Lura P2 Soaks"] = {
-["collapsed"] = false,
-},
-["3182|Beloren P2"] = {
-["collapsed"] = true,
-},
-["3183|Lura P4"] = {
-["collapsed"] = false,
-},
-["3183|Lura P1 Transition"] = {
-["collapsed"] = false,
-},
-["3183|Lura P1"] = {
-["collapsed"] = false,
-},
-["3183|Lura P2"] = {
-["collapsed"] = false,
-},
-["3183|Lura P3 Left"] = {
-["collapsed"] = false,
-},
-},
-["ReloeReminders"] = true,
-},
-["SharedNotes"] = {
-},
-["Settings"] = {
-["SuF"] = false,
-["CooldownThreshold"] = 15,
-["Blizzard"] = false,
-["Minimap"] = {
-["minimapPos"] = 223.4974003637528,
-["showInCompartment"] = true,
-["hide"] = false,
-},
-["PASelfPing"] = false,
-["TTSVoice"] = 1,
-["NickNamesSyncAccept"] = 2,
-["UpdateWhitelist"] = {
-},
-["UnreadyOnCooldown"] = true,
-["TTS"] = true,
-["Unhalted"] = false,
-["GlobalFont"] = "Gravity",
-["WA"] = false,
-["GenericDisplay"] = {
-["Anchor"] = "CENTER",
-["relativeTo"] = "CENTER",
-["xOffset"] = -200,
-["yOffset"] = 400,
-},
-["GlobalNickNames"] = false,
-["GlobalFontSize"] = 20,
-["RebuffCheck"] = false,
-["LuraDisplayOffsetY"] = -200,
-["TTSOverlap"] = true,
-["VersionCheckPresets"] = {
-{
-"WA: Northern Sky Manaforge Omega",
-{
-"WA",
-"Northern Sky Manaforge Omega",
-},
-},
-},
-["AcceptNickNames"] = 4,
-["AutoUpdateWA"] = false,
-["OmniCD"] = false,
-["GlobalFontFlags"] = "OUTLINE",
-["AutoUpdateRaidWA"] = false,
-["MissingRaidBuffs"] = false,
-["WeakAurasImportAccept"] = 1,
-["Language"] = "enUS",
-["MRTNoteComparison"] = false,
-["ShareNickNames"] = 4,
-["LuraOffsetX"] = 200,
-["Cell"] = false,
-["MyNickName"] = "",
-["MRT"] = false,
-["CheckCooldowns"] = true,
-["Debug"] = false,
-["DebugLogs"] = false,
-["TTSVolume"] = 50,
-["Grid2"] = false,
-["NickNamesSyncSend"] = 3,
-["LIQUID_MACRO"] = false,
-["LuraDisplayColor"] = {
-0.05882353335618973,
-0.05882353335618973,
-0.05882353335618973,
-0.904166042804718,
-},
-["ElvUI"] = false,
-["SFXMuted"] = false,
-["ExternalSelfPing"] = false,
-["GlobalEncounterFontSize"] = 20,
-["Translit"] = false,
-["PAExtraAction"] = false,
-["VersionCheckRemoveResponse"] = false,
-["LuraDisplayOffsetX"] = 200,
-},
-["PhaseTimings"] = {
-},
-["PATextSettings"] = {
-["enabled"] = true,
-["relativeTo"] = "TOP",
-["Scale"] = 1.5,
-["Anchor"] = "TOP",
-["xOffset"] = 0,
-["yOffset"] = -200,
-},
-["PASettings"] = {
-["PerRow"] = 10,
-["xOffset"] = -200,
-["RowGrowDirection"] = "UP",
-["yOffset"] = -70,
-["Limit"] = 5,
-["Spacing"] = -1,
-["Anchor"] = "CENTER",
-["StackScale"] = 1,
-["enabled"] = false,
-["UpscaleDuration"] = false,
-["Width"] = 40,
-["HideBorder"] = false,
-["HideDurationText"] = false,
-["GrowDirection"] = "LEFT",
-["AlternateDisplay"] = false,
-["Height"] = 40,
-["relativeTo"] = "CENTER",
-["HideTooltip"] = false,
-["DebuffTypeBorder"] = false,
-},
-["AssignmentSettings"] = {
-[3178] = {
-["Soaks"] = false,
-},
-["OnPull"] = true,
-[3180] = {
-["Soaks"] = false,
-},
-[3306] = {
-["Soaks"] = false,
-["SplitSoaks"] = false,
-},
-},
-["StoredSharedReminder"] = "",
-["AutoLoadNote"] = {
-},
-["ActivePersonalReminder"] = {
-["CronÃ®x-Blackhand"] = {
-},
-},
-["PASounds"] = {
-[1254113] = {
-["sound"] = "|cFF4BAAC8Fixate|r",
-["edited"] = false,
-},
-[1270497] = {
-["sound"] = "|cFF4BAAC8Spread|r",
-["edited"] = false,
-},
-[1280023] = {
-["sound"] = "|cFF4BAAC8Targeted|r",
-["edited"] = false,
-},
-[1241292] = {
-["sound"] = "|cFF4BAAC8Light|r",
-["edited"] = false,
-},
-[1265426] = {
-["sound"] = "|cFF4BAAC8Targeted|r",
-["edited"] = false,
-},
-[1215897] = {
-["sound"] = "|cFF4BAAC8Targeted|r",
-["edited"] = false,
-},
-[1252733] = {
-["sound"] = "|cFF4BAAC8Targeted|r",
-["edited"] = false,
-},
-[1237623] = {
-["sound"] = "|cFF4BAAC8Targeted|r",
-["edited"] = false,
-},
-[1262772] = {
-["sound"] = "|cFF4BAAC8Targeted|r",
-["edited"] = false,
-},
-[472793] = {
-["sound"] = "|cFF4BAAC8Targeted|r",
-["edited"] = false,
-},
-[1259861] = {
-["sound"] = "|cFF4BAAC8Targeted|r",
-["edited"] = false,
-},
-[474129] = {
-["sound"] = "|cFF4BAAC8Spread|r",
-["edited"] = false,
-},
-["UseDefaultMPlusPASounds"] = false,
-[1283236] = {
-["sound"] = "|cFF4BAAC8DropPool|r",
-["edited"] = false,
-},
-[1242091] = {
-["sound"] = "|cFF4BAAC8Targeted|r",
-["edited"] = false,
-},
-[1248697] = {
-["sound"] = "|cFF4BAAC8Debuff|r",
-["edited"] = false,
-},
-[474545] = {
-["sound"] = "|cFF4BAAC8Targeted|r",
-["edited"] = false,
-},
-[1283247] = {
-["sound"] = "|cFF4BAAC8Targeted|r",
-["edited"] = false,
-},
-[1257087] = {
-["sound"] = "|cFF4BAAC8Clear|r",
-["edited"] = false,
-},
-[1253024] = {
-["sound"] = "|cFF4BAAC8Targeted|r",
-["edited"] = false,
-},
-[153954] = {
-["sound"] = "|cFF4BAAC8Targeted|r",
-["edited"] = false,
-},
-[1261286] = {
-["sound"] = "|cFF4BAAC8Targeted|r",
-["edited"] = false,
-},
-[1253541] = {
-["sound"] = "|cFF4BAAC8Debuff|r",
-["edited"] = false,
-},
-[1249478] = {
-["sound"] = "|cFF4BAAC8Charge|r",
-["edited"] = false,
-},
-[1249609] = {
-["sound"] = "|cFF4BAAC8Rune|r",
-["edited"] = false,
-},
-[1241992] = {
-["sound"] = "|cFF4BAAC8Targeted|r",
-["edited"] = false,
-},
-[1260027] = {
-["sound"] = "|cFF4BAAC8Targeted|r",
-["edited"] = false,
-},
-[1232470] = {
-["sound"] = "|cFF4BAAC8Obelisk|r",
-["edited"] = false,
-},
-[1251775] = {
-["sound"] = "|cFF4BAAC8Fixate|r",
-["edited"] = false,
-},
-[1248985] = {
-["sound"] = "|cFF4BAAC8Targeted|r",
-["edited"] = false,
-},
-[470966] = {
-["sound"] = "|cFF4BAAC8Fixate|r",
-["edited"] = false,
-},
-[1251785] = {
-["sound"] = "|cFF4BAAC8Targeted|r",
-["edited"] = false,
-},
-[1252675] = {
-["sound"] = "|cFF4BAAC8Targeted|r",
-["edited"] = false,
-},
-[1248994] = {
-["sound"] = "|cFF4BAAC8Targeted|r",
-["edited"] = false,
-},
-[1233887] = {
-["sound"] = "|cFF4BAAC8Debuff|r",
-["edited"] = false,
-},
-[1282911] = {
-["sound"] = "|cFF4BAAC8Targeted|r",
-["edited"] = false,
-},
-["UseDefaultPASounds"] = false,
-[1241339] = {
-["sound"] = "|cFF4BAAC8Void|r",
-["edited"] = false,
-},
-[1223958] = {
-["sound"] = "|cFF4BAAC8Targeted|r",
-["edited"] = false,
-},
-[1284527] = {
-["sound"] = "|cFF4BAAC8Targeted|r",
-["edited"] = false,
-},
-[1264756] = {
-["sound"] = "|cFF4BAAC8Targeted|r",
-["edited"] = false,
-},
-[1281184] = {
-["sound"] = "|cFF4BAAC8Spread|r",
-["edited"] = false,
-},
-[1253709] = {
-["sound"] = "|cFF4BAAC8Linked|r",
-["edited"] = false,
-},
-[1249265] = {
-["sound"] = "|cFF4BAAC8Soak|r",
-["edited"] = false,
-},
-[1225792] = {
-["sound"] = "|cFF4BAAC8Debuff|r",
-["edited"] = false,
-},
-[1261276] = {
-["sound"] = "|cFF4BAAC8Targeted|r",
-["edited"] = false,
-},
-[1225011] = {
-["sound"] = "|cFF4BAAC8Debuff|r",
-["edited"] = false,
-},
-[466559] = {
-["sound"] = "|cFF4BAAC8Targeted|r",
-["edited"] = false,
-},
-[1283069] = {
-["sound"] = "|cFF4BAAC8Fixate|r",
-["edited"] = false,
-},
-[1239111] = {
-["sound"] = "|cFF4BAAC8Break|r",
-["edited"] = false,
-},
-[1253511] = {
-["sound"] = "|cFF4BAAC8Fixate|r",
-["edited"] = false,
-},
-[1240222] = {
-["sound"] = "|cFF4BAAC8Targeted|r",
-["edited"] = false,
-},
-[1249020] = {
-["sound"] = "|cFF4BAAC8Spread|r",
-["edited"] = false,
-},
-[1268992] = {
-["sound"] = "|cFF4BAAC8Targeted|r",
-["edited"] = false,
-},
-[1222098] = {
-["sound"] = "|cFF4BAAC8Targeted|r",
-["edited"] = false,
-},
-[1282678] = {
-["sound"] = "|cFF4BAAC8Fixate|r",
-["edited"] = false,
-},
-[1260643] = {
-["sound"] = "|cFF4BAAC8Targeted|r",
-["edited"] = false,
-},
-[1260203] = {
-["sound"] = "|cFF4BAAC8Soak|r",
-["edited"] = false,
-},
-[1253979] = {
-["sound"] = "|cFF4BAAC8Clear|r",
-["edited"] = false,
-},
-[1246487] = {
-["sound"] = "|cFF4BAAC8Spread|r",
-["edited"] = false,
-},
-[1253531] = {
-["sound"] = "|cFF4BAAC8Beam|r",
-["edited"] = false,
-},
-[1255612] = {
-["sound"] = "|cFF4BAAC8Targeted|r",
-["edited"] = false,
-},
-[1233602] = {
-["sound"] = "|cFF4BAAC8Targeted|r",
-["edited"] = false,
-},
-[1280064] = {
-["sound"] = "|cFF4BAAC8Phase Dash|r",
-["edited"] = false,
-},
-[1264453] = {
-["sound"] = "|cFF4BAAC8Fixate|r",
-["edited"] = false,
-},
-},
-["QoL"] = {
-["AutoInvite"] = false,
-["ResetBossDisplay"] = false,
-["TradeableItems"] = {
-["relativeTo"] = "TOP",
-["xOffset"] = 0,
-["yOffset"] = -400,
-["Spacing"] = 5,
-["GrowDirection"] = "DOWN",
-["Anchor"] = "TOP",
-["FontSize"] = 18,
-["Width"] = 30,
-["Height"] = 30,
-},
-["LootBossReminder"] = false,
-["AutoRepair"] = false,
-["ConsumableNotificationDurationSeconds"] = 5,
-["TextDisplay"] = {
-["FontSize"] = 30,
-["xOffset"] = -3,
-["relativeTo"] = "CENTER",
-["Anchor"] = "CENTER",
-["yOffset"] = 142,
-},
-["IconDisplay"] = {
-["yOffset"] = -350,
-["relativeTo"] = "TOP",
-["Scpaing"] = 5,
-["GrowDirection"] = "DOWN",
-["Height"] = 40,
-["xOffset"] = 0,
-["Anchor"] = "TOP",
-["Width"] = 40,
-},
-["GatewayUseableDisplay"] = false,
-},
-["PARaidSettings"] = {
-["PerRow"] = 3,
-["relativeTo"] = "BOTTOMLEFT",
-["Width"] = 25,
-["StackScale"] = 1.100000023841858,
-["xOffset"] = 0,
-["enabled"] = false,
-["RowGrowDirection"] = "UP",
-["yOffset"] = 0,
-["HideBorder"] = false,
-["HideDurationText"] = false,
-["Limit"] = 5,
-["Spacing"] = -1,
-["Anchor"] = "BOTTOMLEFT",
-["Height"] = 25,
-["DebuffTypeBorder"] = false,
-["GrowDirection"] = "RIGHT",
-},
-["InterruptSettings"] = {
-["xOffset"] = -355,
-["InterruptDefaultTextColor"] = {
-1,
-1,
-1,
-1,
-},
-["yOffset"] = -239,
-["InterruptNowColor"] = {
-0,
-1,
-0,
-1,
-},
-["NumberFontSize"] = 60,
-["InterruptDefaultColor"] = {
-1,
-0,
-0,
-1,
-},
-["NumberRelativeTo"] = "CENTER",
-["NameyOffset"] = 10,
-["Anchor"] = "TOP",
-["NameRelativeTo"] = "TOP",
-["NameFontFlags"] = "OUTLINE",
-["InterruptNextColor"] = {
-1,
-1,
-0,
-1,
-},
-["NumberFontFlags"] = "OUTLINE",
-["NameFont"] = "Gravity",
-["InterruptSound"] = "|cFF4BAAC8Interrupt|r",
-["NumberFont"] = "Gravity",
-["NameFontSize"] = 30,
-["NamexOffset"] = 0,
-["InterruptNowTextColor"] = {
-1,
-0,
-0,
-1,
-},
-["Width"] = 100,
-["NumberxOffset"] = 0,
-["InterruptNextTextColor"] = {
-1,
-0,
-0,
-1,
-},
-["NumberyOffset"] = 0,
-["NameAnchor"] = "BOTTOM",
-["Height"] = 100,
-["relativeTo"] = "TOP",
-["ShowBar"] = true,
-["NumberAnchor"] = "CENTER",
-},
-["PersonalNotes"] = {
-},
-["Reminders"] = {
-["Vorasius - Mythic"] = "EncounterID:3177;Difficulty:Mythic;Name:Vorasius\n\ninvitelist:Antagon-Blackhand Aweyxd-Blackhand KÃ¢zuto-Blackhand Pymowl-Thrall Korimeow-TarrenMill Bennji-Blackhand Vinds-Blackrock CronÃ®x-Blackhand Tranqy-Blackhand Kodama-Thrall Nocie-Blackhand FuÃŸgÃ¤nger-Blackrock Leergut-Blackhand Torashi-Mal'Ganis Miatra-Blackhand Valamonk-Blackhand Dpxhunt-Blackhand Morpheusmage-Blackhand Axtn-Blackhand Helimeisterb-Blackhand;\n\n",
-["Crown - Mythic"] = "EncounterID:3181;Difficulty:Mythic;Name:Crown\n\ntime:2;ph:1;tag:Bennji;spellid:370553;\ntime:2;ph:1;tag:Oxyvoker;spellid:374968;\ntime:3;ph:1;bossSpell:1233865;tag:WhoÃ³ps;spellid:322118;\ntime:6;ph:1;tag:Edolie;spellid:472433;\ntime:6;ph:1;tag:Sanfa;spellid:114052;\ntime:24;ph:1;tag:Sanfa;spellid:98008;\ntime:27;ph:1;bossSpell:1233819;tag:WhoÃ³ps;spellid:443028;\ntime:27;ph:1;bossSpell:1233819;tag:CronÃ®x;spellid:51052;\ntime:28;ph:1;bossSpell:1232467;tag:Bennji;spellid:359816;\ntime:29;ph:1;tag:WhoÃ³ps;spellid:115310;\ntime:30;ph:1;bossSpell:1243743;tag:Bennji;spellid:363534;\ntime:59;ph:1;tag:Vinds;spellid:97462;\ntime:60;ph:1;bossSpell:1233787;tag:Oxyvoker;spellid:374227;\ntime:61;ph:1;bossSpell:1233819;tag:Cadogan;spellid:51052;\ntime:65;ph:1;tag:Edolie;spellid:421453;\ntime:80;ph:1;bossSpell:1233865;tag:FuÃŸgÃ¤nger;spellid:106898;\ntime:92;ph:1;tag:Bennji;spellid:370553;\ntime:99;ph:1;tag:Edolie;spellid:472433;\ntime:2;ph:2;tag:Axtn;spellid:192077;\ntime:3;ph:2;tag:Oxyvoker;spellid:374968;\ntime:6;ph:2;bossSpell:1234546;tag:FuÃŸgÃ¤nger;spellid:106898;\ntime:12;ph:3;tag:WhoÃ³ps;spellid:322118;\ntime:13;ph:3;bossSpell:1237035;tag:Bennji;spellid:370553;\ntime:19;ph:3;bossSpell:1246461;tag:Edolie;spellid:472433;\ntime:32;ph:3;bossSpell:1233819;tag:Oxyvoker;spellid:374227;\ntime:38;ph:3;bossSpell:1237035;tag:Sanfa;spellid:114052;\ntime:38;ph:3;bossSpell:1237035;tag:Sanfa;spellid:98008;\ntime:49;ph:3;bossSpell:1233819;tag:FuÃŸgÃ¤nger;spellid:106898;\ntime:57;ph:3;bossSpell:1233819;tag:CronÃ®x;spellid:51052;\ntime:58;ph:3;tag:Bennji;spellid:359816;\ntime:63;ph:3;bossSpell:1233819;tag:WhoÃ³ps;spellid:115310;\ntime:63;ph:3;bossSpell:1233819;tag:Bennji;spellid:363534;\ntime:81;ph:3;tag:Vinds;spellid:97462;\ntime:101;ph:3;bossSpell:1233819;tag:Oxyvoker;spellid:374968;\ntime:106;ph:3;tag:Bennji;spellid:370553;\ntime:109;ph:3;bossSpell:1233819;tag:Edolie;spellid:472433;\ntime:128;ph:3;bossSpell:1233819;tag:FuÃŸgÃ¤nger;spellid:106898;\ntime:143;ph:3;bossSpell:1232467;tag:Axtn;spellid:192077;\ntime:3;ph:5;tag:WhoÃ³ps;spellid:322118;\ntime:6;ph:5;tag:FuÃŸgÃ¤nger;spellid:106898;\ntime:8;ph:5;tag:Cadogan;spellid:51052;\ntime:9;ph:5;bossSpell:1239080;tag:Edolie;spellid:472433;\ntime:9;ph:5;bossSpell:1239080;tag:KÃ¢zuto;spellid:196718;\ntime:9;ph:5;bossSpell:1239080;tag:Oxyvoker;spellid:374227;\ntime:32;ph:5;tag:Sanfa;spellid:114052;\ntime:35;ph:5;tag:Bennji;spellid:370553;\ntime:36;ph:5;tag:Bennji;spellid:359816;\ntime:36;ph:5;tag:Sanfa;spellid:98008;\ntime:59;ph:5;bossSpell:1237035;tag:Oxyvoker;spellid:374968;\ntime:69;ph:5;bossSpell:1239080;tag:CronÃ®x;spellid:51052;\ntime:70;ph:5;tag:Vinds;spellid:97462;\ntime:71;ph:5;bossSpell:1232467;tag:FuÃŸgÃ¤nger;spellid:106898;\ntime:75;ph:5;tag:WhoÃ³ps;spellid:115310;\ntime:76;ph:5;bossSpell:1237035;tag:Edolie;spellid:421453;\ntime:77;ph:5;tag:Bennji;spellid:363534;\ntime:99;ph:5;tag:Edolie;spellid:472433;\ntime:100;ph:5;bossSpell:1233819;tag:Axtn;spellid:192077;\ntime:129;ph:5;bossSpell:1239080;tag:WhoÃ³ps;spellid:322118;\ntime:129;ph:5;bossSpell:1239080;tag:Oxyvoker;spellid:374227;\ntime:132;ph:5;tag:FuÃŸgÃ¤nger;spellid:106898;\ntime:5;ph:3;tag:Axtn Pawx Pymowl Helimeisterb;text:Kill Add;colors:1 0.16 0.16 1;\ntime:15;ph:5;tag:Aweyxd Oxyvoker;text:Help your friend;colors:0.16 1 0.16 1;\ntime:15;ph:5;tag:Helimeisterb Bennji;text:Help your friend;colors:0.16 1 0.16 1;\ntime:15;ph:5;tag:Edolie;text:Help your friend;colors:0.16 1 0.16 1;\ntime:15;ph:5;tag:Leergut;text:Help your friend;colors:0.16 1 0.16 1;\ntime:72;ph:5;tag:Sanfa WhoÃ³ps Edolie Bennji KÃ¢zuto;text:Gate;TTS:Gate;colors:0.63 0.16 1 1;\ntime:72;ph:5;tag:Cadogan CronÃ®x Antagon Aweyxd Pawx;text:Gate;TTS:Gate;colors:0.63 0.16 1 1;\ntime:72;ph:5;tag:Pymowl Helimeisterb FuÃŸgÃ¤nger LukÃ®Ã® Dpxhunt;text:Gate;TTS:Gate;colors:0.63 0.16 1 1;\ntime:72;ph:5;tag:Oxyvoker Vinds Leergut Valamonk Axtn;text:Gate;TTS:Gate;colors:0.63 0.16 1 1;\ntime:127;ph:5;tag:Helimeisterb Oxyvoker;text:Help your friend;colors:0.16 1 0.16 1;\ntime:127;ph:5;tag:Axtn Sanfa Leergut;text:Federn;TTS:Federn;colors:1 0.5 0 1;\ntime:127;ph:5;tag:WhoÃ³ps Edolie KÃ¢zuto Cadogan CronÃ®x;text:Federn;TTS:Federn;colors:1 0.5 0 1;\ntime:127;ph:5;tag:Antagon Bennji Pawx Pymowl Valamonk;text:Federn;TTS:Federn;colors:1 0.5 0 1;\ntime:127;ph:5;tag:LukÃ®Ã® Dpxhunt Vinds Aweyxd FuÃŸgÃ¤nger;text:Federn;TTS:Federn;colors:1 0.5 0 1;\ntime:25;ph:3;tag:Helimeisterb Oxyvoker;text:help your friend;\ntime:95;ph:3;tag:WhoÃ³ps Bennji Edolie KÃ¢zuto Cadogan Valamonk CronÃ®x Antagon Aweyxd Pawx Pymowl Helimeisterb LukÃ®Ã® Dpxhunt Oxyvoker Vinds Leergut FuÃŸgÃ¤nger Axtn Sanfa;text:Gate;TTS:Gate;colors:0.63 0.16 1 1;\ntime:1;ph:3;tag:WhoÃ³ps Antagon Valamonk Pymowl Pawx;text:place your port;colors:1 1 0.2 1;\n\nPhase 2 Rift Simulacrum Kill Squad\nKill Add: Axtn Pawx Pymowl Helimeisterb\n\nFirst P3 Jump Helpers\nHelp your friend: Aweyxd Oxyvoker\nHelp your friend: Helimeisterb Bennji\nHelp your friend: Edolie\nHelp your friend: Leergut\n\nSecond P3 Jump Helpers\nHelp your friend: Sanfa WhoÃ³ps Edolie Bennji KÃ¢zuto\nHelp your friend: Cadogan CronÃ®x Antagon Aweyxd Pawx\nHelp your friend: Pymowl Helimeisterb FuÃŸgÃ¤nger LukÃ®Ã® Dpxhunt\nHelp your friend: Oxyvoker Vinds Leergut Valamonk Axtn\n\nThird P3 Jump Helpers\nHelp your friend: Helimeisterb Oxyvoker\nHelp your friend: Axtn Sanfa Leergut\nHelp your friend: WhoÃ³ps Edolie KÃ¢zuto Cadogan CronÃ®x\nHelp your friend: Antagon Bennji Pawx Pymowl Valamonk\nHelp your friend: LukÃ®Ã® Dpxhunt Vinds Aweyxd FuÃŸgÃ¤nger\n\nHelp your friend P2\nHelp your friend: Helimeisterb Oxyvoker\n\nGate P2\nGate: WhoÃ³ps Bennji Edolie KÃ¢zuto Cadogan Valamonk CronÃ®x Antagon Aweyxd Pawx Pymowl Helimeisterb LukÃ®Ã® Dpxhunt Oxyvoker Vinds Leergut FuÃŸgÃ¤nger Axtn Sanfa\n\nPlace your port\nPlace your port: WhoÃ³ps Antagon Valamonk Pymowl Pawx\n\ninvitelist:Antagon-Blackhand Aweyxd-Blackhand KÃ¢zuto-Blackhand Pymowl-Thrall Pawx-Blackhand Cadogan-Blackhand CronÃ®x-Blackhand Dpxhunt-Blackhand LukÃ®Ã®-Blackhand Oxyvoker-Blackhand Vinds-Blackrock Leergut-Blackhand Bennji-Blackhand Sanfa-Blackhand Edolie-Blackhand WhoÃ³ps-Blackhand Valamonk-Blackhand Helimeisterb-Blackhand FuÃŸgÃ¤nger-Blackrock Axtn-Blackhand;\n\n",
-["Belo'ren - Mythic"] = "EncounterID:3182;Name:Belo'ren - Mythic;Difficulty:Mythic\n\ntime:1;ph:1;bossSpell:1242515;tag:Kodama;spellid:391528;\ntime:2;ph:1;tag:Edolie;spellid:472433;\ntime:7;ph:1;bossSpell:1242981;tag:Oxyvoker;spellid:374968;\ntime:9;ph:1;tag:Tranqy;spellid:106898;\ntime:51;ph:1;bossSpell:1242515;tag:Edolie;spellid:421453;\ntime:52;ph:1;tag:Kodama;spellid:740;\ntime:56;ph:1;tag:Kodama;spellid:391528;\ntime:5;ph:2;tag:Axtn;spellid:192077;\ntime:8;ph:2;bossSpell:1242792;tag:Kodama;spellid:391528;\ntime:8;ph:2;bossSpell:1242792;tag:Sanfa;spellid:114052;\ntime:12;ph:2;tag:Edolie;spellid:472433;\ntime:18;ph:2;tag:Oxyvoker;spellid:374968;\ntime:22;ph:2;bossSpell:1244348;tag:CronÃ®x;spellid:51052;\ntime:28;ph:2;tag:Tranqy;spellid:106898;\ntime:50;ph:2;tag:Cadogan;spellid:51052;\ntime:52;ph:2;bossSpell:1242515;tag:KÃ¢zuto;spellid:196718;\ntime:52;ph:2;bossSpell:1242515;tag:Vinds;spellid:97462;\ntime:53;ph:2;tag:Sanfa;spellid:98008;\ntime:72;ph:2;bossSpell:1261217;tag:Kodama;spellid:391528;\ntime:102;ph:2;bossSpell:1242515;tag:Edolie;spellid:472433;\ntime:109;ph:2;tag:Tranqy;spellid:106898;\ntime:137;ph:2;bossSpell:1244348;tag:Kodama;spellid:391528;\ntime:152;ph:2;bossSpell:1242515;tag:Kodama;spellid:740;\ntime:172;ph:2;bossSpell:1261217;tag:Axtn;spellid:192077;\ntime:1;ph:3;tag:Oxyvoker;spellid:374968;\ntime:4;ph:3;tag:Tranqy;spellid:106898;\ntime:12;ph:3;tag:Sanfa;spellid:114052;\ntime:15;ph:3;tag:Edolie;spellid:62618;\ntime:19;ph:3;tag:Edolie;spellid:472433;\ntime:24;ph:3;tag:Kodama;spellid:391528;\ntime:26;ph:3;bossSpell:1242515;tag:CronÃ®x;spellid:51052;\ntime:32;ph:3;bossSpell:1242981;tag:Edolie;spellid:421453;\ntime:19;ph:1;tag:Helimeisterb Pawx KÃ¢zuto Axtn Tranqy Kodama;text:Soak;dur:8;colors:0.7 0.4 0.15 1;\ntime:69;ph:1;tag:Helimeisterb Pawx KÃ¢zuto Axtn Tranqy Kodama;text:Soak;dur:8;colors:0.7 0.4 0.15 1;\ntime:62;ph:2;tag:Helimeisterb Pawx KÃ¢zuto Axtn Tranqy Kodama;text:Soak;dur:8;colors:0.7 0.4 0.15 1;\ntime:122;ph:2;tag:Helimeisterb Pawx KÃ¢zuto Axtn Tranqy Kodama;text:Soak;dur:8;colors:0.7 0.4 0.15 1;\ntime:172;ph:2;tag:Helimeisterb Pawx KÃ¢zuto Axtn Tranqy Kodama;text:Soak;dur:8;colors:0.7 0.4 0.15 1;\ntime:7;ph:1;tag:Aweyxd Antagon LukÃ®Ã® Dpxhunt;text:Soak Orbs;dur:8;colors:0.7 0.4 0.15 1;\ntime:57;ph:1;tag:Aweyxd Antagon Dpxhunt LukÃ®Ã®;text:Soak Orbs;dur:8;colors:0.7 0.4 0.15 1;\ntime:50;ph:2;tag:Miatra Torashi;text:Soak Orbs;dur:8;colors:0.7 0.4 0.15 1;\ntime:58;ph:2;tag:Aweyxd Antagon LukÃ®Ã® Dpxhunt;text:Soak Orbs;dur:8;colors:0.7 0.4 0.15 1;\ntime:104;ph:2;tag:Aweyxd Antagon Dpxhunt LukÃ®Ã®;text:Soak Orbs;dur:8;colors:0.7 0.4 0.15 1;\ntime:154;ph:2;tag:Aweyxd Antagon LukÃ®Ã® Dpxhunt;text:Soak Orbs;dur:8;colors:0.7 0.4 0.15 1;\ntime:20;ph:1;tag:CronÃ®x Cadogan Torashi Miatra Vinds KÃ¢zuto;text:Kick First;dur:8;colors:0.7 0.4 0.15 1;\ntime:70;ph:1;tag:CronÃ®x Cadogan Torashi Miatra Vinds KÃ¢zuto;text:Kick First;dur:8;colors:0.7 0.4 0.15 1;\ntime:120;ph:1;tag:CronÃ®x Cadogan Torashi Miatra Vinds KÃ¢zuto;text:Kick First;dur:8;colors:0.7 0.4 0.15 1;\ntime:25;ph:1;tag:Dpxhunt LukÃ®Ã® Helimeisterb Axtn Pawx BadpolÃ©;text:Kick Second;dur:8;colors:0.7 0.4 0.15 1;\ntime:75;ph:1;tag:Dpxhunt LukÃ®Ã® Helimeisterb Axtn Pawx BadpolÃ©;text:Kick Second;dur:8;colors:0.7 0.4 0.15 1;\ntime:125;ph:1;tag:Dpxhunt LukÃ®Ã® Helimeisterb Axtn Pawx BadpolÃ©;text:Kick Second;dur:8;colors:0.7 0.4 0.15 1;\ntime:30;ph:1;tag:CronÃ®x Cadogan Torashi Miatra Vinds KÃ¢zuto;text:Kick Third;dur:8;colors:0.7 0.4 0.15 1;\ntime:80;ph:1;tag:CronÃ®x Cadogan Torashi Miatra Vinds KÃ¢zuto;text:Kick Third;dur:8;colors:0.7 0.4 0.15 1;\ntime:130;ph:1;tag:CronÃ®x Cadogan Torashi Miatra Vinds KÃ¢zuto;text:Kick Third;dur:8;colors:0.7 0.4 0.15 1;\ntime:73;ph:2;tag:CronÃ®x Cadogan Torashi Miatra Vinds KÃ¢zuto;text:Kick First;dur:8;colors:0.7 0.4 0.15 1;\ntime:123;ph:2;tag:CronÃ®x Cadogan Torashi Miatra Vinds KÃ¢zuto;text:Kick First;dur:8;colors:0.7 0.4 0.15 1;\ntime:173;ph:2;tag:CronÃ®x Cadogan Torashi Miatra Vinds KÃ¢zuto;text:Kick First;dur:8;colors:0.7 0.4 0.15 1;\ntime:78;ph:2;tag:Dpxhunt LukÃ®Ã® Helimeisterb Axtn Pawx BadpolÃ©;text:Kick Second;dur:8;colors:0.7 0.4 0.15 1;\ntime:128;ph:2;tag:Dpxhunt LukÃ®Ã® Helimeisterb Axtn Pawx BadpolÃ©;text:Kick Second;dur:8;colors:0.7 0.4 0.15 1;\ntime:178;ph:2;tag:Dpxhunt LukÃ®Ã® Helimeisterb Axtn Pawx BadpolÃ©;text:Kick Second;dur:8;colors:0.7 0.4 0.15 1;\ntime:83;ph:2;tag:CronÃ®x Cadogan Torashi Miatra Vinds KÃ¢zuto;text:Kick Third;dur:8;colors:0.7 0.4 0.15 1;\ntime:133;ph:2;tag:CronÃ®x Cadogan Torashi Miatra Vinds KÃ¢zuto;text:Kick Third;dur:8;colors:0.7 0.4 0.15 1;\ntime:183;ph:2;tag:CronÃ®x Cadogan Torashi Miatra Vinds KÃ¢zuto;text:Kick Third;dur:8;colors:0.7 0.4 0.15 1;\n\nGroup Soaks\nP1 Soak 1: Helimeisterb Pawx KÃ¢zuto Axtn Tranqy Kodama\nP1 Soak 2: Helimeisterb Pawx KÃ¢zuto Axtn Tranqy Kodama\nP2 Soak 1: Helimeisterb Pawx KÃ¢zuto Axtn Tranqy Kodama\nP2 Soak 2: Helimeisterb Pawx KÃ¢zuto Axtn Tranqy Kodama\nP2 Soak 3: Helimeisterb Pawx KÃ¢zuto Axtn Tranqy Kodama\n\nOrb Soaks\nSoak Orbs: Aweyxd Antagon LukÃ®Ã® Dpxhunt\nSoak Orbs: Aweyxd Antagon Dpxhunt LukÃ®Ã®\nSoak Orbs After Egg: Miatra Torashi\nSoak Orbs: Aweyxd Antagon LukÃ®Ã® Dpxhunt\nSoak Orbs: Aweyxd Antagon Dpxhunt LukÃ®Ã®\nSoak Orbs: Aweyxd Antagon LukÃ®Ã® Dpxhunt\n\nInterrupts on Adds\nKick 1: CronÃ®x Cadogan Torashi Miatra Vinds KÃ¢zuto\nKick 2: Dpxhunt LukÃ®Ã® Helimeisterb Axtn Pawx BadpolÃ©\nKick 3: CronÃ®x Cadogan Torashi Miatra Vinds KÃ¢zuto\nKick 1: CronÃ®x Cadogan Torashi Miatra Vinds KÃ¢zuto\nKick 2: Dpxhunt LukÃ®Ã® Helimeisterb Axtn Pawx BadpolÃ©\nKick 3: CronÃ®x Cadogan Torashi Miatra Vinds KÃ¢zuto\n\ninvitelist:Antagon-Blackhand Aweyxd-Blackhand Edolie-Blackhand Sanfa-Blackhand Cadogan-Blackhand CronÃ®x-Blackhand LukÃ®Ã®-Blackhand Dpxhunt-Blackhand Miatra-Blackhand Helimeisterb-Blackhand Tranqy-Blackhand Torashi-Mal'Ganis KÃ¢zuto-Blackhand Oxyvoker-Blackhand Bennji-Blackhand Axtn-Blackhand Vinds-Blackrock Pawx-Blackhand Kodama-Thrall BadpolÃ©-Blackhand;\n\n",
-["Lura - Mythic"] = "EncounterID:3183;Name:Lura - Mythic;Difficulty:Mythic\n\ntime:3;ph:1;tag:Bennji;spellid:359816;\ntime:5;ph:1;tag:Edolie;spellid:472433;\ntime:7;ph:1;tag:Sanfa;spellid:114052;\ntime:14;ph:1;tag:WhoÃ³ps;spellid:443028;\ntime:53;ph:1;tag:Sanfa;spellid:192077;\ntime:56;ph:1;tag:Tranqy;spellid:106898;\ntime:60;ph:1;tag:WhoÃ³ps;spellid:322118;\ntime:68;ph:1;bossSpell:1284931;tag:Bennji;spellid:374227;\ntime:69;ph:1;tag:Oxyvoker;spellid:374227;\ntime:69;ph:1;tag:Edolie;spellid:421453;\ntime:70;ph:1;tag:Cadogan;spellid:51052;\ntime:71;ph:1;tag:Bennji;spellid:363534;\ntime:76;ph:1;tag:Oxyvoker;spellid:374968;\ntime:79;ph:1;tag:Sanfa;spellid:98008;\ntime:116;ph:1;tag:WhoÃ³ps;spellid:443028;\ntime:118;ph:1;tag:Axtn;spellid:192077;\ntime:118;ph:1;tag:Tranqy;spellid:106898;\ntime:127;ph:1;tag:Edolie;spellid:472433;\ntime:128;ph:1;tag:Bennji;spellid:359816;\ntime:133;ph:1;tag:Antadk;spellid:51052;\ntime:179;ph:1;tag:Sanfa;spellid:192077;\ntime:1;ph:2;tag:Tranqy;spellid:106898;\ntime:2;ph:2;tag:WhoÃ³ps;spellid:322118;\ntime:8;ph:2;tag:Sanfa;spellid:114052;\ntime:9;ph:2;tag:Bennji;spellid:374227;\ntime:16;ph:3;tag:Edolie;spellid:472433;\ntime:17;ph:3;tag:Oxyvoker;spellid:374968;\ntime:18;ph:3;bossSpell:1284525;tag:Bennji;spellid:363534;\ntime:18;ph:3;bossSpell:1284525;tag:Axtn;spellid:192077;\ntime:20;ph:3;tag:Tranqy;spellid:106898;\ntime:43;ph:3;tag:Cadogan;spellid:51052;\ntime:46;ph:3;tag:WhoÃ³ps;spellid:443028;\ntime:49;ph:3;tag:Bennji;spellid:359816;\ntime:51;ph:3;tag:Oxyvoker;spellid:374227;\ntime:59;ph:3;tag:Sanfa;spellid:98008;\ntime:80;ph:3;tag:WhoÃ³ps;spellid:322118;\ntime:92;ph:3;tag:Edolie;spellid:421453;\ntime:95;ph:3;bossSpell:1282412;tag:Antadk;spellid:51052;\ntime:96;ph:3;tag:Vinds;spellid:97462;\ntime:101;ph:3;tag:Bennji;spellid:374227;\ntime:101;ph:3;tag:Tranqy;spellid:106898;\ntime:105;ph:3;tag:Vinds;spellid:12323;\ntime:15;ph:4;tag:Edolie;spellid:472433;\ntime:39;ph:4;tag:WhoÃ³ps;spellid:443028;\ntime:63;ph:4;tag:Axtn;spellid:192077;\ntime:64;ph:4;bossSpell:1251343;tag:Tranqy;spellid:106898;\ntime:65;ph:4;bossSpell:1263253;tag:Bennji;spellid:359816;\ntime:71;ph:4;tag:Sanfa;spellid:114052;\ntime:73;ph:4;bossSpell:1266810;tag:Oxyvoker;spellid:374968;\ntime:76;ph:4;tag:Oxyvoker;spellid:374227;\ntime:98;ph:4;bossSpell:1273375;tag:WhoÃ³ps;spellid:322118;\ntime:123;ph:4;tag:Bennji;spellid:374227;\ntime:130;ph:4;bossSpell:1266388;tag:WhoÃ³ps;spellid:443028;\ntime:11;ph:5;tag:Edolie;spellid:472433;\ntime:20;ph:5;tag:Tranqy;spellid:106898;\ntime:25;ph:5;tag:Vinds;spellid:97462;\ntime:27;ph:5;tag:Bennji;spellid:363534;\ntime:39;ph:5;tag:Oxyvoker;spellid:374968;\ntime:39;ph:5;tag:Sanfa;spellid:192077;\ntime:41;ph:5;tag:Bennji;spellid:359816;\ntime:55;ph:5;tag:KÃ¢zuto;spellid:196718;\ntime:59;ph:5;tag:Oxyvoker;spellid:374227;\ntime:61;ph:5;tag:Axtn;spellid:192077;\ntime:62;ph:5;tag:Sanfa;spellid:98008;\ntime:68;ph:5;tag:WhoÃ³ps;spellid:322118;\ntime:68;ph:5;tag:WhoÃ³ps;spellid:443028;\ntime:28;ph:1;tag:KÃ¢zuto Oxyvoker Axtn;text:Pick up Crystal;colors:1 1 0.2 1;\ntime:92;ph:1;tag:Pawx LukÃ®Ã® Dpxhunt;text:Pick up Crystal;colors:1 1 0.2 1;\ntime:179;ph:1;tag:KÃ¢zuto Oxyvoker Axtn Pawx LukÃ®Ã® Dpxhunt;text:Pick up Crystal;colors:1 1 0.2 1;\ntime:13;ph:3;tag:KÃ¢zuto Pawx Axtn Dpxhunt LukÃ®Ã® Oxyvoker;text:Pick up Crystal;colors:1 1 0.2 1;\ntime:14;ph:4;tag:Axtn Oxyvoker Sanfa Bennji Dpxhunt KÃ¢zuto;text:Pick up Crystal;colors:1 1 0.2 1;\ntime:16;ph:1;tag:CronÃ®x Antadk Cadogan;text:Grip Adds;colors:1 0.16 0.16 1;\ntime:78;ph:1;tag:CronÃ®x Antadk Cadogan;text:Grip Adds;colors:1 0.16 0.16 1;\ntime:140;ph:1;tag:CronÃ®x Antadk Cadogan;text:Grip Adds;colors:1 0.16 0.16 1;\ntime:16;ph:1;tag:Tranqy Oxyvoker Axtn;text:Knock Adds;colors:0.16 1 0.16 1;\ntime:78;ph:1;tag:Tranqy Oxyvoker Axtn;text:Knock Adds;colors:0.16 1 0.16 1;\ntime:140;ph:1;tag:Tranqy Oxyvoker Axtn;text:Knock Adds;colors:0.16 1 0.16 1;\ntime:16;ph:1;tag:Edolie Bennji Oxyvoker;text:Grip Crystal;colors:1 1 1 1;\ntime:78;ph:1;tag:Edolie Bennji Oxyvoker;text:Grip Crystal;colors:1 1 1 1;\ntime:13;ph:3;tag:Edolie Bennji WhoÃ³ps Sanfa LukÃ®Ã®;text:Soak {cross};colors:1 0.16 0.16 1;\ntime:43;ph:3;tag:Edolie Bennji WhoÃ³ps Sanfa LukÃ®Ã®;text:Soak {cross};colors:1 0.16 0.16 1;\ntime:73;ph:3;tag:Edolie Bennji WhoÃ³ps Sanfa LukÃ®Ã®;text:Soak {cross};colors:1 0.16 0.16 1;\ntime:13;ph:3;tag:Antadk Sanatio Axtn Dpxhunt Pawx;text:Soak {star};colors:1 1 0.2 1;\ntime:43;ph:3;tag:Antadk Sanatio Axtn Dpxhunt Pawx;text:Soak {star};colors:1 1 0.2 1;\ntime:73;ph:3;tag:Antadk Sanatio Axtn Dpxhunt Pawx;text:Soak {star};colors:1 1 0.2 1;\ntime:13;ph:3;tag:CronÃ®x Cadogan Vinds Miatra Oxyvoker;text:Soak {circle};colors:1 0.5 0 1;\ntime:43;ph:3;tag:CronÃ®x Cadogan Vinds Miatra Oxyvoker;text:Soak {circle};colors:1 0.5 0 1;\ntime:73;ph:3;tag:CronÃ®x Cadogan Vinds Miatra Oxyvoker;text:Soak {circle};colors:1 0.5 0 1;\ntime:13;ph:3;tag:KÃ¢zuto Helimeisterb Pymowl Tranqy Morpheusmage;text:Soak {skull};colors:1 1 1 1;\ntime:43;ph:3;tag:KÃ¢zuto Helimeisterb Pymowl Tranqy Morpheusmage;text:Soak {skull};colors:1 1 1 1;\ntime:73;ph:3;tag:KÃ¢zuto Helimeisterb Pymowl Tranqy Morpheusmage;text:Soak {skull};colors:1 1 1 1;\ntime:61;ph:4;tag:Dpxhunt Oxyvoker;text:Pop Crystal;colors:1 0.16 0.16 1;\ntime:116;ph:4;tag:Axtn KÃ¢zuto;text:Pop Crystal;colors:1 0.16 0.16 1;\ntime:171;ph:4;tag:Sanfa Bennji;text:Pop Crystal;colors:1 0.16 0.16 1;\ntime:18;ph:4;tag:Dpxhunt Axtn Bennji;text:Soaks;colors:1 0.5 0 1;\ntime:93;ph:4;tag:Dpxhunt Axtn Bennji;text:Soaks;colors:1 0.5 0 1;\ntime:128;ph:4;tag:Dpxhunt Axtn Bennji;text:Soaks;colors:1 0.5 0 1;\ntime:18;ph:4;tag:Antadk Cadogan Vinds Helimeisterb WhoÃ³ps Pawx Morpheusmage;text:Soaks;colors:1 0.5 0 1;\ntime:93;ph:4;tag:Antadk Cadogan Vinds Helimeisterb WhoÃ³ps Pawx Morpheusmage;text:Soaks;colors:1 0.5 0 1;\ntime:128;ph:4;tag:Antadk Cadogan Vinds Helimeisterb WhoÃ³ps Pawx Morpheusmage;text:Soaks;colors:1 0.5 0 1;\ntime:38;ph:4;tag:KÃ¢zuto Oxyvoker Sanfa;text:Soaks;colors:1 0.5 0 1;\ntime:73;ph:4;tag:KÃ¢zuto Oxyvoker Sanfa;text:Soaks;colors:1 0.5 0 1;\ntime:148;ph:4;tag:KÃ¢zuto Oxyvoker Sanfa;text:Soaks;colors:1 0.5 0 1;\ntime:38;ph:4;tag:Sanatio Miatra CronÃ®x Edolie LukÃ®Ã® Tranqy Pymowl;text:Soaks;colors:1 0.5 0 1;\ntime:73;ph:4;tag:Sanatio Miatra CronÃ®x Edolie LukÃ®Ã® Tranqy Pymowl;text:Soaks;colors:1 0.5 0 1;\ntime:148;ph:4;tag:Sanatio Miatra CronÃ®x Edolie LukÃ®Ã® Tranqy Pymowl;text:Soaks;colors:1 0.5 0 1;\ntime:20;ph:5;tag:Sanatio LukÃ®Ã®;text:Immunity Soak;dur:8;colors:0.7 0.4 0.15 1;\ntime:40;ph:5;tag:Antadk Dpxhunt;text:Immunity Soak;dur:8;colors:0.7 0.4 0.15 1;\ntime:60;ph:5;tag:Sanatio Miatra;text:Immunity Soak;dur:8;colors:0.7 0.4 0.15 1;\ntime:5;ph:1;tag:Edolie CronÃ®x;spellid:10060;text:Power Infusion;dur:8;colors:1 1 0.2 1;glowunit:CronÃ®x;\ntime:5;ph:2;tag:Edolie CronÃ®x;spellid:10060;text:Power Infusion;dur:8;colors:1 1 0.2 1;glowunit:CronÃ®x;\ntime:45;ph:4;tag:Edolie CronÃ®x;spellid:10060;text:Power Infusion;dur:8;colors:1 1 0.2 1;glowunit:CronÃ®x;\ntime:33;ph:5;tag:Edolie CronÃ®x;spellid:10060;text:Power Infusion;dur:8;colors:1 1 0.2 1;glowunit:CronÃ®x;\n\nCrystals\nCrystal spawn 1 (0:28): KÃ¢zuto Oxyvoker Axtn\nCrystal spawn 2 (1:32): Pawx LukÃ®Ã® Dpxhunt\nCrystal Intermission: KÃ¢zuto Oxyvoker Axtn Pawx LukÃ®Ã® Dpxhunt\nCrystal P2 (3:58): KÃ¢zuto Pawx Axtn Dpxhunt LukÃ®Ã® Oxyvoker\nCrystal P3 (5:44): Axtn Oxyvoker Sanfa Bennji Dpxhunt KÃ¢zuto\n\nP1 Grip Adds\nGrip Adds: CronÃ®x Antadk Cadogan\nKnock Adds: Tranqy Oxyvoker Axtn\nGrip Crystals: Edolie Bennji Oxyvoker\n\nintstart\nCronÃ®x Dpxhunt Pymowl Morpheusmage\nCadogan LukÃ®Ã® Axtn Pawx\nKÃ¢zuto Oxyvoker Helimeisterb Sanfa\nintend\n\nP2 Galvanize Soaks\nHealers: Edolie Bennji WhoÃ³ps Sanfa LukÃ®Ã®\nTanks: Antadk Sanatio Axtn Dpxhunt Pawx\nMelee: CronÃ®x Cadogan Vinds Miatra Oxyvoker\nRanged: KÃ¢zuto Helimeisterb Pymowl Tranqy Morpheusmage\n\nP2 Spread Positions\nNorth West: Pawx Bennji WhoÃ³ps Morpheusmage\nNorth East: Tranqy LukÃ®Ã® Edolie Sanfa\nWest: Axtn Helimeisterb Antadk\nEast: KÃ¢zuto Pymowl CronÃ®x\nSouth West: Dpxhunt Cadogan Vinds\nSouth East: Oxyvoker Miatra Sanatio\n\nP3 Pop Crystal\nPop Crystal 1 (6:31): Dpxhunt Oxyvoker\nPop Crystal 2 (7:26): Axtn KÃ¢zuto\nPop Crystal 3 (8:21): Sanfa Bennji\n\nP3 Sides\nLeft: Antadk Cadogan Vinds Axtn Dpxhunt Helimeisterb Pawx Morpheusmage Bennji WhoÃ³ps\nRight: Sanatio CronÃ®x Miatra KÃ¢zuto LukÃ®Ã® Pymowl Oxyvoker Tranqy Sanfa Edolie\n\nP3 Positions\nLeft - Crystal Carrier: Dpxhunt Axtn Bennji\nLeft - Non-Crystal: Antadk Cadogan Vinds Helimeisterb WhoÃ³ps Pawx Morpheusmage\nRight - Crystal Carrier: KÃ¢zuto Oxyvoker Sanfa\nRight - Non-Crystal: Sanatio Miatra CronÃ®x Edolie LukÃ®Ã® Tranqy Pymowl\n\nP4 - Immunity Soak\nRun 1: Sanatio LukÃ®Ã®\nRun 2: Antadk Dpxhunt\nRun 3: Sanatio Miatra\n\nPower Infusion\nPI: Edolie CronÃ®x (Glow: CronÃ®x)\n\ninvitelist:CronÃ®x-Blackhand KÃ¢zuto-Blackhand Tranqy-Blackhand LukÃ®Ã®-Blackhand Pawx-Blackhand Bennji-Blackhand Vinds-Blackrock Sanatio-Blackhand Antadk-Blackhand Miatra-Blackhand Axtn-Blackhand Helimeisterb-Blackhand Sanfa-Blackhand Edolie-Blackhand Oxyvoker-Blackhand Dpxhunt-Blackhand Cadogan-Blackhand Pymowl-Thrall Morpheusmage-Blackhand WhoÃ³ps-Blackhand;\n",
-["Averzian - Mythic"] = "EncounterID:3176;Difficulty:Mythic;Name:Averzian\n\ninvitelist:Antagon-Blackhand Aweyxd-Blackhand KÃ¢zuto-Blackhand Pawx-Blackhand Korimeow-TarrenMill Vinds-Blackrock CronÃ®x-Blackhand Morpheusmage-Blackhand FuÃŸgÃ¤nger-Blackrock Kodama-Thrall Nocie-Blackhand BadpolÃ©-Blackhand Leergut-Blackhand Torashi-Mal'Ganis Miatra-Blackhand Cadogan-Blackhand Valamonk-Blackhand LukÃ®Ã®-Blackhand Sanfa-Blackhand Oxyvoker-Blackhand;\n\n",
-["Vaelgor - Mythic"] = "EncounterID:3178;Difficulty:Mythic;Name:Vaelgor\n\ntime:24;ph:1;tag:Bennji;spellid:370537;\ntime:26;ph:1;tag:Kodama;spellid:391528;\ntime:27;ph:1;bossSpell:1245391;tag:WhoÃ³ps;spellid:443028;\ntime:33;ph:1;tag:WhoÃ³ps;spellid:322118;\ntime:37;ph:1;tag:Edolie;spellid:472433;\ntime:38;ph:1;bossSpell:1244917;tag:Kodama;spellid:740;\ntime:38;ph:1;bossSpell:1244917;tag:Oxyvoker;spellid:374968;\ntime:38;ph:1;bossSpell:1244917;tag:Tranqy;spellid:106898;\ntime:71;ph:1;tag:Vinds;spellid:97462;\ntime:73;ph:1;bossSpell:1245391;tag:Oxyvoker;spellid:374227;\ntime:76;ph:1;bossSpell:1244221;tag:Edolie;spellid:421453;\ntime:78;ph:1;bossSpell:1244917;tag:WhoÃ³ps;spellid:115310;\ntime:78;ph:1;bossSpell:1244917;tag:Bennji;spellid:363534;\ntime:78;ph:1;bossSpell:1244917;tag:CronÃ®x;spellid:51052;\ntime:89;ph:1;bossSpell:1265152;tag:Kodama;spellid:391528;\ntime:90;ph:1;bossSpell:1244672;tag:FuÃŸgÃ¤nger;spellid:106898;\ntime:128;ph:1;bossSpell:1245391;tag:Edolie;spellid:472433;\ntime:128;ph:1;bossSpell:1245391;tag:WhoÃ³ps;spellid:443028;\ntime:128;ph:1;bossSpell:1245391;tag:Bennji;spellid:370537;\ntime:128;ph:1;bossSpell:1245391;tag:KÃ¢zuto;spellid:196718;\ntime:140;ph:1;bossSpell:1270497;tag:Axtn;spellid:192077;\ntime:149;ph:1;bossSpell:1244672;tag:Tranqy;spellid:106898;\ntime:150;ph:1;tag:Kodama;spellid:391528;\ntime:156;ph:1;tag:WhoÃ³ps;spellid:322118;\ntime:188;ph:1;bossSpell:1244672;tag:Oxyvoker;spellid:374968;\ntime:188;ph:1;bossSpell:1244672;tag:FuÃŸgÃ¤nger;spellid:106898;\ntime:210;ph:1;tag:Kodama;spellid:391528;\ntime:222;ph:1;bossSpell:1245391;tag:WhoÃ³ps;spellid:443028;\ntime:225;ph:1;tag:Kodama;spellid:740;\ntime:238;ph:1;bossSpell:1244672;tag:Tranqy;spellid:106898;\ntime:242;ph:1;tag:Edolie;spellid:472433;\ntime:242;ph:1;tag:Oxyvoker;spellid:374227;\ntime:246;ph:1;bossSpell:1244917;tag:Bennji;spellid:363534;\ntime:246;ph:1;bossSpell:1244917;tag:Bennji;spellid:370537;\ntime:273;ph:1;bossSpell:1245391;tag:WhoÃ³ps;spellid:115310;\ntime:273;ph:1;bossSpell:1245391;tag:Kodama;spellid:391528;\ntime:279;ph:1;tag:WhoÃ³ps;spellid:322118;\ntime:286;ph:1;bossSpell:1244917;tag:Axtn;spellid:192077;\ntime:288;ph:1;bossSpell:1244672;tag:FuÃŸgÃ¤nger;spellid:106898;\ntime:304;ph:1;bossSpell:1270497;tag:Vinds;spellid:97462;\ntime:304;ph:1;bossSpell:1270497;tag:Tranqy;spellid:106898;\ntime:308;ph:1;bossSpell:1244917;tag:Oxyvoker;spellid:374968;\ntime:308;ph:1;bossSpell:1244917;tag:CronÃ®x;spellid:51052;\ntime:329;ph:1;bossSpell:1245391;tag:Edolie;spellid:421453;\ntime:329;ph:1;bossSpell:1245391;tag:WhoÃ³ps;spellid:443028;\ntime:358;ph:1;tag:Kodama;spellid:391528;\ntime:370;ph:1;tag:Bennji;spellid:370537;\ntime:371;ph:1;bossSpell:1245391;tag:Edolie;spellid:472433;\ntime:371;ph:1;bossSpell:1245391;tag:Oxyvoker;spellid:374227;\ntime:371;ph:1;bossSpell:1245391;tag:KÃ¢zuto;spellid:196718;\ntime:385;ph:1;bossSpell:1265152;tag:Tranqy;spellid:106898;\ntime:410;ph:1;bossSpell:1245391;tag:WhoÃ³ps;spellid:322118;\ntime:415;ph:1;tag:Kodama;spellid:740;\ntime:417;ph:1;bossSpell:1245391;tag:Kodama;spellid:391528;\ntime:419;ph:1;bossSpell:1244917;tag:Bennji;spellid:359816;\ntime:419;ph:1;bossSpell:1244917;tag:Bennji;spellid:363534;\ntime:420;ph:1;tag:WhoÃ³ps;spellid:443028;\ntime:435;ph:1;bossSpell:1265152;tag:Oxyvoker;spellid:374968;\ntime:435;ph:1;bossSpell:1265152;tag:Axtn;spellid:192077;\ntime:435;ph:1;bossSpell:1265152;tag:FuÃŸgÃ¤nger;spellid:106898;\ntime:454;ph:1;bossSpell:1264467;tag:WhoÃ³ps;spellid:115310;\ntime:16;ph:1;tag:Bennji Torashi Oxyvoker FuÃŸgÃ¤nger Pymowl LukÃ®Ã®;text:Soak Gloom;colors:1 0.5 0 1;\ntime:116;ph:1;tag:Bennji Torashi Oxyvoker FuÃŸgÃ¤nger Pymowl LukÃ®Ã®;text:Soak Gloom;colors:1 0.5 0 1;\ntime:215;ph:1;tag:Bennji Torashi Oxyvoker FuÃŸgÃ¤nger Pymowl LukÃ®Ã®;text:Soak Gloom;colors:1 0.5 0 1;\ntime:317;ph:1;tag:Bennji Torashi Oxyvoker FuÃŸgÃ¤nger Pymowl LukÃ®Ã®;text:Soak Gloom;colors:1 0.5 0 1;\ntime:410;ph:1;tag:Bennji Torashi Oxyvoker FuÃŸgÃ¤nger Pymowl LukÃ®Ã®;text:Soak Gloom;colors:1 0.5 0 1;\ntime:66;ph:1;tag:WhoÃ³ps Vinds KÃ¢zuto Helimeisterb Tranqy Axtn;text:Soak Gloom;colors:1 0.5 0 1;\ntime:264;ph:1;tag:WhoÃ³ps Vinds KÃ¢zuto Helimeisterb Tranqy Axtn;text:Soak Gloom;colors:1 0.5 0 1;\ntime:362;ph:1;tag:WhoÃ³ps Vinds KÃ¢zuto Helimeisterb Tranqy Axtn;text:Soak Gloom;colors:1 0.5 0 1;\ntime:40;ph:1;tag:FuÃŸgÃ¤nger Oxyvoker Bennji;text:Knock;colors:0.2 0.4 1 1;\ntime:173;ph:1;tag:FuÃŸgÃ¤nger Oxyvoker Bennji;text:Knock;colors:0.2 0.4 1 1;\ntime:248;ph:1;tag:FuÃŸgÃ¤nger Oxyvoker Bennji;text:Knock;colors:0.2 0.4 1 1;\ntime:310;ph:1;tag:FuÃŸgÃ¤nger Oxyvoker Bennji;text:Knock;colors:0.2 0.4 1 1;\ntime:376;ph:1;tag:FuÃŸgÃ¤nger Oxyvoker Bennji;text:Knock;colors:0.2 0.4 1 1;\ntime:456;ph:1;tag:FuÃŸgÃ¤nger Oxyvoker Bennji;text:Knock;colors:0.2 0.4 1 1;\ntime:80;ph:1;tag:Axtn Tranqy Kodama;text:Knock;colors:0.2 0.4 1 1;\ntime:208;ph:1;tag:Axtn Tranqy Kodama;text:Knock;colors:0.2 0.4 1 1;\ntime:288;ph:1;tag:Axtn Tranqy Kodama;text:Knock;colors:0.2 0.4 1 1;\ntime:376;ph:1;tag:Axtn Tranqy Kodama;text:Knock;colors:0.2 0.4 1 1;\ntime:456;ph:1;tag:Axtn Tranqy Kodama;text:Knock;colors:0.2 0.4 1 1;\n\nGloom Soak Groups\nGloom Soak Group 1: Bennji Torashi Oxyvoker FuÃŸgÃ¤nger Pymowl LukÃ®Ã®\nGloom Soak Group 2: WhoÃ³ps Vinds KÃ¢zuto Helimeisterb Tranqy Axtn\n\nKnocks odds/evens\nKnock Odd Sets: FuÃŸgÃ¤nger Oxyvoker Bennji\nKnock Even Sets: Axtn Tranqy Kodama\n\ninvitelist:Antagon-Blackhand Aweyxd-Blackhand KÃ¢zuto-Blackhand Pymowl-Thrall Oxyvoker-Blackhand Leergut-Blackhand Vinds-Blackrock Torashi-Mal'Ganis CronÃ®x-Blackhand Helimeisterb-Blackhand Edolie-Blackhand Bennji-Blackhand Kodama-Thrall Tranqy-Blackhand BadpolÃ©-Blackhand LukÃ®Ã®-Blackhand Valamonk-Blackhand FuÃŸgÃ¤nger-Blackrock Axtn-Blackhand WhoÃ³ps-Blackhand;\n\n",
-["Salhadaar - Mythic"] = "EncounterID:3179;Difficulty:Mythic;Name:Salhadaar\n\ntime:27;ph:1;tag:FuÃŸgÃ¤nger Pymowl;text:CC Image 1;colors:1 0.4 0.7 1;\ntime:72;ph:1;tag:FuÃŸgÃ¤nger Pymowl;text:CC Image 1;colors:1 0.4 0.7 1;\ntime:150;ph:1;tag:FuÃŸgÃ¤nger Pymowl;text:CC Image 1;colors:1 0.4 0.7 1;\ntime:196;ph:1;tag:FuÃŸgÃ¤nger Pymowl;text:CC Image 1;colors:1 0.4 0.7 1;\ntime:271;ph:1;tag:FuÃŸgÃ¤nger Pymowl;text:CC Image 1;colors:1 0.4 0.7 1;\ntime:317;ph:1;tag:FuÃŸgÃ¤nger Pymowl;text:CC Image 1;colors:1 0.4 0.7 1;\ntime:393;ph:1;tag:FuÃŸgÃ¤nger Pymowl;text:CC Image 1;colors:1 0.4 0.7 1;\ntime:439;ph:1;tag:FuÃŸgÃ¤nger Pymowl;text:CC Image 1;colors:1 0.4 0.7 1;\ntime:27;ph:1;tag:Morpheusmage Leergut;text:CC Image 2;colors:1 0.4 0.7 1;\ntime:72;ph:1;tag:Morpheusmage Leergut;text:CC Image 2;colors:1 0.4 0.7 1;\ntime:150;ph:1;tag:Morpheusmage Leergut;text:CC Image 2;colors:1 0.4 0.7 1;\ntime:196;ph:1;tag:Morpheusmage Leergut;text:CC Image 2;colors:1 0.4 0.7 1;\ntime:271;ph:1;tag:Morpheusmage Leergut;text:CC Image 2;colors:1 0.4 0.7 1;\ntime:317;ph:1;tag:Morpheusmage Leergut;text:CC Image 2;colors:1 0.4 0.7 1;\ntime:393;ph:1;tag:Morpheusmage Leergut;text:CC Image 2;colors:1 0.4 0.7 1;\ntime:439;ph:1;tag:Morpheusmage Leergut;text:CC Image 2;colors:1 0.4 0.7 1;\ntime:27;ph:1;tag:Axtn Oxyvoker;text:CC Image 3;colors:1 0.4 0.7 1;\ntime:72;ph:1;tag:Axtn Oxyvoker;text:CC Image 3;colors:1 0.4 0.7 1;\ntime:150;ph:1;tag:Axtn Oxyvoker;text:CC Image 3;colors:1 0.4 0.7 1;\ntime:196;ph:1;tag:Axtn Oxyvoker;text:CC Image 3;colors:1 0.4 0.7 1;\ntime:271;ph:1;tag:Axtn Oxyvoker;text:CC Image 3;colors:1 0.4 0.7 1;\ntime:317;ph:1;tag:Axtn Oxyvoker;text:CC Image 3;colors:1 0.4 0.7 1;\ntime:393;ph:1;tag:Axtn Oxyvoker;text:CC Image 3;colors:1 0.4 0.7 1;\ntime:439;ph:1;tag:Axtn Oxyvoker;text:CC Image 3;colors:1 0.4 0.7 1;\ntime:27;ph:1;tag:LukÃ®Ã® BadpolÃ©;text:CC Image 4;colors:1 0.4 0.7 1;\ntime:72;ph:1;tag:LukÃ®Ã® BadpolÃ©;text:CC Image 4;colors:1 0.4 0.7 1;\ntime:150;ph:1;tag:LukÃ®Ã® BadpolÃ©;text:CC Image 4;colors:1 0.4 0.7 1;\ntime:196;ph:1;tag:LukÃ®Ã® BadpolÃ©;text:CC Image 4;colors:1 0.4 0.7 1;\ntime:271;ph:1;tag:LukÃ®Ã® BadpolÃ©;text:CC Image 4;colors:1 0.4 0.7 1;\ntime:317;ph:1;tag:LukÃ®Ã® BadpolÃ©;text:CC Image 4;colors:1 0.4 0.7 1;\ntime:393;ph:1;tag:LukÃ®Ã® BadpolÃ©;text:CC Image 4;colors:1 0.4 0.7 1;\ntime:439;ph:1;tag:LukÃ®Ã® BadpolÃ©;text:CC Image 4;colors:1 0.4 0.7 1;\ntime:27;ph:1;tag:KÃ¢zuto WhoÃ³ps Valamonk;text:CC Image 5;colors:1 0.4 0.7 1;\ntime:72;ph:1;tag:KÃ¢zuto WhoÃ³ps Valamonk;text:CC Image 5;colors:1 0.4 0.7 1;\ntime:150;ph:1;tag:KÃ¢zuto WhoÃ³ps Valamonk;text:CC Image 5;colors:1 0.4 0.7 1;\ntime:196;ph:1;tag:KÃ¢zuto WhoÃ³ps Valamonk;text:CC Image 5;colors:1 0.4 0.7 1;\ntime:271;ph:1;tag:KÃ¢zuto WhoÃ³ps Valamonk;text:CC Image 5;colors:1 0.4 0.7 1;\ntime:317;ph:1;tag:KÃ¢zuto WhoÃ³ps Valamonk;text:CC Image 5;colors:1 0.4 0.7 1;\ntime:393;ph:1;tag:KÃ¢zuto WhoÃ³ps Valamonk;text:CC Image 5;colors:1 0.4 0.7 1;\ntime:439;ph:1;tag:KÃ¢zuto WhoÃ³ps Valamonk;text:CC Image 5;colors:1 0.4 0.7 1;\n\nCC Fractured Images\nImage 1: FuÃŸgÃ¤nger Pymowl\nImage 2: Morpheusmage Leergut\nImage 3: Axtn Oxyvoker\nImage 4: LukÃ®Ã® BadpolÃ©\nImage 5: KÃ¢zuto WhoÃ³ps Valamonk\n\ninvitelist:Antagon-Blackhand Aweyxd-Blackhand KÃ¢zuto-Blackhand Korimeow-TarrenMill Oxyvoker-Blackhand FuÃŸgÃ¤nger-Blackrock Vinds-Blackrock CronÃ®x-Blackhand Morpheusmage-Blackhand WhoÃ³ps-Blackhand LukÃ®Ã®-Blackhand Pymowl-Thrall Leergut-Blackhand Nocie-Blackhand Torashi-Mal'Ganis Edolie-Blackhand Miatra-Blackhand Valamonk-Blackhand Axtn-Blackhand BadpolÃ©-Blackhand;\n\n",
-["Vanguard - Mythic"] = "EncounterID:3180;Difficulty:Mythic;Name:Vanguard\n\ntime:3;ph:1;tag:Bennji;spellid:370553;\ntime:3;ph:1;tag:Bennji;spellid:370537;\ntime:4;ph:1;tag:Sanfa;spellid:114052;\ntime:9;ph:1;tag:WhoÃ³ps;spellid:322118;\ntime:11;ph:1;bossSpell:1255738;tag:Edolie;spellid:472433;\ntime:18;ph:1;bossSpell:1246497;tag:Sanfa;spellid:98008;\ntime:22;ph:1;bossSpell:1246749;tag:Bennji;spellid:363534;\ntime:70;ph:1;tag:Edolie;spellid:421453;\ntime:71;ph:1;tag:Cadogan;spellid:51052;\ntime:72;ph:1;bossSpell:1246497;tag:WhoÃ³ps;spellid:115310;\ntime:73;ph:1;tag:WhoÃ³ps;spellid:443028;\ntime:82;ph:1;bossSpell:1248449;tag:Bennji;spellid:374968;\ntime:84;ph:1;tag:Bennji;spellid:374227;\ntime:86;ph:1;tag:Vinds;spellid:97462;\ntime:86;ph:1;tag:Oxyvoker;spellid:374227;\ntime:88;ph:1;tag:KÃ¢zuto;spellid:196718;\ntime:92;ph:1;tag:Bennji;spellid:370553;\ntime:92;ph:1;tag:Bennji;spellid:370537;\ntime:115;ph:1;bossSpell:1251859;tag:Edolie;spellid:472433;\ntime:126;ph:1;bossSpell:1246497;tag:Tranqy;spellid:106898;\ntime:138;ph:1;bossSpell:1248451;tag:Oxyvoker;spellid:374968;\ntime:150;ph:1;tag:WhoÃ³ps;spellid:322118;\ntime:182;ph:1;bossSpell:1255738;tag:WhoÃ³ps;spellid:443028;\ntime:183;ph:1;tag:CronÃ®x;spellid:51052;\ntime:184;ph:1;bossSpell:1246749;tag:Bennji;spellid:370553;\ntime:184;ph:1;bossSpell:1246749;tag:Bennji;spellid:370537;\ntime:184;ph:1;bossSpell:1246749;tag:Sanfa;spellid:114052;\ntime:198;ph:1;bossSpell:1248710;tag:Sanfa;spellid:98008;\ntime:234;ph:1;bossSpell:1246497;tag:Edolie;spellid:472433;\ntime:234;ph:1;bossSpell:1246497;tag:WhoÃ³ps;spellid:115310;\ntime:241;ph:1;bossSpell:1248449;tag:Bennji;spellid:374968;\ntime:244;ph:1;tag:Bennji;spellid:374227;\ntime:244;ph:1;tag:Oxyvoker;spellid:374227;\ntime:274;ph:1;bossSpell:1251857;tag:WhoÃ³ps;spellid:443028;\ntime:274;ph:1;bossSpell:1251857;tag:Bennji;spellid:370553;\ntime:274;ph:1;bossSpell:1251857;tag:Bennji;spellid:370537;\ntime:277;ph:1;bossSpell:1251859;tag:WhoÃ³ps;spellid:322118;\ntime:294;ph:1;tag:Tranqy;spellid:106898;\ntime:297;ph:1;bossSpell:1248451;tag:Oxyvoker;spellid:374968;\ntime:302;ph:1;tag:Vinds;spellid:97462;\ntime:310;ph:1;bossSpell:1251857;tag:Edolie;spellid:421453;\ntime:341;ph:1;bossSpell:1255738;tag:Edolie;spellid:472433;\ntime:343;ph:1;tag:KÃ¢zuto;spellid:196718;\ntime:343;ph:1;tag:Cadogan;spellid:51052;\ntime:347;ph:1;bossSpell:1246162;tag:Bennji;spellid:363534;\ntime:364;ph:1;bossSpell:1246749;tag:WhoÃ³ps;spellid:443028;\ntime:364;ph:1;bossSpell:1246749;tag:Bennji;spellid:370537;\ntime:364;ph:1;bossSpell:1246749;tag:CronÃ®x;spellid:51052;\ntime:365;ph:1;tag:Bennji;spellid:370553;\ntime:391;ph:1;tag:Bennji;spellid:374227;\ntime:394;ph:1;bossSpell:1255738;tag:Sanfa;spellid:98008;\ntime:395;ph:1;tag:Sanfa;spellid:114052;\ntime:395;ph:1;tag:Tranqy;spellid:106898;\ntime:396;ph:1;bossSpell:1246497;tag:WhoÃ³ps;spellid:115310;\ntime:397;ph:1;bossSpell:1258659;tag:WhoÃ³ps;spellid:322118;\ntime:400;ph:1;bossSpell:1248449;tag:Bennji;spellid:374968;\ntime:400;ph:1;bossSpell:1248449;tag:Oxyvoker;spellid:374227;\ntime:433;ph:1;tag:Edolie;spellid:472433;\ntime:90;ph:1;tag:Aweyxd CronÃ®x Valamonk Vinds WhoÃ³ps;text:Soak Front Left;colors:1 1 0.2 1;\ntime:146;ph:1;tag:Aweyxd CronÃ®x Valamonk Vinds WhoÃ³ps;text:Soak Front Left;colors:1 1 0.2 1;\ntime:249;ph:1;tag:Aweyxd CronÃ®x Valamonk Vinds WhoÃ³ps;text:Soak Front Left;colors:1 1 0.2 1;\ntime:305;ph:1;tag:Aweyxd CronÃ®x Valamonk Vinds WhoÃ³ps;text:Soak Front Left;colors:1 1 0.2 1;\ntime:90;ph:1;tag:Antagon Cadogan Miatra KÃ¢zuto Bennji;text:Soak Front Right;colors:1 1 0.2 1;\ntime:146;ph:1;tag:Antagon Cadogan Miatra KÃ¢zuto Bennji;text:Soak Front Right;colors:1 1 0.2 1;\ntime:249;ph:1;tag:Antagon Cadogan Miatra KÃ¢zuto Bennji;text:Soak Front Right;colors:1 1 0.2 1;\ntime:305;ph:1;tag:Antagon Cadogan Miatra KÃ¢zuto Bennji;text:Soak Front Right;colors:1 1 0.2 1;\ntime:90;ph:1;tag:LukÃ®Ã® Dpxhunt Helimeisterb Morpheusmage Sanfa;text:Soak Back Right;colors:1 1 0.2 1;\ntime:146;ph:1;tag:LukÃ®Ã® Dpxhunt Helimeisterb Morpheusmage Sanfa;text:Soak Back Right;colors:1 1 0.2 1;\ntime:249;ph:1;tag:LukÃ®Ã® Dpxhunt Helimeisterb Morpheusmage Sanfa;text:Soak Back Right;colors:1 1 0.2 1;\ntime:305;ph:1;tag:LukÃ®Ã® Dpxhunt Helimeisterb Morpheusmage Sanfa;text:Soak Back Right;colors:1 1 0.2 1;\ntime:90;ph:1;tag:Oxyvoker Pawx BadpolÃ© Tranqy Edolie;text:Soak Back Left;colors:1 1 0.2 1;\ntime:146;ph:1;tag:Oxyvoker Pawx BadpolÃ© Tranqy Edolie;text:Soak Back Left;colors:1 1 0.2 1;\ntime:249;ph:1;tag:Oxyvoker Pawx BadpolÃ© Tranqy Edolie;text:Soak Back Left;colors:1 1 0.2 1;\ntime:305;ph:1;tag:Oxyvoker Pawx BadpolÃ© Tranqy Edolie;text:Soak Back Left;colors:1 1 0.2 1;\ntime:29;ph:1;tag:Dpxhunt LukÃ®Ã® Helimeisterb Morpheusmage;text:Bait Charge;colors:0.16 1 0.16 1;\ntime:161;ph:1;tag:Dpxhunt LukÃ®Ã® Helimeisterb Morpheusmage;text:Bait Charge;colors:0.16 1 0.16 1;\ntime:205;ph:1;tag:Dpxhunt LukÃ®Ã® Helimeisterb Morpheusmage;text:Bait Charge;colors:0.16 1 0.16 1;\ntime:258;ph:1;tag:Dpxhunt LukÃ®Ã® Helimeisterb Morpheusmage;text:Bait Charge;colors:0.16 1 0.16 1;\ntime:39;ph:1;tag:Antagon Aweyxd WhoÃ³ps Bennji Sanfa;text:Set 1;colors:1 0.16 0.16 1;\ntime:148;ph:1;tag:Antagon Aweyxd WhoÃ³ps Miatra Vinds;text:Set 2;colors:1 0.16 0.16 1;\ntime:198;ph:1;tag:WhoÃ³ps Sanfa Bennji Miatra Vinds;text:Set 3;colors:1 0.16 0.16 1;\ntime:307;ph:1;tag:Antagon Aweyxd WhoÃ³ps Bennji Sanfa;text:Set 4;colors:1 0.16 0.16 1;\ntime:357;ph:1;tag:WhoÃ³ps Bennji Sanfa Edolie Pawx;text:Set 5;colors:1 0.16 0.16 1;\ntime:466;ph:1;tag:WhoÃ³ps Bennji Sanfa Edolie Pawx;text:Set 6;colors:1 0.16 0.16 1;\ntime:82;ph:1;tag:WhoÃ³ps Bennji Sanfa Edolie;text:Pre-position for soaks;colors:0.2 0.4 1 1;\ntime:138;ph:1;tag:WhoÃ³ps Bennji Sanfa Edolie;text:Pre-position for soaks;colors:0.2 0.4 1 1;\ntime:241;ph:1;tag:WhoÃ³ps Bennji Sanfa Edolie;text:Pre-position for soaks;colors:0.2 0.4 1 1;\ntime:297;ph:1;tag:WhoÃ³ps Bennji Sanfa Edolie;text:Pre-position for soaks;colors:0.2 0.4 1 1;\n\nExecution Sentence Soaks\nSoak Front Left: Aweyxd CronÃ®x Valamonk Vinds WhoÃ³ps\nSoak Front Right: Antagon Cadogan Miatra KÃ¢zuto Bennji\nSoak Back Right: LukÃ®Ã® Dpxhunt Helimeisterb Morpheusmage Sanfa\nSoak Back Left: Oxyvoker Pawx BadpolÃ© Tranqy Edolie\n\nBait Charge\nBait Charge: Dpxhunt LukÃ®Ã® Helimeisterb Morpheusmage\nBait Charge: Dpxhunt LukÃ®Ã® Helimeisterb Morpheusmage\nBait Charge: Dpxhunt LukÃ®Ã® Helimeisterb Morpheusmage\nBait Charge: Dpxhunt LukÃ®Ã® Helimeisterb Morpheusmage\n\nTyr's Wrath Healing Absorbs\nSet 1: Antagon Aweyxd WhoÃ³ps Bennji Sanfa\nSet 2: Antagon Aweyxd WhoÃ³ps Miatra Vinds\nSet 3: WhoÃ³ps Sanfa Bennji Miatra Vinds\nSet 4: Antagon Aweyxd WhoÃ³ps Bennji Sanfa\nSet 5: WhoÃ³ps Bennji Sanfa Edolie Pawx\nSet 6: WhoÃ³ps Bennji Sanfa Edolie Pawx\n\nPre-position for Executioner's Sentence\nPre-position: WhoÃ³ps Bennji Sanfa Edolie\n\ninvitelist:Antagon-Blackhand Aweyxd-Blackhand KÃ¢zuto-Blackhand Pawx-Blackhand Dpxhunt-Blackhand LukÃ®Ã®-Blackhand Oxyvoker-Blackhand Bennji-Blackhand Sanfa-Blackhand Edolie-Blackhand Vinds-Blackrock Tranqy-Blackhand Cadogan-Blackhand Valamonk-Blackhand Miatra-Blackhand Helimeisterb-Blackhand Morpheusmage-Blackhand WhoÃ³ps-Blackhand CronÃ®x-Blackhand BadpolÃ©-Blackhand;\n\n",
-["Chimaerus - Mythic"] = "EncounterID:3306;Name:Chimaerus - Mythic;Difficulty:Mythic\n\ntime:5;ph:1;tag:WhoÃ³ps;spellid:322118;\ntime:6;ph:1;tag:Kodama;spellid:391528;\ntime:19;ph:1;bossSpell:1262289;tag:Tranqy;spellid:106898;\ntime:45;ph:1;tag:FuÃŸgÃ¤nger;spellid:106898;\ntime:66;ph:1;tag:Kodama;spellid:391528;\ntime:67;ph:1;tag:Sanfa;spellid:114052;\ntime:68;ph:1;bossSpell:1245396;tag:Cadogan;spellid:51052;\ntime:69;ph:1;tag:KÃ¢zuto;spellid:196718;\ntime:71;ph:1;tag:Sanfa;spellid:98008;\ntime:72;ph:1;tag:WhoÃ³ps;spellid:115310;\ntime:72;ph:1;tag:Kodama;spellid:740;\ntime:87;ph:1;bossSpell:1250953;tag:Tranqy;spellid:106898;\ntime:127;ph:1;tag:WhoÃ³ps;spellid:322118;\ntime:138;ph:1;tag:Kodama;spellid:391528;\ntime:140;ph:1;bossSpell:1245396;tag:CronÃ®x;spellid:51052;\ntime:140;ph:1;bossSpell:1245396;tag:Vinds;spellid:97462;\ntime:143;ph:1;tag:WhoÃ³ps;spellid:443028;\ntime:166;ph:1;tag:Tranqy;spellid:106898;\ntime:189;ph:1;tag:FuÃŸgÃ¤nger;spellid:106898;\ntime:200;ph:1;tag:Kodama;spellid:391528;\ntime:9;ph:2;bossSpell:1258610;tag:WhoÃ³ps;spellid:322118;\ntime:13;ph:2;bossSpell:1250953;tag:WhoÃ³ps;spellid:115310;\ntime:13;ph:2;bossSpell:1250953;tag:Sanfa;spellid:114052;\ntime:19;ph:2;bossSpell:1262289;tag:Tranqy;spellid:106898;\ntime:54;ph:2;tag:FuÃŸgÃ¤nger;spellid:106898;\ntime:64;ph:2;tag:Kodama;spellid:391528;\ntime:69;ph:2;tag:WhoÃ³ps;spellid:443028;\ntime:69;ph:2;tag:Kodama;spellid:740;\ntime:69;ph:2;tag:Cadogan;spellid:51052;\ntime:72;ph:2;tag:Sanfa;spellid:98008;\ntime:87;ph:2;bossSpell:1250953;tag:Tranqy;spellid:106898;\ntime:19;ph:1;tag:Antagon Cadogan Vinds Dpxhunt Pawx Torashi FuÃŸgÃ¤nger BadpolÃ© WhoÃ³ps Kodama;text:Group Soak;colors:1 0.5 0 1;\ntime:155;ph:1;tag:Antagon Cadogan Vinds Dpxhunt Pawx Torashi FuÃŸgÃ¤nger BadpolÃ© WhoÃ³ps Kodama;text:Group Soak;colors:1 0.5 0 1;\ntime:19;ph:2;tag:Antagon Cadogan Vinds Dpxhunt Pawx Torashi FuÃŸgÃ¤nger BadpolÃ© WhoÃ³ps Kodama;text:Group Soak;colors:1 0.5 0 1;\ntime:91;ph:1;tag:Aweyxd CronÃ®x Morpheusmage KÃ¢zuto Korimeow Leergut Pymowl Tranqy Sanfa Nocie;text:Group Soak;colors:1 0.5 0 1;\ntime:44;ph:1;tag:Sanfa Tranqy;text:Soak Rift Madness;colors:0.63 0.16 1 1;\ntime:44;ph:2;tag:Sanfa Tranqy;text:Soak Rift Madness;colors:0.63 0.16 1 1;\ntime:44;ph:3;tag:Sanfa Tranqy;text:Soak Rift Madness;colors:0.63 0.16 1 1;\ntime:44;ph:4;tag:Sanfa Tranqy;text:Soak Rift Madness;colors:0.63 0.16 1 1;\ntime:117;ph:1;tag:WhoÃ³ps FuÃŸgÃ¤nger;text:Soak Rift Madness;colors:0.63 0.16 1 1;\ntime:117;ph:2;tag:WhoÃ³ps FuÃŸgÃ¤nger;text:Soak Rift Madness;colors:0.63 0.16 1 1;\ntime:117;ph:3;tag:WhoÃ³ps FuÃŸgÃ¤nger;text:Soak Rift Madness;colors:0.63 0.16 1 1;\ntime:117;ph:4;tag:WhoÃ³ps FuÃŸgÃ¤nger;text:Soak Rift Madness;colors:0.63 0.16 1 1;\ntime:176;ph:1;tag:Cadogan Vinds Torashi;text:Kick Left;colors:1 0.4 0.7 1;\ntime:206;ph:1;tag:Cadogan Vinds Torashi;text:Kick Left;colors:1 0.4 0.7 1;\ntime:226;ph:1;tag:Cadogan Vinds Torashi;text:Kick Left;colors:1 0.4 0.7 1;\ntime:176;ph:1;tag:Dpxhunt FuÃŸgÃ¤nger BadpolÃ©;text:Kick Right;colors:1 0.4 0.7 1;\ntime:206;ph:1;tag:Dpxhunt FuÃŸgÃ¤nger BadpolÃ©;text:Kick Right;colors:1 0.4 0.7 1;\ntime:226;ph:1;tag:Dpxhunt FuÃŸgÃ¤nger BadpolÃ©;text:Kick Right;colors:1 0.4 0.7 1;\ntime:176;ph:1;tag:CronÃ®x KÃ¢zuto Tranqy;text:Kick Left;colors:1 0.4 0.7 1;\ntime:206;ph:1;tag:CronÃ®x KÃ¢zuto Tranqy;text:Kick Left;colors:1 0.4 0.7 1;\ntime:226;ph:1;tag:CronÃ®x KÃ¢zuto Tranqy;text:Kick Left;colors:1 0.4 0.7 1;\ntime:176;ph:1;tag:Morpheusmage Korimeow Leergut;text:Kick Right;colors:1 0.4 0.7 1;\ntime:206;ph:1;tag:Morpheusmage Korimeow Leergut;text:Kick Right;colors:1 0.4 0.7 1;\ntime:226;ph:1;tag:Morpheusmage Korimeow Leergut;text:Kick Right;colors:1 0.4 0.7 1;\n\nAlndust Upheaval Soak\nSoak 1, 3, 4: Antagon Cadogan Vinds Dpxhunt Pawx Torashi FuÃŸgÃ¤nger BadpolÃ© WhoÃ³ps Kodama\nSoak 2: Aweyxd CronÃ®x Morpheusmage KÃ¢zuto Korimeow Leergut Pymowl Tranqy Sanfa Nocie\n\nRift Madness Soak\nSoak 1: Sanfa Tranqy\nSoak 2: WhoÃ³ps FuÃŸgÃ¤nger\n\nFirst Kick - Haunting Essence \nGroup 1 - Left: Cadogan Vinds Torashi\nGroup 1 - Right: Dpxhunt FuÃŸgÃ¤nger BadpolÃ©\nGroup 2 - Left: CronÃ®x KÃ¢zuto Tranqy\nGroup 2 - Right: Morpheusmage Korimeow Leergut\n\ninvitelist:Antagon-Blackhand Aweyxd-Blackhand KÃ¢zuto-Blackhand Pawx-Blackhand Pymowl-Thrall Korimeow-TarrenMill Vinds-Blackrock CronÃ®x-Blackhand Cadogan-Blackhand Morpheusmage-Blackhand Tranqy-Blackhand FuÃŸgÃ¤nger-Blackrock Kodama-Thrall Nocie-Blackhand WhoÃ³ps-Blackhand Sanfa-Blackhand Dpxhunt-Blackhand Leergut-Blackhand BadpolÃ©-Blackhand Torashi-Mal'Ganis;\n\n",
-},
-["InviteList"] = {
-["Vorasius - Mythic"] = {
-"Antagon-Blackhand",
-"Aweyxd-Blackhand",
-"KÃ¢zuto-Blackhand",
-"Pymowl-Thrall",
-"Korimeow-TarrenMill",
-"Bennji-Blackhand",
-"Vinds-Blackrock",
-"CronÃ®x-Blackhand",
-"Tranqy-Blackhand",
-"Kodama-Thrall",
-"Nocie-Blackhand",
-"FuÃŸgÃ¤nger-Blackrock",
-"Leergut-Blackhand",
-"Torashi-Mal'Ganis",
-"Miatra-Blackhand",
-"Valamonk-Blackhand",
-"Dpxhunt-Blackhand",
-"Morpheusmage-Blackhand",
-"Axtn-Blackhand",
-"Helimeisterb-Blackhand",
-},
-["Crown - Mythic"] = {
-"Antagon-Blackhand",
-"Aweyxd-Blackhand",
-"KÃ¢zuto-Blackhand",
-"Pymowl-Thrall",
-"Pawx-Blackhand",
-"Cadogan-Blackhand",
-"CronÃ®x-Blackhand",
-"Dpxhunt-Blackhand",
-"LukÃ®Ã®-Blackhand",
-"Oxyvoker-Blackhand",
-"Vinds-Blackrock",
-"Leergut-Blackhand",
-"Bennji-Blackhand",
-"Sanfa-Blackhand",
-"Edolie-Blackhand",
-"WhoÃ³ps-Blackhand",
-"Valamonk-Blackhand",
-"Helimeisterb-Blackhand",
-"FuÃŸgÃ¤nger-Blackrock",
-"Axtn-Blackhand",
-},
-["Belo'ren - Mythic"] = {
-"Antagon-Blackhand",
-"Aweyxd-Blackhand",
-"Edolie-Blackhand",
-"Sanfa-Blackhand",
-"Cadogan-Blackhand",
-"CronÃ®x-Blackhand",
-"LukÃ®Ã®-Blackhand",
-"Dpxhunt-Blackhand",
-"Miatra-Blackhand",
-"Helimeisterb-Blackhand",
-"Tranqy-Blackhand",
-"Torashi-Mal'Ganis",
-"KÃ¢zuto-Blackhand",
-"Oxyvoker-Blackhand",
-"Bennji-Blackhand",
-"Axtn-Blackhand",
-"Vinds-Blackrock",
-"Pawx-Blackhand",
-"Kodama-Thrall",
-"BadpolÃ©-Blackhand",
-},
-["Lura - Mythic"] = {
-"CronÃ®x-Blackhand",
-"KÃ¢zuto-Blackhand",
-"Tranqy-Blackhand",
-"LukÃ®Ã®-Blackhand",
-"Pawx-Blackhand",
-"Bennji-Blackhand",
-"Vinds-Blackrock",
-"Sanatio-Blackhand",
-"Antadk-Blackhand",
-"Miatra-Blackhand",
-"Axtn-Blackhand",
-"Helimeisterb-Blackhand",
-"Sanfa-Blackhand",
-"Edolie-Blackhand",
-"Oxyvoker-Blackhand",
-"Dpxhunt-Blackhand",
-"Cadogan-Blackhand",
-"Pymowl-Thrall",
-"Morpheusmage-Blackhand",
-"WhoÃ³ps-Blackhand",
-},
-["Averzian - Mythic"] = {
-"Antagon-Blackhand",
-"Aweyxd-Blackhand",
-"KÃ¢zuto-Blackhand",
-"Pawx-Blackhand",
-"Korimeow-TarrenMill",
-"Vinds-Blackrock",
-"CronÃ®x-Blackhand",
-"Morpheusmage-Blackhand",
-"FuÃŸgÃ¤nger-Blackrock",
-"Kodama-Thrall",
-"Nocie-Blackhand",
-"BadpolÃ©-Blackhand",
-"Leergut-Blackhand",
-"Torashi-Mal'Ganis",
-"Miatra-Blackhand",
-"Cadogan-Blackhand",
-"Valamonk-Blackhand",
-"LukÃ®Ã®-Blackhand",
-"Sanfa-Blackhand",
-"Oxyvoker-Blackhand",
-},
-["Vaelgor - Mythic"] = {
-"Antagon-Blackhand",
-"Aweyxd-Blackhand",
-"KÃ¢zuto-Blackhand",
-"Pymowl-Thrall",
-"Oxyvoker-Blackhand",
-"Leergut-Blackhand",
-"Vinds-Blackrock",
-"Torashi-Mal'Ganis",
-"CronÃ®x-Blackhand",
-"Helimeisterb-Blackhand",
-"Edolie-Blackhand",
-"Bennji-Blackhand",
-"Kodama-Thrall",
-"Tranqy-Blackhand",
-"BadpolÃ©-Blackhand",
-"LukÃ®Ã®-Blackhand",
-"Valamonk-Blackhand",
-"FuÃŸgÃ¤nger-Blackrock",
-"Axtn-Blackhand",
-"WhoÃ³ps-Blackhand",
-},
-["Salhadaar - Mythic"] = {
-"Antagon-Blackhand",
-"Aweyxd-Blackhand",
-"KÃ¢zuto-Blackhand",
-"Korimeow-TarrenMill",
-"Oxyvoker-Blackhand",
-"FuÃŸgÃ¤nger-Blackrock",
-"Vinds-Blackrock",
-"CronÃ®x-Blackhand",
-"Morpheusmage-Blackhand",
-"WhoÃ³ps-Blackhand",
-"LukÃ®Ã®-Blackhand",
-"Pymowl-Thrall",
-"Leergut-Blackhand",
-"Nocie-Blackhand",
-"Torashi-Mal'Ganis",
-"Edolie-Blackhand",
-"Miatra-Blackhand",
-"Valamonk-Blackhand",
-"Axtn-Blackhand",
-"BadpolÃ©-Blackhand",
-},
-["Vanguard - Mythic"] = {
-"Antagon-Blackhand",
-"Aweyxd-Blackhand",
-"KÃ¢zuto-Blackhand",
-"Pawx-Blackhand",
-"Dpxhunt-Blackhand",
-"LukÃ®Ã®-Blackhand",
-"Oxyvoker-Blackhand",
-"Bennji-Blackhand",
-"Sanfa-Blackhand",
-"Edolie-Blackhand",
-"Vinds-Blackrock",
-"Tranqy-Blackhand",
-"Cadogan-Blackhand",
-"Valamonk-Blackhand",
-"Miatra-Blackhand",
-"Helimeisterb-Blackhand",
-"Morpheusmage-Blackhand",
-"WhoÃ³ps-Blackhand",
-"CronÃ®x-Blackhand",
-"BadpolÃ©-Blackhand",
-},
-["Chimaerus - Mythic"] = {
-"Antagon-Blackhand",
-"Aweyxd-Blackhand",
-"KÃ¢zuto-Blackhand",
-"Pawx-Blackhand",
-"Pymowl-Thrall",
-"Korimeow-TarrenMill",
-"Vinds-Blackrock",
-"CronÃ®x-Blackhand",
-"Cadogan-Blackhand",
-"Morpheusmage-Blackhand",
-"Tranqy-Blackhand",
-"FuÃŸgÃ¤nger-Blackrock",
-"Kodama-Thrall",
-"Nocie-Blackhand",
-"WhoÃ³ps-Blackhand",
-"Sanfa-Blackhand",
-"Dpxhunt-Blackhand",
-"Leergut-Blackhand",
-"BadpolÃ©-Blackhand",
-"Torashi-Mal'Ganis",
-},
-},
-["GravityUIProfile"] = "GravityUI",
-["PersonalReminders"] = {
-},
-["HasLoggedIntoMidnight"] = true,
-["NickNames"] = {
-["LukÃ®Ã®-Blackhand"] = "Luki",
-},
-["StoredPersonalReminder"] = {
-},
-["PATankSettings"] = {
-["xOffset"] = -202,
-["MultiTankGrowDirection"] = "UP",
-["yOffset"] = -121,
-["Limit"] = 5,
-["Spacing"] = -1,
-["Anchor"] = "CENTER",
-["StackScale"] = 4,
-["enabled"] = false,
-["UpscaleDuration"] = false,
-["Width"] = 40,
-["HideBorder"] = false,
-["HideDurationText"] = false,
-["AlternateDisplay"] = false,
-["Height"] = 40,
-["relativeTo"] = "CENTER",
-["HideTooltip"] = false,
-["GrowDirection"] = "LEFT",
-},
-["NSUI"] = {
-["reminders_frame"] = {
-},
-["timeline_window"] = {
-["scale"] = 1,
-["NSUITimelineWindow"] = {
-["scale"] = 1,
-},
-},
-["scale"] = 1,
-["externals_anchor"] = {
-["settings"] = {
-["height"] = 70,
-["anchorPoint"] = {
-"CENTER",
-"UIParent",
-"CENTER",
-0,
-150,
-},
-["width"] = 70,
-},
-},
-["AutoComplete"] = {
-["WA"] = {
-"Northern Sky",
-"Northern Sky Manaforge Omega",
-["Optimized"] = {
-["n"] = {
-"northern sky",
-},
-},
-},
-["Addon"] = {
-"Nortern Sky",
-"Nortern Sky Raid Tools",
-"Northern Sky Raid Tools",
-"Northern Sky",
-["Optimized"] = {
-},
-},
-},
-},
     }
+
 }
 
--- 4. WARPDEPLETE
+-- 2. WARPDEPLETE
 -- Data from WarpDepleteDB.profiles["GravityUI"]
 imports["WarpDeplete"] = {
     data = {
@@ -1787,38 +695,38 @@ imports["WarpDeplete"] = {
 ["timerSuccessColor"] = "ff00ff28",
 ["barPadding"] = 4,
 ["verticalOffset"] = 4,
-["frameX"] = 13.38862800598145,
+["frameX"] = 13.38861083984375,
 ["completedObjectivesColor"] = "ff00ff25",
 ["keyDetailsFontSize"] = 12,
-["keyColor"] = "ff0095ff",
+["timerFont"] = "Gravity",
 ["bar3Font"] = "Gravity",
-["bar1Texture"] = "Gravity Normal",
-["bar3TextureColor"] = "ffe6e6e6",
-["objectivesFont"] = "Gravity",
 ["keyDetailsColor"] = "ffe6e6e6",
-["keyFont"] = "Gravity",
+["bar3TextureColor"] = "ffe6e6e6",
+["keyColor"] = "ff0095ff",
 ["bar2Texture"] = "Gravity Normal",
 ["keyDetailsFont"] = "Gravity",
-["forcesFont"] = "Gravity",
+["frameY"] = 173.7003021240234,
 ["deathsFont"] = "Gravity",
-["bar3Texture"] = "Gravity Normal",
-["frameScale"] = 0.9,
+["frameScale"] = 0.94,
 ["forcesOverlayTexture"] = "Gravity Normal",
 ["timingsImprovedTimeColor"] = "ff00ff25",
+["bar1Texture"] = "Gravity Normal",
 ["showPrideGlow"] = false,
-["completedForcesColor"] = "ff00ff25",
 ["objectivesFontSize"] = 16,
+["bar3Texture"] = "Gravity Normal",
 ["bar1Font"] = "Gravity",
-["bar2TextureColor"] = "ffe6e6e6",
+["forcesOverlayTextureColor"] = "ff00ff28",
+["objectivesFont"] = "Gravity",
 ["timerFontSize"] = 28,
 ["bar1TextureColor"] = "ffe6e6e6",
 ["forcesTextureColor"] = "ff0096ff",
 ["forcesTexture"] = "Gravity Normal",
-["frameY"] = 187.8846740722656,
-["forcesOverlayTextureColor"] = "ff00ff28",
-["timerFont"] = "Gravity",
+["forcesFont"] = "Gravity",
+["bar2TextureColor"] = "ffe6e6e6",
 ["keyFont"] = "Gravity",
-}
+["completedForcesColor"] = "ff00ff25",
+["barWidth"] = 300,
+    }
 
 }
 
@@ -1949,24 +857,15 @@ imports["Dominos"] = {
 ["y"] = 219.8643798828125,
 ["relPoint"] = "LEFT",
 ["pages"] = {
-["HUNTER"] = {
-},
-["SHAMAN"] = {
-},
-["PRIEST"] = {
-},
-["PALADIN"] = {
-},
-["DEMONHUNTER"] = {
-},
-["DEATHKNIGHT"] = {
-},
-["DRUID"] = {
-},
-["EVOKER"] = {
-},
-["ROGUE"] = {
-},
+["HUNTER"] = {},
+["SHAMAN"] = {},
+["PRIEST"] = {},
+["PALADIN"] = {},
+["DEMONHUNTER"] = {},
+["DEATHKNIGHT"] = {},
+["DRUID"] = {},
+["EVOKER"] = {},
+["ROGUE"] = {},
 },
 ["displayLevel"] = 1,
 ["padH"] = 2,
@@ -1986,24 +885,15 @@ imports["Dominos"] = {
 ["numButtons"] = 12,
 ["displayLayer"] = "LOW",
 ["pages"] = {
-["HUNTER"] = {
-},
-["SHAMAN"] = {
-},
-["PRIEST"] = {
-},
-["PALADIN"] = {
-},
-["DEMONHUNTER"] = {
-},
-["DEATHKNIGHT"] = {
-},
-["DRUID"] = {
-},
-["EVOKER"] = {
-},
-["ROGUE"] = {
-},
+["HUNTER"] = {},
+["SHAMAN"] = {},
+["PRIEST"] = {},
+["PALADIN"] = {},
+["DEMONHUNTER"] = {},
+["DEATHKNIGHT"] = {},
+["DRUID"] = {},
+["EVOKER"] = {},
+["ROGUE"] = {},
 },
 ["fadeInDuration"] = 0.1000000014901161,
 ["y"] = 181.9765319824219,
@@ -2028,24 +918,15 @@ imports["Dominos"] = {
 ["displayLayer"] = "LOW",
 ["fadeInDuration"] = 0.1000000014901161,
 ["pages"] = {
-["HUNTER"] = {
-},
-["SHAMAN"] = {
-},
-["PRIEST"] = {
-},
-["PALADIN"] = {
-},
-["DEMONHUNTER"] = {
-},
-["DEATHKNIGHT"] = {
-},
-["DRUID"] = {
-},
-["EVOKER"] = {
-},
-["ROGUE"] = {
-},
+["HUNTER"] = {},
+["SHAMAN"] = {},
+["PRIEST"] = {},
+["PALADIN"] = {},
+["DEMONHUNTER"] = {},
+["DEATHKNIGHT"] = {},
+["DRUID"] = {},
+["EVOKER"] = {},
+["ROGUE"] = {},
 },
 ["fadeOutDelay"] = false,
 ["x"] = 1.864888509114583,
@@ -2078,24 +959,15 @@ imports["Dominos"] = {
 ["padH"] = 2,
 ["fadeInDelay"] = false,
 ["pages"] = {
-["HUNTER"] = {
-},
-["SHAMAN"] = {
-},
-["PRIEST"] = {
-},
-["PALADIN"] = {
-},
-["DEMONHUNTER"] = {
-},
-["DEATHKNIGHT"] = {
-},
-["DRUID"] = {
-},
-["EVOKER"] = {
-},
-["ROGUE"] = {
-},
+["HUNTER"] = {},
+["SHAMAN"] = {},
+["PRIEST"] = {},
+["PALADIN"] = {},
+["DEMONHUNTER"] = {},
+["DEATHKNIGHT"] = {},
+["DRUID"] = {},
+["EVOKER"] = {},
+["ROGUE"] = {},
 },
 ["rowSpacing"] = 0,
 },
@@ -2109,24 +981,15 @@ imports["Dominos"] = {
 ["spacing"] = 2,
 ["rightClickUnit"] = "player",
 ["pages"] = {
-["HUNTER"] = {
-},
-["SHAMAN"] = {
-},
-["PRIEST"] = {
-},
-["PALADIN"] = {
-},
-["DEMONHUNTER"] = {
-},
-["DEATHKNIGHT"] = {
-},
-["DRUID"] = {
-},
-["EVOKER"] = {
-},
-["ROGUE"] = {
-},
+["HUNTER"] = {},
+["SHAMAN"] = {},
+["PRIEST"] = {},
+["PALADIN"] = {},
+["DEMONHUNTER"] = {},
+["DEATHKNIGHT"] = {},
+["DRUID"] = {},
+["EVOKER"] = {},
+["ROGUE"] = {},
 },
 ["displayLayer"] = "LOW",
 ["columns"] = 6,
@@ -2153,24 +1016,15 @@ imports["Dominos"] = {
 ["numButtons"] = 12,
 ["displayLayer"] = "LOW",
 ["pages"] = {
-["HUNTER"] = {
-},
-["SHAMAN"] = {
-},
-["PRIEST"] = {
-},
-["PALADIN"] = {
-},
-["DEMONHUNTER"] = {
-},
-["DEATHKNIGHT"] = {
-},
-["DRUID"] = {
-},
-["EVOKER"] = {
-},
-["ROGUE"] = {
-},
+["HUNTER"] = {},
+["SHAMAN"] = {},
+["PRIEST"] = {},
+["PALADIN"] = {},
+["DEMONHUNTER"] = {},
+["DEATHKNIGHT"] = {},
+["DRUID"] = {},
+["EVOKER"] = {},
+["ROGUE"] = {},
 },
 ["displayLevel"] = 1,
 ["hidden"] = true,
@@ -2205,24 +1059,15 @@ imports["Dominos"] = {
 ["padH"] = 2,
 ["fadeInDelay"] = false,
 ["pages"] = {
-["HUNTER"] = {
-},
-["SHAMAN"] = {
-},
-["PRIEST"] = {
-},
-["PALADIN"] = {
-},
-["DEMONHUNTER"] = {
-},
-["DEATHKNIGHT"] = {
-},
-["DRUID"] = {
-},
-["EVOKER"] = {
-},
-["ROGUE"] = {
-},
+["HUNTER"] = {},
+["SHAMAN"] = {},
+["PRIEST"] = {},
+["PALADIN"] = {},
+["DEMONHUNTER"] = {},
+["DEATHKNIGHT"] = {},
+["DRUID"] = {},
+["EVOKER"] = {},
+["ROGUE"] = {},
 },
 ["rowSpacing"] = 0,
 },
@@ -2240,24 +1085,15 @@ imports["Dominos"] = {
 ["displayLevel"] = 1,
 ["rightClickUnit"] = "player",
 ["pages"] = {
-["HUNTER"] = {
-},
-["SHAMAN"] = {
-},
-["PRIEST"] = {
-},
-["PALADIN"] = {
-},
-["DEMONHUNTER"] = {
-},
-["DEATHKNIGHT"] = {
-},
-["DRUID"] = {
-},
-["EVOKER"] = {
-},
-["ROGUE"] = {
-},
+["HUNTER"] = {},
+["SHAMAN"] = {},
+["PRIEST"] = {},
+["PALADIN"] = {},
+["DEMONHUNTER"] = {},
+["DEATHKNIGHT"] = {},
+["DRUID"] = {},
+["EVOKER"] = {},
+["ROGUE"] = {},
 },
 ["hidden"] = true,
 ["x"] = 128.4723815917969,
@@ -2280,24 +1116,15 @@ imports["Dominos"] = {
 ["spacing"] = 2,
 ["rightClickUnit"] = "player",
 ["pages"] = {
-["HUNTER"] = {
-},
-["SHAMAN"] = {
-},
-["PRIEST"] = {
-},
-["PALADIN"] = {
-},
-["DEMONHUNTER"] = {
-},
-["DEATHKNIGHT"] = {
-},
-["DRUID"] = {
-},
-["EVOKER"] = {
-},
-["ROGUE"] = {
-},
+["HUNTER"] = {},
+["SHAMAN"] = {},
+["PRIEST"] = {},
+["PALADIN"] = {},
+["DEMONHUNTER"] = {},
+["DEATHKNIGHT"] = {},
+["DRUID"] = {},
+["EVOKER"] = {},
+["ROGUE"] = {},
 },
 ["displayLayer"] = "LOW",
 ["hidden"] = true,
@@ -2329,24 +1156,15 @@ imports["Dominos"] = {
 ["relPoint"] = "LEFT",
 ["y"] = 347.7499303165798,
 ["pages"] = {
-["HUNTER"] = {
-},
-["SHAMAN"] = {
-},
-["PRIEST"] = {
-},
-["PALADIN"] = {
-},
-["DEMONHUNTER"] = {
-},
-["DEATHKNIGHT"] = {
-},
-["DRUID"] = {
-},
-["EVOKER"] = {
-},
-["ROGUE"] = {
-},
+["HUNTER"] = {},
+["SHAMAN"] = {},
+["PRIEST"] = {},
+["PALADIN"] = {},
+["DEMONHUNTER"] = {},
+["DEATHKNIGHT"] = {},
+["DRUID"] = {},
+["EVOKER"] = {},
+["ROGUE"] = {},
 },
 ["padH"] = 2,
 ["fadeInDelay"] = false,
@@ -2363,24 +1181,15 @@ imports["Dominos"] = {
 ["spacing"] = 2,
 ["rightClickUnit"] = "player",
 ["pages"] = {
-["HUNTER"] = {
-},
-["SHAMAN"] = {
-},
-["PRIEST"] = {
-},
-["PALADIN"] = {
-},
-["DEMONHUNTER"] = {
-},
-["DEATHKNIGHT"] = {
-},
-["DRUID"] = {
-},
-["EVOKER"] = {
-},
-["ROGUE"] = {
-},
+["HUNTER"] = {},
+["SHAMAN"] = {},
+["PRIEST"] = {},
+["PALADIN"] = {},
+["DEMONHUNTER"] = {},
+["DEATHKNIGHT"] = {},
+["DRUID"] = {},
+["EVOKER"] = {},
+["ROGUE"] = {},
 },
 ["displayLayer"] = "LOW",
 ["columns"] = 2,
@@ -2406,24 +1215,15 @@ imports["Dominos"] = {
 ["spacing"] = 2,
 ["rightClickUnit"] = "player",
 ["pages"] = {
-["HUNTER"] = {
-},
-["SHAMAN"] = {
-},
-["PRIEST"] = {
-},
-["PALADIN"] = {
-},
-["DEMONHUNTER"] = {
-},
-["DEATHKNIGHT"] = {
-},
-["DRUID"] = {
-},
-["EVOKER"] = {
-},
-["ROGUE"] = {
-},
+["HUNTER"] = {},
+["SHAMAN"] = {},
+["PRIEST"] = {},
+["PALADIN"] = {},
+["DEMONHUNTER"] = {},
+["DEATHKNIGHT"] = {},
+["DRUID"] = {},
+["EVOKER"] = {},
+["ROGUE"] = {},
 },
 ["displayLayer"] = "LOW",
 ["columns"] = 2,
@@ -2455,24 +1255,15 @@ imports["Dominos"] = {
 ["y"] = 135.1986389160156,
 ["x"] = 2.222249348958334,
 ["pages"] = {
-["HUNTER"] = {
-},
-["SHAMAN"] = {
-},
-["PRIEST"] = {
-},
-["PALADIN"] = {
-},
-["DEMONHUNTER"] = {
-},
-["DEATHKNIGHT"] = {
-},
-["DRUID"] = {
-},
-["EVOKER"] = {
-},
-["ROGUE"] = {
-},
+["HUNTER"] = {},
+["SHAMAN"] = {},
+["PRIEST"] = {},
+["PALADIN"] = {},
+["DEMONHUNTER"] = {},
+["DEATHKNIGHT"] = {},
+["DRUID"] = {},
+["EVOKER"] = {},
+["ROGUE"] = {},
 },
 ["rowOffset"] = 0,
 ["padH"] = 2,

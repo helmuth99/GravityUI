@@ -512,7 +512,7 @@ Installer.registry = {
 -- changes the user made manually.
 --
 -- Keys confirmed via /run for k,v in pairs(EllesmereUIDB) do ... end on
--- a live GravityUI client (2026-07-18).
+-- a live GravityUI client (2026-07-31).
 function Installer:ApplyEllesmereGlobalSettings()
     if not C_AddOns.IsAddOnLoaded("EllesmereUI") then return end
     local db = _G.EllesmereUIDB
@@ -529,7 +529,9 @@ function Installer:ApplyEllesmereGlobalSettings()
     db.hideGameMenuButton   = true
     db.merchantShowItemLevel= true
     db.autoOpenContainers   = true
-    db.firstInstallPopupShown = true     -- Suppress EllesmereUI first-install popup (GravityUI handles setup)
+    db.bagsAutoDisabled     = true           -- Disable EUI bags auto-open (we use Baganator)
+    db.patchDotDisabled     = true           -- Suppress patch-update notification dot
+    db.firstInstallPopupShown = true         -- Suppress EllesmereUI first-install popup (GravityUI handles setup)
 
     -- ── Global Settings → Fonts & Colors ─────────────────────────────────
     -- Source: GetFontsDB() in EllesmereUI.lua (stores in EllesmereUIDB.fonts).
@@ -549,6 +551,7 @@ function Installer:ApplyEllesmereGlobalSettings()
     -- touches them. We must set them explicitly on first install.
     db.themedCharacterSheet  = false  -- off: GravityUI has its own character sheet
     db.themedInspectSheet    = false  -- off: GravityUI has its own inspect sheet
+    db.reskinBorders         = true   -- Reskin Blizzard Window Borders
     db.reskinLFGMenu         = true
     db.reskinGreatVault       = true
     db.reskinCollections      = true

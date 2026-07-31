@@ -333,13 +333,115 @@ local function BuildDebuffs(parent)
 end
 
 --==============================================================================================================================================================================================
+-- TRACKED BARS
+--==============================================================================================================================================================================================
+
+local function BuildTrackedBars(parent)
+    local scroll, content = GUI:CreateScrollableContent(parent)
+    scroll:SetAllPoints()
+    content.rowCount = 0
+
+    local function DB()
+        local db = ns.GetDB()
+        return db and db.actionbars and db.actionbars.cdmBuffbar
+    end
+
+    local function Refresh()
+        local mod = ns.TrackedBuffBar
+        if mod and mod.Refresh then mod:Refresh() end
+    end
+
+    -- Header
+    local header = GUI:CreateSectionHeader(content, "Tracked Bars (Blizzard CDM)")
+    header:SetPoint("TOPLEFT", content, "TOPLEFT", 10, -10)
+    content.rowCount = content.rowCount + 1.5
+
+    local infoBox = GUI:CreateInfoBox(content,
+        "Skins the Blizzard \"Tracked Bars\" (BuffBarCooldownViewer / CDM) with GravityUI colours, " ..
+        "bar texture and optional Dynamic Growth.\n\n" ..
+        "|cffFFCC00Note:|r Bars must be visible (open a M+ or use a Tracked ability) for changes to apply.",
+        GUI.CONTENT_WIDTH - 40)
+    infoBox:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT + 5))
+    content.rowCount = content.rowCount + 2
+
+    -- ── Master ───────────────────────────────────────────────────────────────
+    CreateSubLabel(content, "General")
+    AddRow(content, "Enable Tracked Bars", "checkbox", "enabled", DB(), function(val)
+        local d = DB(); if d then d.enabled = val end
+        Refresh()
+    end)
+
+    -- Bar Texture (LSM statusbar list)
+    local textureOptions = { { value = "Gravity Normal", text = "Gravity Normal" } }
+    local LSM = LibStub and LibStub("LibSharedMedia-3.0", true)
+    if LSM then
+        textureOptions = {}
+        for name, _ in pairs(LSM:HashTable("statusbar")) do
+            table.insert(textureOptions, { value = name, text = name })
+        end
+        table.sort(textureOptions, function(a, b) return a.text < b.text end)
+    end
+    AddRow(content, "Bar Texture", "dropdown", textureOptions, "texture", DB(), Refresh)
+
+    AddRow(content, "Bar Height",  "slider", 12, 40, "height",   DB(), Refresh, 1)
+    AddRow(content, "Font Size",   "slider",  8, 18, "fontSize", DB(), Refresh, 1)
+
+    -- Font (LSM font list)
+    local fontOptions = { { value = "Gravity", text = "Gravity" } }
+    if LSM then
+        fontOptions = {}
+        for name, _ in pairs(LSM:HashTable("font")) do
+            table.insert(fontOptions, { value = name, text = name })
+        end
+        table.sort(fontOptions, function(a, b) return a.text < b.text end)
+    end
+    AddRow(content, "Font", "dropdown", fontOptions, "font", DB(), Refresh)
+
+    -- ── Colors ───────────────────────────────────────────────────────────────
+    CreateSubLabel(content, "Bar Color")
+    AddRow(content, "Use Theme Color",    "checkbox", "useThemeColor",   DB(), Refresh)
+    AddRow(content, "Bar Color",          "color",    "barColor",        DB(), Refresh)
+
+    CreateSubLabel(content, "Background")
+    AddRow(content, "Use Theme Background", "checkbox", "useThemeBackground", DB(), Refresh)
+    AddRow(content, "Background Color",     "color",    "backgroundColor",   DB(), Refresh)
+
+    CreateSubLabel(content, "Spark")
+    AddRow(content, "Spark Color", "color", "sparkColor", DB(), Refresh)
+
+    -- ── Icon ─────────────────────────────────────────────────────────────────
+    CreateSubLabel(content, "Icon")
+    AddRow(content, "Icon Size",         "slider", 12, 40, "iconSize",      DB(), Refresh, 1)
+    AddRow(content, "Icon Border Size",  "slider",  0,  5, "iconBorderSize",DB(), Refresh, 1)
+    AddRow(content, "Icon Border Color", "color",  "iconBorderColor", DB(), Refresh)
+
+    -- ── Dynamic Growth ───────────────────────────────────────────────────────
+    CreateSubLabel(content, "Dynamic Growth")
+    AddRow(content, "Enable Dynamic Growth", "checkbox", "dynamicPositioning", DB(), Refresh)
+
+    local growOptions = {
+        { value = "DOWN", text = "Grow Down" },
+        { value = "UP",   text = "Grow Up"   },
+    }
+    local growRow = CreatePropertyRow(content, "Grow Direction", "dropdown", growOptions, "growDirection", DB(), Refresh)
+    growRow:SetParent(content)
+    growRow:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT + 5))
+    content.rowCount = content.rowCount + 1
+
+    AddRow(content, "Bar Spacing", "slider", 0, 20, "spacing", DB(), Refresh, 1)
+
+    content:SetHeight(content.rowCount * (ROW_HEIGHT + 5) + 20)
+end
+
+--==============================================================================================================================================================================================
 -- PAGE REGISTRATION
 --==============================================================================================================================================================================================
 ns.GUI:RegisterPage("utilities", {
     title = "Utilities",
     subTabs = {
-        { name = "Sound Alerts", builder = BuildSoundAlerts },
-        { name = "Debuffs",      builder = BuildDebuffs },
+        { name = "Sound Alerts",  builder = BuildSoundAlerts },
+        { name = "Debuffs",       builder = BuildDebuffs },
+        { name = "Tracked Bars",  builder = BuildTrackedBars },
     },
     OnBuild = function(content)
         local scrollFrame = content:GetParent()

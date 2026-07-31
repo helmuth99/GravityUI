@@ -739,11 +739,11 @@ local function BuildCombat(parent)
     header:SetPoint("TOPLEFT", PADDING, yOffset)
     yOffset = yOffset - header.gap - 10
     
-    local cb1 = ns.GUI:CreateCheckbox(content, "Show Damage Numbers", "showDamageNumbers", dbUI, function(enabled) SetCVar("floatingCombatTextCombatDamage", enabled and "1" or "0") end)
+    local cb1 = ns.GUI:CreateCheckbox(content, "Show Damage Numbers", "showDamageNumbers", dbUI, function(enabled) SetCVar("floatingCombatTextCombatDamage_v2", enabled and "1" or "0") end)
     cb1:SetPoint("TOPLEFT", PADDING, yOffset)
     yOffset = yOffset - 30
 
-    local cb2 = ns.GUI:CreateCheckbox(content, "Show Healing Numbers", "showHealingNumbers", dbUI, function(enabled) SetCVar("floatingCombatTextCombatHealing", enabled and "1" or "0") end)
+    local cb2 = ns.GUI:CreateCheckbox(content, "Show Healing Numbers", "showHealingNumbers", dbUI, function(enabled) SetCVar("floatingCombatTextCombatHealing_v2", enabled and "1" or "0") end)
     cb2:SetPoint("TOPLEFT", PADDING, yOffset)
     yOffset = yOffset - 40
     

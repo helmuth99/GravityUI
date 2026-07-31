@@ -1281,6 +1281,28 @@ ns.Defaults = {
         },
         bar7_vis = true,
         bar6_vis = true,
+        cdmBuffbar = {
+            enabled             = false,       -- user activates in Utilities → Tracked Bars
+            texture             = "Gravity Normal",
+            height              = 18,
+            fontSize            = 12,
+            font                = "Gravity",
+            -- Colors
+            useThemeBackground  = true,
+            backgroundColor     = {0, 0, 0, 0.5},
+            useThemeColor       = true,
+            barColor            = {0, 0.57, 0.98, 1},
+            -- Icon
+            iconSize            = 16,
+            iconBorderSize      = 1,
+            iconBorderColor     = {0, 0, 0, 1},
+            -- Spark
+            sparkColor          = {0.85, 0.85, 0.85, 1},
+            -- Dynamic Positioning
+            dynamicPositioning  = true,
+            growDirection       = "DOWN",   -- "UP" or "DOWN"
+            spacing             = 0,
+        },
     },
     skyriding =     {
         secondWindHeight = 20,

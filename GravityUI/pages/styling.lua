@@ -1365,7 +1365,13 @@ local function BuildTooltip(parent)
     local yOffset = -10
     local PAD = 10
 
-    local function RefreshTooltip() if ns.Tooltip and ns.Tooltip.Refresh then ns.Tooltip.Refresh() end end
+    local function RefreshTooltip()
+        if ns.Tooltip and ns.Tooltip.Refresh then ns.Tooltip.Refresh() end
+        -- Keep EllesmereUI's Blizzard Tooltip reskin in sync:
+        -- when GravityUI's Tooltip Module is enabled, EllesmereUI's own
+        -- reskin (customTooltips) must be off to prevent conflicts.
+        if ns.SyncEllesmereTooltip then ns.SyncEllesmereTooltip() end
+    end
     local dbTT = dbUI.tooltip or {}
     if dbTT.enabled == nil then dbTT.enabled = true end
     if not dbTT.visibility then dbTT.visibility = {npcs="SHOW", abilities="SHOW", items="SHOW", frames="SHOW", cdm="SHOW", customTrackers="SHOW"} end
@@ -1492,6 +1498,7 @@ local function BuildCharacter(parent)
         if ns.Character and ns.Character.RefreshCharacterPane then ns.Character.RefreshCharacterPane() end
         if ns.Character and ns.Character.RefreshAllFonts then ns.Character.RefreshAllFonts() end
         if ns.Inspect and ns.Inspect.UpdateInspectFrame then ns.Inspect.UpdateInspectFrame() end
+        if ns.SyncEllesmereCharSheet then ns.SyncEllesmereCharSheet() end
     end
     local dbChar = dbUI.character or {}
     if dbChar.enabled == nil then dbChar.enabled = true end
