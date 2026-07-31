@@ -31,5 +31,4 @@ move-folders:
 required-dependencies:
   - ellesmereui
   - bigwigs
-  - plater-nameplates
   - blizzmove
