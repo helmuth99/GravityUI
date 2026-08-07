@@ -1,4 +1,4 @@
--- Optional Addons Data Export
+﻿-- Optional Addons Data Export
 -- Extracted from User SavedVariables (07.08.2026)
 
 if not GravityUI.profiles["Cronix"] then return end
@@ -24,18 +24,18 @@ imports["Baganator"] = {
 ["default_battlepet"] = true,
 ["default_food"] = true,
 ["default_recipe"] = true,
-["default_junk"] = true,
-["default_reagent"] = true,
+["default_weapon"] = true,
+["default_questitem"] = true,
 ["default_consumable"] = true,
 ["default_tradegoods"] = true,
-["default_key"] = true,
-["default_container"] = true,
-["default_auto_equipment_sets"] = true,
-["default_profession"] = true,
-["default_potion"] = true,
 ["default_gem"] = true,
-["default_questitem"] = true,
-["default_weapon"] = true,
+["default_potion"] = true,
+["default_profession"] = true,
+["default_auto_equipment_sets"] = true,
+["default_container"] = true,
+["default_key"] = true,
+["default_reagent"] = true,
+["default_junk"] = true,
 },
 ["show_search_box"] = true,
 ["debug_categories_search"] = false,
@@ -45,10 +45,10 @@ imports["Baganator"] = {
 ["reverse_groups_sort_order"] = false,
 ["auto_open"] = {
 ["merchant"] = true,
-["void_storage"] = false,
 ["item_upgrade"] = true,
+["void_storage"] = false,
 ["guild_bank"] = true,
-["trade_partner"] = true,
+["forge_of_bonds"] = false,
 ["tradeskill"] = false,
 ["auction_house"] = true,
 ["character_panel"] = false,
@@ -56,15 +56,15 @@ imports["Baganator"] = {
 ["item_interaction"] = true,
 ["mail"] = true,
 ["sockets"] = true,
-["forge_of_bonds"] = false,
+["trade_partner"] = true,
 ["bank"] = true,
 },
 ["icon_corners_auto_insert_applied"] = {
 ["battle_pet_level"] = true,
-["keystone_level"] = true,
 ["bag_type"] = true,
+["keystone_level"] = true,
 },
-
+["show_recents_tabs_main_view"] = false,
 ["upgrade_plugin_ignored"] = {
 },
 ["category_hidden"] = {
@@ -72,20 +72,20 @@ imports["Baganator"] = {
 ["default_hearthstone"] = false,
 ["28"] = false,
 ["1"] = false,
-["14"] = false,
-["11"] = false,
-["21"] = false,
-["24"] = false,
+["25"] = false,
+["22"] = false,
+["12"] = false,
+["8"] = false,
 ["18"] = false,
 ["7"] = false,
-["26"] = false,
-["25"] = false,
-["8"] = false,
-["27"] = false,
 ["default_auto_equipment_sets"] = false,
+["14"] = false,
+["24"] = false,
+["27"] = false,
+["26"] = false,
 ["20"] = false,
-["12"] = false,
-["22"] = false,
+["21"] = false,
+["11"] = false,
 ["23"] = false,
 },
 ["junk_plugin_ignored"] = {
@@ -94,7 +94,7 @@ imports["Baganator"] = {
 ["character_bank_view_width"] = 14,
 ["no_frame_borders"] = false,
 ["warband_current_tab"] = 0,
-["category_item_grouping"] = true,
+["category_item_grouping"] = false,
 ["icon_top_left_corner_array"] = {
 "battle_pet_level",
 "keystone_level",
@@ -173,18 +173,130 @@ imports["Baganator"] = {
 3.611170053482056,
 124.6664047241211,
 },
-["recent_timeout"] = 15,
-["currency_headers_collapsed"] = {
+["sort_start_at_bottom"] = false,
+["custom_categories"] = {
+["23"] = {
+["name"] = "Weapons",
+["search"] = "#weapon",
+},
+["22"] = {
+["name"] = "Prof",
+["search"] = "#profession",
+},
+["21"] = {
+["name"] = "Trade",
+["search"] = "tradable loot|tradeable loot",
+},
+["13"] = {
+["name"] = "Food",
+["search"] = "#food",
+},
+["26"] = {
+["name"] = "Ring",
+["search"] = "#finger",
+},
+["27"] = {
+["name"] = "Midnight",
+["search"] = "#midnight",
+},
+["28"] = {
+["name"] = "Warbound",
+["search"] = "#warbound until equipped|#warbound",
+},
+["24"] = {
+["name"] = "BoA",
+["search"] = "boa",
+},
+["9"] = {
+["name"] = "Quest",
+["search"] = "#quest",
+},
+["8"] = {
+["name"] = "Trinkets",
+["search"] = "#trinket",
+},
+["14"] = {
+["name"] = "Junk",
+["search"] = "#junk",
+},
+["18"] = {
+["name"] = "Pets",
+["search"] = "#battle pet || pet",
+},
+["1"] = {
+["name"] = "TWW",
+["search"] = "#tww",
+},
+["5"] = {
+["name"] = "Consumables",
+["search"] = "#consumable",
+},
+["3"] = {
+["name"] = "Recipes",
+["search"] = "#recipe",
+},
+["2"] = {
+["name"] = "Misc",
+["search"] = "#tabard || #shirt",
+},
+["19"] = {
+["name"] = "Pots",
+["search"] = "#potion",
+},
+["4"] = {
+["name"] = "Boxes",
+["search"] = "open",
+},
+["7"] = {
+["name"] = "Gear",
+["search"] = "#armor",
+},
+["6"] = {
+["name"] = "Enchants",
+["search"] = "#item enhancement",
+},
+["25"] = {
+["name"] = "BoE",
+["search"] = "boe",
+},
+["15"] = {
+["name"] = "Gems",
+["search"] = "#gem",
+},
+["16"] = {
+["name"] = "Toys",
+["search"] = "#toy",
+},
+["17"] = {
+["name"] = "Keys",
+["search"] = "#key",
+},
+["20"] = {
+["name"] = "Sparks",
+["search"] = "spark",
+},
+["12"] = {
+["name"] = "Mats",
+["search"] = "#tradeskill|#reagent",
+},
+["11"] = {
+["name"] = "Legacy",
+["search"] = "#gear&!midnight",
+},
+["10"] = {
+["name"] = "Utility",
+["search"] = "",
+},
 },
 ["recent_include_owned"] = false,
-["category_sort_method"] = "item-level",
-["icon_context_fading"] = true,
+["icon_mark_unusable"] = false,
+["guild_current_tab"] = 4,
 ["guild_view_position_2"] = {
 "TOPLEFT",
-77.99996185302734,
--83.8887939453125,
+150.4443664550781,
+-143.148193359375,
 },
-["icon_equipment_set_border"] = true,
+["lock_frames"] = false,
 ["debug_timers"] = false,
 ["seen_welcome"] = 1,
 ["hide_special_container"] = {
@@ -213,29 +325,45 @@ imports["Baganator"] = {
 0,
 0,
 },
-["category_edit_search_mode"] = "visual",
-["category_horizontal_spacing_2"] = 0.3,
-["bag_view_show_bag_slots"] = false,
+["bag_icon_size"] = 36,
+["category_horizontal_spacing_2"] = 0.26,
+["currencies_tracked_imported"] = {
+},
 ["category_default_import"] = 3,
 ["debug_categories"] = false,
-["character_bank_current_tab"] = 1,
+["character_bank_current_tab"] = 0,
 ["category_horizontal_spacing"] = 0.15,
-["migrated_sort_method"] = true,
+["bag_view_position"] = {
+"BOTTOMRIGHT",
+-9.501708984375,
+23.72253036499023,
+},
 ["upgrade_plugin"] = "none",
-["junk_plugin"] = "poor_quality",
+["saved_searches"] = {
+},
+["guild_bank_sort_method"] = "unset",
+["category_migration"] = 5,
+["category_section_toggled"] = {
+["1"] = false,
+["Main"] = false,
+["Crafting"] = false,
+["3"] = false,
+["Equipment"] = false,
+["General"] = false,
+},
 ["category_modifications"] = {
 ["default_hearthstone"] = {
 ["showGroupPrefix"] = true,
 ["priority"] = -1,
 ["addedItems"] = {
-["i:6948"] = true,
 ["i:110560"] = true,
+["i:6948"] = true,
 },
 },
 ["default_other"] = {
 ["addedItems"] = {
-["i:220756"] = true,
 ["i:232049"] = true,
+["i:220756"] = true,
 },
 },
 ["1"] = {
@@ -254,6 +382,10 @@ imports["Baganator"] = {
 ["priority"] = 3,
 },
 ["19"] = {
+["addedItems"] = {
+["i:241304"] = true,
+["i:258138"] = true,
+},
 ["priority"] = -1,
 },
 ["4"] = {
@@ -275,11 +407,11 @@ imports["Baganator"] = {
 },
 },
 ["6"] = {
-["priority"] = -1,
 ["addedItems"] = {
 ["i:226505"] = true,
 ["i:213777"] = true,
 },
+["priority"] = -1,
 },
 ["9"] = {
 ["priority"] = -1,
@@ -297,19 +429,29 @@ imports["Baganator"] = {
 },
 },
 ["17"] = {
+["priority"] = -1,
 ["addedItems"] = {
 ["i:180653"] = true,
 },
-["priority"] = -1,
 },
 ["13"] = {
-["priority"] = -1,
 ["addedItems"] = {
+["i:242744"] = true,
 ["i:222778"] = true,
+["i:242764"] = true,
+["i:266985"] = true,
+["i:266996"] = true,
+["i:222768"] = true,
+["i:242753"] = true,
+["i:242747"] = true,
 ["i:222781"] = true,
+["i:222776"] = true,
+["i:242745"] = true,
 },
+["priority"] = -1,
 },
 ["21"] = {
+["showGroupPrefix"] = true,
 ["priority"] = 3,
 },
 ["11"] = {
@@ -317,6 +459,7 @@ imports["Baganator"] = {
 ["priority"] = 3,
 },
 ["23"] = {
+["showGroupPrefix"] = true,
 ["priority"] = -1,
 ["addedItems"] = {
 ["i:133301"] = true,
@@ -325,7 +468,13 @@ imports["Baganator"] = {
 },
 ["default_miscellaneous"] = {
 ["addedItems"] = {
+["i:244465"] = true,
 ["i:233186"] = true,
+["i:259361"] = true,
+["i:260531"] = true,
+["i:249689"] = true,
+["i:255826"] = true,
+["i:253580"] = true,
 },
 },
 ["default_housing"] = {
@@ -333,29 +482,33 @@ imports["Baganator"] = {
 ["priority"] = -1,
 ["addedItems"] = {
 ["i:246838"] = true,
-["i:252041"] = true,
 ["i:252039"] = true,
+["i:252041"] = true,
 },
 },
-
-["5"] = {
+["28"] = {
+["showGroupPrefix"] = true,
+["priority"] = 1,
+},
+["default_auto_equipment_sets"] = {
+["showGroupPrefix"] = true,
 ["priority"] = -1,
+},
+["5"] = {
 ["addedItems"] = {
 ["i:132514"] = true,
-["i:222776"] = true,
-["i:222768"] = true,
 },
+["priority"] = -1,
 },
 ["18"] = {
-["priority"] = -1,
 ["addedItems"] = {
 ["i:86143"] = true,
 ["i:98114"] = true,
 ["i:127755"] = true,
-["i:92682"] = true,
+["i:116374"] = true,
 ["i:116418"] = true,
 ["i:92683"] = true,
-["i:163036"] = true,
+["i:116424"] = true,
 ["i:98715"] = true,
 ["i:116421"] = true,
 ["i:116420"] = true,
@@ -363,28 +516,32 @@ imports["Baganator"] = {
 ["i:122457"] = true,
 ["i:116429"] = true,
 ["i:71153"] = true,
-["i:116424"] = true,
-["i:116374"] = true,
+["i:163036"] = true,
+["i:92682"] = true,
 },
+["priority"] = -1,
 },
 ["25"] = {
+["showGroupPrefix"] = true,
 ["priority"] = 0,
 },
 ["15"] = {
 ["priority"] = -1,
 },
 ["14"] = {
+["showGroupPrefix"] = true,
 ["priority"] = 3,
 },
 ["24"] = {
-["priority"] = 3,
+["showGroupPrefix"] = true,
+["priority"] = 0,
 },
 ["16"] = {
-["priority"] = -1,
 ["addedItems"] = {
 ["i:163604"] = true,
 ["i:45047"] = true,
 },
+["priority"] = -1,
 },
 ["26"] = {
 ["showGroupPrefix"] = true,
@@ -398,52 +555,55 @@ imports["Baganator"] = {
 ["showGroupPrefix"] = true,
 ["priority"] = 0,
 ["addedItems"] = {
-["i:268552"] = true,
 ["i:211297"] = true,
 ["i:268650"] = true,
+["i:231757"] = true,
+["i:231756"] = true,
 ["i:211296"] = true,
 },
 },
 ["12"] = {
+["showGroupPrefix"] = true,
 ["priority"] = -1,
 ["addedItems"] = {
 ["i:222738"] = true,
 },
 },
 ["22"] = {
+["showGroupPrefix"] = true,
 ["priority"] = -1,
 ["addedItems"] = {
-["i:222551"] = true,
+["i:245757"] = true,
+["i:246329"] = true,
 ["i:222548"] = true,
+["i:256645"] = true,
+["i:222551"] = true,
+["i:245760"] = true,
 },
 },
 ["10"] = {
+["priority"] = 3,
 ["addedItems"] = {
 ["i:65274"] = true,
-["i:64401"] = true,
+["i:112384"] = true,
 ["i:188152"] = true,
-["i:65360"] = true,
-["i:168222"] = true,
 ["i:109076"] = true,
+["i:168222"] = true,
+["i:65360"] = true,
 ["i:64402"] = true,
 ["i:132516"] = true,
-["i:64400"] = true,
-["i:111820"] = true,
-["i:221903"] = true,
 ["i:109253"] = true,
+["i:64400"] = true,
+["i:221903"] = true,
+["i:111820"] = true,
 ["i:221949"] = true,
 ["i:49040"] = true,
 ["i:203722"] = true,
-["i:112384"] = true,
-},
-["priority"] = 3,
+["i:64401"] = true,
 },
 },
-["category_migration"] = 5,
-["currencies_tracked"] = {
 },
-["guild_bank_sort_method"] = "unset",
-["warband_bank_view_width"] = 14,
+["warband_bank_view_width"] = 16,
 ["guild_view_position"] = {
 "LEFT",
 583.5559692382812,
@@ -452,80 +612,67 @@ imports["Baganator"] = {
 ["add_to_category_buttons_2"] = "drag+alt",
 ["view_type"] = "unset",
 ["bank_current_tab"] = 1,
-["icon_text_quality_colors"] = true,
-["bag_empty_space_at_top"] = false,
+["show_buttons_on_alt"] = false,
 ["icon_text_font_size"] = 14,
-["sort_ignore_slots_at_end"] = false,
+["setting_anchors"] = false,
+["bag_view_width"] = 16,
 ["disabled_skins"] = {
 },
-["view_alpha"] = 1,
 ["sort_ignore_slots_count_2"] = {
 ["Cronix-Blackhand"] = 0,
 },
 ["sort_ignore_bank_slots_count"] = {
 ["Cronix-Blackhand"] = 0,
 },
-["setting_anchors"] = false,
-["category_group_empty_slots"] = true,
-["debug_keywords"] = false,
+["recent_characters_main_view"] = {
+"Cronîx-Blackhand",
+"Cronìx-Blackhand",
+"Crônix-Blackhand",
+"Cròníx-Blackhand",
+},
 ["skins"] = {
 ["elvui"] = {
 ["use_bag_font"] = false,
 },
 ["blizzard"] = {
-["no_frame_borders"] = false,
+["no_frame_borders"] = true,
 ["view_transparency"] = 0,
-["empty_slot_background"] = false,
+["empty_slot_background"] = true,
 },
 ["blizzard_black"] = {
 ["empty_slot_background"] = false,
 },
 ["dark"] = {
-["view_transparency"] = 0.3,
-["square_icons"] = false,
-["no_frame_borders"] = false,
+["view_transparency"] = 0.2,
+["square_icons"] = true,
+["no_frame_borders"] = true,
 ["empty_slot_background"] = false,
 },
 },
-["recent_characters_main_view"] = {
-"Cronix-Blackhand",
-"Cronix-Blackhand",
-"Cronix-Blackhand",
-"Cronix-Blackhand",
-},
+["debug_keywords"] = false,
+["category_group_empty_slots"] = true,
 ["auto_sort_on_open"] = false,
-["bag_view_width"] = 14,
-["show_buttons_on_alt"] = false,
-["category_section_toggled"] = {
-["1"] = false,
-["Main"] = false,
-["Crafting"] = false,
-["General"] = false,
-["Equipment"] = false,
-},
+["view_alpha"] = 1,
+["sort_ignore_slots_at_end"] = false,
+["bag_empty_space_at_top"] = false,
+["icon_text_quality_colors"] = true,
 ["guild_view_dialog_position"] = {
-"LEFT",
+"TOP",
 "UIParent",
-"LEFT",
-246.2226867675781,
-227.4999389648438,
+"TOP",
+63.99988174438477,
+-170.1110534667969,
 },
-["saved_searches"] = {
-},
+["junk_plugin"] = "poor_quality",
 ["bank_only_view_position"] = {
 "LEFT",
 549.7777099609375,
 20.44439697265625,
 },
-["bag_view_position"] = {
-"BOTTOMRIGHT",
--5.66748046875,
-29.88918876647949,
-},
+["migrated_sort_method"] = true,
 ["show_sort_button_2"] = true,
-["currencies_tracked_imported"] = {
-},
-["bag_icon_size"] = 36,
+["bag_view_show_bag_slots"] = false,
+["category_edit_search_mode"] = "visual",
 ["currency_panel_position"] = {
 "RIGHT",
 "Baganator_CategoryViewBackpackViewFramedark",
@@ -533,124 +680,12 @@ imports["Baganator"] = {
 0,
 0,
 },
-["lock_frames"] = false,
-["guild_current_tab"] = 1,
-["icon_mark_unusable"] = false,
-["custom_categories"] = {
-["10"] = {
-["name"] = "Utility",
-["search"] = "",
+["icon_equipment_set_border"] = true,
+["icon_context_fading"] = true,
+["category_sort_method"] = "item-level",
+["currency_headers_collapsed"] = {
 },
-["11"] = {
-["name"] = "Legacy",
-["search"] = "#gear&!tww",
-},
-["12"] = {
-["name"] = "Mats",
-["search"] = "#tradeskill || #reagent",
-},
-["20"] = {
-["name"] = "Sparks",
-["search"] = "spark",
-},
-["17"] = {
-["name"] = "Keys",
-["search"] = "#key",
-},
-["16"] = {
-["name"] = "Toys",
-["search"] = "#toy",
-},
-["28"] = {
-["name"] = "Warbound",
-["search"] = "#warbound until equipped|#warbound",
-},
-["15"] = {
-["name"] = "Gems",
-["search"] = "#gem",
-},
-["25"] = {
-["name"] = "BoE",
-["search"] = "boe",
-},
-["8"] = {
-["name"] = "Trinkets",
-["search"] = "#trinket",
-},
-["14"] = {
-["name"] = "Junk",
-["search"] = "#junk",
-},
-["4"] = {
-["name"] = "Boxes",
-["search"] = "open",
-},
-["1"] = {
-["name"] = "TWW",
-["search"] = "#tww",
-},
-["19"] = {
-["name"] = "Pots",
-["search"] = "#potion",
-},
-["3"] = {
-["name"] = "Recipes",
-["search"] = "#recipe",
-},
-["2"] = {
-["name"] = "Misc",
-["search"] = "#tabard || #shirt",
-},
-["5"] = {
-["name"] = "Consumables",
-["search"] = "#consumable",
-},
-["18"] = {
-["name"] = "Pets",
-["search"] = "#battle pet || pet",
-},
-["7"] = {
-["name"] = "Gear",
-["search"] = "#armor",
-},
-["6"] = {
-["name"] = "Enchants",
-["search"] = "#item enhancement",
-},
-["9"] = {
-["name"] = "Quest",
-["search"] = "#quest",
-},
-["24"] = {
-["name"] = "BoA",
-["search"] = "boa",
-},
-["27"] = {
-["name"] = "Midnight",
-["search"] = "#midnight",
-},
-["26"] = {
-["name"] = "Ring",
-["search"] = "#finger",
-},
-["13"] = {
-["name"] = "Food",
-["search"] = "#food",
-},
-["21"] = {
-["name"] = "Trade",
-["search"] = "tradable loot || tradeable loot",
-},
-["22"] = {
-["name"] = "Prof",
-["search"] = "#profession",
-},
-["23"] = {
-["name"] = "Weapons",
-["search"] = "#weapon",
-},
-},
-["sort_start_at_bottom"] = false,
+["recent_timeout"] = 15,
     }
 
 }
