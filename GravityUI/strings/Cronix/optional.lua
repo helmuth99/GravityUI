@@ -1,5 +1,5 @@
-﻿-- Optional Addons Data Export
--- Extracted from User SavedVariables (31.07.2026)
+-- Optional Addons Data Export
+-- Extracted from User SavedVariables (07.08.2026)
 
 if not GravityUI.profiles["Cronix"] then return end
 
@@ -64,7 +64,7 @@ imports["Baganator"] = {
 ["keystone_level"] = true,
 ["bag_type"] = true,
 },
-["show_recents_tabs_main_view"] = false,
+
 ["upgrade_plugin_ignored"] = {
 },
 ["category_hidden"] = {
@@ -181,8 +181,8 @@ imports["Baganator"] = {
 ["icon_context_fading"] = true,
 ["guild_view_position_2"] = {
 "TOPLEFT",
-150.4443664550781,
--143.148193359375,
+77.99996185302734,
+-83.8887939453125,
 },
 ["icon_equipment_set_border"] = true,
 ["debug_timers"] = false,
@@ -214,11 +214,11 @@ imports["Baganator"] = {
 0,
 },
 ["category_edit_search_mode"] = "visual",
-["category_horizontal_spacing_2"] = 0.26,
+["category_horizontal_spacing_2"] = 0.3,
 ["bag_view_show_bag_slots"] = false,
 ["category_default_import"] = 3,
 ["debug_categories"] = false,
-["character_bank_current_tab"] = 0,
+["character_bank_current_tab"] = 1,
 ["category_horizontal_spacing"] = 0.15,
 ["migrated_sort_method"] = true,
 ["upgrade_plugin"] = "none",
@@ -255,10 +255,6 @@ imports["Baganator"] = {
 },
 ["19"] = {
 ["priority"] = -1,
-["addedItems"] = {
-["i:241304"] = true,
-["i:258138"] = true,
-},
 },
 ["4"] = {
 ["priority"] = 3,
@@ -309,21 +305,11 @@ imports["Baganator"] = {
 ["13"] = {
 ["priority"] = -1,
 ["addedItems"] = {
-["i:242744"] = true,
 ["i:222778"] = true,
-["i:242764"] = true,
-["i:266985"] = true,
-["i:266996"] = true,
-["i:242745"] = true,
-["i:242747"] = true,
-["i:242753"] = true,
 ["i:222781"] = true,
-["i:222776"] = true,
-["i:222768"] = true,
 },
 },
 ["21"] = {
-["showGroupPrefix"] = true,
 ["priority"] = 3,
 },
 ["11"] = {
@@ -331,7 +317,6 @@ imports["Baganator"] = {
 ["priority"] = 3,
 },
 ["23"] = {
-["showGroupPrefix"] = true,
 ["priority"] = -1,
 ["addedItems"] = {
 ["i:133301"] = true,
@@ -340,13 +325,7 @@ imports["Baganator"] = {
 },
 ["default_miscellaneous"] = {
 ["addedItems"] = {
-["i:244465"] = true,
 ["i:233186"] = true,
-["i:259361"] = true,
-["i:253580"] = true,
-["i:255826"] = true,
-["i:249689"] = true,
-["i:260531"] = true,
 },
 },
 ["default_housing"] = {
@@ -358,18 +337,13 @@ imports["Baganator"] = {
 ["i:252039"] = true,
 },
 },
-["28"] = {
-["showGroupPrefix"] = true,
-["priority"] = 1,
-},
-["default_auto_equipment_sets"] = {
-["showGroupPrefix"] = true,
-["priority"] = -1,
-},
+
 ["5"] = {
 ["priority"] = -1,
 ["addedItems"] = {
 ["i:132514"] = true,
+["i:222776"] = true,
+["i:222768"] = true,
 },
 },
 ["18"] = {
@@ -394,19 +368,16 @@ imports["Baganator"] = {
 },
 },
 ["25"] = {
-["showGroupPrefix"] = true,
 ["priority"] = 0,
 },
 ["15"] = {
 ["priority"] = -1,
 },
 ["14"] = {
-["showGroupPrefix"] = true,
 ["priority"] = 3,
 },
 ["24"] = {
-["showGroupPrefix"] = true,
-["priority"] = 0,
+["priority"] = 3,
 },
 ["16"] = {
 ["priority"] = -1,
@@ -427,30 +398,23 @@ imports["Baganator"] = {
 ["showGroupPrefix"] = true,
 ["priority"] = 0,
 ["addedItems"] = {
-["i:268650"] = true,
-["i:231756"] = true,
-["i:231757"] = true,
+["i:268552"] = true,
 ["i:211297"] = true,
+["i:268650"] = true,
 ["i:211296"] = true,
 },
 },
 ["12"] = {
-["showGroupPrefix"] = true,
 ["priority"] = -1,
 ["addedItems"] = {
 ["i:222738"] = true,
 },
 },
 ["22"] = {
-["showGroupPrefix"] = true,
 ["priority"] = -1,
 ["addedItems"] = {
-["i:245757"] = true,
-["i:246329"] = true,
-["i:256645"] = true,
-["i:222548"] = true,
 ["i:222551"] = true,
-["i:245760"] = true,
+["i:222548"] = true,
 },
 },
 ["10"] = {
@@ -479,7 +443,7 @@ imports["Baganator"] = {
 ["currencies_tracked"] = {
 },
 ["guild_bank_sort_method"] = "unset",
-["warband_bank_view_width"] = 16,
+["warband_bank_view_width"] = 14,
 ["guild_view_position"] = {
 "LEFT",
 583.5559692382812,
@@ -487,7 +451,7 @@ imports["Baganator"] = {
 },
 ["add_to_category_buttons_2"] = "drag+alt",
 ["view_type"] = "unset",
-["bank_current_tab"] = 2,
+["bank_current_tab"] = 1,
 ["icon_text_quality_colors"] = true,
 ["bag_empty_space_at_top"] = false,
 ["icon_text_font_size"] = 14,
@@ -495,6 +459,12 @@ imports["Baganator"] = {
 ["disabled_skins"] = {
 },
 ["view_alpha"] = 1,
+["sort_ignore_slots_count_2"] = {
+["Cronix-Blackhand"] = 0,
+},
+["sort_ignore_bank_slots_count"] = {
+["Cronix-Blackhand"] = 0,
+},
 ["setting_anchors"] = false,
 ["category_group_empty_slots"] = true,
 ["debug_keywords"] = false,
@@ -503,17 +473,17 @@ imports["Baganator"] = {
 ["use_bag_font"] = false,
 },
 ["blizzard"] = {
-["no_frame_borders"] = true,
+["no_frame_borders"] = false,
 ["view_transparency"] = 0,
-["empty_slot_background"] = true,
+["empty_slot_background"] = false,
 },
 ["blizzard_black"] = {
 ["empty_slot_background"] = false,
 },
 ["dark"] = {
-["view_transparency"] = 0.2,
-["square_icons"] = true,
-["no_frame_borders"] = true,
+["view_transparency"] = 0.3,
+["square_icons"] = false,
+["no_frame_borders"] = false,
 ["empty_slot_background"] = false,
 },
 },
@@ -524,7 +494,7 @@ imports["Baganator"] = {
 "Cronix-Blackhand",
 },
 ["auto_sort_on_open"] = false,
-["bag_view_width"] = 16,
+["bag_view_width"] = 14,
 ["show_buttons_on_alt"] = false,
 ["category_section_toggled"] = {
 ["1"] = false,
@@ -532,14 +502,13 @@ imports["Baganator"] = {
 ["Crafting"] = false,
 ["General"] = false,
 ["Equipment"] = false,
-["3"] = false,
 },
 ["guild_view_dialog_position"] = {
-"TOP",
+"LEFT",
 "UIParent",
-"TOP",
-63.99988174438477,
--170.1110534667969,
+"LEFT",
+246.2226867675781,
+227.4999389648438,
 },
 ["saved_searches"] = {
 },
@@ -550,8 +519,8 @@ imports["Baganator"] = {
 },
 ["bag_view_position"] = {
 "BOTTOMRIGHT",
--9.501708984375,
-23.72253036499023,
+-5.66748046875,
+29.88918876647949,
 },
 ["show_sort_button_2"] = true,
 ["currencies_tracked_imported"] = {
@@ -574,11 +543,11 @@ imports["Baganator"] = {
 },
 ["11"] = {
 ["name"] = "Legacy",
-["search"] = "#gear&!midnight",
+["search"] = "#gear&!tww",
 },
 ["12"] = {
 ["name"] = "Mats",
-["search"] = "#tradeskill|#reagent",
+["search"] = "#tradeskill || #reagent",
 },
 ["20"] = {
 ["name"] = "Sparks",
@@ -670,7 +639,7 @@ imports["Baganator"] = {
 },
 ["21"] = {
 ["name"] = "Trade",
-["search"] = "tradable loot|tradeable loot",
+["search"] = "tradable loot || tradeable loot",
 },
 ["22"] = {
 ["name"] = "Prof",
