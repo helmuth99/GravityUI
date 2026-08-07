@@ -232,6 +232,13 @@ local function BuildInformationTab(parent)
     -- Changelog data (newest first)
     local changeLogs = {
         {
+            version = "4.00.27",
+            date = "08/07/2026",
+            changes = {
+                "Fixed Consumables Raid Frame Durability: local player now queries GetInventoryItemDurability directly instead of relying on LibOpenRaid (fixes Demon Hunters and intermittent blank Durability for all classes on frame open)",
+            },
+        },
+        {
             version = "4.00.26",
             date = "08/07/2026",
             changes = {

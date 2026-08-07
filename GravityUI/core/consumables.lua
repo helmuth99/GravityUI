@@ -3081,27 +3081,48 @@ local function applyRowData(row, member)
 
     row.nameText:SetText(shortName)
 
-    -- Player Durability (LibOpenRaid)
-    if openRaidLib and openRaidLib.GetUnitGear then
-        local unitGear = openRaidLib.GetUnitGear(member.unit)
+    -- Player Durability
+    -- For the local player we query the API directly so the value is always
+    -- available immediately (LibOpenRaid data may not have arrived yet, which
+    -- caused DHs and other classes to show '-' or nothing on frame open).
+    -- For remote players we fall back to LibOpenRaid as before.
+    do
+        local durPct = nil
 
-        if unitGear and unitGear.durability and unitGear.durability > 0 then
-            row.durabilityText:SetFormattedText("%d%%", unitGear.durability)
-            if unitGear.durability < 20 then
+        if member.unit == "player" then
+            local total, count = 0, 0
+            for i = 1, 18 do
+                local cur, maxD = GetInventoryItemDurability(i)
+                if cur and maxD and maxD > 0 then
+                    total = total + (cur / maxD * 100)
+                    count = count + 1
+                end
+            end
+            if count > 0 then
+                durPct = floor(total / count)
+            end
+        elseif openRaidLib and openRaidLib.GetUnitGear then
+            local unitGear = openRaidLib.GetUnitGear(member.unit)
+            if unitGear and unitGear.durability and unitGear.durability > 0 then
+                durPct = unitGear.durability
+            end
+        end
+
+        if durPct then
+            row.durabilityText:SetFormattedText("%d%%", durPct)
+            if durPct < 20 then
                 row.durabilityText:SetTextColor(1, 0.2, 0.2)
-            elseif unitGear.durability < 50 then
+            elseif durPct < 50 then
                 row.durabilityText:SetTextColor(1, 0.8, 0)
             else
                 row.durabilityText:SetTextColor(0.8, 0.8, 0.8)
             end
         else
-            -- durability == 0 means LibOpenRaid hasn't received data yet (default value).
-            -- Shown as '-' to distinguish from genuinely broken gear (which would be ~1-5%).
+            -- LibOpenRaid hasn't received data yet for this remote player.
+            -- Show '-' to distinguish from genuinely broken gear (~1-5%).
             row.durabilityText:SetText("-")
             row.durabilityText:SetTextColor(0.5, 0.5, 0.5)
         end
-    else
-        row.durabilityText:SetText("")
     end
 
     -- Food
