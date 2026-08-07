@@ -3626,7 +3626,7 @@ end
 local function HookBigWigsPullTimer()
     local BWLoader = BigWigsLoader
     if not BWLoader then return end
-    BWLoader.RegisterMessage(Module, "BigWigs_StartPull", function(_, seconds)
+    BWLoader.RegisterMessage(Module, "BigWigs_StartPull", function(_, _, seconds)
         OnPullTimerStart(seconds)
     end)
     BWLoader.RegisterMessage(Module, "BigWigs_StopPull", function()
