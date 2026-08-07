@@ -447,7 +447,7 @@ local function GetGemInfo(unit, slotId)
         if gemLink then
             filledCount = filledCount + 1
             -- Get gem icon texture from item info (icon is the 10th return value)
-            local _, _, _, _, _, _, gemSubType, _, _, gemIcon = GetItemInfo(gemLink)
+            local _, _, _, _, _, _, gemSubType, _, _, gemIcon = C_Item.GetItemInfo(gemLink)
 
             -- If GetItemInfo didn't return icon yet (item not cached), try C_Item API
             if not gemIcon and C_Item and C_Item.GetItemIconByID then
@@ -763,7 +763,7 @@ local function UpdateSlotOverlay(overlay, unit)
     overlay:Show()
 
     -- Get item info for name and quality
-    local itemName = GetItemInfo(itemLink)
+    local itemName = C_Item.GetItemInfo(itemLink)
     local quality = GetSlotItemQuality(unit, slotId)
     local r, g, b = GetItemQualityColorRGB(quality)
 
@@ -939,7 +939,7 @@ local function UpdateSlotOverlay(overlay, unit)
                 local c = settings.backdropColor
                 r, g, b, alpha = c[1], c[2], c[3], c[4] or 0.4
             else
-                local _, _, quality = GetItemInfo(itemLink)
+                local _, _, quality = C_Item.GetItemInfo(itemLink)
                 -- If quality >= uncommon (2), use a more distinct quality tint
                 if quality and quality >= 2 then
                     local qr, qg, qb = C_Item.GetItemQualityColor(quality)
@@ -4000,7 +4000,7 @@ local function GetCompatibleSlotsFromItem(itemID)
         -- Don't dim for weapon-slot interactions.
         return nil
     end
-    local itemName = GetItemInfo(itemID)
+    local itemName = C_Item.GetItemInfo(itemID)
     if not itemName then return nil end
 
     -- Standard enchant scrolls: "Enchant Keyword - Description"

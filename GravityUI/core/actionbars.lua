@@ -888,9 +888,6 @@ local function ApplyZoneAbilityKeybind()
             local info = C_Spell.GetSpellInfo(spellID)
             spellName = info and info.name
         end
-        if not spellName and GetSpellInfo then
-            spellName = GetSpellInfo(spellID)
-        end
     end
 
     if spellName then

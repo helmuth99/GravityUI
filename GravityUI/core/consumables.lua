@@ -541,10 +541,8 @@ Module.db.vantusBuffIDs = {
     --- Midnight
 
     -- 12.1.0 - The Venomous Abyss (Season 2)
-    -- SpellID 1303164 confirmed via PTR (wowhead.com/ptr/spell=1303164)
-    [1303164] = true, -- Vantus Rune: Tides (Ula'tek, EncounterID 3492)
-    -- TODO: Remaining 7 bosses (Sszorak, Sentinels, Nekzali, Vashnik, Explorers, Twin Fangs, The Bargained Crown)
-    --       Add their Vantus Rune spell IDs once available on PTR/live.
+    -- Vantus Rune applies raid-wide. One SpellID covers all bosses.
+    [1303164] = true, -- Vantus Rune: Tides (The Venomous Abyss, EncounterID 3492)
 
     -- 12.0.0 - Voidspire
     [1276687] = true, [1276688] = true, -- Imperator Averzian
@@ -1912,14 +1910,14 @@ local function updateWeaponEnchants(buttons, LCG)
 
     if type(oilItemID) == "number" and oilItemID < 0 then
         if not InCombatLockdown() then
-            local spellInfo = GetSpellInfo(-oilItemID)
+            local spellInfo = C_Spell.GetSpellInfo(-oilItemID)
             local spellName = spellInfo and spellInfo.name
             buttons.oil.click:SetAttribute("spell", spellName)
             buttons.oil.click:Show()
             buttons.oil.click.IsON = true
             buttons.oil.click:SetAttribute("type", "spell")
 
-            local ohSpellInfo = GetSpellInfo(-oilItemID)
+            local ohSpellInfo = C_Spell.GetSpellInfo(-oilItemID)
             local ohSpellName = ohSpellInfo and ohSpellInfo.name
             buttons.oiloh.click:SetAttribute("spell", ohSpellName)
             buttons.oiloh.click:Show()
@@ -2212,7 +2210,7 @@ local function updateArmorKits(buttons, LCG)
 
     if kitCount and kitCount > 0 then
         if not InCombatLockdown() then
-            local itemName = GetItemInfo(172347)
+            local itemName = C_Item.GetItemInfo(172347)
 
             if itemName then
                 buttons.kit.click:SetAttribute("macrotext1",
@@ -2919,7 +2917,10 @@ local function scanMemberAuras(unit, now)
             break
         end
 
-        local sid = aura.spellId
+        -- tonumber() strips Blizzard's 'secret number' flag from protected aura spellIds.
+        -- Without this, table lookups like db.foodBuffIDs[sid] raise 'table index is secret'
+        -- even inside pcall on some aura sources (e.g. phased or restricted instances).
+        local sid = tonumber(aura.spellId)
 
         -- Blizzard marks some internal auras as "secret": type() still reports
         -- "number" but using them as a table key raises "table index is secret".
@@ -3084,7 +3085,7 @@ local function applyRowData(row, member)
     if openRaidLib and openRaidLib.GetUnitGear then
         local unitGear = openRaidLib.GetUnitGear(member.unit)
 
-        if unitGear and unitGear.durability then
+        if unitGear and unitGear.durability and unitGear.durability > 0 then
             row.durabilityText:SetFormattedText("%d%%", unitGear.durability)
             if unitGear.durability < 20 then
                 row.durabilityText:SetTextColor(1, 0.2, 0.2)
@@ -3094,6 +3095,8 @@ local function applyRowData(row, member)
                 row.durabilityText:SetTextColor(0.8, 0.8, 0.8)
             end
         else
+            -- durability == 0 means LibOpenRaid hasn't received data yet (default value).
+            -- Shown as '-' to distinguish from genuinely broken gear (which would be ~1-5%).
             row.durabilityText:SetText("-")
             row.durabilityText:SetTextColor(0.5, 0.5, 0.5)
         end
@@ -3572,6 +3575,99 @@ frame:RegisterEvent("READY_CHECK_FINISHED")
 frame:RegisterEvent("PLAYER_REGEN_DISABLED")
 frame:RegisterEvent("PLAYER_REGEN_ENABLED")
 frame:RegisterEvent("ADDON_LOADED")
+
+-------------------------------------------------------------------------------
+--- Pull Timer Auto-Hide
+--- Hides the Consumables Raid Frame when a pull timer reaches 5 seconds.
+--- Supports: BigWigs (BigWigs_StartPull / BigWigs_StopPull)
+---           DBM     (DBM_TimerStart with type "pull")
+--- Only triggers when the frame is shown (after a Ready Check).
+--- Cancelled automatically if the pull is aborted.
+-------------------------------------------------------------------------------
+
+local pullHideTimer
+
+local function cancelPullHideTimer()
+    if pullHideTimer then
+        pullHideTimer:Cancel()
+        pullHideTimer = nil
+    end
+end
+
+local PULL_CLOSE_BEFORE_SECONDS = 5  -- hide frame N seconds before pull
+
+local function OnPullTimerStart(seconds)
+    if not frame:IsShown() then return end
+    cancelPullHideTimer()
+
+    -- Schedule hide so that the frame disappears PULL_CLOSE_BEFORE_SECONDS before pull
+    local delay = (seconds or 0) - PULL_CLOSE_BEFORE_SECONDS
+    if delay <= 0 then
+        -- Pull is already within 5s or shorter than 5s: hide immediately
+        cancelHideTimer()
+        frame:Hide()
+        return
+    end
+
+    pullHideTimer = C_Timer.NewTimer(delay, function()
+        pullHideTimer = nil
+        if frame:IsShown() then
+            cancelHideTimer()
+            frame:Hide()
+        end
+    end)
+end
+
+local function OnPullTimerStop()
+    cancelPullHideTimer()
+end
+
+-- BigWigs: uses BigWigsLoader message bus (available even when BigWigs core not loaded)
+local function HookBigWigsPullTimer()
+    local BWLoader = BigWigsLoader
+    if not BWLoader then return end
+    BWLoader.RegisterMessage(Module, "BigWigs_StartPull", function(_, seconds)
+        OnPullTimerStart(seconds)
+    end)
+    BWLoader.RegisterMessage(Module, "BigWigs_StopPull", function()
+        OnPullTimerStop()
+    end)
+end
+
+-- DBM: fires DBM_TimerStart with type containing "pull" for pull countdowns
+local function HookDBMPullTimer()
+    if not DBM then return end
+    -- DBM uses callback events registered via DBM:RegisterCallback
+    -- Alternatively, hook via a frame listening to the DBM event frame messages.
+    -- DBM fires DBM_TimerStart(id, msg, timerDuration, type, ...) where type == "pull"
+    local dbmFrame = CreateFrame("Frame")
+    dbmFrame:RegisterEvent("DBM_TIMER_START")  -- fired by DBM as virtual event
+    dbmFrame:SetScript("OnEvent", function(_, event, ...)
+        -- DBM doesn't use Blizzard events; this is a no-op fallback.
+        -- Real DBM hook is via DBM.RegisterCallback below.
+    end)
+
+    -- DBM 9.x callback API
+    if DBM.RegisterCallback then
+        DBM:RegisterCallback("DBM_TimerStart", function(_, timer)
+            if timer and timer.type and timer.type:find("pull") then
+                OnPullTimerStart(timer.totalTime)
+            end
+        end)
+        DBM:RegisterCallback("DBM_TimerStop", function(_, timer)
+            if timer and timer.type and timer.type:find("pull") then
+                OnPullTimerStop()
+            end
+        end)
+    end
+end
+
+-- C_Timer.After(0) defers until the next frame tick, after all addons have loaded.
+-- BigWigs and DBM are guaranteed to be available at that point.
+C_Timer.After(0, function()
+    HookBigWigsPullTimer()
+    HookDBMPullTimer()
+end)
 
 
 Module.color = "cff00cc"

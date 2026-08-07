@@ -288,7 +288,7 @@ local function GetMountName(unit)
                 if C_MountJournal.GetMountInfoByID then
                     mName = C_MountJournal.GetMountInfoByID(mountID)
                 end
-                mName = mName or aura.name or (GetSpellInfo and GetSpellInfo(spellId))
+                mName = mName or aura.name or (C_Spell and C_Spell.GetSpellName and C_Spell.GetSpellName(spellId))
                 return mName
             end
         end

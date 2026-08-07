@@ -355,6 +355,36 @@ local SELF_BUFFS = {
         groupId = "consumables",
         customCheck = function() return ScanConsumableBySpellIDs(MIDNIGHT_RUNE_IDS) end,
     },
+    {
+        spellID = 243738, -- Smuggler's Enchanted Edge (used for icon display)
+        iconOverride = 7548986,
+        key = "weaponOil",
+        name = "Weapon Enchant (Oil/Whetstone)",
+        missingText = "NO\nOIL",
+        groupId = "consumables",
+        -- Detection via GetWeaponEnchantInfo() (the correct API for temporary weapon enchants).
+        -- class field intentionally omitted: raidbuffs compares buff.class as a string;
+        -- class filtering is handled entirely inside customCheck.
+        customCheck = function()
+            local _, playerClassToken = UnitClass("player")
+            -- Only relevant classes (Shaman excluded: tracked separately via enchantID imbues)
+            local usesWeaponEnchant = {
+                WARRIOR=true, PALADIN=true, DEATHKNIGHT=true, ROGUE=true,
+                MONK=true, DEMONHUNTER=true, HUNTER=true, EVOKER=true, DRUID=true,
+            }
+            if not usesWeaponEnchant[playerClassToken] then return false end
+            -- No main-hand weapon equipped: nothing to enchant, suppress reminder
+            if not GetInventoryItemLink("player", INVSLOT_MAINHAND) then return false end
+            -- GetWeaponEnchantInfo returns: hasMain, mainExp(ms), mainCharges, mainEnchantID, ...
+            local hasMain, mainExpMs = GetWeaponEnchantInfo()
+            if not hasMain then
+                return true  -- missing: show NO OIL
+            end
+            -- Oil present: return remaining time in seconds for expiration glow
+            local remSec = mainExpMs and (mainExpMs / 1000) or nil
+            return false, remSec  -- false = not missing, remSec for expiration warning
+        end,
+    },
 }
 
 local BUFF_GROUPS = {
@@ -1192,8 +1222,6 @@ function RaidBuffs:AddCustomBuff(spellID)
         if C_Spell and C_Spell.GetSpellInfo then
              local info = C_Spell.GetSpellInfo(lookupID)
              if info then spellName = info.name; icon = info.iconID end
-        else
-             spellName, _, icon = GetSpellInfo(lookupID)
         end
     end
     

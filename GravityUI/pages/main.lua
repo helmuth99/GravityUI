@@ -29,14 +29,15 @@ local Gravity_FPS_CVARS = {
     ["graphicsOutlineMode"] = "0",              -- 0 (Off)
     ["OutlineEngineMode"] = "1",
     ["graphicsTextureResolution"] = "2",
-    ["graphicsSpellDensity"] = "1",             -- Low
+    ["graphicsSpellDensity"] = "0",             -- Essential
     ["spellClutter"] = "1",
     ["spellVisualDensityFilterSetting"] = "1",
     ["graphicsProjectedTextures"] = "1",
     ["projectedTextures"] = "1",
-    ["graphicsViewDistance"] = "1",             -- Level 2
-    ["graphicsEnvironmentDetail"] = "1",        -- Level 2
-    ["graphicsGroundClutter"] = "1",            -- Level 2
+    ["graphicsViewDistance"] = "0",             -- Level 1
+    ["graphicsEnvironmentDetail"] = "0",        -- Level 1
+    ["graphicsGroundClutter"] = "0",            -- Level 1
+    ["RAIDsettingsEnabled"] = "0",              -- Same settings everywhere (no separate Raid quality)
 
     -- Advanced Tab
     ["gxTripleBuffer"] = "0",
@@ -55,9 +56,11 @@ local Gravity_FPS_CVARS = {
     ["useTargetFPS"] = "0",
     ["ResampleSharpness"] = "0.2",               -- Sharpness (was 0)
     ["cameraShake"] = "0",                     -- Disable camera shake
-    ["Contrast"] = "75",
     ["Brightness"] = "50",
     ["Gamma"] = "1.1",
+    -- Audio: reverb runs a full effect bus over the mix when enabled.
+    -- Disabling it trims audio DSP work and keeps spell and interrupt cues dry and crisp.
+    ["Sound_EnableReverb"] = "0",
 
     -- Additional Optimizations (GravityUI exclusive)
     ["particulatesEnabled"] = "0",
@@ -176,7 +179,26 @@ local Gravity_FPS_DISPLAY = {
 local function BackupCurrentFPSSettings()
     local db = ns.GetDB()
     if not db then return false end
-    
+
+    -- One-time store: only snapshot if no backup exists yet
+    if db.fpsBackup then
+        -- Backfill CVars added to the list after the user's original snapshot,
+        -- so Restore covers them too (mirrors EllesmerUI backfill logic).
+        local backup = db.fpsBackup
+        for cvar, _ in pairs(Gravity_FPS_CVARS) do
+            if backup[cvar] == nil then
+                local success, current = pcall(C_CVar.GetCVar, cvar)
+                if success and current then
+                    backup[cvar] = current
+                end
+            end
+        end
+        if backup["Contrast"] == nil then
+            backup["Contrast"] = C_CVar.GetCVar("Contrast")
+        end
+        return true
+    end
+
     local backup = {}
     for cvar, _ in pairs(Gravity_FPS_CVARS) do
         local success, current = pcall(C_CVar.GetCVar, cvar)
@@ -184,6 +206,8 @@ local function BackupCurrentFPSSettings()
             backup[cvar] = current
         end
     end
+    -- Store Contrast separately (applied dynamically, not in the table)
+    backup["Contrast"] = C_CVar.GetCVar("Contrast")
     db.fpsBackup = backup
     return true
 end
@@ -197,13 +221,17 @@ local function RestorePreviousFPSSettings()
 
     local successCount = 0
     local failCount = 0
-    for cvar, value in pairs(db.fpsBackup) do
-        local ok = pcall(C_CVar.SetCVar, cvar, tostring(value))
-        if ok then
-            successCount = successCount + 1
-        else
-            failCount = failCount + 1
+    local backup = db.fpsBackup
+    for cvar, value in pairs(Gravity_FPS_CVARS) do
+        local saved = backup[cvar]
+        if saved then
+            local ok = pcall(C_CVar.SetCVar, cvar, tostring(saved))
+            if ok then successCount = successCount + 1 else failCount = failCount + 1 end
         end
+    end
+    -- Restore Contrast separately
+    if backup["Contrast"] then
+        pcall(C_CVar.SetCVar, "Contrast", tostring(backup["Contrast"]))
     end
 
     -- Clear backup after successful restore
@@ -249,6 +277,12 @@ local function ApplyGravityFPSSettings()
         else
             failCount = failCount + 1
         end
+    end
+
+    -- Contrast boost: if current contrast <= 55, add 10 (mirrors EllesmerUI logic)
+    local curContrast = tonumber(C_CVar.GetCVar("Contrast")) or 50
+    if curContrast <= 55 then
+        pcall(C_CVar.SetCVar, "Contrast", tostring(curContrast + 10))
     end
 
     ns.Print("Applied " .. successCount .. " FPS settings. Backup saved.")

@@ -20,19 +20,6 @@ local function EnforceShield()
             SetCVar("SetAddonPerformanceDisplay", 0)
         end
     end)
-
-    -- 3. Suppress "Addon is using too much memory" or other analytics hooks
-    -- We hook UpdateAddOnCPUUsage to prevent other addons from triggering 
-    -- the engine's expensive bookkeeping logic.
-    if not ns.ShieldHooked then
-        hooksecurefunc("UpdateAddOnCPUUsage", function()
-            -- By hooking this, we ensure that even if an addon calls it,
-            -- the internal state remains as "unprofiled" as possible.
-            -- Note: We don't overwrite it to avoid Taint, but the hook 
-            -- is often enough to neutralize certain engine triggers.
-        end)
-        ns.ShieldHooked = true
-    end
 end
 
 -- Initialize on load

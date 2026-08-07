@@ -700,6 +700,19 @@ local function OnLootReady()
 end
 
 ---------------------------------------------------------------------------
+-- COMBAT LOGGING HELPERS
+---------------------------------------------------------------------------
+
+-- Silently enables Advanced Combat Logging if it isn't already on.
+-- This ensures WarcraftLogs receives full event data (source GUIDs, flags, etc.).
+-- Mirrors EllesmerUI's EnsureAdvancedLogging() pattern.
+local function EnsureAdvancedLogging()
+    if GetCVar and GetCVar("advancedCombatLogging") ~= "1" then
+        pcall(SetCVar, "advancedCombatLogging", 1)
+    end
+end
+
+---------------------------------------------------------------------------
 -- M+ COMBAT LOGGING
 ---------------------------------------------------------------------------
 
@@ -712,6 +725,7 @@ local function OnChallengeModeStart()
     wasLoggingBeforeChallenge = LoggingCombat()
 
     if not wasLoggingBeforeChallenge then
+        EnsureAdvancedLogging()
         LoggingCombat(true)
         print("|cFF30D1FFGravityUI:|r Combat logging started for M+")
     else
@@ -758,7 +772,9 @@ local function CheckRaidLogging()
             shouldLog = true
         elseif difficultyID == 16 and settings.autoCombatLogRaidMythic then -- Mythic (fixed 20)
             shouldLog = true
-        -- Fallback: name-based matching for new/unknown IDs (e.g. Mythic Flex in 12.0.7 Sporefall)
+        elseif difficultyID == 233 and settings.autoCombatLogRaidMythic then -- Mythic Flexible (since Sporefall/12.0.7)
+            shouldLog = true
+        -- Fallback: name-based matching for new/unknown IDs
         elseif settings.autoCombatLogRaidNormal and lowerName:find("normal") then
             shouldLog = true
         elseif settings.autoCombatLogRaidHeroic and lowerName:find("heroic") then
@@ -775,6 +791,7 @@ local function CheckRaidLogging()
             -- Enable Logging
             wasLoggingBeforeRaid = false
             isRaidLoggingActive = true
+            EnsureAdvancedLogging()
             LoggingCombat(true)
             print("|cFF30D1FFGravityUI:|r Combat logging started for Raid")
         elseif not isRaidLoggingActive then
@@ -806,13 +823,25 @@ local function CheckResumeLogging()
     local settings = GetSettings()
     if settings and settings.autoCombatLog then
         if C_ChallengeMode.IsChallengeModeActive() and not LoggingCombat() then
+            EnsureAdvancedLogging()
             LoggingCombat(true)
             print("|cFF30D1FFGravityUI:|r Combat logging resumed (reconnected to M+)")
         end
     end
-    
-    -- Raid Check
+
+    -- Raid Check: CheckRaidLogging handles the full logic.
+    -- If we reconnected mid-raid and logging was not yet started by us,
+    -- it will start it. We track the reconnect case for a clear chat message.
+    local wasActive = isRaidLoggingActive
     CheckRaidLogging()
+    if not wasActive and isRaidLoggingActive then
+        -- CheckRaidLogging already printed "started for Raid" – no extra message needed.
+        -- But if logging was already running when we reconnected (user had it on manually),
+        -- we print a reconnect notice so it's clear GravityUI noticed the raid.
+        if LoggingCombat() and wasLoggingBeforeRaid then
+            print("|cFF30D1FFGravityUI:|r Combat logging active (reconnected to Raid)")
+        end
+    end
 end
 
 local function OnKeyStoneInsert()
@@ -860,6 +889,69 @@ local function InitMovieSkip()
     hookRef(CinematicFrame, function() return CinematicFrameCloseDialogConfirmButton end)
     hookRef(MovieFrame, function() return MovieFrame and MovieFrame.CloseDialog and MovieFrame.CloseDialog.ConfirmButton end)
 end
+
+-- ==========================================
+-- GravityUI: Auto Skip Cinematics
+-- ==========================================
+local function InitAutoSkipCinematics()
+    -- Pattern adapted from EllesmereUI (EllesmereUIQoL.lua):
+    -- Real cinematics (isRealCinematic) can be stopped directly from event context via StopCinematic().
+    -- In-game scenes (CancelScene) are hardware-gated: the call is only allowed while processing a key press.
+    -- We arm a one-shot flag on CINEMATIC_START and consume it on the first key press.
+    local autoSkipArmed = false
+    local cinHooked = false
+
+    local function ConsumeArmedSkip()
+        if not autoSkipArmed then return end
+        local s = GetSettings()
+        if not s or not s.autoSkipCinematics then return end
+        if not (CinematicFrame and CinematicFrame:IsShown()) then return end
+        autoSkipArmed = false
+        if CinematicFrame.isRealCinematic then
+            StopCinematic()
+        elseif CanCancelScene and CanCancelScene() then
+            CancelScene()
+        end
+    end
+
+    local function SetupCinematicHooks()
+        if cinHooked then return end
+        if not CinematicFrame or not CinematicFrame.HookScript then return end
+        cinHooked = true
+        -- Armed skip fires on first key press during a scene
+        CinematicFrame:HookScript("OnKeyDown", ConsumeArmedSkip)
+    end
+
+    local cinFrame = CreateFrame("Frame")
+    cinFrame:RegisterEvent("CINEMATIC_START")
+    cinFrame:RegisterEvent("CINEMATIC_STOP")
+    cinFrame:RegisterEvent("PLAY_MOVIE")
+    cinFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
+    cinFrame:SetScript("OnEvent", function(self, event)
+        if event == "PLAYER_ENTERING_WORLD" then
+            self:UnregisterEvent("PLAYER_ENTERING_WORLD")
+            SetupCinematicHooks()
+            return
+        end
+        if event == "CINEMATIC_STOP" then
+            autoSkipArmed = false
+            return
+        end
+        local s = GetSettings()
+        if not s or not s.autoSkipCinematics then return end
+        if event == "CINEMATIC_START" then
+            -- Real cinematics: stop immediately from event context
+            -- In-game scenes: arm the flag; the key hook will fire CancelScene()
+            autoSkipArmed = true
+            if CinematicFrame and CinematicFrame.isRealCinematic then
+                StopCinematic()
+            end
+        elseif event == "PLAY_MOVIE" then
+            if MovieFrame then MovieFrame:Hide() end
+        end
+    end)
+end
+
 
 -- ==========================================
 -- GravityUI: Smart Item Destroyer
@@ -1172,6 +1264,7 @@ end
 
 -- Init Hooks immediately
 InitMovieSkip()
+InitAutoSkipCinematics()
 
 automationFrame:RegisterEvent("ADDON_LOADED")
 automationFrame:RegisterEvent("MERCHANT_SHOW")
@@ -1487,7 +1580,7 @@ local DIFFICULTY_NAMES = {
     [23] = "Mythic (Dungeon)",
     [24] = "Timewalking (Dungeon)",
     [33] = "Timewalking (Raid)",
-    -- 12.0.7+: Mythic Flex (Sporefall) uses a new ID, resolved by name-fallback
+    [233] = "Mythic Flex (Raid, Sporefall+)",
 }
 
 local function CombatLogDebug()
@@ -1534,11 +1627,12 @@ local function CombatLogDebug()
         local lowerDiffName = difficultyName and difficultyName:lower() or ""
         if difficultyID == 14 and rN then wouldLog = true; reason = "Raid Normal + Auto Log Normal = ON"
         elseif difficultyID == 15 and rH then wouldLog = true; reason = "Raid Heroic + Auto Log Heroic = ON"
-        elseif difficultyID == 16 and rM then wouldLog = true; reason = "Raid Mythic + Auto Log Mythic = ON"
-        -- Fallback name-match for new IDs like Mythic Flex (12.0.7 Sporefall)
+        elseif difficultyID == 16 and rM then wouldLog = true; reason = "Raid Mythic (fixed 20) + Auto Log Mythic = ON"
+        elseif difficultyID == 233 and rM then wouldLog = true; reason = "Raid Mythic Flex (ID 233, Sporefall+) + Auto Log Mythic = ON"
+        -- Fallback name-match for unknown future IDs
         elseif rN and lowerDiffName:find("normal") then wouldLog = true; reason = "Raid Normal (name match) + Auto Log Normal = ON"
         elseif rH and lowerDiffName:find("heroic") then wouldLog = true; reason = "Raid Heroic (name match) + Auto Log Heroic = ON"
-        elseif rM and lowerDiffName:find("mythic") then wouldLog = true; reason = "Raid Mythic Flex (name match) + Auto Log Mythic = ON"
+        elseif rM and lowerDiffName:find("mythic") then wouldLog = true; reason = "Raid Mythic (name match) + Auto Log Mythic = ON"
         end
         if not wouldLog then
             reason = string.format("Raid (diff %d / '%s') but matching toggle is OFF", difficultyID or 0, difficultyName or "?")

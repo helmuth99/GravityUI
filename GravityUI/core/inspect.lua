@@ -278,7 +278,7 @@ local function GetGemInfo(unit, slotId)
         if gemID then
             filled = filled + 1
             local texture = C_Item.GetItemIconByID(gemID)
-            local _, gemLink = GetItemInfo(gemID)
+            local _, gemLink = C_Item.GetItemInfo(gemID)
             table.insert(gems, { filled = true, icon = texture, link = gemLink or ("item:"..gemID) })
         end
     end
@@ -1178,7 +1178,7 @@ local function UpdateInspectFrame()
                     local track, cur, max = GetUpgradeTrack(unit, slotID)
                     local enchant, enchantable = GetEnchantText(unit, slotID)
                     local gems = GetGemInfo(unit, slotID)
-                    local name, _, quality = GetItemInfo(link)
+                    local name, _, quality = C_Item.GetItemInfo(link)
                     
                     cache[slotID] = {
                         link = link,

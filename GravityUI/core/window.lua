@@ -677,15 +677,12 @@ CreateButtonBar = function(parent)
         
         -- Plater
         if not opened and OpenAddonConfig("Plater", "PLATER") then opened = true end
-        
-        -- Platynator
-        if not opened and OpenAddonConfig("Platynator", "PLATYNATOR") then opened = true end
 
         -- EllesmereUI (Nameplates module)
         if not opened and OpenAddonConfig("EllesmereUI", "ELLESMEREUI") then opened = true end
          
         if not opened then
-             print("|cFF30D1FFGravityUI:|r No supported Nameplates addon loaded (Plater, Platynator, EllesmereUI).")
+             print("|cFF30D1FFGravityUI:|r No supported Nameplates addon loaded (Plater, EllesmereUI).")
         end
     end)
     npBtn:SetPoint("LEFT", bossBtn, "RIGHT", 8, 0)

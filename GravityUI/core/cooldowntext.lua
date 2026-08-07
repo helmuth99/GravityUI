@@ -240,7 +240,8 @@ function CooldownText:UpdateCooldowns()
                 -- Build formatted string only when visible
                 fs:SetText(strformat("%s: %.1f", spellObj.runtimeName, actualCooldown))
                 -- Route through secure C variables without branching on the Tainted Table
-                local state = GetSpellCooldown(spellObj.spellID).isOnGCD ~= false
+                local cdInfo = C_Spell.GetSpellCooldown(spellObj.spellID)
+                local state = cdInfo and cdInfo.isOnGCD ~= false
                 fs:SetAlphaFromBoolean(state, 0, 1)
             end
         end

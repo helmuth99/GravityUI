@@ -838,7 +838,7 @@ local function OnGroupLootShow(frame)
              frame.gravityLootLink = link -- Store for tooltip fallback
              
              if link then
-                 local _, _, _, ilvl = GetItemInfo(link)
+                 local _, _, _, ilvl = C_Item.GetItemInfo(link)
                  if ilvl then
                      frame.guiIlvl:SetText(ilvl)
                  else
@@ -861,7 +861,7 @@ local function OnGroupLootShow(frame)
             if not bindOnPickUp then
                 local link = GetLootRollItemLink(frame.rollID)
                 if link then
-                    local _, _, _, _, _, _, _, _, _, _, _, _, _, bindType = GetItemInfo(link)
+                    local _, _, _, _, _, _, _, _, _, _, _, _, _, bindType = C_Item.GetItemInfo(link)
                     if bindType == 2 then -- LE_ITEM_BIND_ON_EQUIP
                          -- Green text, no parens
                          bindText = "|cff1eff00BoE|r"
@@ -1598,11 +1598,11 @@ function Loot:Initialize()
                              -- Retry Ilvl
                              if self.guiIlvl and link then
                                  local effectiveLevel = GetDetailedItemLevelInfo(link)
-                                 local _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, isCrafted = GetItemInfo(link)
+                                 local _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, isCrafted = C_Item.GetItemInfo(link)
                                  
                                  -- Fallback to standard GetItemInfo if detailed fails
                                  if not effectiveLevel then
-                                     local _, _, _, ilvl = GetItemInfo(link)
+                                     local _, _, _, ilvl = C_Item.GetItemInfo(link)
                                      effectiveLevel = ilvl
                                  end
 
@@ -1627,7 +1627,7 @@ function Loot:Initialize()
                              
                              -- Retry Bind Text
                              if self.guiBindText and (not self.guiBindText:GetText() or self.guiBindText:GetText() == "") and link then
-                                 local _, _, _, _, _, _, _, _, _, _, _, _, _, bindType = GetItemInfo(link)
+                                 local _, _, _, _, _, _, _, _, _, _, _, _, _, bindType = C_Item.GetItemInfo(link)
                                  if bindType == 2 then 
                                      self.guiBindText:SetText("|cff1eff00BoE|r")
                                  elseif bindType == 3 then

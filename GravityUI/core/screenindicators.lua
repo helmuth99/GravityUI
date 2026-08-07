@@ -1072,7 +1072,8 @@ SlashCmdList["GRAVITYDEBUGRANGE"] = function()
     if cachedRangeSlot then
         local actionType, id = GetActionInfo(cachedRangeSlot)
         local spellID = GetSpellIDFromSlot(cachedRangeSlot)
-        local name = spellID and C_Spell.GetSpellInfo(spellID) and C_Spell.GetSpellInfo(spellID).name or "Unknown"
+        local _si = spellID and C_Spell.GetSpellInfo(spellID)
+        local name = (_si and _si.name) or "Unknown"
         print("  Current Range Slot: " .. cachedRangeSlot .. " (" .. (actionType or "nil") .. " | ID: " .. (id or "nil") .. " | SpellID: " .. (spellID or "nil") .. " | Name: " .. name .. ")")
         
         local isMelee = spellID and MELEE_RANGE_ABILITIES[spellID]
@@ -1087,7 +1088,8 @@ SlashCmdList["GRAVITYDEBUGRANGE"] = function()
         local at, aid = GetActionInfo(i)
         if at then
             local sid = GetSpellIDFromSlot(i)
-            local sname = sid and C_Spell.GetSpellInfo(sid) and C_Spell.GetSpellInfo(sid).name or "Unknown"
+            local _si2 = sid and C_Spell.GetSpellInfo(sid)
+            local sname = (_si2 and _si2.name) or "Unknown"
             local isM = sid and MELEE_RANGE_ABILITIES[sid]
             local isR = sid and RANGED_RANGE_ABILITIES[sid]
             local status = ""

@@ -232,6 +232,19 @@ local function BuildInformationTab(parent)
     -- Changelog data (newest first)
     local changeLogs = {
         {
+            version = "4.00.26",
+            date = "08/07/2026",
+            changes = {
+                "API 12.1 migration: replaced deprecated GetSpellCooldown, GetItemInfo, IsSpellKnown, GetSpellInfo with C_Spell / C_Item namespaces across core modules",
+                "Added Cinematic Auto-Skip -- automatically dismisses in-game cinematics (QoL > Automation, toggle in UI)",
+                "Added Weapon Enchant reminder (Oil/Whetstone) to Missing Buffs > Self Buffs > Consumables -- shows NO OIL for melee classes",
+                "Fixed Weapon Oil Expiration Warning: customCheck now returns remaining time (ms) for correct Pixel Glow triggering",
+                "Fixed Consumables Raid Frame: scanMemberAuras now uses tonumber(aura.spellId) to avoid secret-number taint drops",
+                "Fixed Demon Hunter showing 0% Durability: LibOpenRaid default value 0 now shown as dash (data not yet received)",
+                "Added Pull Timer Auto-Hide: Raid Frame closes 5s before pull when BigWigs or DBM fires a pull countdown",
+            },
+        },
+        {
             version = "4.00.01",
             date = "07/19/2026",
             changes = {
@@ -242,7 +255,7 @@ local function BuildInformationTab(parent)
                 "Added EllesmereUI minimap button to IconCatcher",
                 "Added EllesmereUI to bottom bar buttons (Unitframes, CDM, Nameplates, Party/Raid)",
                 "Updated FPS settings: Shadow=Fair, Liquid=Low, Particle=Ultra, Spell=Low, ViewDist=Level2",
-                "TOC: introduced @project-version@ packager token",
+                "TOC: introduced v4.00.25 packager token",
             },
         },
         {
@@ -255,14 +268,6 @@ local function BuildInformationTab(parent)
                 "Added /glog and /gravitylog commands with toggle support for manual combat log control",
                 "Enhanced Combat Log automation with clearer chat feedback for M+ and Raid transitions",
                 "Optimized Elemental Orbit shield logic to prevent false-positives for multi-shield classes",
-            },
-        },
-        {
-            version = "3.94.67",
-            date = "03/31/2026",
-            changes = {
-                "Removed M+ CD Tracking module (CDTracker) entirely -- WoW Midnight taint system prevents reliable cooldown tracking in instances",
-                "Deleted cdtracker.lua, cleaned up GravityUI.toc, defaults.lua, and all CDTracker references",
             },
         },
     }
@@ -331,8 +336,8 @@ local function BuildInformationTab(parent)
 
     -- Quality of Life
     RenderCategory(">> Quality of Life", {
-        { name = "Automation / Stuff", desc = "Auto-repair, fast loot, junk selling, quest accept, movie skips, and dialogue routing -- all automated.",            pageId = "qol", tabIndex = 1 },
-        { name = "Autohide Setup",     desc = "Contextual UI hiding based on game events (e.g. minigames) to preserve full immersion.",                             pageId = "qol", tabIndex = 2 },
+        { name = "Automation / Stuff", desc = "Auto-repair, fast loot, junk selling, quest accept, movie skips, cinematic auto-skip, and dialogue routing -- all automated.", pageId = "qol", tabIndex = 1 },
+        { name = "Autohide Setup",     desc = "Contextual UI hiding based on game events (e.g. minigames) to preserve full immersion.",                                         pageId = "qol", tabIndex = 2 },
     })
 
     -- Features
@@ -352,7 +357,7 @@ local function BuildInformationTab(parent)
         { name = "Pet Info",            desc = "Pet management tools and large status warnings (Pet Dead) for Hunters and Warlocks.",                               stateTable = db.screenindicators and db.screenindicators.petWarnings,  stateKey = "enabled", pageId = "indicators", tabIndex = 3 },
         { name = "Combat Timer",        desc = "Visual stopwatch tracking time spent in combat or encounters. Great for raid bosses and M+ pack analysis.",         stateTable = db.uiimprovements and db.uiimprovements.combatTimer,      stateKey = "enabled", pageId = "indicators", tabIndex = 4 },
         { name = "Cooldown Text",       desc = "On-screen text alerts when tracked party spells go on cooldown. Configurable per class with custom spell IDs.",     stateTable = db.cooldownText,                                         stateKey = "enabled", pageId = "indicators", tabIndex = 5 },
-        { name = "Missing Buffs (Raid)", desc = "Dynamically tracks missing raid buffs based on group class composition. Shows exactly what is missing pre-pull.", stateTable = db.raidBuffs,                                            stateKey = "enabled", pageId = "indicators", tabIndex = 6 },
+        { name = "Missing Buffs (Raid)", desc = "Dynamically tracks missing raid buffs based on group class composition. Includes Consumables (Oil/Whetstone), Shaman Imbues, and Paladin Rites. Shows exactly what is missing pre-pull.", stateTable = db.raidBuffs, stateKey = "enabled", pageId = "indicators", tabIndex = 6 },
         { name = "Raid Warnings",       desc = "Displays large centralized text alerts for Soulwells, Feasts, Mage Tables, and Rituals.",                           stateTable = db.raidWarnings,                                         stateKey = "enabled", pageId = "indicators", tabIndex = 7 },
         { name = "Consumables Tracker", desc = "Shows missing consumables (food, flasks) for yourself and group members during a Ready Check.",                     stateTable = db.screenindicators and db.screenindicators.consumables,  stateKey = "enabled", pageId = "indicators", tabIndex = 8 },
         { name = "Difficulty Indicator", desc = "Status bar showing the current instance difficulty with a dropdown to change it quickly while out of world.",     stateTable = db.screenindicators and db.screenindicators.difficulty,   stateKey = "enabled", pageId = "indicators", tabIndex = 9 },
@@ -361,7 +366,9 @@ local function BuildInformationTab(parent)
 
     -- Utilities
     RenderCategory(">> Utilities", {
-        { name = "Sound Alerts", desc = "Integrate custom SharedMedia sounds directly into Blizzard's CooldownViewer seamlessly.",                                   stateTable = db.soundAlerts, stateKey = "enabled", pageId = "utilities", tabIndex = 4 },
+        { name = "Sound Alerts",  desc = "Integrate custom SharedMedia sounds directly into Blizzard's CooldownViewer seamlessly.",                                   stateTable = db.soundAlerts, stateKey = "enabled", pageId = "utilities", tabIndex = 1 },
+        { name = "Debuffs",       desc = "Track specific debuffs on nameplates or unit frames with custom duration timers and alert colors.",                          pageId = "utilities", tabIndex = 2 },
+        { name = "Tracked Bars",  desc = "Configurable progress bars tracking specific spells, items or timers with custom thresholds and warnings.",                  pageId = "utilities", tabIndex = 3 },
     })
 
     -- UI Styling

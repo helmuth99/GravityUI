@@ -193,6 +193,13 @@ local function BuildAutomation(parent)
     movieInfo:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
     content.rowCount = content.rowCount + (movieInfo:GetHeight() / (ROW_HEIGHT+5)) + 0.2
     
+    AddRow(content, "Auto Skip Cinematics", "checkbox", "autoSkipCinematics", dbUI, nil)
+    content.rowCount = content.rowCount + 0.2
+    local cinInfo = GUI:CreateInfoBox(content, "Automatically skips in-game cinematics and movies without any key press. Real cutscenes are stopped instantly; in-game scenes are cancelled on the first key press.")
+    cinInfo:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
+    content.rowCount = content.rowCount + (cinInfo:GetHeight() / (ROW_HEIGHT+5)) + 0.2
+
+    
     AddRow(content, "Auto-Select Single Gossip Option", "checkbox", "autoSelectGossip", dbUI, nil)
     AddRow(content, "Auto Check EditMode on Spec Switch", "checkbox", "checkEditmodeOnSpecSwitch", dbUI, nil)
     AddRow(content, "AH: Filter Current Expansion", "checkbox", "ahCurrentExpansionFilter", dbUI, nil)

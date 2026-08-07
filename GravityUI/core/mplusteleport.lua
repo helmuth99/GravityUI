@@ -115,8 +115,6 @@ local function CreateSecureOverlay(dungeonIcon)
                 if C_Spell and C_Spell.GetSpellCooldown then
                     local info = C_Spell.GetSpellCooldown(currentSpellID)
                     if info then start, duration = info.startTime, info.duration end
-                else
-                    start, duration = GetSpellCooldown(currentSpellID)
                 end
                 local isCooldown = false
                 if start and duration then
@@ -173,8 +171,6 @@ local function UpdateButtonCooldowns(frame)
             if C_Spell and C_Spell.GetSpellCooldown then
                 local info = C_Spell.GetSpellCooldown(spellID)
                 if info then start, duration = info.startTime, info.duration end
-            else
-                start, duration = GetSpellCooldown(spellID)
             end
 
             local isCooldown = false
@@ -191,7 +187,7 @@ local function UpdateButtonCooldowns(frame)
             else
                 btn.cd:Clear()
                 btn.icon:SetDesaturated(false)
-                btn.icon:SetAlpha(IsSpellKnown(spellID) and 1 or 0.4)
+                btn.icon:SetAlpha((C_SpellBook.IsSpellKnown and C_SpellBook.IsSpellKnown(spellID) or IsSpellKnown(spellID)) and 1 or 0.4)
             end
         end
     end
