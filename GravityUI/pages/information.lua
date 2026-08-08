@@ -376,6 +376,7 @@ local function BuildInformationTab(parent)
         { name = "Sound Alerts",  desc = "Integrate custom SharedMedia sounds directly into Blizzard's CooldownViewer seamlessly.",                                   stateTable = db.soundAlerts, stateKey = "enabled", pageId = "utilities", tabIndex = 1 },
         { name = "Debuffs",       desc = "Track specific debuffs on nameplates or unit frames with custom duration timers and alert colors.",                          pageId = "utilities", tabIndex = 2 },
         { name = "Tracked Bars",  desc = "Configurable progress bars tracking specific spells, items or timers with custom thresholds and warnings.",                  pageId = "utilities", tabIndex = 3 },
+        { name = "Color Picker",  desc = "A fully custom HSV color picker with hue/alpha bars, saved slots, class & theme colors, hex input, and live preview — usable globally across all addons including EllesmereUI.", stateTable = db.colorPicker, stateKey = "enabled", pageId = "utilities", tabIndex = 4 },
     })
 
     -- UI Styling

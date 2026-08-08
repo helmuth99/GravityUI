@@ -1259,11 +1259,26 @@ function GUI:CreateColorPicker(parent, label, dbKey, dbTable, callbackFunc)
     swatch:SetScript("OnClick", function()
         local r, g, b, a = GetColor()
         local originalA = a or 1
-        
+
+        -- Use GravityUI Color Picker if enabled for GravityUI
+        if ns.ColorPicker then
+            local db = ns.GetDB and ns.GetDB()
+            if db and db.colorPicker and db.colorPicker.enabled then
+                ns.ColorPicker:Open(
+                    { r = r, g = g, b = b, a = originalA },
+                    true,
+                    function(c) SetColor(c.r, c.g, c.b, c.a) end,
+                    function() SetColor(r, g, b, originalA) end,
+                    nil,
+                    { r = r, g = g, b = b, a = originalA }
+                )
+                return
+            end
+        end
+
+        -- Fallback: Blizzard Color Picker
         local info = {
-            r = r,
-            g = g,
-            b = b,
+            r = r, g = g, b = b,
             opacity = originalA,
             hasOpacity = true,
             swatchFunc = function()
@@ -1280,7 +1295,6 @@ function GUI:CreateColorPicker(parent, label, dbKey, dbTable, callbackFunc)
                 SetColor(prev.r, prev.g, prev.b, originalA)
             end,
         }
-        
         ColorPickerFrame:SetupColorPickerAndShow(info)
     end)
     

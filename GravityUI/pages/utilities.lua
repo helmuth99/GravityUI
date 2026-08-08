@@ -434,6 +434,84 @@ local function BuildTrackedBars(parent)
 end
 
 --==============================================================================================================================================================================================
+-- COLOR PICKER SETTINGS
+--==============================================================================================================================================================================================
+
+local function BuildColorPickerSettings(parent)
+    local scroll, content = GUI:CreateScrollableContent(parent)
+    scroll:SetAllPoints()
+    local db = ns.GetDB(); if not db then return end
+    if not db.colorPicker then
+        db.colorPicker = { enabled = true, hookAllAddons = false, useSquarePicker = true, savedColors = {}, recentColors = {} }
+    end
+    local cpDB = db.colorPicker
+    content.rowCount = 0
+
+    local header = GUI:CreateSectionHeader(content, "Color Picker")
+    header:SetPoint("TOPLEFT", 10, -10)
+    header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
+    content.rowCount = 1.3
+
+    local infoBox = GUI:CreateInfoBox(content,
+        "A fully custom Color Picker that replaces Blizzard's built-in color selection window. " ..
+        "You can use it only within GravityUI, or enable it globally so every addon uses it too.\n\n" ..
+        "|cffFFCC00What's included:|r  Color selector with hue & brightness sliders  •  " ..
+        "New / Prev color preview  •  Recent colors  •  Class colors  •  Theme colors  •  Saved color slots  •  Hex input (paste with Ctrl+V, copy with click + Ctrl+C)")
+    infoBox:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT + 5))
+    infoBox:SetPoint("RIGHT", content, "RIGHT", -10, 0)
+    content.rowCount = content.rowCount + (infoBox:GetHeight() / (ROW_HEIGHT + 5)) + 0.3
+
+    -- ── Master Enable ────────────────────────────────────────
+    AddRow(content, "Enable Custom Color Picker", "checkbox", "enabled", cpDB, function(val)
+        cpDB.enabled = val
+        -- If disabling GravityUI picker, also disable global hook
+        if not val then
+            cpDB.hookAllAddons = false
+            if ns.ColorPicker then ns.ColorPicker:SetGlobalHookEnabled(false) end
+        end
+    end)
+
+    content.rowCount = content.rowCount + 0.3
+
+    local hookInfoBox = GUI:CreateInfoBox(content,
+        "|cffFFCC00Use for all addons:|r When enabled, the GravityUI Color Picker replaces the color " ..
+        "picker everywhere — including Blizzard's built-in picker and |cff00aaffEllesmereUI's|r " ..
+        "own color picker.\n\n" ..
+        "|cff888888Requires 'Enable Custom Color Picker' to be active. Cannot be undone until /reload.|r")
+    hookInfoBox:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT + 5))
+    hookInfoBox:SetPoint("RIGHT", content, "RIGHT", -10, 0)
+    content.rowCount = content.rowCount + (hookInfoBox:GetHeight() / (ROW_HEIGHT + 5)) + 0.3
+
+    AddRow(content, "Use for all addons", "checkbox", "hookAllAddons", cpDB, function(val)
+        cpDB.hookAllAddons = val
+        if ns.ColorPicker then ns.ColorPicker:SetGlobalHookEnabled(val) end
+    end)
+
+
+
+
+    -- ── Saved Colors ──────────────────────────────────────────
+    content.rowCount = content.rowCount + 0.5
+    CreateSubLabel(content, "Saved Colors")
+    content.rowCount = content.rowCount + 0.3
+
+    local clearSavedBtn = GUI:CreateButton(content, "Clear Saved Colors", 160, 24, function()
+        if cpDB.savedColors then wipe(cpDB.savedColors) end
+        print("|cff00aaff[GravityUI]|r Saved colors cleared.")
+    end)
+    clearSavedBtn:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT + 5))
+
+    local clearRecentBtn = GUI:CreateButton(content, "Clear Recent Colors", 160, 24, function()
+        if cpDB.recentColors then wipe(cpDB.recentColors) end
+        print("|cff00aaff[GravityUI]|r Recent colors cleared.")
+    end)
+    clearRecentBtn:SetPoint("LEFT", clearSavedBtn, "RIGHT", 10, 0)
+    content.rowCount = content.rowCount + 1.2
+
+    content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
+end
+
+--==============================================================================================================================================================================================
 -- PAGE REGISTRATION
 --==============================================================================================================================================================================================
 ns.GUI:RegisterPage("utilities", {
@@ -442,6 +520,7 @@ ns.GUI:RegisterPage("utilities", {
         { name = "Sound Alerts",  builder = BuildSoundAlerts },
         { name = "Debuffs",       builder = BuildDebuffs },
         { name = "Tracked Bars",  builder = BuildTrackedBars },
+        { name = "Color Picker",  builder = BuildColorPickerSettings },
     },
     OnBuild = function(content)
         local scrollFrame = content:GetParent()

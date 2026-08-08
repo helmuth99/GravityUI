@@ -308,6 +308,13 @@ ns.Defaults = {
         x = 0, 
         y = 0,
     },
+    colorPicker = {
+        enabled         = true,   -- Custom Color Picker active (used in GravityUI settings)
+        hookAllAddons   = false,  -- Replace Blizzard picker globally for all addons
+        useSquarePicker = true,   -- Square (true) or Circle (false)
+        savedColors     = {},     -- Persisted saved colors
+        recentColors    = {},     -- Recently used colors (auto)
+    },
     raidBuffs = {
         enabled = true,
         showOnlyInGroup = true,

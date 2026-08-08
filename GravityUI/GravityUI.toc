@@ -30,6 +30,7 @@ core\profiles_logic.lua
 
 # Framework
 core\framework.lua
+core\colorpicker.lua
 core\movers.lua
 core\window.lua
 
