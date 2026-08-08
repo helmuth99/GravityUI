@@ -3077,6 +3077,7 @@ end
 
 -- GEAR UPDATE: Low frequency, high cost (Frames, Textures, Overlays)
 -- Note: Gear changes usually affect stats, so this triggers a stat update too.
+local pendingGemRetry = false   -- Debounce for GET_ITEM_INFO_RECEIVED gem-icon retries
 ScheduleGearUpdate = function()
     if pendingGearUpdate then return end
     pendingGearUpdate = true
@@ -3911,6 +3912,7 @@ eventFrame:RegisterUnitEvent("UNIT_AURA", "player")
 eventFrame:RegisterEvent("UNIT_SPELL_HASTE")
 eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 eventFrame:RegisterEvent("INSPECT_READY")
+eventFrame:RegisterEvent("GET_ITEM_INFO_RECEIVED")   -- Gem icon cache miss retry
 -- Enchant events
 pcall(function() eventFrame:RegisterEvent("ENCHANT_SPELL_SELECTED") end)  -- player-local
 pcall(function() eventFrame:RegisterEvent("ENCHANT_SPELL_COMPLETED") end)  -- success
@@ -4094,6 +4096,23 @@ eventFrame:SetScript("OnEvent", function(self, event, arg1)
         
     elseif event == "INSPECT_READY" then
         ScheduleGearUpdate()
+
+    elseif event == "GET_ITEM_INFO_RECEIVED" then
+        -- C_Item.GetItemInfo is async: gem icons are nil on first frame open if the
+        -- item isn't cached yet. This event fires when the server returns item data.
+        -- We schedule a single gear update to re-draw gem icons with the now-cached data.
+        -- A separate debounce flag (pendingGemRetry) prevents flooding during mass-load.
+        if CharacterFrame and CharacterFrame:IsShown() and PaperDollFrame and PaperDollFrame:IsShown() then
+            if not pendingGemRetry then
+                pendingGemRetry = true
+                C_Timer.After(0.3, function()
+                    pendingGemRetry = false
+                    if CharacterFrame and CharacterFrame:IsShown() and PaperDollFrame and PaperDollFrame:IsShown() then
+                        UpdateAllSlotOverlays("player", slotOverlays)
+                    end
+                end)
+            end
+        end
 
     elseif event == "ENCHANT_SPELL_SELECTED" then
         -- Fires when enchant scroll is clicked → apply dim immediately
