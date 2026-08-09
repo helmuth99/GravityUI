@@ -299,8 +299,6 @@ local function PopulateAddonRows(listContainer, selectionState)
     -- Split registry: non-Optional = Core/Required, rest = Optional.
     -- WIZARD_HIDDEN: addons hidden from the wizard (still installable via /gui -> Installer).
     local WIZARD_HIDDEN = {
-        ["WarpDeplete"]   = true,
-        ["DandersFrames"] = true,
         ["Dominos"]       = true,
         ["Details"]       = true,
     }
