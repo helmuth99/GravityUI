@@ -773,6 +773,10 @@ local function BuildCombat(parent)
     header:SetPoint("TOPLEFT", PADDING, yOffset)
     yOffset = yOffset - header.gap - 10
     
+    local cb0 = ns.GUI:CreateCheckbox(content, "Scrolling Combat Text (Self)", "scrollingCombatText", dbUI, function(enabled) SetCVar("enableFloatingCombatText", enabled and "1" or "0") end)
+    cb0:SetPoint("TOPLEFT", PADDING, yOffset)
+    yOffset = yOffset - 30
+
     local cb1 = ns.GUI:CreateCheckbox(content, "Show Damage Numbers", "showDamageNumbers", dbUI, function(enabled) SetCVar("floatingCombatTextCombatDamage_v2", enabled and "1" or "0") end)
     cb1:SetPoint("TOPLEFT", PADDING, yOffset)
     yOffset = yOffset - 30

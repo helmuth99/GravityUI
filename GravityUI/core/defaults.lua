@@ -653,6 +653,8 @@ ns.Defaults = {
         },
 
         showDamageNumbers = true,
+        showHealingNumbers = false,
+        scrollingCombatText = false,
         autoRoleAccept = true,
         lfgQuickJoin = true,
         autoRepair = "personal",

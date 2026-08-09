@@ -271,6 +271,9 @@ function ns.ApplyCombatTextSettings()
     local db = ns.GetDB()
     if not (db and db.uiimprovements) then return end
     local ui = db.uiimprovements
+    if ui.scrollingCombatText ~= nil then
+        SetCVar("enableFloatingCombatText",          ui.scrollingCombatText and "1" or "0")
+    end
     if ui.showDamageNumbers ~= nil then
         SetCVar("floatingCombatTextCombatDamage_v2",  ui.showDamageNumbers  and "1" or "0")
     end
@@ -285,12 +288,15 @@ do
     local combatCVarFrame = CreateFrame("Frame")
     combatCVarFrame:RegisterEvent("CVAR_UPDATE")
     combatCVarFrame:SetScript("OnEvent", function(_, _, cvarName, value)
-        if cvarName ~= "floatingCombatTextCombatDamage_v2"
+        if cvarName ~= "enableFloatingCombatText"
+           and cvarName ~= "floatingCombatTextCombatDamage_v2"
            and cvarName ~= "floatingCombatTextCombatHealing_v2" then return end
         local db = ns.GetDB()
         if not (db and db.uiimprovements) then return end
         local enabled = (value == "1")
-        if cvarName == "floatingCombatTextCombatDamage_v2" then
+        if cvarName == "enableFloatingCombatText" then
+            db.uiimprovements.scrollingCombatText = enabled
+        elseif cvarName == "floatingCombatTextCombatDamage_v2" then
             db.uiimprovements.showDamageNumbers  = enabled
         else
             db.uiimprovements.showHealingNumbers = enabled
