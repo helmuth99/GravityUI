@@ -47,7 +47,7 @@ local recentColors  = {}
 local savedPosition = nil
 
 local MAX_RECENT      = 24
-local MAX_SAVED       = 24
+local MAX_SAVED       = 8
 local SWATCH_SIZE     = 28
 local SWATCH_GAP      = 3
 local SWATCHES_PER_ROW = 12
@@ -183,7 +183,7 @@ local function CreatePickerFrame()
     -- MAIN FRAME
     -- ──────────────────────────────────────────────────────────
     pickerFrame = CreateFrame("Frame", "GravityUIColorPicker", UIParent, "BackdropTemplate")
-    pickerFrame:SetSize(420, 500)
+    pickerFrame:SetSize(420, 530)
     pickerFrame:SetBackdrop(Backdrop())
     pickerFrame:SetBackdropColor(C_BG[1], C_BG[2], C_BG[3], 0.88)
     pickerFrame:SetBackdropBorderColor(C_ACCENT[1], C_ACCENT[2], C_ACCENT[3], 0.45)
@@ -866,6 +866,7 @@ local function CreatePickerFrame()
         for i, c in ipairs(recentColors) do
             local r, g, b, a = c.r, c.g, c.b, c.a or 1
             local col = (i-1) % SWATCHES_PER_ROW
+            local row = math.floor((i-1) / SWATCHES_PER_ROW)
             local sw = MakeSwatch(palCont, col, 0, r, g, b, a, RGBtoHex(r,g,b,a),
                 function() SelectColor(r, g, b, a) end,
                 function()
@@ -879,12 +880,13 @@ local function CreatePickerFrame()
                         RefreshSaved()
                     end
                 end)
-            sw:SetPoint("TOPLEFT", col*(SWATCH_SIZE+SWATCH_GAP), -(RECENT_Y + LBL_H))
+            sw:SetPoint("TOPLEFT", col*(SWATCH_SIZE+SWATCH_GAP), -(RECENT_Y + LBL_H + row*ROW_H))
             table.insert(recentSwatches, sw)
         end
     end
 
-    local PAL_TOTAL = RECENT_Y + LBL_H + ROW_H + 4
+    local RECENT_ROWS = math.ceil(MAX_RECENT / SWATCHES_PER_ROW)
+    local PAL_TOTAL = RECENT_Y + LBL_H + RECENT_ROWS * ROW_H + 4
     palCont:SetHeight(PAL_TOTAL)
 
     -- ── Assign RefreshSaved (savedPanel + savedSwatches created in the top section) ──
@@ -1132,9 +1134,8 @@ function CP:Open(initialColor, hasAlpha, onAccept, onCancel, onChange, defaultCo
         pickerFrame.skipOnChange = true
         pickerFrame:SetColor(ir, ig, ib, ia)
         pickerFrame.skipOnChange = false
-        if pickerFrame._addToRecent then
-            pickerFrame._addToRecent(ir, ig, ib, hasAlpha and ia or nil)
-        end
+        -- NOTE: Do NOT add to Recent here. Recent only tracks colors the user
+        -- explicitly confirmed via the Apply button (see applyBtn OnClick).
     end
 
     pickerFrame:UpdateAlphaVis()
@@ -1321,7 +1322,8 @@ local function InstallEllesmereHook()
 
         local r, g, b = info.r or 1, info.g or 1, info.b or 1
         local a       = info.opacity or 1
-        local hasA    = info.hasOpacity or false
+        -- EUI doesn't set hasOpacity; derive it from opacityFunc being present.
+        local hasA    = info.hasOpacity or (info.opacityFunc ~= nil)
 
         -- Install proxy so EUI swatch callbacks that call popup:GetColorRGB()
         -- see our live color immediately.
