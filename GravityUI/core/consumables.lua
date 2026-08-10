@@ -3085,11 +3085,13 @@ local function applyRowData(row, member)
     -- For the local player we query the API directly so the value is always
     -- available immediately (LibOpenRaid data may not have arrived yet, which
     -- caused DHs and other classes to show '-' or nothing on frame open).
+    -- IMPORTANT: Use UnitIsUnit(unit, "player") not unit == "player" because
+    -- in a raid group our own unit ID is "raidN", never the literal "player".
     -- For remote players we fall back to LibOpenRaid as before.
     do
         local durPct = nil
 
-        if member.unit == "player" then
+        if UnitIsUnit(member.unit, "player") then
             local total, count = 0, 0
             for i = 1, 18 do
                 local cur, maxD = GetInventoryItemDurability(i)

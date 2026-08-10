@@ -183,6 +183,14 @@ local function BuildInformationTab(parent)
             },
         },
         {
+            version = "4.00.32",
+            date = "08/10/2026",
+            changes = {
+                "Fixed Consumables Raid Frame Durability not showing for Demon Hunters (and for yourself in a Raid group) -- previous fix used unit == 'player' which is never true in a Raid, now uses UnitIsUnit()",
+            },
+        },
+
+        {
             version = "4.00.27",
             date = "08/07/2026",
             changes = {
