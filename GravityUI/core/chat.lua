@@ -1563,6 +1563,23 @@ local function ApplyTabAutohide(chatFrame)
     local tab = _G[chatFrame:GetName() .. "Tab"]
     if not tab then return end
 
+    -- Register the blink-suppression hook once, independently of hideTabs.
+    -- This way disableTabBlink works even when Auto Hide Tabs is OFF.
+    if not _G.__guiFCFFlashHooked then
+        _G.__guiFCFFlashHooked = true
+        hooksecurefunc("FCF_FlashTab", function(cf)
+            local s = GetSettings()
+            if not s or not s.disableTabBlink then return end
+            local t = cf and _G[cf:GetName().."Tab"]
+            if not t then return end
+            -- Stop any running flash animation immediately
+            if t.AnimIn  and t.AnimIn:IsPlaying()  then t.AnimIn:Stop()  end
+            if t.AnimOut and t.AnimOut:IsPlaying() then t.AnimOut:Stop() end
+            -- Restore stable alpha (respects hideTabs if also enabled)
+            t:SetAlpha(s.hideTabs and (IsMouseOverChat() and 1 or 0) or 1)
+        end)
+    end
+
     if settings.hideTabs then
         -- Initialize Ticker once (centralized)
         if not ns.Chat.AutohideTicker then
@@ -1591,7 +1608,7 @@ local function ApplyTabAutohide(chatFrame)
                 end
             end)
             
-            -- Also hook the Blizzard internal update function
+            -- Hook the Blizzard internal alpha update function
             if not _G.__guiFCFHooked then
                 _G.__guiFCFHooked = true
                 hooksecurefunc("FCFTab_UpdateAlpha", function(cf)

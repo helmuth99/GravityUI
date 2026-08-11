@@ -1314,6 +1314,7 @@ local function BuildChat(parent)
     MakeRow("Active Tab Opacity", "slider", 0, 1, "alpha", dbChat.tabs.activeTab, RefreshChat, 0.1)
     MakeRow("Inactive Tab Opacity", "slider", 0, 1, "alpha", dbChat.tabs.inactiveTab, RefreshChat, 0.1)
     MakeRow("Auto Hide Chat Tabs", "checkbox", "hideTabs", dbChat, RefreshChat)
+    MakeRow("Disable Tab Blink on New Message", "checkbox", "disableTabBlink", dbChat, RefreshChat)
 
     MakeSubHeader("Input Box Background")
     MakeRow("Input Box Background Texture", "checkbox", "enabled", dbChat.editBox, RefreshChat)

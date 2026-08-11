@@ -565,6 +565,7 @@ ns.Defaults = {
                 bgAlpha = 0.25,
             },
             hideTabs = false,
+            disableTabBlink = false,
             tabs = {
                 activeTab = {
                     useThemeColor = true,

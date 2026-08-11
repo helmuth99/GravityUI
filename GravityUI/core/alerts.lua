@@ -9,10 +9,18 @@ local Alerts = ns.Alerts
 -------------------------------------------------------------------------------
 -- POLYFILLS
 -------------------------------------------------------------------------------
+-- AchievementShield_SetPoints: called by Blizzard to set shield text
 if not AchievementShield_SetPoints then
     function AchievementShield_SetPoints(points, anchorFrame)
         if not anchorFrame then return end
         anchorFrame:SetText(points)
+    end
+end
+-- AchievementShield_OnLoad: called by Blizzard XML OnLoad handler.
+-- Missing in some patches → LUA_WARNING. No-op is safe; we skin the frame ourselves.
+if not AchievementShield_OnLoad then
+    function AchievementShield_OnLoad(self)
+        -- no-op polyfill
     end
 end
 
@@ -157,39 +165,56 @@ end
 
 local function SkinLootWonAlert(frame)
     if not frame or frame.guiSkinned then return end
+
+    -- Safety: if the frame is forbidden, skip entirely
+    if frame.IsForbidden and frame:IsForbidden() then return end
+
     frame:SetAlpha(1)
     if not frame.guiHooked then
         hooksecurefunc(frame, "SetAlpha", ForceAlpha)
         frame.guiHooked = true
     end
+
+    -- Only kill visual chrome, NOT the frame itself (which could be frame.lootItem == frame fallback)
     Kill(frame.Background)
     Kill(frame.glow)
     Kill(frame.shine)
     Kill(frame.BGAtlas)
-    
+
     local lootItem = frame.lootItem or frame
+
+    -- GUARD: If lootItem or its Icon is nil, bail out early.
+    -- This can happen when the frame pool recycles before item data is loaded.
+    -- Bailing here is safe: Blizzard still shows the frame, it just won't have our skin.
+    if not lootItem or not lootItem.Icon then
+        frame.guiSkinned = true
+        return
+    end
+
     local qualityColor = nil
     local hyperlink = frame.hyperlink or (lootItem and lootItem.hyperlink)
     if hyperlink then
-        local quality = C_Item.GetItemQualityByID(hyperlink)
-        if quality and quality >= 1 then
+        local ok, quality = pcall(C_Item.GetItemQualityByID, hyperlink)
+        if ok and quality and quality >= 1 then
             local r, g, b = GetItemQualityColor(quality)
             qualityColor = { r = r, g = g, b = b }
         end
     end
-    StyleIcon(lootItem.Icon, frame, qualityColor)
-    
+
+    -- Wrap StyleIcon in pcall: it accesses Icon width/height which can error on forbidden frames
+    pcall(StyleIcon, lootItem.Icon, frame, qualityColor)
+
     if not frame.guiBackdrop and lootItem.Icon.guiBorder then
         local sr, sg, sb, sa = ns.GetAccentColor()
         local bgr, bgg, bgb, bga = 0.05, 0.05, 0.05, 0.95
-        
+
         local db = GetDB()
         if db and db.disableThemeColorBackground then
             local c = db.customBackgroundColor
             if c then bgr, bgg, bgb, bga = c[1], c[2], c[3], c[4] end
         else
-             local themeBg = ns.db.profile.general.themeBgColor
-             if themeBg then bgr, bgg, bgb, bga = themeBg[1], themeBg[2], themeBg[3], themeBg[4] end
+            local themeBg = ns.db.profile.general.themeBgColor
+            if themeBg then bgr, bgg, bgb, bga = themeBg[1], themeBg[2], themeBg[3], themeBg[4] end
         end
 
         local bg = CreateFrame("Frame", nil, frame, "BackdropTemplate")
@@ -205,20 +230,17 @@ local function SkinLootWonAlert(frame)
         bg:SetBackdropBorderColor(sr, sg, sb, sa)
         frame.guiBackdrop = bg
     end
-    
-    local sr, sg, sb, sa = ns.GetAccentColor()
+
     local db = GetDB()
-    local tr, tg, tb, ta = sr, sg, sb, sa
-    
     if db and db.disableThemeColorFont then
         local c = db.customFontColor
-        if c then
-            tr, tg, tb, ta = c[1], c[2], c[3], c[4]
+        if c and frame.Label then
+            frame.Label:SetTextColor(c[1], c[2], c[3], c[4])
         end
+    else
+        if frame.Label then frame.Label:SetTextColor(1, 1, 1, 1) end
     end
-    
-    if frame.Label then frame.Label:SetTextColor(1, 1, 1, 1) end
-    
+
     frame.guiSkinned = true
 end
 
@@ -625,4 +647,46 @@ function Alerts:Initialize()
             end
         end)
     end
+end
+
+-------------------------------------------------------------------------------
+-- DEBUG COMMAND
+-------------------------------------------------------------------------------
+SLASH_GRAVITYDEBUGALERT1 = "/gravitydebugalert"
+SlashCmdList["GRAVITYDEBUGALERT"] = function()
+    local p = function(msg) print("|cff00ccffGravityUI Alert Debug:|r " .. tostring(msg)) end
+
+    -- 1. Check LootAlertSystem
+    if not LootAlertSystem then
+        p("LootAlertSystem = NIL!")
+        return
+    end
+    p("LootAlertSystem: OK")
+    p("setUpFunction: " .. tostring(LootAlertSystem.setUpFunction))
+
+    -- 2. Try AddAlert WITHOUT pcall to surface real Lua errors
+    local link = "|cffa335ee|Hitem:19019::::::::::::|h[Thunderfury]|h|r"
+    p("Versuche AddAlert() ohne pcall...")
+    LootAlertSystem:AddAlert(link, 1, nil, nil, nil, nil, nil, nil)
+    p("AddAlert() aufgerufen.")
+
+    -- 3. Check active frames in pool after a tick
+    C_Timer.After(0.1, function()
+        if LootAlertSystem.alertFramePool then
+            local count = 0
+            for frame in LootAlertSystem.alertFramePool:EnumerateActive() do
+                count = count + 1
+                p("Frame #"..count..": IsShown=" .. tostring(frame:IsShown()) ..
+                  " Alpha=" .. tostring(frame:GetAlpha()) ..
+                  " lootItem=" .. tostring(frame.lootItem) ..
+                  " guiSkinned=" .. tostring(frame.guiSkinned))
+                if frame.lootItem then
+                    p("  lootItem.Icon=" .. tostring(frame.lootItem.Icon))
+                end
+            end
+            if count == 0 then p("Keine aktiven Frames im Pool!") end
+        else
+            p("alertFramePool = NIL")
+        end
+    end)
 end
