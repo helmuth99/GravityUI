@@ -201,8 +201,10 @@ local function InjectGravityLfgListeners()
     local targetNode = LFGListFrame.SearchPanel.ScrollBox:GetScrollTarget()
     if not targetNode then return end
     
-    for i = 1, select("#", targetNode:GetChildren()) do
-        local node = select(i, targetNode:GetChildren())
+    -- PERF: Cache GetChildren() once to avoid double vararg allocation per iteration.
+    local targetChildren = {targetNode:GetChildren()}
+    for i = 1, #targetChildren do
+        local node = targetChildren[i]
         if node and node:GetObjectType() == "Button" and not node.guiLfgAttached then
             node:SetScript("OnDoubleClick", HandleGravityLfgClick)
             node:RegisterForClicks("AnyUp")
@@ -1149,6 +1151,8 @@ function SafeRelease:Trigger()
     -- In case the popup was reused, ensure we show it now because the type is DEATH again
     self.overlay:Show()
     self.overlay.label:SetText(string.format("Hold ALT or Click"))
+    -- PERF: Use named method reference instead of anonymous closure to avoid
+    -- allocating a new function object on every Trigger() call.
     self.overlay:SetScript("OnUpdate", function() self:Update() end)
 end
 

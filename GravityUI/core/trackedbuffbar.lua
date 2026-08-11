@@ -210,11 +210,13 @@ function Module:SkinBar(bar)
     local icon = bar.icon or bar.Icon
     -- Check children for icon if not found
     if not icon and bar.GetChildren then
-        for i = 1, select("#", bar:GetChildren()) do
-             local child = select(i, bar:GetChildren())
-             if child.Texture or (child.IsObjectType and child:IsObjectType("Texture")) then
-                 -- This is risky, might catch random textures
-             end
+        -- PERF: Cache GetChildren() once to avoid double vararg allocation per iteration.
+        local barChildren = {bar:GetChildren()}
+        for i = 1, #barChildren do
+            local child = barChildren[i]
+            if child.Texture or (child.IsObjectType and child:IsObjectType("Texture")) then
+                -- This is risky, might catch random textures
+            end
         end
     end
     -- Try parent's icon if bar is inside a row
@@ -365,8 +367,10 @@ function Module:ScanForBars()
              end
                  
              -- Scan Children
-             for i = 1, select("#", obj:GetChildren()) do
-                 local child = select(i, obj:GetChildren())
+             -- PERF: Cache GetChildren() once to avoid double vararg allocation per iteration.
+             local objChildren = {obj:GetChildren()}
+             for i = 1, #objChildren do
+                 local child = objChildren[i]
                  -- Direct Child Bar
                  if child.SetStatusBarTexture then
                      Module.knownBars[child] = true
@@ -395,14 +399,16 @@ function Module:ScanForBars()
     -- 2. Heuristic: Scan for the specific object pattern "BuffBarCooldownViewer.X.Bar"
     local root = _G["BuffBarCooldownViewer"]
     if root and root.GetChildren then
-        for i = 1, select("#", root:GetChildren()) do
-             local child = select(i, root:GetChildren())
-             if child.Bar and child.Bar.SetStatusBarTexture then
-                 Module.knownBars[child.Bar] = true
-             end
-             if child.SetStatusBarTexture then
-                 Module.knownBars[child] = true
-             end
+        -- PERF: Cache GetChildren() once to avoid double vararg allocation per iteration.
+        local rootChildren = {root:GetChildren()}
+        for i = 1, #rootChildren do
+            local child = rootChildren[i]
+            if child.Bar and child.Bar.SetStatusBarTexture then
+                Module.knownBars[child.Bar] = true
+            end
+            if child.SetStatusBarTexture then
+                Module.knownBars[child] = true
+            end
         end
     end
 

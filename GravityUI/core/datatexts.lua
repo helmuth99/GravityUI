@@ -880,12 +880,17 @@ local function PopulateGuildPopup(anchor)
 end
 
 -- 4. GUILD
+local GUILD_MAX_CHARS = 12  -- max guild name chars before truncation with "..."
 DT.Types.guild = {
     Update = function(slot, config)
         if not IsInGuild() then return "No Guild" end
         local total, online = GetNumGuildMembers()
         local r, g, b = GetValueColor()
         local guildName = GetGuildInfo("player") or "Guild"
+        -- Truncate long guild names so they don't overflow the slot
+        if #guildName > GUILD_MAX_CHARS then
+            guildName = guildName:sub(1, GUILD_MAX_CHARS) .. "..."
+        end
         local label = GetLabel(guildName .. ": ", "G: ", config.shortLabel, config.noLabel)
         return string.format("%s|cff%02x%02x%02x%d|r", label, r*255, g*255, b*255, online or 0)
     end,

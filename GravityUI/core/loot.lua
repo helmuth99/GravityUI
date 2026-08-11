@@ -1566,8 +1566,12 @@ function Loot:Initialize()
             local f = _G["GroupLootFrame"..i]
             if f then 
                 UpdateGroupLootStyle(f) 
-                f:HookScript("OnShow", OnGroupLootShow)
-                
+                f:HookScript("OnShow", function(self)
+                    -- Cache DB reference on show so OnUpdate avoids repeated lookups
+                    self._cachedLootDB = GetDB()
+                    self._lastKnownWidth = nil  -- reset so width-check triggers on first tick
+                end)
+
                 -- Robustness: Add OnUpdate to retry data loading and enforce layout
                 f:HookScript("OnUpdate", function(self, elapsed)
                     if not self.gravityUpdateTimer then self.gravityUpdateTimer = 0 end
@@ -1575,12 +1579,17 @@ function Loot:Initialize()
                     if self.gravityUpdateTimer > 0.2 then
                         self.gravityUpdateTimer = 0
                         -- 1. Enforce Width (Blizzard likes to reset this)
-                         local db = GetDB()
-                         if db and db.lootRoll and db.lootRoll.width then
-                             if self:GetWidth() ~= db.lootRoll.width then
-                                 self:SetWidth(db.lootRoll.width)
-                             end
-                         end
+                        -- PERF: Use cached db and gate on actual width change to avoid
+                        -- calling UpdateRollPositions() every 0.2s needlessly.
+                        local db = self._cachedLootDB
+                        if db and db.lootRoll and db.lootRoll.width then
+                            local desiredW = db.lootRoll.width
+                            if self:GetWidth() ~= desiredW then
+                                self:SetWidth(desiredW)
+                                self._lastKnownWidth = desiredW
+                                Loot:UpdateRollPositions()  -- only on actual change
+                            end
+                        end
                          
                          -- 2. Retry Ilvl / Link / Color
                          if self.rollID then
@@ -1634,13 +1643,6 @@ function Loot:Initialize()
                                      self.guiBindText:SetText("|cff1eff00BoU|r")
                                  end
                              end
-                         end
-                         
-                         -- 3. Enforce Layout Position (Aggressive)
-                         -- Only if not moving
-                         if not self.isMoving and not (Loot.rollMover and Loot.rollMover:IsShown()) then
-                              -- Force layout update to snap any rogue frames back
-                              Loot:UpdateRollPositions()
                          end
                     end
                 end)

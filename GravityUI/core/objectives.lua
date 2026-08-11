@@ -314,14 +314,16 @@ local function SkinHeaderFrame(header, isMain)
     -- Minimize Button handling (Re-run to ensure it stays on top/correct)
     local btn = header.MinimizeButton
     if not btn then
-         for i = 1, select("#", header:GetChildren()) do
-             local child = select(i, header:GetChildren())
-             if child:IsObjectType("Button") then
-                 local w = child:GetWidth()
-                 if w and w > 10 and w < 40 then btn = child break end
-             end
-         end
-         header.MinimizeButton = btn 
+        -- PERF: Cache GetChildren() once to avoid double vararg allocation per iteration.
+        local headerChildren = {header:GetChildren()}
+        for i = 1, #headerChildren do
+            local child = headerChildren[i]
+            if child:IsObjectType("Button") then
+                local w = child:GetWidth()
+                if w and w > 10 and w < 40 then btn = child break end
+            end
+        end
+        header.MinimizeButton = btn 
     end
     if btn then SkinMinimizeButton(btn) end
 end
@@ -330,8 +332,10 @@ end
 local function FindHeadersRecursive(frame, depth)
     if not frame or depth > 6 then return end 
     
-    for i = 1, select("#", frame:GetChildren()) do
-        local child = select(i, frame:GetChildren())
+    -- PERF: Cache GetChildren() once to avoid double vararg allocation per iteration.
+    local frameChildren = {frame:GetChildren()}
+    for i = 1, #frameChildren do
+        local child = frameChildren[i]
         local isHeader = false
         local isMain = false
         
@@ -376,8 +380,10 @@ end
 
 local function SkinWidgetsRecursive(frame)
     if not frame then return end
-    for i = 1, select("#", frame:GetChildren()) do
-        local child = select(i, frame:GetChildren())
+    -- PERF: Cache GetChildren() once to avoid double vararg allocation per iteration.
+    local widgetChildren = {frame:GetChildren()}
+    for i = 1, #widgetChildren do
+        local child = widgetChildren[i]
         -- Check for Bar with Spark
         if child.Bar and child.Bar.Spark then
             child.Bar.Spark:SetAlpha(0)
@@ -390,6 +396,13 @@ end
 
 function Objectives:OnInitialize()
     self:RegisterEvent("PLAYER_ENTERING_WORLD", "SkinTracker")
+    -- Auto-hide: react to quest watch changes
+    self:RegisterEvent("QUEST_WATCH_UPDATE", "CheckAutoHide")
+    self:RegisterEvent("QUEST_LOG_UPDATE", "CheckAutoHide")
+    self:RegisterEvent("QUEST_ACCEPTED", "CheckAutoHide")
+    self:RegisterEvent("QUEST_REMOVED", "CheckAutoHide")
+    self:RegisterEvent("SCENARIO_UPDATE", "CheckAutoHide")
+    self:RegisterEvent("CRITERIA_UPDATE", "CheckAutoHide")
     
     C_Timer.After(1, function() self:SkinTracker() end)
     C_Timer.After(3, function() self:SkinTracker() end)
@@ -445,6 +458,78 @@ function Objectives:SkinTracker()
     -- 3. Specific Scenario Widget Skinning (Remove Sparks)
     if ScenarioObjectiveTracker and ScenarioObjectiveTracker.ContentsFrame then
          SkinWidgetsRecursive(ScenarioObjectiveTracker.ContentsFrame)
+    end
+    
+    -- 4. Auto-hide check after skinning
+    self:CheckAutoHide()
+end
+
+-- -------------------------------------------------------------------------
+-- AUTO-HIDE: Hide the tracker when there is nothing to show.
+-- GUARD: Never auto-hide inside any instance (dungeon, M+, raid, scenario)
+--        because the tracker always shows relevant content there (M+ timer,
+--        dungeon objectives, boss progress, scenario steps).
+-- Only hides when the player has no quests tracked AND is in open world.
+-- -------------------------------------------------------------------------
+function Objectives:CheckAutoHide()
+    local db = ns.db.profile.styling.objectives
+    if not db.objectiveTrackerSkinning then return end
+    if not db.autoHideWhenEmpty then return end
+    if not ObjectiveTrackerFrame then return end
+
+    -- GUARD: Never suppress the tracker inside any instance.
+    -- IsInInstance() returns true for: dungeons, raids, M+ keys, scenarios.
+    local inInstance = IsInInstance and IsInInstance()
+    if inInstance then
+        if not ObjectiveTrackerFrame:IsShown() then
+            ObjectiveTrackerFrame:Show()
+        end
+        return
+    end
+
+    -- Also stay visible during active scenarios in the open world (e.g. Delves entrance)
+    if C_Scenario and C_Scenario.IsInScenario and C_Scenario.IsInScenario() then
+        if not ObjectiveTrackerFrame:IsShown() then
+            ObjectiveTrackerFrame:Show()
+        end
+        return
+    end
+
+    local hasContent = false
+
+    -- Method A: Iterate Blizzard modules (quests, scenarios, achievements, M+)
+    if ObjectiveTrackerFrame.MODULES then
+        for _, module in pairs(ObjectiveTrackerFrame.MODULES) do
+            if module and module.HasContents and module:HasContents() then
+                hasContent = true
+                break
+            end
+            -- Fallback: check usedBlocks table (some modules don't implement HasContents)
+            if not hasContent and module and module.usedBlocks then
+                for _ in pairs(module.usedBlocks) do
+                    hasContent = true
+                    break
+                end
+            end
+        end
+    end
+
+    -- Method B: Direct quest watch count (safety fallback if MODULES is unavailable)
+    if not hasContent then
+        local watchCount = C_QuestLog and C_QuestLog.GetNumQuestWatches and C_QuestLog.GetNumQuestWatches()
+        if watchCount and watchCount > 0 then
+            hasContent = true
+        end
+    end
+
+    if hasContent then
+        if not ObjectiveTrackerFrame:IsShown() then
+            ObjectiveTrackerFrame:Show()
+        end
+    else
+        if ObjectiveTrackerFrame:IsShown() then
+            ObjectiveTrackerFrame:Hide()
+        end
     end
 end
 

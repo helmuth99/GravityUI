@@ -863,6 +863,14 @@ local function BuildObjectivesPanel(parent)
     end)
     row1:SetPoint("TOPLEFT", PAD, yOffset)
     yOffset = yOffset - ROW_HEIGHT - 5
+
+    local rowAutoHide = CreateStylingRow(content, "Auto-Hide When Empty", "checkbox", "autoHideWhenEmpty", db, function()
+        if ns.Objectives and ns.Objectives.CheckAutoHide then ns.Objectives:CheckAutoHide() end
+    end)
+    rowAutoHide:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
+
+
     
     local rowWidth = CreateStylingRow(content, "Header Width", "slider", 180, 400, "width", db, function()
         if ns.Objectives and ns.Objectives.Refresh then ns.Objectives:Refresh() end

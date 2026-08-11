@@ -176,6 +176,7 @@ ns.Defaults = {
             
             -- Skinning Settings
             objectiveTrackerSkinning = true, -- Master Enable
+            autoHideWhenEmpty = true, -- Hide tracker frame when no quests/objectives are tracked
             backgroundOpacity = 0.8,
             
             -- Background Color

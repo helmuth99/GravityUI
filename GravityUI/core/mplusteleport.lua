@@ -21,23 +21,81 @@ local function Print(...)
     print("|cFF30D1FFGravityUI:|r " .. table.concat(args, " "))
 end
 
+-- Scans bags for a real |Hkeystone: item link.
+-- Returns the raw API link (the ONLY format accepted by SendChatMessage in Midnight 12.0.1).
+-- Uses the global string.find (not :find) matching MythicKeyAnnouncer exactly.
+local function FindKeystoneItemLink()
+    for bag = 0, 4 do
+        local numSlots = C_Container.GetContainerNumSlots(bag) or 0
+        for slot = 1, numSlots do
+            local link = C_Container.GetContainerItemLink(bag, slot)
+            if link and string.find(link, "|Hkeystone:", 1, true) then
+                return link
+            end
+        end
+    end
+    return nil
+end
+
 local function GetOwnedKeystone()
     -- Bag Scan (Most reliable)
+    -- Also returns the raw item link so !key/!keys can post a clickable |Hkeystone: link.
     for bag = 0, 4 do
         local numSlots = C_Container.GetContainerNumSlots(bag) or 0
         for slot = 1, numSlots do
             local itemLink = C_Container.GetContainerItemLink(bag, slot)
-            if itemLink and itemLink:find("keystone:") then
+            if itemLink and string.find(itemLink, "|Hkeystone:", 1, true) then
                 local mid, lvl = itemLink:match("keystone:%d+:(%d+):(%d+)")
-                if mid then return tonumber(mid), tonumber(lvl) end
+                if mid then return tonumber(mid), tonumber(lvl), itemLink end
             end
         end
     end
-    -- API Fallback
+    -- API Fallback (no item link available here)
     local mid = C_MythicPlus.GetOwnedKeystoneChallengeMapID()
     local lvl = C_MythicPlus.GetOwnedKeystoneLevel()
-    if mid and mid > 0 then return mid, lvl end
-    return nil, nil
+    if mid and mid > 0 then return mid, lvl, nil end
+    return nil, nil, nil
+end
+
+-- Announce our own keystone to the given channel.
+-- CRITICAL: WoW internally validates the "authenticity" of |Hkeystone: hyperlinks.
+-- Any modification of the raw string from GetContainerItemLink (gsub, format, concat)
+-- breaks this provenance check and causes SendChatMessage to strip the link to plain text.
+-- The raw link MUST be sent completely unmodified via C_ChatInfo.SendChatMessage.
+-- This matches KeystoneLoot's exact working implementation:
+--   local link = GetContainerItemLink(bag, slot)
+--   C_ChatInfo.SendChatMessage(link, channel)
+local function AnnounceOwnKey(replyChannel, whisperTarget)
+    local rawLink = FindKeystoneItemLink()
+
+    if rawLink then
+        -- KeystoneLoot's exact pattern: prefix text + raw link.
+        -- WoW requires non-hyperlink text to precede the |Hkeystone: link
+        -- in order for SendChatMessage to accept it as a clickable hyperlink.
+        local msg = rawLink  -- start with just the link
+        if replyChannel == "WHISPER" then
+            C_ChatInfo.SendChatMessage(msg, "WHISPER", nil, whisperTarget)
+        else
+            C_ChatInfo.SendChatMessage(msg, replyChannel)
+        end
+        return true
+    end
+
+    -- No bag link — text fallback from API data only
+    local mapID = C_MythicPlus.GetOwnedKeystoneChallengeMapID()
+    local level = C_MythicPlus.GetOwnedKeystoneLevel()
+    if mapID and mapID > 0 and level and level > 0 then
+        local dn = C_ChallengeMode.GetMapUIInfo(mapID) or "Unknown Dungeon"
+        local text = string.format("Keystone: %s (%d)", dn, level)
+        if replyChannel == "WHISPER" then
+            C_ChatInfo.SendChatMessage(text, "WHISPER", nil, whisperTarget)
+        else
+            C_ChatInfo.SendChatMessage(text, replyChannel)
+        end
+        return true
+    end
+
+    return false
 end
 
 -- IsSpellKnown() does not reliably detect newer Midnight teleport spells (IDs 1254xxx+).
@@ -293,17 +351,13 @@ local function HandleChatCommand(event, msg, sender)
     end
 
     if cmd == "!key" or cmd == "!keys" then
-        -- Always respond with OUR OWN key only.
-        -- When someone else asks (!key), we tell them what WE have.
-        -- When we ask ourselves, we announce our own key to the group.
-        -- We never dump the full groupKeys cache into chat.
-        local myMapID, myLevel = GetOwnedKeystone()
-        if myMapID then
-            local dn = C_ChallengeMode.GetMapUIInfo(myMapID) or ("Map "..myMapID)
-            dn = dn:gsub("Operation: ",""):gsub("Tazavesh: ","")
-            Reply(string.format("[GravityUI] %s: %s +%d", UnitName("player"), dn, myLevel))
-        else
-            -- Only bother saying "no key" if we ourselves typed the command
+        -- Delegate entirely to AnnounceOwnKey which calls SendChatMessage directly.
+        -- This matches the MythicKeyAnnouncer pattern: the chat event handler only
+        -- extracts the command safely, the actual announce happens in a clean function
+        -- scope where the item link security context is fully preserved.
+        local announced = AnnounceOwnKey(replyChannel, target)
+        if not announced then
+            -- Only tell the player they have no key if THEY typed the command
             local isSelf = false
             pcall(function()
                 local playerName = UnitName("player") or ""
@@ -311,7 +365,7 @@ local function HandleChatCommand(event, msg, sender)
                 isSelf = (senderShort == playerName or senderShort == Ambiguate(playerName, "short"))
             end)
             if isSelf then
-                Reply("[GravityUI] You have no keystone.")
+                pcall(SendChatMessage, "[GravityUI] You have no keystone.", replyChannel == "WHISPER" and "WHISPER" or replyChannel, nil, target)
             end
         end
 
@@ -800,7 +854,7 @@ SlashCmdList["GRAVITYTELEPORT"] = function(msg)
         Print("API MapID:", apiMapID)
         Print("API Level:", apiLevel)
         
-        Print("Scanning Bags...")
+        Print("Scanning Bags (legacy find)...")
         local found = false
         for bag = 0, 4 do
             local numSlots = C_Container.GetContainerNumSlots(bag) or 0
@@ -812,7 +866,6 @@ SlashCmdList["GRAVITYTELEPORT"] = function(msg)
                     local mid, lvl = itemLink:match("keystone:%d+:(%d+):(%d+)")
                     Print("Link (raw):", itemLink:gsub("|", "||"))
                     Print("Parsed:", "MapID="..tostring(mid), "Level="..tostring(lvl))
-                    
                     if mid then
                         local dungeonName = C_ChallengeMode.GetMapUIInfo(tonumber(mid))
                         Print("Reconstructed Name:", dungeonName, "(" .. lvl .. ")")
@@ -821,7 +874,35 @@ SlashCmdList["GRAVITYTELEPORT"] = function(msg)
             end
         end
         if not found then Print("Result: No Keystone found in bags 0-4.") end
+
+        -- Test new FindKeystoneItemLink function
+        local newLink = FindKeystoneItemLink()
+        if newLink then
+            Print("FindKeystoneItemLink: FOUND", newLink:gsub("|", "||"))
+        else
+            Print("FindKeystoneItemLink: NIL (not found with |Hkeystone: check)")
+        end
+
         Print("--- End Debug ---")
+    elseif msg == "testkey" then
+        Print("Testing key announce (RAW link, KeystoneLoot-style)...")
+        local rawLink = FindKeystoneItemLink()
+        if rawLink then
+            Print("Raw link found:", rawLink:gsub("|", "||"))
+            local channel = IsInGroup(LE_PARTY_CATEGORY_INSTANCE) and "INSTANCE_CHAT"
+                or (IsInRaid() and "RAID")
+                or (IsInGroup() and "PARTY")
+                or nil
+            if channel then
+                C_ChatInfo.SendChatMessage(rawLink, channel)
+                Print("Sent RAW via C_ChatInfo to", channel)
+            else
+                C_ChatInfo.SendChatMessage(rawLink, "SAY")
+                Print("Not in group - sent RAW to SAY")
+            end
+        else
+            Print("No keystone found in bags.")
+        end
     elseif msg:match("^spell%s+(%d+)") then
         -- /gtp spell <spellID> - test all known APIs for spell detection
         local id = tonumber(msg:match("^spell%s+(%d+)"))

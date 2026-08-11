@@ -189,6 +189,44 @@ local function BuildInformationTab(parent)
                 "Fixed Consumables Raid Frame Durability not showing for Demon Hunters (and for yourself in a Raid group) -- previous fix used unit == 'player' which is never true in a Raid, now uses UnitIsUnit()",
             },
         },
+        {
+            version = "4.00.33",
+            date = "08/11/2026",
+            changes = {
+                "Minimap Datapanel: Guild name is now truncated to 12 characters with '...' to prevent overflow in the panel slot",
+            },
+        },
+        {
+            version = "4.00.34",
+            date = "08/11/2026",
+            changes = {
+                "Performance: loot.lua GroupLootFrame OnUpdate optimized -- GetDB() now cached on OnShow instead of every 0.2s tick, UpdateRollPositions() only called when width actually changes (State-Gatekeeping)",
+            },
+        },
+        {
+            version = "4.00.35",
+            date = "08/11/2026",
+            changes = {
+                "12.1 Pre-Launch Performance Audit: 9x GetChildren() double-call GC churn fixed across buffborders.lua, objectives.lua, trackedbuffbar.lua, automation.lua",
+                "buffborders.lua: borderColor {0,0,0,1} table removed from AddBorderToButton hot-path -- direct RGBA values passed (Zero-Allocation standard)",
+                "automation.lua: anonymous closure in SafeRelease:Trigger() and LFG-listener loop cleaned up",
+            },
+        },
+        {
+            version = "4.00.36",
+            date = "08/11/2026",
+            changes = {
+                "M+ Teleport: !key / !keys now posts the real clickable Keystone item link (|Hkeystone:) from bag scan instead of plain text -- same mechanism as MythicKeyAnnouncer",
+                "M+ Teleport: GetOwnedKeystone() now returns the raw item link as 3rd value; bag scan detection updated to use |Hkeystone: literal match (more robust)",
+            },
+        },
+        {
+            version = "4.00.37",
+            date = "08/11/2026",
+            changes = {
+                "Objective Tracker: Auto-Hide when empty -- tracker is hidden when no quests/scenarios/achievements are tracked (controllable via Features > Styling > Objective Tracker > Auto-Hide When Empty)",
+            },
+        },
 
         {
             version = "4.00.27",

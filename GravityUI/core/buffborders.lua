@@ -156,7 +156,8 @@ local function AddBorderToButton(button, isBuff)
     end
 
     local borderSize = settings.borderSize or 2
-    local borderColor = {0, 0, 0, 1} -- Default Black
+    -- PERF: No borderColor table allocation — pass RGBA directly to avoid GC churn.
+    -- Border is always solid black (0,0,0,1) regardless of buff/debuff type.
     local isShown = borderSize > 0
     
     if not button.GravityBorderTop then
@@ -179,10 +180,10 @@ local function AddBorderToButton(button, isBuff)
     end
     
     if isShown then
-        button.GravityBorderTop:SetColorTexture(unpack(borderColor))
-        button.GravityBorderBottom:SetColorTexture(unpack(borderColor))
-        button.GravityBorderLeft:SetColorTexture(unpack(borderColor))
-        button.GravityBorderRight:SetColorTexture(unpack(borderColor))
+        button.GravityBorderTop:SetColorTexture(0, 0, 0, 1)
+        button.GravityBorderBottom:SetColorTexture(0, 0, 0, 1)
+        button.GravityBorderLeft:SetColorTexture(0, 0, 0, 1)
+        button.GravityBorderRight:SetColorTexture(0, 0, 0, 1)
         
         button.GravityBorderTop:SetHeight(borderSize)
         button.GravityBorderBottom:SetHeight(borderSize)
@@ -255,8 +256,10 @@ local function ApplyBuffBorders()
     end
     
     if TemporaryEnchantFrame then
-        for i = 1, select("#", TemporaryEnchantFrame:GetChildren()) do
-            local frame = select(i, TemporaryEnchantFrame:GetChildren())
+        -- PERF: Cache GetChildren() once — avoids double vararg allocation per iteration.
+        local enchChildren = {TemporaryEnchantFrame:GetChildren()}
+        for i = 1, #enchChildren do
+            local frame = enchChildren[i]
             if frame and (frame.Icon or frame.icon) then
                 frame._gui_IsTemp = true
                 AddBorderToButton(frame, true)
