@@ -561,6 +561,51 @@ end
 local movers = {}
 local moversLocked = true
 
+-- Guard flag: prevents our own SetPoint calls from retriggering the reassert hook.
+local gravityIsPositioning = false
+
+-- Installs hooksecurefunc on each extra button frame's SetPoint so GravityUI
+-- reasserts its saved position immediately after any external system moves the frame.
+-- Per-frame flags allow retry: ZoneAbilityFrame may not exist at PLAYER_LOGIN
+-- but will exist by PLAYER_ENTERING_WORLD. Each call to this function will
+-- install hooks for any frames that are now available.
+local extraHookInstalled_EAB  = false  -- ExtraAbilityContainer
+local extraHookInstalled_Zone = false  -- ZoneAbilityFrame
+local function MakeReassert(frameGetter, dbKey)
+    return function()
+        if gravityIsPositioning then return end
+        if InCombatLockdown() then return end
+        local db = GetDB()
+        if not db or not db.enabled then return end
+        local pos = db.bars and db.bars[dbKey] and db.bars[dbKey].position
+        if not pos then return end
+        C_Timer.After(0, function()
+            local f = frameGetter()
+            if not f or gravityIsPositioning then return end
+            if InCombatLockdown() then return end
+            local db2 = GetDB()
+            local pos2 = db2 and db2.bars and db2.bars[dbKey] and db2.bars[dbKey].position
+            if not pos2 then return end
+            gravityIsPositioning = true
+            f:ClearAllPoints()
+            f:SetPoint(pos2.point, UIParent, pos2.relativePoint, pos2.x, pos2.y)
+            gravityIsPositioning = false
+        end)
+    end
+end
+local function InstallExtraButtonPositionHooks()
+    if not extraHookInstalled_EAB and ExtraAbilityContainer then
+        extraHookInstalled_EAB = true
+        hooksecurefunc(ExtraAbilityContainer, "SetPoint",
+            MakeReassert(function() return ExtraAbilityContainer end, "extraActionButton"))
+    end
+    if not extraHookInstalled_Zone and _G.ZoneAbilityFrame then
+        extraHookInstalled_Zone = true
+        hooksecurefunc(_G.ZoneAbilityFrame, "SetPoint",
+            MakeReassert(function() return _G.ZoneAbilityFrame end, "zoneAbility"))
+    end
+end
+
 local function SaveMoverPosition(mover)
     local point, _, relativePoint, x, y = mover:GetPoint()
     local db = GetDB()
@@ -603,10 +648,27 @@ local function CreateMover(key, parentFrame, labelText)
     
     mover:SetScript("OnDragStop", function(self)
         self:StopMovingOrSizing()
-        SaveMoverPosition(self)
-        -- Update the actual frame position
+
+        -- Apply frame position (guard prevents our own SetPoint from triggering the hook)
+        gravityIsPositioning = true
         parentFrame:ClearAllPoints()
         parentFrame:SetPoint("CENTER", self, "CENTER")
+        gravityIsPositioning = false
+
+        -- Save the mover's raw GetPoint() result — reliable, no coordinate math.
+        -- After StopMovingOrSizing() the mover is re-anchored to UIParent TOPLEFT.
+        -- Storing this TOPLEFT offset directly and applying it to the game frame
+        -- on restore gives a consistent, drift-free position every session.
+        local db = GetDB()
+        if db and db.bars and db.bars[key] then
+            local point, _, relativePoint, x, y = self:GetPoint()
+            db.bars[key].position = {
+                point         = point         or "TOPLEFT",
+                relativePoint = relativePoint or "TOPLEFT",
+                x = x or 0,
+                y = y or 0,
+            }
+        end
     end)
     
     mover:Hide()
@@ -644,10 +706,12 @@ InitializeExtraButtons = function()
             pcall(function() frame:SetScale(settings.scale) end)
         end
         
-        -- Position
+        -- Position (GravityUI is authoritative — guard flag prevents hook re-entry)
         if settings.position then
+            gravityIsPositioning = true
             frame:ClearAllPoints()
             frame:SetPoint(settings.position.point, UIParent, settings.position.relativePoint, settings.position.x, settings.position.y)
+            gravityIsPositioning = false
         end
         
         -- Artwork (The texture is usually on ExtraActionButton1.style)
@@ -670,7 +734,9 @@ InitializeExtraButtons = function()
         local mover = CreateMover("extraActionButton", frame, "Extra Action Button")
         if ns.Movers and ns.Movers.Register then
             ns.Movers:Register("ExtraActionButton", mover, function(f, enabled, force)
-                if force then
+                -- Reassert frame positions before showing movers so they appear
+                -- in the correct place even if an external system repositioned the frame.
+                if enabled or force then
                     InitializeExtraButtons()
                 end
                 if enabled then
@@ -686,7 +752,13 @@ InitializeExtraButtons = function()
         if moverEAB then
             moverEAB:SetSize(160 * (settings.scale or 1), 80 * (settings.scale or 1))
             moverEAB:ClearAllPoints()
-            moverEAB:SetPoint("CENTER", frame, "CENTER")
+            -- Position the mover at the saved location so it matches the restored frame.
+            -- Fall back to centering on the frame only when no saved position exists yet.
+            if settings.position then
+                moverEAB:SetPoint(settings.position.point, UIParent, settings.position.relativePoint, settings.position.x, settings.position.y)
+            else
+                moverEAB:SetPoint("CENTER", frame, "CENTER")
+            end
         end
     end
     
@@ -700,10 +772,12 @@ InitializeExtraButtons = function()
             pcall(function() zoneFrame:SetScale(zSettings.scale) end)
         end
         
-        -- Position
+        -- Position (GravityUI is authoritative — guard flag prevents hook re-entry)
         if zSettings.position then
+            gravityIsPositioning = true
             zoneFrame:ClearAllPoints()
             zoneFrame:SetPoint(zSettings.position.point, UIParent, zSettings.position.relativePoint, zSettings.position.x, zSettings.position.y)
+            gravityIsPositioning = false
         end
         
         -- Artwork (ZoneAbilityFrame.SpellButton.Style)
@@ -735,7 +809,9 @@ InitializeExtraButtons = function()
             local mover = CreateMover("zoneAbility", zoneFrame, "Zone Ability")
             if ns.Movers and ns.Movers.Register then
                 ns.Movers:Register("ZoneAbility", mover, function(f, enabled, force)
-                    if force then
+                    -- Reassert frame positions before showing movers so they appear
+                    -- in the correct place even if an external system repositioned the frame.
+                    if enabled or force then
                         InitializeExtraButtons()
                     end
                     if enabled then
@@ -751,9 +827,19 @@ InitializeExtraButtons = function()
         if moverZone then
             moverZone:SetSize(160 * (zSettings.scale or 1), 80 * (zSettings.scale or 1))
             moverZone:ClearAllPoints()
-            moverZone:SetPoint("CENTER", zoneFrame, "CENTER")
+            -- Position the mover at the saved location so it matches the restored frame.
+            -- Fall back to centering on the frame only when no saved position exists yet.
+            if zSettings.position then
+                moverZone:SetPoint(zSettings.position.point, UIParent, zSettings.position.relativePoint, zSettings.position.x, zSettings.position.y)
+            else
+                moverZone:SetPoint("CENTER", zoneFrame, "CENTER")
+            end
         end
     end
+
+    -- Install SetPoint hooks once, so GravityUI reasserts against any future
+    -- external repositioning (Edit Mode, Dominos, other addons).
+    InstallExtraButtonPositionHooks()
 end
 
 function ActionBars.ToggleExtraButtonMovers()
@@ -1119,6 +1205,7 @@ end
 
 local initFrame = CreateFrame("Frame")
 initFrame:RegisterEvent("PLAYER_LOGIN")
+initFrame:RegisterEvent("PLAYER_ENTERING_WORLD") -- Reassert after Edit Mode applies its login-time layout
 initFrame:RegisterEvent("ACTIONBAR_UPDATE_USABLE")
 -- Note: ACTIONBAR_UPDATE_COOLDOWN removed - fires too frequently (every CD tick)
 -- Cooldown display is handled by Blizzard natively; we only need usability state
@@ -1137,6 +1224,16 @@ initFrame:SetScript("OnEvent", function(self, event)
         ns.RefreshActionBars()
         -- Apply zone keybind mirror after initial bindings are loaded
         C_Timer.After(0.5, function() ApplyZoneAbilityKeybind() end)
+    elseif event == "PLAYER_ENTERING_WORLD" then
+        -- WoW's Edit Mode applies its stored layout around PLAYER_ENTERING_WORLD.
+        -- 0.1s: reassert after Blizzard's initial layout pass.
+        -- 1.5s: safety net after Dominos (1.0s) and any other late-init addons settle.
+        C_Timer.After(0.1, function()
+            if InitializeExtraButtons then InitializeExtraButtons() end
+        end)
+        C_Timer.After(1.5, function()
+            if InitializeExtraButtons then InitializeExtraButtons() end
+        end)
     elseif event == "ACTIONBAR_SLOT_CHANGED" or event == "UPDATE_BINDINGS" or event == "ACTIONBAR_PAGE_CHANGED" or event == "UPDATE_BONUS_ACTIONBAR" or event == "UPDATE_VEHICLE_ACTIONBAR" then
         RequestRefresh()
         -- Re-mirror zone keybind whenever bindings change (e.g. player re-bound ExtraActionButton1)
@@ -1159,7 +1256,8 @@ ns.SkinDominosButtons = function()
     ns.RefreshActionBars() -- Delegate to the main refresh which includes Dominos
 end
 
--- Hook: when Dominos finishes loading, trigger a refresh once the DB is ready
+-- Hook: when Dominos finishes loading, trigger a refresh once the DB is ready.
+-- Also reasserts ExtraButton/ZoneAbility positions since Dominos may move them.
 local dominosHookFrame = CreateFrame("Frame")
 dominosHookFrame:RegisterEvent("ADDON_LOADED")
 dominosHookFrame:SetScript("OnEvent", function(self, event, addonName)
@@ -1168,15 +1266,32 @@ dominosHookFrame:SetScript("OnEvent", function(self, event, addonName)
         local waitFrame = CreateFrame("Frame")
         waitFrame:RegisterEvent("PLAYER_LOGIN")
         waitFrame:SetScript("OnEvent", function(wf)
+            -- 0.5s: skin refresh; 1.0s: position reassert after Dominos settles
             C_Timer.After(0.5, function()
                 local db = GetDB()
                 if db and db.skinDominos then
                     ns.RefreshActionBars()
                 end
             end)
+            C_Timer.After(1.0, function()
+                -- Reassert GravityUI positions over whatever Dominos placed
+                InitializeExtraButtons()
+            end)
             wf:UnregisterEvent("PLAYER_LOGIN")
         end)
         self:UnregisterEvent("ADDON_LOADED")
     end
+end)
+
+-- Reassert ExtraButton/ZoneAbility positions after WoW Edit Mode saves.
+-- EDIT_MODE_LAYOUTS_UPDATED fires whenever the user confirms changes in the
+-- Edit Mode UI — at that point Blizzard re-applies the Edit Mode layout and
+-- moves our frames. We reassert on the next frame to win.
+local editModeReassertFrame = CreateFrame("Frame")
+editModeReassertFrame:RegisterEvent("EDIT_MODE_LAYOUTS_UPDATED")
+editModeReassertFrame:SetScript("OnEvent", function()
+    C_Timer.After(0, function()
+        InitializeExtraButtons()
+    end)
 end)
 

@@ -175,74 +175,13 @@ local function BuildInformationTab(parent)
 
     local changeLogs = {
         {
-            version = "4.00.31",
-            date = "08/10/2026",
-            changes = {
-                "ExBoss string added to Gravity Strings tab (Profiles > Gravity Strings)",
-                "WarpDeplete and Dander's Frames removed from Installer -- strings remain in Gravity Strings",
-            },
-        },
-        {
-            version = "4.00.32",
-            date = "08/10/2026",
-            changes = {
-                "Fixed Consumables Raid Frame Durability not showing for Demon Hunters (and for yourself in a Raid group) -- previous fix used unit == 'player' which is never true in a Raid, now uses UnitIsUnit()",
-            },
-        },
-        {
-            version = "4.00.33",
-            date = "08/11/2026",
-            changes = {
-                "Minimap Datapanel: Guild name is now truncated to 12 characters with '...' to prevent overflow in the panel slot",
-            },
-        },
-        {
-            version = "4.00.34",
-            date = "08/11/2026",
-            changes = {
-                "Performance: loot.lua GroupLootFrame OnUpdate optimized -- GetDB() now cached on OnShow instead of every 0.2s tick, UpdateRollPositions() only called when width actually changes (State-Gatekeeping)",
-            },
-        },
-        {
             version = "4.00.35",
             date = "08/11/2026",
             changes = {
-                "12.1 Pre-Launch Performance Audit: 9x GetChildren() double-call GC churn fixed across buffborders.lua, objectives.lua, trackedbuffbar.lua, automation.lua",
-                "buffborders.lua: borderColor {0,0,0,1} table removed from AddBorderToButton hot-path -- direct RGBA values passed (Zero-Allocation standard)",
-                "automation.lua: anonymous closure in SafeRelease:Trigger() and LFG-listener loop cleaned up",
-            },
-        },
-        {
-            version = "4.00.36",
-            date = "08/11/2026",
-            changes = {
-                "M+ Teleport: !key / !keys now posts the real clickable Keystone item link (|Hkeystone:) from bag scan instead of plain text -- same mechanism as MythicKeyAnnouncer",
-                "M+ Teleport: GetOwnedKeystone() now returns the raw item link as 3rd value; bag scan detection updated to use |Hkeystone: literal match (more robust)",
-            },
-        },
-        {
-            version = "4.00.37",
-            date = "08/11/2026",
-            changes = {
-                "Objective Tracker: Auto-Hide when empty -- tracker is hidden when no quests/scenarios/achievements are tracked (controllable via Features > Styling > Objective Tracker > Auto-Hide When Empty)",
-            },
-        },
-
-        {
-            version = "4.00.27",
-            date = "08/07/2026",
-            changes = {
-                "Fixed Consumables Raid Frame Durability (fixes Demon Hunters and intermittent blank Durability)",
-            },
-        },
-        {
-            version = "4.00.26",
-            date = "08/07/2026",
-            changes = {
-                "API 12.1 migration: C_Spell / C_Item namespaces across core modules",
-                "Added Cinematic Auto-Skip (QoL > Automation)",
-                "Added Weapon Enchant reminder to Missing Buffs",
-                "Added Pull Timer Auto-Hide (closes 5s before BigWigs/DBM pull)",
+                "Ready for WoW 12.1 -- all core modules verified and updated for the new API surface",
+                "Performance: ExtraActionButton & ZoneAbility positioning system rewritten -- persistent drift-free save/restore across sessions, Edit Mode toggles, and Dominos interactions",
+                "Performance: SetPoint hook now uses per-frame installation flags (no single shared guard) -- ZoneAbilityFrame hook correctly retried if frame was nil at PLAYER_LOGIN",
+                "General stability improvements and minor memory optimizations across actionbars.lua",
             },
         },
     }
