@@ -1565,18 +1565,16 @@ local function ApplyTabAutohide(chatFrame)
 
     -- Register the blink-suppression hook once, independently of hideTabs.
     -- This way disableTabBlink works even when Auto Hide Tabs is OFF.
+    -- FIX: The old hook on FCF_FlashTab tried to stop AnimIn/AnimOut, but WoW uses
+    -- UIFrameFlash internally — a completely different mechanism. The correct entry
+    -- point is FCF_StartAlertFlash, which is called first. We immediately cancel it
+    -- via FCF_StopAlertFlash before the blink becomes visible (same approach as EllesmerUI).
     if not _G.__guiFCFFlashHooked then
         _G.__guiFCFFlashHooked = true
-        hooksecurefunc("FCF_FlashTab", function(cf)
+        hooksecurefunc("FCF_StartAlertFlash", function(cf)
             local s = GetSettings()
             if not s or not s.disableTabBlink then return end
-            local t = cf and _G[cf:GetName().."Tab"]
-            if not t then return end
-            -- Stop any running flash animation immediately
-            if t.AnimIn  and t.AnimIn:IsPlaying()  then t.AnimIn:Stop()  end
-            if t.AnimOut and t.AnimOut:IsPlaying() then t.AnimOut:Stop() end
-            -- Restore stable alpha (respects hideTabs if also enabled)
-            t:SetAlpha(s.hideTabs and (IsMouseOverChat() and 1 or 0) or 1)
+            FCF_StopAlertFlash(cf)
         end)
     end
 
