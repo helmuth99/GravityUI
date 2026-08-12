@@ -51,6 +51,7 @@ core\interrupttracker.lua
 
 core\combattimer.lua
 core\mplusteleport.lua
+core\premadegroup.lua
 core\worldmarks.lua
 core\autohide.lua
 core\buffborders.lua

@@ -313,8 +313,14 @@ local function UpdateMirror()
     local index = 1
 
     while count < maxDebuffs do
-        local aura = C_UnitAuras.GetDebuffDataByIndex("player", index)
-        if not aura or not aura.auraInstanceID then break end
+        -- GetAuraDataByIndex(unit, index, isHelpful, isHarmful) is the
+        -- Midnight-safe replacement for the forbidden GetDebuffDataByIndex().
+        -- Passing isHarmful=true restricts results to debuffs only.
+        local aura
+        local ok = pcall(function()
+            aura = C_UnitAuras.GetAuraDataByIndex("player", index, false, true)
+        end)
+        if not ok or not aura or not aura.auraInstanceID then break end
 
         if aura.icon then
             -- Blacklist check: aura.name / aura.spellId are secret values and cannot

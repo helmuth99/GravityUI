@@ -512,6 +512,66 @@ local function BuildColorPickerSettings(parent)
 end
 
 --==============================================================================================================================================================================================
+-- PREMADE GROUP
+--==============================================================================================================================================================================================
+
+local function BuildPremadeGroup(parent)
+    local scroll, content = GUI:CreateScrollableContent(parent)
+    scroll:SetAllPoints()
+    local db = ns.GetDB(); if not db then return end
+    if not db.uiimprovements then db.uiimprovements = {} end
+    local uiDB = db.uiimprovements
+    content.rowCount = 0
+
+    -- Header
+    local header = GUI:CreateSectionHeader(content, "Premade Group")
+    header:SetPoint("TOPLEFT", 10, -10)
+    header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
+    content.rowCount = 1.3
+
+    -- Info box (compact)
+    local infoBox = GUI:CreateInfoBox(content,
+        "Adds a |cff30D1FFSelect Group Key|r dropdown to the Group Finder. Select a keystone to auto-fill dungeon, title and playstyle when creating a group.\n" ..
+        "|cff888888Requires GravityUI, BigWigs/LittleWigs, or AstralKeys on all members.|r")
+    infoBox:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT + 5))
+    infoBox:SetPoint("RIGHT", content, "RIGHT", -10, 0)
+    content.rowCount = content.rowCount + (infoBox:GetHeight() / (ROW_HEIGHT + 5)) + 0.4
+
+    -- Enable toggle
+    local function Refresh()
+        if ns.PremadeGroup and ns.PremadeGroup.ApplySettings then
+            ns.PremadeGroup:ApplySettings()
+        end
+    end
+    AddRow(content, "Enable Premade Group Dropdown", "checkbox", "premadeGroupEnabled", uiDB, Refresh)
+
+    content.rowCount = content.rowCount + 0.5
+    CreateSubLabel(content, "Group Creation")
+    content.rowCount = content.rowCount + 0.3
+
+    local playstyleOptions = {
+        { value = 0, text = "Don't set" },
+        { value = 2, text = "Relaxed" },
+        { value = 1, text = "Moderate" },
+        { value = 3, text = "Hardcore" },
+    }
+    AddRow(content, "Default Playstyle", "dropdown", playstyleOptions, "premadeGroupPlaystyle", uiDB, Refresh)
+
+    content.rowCount = content.rowCount + 0.5
+    CreateSubLabel(content, "Season Config")
+    content.rowCount = content.rowCount + 0.3
+
+    local seasonInfo = GUI:CreateInfoBox(content,
+        "|cff888888Current Season:|r |cffFFFFFFMidnight Season 2|r  |cff888888(12.1)|r\n" ..
+        "Voidscar Arena, The Blinding Vale, Temple of Sethraliss, Ruby Life Pools, Murder Row, Kings' Rest, Den of Nalorakk, Altar of Fangs")
+    seasonInfo:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT + 5))
+    seasonInfo:SetPoint("RIGHT", content, "RIGHT", -10, 0)
+    content.rowCount = content.rowCount + (seasonInfo:GetHeight() / (ROW_HEIGHT + 5)) + 0.3
+
+    content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
+end
+
+--==============================================================================================================================================================================================
 -- PAGE REGISTRATION
 --==============================================================================================================================================================================================
 ns.GUI:RegisterPage("utilities", {
@@ -521,6 +581,7 @@ ns.GUI:RegisterPage("utilities", {
         { name = "Debuffs",       builder = BuildDebuffs },
         { name = "Tracked Bars",  builder = BuildTrackedBars },
         { name = "Color Picker",  builder = BuildColorPickerSettings },
+        { name = "Premade Group",  builder = BuildPremadeGroup },
     },
     OnBuild = function(content)
         local scrollFrame = content:GetParent()

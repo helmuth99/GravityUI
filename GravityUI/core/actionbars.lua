@@ -154,7 +154,9 @@ local function SkinButton(button, settings)
     -- Borders
     if settings.showBorders then
         if not button._guiNormal then
-            button._guiNormal = button:CreateTexture(nil, "OVERLAY", nil, 1)
+            -- Use BORDER layer (always below OVERLAY where HotKey/Count FontStrings live).
+            -- sublayer 7 keeps it on top of BACKGROUND/backdrop but under all OVERLAY text.
+            button._guiNormal = button:CreateTexture(nil, "BORDER", nil, 7)
             button._guiNormal:SetTexture(TEXTURES.normal)
             button._guiNormal:SetVertexColor(0, 0, 0, 1)
             button._guiNormal:SetAllPoints(button)
@@ -167,7 +169,8 @@ local function SkinButton(button, settings)
     -- Gloss
     if settings.showGloss then
         if not button._guiGloss then
-            button._guiGloss = button:CreateTexture(nil, "OVERLAY", nil, 2)
+            -- OVERLAY sublayer -1: above icon (ARTWORK) but below HotKey/Count text (OVERLAY 0+)
+            button._guiGloss = button:CreateTexture(nil, "OVERLAY", nil, -1)
             button._guiGloss:SetTexture(TEXTURES.gloss)
             button._guiGloss:SetBlendMode("ADD")
             button._guiGloss:SetAllPoints(button)

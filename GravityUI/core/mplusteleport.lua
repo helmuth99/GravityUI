@@ -377,6 +377,20 @@ local function HandleChatCommand(event, msg, sender)
     end
 end
 
+-- Returns the shared groupKeys table: [playerName] = {mapID, level}
+-- Used by premadegroup.lua to populate the Premade Group dropdown.
+function MPlusTeleport:GetGroupKeys()
+    -- Include own keystone if available
+    local myMapID, myLevel = GetOwnedKeystone()
+    if myMapID then
+        local myName = UnitName("player")
+        if myName then
+            groupKeys[myName] = { mapID = myMapID, level = myLevel }
+        end
+    end
+    return groupKeys
+end
+
 function MPlusTeleport:UpdateGroupKeys()
     if InCombatLockdown() then
         MPlusTeleport.pendingGroupUpdate = true
@@ -743,6 +757,86 @@ eventFrame:SetScript("OnEvent", function(_, event, ...)
                 ChallengesFrame:HookScript("OnHide", MPlusTeleport.UpdateGroupKeys)
                 hooksecurefunc(ChallengesFrame, "Update", HookDungeonIcons)
                 HookDungeonIcons()
+
+                -- Great Vault Button — anchored top-right of the Mythic+ Dungeons panel
+                if not ChallengesFrame._guiVaultBtn then
+                    local vb = CreateFrame("Button", "GravityUI_ChallengesVaultBtn", ChallengesFrame)
+                    -- Top-left corner of the frame title bar
+                    vb:SetSize(120, 20)
+                    vb:SetPoint("TOPLEFT", ChallengesFrame, "TOPLEFT", 8, -8)
+                    vb:SetFrameLevel(ChallengesFrame:GetFrameLevel() + 20)
+
+                    -- Backdrop (GravityUI style)
+                    local bgR, bgG, bgB = 0.08, 0.09, 0.10
+                    if ns.GetThemeBgColor then bgR, bgG, bgB = ns.GetThemeBgColor() end
+                    if ns.GUI and ns.GUI.CreateBackdrop then
+                        ns.GUI:CreateBackdrop(vb, {bgR, bgG, bgB, 0.88})
+                    else
+                        local vbBg = vb:CreateTexture(nil, "BACKGROUND")
+                        vbBg:SetAllPoints()
+                        vbBg:SetColorTexture(bgR, bgG, bgB, 0.88)
+                    end
+
+                    -- Gold left-accent bar (matches GravityUI section headers)
+                    local accentR, accentG, accentB = 1, 0.82, 0
+                    if ns.GetThemeColor then accentR, accentG, accentB = ns.GetThemeColor() end
+                    local accent = vb:CreateTexture(nil, "BORDER", nil, 3)
+                    accent:SetWidth(2)
+                    accent:SetPoint("TOPLEFT",    vb, "TOPLEFT",  0, 0)
+                    accent:SetPoint("BOTTOMLEFT", vb, "BOTTOMLEFT", 0, 0)
+                    accent:SetColorTexture(accentR, accentG, accentB, 1)
+
+                    -- Hover highlight overlay
+                    local vbHL = vb:CreateTexture(nil, "HIGHLIGHT")
+                    vbHL:SetAllPoints()
+                    vbHL:SetColorTexture(1, 1, 1, 0.06)
+
+                    -- Chest / vault icon
+                    local vbIcon = vb:CreateTexture(nil, "ARTWORK")
+                    vbIcon:SetSize(14, 14)
+                    vbIcon:SetPoint("LEFT", vb, "LEFT", 8, 0)
+                    vbIcon:SetTexture("Interface\\Icons\\inv_chest_blue")
+                    vbIcon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+
+                    -- Label
+                    local vbText = vb:CreateFontString(nil, "OVERLAY")
+                    vbText:SetFont(GetFont(), 11, "OUTLINE")
+                    vbText:SetPoint("LEFT",  vbIcon, "RIGHT", 5, 0)
+                    vbText:SetPoint("RIGHT", vb,     "RIGHT", -8, 0)
+                    vbText:SetText("Great Vault")
+                    vbText:SetTextColor(accentR, accentG, accentB, 1)
+
+                    -- Tooltip
+                    vb:SetScript("OnEnter", function(self)
+                        GameTooltip:SetOwner(self, "ANCHOR_BOTTOMRIGHT")
+                        GameTooltip:SetText("Great Vault", accentR, accentG, accentB)
+                        GameTooltip:AddLine("Open your Weekly Vault to see\nand claim M+ rewards.", 0.8, 0.8, 0.8, true)
+                        local ok, hasRewards = pcall(function()
+                            return C_WeeklyRewards and C_WeeklyRewards.HasAvailableRewards
+                                and C_WeeklyRewards.HasAvailableRewards()
+                        end)
+                        if ok and hasRewards then
+                            GameTooltip:AddLine(" ")
+                            GameTooltip:AddLine("|cff00FF00Rewards available this week!|r", 1, 1, 1)
+                        end
+                        GameTooltip:Show()
+                    end)
+                    vb:SetScript("OnLeave", function() GameTooltip:Hide() end)
+
+                    -- Click: load addon on demand then toggle
+                    vb:SetScript("OnClick", function()
+                        C_AddOns.LoadAddOn("Blizzard_WeeklyRewards")
+                        if WeeklyRewardsFrame then
+                            if WeeklyRewardsFrame:IsShown() then
+                                WeeklyRewardsFrame:Hide()
+                            else
+                                WeeklyRewardsFrame:Show()
+                            end
+                        end
+                    end)
+
+                    ChallengesFrame._guiVaultBtn = vb
+                end
             end
         end
     elseif event == "SPELL_UPDATE_COOLDOWN" then
