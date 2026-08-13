@@ -874,6 +874,7 @@ end
 -- IMPORTANT: The proxy must be SHOWN (not hidden) for SetOverrideBindingClick.
 local zoneKeybindOwner = CreateFrame("Frame")
 local zoneAbilityProxy = CreateFrame("Button", "GravityUI_ZoneAbilityProxy", UIParent, "SecureActionButtonTemplate")
+local zoneKeybindPending = false  -- deferred apply requested while in combat
 zoneAbilityProxy:SetSize(1, 1)
 zoneAbilityProxy:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", 0, 0) -- off-screen
 zoneAbilityProxy:SetAlpha(0) -- invisible but shown
@@ -942,6 +943,13 @@ local function UpdateZoneAbilityKeybindText(spellBtn, keyText)
 end
 
 local function ApplyZoneAbilityKeybind()
+    -- ClearOverrideBindings / SetOverrideBindingClick are protected functions:
+    -- calling them during combat lockdown causes ADDON_ACTION_BLOCKED.
+    if InCombatLockdown() then
+        zoneKeybindPending = true
+        return
+    end
+    zoneKeybindPending = false
     ClearOverrideBindings(zoneKeybindOwner)
 
     local db = GetDB()
@@ -996,17 +1004,9 @@ local function ApplyZoneAbilityKeybind()
     UpdateZoneAbilityKeybindText(spellBtn, FormatKeyText(key1))
 end
 
--- Public wrapper exposed to settings page (with combat guard)
+-- Public wrapper exposed to settings page.
+-- ApplyZoneAbilityKeybind() now handles the combat guard internally.
 function ActionBars.RefreshZoneAbilityKeybind()
-    if InCombatLockdown() then
-        local f = CreateFrame("Frame")
-        f:RegisterEvent("PLAYER_REGEN_ENABLED")
-        f:SetScript("OnEvent", function(self)
-            ApplyZoneAbilityKeybind()
-            self:UnregisterAllEvents()
-        end)
-        return
-    end
     ApplyZoneAbilityKeybind()
 end
 
@@ -1035,12 +1035,19 @@ if ZoneAbilityFrame then
     end)
 end
 
--- Zone change events
+-- Zone change events + post-combat flush for deferred applies
 local zoneAbilityHookFrame = CreateFrame("Frame")
 zoneAbilityHookFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 zoneAbilityHookFrame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
-zoneAbilityHookFrame:SetScript("OnEvent", function()
-    C_Timer.After(1.0, ApplyZoneAbilityKeybind)
+zoneAbilityHookFrame:RegisterEvent("PLAYER_REGEN_ENABLED")  -- flush pending apply after combat
+zoneAbilityHookFrame:SetScript("OnEvent", function(_, event)
+    if event == "PLAYER_REGEN_ENABLED" then
+        if zoneKeybindPending then
+            C_Timer.After(0.1, ApplyZoneAbilityKeybind)
+        end
+    else
+        C_Timer.After(1.0, ApplyZoneAbilityKeybind)
+    end
 end)
 
 ---------------------------------------------------------------------------

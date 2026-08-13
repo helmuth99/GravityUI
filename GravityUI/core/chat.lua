@@ -647,33 +647,39 @@ end
 
 local function AbbreviateChannelText(text)
     if type(text) ~= "string" then return text end
-    local HDR = "|Hchannel:"
-    if not text:find(HDR, 1, true) then return text end  -- fast-path: no channel link
-    local pieces, pos, n = {}, 1, 0
-    local searchPos = 1
-    while true do
-        local hStart = text:find(HDR, searchPos, true)
-        if not hStart then break end
-        local keyStart = hStart + #HDR
-        local hEnd = text:find("|h", keyStart, true)
-        if not hEnd then break end
-        local bracketStart = hEnd + 2
-        if text:sub(bracketStart, bracketStart) ~= "[" then
-            searchPos = bracketStart
-        else
-            local closeBracket = text:find("]|h", bracketStart, true)
-            if not closeBracket then break end
-            local target      = text:sub(keyStart, hEnd - 1)
-            local replacement = GetChannelAbbr(target)
-            local segEnd      = closeBracket + 2
-            n = n + 1; pieces[n] = text:sub(pos, hStart - 1)
-            n = n + 1; pieces[n] = replacement or text:sub(hStart, segEnd)
-            pos = segEnd + 1
-            searchPos = pos
+    -- Blizzard marks certain strings as "secret" (e.g. inside M+ / secure contexts).
+    -- Indexing a secret string from addon code triggers a taint error.
+    -- Wrap the entire operation in pcall and fall back to the original text on failure.
+    local ok, result = pcall(function()
+        local HDR = "|Hchannel:"
+        if not text:find(HDR, 1, true) then return text end  -- fast-path: no channel link
+        local pieces, pos, n = {}, 1, 0
+        local searchPos = 1
+        while true do
+            local hStart = text:find(HDR, searchPos, true)
+            if not hStart then break end
+            local keyStart = hStart + #HDR
+            local hEnd = text:find("|h", keyStart, true)
+            if not hEnd then break end
+            local bracketStart = hEnd + 2
+            if text:sub(bracketStart, bracketStart) ~= "[" then
+                searchPos = bracketStart
+            else
+                local closeBracket = text:find("]|h", bracketStart, true)
+                if not closeBracket then break end
+                local target      = text:sub(keyStart, hEnd - 1)
+                local replacement = GetChannelAbbr(target)
+                local segEnd      = closeBracket + 2
+                n = n + 1; pieces[n] = text:sub(pos, hStart - 1)
+                n = n + 1; pieces[n] = replacement or text:sub(hStart, segEnd)
+                pos = segEnd + 1
+                searchPos = pos
+            end
         end
-    end
-    n = n + 1; pieces[n] = text:sub(pos)
-    return table.concat(pieces)
+        n = n + 1; pieces[n] = text:sub(pos)
+        return table.concat(pieces)
+    end)
+    return ok and result or text  -- on secret-string taint: return original unmodified
 end
 
 --- Public toggle — called by the Settings checkbox.

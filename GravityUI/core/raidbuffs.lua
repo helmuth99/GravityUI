@@ -375,13 +375,26 @@ local SELF_BUFFS = {
             if not usesWeaponEnchant[playerClassToken] then return false end
             -- No main-hand weapon equipped: nothing to enchant, suppress reminder
             if not GetInventoryItemLink("player", INVSLOT_MAINHAND) then return false end
-            -- GetWeaponEnchantInfo returns: hasMain, mainExp(ms), mainCharges, mainEnchantID, ...
-            local hasMain, mainExpMs = GetWeaponEnchantInfo()
-            if not hasMain then
-                return true  -- missing: show NO OIL
+            -- GetWeaponEnchantInfo returns: hasMain, mainExpMs, mainCharges, mainEnchantID,
+            --                               hasOff,  offExpMs,  offCharges,  offEnchantID
+            local hasMain, mainExpMs, _, _, hasOff, offExpMs = GetWeaponEnchantInfo()
+            -- Main-hand missing oil → always show reminder
+            if not hasMain then return true end
+            -- Check off-hand: only relevant if an off-hand weapon is actually equipped.
+            -- Dual-wield classes (DH, Rogue, Fury Warrior, Frost DK, Windwalker, …) carry a
+            -- second 1H weapon in INVSLOT_OFFHAND.  If the slot is filled but the off-hand has
+            -- no temporary enchant, we must still warn the player.
+            local hasOffWeapon = GetInventoryItemLink("player", INVSLOT_OFFHAND) ~= nil
+            if hasOffWeapon and not hasOff then return true end
+            -- Both weapons are enchanted: return the shorter remaining time for the expiration glow.
+            local mainSec = mainExpMs and (mainExpMs / 1000) or nil
+            local offSec  = (hasOffWeapon and offExpMs) and (offExpMs / 1000) or nil
+            local remSec
+            if mainSec and offSec then
+                remSec = math.min(mainSec, offSec)
+            else
+                remSec = mainSec or offSec
             end
-            -- Oil present: return remaining time in seconds for expiration glow
-            local remSec = mainExpMs and (mainExpMs / 1000) or nil
             return false, remSec  -- false = not missing, remSec for expiration warning
         end,
     },
