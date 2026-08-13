@@ -2910,65 +2910,73 @@ local function scanMemberAuras(unit, now)
         result.raidBuff[k] = false
     end
 
-    for i = 1, 60 do
-        local aura = C_UnitAuras.GetAuraDataByIndex(unit, i, "HELPFUL")
-
-        if not aura then
+    local i = 1
+    while i <= 60 do
+        -- GetAuraDataByIndex() itself can raise "Auras cannot be accessed when secret"
+        -- when called in a tainted context (e.g. UNIT_AURA triggered by a raid-frame click).
+        -- If ok==false the aura is tainted: skip this index and continue.
+        -- If ok==true and aura==nil: real end of aura list, stop scanning.
+        local ok, aura = pcall(C_UnitAuras.GetAuraDataByIndex, unit, i, "HELPFUL")
+        if not ok then
+            i = i + 1
+        elseif not aura then
             break
-        end
+        else
+            -- tonumber() strips Blizzard's 'secret number' flag from protected aura spellIds.
+            -- Without this, table lookups like db.foodBuffIDs[sid] raise 'table index is secret'
+            -- even inside pcall on some aura sources (e.g. phased or restricted instances).
+            local sid = tonumber(aura.spellId)
 
-        -- tonumber() strips Blizzard's 'secret number' flag from protected aura spellIds.
-        -- Without this, table lookups like db.foodBuffIDs[sid] raise 'table index is secret'
-        -- even inside pcall on some aura sources (e.g. phased or restricted instances).
-        local sid = tonumber(aura.spellId)
-
-        -- Blizzard marks some internal auras as "secret": type() still reports
-        -- "number" but using them as a table key raises "table index is secret".
-        -- Wrap the entire per-aura block in pcall so those auras are silently skipped.
-        if sid and type(sid) == "number" then
-            pcall(function()
-                if db.foodBuffIDs[sid] or db.foodIconIDs[aura.icon] then
-                    if not result.hasFood or aura.icon == db.foodWellFedIconID then
-                        result.hasFood    = true
-                        result.foodTime   = (aura.expirationTime or 0) - now
-                        result.foodAuraID = aura.auraInstanceID
-                        result.foodIconID = aura.icon
-                    end
-                end
-
-                if not result.hasFlask and db.flaskBuffIDs[sid] then
-                    result.hasFlask    = true
-                    result.flaskTime   = (aura.expirationTime or 0) - now
-                    result.flaskAuraID = aura.auraInstanceID
-                    result.flaskIconID = aura.icon
-                end
-
-                if not result.hasRune and db.runeBuffIDs[sid] then
-                    result.hasRune    = true
-                    result.runeAuraID = aura.auraInstanceID
-                    result.runeIconID = aura.icon
-                end
-
-                if not result.hasVantus and db.vantusBuffIDs[sid] then
-                    result.hasVantus    = true
-                    result.vantusAuraID = aura.auraInstanceID
-                    result.vantusIconID = aura.icon
-                end
-
-                for k = 1, #buffsList do
-                    if not result.raidBuff[k] then
-                        local b = buffsList[k]
-
-                        if sid == b[3]
-                            or (b[4] and sid == b[4])
-                            or (b[5] and b[5][sid])
-                        then
-                            result.raidBuff[k] = aura.auraInstanceID or true
+            -- Blizzard marks some internal auras as "secret": type() still reports
+            -- "number" but using them as a table key raises "table index is secret".
+            -- Wrap the entire per-aura block in pcall so those auras are silently skipped.
+            if sid and type(sid) == "number" then
+                pcall(function()
+                    if db.foodBuffIDs[sid] or db.foodIconIDs[aura.icon] then
+                        if not result.hasFood or aura.icon == db.foodWellFedIconID then
+                            result.hasFood    = true
+                            result.foodTime   = (aura.expirationTime or 0) - now
+                            result.foodAuraID = aura.auraInstanceID
+                            result.foodIconID = aura.icon
                         end
                     end
-                end
-            end)
-        end
+
+                    if not result.hasFlask and db.flaskBuffIDs[sid] then
+                        result.hasFlask    = true
+                        result.flaskTime   = (aura.expirationTime or 0) - now
+                        result.flaskAuraID = aura.auraInstanceID
+                        result.flaskIconID = aura.icon
+                    end
+
+                    if not result.hasRune and db.runeBuffIDs[sid] then
+                        result.hasRune    = true
+                        result.runeAuraID = aura.auraInstanceID
+                        result.runeIconID = aura.icon
+                    end
+
+                    if not result.hasVantus and db.vantusBuffIDs[sid] then
+                        result.hasVantus    = true
+                        result.vantusAuraID = aura.auraInstanceID
+                        result.vantusIconID = aura.icon
+                    end
+
+                    for k = 1, #buffsList do
+                        if not result.raidBuff[k] then
+                            local b = buffsList[k]
+
+                            if sid == b[3]
+                                or (b[4] and sid == b[4])
+                                or (b[5] and b[5][sid])
+                            then
+                                result.raidBuff[k] = aura.auraInstanceID or true
+                            end
+                        end
+                    end
+                end)
+            end
+
+            i = i + 1
+        end -- else (aura valid)
     end
 
     return result
@@ -3515,7 +3523,10 @@ function frame:OnUnitAura(unit)
         return
     end
 
-    member.auras = scanMemberAuras(unit, GetTime())
+    -- Outer pcall: catches any residual taint that escapes the inner per-aura pcall
+    -- (e.g. if the entire UNIT_AURA call-stack is tainted in a raid context).
+    local ok, result = pcall(scanMemberAuras, unit, GetTime())
+    if ok and result then member.auras = result end
     refreshRow(index)
 end
 

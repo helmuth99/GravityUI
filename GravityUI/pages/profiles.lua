@@ -464,8 +464,8 @@ local function BuildGravityStringsTab(parent)
 
         -- List of keys
         local keys = {
-            "EditMode", "Details", "Plater", "BigWigs", "ExBoss", "DandersFrames",
-            "EllesmereUI", "GravityUI", "MethodRaidTools"
+            "EditMode", "Details", "Plater", "BigWigs", "ExBoss",
+            "EllesmereUI", "GravityUI", "NorthernSkyRaidTools"
         }
 
         

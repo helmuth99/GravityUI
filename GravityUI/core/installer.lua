@@ -697,9 +697,7 @@ function Installer:IsConfigured(targetProfile)
             if addon.HasProfile then
                 hasIt = addon:HasProfile(targetProfile)
             else
-                -- If no HasProfile check, assume true to not block? 
-                -- Or assume false? User wants "fully configured". 
-                -- Let's assume true for now for addons we haven't implemented HasProfile for (Danders)
+                -- If no HasProfile check, assume true to not block the install flow.
                 hasIt = true 
             end
             

@@ -1343,30 +1343,5 @@ ns.Defaults = {
         lfgRole_healer = false,
         lfgRole_dps = true,
     },
-    debuffMirror = {
-        enabled = false,
-        iconSize = 32,
-        spacing = 4,
-        iconsPerRow = 8,
-        maxDebuffs = 16,
-        growDirection = "RIGHT", -- RIGHT, LEFT, UP, DOWN
-        hideOriginal = false,
-        -- Text
-        textFontSize = 11,
-        countFontSize = 14,
-        textOutline = "OUTLINE",  -- OUTLINE, THICKOUTLINE, MONOCHROME, or ""
-        showCount = true,
-        showDuration = true,
-        showTooltip = false,
-        blacklist = {},               -- [spellName or tostring(spellId)] = true
-        countAnchor = "BOTTOMRIGHT",  -- BOTTOMRIGHT, BOTTOMLEFT, TOPRIGHT, TOPLEFT
-        durationAnchor = "TOP",       -- TOP, BOTTOM, CENTER
-        position = {
-            point = "TOPLEFT",
-            relPoint = "BOTTOMLEFT",
-            x = 400,
-            y = 400,
-        },
-    },
 }
 }

@@ -896,60 +896,49 @@ end
 -- GravityUI: Auto Skip Cinematics
 -- ==========================================
 local function InitAutoSkipCinematics()
-    -- Pattern adapted from EllesmereUI (EllesmereUIQoL.lua):
-    -- Real cinematics (isRealCinematic) can be stopped directly from event context via StopCinematic().
-    -- In-game scenes (CancelScene) are hardware-gated: the call is only allowed while processing a key press.
-    -- We arm a one-shot flag on CINEMATIC_START and consume it on the first key press.
-    local autoSkipArmed = false
-    local cinHooked = false
-
-    local function ConsumeArmedSkip()
-        if not autoSkipArmed then return end
-        local s = GetSettings()
-        if not s or not s.autoSkipCinematics then return end
-        if not (CinematicFrame and CinematicFrame:IsShown()) then return end
-        autoSkipArmed = false
-        if CinematicFrame.isRealCinematic then
-            StopCinematic()
-        elseif CanCancelScene and CanCancelScene() then
-            CancelScene()
-        end
-    end
-
-    local function SetupCinematicHooks()
-        if cinHooked then return end
-        if not CinematicFrame or not CinematicFrame.HookScript then return end
-        cinHooked = true
-        -- Armed skip fires on first key press during a scene
-        CinematicFrame:HookScript("OnKeyDown", ConsumeArmedSkip)
-    end
+    -- Real cinematics (isRealCinematic): StopCinematic() is safe from event context.
+    -- In-game scenes: CancelScene() only needs to escape the direct event call-stack;
+    --   a minimal C_Timer.After(0.05) is sufficient — no key press required.
+    -- Movies (PLAY_MOVIE): StopMovie() is the clean API.
 
     local cinFrame = CreateFrame("Frame")
     cinFrame:RegisterEvent("CINEMATIC_START")
-    cinFrame:RegisterEvent("CINEMATIC_STOP")
     cinFrame:RegisterEvent("PLAY_MOVIE")
-    cinFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
     cinFrame:SetScript("OnEvent", function(self, event)
-        if event == "PLAYER_ENTERING_WORLD" then
-            self:UnregisterEvent("PLAYER_ENTERING_WORLD")
-            SetupCinematicHooks()
-            return
-        end
-        if event == "CINEMATIC_STOP" then
-            autoSkipArmed = false
-            return
-        end
         local s = GetSettings()
         if not s or not s.autoSkipCinematics then return end
+
         if event == "CINEMATIC_START" then
-            -- Real cinematics: stop immediately from event context
-            -- In-game scenes: arm the flag; the key hook will fire CancelScene()
-            autoSkipArmed = true
             if CinematicFrame and CinematicFrame.isRealCinematic then
+                -- Real pre-rendered cutscene: stop immediately.
                 StopCinematic()
+            else
+                -- In-game engine scene: escape the event call-stack with a short timer,
+                -- then cancel if the setting is still on and the frame is still shown.
+                C_Timer.After(0.05, function()
+                    local s2 = GetSettings()
+                    if not s2 or not s2.autoSkipCinematics then return end
+                    if CinematicFrame and CinematicFrame:IsShown() then
+                        if CanCancelScene and CanCancelScene() then
+                            CancelScene()
+                        else
+                            -- Fallback: try StopCinematic for any remaining frame types
+                            pcall(StopCinematic)
+                        end
+                    end
+                end)
             end
         elseif event == "PLAY_MOVIE" then
-            if MovieFrame then MovieFrame:Hide() end
+            -- Use the clean Movie API; hides MovieFrame as a side-effect.
+            C_Timer.After(0.05, function()
+                local s2 = GetSettings()
+                if not s2 or not s2.autoSkipCinematics then return end
+                if StopMovie then
+                    pcall(StopMovie)
+                elseif MovieFrame then
+                    MovieFrame:Hide()
+                end
+            end)
         end
     end)
 end

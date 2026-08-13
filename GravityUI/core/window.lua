@@ -753,9 +753,6 @@ CreateButtonBar = function(parent)
     local prBtn = GUI:CreateButton(buttonBar, "Party / Raid", 90, 32, function()
         local opened = false
         
-        -- DandersFrames
-        if not opened and OpenAddonConfig("DandersFrames", "DANDERSFRAMES") then opened = true end
-        
         -- Grid2
         if not opened and OpenAddonConfig("Grid2", "GRID2") then opened = true end
         
@@ -766,7 +763,7 @@ CreateButtonBar = function(parent)
         if not opened and OpenAddonConfig("EllesmereUI", "ELLESMEREUI") then opened = true end
  
         if not opened then
-            print("|cFF30D1FFGravityUI:|r No supported Party/Raid addon loaded (DandersFrames, Grid2, Cell, EllesmereUI).")
+            print("|cFF30D1FFGravityUI:|r No supported Party/Raid addon loaded (Grid2, Cell, EllesmereUI).")
         end
     end)
     prBtn:SetPoint("LEFT", ufBtn, "RIGHT", 8, 0)

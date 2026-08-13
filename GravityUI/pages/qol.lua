@@ -195,7 +195,7 @@ local function BuildAutomation(parent)
     
     AddRow(content, "Auto Skip Cinematics", "checkbox", "autoSkipCinematics", dbUI, nil)
     content.rowCount = content.rowCount + 0.2
-    local cinInfo = GUI:CreateInfoBox(content, "Automatically skips in-game cinematics and movies without any key press. Real cutscenes are stopped instantly; in-game scenes are cancelled on the first key press.")
+    local cinInfo = GUI:CreateInfoBox(content, "Automatically skips in-game cinematics and movies without any key press. All cutscene types (real cinematics, in-game scenes, and movies) are cancelled automatically.")
     cinInfo:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
     content.rowCount = content.rowCount + (cinInfo:GetHeight() / (ROW_HEIGHT+5)) + 0.2
 

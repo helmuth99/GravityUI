@@ -55,7 +55,6 @@ core\premadegroup.lua
 core\worldmarks.lua
 core\autohide.lua
 core\buffborders.lua
-core\debuffmirror.lua
 core\chat.lua
 core\datatexts.lua
 core\datapanels.lua
