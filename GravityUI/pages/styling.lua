@@ -1355,6 +1355,11 @@ local function BuildChat(parent)
     MakeSubHeader("UI Cleanup")
     MakeRow("Hide Chat Buttons", "checkbox", "hideButtons", dbChat, RefreshChat)
     MakeRow("Unclamp Chat (Allow off-screen)", "checkbox", "unclamp", dbChat, RefreshChat)
+    MakeRow("Shorten Channel Names", "checkbox", "abbreviateChannels", dbChat, function(val)
+        if ns.Chat and ns.Chat.SetChannelAbbrev then
+            ns.Chat.SetChannelAbbrev(val)
+        end
+    end)
 
     MakeSubHeader("Auto Jump Down")
     if not dbChat.jumpDown then dbChat.jumpDown = {enabled = false, delay = 10} end

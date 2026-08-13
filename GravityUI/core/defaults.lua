@@ -629,6 +629,7 @@ ns.Defaults = {
                 enabled = false,
                 delay = 10,
             },
+            abbreviateChannels = false,
         },
         mail = {
             enabled = true,

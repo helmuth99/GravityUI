@@ -321,9 +321,13 @@ function DP:Init()
         return false
     end
 
-    if ticker then ticker:Cancel() end
+    if ns.Tick.Has("datapanels_update") then ns.Tick.Remove("datapanels_update") end
     local tickCount = 0
-    ticker = C_Timer.NewTicker(1, function()
+    local _elapsed  = 0
+    ns.Tick.Add("datapanels_update", function(dt)
+        _elapsed = _elapsed + dt
+        if _elapsed < 1.0 then return end
+        _elapsed = 0
         tickCount = tickCount + 1
         local checkPassive = (tickCount % 5 == 0)
         

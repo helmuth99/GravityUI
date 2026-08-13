@@ -173,17 +173,18 @@ local function StartTimer()
     frame.text:SetText("00:00")
     frame:Show()
 
-    -- Efficiency: Use a 1-second ticker instead of OnUpdate
-    if CombatTimerState.ticker then CombatTimerState.ticker:Cancel() end
-    CombatTimerState.ticker = C_Timer.NewTicker(1, UpdateTimerDisplay)
+    -- Self-disarming ticker: only runs during combat, zero CPU otherwise
+    ns.Tick.Remove("combattimer_update")
+    local _elapsed = 0
+    ns.Tick.Add("combattimer_update", function(dt)
+        _elapsed = _elapsed + dt
+        if _elapsed >= 1.0 then _elapsed = 0; UpdateTimerDisplay() end
+    end)
 end
 
 local function StopTimer()
     CombatTimerState.isInCombat = false
-    if CombatTimerState.ticker then
-        CombatTimerState.ticker:Cancel()
-        CombatTimerState.ticker = nil
-    end
+    ns.Tick.Remove("combattimer_update")
     if CombatTimerState.timerFrame then
         CombatTimerState.timerFrame:Hide()
     end
@@ -239,7 +240,7 @@ function CombatTimer.TogglePreview(show, isForceEditMode)
     local frame = CombatTimerState.timerFrame or CreateTimerFrame()
     
     if show then
-        if CombatTimerState.ticker then CombatTimerState.ticker:Cancel(); CombatTimerState.ticker = nil end
+        ns.Tick.Remove("combattimer_update")
         frame:EnableMouse(true)
         UpdateAppearance()
         frame.text:SetText("01:23")
@@ -268,8 +269,9 @@ function CombatTimer.TogglePreview(show, isForceEditMode)
             local settings = GetSettings()
             if settings and settings.enabled then
                 UpdateAppearance()
-                if not CombatTimerState.ticker then
-                    CombatTimerState.ticker = C_Timer.NewTicker(1, UpdateTimerDisplay)
+                if not ns.Tick.Has("combattimer_update") then
+                    local _e = 0
+                    ns.Tick.Add("combattimer_update", function(dt) _e=_e+dt; if _e>=1.0 then _e=0; UpdateTimerDisplay() end end)
                 end
             else
                 StopTimer()

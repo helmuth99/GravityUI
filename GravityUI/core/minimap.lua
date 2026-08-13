@@ -1151,8 +1151,19 @@ local function MasterUpdate()
 end
 
 local function StartTickers()
-    if masterTicker then masterTicker:Cancel() end
-    masterTicker = C_Timer.NewTicker(1, MasterUpdate)
+    -- Self-disarming ticker. The elapsed accumulator lives inside the closure
+    -- so dt is always correctly received from the shared driver.
+    local _elapsed = 0
+    ns.Tick.Add("minimap_master", function(dt)
+        _elapsed = _elapsed + dt
+        if _elapsed < 1.0 then return end
+        _elapsed = 0
+        MasterUpdate()
+    end)
+end
+
+local function StopTickers()
+    ns.Tick.Remove("minimap_master")
 end
 
 -- ═══════════════════════════════════════════════════════════════

@@ -601,6 +601,86 @@ local function MakeURLsClickable(text)
     return processed
 end
 
+-------------------------------------------------------------------------------
+-- Channel Name Abbreviation
+-- Rewrites |Hchannel:party|h[Party]|h → |Hchannel:party|h[P]|h
+-- Only the visible bracket text is changed; the hyperlink target is untouched
+-- so clicks still work. Locale-independent: matches on the keyword, not the
+-- channel display name. Adapted from EllesmereUI_Engine (2026).
+-------------------------------------------------------------------------------
+local _abbrevOn = false  -- toggled by ns.Chat.SetChannelAbbrev()
+
+local CHANNEL_ABBR_LOOKUP = {
+    PARTY                = "P",
+    PARTY_LEADER         = "PL",
+    RAID                 = "R",
+    RAID_LEADER          = "RL",
+    GUILD                = "G",
+    OFFICER              = "O",
+    BATTLEGROUND         = "BG",
+    INSTANCE_CHAT        = "I",
+    INSTANCE_CHAT_LEADER = "IL",
+}
+
+-- World channels: keyword is "channel:<N>"
+-- Unknown numbers fall through to just the number (e.g. [3] for any unlisted channel)
+local WORLD_CHANNEL_ABBR = {
+    ["1"]  = "GEN",   -- General
+    ["2"]  = "TRD",    -- Trade
+    ["3"]  = "SRV",   -- Trade (Services) / City channel
+    ["22"] = "LD",   -- LocalDefense
+    ["23"] = "WD",   -- WorldDefense
+    ["26"] = "LFG",  -- LookingForGroup
+}
+
+local function GetChannelAbbr(hyperlinkTarget)
+    local abbr = CHANNEL_ABBR_LOOKUP[hyperlinkTarget:upper()]
+    if not abbr then
+        local num = hyperlinkTarget:match("^channel:(%d+)$")
+        if num then
+            abbr = WORLD_CHANNEL_ABBR[num] or num
+        end
+    end
+    if not abbr then return nil end
+    return "|Hchannel:" .. hyperlinkTarget .. "|h[" .. abbr .. "]|h"
+end
+
+local function AbbreviateChannelText(text)
+    if type(text) ~= "string" then return text end
+    local HDR = "|Hchannel:"
+    if not text:find(HDR, 1, true) then return text end  -- fast-path: no channel link
+    local pieces, pos, n = {}, 1, 0
+    local searchPos = 1
+    while true do
+        local hStart = text:find(HDR, searchPos, true)
+        if not hStart then break end
+        local keyStart = hStart + #HDR
+        local hEnd = text:find("|h", keyStart, true)
+        if not hEnd then break end
+        local bracketStart = hEnd + 2
+        if text:sub(bracketStart, bracketStart) ~= "[" then
+            searchPos = bracketStart
+        else
+            local closeBracket = text:find("]|h", bracketStart, true)
+            if not closeBracket then break end
+            local target      = text:sub(keyStart, hEnd - 1)
+            local replacement = GetChannelAbbr(target)
+            local segEnd      = closeBracket + 2
+            n = n + 1; pieces[n] = text:sub(pos, hStart - 1)
+            n = n + 1; pieces[n] = replacement or text:sub(hStart, segEnd)
+            pos = segEnd + 1
+            searchPos = pos
+        end
+    end
+    n = n + 1; pieces[n] = text:sub(pos)
+    return table.concat(pieces)
+end
+
+--- Public toggle — called by the Settings checkbox.
+function ns.Chat.SetChannelAbbrev(on)
+    _abbrevOn = on == true
+end
+
 -- URL message filter — registered once, covers ALL channels including whisper.
 -- EllesmereUI (field-tested 2026-07-25) confirms CHAT_MSG_WHISPER is safe to
 -- filter directly in Midnight 12.x without tainting chatEditLastTell.
@@ -678,19 +758,31 @@ local function RegisterMessageFilter()
     end
 end
 
--- URL transform only — called from the message filter.
--- Direct gsub like EllesmereUI — no pcall wrapping.
+-- Text transform pipeline — called from the message filter for every chat line.
+-- NOTE: AbbreviateChannelText is NOT here — channel prefix is added by WoW
+-- AFTER the filter runs, so we intercept at AddMessage instead (see below).
 function HookTransformText(text)
     if not text or type(text) ~= "string" then return text end
     return MakeURLsClickable(text)
 end
 
--- Per-frame hook: now just ensures we've registered filters once.
--- The actual work is done by RegisterMessageFilter / HookTransformText above.
+-- Per-frame hook: registers the URL filter once and wraps AddMessage so that
+-- channel name abbreviation sees the fully-formatted display string (including
+-- the channel prefix WoW prepends — e.g. "[3. Trade (Services) - City]").
 local function HookChatMessages(chatFrame)
     if chatFrame.__guiChatMessageHooked then return end
     chatFrame.__guiChatMessageHooked = true
     RegisterMessageFilter()
+
+    -- Wrap AddMessage: this is called with the complete formatted line,
+    -- AFTER WoW has added the channel name / sender prefix.
+    local _origAddMessage = chatFrame.AddMessage
+    chatFrame.AddMessage = function(self, msg, r, g, b, id)
+        if _abbrevOn and type(msg) == "string" then
+            msg = AbbreviateChannelText(msg)
+        end
+        return _origAddMessage(self, msg, r, g, b, id)
+    end
 end
 
 ---------------------------------------------------------------------------
@@ -1649,6 +1741,9 @@ function ns.Chat.Refresh()
     -- Validation
     
     if not settings or settings.enabled == false then return end
+
+    -- Sync channel abbreviation flag from DB
+    _abbrevOn = settings.abbreviateChannels == true
 
     -- Run global cleanup first (Protected Call to avoid crash)
     local status, err = pcall(GlobalCleanup)

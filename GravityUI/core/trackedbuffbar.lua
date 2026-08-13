@@ -613,17 +613,23 @@ function Module:Init()
         end
     end
 
-    -- Periodic Scan (to catch dynamically created bars)
-    C_Timer.NewTicker(2.0, function()
-        ApplyClickThrough()
-        local anyVisible = false
-        for bar in pairs(Module.knownBars) do
-            if bar:IsVisible() then anyVisible = true; break end
-        end
-        if not anyVisible and next(Module.knownBars) ~= nil then return end
-        Module:ScanForBars()
-        Module:UpdateLayout()
-    end)
+    -- Periodic Scan (to catch dynamically created bars) -- self-disarming ticker
+    do
+        local _elapsed = 0
+        ns.Tick.Add("trackedbuffbar_scan", function(dt)
+            _elapsed = _elapsed + dt
+            if _elapsed < 2.0 then return end
+            _elapsed = 0
+            ApplyClickThrough()
+            local anyVisible = false
+            for bar in pairs(Module.knownBars) do
+                if bar:IsVisible() then anyVisible = true; break end
+            end
+            if not anyVisible and next(Module.knownBars) ~= nil then return end
+            Module:ScanForBars()
+            Module:UpdateLayout()
+        end)
+    end
     
     ApplyClickThrough()
     Module:Refresh()
