@@ -529,7 +529,9 @@ function Module:HookBarEvents(bar)
     if bar.gravityLayoutHooked then return end
     
     -- Hook Visibility on the BAR (since that's what we track)
-    bar:HookScript("OnShow", function() Module:RequestLayout() end)
+    -- Use Refresh() instead of RequestLayout() so that newly appearing bars
+    -- are first discovered (ScanForBars) before the layout is calculated.
+    bar:HookScript("OnShow", function() Module:Refresh() end)
     bar:HookScript("OnHide", function() Module:RequestLayout() end)
 
     -- Hook SetPoint on the MOVABLE FRAME (Container)
@@ -633,6 +635,15 @@ function Module:Init()
     
     ApplyClickThrough()
     Module:Refresh()
+
+    -- Hook the root container OnShow so we catch the very first moment
+    -- BuffBarCooldownViewer becomes visible (before child bars fire OnShow).
+    -- Calling Refresh() here ensures all bars are discovered + positioned
+    -- immediately, eliminating the ~1s race-condition jump.
+    local root = _G.BuffBarCooldownViewer
+    if root then
+        root:HookScript("OnShow", function() Module:Refresh() end)
+    end
 
     -- Hook the "Use Blizzard CDM Bars" card in EUI to show a GravityUI tooltip
     C_Timer.After(1.0, function() Module:HookBlizzardCard() end)
