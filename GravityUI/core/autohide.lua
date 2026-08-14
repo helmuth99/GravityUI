@@ -562,25 +562,17 @@ local function InstallHelpTipHook()
     helpTipHookInstalled = true
     hooksecurefunc(HelpTip, "Show", function(self, parent, info, ...)
         local settings = GetSettings()
-        if settings and settings.suppressHelpTips and self.Hide then
-            -- Defer one tick to allow Blizzard's own Show logic to run first,
-            -- then hide the resulting frame so we don't cause taint.
+        if settings and settings.suppressHelpTips then
+            -- Defer one tick to allow Blizzard's Show logic to complete first,
+            -- then dismiss the tip so we don't cause taint mid-call.
             C_Timer.After(0, function()
-                -- Find and hide all active HelpTip children on the parent
-                if parent and parent.helpTipFrameStack then
-                    for _, frame in ipairs(parent.helpTipFrameStack) do
-                        if frame and frame:IsShown() and frame.Hide then
-                            frame:Hide()
-                        end
-                    end
+                -- Acknowledge the tip so it never shows again this session
+                if info and info.text and HelpTip.Acknowledge then
+                    pcall(HelpTip.Acknowledge, HelpTip, parent, info.text)
                 end
-                -- Also sweep the HelpTipRegistry
-                if HelpTipRegistry then
-                    for _, entry in pairs(HelpTipRegistry) do
-                        if entry and entry.frame and entry.frame:IsShown() and entry.frame.Hide then
-                            entry.frame:Hide()
-                        end
-                    end
+                -- Hide all active system help tips (covers any tip shown on any parent)
+                if HelpTip.HideAllSystemHelpTips then
+                    pcall(HelpTip.HideAllSystemHelpTips, HelpTip)
                 end
             end)
         end
