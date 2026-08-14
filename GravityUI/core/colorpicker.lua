@@ -1299,33 +1299,38 @@ function euiProxy:GetColorRGB()   return self._r, self._g, self._b end
 function euiProxy:GetColorAlpha() return self._a end
 function euiProxy:IsShown()       return self._shown end
 function euiProxy:Hide()          self._shown = false end
+-- EUI calls popup:Open(info, anchorFrame) on every ShowColorPicker call.
+-- Since we set _colorPickerPopup = euiProxy after the first open, we need
+-- Open() to be a no-op so EUI doesn't error. The actual picker is opened
+-- by our hooksecurefunc callback which receives info/anchorFrame directly.
+function euiProxy:Open(info, anchorFrame) end
 
 local function InstallEllesmereHook()
     if euiHookInstalled then return end
-    -- EllesmereUI may not be loaded yet; this is called again on ADDON_LOADED.
+    -- EllesmereUIOptions (LoadOnDemand) must be loaded for ShowColorPicker to exist.
     if not (EllesmereUI and EllesmereUI.ShowColorPicker) then return end
 
     local db = GetDB()
     if not (db and db.colorPicker and db.colorPicker.hookAllAddons) then return end
 
-    -- Store EUI's original function so we can call it when our hook is disabled.
-    local _origShowColorPicker = EllesmereUI.ShowColorPicker
-
-    EllesmereUI.ShowColorPicker = function(self, info, anchorFrame)
-        -- Re-check the flag at call time so toggling in settings takes effect
-        -- without needing a reload.
+    -- Strategy: use hooksecurefunc so EUI's own ShowColorPicker runs first
+    -- (building/showing its popup), then we immediately hide it and open ours.
+    -- This is more robust than direct replacement because Lua method dispatch
+    -- on EllesmereUI may bypass a direct field assignment.
+    hooksecurefunc(EllesmereUI, "ShowColorPicker", function(self, info, anchorFrame)
+        -- Re-check flag at call time so toggling in settings takes effect.
         local db2 = GetDB()
-        if not (db2 and db2.colorPicker and db2.colorPicker.hookAllAddons) then
-            _origShowColorPicker(self, info, anchorFrame)
-            return
-        end
+        if not (db2 and db2.colorPicker and db2.colorPicker.hookAllAddons) then return end
+
+        -- Hide EUI's own popup immediately.
+        local euiPopup = EllesmereUI._colorPickerPopup
+        if euiPopup and euiPopup.Hide then euiPopup:Hide() end
 
         local r, g, b = info.r or 1, info.g or 1, info.b or 1
         local a       = info.opacity or 1
-        -- EUI doesn't set hasOpacity; derive it from opacityFunc being present.
         local hasA    = info.hasOpacity or (info.opacityFunc ~= nil)
 
-        -- Install proxy so EUI swatch callbacks that call popup:GetColorRGB()
+        -- Install proxy so EUI swatch callbacks reading popup:GetColorRGB()
         -- see our live color immediately.
         euiProxy._r, euiProxy._g, euiProxy._b, euiProxy._a = r, g, b, a
         euiProxy._shown = true
@@ -1334,28 +1339,46 @@ local function InstallEllesmereHook()
         CP:Open(
             { r=r, g=g, b=b, a=a },
             hasA,
-            -- Apply callback (OK button)
+            -- Accept (OK)
             function(c)
                 euiProxy._r, euiProxy._g, euiProxy._b, euiProxy._a = c.r, c.g, c.b, c.a
                 if info.swatchFunc   then info.swatchFunc()   end
                 if hasA and info.opacityFunc then info.opacityFunc() end
                 euiProxy._shown = false
             end,
-            -- Cancel callback
+            -- Cancel
             function()
                 if info.cancelFunc then info.cancelFunc() end
                 euiProxy._shown = false
             end,
-            -- onChange live-preview callback
+            -- onChange live-preview
             function(c)
                 euiProxy._r, euiProxy._g, euiProxy._b, euiProxy._a = c.r, c.g, c.b, c.a
                 if info.swatchFunc   then info.swatchFunc()   end
                 if hasA and info.opacityFunc then info.opacityFunc() end
             end,
-            -- Default color (none provided by EUI; use start color)
             { r=r, g=g, b=b, a=a }
         )
+    end)
+
+    -- Fallback safety: if EUI's popup frame (global name) somehow gets shown
+    -- outside of ShowColorPicker, hide it immediately.
+    local function HookEUIPopupFrame()
+        local euiFrame = _G["EllesmereUIColorPicker"]
+        if euiFrame and not euiFrame._gravityHideHooked then
+            euiFrame._gravityHideHooked = true
+            euiFrame:HookScript("OnShow", function(self)
+                local db3 = GetDB()
+                if db3 and db3.colorPicker and db3.colorPicker.hookAllAddons then
+                    C_Timer.After(0, function() if self:IsShown() then self:Hide() end end)
+                end
+            end)
+        end
     end
+
+    -- Try immediately; the frame is created lazily on first open, so also retry later.
+    HookEUIPopupFrame()
+    C_Timer.After(0, HookEUIPopupFrame)
 
     euiHookInstalled = true
 end
@@ -1369,19 +1392,48 @@ initFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 initFrame:SetScript("OnEvent", function(self, event, arg1)
     if event == "ADDON_LOADED" and arg1 == ADDON_NAME then
         LoadDB()
-    elseif event == "ADDON_LOADED" and arg1 == "EllesmereUI" then
-        -- EllesmereUI just finished loading; install our hook if active.
-        local db = GetDB()
-        if db and db.colorPicker and db.colorPicker.hookAllAddons then
-            InstallEllesmereHook()
+    elseif event == "ADDON_LOADED" and arg1 == "EllesmereUIOptions" then
+        -- EllesmereUIOptions is LoadOnDemand: loads the first time the user opens the EUI panel.
+        -- ShowColorPicker is defined inside EllesmereUI_Widgets.lua but may be registered
+        -- in a deferred callback, so retry a few times with short delays if not yet available.
+        InstallEllesmereHook()
+        if not euiHookInstalled then
+            C_Timer.After(0.5, function()
+                InstallEllesmereHook()
+                if not euiHookInstalled then
+                    C_Timer.After(1, function()
+                        InstallEllesmereHook()
+                        if not euiHookInstalled then
+                            C_Timer.After(3, InstallEllesmereHook)
+                        end
+                    end)
+                end
+            end)
         end
     elseif event == "PLAYER_ENTERING_WORLD" then
         local db = GetDB()
         if db and db.colorPicker and db.colorPicker.hookAllAddons then
             InstallBlizzardHook()
-            InstallEllesmereHook()
+            InstallEllesmereHook() -- no-op if EllesmereUIOptions not loaded yet
         end
         self:UnregisterEvent("PLAYER_ENTERING_WORLD")
     end
 end)
 
+-- ============================================================
+-- DEBUG COMMAND
+-- ============================================================
+SLASH_GRAVITYDEBUGCP1 = "/gravitydebugcp"
+SlashCmdList["GRAVITYDEBUGCP"] = function()
+    local p = function(msg) print("|cff00ccffGravityUI CP Debug:|r " .. tostring(msg)) end
+    local db = GetDB()
+    p("GetDB() ok = "              .. tostring(db ~= nil))
+    p("db.colorPicker ok = "       .. tostring(db and db.colorPicker ~= nil))
+    p("hookAllAddons = "           .. tostring(db and db.colorPicker and db.colorPicker.hookAllAddons))
+    p("euiHookInstalled = "        .. tostring(euiHookInstalled))
+    p("EllesmereUI exists = "      .. tostring(EllesmereUI ~= nil))
+    p("EllesmereUI.ShowColorPicker = " .. tostring(EllesmereUI and EllesmereUI.ShowColorPicker ~= nil))
+    p("EllesmereUI._colorPickerPopup = " .. tostring(EllesmereUI and EllesmereUI._colorPickerPopup ~= nil))
+    p("_G.EllesmereUIColorPicker = " .. tostring(_G["EllesmereUIColorPicker"] ~= nil))
+    p("CP.Open ok = "              .. tostring(CP.Open ~= nil))
+end

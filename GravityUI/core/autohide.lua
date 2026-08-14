@@ -397,6 +397,12 @@ local function ApplyHideSettings()
         end
     end
 
+    -- HelpTip (Tutorial Popups) suppression
+    -- The hook is installed once at addon init; flag is read dynamically.
+    if settings.suppressHelpTips and HelpTip and HelpTip.HideAllSystemHelpTips then
+        HelpTip:HideAllSystemHelpTips()
+    end
+
 
     -- World Quest Minigames (Vehicle / Override Bar) -> Hide Interface
     -- World Quest Minigames (Vehicle / Override Bar) -> Hide Interface
@@ -546,6 +552,41 @@ function ns.ApplyAutohideSettings()
     ApplyHideSettings()
 end
 
+-- One-time HelpTip hook: prevents new tips from appearing when the flag is enabled.
+-- This must be installed once at startup, not inside ApplyHideSettings, because
+-- hooksecurefunc cannot be called more than once safely on the same function.
+local helpTipHookInstalled = false
+local function InstallHelpTipHook()
+    if helpTipHookInstalled then return end
+    if not HelpTip then return end
+    helpTipHookInstalled = true
+    hooksecurefunc(HelpTip, "Show", function(self, parent, info, ...)
+        local settings = GetSettings()
+        if settings and settings.suppressHelpTips and self.Hide then
+            -- Defer one tick to allow Blizzard's own Show logic to run first,
+            -- then hide the resulting frame so we don't cause taint.
+            C_Timer.After(0, function()
+                -- Find and hide all active HelpTip children on the parent
+                if parent and parent.helpTipFrameStack then
+                    for _, frame in ipairs(parent.helpTipFrameStack) do
+                        if frame and frame:IsShown() and frame.Hide then
+                            frame:Hide()
+                        end
+                    end
+                end
+                -- Also sweep the HelpTipRegistry
+                if HelpTipRegistry then
+                    for _, entry in pairs(HelpTipRegistry) do
+                        if entry and entry.frame and entry.frame:IsShown() and entry.frame.Hide then
+                            entry.frame:Hide()
+                        end
+                    end
+                end
+            end)
+        end
+    end)
+end
+
 
 -- Event Handling
 local eventFrame = CreateFrame("Frame")
@@ -566,6 +607,10 @@ eventFrame:RegisterEvent("PET_BATTLE_CLOSE")
 eventFrame:SetScript("OnEvent", function(self, event, addon)
     local settings = GetSettings()
     
+    if event == "ADDON_LOADED" and addon == ADDON_NAME then
+        InstallHelpTipHook()
+    end
+
     if event == "ADDON_LOADED" and addon == "Blizzard_TalkingHeadUI" then
         ApplyHideSettings()
         return

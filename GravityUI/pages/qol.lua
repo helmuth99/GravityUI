@@ -273,6 +273,11 @@ local function BuildAutohide(parent)
 
     CreateSubLabel(content, "Combat & Messages")
     AddRow(content, "Hide Error Messages (Red Text)", "checkbox", "hideErrorMessages", dbUI, RefreshAutohide)
+    AddRow(content, "Suppress HelpTip Popups", "checkbox", "suppressHelpTips", dbUI, RefreshAutohide)
+    content.rowCount = content.rowCount + 0.2
+    local helpTipInfo = GUI:CreateInfoBox(content, "Hides Blizzard's yellow tutorial popup bubbles (e.g. 'Focus on a quest by clicking its icon'). Existing tips are dismissed immediately; new ones are suppressed automatically.")
+    helpTipInfo:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
+    content.rowCount = content.rowCount + (helpTipInfo:GetHeight() / (ROW_HEIGHT+5)) + 0.2
     content.rowCount = content.rowCount + 0.5
 
     CreateSubLabel(content, "World Quest Minigames/Petbattles")
