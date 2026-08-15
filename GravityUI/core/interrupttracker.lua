@@ -157,11 +157,127 @@ local activeBars = {}
 local framePool = {}
 -- PERF: Hoisted to module scope – wipe() instead of new-table allocation in UpdateLayout.
 local sortedBars = {}
+
+-- Object & Signal Pools (Zero-Allocation Architecture)
+local infoPool = {}
+local signalPool = {}
+local candidatePool = {}
+
+local scratchTargeting  = {}
+local scratchInRange    = {}
+local scratchAll        = {}
+local scratchCasts      = {}
+local scratchInterrupts = {}
+local scratchAuras      = {}
+
+local function AcquireInfo(guid, name, class, spellId, duration, expiration, f)
+    local info = table.remove(infoPool)
+    if not info then info = {} end
+    info.guid = guid
+    info.name = name
+    info.class = class
+    info.spellId = spellId
+    info.baseDuration = duration
+    info.expiration = expiration
+    info.duration = duration
+    info.frame = f
+    info.lastRem10 = nil
+    return info
+end
+
+local function ReleaseInfo(info)
+    if info then
+        wipe(info)
+        infoPool[#infoPool + 1] = info
+    end
+end
+
+local function ClearActiveBar(key)
+    local info = activeBars[key]
+    if info then
+        if info.frame then info.frame:Hide() end
+        ReleaseInfo(info)
+        activeBars[key] = nil
+    end
+end
+
+local function ClearAllActiveBars()
+    for key, info in pairs(activeBars) do
+        if info.frame then info.frame:Hide() end
+        ReleaseInfo(info)
+        activeBars[key] = nil
+    end
+end
+
+local function AcquireSignal(kind, unit, at)
+    local s = table.remove(signalPool)
+    if not s then
+        s = { kind = kind, unit = unit, at = at, consumed = false }
+    else
+        s.kind = kind
+        s.unit = unit
+        s.at = at
+        s.consumed = false
+    end
+    return s
+end
+
+local function ReleaseSignal(s)
+    if s then
+        s.kind = nil
+        s.unit = nil
+        s.consumed = true
+        signalPool[#signalPool + 1] = s
+    end
+end
+
+local function AcquireCandidate(name, unit, spellID, dist)
+    local c = table.remove(candidatePool)
+    if not c then c = {} end
+    c.name = name
+    c.unit = unit
+    c.spellID = spellID
+    c.dist = dist
+    return c
+end
+
+local function ReleaseCandidate(c)
+    if c then
+        c.name = nil
+        c.unit = nil
+        candidatePool[#candidatePool + 1] = c
+    end
+end
+
+local function ReleaseCandidateList(list)
+    for i = 1, #list do
+        ReleaseCandidate(list[i])
+        list[i] = nil
+    end
+end
+
+local function GetUnitDistanceToMob(pu, mobX, mobY, mobMap)
+    if not mobX or not mobMap then return nil end
+    local px, py, _, pm = UnitPosition(pu)
+    if not px or pm ~= mobMap then return nil end
+    return math.sqrt((mobX - px)^2 + (mobY - py)^2)
+end
+
+local function PickClosestCandidate(set)
+    if #set == 0 then return nil end
+    local best, bd, fb = nil, math.huge, nil
+    for i = 1, #set do
+        local c = set[i]
+        if c.dist then
+            if c.dist < bd then best, bd = c, c.dist end
+        elseif not fb then fb = c end
+    end
+    return best or fb
+end
+
 -- ============================================================================
 -- DYNAMIC COOLDOWN DATA
 -- ============================================================================
-
-
 
 local activeReductions = {}
 local activeSpecs = {}
@@ -192,17 +308,27 @@ local MATCH_WINDOW       = 0.055
 local AURA_SUPPRESS      = 0.028
 
 local function PushSignal(kind, unit)
-    signalTape[#signalTape + 1] = { kind = kind, unit = unit, at = GetTime(), consumed = false }
+    signalTape[#signalTape + 1] = AcquireSignal(kind, unit, GetTime())
     needsCorrelation = true
 end
 
 local function PruneSignalTape(now)
-    local kept, minAt = {}, now - SIGNAL_RETENTION
-    for i = 1, #signalTape do
-        local s = signalTape[i]
-        if s and s.at and s.at >= minAt then kept[#kept + 1] = s end
+    local minAt = now - SIGNAL_RETENTION
+    local writeIdx = 1
+    local n = #signalTape
+    for readIdx = 1, n do
+        local s = signalTape[readIdx]
+        if s and s.at and s.at >= minAt then
+            if writeIdx ~= readIdx then
+                signalTape[writeIdx] = s
+                signalTape[readIdx] = nil
+            end
+            writeIdx = writeIdx + 1
+        else
+            ReleaseSignal(s)
+            signalTape[readIdx] = nil
+        end
     end
-    signalTape = kept
 end
 
 -- Back-compat stub (called from OnGroupRosterUpdate / Initialize)
@@ -754,16 +880,7 @@ local function StartCooldown(guid, name, class, spellId, isReady)
         f.bar:SetValue(1)
     end
     
-    local info = {
-        guid = guid,
-        name = name,
-        class = class,
-        spellId = spellId,
-        baseDuration = duration,
-        expiration = expiration,
-        duration = duration,
-        frame = f
-    }
+    local info = AcquireInfo(guid, name, class, spellId, duration, expiration, f)
     activeBars[key] = info
     
     updateFrame:Show() -- Ensure OnUpdate is running
@@ -805,7 +922,7 @@ local HEALER_CAPABLE_CLASS = {
 local function AutoRegisterPartyByClass()
     for i = 1, 4 do
         local u = "party" .. i
-        if UnitExists(u) and UnitIsPlayer(u) then
+        if UnitExists(u) then
             local name = UnitName(u)
             local _, cls = UnitClass(u)
             -- Skip if already known to have no kick
@@ -825,9 +942,9 @@ local function AutoRegisterPartyByClass()
                         end
                     else
                         -- Spec not yet available.
-                        -- For classes that CAN be healers (Paladin, Priest, Monk, Druid),
-                        -- defer registration to the retry loop to avoid false-positive healer bars.
-                        if HEALER_CAPABLE_CLASS[cls] then
+                        -- For players that CAN be healers with unknown/NONE role, defer registration.
+                        -- NPCs/Followers with explicit TANK/DAMAGER roles are registered immediately.
+                        if UnitIsPlayer(u) and (not role or role == "NONE") and HEALER_CAPABLE_CLASS[cls] then
                             noKick = true  -- skip now; retry loop will register if they turn out to be DPS/Tank
                         end
                     end
@@ -866,8 +983,7 @@ local function AutoRegisterPartyByClass()
                                 if guid then
                                     for key, info in pairs(activeBars) do
                                         if info.guid == guid then
-                                            info.frame:Hide()
-                                            activeBars[key] = nil
+                                            ClearActiveBar(key)
                                         end
                                     end
                                     UpdateLayout()
@@ -916,44 +1032,47 @@ local function CorrelateSignals()
     lastCorrelateAt = now
     PruneSignalTape(now)
 
-    local casts, interrupts, auras = {}, {}, {}
+    wipe(scratchCasts)
+    wipe(scratchInterrupts)
+    wipe(scratchAuras)
+
     for i = 1, #signalTape do
         local s = signalTape[i]
         if s and not s.consumed then
-            if     s.kind == "cast"      then casts[#casts+1]           = s
-            elseif s.kind == "interrupt" then interrupts[#interrupts+1] = s
-            elseif s.kind == "aura"      then auras[#auras+1]           = s
+            if     s.kind == "cast"      then scratchCasts[#scratchCasts + 1]           = s
+            elseif s.kind == "interrupt" then scratchInterrupts[#scratchInterrupts + 1] = s
+            elseif s.kind == "aura"      then scratchAuras[#scratchAuras + 1]           = s
             end
         end
     end
 
-    if #interrupts == 0 or #casts == 0 then needsCorrelation = false; return end
+    if #scratchInterrupts == 0 or #scratchCasts == 0 then needsCorrelation = false; return end
 
-    table.sort(interrupts, function(a, b) return a.at < b.at end)
-    local fresh = interrupts[#interrupts]
+    table.sort(scratchInterrupts, function(a, b) return a.at < b.at end)
+    local fresh = scratchInterrupts[#scratchInterrupts]
 
     -- Aura suppress: buff change on same mob within 28ms → not a real interrupt
-    for i = 1, #auras do
-        if auras[i].unit == fresh.unit and math.abs(fresh.at - auras[i].at) <= AURA_SUPPRESS then
+    for i = 1, #scratchAuras do
+        if scratchAuras[i].unit == fresh.unit and math.abs(fresh.at - scratchAuras[i].at) <= AURA_SUPPRESS then
             fresh.consumed = true; needsCorrelation = false; return
         end
     end
 
     -- Cluster suppress: multiple interrupts at once → AoE stun, not a kick
     local cluster = 0
-    for i = 1, #interrupts do
-        if math.abs(interrupts[i].at - fresh.at) <= 0.018 then cluster = cluster + 1 end
+    for i = 1, #scratchInterrupts do
+        if math.abs(scratchInterrupts[i].at - fresh.at) <= 0.018 then cluster = cluster + 1 end
     end
     if cluster > 1 then
-        for i = 1, #interrupts do interrupts[i].consumed = true end
+        for i = 1, #scratchInterrupts do scratchInterrupts[i].consumed = true end
         needsCorrelation = false; return
     end
 
     fresh.consumed = true
     local best, bestDiff = nil, math.huge
-    for i = 1, #casts do
-        local diff = math.abs(fresh.at - casts[i].at)
-        if diff <= MATCH_WINDOW and diff < bestDiff then bestDiff = diff; best = casts[i] end
+    for i = 1, #scratchCasts do
+        local diff = math.abs(fresh.at - scratchCasts[i].at)
+        if diff <= MATCH_WINDOW and diff < bestDiff then bestDiff = diff; best = scratchCasts[i] end
     end
 
     if best then
@@ -993,8 +1112,10 @@ local function OwnKick(spellID)
 end
 
 local _playerFrame = CreateFrame("Frame")
-_playerFrame:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player", "pet")
-_playerFrame:SetScript("OnEvent", function(_, _, unit, _, spellID)
+local _interruptFrame = CreateFrame("Frame")
+local _framesEnabled = false
+
+local function PlayerFrame_OnEvent(_, _, unit, _, spellID)
     if unit == "pet" then
         -- Pet spellID is tainted in 12.0 – launder via slider
         onSliderChangedResult = nil
@@ -1007,7 +1128,7 @@ _playerFrame:SetScript("OnEvent", function(_, _, unit, _, spellID)
     -- Player: untainted – fast path
     OwnKick(spellID)
     PushSignal("cast", "player")
-end)
+end
 
 -- ============================================================================
 -- UNIFIED EVENT FRAME (12.0.5 Signal-Tape)
@@ -1015,11 +1136,7 @@ end)
 -- NOTE: UNIT_SPELLCAST_SUCCEEDED for party no longer fires in 12.0.5.
 --       Party attribution uses UNIT_SPELLCAST_INTERRUPTED + mob heuristic.
 -- ============================================================================
-local _interruptFrame = CreateFrame("Frame")
-_interruptFrame:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
-_interruptFrame:RegisterEvent("UNIT_SPELLCAST_INTERRUPTED")
-_interruptFrame:RegisterEvent("UNIT_AURA")
-_interruptFrame:SetScript("OnEvent", function(_, event, unit, ...)
+local function InterruptFrame_OnEvent(_, event, unit, ...)
     local s = GetSettings()
     if not s or not s.enabled or not IsTrackerAllowed() then return end
 
@@ -1056,7 +1173,6 @@ _interruptFrame:SetScript("OnEvent", function(_, event, unit, ...)
         elseif not (pcall(C_Spell.GetSpellName, spellID) and not issecretvalue(select(2, pcall(C_Spell.GetSpellName, spellID)))) then
             -- Name lookup failed entirely (tainted spellID AND GetSpellName failed).
             -- Fall back to the registered interrupt for this player — ONLY if NOT on CD.
-            -- (BliZzi parity: prevents resetting CD when e.g. Tail Swipe fires while kick is recharging)
             local ok, entry = pcall(function() return partyRegistry[memberName] end)
             if ok and entry and entry.spellID and entry.spellID > 0 then
                 local isOnCD = entry.cdEnd and entry.cdEnd > GetTime()
@@ -1066,7 +1182,6 @@ _interruptFrame:SetScript("OnEvent", function(_, event, unit, ...)
                 end
             end
         end
-
 
     elseif event == "UNIT_SPELLCAST_INTERRUPTED" then
         if not unit or not unit:find("^nameplate") then return end
@@ -1078,9 +1193,6 @@ _interruptFrame:SetScript("OnEvent", function(_, event, unit, ...)
         -- If the local player just kicked within 0.5s, this mob interrupt belongs
         -- to us — OwnKick() already called StartCooldown(). Skip party attribution
         -- entirely to prevent falsely triggering another player's bar.
-        -- NOTE: we intentionally do NOT check UnitIsUnit("playertarget", unit) here
-        -- because macros / tab-target can leave the target frame on a different unit
-        -- than the nameplate that received the kick event.
         if InterruptTracker._pendingOwnKickAt and (now - InterruptTracker._pendingOwnKickAt) < 0.5 then
             InterruptTracker._pendingOwnKickAt = nil  -- consume so rapid-fire doesn't suppress next party kick
             return
@@ -1088,13 +1200,11 @@ _interruptFrame:SetScript("OnEvent", function(_, event, unit, ...)
 
         local mobX, mobY, _, mobMap = UnitPosition(unit)
         local MAX_RANGE = 35
-        local function dist(pu)
-            if not mobX or not mobMap then return nil end
-            local px, py, _, pm = UnitPosition(pu)
-            if not px or pm ~= mobMap then return nil end
-            return math.sqrt((mobX - px)^2 + (mobY - py)^2)
-        end
-        local targeting, inRange, all = {}, {}, {}
+
+        wipe(scratchTargeting)
+        wipe(scratchInRange)
+        wipe(scratchAll)
+
         for i = 1, 4 do
             local pu = "party" .. i
             if UnitExists(pu) then
@@ -1109,54 +1219,84 @@ _interruptFrame:SetScript("OnEvent", function(_, event, unit, ...)
                 end
                 local entry = nm and partyRegistry[nm]
                 if entry and entry.spellID and (not entry.cdEnd or entry.cdEnd < now) then
-                    local d = dist(pu)
-                    local c = { name = nm, unit = pu, spellID = entry.spellID, dist = d }
-                    all[#all + 1] = c
-                    if UnitIsUnit(pu .. "target", unit) then targeting[#targeting + 1] = c end
-                    if not d or d <= MAX_RANGE       then inRange[#inRange + 1]   = c end
+                    local d = GetUnitDistanceToMob(pu, mobX, mobY, mobMap)
+                    local c = AcquireCandidate(nm, pu, entry.spellID, d)
+                    scratchAll[#scratchAll + 1] = c
+                    if UnitIsUnit(pu .. "target", unit) then scratchTargeting[#scratchTargeting + 1] = c end
+                    if not d or d <= MAX_RANGE       then scratchInRange[#scratchInRange + 1]   = c end
                 end
             end
         end
-        local function closest(set)
-            if #set == 0 then return nil end
-            local best, bd, fb = nil, math.huge, nil
-            for _, c in ipairs(set) do
-                if c.dist then
-                    if c.dist < bd then best, bd = c, c.dist end
-                elseif not fb then fb = c end
-            end
-            return best or fb
-        end
+
         local winner
-        if     #targeting == 1 then winner = targeting[1]
-        elseif #targeting  > 1 then winner = closest(targeting)
-        elseif #inRange   == 1 then winner = inRange[1]
-        elseif #inRange    > 1 then winner = closest(inRange)
-        elseif #all       == 1 then winner = all[1]
+        if     #scratchTargeting == 1 then winner = scratchTargeting[1]
+        elseif #scratchTargeting  > 1 then winner = PickClosestCandidate(scratchTargeting)
+        elseif #scratchInRange   == 1 then winner = scratchInRange[1]
+        elseif #scratchInRange    > 1 then winner = PickClosestCandidate(scratchInRange)
+        elseif #scratchAll       == 1 then winner = scratchAll[1]
         end
+
+        local winnerName, winnerSpellID
         if winner then
-            recentCasts[winner.name] = { t = now, spellID = winner.spellID }
-            HandlePartyCast(winner.name, winner.spellID)
+            winnerName = winner.name
+            winnerSpellID = winner.spellID
+        end
+
+        ReleaseCandidateList(scratchAll)
+        wipe(scratchTargeting)
+        wipe(scratchInRange)
+
+        if winnerName and winnerSpellID then
+            recentCasts[winnerName] = { t = now, spellID = winnerSpellID }
+            HandlePartyCast(winnerName, winnerSpellID)
         end
 
     elseif event == "UNIT_AURA" then
         -- PERF: sub(1,9) avoids pattern-engine overhead for every UNIT_AURA dispatch.
-        -- In a 40-man raid this fires 40+ times/sec for players, pets, npcs etc.
         if unit and unit:sub(1, 9) == "nameplate" then PushSignal("aura", unit) end
     end
-end)
+end
 
-_interruptFrame:SetScript("OnUpdate", function()
+local function InterruptFrame_OnUpdate()
     if needsCorrelation then
         local s = GetSettings()
         if s and s.enabled and IsTrackerAllowed() then
             CorrelateSignals()
         else
             needsCorrelation = false
+            PruneSignalTape(math.huge)
             wipe(signalTape)
         end
     end
-end)
+end
+
+local function EnableTrackerFrames()
+    if _framesEnabled then return end
+    _playerFrame:SetScript("OnEvent", PlayerFrame_OnEvent)
+    _playerFrame:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player", "pet")
+
+    _interruptFrame:SetScript("OnEvent", InterruptFrame_OnEvent)
+    _interruptFrame:SetScript("OnUpdate", InterruptFrame_OnUpdate)
+    _interruptFrame:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
+    _interruptFrame:RegisterEvent("UNIT_SPELLCAST_INTERRUPTED")
+    _interruptFrame:RegisterEvent("UNIT_AURA")
+    _framesEnabled = true
+end
+
+local function DisableTrackerFrames()
+    if not _framesEnabled then return end
+    _playerFrame:UnregisterAllEvents()
+    _playerFrame:SetScript("OnEvent", nil)
+
+    _interruptFrame:UnregisterAllEvents()
+    _interruptFrame:SetScript("OnEvent", nil)
+    _interruptFrame:SetScript("OnUpdate", nil)
+
+    needsCorrelation = false
+    PruneSignalTape(math.huge)
+    wipe(signalTape)
+    _framesEnabled = false
+end
 
 -- ============================================================================
 -- GRV_INT ADDON MESSAGE HANDLER (secondary confirmation from other GravityUI users)
@@ -1185,8 +1325,7 @@ function InterruptTracker:UNIT_SPELLCAST_SUCCEEDED() end
 
 function InterruptTracker.TestMode()
     if testModeActive then
-        for _, f in ipairs(framePool) do f:Hide() end
-        activeBars = {}
+        ClearAllActiveBars()
         testModeActive = false
     else
         testModeActive = true
@@ -1314,8 +1453,7 @@ local function OnInspectReady(guid)
                 if partyRegistry and name then partyRegistry[name] = nil end
                 for key, info in pairs(activeBars) do
                     if info.guid == guid then
-                        info.frame:Hide()
-                        activeBars[key] = nil
+                        ClearActiveBar(key)
                     end
                 end
                 UpdateLayout()
@@ -1328,12 +1466,12 @@ local function OnInspectReady(guid)
                 for key, info in pairs(activeBars) do
                     if info.guid == guid and info.spellId ~= specInterrupt then
                         -- Re-key the bar so future UNIT_SPELLCAST_SUCCEEDED events find it correctly
-                        activeBars[key] = nil
                         local newKey = guid .. specInterrupt
                         -- If a bar already exists for the spec interrupt, hide the old frame
                         if activeBars[newKey] then
-                            info.frame:Hide()
+                            ClearActiveBar(key)
                         else
+                            activeBars[key] = nil
                             info.spellId = specInterrupt
                             -- Update Icon
                             local icon = C_Spell.GetSpellTexture(specInterrupt)
@@ -1456,8 +1594,7 @@ local function OnGroupRosterUpdate()
     -- 2. Solo: Hide (User request)
     -- Exception: Test Mode
     if (not inGroup or instanceType == "raid" or IsInRaid()) and not testModeActive then
-         for _, info in pairs(activeBars) do info.frame:Hide() end
-         activeBars = {}
+         ClearAllActiveBars()
          UpdateLayout() -- Ensure it clears
          return
     end
@@ -1496,8 +1633,8 @@ local function OnGroupRosterUpdate()
         if specID and specID > 0 then
             if SPEC_NO_INTERRUPT[specID] then return end
         else
-            -- Spec not yet known: if class CAN be a healer, skip until spec is confirmed
-            if HEALER_CAPABLE_CLASS[class] then return end
+            -- Spec not yet known: if a player CAN be a healer and role is NONE/unknown, skip until spec is confirmed
+            if UnitIsPlayer(unit) and (not role or role == "NONE") and HEALER_CAPABLE_CLASS[class] then return end
         end
         
         -- Priority: Spec-specific interrupt > Class interrupt
@@ -1535,8 +1672,7 @@ local function OnGroupRosterUpdate()
     -- Clean up removed members (activeBars + partyRegistry)
     for key, info in pairs(activeBars) do
         if not members[info.guid] and not testModeActive then
-             info.frame:Hide()
-             activeBars[key] = nil
+             ClearActiveBar(key)
         end
     end
     for name in pairs(partyRegistry) do
@@ -1598,7 +1734,6 @@ end
 
 -- ============================================================================
 -- INITIALIZATION & MOVER
-
 -- ============================================================================
 
 local moverDummiesActive = false
@@ -1651,8 +1786,7 @@ function InterruptTracker.ToggleMover(force)
         
         -- Clear dummies ONLY if we created them
         if moverDummiesActive then
-            activeBars = {}
-            for _, f in ipairs(framePool) do f:Hide() end
+            ClearAllActiveBars()
             moverDummiesActive = false
             -- Trigger immediate roster update to restore real bars if any (though unlikely if we were empty)
             OnGroupRosterUpdate()
@@ -1712,6 +1846,7 @@ function InterruptTracker.Initialize()
     
     -- Init Events via AceEvent
     if s.enabled then
+        EnableTrackerFrames()
         InterruptTracker:RegisterEvent("INSPECT_READY", function(_, guid) OnInspectReady(guid) end)
         InterruptTracker:RegisterEvent("GROUP_ROSTER_UPDATE", OnGroupRosterUpdate)
         InterruptTracker:RegisterEvent("PLAYER_ENTERING_WORLD", OnGroupRosterUpdate)
@@ -1736,6 +1871,7 @@ function InterruptTracker.Initialize()
         OnGroupRosterUpdate()
         updateFrame:Show()
     else
+        DisableTrackerFrames()
         InterruptTracker:UnregisterAllEvents()
         updateFrame:Hide()
         container:Hide()
@@ -1758,6 +1894,7 @@ function InterruptTracker.ApplySettings()
      if not container or not s then return end
      
     if s.enabled then
+        EnableTrackerFrames()
         InterruptTracker:RegisterEvent("INSPECT_READY", function(_, guid) OnInspectReady(guid) end)
         InterruptTracker:RegisterEvent("GROUP_ROSTER_UPDATE", OnGroupRosterUpdate)
         InterruptTracker:RegisterEvent("PLAYER_ENTERING_WORLD", OnGroupRosterUpdate)
@@ -1782,6 +1919,7 @@ function InterruptTracker.ApplySettings()
         updateFrame:Show()
         container:Show()
     else
+        DisableTrackerFrames()
         InterruptTracker:UnregisterAllEvents()
         updateFrame:Hide()
         container:Hide()
@@ -1799,8 +1937,6 @@ function InterruptTracker.ApplySettings()
      end
      
      -- PERF: Settings changed – force the OnUpdate cache to re-read on next tick.
-     InvalidateOnUpdateCache()
-     
      UpdateLayout()
 end
 

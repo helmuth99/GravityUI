@@ -334,13 +334,15 @@ end
 -- AceAddon callback - runs after OnInitialize
 function Addon:OnEnable()
     self:RegisterEvent("PLAYER_ENTERING_WORLD")
-    
-    -- Initialize Modules
     if ns.InterruptTracker and ns.InterruptTracker.Initialize then 
         ns.InterruptTracker.Initialize() 
         if ns.InterruptTracker.ApplySettings then ns.InterruptTracker.ApplySettings() end
     end
 
+    if ns.TargetedSpells and ns.TargetedSpells.Initialize then
+        ns.TargetedSpells.Initialize()
+        if ns.TargetedSpells.ApplySettings then ns.TargetedSpells.ApplySettings() end
+    end
 
     if ns.Consumables and ns.Consumables.Initialize then 
         ns.Consumables.Initialize()
@@ -1797,6 +1799,7 @@ function Addon:PLAYER_ENTERING_WORLD(event, isInitialLogin, isReloadingUi)
         if ns.Loot and ns.Loot.Initialize then ns.Loot:Initialize() end
         if ns.RaidWarnings and ns.RaidWarnings.Initialize then ns.RaidWarnings:Initialize() end
         if ns.InterruptTracker and ns.InterruptTracker.Initialize then ns.InterruptTracker:Initialize() end
+        if ns.TargetedSpells and ns.TargetedSpells.Initialize then ns.TargetedSpells:Initialize() end
         if ns.TrackedBuffBar and ns.TrackedBuffBar.Init then ns.TrackedBuffBar:Init() end
     end)
     

@@ -100,9 +100,10 @@ end
 
 local function IsUnitDrinking(unit)
     if not UnitExists(unit) then return false end
+    if not C_UnitAuras or not C_UnitAuras.GetAuraDataByIndex then return false end
     for i = 1, 40 do
-        local aura = C_UnitAuras and C_UnitAuras.GetAuraDataByIndex(unit, i, "HELPFUL")
-        if not aura then break end
+        local ok, aura = pcall(C_UnitAuras.GetAuraDataByIndex, unit, i, "HELPFUL")
+        if not ok or not aura or IsSecret(aura) then break end
 
         local spellId = aura.spellId
         if spellId and not IsSecret(spellId) then
@@ -112,7 +113,7 @@ local function IsUnitDrinking(unit)
         end
 
         local name = aura.name
-        if name and not IsSecret(name) then
+        if name and not IsSecret(name) and type(name) == "string" then
             local lower = string.lower(name)
             if string.find(lower, "drink") or string.find(lower, "trink") or string.find(lower, "boisson") or string.find(lower, "boire") or string.find(lower, "beber") or string.find(lower, "refreshment") then
                 return true
@@ -139,9 +140,9 @@ function HM:UpdateManaDisplay(frame, unit, connected, isRegen)
         local pct = GetUnitManaPercent(unit)
         frame.icon:SetVertexColor(1, 1, 1)
         if isRegen then
-            -- Actively regenerating (drinking, Innervate, mana pot etc.) → green
+            -- Actively regenerating (drinking, Innervate, mana pot etc.) → green + Drinking status
             frame.mana:SetTextColor(0.3, 1, 0.4)
-            frame.mana:SetText(format("%.0f%% ", pct or 0))
+            frame.mana:SetText(format("%.0f%%  |cff55ff77Drinking|r", pct or 0))
         else
             local col = db.highManaColor or { 0.4, 0.8, 1 }
             frame.mana:SetTextColor(col[1], col[2], col[3])
@@ -485,10 +486,11 @@ function HM:UpdateMana()
                 CurveConstants and CurveConstants.ScaleTo100 or nil)
 
             local isRegen = false
-            if curMana and not IsSecret(curMana) and h.lastMana and not IsSecret(h.lastMana) and type(curMana) == "number" and type(h.lastMana) == "number" then
-                isRegen = h.connected and (curMana > h.lastMana)
-            else
-                isRegen = h.connected and IsUnitDrinking(h.unit)
+            local isDrinking = IsUnitDrinking(h.unit)
+            if isDrinking then
+                isRegen = true
+            elseif curMana and not IsSecret(curMana) and h.lastMana and not IsSecret(h.lastMana) and type(curMana) == "number" and type(h.lastMana) == "number" then
+                isRegen = h.connected and (curMana > h.lastMana) and (curMana < 100)
             end
 
             h.isRegen = isRegen
@@ -539,15 +541,20 @@ function HM:ShowPreview()
     self:UpdateContainerSize()
     self:PositionFrames()
 
-    for _, h in ipairs(self.currentHealers) do
+    for i, h in ipairs(self.currentHealers) do
         local frame = self:GetHealerFrame(h.frameIndex)
         local icon  = select(4, GetSpecializationInfoByID(h.specID))
         frame.icon:SetTexture(icon or FALLBACK_ICON)
         frame.icon:SetVertexColor(1, 1, 1)
         frame.name:SetText(h.name)
         frame.name:SetTextColor(GetClassColor(h.class))
-        frame.mana:SetText("75%")
-        frame.mana:SetTextColor(0.4, 0.8, 1)
+        if i == 1 then
+            frame.mana:SetText("52%  |cff55ff77Drinking|r")
+            frame.mana:SetTextColor(0.3, 1, 0.4)
+        else
+            frame.mana:SetText("88%")
+            frame.mana:SetTextColor(0.4, 0.8, 1)
+        end
         frame:Show()
     end
 

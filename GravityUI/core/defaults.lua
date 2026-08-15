@@ -309,6 +309,55 @@ ns.Defaults = {
         x = 0, 
         y = 0,
     },
+    targetedSpells = {
+        enabled            = false,
+        showBars           = true,
+        showIcons          = false,
+        showSelf           = true,
+        showParty          = true,
+        onlyKickable       = false,
+
+        -- Bars
+        width              = 200,
+        height             = 20,
+        spacing            = 2,
+        maxBars            = 5,
+        growDirection      = "UP",
+        texture            = "Gravity Normal",
+        font               = "Gravity",
+        fontSize           = 12,
+        fontOutline        = "OUTLINE",
+
+        -- Icons
+        iconOnlySelf       = true,
+        iconSize           = 40,
+        iconSpacing        = 4,
+        iconMax            = 5,
+        iconGrowDirection  = "CENTER",
+        iconFont           = "Gravity",
+        iconFontSize       = 14,
+        iconFontOutline    = "OUTLINE",
+        iconShowTargetName = false,
+        iconShowSweep      = true,
+
+        -- Colors (Unified Design)
+        castingColor       = { 1.00, 0.82, 0.00, 0.90 }, -- Yellow (Interruptible Casts)
+        channelingColor    = { 0.60, 0.25, 0.95, 0.90 }, -- Purple (Channeling Casts)
+        shieldColor        = { 0.50, 0.50, 0.50, 0.90 }, -- Shield Gray (Non-Interruptible Casts)
+        backdropColor      = { 0.08, 0.08, 0.08, 0.85 }, -- Bar Track Background
+        textColor          = { 1.00, 1.00, 1.00, 1.00 }, -- Text Color
+        targetClassColor   = true,                       -- Class Color for Target Name (» Name)
+
+        -- Sound (Temporarily disabled in 12.0)
+        soundEnabled       = false,
+        soundFile          = "Targeted",
+        soundChannel       = "Master",
+
+        x = 0,
+        y = -140,
+        iconX = 0,
+        iconY = -80,
+    },
     colorPicker = {
         enabled         = true,   -- Custom Color Picker active (used in GravityUI settings)
         hookAllAddons   = true,   -- Replace Blizzard picker globally for all addons

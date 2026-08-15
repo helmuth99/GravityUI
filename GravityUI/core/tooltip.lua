@@ -271,8 +271,8 @@ local function GetMountName(unit)
     if not C_UnitAuras or not C_MountJournal then return end
 
     for i = 1, 40 do
-        local aura = C_UnitAuras.GetAuraDataByIndex(unit, i, "HELPFUL")
-        if not aura then break end
+        local ok, aura = pcall(C_UnitAuras.GetAuraDataByIndex, unit, i, "HELPFUL")
+        if not ok or not aura then break end
 
         local spellId = aura.spellId
         if spellId then

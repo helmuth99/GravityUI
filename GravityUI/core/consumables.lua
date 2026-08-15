@@ -1669,9 +1669,8 @@ local function scanPlayerAuras(buttons, now)
     local isFlask, isRune, isVantus
 
     for i = 1, 60 do
-        local auraData = C_UnitAuras.GetAuraDataByIndex("player", i, "HELPFUL")
-
-        if not auraData then break end
+        local ok, auraData = pcall(C_UnitAuras.GetAuraDataByIndex, "player", i, "HELPFUL")
+        if not ok or not auraData then break end
 
         -- TAINT FIX: auraData.spellId and auraData.icon can be 'secret number values'
         -- when the aura originates from a Blizzard-protected source. Using a secret

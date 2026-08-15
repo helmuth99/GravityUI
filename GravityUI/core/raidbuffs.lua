@@ -1454,8 +1454,8 @@ SlashCmdList["GUIAURAS"] = function()
     print("|cff00ccffGravityUI Aura Dump|r (searching for Food/Flask/Rune keywords):")
     local found = 0
     for i = 1, 60 do
-        local aura = C_UnitAuras.GetAuraDataByIndex("player", i, "HELPFUL")
-        if not aura then break end
+        local ok, aura = pcall(C_UnitAuras.GetAuraDataByIndex, "player", i, "HELPFUL")
+        if not ok or not aura then break end
         local sid  = tonumber(aura.spellId) or "?"
         local icon = tonumber(aura.icon) or "?"
         local name = aura.name or "?"
