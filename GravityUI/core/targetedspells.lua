@@ -792,12 +792,8 @@ UpdateLayout = function()
             local maxIcons = s.iconMax or 5
             local growDir = s.iconGrowDirection or "CENTER"
 
-            local shouldPlaySound = s.soundEnabled and s.iconOnlySelf and InCombatLockdown()
-
             local iconCount = 0
-            local effectiveCount = math_min(#activeList, maxIcons)
-            local totalDim = math_max(size, (effectiveCount * size) + (math_max(0, effectiveCount - 1) * spacing))
-            local startX = -(totalDim / 2) + (size / 2)
+            local step = size + spacing
 
             for i, cast in ipairs(activeList) do
                 if iconCount < maxIcons then
@@ -806,18 +802,31 @@ UpdateLayout = function()
                     ApplyIconStyles(iconF, cast)
 
                     iconF:ClearAllPoints()
-                    local offset = (iconCount - 1) * (size + spacing)
                     if growDir == "CENTER" or growDir == "CENTER_HORIZONTAL" then
-                        local iconCenterX = startX + (iconCount - 1) * (size + spacing)
-                        iconF:SetPoint("CENTER", iconContainer, "CENTER", iconCenterX, 0)
+                        -- Stable Alternating Center: Slot 1 is center (0), Slot 2 is Right (+step), Slot 3 is Left (-step), Slot 4 is Right (+2*step), Slot 5 is Left (-2*step)
+                        -- Completely eliminates icon jumping when casts start/stop or change count!
+                        local xOffset = 0
+                        if iconCount > 1 then
+                            local pairIdx = math_floor(iconCount / 2)
+                            if (iconCount % 2) == 0 then
+                                xOffset = pairIdx * step
+                            else
+                                xOffset = -pairIdx * step
+                            end
+                        end
+                        iconF:SetPoint("CENTER", iconContainer, "CENTER", xOffset, 0)
                     elseif growDir == "RIGHT" then
-                        iconF:SetPoint("LEFT", iconContainer, "LEFT", offset, 0)
+                        local xOffset = (iconCount - 1) * step
+                        iconF:SetPoint("CENTER", iconContainer, "CENTER", xOffset, 0)
                     elseif growDir == "LEFT" then
-                        iconF:SetPoint("RIGHT", iconContainer, "RIGHT", -offset, 0)
+                        local xOffset = -(iconCount - 1) * step
+                        iconF:SetPoint("CENTER", iconContainer, "CENTER", xOffset, 0)
                     elseif growDir == "DOWN" then
-                        iconF:SetPoint("TOP", iconContainer, "TOP", 0, -offset)
+                        local yOffset = -(iconCount - 1) * step
+                        iconF:SetPoint("CENTER", iconContainer, "CENTER", 0, yOffset)
                     else -- UP
-                        iconF:SetPoint("BOTTOM", iconContainer, "BOTTOM", 0, offset)
+                        local yOffset = (iconCount - 1) * step
+                        iconF:SetPoint("CENTER", iconContainer, "CENTER", 0, yOffset)
                     end
 
                     iconF.texture:SetTexture(cast.icon or 136243)
@@ -834,11 +843,7 @@ UpdateLayout = function()
                 iconPool[i]:Hide()
             end
 
-            if growDir == "CENTER" or growDir == "CENTER_HORIZONTAL" or growDir == "RIGHT" or growDir == "LEFT" then
-                iconContainer:SetSize(totalDim, size)
-            else
-                iconContainer:SetSize(size, totalDim)
-            end
+            iconContainer:SetSize(size, size)
             iconContainer:Show()
         else
             for _, iconF in ipairs(iconPool) do iconF:Hide() end
