@@ -312,7 +312,7 @@ ns.Defaults = {
     targetedSpells = {
         enabled            = false,
         showBars           = true,
-        showIcons          = false,
+        showIcons          = true,
         showSelf           = true,
         showParty          = true,
         onlyKickable       = false,
@@ -339,6 +339,11 @@ ns.Defaults = {
         iconFontOutline    = "OUTLINE",
         iconShowTargetName = false,
         iconShowSweep      = true,
+        iconGlow           = true,
+        iconGlowMatchCast  = true,
+        iconGlowColor      = { 1.00, 0.82, 0.00, 0.90 },
+        iconGlowSize       = 2,
+        iconGlowPulse      = true,
 
         -- Colors (Unified Design)
         castingColor       = { 1.00, 0.82, 0.00, 0.90 }, -- Yellow (Interruptible Casts)

@@ -119,15 +119,19 @@ local function GetSettings()
             iconShowTargetName = true,
             iconShowSweep      = true,
             iconOnlySelf       = true,
+            iconGlow           = true,
+            iconGlowMatchCast  = true,
+            iconGlowColor      = { 1.00, 0.82, 0.00, 0.90 },
+            iconGlowSize       = 4,
+            iconGlowPulse      = true,
 
             -- Colors
-            useClassColorSelf  = false,
-            selfColor          = { 0.9, 0.2, 0.2, 0.9 },
-            useClassColorParty = true,
-            partyColor         = { 0.2, 0.6, 1.0, 0.9 },
-            shieldColor        = { 0.5, 0.5, 0.5, 0.9 },
-            backdropColor      = { 0.1, 0.1, 0.1, 0.8 },
-            textColor          = { 1, 1, 1, 1 },
+            castingColor       = { 1.00, 0.82, 0.00, 0.90 },
+            channelingColor    = { 0.60, 0.25, 0.95, 0.90 },
+            shieldColor        = { 0.50, 0.50, 0.50, 0.90 },
+            backdropColor      = { 0.08, 0.08, 0.08, 0.85 },
+            textColor          = { 1.00, 1.00, 1.00, 1.00 },
+            targetClassColor   = true,
 
             -- Sound (Deactivated)
             soundEnabled       = false,
@@ -496,6 +500,27 @@ local function CreateIconFrame()
     iconF:SetBackdropColor(0, 0, 0, 1)
     iconF:SetBackdropBorderColor(0, 0, 0, 1)
 
+    -- Glow Frame (Outer Glowing Border with Smooth Pulse Animation)
+    local glow = CreateFrame("Frame", nil, iconF, "BackdropTemplate")
+    glow:SetPoint("TOPLEFT", iconF, "TOPLEFT", -4, 4)
+    glow:SetPoint("BOTTOMRIGHT", iconF, "BOTTOMRIGHT", 4, -4)
+    glow:SetBackdrop({
+        edgeFile = "Interface\\Buttons\\WHITE8X8",
+        edgeSize = 4,
+        insets   = { left = 0, right = 0, top = 0, bottom = 0 }
+    })
+    glow:SetBackdropBorderColor(1.0, 0.82, 0.0, 0.9)
+
+    local ag = glow:CreateAnimationGroup()
+    ag:SetLooping("BOUNCE")
+    local a = ag:CreateAnimation("Alpha")
+    a:SetFromAlpha(0.35)
+    a:SetToAlpha(1.0)
+    a:SetDuration(0.65)
+    a:SetSmoothing("IN_OUT")
+    glow.animGroup = ag
+    iconF.glow = glow
+
     -- Texture
     local tex = iconF:CreateTexture(nil, "ARTWORK")
     tex:SetPoint("TOPLEFT", 1, -1)
@@ -581,6 +606,7 @@ local function ApplyIconStyles(iconF, cast)
     local chanCol   = s.channelingColor or { 0.60, 0.25, 0.95, 0.90 }
     local shieldCol = s.shieldColor or { 0.50, 0.50, 0.50, 0.90 }
 
+    local activeBorderCol
     if cast.isTest then
         local borderCol
         if cast.notInterruptible then
@@ -590,6 +616,7 @@ local function ApplyIconStyles(iconF, cast)
         else
             borderCol = castCol
         end
+        activeBorderCol = borderCol
         iconF:SetBackdropBorderColor(borderCol[1], borderCol[2], borderCol[3], borderCol[4] or 1)
     else
         local baseCol = cast.isChannel and chanCol or castCol
@@ -598,10 +625,54 @@ local function ApplyIconStyles(iconF, cast)
             local r = ev(cast.uninterruptible, baseCol[1], shieldCol[1])
             local g = ev(cast.uninterruptible, baseCol[2], shieldCol[2])
             local b = ev(cast.uninterruptible, baseCol[3], shieldCol[3])
+            activeBorderCol = { r, g, b, 1 }
             iconF:SetBackdropBorderColor(r, g, b, 1)
         else
             local col = (cast.uninterruptible == true or cast.notInterruptible == true) and shieldCol or baseCol
+            activeBorderCol = col
             iconF:SetBackdropBorderColor(col[1], col[2], col[3], 1)
+        end
+    end
+
+    -- Icon Glow Handling
+    if iconF.glow then
+        if s.iconGlow ~= false then
+            local glowSize = s.iconGlowSize or 4
+            iconF.glow:ClearAllPoints()
+            iconF.glow:SetPoint("TOPLEFT", iconF, "TOPLEFT", -glowSize, glowSize)
+            iconF.glow:SetPoint("BOTTOMRIGHT", iconF, "BOTTOMRIGHT", glowSize, -glowSize)
+            iconF.glow:SetBackdrop({
+                edgeFile = "Interface\\Buttons\\WHITE8X8",
+                edgeSize = glowSize,
+                insets   = { left = 0, right = 0, top = 0, bottom = 0 }
+            })
+
+            -- Determine Glow Color
+            if s.iconGlowMatchCast == false and s.iconGlowColor then
+                local gc = s.iconGlowColor
+                iconF.glow:SetBackdropBorderColor(gc[1], gc[2], gc[3], gc[4] or 0.9)
+            else
+                if activeBorderCol then
+                    iconF.glow:SetBackdropBorderColor(activeBorderCol[1], activeBorderCol[2], activeBorderCol[3], activeBorderCol[4] or 0.9)
+                end
+            end
+
+            if s.iconGlowPulse ~= false then
+                if not iconF.glow.animGroup:IsPlaying() then
+                    iconF.glow.animGroup:Play()
+                end
+            else
+                if iconF.glow.animGroup:IsPlaying() then
+                    iconF.glow.animGroup:Stop()
+                end
+                iconF.glow:SetAlpha(0.9)
+            end
+            iconF.glow:Show()
+        else
+            if iconF.glow.animGroup:IsPlaying() then
+                iconF.glow.animGroup:Stop()
+            end
+            iconF.glow:Hide()
         end
     end
 

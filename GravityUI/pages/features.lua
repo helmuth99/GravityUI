@@ -434,6 +434,11 @@ local function BuildTargetedSpells(parent)
     if c.iconFontOutline == nil then c.iconFontOutline = "OUTLINE" end
     if c.iconShowTargetName == nil then c.iconShowTargetName = true end
     if c.iconShowSweep == nil then c.iconShowSweep = true end
+    if c.iconGlow == nil then c.iconGlow = true end
+    if c.iconGlowMatchCast == nil then c.iconGlowMatchCast = true end
+    if c.iconGlowColor == nil then c.iconGlowColor = { 1.00, 0.82, 0.00, 0.90 } end
+    if c.iconGlowSize == nil then c.iconGlowSize = 4 end
+    if c.iconGlowPulse == nil then c.iconGlowPulse = true end
 
     if c.castingColor == nil then c.castingColor = { 1.00, 0.82, 0.00, 0.90 } end
     if c.channelingColor == nil then c.channelingColor = { 0.60, 0.25, 0.95, 0.90 } end
@@ -495,6 +500,11 @@ local function BuildTargetedSpells(parent)
     -- ICON MODE SETTINGS
     CreateSubLabel(content, "Icon Mode Settings")
     AddRow(content, "Only Show Icons Targeted on You", "checkbox", "iconOnlySelf", c, Refresh)
+    AddRow(content, "Enable Icon Glow", "checkbox", "iconGlow", c, Refresh)
+    AddRow(content, "Match Glow to Cast Color", "checkbox", "iconGlowMatchCast", c, Refresh)
+    AddRow(content, "Custom Glow Color", "color", "iconGlowColor", c, Refresh)
+    AddRow(content, "Glow Size", "slider", 2, 10, "iconGlowSize", c, Refresh, 1)
+    AddRow(content, "Animated Pulse Glow", "checkbox", "iconGlowPulse", c, Refresh)
     AddRow(content, "Icon Size", "slider", 20, 80, "iconSize", c, Refresh, 1)
     AddRow(content, "Icon Spacing", "slider", 0, 20, "iconSpacing", c, Refresh, 1)
     AddRow(content, "Max Icons", "slider", 1, 10, "iconMax", c, Refresh, 1)
