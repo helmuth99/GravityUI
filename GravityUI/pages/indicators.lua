@@ -456,7 +456,49 @@ local function BuildAFKScreen(parent)
     content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
 end
 
--- 9. Consumables
+-- 10. Healer Mana
+local function BuildHealerMana(parent)
+    local scroll, content = GUI:CreateScrollableContent(parent)
+    scroll:SetAllPoints()
+    local db = ns.GetDB(); if not db then return end
+    local hm = db.screenindicators.healerMana
+    content.rowCount = 0
+    local refresh = function() if ns.RefreshHealerMana then ns.RefreshHealerMana() end end
+    local header = GUI:CreateSectionHeader(content, "Healer Mana Tracker")
+    header:SetPoint("TOPLEFT", 10, -10)
+    header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
+    content.rowCount = 1.3
+    local infoBox = GUI:CreateInfoBox(content, "Displays spec icon, name and mana% of all healers in the current party or raid. Only visible while grouped.")
+    infoBox:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5)); content.rowCount = content.rowCount + (infoBox:GetHeight() / (ROW_HEIGHT+5)) + 0.2
+    CreateSubLabel(content, "General")
+    AddRow(content, "Enable Healer Mana",       "checkbox", "enabled",        hm, refresh)
+    AddRow(content, "Only if I am a Healer",    "checkbox", "onlyIfHealer",   hm, refresh)
+    AddRow(content, "Enable in Dungeons",        "checkbox", "enableInDungeon",hm, refresh)
+    AddRow(content, "Enable in Raids",           "checkbox", "enableInRaid",   hm, refresh)
+    AddRow(content, "Max Healers Shown",         "slider",   1, 5, "maxHealers", hm, refresh, 1)
+    content.rowCount = content.rowCount + 0.3
+    CreateSubLabel(content, "Layout")
+    local growOpts = { {value=true, text="Down"}, {value=false, text="Up"} }
+    AddRow(content, "Grow Direction",            "dropdown", growOpts, "growDown", hm, refresh)
+    AddRow(content, "Icon Size",                 "slider",   16, 48, "iconSize",     hm, refresh, 1)
+    AddRow(content, "Font Size",                 "slider",   8,  20, "fontSize",     hm, refresh, 1)
+    AddRow(content, "Frame Spacing",             "slider",   0,  20, "frameSpacing", hm, refresh, 1)
+    AddRow(content, "Frame Width",               "slider",   80, 280, "frameWidth",  hm, refresh, 1)
+    content.rowCount = content.rowCount + 0.3
+    CreateSubLabel(content, "Colors")
+    AddRow(content, "Mana % Color",              "color",    "highManaColor", hm, refresh)
+    content.rowCount = content.rowCount + 0.3
+    CreateSubLabel(content, "Position")
+    local moverBtn = GUI:CreateButton(content, "Toggle Mover", 140, 24, function()
+        if ns.HealerMana and ns.HealerMana.ToggleMover then
+            ns.HealerMana:ToggleMover()
+        end
+    end)
+    moverBtn:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT + 5)))
+    content.rowCount = content.rowCount + 1.2
+    content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
+end
+
 local function BuildConsumables(parent)
     local scroll, content = GUI:CreateScrollableContent(parent)
     scroll:SetAllPoints()
@@ -482,6 +524,7 @@ ns.GUI:RegisterPage("indicators", {
     subTabs = {
         { name = "Cursor",             builder = BuildCursor },
         { name = "Crosshair",          builder = BuildCrosshair },
+        { name = "Healer Mana",        builder = BuildHealerMana },
         { name = "Pet Info",           builder = BuildPet },
         { name = "Combat Timer",       builder = BuildCombatTimer },
         { name = "Cooldown Text",      builder = ns.CooldownText and ns.CooldownText.AddOptions or function() end },

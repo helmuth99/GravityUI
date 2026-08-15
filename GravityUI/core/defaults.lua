@@ -978,6 +978,21 @@ ns.Defaults = {
         customExpanded = true,
     },
     screenindicators =     {
+        healerMana = {
+            enabled         = false,
+            onlyIfHealer    = false,
+            enableInRaid    = false,
+            enableInDungeon = true,
+            maxHealers      = 3,
+            growDown        = true,
+            iconSize        = 24,
+            fontSize        = 12,
+            frameSpacing    = 4,
+            frameWidth      = 160,
+            highManaColor   = { 0.4, 0.8, 1.0 },
+            position        = { point = "CENTER", relativePoint = "CENTER", x = 0, y = 200 },
+        },
+        healerManaExpanded = true,
         petWarnings =         {
             enabled = true,
             fontSize = 28,

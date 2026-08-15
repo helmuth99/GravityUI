@@ -39,6 +39,8 @@ core\window.lua
 core\utils.lua
 core\dungeondata.lua
 core\automation.lua
+core\cdmdata.lua
+core\cdmimport.lua
 core\quicksalvage.lua
 core\styling.lua
 core\xpreputation.lua
@@ -88,6 +90,7 @@ pages\search.lua
 core\buttons.lua
 core\skyriding.lua
 core\screenindicators.lua
+core\healermana.lua
 core\consumables.lua
 core\mail.lua
 
