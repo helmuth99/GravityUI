@@ -1020,6 +1020,9 @@ _interruptFrame:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
 _interruptFrame:RegisterEvent("UNIT_SPELLCAST_INTERRUPTED")
 _interruptFrame:RegisterEvent("UNIT_AURA")
 _interruptFrame:SetScript("OnEvent", function(_, event, unit, ...)
+    local s = GetSettings()
+    if not s or not s.enabled or not IsTrackerAllowed() then return end
+
     if event == "UNIT_SPELLCAST_SUCCEEDED" then
         if not unit or unit == "player" or unit == "pet" then return end
         if not unit:find("^party") then return end
@@ -1144,7 +1147,15 @@ _interruptFrame:SetScript("OnEvent", function(_, event, unit, ...)
 end)
 
 _interruptFrame:SetScript("OnUpdate", function()
-    if needsCorrelation then CorrelateSignals() end
+    if needsCorrelation then
+        local s = GetSettings()
+        if s and s.enabled and IsTrackerAllowed() then
+            CorrelateSignals()
+        else
+            needsCorrelation = false
+            wipe(signalTape)
+        end
+    end
 end)
 
 -- ============================================================================
