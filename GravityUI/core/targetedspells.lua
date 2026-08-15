@@ -129,8 +129,8 @@ local function GetSettings()
             backdropColor      = { 0.1, 0.1, 0.1, 0.8 },
             textColor          = { 1, 1, 1, 1 },
 
-            -- Sound
-            soundEnabled       = true,
+            -- Sound (Deactivated)
+            soundEnabled       = false,
             soundFile          = "Targeted",
             soundChannel       = "Master",
 
@@ -175,17 +175,8 @@ local function GetSoundPath(soundFile)
 end
 
 local function TriggerSoundAlert()
-    local s = GetSettings()
-    if not s or not s.soundEnabled then return end
-    if not InCombatLockdown() and not UnitAffectingCombat("player") and not testModeActive then return end
-    local now = GetTime()
-    if now - lastSoundPlayTime < 1.0 then return end
-    lastSoundPlayTime = now
-
-    local soundFile = s.soundFile or "Targeted"
-    local soundPath = GetSoundPath(soundFile)
-    local channel = s.soundChannel or "Master"
-    PlaySoundFile(soundPath, channel)
+    -- Sound alerts for targeted spells are deactivated in WoW 12.0
+    return
 end
 
 function TargetedSpells.PlayTestSound()
@@ -961,11 +952,8 @@ local function TryProcessCast(unit, isChannel)
     cast.targetClass      = targetClass
     cast.isTest           = false
 
-    -- Sound alert on new hostile cast in combat (1s throttle)
-    if isNew and not cast.soundPlayed and s.soundEnabled then
-        cast.soundPlayed = true
-        TriggerSoundAlert()
-    end
+    -- Sound alerts for targeted spells are completely deactivated in WoW 12.0
+    -- (secret value restrictions prevent target-specific sound triggers in combat)
 
     UpdateLayout()
 end

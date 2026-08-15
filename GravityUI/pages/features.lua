@@ -442,7 +442,7 @@ local function BuildTargetedSpells(parent)
     if c.textColor == nil then c.textColor = { 1, 1, 1, 1 } end
     if c.targetClassColor == nil then c.targetClassColor = true end
 
-    if c.soundEnabled == nil then c.soundEnabled = true end
+    c.soundEnabled = false
     if c.soundFile == nil then c.soundFile = "Targeted" end
     if c.soundChannel == nil then c.soundChannel = "Master" end
 
@@ -549,54 +549,11 @@ local function BuildTargetedSpells(parent)
     AddRow(content, "Use Class Color for Target Name (» Name)", "checkbox", "targetClassColor", c, Refresh)
     content.rowCount = content.rowCount + 0.3
 
-    -- AUDIO ALERT (Disabled in WoW 12.0 due to secret value restrictions)
-    CreateSubLabel(content, "Audio Alert |cffff8800(Disabled in WoW 12.0)|r")
+    -- AUDIO ALERT (Deactivated in WoW 12.0)
+    CreateSubLabel(content, "Audio Alert |cffff4444(Deactivated)|r")
     
-    local noteLabel = content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    noteLabel:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT + 5)))
-    noteLabel:SetPoint("RIGHT", content, "RIGHT", -10, 0)
-    noteLabel:SetJustifyH("LEFT")
-    noteLabel:SetText("|cff888888Notice: Sound alerts on specific targets are temporarily disabled due to Blizzard's WoW 12.0 secret-value engine restrictions.|r")
-    content.rowCount = content.rowCount + 0.9
-
-    AddRow(content, "|cff666666Play Sound on Targeted Spells (Disabled)|r", "checkbox", "soundEnabled", c, Refresh)
-
-    local function PlaySpecificSound(soundName)
-        local soundPath = soundName
-        local LSM = LibStub("LibSharedMedia-3.0", true)
-        if LSM then
-            soundPath = LSM:Fetch("sound", soundName) or soundName
-        end
-        local channel = c.soundChannel or "Master"
-        PlaySoundFile(soundPath, channel)
-    end
-
-    local soundOptions = { { value = "Targeted", text = "Targeted", previewFunc = PlaySpecificSound } }
-    local LSM = LibStub("LibSharedMedia-3.0", true)
-    if LSM then
-        soundOptions = {}
-        for name, _ in pairs(LSM:HashTable("sound")) do
-            table.insert(soundOptions, { value = name, text = name, previewFunc = PlaySpecificSound })
-        end
-        table.sort(soundOptions, function(a, b) return a.text < b.text end)
-    end
-    AddRow(content, "|cff666666Alert Sound|r", "dropdown", soundOptions, "soundFile", c, Refresh)
-    local channels = {
-        { value = "Master", text = "Master" },
-        { value = "SFX", text = "Sound Effects (SFX)" },
-        { value = "Music", text = "Music" },
-        { value = "Ambience", text = "Ambience" },
-        { value = "Dialog", text = "Dialog" },
-    }
-    AddRow(content, "|cff666666Sound Channel|r", "dropdown", channels, "soundChannel", c, Refresh)
-
-    local playSoundBtn = GUI:CreateButton(content, "Test Sound File", 120, 24, function()
-        if ns.TargetedSpells and ns.TargetedSpells.PlayTestSound then
-            ns.TargetedSpells.PlayTestSound()
-        end
-    end)
-    playSoundBtn:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT + 5)))
-    content.rowCount = content.rowCount + 1.2
+    local noteBox = GUI:CreateInfoBox(content, "|cffFFCC00Audio Alerts Deactivated|r\nAudio alerts for targeted enemy casts are currently deactivated until a reliable, secret-safe target resolution API is available in WoW 12.0.")
+    content.rowCount = content.rowCount + 1.8
 
     content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
 end
