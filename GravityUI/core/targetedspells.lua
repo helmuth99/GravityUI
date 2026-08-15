@@ -1375,11 +1375,22 @@ function TargetedSpells.ToggleIconMover(force)
         iconContainer.mover:SetBackdrop({
             bgFile   = "Interface\\Buttons\\WHITE8x8",
             edgeFile = "Interface\\Buttons\\WHITE8x8",
-            edgeSize = 1,
+            edgeSize = 2,
             insets   = { left = 0, right = 0, top = 0, bottom = 0 }
         })
-        iconContainer.mover:SetBackdropColor(1, 0.5, 0, 0.5)
-        iconContainer.mover:SetBackdropBorderColor(1, 0.7, 0, 1)
+        iconContainer.mover:SetBackdropColor(0.0, 0.6, 1.0, 0.45)
+        iconContainer.mover:SetBackdropBorderColor(0.0, 0.9, 1.0, 1)
+
+        local r, g, b = 0, 0.8, 1
+        if ns.GetAccentColor then
+            r, g, b = ns.GetAccentColor()
+        end
+        if iconContainer.mover.titleBadge then
+            iconContainer.mover.titleBadge:SetBackdropBorderColor(r, g, b, 0.9)
+        end
+        if iconContainer.mover.titleText then
+            iconContainer.mover.titleText:SetTextColor(r, g, b)
+        end
 
         if #activeList == 0 and not testModeActive then
             TargetedSpells.TestMode(true)
@@ -1450,7 +1461,7 @@ function TargetedSpells.Initialize()
     end)
     barContainer.mover = barMover
 
-    -- 2. Icon Container Frame
+    -- 2. Icon Container Frame (represents Slot 1 at Anchor X=0, Y=0)
     iconContainer = CreateFrame("Frame", "GravityUI_TargetedSpells_Icons", UIParent, "BackdropTemplate")
     iconContainer:SetSize(s.iconSize or 36, s.iconSize or 36)
     iconContainer:SetPoint("CENTER", UIParent, "CENTER", s.iconX or 0, s.iconY or -80)
@@ -1464,9 +1475,34 @@ function TargetedSpells.Initialize()
     iconMover:RegisterForDrag("LeftButton")
     iconMover:Hide()
 
-    local iconTxt = iconMover:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    -- Title Badge positioned above the anchor icon box so it doesn't obstruct icons
+    local titleBadge = CreateFrame("Frame", nil, iconMover, "BackdropTemplate")
+    titleBadge:SetPoint("BOTTOM", iconMover, "TOP", 0, 6)
+    titleBadge:SetSize(160, 20)
+    titleBadge:SetBackdrop({
+        bgFile   = "Interface\\Buttons\\WHITE8x8",
+        edgeFile = "Interface\\Buttons\\WHITE8x8",
+        edgeSize = 1,
+        insets   = { left = 0, right = 0, top = 0, bottom = 0 }
+    })
+    titleBadge:SetBackdropColor(0.06, 0.06, 0.06, 0.90)
+    titleBadge:SetBackdropBorderColor(0.0, 0.8, 1.0, 0.9)
+
+    local iconTxt = titleBadge:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     iconTxt:SetPoint("CENTER")
     iconTxt:SetText("Targeted Spells (Icons)")
+
+    -- Center Slot Anchor Marker inside the exact X=0 icon box
+    local slotTxt = iconMover:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    slotTxt:SetPoint("CENTER")
+    slotTxt:SetText("Slot 1\n[ X=0 ]")
+    slotTxt:SetTextColor(1, 0.82, 0, 1)
+    slotTxt:SetShadowOffset(1, -1)
+    slotTxt:SetShadowColor(0, 0, 0, 1)
+
+    iconMover.titleBadge = titleBadge
+    iconMover.titleText  = iconTxt
+    iconMover.slotText   = slotTxt
 
     iconMover:SetScript("OnDragStart", function() iconContainer:StartMoving() end)
     iconMover:SetScript("OnDragStop", function()
@@ -1511,9 +1547,11 @@ function TargetedSpells.ApplySettings()
     end
 
     barContainer:ClearAllPoints()
+    barContainer:SetSize(s.width or 200, s.height or 20)
     barContainer:SetPoint("CENTER", UIParent, "CENTER", s.x or 0, s.y or -140)
 
     iconContainer:ClearAllPoints()
+    iconContainer:SetSize(s.iconSize or 36, s.iconSize or 36)
     iconContainer:SetPoint("CENTER", UIParent, "CENTER", s.iconX or 0, s.iconY or -80)
 
     CheckZoneState()
