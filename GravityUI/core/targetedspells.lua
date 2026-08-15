@@ -535,7 +535,8 @@ local function CreateIconFrame()
     cd:SetDrawEdge(false)
     cd:SetDrawSwipe(true)
     cd:SetReverse(true)
-    cd:SetHideCountdownNumbers(false)
+    cd:SetHideCountdownNumbers(true)
+    cd.noCooldownCount = true
     cd:SetScript("OnCooldownDone", function(self)
         local parentIcon = self:GetParent()
         if parentIcon and parentIcon.unit and StopCast then
@@ -911,6 +912,20 @@ local function OnUpdateTicker(self, elapsed)
                             local ok, rem = pcall(cast.duration.GetRemainingDuration, cast.duration)
                             if ok and rem then
                                 pcall(bar.textDuration.SetFormattedText, bar.textDuration, "%.1fs", rem)
+                            end
+                        end
+                    end
+                end
+            end
+
+            if s.showIcons then
+                local iconF = GetIconFrame(i)
+                if iconF and iconF:IsShown() then
+                    if iconF.textDuration then
+                        if cast.duration and cast.duration.GetRemainingDuration then
+                            local ok, rem = pcall(cast.duration.GetRemainingDuration, cast.duration)
+                            if ok and rem then
+                                pcall(iconF.textDuration.SetFormattedText, iconF.textDuration, "%.1f", rem)
                             end
                         end
                     end
