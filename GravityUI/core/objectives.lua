@@ -396,13 +396,23 @@ end
 
 function Objectives:OnInitialize()
     self:RegisterEvent("PLAYER_ENTERING_WORLD", "SkinTracker")
-    -- Auto-hide: react to quest watch changes
+    -- Auto-hide: react to quest, recipe, achievement, trading post and scenario tracking changes
     self:RegisterEvent("QUEST_WATCH_UPDATE", "CheckAutoHide")
     self:RegisterEvent("QUEST_LOG_UPDATE", "CheckAutoHide")
     self:RegisterEvent("QUEST_ACCEPTED", "CheckAutoHide")
     self:RegisterEvent("QUEST_REMOVED", "CheckAutoHide")
+    self:RegisterEvent("QUEST_WATCH_LIST_CHANGED", "CheckAutoHide")
+    self:RegisterEvent("TRACKED_RECIPE_UPDATE", "CheckAutoHide")
+    self:RegisterEvent("CONTENT_TRACKING_UPDATE", "CheckAutoHide")
+    self:RegisterEvent("TRACKED_ACHIEVEMENT_UPDATE", "CheckAutoHide")
+    self:RegisterEvent("TRACKED_ACHIEVEMENT_LIST_CHANGED", "CheckAutoHide")
+    self:RegisterEvent("PERKS_PROGRAM_DATA_REFRESH", "CheckAutoHide")
+    self:RegisterEvent("PERKS_ACTIVITY_COMPLETED", "CheckAutoHide")
+    self:RegisterEvent("SUPER_TRACKING_CHANGED", "CheckAutoHide")
     self:RegisterEvent("SCENARIO_UPDATE", "CheckAutoHide")
     self:RegisterEvent("CRITERIA_UPDATE", "CheckAutoHide")
+    self:RegisterEvent("ZONE_CHANGED_NEW_AREA", "CheckAutoHide")
+    self:RegisterEvent("ZONE_CHANGED", "CheckAutoHide")
     
     C_Timer.After(1, function() self:SkinTracker() end)
     C_Timer.After(3, function() self:SkinTracker() end)
@@ -420,7 +430,22 @@ function Objectives:OnInitialize()
         end)
     end
     
+    if ObjectiveTrackerManager and ObjectiveTrackerManager.Update then
+        hooksecurefunc(ObjectiveTrackerManager, "Update", function()
+            self:CheckAutoHide()
+        end)
+    end
 
+    -- Enforce Auto-Hide whenever Blizzard opens/shows the tracker (e.g. Talents, Map, Mount, etc.)
+    if ObjectiveTrackerFrame and not ObjectiveTrackerFrame._gui_AutoHideHooked then
+        ObjectiveTrackerFrame._gui_AutoHideHooked = true
+        hooksecurefunc(ObjectiveTrackerFrame, "Show", function()
+            if Objectives.isApplyingAutoHide then return end
+            Objectives.isApplyingAutoHide = true
+            Objectives:CheckAutoHide()
+            Objectives.isApplyingAutoHide = false
+        end)
+    end
     
     if ObjectiveTrackerFrame and ObjectiveTrackerFrame.Update then
         hooksecurefunc(ObjectiveTrackerFrame, "Update", function() 
@@ -464,20 +489,161 @@ function Objectives:SkinTracker()
     self:CheckAutoHide()
 end
 
+local function TrackerHasRealContent(tracker)
+    if not tracker then return false end
+
+    -- 1. Native HasContents() method
+    if tracker.HasContents then
+        local ok, has = pcall(tracker.HasContents, tracker)
+        if ok and has == true then return true end
+    end
+
+    -- 2. Active blocks in module
+    if tracker.usedBlocks and type(tracker.usedBlocks) == "table" and next(tracker.usedBlocks) ~= nil then
+        return true
+    end
+    if tracker.currentBlocks and type(tracker.currentBlocks) == "table" and next(tracker.currentBlocks) ~= nil then
+        return true
+    end
+    if tracker.numBlocks and type(tracker.numBlocks) == "number" and tracker.numBlocks > 0 then
+        return true
+    end
+    if tracker.GetNumBlocks then
+        local ok, num = pcall(tracker.GetNumBlocks, tracker)
+        if ok and type(num) == "number" and num > 0 then return true end
+    end
+
+    -- 3. If tracker has a ContentsFrame with visible children
+    if tracker.ContentsFrame and tracker.ContentsFrame.GetChildren then
+        local children = { tracker.ContentsFrame:GetChildren() }
+        for _, c in ipairs(children) do
+            if c and c:IsShown() and c.GetHeight and c:GetHeight() > 10 then
+                return true
+            end
+        end
+    end
+
+    return false
+end
+
+local function HasAnyTrackerContent()
+    if not ObjectiveTrackerFrame then return false end
+
+    -- 1. Check all modules from ObjectiveTrackerManager
+    if ObjectiveTrackerManager then
+        if ObjectiveTrackerManager.GetTrackers then
+            local ok, list = pcall(ObjectiveTrackerManager.GetTrackers, ObjectiveTrackerManager)
+            if ok and type(list) == "table" then
+                for _, tracker in ipairs(list) do
+                    if tracker ~= ObjectiveTrackerFrame.HeaderMenu and TrackerHasRealContent(tracker) then
+                        return true
+                    end
+                end
+            end
+        end
+        if ObjectiveTrackerManager.trackers and type(ObjectiveTrackerManager.trackers) == "table" then
+            for _, tracker in pairs(ObjectiveTrackerManager.trackers) do
+                if tracker ~= ObjectiveTrackerFrame.HeaderMenu and TrackerHasRealContent(tracker) then
+                    return true
+                end
+            end
+        end
+    end
+
+    -- 2. Check all global named tracker frames
+    local globalTrackerNames = {
+        "ProfessionsRecipeObjectiveTracker",
+        "ProfessionsRecipeTracker",
+        "ProfessionsCustomerOrdersObjectiveTracker",
+        "ProfessionsCustomerOrdersTracker",
+        "AchievementObjectiveTracker",
+        "MonthlyActivitiesObjectiveTracker",
+        "CampaignQuestObjectiveTracker",
+        "QuestObjectiveTracker",
+        "WorldQuestObjectiveTracker",
+        "BonusObjectiveTracker",
+        "ScenarioObjectiveTracker",
+        "UIWidgetObjectiveTracker",
+        "AdventureObjectiveTracker",
+        "DelvesObjectiveTracker",
+    }
+    for _, name in ipairs(globalTrackerNames) do
+        local tracker = _G[name]
+        if tracker and TrackerHasRealContent(tracker) then
+            return true
+        end
+    end
+
+    -- 3. Check legacy MODULES table
+    if ObjectiveTrackerFrame.MODULES then
+        for _, module in pairs(ObjectiveTrackerFrame.MODULES) do
+            if module ~= ObjectiveTrackerFrame.HeaderMenu and TrackerHasRealContent(module) then
+                return true
+            end
+        end
+    end
+
+    -- 4. Check APIs
+    -- Quests (Standard & World Quests)
+    if C_QuestLog then
+        local ok1, qw = pcall(C_QuestLog.GetNumQuestWatches)
+        if ok1 and type(qw) == "number" and qw > 0 then return true end
+        local ok2, wqw = pcall(C_QuestLog.GetNumWorldQuestWatches)
+        if ok2 and type(wqw) == "number" and wqw > 0 then return true end
+    end
+
+    -- Profession Recipes
+    if C_TradeSkillUI then
+        if C_TradeSkillUI.GetTrackedRecipeIDs then
+            local ok, list = pcall(C_TradeSkillUI.GetTrackedRecipeIDs)
+            if ok and type(list) == "table" and #list > 0 then return true end
+        end
+        if C_TradeSkillUI.GetTrackedRecipes then
+            local ok, list = pcall(C_TradeSkillUI.GetTrackedRecipes)
+            if ok and type(list) == "table" and #list > 0 then return true end
+        end
+    end
+
+    -- Content Tracking (Recipes, Achievements, Transmog, etc.)
+    if C_ContentTracking and C_ContentTracking.GetTrackedIDs then
+        for trackTypeID = 0, 10 do
+            local ok, list = pcall(C_ContentTracking.GetTrackedIDs, trackTypeID)
+            if ok and type(list) == "table" and #list > 0 then
+                return true
+            end
+        end
+    end
+
+    -- Achievements
+    if GetNumTrackedAchievements then
+        local ok, count = pcall(GetNumTrackedAchievements)
+        if ok and type(count) == "number" and count > 0 then return true end
+    end
+
+    -- Traveler's Log / Perks Program
+    if C_PerksProgram and C_PerksProgram.GetTrackedPerksActivities then
+        local ok, list = pcall(C_PerksProgram.GetTrackedPerksActivities)
+        if ok and type(list) == "table" and #list > 0 then return true end
+    end
+
+    return false
+end
+
 -- -------------------------------------------------------------------------
 -- AUTO-HIDE: Hide the tracker when there is nothing to show.
 -- GUARD: Never auto-hide inside any instance (dungeon, M+, raid, scenario)
 --        because the tracker always shows relevant content there (M+ timer,
 --        dungeon objectives, boss progress, scenario steps).
--- Only hides when the player has no quests tracked AND is in open world.
+-- Checks Quests, World Quests, Profession Recipes, Work Orders, Achievements,
+-- Traveler's Log / Trading Post, Delves, and Content Tracking.
 -- -------------------------------------------------------------------------
 function Objectives:CheckAutoHide()
-    local db = ns.db.profile.styling.objectives
-    if not db.objectiveTrackerSkinning then return end
+    local db = ns.db and ns.db.profile and ns.db.profile.styling and ns.db.profile.styling.objectives
+    if not db or not db.objectiveTrackerSkinning then return end
     if not db.autoHideWhenEmpty then return end
     if not ObjectiveTrackerFrame then return end
 
-    -- GUARD: Never suppress the tracker inside any instance.
+    -- GUARD 1: Never suppress the tracker inside any instance.
     -- IsInInstance() returns true for: dungeons, raids, M+ keys, scenarios.
     local inInstance = IsInInstance and IsInInstance()
     if inInstance then
@@ -487,7 +653,7 @@ function Objectives:CheckAutoHide()
         return
     end
 
-    -- Also stay visible during active scenarios in the open world (e.g. Delves entrance)
+    -- GUARD 2: Stay visible during active scenarios in the open world (e.g. Delves entrance)
     if C_Scenario and C_Scenario.IsInScenario and C_Scenario.IsInScenario() then
         if not ObjectiveTrackerFrame:IsShown() then
             ObjectiveTrackerFrame:Show()
@@ -495,32 +661,7 @@ function Objectives:CheckAutoHide()
         return
     end
 
-    local hasContent = false
-
-    -- Method A: Iterate Blizzard modules (quests, scenarios, achievements, M+)
-    if ObjectiveTrackerFrame.MODULES then
-        for _, module in pairs(ObjectiveTrackerFrame.MODULES) do
-            if module and module.HasContents and module:HasContents() then
-                hasContent = true
-                break
-            end
-            -- Fallback: check usedBlocks table (some modules don't implement HasContents)
-            if not hasContent and module and module.usedBlocks then
-                for _ in pairs(module.usedBlocks) do
-                    hasContent = true
-                    break
-                end
-            end
-        end
-    end
-
-    -- Method B: Direct quest watch count (safety fallback if MODULES is unavailable)
-    if not hasContent then
-        local watchCount = C_QuestLog and C_QuestLog.GetNumQuestWatches and C_QuestLog.GetNumQuestWatches()
-        if watchCount and watchCount > 0 then
-            hasContent = true
-        end
-    end
+    local hasContent = HasAnyTrackerContent()
 
     if hasContent then
         if not ObjectiveTrackerFrame:IsShown() then
