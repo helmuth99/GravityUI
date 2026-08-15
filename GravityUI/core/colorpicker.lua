@@ -587,6 +587,23 @@ local function CreatePickerFrame()
         return HSVtoRGB(curH, curS, curV)
     end
 
+    -- Drag-throttle state: fire onChangeCallback at most every 0.15s,
+    -- and only when the color actually changed (prevents downstream rebuild spam).
+    local lastCallbackR, lastCallbackG, lastCallbackB, lastCallbackA
+    local pendingCallbackTimer = nil
+    local CALLBACK_THROTTLE = 0.15
+
+    local function FlushCallback()
+        pendingCallbackTimer = nil
+        if not pickerFrame.onChangeCallback or pickerFrame.skipOnChange then return end
+        local r, g, b = GetCurrentRGB()
+        local a = pickerFrame.hasAlpha and curA or 1
+        -- Change detection: skip if color is identical to last fired values
+        if r == lastCallbackR and g == lastCallbackG and b == lastCallbackB and a == lastCallbackA then return end
+        lastCallbackR, lastCallbackG, lastCallbackB, lastCallbackA = r, g, b, a
+        pickerFrame.onChangeCallback({ r = r, g = g, b = b, a = a })
+    end
+
     local function UpdateAll()
         local r, g, b = GetCurrentRGB()
         newTex:SetColorTexture(r, g, b, curA)  -- "New" swatch tracks live color
@@ -597,10 +614,9 @@ local function CreatePickerFrame()
         UpdateAlphaThumb()
         UpdateInputs()
         if pickerFrame.onChangeCallback and not pickerFrame.skipOnChange then
-            pickerFrame.onChangeCallback({
-                r = r, g = g, b = b,
-                a = pickerFrame.hasAlpha and curA or 1
-            })
+            -- Throttle: schedule a deferred flush; cancel any existing pending one
+            if pendingCallbackTimer then pendingCallbackTimer:Cancel() end
+            pendingCallbackTimer = C_Timer.NewTimer(CALLBACK_THROTTLE, FlushCallback)
         end
     end
 

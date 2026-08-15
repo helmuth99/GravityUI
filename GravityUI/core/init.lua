@@ -12,6 +12,17 @@ ns.Addon = Addon
 ns.db = nil
 ns.trackedFonts = {}
 
+-- v2026-08 (Midnight compat): GetSpecialization / GetSpecializationInfo were moved
+-- from globals into C_SpecializationInfo. Any GravityUI code that needs these should
+-- call ns.GetSpecialization() / ns.GetSpecializationInfo() so both expansions work.
+-- (Libs like LibOpenRaid and LibDualSpec already have their own local wrappers.)
+do
+    local CSI = C_SpecializationInfo
+    ns.GetSpecialization = (CSI and CSI.GetSpecialization) or GetSpecialization
+    ns.GetSpecializationInfo = (CSI and CSI.GetSpecializationInfo) or GetSpecializationInfo
+end
+
+
 -- Database caching
 local dbCache = nil
 function ns.GetDB()

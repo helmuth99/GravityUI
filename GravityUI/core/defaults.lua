@@ -1043,6 +1043,8 @@ ns.Defaults = {
             gcdEnabled = false,
             ringStyle = "standard",
             inCombatAlpha = 1,
+            tauntCursorEnabled = false,   -- Taunt CD follows cursor (Tank specs only), default off
+            dispelCursorEnabled = false,  -- Dispel CD follows cursor (all classes with dispel), default off
         },
         cursorExpanded = true,
         crosshairExpanded = true,

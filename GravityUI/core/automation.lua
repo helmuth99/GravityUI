@@ -63,20 +63,39 @@ local function OnMerchantShow()
     end
 
     -- Auto Repair (Dropdown: "off", "personal", "guild")
+    -- v2026-08 (Midnight compat): GetRepairAllCost and GetMoney return SECRET values in
+    -- combat -- numeric comparisons > 0 and >= throw. Use only CanMerchantRepair() to
+    -- decide; C-side enforces affordability when RepairAllItems is called.
     local repairMode = settings.autoRepair
     if repairMode and repairMode ~= "off" and CanMerchantRepair() then
-        local repairCost = GetRepairAllCost()
-        if repairCost and repairCost > 0 then
+        local repairCost, canRepair = GetRepairAllCost()
+        if canRepair then
+            -- Build a cost string only when the value is readable (not SECRET)
+            local costText
+            if repairCost and not (issecretvalue and issecretvalue(repairCost)) then
+                local ok, txt = pcall(function()
+                    local gold   = math.floor(repairCost / 10000)
+                    local silver = math.floor((repairCost % 10000) / 100)
+                    return gold .. "|cffffd700g|r " .. silver .. "|cffc7c7cfs|r"
+                end)
+                if ok then costText = txt end
+            end
+
             if repairMode == "guild" and CanGuildBankRepair() then
                 RepairAllItems(true)
-                print("|cFF30D1FFGravityUI:|r Auto Repaired (Guild Bank)")
+                print("|cFF30D1FFGravityUI:|r Auto Repaired (Guild Bank)" .. (costText and " for " .. costText or "") .. ".")
+                -- Guild funds may not cover everything; check after server round-trip.
+                C_Timer.After(0.6, function()
+                    if not (MerchantFrame and MerchantFrame:IsShown()) then return end
+                    local _, still = GetRepairAllCost()
+                    if still then
+                        RepairAllItems(false)
+                        print("|cFF30D1FFGravityUI:|r Guild funds insufficient — repaired remainder with personal gold.")
+                    end
+                end)
             else
-                if GetMoney() >= repairCost then
-                    RepairAllItems(false)
-                    print("|cFF30D1FFGravityUI:|r Auto Repaired (Personal)")
-                else
-                    print("|cFF30D1FFGravityUI:|r Not enough money to repair!")
-                end
+                RepairAllItems(false)
+                print("|cFF30D1FFGravityUI:|r Auto Repaired (Personal)" .. (costText and " for " .. costText or "") .. ".")
             end
         end
     end
@@ -553,22 +572,56 @@ end
 -- QUESTS: AUTO ACCEPT & AUTO TURN-IN
 ---------------------------------------------------------------------------
 
-local function ShouldPauseQuest(settings)
-    return settings.questHoldShift and IsShiftKeyDown()
+-- v2026-08: GUID-based NPC suppression (EUI pattern).
+-- Holding Shift at ANY quest event during a visit marks the current NPC's
+-- GUID as suppressed. All subsequent events for that NPC stay manual even
+-- after Shift is released -- so releasing Shift to click a gossip option
+-- can no longer accidentally re-arm automation. The mark is cleared 0.15s
+-- after a close event (NPC unit is gone by then on a true close but still
+-- present during panel transitions).
+local suppressedNPCGUID = nil
+
+local function CurrentNPCGUID()
+    return UnitGUID("npc") or UnitGUID("questnpc")
+end
+
+local function VisitSuppressed()
+    local npc = CurrentNPCGUID()
+    if IsShiftKeyDown() then
+        if npc then suppressedNPCGUID = npc end
+        return true
+    end
+    if npc and npc == suppressedNPCGUID then
+        return true
+    end
+    return false
 end
 
 local function OnQuestDetail()
     local settings = GetSettings()
     if not settings or not settings.autoAcceptQuest then return end
-    if ShouldPauseQuest(settings) then return end
-
+    if VisitSuppressed() then
+        -- Blizzard auto-accept quests are accepted server-side before addon code runs.
+        -- DeclineQuest() is the only client-side undo while the detail frame is shown.
+        if QuestGetAutoAccept and QuestGetAutoAccept() then
+            DeclineQuest()
+        end
+        return
+    end
     AcceptQuest()
+end
+
+local function OnQuestProgress()
+    local settings = GetSettings()
+    if not settings or not settings.autoTurnInQuest then return end
+    if VisitSuppressed() then return end
+    if IsQuestCompletable and IsQuestCompletable() then CompleteQuest() end
 end
 
 local function OnQuestComplete()
     local settings = GetSettings()
     if not settings or not settings.autoTurnInQuest then return end
-    if ShouldPauseQuest(settings) then return end
+    if VisitSuppressed() then return end
 
     -- If multiple choices exist, let user choose
     local numChoices = GetNumQuestChoices()
@@ -587,11 +640,8 @@ local function OnGossipShow()
     local settings = GetSettings()
     if not settings then return end
 
-    -- Shift-Bypass
-    if settings.questHoldShift and IsShiftKeyDown() then return end
-
     -- 1. Auto Turn-In (Active Quests)
-    if settings.autoTurnInQuest then
+    if settings.autoTurnInQuest and not VisitSuppressed() then
         local activeQuests = C_GossipInfo.GetActiveQuests()
         if activeQuests then
             for _, quest in ipairs(activeQuests) do
@@ -604,7 +654,7 @@ local function OnGossipShow()
     end
 
     -- 2. Auto Accept (Available Quests)
-    if settings.autoAcceptQuest then
+    if settings.autoAcceptQuest and not VisitSuppressed() then
         local availableQuests = C_GossipInfo.GetAvailableQuests()
         if availableQuests then
             for _, quest in ipairs(availableQuests) do
@@ -621,7 +671,7 @@ local function OnGossipShow()
     -- This prevents skipping quest pickup/turn-in if automation above didn't handle it (e.g. turned off)
     local availableQuests = C_GossipInfo.GetAvailableQuests()
     local activeQuests = C_GossipInfo.GetActiveQuests() -- Using GetActiveQuests table check for consistency
-    
+
     if (availableQuests and #availableQuests > 0) or (activeQuests and #activeQuests > 0) then
         return
     end
@@ -648,12 +698,28 @@ local function OnGossipShow()
 
             local optionName = option.name or "gossip"
             print(string.format("|cFF30D1FFGravityUI:|r %s", optionName))
-        end   
+        end
     end
 end
 
 local function OnGossipClosed()
     gossipClicked = {}
+    -- Deferred clear: on a true close the npc unit is gone shortly after the event;
+    -- on a panel transition it is still present. Only clear the GUID when no NPC remains
+    -- so panel transitions can't corrupt suppression state.
+    C_Timer.After(0.15, function()
+        if not CurrentNPCGUID() then
+            suppressedNPCGUID = nil
+        end
+    end)
+end
+
+local function OnQuestFinished()
+    C_Timer.After(0.15, function()
+        if not CurrentNPCGUID() then
+            suppressedNPCGUID = nil
+        end
+    end)
 end
 
 ---------------------------------------------------------------------------
@@ -1264,7 +1330,9 @@ automationFrame:RegisterEvent("MERCHANT_SHOW")
 automationFrame:RegisterEvent("LFG_ROLE_CHECK_SHOW")
 automationFrame:RegisterEvent("PARTY_INVITE_REQUEST")
 automationFrame:RegisterEvent("QUEST_DETAIL")
+automationFrame:RegisterEvent("QUEST_PROGRESS")
 automationFrame:RegisterEvent("QUEST_COMPLETE")
+automationFrame:RegisterEvent("QUEST_FINISHED")
 automationFrame:RegisterEvent("GOSSIP_SHOW")
 automationFrame:RegisterEvent("GOSSIP_CLOSED")
 automationFrame:RegisterEvent("LOOT_READY")
@@ -1285,6 +1353,7 @@ automationFrame:RegisterEvent("AUCTION_HOUSE_SHOW")
 automationFrame:RegisterEvent("CHAT_MSG_WHISPER")
 automationFrame:RegisterEvent("CHAT_MSG_BN_WHISPER")
 automationFrame:RegisterEvent("GROUP_ROSTER_UPDATE")
+
 
 ---------------------------------------------------------------------------
 -- GROUP TOOLS: GUILD INVITE & AUTO ROLES
@@ -1503,8 +1572,12 @@ automationFrame:SetScript("OnEvent", function(self, event, ...)
         OnPartyInvite(...)
     elseif event == "QUEST_DETAIL" then
         OnQuestDetail()
+    elseif event == "QUEST_PROGRESS" then
+        OnQuestProgress()
     elseif event == "QUEST_COMPLETE" then
         OnQuestComplete()
+    elseif event == "QUEST_FINISHED" then
+        OnQuestFinished()
     elseif event == "GOSSIP_SHOW" then
         OnGossipShow()
     elseif event == "GOSSIP_CLOSED" then
@@ -1523,7 +1596,7 @@ automationFrame:SetScript("OnEvent", function(self, event, ...)
         OnChallengeModeEnd()
     elseif event == "PLAYER_ENTERING_WORLD" or event == "ZONE_CHANGED_NEW_AREA" or event == "PLAYER_DIFFICULTY_CHANGED" then
         if event == "PLAYER_ENTERING_WORLD" then
-             lastSpec = GetSpecialization()
+             lastSpec = ns.GetSpecialization()
              local s = GetSettings()
              if s then
                  if s.showDamageNumbers ~= nil then SetCVar("floatingCombatTextCombatDamage", s.showDamageNumbers and "1" or "0") end
@@ -1546,7 +1619,7 @@ automationFrame:SetScript("OnEvent", function(self, event, ...)
     elseif event == "PLAYER_SPECIALIZATION_CHANGED" then
         local unit = ...
         if unit == "player" then
-            local currentSpec = GetSpecialization()
+            local currentSpec = ns.GetSpecialization()
             if lastSpec and currentSpec and currentSpec ~= lastSpec then
                 lastSpec = currentSpec
                 OnSpecSwitchEditModeCheck()

@@ -176,12 +176,66 @@ local cursorFrame, ringTexture, reticleTexture, gcdCooldown
 local crosshairFrame, horizLine, vertLine, horizBorder, vertBorder
 local rangeCheckFrame
 
+-- Combat state flag: tracked via PLAYER_REGEN events to avoid the race condition
+-- where InCombatLockdown() can return false on the exact tick PLAYER_REGEN_DISABLED fires.
+local inCombat = false
+
 -- Cached settings
 local cachedCursorSettings, cachedCrosshairSettings
 local cursorHideOnRightClick = false -- Optimization: Upvalue for Input Hook
 local isRightClickHidden = false -- Optimization: Use Alpha instead of Show/Hide to prevent Cooldown recalculation stutter
 local lastOutOfRange = nil -- Optimization: State tracker for Crosshair
 local effectiveScale = 1 -- Optimization: Cache to avoid per-frame C-API calls
+
+-- Taunt/Dispel cursor frames (nil until first enabled)
+local tauntCursorFrame = nil
+local dispelCursorFrame = nil
+
+---------------------------------------------------------------------------
+-- SPEC / ROLE HELPERS
+---------------------------------------------------------------------------
+local function GetSpecRole()
+    local spec = ns.GetSpecialization()
+    if not spec then return nil end
+    local _, _, _, _, role = ns.GetSpecializationInfo(spec)
+    return role  -- "TANK", "HEALER", "DAMAGER"
+end
+
+---------------------------------------------------------------------------
+-- TAUNT CURSOR -- spell IDs
+---------------------------------------------------------------------------
+local TAUNT_SPELL_IDS = {
+    355,    -- Taunt (Warrior - Protection)
+    62124,  -- Hand of Reckoning (Paladin - Protection)
+    56222,  -- Dark Command (Death Knight - Blood)
+    6795,   -- Growl (Druid - Guardian)
+    115546, -- Provoke (Monk - Brewmaster)
+    185245, -- Torment (Demon Hunter - Vengeance)
+}
+
+---------------------------------------------------------------------------
+-- DISPEL CURSOR -- spell IDs
+---------------------------------------------------------------------------
+local DISPEL_SPELL_IDS = {
+    -- Healer dispels
+    115450, -- Detox (Monk - MW)
+    4987,   -- Cleanse (Paladin - Holy)
+    527,    -- Purify (Priest - Holy/Disc)
+    360823, -- Naturalize (Evoker - Preservation)
+    88423,  -- Nature's Cure (Druid - Restoration)
+    77130,  -- Purify Spirit (Shaman - Restoration)
+    -- DPS/Tank dispels
+    213634, -- Purify Disease (Priest - Shadow)
+    218164, -- Detox (Monk - WW/BM)
+    213644, -- Cleanse Toxins (Paladin - Ret/Prot)
+    2782,   -- Remove Corruption (Druid - Balance/Feral)
+    475,    -- Remove Curse (Mage)
+    365585, -- Expunge (Evoker - Devastation/Augmentation)
+    51886,  -- Cleanse Spirit (Shaman - Elemental/Enhancement)
+}
+local DISPEL_PET_SPELL_IDS = {
+    89808,  -- Singe Magic (Warlock Imp/Fel Imp)
+}
 
 local function UpdateEffectiveScale()
     effectiveScale = UIParent:GetEffectiveScale() or 1
@@ -214,14 +268,14 @@ local function GetAccentColor()
     return 0, 0.75, 1, 1
 end
 
-local function ReadSpellCooldown(spellID)
-    if C_Spell and C_Spell.GetSpellCooldown then
-        local t = C_Spell.GetSpellCooldown(spellID)
-        if t then
-            return t.startTime, t.duration, t.modRate
-        end
+-- v2026-08 (Midnight compat): GetSpellCooldown returns SECRET startTime/duration in combat.
+-- GetSpellCooldownDuration returns a duration object that SetCooldownFromDurationObject
+-- accepts directly -- no numeric comparison needed, taint-safe.
+local function GetGCDDuration(spellID)
+    if C_Spell and C_Spell.GetSpellCooldownDuration then
+        return C_Spell.GetSpellCooldownDuration(spellID)
     end
-    return nil, nil, nil
+    return nil
 end
 
 local function GetScaledCursorPosition()
@@ -278,7 +332,7 @@ local function UpdateCursorStatic()
     -- GCD Static Props
     if gcdCooldown then
         gcdCooldown:SetSwipeTexture(texturePath)
-        gcdCooldown:SetSwipeColor(r, g, b, InCombatLockdown() and s.inCombatAlpha or s.outCombatAlpha or 0.3) -- Initial alpha
+        gcdCooldown:SetSwipeColor(r, g, b, inCombat and s.inCombatAlpha or s.outCombatAlpha or 0.3) -- Initial alpha
         gcdCooldown:SetReverse(s.gcdReverse or false)
     end
 end
@@ -297,9 +351,9 @@ local function UpdateCursorDynamic()
     
     -- Ensure visibility if we are restoring alpha (Fix for 'Hide out of Combat' not showing on combat start)
     if not isRightClickHidden and not cursorFrame:IsShown() then
-        -- Only show if logic permits (e.g. InCombat or !HideOutOfCombat)
+        -- Only show if logic permits (e.g. inCombat or !HideOutOfCombat)
         local settings = GetCursorSettings()
-        if settings and (not settings.hideOutOfCombat or InCombatLockdown()) then
+        if settings and (not settings.hideOutOfCombat or inCombat) then
              cursorFrame:Show()
         end
     end
@@ -308,7 +362,7 @@ local function UpdateCursorDynamic()
     if not s or not s.enabled then return end
 
     -- 2. Dynamic Alpha (On GCD/Combat State)
-    local baseAlpha = InCombatLockdown() and s.inCombatAlpha or s.outCombatAlpha or 0.3
+    local baseAlpha = inCombat and s.inCombatAlpha or s.outCombatAlpha or 0.3
     
     -- Update GCD Swipe Alpha if needed
     if gcdCooldown then
@@ -339,7 +393,7 @@ local function UpdateCursorVisibility()
         return
     end
 
-    if s.hideOutOfCombat and not InCombatLockdown() then
+    if s.hideOutOfCombat and not inCombat then
         cursorFrame:Hide()
     else
         cursorFrame:Show()
@@ -355,14 +409,13 @@ local function UpdateCursorGCD()
         return
     end
 
-    local start, duration, modRate = ReadSpellCooldown(GCD_SPELL_ID)
-    if start and duration and duration > 0 then
+    -- v2026-08 (Midnight compat): SetCooldown with numeric startTime/duration throws on
+    -- SECRET values in combat. SetCooldownFromDurationObject accepts the duration object
+    -- wholesale and renders nothing at zero -- no numeric branch needed.
+    local duration = GetGCDDuration(GCD_SPELL_ID)
+    if duration then
         gcdCooldown:Show()
-        if modRate then
-            gcdCooldown:SetCooldown(start, duration, modRate)
-        else
-            gcdCooldown:SetCooldown(start, duration)
-        end
+        gcdCooldown:SetCooldownFromDurationObject(duration, false)
     else
         gcdCooldown:Hide()
     end
@@ -386,6 +439,12 @@ local function CreateCursorFrame()
     gcdCooldown:SetDrawSwipe(true)
     gcdCooldown:SetDrawEdge(false)
     gcdCooldown:SetHideCountdownNumbers(true)
+    -- Suppress bling animation (unnecessary flash at GCD end)
+    if gcdCooldown.SetDrawBling then gcdCooldown:SetDrawBling(false) end
+    -- Circular edge is a hard STENCIL clip with no antialiasing -- at cursor sizes it
+    -- staircases the swipe boundary. The ring texture's own alpha channel already
+    -- confines the swipe smoothly, so this is redundant and visually worse.
+    if gcdCooldown.SetUseCircularEdge then gcdCooldown:SetUseCircularEdge(false) end
 
     reticleTexture = cursorFrame:CreateTexture(nil, "OVERLAY")
     reticleTexture:SetPoint("CENTER")
@@ -431,6 +490,173 @@ local function CreateCursorFrame()
             end
         end
     end)
+end
+
+---------------------------------------------------------------------------
+-- TAUNT CURSOR
+-- Follows the cursor, shows the taunt CD countdown.
+-- Only active when tauntCursorEnabled=true AND player is on a Tank spec.
+-- v2026-08: uses SetCooldownFromDurationObject (Midnight-safe).
+---------------------------------------------------------------------------
+local tauntTrackedSpellId = nil
+
+local function FindTauntSpell()
+    tauntTrackedSpellId = nil
+    if not (C_SpellBook and C_SpellBook.IsSpellInSpellBook) then return end
+    for _, spellID in ipairs(TAUNT_SPELL_IDS) do
+        if C_SpellBook.IsSpellInSpellBook(spellID) then
+            tauntTrackedSpellId = spellID
+            return
+        end
+    end
+end
+
+local function CreateTauntCursorFrame()
+    if tauntCursorFrame then return end
+    local frame = CreateFrame("Frame", "GravityUI_TauntCursorFrame", UIParent)
+    frame:SetFrameStrata("TOOLTIP")
+    frame:SetSize(1, 1)
+    frame:Hide()
+
+    local cd = CreateFrame("Cooldown", nil, frame, "CooldownFrameTemplate")
+    cd:SetDrawSwipe(false)
+    cd:SetDrawEdge(false)
+    if cd.SetDrawBling then cd:SetDrawBling(false) end
+    cd:SetHideCountdownNumbers(false)
+
+    local cdText
+    for _, region in ipairs({ cd:GetRegions() }) do
+        if region:GetObjectType() == "FontString" then cdText = region; break end
+    end
+    if not cdText then cdText = cd:CreateFontString(nil, "OVERLAY") end
+    frame.cd = cd
+    frame.cdText = cdText
+
+    local elapsed = 0
+    frame:SetScript("OnUpdate", function(self, dt)
+        elapsed = elapsed + dt
+        if elapsed < 0.05 then return end
+        elapsed = 0
+        local x, y = GetCursorPosition()
+        self:SetPoint("CENTER", UIParent, "BOTTOMLEFT",
+            (x / effectiveScale) + 10,
+            (y / effectiveScale) + 10)
+    end)
+    tauntCursorFrame = frame
+end
+
+local function UpdateTauntCursor()
+    local s = GetCursorSettings()
+    if not s or not s.tauntCursorEnabled then
+        if tauntCursorFrame then tauntCursorFrame:Hide() end
+        return
+    end
+    -- Spec gate: Tank only
+    if GetSpecRole() ~= "TANK" then
+        if tauntCursorFrame then tauntCursorFrame:Hide() end
+        return
+    end
+    CreateTauntCursorFrame()
+    FindTauntSpell()
+    if not tauntTrackedSpellId then
+        tauntCursorFrame:Hide()
+        return
+    end
+    local duration = C_Spell and C_Spell.GetSpellCooldownDuration and
+                     C_Spell.GetSpellCooldownDuration(tauntTrackedSpellId)
+    if duration then
+        tauntCursorFrame.cd:SetCooldownFromDurationObject(duration, false)
+        tauntCursorFrame:Show()
+    else
+        tauntCursorFrame.cd:Clear()
+        tauntCursorFrame:Hide()
+    end
+end
+
+---------------------------------------------------------------------------
+-- DISPEL CURSOR
+-- Follows the cursor, shows the dispel CD countdown.
+-- Only active when dispelCursorEnabled=true AND player has a dispel spell.
+-- v2026-08: uses SetCooldownFromDurationObject (Midnight-safe).
+---------------------------------------------------------------------------
+local dispelTrackedSpellId = nil
+
+local function FindDispelSpell()
+    dispelTrackedSpellId = nil
+    if not (C_SpellBook and C_SpellBook.IsSpellInSpellBook) then return end
+    for _, spellID in ipairs(DISPEL_SPELL_IDS) do
+        if C_SpellBook.IsSpellInSpellBook(spellID) then
+            dispelTrackedSpellId = spellID
+            return
+        end
+    end
+    -- Pet dispels (Warlock Imp)
+    local petBank = Enum.SpellBookSpellBank and Enum.SpellBookSpellBank.Pet
+    if petBank then
+        for _, spellID in ipairs(DISPEL_PET_SPELL_IDS) do
+            if C_SpellBook.IsSpellInSpellBook(spellID, petBank) then
+                dispelTrackedSpellId = spellID
+                return
+            end
+        end
+    end
+end
+
+local function CreateDispelCursorFrame()
+    if dispelCursorFrame then return end
+    local frame = CreateFrame("Frame", "GravityUI_DispelCursorFrame", UIParent)
+    frame:SetFrameStrata("TOOLTIP")
+    frame:SetSize(1, 1)
+    frame:Hide()
+
+    local cd = CreateFrame("Cooldown", nil, frame, "CooldownFrameTemplate")
+    cd:SetDrawSwipe(false)
+    cd:SetDrawEdge(false)
+    if cd.SetDrawBling then cd:SetDrawBling(false) end
+    cd:SetHideCountdownNumbers(false)
+
+    local cdText
+    for _, region in ipairs({ cd:GetRegions() }) do
+        if region:GetObjectType() == "FontString" then cdText = region; break end
+    end
+    if not cdText then cdText = cd:CreateFontString(nil, "OVERLAY") end
+    frame.cd = cd
+    frame.cdText = cdText
+
+    local elapsed = 0
+    frame:SetScript("OnUpdate", function(self, dt)
+        elapsed = elapsed + dt
+        if elapsed < 0.05 then return end
+        elapsed = 0
+        local x, y = GetCursorPosition()
+        self:SetPoint("CENTER", UIParent, "BOTTOMLEFT",
+            (x / effectiveScale) - 10,
+            (y / effectiveScale) + 10)
+    end)
+    dispelCursorFrame = frame
+end
+
+local function UpdateDispelCursor()
+    local s = GetCursorSettings()
+    if not s or not s.dispelCursorEnabled then
+        if dispelCursorFrame then dispelCursorFrame:Hide() end
+        return
+    end
+    CreateDispelCursorFrame()
+    FindDispelSpell()
+    if not dispelTrackedSpellId then
+        dispelCursorFrame:Hide()
+        return
+    end
+    local duration = C_Spell and C_Spell.GetSpellCooldownDuration and
+                     C_Spell.GetSpellCooldownDuration(dispelTrackedSpellId)
+    if duration then
+        dispelCursorFrame.cd:SetCooldownFromDurationObject(duration, false)
+        dispelCursorFrame:Show()
+    else
+        dispelCursorFrame.cd:Clear()
+        dispelCursorFrame:Hide()
+    end
 end
 
 ---------------------------------------------------------------------------
@@ -528,7 +754,7 @@ local function UpdateRangeSlotCache()
     -- Determine Priority based on Class/Spec
     -- We want to avoid Ranged spells (Arcane Shot) hijacking the crosshair for Melee specs (Survival)
     local _, class = UnitClass("player")
-    local spec = GetSpecialization()
+    local spec = ns.GetSpecialization()
     local preferMelee = false -- Default to Neutral/Ranged
     
     if class == "HUNTER" and spec == 3 then preferMelee = true end -- Survival
@@ -839,9 +1065,9 @@ local function HasPetSpec()
     local petClasses = { HUNTER = true, WARLOCK = true, DEATHKNIGHT = true, MAGE = true }
     if not petClasses[class] then return false end
     
-    local spec = GetSpecialization()
+    local spec = ns.GetSpecialization()
     if not spec then return true end
-    local specID = GetSpecializationInfo(spec)
+    local specID = ns.GetSpecializationInfo(spec)
     
     -- Jäger: Einsamer Wolf (Marksmanship SpecID 254) hat kein Pet
     if class == "HUNTER" and specID == 254 then return false end
@@ -977,6 +1203,9 @@ function Screen.Refresh()
     end
 
     Screen.UpdatePetTicker()
+    -- Refresh Taunt/Dispel cursor indicators (spec-gated, no-op when disabled)
+    UpdateTauntCursor()
+    UpdateDispelCursor()
 end
 
 function Screen.PreviewPetWarning(warnType)
@@ -1040,23 +1269,40 @@ eventFrame:RegisterEvent("ACTIONBAR_SLOT_CHANGED")
 eventFrame:RegisterEvent("ACTIONBAR_PAGE_CHANGED")
 eventFrame:RegisterEvent("UPDATE_BONUS_ACTIONBAR")
 eventFrame:RegisterEvent("UPDATE_MACROS")
+eventFrame:RegisterEvent("SPELLS_CHANGED")
 
 eventFrame:SetScript("OnEvent", function(self, event, unit)
     if event == "PLAYER_LOGIN" then
         Screen.RegisterMovers()
         C_Timer.After(1, Screen.Refresh)
     elseif event == "PLAYER_REGEN_DISABLED" or event == "PLAYER_REGEN_ENABLED" then
+        -- Update our tracked flag BEFORE calling visibility so the flag is already
+        -- correct when UpdateCursorVisibility reads it (avoids InCombatLockdown race).
+        inCombat = (event == "PLAYER_REGEN_DISABLED")
         UpdateCursorVisibility()
-        Screen.ShowCombatStatus(event == "PLAYER_REGEN_DISABLED" and "+Combat" or "-Combat")
+        Screen.ShowCombatStatus(inCombat and "+Combat" or "-Combat")
     elseif event == "SPELL_UPDATE_COOLDOWN" then
         UpdateCursorGCD()
+        UpdateTauntCursor()
+        UpdateDispelCursor()
     elseif event == "PLAYER_TARGET_CHANGED" then
         if crosshairFrame and crosshairFrame:IsShown() then
             UpdateCrosshairAppearance(IsOutOfRange())
         end
     elseif event == "UNIT_PET" or event == "PET_BAR_UPDATE" or event == "PLAYER_SPECIALIZATION_CHANGED" then
         Screen.UpdatePetTicker()
-        if event == "PLAYER_SPECIALIZATION_CHANGED" then QueueRangeSlotCacheUpdate() end
+        if event == "PLAYER_SPECIALIZATION_CHANGED" then
+            QueueRangeSlotCacheUpdate()
+            -- Re-evaluate spec-gating for TauntCursor (Tank) and DispelCursor
+            UpdateTauntCursor()
+            UpdateDispelCursor()
+        end
+    elseif event == "SPELLS_CHANGED" then
+        -- Spellbook changed: re-scan for Taunt/Dispel spells (debounced)
+        C_Timer.After(0.25, function()
+            UpdateTauntCursor()
+            UpdateDispelCursor()
+        end)
     elseif event == "ACTIONBAR_SLOT_CHANGED" or event == "ACTIONBAR_PAGE_CHANGED" or event == "UPDATE_BONUS_ACTIONBAR" then
         QueueRangeSlotCacheUpdate()
     elseif event == "UPDATE_MACROS" then

@@ -284,9 +284,9 @@ local function BuildAceDBProfilesTab(parent)
 
         local numSpecs = GetNumSpecializations()
         for i = 1, numSpecs do
-            local _, specName = GetSpecializationInfo(i)
+            local _, specName = ns.GetSpecializationInfo(i)
             if specName then
-                local currentSpec = GetSpecialization()
+                local currentSpec = ns.GetSpecialization()
                 local displayName = (i == currentSpec) and (specName .. " (Active)") or specName
                 
                 local specWrapper = {selected = db:GetDualSpecProfile(i) or ""}

@@ -126,6 +126,10 @@ local function BuildCursor(parent)
     AddRow(content, "Track GCD", "checkbox", "gcdEnabled", c, refresh)
     AddRow(content, "GCD Ring Fade", "slider", 0, 1, "gcdFadeRing", c, refresh, 0.05)
     AddRow(content, "Reverse Animation", "checkbox", "gcdReverse", c, refresh)
+    content.rowCount = content.rowCount + 0.3
+    CreateSubLabel(content, "Cooldown Indicators")
+    AddRow(content, "Taunt CD on Cursor", "checkbox", "tauntCursorEnabled", c, refresh)
+    AddRow(content, "Dispel CD on Cursor", "checkbox", "dispelCursorEnabled", c, refresh)
     content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
 end
 
