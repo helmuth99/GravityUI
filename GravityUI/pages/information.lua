@@ -175,6 +175,16 @@ local function BuildInformationTab(parent)
 
     local changeLogs = {
         {
+            version = "4.00.56",
+            date = "08/17/2026",
+            changes = {
+                "Edit Mode Overhaul: Full visual previews for Interrupt Tracker, Healer Mana, Ready Check, Alerts, Toasts, and XP/Reputation bars",
+                "Edit Mode HUD: Added manual X and Y coordinate input boxes for real-time pixel-perfect positioning and direct value entry",
+                "Edit Mode Decoupling: GravityUI Edit Mode now independent from Blizzard Edit Mode, accessible via dedicated button or /guiedit",
+                "Blizzard Edit Mode: Objective Tracker frame auto-shows and remains selectable without conflict",
+            },
+        },
+        {
             version = "4.00.35",
             date = "08/11/2026",
             changes = {
@@ -214,7 +224,9 @@ local function BuildInformationTab(parent)
     R({ name="Global UI Scale", desc="Centralized interface scaling with quick one-click presets.",                        pageId="main", tabIndex=3 })
     R({ name="Global Fonts",    desc="Global font style settings applied across all UI elements.",                         pageId="main", tabIndex=4 })
     R({ name="FPS Settings",    desc="Apply Gravity's curated graphics settings for competitive play.",                    pageId="main", tabIndex=5 })
-    R({ name="Edit Mode",       desc="Enable custom frame movers to freely reposition all registered frames.",             pageId="main", tabIndex=6 })
+    R({ name="Combat Elements", desc="Hide Blizzard Talking Head, Boss Banners, and Alert popups during combat.",          pageId="main", tabIndex=6 })
+    R({ name="Buffs & Debuffs", desc="Configure default Blizzard buff and debuff frame visibility and styles.",            pageId="main", tabIndex=7 })
+    R({ name="Edit Mode",       desc="Enable custom frame movers to freely reposition all registered frames.",             pageId="main", tabIndex=8 })
     G()
     H("  Minimap")
     R({ name="Minimap Overhaul", desc="Square or round minimap with smart anchoring and dynamic zoom.",                   stateTable=db.minimap, stateKey="enabled", pageId="minimap", tabIndex=1 })
@@ -242,6 +254,7 @@ local function BuildInformationTab(parent)
     R({ name="Group & Guild",     desc="Guild invite tool and automatic role promotion for assistants.",                 pageId="features", tabIndex=5 })
     R({ name="Interrupt Tracker", desc="Tracks interrupt cooldowns of party members in M+ dungeons.",                   stateTable=db.screenindicators and db.screenindicators.interruptTracker, stateKey="enabled", pageId="features", tabIndex=6 })
     R({ name="Targeted Spells",   desc="Castbars & icons for enemy spells targeting you or group members.",             stateTable=db.screenindicators and db.screenindicators.targetedSpells, stateKey="enabled", pageId="features", tabIndex=7 })
+    R({ name="Death Announcer",   desc="Broadcasts party and raid player deaths to chat and on-screen alerts.",          stateTable=db.deathAnnouncer, stateKey="enabled", pageId="features", tabIndex=8 })
     G()
     H("  Indicators")
     R({ name="Cursor Utilities",   desc="Attach GCD rings, cursor castbars and highlights to your mouse cursor.",       stateTable=db.screenindicators and db.screenindicators.cursor, stateKey="enabled", pageId="indicators", tabIndex=1 })
@@ -257,9 +270,10 @@ local function BuildInformationTab(parent)
     R({ name="AFK Screen",         desc="Immersive character orbit when AFK. Displays real time, guild, and rank.",        stateTable=db.screenindicators and db.screenindicators.afkScreen, stateKey="enabled", pageId="indicators", tabIndex=11 })
     G()
     H("  Utilities")
-    R({ name="Sound Alerts", desc="Integrate custom SharedMedia sounds into Blizzard's CooldownViewer.",           stateTable=db.soundAlerts, stateKey="enabled", pageId="utilities", tabIndex=1 })
-    R({ name="Tracked Bars", desc="Configurable progress bars tracking spells, items or timers with custom thresholds.",  stateTable=db.actionbars and db.actionbars.cdmBuffbar, stateKey="enabled", pageId="utilities", tabIndex=2 })
-    R({ name="Color Picker", desc="Full HSV color picker with saved slots, class colors, hex input, and live preview.",   stateTable=db.colorPicker, stateKey="enabled", pageId="utilities", tabIndex=3 })
+    R({ name="Sound Alerts",   desc="Integrate custom SharedMedia sounds into Blizzard's CooldownViewer.",             stateTable=db.soundAlerts, stateKey="enabled", pageId="utilities", tabIndex=1 })
+    R({ name="Tracked Bars",   desc="Configurable progress bars tracking spells, items or timers with custom thresholds.",  stateTable=db.actionbars and db.actionbars.cdmBuffbar, stateKey="enabled", pageId="utilities", tabIndex=2 })
+    R({ name="Color Picker",   desc="Full HSV color picker with saved slots, class colors, hex input, and live preview.",   stateTable=db.colorPicker, stateKey="enabled", pageId="utilities", tabIndex=3 })
+    R({ name="Premade Group",  desc="Group Finder and GroupFinderIO enhancements with role filters and auto-accept.",       stateTable=db.premadeGroup, stateKey="enabled", pageId="utilities", tabIndex=4 })
     G()
     H("  UI Styling")
     R({ name="Character Panel",    desc="Embeds item level, durability, enchants and gems on character slot icons.",        stateTable=db.uiimprovements and db.uiimprovements.character, stateKey="enabled", pageId="Styling", tabIndex=1 })
