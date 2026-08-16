@@ -569,6 +569,134 @@ local function BuildTargetedSpells(parent)
     content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
 end
 
+-- 8. Death Announcer
+local function BuildDeathAnnouncer(parent)
+    local scroll, content = GUI:CreateScrollableContent(parent)
+    scroll:SetAllPoints()
+    local db = ns.GetDB(); if not db then return end
+    if not db.deathAnnouncer then
+        db.deathAnnouncer = {
+            enabled = true,
+            inDungeon = true,
+            inRaid = true,
+            inGroup = true,
+            useClassColor = true,
+            messageFormat = "%s died!",
+            fontSize = 24,
+            font = "Gravity",
+            fontOutline = "OUTLINE",
+            textColor = { 1, 1, 1, 1 },
+            duration = 3.0,
+            x = 0,
+            y = 140,
+            soundEnabled = false,
+            soundFile = "Warning",
+            soundChannel = "Master",
+            chatAnnouncement = "DISABLED",
+        }
+    end
+    local c = db.deathAnnouncer
+    content.rowCount = 0
+
+    local function Refresh()
+        if ns.DeathAnnouncer and ns.DeathAnnouncer.ApplySettings then ns.DeathAnnouncer.ApplySettings() end
+        C_Timer.After(0.05, function() if ns.GUI and ns.GUI.RefreshAll then ns.GUI:RefreshAll() end end)
+    end
+
+    local header = GUI:CreateSectionHeader(content, "Death Announcer")
+    header:SetPoint("TOPLEFT", 10, -10)
+    header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
+    content.rowCount = 1.3
+
+    local infoBox = GUI:CreateInfoBox(content, "Displays an on-screen alert whenever a group or raid member dies with class colors.")
+    infoBox:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT + 5))
+    content.rowCount = content.rowCount + (infoBox:GetHeight() / (ROW_HEIGHT + 5)) + 0.2
+
+    AddRow(content, "Enable Death Announcer", "checkbox", "enabled", c, Refresh)
+    content.rowCount = content.rowCount + 0.3
+
+    -- Action Buttons (Test Mode & Mover)
+    local testBtn = GUI:CreateButton(content, "Toggle Test Mode", 140, 24, function()
+        if ns.DeathAnnouncer and ns.DeathAnnouncer.TestMode then ns.DeathAnnouncer.TestMode() end
+    end)
+    testBtn:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT + 5)))
+
+    local moverBtn = GUI:CreateButton(content, "Toggle Mover", 120, 24, function()
+        if ns.DeathAnnouncer and ns.DeathAnnouncer.ToggleMover then ns.DeathAnnouncer.ToggleMover() end
+    end)
+    moverBtn:SetPoint("LEFT", testBtn, "RIGHT", 10, 0)
+    content.rowCount = content.rowCount + 1.2
+
+    -- TRIGGERS & INSTANCES
+    CreateSubLabel(content, "Instance & Group Triggers")
+    AddRow(content, "In Dungeons", "checkbox", "inDungeon", c, Refresh)
+    AddRow(content, "In Raid", "checkbox", "inRaid", c, Refresh)
+    AddRow(content, "Always in a Group / Raid", "checkbox", "inGroup", c, Refresh)
+    content.rowCount = content.rowCount + 0.3
+
+    -- DISPLAY SETTINGS
+    CreateSubLabel(content, "Display & Typography")
+    local fontOptions = { { value = "Fonts\\FRIZQT__.TTF", text = "Friz Quadrata" } }
+    local LSM = LibStub("LibSharedMedia-3.0", true)
+    if LSM then
+        fontOptions = {}
+        for name, _ in pairs(LSM:HashTable("font")) do table.insert(fontOptions, { value = name, text = name }) end
+        table.sort(fontOptions, function(a, b) return a.text < b.text end)
+    end
+    AddRow(content, "Font", "dropdown", fontOptions, "font", c, Refresh)
+    AddRow(content, "Font Size", "slider", 12, 48, "fontSize", c, Refresh, 1)
+    local outlines = { { value = "NONE", text = "None" }, { value = "OUTLINE", text = "Outline" }, { value = "THICKOUTLINE", text = "Thick Outline" } }
+    AddRow(content, "Font Outline", "dropdown", outlines, "fontOutline", c, Refresh)
+    AddRow(content, "Text Color", "color", "textColor", c, Refresh)
+    AddRow(content, "Use Class Color for Player Name", "checkbox", "useClassColor", c, Refresh)
+    AddRow(content, "Display Duration (sec)", "slider", 1, 10, "duration", c, Refresh, 0.5)
+    content.rowCount = content.rowCount + 0.3
+
+    -- AUDIO ALERT
+    CreateSubLabel(content, "Audio Alert")
+    AddRow(content, "Enable Sound Alert", "checkbox", "soundEnabled", c, Refresh)
+    
+    local function PlayPreviewSound(soundName)
+        soundName = soundName or (c and c.soundFile)
+        if not soundName or soundName == "None" or soundName == "" then return end
+        local lsm = LibStub("LibSharedMedia-3.0", true)
+        local soundPath = lsm and lsm:Fetch("sound", soundName)
+        local channel = (c and c.soundChannel) or "Master"
+        if soundPath then
+            PlaySoundFile(soundPath, channel)
+        else
+            PlaySound(SOUNDKIT.RAID_WARNING or 8959, channel)
+        end
+    end
+
+    local soundOptions = { { value = "Warning", text = "Warning", previewFunc = PlayPreviewSound } }
+    if LSM then
+        soundOptions = {}
+        for name, _ in pairs(LSM:HashTable("sound")) do
+            table.insert(soundOptions, { value = name, text = name, previewFunc = PlayPreviewSound })
+        end
+        table.sort(soundOptions, function(a, b) return a.text < b.text end)
+    end
+    AddRow(content, "Sound Alert", "dropdown", soundOptions, "soundFile", c, Refresh)
+    local channels = { { value = "Master", text = "Master" }, { value = "SFX", text = "SFX" }, { value = "Ambience", text = "Ambience" }, { value = "Dialog", text = "Dialog" } }
+    AddRow(content, "Sound Channel", "dropdown", channels, "soundChannel", c, Refresh)
+    content.rowCount = content.rowCount + 0.3
+
+    -- CHAT ANNOUNCEMENT
+    CreateSubLabel(content, "Chat Announcement (Optional)")
+    local chatOptions = {
+        { value = "DISABLED", text = "Disabled" },
+        { value = "SELF",     text = "Self Only (Chat Frame)" },
+        { value = "PARTY",    text = "Party Chat" },
+        { value = "RAID",     text = "Raid Chat" },
+        { value = "AUTO",     text = "Auto (Party / Raid)" },
+    }
+    AddRow(content, "Chat Output", "dropdown", chatOptions, "chatAnnouncement", c, Refresh)
+    content.rowCount = content.rowCount + 0.3
+
+    content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
+end
+
 --==============================================================================================================================================================================================
 -- PAGE REGISTRATION
 --==============================================================================================================================================================================================
@@ -582,6 +710,7 @@ ns.GUI:RegisterPage("features", {
         { name = "Guildtools",        builder = BuildTools },
         { name = "Interrupt Tracker", builder = BuildInterruptTracker },
         { name = "Targeted Spells",   builder = BuildTargetedSpells },
+        { name = "Death Announcer",   builder = BuildDeathAnnouncer },
     },
     OnBuild = function(content)
         local scrollFrame = content:GetParent()
@@ -600,3 +729,4 @@ ns.GUI:RegisterPage("features", {
         if opts.subTabsContainer.tabContents[subIndex] then opts.subTabsContainer.tabContents[subIndex]:Show() end
     end
 })
+

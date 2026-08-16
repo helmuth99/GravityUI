@@ -126,6 +126,7 @@ function ns.RefreshAccentColors()
     if ns.InstanceFrames and ns.InstanceFrames.Initialize then ns.InstanceFrames:Initialize() end
     if ns.Objectives and ns.Objectives.Initialize then ns.Objectives:Initialize() end
     if ns.XPRep and ns.XPRep.Refresh then ns.XPRep:Refresh() end
+    if ns.DeathAnnouncer and ns.DeathAnnouncer.ApplySettings then ns.DeathAnnouncer.ApplySettings() end
     -- Sync EllesmereUI accent color whenever GravityUI's theme color changes.
     if ns.SyncEllesmereAccentColor then ns.SyncEllesmereAccentColor() end
 end
@@ -355,6 +356,11 @@ function Addon:OnEnable()
         if ns.Mail.ApplySettings then ns.Mail.ApplySettings() end
     end
     
+    if ns.DeathAnnouncer and ns.DeathAnnouncer.Initialize then
+        ns.DeathAnnouncer.Initialize()
+        if ns.DeathAnnouncer.ApplySettings then ns.DeathAnnouncer.ApplySettings() end
+    end
+    
     -- Initial Updates
     ns.RefreshEverything()
     
@@ -487,6 +493,18 @@ do
                 end
             end
 
+            -- Enable an EllesmereUI sub-addon if its external replacement is not active.
+            local function Enable(addonName)
+                local name = C_AddOns.GetAddOnInfo(addonName)
+                if not name then return end
+                -- Enable for next session
+                C_AddOns.EnableAddOn(addonName)
+                -- If it's not loaded right now, a reload is needed to fully load it
+                if not C_AddOns.IsAddOnLoaded(addonName) then
+                    reloadNeeded = true
+                end
+            end
+
             -- ---------------------------------------------------------------
             -- Always disabled: GravityUI fully replaces these.
             -- ---------------------------------------------------------------
@@ -528,8 +546,11 @@ do
 
             -- Nameplates: disable EllesmereUINameplates when Plater is loaded,
             -- because Plater fully replaces Blizzard/EllesmereUI nameplates.
+            -- Automatically enable EllesmereUINameplates when Plater is NOT loaded.
             if C_AddOns.IsAddOnLoaded("Plater") then
                 Disable("EllesmereUINameplates")
+            else
+                Enable("EllesmereUINameplates")
             end
 
             -- Bags: disable EllesmereUIBags when Baganator is loaded,

@@ -1234,7 +1234,6 @@ function TargetedSpells.TestMode(state)
         wipe(activeList)
         wipe(activeCasts)
         CheckZoneState()
-        print("|cff00ccffGravityUI|r: Targeted Spells Test Mode |cffff4444Disabled|r")
     else
         testModeActive = true
         for _, c in ipairs(activeList) do ReleaseCast(c) end
@@ -1321,7 +1320,6 @@ function TargetedSpells.TestMode(state)
         table_insert(activeList, c4)
 
         UpdateLayout()
-        print("|cff00ccffGravityUI|r: Targeted Spells Test Mode |cff55ff55Enabled|r")
     end
 end
 
