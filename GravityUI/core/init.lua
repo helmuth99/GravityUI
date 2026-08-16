@@ -1912,6 +1912,130 @@ do
     end
 end
 
+-------------------------------------------------------------------------------
+-- EllesmereUI – Hunter Rapid Fire Channel Ticks Bridge
+--
+-- EllesmereUI's CastBar (EllesmereUIResourceBars / ERB_CastBarFrame) supports
+-- channel ticks for many classes, but Rapid Fire (257044) is not yet in its
+-- static CHANNEL_TICK_DATA table.
+--
+-- This bridge dynamically injects the 7 Rapid Fire ticks (6 dividers, 6th gold)
+-- directly onto ERB_CastBarFrame._bar whenever Rapid Fire is channeled.
+--
+-- Future-proof / Auto-Yield:
+-- If EllesmereUI adds Rapid Fire in a future update, ERB_CastBarFrame._numTicks
+-- will already be > 0, so this bridge automatically yields with zero overhead
+-- and never creates duplicate ticks.
+-------------------------------------------------------------------------------
+do
+    local _, playerClass = UnitClass("player")
+    if playerClass == "HUNTER" and (C_AddOns.IsAddOnLoaded("EllesmereUI") or C_AddOns.IsAddOnLoaded("EllesmereUIResourceBars")) then
+        local RAPID_FIRE_SPELL_ID = 257044
+        local RAPID_FIRE_TICKS = 7  -- 7 shots over duration -> 6 interior dividers
+
+        local function ApplyRapidFireTicks()
+            local castBarFrame = _G.ERB_CastBarFrame
+            if not castBarFrame or not castBarFrame._bar or not castBarFrame._channeling then return end
+
+            -- Auto-yield: If EllesmereUI already rendered ticks for this channel, do not intervene
+            if castBarFrame._numTicks and castBarFrame._numTicks > 0 then return end
+
+            local edb = _G.EllesmereUIDB
+            local profileName = (edb and edb.activeProfile) or "Default"
+            local p = edb and edb.profiles and edb.profiles[profileName]
+            local cb = p and p.addons and p.addons["EllesmereUIResourceBars"] and p.addons["EllesmereUIResourceBars"].castBar
+
+            if cb and cb.showChannelTicks == false then return end
+
+            local showTickMarks = (cb == nil) or (cb.showTickMarks ~= false)
+            local showLastTick  = (cb == nil) or (cb.showLastTick ~= false)
+            if not showTickMarks and not showLastTick then return end
+
+            local bar = castBarFrame._bar
+            local barWidth = bar:GetWidth()
+            local barHeight = bar:GetHeight()
+            if not barWidth or barWidth <= 0 or not barHeight or barHeight <= 0 then return end
+
+            local effectiveScale = bar:GetEffectiveScale() or 1
+            local E = _G.EllesmereUI
+            local PPc = E and E.PP
+            local onePx = ((PPc and PPc.perfect) or 1) / effectiveScale
+            local tickWidth = 2 * onePx
+            local highlightWidth = 3 * onePx
+            local snappedHeight = (PPc and PPc.SnapForES) and PPc.SnapForES(barHeight, effectiveScale) or barHeight
+
+            local tmR = (cb and cb.tickMarksR) or 1.0
+            local tmG = (cb and cb.tickMarksG) or 1.0
+            local tmB = (cb and cb.tickMarksB) or 1.0
+            local tmA = (cb and cb.tickMarksA) or 0.7
+
+            local ltR = (cb and cb.lastTickR) or 1.0
+            local ltG = (cb and cb.lastTickG) or 0.82
+            local ltB = (cb and cb.lastTickB) or 0.0
+            local ltA = (cb and cb.lastTickA) or 0.95
+
+            if not castBarFrame._ticks then castBarFrame._ticks = {} end
+
+            local numInteriorMarks = RAPID_FIRE_TICKS - 1  -- 6 interior marks
+            for i = 1, numInteriorMarks do
+                local isLastTick = (i == numInteriorMarks)
+                local tick = castBarFrame._ticks[i]
+                if not tick then
+                    tick = bar:CreateTexture(nil, "OVERLAY", nil, 3)
+                    if tick.SetSnapToPixelGrid then
+                        tick:SetSnapToPixelGrid(false)
+                        tick:SetTexelSnappingBias(0)
+                    end
+                    castBarFrame._ticks[i] = tick
+                end
+
+                if not showTickMarks and not isLastTick then
+                    tick:Hide()
+                else
+                    local isGold = isLastTick and showLastTick
+                    local w = isGold and highlightWidth or tickWidth
+                    local posFraction = i / RAPID_FIRE_TICKS
+                    local rawOffset = barWidth * (1 - posFraction)
+                    local snappedOffset = (PPc and PPc.SnapCenterForDim)
+                        and PPc.SnapCenterForDim(rawOffset, w, effectiveScale)
+                        or (math.floor(rawOffset * effectiveScale + 0.5) / effectiveScale)
+
+                    if isGold then
+                        tick:SetColorTexture(ltR, ltG, ltB, ltA)
+                    else
+                        tick:SetColorTexture(tmR, tmG, tmB, tmA)
+                    end
+                    tick:SetSize(w, snappedHeight)
+                    tick:ClearAllPoints()
+                    tick:SetPoint("CENTER", bar, "LEFT", snappedOffset, 0)
+                    tick:Show()
+                end
+            end
+
+            -- Hide any leftover ticks beyond 6
+            for i = numInteriorMarks + 1, #castBarFrame._ticks do
+                castBarFrame._ticks[i]:Hide()
+            end
+
+            castBarFrame._numTicks = RAPID_FIRE_TICKS
+        end
+
+        local rfFrame = CreateFrame("Frame")
+        rfFrame:RegisterUnitEvent("UNIT_SPELLCAST_CHANNEL_START", "player")
+        rfFrame:RegisterUnitEvent("UNIT_SPELLCAST_CHANNEL_UPDATE", "player")
+        rfFrame:SetScript("OnEvent", function(self, event, unit, castGUID, spellID)
+            if not spellID then
+                local _, _, _, _, _, _, _, sID = UnitChannelInfo("player")
+                spellID = sID
+            end
+            if spellID == RAPID_FIRE_SPELL_ID then
+                ApplyRapidFireTicks()
+                C_Timer.After(0, ApplyRapidFireTicks)
+            end
+        end)
+    end
+end
+
 
 function Addon:SlashCommandOpen(input)
     input = input and input:lower():trim() or ""
