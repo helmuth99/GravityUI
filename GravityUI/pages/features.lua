@@ -460,6 +460,7 @@ local function BuildTargetedSpells(parent)
 
     local function Refresh()
         if ns.TargetedSpells and ns.TargetedSpells.ApplySettings then ns.TargetedSpells.ApplySettings() end
+        if ns.SyncEllesmereTargetedSpells then ns.SyncEllesmereTargetedSpells() end
         C_Timer.After(0.05, function() if ns.GUI and ns.GUI.RefreshAll then ns.GUI:RefreshAll() end end)
     end
 

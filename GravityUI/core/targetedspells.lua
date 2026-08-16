@@ -1555,6 +1555,7 @@ function TargetedSpells.ApplySettings()
     iconContainer:SetPoint("CENTER", UIParent, "CENTER", s.iconX or 0, s.iconY or -80)
 
     CheckZoneState()
+    if ns.SyncEllesmereTargetedSpells then ns.SyncEllesmereTargetedSpells() end
 end
 
 -- ============================================================================
