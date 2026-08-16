@@ -46,8 +46,10 @@ local INSPECT_DELAY = 0.05
 local MANA_TICK     = 0.5     -- seconds between mana updates
 
 -- Preview specs: Resto Druid, Holy Paladin, Resto Shaman
-local PREVIEW_SPECS = { 105, 65, 264 }
-local PREVIEW_NAMES = { "Healer", "Support", "Backup" }
+local PREVIEW_SPECS   = { 105, 65, 264 }
+local PREVIEW_CLASSES = { "DRUID", "PALADIN", "SHAMAN" }
+local PREVIEW_NAMES   = { "Resto Druid", "Holy Paladin", "Resto Shaman" }
+local PREVIEW_ICONS   = { 136041, 135972, 136052 }
 
 -- ============================================================================
 -- STATE
@@ -65,7 +67,22 @@ HM.containerFrame = nil
 -- ============================================================================
 local function GetDB()
     local db = ns.GetDB and ns.GetDB()
-    return db and db.screenindicators and db.screenindicators.healerMana
+    if db and db.screenindicators then
+        if not db.screenindicators.healerMana then
+            db.screenindicators.healerMana = {
+                enabled = true,
+                maxHealers = 3,
+                iconSize = 24,
+                frameWidth = 160,
+                frameSpacing = 4,
+                fontSize = 12,
+                showOffline = true,
+                drinkingThreshold = 80,
+            }
+        end
+        return db.screenindicators.healerMana
+    end
+    return nil
 end
 
 local function GetClassColor(classToken)
@@ -166,11 +183,14 @@ function HM:CreateHealerFrame(index)
 
     local frame = CreateFrame("Frame", "GravityUI_HealerMana_" .. index, self.containerFrame, "BackdropTemplate")
     frame:SetSize(frameW, iconSize)
+    frame:SetFrameStrata("DIALOG")
+    frame:SetFrameLevel(self.containerFrame:GetFrameLevel() + 20)
 
     -- Icon background
     frame.iconFrame = CreateFrame("Frame", nil, frame, "BackdropTemplate")
     frame.iconFrame:SetSize(iconSize, iconSize)
     frame.iconFrame:SetPoint("LEFT", 0, 0)
+    frame.iconFrame:SetFrameLevel(frame:GetFrameLevel() + 2)
     frame.iconFrame:SetBackdrop({
         bgFile   = "Interface\\Buttons\\WHITE8X8",
         edgeFile = "Interface\\Buttons\\WHITE8X8",
@@ -187,13 +207,13 @@ function HM:CreateHealerFrame(index)
 
     -- Name
     frame.name = frame:CreateFontString(nil, "OVERLAY")
-    frame.name:SetPoint("BOTTOMLEFT", frame.iconFrame, "RIGHT", 4, 1)
+    frame.name:SetPoint("BOTTOMLEFT", frame.iconFrame, "RIGHT", 6, 1)
     frame.name:SetJustifyH("LEFT")
-    frame.name:SetFont(DEFAULT_FONT, math.max(fontSize - 1, 8), "OUTLINE")
+    frame.name:SetFont(DEFAULT_FONT, math.max(fontSize - 1, 9), "OUTLINE")
 
     -- Mana %
     frame.mana = frame:CreateFontString(nil, "OVERLAY")
-    frame.mana:SetPoint("TOPLEFT", frame.iconFrame, "RIGHT", 4, -1)
+    frame.mana:SetPoint("TOPLEFT", frame.iconFrame, "RIGHT", 6, -1)
     frame.mana:SetJustifyH("LEFT")
     frame.mana:SetFont(DEFAULT_FONT, fontSize, "OUTLINE")
 
@@ -512,6 +532,28 @@ function HM:StopTicker()
     if self.ticker then self.ticker:Cancel(); self.ticker = nil end
 end
 
+function HM:HideAllFrames()
+    for _, f in pairs(self.healerFrames) do
+        f:Hide()
+    end
+end
+
+function HM:UpdateStyles()
+    local db = GetDB()
+    if not db then return end
+    local font = (ns.Styling and ns.Styling.GetFontPath and ns.Styling:GetFontPath()) or DEFAULT_FONT
+    local fontSize = db.fontSize or 12
+    local iconSize = db.iconSize or 24
+    local frameW = db.frameWidth or 160
+
+    for _, frame in pairs(self.healerFrames) do
+        frame:SetSize(frameW, iconSize)
+        if frame.iconFrame then frame.iconFrame:SetSize(iconSize, iconSize) end
+        if frame.name then frame.name:SetFont(font, math.max(fontSize - 1, 9), "OUTLINE") end
+        if frame.mana then frame.mana:SetFont(font, fontSize, "OUTLINE") end
+    end
+end
+
 -- ============================================================================
 -- PREVIEW (Edit Mode)
 -- ============================================================================
@@ -521,9 +563,10 @@ function HM:ShowPreview()
     self:UpdateStyles()
     local db   = GetDB()
     local maxH = math.min((db and db.maxHealers) or 3, #PREVIEW_SPECS)
+    if maxH <= 0 then maxH = 3 end
 
     -- Hide all existing frames first so unused ones disappear
-    for _, f in pairs(self.healerFrames) do f:Hide() end
+    self:HideAllFrames()
 
     wipe(self.currentHealers)
     for i = 1, maxH do
@@ -531,19 +574,27 @@ function HM:ShowPreview()
             unit       = "player",
             guid       = "preview_" .. i,
             name       = PREVIEW_NAMES[i] or ("Healer " .. i),
-            class      = "PRIEST",
+            class      = PREVIEW_CLASSES[i] or "PRIEST",
             connected  = true,
             frameIndex = i,
             specID     = PREVIEW_SPECS[i],
+            icon       = PREVIEW_ICONS[i],
         }
     end
 
-    self:UpdateContainerSize()
-    self:PositionFrames()
-
+    -- Create and populate healer frames
     for i, h in ipairs(self.currentHealers) do
         local frame = self:GetHealerFrame(h.frameIndex)
-        local icon  = select(4, GetSpecializationInfoByID(h.specID))
+        frame:SetFrameStrata("DIALOG")
+        frame:SetFrameLevel(self.containerFrame:GetFrameLevel() + 20)
+        if frame.iconFrame then
+            frame.iconFrame:SetFrameLevel(frame:GetFrameLevel() + 2)
+        end
+
+        local icon = h.icon
+        if not icon and GetSpecializationInfoByID then
+            icon = select(4, GetSpecializationInfoByID(h.specID))
+        end
         frame.icon:SetTexture(icon or FALLBACK_ICON)
         frame.icon:SetVertexColor(1, 1, 1)
         frame.name:SetText(h.name)
@@ -551,22 +602,40 @@ function HM:ShowPreview()
         if i == 1 then
             frame.mana:SetText("52%  |cff55ff77Drinking|r")
             frame.mana:SetTextColor(0.3, 1, 0.4)
-        else
+        elseif i == 2 then
             frame.mana:SetText("88%")
+            frame.mana:SetTextColor(0.4, 0.8, 1)
+        else
+            frame.mana:SetText("74%")
             frame.mana:SetTextColor(0.4, 0.8, 1)
         end
         frame:Show()
     end
 
+    self:UpdateContainerSize()
+    self:PositionFrames()
+
     self.containerFrame:Show()
-    if ns.Movers then ns.Movers:ApplyEditModeStyle(self.containerFrame, true) end
     self.containerFrame:EnableMouse(true)
+    if ns.Movers then
+        ns.Movers:ApplyEditModeStyle(self.containerFrame, true, "HealerMana")
+        if self.containerFrame.ag_backdrop then
+            if self.containerFrame.ag_backdrop.title then self.containerFrame.ag_backdrop.title:Hide() end
+            if self.containerFrame.ag_backdrop.dim then self.containerFrame.ag_backdrop.dim:Hide() end
+        end
+    end
 end
 
 function HM:HidePreview()
     self.isPreview = false
     self.containerFrame:EnableMouse(false)
-    if ns.Movers then ns.Movers:ApplyEditModeStyle(self.containerFrame, false) end
+    if ns.Movers then
+        if self.containerFrame.ag_backdrop then
+            if self.containerFrame.ag_backdrop.title then self.containerFrame.ag_backdrop.title:Show() end
+            if self.containerFrame.ag_backdrop.dim then self.containerFrame.ag_backdrop.dim:Show() end
+        end
+        ns.Movers:ApplyEditModeStyle(self.containerFrame, false, "HealerMana")
+    end
     self:HideAllFrames()
     self:FindHealers()
 end
@@ -685,5 +754,10 @@ local bootstrap = CreateFrame("Frame")
 bootstrap:RegisterEvent("PLAYER_LOGIN")
 bootstrap:SetScript("OnEvent", function(self)
     self:UnregisterAllEvents()
+    HM:EnsureContainer()
     HM:ApplySettings()
+end)
+
+C_Timer.After(0.1, function()
+    HM:EnsureContainer()
 end)

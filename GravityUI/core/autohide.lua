@@ -111,6 +111,10 @@ local function ApplyHideSettings()
             shouldHide = true
         end
 
+        if EditModeManagerFrame and EditModeManagerFrame:IsShown() then
+            shouldHide = false
+        end
+
         if shouldHide then
             ObjectiveTrackerFrame:Hide()
             if ObjectiveTrackerFrame.SetCollapsed then
@@ -123,6 +127,7 @@ local function ApplyHideSettings()
             if not ObjectiveTrackerFrame._gui_ShowHooked then
                 ObjectiveTrackerFrame._gui_ShowHooked = true
                 hooksecurefunc(ObjectiveTrackerFrame, "Show", function(self)
+                    if EditModeManagerFrame and EditModeManagerFrame:IsShown() then return end
                     local s = GetSettings()
                     if s then
                         local shouldHideNow = false

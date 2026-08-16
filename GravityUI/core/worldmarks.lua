@@ -230,12 +230,12 @@ function WorldMarks:ToggleMover(forceState)
         if self.frame then self.frame:Show(); self.frame:SetAlpha(1) end
         self.mover:Show()
         if ns.Movers and ns.Movers.ApplyEditModeStyle then
-            ns.Movers:ApplyEditModeStyle(self.mover, true)
+            ns.Movers:ApplyEditModeStyle(self.mover, true, "WorldMarks")
         end
     else
         -- Remove edit-mode styling and hide the mover
         if ns.Movers and ns.Movers.ApplyEditModeStyle then
-            ns.Movers:ApplyEditModeStyle(self.mover, false)
+            ns.Movers:ApplyEditModeStyle(self.mover, false, "WorldMarks")
         end
         self.mover:Hide()
         -- Restore the actual frame to its settings-driven state

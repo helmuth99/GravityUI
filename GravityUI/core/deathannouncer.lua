@@ -591,8 +591,12 @@ end
 
 function DeathAnnouncer.ToggleMover(force)
     if not mover then CreateAlertFrames() end
-    local show = (force ~= nil) and force or (not mover:IsShown())
-    if force == false then show = false end
+    local show
+    if force ~= nil then
+        show = (force == true)
+    else
+        show = not mover:IsShown()
+    end
 
     if show then
         mover:Show()

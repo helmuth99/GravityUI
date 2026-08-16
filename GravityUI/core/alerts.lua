@@ -388,8 +388,8 @@ function Alerts:ToggleMovers(forceState)
         alertMover = CreateFrame("Frame", nil, alertHolder, "BackdropTemplate")
         alertMover:SetAllPoints()
         alertMover:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8", edgeFile = "Interface\\Buttons\\WHITE8x8", edgeSize = 1 })
-        alertMover:SetBackdropColor(0.2, 0.8, 0.8, 0.5)
-        alertMover:SetBackdropBorderColor(0.2, 0.8, 0.8, 1)
+        alertMover:SetBackdropColor(0.05, 0.05, 0.08, 0.4)
+        alertMover:SetBackdropBorderColor(0, 0, 0, 0)
         alertMover:EnableMouse(true)
         alertMover:RegisterForDrag("LeftButton")
         alertMover:SetScript("OnDragStart", function() alertHolder:StartMoving() end)
@@ -399,19 +399,36 @@ function Alerts:ToggleMovers(forceState)
             Alerts:SavePosition("alert", p, rp, x, y)
             if AlertFrame then AlertFrame:UpdateAnchors() end
         end)
-        
-        local alertText = alertMover:CreateFontString(nil, "OVERLAY")
-        alertText:SetFont(GetFontPath(), 11, "OUTLINE")
-        alertText:SetPoint("CENTER")
-        alertText:SetText("Alerts")
-        alertText:SetTextColor(1, 1, 1)
+
+        -- Achievement Alert Preview
+        local alertIconFrame = CreateFrame("Frame", nil, alertMover, "BackdropTemplate")
+        alertIconFrame:SetSize(36, 36)
+        alertIconFrame:SetPoint("LEFT", 10, 0)
+        alertIconFrame:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8", edgeFile = "Interface\\Buttons\\WHITE8x8", edgeSize = 1 })
+        alertIconFrame:SetBackdropColor(0, 0, 0, 1)
+        alertIconFrame:SetBackdropBorderColor(1, 0.82, 0, 1)
+        local alertIcon = alertIconFrame:CreateTexture(nil, "ARTWORK")
+        alertIcon:SetAllPoints()
+        alertIcon:SetTexture("Interface\\Icons\\Achievement_General")
+        alertIcon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+
+        local alertTitle = alertMover:CreateFontString(nil, "OVERLAY")
+        alertTitle:SetFont(GetFontPath(), 11, "OUTLINE")
+        alertTitle:SetPoint("TOPLEFT", alertIconFrame, "TOPRIGHT", 8, -2)
+        alertTitle:SetText("|cffffd100Achievement Unlocked!|r")
+
+        local alertDesc = alertMover:CreateFontString(nil, "OVERLAY")
+        alertDesc:SetFont(GetFontPath(), 10, "OUTLINE")
+        alertDesc:SetPoint("BOTTOMLEFT", alertIconFrame, "BOTTOMRIGHT", 8, 2)
+        alertDesc:SetText("Going Down? (+10 pts)")
+        alertDesc:SetTextColor(0.9, 0.9, 0.9, 1)
 
         -- Toast Mover Overlay
         toastMover = CreateFrame("Frame", nil, toastHolder, "BackdropTemplate")
         toastMover:SetAllPoints()
         toastMover:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8", edgeFile = "Interface\\Buttons\\WHITE8x8", edgeSize = 1 })
-        toastMover:SetBackdropColor(0.8, 0.6, 0.2, 0.5)
-        toastMover:SetBackdropBorderColor(0.8, 0.6, 0.2, 1)
+        toastMover:SetBackdropColor(0.05, 0.05, 0.08, 0.4)
+        toastMover:SetBackdropBorderColor(0, 0, 0, 0)
         toastMover:EnableMouse(true)
         toastMover:RegisterForDrag("LeftButton")
         toastMover:SetScript("OnDragStart", function() toastHolder:StartMoving() end)
@@ -422,11 +439,27 @@ function Alerts:ToggleMovers(forceState)
             if EventToastManagerFrame and EventToastManagerFrame.UpdateAnchor then EventToastManagerFrame:UpdateAnchor() end
         end)
 
-        local toastText = toastMover:CreateFontString(nil, "OVERLAY")
-        toastText:SetFont(GetFontPath(), 11, "OUTLINE")
-        toastText:SetPoint("CENTER")
-        toastText:SetText("Toasts")
-        toastText:SetTextColor(1, 1, 1)
+        -- Loot Toast Preview
+        local toastIconFrame = CreateFrame("Frame", nil, toastMover, "BackdropTemplate")
+        toastIconFrame:SetSize(32, 32)
+        toastIconFrame:SetPoint("LEFT", 10, 0)
+        toastIconFrame:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8", edgeFile = "Interface\\Buttons\\WHITE8x8", edgeSize = 1 })
+        toastIconFrame:SetBackdropColor(0, 0, 0, 1)
+        toastIconFrame:SetBackdropBorderColor(1, 0.5, 0, 1)
+        local toastIcon = toastIconFrame:CreateTexture(nil, "ARTWORK")
+        toastIcon:SetAllPoints()
+        toastIcon:SetTexture(132394)
+        toastIcon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+
+        local toastTitle = toastMover:CreateFontString(nil, "OVERLAY")
+        toastTitle:SetFont(GetFontPath(), 10, "OUTLINE")
+        toastTitle:SetPoint("TOPLEFT", toastIconFrame, "TOPRIGHT", 8, -2)
+        toastTitle:SetText("|cff00FF80You received loot:|r")
+
+        local toastItem = toastMover:CreateFontString(nil, "OVERLAY")
+        toastItem:SetFont(GetFontPath(), 10, "OUTLINE")
+        toastItem:SetPoint("BOTTOMLEFT", toastIconFrame, "BOTTOMRIGHT", 8, 2)
+        toastItem:SetText("|cffff8000[Thunderfury, Blessed Blade]|r")
         
         -- Default to hidden initially if just created
         alertMover:Hide()
@@ -447,29 +480,27 @@ function Alerts:ToggleMovers(forceState)
         -- Apply Standard Edit Mode Style (Blue) if forced, otherwise keep custom colors
         if ns.Movers and ns.Movers.ApplyEditModeStyle then
             if forceState == true then
-                -- Global Edit Mode: Hide base color, show Overlay
                 alertMover:SetBackdropColor(0, 0, 0, 0)
                 alertMover:SetBackdropBorderColor(0, 0, 0, 0)
-                ns.Movers:ApplyEditModeStyle(alertMover, true)
+                ns.Movers:ApplyEditModeStyle(alertMover, true, "Alerts")
                 
                 toastMover:SetBackdropColor(0, 0, 0, 0)
                 toastMover:SetBackdropBorderColor(0, 0, 0, 0)
-                ns.Movers:ApplyEditModeStyle(toastMover, true)
+                ns.Movers:ApplyEditModeStyle(toastMover, true, "Toasts")
             else
-                -- Manual Mode: Restore Colors, Hide Overlay
                 alertMover:SetBackdropColor(0.2, 0.8, 0.8, 0.5)
                 alertMover:SetBackdropBorderColor(0.2, 0.8, 0.8, 1)
-                ns.Movers:ApplyEditModeStyle(alertMover, false)
+                ns.Movers:ApplyEditModeStyle(alertMover, false, "Alerts")
                 
                 toastMover:SetBackdropColor(0.8, 0.6, 0.2, 0.5)
                 toastMover:SetBackdropBorderColor(0.8, 0.6, 0.2, 1)
-                ns.Movers:ApplyEditModeStyle(toastMover, false)
+                ns.Movers:ApplyEditModeStyle(toastMover, false, "Toasts")
             end
         end
     else
         if ns.Movers and ns.Movers.ApplyEditModeStyle then
-             ns.Movers:ApplyEditModeStyle(alertMover, false)
-             ns.Movers:ApplyEditModeStyle(toastMover, false)
+             ns.Movers:ApplyEditModeStyle(alertMover, false, "Alerts")
+             ns.Movers:ApplyEditModeStyle(toastMover, false, "Toasts")
         end
         alertMover:Hide()
         toastMover:Hide()
@@ -560,42 +591,12 @@ function Alerts:Initialize()
     if not db or not db.enabled then return end
     
     Alerts:CreateHolders()
+    Alerts:ToggleMovers(false)
     
     -- Register with Movers
     if ns.Movers and ns.Movers.Register then
-        ns.Movers:Register("Alerts", alertHolder, function(frame, enabled) Alerts:ToggleMovers(enabled) end, "Alerts Anchor")
-        -- Note: ToggleMovers toggles BOTH. We only need to register one "Callback" effectively, or register both frames but handle the callback carefully.
-        -- Since ToggleMovers toggles BOTH, registering just "Alerts" and relying on it to toggle Toasts is fine, 
-        -- BUT if we want separate movers in the list (if we list them), we might want separate callbacks.
-        -- However, `ToggleMovers` implementation couples them. I will stick to coupled for now or register the second one as a dummy or separate if possible.
-        -- Actually, Register checks if name exists. I'll register "Toasts" as well, but pass the same callback? 
-        -- If I pass the same callback, calling it for Alerts toggles Toasts. Calling it for Toasts toggles Alerts. 
-        -- If UpdateDisplay calls both, we toggle twice? 
-        -- Solution: Update ToggleMovers to be idempotent for a specific frame? Or just register one "Group".
-        -- I'll register "Alerts & Toasts" as one entry? 
-        -- Or just register both with same callback, but `ToggleMovers(enabled)` sets both. 
-        -- `UpdateDisplay` calls toggleFunc for EACH registered mover.
-        -- If I register "Alerts" -> ToggleMovers(true) -> Sets Both True.
-        -- If I register "Toasts" -> ToggleMovers(true) -> Sets Both True. (Redundant but harmless).
-        -- BUT, creating the overlay/registry entry for "Toasts" might be needed if `ns.Movers` manages the frame visibility directly???
-        -- My `movers.lua` logic: `pcall(data.toggleFunc, data.frame, shouldShow)`.
-        -- So it will call ToggleMovers(alertHolder, true) then ToggleMovers(toastHolder, true).
-        -- `ToggleMovers` signature I wrote: `function Alerts:ToggleMovers(forceState)`. 
-        -- If called as `Alerts:ToggleMovers(enabled)`, `self` is missing if called with dot notation from pcall? 
-        -- `ns.Movers` stores `toggleFunc`. I passed `function(frame, enabled) Alerts:ToggleMovers(enabled) end`. 
-        -- This closure ignores the frame arg and calls `Alerts:ToggleMovers(enabled)`.
-        -- So it works. Redundancy is fine.
-        
-        ns.Movers:Register("Toasts", toastHolder, function(frame, enabled) end, "Toasts Anchor") 
-        -- Wait, if I pass `function() end` for Toasts, it won't toggle. 
-        -- But `Alerts` toggle handles both. So "Toasts" registration is just for... tracking? 
-        -- If `ns.Movers` uses the list to Show/Hide frames directly if no toggleFunc? 
-        -- `alertHolder` and `toastHolder` are just frames. 
-        -- If I don't register Toasts, will it be hidden? 
-        -- No, `ToggleMovers` handles it.
-        -- If I register Toasts, `UpdateDisplay` iterates it.
-        -- If I give it a toggleFunc that does nothing, `ToggleMovers` (called by Alerts) already did the job.
-        -- So empty function is fine.
+        ns.Movers:Register("Alerts", alertMover or alertHolder, function(frame, enabled) Alerts:ToggleMovers(enabled) end, "Alerts Anchor")
+        ns.Movers:Register("Toasts", toastMover or toastHolder, function(frame, enabled) Alerts:ToggleMovers(enabled) end, "Toasts Anchor")
     end
 
     -- Prevent repeated hooking on refresh

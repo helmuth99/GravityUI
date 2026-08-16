@@ -384,19 +384,28 @@ function XPRep:ToggleMover(forceState)
     end
 
     if shouldShow then
+        self.preview = true
+        self:Update()
+        self.frame:Show()
+        self.frame:SetAlpha(1)
         self.mover:Show()
-        -- Color Logic
-        if forceState == true then
-             -- Global Edit Mode: Blue
-             self.mover:SetBackdropColor(0, 0.6, 1, 0.5)
-             self.mover:SetBackdropBorderColor(0, 0.8, 1, 1)
+        if self.mover.text then self.mover.text:Hide() end
+
+        if ns.Movers and ns.Movers.ApplyEditModeStyle then
+            self.mover:SetBackdropColor(0, 0, 0, 0)
+            self.mover:SetBackdropBorderColor(0, 0, 0, 0)
+            ns.Movers:ApplyEditModeStyle(self.mover, forceState == true, "XPRep")
         else
-             -- Manual: Green
-             self.mover:SetBackdropColor(0, 1, 0, 0.5)
-             self.mover:SetBackdropBorderColor(0, 1, 0, 1)
+            self.mover:SetBackdropColor(0, 0.6, 1, 0.3)
+            self.mover:SetBackdropBorderColor(0, 0.8, 1, 1)
         end
     else
+        self.preview = false
+        if ns.Movers and ns.Movers.ApplyEditModeStyle then
+            ns.Movers:ApplyEditModeStyle(self.mover, false, "XPRep")
+        end
         self.mover:Hide()
+        self:Update()
     end
 end
 
@@ -417,8 +426,8 @@ function XPRep:CreateMover()
         edgeFile = "Interface\\Buttons\\WHITE8x8",
         edgeSize = 1,
     })
-    self.mover:SetBackdropColor(0, 1, 0, 0.5)
-    self.mover:SetBackdropBorderColor(0, 1, 0, 1)
+    self.mover:SetBackdropColor(0, 0, 0, 0)
+    self.mover:SetBackdropBorderColor(0, 0, 0, 0)
     
     self.mover:EnableMouse(true)
     self.mover:SetMovable(true)
@@ -429,6 +438,8 @@ function XPRep:CreateMover()
     local text = self.mover:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     text:SetPoint("CENTER")
     text:SetText("XP/Rep Mover")
+    text:Hide()
+    self.mover.text = text
     
     self.mover:SetScript("OnDragStart", function()
         self.frame:StartMoving()

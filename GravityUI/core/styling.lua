@@ -342,19 +342,22 @@ local function CreateReadyCheckMover()
     local sr, sg, sb, sa = ns.GetAccentColor()
 
     -- Create mover overlay
+    local w = math.max(260, frame:GetWidth() > 0 and (frame:GetWidth() + 4) or 260)
+    local h = math.max(90, frame:GetHeight() > 0 and (frame:GetHeight() + 4) or 90)
+
     readyCheckMover = CreateFrame("Frame", "GravityUI_ReadyCheckMover", UIParent, "BackdropTemplate")
-    readyCheckMover:SetSize(frame:GetWidth() + 4, frame:GetHeight() + 4)
+    readyCheckMover:SetSize(w, h)
     readyCheckMover:SetBackdrop({
         bgFile = "Interface\\Buttons\\WHITE8x8",
         edgeFile = "Interface\\Buttons\\WHITE8x8",
-        edgeSize = 2,
+        edgeSize = 1,
     })
-    readyCheckMover:SetBackdropColor(sr, sg, sb, 0.3)
-    readyCheckMover:SetBackdropBorderColor(sr, sg, sb, 1)
+    readyCheckMover:SetBackdropColor(0.05, 0.05, 0.08, 0.4)
+    readyCheckMover:SetBackdropBorderColor(0, 0, 0, 0)
     readyCheckMover:EnableMouse(true)
     readyCheckMover:SetMovable(true)
     readyCheckMover:RegisterForDrag("LeftButton")
-    readyCheckMover:SetFrameStrata("FULLSCREEN_DIALOG")
+    readyCheckMover:SetFrameStrata("DIALOG")
     readyCheckMover:Hide()
 
     -- Position mover
@@ -365,12 +368,52 @@ local function CreateReadyCheckMover()
         readyCheckMover:SetPoint("CENTER", UIParent, "CENTER", 0, -10)
     end
 
-    -- Mover label
-    readyCheckMover.text = readyCheckMover:CreateFontString(nil, "OVERLAY")
-    readyCheckMover.text:SetPoint("CENTER")
-    readyCheckMover.text:SetFont(GetFontPath(), 11, "OUTLINE")
-    readyCheckMover.text:SetText("Ready Check")
-    readyCheckMover.text:SetTextColor(1, 1, 1)
+    -- Mover title & preview texts
+    local title = readyCheckMover:CreateFontString(nil, "OVERLAY")
+    title:SetPoint("TOP", 0, -10)
+    title:SetFont(GetFontPath(), 13, "OUTLINE")
+    title:SetText("|cffffd100Ready Check|r")
+    readyCheckMover.title = title
+
+    local sub = readyCheckMover:CreateFontString(nil, "OVERLAY")
+    sub:SetPoint("TOP", title, "BOTTOM", 0, -4)
+    sub:SetFont(GetFontPath(), 11, "OUTLINE")
+    sub:SetText("Are you ready?")
+    sub:SetTextColor(0.8, 0.8, 0.8, 1)
+    readyCheckMover.sub = sub
+
+    -- Dummy Yes / No Buttons Preview
+    local yesBtn = CreateFrame("Frame", nil, readyCheckMover, "BackdropTemplate")
+    yesBtn:SetSize(80, 24)
+    yesBtn:SetPoint("BOTTOMLEFT", 35, 12)
+    yesBtn:SetBackdrop({
+        bgFile = "Interface\\Buttons\\WHITE8x8",
+        edgeFile = "Interface\\Buttons\\WHITE8x8",
+        edgeSize = 1,
+    })
+    yesBtn:SetBackdropColor(0.1, 0.45, 0.15, 0.9)
+    yesBtn:SetBackdropBorderColor(0.2, 0.8, 0.3, 1)
+    local yesTxt = yesBtn:CreateFontString(nil, "OVERLAY")
+    yesTxt:SetPoint("CENTER")
+    yesTxt:SetFont(GetFontPath(), 11, "OUTLINE")
+    yesTxt:SetText("|cff00FF80Yes|r")
+
+    local noBtn = CreateFrame("Frame", nil, readyCheckMover, "BackdropTemplate")
+    noBtn:SetSize(80, 24)
+    noBtn:SetPoint("BOTTOMRIGHT", -35, 12)
+    noBtn:SetBackdrop({
+        bgFile = "Interface\\Buttons\\WHITE8x8",
+        edgeFile = "Interface\\Buttons\\WHITE8x8",
+        edgeSize = 1,
+    })
+    noBtn:SetBackdropColor(0.5, 0.1, 0.1, 0.9)
+    noBtn:SetBackdropBorderColor(0.9, 0.2, 0.2, 1)
+    local noTxt = noBtn:CreateFontString(nil, "OVERLAY")
+    noTxt:SetPoint("CENTER")
+    noTxt:SetFont(GetFontPath(), 11, "OUTLINE")
+    noTxt:SetText("|cffff4444No|r")
+
+    readyCheckMover.text = title
 
     -- Drag handlers
     readyCheckMover:SetScript("OnDragStart", function(self)
@@ -396,11 +439,16 @@ function Styling:ToggleReadyCheckMover(forceState)
 
     if shouldShow then
         if ns.Movers and ns.Movers.ApplyEditModeStyle then
-            ns.Movers:ApplyEditModeStyle(readyCheckMover, forceState == true)
+            ns.Movers:ApplyEditModeStyle(readyCheckMover, forceState == true, "ReadyCheck")
         end
         if readyCheckMover then readyCheckMover:Show() end
     else
-        if readyCheckMover then readyCheckMover:Hide() end
+        if readyCheckMover then 
+            if ns.Movers and ns.Movers.ApplyEditModeStyle then
+                ns.Movers:ApplyEditModeStyle(readyCheckMover, false, "ReadyCheck")
+            end
+            readyCheckMover:Hide() 
+        end
     end
 end
 
@@ -1153,11 +1201,14 @@ function Styling:ToggleWidgetPowerBarMover(forceState)
 
     if shouldShow then
         if ns.Movers and ns.Movers.ApplyEditModeStyle then
-            ns.Movers:ApplyEditModeStyle(widgetPowerBarMover, forceState == true)
+            ns.Movers:ApplyEditModeStyle(widgetPowerBarMover, forceState == true, "WidgetPowerBar")
         end
         widgetPowerBarMover:SetSize(math.max(container:GetWidth() or 200, 200), math.max(container:GetHeight() or 40, 40))
         widgetPowerBarMover:Show()
     else
+        if ns.Movers and ns.Movers.ApplyEditModeStyle then
+            ns.Movers:ApplyEditModeStyle(widgetPowerBarMover, false, "WidgetPowerBar")
+        end
         widgetPowerBarMover:Hide()
     end
 end
@@ -1514,11 +1565,14 @@ function Styling:ToggleWidgetBelowMinimapMover(forceState)
 
     if shouldShow then
         if ns.Movers and ns.Movers.ApplyEditModeStyle then
-            ns.Movers:ApplyEditModeStyle(widgetBelowMinimapMover, forceState == true)
+            ns.Movers:ApplyEditModeStyle(widgetBelowMinimapMover, forceState == true, "WidgetBelowMinimap")
         end
         widgetBelowMinimapMover:SetSize(math.max(container:GetWidth() or 200, 200), math.max(container:GetHeight() or 40, 40))
         widgetBelowMinimapMover:Show()
     else
+        if ns.Movers and ns.Movers.ApplyEditModeStyle then
+            ns.Movers:ApplyEditModeStyle(widgetBelowMinimapMover, false, "WidgetBelowMinimap")
+        end
         widgetBelowMinimapMover:Hide()
     end
 end
@@ -1637,11 +1691,14 @@ function Styling:ToggleWidgetTopCenterMover(forceState)
 
     if shouldShow then
         if ns.Movers and ns.Movers.ApplyEditModeStyle then
-            ns.Movers:ApplyEditModeStyle(widgetTopCenterMover, forceState == true)
+            ns.Movers:ApplyEditModeStyle(widgetTopCenterMover, forceState == true, "WidgetTopCenter")
         end
         widgetTopCenterMover:SetSize(math.max(container:GetWidth() or 200, 200), math.max(container:GetHeight() or 40, 40))
         widgetTopCenterMover:Show()
     else
+        if ns.Movers and ns.Movers.ApplyEditModeStyle then
+            ns.Movers:ApplyEditModeStyle(widgetTopCenterMover, false, "WidgetTopCenter")
+        end
         widgetTopCenterMover:Hide()
     end
 end

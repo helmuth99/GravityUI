@@ -643,6 +643,14 @@ function Objectives:CheckAutoHide()
     if not db.autoHideWhenEmpty then return end
     if not ObjectiveTrackerFrame then return end
 
+    -- GUARD 0: Always keep tracker shown when Blizzard Edit Mode is open
+    if EditModeManagerFrame and EditModeManagerFrame:IsShown() then
+        if not ObjectiveTrackerFrame:IsShown() then
+            ObjectiveTrackerFrame:Show()
+        end
+        return
+    end
+
     -- GUARD 1: Never suppress the tracker inside any instance.
     -- IsInInstance() returns true for: dungeons, raids, M+ keys, scenarios.
     local inInstance = IsInInstance and IsInInstance()

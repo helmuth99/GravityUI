@@ -1439,11 +1439,11 @@ function Screen.ToggleMover(type, forceState)
             if forceState == true then
                 m:SetBackdropColor(0, 0, 0, 0)
                 m:SetBackdropBorderColor(0, 0, 0, 0)
-                ns.Movers:ApplyEditModeStyle(m, true)
+                ns.Movers:ApplyEditModeStyle(m, true, "PetWarnings")
             else
                 m:SetBackdropColor(0, 0.5, 0, 0.5)
                 m:SetBackdropBorderColor(0, 1, 0, 1)
-                ns.Movers:ApplyEditModeStyle(m, false)
+                ns.Movers:ApplyEditModeStyle(m, false, "PetWarnings")
             end
         end
         
@@ -1490,11 +1490,11 @@ function Screen.ToggleMover(type, forceState)
             if forceState == true then
                 m:SetBackdropColor(0, 0, 0, 0)
                 m:SetBackdropBorderColor(0, 0, 0, 0)
-                ns.Movers:ApplyEditModeStyle(m, true)
+                ns.Movers:ApplyEditModeStyle(m, true, "CombatStatus")
             else
                 m:SetBackdropColor(0, 0.5, 0, 0.5)
                 m:SetBackdropBorderColor(0, 1, 0, 1)
-                ns.Movers:ApplyEditModeStyle(m, false)
+                ns.Movers:ApplyEditModeStyle(m, false, "CombatStatus")
             end
         end
         
@@ -1525,11 +1525,11 @@ function Screen.ToggleMover(type, forceState)
             if forceState == true then
                 m:SetBackdropColor(0, 0, 0, 0)
                 m:SetBackdropBorderColor(0, 0, 0, 0)
-                ns.Movers:ApplyEditModeStyle(m, true)
+                ns.Movers:ApplyEditModeStyle(m, true, "Crosshair")
             else
                 m:SetBackdropColor(0, 0.5, 0, 0.5)
                 m:SetBackdropBorderColor(0, 1, 0, 1)
-                ns.Movers:ApplyEditModeStyle(m, false)
+                ns.Movers:ApplyEditModeStyle(m, false, "Crosshair")
             end
         end
         

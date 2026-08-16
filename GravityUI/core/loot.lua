@@ -473,7 +473,7 @@ function Loot:ToggleMover(forceState)
     
     if not shouldShow then
         if ns.Movers and ns.Movers.ApplyEditModeStyle then
-            ns.Movers:ApplyEditModeStyle(lootFrame, false)
+            ns.Movers:ApplyEditModeStyle(lootFrame, false, "LootWindow")
         end
         lootFrame:Hide()
         lootFrame._previewMode = false
@@ -508,7 +508,7 @@ function Loot:ToggleMover(forceState)
         
         -- Apply Standard Edit Mode Style
         if ns.Movers and ns.Movers.ApplyEditModeStyle then
-            ns.Movers:ApplyEditModeStyle(lootFrame, forceState == true)
+            ns.Movers:ApplyEditModeStyle(lootFrame, forceState == true, "LootWindow")
         end
         
         lootFrame:Show()
@@ -1293,7 +1293,7 @@ function Loot:ToggleRollMover(forceState)
     
     -- Apply Standard Edit Mode Style
     if ns.Movers and ns.Movers.ApplyEditModeStyle then
-        ns.Movers:ApplyEditModeStyle(f, forceState == true)
+        ns.Movers:ApplyEditModeStyle(f, forceState == true, "LootRolls")
     end
     
     f:Show()

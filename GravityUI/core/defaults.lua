@@ -1435,5 +1435,12 @@ ns.Defaults = {
         soundChannel = "Master",
         chatAnnouncement = "DISABLED",
     },
+    editMode = {
+        showGrid = true,
+        gridSize = 32,
+        snapToGrid = false,
+        snapToElements = false,
+        showDisabled = false,
+    },
 }
 }

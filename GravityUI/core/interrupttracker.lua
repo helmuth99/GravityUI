@@ -664,17 +664,22 @@ local function UpdateLayout()
         return a.name < b.name
     end)
     
+    local barCount = #sortedBars
+    local totalW = (s.width or 200) + height
     for i, info in ipairs(sortedBars) do
         local f = info.frame
         f:ClearAllPoints()
         if s.growDirection == "UP" then
-            f:SetPoint("BOTTOMLEFT", container, "BOTTOMLEFT", 0, yOffset)
+            f:SetPoint("BOTTOMLEFT", container, "BOTTOMLEFT", height, yOffset)
         else
-            f:SetPoint("TOPLEFT", container, "TOPLEFT", 0, -yOffset)
+            f:SetPoint("TOPLEFT", container, "TOPLEFT", height, -yOffset)
         end
         f:Show()
         yOffset = yOffset + height + spacing
     end
+
+    local totalH = barCount > 0 and (yOffset - spacing) or height
+    container:SetSize(totalW, totalH)
 end
 
 
@@ -776,10 +781,10 @@ updateFrame:SetScript("OnUpdate", OnUpdate)
 -- LOGIC
 -- ============================================================================
 
-local function StartCooldown(guid, name, class, spellId, isReady)
+local function StartCooldown(guid, name, class, spellId, isReady, isTest)
     local s = GetSettings()
     if not s or not s.enabled then return end
-    if not IsTrackerAllowed() then return end
+    if not isTest and not IsTrackerAllowed() then return end
     
     local baseCD = INTERRUPTS[spellId]
     if not baseCD then return end
@@ -1329,9 +1334,10 @@ function InterruptTracker.TestMode()
         testModeActive = false
     else
         testModeActive = true
-        StartCooldown(UnitGUID("player"), "Test Player", "WARRIOR", 6552) -- Pummel
-        StartCooldown(UnitGUID("player"), "Test Mage", "MAGE", 2139) -- Counterspell
-        StartCooldown(UnitGUID("player"), "Test Shaman", "SHAMAN", 57994) -- Wind Shear
+        StartCooldown("test_warrior", "Warrior", "WARRIOR", 6552, nil, true) -- Pummel
+        StartCooldown("test_mage", "Mage", "MAGE", 2139, nil, true) -- Counterspell
+        StartCooldown("test_shaman", "Shaman", "SHAMAN", 57994, true, true) -- Wind Shear
+        updateFrame:Show()
     end
 end
 
@@ -1776,9 +1782,11 @@ function InterruptTracker.ToggleMover(force)
         
         -- Add dummy bars for visual if empty
         if not next(activeBars) then
-             StartCooldown(UnitGUID("player"), "Test Player", "WARRIOR", 6552) -- Pummel
-             StartCooldown(UnitGUID("player"), "Test Mage", "MAGE", 2139) -- Counterspell
+             StartCooldown("test_warrior", "Warrior", "WARRIOR", 6552, nil, true) -- Pummel
+             StartCooldown("test_mage", "Mage", "MAGE", 2139, nil, true) -- Counterspell
+             StartCooldown("test_shaman", "Shaman", "SHAMAN", 57994, true, true) -- Wind Shear
              moverDummiesActive = true
+             updateFrame:Show()
         end
     else
         container.mover:Hide()

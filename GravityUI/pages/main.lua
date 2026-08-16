@@ -923,6 +923,7 @@ local function BuildEditMode(parent)
 
     local yOffset = -10
     local PAD = PADDING
+    local cfg = ns.Movers:GetEditModeSettings()
 
     -- Header
     local header = ns.GUI:CreateSectionHeader(content, "GravityUI Edit Mode")
@@ -930,8 +931,11 @@ local function BuildEditMode(parent)
     yOffset = yOffset - header.gap - 10
 
     local infoBox = ns.GUI:CreateInfoBox(content,
-        "Enable GravityUI Edit Mode to drag and reposition all GravityUI elements.\n" ..
-        "Changes are saved automatically when you drag a frame.")
+        "|cff30D1FFGravityUI Edit Mode Suite:|r\n" ..
+        "• |cff30d1ffBlue Overlays|r: Enabled modules | |cffff4444Red Overlays|r: Disabled modules.\n" ..
+        "• |cff00FF80Left-Click & Drag|r to move frames (with Grid & Magnetic Element snapping).\n" ..
+        "• |cff00FF80Left-Click|r an element to select it and nudge with |cffffd700Arrow Keys|r (|cffffffff1px|r / |cffffffffShift: 10px|r).\n" ..
+        "• |cffFF9900Right-Click|r an element overlay to toggle the module on/off directly.")
     infoBox:SetPoint("TOPLEFT", PAD, yOffset)
     yOffset = yOffset - infoBox:GetHeight() - 14
 
@@ -945,7 +949,6 @@ local function BuildEditMode(parent)
     local enableBtn = ns.GUI:CreateButton(btnContainer, "Enable GravityUI Edit Mode", 210, 32, function()
         if Movers then
             Movers:SetEditMode(true)
-            Movers:SetShowGravityElements(true)
         end
     end)
     enableBtn:SetPoint("LEFT", btnContainer, "LEFT", 0, 0)
@@ -953,7 +956,6 @@ local function BuildEditMode(parent)
     local disableBtn = ns.GUI:CreateButton(btnContainer, "Disable GravityUI Edit Mode", 210, 32, function()
         if Movers then
             Movers:SetEditMode(false)
-            Movers:SetShowGravityElements(false)
         end
     end)
     disableBtn:SetPoint("LEFT", enableBtn, "RIGHT", 10, 0)
@@ -969,16 +971,69 @@ local function BuildEditMode(parent)
     -- Live update status when this tab is shown
     local function RefreshStatus()
         if Movers and Movers.isEditMode and Movers.showGravityElements then
-            statusLabel:SetText("|cff00FF80● Edit Mode ACTIVE — Drag elements to reposition them|r")
+            statusLabel:SetText("|cff00FF80● Edit Mode ACTIVE — Use Mouse or Arrow Keys to position elements|r")
         else
             statusLabel:SetText("")
         end
     end
     RefreshStatus()
 
-    -- Refresh status on each button click
     hooksecurefunc(enableBtn, "Click", RefreshStatus)
     hooksecurefunc(disableBtn, "Click", RefreshStatus)
+
+    -- ── Grid & Snapping Settings ──────────────────────────────────────────
+    yOffset = yOffset - 6
+    local settingsHeader = ns.GUI:CreateSectionHeader(content, "Grid & Snapping Options")
+    settingsHeader:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - settingsHeader.gap - 8
+
+    -- Row 1: Show Screen Grid & Snap to Grid
+    local optRow1 = CreateFrame("Frame", nil, content)
+    optRow1:SetPoint("TOPLEFT", PAD, yOffset)
+    optRow1:SetSize(520, 26)
+
+    local cbShowGrid = ns.GUI:CreateCheckbox(optRow1, "Show Screen Grid", "showGrid", cfg, function(v)
+        Movers:UpdateGrid()
+    end)
+    cbShowGrid:SetPoint("LEFT", optRow1, "LEFT", 0, 0)
+
+    local cbSnapGrid = ns.GUI:CreateCheckbox(optRow1, "Snap to Grid", "snapToGrid", cfg, function(v) end)
+    cbSnapGrid:SetPoint("LEFT", optRow1, "LEFT", 240, 0)
+
+    yOffset = yOffset - 32
+
+    -- Row 2: Show Disabled Modules & Snap to Elements
+    local optRow2 = CreateFrame("Frame", nil, content)
+    optRow2:SetPoint("TOPLEFT", PAD, yOffset)
+    optRow2:SetSize(520, 26)
+
+    local cbShowDisabled = ns.GUI:CreateCheckbox(optRow2, "Show Disabled Modules", "showDisabled", cfg, function(v)
+        Movers:UpdateDisplay()
+    end)
+    cbShowDisabled:SetPoint("LEFT", optRow2, "LEFT", 0, 0)
+
+    local cbSnapElem = ns.GUI:CreateCheckbox(optRow2, "Snap to Elements", "snapToElements", cfg, function(v) end)
+    cbSnapElem:SetPoint("LEFT", optRow2, "LEFT", 240, 0)
+
+    yOffset = yOffset - 34
+
+    -- Row 3: Grid Size Dropdown
+    local optRow3 = CreateFrame("Frame", nil, content)
+    optRow3:SetPoint("TOPLEFT", PAD, yOffset)
+    optRow3:SetSize(520, 32)
+
+    local gridSizes = {
+        { value = 8, text = "8 px" },
+        { value = 16, text = "16 px" },
+        { value = 32, text = "32 px (Standard)" },
+        { value = 64, text = "64 px" },
+    }
+    local ddGrid = ns.GUI:CreateDropdown(optRow3, "Grid Size", gridSizes, "gridSize", cfg, function(v)
+        Movers:UpdateGrid()
+    end)
+    ddGrid:SetPoint("LEFT", optRow3, "LEFT", 0, 0)
+
+    yOffset = yOffset - 46
 
     -- ── Registered Elements List ──────────────────────────────────────────
     yOffset = yOffset - 8
@@ -1002,67 +1057,57 @@ local function BuildEditMode(parent)
             local data = Movers.registry[name]
             if name ~= "ZoneAbility" then
             local displayLabel = data.label or name
+            local isEnabled = Movers:IsElementEnabled(name)
 
             -- Row
             local row = CreateFrame("Frame", nil, content, "BackdropTemplate")
-            row:SetSize(480, 28)
+            row:SetSize(520, 28)
             row:SetPoint("TOPLEFT", PAD, yOffset)
             ns.GUI:CreateBackdrop(row, {0.12, 0.12, 0.12, 0.35}, C.border)
+
+            -- Status Indicator Pill
+            local statusDot = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+            statusDot:SetPoint("LEFT", 8, 0)
+            statusDot:SetText(isEnabled and "|cff00FF80●|r" or "|cffff4444●|r")
 
             -- Label
             local lbl = row:CreateFontString(nil, "OVERLAY", "GameFontNormal")
             ns.GUI:SetFont(lbl, 12, "")
-            lbl:SetPoint("LEFT", 10, 0)
-            lbl:SetText(displayLabel)
+            lbl:SetPoint("LEFT", statusDot, "RIGHT", 6, 0)
+            lbl:SetText(displayLabel .. (isEnabled and "" or " |cffff4444(Disabled)|r"))
             lbl:SetTextColor(C.text[1], C.text[2], C.text[3], 1)
 
-            -- Toggle button: first click = show mover, second click = hide + save
-            local frameAvailable = name ~= "ZoneAbility" or (data.frame and data.frame.IsShown ~= nil)
-            local moverActive = false
+            -- Enable / Disable Toggle Button
+            local toggleModuleBtn = ns.GUI:CreateButton(row, isEnabled and "Disable" or "Enable", 64, 20, function() end)
+            toggleModuleBtn:SetPoint("RIGHT", row, "RIGHT", -68, 0)
+            toggleModuleBtn:SetScript("OnClick", function()
+                Movers:ToggleElementEnabled(name)
+                local updated = Movers:IsElementEnabled(name)
+                statusDot:SetText(updated and "|cff00FF80●|r" or "|cffff4444●|r")
+                lbl:SetText(displayLabel .. (updated and "" or " |cffff4444(Disabled)|r"))
+                if toggleModuleBtn.text then
+                    toggleModuleBtn.text:SetText(updated and "Disable" or "Enable")
+                end
+            end)
 
+            -- Move single frame button
             local toggleBtn = ns.GUI:CreateButton(row, "Move", 56, 20, function() end)
             toggleBtn:SetPoint("RIGHT", row, "RIGHT", -6, 0)
 
-            local function SetMoverActive(active)
-                moverActive = active
-                if active then
-                    -- Show the mover
-                    if Movers and data.toggleFunc then
-                        pcall(data.toggleFunc, data.frame, true, true)
-                    end
-                    -- Update button appearance to "Done"
-                    if toggleBtn.text then
-                        toggleBtn.text:SetText("Done")
-                        toggleBtn.text:SetTextColor(C.accent[1], C.accent[2], C.accent[3], 1)
-                    end
-                else
-                    -- Hide the mover (position auto-saved on drag via OnDragStop)
-                    if Movers and data.toggleFunc then
-                        pcall(data.toggleFunc, data.frame, false, false)
-                    end
-                    -- Revert button to "Move"
-                    if toggleBtn.text then
-                        toggleBtn.text:SetText("Move")
-                        toggleBtn.text:SetTextColor(C.text[1], C.text[2], C.text[3], 1)
-                    end
-                end
-            end
-
+            local moverActive = false
             toggleBtn:SetScript("OnClick", function()
-                if not frameAvailable then return end
-                SetMoverActive(not moverActive)
+                moverActive = not moverActive
+                if Movers and data.toggleFunc then
+                    pcall(data.toggleFunc, data.frame, moverActive, moverActive)
+                end
+                if data.frame then
+                    Movers:ApplyEditModeStyle(data.frame, moverActive, name)
+                end
+                if toggleBtn.text then
+                    toggleBtn.text:SetText(moverActive and "Done" or "Move")
+                    toggleBtn.text:SetTextColor(moverActive and C.accent[1] or C.text[1], moverActive and C.accent[2] or C.text[2], moverActive and C.accent[3] or C.text[3], 1)
+                end
             end)
-
-            if not frameAvailable then
-                toggleBtn:SetAlpha(0.4)
-                toggleBtn:SetScript("OnEnter", function(self)
-                    GameTooltip:SetOwner(self, "ANCHOR_LEFT")
-                    GameTooltip:AddLine("Not available", 1, 0.5, 0, true)
-                    GameTooltip:AddLine("Zone Ability only appears during\nspecific zone events or encounters.", 0.7, 0.7, 0.7, true)
-                    GameTooltip:Show()
-                end)
-                toggleBtn:SetScript("OnLeave", function() GameTooltip:Hide() end)
-            end
 
             yOffset = yOffset - 32
             end -- if name ~= ZoneAbility

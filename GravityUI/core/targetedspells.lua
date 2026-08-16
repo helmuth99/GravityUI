@@ -750,6 +750,8 @@ UpdateLayout = function()
             local spacing = s.spacing or 4
             local maxBars = s.maxBars or 5
             local growUp = (s.growDirection ~= "DOWN")
+            local extraLeft = (height + 2) + (s.showRaidIcon ~= false and (height + 1) or 0)
+            local totalWidth = width + extraLeft
 
             local barCount = 0
             for i, cast in ipairs(activeList) do
@@ -761,9 +763,9 @@ UpdateLayout = function()
                     bar:ClearAllPoints()
                     local yOffset = (barCount - 1) * (height + spacing)
                     if growUp then
-                        bar:SetPoint("BOTTOMLEFT", barContainer, "BOTTOMLEFT", 0, yOffset)
+                        bar:SetPoint("BOTTOMRIGHT", barContainer, "BOTTOMRIGHT", 0, yOffset)
                     else
-                        bar:SetPoint("TOPLEFT", barContainer, "TOPLEFT", 0, -yOffset)
+                        bar:SetPoint("TOPRIGHT", barContainer, "TOPRIGHT", 0, -yOffset)
                     end
 
                     bar.icon:SetTexture(cast.icon or 136243)
@@ -777,8 +779,12 @@ UpdateLayout = function()
             end
 
             local totalHeight = math_max(height, (barCount * height) + (math_max(0, barCount - 1) * spacing))
-            barContainer:SetSize(width, totalHeight)
-            barContainer:Show()
+            barContainer:SetSize(totalWidth, totalHeight)
+            if barCount > 0 or barMoverActive then
+                barContainer:Show()
+            else
+                barContainer:Hide()
+            end
         else
             for _, bar in ipairs(barPool) do bar:Hide() end
             barContainer:Hide()
@@ -845,7 +851,11 @@ UpdateLayout = function()
             end
 
             iconContainer:SetSize(size, size)
-            iconContainer:Show()
+            if iconCount > 0 or iconMoverActive then
+                iconContainer:Show()
+            else
+                iconContainer:Hide()
+            end
         else
             for _, iconF in ipairs(iconPool) do iconF:Hide() end
             iconContainer:Hide()
@@ -1227,12 +1237,23 @@ end
 -- TEST MODE & MOVERS
 -- ============================================================================
 function TargetedSpells.TestMode(state)
-    local enable = (state ~= nil) and state or (not testModeActive)
+    local enable
+    if state ~= nil then
+        enable = (state == true)
+    else
+        enable = not testModeActive
+    end
+
     if not enable then
         testModeActive = false
         for _, c in ipairs(activeList) do ReleaseCast(c) end
         wipe(activeList)
         wipe(activeCasts)
+        for _, bar in ipairs(barPool) do bar:Hide() end
+        for _, iconF in ipairs(iconPool) do iconF:Hide() end
+        if not barMoverActive and barContainer then barContainer:Hide() end
+        if not iconMoverActive and iconContainer then iconContainer:Hide() end
+        if updateFrame then updateFrame:Hide() end
         CheckZoneState()
     else
         testModeActive = true
@@ -1327,35 +1348,43 @@ function TargetedSpells.ToggleBarMover(force)
     if not barContainer then return end
     local s = GetSettings()
 
-    local show = (force ~= nil) and force or (not barContainer.mover:IsShown())
-    if force == false then show = false end
+    local show
+    if force ~= nil then
+        show = (force == true)
+    else
+        show = not (barContainer.mover and barContainer.mover:IsShown())
+    end
     barMoverActive = show
 
     if show then
         barContainer:Show()
-        barContainer.mover:Show()
-        barContainer.mover:SetBackdrop({
-            bgFile   = "Interface\\Buttons\\WHITE8x8",
-            edgeFile = "Interface\\Buttons\\WHITE8x8",
-            edgeSize = 1,
-            insets   = { left = 0, right = 0, top = 0, bottom = 0 }
-        })
-        barContainer.mover:SetBackdropColor(0, 0.6, 1, 0.5)
-        barContainer.mover:SetBackdropBorderColor(0, 0.8, 1, 1)
+        if barContainer.mover then
+            barContainer.mover:Show()
+            barContainer.mover:SetBackdrop({
+                bgFile   = "Interface\\Buttons\\WHITE8x8",
+                edgeFile = "Interface\\Buttons\\WHITE8x8",
+                edgeSize = 1,
+                insets   = { left = 0, right = 0, top = 0, bottom = 0 }
+            })
+            barContainer.mover:SetBackdropColor(0, 0.6, 1, 0.5)
+            barContainer.mover:SetBackdropBorderColor(0, 0.8, 1, 1)
+        end
 
         if #activeList == 0 and not testModeActive then
             TargetedSpells.TestMode(true)
+        else
+            UpdateLayout()
         end
     else
-        barContainer.mover:Hide()
-        barContainer.mover:SetBackdrop(nil)
+        if barContainer.mover then
+            barContainer.mover:Hide()
+            barContainer.mover:SetBackdrop(nil)
+        end
         if not iconMoverActive then
             TargetedSpells.TestMode(false)
+        else
+            UpdateLayout()
         end
-        if not s or not s.enabled or not s.showBars or #activeList == 0 then
-            barContainer:Hide()
-        end
-        UpdateLayout()
     end
 end
 
@@ -1363,54 +1392,64 @@ function TargetedSpells.ToggleIconMover(force)
     if not iconContainer then return end
     local s = GetSettings()
 
-    local show = (force ~= nil) and force or (not iconContainer.mover:IsShown())
-    if force == false then show = false end
+    local show
+    if force ~= nil then
+        show = (force == true)
+    else
+        show = not (iconContainer.mover and iconContainer.mover:IsShown())
+    end
     iconMoverActive = show
 
     if show then
         iconContainer:Show()
-        iconContainer.mover:Show()
-        iconContainer.mover:SetBackdrop({
-            bgFile   = "Interface\\Buttons\\WHITE8x8",
-            edgeFile = "Interface\\Buttons\\WHITE8x8",
-            edgeSize = 2,
-            insets   = { left = 0, right = 0, top = 0, bottom = 0 }
-        })
-        iconContainer.mover:SetBackdropColor(0.0, 0.6, 1.0, 0.45)
-        iconContainer.mover:SetBackdropBorderColor(0.0, 0.9, 1.0, 1)
+        if iconContainer.mover then
+            iconContainer.mover:Show()
+            iconContainer.mover:SetBackdrop({
+                bgFile   = "Interface\\Buttons\\WHITE8x8",
+                edgeFile = "Interface\\Buttons\\WHITE8x8",
+                edgeSize = 2,
+                insets   = { left = 0, right = 0, top = 0, bottom = 0 }
+            })
+            iconContainer.mover:SetBackdropColor(0.0, 0.6, 1.0, 0.45)
+            iconContainer.mover:SetBackdropBorderColor(0.0, 0.9, 1.0, 1)
 
-        local r, g, b = 0, 0.8, 1
-        if ns.GetAccentColor then
-            r, g, b = ns.GetAccentColor()
-        end
-        if iconContainer.mover.titleBadge then
-            iconContainer.mover.titleBadge:SetBackdropBorderColor(r, g, b, 0.9)
-        end
-        if iconContainer.mover.titleText then
-            iconContainer.mover.titleText:SetTextColor(r, g, b)
+            local r, g, b = 0, 0.8, 1
+            if ns.GetAccentColor then
+                r, g, b = ns.GetAccentColor()
+            end
+            if iconContainer.mover.titleBadge then
+                iconContainer.mover.titleBadge:SetBackdropBorderColor(r, g, b, 0.9)
+            end
+            if iconContainer.mover.titleText then
+                iconContainer.mover.titleText:SetTextColor(r, g, b)
+            end
         end
 
         if #activeList == 0 and not testModeActive then
             TargetedSpells.TestMode(true)
+        else
+            UpdateLayout()
         end
     else
-        iconContainer.mover:Hide()
-        iconContainer.mover:SetBackdrop(nil)
+        if iconContainer.mover then
+            iconContainer.mover:Hide()
+            iconContainer.mover:SetBackdrop(nil)
+        end
         if not barMoverActive then
             TargetedSpells.TestMode(false)
+        else
+            UpdateLayout()
         end
-        if not s or not s.enabled or not s.showIcons or #activeList == 0 then
-            iconContainer:Hide()
-        end
-        UpdateLayout()
     end
 end
 
 function TargetedSpells.ToggleMover(force)
     local s = GetSettings()
     if force == false then
-        TargetedSpells.ToggleBarMover(false)
-        TargetedSpells.ToggleIconMover(false)
+        barMoverActive = false
+        iconMoverActive = false
+        if barContainer and barContainer.mover then barContainer.mover:Hide() end
+        if iconContainer and iconContainer.mover then iconContainer.mover:Hide() end
         TargetedSpells.TestMode(false)
         return
     end

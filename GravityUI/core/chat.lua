@@ -1634,7 +1634,12 @@ local function UpdateAllTabsVisibility(forceState)
     local settings = GetSettings()
     if not settings or not settings.hideTabs then return end
 
-    local isOverAny = (forceState ~= nil) and forceState or IsMouseOverChat()
+    local isOverAny
+    if forceState ~= nil then
+        isOverAny = (forceState == true)
+    else
+        isOverAny = IsMouseOverChat()
+    end
     
     -- Only trigger fade if state actually changed
     if isOverAny == lastHoverState and forceState == nil then return end

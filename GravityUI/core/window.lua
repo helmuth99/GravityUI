@@ -1194,7 +1194,9 @@ end
 function GUI:Hide()
     if self.MainFrame then
         self.MainFrame:Hide()
-        self:CloseSearchResults()
+        if self.CloseSearchResults then
+            self:CloseSearchResults()
+        end
     end
 end
 
