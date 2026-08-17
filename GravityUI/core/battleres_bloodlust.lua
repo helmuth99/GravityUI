@@ -4,17 +4,23 @@ local ADDON_NAME, ns = ...
 ns.BattleResTracker = ns.BattleResTracker or {}
 ns.BloodlustTracker = ns.BloodlustTracker or {}
 
-local BREZ_SPELL_ID = 20484 -- Rebirth (shared brez pool)
+local BREZ_SPELL_ID = 20484 -- Rebirth (canonical shared brez pool spell ID)
+local PREVIEW_LUST_SPELL_ID = 2825
+
+-- Sated / Exhaustion debuff IDs (all lust variants)
 local SATED_DEBUFFS = {
-    [57723]  = true, -- Exhaustion (Heroism)
-    [57724]  = true, -- Sated (Bloodlust)
-    [80354]  = true, -- Temporal Displacement (Time Warp)
-    [95809]  = true, -- Insanity (Ancient Hysteria)
-    [160455] = true, -- Fatigued (Netherwinds)
-    [264689] = true, -- Fatigued (Primal Rage)
-    [390435] = true, -- Exhaustion (Fury of the Aspects)
+    57723,   -- Exhaustion (Heroism)
+    57724,   -- Sated (Bloodlust)
+    80354,   -- Temporal Displacement (Time Warp)
+    95809,   -- Insanity (Ancient Hysteria)
+    160455,  -- Fatigued (Netherwinds)
+    264689,  -- Fatigued (Primal Rage)
+    390435,  -- Exhaustion (Fury of the Aspects)
 }
 
+---------------------------------------------------------------------------
+-- DATABASE ACCESS
+---------------------------------------------------------------------------
 local function GetBR_DB()
     local db = ns.GetDB and ns.GetDB()
     if db and db.screenindicators then
@@ -54,24 +60,70 @@ local function GetBL_DB()
     return nil
 end
 
+---------------------------------------------------------------------------
+-- TIME FORMATTING & HELPERS
+---------------------------------------------------------------------------
+local function FormatTime(s)
+    if not s or s <= 0 then return "" end
+    local m = math.floor(s / 60)
+    local sec = math.floor(s % 60)
+    return string.format("%d:%02d", m, sec)
+end
+
+local function GetActiveLustIcon()
+    local faction = UnitFactionGroup("player")
+    return (faction == "Alliance") and 132313 or 136012 -- Heroism vs Bloodlust
+end
+
+---------------------------------------------------------------------------
+-- ENCOUNTER & KEYSTONE STATE TRACKING
+---------------------------------------------------------------------------
+local _state = {
+    inEncounter     = false,
+    encounterIsRaid = false,
+    inChallenge     = false,
+}
+
+local function ActiveKeystoneLevel()
+    if not C_ChallengeMode or not C_ChallengeMode.IsChallengeModeActive or not C_ChallengeMode.IsChallengeModeActive() then
+        return nil
+    end
+    if C_ChallengeMode.GetActiveKeystoneInfo then
+        local lvl = C_ChallengeMode.GetActiveKeystoneInfo()
+        return (lvl and lvl > 0) and lvl or nil
+    end
+    return nil
+end
+
+local function RefreshKeystoneState()
+    _state.inChallenge = (ActiveKeystoneLevel() ~= nil)
+end
+
+local function RefreshEncounterState()
+    _state.inEncounter = (IsEncounterInProgress and IsEncounterInProgress()) or false
+    if _state.inEncounter then
+        local _, instanceType = GetInstanceInfo()
+        _state.encounterIsRaid = (instanceType == "raid")
+    else
+        _state.encounterIsRaid = false
+    end
+end
+
 local function CheckVisibility(visMode)
     if visMode == "ALWAYS" then return true end
     if visMode == "NEVER" then return false end
 
-    local inInstance, instanceType = IsInInstance()
-    local isRaid = inInstance and instanceType == "raid"
-    local isParty = inInstance and instanceType == "party"
-    local isMPlus = isParty and C_ChallengeMode and C_ChallengeMode.IsChallengeModeActive and C_ChallengeMode.IsChallengeModeActive()
+    -- Hard gate: must be in a party or raid instance
+    local _, instanceType = GetInstanceInfo()
+    if instanceType ~= "party" and instanceType ~= "raid" then return false end
 
-    if visMode == "MPLUS_AND_RAID" then
-        return isRaid or isMPlus or (IsInRaid() or IsInGroup())
-    elseif visMode == "MPLUS" then
-        return isMPlus or (isParty and IsInGroup())
-    elseif visMode == "RAID" then
-        return isRaid or IsInRaid()
-    end
+    local wantMPlus = (visMode == "MPLUS_AND_RAID" or visMode == "MPLUS")
+    local wantRaid  = (visMode == "MPLUS_AND_RAID" or visMode == "RAID")
 
-    return true
+    if wantMPlus and _state.inChallenge then return true end
+    if wantRaid and _state.inEncounter and _state.encounterIsRaid then return true end
+
+    return false
 end
 
 --==============================================================================================================================================================================================
@@ -79,6 +131,7 @@ end
 --==============================================================================================================================================================================================
 local brFrame, brIcon, brBorder, brCountText, brCooldownText, brCD
 local brIsPreview = false
+local brTicker = nil
 
 local function CreateBRFrame()
     if brFrame then return brFrame end
@@ -103,6 +156,7 @@ local function CreateBRFrame()
     end)
     brFrame:SetScript("OnDragStop", function(self)
         self:StopMovingOrSizing()
+        self:SetUserPlaced(false)
         local p, _, rp, x, y = self:GetPoint()
         local d = GetBR_DB()
         if d then
@@ -113,7 +167,7 @@ local function CreateBRFrame()
     brIcon = brFrame:CreateTexture(nil, "ARTWORK")
     brIcon:SetAllPoints()
     brIcon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
-    local brezIconPath = C_Spell.GetSpellTexture and C_Spell.GetSpellTexture(BREZ_SPELL_ID) or 136080
+    local brezIconPath = C_Spell and C_Spell.GetSpellTexture and C_Spell.GetSpellTexture(BREZ_SPELL_ID) or 136080
     brIcon:SetTexture(brezIconPath)
 
     brCD = CreateFrame("Cooldown", nil, brFrame, "CooldownFrameTemplate")
@@ -144,9 +198,11 @@ local function CreateBRFrame()
         ns.Movers:Register("BattleResTracker", brFrame, function(frame, enabled, force)
             if enabled then
                 brIsPreview = true
+                if brTicker then brTicker:Cancel(); brTicker = nil end
                 frame:Show()
                 frame:EnableMouse(true)
                 brCountText:SetText("2")
+                brCountText:SetTextColor(1, 1, 1, 1)
                 brCooldownText:SetText("3:45")
                 brIcon:SetDesaturated(false)
                 frame:SetAlpha(1)
@@ -161,6 +217,58 @@ local function CreateBRFrame()
     return brFrame
 end
 
+local function PollBR()
+    if not brFrame or brIsPreview then return end
+
+    local db = GetBR_DB()
+    if not (db and db.enabled) then return end
+
+    local info = C_Spell and C_Spell.GetSpellCharges and C_Spell.GetSpellCharges(BREZ_SPELL_ID)
+    if not info or not info.maxCharges then
+        if db.visibility == "ALWAYS" then
+            brCountText:SetText("-")
+            brCooldownText:SetText("")
+            brIcon:SetDesaturated(false)
+            brCD:Clear()
+        end
+        return
+    end
+
+    local charges = info.currentCharges
+    local maxCharges = info.maxCharges
+    local start = info.cooldownStartTime
+    local dur = info.cooldownDuration
+    local recharging = (charges < maxCharges and start and dur and dur > 0)
+
+    -- Count text & color
+    brCountText:SetText(tostring(charges))
+    if charges <= 0 then
+        brCountText:SetTextColor(1, 0.2, 0.2, 1)
+        brIcon:SetDesaturated(true)
+        brFrame:SetAlpha(0.7)
+    else
+        local cc = db.countColor or { 1, 1, 1, 1 }
+        brCountText:SetTextColor(cc[1] or 1, cc[2] or 1, cc[3] or 1, cc[4] or 1)
+        brIcon:SetDesaturated(false)
+        brFrame:SetAlpha(1)
+    end
+
+    -- Timer text & cooldown swipe
+    if recharging then
+        local remaining = (start + dur) - GetTime()
+        if remaining > 0 then
+            brCooldownText:SetText(FormatTime(remaining))
+            brCD:SetCooldown(start, dur)
+        else
+            brCooldownText:SetText("")
+            brCD:Clear()
+        end
+    else
+        brCooldownText:SetText("")
+        brCD:Clear()
+    end
+end
+
 function ns.BattleResTracker.ToggleMover()
     CreateBRFrame()
     if brIsPreview then
@@ -172,9 +280,11 @@ function ns.BattleResTracker.ToggleMover()
         ns.BattleResTracker.Update()
     else
         brIsPreview = true
+        if brTicker then brTicker:Cancel(); brTicker = nil end
         brFrame:Show()
         brFrame:EnableMouse(true)
         brCountText:SetText("2")
+        brCountText:SetTextColor(1, 1, 1, 1)
         brCooldownText:SetText("3:45")
         brIcon:SetDesaturated(false)
         brFrame:SetAlpha(1)
@@ -190,78 +300,32 @@ function ns.BattleResTracker.Update()
 
     local db = GetBR_DB()
     if not (db and db.enabled) then
+        if brTicker then brTicker:Cancel(); brTicker = nil end
         brFrame:Hide()
         return
     end
 
-    if not CheckVisibility(db.visibility) then
-        brFrame:Hide()
-        return
-    end
-
-    -- Sizing & styling
-    local sz = db.iconSize or 36
-    brFrame:SetSize(sz, sz)
-    if ns.GUI and ns.GUI.SetFont then
-        ns.GUI:SetFont(brCountText, db.countFontSize or 11, "OUTLINE")
-        ns.GUI:SetFont(brCooldownText, db.fontSize or 12, "OUTLINE")
-    end
-
-    local tc = db.timerColor or { 1, 0.82, 0, 1 }
-    local cc = db.countColor or { 1, 1, 1, 1 }
-    brCooldownText:SetTextColor(tc[1] or 1, tc[2] or 0.82, tc[3] or 0, tc[4] or 1)
-    brCountText:SetTextColor(cc[1] or 1, cc[2] or 1, cc[3] or 1, cc[4] or 1)
-
-    local currentCharges, maxCharges, cooldownStart, cooldownDuration
-    if C_Spell and C_Spell.GetSpellCharges then
-        local chargeInfo = C_Spell.GetSpellCharges(BREZ_SPELL_ID)
-        if chargeInfo then
-            currentCharges = chargeInfo.currentCharges
-            maxCharges = chargeInfo.maxCharges
-            cooldownStart = chargeInfo.cooldownStartTime
-            cooldownDuration = chargeInfo.cooldownDuration
-        end
-    elseif GetSpellCharges then
-        currentCharges, maxCharges, cooldownStart, cooldownDuration = GetSpellCharges(BREZ_SPELL_ID)
-    end
-
-    if currentCharges and maxCharges and maxCharges > 0 then
-        brFrame:Show()
-        brCountText:SetText(tostring(currentCharges))
-
-        if currentCharges == 0 then
-            brIcon:SetDesaturated(true)
-            brFrame:SetAlpha(0.6)
-        else
-            brIcon:SetDesaturated(false)
-            brFrame:SetAlpha(1)
+    local shouldShow = CheckVisibility(db.visibility)
+    if shouldShow then
+        -- Sizing & styling
+        local sz = db.iconSize or 36
+        brFrame:SetSize(sz, sz)
+        if ns.GUI and ns.GUI.SetFont then
+            ns.GUI:SetFont(brCountText, db.countFontSize or 11, "OUTLINE")
+            ns.GUI:SetFont(brCooldownText, db.fontSize or 12, "OUTLINE")
         end
 
-        if cooldownDuration and cooldownDuration > 0 and currentCharges < maxCharges then
-            local remain = (cooldownStart + cooldownDuration) - GetTime()
-            if remain > 0 then
-                local m = math.floor(remain / 60)
-                local s = math.floor(remain % 60)
-                brCooldownText:SetText(string.format("%d:%02d", m, s))
-                brCD:SetCooldown(cooldownStart, cooldownDuration)
-            else
-                brCooldownText:SetText("")
-                brCD:Clear()
-            end
-        else
-            brCooldownText:SetText("")
-            brCD:Clear()
+        local tc = db.timerColor or { 1, 0.82, 0, 1 }
+        brCooldownText:SetTextColor(tc[1] or 1, tc[2] or 0.82, tc[3] or 0, tc[4] or 1)
+
+        if not brFrame:IsShown() then brFrame:Show() end
+        if not brTicker then
+            brTicker = C_Timer.NewTicker(0.5, PollBR)
         end
+        PollBR()
     else
-        -- Fallback when charges info is unavailable (solo out of instance)
-        if db.visibility == "ALWAYS" then
-            brFrame:Show()
-            brCountText:SetText("-")
-            brCooldownText:SetText("")
-            brIcon:SetDesaturated(false)
-        else
-            brFrame:Hide()
-        end
+        if brFrame:IsShown() then brFrame:Hide() end
+        if brTicker then brTicker:Cancel(); brTicker = nil end
     end
 end
 
@@ -269,7 +333,68 @@ end
 -- 2. BLOODLUST TRACKER
 --==============================================================================================================================================================================================
 local blFrame, blIcon, blBorder, blCooldownText, blCD
+local buffOverlay, buffTex, buffCooldown, buffDurationFS
 local blIsPreview = false
+local blTicker = nil
+
+local _satedActive = false
+local _satedWasPresent = false
+local _buffExpiry = 0
+local _buffZoneGuard = 0
+local _satedExpiryGuess = 0
+
+local function FindSatedDebuff()
+    if not (C_UnitAuras and C_UnitAuras.GetPlayerAuraBySpellID) then return nil end
+    for i = 1, #SATED_DEBUFFS do
+        local sid = SATED_DEBUFFS[i]
+        local aura = C_UnitAuras.GetPlayerAuraBySpellID(sid)
+        if aura then return aura, sid end
+    end
+    return nil
+end
+
+local _buffAccum = 0
+local _lastBuffDurText = nil
+
+local function HideBuffOverlay()
+    _buffExpiry = 0
+    _lastBuffDurText = nil
+    if buffOverlay then
+        buffOverlay:SetScript("OnUpdate", nil)
+        buffOverlay:Hide()
+    end
+    if buffDurationFS then buffDurationFS:SetText("") end
+end
+
+local function BuffOnUpdate(_, elapsed)
+    local rem = _buffExpiry - GetTime()
+    if rem <= 0 then
+        HideBuffOverlay()
+        return
+    end
+
+    _buffAccum = _buffAccum + (elapsed or 0)
+    if _buffAccum < 0.1 then return end
+    _buffAccum = 0
+
+    local s = tostring(math.ceil(rem))
+    if s ~= _lastBuffDurText then
+        buffDurationFS:SetText(s)
+        _lastBuffDurText = s
+    end
+end
+
+local function ShowBuffOverlay()
+    if not buffOverlay then return end
+    buffTex:SetTexture(GetActiveLustIcon())
+    _buffExpiry = GetTime() + 40
+    _buffAccum = 0
+    _lastBuffDurText = "40"
+    buffCooldown:SetCooldown(GetTime(), 40)
+    buffDurationFS:SetText("40")
+    buffOverlay:Show()
+    buffOverlay:SetScript("OnUpdate", BuffOnUpdate)
+end
 
 local function CreateBLFrame()
     if blFrame then return blFrame end
@@ -294,6 +419,7 @@ local function CreateBLFrame()
     end)
     blFrame:SetScript("OnDragStop", function(self)
         self:StopMovingOrSizing()
+        self:SetUserPlaced(false)
         local p, _, rp, x, y = self:GetPoint()
         local d = GetBL_DB()
         if d then
@@ -304,7 +430,7 @@ local function CreateBLFrame()
     blIcon = blFrame:CreateTexture(nil, "ARTWORK")
     blIcon:SetAllPoints()
     blIcon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
-    local blIconPath = C_Spell.GetSpellTexture and C_Spell.GetSpellTexture(2825) or 136012
+    local blIconPath = C_Spell and C_Spell.GetSpellTexture and C_Spell.GetSpellTexture(PREVIEW_LUST_SPELL_ID) or 136012
     blIcon:SetTexture(blIconPath)
 
     blCD = CreateFrame("Cooldown", nil, blFrame, "CooldownFrameTemplate")
@@ -323,6 +449,29 @@ local function CreateBLFrame()
     blCooldownText:SetPoint("CENTER", blFrame, "CENTER", 0, 0)
     blCooldownText:SetTextColor(1, 0.2, 0.2, 1)
 
+    -- 40s Active Lust Buff Overlay (sits directly on top of the Sated debuff icon)
+    buffOverlay = CreateFrame("Frame", nil, blFrame)
+    buffOverlay:SetAllPoints(blFrame)
+    buffOverlay:SetFrameLevel(blCD:GetFrameLevel() + 4)
+    buffOverlay:Hide()
+
+    buffTex = buffOverlay:CreateTexture(nil, "ARTWORK")
+    buffTex:SetAllPoints(buffOverlay)
+    buffTex:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+
+    buffCooldown = CreateFrame("Cooldown", nil, buffOverlay, "CooldownFrameTemplate")
+    buffCooldown:SetAllPoints(buffOverlay)
+    buffCooldown:SetDrawEdge(false)
+    buffCooldown:SetDrawSwipe(true)
+    buffCooldown:SetReverse(true)
+    buffCooldown:SetHideCountdownNumbers(true)
+    buffCooldown:SetFrameLevel(buffOverlay:GetFrameLevel() + 1)
+
+    buffDurationFS = buffCooldown:CreateFontString(nil, "OVERLAY", nil, 2)
+    if ns.GUI and ns.GUI.SetFont then ns.GUI:SetFont(buffDurationFS, 12, "OUTLINE") else buffDurationFS:SetFont(STANDARD_TEXT_FONT, 12, "OUTLINE") end
+    buffDurationFS:SetPoint("CENTER", buffOverlay, "CENTER", 0, 0)
+    buffDurationFS:SetTextColor(1, 0.9, 0.2, 1)
+
     blFrame:EnableMouse(false)
     blFrame:Hide()
 
@@ -330,6 +479,8 @@ local function CreateBLFrame()
         ns.Movers:Register("BloodlustTracker", blFrame, function(frame, enabled, force)
             if enabled then
                 blIsPreview = true
+                if blTicker then blTicker:Cancel(); blTicker = nil end
+                HideBuffOverlay()
                 frame:Show()
                 frame:EnableMouse(true)
                 blCooldownText:SetText("5:30")
@@ -346,6 +497,49 @@ local function CreateBLFrame()
     return blFrame
 end
 
+local function PollBL()
+    if not blFrame or blIsPreview then return end
+
+    local aura, sid = FindSatedDebuff()
+    if not aura then
+        _satedActive = false
+        _satedExpiryGuess = 0
+        blCooldownText:SetText("")
+        blCD:Clear()
+        if not blIsPreview and not CheckVisibility(GetBL_DB() and GetBL_DB().visibility) then
+            if blTicker then blTicker:Cancel(); blTicker = nil end
+            blFrame:Hide()
+        end
+        return
+    end
+
+    _satedActive = true
+    local exp = aura.expirationTime
+    local dur = aura.duration or 600
+
+    -- Secret-safe expiration handling
+    if exp and (not issecretvalue or not issecretvalue(exp)) and exp > 0 then
+        _satedExpiryGuess = exp
+    end
+
+    local remain = 0
+    if exp and (not issecretvalue or not issecretvalue(exp)) and exp > 0 then
+        remain = exp - GetTime()
+    elseif _satedExpiryGuess > GetTime() then
+        remain = _satedExpiryGuess - GetTime()
+    end
+
+    if remain > 0 then
+        blCooldownText:SetText(FormatTime(remain))
+        if _satedExpiryGuess > GetTime() then
+            blCD:SetCooldown(_satedExpiryGuess - dur, dur)
+        end
+    else
+        blCooldownText:SetText("")
+        blCD:Clear()
+    end
+end
+
 function ns.BloodlustTracker.ToggleMover()
     CreateBLFrame()
     if blIsPreview then
@@ -357,6 +551,8 @@ function ns.BloodlustTracker.ToggleMover()
         ns.BloodlustTracker.Update()
     else
         blIsPreview = true
+        if blTicker then blTicker:Cancel(); blTicker = nil end
+        HideBuffOverlay()
         blFrame:Show()
         blFrame:EnableMouse(true)
         blCooldownText:SetText("5:30")
@@ -374,96 +570,117 @@ function ns.BloodlustTracker.Update()
 
     local db = GetBL_DB()
     if not (db and db.enabled) then
+        if blTicker then blTicker:Cancel(); blTicker = nil end
+        HideBuffOverlay()
         blFrame:Hide()
         return
     end
 
-    if not CheckVisibility(db.visibility) then
-        blFrame:Hide()
-        return
-    end
+    local aura, sid = FindSatedDebuff()
+    _satedActive = (aura ~= nil)
 
-    local sz = db.iconSize or 36
-    blFrame:SetSize(sz, sz)
-    if ns.GUI and ns.GUI.SetFont then
-        ns.GUI:SetFont(blCooldownText, db.fontSize or 12, "OUTLINE")
-    end
-
-    local tc = db.timerColor or { 1, 0.2, 0.2, 1 }
-    blCooldownText:SetTextColor(tc[1] or 1, tc[2] or 0.2, tc[3] or 0.2, tc[4] or 1)
-
-    -- Check player debuffs for Sated/Exhaustion
-    local satedFound = false
-    local satedExpTime = 0
-    local satedDuration = 0
-    local satedIcon
-
-    if C_UnitAuras and C_UnitAuras.GetAuraDataByIndex then
-        for i = 1, 40 do
-            local ok, aura = pcall(C_UnitAuras.GetAuraDataByIndex, "player", i, "HARMFUL")
-            if not ok then
-                break
-            elseif not aura then
-                break
-            else
-                local sid = tonumber(aura.spellId)
-                if sid and SATED_DEBUFFS[sid] then
-                    satedFound = true
-                    satedExpTime = aura.expirationTime or 0
-                    satedDuration = aura.duration or 0
-                    satedIcon = aura.icon
-                    break
-                end
-            end
+    local shouldShow = CheckVisibility(db.visibility)
+    if shouldShow and _satedActive then
+        local sz = db.iconSize or 36
+        blFrame:SetSize(sz, sz)
+        if ns.GUI and ns.GUI.SetFont then
+            ns.GUI:SetFont(blCooldownText, db.fontSize or 12, "OUTLINE")
+            if buffDurationFS then ns.GUI:SetFont(buffDurationFS, db.fontSize or 12, "OUTLINE") end
         end
-    end
 
-    if satedFound and satedExpTime > 0 then
-        blFrame:Show()
-        if satedIcon then blIcon:SetTexture(satedIcon) end
-        local remain = satedExpTime - GetTime()
-        if remain > 0 then
-            local m = math.floor(remain / 60)
-            local s = math.floor(remain % 60)
-            blCooldownText:SetText(string.format("%d:%02d", m, s))
-            blCD:SetCooldown(satedExpTime - satedDuration, satedDuration)
-        else
-            blCooldownText:SetText("")
-            blCD:Clear()
+        local tc = db.timerColor or { 1, 0.2, 0.2, 1 }
+        blCooldownText:SetTextColor(tc[1] or 1, tc[2] or 0.2, tc[3] or 0.2, tc[4] or 1)
+
+        local tex = C_Spell and C_Spell.GetSpellTexture and C_Spell.GetSpellTexture(sid)
+        if not tex and C_Spell and C_Spell.GetSpellTexture then
+            tex = C_Spell.GetSpellTexture(PREVIEW_LUST_SPELL_ID)
         end
+        blIcon:SetTexture(tex or 136012)
+
+        if not blFrame:IsShown() then blFrame:Show() end
+        if not blTicker then
+            blTicker = C_Timer.NewTicker(0.5, PollBL)
+        end
+        PollBL()
     else
-        blFrame:Hide()
+        if blFrame:IsShown() then blFrame:Hide() end
+        if blTicker then blTicker:Cancel(); blTicker = nil end
     end
 end
 
 ---------------------------------------------------------------------------
--- INITIALIZATION & EVENT HANDLING
+-- EVENT HANDLING
 ---------------------------------------------------------------------------
-CreateBRFrame()
-CreateBLFrame()
-
 local eventFrame = CreateFrame("Frame")
-eventFrame:RegisterEvent("PLAYER_LOGIN")
-eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
-eventFrame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
-eventFrame:RegisterEvent("UNIT_AURA")
+eventFrame:RegisterUnitEvent("UNIT_AURA", "player")
 eventFrame:RegisterEvent("SPELL_UPDATE_CHARGES")
-eventFrame:RegisterEvent("SPELL_UPDATE_COOLDOWN")
+eventFrame:RegisterEvent("ENCOUNTER_START")
+eventFrame:RegisterEvent("ENCOUNTER_END")
+eventFrame:RegisterEvent("CHALLENGE_MODE_START")
+eventFrame:RegisterEvent("CHALLENGE_MODE_COMPLETED")
+eventFrame:RegisterEvent("CHALLENGE_MODE_RESET")
+eventFrame:RegisterEvent("WORLD_STATE_TIMER_START")
+eventFrame:RegisterEvent("WORLD_STATE_TIMER_STOP")
+eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
+eventFrame:RegisterEvent("PLAYER_LOGIN")
+eventFrame:RegisterEvent("PLAYER_DEAD")
 
-eventFrame:SetScript("OnEvent", function(self, event, unit)
+eventFrame:SetScript("OnEvent", function(self, event, unit, updateInfo)
     if event == "PLAYER_LOGIN" then
         CreateBRFrame()
         CreateBLFrame()
-        C_Timer.NewTicker(1.0, function()
-            ns.BattleResTracker.Update()
-            ns.BloodlustTracker.Update()
-        end)
-    elseif event == "UNIT_AURA" then
-        if unit == "player" then
-            ns.BloodlustTracker.Update()
-        end
-    else
+        RefreshEncounterState()
+        RefreshKeystoneState()
         ns.BattleResTracker.Update()
         ns.BloodlustTracker.Update()
+    elseif event == "UNIT_AURA" then
+        local was = _satedWasPresent
+        local aura, sid = FindSatedDebuff()
+        local present = (aura ~= nil)
+        _satedWasPresent = present
+        _satedActive = present
+
+        local isFull = false
+        if updateInfo and (not issecretvalue or not issecretvalue(updateInfo)) then
+            local v = updateInfo.isFullUpdate
+            if v and (not issecretvalue or not issecretvalue(v)) then isFull = true end
+        end
+
+        -- Rising edge: Bloodlust/Heroism was just cast!
+        if present and not was and not isFull and GetTime() >= _buffZoneGuard then
+            _satedExpiryGuess = GetTime() + 600
+            ShowBuffOverlay()
+        end
+
+        ns.BloodlustTracker.Update()
+    elseif event == "PLAYER_DEAD" then
+        HideBuffOverlay()
+    elseif event == "ENCOUNTER_START" then
+        RefreshEncounterState()
+        ns.BattleResTracker.Update()
+        ns.BloodlustTracker.Update()
+    elseif event == "ENCOUNTER_END" then
+        RefreshEncounterState()
+        ns.BattleResTracker.Update()
+        ns.BloodlustTracker.Update()
+    elseif event == "CHALLENGE_MODE_START" or event == "WORLD_STATE_TIMER_START" then
+        RefreshKeystoneState()
+        ns.BattleResTracker.Update()
+        ns.BloodlustTracker.Update()
+    elseif event == "CHALLENGE_MODE_COMPLETED" or event == "CHALLENGE_MODE_RESET" or event == "WORLD_STATE_TIMER_STOP" then
+        _state.inChallenge = false
+        ns.BattleResTracker.Update()
+        ns.BloodlustTracker.Update()
+    elseif event == "PLAYER_ENTERING_WORLD" then
+        local aura = FindSatedDebuff()
+        _satedActive = (aura ~= nil)
+        _satedWasPresent = _satedActive
+        _buffZoneGuard = GetTime() + 1.5
+        RefreshEncounterState()
+        RefreshKeystoneState()
+        ns.BattleResTracker.Update()
+        ns.BloodlustTracker.Update()
+    elseif event == "SPELL_UPDATE_CHARGES" then
+        ns.BattleResTracker.Update()
     end
 end)

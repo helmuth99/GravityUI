@@ -2021,22 +2021,23 @@ local function CleanTransforms()
         return
     end
 
-    if C_UnitAuras and C_UnitAuras.GetAuraDataByIndex then
+    if C_UnitAuras and C_UnitAuras.GetPlayerAuraBySpellID then
+        for sid in pairs(TRANSFORM_SPELLS) do
+            local ok, aura = pcall(C_UnitAuras.GetPlayerAuraBySpellID, sid)
+            if ok and aura and aura.name and (not issecretvalue or not issecretvalue(aura.name)) then
+                if CancelSpellByName then
+                    pcall(CancelSpellByName, aura.name)
+                end
+            end
+        end
+    elseif C_UnitAuras and C_UnitAuras.GetAuraDataByIndex then
         for i = 1, 40 do
             local ok, aura = pcall(C_UnitAuras.GetAuraDataByIndex, "player", i, "HELPFUL")
-            if not ok then
-                -- Aura is secret / restricted under taint: stop scanning safely
-                break
-            elseif not aura then
-                break
-            else
-                local sid = tonumber(aura.spellId)
-                if sid and TRANSFORM_SPELLS[sid] then
-                    if CancelSpellByName and aura.name and (not issecretvalue or not issecretvalue(aura.name)) then
-                        pcall(CancelSpellByName, aura.name)
-                    elseif CancelUnitBuff then
-                        pcall(CancelUnitBuff, "player", i)
-                    end
+            if not ok or not aura then break end
+            local sid = tonumber(aura.spellId)
+            if sid and TRANSFORM_SPELLS[sid] then
+                if CancelSpellByName and aura.name and (not issecretvalue or not issecretvalue(aura.name)) then
+                    pcall(CancelSpellByName, aura.name)
                 end
             end
         end
