@@ -31,4 +31,3 @@ move-folders:
 required-dependencies:
   - ellesmereui
   - bigwigs
-  - blizzmove
