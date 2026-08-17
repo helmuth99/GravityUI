@@ -401,7 +401,6 @@ local function BuildGravityStringsTab(parent)
     -- 1. Source Profile Dropdown
     local availableProfiles = GUI.Installer and GUI.Installer:GetSourceProfiles() or {}
     local defaultSource = "Cronix"
-    -- Check if Cronix exists, if not pick first
     local hasDefault = false
     for _, v in ipairs(availableProfiles) do if v == defaultSource then hasDefault = true break end end
     if not hasDefault and #availableProfiles > 0 then defaultSource = availableProfiles[1] end
@@ -410,13 +409,20 @@ local function BuildGravityStringsTab(parent)
     local sourceWrapper = { selected = selectedSource }
     local stringsContainer -- Forward declare
 
+    local items = {}
+    for _, v in ipairs(availableProfiles) do 
+        local info = GUI.Installer and GUI.Installer:GetProfileInfo(v) or { name = v, className = "Profile", colorHex = "0099FF", formattedText = v }
+        table.insert(items, { 
+            text = info.formattedText or ("|cff" .. info.colorHex .. info.name .. "|r (" .. info.className .. ")"), 
+            value = v,
+            bgColor = info.bgColor,
+            borderColor = info.borderColor,
+        }) 
+    end
+
     local sourceDropdown 
     sourceDropdown = GUI:CreateDropdown(content, "GravityUI Profile", 
-        (function() 
-            local list = {}; 
-            for _,v in ipairs(availableProfiles) do table.insert(list, {text=v, value=v}) end; 
-            return list 
-        end)(), 
+        items, 
         "selected", sourceWrapper, function(val)
             selectedSource = val
             if stringsContainer and stringsContainer.Rebuild then stringsContainer:Rebuild(val) end
@@ -861,16 +867,34 @@ local function BuildInstallerTab(parent)
 
     -- Source Selection Dropdown
     local sourceWrapper = { selected = selectedSource }
+    local items = {}
+    for _, v in ipairs(availableProfiles) do 
+        local info = GUI.Installer and GUI.Installer:GetProfileInfo(v) or { name = v, className = "Profile", colorHex = "0099FF", formattedText = v }
+        table.insert(items, { 
+            text = info.formattedText or ("|cff" .. info.colorHex .. info.name .. "|r (" .. info.className .. ")"), 
+            value = v,
+            bgColor = info.bgColor,
+            borderColor = info.borderColor,
+        }) 
+    end
+
+    local installBtn -- Forward declare
+    local function UpdateInstallBtnTheme(profileName)
+        if not installBtn then return end
+        local info = GUI.Installer and GUI.Installer:GetProfileInfo(profileName) or { color = { 0.8, 0.2, 0.2 }, bgColor = { 0.14, 0.03, 0.05, 0.88 }, borderColor = { 0.77, 0.12, 0.23, 0.65 } }
+        installBtn:SetBackdropColor(unpack(info.bgColor))
+        installBtn:SetBackdropBorderColor(unpack(info.borderColor))
+        if installBtn.glow then 
+            installBtn.glow:SetColorTexture(info.color[1], info.color[2], info.color[3], 0.08) 
+        end
+    end
+
     local sourceDropdown 
     sourceDropdown = GUI:CreateDropdown(content, "GravityUI Profile Config:", 
-        (function() 
-            local list = {}; 
-            for _,v in ipairs(availableProfiles) do table.insert(list, {text=v, value=v}) end; 
-            return list 
-        end)(), 
+        items, 
         "selected", sourceWrapper, function(val)
             selectedSource = val
-            -- Button Update if needed, though mostly static now
+            UpdateInstallBtnTheme(val)
         end
     )
     sourceDropdown:SetPoint("TOPLEFT", PAD, y)
@@ -902,7 +926,6 @@ local function BuildInstallerTab(parent)
         end
     end
 
-    local installBtn -- Forward declare
     installBtn = GUI:CreateButton(content, "Install GravityUI (Fresh Install)", 220, 30, function()
         -- Confirm
         GUI:ShowConfirmation({
@@ -918,16 +941,22 @@ local function BuildInstallerTab(parent)
             end
         })
     end)
-    -- Custom Red Theme for Fresh Install
-    installBtn:SetBackdropColor(0.4, 0.1, 0.1, 0.8)
-    installBtn:SetBackdropBorderColor(0.8, 0.2, 0.2, 1)
-    if installBtn.glow then installBtn.glow:SetColorTexture(1, 0.2, 0.2, 0.1) end
+    -- Theme for Fresh Install based on selected profile
+    UpdateInstallBtnTheme(selectedSource)
     
     installBtn:HookScript("OnEnter", function(self)
-        self:SetBackdropBorderColor(1, 0.3, 0.3, 1)
+        local info = GUI.Installer and GUI.Installer:GetProfileInfo(selectedSource)
+        if info and info.hoverColor then
+            self:SetBackdropBorderColor(unpack(info.hoverColor))
+        elseif info and info.color then
+            self:SetBackdropBorderColor(info.color[1], info.color[2], info.color[3], 0.95)
+        end
     end)
     installBtn:HookScript("OnLeave", function(self)
-        self:SetBackdropBorderColor(0.8, 0.2, 0.2, 1)
+        local info = GUI.Installer and GUI.Installer:GetProfileInfo(selectedSource)
+        if info and info.borderColor then
+            self:SetBackdropBorderColor(unpack(info.borderColor))
+        end
     end)
 
     -- Align button with the dropdown input for cleaner look

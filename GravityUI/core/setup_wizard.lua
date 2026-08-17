@@ -515,7 +515,15 @@ function Wizard:Show()
 
     local srcWrapper = { selected = selectedSource }
     local items = {}
-    for _, v in ipairs(sources) do table.insert(items, { text = v, value = v }) end
+    for _, v in ipairs(sources) do 
+        local info = GUI.Installer and GUI.Installer:GetProfileInfo(v) or { name = v, className = "Profile", colorHex = "0099FF", formattedText = v }
+        table.insert(items, { 
+            text = info.formattedText or ("|cff" .. info.colorHex .. info.name .. "|r (" .. info.className .. ")"), 
+            value = v,
+            bgColor = info.bgColor,
+            borderColor = info.borderColor,
+        }) 
+    end
 
     local dd = GUI:CreateDropdown(
         f,
@@ -528,7 +536,7 @@ function Wizard:Show()
     -- Park the framework container so its empty 18px label zone sits behind profLabel,
     -- making the actual button appear directly below the label text.
     dd:SetPoint("TOPLEFT", f._profLabel, "BOTTOMLEFT", 0, -2)
-    dd:SetSize(220, 40)
+    dd:SetSize(280, 40)
     if dd.label then dd.label:SetAlpha(0) end
     f._profileDropdown = dd
 

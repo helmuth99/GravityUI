@@ -1019,16 +1019,30 @@ function GUI:CreateDropdown(parent, label, items, dbKey, dbTable, onChange)
             dbTable[dbKey] = val
         end
         
-        -- Update display text
+        -- Update display text and background
         local found = false
         for _, item in ipairs(items) do
             if item.value == val then
                 selectedText:SetText(item.text or item.value)
+                if item.bgColor and dropdown.SetBackdropColor then
+                    dropdown:SetBackdropColor(unpack(item.bgColor))
+                else
+                    dropdown:SetBackdropColor(0.15, 0.15, 0.15, 1)
+                end
+                if item.borderColor and dropdown.SetBackdropBorderColor then
+                    dropdown:SetBackdropBorderColor(unpack(item.borderColor))
+                else
+                    dropdown:SetBackdropBorderColor(C.border[1], C.border[2], C.border[3], 1)
+                end
                 found = true
                 break
             end
         end
-        if not found then selectedText:SetText("") end
+        if not found then 
+            selectedText:SetText("") 
+            dropdown:SetBackdropColor(0.15, 0.15, 0.15, 1)
+            dropdown:SetBackdropBorderColor(C.border[1], C.border[2], C.border[3], 1)
+        end
         
         if onChange then
             onChange(val)
@@ -1116,7 +1130,11 @@ function GUI:CreateDropdown(parent, label, items, dbKey, dbTable, onChange)
             btn:Show()
             
             btn:SetBackdrop({bgFile = "Interface\\Buttons\\WHITE8x8"})
-            btn:SetBackdropColor(0, 0, 0, 0)
+            if item.bgColor then
+                btn:SetBackdropColor(item.bgColor[1], item.bgColor[2], item.bgColor[3], (item.bgColor[4] or 0.25) * 0.6)
+            else
+                btn:SetBackdropColor(0, 0, 0, 0)
+            end
             
             local btnText = btn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
             SetFont(btnText, 11, "", C.text)
@@ -1126,8 +1144,20 @@ function GUI:CreateDropdown(parent, label, items, dbKey, dbTable, onChange)
             btnText:SetJustifyH("LEFT")
             btnText:SetWordWrap(false)
             
-            btn:SetScript("OnEnter", function(self) self:SetBackdropColor(C.accent[1], C.accent[2], C.accent[3], 0.3) end)
-            btn:SetScript("OnLeave", function(self) self:SetBackdropColor(0, 0, 0, 0) end)
+            btn:SetScript("OnEnter", function(self) 
+                if item.bgColor then
+                    self:SetBackdropColor(item.bgColor[1], item.bgColor[2], item.bgColor[3], 0.45)
+                else
+                    self:SetBackdropColor(C.accent[1], C.accent[2], C.accent[3], 0.3)
+                end
+            end)
+            btn:SetScript("OnLeave", function(self) 
+                if item.bgColor then
+                    self:SetBackdropColor(item.bgColor[1], item.bgColor[2], item.bgColor[3], (item.bgColor[4] or 0.25) * 0.6)
+                else
+                    self:SetBackdropColor(0, 0, 0, 0)
+                end
+            end)
             
             if item.previewFunc then
                 local playBtn = CreateFrame("Button", nil, btn)

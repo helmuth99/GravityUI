@@ -638,6 +638,82 @@ function Installer:GetSystemStatus(targetProfile)
     return allGood, report
 end
 
+local PROFILE_INFO = {
+    ["Cronix"] = {
+        name = "Cronix",
+        displayName = "Cronix",
+        class = "DEATHKNIGHT",
+        className = "Death Knight",
+        resolution = "1440p",
+        color = { 0.77, 0.12, 0.23 },
+        colorHex = "C41E3A",
+        bgColor = { 0.14, 0.03, 0.05, 0.88 },       -- Sleek dark with subtle DK red tint
+        borderColor = { 0.77, 0.12, 0.23, 0.65 },   -- Refined DK red border
+        hoverColor = { 0.90, 0.18, 0.28, 0.95 },
+    },
+    ["Dpxhunt"] = {
+        name = "Dpxhunt",
+        displayName = "Dpxhunt",
+        class = "HUNTER",
+        className = "Hunter",
+        resolution = "1080p",
+        color = { 0.67, 0.83, 0.45 },
+        colorHex = "AAD372",
+        bgColor = { 0.07, 0.11, 0.04, 0.88 },       -- Sleek dark with subtle Hunter green tint
+        borderColor = { 0.67, 0.83, 0.45, 0.65 },   -- Refined Hunter green border
+        hoverColor = { 0.77, 0.92, 0.55, 0.95 },
+    },
+}
+
+function Installer:GetProfileInfo(profileName)
+    local info
+    if profileName and PROFILE_INFO[profileName] then
+        info = PROFILE_INFO[profileName]
+    elseif profileName and _G.GravityUI and _G.GravityUI.profiles and _G.GravityUI.profiles[profileName] then
+        local p = _G.GravityUI.profiles[profileName]
+        if p.class then
+            local classColor = C_ClassColor and C_ClassColor.GetClassColor(p.class) or (RAID_CLASS_COLORS and RAID_CLASS_COLORS[p.class])
+            local r = classColor and classColor.r or (p.color and p.color[1] or 0)
+            local g = classColor and classColor.g or (p.color and p.color[2] or 0.6)
+            local b = classColor and classColor.b or (p.color and p.color[3] or 1)
+            local hex = classColor and classColor.colorStr or p.colorHex or "0099FF"
+            if #hex == 8 and hex:sub(1,2):lower() == "ff" then hex = hex:sub(3) end
+            
+            info = {
+                name = profileName,
+                displayName = profileName,
+                class = p.class,
+                className = p.className or p.class,
+                resolution = p.resolution,
+                color = { r, g, b },
+                colorHex = hex,
+                bgColor = { r * 0.15, g * 0.15, b * 0.15, 0.88 },
+                borderColor = { r, g, b, 0.65 },
+                hoverColor = { math.min(1, r + 0.1), math.min(1, g + 0.1), math.min(1, b + 0.1), 0.95 },
+            }
+        end
+    end
+    
+    if not info then
+        info = {
+            name = profileName or "Default",
+            displayName = profileName or "Default",
+            class = "NONE",
+            className = "Profile",
+            resolution = nil,
+            color = { 0, 0.6, 1 },
+            colorHex = "0099FF",
+            bgColor = { 0.04, 0.08, 0.14, 0.88 },
+            borderColor = { 0, 0.6, 1, 0.65 },
+            hoverColor = { 0.2, 0.7, 1, 0.95 },
+        }
+    end
+
+    local resStr = info.resolution and (" - " .. info.resolution) or ""
+    info.formattedText = "|cff" .. info.colorHex .. info.name .. "|r |cffAAAAAA(" .. info.className .. resStr .. ")|r"
+    return info
+end
+
 -- Helper to get available source profiles string data
 -- These are profiles we can IMPORT FROM (defined in strings/ folder)
 function Installer:GetSourceProfiles()
@@ -647,7 +723,11 @@ function Installer:GetSourceProfiles()
             table.insert(sources, name)
         end
     end
-    table.sort(sources)
+    table.sort(sources, function(a, b)
+        if a == "Cronix" then return true end
+        if b == "Cronix" then return false end
+        return a < b
+    end)
     return sources
 end
 

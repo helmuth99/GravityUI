@@ -3,4 +3,5 @@
 
 
     <Include file="Cronix\profile.xml" />
+	<Include file="Dpxhunt\profile.xml" />
 </Ui>
