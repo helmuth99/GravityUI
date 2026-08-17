@@ -698,6 +698,10 @@ function Data:PurgeAlt(guid)
     if not guid then return end
     local alts = GetGlobalAltsTable()
     alts[guid] = nil
+    local db = GetDB()
+    if db and db.customOrder then
+        db.customOrder[guid] = nil
+    end
     if AM.UI and AM.UI.Refresh then AM.UI:Refresh() end
 end
 
