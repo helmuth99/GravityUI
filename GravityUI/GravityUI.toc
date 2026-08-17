@@ -53,6 +53,10 @@ core\raidwarnings.lua
 core\interrupttracker.lua
 core\targetedspells.lua
 core\deathannouncer.lua
+core\stancetext.lua
+core\altmanager_data.lua
+core\altmanager_ui.lua
+core\altmanager_launcher.lua
 
 core\combattimer.lua
 core\mplusteleport.lua

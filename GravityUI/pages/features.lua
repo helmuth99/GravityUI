@@ -697,20 +697,214 @@ local function BuildDeathAnnouncer(parent)
     content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
 end
 
+-- 9. Gravity Alt Manager
+local function BuildAltManager(parent)
+    local scroll, content = GUI:CreateScrollableContent(parent)
+    scroll:SetAllPoints()
+    local db = ns.GetDB(); if not db then return end
+    if not db.altManager then
+        db.altManager = {
+            enabled = true,
+            showVault = true,
+            showPrey = true,
+            showMPlus = true,
+            showRaids = true,
+            showCurrencies = true,
+            onlyMaxLevel = false,
+            showZeroRated = true,
+            sortOrder = "lastPlayed",
+            customOrder = {},
+            announceParty = true,
+            minimap = { hide = false, minimapPos = 220 },
+        }
+    end
+    local c = db.altManager
+    if not c.minimap then c.minimap = { hide = false, minimapPos = 220 } end
+    c.showMinimap = not c.minimap.hide
+    content.rowCount = 0
+
+    local function refresh()
+        content:Hide()
+        content:Show()
+        if ns.AltManager and ns.AltManager.UI and ns.AltManager.UI.Refresh then
+            ns.AltManager.UI:Refresh()
+        end
+    end
+
+    local header = GUI:CreateSectionHeader(content, "Gravity Alt Manager")
+    header:SetPoint("TOPLEFT", 10, -10)
+    header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
+    content.rowCount = 1.3
+
+    local infoBox = GUI:CreateInfoBox(content, "Account-wide dashboard tracking Mythic+ Keystones, Great Vault status, Raid lockouts, and Currencies across all your characters. Open with /guialt or via the Icon Catcher icon.")
+    infoBox:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT + 5))
+    content.rowCount = content.rowCount + (infoBox:GetHeight() / (ROW_HEIGHT + 5)) + 0.2
+
+    CreateSubLabel(content, "General")
+    AddRow(content, "Enable Alt Manager", "checkbox", "enabled", c, refresh)
+    AddRow(content, "Show Minimap Icon", "checkbox", "showMinimap", c, function(value)
+        c.minimap.hide = not value
+        if ns.AltManager and ns.AltManager.UpdateMinimapIcon then
+            ns.AltManager:UpdateMinimapIcon()
+        end
+        refresh()
+    end)
+    AddRow(content, "Auto Announce on Keystone Loot", "checkbox", "announceParty", c, refresh)
+    content.rowCount = content.rowCount + 0.33
+
+    CreateSubLabel(content, "Display & Filter")
+    AddRow(content, "Show Great Vault Status", "checkbox", "showVault", c, refresh)
+    AddRow(content, "Show Prey Hunts", "checkbox", "showPrey", c, refresh)
+    AddRow(content, "Show Mythic+ Dungeons", "checkbox", "showMPlus", c, refresh)
+    AddRow(content, "Show Raid Lockouts", "checkbox", "showRaids", c, refresh)
+    AddRow(content, "Show Currencies (Crests/Valor)", "checkbox", "showCurrencies", c, refresh)
+    AddRow(content, "Only Max Level Characters", "checkbox", "onlyMaxLevel", c, refresh)
+    AddRow(content, "Show 0-Rated Characters", "checkbox", "showZeroRated", c, refresh)
+
+    local sortOptions = {
+        { value = "lastPlayed", text = "Last Played (Active First)" },
+        { value = "custom",     text = "Custom Order" },
+        { value = "ilvl",       text = "Equipped Item Level" },
+        { value = "score",      text = "Mythic+ Rating" },
+        { value = "name",       text = "Character Name" },
+    }
+    AddRow(content, "Character Sort Order", "dropdown", sortOptions, "sortOrder", c, refresh)
+    content.rowCount = content.rowCount + 0.3
+
+    CreateSubLabel(content, "Actions")
+    local btnRow = CreateFrame("Frame", nil, content)
+    btnRow:SetSize(GUI.CONTENT_WIDTH - 20, ROW_HEIGHT)
+    local bCount = content.rowCount or 0
+    btnRow:SetPoint("TOPLEFT", 10, -10 - (bCount * (ROW_HEIGHT + 5)))
+    content.rowCount = bCount + 1.2
+
+    local btnOpen = GUI:CreateButton(btnRow, "Open Alt Manager", 160, 24, function()
+        if ns.AltManager and ns.AltManager.UI and ns.AltManager.UI.ToggleWindow then
+            ns.AltManager.UI:ToggleWindow()
+        end
+    end)
+    btnOpen:SetPoint("LEFT", 0, 0)
+
+    local btnAnnounce = GUI:CreateButton(btnRow, "Announce Keys", 140, 24, function()
+        if ns.AltManager and ns.AltManager.Data and ns.AltManager.Data.AnnounceKeystones then
+            ns.AltManager.Data:AnnounceKeystones()
+        end
+    end)
+    btnAnnounce:SetPoint("LEFT", btnOpen, "RIGHT", 10, 0)
+
+    local btnPurge = GUI:CreateButton(btnRow, "Reset All Alt Data", 150, 24, function()
+        if ns.AltManager and ns.AltManager.Data and ns.AltManager.Data.PurgeAll then
+            ns.AltManager.Data:PurgeAll()
+            refresh()
+            print("|cff00c0ffGravityUI|r: Alt Manager database reset.")
+        end
+    end)
+    btnPurge:SetPoint("LEFT", btnAnnounce, "RIGHT", 10, 0)
+    content.rowCount = content.rowCount + 0.3
+
+    -- Character Management Section
+    CreateSubLabel(content, "Tracked Characters (Reorder & Delete)")
+    local altsList = (ns.AltManager and ns.AltManager.Data and ns.AltManager.Data.GetAllAltsList and ns.AltManager.Data:GetAllAltsList()) or {}
+
+    if #altsList == 0 then
+        local emptyRow = CreateFrame("Frame", nil, content)
+        emptyRow:SetSize(GUI.CONTENT_WIDTH - 20, ROW_HEIGHT)
+        local eCount = content.rowCount or 0
+        emptyRow:SetPoint("TOPLEFT", 10, -10 - (eCount * (ROW_HEIGHT + 5)))
+        local emptyTxt = emptyRow:CreateFontString(nil, "OVERLAY")
+        emptyTxt:SetPoint("LEFT", 10, 0)
+        emptyTxt:SetFont((ns.Styling and ns.Styling.GetFontPath and ns.Styling:GetFontPath()) or "Fonts\\FRIZQT__.TTF", 11, "")
+        emptyTxt:SetTextColor(0.6, 0.6, 0.6, 1)
+        emptyTxt:SetText("No characters tracked yet. Log onto your characters to populate.")
+        content.rowCount = content.rowCount + 1.0
+    else
+        for idx, alt in ipairs(altsList) do
+            local charCard = CreateFrame("Frame", nil, content, "BackdropTemplate")
+            charCard:SetSize(GUI.CONTENT_WIDTH - 20, 28)
+            local cardCount = content.rowCount or 0
+            charCard:SetPoint("TOPLEFT", 10, -10 - (cardCount * (ROW_HEIGHT + 5)))
+            content.rowCount = content.rowCount + 1.15
+
+            charCard:SetBackdrop({
+                bgFile = "Interface\\Buttons\\WHITE8x8",
+                edgeFile = "Interface\\Buttons\\WHITE8x8",
+                edgeSize = 1,
+            })
+            charCard:SetBackdropColor(0.08, 0.10, 0.14, 0.8)
+            charCard:SetBackdropBorderColor(0.18, 0.22, 0.28, 0.8)
+
+            -- Class / Spec Icon
+            local icon = charCard:CreateTexture(nil, "ARTWORK")
+            icon:SetSize(18, 18)
+            icon:SetPoint("LEFT", charCard, "LEFT", 8, 0)
+            icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+            if alt.specIcon and alt.specIcon ~= 0 then
+                icon:SetTexture(alt.specIcon)
+            else
+                local classFile = alt.class or "WARRIOR"
+                icon:SetTexture("Interface\\Icons\\ClassIcon_" .. classFile)
+            end
+
+            -- Character Info Text
+            local classCol = RAID_CLASS_COLORS and RAID_CLASS_COLORS[alt.class] or { colorStr = "ffffffff" }
+            local nameTxt = charCard:CreateFontString(nil, "OVERLAY")
+            nameTxt:SetPoint("LEFT", icon, "RIGHT", 8, 0)
+            nameTxt:SetFont((ns.Styling and ns.Styling.GetFontPath and ns.Styling:GetFontPath()) or "Fonts\\FRIZQT__.TTF", 11, "")
+            nameTxt:SetText(string.format("|c%s%s|r  |cff888888(%s)|r  -  |cffa335ee%.1f iLvl|r  -  |cff00c0ff%d Rating|r",
+                classCol.colorStr or "ffffffff",
+                alt.name or "Unknown",
+                alt.realm or "",
+                alt.ilvlEquipped or 0,
+                alt.mythicplus and alt.mythicplus.rating or 0
+            ))
+
+            -- Delete Button
+            local btnDel = GUI:CreateButton(charCard, "Remove", 75, 20, function()
+                if ns.AltManager and ns.AltManager.Data and ns.AltManager.Data.DeleteAlt then
+                    ns.AltManager.Data:DeleteAlt(alt.guid)
+                    refresh()
+                end
+            end)
+            btnDel:SetPoint("RIGHT", charCard, "RIGHT", -6, 0)
+
+            -- Move Down Button
+            local btnDown = GUI:CreateButton(charCard, "▼", 26, 20, function()
+                if ns.AltManager and ns.AltManager.Data and ns.AltManager.Data.MoveAltOrder then
+                    ns.AltManager.Data:MoveAltOrder(alt.guid, 1)
+                    refresh()
+                end
+            end)
+            btnDown:SetPoint("RIGHT", btnDel, "LEFT", -6, 0)
+
+            -- Move Up Button
+            local btnUp = GUI:CreateButton(charCard, "▲", 26, 20, function()
+                if ns.AltManager and ns.AltManager.Data and ns.AltManager.Data.MoveAltOrder then
+                    ns.AltManager.Data:MoveAltOrder(alt.guid, -1)
+                    refresh()
+                end
+            end)
+            btnUp:SetPoint("RIGHT", btnDown, "LEFT", -4, 0)
+        end
+    end
+
+    content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
+end
+
 --==============================================================================================================================================================================================
 -- PAGE REGISTRATION
 --==============================================================================================================================================================================================
 ns.GUI:RegisterPage("features", {
     title = "Features",
     subTabs = {
-        { name = "Dragonriding",      builder = BuildDragonriding },
-        { name = "M+ Teleport",       builder = BuildTeleport },
-        { name = "World Marks",       builder = BuildWorldMarks },
-        { name = "Mail",              builder = BuildMailExtras },
-        { name = "Guildtools",        builder = BuildTools },
-        { name = "Interrupt Tracker", builder = BuildInterruptTracker },
-        { name = "Targeted Spells",   builder = BuildTargetedSpells },
-        { name = "Death Announcer",   builder = BuildDeathAnnouncer },
+        { name = "Dragonriding",        builder = BuildDragonriding },
+        { name = "M+ Teleport",         builder = BuildTeleport },
+        { name = "World Marks",         builder = BuildWorldMarks },
+        { name = "Mail",                builder = BuildMailExtras },
+        { name = "Guildtools",          builder = BuildTools },
+        { name = "Interrupt Tracker",   builder = BuildInterruptTracker },
+        { name = "Targeted Spells",     builder = BuildTargetedSpells },
+        { name = "Death Announcer",     builder = BuildDeathAnnouncer },
+        { name = "Gravity Alt Manager", builder = BuildAltManager },
     },
     OnBuild = function(content)
         local scrollFrame = content:GetParent()

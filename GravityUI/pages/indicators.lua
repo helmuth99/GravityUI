@@ -127,9 +127,48 @@ local function BuildCursor(parent)
     AddRow(content, "GCD Ring Fade", "slider", 0, 1, "gcdFadeRing", c, refresh, 0.05)
     AddRow(content, "Reverse Animation", "checkbox", "gcdReverse", c, refresh)
     content.rowCount = content.rowCount + 0.3
-    CreateSubLabel(content, "Cooldown Indicators")
-    AddRow(content, "Taunt CD on Cursor", "checkbox", "tauntCursorEnabled", c, refresh)
-    AddRow(content, "Dispel CD on Cursor", "checkbox", "dispelCursorEnabled", c, refresh)
+
+    CreateSubLabel(content, "Taunt Cooldown Indicator (Tank Specs Only)")
+    AddRow(content, "Enable Taunt CD on Cursor", "checkbox", "tauntCursorEnabled", c, refresh)
+    AddRow(content, "Font Size", "slider", 10, 32, "tauntCursorFontSize", c, refresh, 1)
+    AddRow(content, "X Offset", "slider", -50, 50, "tauntCursorOffsetX", c, refresh, 1)
+    AddRow(content, "Y Offset", "slider", -50, 50, "tauntCursorOffsetY", c, refresh, 1)
+    AddRow(content, "Use Theme Color", "checkbox", "tauntCursorUseThemeColor", c, refresh)
+    AddRow(content, "Custom Text Color", "color", "tauntCursorColor", c, refresh)
+
+    local tauntBtnRow = CreateFrame("Frame", nil, content)
+    tauntBtnRow:SetSize(GUI.CONTENT_WIDTH - 20, ROW_HEIGHT)
+    local tCount = content.rowCount or 0
+    tauntBtnRow:SetPoint("TOPLEFT", 10, -10 - (tCount * (ROW_HEIGHT + 5)))
+    content.rowCount = tCount + 1.2
+    local btnTauntPreview = GUI:CreateButton(tauntBtnRow, "Test / Preview Taunt CD", 160, 24, function()
+        if ns.ScreenIndicators and ns.ScreenIndicators.PreviewTauntCursor then
+            ns.ScreenIndicators.PreviewTauntCursor()
+        end
+    end)
+    btnTauntPreview:SetPoint("LEFT", 0, 0)
+
+    content.rowCount = content.rowCount + 0.3
+    CreateSubLabel(content, "Dispel Cooldown Indicator (All Dispel Classes & Pets)")
+    AddRow(content, "Enable Dispel CD on Cursor", "checkbox", "dispelCursorEnabled", c, refresh)
+    AddRow(content, "Font Size", "slider", 10, 32, "dispelCursorFontSize", c, refresh, 1)
+    AddRow(content, "X Offset", "slider", -50, 50, "dispelCursorOffsetX", c, refresh, 1)
+    AddRow(content, "Y Offset", "slider", -50, 50, "dispelCursorOffsetY", c, refresh, 1)
+    AddRow(content, "Use Theme Color", "checkbox", "dispelCursorUseThemeColor", c, refresh)
+    AddRow(content, "Custom Text Color", "color", "dispelCursorColor", c, refresh)
+
+    local dispelBtnRow = CreateFrame("Frame", nil, content)
+    dispelBtnRow:SetSize(GUI.CONTENT_WIDTH - 20, ROW_HEIGHT)
+    local dCount = content.rowCount or 0
+    dispelBtnRow:SetPoint("TOPLEFT", 10, -10 - (dCount * (ROW_HEIGHT + 5)))
+    content.rowCount = dCount + 1.2
+    local btnDispelPreview = GUI:CreateButton(dispelBtnRow, "Test / Preview Dispel CD", 160, 24, function()
+        if ns.ScreenIndicators and ns.ScreenIndicators.PreviewDispelCursor then
+            ns.ScreenIndicators.PreviewDispelCursor()
+        end
+    end)
+    btnDispelPreview:SetPoint("LEFT", 0, 0)
+
     content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
 end
 
@@ -516,6 +555,107 @@ local function BuildConsumables(parent)
     content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
 end
 
+local function BuildStanceText(parent)
+    local scroll, content = GUI:CreateScrollableContent(parent)
+    scroll:SetAllPoints()
+    local db = ns.GetDB(); if not db then return end
+    if not db.screenindicators then db.screenindicators = {} end
+    if not db.screenindicators.stanceText then
+        db.screenindicators.stanceText = {
+            enabled = false,
+            fontSize = 18,
+            fontOutline = "OUTLINE",
+            colorMode = "class",
+            customColor = { 1, 1, 1, 1 },
+            bracketStyle = "brackets",
+            onlyInCombat = false,
+            hideInCasterForm = true,
+            x = 0,
+            y = -180,
+            point = "CENTER",
+            relativePoint = "CENTER",
+        }
+    end
+    local st = db.screenindicators.stanceText
+    content.rowCount = 0
+    local refresh = function() if ns.RefreshStanceText then ns.RefreshStanceText() end end
+
+    local header = GUI:CreateSectionHeader(content, "Stance & Shapeshift Text Indicator")
+    header:SetPoint("TOPLEFT", 10, -10)
+    header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
+    content.rowCount = 1.3
+
+    local infoBox = GUI:CreateInfoBox(content, "Displays clean on-screen text for current Stance, Shapeshift Form, Stealth, or Aura (Druid, Warrior, Paladin, Rogue, Priest, DH).")
+    infoBox:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
+    content.rowCount = content.rowCount + (infoBox:GetHeight() / (ROW_HEIGHT+5)) + 0.2
+
+    CreateSubLabel(content, "General")
+    AddRow(content, "Enable Stance Text", "checkbox", "enabled", st, refresh)
+    AddRow(content, "Only in Combat", "checkbox", "onlyInCombat", st, refresh)
+    AddRow(content, "Hide in Normal/Caster Form", "checkbox", "hideInCasterForm", st, refresh)
+    content.rowCount = content.rowCount + 0.3
+
+    CreateSubLabel(content, "Typography & Style")
+    AddRow(content, "Font Size", "slider", 10, 48, "fontSize", st, refresh, 1)
+
+    local outlineOpts = {
+        { value = "OUTLINE", text = "Outline" },
+        { value = "THICKOUTLINE", text = "Thick Outline" },
+        { value = "NONE", text = "None" },
+    }
+    AddRow(content, "Font Outline", "dropdown", outlineOpts, "fontOutline", st, refresh)
+
+    local bracketOpts = {
+        { value = "brackets", text = "[ STANCE ]" },
+        { value = "none", text = "STANCE" },
+        { value = "hyphens", text = "- STANCE -" },
+        { value = "arrows", text = ">> STANCE <<" },
+        { value = "colon", text = ": STANCE :" },
+    }
+    AddRow(content, "Bracket Style", "dropdown", bracketOpts, "bracketStyle", st, refresh)
+
+    local colorModeOpts = {
+        { value = "class", text = "Class Color" },
+        { value = "theme", text = "Theme Accent Color" },
+        { value = "custom", text = "Custom Color" },
+    }
+    AddRow(content, "Color Mode", "dropdown", colorModeOpts, "colorMode", st, refresh)
+    AddRow(content, "Custom Text Color", "color", "customColor", st, refresh)
+
+    local strataOpts = {
+        { value = "LOW", text = "Low" },
+        { value = "MEDIUM", text = "Medium" },
+        { value = "HIGH", text = "High (Recommended)" },
+        { value = "DIALOG", text = "Dialog" },
+        { value = "TOOLTIP", text = "Tooltip (Top Layer)" },
+    }
+    AddRow(content, "Frame Strata", "dropdown", strataOpts, "strata", st, refresh)
+    content.rowCount = content.rowCount + 0.3
+
+    CreateSubLabel(content, "Position & Preview")
+    local btnRow = CreateFrame("Frame", nil, content)
+    btnRow:SetSize(GUI.CONTENT_WIDTH - 20, ROW_HEIGHT)
+    local bCount = content.rowCount or 0
+    btnRow:SetPoint("TOPLEFT", 10, -10 - (bCount * (ROW_HEIGHT + 5)))
+    content.rowCount = bCount + 1.2
+
+    local btnMover = GUI:CreateButton(btnRow, "Toggle Mover", 140, 24, function()
+        if ns.StanceText and ns.StanceText.ToggleMover then
+            ns.StanceText:ToggleMover()
+        end
+    end)
+    btnMover:SetPoint("LEFT", 0, 0)
+
+    local btnPreview = GUI:CreateButton(btnRow, "Preview Stance", 140, 24, function()
+        if ns.StanceText and ns.StanceText.PreviewTest then
+            ns.StanceText:PreviewTest()
+        end
+    end)
+    btnPreview:SetPoint("LEFT", btnMover, "RIGHT", 10, 0)
+
+    content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
+end
+
 --==============================================================================================================================================================================================
 -- PAGE REGISTRATION
 --==============================================================================================================================================================================================
@@ -524,6 +664,7 @@ ns.GUI:RegisterPage("indicators", {
     subTabs = {
         { name = "Cursor",             builder = BuildCursor },
         { name = "Crosshair",          builder = BuildCrosshair },
+        { name = "Stance Text",        builder = BuildStanceText },
         { name = "Healer Mana",        builder = BuildHealerMana },
         { name = "Pet Info",           builder = BuildPet },
         { name = "Combat Timer",       builder = BuildCombatTimer },

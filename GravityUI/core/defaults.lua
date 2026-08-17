@@ -2,6 +2,12 @@
 local ADDON_NAME, ns = ...
 
 ns.Defaults = {
+    global = {
+        altManager = {
+            alts = {},
+            lastWeeklyReset = 0,
+        },
+    },
     profile = {
     general =     {
         themeColor =         {
@@ -1441,6 +1447,23 @@ ns.Defaults = {
         snapToGrid = false,
         snapToElements = false,
         showDisabled = false,
+    },
+    altManager = {
+        enabled = false,
+        showVault = true,
+        showPrey = true,
+        showMPlus = true,
+        showRaids = true,
+        showCurrencies = true,
+        onlyMaxLevel = false,
+        showZeroRated = true,
+        sortOrder = "lastPlayed",
+        customOrder = {},
+        announceParty = true,
+        minimap = {
+            hide = false,
+            minimapPos = 220,
+        },
     },
 }
 }

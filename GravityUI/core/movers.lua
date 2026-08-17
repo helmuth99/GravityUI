@@ -106,10 +106,17 @@ local MODULE_CONFIG_MAP = {
         end,
     },
     ["HealerMana"] = {
-        get = function(db) return db.screenindicators and db.screenindicators.healerMana and db.screenindicators.healerMana.enabled ~= false end,
+        get = function(db) return db.screenindicators and db.screenindicators.healerMana and db.screenindicators.healerMana.enabled == true end,
         set = function(db, val)
             if db.screenindicators and db.screenindicators.healerMana then db.screenindicators.healerMana.enabled = val end
             if ns.HealerMana and ns.HealerMana.Refresh then ns.HealerMana.Refresh() end
+        end,
+    },
+    ["StanceText"] = {
+        get = function(db) return db.screenindicators and db.screenindicators.stanceText and db.screenindicators.stanceText.enabled == true end,
+        set = function(db, val)
+            if db.screenindicators and db.screenindicators.stanceText then db.screenindicators.stanceText.enabled = val end
+            if ns.StanceText and ns.StanceText.Refresh then ns.StanceText:Refresh() end
         end,
     },
     ["ReadyCheck"] = {
@@ -436,7 +443,7 @@ function Movers:ApplyOverlayVisuals(ov, targetFrame, name)
     end
 
     -- Hide overlay labels on modules that render their own rich internal visuals
-    if name == "HealerMana" or name == "InterruptTracker" or name == "XPRep" or name == "WorldMarks" or name == "ReadyCheck" or name == "TargetedSpellsBars" then
+    if name == "HealerMana" or name == "InterruptTracker" or name == "XPRep" or name == "WorldMarks" or name == "ReadyCheck" or name == "TargetedSpellsBars" or name == "StanceText" then
         if ov.title then ov.title:Hide() end
         if ov.dim then ov.dim:Hide() end
     end

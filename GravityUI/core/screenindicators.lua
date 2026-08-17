@@ -499,6 +499,8 @@ end
 -- v2026-08: uses SetCooldownFromDurationObject (Midnight-safe).
 ---------------------------------------------------------------------------
 local tauntTrackedSpellId = nil
+local tauntPreviewTicker = nil
+local isTauntPreviewActive = false
 
 local function FindTauntSpell()
     tauntTrackedSpellId = nil
@@ -509,6 +511,27 @@ local function FindTauntSpell()
             return
         end
     end
+end
+
+local function ApplyTauntCursorSettings()
+    if not tauntCursorFrame or not tauntCursorFrame.cdText then return end
+    local s = GetCursorSettings()
+    if not s then return end
+
+    local font = (ns.Styling and ns.Styling.GetFontPath and ns.Styling:GetFontPath()) or
+                 (LSM and LSM:Fetch("font", ns.GetDB() and ns.GetDB().general and ns.GetDB().general.font or "Gravity")) or
+                 "Fonts\\FRIZQT__.TTF"
+    local fontSize = s.tauntCursorFontSize or 18
+    tauntCursorFrame.cdText:SetFont(font, fontSize, "OUTLINE")
+
+    local r, g, b, a
+    if s.tauntCursorUseThemeColor ~= false then
+        r, g, b, a = GetAccentColor()
+    else
+        local c = s.tauntCursorColor or { 1, 0.4, 0.4, 1 }
+        r, g, b, a = c[1], c[2], c[3], c[4] or 1
+    end
+    tauntCursorFrame.cdText:SetTextColor(r, g, b, a)
 end
 
 local function CreateTauntCursorFrame()
@@ -537,15 +560,20 @@ local function CreateTauntCursorFrame()
         elapsed = elapsed + dt
         if elapsed < 0.05 then return end
         elapsed = 0
+        local s = GetCursorSettings()
+        local offX = (s and s.tauntCursorOffsetX) or 12
+        local offY = (s and s.tauntCursorOffsetY) or 12
         local x, y = GetCursorPosition()
         self:SetPoint("CENTER", UIParent, "BOTTOMLEFT",
-            (x / effectiveScale) + 10,
-            (y / effectiveScale) + 10)
+            (x / effectiveScale) + offX,
+            (y / effectiveScale) + offY)
     end)
     tauntCursorFrame = frame
+    ApplyTauntCursorSettings()
 end
 
 local function UpdateTauntCursor()
+    if isTauntPreviewActive then return end
     local s = GetCursorSettings()
     if not s or not s.tauntCursorEnabled then
         if tauntCursorFrame then tauntCursorFrame:Hide() end
@@ -557,6 +585,7 @@ local function UpdateTauntCursor()
         return
     end
     CreateTauntCursorFrame()
+    ApplyTauntCursorSettings()
     FindTauntSpell()
     if not tauntTrackedSpellId then
         tauntCursorFrame:Hide()
@@ -573,6 +602,36 @@ local function UpdateTauntCursor()
     end
 end
 
+function Screen.PreviewTauntCursor()
+    CreateTauntCursorFrame()
+    if not tauntCursorFrame then return end
+
+    if isTauntPreviewActive then
+        isTauntPreviewActive = false
+        if tauntPreviewTicker then tauntPreviewTicker:Cancel(); tauntPreviewTicker = nil end
+        tauntCursorFrame.cd:Clear()
+        tauntCursorFrame:Hide()
+        UpdateTauntCursor()
+        return
+    end
+
+    isTauntPreviewActive = true
+    ApplyTauntCursorSettings()
+    tauntCursorFrame:Show()
+    tauntCursorFrame.cd:SetCooldown(GetTime(), 8)
+
+    if tauntPreviewTicker then tauntPreviewTicker:Cancel() end
+    tauntPreviewTicker = C_Timer.NewTimer(8, function()
+        isTauntPreviewActive = false
+        tauntPreviewTicker = nil
+        if tauntCursorFrame then
+            tauntCursorFrame.cd:Clear()
+            tauntCursorFrame:Hide()
+        end
+        UpdateTauntCursor()
+    end)
+end
+
 ---------------------------------------------------------------------------
 -- DISPEL CURSOR
 -- Follows the cursor, shows the dispel CD countdown.
@@ -580,6 +639,8 @@ end
 -- v2026-08: uses SetCooldownFromDurationObject (Midnight-safe).
 ---------------------------------------------------------------------------
 local dispelTrackedSpellId = nil
+local dispelPreviewTicker = nil
+local isDispelPreviewActive = false
 
 local function FindDispelSpell()
     dispelTrackedSpellId = nil
@@ -600,6 +661,27 @@ local function FindDispelSpell()
             end
         end
     end
+end
+
+local function ApplyDispelCursorSettings()
+    if not dispelCursorFrame or not dispelCursorFrame.cdText then return end
+    local s = GetCursorSettings()
+    if not s then return end
+
+    local font = (ns.Styling and ns.Styling.GetFontPath and ns.Styling:GetFontPath()) or
+                 (LSM and LSM:Fetch("font", ns.GetDB() and ns.GetDB().general and ns.GetDB().general.font or "Gravity")) or
+                 "Fonts\\FRIZQT__.TTF"
+    local fontSize = s.dispelCursorFontSize or 18
+    dispelCursorFrame.cdText:SetFont(font, fontSize, "OUTLINE")
+
+    local r, g, b, a
+    if s.dispelCursorUseThemeColor ~= false then
+        r, g, b, a = GetAccentColor()
+    else
+        local c = s.dispelCursorColor or { 0.4, 0.9, 1, 1 }
+        r, g, b, a = c[1], c[2], c[3], c[4] or 1
+    end
+    dispelCursorFrame.cdText:SetTextColor(r, g, b, a)
 end
 
 local function CreateDispelCursorFrame()
@@ -628,21 +710,27 @@ local function CreateDispelCursorFrame()
         elapsed = elapsed + dt
         if elapsed < 0.05 then return end
         elapsed = 0
+        local s = GetCursorSettings()
+        local offX = (s and s.dispelCursorOffsetX) or -12
+        local offY = (s and s.dispelCursorOffsetY) or 12
         local x, y = GetCursorPosition()
         self:SetPoint("CENTER", UIParent, "BOTTOMLEFT",
-            (x / effectiveScale) - 10,
-            (y / effectiveScale) + 10)
+            (x / effectiveScale) + offX,
+            (y / effectiveScale) + offY)
     end)
     dispelCursorFrame = frame
+    ApplyDispelCursorSettings()
 end
 
 local function UpdateDispelCursor()
+    if isDispelPreviewActive then return end
     local s = GetCursorSettings()
     if not s or not s.dispelCursorEnabled then
         if dispelCursorFrame then dispelCursorFrame:Hide() end
         return
     end
     CreateDispelCursorFrame()
+    ApplyDispelCursorSettings()
     FindDispelSpell()
     if not dispelTrackedSpellId then
         dispelCursorFrame:Hide()
@@ -657,6 +745,36 @@ local function UpdateDispelCursor()
         dispelCursorFrame.cd:Clear()
         dispelCursorFrame:Hide()
     end
+end
+
+function Screen.PreviewDispelCursor()
+    CreateDispelCursorFrame()
+    if not dispelCursorFrame then return end
+
+    if isDispelPreviewActive then
+        isDispelPreviewActive = false
+        if dispelPreviewTicker then dispelPreviewTicker:Cancel(); dispelPreviewTicker = nil end
+        dispelCursorFrame.cd:Clear()
+        dispelCursorFrame:Hide()
+        UpdateDispelCursor()
+        return
+    end
+
+    isDispelPreviewActive = true
+    ApplyDispelCursorSettings()
+    dispelCursorFrame:Show()
+    dispelCursorFrame.cd:SetCooldown(GetTime(), 8)
+
+    if dispelPreviewTicker then dispelPreviewTicker:Cancel() end
+    dispelPreviewTicker = C_Timer.NewTimer(8, function()
+        isDispelPreviewActive = false
+        dispelPreviewTicker = nil
+        if dispelCursorFrame then
+            dispelCursorFrame.cd:Clear()
+            dispelCursorFrame:Hide()
+        end
+        UpdateDispelCursor()
+    end)
 end
 
 ---------------------------------------------------------------------------
