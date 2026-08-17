@@ -26,8 +26,15 @@ function WorldMarks.Refresh()
     if not settings then return end
 
     -- Visual Updates (Safe in Combat)
-    if settings.enabled then frame:Show() else frame:Hide() end
-    frame:SetAlpha(settings.mouseover and 0 or 1)
+    if WorldMarks.preview then
+        frame:Show()
+        frame:SetAlpha(1)
+    elseif settings.enabled then
+        frame:Show()
+        frame:SetAlpha(settings.mouseover and 0 or 1)
+    else
+        frame:Hide()
+    end
     
     local r, g, b, a = 0, 0, 0, 1
     if settings.useThemeColorBorder then
@@ -223,37 +230,47 @@ end
 ---------------------------------------------------------------------------
 -- MOVER/INIT
 ---------------------------------------------------------------------------
+function WorldMarks.EnsureFrame()
+    if not WorldMarks.frame then
+        CreateMarksBar()
+    end
+    return WorldMarks.frame
+end
+
 function WorldMarks:ToggleMover(forceState)
-    if not self.frame then return end
+    local frame = WorldMarks.EnsureFrame()
+    if not frame then return end
 
     local shouldShow = false
     if forceState ~= nil then
-        shouldShow = forceState
+        shouldShow = (forceState == true)
     else
-        shouldShow = not self.frame:IsShown()
+        shouldShow = not (self.preview or (frame.ag_backdrop and frame.ag_backdrop:IsShown()))
     end
+    self.preview = shouldShow
 
     local settings = GetSettings()
     if shouldShow then
-        self.frame:Show()
-        self.frame:SetAlpha(1)
+        frame:Show()
+        frame:SetAlpha(1)
     else
         if settings and not settings.enabled then
-            self.frame:Hide()
+            frame:Hide()
         else
-            self.frame:Show()
-            self.frame:SetAlpha((settings and settings.mouseover) and 0 or 1)
+            frame:Show()
+            frame:SetAlpha((settings and settings.mouseover) and 0 or 1)
         end
     end
 
-    if ns.Movers and ns.Movers.ApplyEditModeStyle and self.frame then
-        ns.Movers:ApplyEditModeStyle(self.frame, shouldShow, "WorldMarks")
+    if ns.Movers and ns.Movers.ApplyEditModeStyle then
+        ns.Movers:ApplyEditModeStyle(frame, shouldShow, "WorldMarks")
     end
 end
 
 function WorldMarks:RegisterMover()
-    if ns.Movers and ns.Movers.Register and self.frame then
-        ns.Movers:Register("WorldMarks", self.frame, function(f, e, force) self:ToggleMover(force) end, "World Marks")
+    local frame = WorldMarks.EnsureFrame()
+    if ns.Movers and ns.Movers.Register and frame then
+        ns.Movers:Register("WorldMarks", frame, function(f, e, force) self:ToggleMover(force) end, "World Marks")
     end
 end
 

@@ -450,13 +450,6 @@ function Movers:UpdateDisplay()
         end
     end
 
-    -- WorldMarks custom mover
-    if ns.WorldMarks and ns.WorldMarks.ToggleMover then
-        local wmEnabled = self:IsElementEnabled("WorldMarks")
-        local shouldShowWM = inEdit and (wmEnabled or showDisabled)
-        pcall(function() ns.WorldMarks:ToggleMover(shouldShowWM) end)
-    end
-
     self:UpdateHUD()
 end
 

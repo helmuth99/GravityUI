@@ -480,6 +480,7 @@ local function OnWhisper(msg, sender, isBNet, bnGameAccountID)
     local settings = GetSettings()
     if not settings or not settings.inviteOnWhisper then return end
     if not msg or not sender then return end
+    if (issecretvalue and (issecretvalue(msg) or issecretvalue(sender))) or type(msg) ~= "string" then return end
 
     -- Check if we are already in a group and not the leader
     if IsInGroup() and not UnitIsGroupLeader("player") then 
@@ -493,20 +494,20 @@ local function OnWhisper(msg, sender, isBNet, bnGameAccountID)
     -- Parse keywords
     local keywords = {}
     for kw in string.gmatch(settings.inviteOnWhisperKeywords or "", "([^,%s]+)") do
-        table.insert(keywords, kw:lower())
+        table.insert(keywords, string.lower(kw))
     end
     -- print("|cFF30D1FFGravityUI Debug:|r Keywords: " .. table.concat(keywords, ", "))
 
     -- Match keyword (case-insensitive)
     local match = false
     local text = ""
-    local lowerSuccess, lowerText = pcall(function() return strtrim(msg:lower()) end)
+    local lowerSuccess, lowerText = pcall(function() return strtrim(string.lower(msg)) end)
     
-    if lowerSuccess then
+    if lowerSuccess and lowerText then
         text = lowerText
         for _, kw in ipairs(keywords) do
             local findSuccess, findMatch = pcall(function() 
-                return text == kw or text:find("%f[%a]" .. kw .. "%f[%A]") 
+                return text == kw or string.find(text, "%f[%a]" .. kw .. "%f[%A]") 
             end)
             if findSuccess and findMatch then
                 match = true
@@ -2022,13 +2023,20 @@ local function CleanTransforms()
 
     if C_UnitAuras and C_UnitAuras.GetAuraDataByIndex then
         for i = 1, 40 do
-            local aura = C_UnitAuras.GetAuraDataByIndex("player", i, "HELPFUL")
-            if not aura then break end
-            if TRANSFORM_SPELLS[aura.spellId] then
-                if CancelSpellByName then
-                    CancelSpellByName(aura.name)
-                elseif CancelUnitBuff then
-                    CancelUnitBuff("player", i)
+            local ok, aura = pcall(C_UnitAuras.GetAuraDataByIndex, "player", i, "HELPFUL")
+            if not ok then
+                -- Aura is secret / restricted under taint: stop scanning safely
+                break
+            elseif not aura then
+                break
+            else
+                local sid = tonumber(aura.spellId)
+                if sid and TRANSFORM_SPELLS[sid] then
+                    if CancelSpellByName and aura.name and (not issecretvalue or not issecretvalue(aura.name)) then
+                        pcall(CancelSpellByName, aura.name)
+                    elseif CancelUnitBuff then
+                        pcall(CancelUnitBuff, "player", i)
+                    end
                 end
             end
         end
@@ -2154,12 +2162,21 @@ local function HandleInstanceResetMsg(msg)
     local settings = GetSettings()
     if not (settings and settings.instanceResetAnnounce) then return end
     if not (IsInGroup() or IsInRaid()) then return end
+    if not msg or type(msg) ~= "string" or (issecretvalue and issecretvalue(msg)) then return end
 
-    -- Check for instance reset system message pattern
-    local resetPattern = INSTANCE_RESET_SUCCESS and INSTANCE_RESET_SUCCESS:gsub("%%s", ".+") or "has been reset"
-    if msg and msg:find(resetPattern) then
+    -- Check for instance reset system message pattern safely without indexing secret values
+    local resetPattern = (INSTANCE_RESET_SUCCESS and string.gsub(INSTANCE_RESET_SUCCESS, "%%s", ".+")) or "has been reset"
+    local isMatch = false
+    local ok, found = pcall(function()
+        return string.find(msg, resetPattern)
+    end)
+    if ok and found then
+        isMatch = true
+    end
+
+    if isMatch then
         local channel = IsInRaid() and "RAID" or "PARTY"
-        SendChatMessage("GravityUI: " .. msg, channel)
+        pcall(SendChatMessage, "GravityUI: " .. msg, channel)
     end
 end
 

@@ -400,14 +400,20 @@ function ns.BloodlustTracker.Update()
 
     if C_UnitAuras and C_UnitAuras.GetAuraDataByIndex then
         for i = 1, 40 do
-            local aura = C_UnitAuras.GetAuraDataByIndex("player", i, "HARMFUL")
-            if not aura then break end
-            if SATED_DEBUFFS[aura.spellId] then
-                satedFound = true
-                satedExpTime = aura.expirationTime or 0
-                satedDuration = aura.duration or 0
-                satedIcon = aura.icon
+            local ok, aura = pcall(C_UnitAuras.GetAuraDataByIndex, "player", i, "HARMFUL")
+            if not ok then
                 break
+            elseif not aura then
+                break
+            else
+                local sid = tonumber(aura.spellId)
+                if sid and SATED_DEBUFFS[sid] then
+                    satedFound = true
+                    satedExpTime = aura.expirationTime or 0
+                    satedDuration = aura.duration or 0
+                    satedIcon = aura.icon
+                    break
+                end
             end
         end
     end
