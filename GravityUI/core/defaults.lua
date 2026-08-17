@@ -1450,6 +1450,7 @@ ns.Defaults = {
     },
     altManager = {
         enabled = false,
+        openOnRightClick = true,
         showVault = true,
         showPrey = true,
         showMPlus = true,
@@ -1459,11 +1460,8 @@ ns.Defaults = {
         showZeroRated = true,
         sortOrder = "lastPlayed",
         customOrder = {},
+        visibleColumns = 5,
         announceParty = true,
-        minimap = {
-            hide = false,
-            minimapPos = 220,
-        },
     },
 }
 }

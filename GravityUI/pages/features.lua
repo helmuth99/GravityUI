@@ -705,6 +705,7 @@ local function BuildAltManager(parent)
     if not db.altManager then
         db.altManager = {
             enabled = true,
+            openOnRightClick = true,
             showVault = true,
             showPrey = true,
             showMPlus = true,
@@ -714,13 +715,11 @@ local function BuildAltManager(parent)
             showZeroRated = true,
             sortOrder = "lastPlayed",
             customOrder = {},
+            visibleColumns = 5,
             announceParty = true,
-            minimap = { hide = false, minimapPos = 220 },
         }
     end
     local c = db.altManager
-    if not c.minimap then c.minimap = { hide = false, minimapPos = 220 } end
-    c.showMinimap = not c.minimap.hide
     content.rowCount = 0
 
     local function refresh()
@@ -736,19 +735,13 @@ local function BuildAltManager(parent)
     header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
     content.rowCount = 1.3
 
-    local infoBox = GUI:CreateInfoBox(content, "Account-wide dashboard tracking Mythic+ Keystones, Great Vault status, Raid lockouts, and Currencies across all your characters. Open with /guialt or via the Icon Catcher icon.")
+    local infoBox = GUI:CreateInfoBox(content, "Account-wide dashboard tracking Mythic+ Keystones, Great Vault status, Raid lockouts, and Currencies across all your characters. Open with /guialt or via Right-Click on the GravityUI minimap icon.")
     infoBox:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT + 5))
     content.rowCount = content.rowCount + (infoBox:GetHeight() / (ROW_HEIGHT + 5)) + 0.2
 
     CreateSubLabel(content, "General")
     AddRow(content, "Enable Alt Manager", "checkbox", "enabled", c, refresh)
-    AddRow(content, "Show Minimap Icon", "checkbox", "showMinimap", c, function(value)
-        c.minimap.hide = not value
-        if ns.AltManager and ns.AltManager.UpdateMinimapIcon then
-            ns.AltManager:UpdateMinimapIcon()
-        end
-        refresh()
-    end)
+    AddRow(content, "Open with Right-Click on Minimap Icon", "checkbox", "openOnRightClick", c, refresh)
     AddRow(content, "Auto Announce on Keystone Loot", "checkbox", "announceParty", c, refresh)
     content.rowCount = content.rowCount + 0.33
 
@@ -760,6 +753,7 @@ local function BuildAltManager(parent)
     AddRow(content, "Show Currencies (Crests/Valor)", "checkbox", "showCurrencies", c, refresh)
     AddRow(content, "Only Max Level Characters", "checkbox", "onlyMaxLevel", c, refresh)
     AddRow(content, "Show 0-Rated Characters", "checkbox", "showZeroRated", c, refresh)
+    AddRow(content, "Visible Characters", "slider", 3, 8, "visibleColumns", c, refresh, 1)
 
     local sortOptions = {
         { value = "lastPlayed", text = "Last Played (Active First)" },

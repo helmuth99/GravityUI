@@ -295,11 +295,6 @@ local function LayoutGrid()
             isHidden = true
         elseif btn.db and btn.db.hide then
             isHidden = true
-        elseif btn.name == "GravityUI_AltManager" or (btn:GetName() and btn:GetName():find("GravityUI_AltManager")) then
-            local altDB = ns.GetDB and ns.GetDB() and ns.GetDB().altManager
-            if altDB and (altDB.showMinimap == false or (altDB.minimap and altDB.minimap.hide == true)) then
-                isHidden = true
-            end
         end
 
         if not isHidden then

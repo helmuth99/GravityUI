@@ -12,12 +12,15 @@ AM.UI = {}
 local UI = AM.UI
 
 local mainFrame = nil
-local rowFrames = {}
+local leftRowFrames = {}
+local charRowFrames = {}
+UI.currentScrollX = 0
 
 local LABEL_WIDTH = 155
 local CHAR_WIDTH = 120
 local ROW_HEIGHT = 20
 local HEADER_ROW_HEIGHT = 22
+local DEFAULT_VISIBLE_ALTS = 5
 
 -- Great Vault Threshold Types (Enum.WeeklyRewardChestThresholdType)
 local RAID_VAULT_TYPE    = (Enum and Enum.WeeklyRewardChestThresholdType and Enum.WeeklyRewardChestThresholdType.Raid) or 0
@@ -462,6 +465,77 @@ local function BuildRowDefinitions()
 end
 
 -- ============================================================================
+-- HORIZONTAL SCROLL & NAVIGATION
+-- ============================================================================
+
+function UI:GetMaxScroll(numAlts, visibleAlts)
+    return math.max(0, (numAlts - visibleAlts) * CHAR_WIDTH)
+end
+
+function UI:UpdateNavControls(numAlts, visibleAlts)
+    if not mainFrame or not mainFrame.navFrame then return end
+    local nav = mainFrame.navFrame
+    if numAlts <= visibleAlts then
+        nav:Hide()
+        return
+    end
+
+    nav:Show()
+    local maxScroll = self:GetMaxScroll(numAlts, visibleAlts)
+    local cur = self.currentScrollX or 0
+
+    local firstVisible = math.floor(cur / CHAR_WIDTH) + 1
+    local lastVisible = math.min(numAlts, firstVisible + visibleAlts - 1)
+
+    nav.text:SetText(string.format("|cff00c0ff%d|r-|cff00c0ff%d|r / |cffffffff%d|r", firstVisible, lastVisible, numAlts))
+
+    if cur <= 0 then
+        nav.btnPrev:SetAlpha(0.3)
+        nav.btnPrev:EnableMouse(false)
+    else
+        nav.btnPrev:SetAlpha(1.0)
+        nav.btnPrev:EnableMouse(true)
+    end
+
+    if cur >= maxScroll - 1 then
+        nav.btnNext:SetAlpha(0.3)
+        nav.btnNext:EnableMouse(false)
+    else
+        nav.btnNext:SetAlpha(1.0)
+        nav.btnNext:EnableMouse(true)
+    end
+end
+
+function UI:ScrollHorizontal(delta)
+    local alts = (AM.Data and AM.Data.GetAllAltsList and AM.Data:GetAllAltsList()) or {}
+    local numAlts = #alts
+    local db = GetDB()
+    local maxVisible = (db and db.visibleColumns and db.visibleColumns > 0 and db.visibleColumns) or DEFAULT_VISIBLE_ALTS
+    local visibleAlts = math.min(math.max(numAlts, 1), maxVisible)
+    local maxScroll = self:GetMaxScroll(numAlts, visibleAlts)
+
+    if maxScroll <= 0 then
+        self.currentScrollX = 0
+        if mainFrame and mainFrame.charsScrollFrame then
+            mainFrame.charsScrollFrame:SetHorizontalScroll(0)
+        end
+        self:UpdateNavControls(numAlts, visibleAlts)
+        return
+    end
+
+    local cur = self.currentScrollX or 0
+    local step = CHAR_WIDTH
+    local target = cur - (delta * step)
+    target = math.max(0, math.min(maxScroll, target))
+
+    self.currentScrollX = target
+    if mainFrame and mainFrame.charsScrollFrame then
+        mainFrame.charsScrollFrame:SetHorizontalScroll(target)
+    end
+    self:UpdateNavControls(numAlts, visibleAlts)
+end
+
+-- ============================================================================
 -- WINDOW CREATION
 -- ============================================================================
 
@@ -469,7 +543,7 @@ function UI:CreateMainWindow()
     if mainFrame then return mainFrame end
 
     local f = CreateFrame("Frame", "GravityUI_AltManagerFrame", UIParent, "BackdropTemplate")
-    f:SetSize(600, 860)
+    f:SetSize(780, 800)
     f:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
     f:SetFrameStrata("DIALOG")
     f:SetFrameLevel(100)
@@ -569,21 +643,93 @@ function UI:CreateMainWindow()
         GameTooltip:Hide()
     end)
 
-    -- Scrollable Datagrid Container
-    local scrollFrame = CreateFrame("ScrollFrame", "GravityUI_AltManagerScroll", f, "UIPanelScrollFrameTemplate")
-    scrollFrame:SetPoint("TOPLEFT", f, "TOPLEFT", 10, -36)
-    scrollFrame:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -12, 10)
-    f.scrollFrame = scrollFrame
+    -- Horizontal Navigation Controls (<  1-5 / 12  >)
+    local navFrame = CreateFrame("Frame", nil, titleBar)
+    navFrame:SetSize(140, 22)
+    navFrame:SetPoint("RIGHT", btnAnnounce, "LEFT", -14, 0)
+    f.navFrame = navFrame
 
-    if scrollFrame.ScrollBar then
-        scrollFrame.ScrollBar:Hide()
-        scrollFrame.ScrollBar:HookScript("OnShow", function(self) self:Hide() end)
-    end
+    local btnPrev = CreateFrame("Button", nil, navFrame, "BackdropTemplate")
+    btnPrev:SetSize(18, 18)
+    btnPrev:SetPoint("LEFT", navFrame, "LEFT", 0, 0)
+    btnPrev:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8", edgeFile = "Interface\\Buttons\\WHITE8x8", edgeSize = 1 })
+    btnPrev:SetBackdropColor(0.12, 0.16, 0.22, 0.8)
+    btnPrev:SetBackdropBorderColor(0.25, 0.35, 0.48, 1)
+    local prevText = btnPrev:CreateFontString(nil, "OVERLAY")
+    prevText:SetPoint("CENTER", btnPrev, "CENTER", -1, 0)
+    prevText:SetFont(GetFont(), 11, "OUTLINE")
+    prevText:SetText("<")
+    prevText:SetTextColor(0.8, 0.9, 1, 1)
+    btnPrev:SetScript("OnClick", function()
+        UI:ScrollHorizontal(1)
+    end)
+    btnPrev:SetScript("OnEnter", function(self)
+        local r, g, b = GetAccentColor()
+        self:SetBackdropBorderColor(r, g, b, 1)
+        prevText:SetTextColor(r, g, b, 1)
+    end)
+    btnPrev:SetScript("OnLeave", function(self)
+        self:SetBackdropBorderColor(0.25, 0.35, 0.48, 1)
+        prevText:SetTextColor(0.8, 0.9, 1, 1)
+    end)
+    navFrame.btnPrev = btnPrev
 
-    local gridContent = CreateFrame("Frame", "GravityUI_AltManagerGridContent", scrollFrame)
-    gridContent:SetSize(560, 800)
-    scrollFrame:SetScrollChild(gridContent)
-    f.gridContent = gridContent
+    local navText = navFrame:CreateFontString(nil, "OVERLAY")
+    navText:SetPoint("CENTER", navFrame, "CENTER", 0, 0)
+    navText:SetFont(GetFont(), 10, "")
+    navText:SetTextColor(0.85, 0.88, 0.92, 1)
+    navFrame.text = navText
+
+    local btnNext = CreateFrame("Button", nil, navFrame, "BackdropTemplate")
+    btnNext:SetSize(18, 18)
+    btnNext:SetPoint("RIGHT", navFrame, "RIGHT", 0, 0)
+    btnNext:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8", edgeFile = "Interface\\Buttons\\WHITE8x8", edgeSize = 1 })
+    btnNext:SetBackdropColor(0.12, 0.16, 0.22, 0.8)
+    btnNext:SetBackdropBorderColor(0.25, 0.35, 0.48, 1)
+    local nextText = btnNext:CreateFontString(nil, "OVERLAY")
+    nextText:SetPoint("CENTER", btnNext, "CENTER", 1, 0)
+    nextText:SetFont(GetFont(), 11, "OUTLINE")
+    nextText:SetText(">")
+    nextText:SetTextColor(0.8, 0.9, 1, 1)
+    btnNext:SetScript("OnClick", function()
+        UI:ScrollHorizontal(-1)
+    end)
+    btnNext:SetScript("OnEnter", function(self)
+        local r, g, b = GetAccentColor()
+        self:SetBackdropBorderColor(r, g, b, 1)
+        nextText:SetTextColor(r, g, b, 1)
+    end)
+    btnNext:SetScript("OnLeave", function(self)
+        self:SetBackdropBorderColor(0.25, 0.35, 0.48, 1)
+        nextText:SetTextColor(0.8, 0.9, 1, 1)
+    end)
+    navFrame.btnNext = btnNext
+
+    -- 1. Left Fixed Column Container (Labels)
+    local leftContainer = CreateFrame("Frame", "GravityUI_AltManagerLeftCol", f)
+    leftContainer:SetPoint("TOPLEFT", f, "TOPLEFT", 10, -36)
+    leftContainer:SetWidth(LABEL_WIDTH)
+    leftContainer:SetHeight(800)
+    f.leftContainer = leftContainer
+
+    -- 2. Right Characters Scrollable Container
+    local charsScrollFrame = CreateFrame("ScrollFrame", "GravityUI_AltManagerScroll", f)
+    charsScrollFrame:SetPoint("TOPLEFT", leftContainer, "TOPRIGHT", 2, 0)
+    charsScrollFrame:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -10, 10)
+    charsScrollFrame:EnableMouseWheel(true)
+    charsScrollFrame:SetScript("OnMouseWheel", function(self, delta)
+        UI:ScrollHorizontal(delta)
+    end)
+    f.charsScrollFrame = charsScrollFrame
+
+    local charsContent = CreateFrame("Frame", "GravityUI_AltManagerCharsContent", charsScrollFrame)
+    charsContent:SetSize(600, 800)
+    charsContent:EnableMouseWheel(true)
+    charsContent:SetScript("OnMouseWheel", function(self, delta)
+        UI:ScrollHorizontal(delta)
+    end)
+    charsScrollFrame:SetScrollChild(charsContent)
+    f.charsContent = charsContent
 
     tinsert(UISpecialFrames, "GravityUI_AltManagerFrame")
     f:Hide()
@@ -643,150 +789,163 @@ end
 function UI:Refresh()
     if not mainFrame or not mainFrame:IsShown() then return end
 
-    local alts = AM.Data:GetAllAltsList()
+    local alts = (AM.Data and AM.Data.GetAllAltsList and AM.Data:GetAllAltsList()) or {}
     local numAlts = #alts
     local rowDefs = BuildRowDefinitions()
+    local db = GetDB()
 
-    -- Adjust Window Width dynamically to fit character count
-    local totalContentWidth = LABEL_WIDTH + (numAlts * CHAR_WIDTH) + 16
-    local winWidth = math.min(math.max(totalContentWidth + 36, 320), 1280)
-    mainFrame:SetWidth(winWidth)
-    mainFrame.gridContent:SetWidth(totalContentWidth)
+    local maxVisible = (db and db.visibleColumns and db.visibleColumns > 0 and db.visibleColumns) or DEFAULT_VISIBLE_ALTS
+    local visibleAlts = math.min(math.max(numAlts, 1), maxVisible)
+    local charsVisibleWidth = visibleAlts * CHAR_WIDTH
+    local charsTotalWidth = math.max(numAlts * CHAR_WIDTH, charsVisibleWidth)
+
+    -- Dynamic Window Width: Compact 1080p fit, fits up to visibleAlts
+    local totalWinWidth = LABEL_WIDTH + 2 + charsVisibleWidth + 20
+    totalWinWidth = math.max(totalWinWidth, 340)
+    mainFrame:SetWidth(totalWinWidth)
+
+    mainFrame.leftContainer:SetWidth(LABEL_WIDTH)
+    mainFrame.charsScrollFrame:SetWidth(charsVisibleWidth)
+    mainFrame.charsContent:SetWidth(charsTotalWidth)
 
     local currentY = 0
 
     for rIdx, row in ipairs(rowDefs) do
-        if not rowFrames[rIdx] then
-            local rf = CreateFrame("Frame", nil, mainFrame.gridContent, "BackdropTemplate")
-            rf:SetHeight(ROW_HEIGHT)
-            rf:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8" })
+        local isHeader = (row.type == "header")
+        local rHeight = isHeader and HEADER_ROW_HEIGHT or ROW_HEIGHT
 
-            -- Left Label Button
-            local labelBtn = CreateFrame("Button", nil, rf, "InsecureActionButtonTemplate")
+        -- Zebra Background Colors
+        local bgR, bgG, bgB, bgA
+        if isHeader then
+            bgR, bgG, bgB, bgA = 0.04, 0.06, 0.09, 0.95
+        else
+            local isEven = (rIdx % 2 == 0)
+            bgR = isEven and 0.08 or 0.05
+            bgG = isEven and 0.10 or 0.07
+            bgB = isEven and 0.14 or 0.10
+            bgA = 0.65
+        end
+
+        -- ==========================================
+        -- 1. LEFT LABEL ROW (FIXED / STICKY)
+        -- ==========================================
+        if not leftRowFrames[rIdx] then
+            local lrf = CreateFrame("Frame", nil, mainFrame.leftContainer, "BackdropTemplate")
+            lrf:SetHeight(ROW_HEIGHT)
+            lrf:SetWidth(LABEL_WIDTH)
+            lrf:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8" })
+
+            local labelBtn = CreateFrame("Button", nil, lrf, "InsecureActionButtonTemplate")
             labelBtn:RegisterForClicks("AnyUp", "AnyDown")
-            labelBtn:SetPoint("TOPLEFT", rf, "TOPLEFT", 0, 0)
-            labelBtn:SetPoint("BOTTOMLEFT", rf, "BOTTOMLEFT", 0, 0)
-            labelBtn:SetWidth(LABEL_WIDTH)
-            rf.labelBtn = labelBtn
+            labelBtn:SetAllPoints()
+            lrf.labelBtn = labelBtn
 
             local icon = labelBtn:CreateTexture(nil, "ARTWORK")
             icon:SetSize(14, 14)
             icon:SetPoint("LEFT", labelBtn, "LEFT", 6, 0)
             icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
-            rf.icon = icon
+            lrf.icon = icon
 
             local label = labelBtn:CreateFontString(nil, "OVERLAY")
             label:SetPoint("LEFT", icon, "RIGHT", 6, 0)
             label:SetPoint("RIGHT", labelBtn, "RIGHT", -6, 0)
             label:SetFont(GetFont(), 10, "")
             label:SetJustifyH("LEFT")
-            rf.label = label
+            lrf.label = label
 
-            rf.cells = {}
-
-            -- Row Hover script
-            rf:SetScript("OnEnter", function(self)
-                if not self.isHeader then
-                    local r, g, b = GetAccentColor()
-                    self:SetBackdropColor(r, g, b, 0.18)
-                end
-            end)
-            rf:SetScript("OnLeave", function(self)
-                if not self.isHeader then
-                    self:SetBackdropColor(self.bgR, self.bgG, self.bgB, self.bgA)
-                end
-            end)
-
-            rowFrames[rIdx] = rf
+            leftRowFrames[rIdx] = lrf
         end
 
-        local rf = rowFrames[rIdx]
-        local isHeader = (row.type == "header")
-        rf.isHeader = isHeader
-        local rHeight = isHeader and HEADER_ROW_HEIGHT or ROW_HEIGHT
-        rf:SetHeight(rHeight)
-        rf:SetPoint("TOPLEFT", mainFrame.gridContent, "TOPLEFT", 0, -currentY)
-        rf:SetPoint("RIGHT", mainFrame.gridContent, "RIGHT", 0, 0)
-        rf:Show()
+        local lrf = leftRowFrames[rIdx]
+        lrf.isHeader = isHeader
+        lrf.bgR, lrf.bgG, lrf.bgB, lrf.bgA = bgR, bgG, bgB, bgA
+        lrf:SetHeight(rHeight)
+        lrf:SetPoint("TOPLEFT", mainFrame.leftContainer, "TOPLEFT", 0, -currentY)
+        lrf:SetBackdropColor(bgR, bgG, bgB, bgA)
+        lrf:Show()
 
-        -- Left Label interactions & tooltips
-        rf.labelBtn:SetScript("OnEnter", nil)
-        rf.labelBtn:SetScript("OnLeave", nil)
-
+        lrf.labelBtn:SetScript("OnEnter", nil)
+        lrf.labelBtn:SetScript("OnLeave", nil)
         if not InCombatLockdown() then
-            rf.labelBtn:SetAttribute("type", nil)
-            rf.labelBtn:SetAttribute("spell", nil)
+            lrf.labelBtn:SetAttribute("type", nil)
+            lrf.labelBtn:SetAttribute("spell", nil)
         end
+
+        local function SetRowHover(highlight)
+            local crf = charRowFrames[rIdx]
+            if highlight then
+                local r, g, b = GetAccentColor()
+                lrf:SetBackdropColor(r, g, b, 0.18)
+                if crf then crf:SetBackdropColor(r, g, b, 0.18) end
+            else
+                lrf:SetBackdropColor(lrf.bgR, lrf.bgG, lrf.bgB, lrf.bgA)
+                if crf then crf:SetBackdropColor(crf.bgR, crf.bgG, crf.bgB, crf.bgA) end
+            end
+        end
+
+        lrf:SetScript("OnEnter", function()
+            if not isHeader then SetRowHover(true) end
+        end)
+        lrf:SetScript("OnLeave", function()
+            if not isHeader then SetRowHover(false) end
+        end)
 
         if row.category == "dungeon" and row.dungeon then
             local spellID = GetKnownTeleport(row.dungeon)
             if spellID and not InCombatLockdown() then
-                rf.labelBtn:SetAttribute("type", "spell")
-                rf.labelBtn:SetAttribute("spell", spellID)
+                lrf.labelBtn:SetAttribute("type", "spell")
+                lrf.labelBtn:SetAttribute("spell", spellID)
             end
-            rf.labelBtn:SetScript("OnEnter", function(self)
+            lrf.labelBtn:SetScript("OnEnter", function(self)
                 ShowDungeonTooltip(self, row.dungeon)
-                local r, g, b = GetAccentColor()
-                rf:SetBackdropColor(r, g, b, 0.18)
+                SetRowHover(true)
             end)
-            rf.labelBtn:SetScript("OnLeave", function(self)
+            lrf.labelBtn:SetScript("OnLeave", function()
                 GameTooltip:Hide()
-                rf:SetBackdropColor(rf.bgR, rf.bgG, rf.bgB, rf.bgA)
+                SetRowHover(false)
             end)
         elseif row.category == "raid" then
-            rf.labelBtn:SetScript("OnEnter", function(self)
+            lrf.labelBtn:SetScript("OnEnter", function(self)
                 local firstAlt = alts and alts[1]
                 ShowRaidTooltip(self, firstAlt, row.diffKey)
-                local r, g, b = GetAccentColor()
-                rf:SetBackdropColor(r, g, b, 0.18)
+                SetRowHover(true)
             end)
-            rf.labelBtn:SetScript("OnLeave", function()
+            lrf.labelBtn:SetScript("OnLeave", function()
                 GameTooltip:Hide()
-                rf:SetBackdropColor(rf.bgR, rf.bgG, rf.bgB, rf.bgA)
+                SetRowHover(false)
             end)
         elseif row.category == "currency" then
-            rf.labelBtn:SetScript("OnEnter", function(self)
-                local r, g, b = GetAccentColor()
-                rf:SetBackdropColor(r, g, b, 0.18)
+            lrf.labelBtn:SetScript("OnEnter", function(self)
+                SetRowHover(true)
                 GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
                 GameTooltip:SetCurrencyByID(row.currId)
                 GameTooltip:Show()
             end)
-            rf.labelBtn:SetScript("OnLeave", function(self)
+            lrf.labelBtn:SetScript("OnLeave", function()
                 GameTooltip:Hide()
-                rf:SetBackdropColor(rf.bgR, rf.bgG, rf.bgB, rf.bgA)
+                SetRowHover(false)
             end)
         end
 
-        -- Zebra Background
         if isHeader then
-            rf.bgR, rf.bgG, rf.bgB, rf.bgA = 0.04, 0.06, 0.09, 0.95
-            rf:SetBackdropColor(rf.bgR, rf.bgG, rf.bgB, rf.bgA)
-            rf.icon:Hide()
-            rf.label:ClearAllPoints()
-            rf.label:SetPoint("LEFT", rf.labelBtn, "LEFT", 8, 0)
-            rf.label:SetFont(GetFont(), 10, "OUTLINE")
-            rf.label:SetTextColor(0.92, 0.75, 0.18, 1) -- Gold Header
-            rf.label:SetText(row.label:upper())
+            lrf.icon:Hide()
+            lrf.label:ClearAllPoints()
+            lrf.label:SetPoint("LEFT", lrf.labelBtn, "LEFT", 8, 0)
+            lrf.label:SetFont(GetFont(), 10, "OUTLINE")
+            lrf.label:SetTextColor(0.92, 0.75, 0.18, 1) -- Gold Header
+            lrf.label:SetText(row.label:upper())
         else
-            local isEven = (rIdx % 2 == 0)
-            rf.bgR = isEven and 0.08 or 0.05
-            rf.bgG = isEven and 0.10 or 0.07
-            rf.bgB = isEven and 0.14 or 0.10
-            rf.bgA = 0.65
-            rf:SetBackdropColor(rf.bgR, rf.bgG, rf.bgB, rf.bgA)
-
-            rf.label:ClearAllPoints()
+            lrf.label:ClearAllPoints()
             if row.icon and row.icon ~= 0 then
-                rf.icon:SetTexture(row.icon)
-                rf.icon:Show()
-                rf.label:SetPoint("LEFT", rf.icon, "RIGHT", 6, 0)
+                lrf.icon:SetTexture(row.icon)
+                lrf.icon:Show()
+                lrf.label:SetPoint("LEFT", lrf.icon, "RIGHT", 6, 0)
             else
-                rf.icon:Hide()
-                rf.label:SetPoint("LEFT", rf.labelBtn, "LEFT", 8, 0)
+                lrf.icon:Hide()
+                lrf.label:SetPoint("LEFT", lrf.labelBtn, "LEFT", 8, 0)
             end
-            rf.label:SetPoint("RIGHT", rf.labelBtn, "RIGHT", -6, 0)
-            rf.label:SetFont(GetFont(), 10, "")
+            lrf.label:SetPoint("RIGHT", lrf.labelBtn, "RIGHT", -6, 0)
+            lrf.label:SetFont(GetFont(), 10, "")
             if row.category == "currency" and row.quality then
                 local qualityColors = {
                     [0] = { 0.62, 0.62, 0.62 }, -- Poor
@@ -798,20 +957,55 @@ function UI:Refresh()
                     [6] = { 0.90, 0.80, 0.50 }, -- Artifact
                 }
                 local qCol = qualityColors[row.quality] or { 0.85, 0.88, 0.92 }
-                rf.label:SetTextColor(qCol[1], qCol[2], qCol[3], 1)
+                lrf.label:SetTextColor(qCol[1], qCol[2], qCol[3], 1)
             else
-                rf.label:SetTextColor(0.85, 0.88, 0.92, 1)
+                lrf.label:SetTextColor(0.85, 0.88, 0.92, 1)
             end
-            rf.label:SetText(row.label)
+            lrf.label:SetText(row.label)
         end
+
+        -- ==========================================
+        -- 2. CHARACTERS ROW (IN SCROLL CONTAINER)
+        -- ==========================================
+        if not charRowFrames[rIdx] then
+            local crf = CreateFrame("Frame", nil, mainFrame.charsContent, "BackdropTemplate")
+            crf:SetHeight(ROW_HEIGHT)
+            crf:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8" })
+            crf:EnableMouseWheel(true)
+            crf:SetScript("OnMouseWheel", function(self, delta)
+                UI:ScrollHorizontal(delta)
+            end)
+            crf.cells = {}
+            charRowFrames[rIdx] = crf
+        end
+
+        local crf = charRowFrames[rIdx]
+        crf.isHeader = isHeader
+        crf.bgR, crf.bgG, crf.bgB, crf.bgA = bgR, bgG, bgB, bgA
+        crf:SetHeight(rHeight)
+        crf:SetWidth(charsTotalWidth)
+        crf:SetPoint("TOPLEFT", mainFrame.charsContent, "TOPLEFT", 0, -currentY)
+        crf:SetBackdropColor(bgR, bgG, bgB, bgA)
+        crf:Show()
+
+        crf:SetScript("OnEnter", function()
+            if not isHeader then SetRowHover(true) end
+        end)
+        crf:SetScript("OnLeave", function()
+            if not isHeader then SetRowHover(false) end
+        end)
 
         -- Character Cells per Row
         for cIdx, alt in ipairs(alts) do
-            if not rf.cells[cIdx] then
-                local cell = CreateFrame("Button", nil, rf, "InsecureActionButtonTemplate")
+            if not crf.cells[cIdx] then
+                local cell = CreateFrame("Button", nil, crf, "InsecureActionButtonTemplate")
                 cell:RegisterForClicks("AnyUp", "AnyDown")
                 cell:SetHeight(rHeight)
                 cell:SetWidth(CHAR_WIDTH)
+                cell:EnableMouseWheel(true)
+                cell:SetScript("OnMouseWheel", function(self, delta)
+                    UI:ScrollHorizontal(delta)
+                end)
 
                 local icon = cell:CreateTexture(nil, "ARTWORK")
                 icon:SetSize(14, 14)
@@ -837,12 +1031,12 @@ function UI:Refresh()
                     cell.skulls[s] = skull
                 end
 
-                rf.cells[cIdx] = cell
+                crf.cells[cIdx] = cell
             end
 
-            local cell = rf.cells[cIdx]
+            local cell = crf.cells[cIdx]
             cell:SetHeight(rHeight)
-            cell:SetPoint("LEFT", rf, "LEFT", LABEL_WIDTH + ((cIdx - 1) * CHAR_WIDTH), 0)
+            cell:SetPoint("LEFT", crf, "LEFT", (cIdx - 1) * CHAR_WIDTH, 0)
             cell:Show()
 
             cell.icon:Hide()
@@ -851,6 +1045,7 @@ function UI:Refresh()
             cell.text:SetTextColor(0.9, 0.9, 0.9, 1)
             cell:SetScript("OnEnter", nil)
             cell:SetScript("OnLeave", nil)
+            cell:SetScript("OnMouseUp", nil)
 
             if not InCombatLockdown() then
                 cell:SetAttribute("type", nil)
@@ -889,12 +1084,11 @@ function UI:Refresh()
                 end)
                 cell:SetScript("OnEnter", function(self)
                     ShowCharacterTooltip(self, alt)
-                    local r, g, b = GetAccentColor()
-                    rf:SetBackdropColor(r, g, b, 0.18)
+                    SetRowHover(true)
                 end)
                 cell:SetScript("OnLeave", function()
                     GameTooltip:Hide()
-                    rf:SetBackdropColor(rf.bgR, rf.bgG, rf.bgB, rf.bgA)
+                    SetRowHover(false)
                 end)
 
             elseif row.id == "char_realm" then
@@ -903,12 +1097,11 @@ function UI:Refresh()
                 cell.text:SetText(alt.realm or "")
                 cell:SetScript("OnEnter", function(self)
                     ShowCharacterTooltip(self, alt)
-                    local r, g, b = GetAccentColor()
-                    rf:SetBackdropColor(r, g, b, 0.18)
+                    SetRowHover(true)
                 end)
                 cell:SetScript("OnLeave", function()
                     GameTooltip:Hide()
-                    rf:SetBackdropColor(rf.bgR, rf.bgG, rf.bgB, rf.bgA)
+                    SetRowHover(false)
                 end)
 
             elseif row.id == "char_ilvl" then
@@ -917,12 +1110,11 @@ function UI:Refresh()
                 cell.text:SetText(string.format("%.1f", alt.ilvlEquipped or 0))
                 cell:SetScript("OnEnter", function(self)
                     ShowItemLevelTooltip(self, alt)
-                    local r, g, b = GetAccentColor()
-                    rf:SetBackdropColor(r, g, b, 0.18)
+                    SetRowHover(true)
                 end)
                 cell:SetScript("OnLeave", function()
                     GameTooltip:Hide()
-                    rf:SetBackdropColor(rf.bgR, rf.bgG, rf.bgB, rf.bgA)
+                    SetRowHover(false)
                 end)
 
             elseif row.id == "char_rating" then
@@ -936,12 +1128,11 @@ function UI:Refresh()
                 cell.text:SetText(string.format("|c%s%d|r", scoreHex, score))
                 cell:SetScript("OnEnter", function(self)
                     ShowRatingTooltip(self, alt)
-                    local r, g, b = GetAccentColor()
-                    rf:SetBackdropColor(r, g, b, 0.18)
+                    SetRowHover(true)
                 end)
                 cell:SetScript("OnLeave", function()
                     GameTooltip:Hide()
-                    rf:SetBackdropColor(rf.bgR, rf.bgG, rf.bgB, rf.bgA)
+                    SetRowHover(false)
                 end)
 
             elseif row.id == "char_key" then
@@ -954,12 +1145,11 @@ function UI:Refresh()
                 end
                 cell:SetScript("OnEnter", function(self)
                     ShowKeystoneTooltip(self, alt)
-                    local r, g, b = GetAccentColor()
-                    rf:SetBackdropColor(r, g, b, 0.18)
+                    SetRowHover(true)
                 end)
                 cell:SetScript("OnLeave", function()
                     GameTooltip:Hide()
-                    rf:SetBackdropColor(rf.bgR, rf.bgG, rf.bgB, rf.bgA)
+                    SetRowHover(false)
                 end)
 
             elseif row.category == "vault" then
@@ -967,12 +1157,11 @@ function UI:Refresh()
                 cell.text:SetText(FormatVaultSummary(alt, row.vaultType))
                 cell:SetScript("OnEnter", function(self)
                     ShowVaultTooltip(self, alt, row.vaultType)
-                    local r, g, b = GetAccentColor()
-                    rf:SetBackdropColor(r, g, b, 0.18)
+                    SetRowHover(true)
                 end)
                 cell:SetScript("OnLeave", function()
                     GameTooltip:Hide()
-                    rf:SetBackdropColor(rf.bgR, rf.bgG, rf.bgB, rf.bgA)
+                    SetRowHover(false)
                 end)
 
             elseif row.category == "prey" then
@@ -987,12 +1176,11 @@ function UI:Refresh()
                 end
                 cell:SetScript("OnEnter", function(self)
                     ShowPreyTooltip(self, alt, row.preyKey)
-                    local r, g, b = GetAccentColor()
-                    rf:SetBackdropColor(r, g, b, 0.18)
+                    SetRowHover(true)
                 end)
                 cell:SetScript("OnLeave", function()
                     GameTooltip:Hide()
-                    rf:SetBackdropColor(rf.bgR, rf.bgG, rf.bgB, rf.bgA)
+                    SetRowHover(false)
                 end)
 
             elseif row.category == "dungeon" then
@@ -1005,7 +1193,6 @@ function UI:Refresh()
                     cell.text:SetText("|cff666666-|r")
                 end
 
-                -- Teleport spell bind on cell
                 if row.dungeon then
                     local spellID = GetKnownTeleport(row.dungeon)
                     if spellID and not InCombatLockdown() then
@@ -1016,12 +1203,11 @@ function UI:Refresh()
 
                 cell:SetScript("OnEnter", function(self)
                     ShowDungeonTooltip(self, row.dungeon)
-                    local r, g, b = GetAccentColor()
-                    rf:SetBackdropColor(r, g, b, 0.18)
+                    SetRowHover(true)
                 end)
                 cell:SetScript("OnLeave", function()
                     GameTooltip:Hide()
-                    rf:SetBackdropColor(rf.bgR, rf.bgG, rf.bgB, rf.bgA)
+                    SetRowHover(false)
                 end)
 
             elseif row.category == "raid" then
@@ -1043,12 +1229,11 @@ function UI:Refresh()
 
                 cell:SetScript("OnEnter", function(self)
                     ShowRaidTooltip(self, alt, row.diffKey)
-                    local r, g, b = GetAccentColor()
-                    rf:SetBackdropColor(r, g, b, 0.18)
+                    SetRowHover(true)
                 end)
                 cell:SetScript("OnLeave", function()
                     GameTooltip:Hide()
-                    rf:SetBackdropColor(rf.bgR, rf.bgG, rf.bgB, rf.bgA)
+                    SetRowHover(false)
                 end)
 
             elseif row.category == "currency" then
@@ -1106,33 +1291,43 @@ function UI:Refresh()
 
                 cell:SetScript("OnEnter", function(self)
                     ShowCurrencyTooltip(self, alt, row.currId)
-                    local r, g, b = GetAccentColor()
-                    rf:SetBackdropColor(r, g, b, 0.18)
+                    SetRowHover(true)
                 end)
                 cell:SetScript("OnLeave", function()
                     GameTooltip:Hide()
-                    rf:SetBackdropColor(rf.bgR, rf.bgG, rf.bgB, rf.bgA)
+                    SetRowHover(false)
                 end)
             end
         end
 
-        -- Hide unused cells
-        for unused = numAlts + 1, #rf.cells do
-            if rf.cells[unused] then rf.cells[unused]:Hide() end
+        -- Hide unused cells in this row
+        for unused = numAlts + 1, #crf.cells do
+            if crf.cells[unused] then crf.cells[unused]:Hide() end
         end
 
         currentY = currentY + rHeight
     end
 
     -- Hide unused rows
-    for remRow = #rowDefs + 1, #rowFrames do
-        if rowFrames[remRow] then rowFrames[remRow]:Hide() end
+    for remRow = #rowDefs + 1, #leftRowFrames do
+        if leftRowFrames[remRow] then leftRowFrames[remRow]:Hide() end
+    end
+    for remRow = #rowDefs + 1, #charRowFrames do
+        if charRowFrames[remRow] then charRowFrames[remRow]:Hide() end
     end
 
     -- Dynamically set window height so all content fits perfectly on screen
     local neededHeight = currentY + 46
     mainFrame:SetHeight(neededHeight)
-    mainFrame.gridContent:SetHeight(currentY + 10)
+    mainFrame.leftContainer:SetHeight(currentY)
+    mainFrame.charsScrollFrame:SetHeight(currentY)
+    mainFrame.charsContent:SetHeight(currentY)
+
+    -- Scroll clamping & update controls
+    local maxScroll = self:GetMaxScroll(numAlts, visibleAlts)
+    self.currentScrollX = math.max(0, math.min(maxScroll, self.currentScrollX or 0))
+    mainFrame.charsScrollFrame:SetHorizontalScroll(self.currentScrollX)
+    self:UpdateNavControls(numAlts, visibleAlts)
 end
 
 function UI:ToggleWindow()

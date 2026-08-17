@@ -1186,11 +1186,28 @@ local function CreateMinimapButton()
         text = "GravityUI",
         icon = ns.ICON_PATH,
         OnClick = function(_, btn)
-            if btn == "LeftButton" and ns.GUI then ns.GUI:Toggle() end
+            if btn == "LeftButton" then
+                if ns.GUI then ns.GUI:Toggle() end
+            elseif btn == "RightButton" then
+                local db = ns.GetDB and ns.GetDB()
+                local altDB = db and db.altManager
+                local enabled = not altDB or (altDB.enabled ~= false)
+                local openRight = not altDB or (altDB.openOnRightClick ~= false)
+                if enabled and openRight and ns.AltManager and ns.AltManager.UI and ns.AltManager.UI.ToggleWindow then
+                    ns.AltManager.UI:ToggleWindow()
+                end
+            end
         end,
         OnTooltipShow = function(tooltip)
             tooltip:AddLine("|cFF30D1FFGravityUI|r")
             tooltip:AddLine("Left-click to open settings", 0.5, 0.8, 1)
+            local db = ns.GetDB and ns.GetDB()
+            local altDB = db and db.altManager
+            local enabled = not altDB or (altDB.enabled ~= false)
+            local openRight = not altDB or (altDB.openOnRightClick ~= false)
+            if enabled and openRight then
+                tooltip:AddLine("Right-click to open Alt Manager", 0.3, 0.9, 0.5)
+            end
         end,
     })
     
