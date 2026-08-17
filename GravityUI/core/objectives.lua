@@ -283,7 +283,7 @@ end
 -- PROGRESS BAR & TIMER BAR SKINNING
 -- ============================================================================
 local function SkinProgressBar(bar)
-    if not bar then return end
+    if not bar or type(bar) ~= "table" or not bar.IsObjectType then return end
     local s = GetSettings()
     if not s.objectiveTrackerSkinning then return end
     if s.modernSkinning == false then return end
@@ -293,7 +293,7 @@ local function SkinProgressBar(bar)
         "Spark", "Glow", "Sheen",
     }) do
         local r = bar[k]
-        if r and r.SetAlpha then r:SetAlpha(0); r:Hide() end
+        if r and type(r) == "table" and r.SetAlpha then r:SetAlpha(0); r:Hide() end
     end
 
     local statusBar = bar.Bar or (bar:IsObjectType("StatusBar") and bar)
@@ -345,7 +345,7 @@ local function SkinProgressBar(bar)
 end
 
 local function SkinTimerBar(bar)
-    if not bar then return end
+    if not bar or type(bar) ~= "table" or not bar.IsObjectType then return end
     local s = GetSettings()
     if not s.objectiveTrackerSkinning then return end
     if s.modernSkinning == false then return end
@@ -355,7 +355,7 @@ local function SkinTimerBar(bar)
         "Spark", "Glow", "Sheen",
     }) do
         local r = bar[k]
-        if r and r.SetAlpha then r:SetAlpha(0); r:Hide() end
+        if r and type(r) == "table" and r.SetAlpha then r:SetAlpha(0); r:Hide() end
     end
 
     local statusBar = bar.Bar or (bar:IsObjectType("StatusBar") and bar)
@@ -913,6 +913,17 @@ local function SkinExistingBlocks(tracker)
     if tracker.Header then SkinHeader(tracker.Header) end
     if SharesWidgetPool(tracker) then return end
 
+    if tracker.progressBarPool and tracker.progressBarPool.EnumerateActive then
+        for bar in tracker.progressBarPool:EnumerateActive() do
+            SkinProgressBar(bar)
+        end
+    end
+    if tracker.timerBarPool and tracker.timerBarPool.EnumerateActive then
+        for bar in tracker.timerBarPool:EnumerateActive() do
+            SkinTimerBar(bar)
+        end
+    end
+
     if tracker.usedBlocks then
         for _, byTemplate in pairs(tracker.usedBlocks) do
             if type(byTemplate) == "table" then
@@ -922,6 +933,16 @@ local function SkinExistingBlocks(tracker)
                         if block.lines then
                             for _, line in pairs(block.lines) do
                                 StyleObjectiveLine(line)
+                            end
+                        end
+                        if block.usedProgressBars then
+                            for _, bar in pairs(block.usedProgressBars) do
+                                SkinProgressBar(bar)
+                            end
+                        end
+                        if block.usedTimerBars then
+                            for _, bar in pairs(block.usedTimerBars) do
+                                SkinTimerBar(bar)
                             end
                         end
                     end
@@ -966,19 +987,22 @@ local function HookTracker(tracker)
 
     if tracker.AddObjective then
         hooksecurefunc(tracker, "AddObjective", function(_, _, line)
-            if line then StyleObjectiveLine(line) end
+            if line and type(line) == "table" and line.IsObjectType then StyleObjectiveLine(line) end
         end)
     end
 
-    if tracker.GetProgressBar then
-        hooksecurefunc(tracker, "GetProgressBar", function(_, _, bar)
-            if bar then SkinProgressBar(bar) end
-        end)
-    end
-
-    if tracker.GetTimerBar then
-        hooksecurefunc(tracker, "GetTimerBar", function(_, _, bar)
-            if bar then SkinTimerBar(bar) end
+    if tracker.LayoutContents then
+        hooksecurefunc(tracker, "LayoutContents", function(self)
+            if self.progressBarPool and self.progressBarPool.EnumerateActive then
+                for bar in self.progressBarPool:EnumerateActive() do
+                    SkinProgressBar(bar)
+                end
+            end
+            if self.timerBarPool and self.timerBarPool.EnumerateActive then
+                for bar in self.timerBarPool:EnumerateActive() do
+                    SkinTimerBar(bar)
+                end
+            end
         end)
     end
 

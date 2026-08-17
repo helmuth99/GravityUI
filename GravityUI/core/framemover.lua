@@ -168,7 +168,11 @@ local function MakeMovable(frameName)
     end)
 
     frame:HookScript("OnShow", function(self)
-        RestorePosition(self, frameName)
+        C_Timer.After(0, function()
+            if self:IsShown() then
+                RestorePosition(self, frameName)
+            end
+        end)
     end)
 
     -- Initial position restore if currently shown

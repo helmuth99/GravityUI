@@ -719,19 +719,28 @@ local function SetupGuildChatPrivacy()
     local function ShowGuildCover()
         local db = ns.GetDB()
         local enabled = db and db.uiimprovements and db.uiimprovements.guildChatPrivacy
-        if enabled and cf:IsShown() and mf:IsShown() then
-            guildCoverFrame:SetParent(mf)
-            guildCoverFrame:SetAllPoints(mf)
-            guildCoverFrame:SetFrameLevel(mf:GetFrameLevel() + 25)
-            guildCoverFrame:Show()
-        else
-            guildCoverFrame:Hide()
+        if not enabled then
+            if guildCoverFrame then guildCoverFrame:Hide() end
+            return
         end
+        C_Timer.After(0, function()
+            if not cf or not mf or not guildCoverFrame then return end
+            if cf:IsShown() and mf:IsShown() then
+                guildCoverFrame:SetParent(mf)
+                guildCoverFrame:SetAllPoints(mf)
+                guildCoverFrame:SetFrameLevel(mf:GetFrameLevel() + 25)
+                guildCoverFrame:Show()
+            else
+                guildCoverFrame:Hide()
+            end
+        end)
     end
 
     if not cf._guildCoverHooked then
         cf:HookScript("OnShow", ShowGuildCover)
-        cf:HookScript("OnHide", function() guildCoverFrame:Hide() end)
+        cf:HookScript("OnHide", function() 
+            if guildCoverFrame then guildCoverFrame:Hide() end 
+        end)
         cf._guildCoverHooked = true
     end
 
@@ -741,10 +750,13 @@ end
 local guildEventFrame = CreateFrame("Frame")
 guildEventFrame:RegisterEvent("ADDON_LOADED")
 guildEventFrame:SetScript("OnEvent", function(self, event, arg1)
-    if arg1 == "Blizzard_Communities" or CommunitiesFrame then
+    if arg1 == "Blizzard_Communities" then
         SetupGuildChatPrivacy()
+        self:UnregisterEvent("ADDON_LOADED")
     end
 end)
-if CommunitiesFrame then SetupGuildChatPrivacy() end
+if C_AddOns.IsAddOnLoaded("Blizzard_Communities") and CommunitiesFrame then
+    SetupGuildChatPrivacy()
+end
 
 

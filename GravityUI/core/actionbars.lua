@@ -111,8 +111,23 @@ local function RequestRefresh()
     if pendingRefresh then return end
     pendingRefresh = true
     C_Timer.After(0.2, function()
-        if ns.RefreshActionBars then
-            ns.RefreshActionBars()
+        if InCombatLockdown() then
+            -- Lightweight in-combat refresh: only update button text and empty slot alpha
+            local db = GetDB()
+            if db and db.enabled and db.global then
+                local g = db.global
+                for barKey, _ in pairs(BAR_BUTTONS) do
+                    local buttons = GetBarButtons(barKey)
+                    for _, btn in ipairs(buttons) do
+                        UpdateButtonText(btn, g)
+                        UpdateEmptySlotVisibility(btn, g)
+                    end
+                end
+            end
+        else
+            if ns.RefreshActionBars then
+                ns.RefreshActionBars()
+            end
         end
         pendingRefresh = false
     end)
@@ -1090,7 +1105,9 @@ function ns.RefreshActionBars()
         end
 
         -- Reset Hide Empty Slots CVar (optional cleanup)
-        SetCVar("alwaysShowActionBars", "1")
+        if not InCombatLockdown() then
+            pcall(SetCVar, "alwaysShowActionBars", "1")
+        end
 
         -- Disable Fade logic
         fadeFrame:SetScript("OnUpdate", nil)
@@ -1116,11 +1133,12 @@ function ns.RefreshActionBars()
     local g = db.global
 
     -- Hide Empty Slots (Grid Management)
-    -- Performance: Only call SetCVar if value actually changed (prevents ActionButton_Update cascade on all buttons)
-    if g.hideEmptySlots ~= nil then
+    -- We use native Alpha-based hiding which is combat-safe.
+    -- SetCVar is only synced when out of combat to avoid triggering Blizzard's protected MultiActionBar_Update.
+    if not InCombatLockdown() and g.hideEmptySlots ~= nil then
         local targetVal = g.hideEmptySlots and "0" or "1"
         if GetCVar("alwaysShowActionBars") ~= targetVal then
-            SetCVar("alwaysShowActionBars", targetVal)
+            pcall(SetCVar, "alwaysShowActionBars", targetVal)
         end
     end
 
@@ -1163,8 +1181,8 @@ function ns.RefreshActionBars()
     -- Do NOT call UpdateAllUsability() here - it causes SPELL_ACTIVATION_OVERLAY_HIDE
     -- flood on ALL registered buttons at once during initialization
     
-    -- Initialize Extra Buttons
-    if InitializeExtraButtons then InitializeExtraButtons() end
+    -- Initialize Extra Buttons (only out of combat)
+    if InitializeExtraButtons and not InCombatLockdown() then InitializeExtraButtons() end
 
     -- Dominos Skinning (only if both master toggle and Dominos toggle are enabled)
     if C_AddOns.IsAddOnLoaded("Dominos") and db.skinDominos then
