@@ -1744,61 +1744,47 @@ end
 
 local moverDummiesActive = false
 
-function InterruptTracker.ToggleMover(force)
+function InterruptTracker.ToggleMover(forceState)
     if not container then return end
     local s = GetSettings()
-    if not s or not s.enabled then return end
     
-    local show = false
-    if force ~= nil then
-        show = force
+    local shouldShow = false
+    if forceState ~= nil then
+        shouldShow = forceState
     else
-        show = not container.mover:IsShown()
+        shouldShow = not (container.mover and container.mover:IsShown())
     end
     
-    if show then
-        container.mover:Show()
+    if shouldShow then
+        container:Show()
+        if container.mover then container.mover:Show() end
         
-        -- Style based on mode
-        local r, g, b, a, br, bg, bb, ba
-        if force then
-            -- Edit Mode: Blue Overlay
-            r, g, b, a = 0, 0.6, 1, 0.5
-            br, bg, bb, ba = 0, 0.8, 1, 1
-        else
-            -- Manual Toggle: Green Highlight
-            r, g, b, a = 0, 1, 0, 0.3
-            br, bg, bb, ba = 0, 1, 0, 1
-        end
-
-        container.mover:SetBackdrop({
-            bgFile = "Interface\\Buttons\\WHITE8x8",
-            edgeFile = "Interface\\Buttons\\WHITE8x8",
-            edgeSize = 1,
-            insets = { left = 0, right = 0, top = 0, bottom = 0 }
-        })
-        container.mover:SetBackdropColor(r, g, b, a)
-        container.mover:SetBackdropBorderColor(br, bg, bb, ba)
-        
-        -- Add dummy bars for visual if empty
+        -- Add dummy bars for visual preview if empty
         if not next(activeBars) then
-             StartCooldown("test_warrior", "Warrior", "WARRIOR", 6552, nil, true) -- Pummel
-             StartCooldown("test_mage", "Mage", "MAGE", 2139, nil, true) -- Counterspell
-             StartCooldown("test_shaman", "Shaman", "SHAMAN", 57994, true, true) -- Wind Shear
-             moverDummiesActive = true
-             updateFrame:Show()
+            StartCooldown("test_warrior", "Warrior", "WARRIOR", 6552, nil, true) -- Pummel
+            StartCooldown("test_mage", "Mage", "MAGE", 2139, nil, true) -- Counterspell
+            StartCooldown("test_shaman", "Shaman", "SHAMAN", 57994, true, true) -- Wind Shear
+            moverDummiesActive = true
+            updateFrame:Show()
         end
     else
-        container.mover:Hide()
-        container.mover:SetBackdrop(nil)
+        if container.mover then container.mover:Hide() end
         
         -- Clear dummies ONLY if we created them
         if moverDummiesActive then
             ClearAllActiveBars()
             moverDummiesActive = false
-            -- Trigger immediate roster update to restore real bars if any (though unlikely if we were empty)
+            -- Trigger immediate roster update to restore real bars if any
             OnGroupRosterUpdate()
         end
+        
+        if s and not s.enabled then
+            container:Hide()
+        end
+    end
+
+    if ns.Movers and ns.Movers.ApplyEditModeStyle and container then
+        ns.Movers:ApplyEditModeStyle(container, shouldShow, "InterruptTracker")
     end
 end
 
@@ -1815,6 +1801,16 @@ function InterruptTracker.Initialize()
     container:SetPoint("CENTER", UIParent, "CENTER", s.x or 0, s.y or 0)
     container:SetMovable(true)
     container:SetClampedToScreen(true)
+
+    container:SetScript("OnDragStop", function(self)
+        self:StopMovingOrSizing()
+        local x, y = self:GetCenter()
+        local ux, uy = UIParent:GetCenter()
+        if x and ux then
+            s.x = math.floor(x - ux + 0.5)
+            s.y = math.floor(y - uy + 0.5)
+        end
+    end)
     
     -- Init Backdrop
     container:SetBackdrop({
@@ -1843,12 +1839,9 @@ function InterruptTracker.Initialize()
     
     mover:SetScript("OnDragStart", function() container:StartMoving() end)
     mover:SetScript("OnDragStop", function() 
-        container:StopMovingOrSizing()
-        -- Save Pos
-        local x, y = container:GetCenter()
-        local ux, uy = UIParent:GetCenter()
-        s.x = x - ux
-        s.y = y - uy
+        if container:GetScript("OnDragStop") then
+            container:GetScript("OnDragStop")(container)
+        end
     end)
     container.mover = mover
     

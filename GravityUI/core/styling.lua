@@ -439,7 +439,7 @@ function Styling:ToggleReadyCheckMover(forceState)
 
     if shouldShow then
         if ns.Movers and ns.Movers.ApplyEditModeStyle then
-            ns.Movers:ApplyEditModeStyle(readyCheckMover, forceState == true, "ReadyCheck")
+            ns.Movers:ApplyEditModeStyle(readyCheckMover, true, "ReadyCheck")
         end
         if readyCheckMover then readyCheckMover:Show() end
     else
@@ -873,25 +873,30 @@ local powerBarMover = nil
 function Styling:SavePowerBarPosition(point, relPoint, x, y)
     local db = GetDB()
     if db then
-        db.powerBar.position = { point = point, relPoint = relPoint, x = x, y = y }
+        db.powerBar = db.powerBar or {}
+        local rp = relPoint or point or "CENTER"
+        local fx = math.floor((x or 0) + 0.5)
+        local fy = math.floor((y or 0) + 0.5)
+        db.powerBar.position = { point = point or "CENTER", relPoint = rp, relativePoint = rp, x = fx, y = fy }
     end
 end
 
 function Styling:GetPowerBarPosition()
     local db = GetDB()
-    return db and db.powerBar.position
+    if not db or not db.powerBar then return nil end
+    local pos = db.powerBar.position
+    if not pos then return nil end
+    pos.relPoint = pos.relPoint or pos.relativePoint or pos.point or "CENTER"
+    pos.relativePoint = pos.relPoint
+    return pos
 end
 
 function Styling:ResetPowerBarPosition()
     local db = GetDB()
-    if db then db.powerBar.position = nil end
+    if db and db.powerBar then db.powerBar.position = nil end
     if altPowerBar then
         altPowerBar:ClearAllPoints()
         altPowerBar:SetPoint("TOP", UIParent, "TOP", 0, -100)
-    end
-    if powerBarMover then
-        powerBarMover:ClearAllPoints()
-        powerBarMover:SetPoint("CENTER", altPowerBar, "CENTER")
     end
 end
 
@@ -952,54 +957,13 @@ local function UpdateAltPowerBar(self)
     end
 end
 
-local function CreateAltPowerBarMover()
-    if powerBarMover or not altPowerBar then return end
-    
-    local sr, sg, sb, sa = ns.GetAccentColor()
-    
-    powerBarMover = CreateFrame("Frame", "GravityUI_AltPowerBarMover", UIParent, "BackdropTemplate")
-    powerBarMover:SetSize(altPowerBar:GetWidth() + 4, altPowerBar:GetHeight() + 4)
-    powerBarMover:SetPoint("CENTER", altPowerBar, "CENTER")
-    powerBarMover:SetBackdrop({
-        bgFile = "Interface\\Buttons\\WHITE8x8",
-        edgeFile = "Interface\\Buttons\\WHITE8x8",
-        edgeSize = 1,
-    })
-    powerBarMover:SetBackdropColor(sr, sg, sb, 0.3)
-    powerBarMover:SetBackdropBorderColor(sr, sg, sb, 1)
-    powerBarMover:EnableMouse(true)
-    powerBarMover:SetMovable(true)
-    powerBarMover:RegisterForDrag("LeftButton")
-    powerBarMover:SetFrameStrata("FULLSCREEN_DIALOG")
-    powerBarMover:Hide()
-
-    powerBarMover.text = powerBarMover:CreateFontString(nil, "OVERLAY")
-    powerBarMover.text:SetPoint("CENTER")
-    powerBarMover.text:SetFont(GetFontPath(), 10, "OUTLINE")
-    powerBarMover.text:SetText("Encounter Power Bar")
-    
-    powerBarMover:SetScript("OnDragStart", function() altPowerBar:StartMoving() end)
-    powerBarMover:SetScript("OnDragStop", function(self)
-        altPowerBar:StopMovingOrSizing()
-        local point, _, relPoint, x, y = altPowerBar:GetPoint()
-        Styling:SavePowerBarPosition(point, relPoint, x, y)
-        self:ClearAllPoints()
-        self:SetPoint("CENTER", altPowerBar, "CENTER")
-    end)
-end
-
 function Styling:TogglePowerBarMover(forceState)
     if not altPowerBar then return end
-    CreateAltPowerBarMover()
 
-    local shouldShow = not powerBarMover:IsShown()
+    local shouldShow = not altPowerBar:IsShown()
     if forceState ~= nil then shouldShow = forceState end
 
     if shouldShow then
-        if ns.Movers and ns.Movers.ApplyEditModeStyle then
-            ns.Movers:ApplyEditModeStyle(powerBarMover, forceState == true)
-        end
-        powerBarMover:Show()
         altPowerBar:Show()
         if not altPowerBar.powerName then
             altPowerBar.text:SetText("Encounter Power Bar")
@@ -1007,7 +971,6 @@ function Styling:TogglePowerBarMover(forceState)
             altPowerBar:SetValue(50)
         end
     else
-        powerBarMover:Hide()
         UpdateAltPowerBar(altPowerBar)
     end
 end
@@ -1046,8 +1009,10 @@ function Styling:SkinPowerBar()
     
     local pos = Styling:GetPowerBarPosition()
     if pos and pos.point then
-        altPowerBar:SetPoint(pos.point, UIParent, pos.relPoint or "CENTER", pos.x or 0, pos.y or 0)
+        altPowerBar:ClearAllPoints()
+        altPowerBar:SetPoint(pos.point, UIParent, pos.relPoint or pos.point or "CENTER", pos.x or 0, pos.y or 0)
     else
+        altPowerBar:ClearAllPoints()
         altPowerBar:SetPoint("TOP", UIParent, "TOP", 0, -100)
     end
     
@@ -1055,6 +1020,12 @@ function Styling:SkinPowerBar()
     altPowerBar:SetStatusBarColor(sr, sg, sb)
     altPowerBar:SetMovable(true)
     altPowerBar:SetClampedToScreen(true)
+
+    altPowerBar:SetScript("OnDragStop", function(self)
+        self:StopMovingOrSizing()
+        local point, _, relPoint, x, y = self:GetPoint()
+        Styling:SavePowerBarPosition(point, relPoint, x, y)
+    end)
 
     altPowerBar.backdrop = CreateFrame("Frame", nil, altPowerBar, "BackdropTemplate")
     altPowerBar.backdrop:SetPoint("TOPLEFT", -2, 2)
@@ -1099,7 +1070,7 @@ function Styling:SkinPowerBar()
     UpdateAltPowerBar(altPowerBar)
     
     if ns.Movers and ns.Movers.Register then
-        ns.Movers:Register("PowerBarAlt", nil, function(frame, enabled, force) Styling:TogglePowerBarMover(force) end, "Encounter Power Bar")
+        ns.Movers:Register("PowerBarAlt", altPowerBar, function(frame, enabled, force) Styling:TogglePowerBarMover(force) end, "Encounter Power Bar")
     end
 end
 
@@ -1135,6 +1106,21 @@ function Styling:GetWidgetPowerBarPosition()
     return db and db.widgetPowerBar and db.widgetPowerBar.position
 end
 
+local widgetPowerBarMover = nil
+
+function Styling:SaveWidgetPowerBarPosition(point, relPoint, x, y)
+    local db = GetDB()
+    if db then
+        db.widgetPowerBar = db.widgetPowerBar or {}
+        db.widgetPowerBar.position = { point = point, relPoint = relPoint, x = x, y = y }
+    end
+end
+
+function Styling:GetWidgetPowerBarPosition()
+    local db = GetDB()
+    return db and db.widgetPowerBar and db.widgetPowerBar.position
+end
+
 function Styling:ResetWidgetPowerBarPosition()
     local db = GetDB()
     if db and db.widgetPowerBar then db.widgetPowerBar.position = nil end
@@ -1145,7 +1131,7 @@ function Styling:ResetWidgetPowerBarPosition()
     end
     if widgetPowerBarMover then
         widgetPowerBarMover:ClearAllPoints()
-        widgetPowerBarMover:SetPoint("CENTER", container, "CENTER")
+        widgetPowerBarMover:SetPoint("TOP", UIParent, "TOP", 0, -200)
     end
 end
 
@@ -1158,8 +1144,15 @@ local function CreateWidgetPowerBarMover()
     local sr, sg, sb, sa = ns.GetAccentColor()
     
     widgetPowerBarMover = CreateFrame("Frame", "GravityUI_WidgetPowerBarMover", UIParent, "BackdropTemplate")
-    widgetPowerBarMover:SetSize(math.max(container:GetWidth() or 200, 200), math.max(container:GetHeight() or 40, 40))
-    widgetPowerBarMover:SetPoint("CENTER", container, "CENTER")
+    widgetPowerBarMover:SetSize(250, 40)
+    
+    local pos = Styling:GetWidgetPowerBarPosition()
+    if pos and pos.point then
+        widgetPowerBarMover:SetPoint(pos.point, UIParent, pos.relPoint or "CENTER", pos.x or 0, pos.y or 0)
+    else
+        widgetPowerBarMover:SetPoint("TOP", UIParent, "TOP", 0, -200)
+    end
+
     widgetPowerBarMover:SetBackdrop({
         bgFile = "Interface\\Buttons\\WHITE8x8",
         edgeFile = "Interface\\Buttons\\WHITE8x8",
@@ -1169,6 +1162,7 @@ local function CreateWidgetPowerBarMover()
     widgetPowerBarMover:SetBackdropBorderColor(sr, sg, sb, 1)
     widgetPowerBarMover:EnableMouse(true)
     widgetPowerBarMover:SetMovable(true)
+    widgetPowerBarMover:SetClampedToScreen(true)
     widgetPowerBarMover:RegisterForDrag("LeftButton")
     widgetPowerBarMover:SetFrameStrata("FULLSCREEN_DIALOG")
     widgetPowerBarMover:Hide()
@@ -1178,24 +1172,22 @@ local function CreateWidgetPowerBarMover()
     widgetPowerBarMover.text:SetFont(GetFontPath(), 10, "OUTLINE")
     widgetPowerBarMover.text:SetText("Widget Power Bar")
     
-    widgetPowerBarMover:SetScript("OnDragStart", function() container:StartMoving() end)
+    widgetPowerBarMover:SetScript("OnDragStart", function(self) self:StartMoving() end)
     widgetPowerBarMover:SetScript("OnDragStop", function(self)
-        container:StopMovingOrSizing()
-        local point, _, relPoint, x, y = container:GetPoint()
+        self:StopMovingOrSizing()
+        local point, _, relPoint, x, y = self:GetPoint()
         Styling:SaveWidgetPowerBarPosition(point, relPoint, x, y)
-        self:ClearAllPoints()
-        self:SetPoint("CENTER", container, "CENTER")
+        if container then
+            container:ClearAllPoints()
+            container:SetPoint(point, UIParent, relPoint or "CENTER", x, y)
+        end
     end)
-    
-    container:SetMovable(true)
-    container:SetClampedToScreen(true)
 end
 
 function Styling:ToggleWidgetPowerBarMover(forceState)
     CreateWidgetPowerBarMover()
     if not widgetPowerBarMover then return end
 
-    local container = _G.UIWidgetPowerBarContainerFrame
     local shouldShow = not widgetPowerBarMover:IsShown()
     if forceState ~= nil then shouldShow = forceState end
 
@@ -1203,7 +1195,6 @@ function Styling:ToggleWidgetPowerBarMover(forceState)
         if ns.Movers and ns.Movers.ApplyEditModeStyle then
             ns.Movers:ApplyEditModeStyle(widgetPowerBarMover, forceState == true, "WidgetPowerBar")
         end
-        widgetPowerBarMover:SetSize(math.max(container:GetWidth() or 200, 200), math.max(container:GetHeight() or 40, 40))
         widgetPowerBarMover:Show()
     else
         if ns.Movers and ns.Movers.ApplyEditModeStyle then
@@ -1217,10 +1208,16 @@ function Styling:InitWidgetPowerBar()
     local container = _G.UIWidgetPowerBarContainerFrame
     if not container then return end
 
+    CreateWidgetPowerBarMover()
+
     local pos = Styling:GetWidgetPowerBarPosition()
     if pos and pos.point then
         container:ClearAllPoints()
         container:SetPoint(pos.point, UIParent, pos.relPoint or "CENTER", pos.x or 0, pos.y or 0)
+        if widgetPowerBarMover then
+            widgetPowerBarMover:ClearAllPoints()
+            widgetPowerBarMover:SetPoint(pos.point, UIParent, pos.relPoint or "CENTER", pos.x or 0, pos.y or 0)
+        end
     end
 
     hooksecurefunc(container, "SetPoint", function(self, point, relativeTo)
@@ -1238,7 +1235,7 @@ function Styling:InitWidgetPowerBar()
     end)
 
     if ns.Movers and ns.Movers.Register then
-        ns.Movers:Register("WidgetPowerBar", nil, function(frame, enabled, force) Styling:ToggleWidgetPowerBarMover(force) end, "Widget Power Bar")
+        ns.Movers:Register("WidgetPowerBar", widgetPowerBarMover, function(frame, enabled, force) Styling:ToggleWidgetPowerBarMover(force) end, "Widget Power Bar")
     end
 
     local function GetActivePreyPercent()
@@ -1509,7 +1506,7 @@ function Styling:ResetWidgetBelowMinimapPosition()
     end
     if widgetBelowMinimapMover then
         widgetBelowMinimapMover:ClearAllPoints()
-        widgetBelowMinimapMover:SetPoint("CENTER", container, "CENTER")
+        widgetBelowMinimapMover:SetPoint("TOPRIGHT", UIParent, "TOPRIGHT", -200, -350)
     end
 end
 
@@ -1522,8 +1519,15 @@ local function CreateWidgetBelowMinimapMover()
     local sr, sg, sb, sa = ns.GetAccentColor()
     
     widgetBelowMinimapMover = CreateFrame("Frame", "GravityUI_WidgetBelowMinimapMover", UIParent, "BackdropTemplate")
-    widgetBelowMinimapMover:SetSize(math.max(container:GetWidth() or 200, 200), math.max(container:GetHeight() or 40, 40))
-    widgetBelowMinimapMover:SetPoint("CENTER", container, "CENTER")
+    widgetBelowMinimapMover:SetSize(200, 40)
+    
+    local pos = Styling:GetWidgetBelowMinimapPosition()
+    if pos and pos.point then
+        widgetBelowMinimapMover:SetPoint(pos.point, UIParent, pos.relPoint or "CENTER", pos.x or 0, pos.y or 0)
+    else
+        widgetBelowMinimapMover:SetPoint("TOPRIGHT", UIParent, "TOPRIGHT", -200, -350)
+    end
+    
     widgetBelowMinimapMover:SetBackdrop({
         bgFile = "Interface\\Buttons\\WHITE8x8",
         edgeFile = "Interface\\Buttons\\WHITE8x8",
@@ -1533,6 +1537,7 @@ local function CreateWidgetBelowMinimapMover()
     widgetBelowMinimapMover:SetBackdropBorderColor(sr, sg, sb, 1)
     widgetBelowMinimapMover:EnableMouse(true)
     widgetBelowMinimapMover:SetMovable(true)
+    widgetBelowMinimapMover:SetClampedToScreen(true)
     widgetBelowMinimapMover:RegisterForDrag("LeftButton")
     widgetBelowMinimapMover:SetFrameStrata("FULLSCREEN_DIALOG")
     widgetBelowMinimapMover:Hide()
@@ -1542,24 +1547,22 @@ local function CreateWidgetBelowMinimapMover()
     widgetBelowMinimapMover.text:SetFont(GetFontPath(), 10, "OUTLINE")
     widgetBelowMinimapMover.text:SetText("Widget Below Minimap")
     
-    widgetBelowMinimapMover:SetScript("OnDragStart", function() container:StartMoving() end)
+    widgetBelowMinimapMover:SetScript("OnDragStart", function(self) self:StartMoving() end)
     widgetBelowMinimapMover:SetScript("OnDragStop", function(self)
-        container:StopMovingOrSizing()
-        local point, _, relPoint, x, y = container:GetPoint()
+        self:StopMovingOrSizing()
+        local point, _, relPoint, x, y = self:GetPoint()
         Styling:SaveWidgetBelowMinimapPosition(point, relPoint, x, y)
-        self:ClearAllPoints()
-        self:SetPoint("CENTER", container, "CENTER")
+        if container then
+            container:ClearAllPoints()
+            container:SetPoint(point, UIParent, relPoint or "CENTER", x, y)
+        end
     end)
-    
-    container:SetMovable(true)
-    container:SetClampedToScreen(true)
 end
 
 function Styling:ToggleWidgetBelowMinimapMover(forceState)
     CreateWidgetBelowMinimapMover()
     if not widgetBelowMinimapMover then return end
 
-    local container = _G.UIWidgetBelowMinimapContainerFrame
     local shouldShow = not widgetBelowMinimapMover:IsShown()
     if forceState ~= nil then shouldShow = forceState end
 
@@ -1567,7 +1570,6 @@ function Styling:ToggleWidgetBelowMinimapMover(forceState)
         if ns.Movers and ns.Movers.ApplyEditModeStyle then
             ns.Movers:ApplyEditModeStyle(widgetBelowMinimapMover, forceState == true, "WidgetBelowMinimap")
         end
-        widgetBelowMinimapMover:SetSize(math.max(container:GetWidth() or 200, 200), math.max(container:GetHeight() or 40, 40))
         widgetBelowMinimapMover:Show()
     else
         if ns.Movers and ns.Movers.ApplyEditModeStyle then
@@ -1581,10 +1583,16 @@ function Styling:InitWidgetBelowMinimap()
     local container = _G.UIWidgetBelowMinimapContainerFrame
     if not container then return end
 
+    CreateWidgetBelowMinimapMover()
+
     local pos = Styling:GetWidgetBelowMinimapPosition()
     if pos and pos.point then
         container:ClearAllPoints()
         container:SetPoint(pos.point, UIParent, pos.relPoint or "CENTER", pos.x or 0, pos.y or 0)
+        if widgetBelowMinimapMover then
+            widgetBelowMinimapMover:ClearAllPoints()
+            widgetBelowMinimapMover:SetPoint(pos.point, UIParent, pos.relPoint or "CENTER", pos.x or 0, pos.y or 0)
+        end
     end
 
     hooksecurefunc(container, "SetPoint", function(self, point, relativeTo)
@@ -1602,7 +1610,7 @@ function Styling:InitWidgetBelowMinimap()
     end)
 
     if ns.Movers and ns.Movers.Register then
-        ns.Movers:Register("WidgetBelowMinimap", nil, function(frame, enabled, force) Styling:ToggleWidgetBelowMinimapMover(force) end, "Widget Below Minimap")
+        ns.Movers:Register("WidgetBelowMinimap", widgetBelowMinimapMover, function(frame, enabled, force) Styling:ToggleWidgetBelowMinimapMover(force) end, "Widget Below Minimap")
     end
 end
 
@@ -1635,7 +1643,7 @@ function Styling:ResetWidgetTopCenterPosition()
     end
     if widgetTopCenterMover then
         widgetTopCenterMover:ClearAllPoints()
-        widgetTopCenterMover:SetPoint("CENTER", container, "CENTER")
+        widgetTopCenterMover:SetPoint("TOP", UIParent, "TOP", 0, -200)
     end
 end
 
@@ -1648,8 +1656,15 @@ local function CreateWidgetTopCenterMover()
     local sr, sg, sb, sa = ns.GetAccentColor()
     
     widgetTopCenterMover = CreateFrame("Frame", "GravityUI_WidgetTopCenterMover", UIParent, "BackdropTemplate")
-    widgetTopCenterMover:SetSize(math.max(container:GetWidth() or 200, 200), math.max(container:GetHeight() or 40, 40))
-    widgetTopCenterMover:SetPoint("CENTER", container, "CENTER")
+    widgetTopCenterMover:SetSize(250, 40)
+    
+    local pos = Styling:GetWidgetTopCenterPosition()
+    if pos and pos.point then
+        widgetTopCenterMover:SetPoint(pos.point, UIParent, pos.relPoint or "CENTER", pos.x or 0, pos.y or 0)
+    else
+        widgetTopCenterMover:SetPoint("TOP", UIParent, "TOP", 0, -200)
+    end
+    
     widgetTopCenterMover:SetBackdrop({
         bgFile = "Interface\\Buttons\\WHITE8x8",
         edgeFile = "Interface\\Buttons\\WHITE8x8",
@@ -1659,6 +1674,7 @@ local function CreateWidgetTopCenterMover()
     widgetTopCenterMover:SetBackdropBorderColor(sr, sg, sb, 1)
     widgetTopCenterMover:EnableMouse(true)
     widgetTopCenterMover:SetMovable(true)
+    widgetTopCenterMover:SetClampedToScreen(true)
     widgetTopCenterMover:RegisterForDrag("LeftButton")
     widgetTopCenterMover:SetFrameStrata("FULLSCREEN_DIALOG")
     widgetTopCenterMover:Hide()
@@ -1668,24 +1684,22 @@ local function CreateWidgetTopCenterMover()
     widgetTopCenterMover.text:SetFont(GetFontPath(), 10, "OUTLINE")
     widgetTopCenterMover.text:SetText("Widget Top Center")
     
-    widgetTopCenterMover:SetScript("OnDragStart", function() container:StartMoving() end)
+    widgetTopCenterMover:SetScript("OnDragStart", function(self) self:StartMoving() end)
     widgetTopCenterMover:SetScript("OnDragStop", function(self)
-        container:StopMovingOrSizing()
-        local point, _, relPoint, x, y = container:GetPoint()
+        self:StopMovingOrSizing()
+        local point, _, relPoint, x, y = self:GetPoint()
         Styling:SaveWidgetTopCenterPosition(point, relPoint, x, y)
-        self:ClearAllPoints()
-        self:SetPoint("CENTER", container, "CENTER")
+        if container then
+            container:ClearAllPoints()
+            container:SetPoint(point, UIParent, relPoint or "CENTER", x, y)
+        end
     end)
-    
-    container:SetMovable(true)
-    container:SetClampedToScreen(true)
 end
 
 function Styling:ToggleWidgetTopCenterMover(forceState)
     CreateWidgetTopCenterMover()
     if not widgetTopCenterMover then return end
 
-    local container = _G.UIWidgetTopCenterContainerFrame
     local shouldShow = not widgetTopCenterMover:IsShown()
     if forceState ~= nil then shouldShow = forceState end
 
@@ -1693,7 +1707,6 @@ function Styling:ToggleWidgetTopCenterMover(forceState)
         if ns.Movers and ns.Movers.ApplyEditModeStyle then
             ns.Movers:ApplyEditModeStyle(widgetTopCenterMover, forceState == true, "WidgetTopCenter")
         end
-        widgetTopCenterMover:SetSize(math.max(container:GetWidth() or 200, 200), math.max(container:GetHeight() or 40, 40))
         widgetTopCenterMover:Show()
     else
         if ns.Movers and ns.Movers.ApplyEditModeStyle then
@@ -1707,10 +1720,16 @@ function Styling:InitWidgetTopCenter()
     local container = _G.UIWidgetTopCenterContainerFrame
     if not container then return end
 
+    CreateWidgetTopCenterMover()
+
     local pos = Styling:GetWidgetTopCenterPosition()
     if pos and pos.point then
         container:ClearAllPoints()
         container:SetPoint(pos.point, UIParent, pos.relPoint or "CENTER", pos.x or 0, pos.y or 0)
+        if widgetTopCenterMover then
+            widgetTopCenterMover:ClearAllPoints()
+            widgetTopCenterMover:SetPoint(pos.point, UIParent, pos.relPoint or "CENTER", pos.x or 0, pos.y or 0)
+        end
     end
 
     hooksecurefunc(container, "SetPoint", function(self, point, relativeTo)
@@ -1728,7 +1747,7 @@ function Styling:InitWidgetTopCenter()
     end)
 
     if ns.Movers and ns.Movers.Register then
-        ns.Movers:Register("WidgetTopCenter", nil, function(frame, enabled, force) Styling:ToggleWidgetTopCenterMover(force) end, "Widget Top Center")
+        ns.Movers:Register("WidgetTopCenter", widgetTopCenterMover, function(frame, enabled, force) Styling:ToggleWidgetTopCenterMover(force) end, "Widget Top Center")
     end
 end
 

@@ -28,7 +28,6 @@ function XPRep:Initialize()
 
     self:CreateContainer()
     self:CreateBars()
-    self:CreateMover()
     self:RegisterMover()
     
     self:RegisterEvents()
@@ -38,7 +37,6 @@ function XPRep:Initialize()
     
     -- Force a second update after a slight delay to ensure DB is fully loaded and UI settled
     C_Timer.After(1, function() 
-        -- print("GravityUI: Delayed XPRep Update")
         self:Update() 
     end)
 end
@@ -46,10 +44,36 @@ end
 function XPRep:CreateContainer()
     self.frame = CreateFrame("Frame", "GravityUI_XPRep_Frame", UIParent)
     self.frame:SetSize(self.db.width, self.db.height)
-    self.frame:SetPoint(self.db.position.point, UIParent, self.db.position.relativePoint, self.db.position.x, self.db.position.y)
+    local pos = self.db.position or { point = "BOTTOM", relativePoint = "BOTTOM", x = 0, y = 0 }
+    self.frame:SetPoint(pos.point or "BOTTOM", UIParent, pos.relativePoint or pos.point or "BOTTOM", pos.x or 0, pos.y or 0)
     self.frame:SetFrameStrata("LOW")
     self.frame:SetMovable(true)
     self.frame:SetClampedToScreen(true)
+
+    self.frame:SetScript("OnDragStop", function(f)
+        f:StopMovingOrSizing()
+        local cx, cy = f:GetCenter()
+        local ucy = (UIParent:GetHeight() or 1080) / 2
+        local scx = UIParent:GetCenter() or 0
+        local x = math.floor((cx - scx) + 0.5)
+        
+        if cy and cy < ucy then
+            -- Lower half of screen: Anchor to BOTTOM
+            local bottom = math.floor((f:GetBottom() or 0) + 0.5)
+            self.db.position = { point = "BOTTOM", relativePoint = "BOTTOM", x = x, y = bottom }
+            f:ClearAllPoints()
+            f:SetPoint("BOTTOM", UIParent, "BOTTOM", x, bottom)
+        else
+            -- Upper half of screen: Anchor to TOP
+            local top = f:GetTop() or 0
+            local uTop = UIParent:GetTop() or UIParent:GetHeight() or 1080
+            local y = math.floor((top - uTop) + 0.5)
+            self.db.position = { point = "TOP", relativePoint = "TOP", x = x, y = y }
+            f:ClearAllPoints()
+            f:SetPoint("TOP", UIParent, "TOP", x, y)
+        end
+        XPRep:Update()
+    end)
 end
 
 function XPRep:CreateBars()
@@ -146,16 +170,16 @@ function XPRep:Update()
             -- DEBUG
             -- print("GravityUI Rep Debug:", name, "Min:", min, "Max:", max, "Val:", val, "ID:", factionID)
 
-            -- Major Faction (Renown) Support
+            -- 1. Major Faction (Renown) Support
             local isMajorFaction = C_Reputation.IsMajorFaction(factionID)
-            local isRenown = false
+            local isHandled = false
             
             if isMajorFaction and C_MajorFactions then
                 local majorData = C_MajorFactions.GetMajorFactionData(factionID)
                 
                 if majorData then
-                    isRenown = true
-                    name = majorData.name -- Use major faction name
+                    isHandled = true
+                    name = majorData.name or name
                     local renownVal = majorData.renownReputationEarned or 0
                     local renownMax = majorData.renownLevelThreshold or 1
                     local renownLevel = majorData.renownLevel or 0
@@ -170,13 +194,61 @@ function XPRep:Update()
                 end
             end
 
-            if not isRenown then
+            -- 2. Friendship Factions / Delve Companions Support (e.g. Valeera, Brann)
+            if not isHandled and factionID and factionID > 0 then
+                local friendshipData = (C_GossipInfo and C_GossipInfo.GetFriendshipReputation and C_GossipInfo.GetFriendshipReputation(factionID))
+                    or (C_Reputation and C_Reputation.GetFriendshipReputation and C_Reputation.GetFriendshipReputation(factionID))
+                    or (GetFriendshipReputation and GetFriendshipReputation(factionID))
+                
+                if friendshipData and friendshipData.friendshipFactionID and friendshipData.friendshipFactionID > 0 then
+                    isHandled = true
+                    name = friendshipData.name or name
+                    local rankName = friendshipData.reaction or ""
+                    local cur = friendshipData.standing or 0
+                    local minThresh = friendshipData.reactionThreshold or 0
+                    local nextThresh = friendshipData.nextThreshold
+                    local maxRep = friendshipData.maxRep or 0
+                    
+                    local standing = 0
+                    local total = 1
+                    
+                    if nextThresh and nextThresh > minThresh then
+                        standing = cur - minThresh
+                        total = nextThresh - minThresh
+                    else
+                        -- Capped / Maximum level reached
+                        local cap = (maxRep > minThresh and (maxRep - minThresh)) or (cur > minThresh and (cur - minThresh)) or 1
+                        standing = cap
+                        total = cap
+                    end
+                    
+                    if total <= 0 then total = 1 end
+                    standing = math.max(0, math.min(standing, total))
+                    
+                    self.repBar:Show()
+                    self.repBar:SetMinMaxValues(0, total)
+                    self.repBar:SetValue(standing)
+                    self.repBar:SetStatusBarColor(unpack(self.db.repColor))
+                    
+                    local pct = math.floor((standing / total) * 100)
+                    if rankName and rankName ~= "" then
+                        self.repBar.text:SetText(string.format("%s (%s): %s / %s (%d%%)", name, rankName, AbbreviateLargeNumbers(standing), AbbreviateLargeNumbers(total), pct))
+                    else
+                        self.repBar.text:SetText(string.format("%s: %s / %s (%d%%)", name, AbbreviateLargeNumbers(standing), AbbreviateLargeNumbers(total), pct))
+                    end
+                end
+            end
+
+            -- 3. Standard & Paragon Reputation
+            if not isHandled then
                 self.repBar:Show()
                 local standing = val - min
                 local total = max - min
                 
                 -- FIX FOR SOME REPUTATIONS (Renown/Paragon edge cases)
-                if total == 0 then total = 1 end -- Prevent div/0
+                if total <= 0 then total = 1 end -- Prevent div/0
+                if standing < 0 then standing = 0 end
+                if standing > total then standing = total end
                 
                 self.repBar:SetMinMaxValues(0, total)
                 self.repBar:SetValue(standing)
@@ -185,7 +257,6 @@ function XPRep:Update()
                 
                 -- PARAGON LOGIC
                 -- Only show Paragon if we are actually Exalted (Reaction 8) AND the game says it's Paragon.
-                -- This fixes issues with Warband factions showing 0/10000 Paragon bars while still leveling (e.g. 5650/6000).
                 local isParagon = C_Reputation.IsFactionParagon(factionID)
                 local isExalted = reaction and reaction >= 8
                 
@@ -194,7 +265,7 @@ function XPRep:Update()
                     
                     local isActuallyParagon = not tooLowLevelForParagon and currentValue
                     
-                    if isActuallyParagon then
+                    if isActuallyParagon and threshold and threshold > 0 then
                         standing = currentValue % threshold
                         total = threshold
                         self.repBar:SetMinMaxValues(0, total)
@@ -222,34 +293,49 @@ function XPRep:Update()
     local width = self.db.width
     local height = self.db.height
     
-    self.frame:SetSize(width, height * 2 + 5) -- Expand container if needed
-    
+    local isBottomAnchored = true
+    if self.db.position and self.db.position.point and self.db.position.point:find("TOP") then
+        isBottomAnchored = false
+    end
+
     if self.xpBar:IsShown() and self.repBar:IsShown() then
+        self.frame:SetSize(width, height * 2 + 2)
         self.xpBar:ClearAllPoints()
-        self.xpBar:SetPoint("TOPLEFT", self.frame, "TOPLEFT", 0, 0)
-        self.xpBar:SetPoint("TOPRIGHT", self.frame, "TOPRIGHT", 0, 0)
-        self.xpBar:SetHeight(height)
-        
         self.repBar:ClearAllPoints()
-        self.repBar:SetPoint("TOPLEFT", self.xpBar, "BOTTOMLEFT", 0, -2) -- 2px Spacing
-        self.repBar:SetPoint("TOPRIGHT", self.xpBar, "BOTTOMRIGHT", 0, -2)
-        self.repBar:SetHeight(height)
+        
+        if isBottomAnchored then
+            self.repBar:SetPoint("BOTTOMLEFT", self.frame, "BOTTOMLEFT", 0, 0)
+            self.repBar:SetPoint("BOTTOMRIGHT", self.frame, "BOTTOMRIGHT", 0, 0)
+            self.repBar:SetHeight(height)
+            
+            self.xpBar:SetPoint("BOTTOMLEFT", self.repBar, "TOPLEFT", 0, 2)
+            self.xpBar:SetPoint("BOTTOMRIGHT", self.repBar, "TOPRIGHT", 0, 2)
+            self.xpBar:SetHeight(height)
+        else
+            self.xpBar:SetPoint("TOPLEFT", self.frame, "TOPLEFT", 0, 0)
+            self.xpBar:SetPoint("TOPRIGHT", self.frame, "TOPRIGHT", 0, 0)
+            self.xpBar:SetHeight(height)
+            
+            self.repBar:SetPoint("TOPLEFT", self.xpBar, "BOTTOMLEFT", 0, -2)
+            self.repBar:SetPoint("TOPRIGHT", self.xpBar, "BOTTOMRIGHT", 0, -2)
+            self.repBar:SetHeight(height)
+        end
     elseif self.xpBar:IsShown() then
         self.xpBar:ClearAllPoints()
         self.xpBar:SetAllPoints(self.frame)
         self.xpBar:SetHeight(height)
-        self.frame:SetHeight(height)
+        self.frame:SetSize(width, height)
     elseif self.repBar:IsShown() then
         self.repBar:ClearAllPoints()
         self.repBar:SetAllPoints(self.frame)
         self.repBar:SetHeight(height)
-        self.frame:SetHeight(height)
+        self.frame:SetSize(width, height)
     else
         self.frame:Hide()
     end
     
     -- Apply Mouseover State & Text Visibility
-    if self.db.mouseover and not self.preview and not (self.mover and self.mover:IsShown()) then
+    if self.db.mouseover and not self.preview then
         self.frame:SetAlpha(0)
         
         -- Keep text ready
@@ -259,16 +345,11 @@ function XPRep:Update()
         self.frame:SetAlpha(1)
         
         -- Text Visibility Logic
-        local showText = self.db.alwaysShowText or self.frame:IsMouseOver() or (self.mover and self.mover:IsShown())
+        local showText = self.db.alwaysShowText or self.frame:IsMouseOver() or self.preview
         local textAlpha = showText and 1 or 0
         
         self.xpBar.text:SetAlpha(textAlpha)
         self.repBar.text:SetAlpha(textAlpha)
-    end
-
-    
-    if self.mover and self.mover:IsShown() then
-        self.frame:SetAlpha(1)
     end
 end
 
@@ -283,6 +364,22 @@ SlashCmdList["GRAVITYREPDEBUG"] = function()
         print("Min (Current Threshold):", data.currentReactionThreshold)
         print("Max (Next Threshold):", data.nextReactionThreshold)
         print("Val (Current Standing):", data.currentStanding)
+
+        local isMajor = C_Reputation.IsMajorFaction(data.factionID)
+        print("Is Major Faction (Renown):", isMajor)
+        if isMajor and C_MajorFactions then
+            local majorData = C_MajorFactions.GetMajorFactionData(data.factionID)
+            if majorData then
+                print("Major Faction Data:", majorData.name, "Renown:", majorData.renownLevel, "Earned:", majorData.renownReputationEarned, "Threshold:", majorData.renownLevelThreshold)
+            end
+        end
+
+        local friendshipData = (C_GossipInfo and C_GossipInfo.GetFriendshipReputation and C_GossipInfo.GetFriendshipReputation(data.factionID))
+            or (C_Reputation and C_Reputation.GetFriendshipReputation and C_Reputation.GetFriendshipReputation(data.factionID))
+            or (GetFriendshipReputation and GetFriendshipReputation(data.factionID))
+        if friendshipData and friendshipData.friendshipFactionID and friendshipData.friendshipFactionID > 0 then
+            print("Friendship Data:", friendshipData.name, "Rank:", friendshipData.reaction, "Standing:", friendshipData.standing, "Threshold:", friendshipData.reactionThreshold, "Next:", friendshipData.nextThreshold, "Max:", friendshipData.maxRep)
+        end
         
         local standing = data.currentStanding - data.currentReactionThreshold
         local total = data.nextReactionThreshold - data.currentReactionThreshold
@@ -300,7 +397,6 @@ SlashCmdList["GRAVITYREPDEBUG"] = function()
     end
 end
 
-
 function XPRep:Refresh()
     if not self.initialized then return end
     
@@ -312,8 +408,9 @@ function XPRep:Refresh()
     end
     
     self.frame:SetSize(self.db.width, self.db.height) -- Initial sizing
+    local pos = self.db.position or { point = "BOTTOM", relativePoint = "BOTTOM", x = 0, y = 0 }
     self.frame:ClearAllPoints()
-    self.frame:SetPoint(self.db.position.point, UIParent, self.db.position.relativePoint, self.db.position.x, self.db.position.y)
+    self.frame:SetPoint(pos.point or "BOTTOM", UIParent, pos.relativePoint or pos.point or "BOTTOM", pos.x or 0, pos.y or 0)
     self.frame:SetFrameStrata(self.db.strata or "MEDIUM")
     
     local texture = LSM:Fetch("statusbar", self.db.texture)
@@ -374,13 +471,11 @@ function XPRep:TogglePreview()
 end
 
 function XPRep:ToggleMover(forceState)
-    if not self.mover then self:CreateMover() end
-    
     local shouldShow = false
     if forceState ~= nil then
         shouldShow = forceState
     else
-        shouldShow = not self.mover:IsShown()
+        shouldShow = not self.preview
     end
 
     if shouldShow then
@@ -388,24 +483,13 @@ function XPRep:ToggleMover(forceState)
         self:Update()
         self.frame:Show()
         self.frame:SetAlpha(1)
-        self.mover:Show()
-        if self.mover.text then self.mover.text:Hide() end
-
-        if ns.Movers and ns.Movers.ApplyEditModeStyle then
-            self.mover:SetBackdropColor(0, 0, 0, 0)
-            self.mover:SetBackdropBorderColor(0, 0, 0, 0)
-            ns.Movers:ApplyEditModeStyle(self.mover, forceState == true, "XPRep")
-        else
-            self.mover:SetBackdropColor(0, 0.6, 1, 0.3)
-            self.mover:SetBackdropBorderColor(0, 0.8, 1, 1)
-        end
     else
         self.preview = false
-        if ns.Movers and ns.Movers.ApplyEditModeStyle then
-            ns.Movers:ApplyEditModeStyle(self.mover, false, "XPRep")
-        end
-        self.mover:Hide()
         self:Update()
+    end
+
+    if ns.Movers and ns.Movers.ApplyEditModeStyle and self.frame then
+        ns.Movers:ApplyEditModeStyle(self.frame, shouldShow, "XPRep")
     end
 end
 
@@ -413,58 +497,4 @@ function XPRep:RegisterMover()
     if ns.Movers and ns.Movers.Register then
         ns.Movers:Register("XPRep", self.frame, function(frame, enabled) self:ToggleMover(enabled) end, "XP/Rep Bar")
     end
-end
-
-
-function XPRep:CreateMover()
-    if self.mover then return end
-    
-    self.mover = CreateFrame("Frame", "GravityUI_XPRep_Mover", UIParent, "BackdropTemplate")
-    self.mover:SetAllPoints(self.frame)
-    self.mover:SetBackdrop({
-        bgFile = "Interface\\Buttons\\WHITE8x8",
-        edgeFile = "Interface\\Buttons\\WHITE8x8",
-        edgeSize = 1,
-    })
-    self.mover:SetBackdropColor(0, 0, 0, 0)
-    self.mover:SetBackdropBorderColor(0, 0, 0, 0)
-    
-    self.mover:EnableMouse(true)
-    self.mover:SetMovable(true)
-    self.mover:RegisterForDrag("LeftButton")
-    self.mover:SetFrameStrata("DIALOG")
-    self.mover:Hide()
-    
-    local text = self.mover:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    text:SetPoint("CENTER")
-    text:SetText("XP/Rep Mover")
-    text:Hide()
-    self.mover.text = text
-    
-    self.mover:SetScript("OnDragStart", function()
-        self.frame:StartMoving()
-        self.mover:SetAllPoints(self.frame) -- Keep synced? iterating
-    end)
-    
-    self.mover:SetScript("OnDragStop", function()
-        self.frame:StopMovingOrSizing()
-        local point, _, relPoint, x, y = self.frame:GetPoint()
-        self.db.position.point = point
-        self.db.position.relativePoint = relPoint
-        self.db.position.x = x
-        self.db.position.y = y
-        self.mover:ClearAllPoints()
-        self.mover:SetAllPoints(self.frame)
-    end)
-    
-    -- Sync mover size/pos updates
-    hooksecurefunc(self.frame, "SetSize", function() 
-        if self.mover then self.mover:SetSize(self.frame:GetSize()) end
-    end)
-    hooksecurefunc(self.frame, "SetPoint", function() 
-         if self.mover and not self.frame:IsDragging() then 
-            self.mover:ClearAllPoints()
-            self.mover:SetAllPoints(self.frame) 
-         end
-    end)
 end

@@ -247,13 +247,9 @@ function CombatTimer.TogglePreview(show, isForceEditMode)
 
         -- Apply Standard Edit Mode Style
         if ns.Movers and ns.Movers.ApplyEditModeStyle then
-            if isForceEditMode == true then
-                frame:SetBackdropColor(0, 0, 0, 0)
-                frame:SetBackdropBorderColor(0, 0, 0, 0)
-                ns.Movers:ApplyEditModeStyle(frame, true, "CombatTimer")
-            else
-                ns.Movers:ApplyEditModeStyle(frame, false, "CombatTimer")
-            end
+            frame:SetBackdropColor(0, 0, 0, 0)
+            frame:SetBackdropBorderColor(0, 0, 0, 0)
+            ns.Movers:ApplyEditModeStyle(frame, true, "CombatTimer")
         end
 
         frame:Show()

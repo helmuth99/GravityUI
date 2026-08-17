@@ -84,6 +84,66 @@ local MODULE_CONFIG_MAP = {
             if ns.RaidBuffs and ns.RaidBuffs.Refresh then ns.RaidBuffs:Refresh() end
         end,
     },
+    ["RaidBuffs_raid"] = {
+        get = function(db) return db.raidBuffs and db.raidBuffs.enabled ~= false and db.raidBuffs.splitCategories and db.raidBuffs.splitCategories.raid == true end,
+        set = function(db, val)
+            if db.raidBuffs then
+                if not db.raidBuffs.splitCategories then db.raidBuffs.splitCategories = {} end
+                db.raidBuffs.splitCategories.raid = val
+            end
+            if ns.RaidBuffs and ns.RaidBuffs.Refresh then ns.RaidBuffs:Refresh() end
+        end,
+    },
+    ["RaidBuffs_presence"] = {
+        get = function(db) return db.raidBuffs and db.raidBuffs.enabled ~= false and db.raidBuffs.splitCategories and db.raidBuffs.splitCategories.presence == true end,
+        set = function(db, val)
+            if db.raidBuffs then
+                if not db.raidBuffs.splitCategories then db.raidBuffs.splitCategories = {} end
+                db.raidBuffs.splitCategories.presence = val
+            end
+            if ns.RaidBuffs and ns.RaidBuffs.Refresh then ns.RaidBuffs:Refresh() end
+        end,
+    },
+    ["RaidBuffs_targeted"] = {
+        get = function(db) return db.raidBuffs and db.raidBuffs.enabled ~= false and db.raidBuffs.splitCategories and db.raidBuffs.splitCategories.targeted == true end,
+        set = function(db, val)
+            if db.raidBuffs then
+                if not db.raidBuffs.splitCategories then db.raidBuffs.splitCategories = {} end
+                db.raidBuffs.splitCategories.targeted = val
+            end
+            if ns.RaidBuffs and ns.RaidBuffs.Refresh then ns.RaidBuffs:Refresh() end
+        end,
+    },
+    ["RaidBuffs_self"] = {
+        get = function(db) return db.raidBuffs and db.raidBuffs.enabled ~= false and db.raidBuffs.splitCategories and db.raidBuffs.splitCategories.self == true end,
+        set = function(db, val)
+            if db.raidBuffs then
+                if not db.raidBuffs.splitCategories then db.raidBuffs.splitCategories = {} end
+                db.raidBuffs.splitCategories.self = val
+            end
+            if ns.RaidBuffs and ns.RaidBuffs.Refresh then ns.RaidBuffs:Refresh() end
+        end,
+    },
+    ["RaidBuffs_consumables"] = {
+        get = function(db) return db.raidBuffs and db.raidBuffs.enabled ~= false and db.raidBuffs.splitCategories and db.raidBuffs.splitCategories.consumables == true end,
+        set = function(db, val)
+            if db.raidBuffs then
+                if not db.raidBuffs.splitCategories then db.raidBuffs.splitCategories = {} end
+                db.raidBuffs.splitCategories.consumables = val
+            end
+            if ns.RaidBuffs and ns.RaidBuffs.Refresh then ns.RaidBuffs:Refresh() end
+        end,
+    },
+    ["RaidBuffs_custom"] = {
+        get = function(db) return db.raidBuffs and db.raidBuffs.enabled ~= false and db.raidBuffs.splitCategories and db.raidBuffs.splitCategories.custom == true end,
+        set = function(db, val)
+            if db.raidBuffs then
+                if not db.raidBuffs.splitCategories then db.raidBuffs.splitCategories = {} end
+                db.raidBuffs.splitCategories.custom = val
+            end
+            if ns.RaidBuffs and ns.RaidBuffs.Refresh then ns.RaidBuffs:Refresh() end
+        end,
+    },
     ["InterruptTracker"] = {
         get = function(db) return db.screenindicators and db.screenindicators.interruptTracker and db.screenindicators.interruptTracker.enabled ~= false end,
         set = function(db, val)
@@ -176,7 +236,8 @@ local MODULE_CONFIG_MAP = {
         get = function(db) return db.styling and db.styling.xpRep and db.styling.xpRep.enabled ~= false end,
         set = function(db, val)
             if db.styling and db.styling.xpRep then db.styling.xpRep.enabled = val end
-            if ns.XPRep and ns.XPRep.UpdateDisplay then ns.XPRep:UpdateDisplay() end
+            if ns.XPRep and ns.XPRep.Update then ns.XPRep:Update() end
+            if ns.XPRep and ns.XPRep.Refresh then ns.XPRep:Refresh() end
         end,
     },
     ["WorldMarks"] = {
@@ -198,6 +259,13 @@ local MODULE_CONFIG_MAP = {
             if db.styling and db.styling.lootRoll then db.styling.lootRoll.enabled = val end
         end,
     },
+    ["CooldownText"] = {
+        get = function(db) return db.cooldownText and db.cooldownText.enabled == true end,
+        set = function(db, val)
+            if db.cooldownText then db.cooldownText.enabled = val end
+            if ns.CooldownText and ns.CooldownText.Refresh then ns.CooldownText:Refresh() end
+        end,
+    },
 }
 
 function Movers:GetEditModeSettings()
@@ -215,29 +283,29 @@ function Movers:GetEditModeSettings()
 end
 
 function Movers:IsElementEnabled(name)
+    local db = ns.GetDB and ns.GetDB()
     local data = self.registry[name]
     if data and data.customGet then
-        return data.customGet()
+        return (data.customGet(db) == true)
     end
     local map = MODULE_CONFIG_MAP[name]
     if map and map.get then
-        local db = ns.GetDB and ns.GetDB()
         if db then return (map.get(db) == true) end
     end
     return true
 end
 
 function Movers:ToggleElementEnabled(name)
+    local db = ns.GetDB and ns.GetDB()
     local data = self.registry[name]
     local current = self:IsElementEnabled(name)
     local newVal = not current
 
     if data and data.customSet then
-        data.customSet(newVal)
+        data.customSet(newVal, db)
     else
         local map = MODULE_CONFIG_MAP[name]
         if map and map.set then
-            local db = ns.GetDB and ns.GetDB()
             if db then map.set(db, newVal) end
         end
     end
@@ -281,18 +349,21 @@ function Movers:Toggle(name)
     local data = self.registry[name]
     if not data then return end
 
-    if data.frame then
-        if data.frame:IsShown() then
-            data.frame:Hide()
-        else
+    local hasOverlay = data.frame and data.frame.ag_backdrop and data.frame.ag_backdrop:IsShown()
+    local shouldShow = not hasOverlay
+
+    if data.toggleFunc then
+        pcall(data.toggleFunc, data.frame, shouldShow, shouldShow)
+    elseif data.frame then
+        if shouldShow then
             data.frame:Show()
-            self:ApplyEditModeStyle(data.frame, true, name)
+        else
+            data.frame:Hide()
         end
     end
 
-    if data.toggleFunc then
-        local isShown = data.frame and data.frame:IsShown()
-        pcall(data.toggleFunc, data.frame, isShown, isShown)
+    if data.frame then
+        self:ApplyEditModeStyle(data.frame, shouldShow, name)
     end
 end
 
@@ -629,15 +700,146 @@ function Movers:SaveFramePosition(name, frame, point, relPoint, x, y)
     end
 
     local db = ns.GetDB and ns.GetDB()
-    if db then
-        if name == "DeathAnnouncer" and db.deathAnnouncer then
-            local cx, cy = frame:GetCenter()
-            local scx, scy = UIParent:GetCenter()
-            if cx and scx then
-                db.deathAnnouncer.x = math.floor(cx - scx + 0.5)
-                db.deathAnnouncer.y = math.floor(cy - scy + 0.5)
+    if not db then return end
+
+    local p, _, rp, px, py = frame:GetPoint()
+    local finalX = math.floor((px or x or 0) + 0.5)
+    local finalY = math.floor((py or y or 0) + 0.5)
+    local finalPoint = p or point or "CENTER"
+    local finalRelPoint = rp or relPoint or "CENTER"
+
+    if name == "DeathAnnouncer" and db.deathAnnouncer then
+        local cx, cy = frame:GetCenter()
+        local scx, scy = UIParent:GetCenter()
+        if cx and scx then
+            db.deathAnnouncer.x = math.floor(cx - scx + 0.5)
+            db.deathAnnouncer.y = math.floor(cy - scy + 0.5)
+        end
+    elseif name == "XPRep" and db.styling and db.styling.xpRep then
+        local cx, cy = frame:GetCenter()
+        local ucy = (UIParent:GetHeight() or 1080) / 2
+        local scx = UIParent:GetCenter() or 0
+        local x = math.floor((cx - scx) + 0.5)
+        
+        if cy and cy < ucy then
+            -- Lower half: Anchor to BOTTOM
+            local bottom = math.floor((frame:GetBottom() or 0) + 0.5)
+            db.styling.xpRep.position = { point = "BOTTOM", relativePoint = "BOTTOM", x = x, y = bottom }
+            frame:ClearAllPoints()
+            frame:SetPoint("BOTTOM", UIParent, "BOTTOM", x, bottom)
+        else
+            -- Upper half: Anchor to TOP
+            local top = frame:GetTop() or 0
+            local uTop = UIParent:GetTop() or UIParent:GetHeight() or 1080
+            local y = math.floor((top - uTop) + 0.5)
+            db.styling.xpRep.position = { point = "TOP", relativePoint = "TOP", x = x, y = y }
+            frame:ClearAllPoints()
+            frame:SetPoint("TOP", UIParent, "TOP", x, y)
+        end
+        if ns.XPRep and ns.XPRep.Update then ns.XPRep:Update() end
+    elseif name == "WorldMarks" and db.uiimprovements and db.uiimprovements.marks then
+        local cx, cy = frame:GetCenter()
+        local scx, scy = UIParent:GetCenter()
+        if cx and scx then
+            db.uiimprovements.marks.offsetX = math.floor(cx - scx + 0.5)
+            db.uiimprovements.marks.offsetY = math.floor(cy - scy + 0.5)
+        end
+    elseif name == "CombatTimer" and db.uiimprovements and db.uiimprovements.combatTimer then
+        local cx, cy = frame:GetCenter()
+        local scx, scy = UIParent:GetCenter()
+        if cx and scx then
+            db.uiimprovements.combatTimer.xOffset = math.floor(cx - scx + 0.5)
+            db.uiimprovements.combatTimer.yOffset = math.floor(cy - scy + 0.5)
+        end
+    elseif name == "PowerBarAlt" and db.styling and db.styling.powerBar then
+        local p, _, rp, px, py = frame:GetPoint()
+        local pt = p or point or "CENTER"
+        local rpt = rp or relPoint or pt
+        local fx = math.floor((px or x or 0) + 0.5)
+        local fy = math.floor((py or y or 0) + 0.5)
+        db.styling.powerBar.position = { point = pt, relPoint = rpt, relativePoint = rpt, x = fx, y = fy }
+    elseif name == "WidgetPowerBar" and db.styling and db.styling.widgetPowerBar then
+        db.styling.widgetPowerBar.position = { point = finalPoint, relPoint = finalRelPoint, x = finalX, y = finalY }
+        local c = _G.UIWidgetPowerBarContainerFrame
+        if c then c:ClearAllPoints(); c:SetPoint(finalPoint, UIParent, finalRelPoint, finalX, finalY) end
+    elseif name == "WidgetBelowMinimap" and db.styling and db.styling.widgetBelowMinimap then
+        db.styling.widgetBelowMinimap.position = { point = finalPoint, relPoint = finalRelPoint, x = finalX, y = finalY }
+        local c = _G.UIWidgetBelowMinimapContainerFrame
+        if c then c:ClearAllPoints(); c:SetPoint(finalPoint, UIParent, finalRelPoint, finalX, finalY) end
+    elseif name == "WidgetTopCenter" and db.styling and db.styling.widgetTopCenter then
+        db.styling.widgetTopCenter.position = { point = finalPoint, relPoint = finalRelPoint, x = finalX, y = finalY }
+        local c = _G.UIWidgetTopCenterContainerFrame
+        if c then c:ClearAllPoints(); c:SetPoint(finalPoint, UIParent, finalRelPoint, finalX, finalY) end
+    elseif name == "Alerts" and db.styling and db.styling.alerts then
+        db.styling.alerts.alertPosition = { point = finalPoint, relPoint = finalRelPoint, x = finalX, y = finalY }
+    elseif name == "Toasts" and db.styling and db.styling.alerts then
+        db.styling.alerts.toastPosition = { point = finalPoint, relPoint = finalRelPoint, x = finalX, y = finalY }
+    elseif name == "TargetedSpellsBars" and db.screenindicators and db.screenindicators.targetedSpells then
+        local cx, cy = frame:GetCenter()
+        local scx, scy = UIParent:GetCenter()
+        if cx and scx then
+            db.screenindicators.targetedSpells.x = math.floor(cx - scx + 0.5)
+            db.screenindicators.targetedSpells.y = math.floor(cy - scy + 0.5)
+        end
+    elseif name == "TargetedSpellsIcons" and db.screenindicators and db.screenindicators.targetedSpells then
+        local cx, cy = frame:GetCenter()
+        local scx, scy = UIParent:GetCenter()
+        if cx and scx then
+            db.screenindicators.targetedSpells.iconX = math.floor(cx - scx + 0.5)
+            db.screenindicators.targetedSpells.iconY = math.floor(cy - scy + 0.5)
+        end
+    elseif name == "InterruptTracker" and db.screenindicators and db.screenindicators.interruptTracker then
+        local cx, cy = frame:GetCenter()
+        local scx, scy = UIParent:GetCenter()
+        if cx and scx then
+            db.screenindicators.interruptTracker.x = math.floor(cx - scx + 0.5)
+            db.screenindicators.interruptTracker.y = math.floor(cy - scy + 0.5)
+        end
+    elseif name == "RaidBuffs" and db.raidBuffs then
+        local left = frame:GetLeft()
+        local top = frame:GetTop()
+        local uTop = UIParent:GetTop()
+        if left and top and uTop then
+            local x = math.floor(left + 0.5)
+            local y = math.floor(top - uTop + 0.5)
+            db.raidBuffs.position = { point = "TOPLEFT", x = x, y = y }
+            frame:ClearAllPoints()
+            frame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", x, y)
+        else
+            db.raidBuffs.position = { point = "TOPLEFT", x = finalX, y = finalY }
+            frame:ClearAllPoints()
+            frame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", finalX, finalY)
+        end
+    elseif name:find("^RaidBuffs_") and db.raidBuffs then
+        local cat = name:match("^RaidBuffs_(.+)")
+        if cat then
+            if not db.raidBuffs.categorySettings then db.raidBuffs.categorySettings = {} end
+            if not db.raidBuffs.categorySettings[cat] then db.raidBuffs.categorySettings[cat] = {} end
+            local left = frame:GetLeft()
+            local top = frame:GetTop()
+            local uTop = UIParent:GetTop()
+            if left and top and uTop then
+                local x = math.floor(left + 0.5)
+                local y = math.floor(top - uTop + 0.5)
+                db.raidBuffs.categorySettings[cat].position = { point = "TOPLEFT", x = x, y = y }
+                frame:ClearAllPoints()
+                frame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", x, y)
+            else
+                db.raidBuffs.categorySettings[cat].position = { point = "TOPLEFT", x = finalX, y = finalY }
+                frame:ClearAllPoints()
+                frame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", finalX, finalY)
             end
         end
+    elseif name == "RaidWarnings" and db.raidWarnings then
+        db.raidWarnings.x = finalX
+        db.raidWarnings.y = finalY
+    elseif name == "LootWindow" and db.styling and db.styling.loot then
+        db.styling.loot.position = { point = finalPoint, relPoint = finalRelPoint, x = finalX, y = finalY }
+    elseif name == "LootRolls" and db.styling and db.styling.lootRoll then
+        db.styling.lootRoll.position = { point = finalPoint, relPoint = finalRelPoint, x = finalX, y = finalY }
+    elseif name == "CooldownText" and db.cooldownText then
+        db.cooldownText.x = finalX
+        db.cooldownText.y = finalY
     end
 end
 

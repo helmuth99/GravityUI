@@ -155,6 +155,10 @@ function CooldownText:CreateBaseFrames()
     mainContainer:SetFrameStrata("LOW")
     -- Visibility is handled by Initialize/Refresh
 
+    if ns.Movers and ns.Movers.Register then
+        ns.Movers:Register("CooldownText", mainContainer, function(frame, enabled, force) CooldownText:ToggleMover(force) end, "Cooldown Tracker")
+    end
+
     self.frame = CreateFrame("Frame")
     self.frame:RegisterEvent("TRAIT_CONFIG_UPDATED")
     self.frame:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED")
@@ -267,27 +271,22 @@ end)
 local isMoverShown = false
 local moverFrame
 
-function CooldownText:ToggleMover()
+function CooldownText:ToggleMover(forceState)
     if not mainContainer or not DB then return end
     
+    local shouldShow = false
+    if forceState ~= nil then
+        shouldShow = forceState
+    else
+        shouldShow = not (moverFrame and moverFrame:IsShown())
+    end
+
     if not moverFrame then
         moverFrame = CreateFrame("Frame", nil, mainContainer, "BackdropTemplate")
         moverFrame:SetAllPoints(mainContainer)
-        moverFrame:SetBackdrop({
-            bgFile = "Interface\\Buttons\\WHITE8x8",
-            edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-            edgeSize = 16,
-            insets = { left = 4, right = 4, top = 4, bottom = 4 },
-        })
-        moverFrame:SetBackdropColor(0, 1, 0, 0.5)
-        moverFrame:SetBackdropBorderColor(0, 1, 0, 1)
         moverFrame:EnableMouse(true)
         moverFrame:RegisterForDrag("LeftButton")
         moverFrame:SetMovable(true)
-        
-        local text = moverFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-        text:SetPoint("CENTER")
-        text:SetText("Cooldown Tracker\nDrag to Move")
         
         moverFrame:SetScript("OnDragStart", function()
             mainContainer:StartMoving()
@@ -302,12 +301,20 @@ function CooldownText:ToggleMover()
         mainContainer:SetMovable(true)
     end
     
-    isMoverShown = not isMoverShown
-    
-    if isMoverShown then
+    if shouldShow then
+        mainContainer:Show()
         moverFrame:Show()
+        if ns.Movers and ns.Movers.ApplyEditModeStyle then
+            ns.Movers:ApplyEditModeStyle(mainContainer, true, "CooldownText")
+        end
     else
         moverFrame:Hide()
+        if ns.Movers and ns.Movers.ApplyEditModeStyle then
+            ns.Movers:ApplyEditModeStyle(mainContainer, false, "CooldownText")
+        end
+        if not DB.enabled then
+            mainContainer:Hide()
+        end
     end
 end
 

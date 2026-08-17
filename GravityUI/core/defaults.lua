@@ -77,10 +77,11 @@ ns.Defaults = {
         powerBar = {
             enabled = true,
             position = {
-                y = 229.16749572754,
-                relPoint = "BOTTOM",
-                point = "BOTTOM",
-                x = 1.6666791439056,
+                point = "TOP",
+                relPoint = "TOP",
+                relativePoint = "TOP",
+                x = 0,
+                y = -100,
             },
         },
         widgetPowerBar = {
@@ -242,10 +243,10 @@ ns.Defaults = {
             restedColor = { 0, 0.4, 0.9, 1 },
             repColor = { 0, 0.6, 0.1, 1 },
             position = {
-                point = "TOP",
-                relativePoint = "TOP",
+                point = "BOTTOM",
+                relativePoint = "BOTTOM",
                 x = 0,
-                y = -20,
+                y = 0,
             },
         },
     },

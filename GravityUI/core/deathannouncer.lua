@@ -612,6 +612,10 @@ function DeathAnnouncer.ToggleMover(force)
         end
         if not anyActive then container:Hide() end
     end
+
+    if ns.Movers and ns.Movers.ApplyEditModeStyle and mover then
+        ns.Movers:ApplyEditModeStyle(mover, show, "DeathAnnouncer")
+    end
 end
 
 function DeathAnnouncer.Initialize()

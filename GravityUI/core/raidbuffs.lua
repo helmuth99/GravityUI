@@ -427,7 +427,7 @@ local CATEGORY_LABELS = {
 
 local DEFAULTS = {
     customBuffs = {},
-    position = { point = "CENTER", x = 0, y = 0 },
+    position = { point = "TOPLEFT", x = 20, y = -50 },
     locked = true,
     enabledBuffs = {},
     iconSize = 40,
@@ -441,7 +441,7 @@ local DEFAULTS = {
     showOnlyPlayerMissing = false,
     showOnlyOnReadyCheck = false,
     readyCheckDuration = 15,
-    growDirection = "CENTER",
+    growDirection = "RIGHT",
     showExpirationGlow = true,
     expirationThreshold = 15,
     glowColor = {0.95, 0.95, 0.32, 1},
@@ -457,20 +457,20 @@ local DEFAULTS = {
     },
     categorySettings = {
         main = {
-            position = { point = "CENTER", x = 0, y = 0 },
+            position = { point = "TOPLEFT", x = 20, y = -50 },
             iconSize = 64,
             spacing = 0.2,
-            growDirection = "CENTER",
+            growDirection = "RIGHT",
             iconZoom = 8,
             borderSize = 2,
             enabled = true,
         },
-        raid = { position = { point = "CENTER", x = 0, y = 60 } },
-        presence = { position = { point = "CENTER", x = 0, y = 20 } },
-        targeted = { position = { point = "CENTER", x = 0, y = -20 } },
-        self = { position = { point = "CENTER", x = 0, y = -60 } },
-        consumables = { position = { point = "CENTER", x = 0, y = -100 } },
-        custom = { position = { point = "CENTER", x = 0, y = -140 } },
+        raid = { position = { point = "TOPLEFT", x = 20, y = 60 } },
+        presence = { position = { point = "TOPLEFT", x = 20, y = 20 } },
+        targeted = { position = { point = "TOPLEFT", x = 20, y = -20 } },
+        self = { position = { point = "TOPLEFT", x = 20, y = -60 } },
+        consumables = { position = { point = "TOPLEFT", x = 20, y = -100 } },
+        custom = { position = { point = "TOPLEFT", x = 20, y = -140 } },
     },
 }
 
@@ -768,13 +768,34 @@ local categoryFrames = {}
 local function GetFrameForCategory(cat)
     local db = GetSettings()
     if not categoryFrames[cat] then
-         categoryFrames[cat] = CreateFrame("Frame", "GravityUI_RaidBuffs_"..cat, UIParent)
-         categoryFrames[cat]:SetSize(1,1)
-         local catData = db.categorySettings[cat] or { position = { point = "CENTER", x = 0, y = 0 } }
-         local pos = catData.position or { point = "CENTER", x = 0, y = 0 }
-         categoryFrames[cat]:SetPoint(pos.point, UIParent, pos.point, pos.x, pos.y)
-         categoryFrames[cat].catKey = cat
-         categoryFrames[cat]:EnableMouse(false)
+         local f = CreateFrame("Frame", "GravityUI_RaidBuffs_"..cat, UIParent)
+         f:SetSize(200, 50)
+         local catData = db.categorySettings and db.categorySettings[cat] or { position = { point = "TOPLEFT", x = 20, y = -100 } }
+         local pos = catData.position or { point = "TOPLEFT", x = 20, y = -100 }
+         f:ClearAllPoints()
+         f:SetPoint(pos.point or "TOPLEFT", UIParent, pos.point or "TOPLEFT", pos.x or 0, pos.y or 0)
+         f.catKey = cat
+         f:EnableMouse(false)
+         f:SetMovable(true)
+         f:SetClampedToScreen(true)
+
+         f:SetScript("OnDragStop", function(self)
+             self:StopMovingOrSizing()
+             local left = self:GetLeft()
+             local top = self:GetTop()
+             local uTop = UIParent:GetTop()
+             local s = GetSettings()
+             if s and s.categorySettings and self.catKey and left and top and uTop then
+                 local x = math.floor(left + 0.5)
+                 local y = math.floor(top - uTop + 0.5)
+                 if not s.categorySettings[self.catKey] then s.categorySettings[self.catKey] = {} end
+                 s.categorySettings[self.catKey].position = { point = "TOPLEFT", x = x, y = y }
+                 self:ClearAllPoints()
+                 self:SetPoint("TOPLEFT", UIParent, "TOPLEFT", x, y)
+             end
+         end)
+
+         categoryFrames[cat] = f
     end
     return categoryFrames[cat]
 end
@@ -1036,40 +1057,59 @@ local function UpdateDisplay()
     if db.customBuffs then for k, b in pairs(db.customBuffs) do ProcessBuffFrame(b, buffFrames[k], false, "custom", validUnits) end end
 
     -- Layout Function
-    local function LayoutFrames(frameList, parentFrame)
+    local function LayoutFrames(frameList, parentFrame, catKey)
+        local isSplit = catKey == "main" or (db.splitCategories and db.splitCategories[catKey] == true)
         if #frameList == 0 then 
-            parentFrame:Hide()
-            return 
+            if not isTestMode or not isSplit then
+                parentFrame:Hide()
+                return 
+            else
+                local iconSize = db.iconSize or 40
+                parentFrame:SetSize(iconSize, iconSize)
+                parentFrame:Show()
+                return
+            end
         end
         parentFrame:Show()
         
         table.sort(frameList, function(a,b) return a.key < b.key end)
         
-        local iconSize = db.iconSize or 64
+        local iconSize = db.iconSize or 40
         local spacing = db.spacing or (iconSize * 0.2)
         local totalWidth = #frameList * iconSize + (#frameList - 1) * spacing
         parentFrame:SetSize(totalWidth, iconSize)
         
-        local grow = db.growDirection or "CENTER"
+        local catSettings = (catKey and db.categorySettings and db.categorySettings[catKey]) or db
+        local grow = (catSettings and catSettings.growDirection) or db.growDirection or "RIGHT"
         for i, f in ipairs(frameList) do
             f:ClearAllPoints()
             f:SetParent(parentFrame) 
-            if grow == "CENTER" then
-                f:SetPoint("LEFT", parentFrame, "LEFT", (i-1)*(iconSize+spacing), 0)
-            elseif grow == "LEFT" then
+            if grow == "LEFT" then
                 f:SetPoint("RIGHT", parentFrame, "RIGHT", -(i-1)*(iconSize+spacing), 0)
-            elseif grow == "RIGHT" then
+            else
                 f:SetPoint("LEFT", parentFrame, "LEFT", (i-1)*(iconSize+spacing), 0)
             end
         end
     end
 
     -- Layout Main
-    LayoutFrames(visibleBuffs.main, mainFrame)
+    LayoutFrames(visibleBuffs.main, mainFrame, "main")
+    if mainFrame and db.position then
+        local pos = db.position
+        mainFrame:ClearAllPoints()
+        mainFrame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", pos.x or 0, pos.y or 0)
+    end
+
     -- Layout Categories
     for cat, list in pairs(visibleBuffs) do
         if cat ~= "main" then
-            LayoutFrames(list, GetFrameForCategory(cat))
+            local catFrame = GetFrameForCategory(cat)
+            LayoutFrames(list, catFrame, cat)
+            if catFrame and db.categorySettings and db.categorySettings[cat] then
+                local pos = db.categorySettings[cat].position or { point = "TOPLEFT", x = 20, y = -100 }
+                catFrame:ClearAllPoints()
+                catFrame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", pos.x or 0, pos.y or 0)
+            end
         end
     end
 end
@@ -1145,47 +1185,46 @@ local function CreateSingleMover(name, frame, label)
 end
 
 function RaidBuffs:ToggleMover(forceState)
-    local db = GetSettings()
-    
-    local mainMover = CreateSingleMover("GravityUI_Mover_Main", mainFrame, "Main / Shared Buffs")
-    
     local shouldShow = false
     if forceState ~= nil then
         shouldShow = forceState
     else
-        shouldShow = not mainMover:IsShown()
+        shouldShow = not RaidBuffs.isTestMode
     end
     
-    if not shouldShow then
-        -- Toggle OFF
-        RaidBuffs.isTestMode = false
-        mainMover:Hide()
-        for _, m in pairs(movers) do m:Hide() end
-    else
-        -- Show Main
-        RaidBuffs.isTestMode = true
-        mainMover:ClearAllPoints()
-        mainMover:SetPoint(db.position.point, UIParent, db.position.point, db.position.x, db.position.y)
-        mainMover:SetSize(math.max(200, db.iconSize*3), db.iconSize+10)
-        mainMover:Show()
-        
-        -- Show Split Movers
-        if db.splitCategories then
-            for cat, split in pairs(db.splitCategories) do
-                if split then
-                    local catFrame = GetFrameForCategory(cat)
-                    local m = CreateSingleMover("GravityUI_Mover_"..cat, catFrame, cat.." Buffs")
-                    local pos = (db.categorySettings[cat] and db.categorySettings[cat].position) or { point="CENTER", x=0, y=0 }
-                    m:ClearAllPoints()
-                    m:SetPoint(pos.point, UIParent, pos.point, pos.x, pos.y)
-                    m:SetSize(math.max(150, db.iconSize*2), db.iconSize+10)
-                    m:Show()
-                end
+    RaidBuffs.isTestMode = shouldShow
+
+    if shouldShow then
+        if mainFrame then
+            mainFrame:Show()
+            mainFrame:SetAlpha(1)
+        end
+        for _, cat in ipairs(CATEGORIES) do
+            local f = GetFrameForCategory(cat)
+            if f then
+                f:Show()
+                f:SetAlpha(1)
             end
         end
     end
+
     -- Trigger display update to show test patterns
     UpdateDisplay()
+
+    -- Apply Mover edit style if toggled
+    if ns.Movers and ns.Movers.ApplyEditModeStyle then
+        if mainFrame then
+            ns.Movers:ApplyEditModeStyle(mainFrame, shouldShow, "RaidBuffs")
+        end
+        local db = GetSettings()
+        for _, cat in ipairs(CATEGORIES) do
+            local f = GetFrameForCategory(cat)
+            if f then
+                local isSplit = (db and db.splitCategories and db.splitCategories[cat] == true)
+                ns.Movers:ApplyEditModeStyle(f, shouldShow and isSplit, "RaidBuffs_" .. cat)
+            end
+        end
+    end
 end
 
 -- Custom Buffs Logic
@@ -1295,12 +1334,11 @@ function RaidBuffs:AddCustomBuff(spellID)
 
     if not spellName then return false, "Invalid Spell ID" end
     
-    -- Safety: Ensure customBuffs table exists
-    if not db.customBuffs then db.customBuffs = {} end
+    local key = "custom_" .. tostring(spellID):gsub("%s+", "_"):gsub("[^%w_]", "")
     
-    local key = "custom_" .. spellID
+    if not db.customBuffs then db.customBuffs = {} end
     db.customBuffs[key] = {
-        spellID = spellID,
+        spellID = originalInput,
         key = key,
         name = spellName,
         iconOverride = icon,
@@ -1332,8 +1370,29 @@ local function InitializeFrames()
     
     mainFrame = CreateFrame("Frame", "GravityUI_RaidBuffs", UIParent)
     mainFrame:SetSize(200, 50)
-    mainFrame:SetPoint(db.position.point, UIParent, db.position.point, db.position.x, db.position.y)
-    mainFrame:EnableMouse(false) 
+    local pos = db.position or { point = "TOPLEFT", x = 20, y = -50 }
+    mainFrame:ClearAllPoints()
+    mainFrame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", pos.x or 0, pos.y or 0)
+    mainFrame:SetMovable(true)
+    mainFrame:SetClampedToScreen(true)
+    mainFrame:EnableMouse(false)
+
+    mainFrame:SetScript("OnDragStop", function(self)
+        self:StopMovingOrSizing()
+        local left = self:GetLeft()
+        local top = self:GetTop()
+        local uTop = UIParent:GetTop()
+        local s = GetSettings()
+        if s and s.position and left and top and uTop then
+            local x = math.floor(left + 0.5)
+            local y = math.floor(top - uTop + 0.5)
+            s.position.point = "TOPLEFT"
+            s.position.x = x
+            s.position.y = y
+            self:ClearAllPoints()
+            self:SetPoint("TOPLEFT", UIParent, "TOPLEFT", x, y)
+        end
+    end) 
     
     -- Create Category Frames by default if split
     if db.splitCategories then
@@ -1362,6 +1421,25 @@ local function InitializeFrames()
     -- Register with Movers
     if ns.Movers and ns.Movers.Register then
         ns.Movers:Register("RaidBuffs", mainFrame, function(frame, enabled) RaidBuffs:ToggleMover(enabled) end, "Raid Buffs")
+
+        for _, cat in ipairs(CATEGORIES) do
+            local catFrame = GetFrameForCategory(cat)
+            local catLabel = "Buffs: " .. (CATEGORY_LABELS[cat] or cat)
+            local moverName = "RaidBuffs_" .. cat
+            ns.Movers:Register(moverName, catFrame, nil, catLabel,
+            function(sdb)
+                local db = sdb or (ns.db and ns.db.profile) or GetSettings()
+                return (db and db.raidBuffs and db.raidBuffs.enabled ~= false and db.raidBuffs.splitCategories and db.raidBuffs.splitCategories[cat] == true) or false
+            end,
+            function(val, sdb)
+                local db = sdb or (ns.db and ns.db.profile) or GetSettings()
+                if db and db.raidBuffs then
+                    if not db.raidBuffs.splitCategories then db.raidBuffs.splitCategories = {} end
+                    db.raidBuffs.splitCategories[cat] = val
+                end
+                RaidBuffs:Refresh()
+            end)
+        end
     end
 end
 

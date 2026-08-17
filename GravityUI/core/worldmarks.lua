@@ -203,6 +203,17 @@ local function CreateMarksBar()
         frame.buttons[i] = btn
     end
 
+    frame:SetScript("OnDragStop", function(f)
+        f:StopMovingOrSizing()
+        local centerX, centerY = UIParent:GetCenter()
+        local frameX, frameY = f:GetCenter()
+        local s = GetSettings()
+        if s and frameX and centerX then
+            s.offsetX = math.floor(frameX - centerX + 0.5)
+            s.offsetY = math.floor(frameY - centerY + 0.5)
+        end
+    end)
+
     WorldMarks.frame = frame
     WorldMarks.Refresh()
     UpdateAlpha(0)
@@ -213,68 +224,35 @@ end
 -- MOVER/INIT
 ---------------------------------------------------------------------------
 function WorldMarks:ToggleMover(forceState)
-    -- Ensure the mover exists before operating on it
-    if not self.mover then self:CreateMover() end
-    if not self.mover then return end -- CreateMover failed (no frame yet)
+    if not self.frame then return end
 
-    -- NOTE: Cannot use `A and B or C` ternary when B can be false (Lua pitfall).
-    local shouldShow
+    local shouldShow = false
     if forceState ~= nil then
-        shouldShow = forceState  -- Explicit forced state: true=show, false=hide
+        shouldShow = forceState
     else
-        shouldShow = not self.mover:IsShown()  -- No force: toggle current state
+        shouldShow = not self.frame:IsShown()
     end
 
+    local settings = GetSettings()
     if shouldShow then
-        -- Force the actual frame visible so it can be dragged
-        if self.frame then self.frame:Show(); self.frame:SetAlpha(1) end
-        self.mover:Show()
-        if ns.Movers and ns.Movers.ApplyEditModeStyle then
-            ns.Movers:ApplyEditModeStyle(self.mover, true, "WorldMarks")
-        end
+        self.frame:Show()
+        self.frame:SetAlpha(1)
     else
-        -- Remove edit-mode styling and hide the mover
-        if ns.Movers and ns.Movers.ApplyEditModeStyle then
-            ns.Movers:ApplyEditModeStyle(self.mover, false, "WorldMarks")
-        end
-        self.mover:Hide()
-        -- Restore the actual frame to its settings-driven state
-        local settings = GetSettings()
-        if self.frame and settings then
-            if not settings.enabled then
-                self.frame:Hide()
-            else
-                self.frame:Show()
-                self.frame:SetAlpha(settings.mouseover and 0 or 1)
-            end
+        if settings and not settings.enabled then
+            self.frame:Hide()
+        else
+            self.frame:Show()
+            self.frame:SetAlpha((settings and settings.mouseover) and 0 or 1)
         end
     end
-end
 
-function WorldMarks:CreateMover()
-    if self.mover then return end
-    local f = self.frame
-    if not f then return end
-    self.mover = CreateFrame("Frame", "GravityUI_WorldMarks_Mover", UIParent, "BackdropTemplate")
-    self.mover:SetAllPoints(f)
-    self.mover:EnableMouse(true); self.mover:SetMovable(true); self.mover:RegisterForDrag("LeftButton")
-    self.mover:SetFrameStrata("DIALOG"); self.mover:Hide()
-    local text = self.mover:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    text:SetPoint("CENTER"); text:SetText("World Marks")
-    self.mover:SetScript("OnDragStart", function() f:StartMoving(); self.mover:SetAllPoints(f) end)
-    self.mover:SetScript("OnDragStop", function()
-        f:StopMovingOrSizing()
-        local centerX, centerY = UIParent:GetCenter()
-        local frameX, frameY = f:GetCenter()
-        local s = GetSettings()
-        if s and frameX and centerX then s.offsetX, s.offsetY = frameX - centerX, frameY - centerY end
-        self.mover:ClearAllPoints(); self.mover:SetAllPoints(f)
-    end)
-    hooksecurefunc(f, "SetSize", function() if self.mover then self.mover:SetSize(f:GetSize()) end end)
+    if ns.Movers and ns.Movers.ApplyEditModeStyle and self.frame then
+        ns.Movers:ApplyEditModeStyle(self.frame, shouldShow, "WorldMarks")
+    end
 end
 
 function WorldMarks:RegisterMover()
-    if ns.Movers and ns.Movers.Register then
+    if ns.Movers and ns.Movers.Register and self.frame then
         ns.Movers:Register("WorldMarks", self.frame, function(f, e, force) self:ToggleMover(force) end, "World Marks")
     end
 end

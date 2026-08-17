@@ -944,6 +944,9 @@ function Loot:ToggleRollMover(forceState)
 
     if not shouldShow then
         if self.rollMover then
+            if ns.Movers and ns.Movers.ApplyEditModeStyle then
+                ns.Movers:ApplyEditModeStyle(self.rollMover, false, "LootRolls")
+            end
             self.rollMover:Hide()
             self.rollMover = nil
         end
@@ -1293,7 +1296,7 @@ function Loot:ToggleRollMover(forceState)
     
     -- Apply Standard Edit Mode Style
     if ns.Movers and ns.Movers.ApplyEditModeStyle then
-        ns.Movers:ApplyEditModeStyle(f, forceState == true, "LootRolls")
+        ns.Movers:ApplyEditModeStyle(f, true, "LootRolls")
     end
     
     f:Show()

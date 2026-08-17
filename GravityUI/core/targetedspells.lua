@@ -1477,6 +1477,16 @@ function TargetedSpells.Initialize()
     barContainer:SetMovable(true)
     barContainer:SetClampedToScreen(true)
 
+    barContainer:SetScript("OnDragStop", function(self)
+        self:StopMovingOrSizing()
+        local x, y = self:GetCenter()
+        local ux, uy = UIParent:GetCenter()
+        if x and ux then
+            s.x = math.floor(x - ux + 0.5)
+            s.y = math.floor(y - uy + 0.5)
+        end
+    end)
+
     local barMover = CreateFrame("Frame", nil, barContainer, "BackdropTemplate")
     barMover:SetAllPoints()
     barMover:SetFrameStrata("DIALOG")
@@ -1490,11 +1500,9 @@ function TargetedSpells.Initialize()
 
     barMover:SetScript("OnDragStart", function() barContainer:StartMoving() end)
     barMover:SetScript("OnDragStop", function()
-        barContainer:StopMovingOrSizing()
-        local x, y = barContainer:GetCenter()
-        local ux, uy = UIParent:GetCenter()
-        s.x = x - ux
-        s.y = y - uy
+        if barContainer:GetScript("OnDragStop") then
+            barContainer:GetScript("OnDragStop")(barContainer)
+        end
     end)
     barContainer.mover = barMover
 
@@ -1504,6 +1512,16 @@ function TargetedSpells.Initialize()
     iconContainer:SetPoint("CENTER", UIParent, "CENTER", s.iconX or 0, s.iconY or -80)
     iconContainer:SetMovable(true)
     iconContainer:SetClampedToScreen(true)
+
+    iconContainer:SetScript("OnDragStop", function(self)
+        self:StopMovingOrSizing()
+        local x, y = self:GetCenter()
+        local ux, uy = UIParent:GetCenter()
+        if x and ux then
+            s.iconX = math.floor(x - ux + 0.5)
+            s.iconY = math.floor(y - uy + 0.5)
+        end
+    end)
 
     local iconMover = CreateFrame("Frame", nil, iconContainer, "BackdropTemplate")
     iconMover:SetAllPoints()
@@ -1543,11 +1561,9 @@ function TargetedSpells.Initialize()
 
     iconMover:SetScript("OnDragStart", function() iconContainer:StartMoving() end)
     iconMover:SetScript("OnDragStop", function()
-        iconContainer:StopMovingOrSizing()
-        local x, y = iconContainer:GetCenter()
-        local ux, uy = UIParent:GetCenter()
-        s.iconX = x - ux
-        s.iconY = y - uy
+        if iconContainer:GetScript("OnDragStop") then
+            iconContainer:GetScript("OnDragStop")(iconContainer)
+        end
     end)
     iconContainer.mover = iconMover
 

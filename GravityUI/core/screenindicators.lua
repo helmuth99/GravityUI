@@ -1552,17 +1552,11 @@ function Screen.ToggleMover(type, forceState)
             end
         end)
         
-        -- Apply Standard Edit Mode Style ONLY if forced via global Edit Mode
+        -- Apply Standard Edit Mode Style
         if ns.Movers and ns.Movers.ApplyEditModeStyle then
-            if forceState == true then
-                m:SetBackdropColor(0, 0, 0, 0)
-                m:SetBackdropBorderColor(0, 0, 0, 0)
-                ns.Movers:ApplyEditModeStyle(m, true, "PetWarnings")
-            else
-                m:SetBackdropColor(0, 0.5, 0, 0.5)
-                m:SetBackdropBorderColor(0, 1, 0, 1)
-                ns.Movers:ApplyEditModeStyle(m, false, "PetWarnings")
-            end
+            m:SetBackdropColor(0, 0, 0, 0)
+            m:SetBackdropBorderColor(0, 0, 0, 0)
+            ns.Movers:ApplyEditModeStyle(m, true, "PetWarnings")
         end
         
         -- Show Preview Content
@@ -1588,6 +1582,10 @@ function Screen.ToggleMover(type, forceState)
         f.text:SetText(s.petDeadText or "*** PET TOT ***")
         f:Show()
         
+        if ns.Movers and ns.Movers.registry and ns.Movers.registry["PetWarnings"] then
+            ns.Movers.registry["PetWarnings"].frame = m
+        end
+
         m:Show()
         
     elseif type == "combat" then
@@ -1605,15 +1603,9 @@ function Screen.ToggleMover(type, forceState)
         
         -- Apply Standard Edit Mode Style
         if ns.Movers and ns.Movers.ApplyEditModeStyle then
-            if forceState == true then
-                m:SetBackdropColor(0, 0, 0, 0)
-                m:SetBackdropBorderColor(0, 0, 0, 0)
-                ns.Movers:ApplyEditModeStyle(m, true, "CombatStatus")
-            else
-                m:SetBackdropColor(0, 0.5, 0, 0.5)
-                m:SetBackdropBorderColor(0, 1, 0, 1)
-                ns.Movers:ApplyEditModeStyle(m, false, "CombatStatus")
-            end
+            m:SetBackdropColor(0, 0, 0, 0)
+            m:SetBackdropBorderColor(0, 0, 0, 0)
+            ns.Movers:ApplyEditModeStyle(m, true, "CombatStatus")
         end
         
         CreateCombatTextFrame()
@@ -1626,6 +1618,11 @@ function Screen.ToggleMover(type, forceState)
         
         m:ClearAllPoints()
         m:SetPoint("CENTER", UIParent, "CENTER", s.xOffset or 0, s.yOffset or 100)
+
+        if ns.Movers and ns.Movers.registry and ns.Movers.registry["CombatStatus"] then
+            ns.Movers.registry["CombatStatus"].frame = m
+        end
+
         m:Show()
         
     elseif type == "crosshair" then

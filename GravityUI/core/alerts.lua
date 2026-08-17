@@ -326,20 +326,87 @@ function Alerts:CreateHolders()
     if alertHolder then return end
     
     -- Alert Holder
-    alertHolder = CreateFrame("Frame", "GravityUIAlertHolder", UIParent)
-    alertHolder:SetSize(180, 20)
+    alertHolder = CreateFrame("Frame", "GravityUIAlertHolder", UIParent, "BackdropTemplate")
+    alertHolder:SetSize(280, 48)
     local pos = (GetDB() or {}).alertPosition
     if pos then alertHolder:SetPoint(pos.point, UIParent, pos.relPoint, pos.x, pos.y)
     else alertHolder:SetPoint("TOP", UIParent, "TOP", 0, -20) end
     alertHolder:SetMovable(true)
+    alertHolder:SetClampedToScreen(true)
+
+    alertHolder:SetScript("OnDragStop", function(self)
+        self:StopMovingOrSizing()
+        local p, _, rp, x, y = self:GetPoint()
+        Alerts:SavePosition("alert", p, rp, x, y)
+        if AlertFrame then AlertFrame:UpdateAnchors() end
+    end)
     
+    -- Achievement Alert Preview inside alertHolder
+    local alertIconFrame = CreateFrame("Frame", nil, alertHolder, "BackdropTemplate")
+    alertIconFrame:SetSize(36, 36)
+    alertIconFrame:SetPoint("LEFT", 10, 0)
+    alertIconFrame:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8", edgeFile = "Interface\\Buttons\\WHITE8x8", edgeSize = 1 })
+    alertIconFrame:SetBackdropColor(0, 0, 0, 1)
+    alertIconFrame:SetBackdropBorderColor(1, 0.82, 0, 1)
+    local alertIcon = alertIconFrame:CreateTexture(nil, "ARTWORK")
+    alertIcon:SetAllPoints()
+    alertIcon:SetTexture("Interface\\Icons\\Achievement_General")
+    alertIcon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+
+    local alertTitle = alertHolder:CreateFontString(nil, "OVERLAY")
+    alertTitle:SetFont(GetFontPath(), 11, "OUTLINE")
+    alertTitle:SetPoint("TOPLEFT", alertIconFrame, "TOPRIGHT", 8, -2)
+    alertTitle:SetText("|cffffd100Achievement Unlocked!|r")
+
+    local alertDesc = alertHolder:CreateFontString(nil, "OVERLAY")
+    alertDesc:SetFont(GetFontPath(), 10, "OUTLINE")
+    alertDesc:SetPoint("BOTTOMLEFT", alertIconFrame, "BOTTOMRIGHT", 8, 2)
+    alertDesc:SetText("Going Down? (+10 pts)")
+    alertDesc:SetTextColor(0.9, 0.9, 0.9, 1)
+
+    alertHolder.previewElements = { alertIconFrame, alertTitle, alertDesc }
+    for _, elem in ipairs(alertHolder.previewElements) do elem:Hide() end
+
     -- Toast Holder
-    toastHolder = CreateFrame("Frame", "GravityUIToastHolder", UIParent)
-    toastHolder:SetSize(300, 20)
+    toastHolder = CreateFrame("Frame", "GravityUIToastHolder", UIParent, "BackdropTemplate")
+    toastHolder:SetSize(280, 48)
     local tpos = (GetDB() or {}).toastPosition
     if tpos then toastHolder:SetPoint(tpos.point, UIParent, tpos.relPoint, tpos.x, tpos.y)
     else toastHolder:SetPoint("TOP", UIParent, "TOP", 0, -150) end
     toastHolder:SetMovable(true)
+    toastHolder:SetClampedToScreen(true)
+
+    toastHolder:SetScript("OnDragStop", function(self)
+        self:StopMovingOrSizing()
+        local p, _, rp, x, y = self:GetPoint()
+        Alerts:SavePosition("toast", p, rp, x, y)
+        if EventToastManagerFrame and EventToastManagerFrame.UpdateAnchor then EventToastManagerFrame:UpdateAnchor() end
+    end)
+
+    -- Loot Toast Preview inside toastHolder
+    local toastIconFrame = CreateFrame("Frame", nil, toastHolder, "BackdropTemplate")
+    toastIconFrame:SetSize(32, 32)
+    toastIconFrame:SetPoint("LEFT", 10, 0)
+    toastIconFrame:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8", edgeFile = "Interface\\Buttons\\WHITE8x8", edgeSize = 1 })
+    toastIconFrame:SetBackdropColor(0, 0, 0, 1)
+    toastIconFrame:SetBackdropBorderColor(1, 0.5, 0, 1)
+    local toastIcon = toastIconFrame:CreateTexture(nil, "ARTWORK")
+    toastIcon:SetAllPoints()
+    toastIcon:SetTexture(132394)
+    toastIcon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+
+    local toastTitle = toastHolder:CreateFontString(nil, "OVERLAY")
+    toastTitle:SetFont(GetFontPath(), 10, "OUTLINE")
+    toastTitle:SetPoint("TOPLEFT", toastIconFrame, "TOPRIGHT", 8, -2)
+    toastTitle:SetText("|cff00FF80You received loot:|r")
+
+    local toastItem = toastHolder:CreateFontString(nil, "OVERLAY")
+    toastItem:SetFont(GetFontPath(), 10, "OUTLINE")
+    toastItem:SetPoint("BOTTOMLEFT", toastIconFrame, "BOTTOMRIGHT", 8, 2)
+    toastItem:SetText("|cffff8000[Thunderfury, Blessed Blade]|r")
+
+    toastHolder.previewElements = { toastIconFrame, toastTitle, toastItem }
+    for _, elem in ipairs(toastHolder.previewElements) do elem:Hide() end
 end
 
 local function ReplaceSubSystemAnchors(subSystem)
@@ -383,127 +450,39 @@ end
 function Alerts:ToggleMovers(forceState)
     if not alertHolder then Alerts:CreateHolders() end
 
-    if not alertMover then
-        -- Alert Mover Overlay
-        alertMover = CreateFrame("Frame", nil, alertHolder, "BackdropTemplate")
-        alertMover:SetAllPoints()
-        alertMover:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8", edgeFile = "Interface\\Buttons\\WHITE8x8", edgeSize = 1 })
-        alertMover:SetBackdropColor(0.05, 0.05, 0.08, 0.4)
-        alertMover:SetBackdropBorderColor(0, 0, 0, 0)
-        alertMover:EnableMouse(true)
-        alertMover:RegisterForDrag("LeftButton")
-        alertMover:SetScript("OnDragStart", function() alertHolder:StartMoving() end)
-        alertMover:SetScript("OnDragStop", function(self)
-            alertHolder:StopMovingOrSizing()
-            local p, _, rp, x, y = alertHolder:GetPoint()
-            Alerts:SavePosition("alert", p, rp, x, y)
-            if AlertFrame then AlertFrame:UpdateAnchors() end
-        end)
-
-        -- Achievement Alert Preview
-        local alertIconFrame = CreateFrame("Frame", nil, alertMover, "BackdropTemplate")
-        alertIconFrame:SetSize(36, 36)
-        alertIconFrame:SetPoint("LEFT", 10, 0)
-        alertIconFrame:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8", edgeFile = "Interface\\Buttons\\WHITE8x8", edgeSize = 1 })
-        alertIconFrame:SetBackdropColor(0, 0, 0, 1)
-        alertIconFrame:SetBackdropBorderColor(1, 0.82, 0, 1)
-        local alertIcon = alertIconFrame:CreateTexture(nil, "ARTWORK")
-        alertIcon:SetAllPoints()
-        alertIcon:SetTexture("Interface\\Icons\\Achievement_General")
-        alertIcon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
-
-        local alertTitle = alertMover:CreateFontString(nil, "OVERLAY")
-        alertTitle:SetFont(GetFontPath(), 11, "OUTLINE")
-        alertTitle:SetPoint("TOPLEFT", alertIconFrame, "TOPRIGHT", 8, -2)
-        alertTitle:SetText("|cffffd100Achievement Unlocked!|r")
-
-        local alertDesc = alertMover:CreateFontString(nil, "OVERLAY")
-        alertDesc:SetFont(GetFontPath(), 10, "OUTLINE")
-        alertDesc:SetPoint("BOTTOMLEFT", alertIconFrame, "BOTTOMRIGHT", 8, 2)
-        alertDesc:SetText("Going Down? (+10 pts)")
-        alertDesc:SetTextColor(0.9, 0.9, 0.9, 1)
-
-        -- Toast Mover Overlay
-        toastMover = CreateFrame("Frame", nil, toastHolder, "BackdropTemplate")
-        toastMover:SetAllPoints()
-        toastMover:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8", edgeFile = "Interface\\Buttons\\WHITE8x8", edgeSize = 1 })
-        toastMover:SetBackdropColor(0.05, 0.05, 0.08, 0.4)
-        toastMover:SetBackdropBorderColor(0, 0, 0, 0)
-        toastMover:EnableMouse(true)
-        toastMover:RegisterForDrag("LeftButton")
-        toastMover:SetScript("OnDragStart", function() toastHolder:StartMoving() end)
-        toastMover:SetScript("OnDragStop", function(self)
-            toastHolder:StopMovingOrSizing()
-            local p, _, rp, x, y = toastHolder:GetPoint()
-            Alerts:SavePosition("toast", p, rp, x, y)
-            if EventToastManagerFrame and EventToastManagerFrame.UpdateAnchor then EventToastManagerFrame:UpdateAnchor() end
-        end)
-
-        -- Loot Toast Preview
-        local toastIconFrame = CreateFrame("Frame", nil, toastMover, "BackdropTemplate")
-        toastIconFrame:SetSize(32, 32)
-        toastIconFrame:SetPoint("LEFT", 10, 0)
-        toastIconFrame:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8", edgeFile = "Interface\\Buttons\\WHITE8x8", edgeSize = 1 })
-        toastIconFrame:SetBackdropColor(0, 0, 0, 1)
-        toastIconFrame:SetBackdropBorderColor(1, 0.5, 0, 1)
-        local toastIcon = toastIconFrame:CreateTexture(nil, "ARTWORK")
-        toastIcon:SetAllPoints()
-        toastIcon:SetTexture(132394)
-        toastIcon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
-
-        local toastTitle = toastMover:CreateFontString(nil, "OVERLAY")
-        toastTitle:SetFont(GetFontPath(), 10, "OUTLINE")
-        toastTitle:SetPoint("TOPLEFT", toastIconFrame, "TOPRIGHT", 8, -2)
-        toastTitle:SetText("|cff00FF80You received loot:|r")
-
-        local toastItem = toastMover:CreateFontString(nil, "OVERLAY")
-        toastItem:SetFont(GetFontPath(), 10, "OUTLINE")
-        toastItem:SetPoint("BOTTOMLEFT", toastIconFrame, "BOTTOMRIGHT", 8, 2)
-        toastItem:SetText("|cffff8000[Thunderfury, Blessed Blade]|r")
-        
-        -- Default to hidden initially if just created
-        alertMover:Hide()
-        toastMover:Hide()
-    end
-
     local shouldShow = false
     if forceState ~= nil then
         shouldShow = forceState
     else
-        shouldShow = not alertMover:IsShown()
+        shouldShow = not (alertHolder and alertHolder.isPreview)
     end
 
+    if not alertHolder or not toastHolder then return end
+
+    alertHolder.isPreview = shouldShow
+    toastHolder.isPreview = shouldShow
+
     if shouldShow then
-        alertMover:Show()
-        toastMover:Show()
-        
-        -- Apply Standard Edit Mode Style (Blue) if forced, otherwise keep custom colors
-        if ns.Movers and ns.Movers.ApplyEditModeStyle then
-            if forceState == true then
-                alertMover:SetBackdropColor(0, 0, 0, 0)
-                alertMover:SetBackdropBorderColor(0, 0, 0, 0)
-                ns.Movers:ApplyEditModeStyle(alertMover, true, "Alerts")
-                
-                toastMover:SetBackdropColor(0, 0, 0, 0)
-                toastMover:SetBackdropBorderColor(0, 0, 0, 0)
-                ns.Movers:ApplyEditModeStyle(toastMover, true, "Toasts")
-            else
-                alertMover:SetBackdropColor(0.2, 0.8, 0.8, 0.5)
-                alertMover:SetBackdropBorderColor(0.2, 0.8, 0.8, 1)
-                ns.Movers:ApplyEditModeStyle(alertMover, false, "Alerts")
-                
-                toastMover:SetBackdropColor(0.8, 0.6, 0.2, 0.5)
-                toastMover:SetBackdropBorderColor(0.8, 0.6, 0.2, 1)
-                ns.Movers:ApplyEditModeStyle(toastMover, false, "Toasts")
-            end
+        alertHolder:Show()
+        toastHolder:Show()
+        if alertHolder.previewElements then
+            for _, elem in ipairs(alertHolder.previewElements) do elem:Show() end
+        end
+        if toastHolder.previewElements then
+            for _, elem in ipairs(toastHolder.previewElements) do elem:Show() end
         end
     else
-        if ns.Movers and ns.Movers.ApplyEditModeStyle then
-             ns.Movers:ApplyEditModeStyle(alertMover, false, "Alerts")
-             ns.Movers:ApplyEditModeStyle(toastMover, false, "Toasts")
+        if alertHolder.previewElements then
+            for _, elem in ipairs(alertHolder.previewElements) do elem:Hide() end
         end
-        alertMover:Hide()
-        toastMover:Hide()
+        if toastHolder.previewElements then
+            for _, elem in ipairs(toastHolder.previewElements) do elem:Hide() end
+        end
+    end
+
+    if ns.Movers and ns.Movers.ApplyEditModeStyle then
+        ns.Movers:ApplyEditModeStyle(alertHolder, shouldShow, "Alerts")
+        ns.Movers:ApplyEditModeStyle(toastHolder, shouldShow, "Toasts")
     end
 end
 
@@ -595,8 +574,8 @@ function Alerts:Initialize()
     
     -- Register with Movers
     if ns.Movers and ns.Movers.Register then
-        ns.Movers:Register("Alerts", alertMover or alertHolder, function(frame, enabled) Alerts:ToggleMovers(enabled) end, "Alerts Anchor")
-        ns.Movers:Register("Toasts", toastMover or toastHolder, function(frame, enabled) Alerts:ToggleMovers(enabled) end, "Toasts Anchor")
+        ns.Movers:Register("Alerts", alertHolder, function(frame, enabled) Alerts:ToggleMovers(enabled) end, "Alerts Anchor")
+        ns.Movers:Register("Toasts", toastHolder, function(frame, enabled) Alerts:ToggleMovers(enabled) end, "Toasts Anchor")
     end
 
     -- Prevent repeated hooking on refresh

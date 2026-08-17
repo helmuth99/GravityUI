@@ -570,26 +570,6 @@ function RaidWarnings.ToggleMover(forceState)
     if shouldShow then
         alertFrame:Show()
         alertText:SetText("Raid Warning Test")
-        alertFrame:SetBackdrop({
-            bgFile = "Interface\\Buttons\\WHITE8x8",
-            edgeFile = "Interface\\Buttons\\WHITE8x8",
-            edgeSize = 1,
-        })
-        
-        -- Default to Green (Manual Toggle)
-        local r, g, b, a = 0, 0.5, 0, 0.5
-        local br, bg, bb, ba = 0, 1, 0, 1
-        
-        -- Check Global Edit Mode Override
-        if forceState == true and ns.Movers and ns.Movers.ApplyEditModeStyle then
-            -- We manually set colors to match ApplyEditModeStyle because we control the backdrop directly here
-            -- Blue Overlay
-            r, g, b, a = 0, 0.6, 1, 0.5
-            br, bg, bb, ba = 0, 0.8, 1, 1
-        end
-
-        alertFrame:SetBackdropColor(r, g, b, a)
-        alertFrame:SetBackdropBorderColor(br, bg, bb, ba)
         alertFrame:EnableMouse(true)
         alertFrame:RegisterForDrag("LeftButton")
         alertFrame:SetScript("OnDragStart", alertFrame.StartMoving)
@@ -602,7 +582,14 @@ function RaidWarnings.ToggleMover(forceState)
                 db.raidWarnings.y = y
             end
         end)
+
+        if ns.Movers and ns.Movers.ApplyEditModeStyle then
+            ns.Movers:ApplyEditModeStyle(alertFrame, true, "RaidWarnings")
+        end
     else
+        if ns.Movers and ns.Movers.ApplyEditModeStyle then
+            ns.Movers:ApplyEditModeStyle(alertFrame, false, "RaidWarnings")
+        end
         alertFrame:Hide()
         alertFrame:EnableMouse(false)
         alertFrame:RegisterForDrag()
