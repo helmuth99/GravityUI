@@ -567,7 +567,7 @@ end
 
 function Alerts:Initialize()
     local db = GetDB()
-    if not db or not db.enabled then return end
+    if not db then return end
     
     Alerts:CreateHolders()
     Alerts:ToggleMovers(false)
@@ -577,6 +577,8 @@ function Alerts:Initialize()
         ns.Movers:Register("Alerts", alertHolder, function(frame, enabled) Alerts:ToggleMovers(enabled) end, "Alerts Anchor")
         ns.Movers:Register("Toasts", toastHolder, function(frame, enabled) Alerts:ToggleMovers(enabled) end, "Toasts Anchor")
     end
+
+    if not db.enabled then return end
 
     -- Prevent repeated hooking on refresh
     if self.initialized then 

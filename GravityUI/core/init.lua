@@ -360,6 +360,10 @@ function Addon:OnEnable()
         ns.DeathAnnouncer.Initialize()
         if ns.DeathAnnouncer.ApplySettings then ns.DeathAnnouncer.ApplySettings() end
     end
+
+    if ns.CooldownText and ns.CooldownText.Initialize then
+        ns.CooldownText:Initialize()
+    end
     
     -- Initial Updates
     ns.RefreshEverything()

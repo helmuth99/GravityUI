@@ -744,7 +744,8 @@ UpdateLayout = function()
 
     -- 1. BARS LAYOUT
     if barContainer then
-        if s.enabled and s.showBars then
+        local showBars = barMoverActive or (s.enabled and s.showBars)
+        if showBars then
             local width = s.width or 200
             local height = s.height or 20
             local spacing = s.spacing or 4
@@ -793,7 +794,8 @@ UpdateLayout = function()
 
     -- 2. ICONS LAYOUT
     if iconContainer then
-        if s.enabled and s.showIcons then
+        local showIcons = iconMoverActive or (s.enabled and s.showIcons)
+        if showIcons then
             local size = s.iconSize or 36
             local spacing = s.iconSpacing or 4
             local maxIcons = s.iconMax or 5

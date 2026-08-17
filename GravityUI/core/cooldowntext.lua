@@ -150,10 +150,14 @@ function CooldownText:Initialize()
 end
 
 function CooldownText:CreateBaseFrames()
+    if not DB then DB = GetSettings() end
     mainContainer = CreateFrame("Frame", "GravityUI_CooldownTextContainer", UIParent)
     mainContainer:SetSize(400, 50)
-    mainContainer:SetFrameStrata("LOW")
+    mainContainer:SetPoint("CENTER", UIParent, "CENTER", (DB and DB.x) or 0, (DB and DB.y) or 18)
+    mainContainer:SetFrameStrata("HIGH")
     mainContainer:EnableMouse(false)
+    mainContainer:SetMovable(true)
+    mainContainer:SetClampedToScreen(true)
     -- Visibility is handled by Initialize/Refresh
 
     if ns.Movers and ns.Movers.Register then
@@ -184,14 +188,8 @@ end
 function CooldownText:Refresh()
     if not mainContainer or not DB then return end
 
-    if not DB.enabled then
-        mainContainer:Hide()
-        return
-    end
-    mainContainer:Show()
-    
     mainContainer:ClearAllPoints()
-    mainContainer:SetPoint("CENTER", UIParent, "CENTER", DB.x, DB.y)
+    mainContainer:SetPoint("CENTER", UIParent, "CENTER", DB.x or 0, DB.y or 18)
 
     local fontPath = GetFontPath()
     self.fsPool = self.fsPool or {}
@@ -236,6 +234,12 @@ function CooldownText:Refresh()
     for i = #trackedList + 1, #self.fsPool do
         self.fsPool[i]:SetText("")
     end
+
+    if not DB.enabled and not isMoverShown then
+        mainContainer:Hide()
+        return
+    end
+    mainContainer:Show()
 
     -- Restart ticker to apply a potentially new tickInterval
     self:StartTicker()
@@ -287,14 +291,17 @@ local isMoverShown = false
 local moverFrame
 
 function CooldownText:ToggleMover(forceState)
+    if not mainContainer then self:CreateBaseFrames() end
+    if not DB then DB = GetSettings() end
     if not mainContainer or not DB then return end
     
     local shouldShow = false
     if forceState ~= nil then
-        shouldShow = forceState
+        shouldShow = (forceState == true)
     else
         shouldShow = not (moverFrame and moverFrame:IsShown())
     end
+    isMoverShown = shouldShow
 
     if not moverFrame then
         moverFrame = CreateFrame("Frame", nil, mainContainer, "BackdropTemplate")
@@ -309,21 +316,53 @@ function CooldownText:ToggleMover(forceState)
         moverFrame:SetScript("OnDragStop", function()
             mainContainer:StopMovingOrSizing()
             local point, relativeTo, relativePoint, xOfs, yOfs = mainContainer:GetPoint()
-            DB.x = xOfs
-            DB.y = yOfs
+            DB.x = math.floor((xOfs or 0) + 0.5)
+            DB.y = math.floor((yOfs or 0) + 0.5)
         end)
         
         mainContainer:SetMovable(true)
     end
     
     if shouldShow then
+        mainContainer:ClearAllPoints()
+        mainContainer:SetPoint("CENTER", UIParent, "CENTER", DB.x or 0, DB.y or 18)
         mainContainer:Show()
         moverFrame:Show()
         moverFrame:EnableMouse(true)
+
+        self.fsPool = self.fsPool or {}
+        if not self.fsPool[1] then
+            local fs = mainContainer:CreateFontString(nil, "OVERLAY")
+            local fontPath = GetFontPath()
+            fs:SetFont(fontPath, (DB and DB.fontSize) or 20, "OUTLINE")
+            fs:SetJustifyH("CENTER")
+            fs:SetPoint("CENTER", mainContainer, "CENTER", 0, 0)
+            self.fsPool[1] = fs
+        end
+        
+        if not DB.enabled or #trackedList == 0 then
+            local r, g, b, a = 1, 1, 1, 1
+            if DB.useClassColor ~= false then
+                local _, playerClass = UnitClass("player")
+                local color = playerClass and ((CUSTOM_CLASS_COLORS or RAID_CLASS_COLORS)[playerClass])
+                if color then r, g, b = color.r, color.g, color.b end
+            elseif DB.textColor then
+                r = DB.textColor[1] or 1
+                g = DB.textColor[2] or 1
+                b = DB.textColor[3] or 1
+                a = DB.textColor[4] or 1
+            end
+            self.fsPool[1]:SetTextColor(r, g, b, a)
+            self.fsPool[1]:SetText("Cooldown Text Preview: 3.5")
+            self.fsPool[1]:SetAlpha(1)
+            self.fsPool[1]:Show()
+        end
+
         if ns.Movers and ns.Movers.ApplyEditModeStyle then
             ns.Movers:ApplyEditModeStyle(mainContainer, true, "CooldownText")
         end
     else
+        isMoverShown = false
         moverFrame:Hide()
         moverFrame:EnableMouse(false)
         mainContainer:EnableMouse(false)
@@ -331,6 +370,11 @@ function CooldownText:ToggleMover(forceState)
             ns.Movers:ApplyEditModeStyle(mainContainer, false, "CooldownText")
         end
         if not DB.enabled then
+            if self.fsPool then
+                for _, fs in ipairs(self.fsPool) do
+                    fs:SetText("")
+                end
+            end
             mainContainer:Hide()
         end
     end

@@ -154,14 +154,14 @@ local MODULE_CONFIG_MAP = {
     ["TargetedSpellsBars"] = {
         get = function(db) return db.screenindicators and db.screenindicators.targetedSpells and db.screenindicators.targetedSpells.enabled ~= false and db.screenindicators.targetedSpells.showBars ~= false end,
         set = function(db, val)
-            if db.screenindicators and db.screenindicators.targetedSpells then db.screenindicators.targetedSpells.enabled = val end
+            if db.screenindicators and db.screenindicators.targetedSpells then db.screenindicators.targetedSpells.showBars = val end
             if ns.TargetedSpells and ns.TargetedSpells.ApplySettings then ns.TargetedSpells.ApplySettings() end
         end,
     },
     ["TargetedSpellsIcons"] = {
-        get = function(db) return db.screenindicators and db.screenindicators.targetedSpells and db.screenindicators.targetedSpells.enabled ~= false and db.screenindicators.targetedSpells.showIcons ~= false end,
+        get = function(db) return db.screenindicators and db.screenindicators.targetedSpells and db.screenindicators.targetedSpells.enabled ~= false and db.screenindicators.targetedSpells.showIcons == true end,
         set = function(db, val)
-            if db.screenindicators and db.screenindicators.targetedSpells then db.screenindicators.targetedSpells.enabled = val end
+            if db.screenindicators and db.screenindicators.targetedSpells then db.screenindicators.targetedSpells.showIcons = val end
             if ns.TargetedSpells and ns.TargetedSpells.ApplySettings then ns.TargetedSpells.ApplySettings() end
         end,
     },
@@ -263,6 +263,7 @@ local MODULE_CONFIG_MAP = {
         get = function(db) return db.cooldownText and db.cooldownText.enabled == true end,
         set = function(db, val)
             if db.cooldownText then db.cooldownText.enabled = val end
+            if ns.CooldownText and ns.CooldownText.Initialize then ns.CooldownText:Initialize() end
             if ns.CooldownText and ns.CooldownText.Refresh then ns.CooldownText:Refresh() end
         end,
     },
@@ -853,6 +854,12 @@ function Movers:SaveFramePosition(name, frame, point, relPoint, x, y)
     elseif name == "CooldownText" and db.cooldownText then
         db.cooldownText.x = finalX
         db.cooldownText.y = finalY
+    elseif name == "TargetedSpellsBars" and db.screenindicators and db.screenindicators.targetedSpells then
+        db.screenindicators.targetedSpells.x = finalX
+        db.screenindicators.targetedSpells.y = finalY
+    elseif name == "TargetedSpellsIcons" and db.screenindicators and db.screenindicators.targetedSpells then
+        db.screenindicators.targetedSpells.iconX = finalX
+        db.screenindicators.targetedSpells.iconY = finalY
     elseif name == "BattleResTracker" and db.screenindicators and db.screenindicators.battleRes then
         db.screenindicators.battleRes.position = { point = finalPoint, relativePoint = finalRelPoint, x = finalX, y = finalY }
     elseif name == "BloodlustTracker" and db.screenindicators and db.screenindicators.bloodlust then
