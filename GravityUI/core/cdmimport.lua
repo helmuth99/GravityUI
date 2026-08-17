@@ -116,7 +116,8 @@ local function ImportSpec(tag)
             local _, layouts = lm:EnumerateLayouts()
             local toRemove = {}
             for layoutID, layout in pairs(layouts or {}) do
-                if layout and layout.layoutName == name then
+                local lName = layout and (layout.layoutName or layout.name)
+                if lName and (lName == name or lName:find(name, 1, true)) then
                     table.insert(toRemove, layoutID)
                 end
             end
@@ -124,6 +125,8 @@ local function ImportSpec(tag)
         end
         PurgeByName(profileKey)
         PurgeByName("atrocityUI - " .. data.name)
+        PurgeByName("Naowh - Demon Hunter " .. data.name)
+        PurgeByName("Naowh - " .. data.name)
 
         -- Handle layout cap
         if lm.AreLayoutsFullyMaxed and lm:AreLayoutsFullyMaxed() then
@@ -148,12 +151,15 @@ local function ImportSpec(tag)
 
         local importedID = layoutIDs[1]
 
-        -- Rename: the serialized string bakes in "atrocityUI - X" as the
-        -- layoutName. Patch it to "GravityUI - X" before saving.
+        -- Rename: ensure layout is strictly named "GravityUI - <Spec>"
         local _, layouts = lm:EnumerateLayouts()
         local importedLayout = layouts and layouts[importedID]
         if importedLayout then
             importedLayout.layoutName = profileKey
+            importedLayout.name = profileKey
+            if importedLayout.coloredName then
+                importedLayout.coloredName = (data.color or "|cffffffff") .. profileKey .. "|r"
+            end
         end
 
         local isCurrentSpec = importTag and currentTag and importTag == currentTag
