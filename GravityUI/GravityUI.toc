@@ -96,6 +96,8 @@ core\buttons.lua
 core\skyriding.lua
 core\screenindicators.lua
 core\healermana.lua
+core\battleres_bloodlust.lua
+core\framemover.lua
 core\consumables.lua
 core\mail.lua
 

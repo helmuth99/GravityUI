@@ -930,6 +930,47 @@ local function BuildAltManager(parent)
     RebuildCharList()
 end
 
+-- 10. Frame Mover (BlizzMove / Shifter)
+local function BuildFrameMover(parent)
+    local scroll, content = GUI:CreateScrollableContent(parent)
+    scroll:SetAllPoints()
+    local db = ns.GetDB(); if not db then return end
+    if not db.frameMover then db.frameMover = { enabled = true, rememberPositions = true, positions = {} } end
+    local fm = db.frameMover
+    content.rowCount = 0
+
+    local refresh = function()
+        if ns.FrameMover and ns.FrameMover.Refresh then
+            ns.FrameMover.Refresh()
+        end
+    end
+
+    local header = GUI:CreateSectionHeader(content, "Frame Mover")
+    header:SetPoint("TOPLEFT", 10, -10)
+    header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
+    content.rowCount = 1.3
+
+    local infoBox = GUI:CreateInfoBox(content, "Allows you to freely drag and reposition all standard Blizzard panels (Character, Bank, Merchant, Quest, Spellbook, Talents, Collections, Housing, Delves, etc.) using your mouse.\n\n• |cff30d1ffLeft Click & Drag:|r Move frame by its title bar / header.\n• |cff30d1ffCtrl + Right Click:|r Reset frame position back to default.")
+    infoBox:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
+    content.rowCount = content.rowCount + (infoBox:GetHeight() / (ROW_HEIGHT+5)) + 0.3
+
+    CreateSubLabel(content, "General Settings")
+    AddRow(content, "Enable Frame Mover",       "checkbox", "enabled",           fm, refresh)
+    AddRow(content, "Remember Frame Positions",  "checkbox", "rememberPositions", fm, nil)
+    content.rowCount = content.rowCount + 0.3
+
+    CreateSubLabel(content, "Position Management")
+    local btnResetAll = GUI:CreateButton(content, "Reset All Frame Positions", 220, 24, function()
+        if ns.FrameMover and ns.FrameMover.ResetAllPositions then
+            ns.FrameMover.ResetAllPositions()
+        end
+    end)
+    btnResetAll:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT + 5)))
+    content.rowCount = content.rowCount + 1.2
+
+    content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
+end
+
 --==============================================================================================================================================================================================
 -- PAGE REGISTRATION
 --==============================================================================================================================================================================================
@@ -945,6 +986,7 @@ ns.GUI:RegisterPage("features", {
         { name = "Targeted Spells",     builder = BuildTargetedSpells },
         { name = "Death Announcer",     builder = BuildDeathAnnouncer },
         { name = "Gravity Alt Manager", builder = BuildAltManager },
+        { name = "Frame Mover",         builder = BuildFrameMover },
     },
     OnBuild = function(content)
         local scrollFrame = content:GetParent()

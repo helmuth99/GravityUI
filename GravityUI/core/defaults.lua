@@ -414,6 +414,14 @@ ns.Defaults = {
         description = "",
     },
     uiimprovements =     {
+        autoOpenContainers = false,
+        autoOpenContainersExcludeWarbound = true,
+        hideTransforms = false,
+        hideTransformsList = {},
+        autoUnwrapCollections = false,
+        trainAllButton = false,
+        instanceResetAnnounce = false,
+        guildChatPrivacy = false,
         marks =         {
             enabled = true,
             mouseover = true,
@@ -1069,6 +1077,30 @@ ns.Defaults = {
             position        = { point = "CENTER", relativePoint = "CENTER", x = 0, y = 200 },
         },
         healerManaExpanded = true,
+        battleRes = {
+            enabled         = false,
+            visibility      = "MPLUS_AND_RAID",
+            iconSize        = 36,
+            fontSize        = 12,
+            countFontSize   = 11,
+            timerColor      = { 1, 0.82, 0, 1 },
+            countColor      = { 1, 1, 1, 1 },
+            borderSize      = 1,
+            borderColor     = { 0, 0, 0, 1 },
+            position        = { point = "CENTER", relativePoint = "CENTER", x = -40, y = 140 },
+        },
+        battleResExpanded = true,
+        bloodlust = {
+            enabled         = false,
+            visibility      = "MPLUS_AND_RAID",
+            iconSize        = 36,
+            fontSize        = 12,
+            timerColor      = { 1, 0.2, 0.2, 1 },
+            borderSize      = 1,
+            borderColor     = { 0, 0, 0, 1 },
+            position        = { point = "CENTER", relativePoint = "CENTER", x = 40, y = 140 },
+        },
+        bloodlustExpanded = true,
         petWarnings =         {
             enabled = true,
             fontSize = 28,
@@ -1478,6 +1510,11 @@ ns.Defaults = {
         customOrder = {},
         visibleColumns = 5,
         announceParty = true,
+    },
+    frameMover = {
+        enabled = true,
+        rememberPositions = false,
+        positions = {},
     },
 }
 }

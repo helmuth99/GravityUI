@@ -170,7 +170,10 @@ end
 
 local function GetButtonDB()
     local s = GetSettings()
-    return s and s.button or { hide = true, minimapPos = 220 }
+    if s and not s.button then
+        s.button = { hide = false, minimapPos = 220 }
+    end
+    return s and s.button or { hide = false, minimapPos = 220 }
 end
 
 local function GetClassColor()
@@ -1278,6 +1281,12 @@ function ns.SetMinimapButtonVisible(visible)
 end
 
 function ns.RefreshMinimap()
+    -- Always ensure the Minimap Button is created and its visibility is updated,
+    -- even if custom Minimap skinning is disabled (e.g. using EllesmereUIMinimap)
+    if not minimapButton then CreateMinimapButton() end
+    local dbBtn = GetButtonDB()
+    ns.SetMinimapButtonVisible(not dbBtn.hide)
+
     local s = GetSettings()
     if not s then return end
 
@@ -1363,11 +1372,6 @@ function ns.RefreshMinimap()
     UpdateButtonVisibility()
     UpdateDungeonEye()
     
-    -- Button
-    if not minimapButton then CreateMinimapButton() end
-    local dbBtn = GetButtonDB()
-    ns.SetMinimapButtonVisible(not dbBtn.hide)
-    
     -- Tickers
     StartTickers()
 end
@@ -1400,7 +1404,10 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
     local arg1, arg2, arg3, arg4, arg5 = ...
     
     if event == "ADDON_LOADED" then
-        if arg1 == "Blizzard_TimeManager" or arg1 == "Blizzard_AddonCompartment" then
+        if arg1 == ADDON_NAME then
+            CreateMinimapButton()
+            ns.RefreshMinimap()
+        elseif arg1 == "Blizzard_TimeManager" or arg1 == "Blizzard_AddonCompartment" then
             ns.RefreshMinimap()
         end
     elseif event == "PLAYER_ENTERING_WORLD" then

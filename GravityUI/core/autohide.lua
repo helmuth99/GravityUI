@@ -680,3 +680,71 @@ SlashCmdList["GRAVITYUIAUTOHIDEDEBUG"] = function()
     ns.Print("  Setting Enabled: " .. tostring(settings and settings.hideOnWorldQuestMinigame))
 
 end
+
+-- ═══════════════════════════════════════════════════════════════
+-- QOL 3.4: GUILD CHAT PRIVACY COVER
+-- ═══════════════════════════════════════════════════════════════
+local guildCoverFrame
+
+local function SetupGuildChatPrivacy()
+    local cf = CommunitiesFrame
+    if not cf or not cf.Chat or not cf.Chat.MessageFrame then return end
+    local mf = cf.Chat.MessageFrame
+
+    if not guildCoverFrame then
+        local cover = CreateFrame("Button", "GravityUI_GuildChatCover", mf, "BackdropTemplate")
+        cover:SetFrameStrata("DIALOG")
+        cover:EnableMouse(true)
+
+        local bg = cover:CreateTexture(nil, "BACKGROUND")
+        bg:SetPoint("TOPLEFT", -4, 4)
+        bg:SetPoint("BOTTOMRIGHT", 4, -4)
+        bg:SetColorTexture(0.08, 0.08, 0.08, 1.0)
+
+        local title = cover:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+        title:SetPoint("CENTER", cover, "CENTER", 0, 10)
+        title:SetText("|cff30d1ffGuild Chat Hidden|r")
+
+        local sub = cover:CreateFontString(nil, "OVERLAY", "GameFontDisable")
+        sub:SetPoint("TOP", title, "BOTTOM", 0, -4)
+        sub:SetText("Click to reveal / hide")
+
+        cover:SetScript("OnClick", function(self)
+            self:Hide()
+        end)
+
+        guildCoverFrame = cover
+    end
+
+    local function ShowGuildCover()
+        local db = ns.GetDB()
+        local enabled = db and db.uiimprovements and db.uiimprovements.guildChatPrivacy
+        if enabled and cf:IsShown() and mf:IsShown() then
+            guildCoverFrame:SetParent(mf)
+            guildCoverFrame:SetAllPoints(mf)
+            guildCoverFrame:SetFrameLevel(mf:GetFrameLevel() + 25)
+            guildCoverFrame:Show()
+        else
+            guildCoverFrame:Hide()
+        end
+    end
+
+    if not cf._guildCoverHooked then
+        cf:HookScript("OnShow", ShowGuildCover)
+        cf:HookScript("OnHide", function() guildCoverFrame:Hide() end)
+        cf._guildCoverHooked = true
+    end
+
+    ShowGuildCover()
+end
+
+local guildEventFrame = CreateFrame("Frame")
+guildEventFrame:RegisterEvent("ADDON_LOADED")
+guildEventFrame:SetScript("OnEvent", function(self, event, arg1)
+    if arg1 == "Blizzard_Communities" or CommunitiesFrame then
+        SetupGuildChatPrivacy()
+    end
+end)
+if CommunitiesFrame then SetupGuildChatPrivacy() end
+
+

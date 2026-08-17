@@ -644,6 +644,14 @@ function HM:EnsureContainer()
     if not self.containerFrame then self:CreateContainer() end
 end
 
+function HM:ToggleMover()
+    if self.isPreview then
+        self:HidePreview()
+    else
+        self:ShowPreview()
+    end
+end
+
 -- ============================================================================
 -- EVENTS
 -- ============================================================================

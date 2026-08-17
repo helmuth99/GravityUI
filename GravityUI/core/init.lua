@@ -671,9 +671,21 @@ do
             return db and db.raidBuffs and (db.raidBuffs.enabled ~= false)
         end
 
-        local function ApplyBlizzSkinLock()
-            -- Lock removed: Blizz UI Enhanced is accessible for all users.
-        end
+        StaticPopupDialogs["GRAVITYUI_CONFIRM_ENABLE_MODULE"] = {
+            text = "Möchtest du das Modul '%s' in EllesmereUI wirklich aktivieren?\n\nGravityUI besitzt bereits eigene Quality of Life Funktionen.",
+            button1 = "Aktivieren & Reload",
+            button2 = "Abbrechen",
+            OnAccept = function(self, data)
+                if data and data.folder then
+                    C_AddOns.EnableAddOn(data.folder)
+                    ReloadUI()
+                end
+            end,
+            timeout = 0,
+            whileDead = true,
+            hideOnEscape = true,
+            preferredIndex = 3,
+        }
 
         -----------------------------------------------------------------------
         -- MakePlaceholder: converts a sidebar button into a "managed by X"
@@ -713,7 +725,23 @@ do
             btn._placeholderTag = tag
 
             -- Click: close EllesmereUI first, then open GravityUI/external addon
-            btn:SetScript("OnClick", function()
+            -- Secret: If Shift + Left Click is pressed on a deactivated module, prompt to enable & reload
+            btn:SetScript("OnClick", function(self, mouseButton)
+                if IsShiftKeyDown() and self._folder then
+                    local isLoaded = C_AddOns.IsAddOnLoaded(self._folder)
+                    if not isLoaded then
+                        local displayName = self._display or (self._label and self._label:GetText()) or self._folder
+                        StaticPopup_Show("GRAVITYUI_CONFIRM_ENABLE_MODULE", displayName, nil, { folder = self._folder })
+                        return
+                    else
+                        local E = _G.EllesmereUI
+                        if E and E.SelectModule then
+                            E:SelectModule(self._folder)
+                            return
+                        end
+                    end
+                end
+
                 -- Close EllesmereUI so GravityUI/Plater/Baganator opens in front
                 local E = _G.EllesmereUI
                 if E and E.Toggle then
@@ -730,7 +758,7 @@ do
                 end)
             end)
 
-            -- Hover: glow + tooltip explaining why it is managed externally
+            -- Hover: glow + tooltip explaining why it is managed externally (clean tooltip without Shift hint)
             btn:SetScript("OnEnter", function(self)
                 local E = _G.EllesmereUI
                 if self._hoverGlow      then self._hoverGlow:Show()      end
@@ -854,12 +882,32 @@ do
             MakePlaceholder(E._sidebarButtons[AURABUFF_FOLDER], "by GravityUI", "indicators")
         end
 
-        -- QoL: always managed by GravityUI → show placeholder pointing to GravityUI's QoL page
+        -- QoL: managed by GravityUI when disabled in WoW, but if user explicitly activated EllesmereUIQoL, leave it unlocked
         local function ApplyAlwaysHidden()
             local E = _G.EllesmereUI
             if not (E and E._sidebarButtons) then return end
             for _, folder in ipairs(ALWAYS_HIDDEN_FOLDERS) do
-                MakePlaceholder(E._sidebarButtons[folder], "deactivated by GravityUI", "qol")
+                local btn = E._sidebarButtons[folder]
+                if btn then
+                    local isLoaded = C_AddOns.IsAddOnLoaded(folder)
+                    if not isLoaded then
+                        MakePlaceholder(btn, "deactivated by GravityUI", "qol")
+                    else
+                        if btn._isGravityUIPlaceholder then
+                            btn._isGravityUIPlaceholder = nil
+                            if btn._placeholderTag then btn._placeholderTag:Hide() end
+                            if btn._pwrBtn then btn._pwrBtn:Show() end
+                            if btn._syncBtn then btn._syncBtn:Show() end
+                            btn._label:SetTextColor(1, 1, 1, 1)
+                            btn:SetScript("OnClick", function(self)
+                                if self._comingSoon or self._maintenance or self._ovLocked or self._notEnabled then return end
+                                if self._loaded and E.modules and E.modules[self._folder] then
+                                    E:SelectModule(self._folder)
+                                end
+                            end)
+                        end
+                    end
+                end
             end
         end
 
@@ -867,7 +915,6 @@ do
             local E = _G.EllesmereUI
             if not (E and E._sidebarButtons) then return end
 
-            ApplyBlizzSkinLock()
             ApplyAlwaysHidden()
             ApplyChatHide()
             ApplyMinimapHide()
@@ -889,7 +936,6 @@ do
                     local orig = E.RefreshSidebarOverrideLocks
                     E.RefreshSidebarOverrideLocks = function(...)
                         orig(...)
-                        ApplyBlizzSkinLock()
                         ApplyAlwaysHidden()
                         ApplyChatHide()
                         ApplyMinimapHide()

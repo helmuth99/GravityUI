@@ -1934,3 +1934,267 @@ SlashCmdList["GRAVITYBONUSROLL"] = function(msg)
         print("|cFF30D1FFGravityUI:|r Usage: /bonusroll [reset|top|center|bottom]")
     end
 end
+
+-- ═══════════════════════════════════════════════════════════════
+-- QOL 1.1: AUTO OPEN CONTAINERS
+-- ═══════════════════════════════════════════════════════════════
+local _openableCache = {}
+local _openBusy = false
+
+local function IsWarboundExcluded(bag, slot)
+    local settings = GetSettings()
+    if not settings or settings.autoOpenContainersExcludeWarbound == false then return false end
+    if not (C_Bank and C_Bank.IsItemAllowedInBankType and ItemLocation and C_Item and C_Item.DoesItemExist) then return false end
+    local loc = ItemLocation:CreateFromBagAndSlot(bag, slot)
+    if not (loc and C_Item.DoesItemExist(loc)) then return false end
+    return C_Bank.IsItemAllowedInBankType(Enum.BankType.Account, loc) and true or false
+end
+
+local function IsOpenable(itemID, bag, slot)
+    local cached = _openableCache[itemID]
+    if cached ~= nil then return cached end
+    local tip = C_TooltipInfo and C_TooltipInfo.GetBagItem and C_TooltipInfo.GetBagItem(bag, slot)
+    if tip and tip.lines then
+        for _, line in ipairs(tip.lines) do
+            if line and line.leftText and line.leftText == ITEM_OPENABLE then
+                _openableCache[itemID] = true
+                return true
+            end
+        end
+    end
+    _openableCache[itemID] = false
+    return false
+end
+
+local function ScanAndOpenContainers()
+    local settings = GetSettings()
+    if not (settings and settings.autoOpenContainers) then return end
+    if InCombatLockdown() or (MerchantFrame and MerchantFrame:IsShown()) then return end
+    if _openBusy then return end
+
+    for bag = 0, 4 do
+        local numSlots = C_Container.GetContainerNumSlots(bag)
+        for slot = 1, numSlots do
+            local info = C_Container.GetContainerItemInfo(bag, slot)
+            if info and info.itemID and not info.isLocked then
+                if not IsWarboundExcluded(bag, slot) and IsOpenable(info.itemID, bag, slot) then
+                    _openBusy = true
+                    C_Container.UseContainerItem(bag, slot)
+                    C_Timer.After(0.4, function()
+                        _openBusy = false
+                        ScanAndOpenContainers()
+                    end)
+                    return
+                end
+            end
+        end
+    end
+end
+
+-- ═══════════════════════════════════════════════════════════════
+-- QOL 1.2: HIDE ITEM TRANSFORMS (COSMETIC FILTER)
+-- ═══════════════════════════════════════════════════════════════
+local TRANSFORM_SPELLS = {
+    [67531] = true, -- Chef's Hat
+    [16591] = true, -- Noggenfogger (Skeleton)
+    [16595] = true, -- Noggenfogger (Small)
+    [8063]  = true, -- Deviate Fish (Ninja)
+    [8064]  = true, -- Deviate Fish (Pirate)
+    [8219]  = true, -- Savory Deviate Delight
+    [16379] = true, -- Gamon's Braid
+    [9264]  = true, -- Elixir of Giant Growth
+    [44654] = true, -- Stylin' Purple Hat
+    [61989] = true, -- Stylin' Crimson Hat
+    [61990] = true, -- Stylin' Adventure Hat
+    [61991] = true, -- Stylin' Jungle Hat
+}
+
+local pendingTransformRemoval = false
+
+local function CleanTransforms()
+    local settings = GetSettings()
+    if not (settings and settings.hideTransforms) then return end
+
+    if InCombatLockdown() then
+        pendingTransformRemoval = true
+        return
+    end
+
+    if C_UnitAuras and C_UnitAuras.GetAuraDataByIndex then
+        for i = 1, 40 do
+            local aura = C_UnitAuras.GetAuraDataByIndex("player", i, "HELPFUL")
+            if not aura then break end
+            if TRANSFORM_SPELLS[aura.spellId] then
+                if CancelSpellByName then
+                    CancelSpellByName(aura.name)
+                elseif CancelUnitBuff then
+                    CancelUnitBuff("player", i)
+                end
+            end
+        end
+    end
+end
+
+-- ═══════════════════════════════════════════════════════════════
+-- QOL 1.3: AUTO UNWRAP COLLECTIONS
+-- ═══════════════════════════════════════════════════════════════
+local function AckMountAlerts()
+    if not (C_MountJournal and C_MountJournal.GetNumMountsNeedingFanfare and C_MountJournal.ClearFanfare) then return false end
+    local pending = C_MountJournal.GetNumMountsNeedingFanfare()
+    if not pending or pending <= 0 then return false end
+
+    for i = 1, C_MountJournal.GetNumDisplayedMounts() do
+        local id = C_MountJournal.GetDisplayedMountID(i)
+        if id and C_MountJournal.NeedsFanfare and C_MountJournal.NeedsFanfare(id) then
+            C_MountJournal.ClearFanfare(id)
+        end
+    end
+    return true
+end
+
+local function AckPetAlerts()
+    if not (C_PetJournal and C_PetJournal.GetNumPetsNeedingFanfare and C_PetJournal.ClearFanfare) then return false end
+    if (C_PetJournal.GetNumPetsNeedingFanfare() or 0) == 0 then return false end
+    local any = false
+    for _, id in ipairs(C_PetJournal.GetOwnedPetIDs and C_PetJournal.GetOwnedPetIDs() or {}) do
+        if id and C_PetJournal.PetNeedsFanfare and C_PetJournal.PetNeedsFanfare(id) then
+            C_PetJournal.ClearFanfare(id)
+            any = true
+        end
+    end
+    return any
+end
+
+local function AckToyAlerts()
+    if not (C_ToyBoxInfo and C_ToyBoxInfo.ClearFanfare) then return false end
+    local any = false
+    if ToyBox and ToyBox.fanfareToys then
+        for id, needs in pairs(ToyBox.fanfareToys) do
+            if needs and id and C_ToyBoxInfo.NeedsFanfare and C_ToyBoxInfo.NeedsFanfare(id) then
+                C_ToyBoxInfo.ClearFanfare(id)
+                any = true
+            end
+        end
+    end
+    return any
+end
+
+local function DismissCollectionAlerts()
+    local settings = GetSettings()
+    if not (settings and settings.autoUnwrapCollections) then return end
+
+    AckMountAlerts()
+    AckPetAlerts()
+    AckToyAlerts()
+end
+
+local function SetupAutoUnwrap()
+    if MainMenuMicroButton_ShowAlert then
+        hooksecurefunc("MainMenuMicroButton_ShowAlert", function(_, text)
+            local settings = GetSettings()
+            if not (settings and settings.autoUnwrapCollections) then return end
+            if text == COLLECTION_UNOPENED_PLURAL or text == COLLECTION_UNOPENED_SINGULAR then
+                C_Timer.After(0.2, DismissCollectionAlerts)
+            end
+        end)
+    end
+    C_Timer.After(3, DismissCollectionAlerts)
+end
+
+-- ═══════════════════════════════════════════════════════════════
+-- QOL 1.4: TRAIN ALL BUTTON
+-- ═══════════════════════════════════════════════════════════════
+local function AddTrainAllButton()
+    if not ClassTrainerFrame or ClassTrainerFrame._trainAllBtn then return end
+
+    local trainBtn = ClassTrainerTrainButton
+    if not trainBtn then return end
+
+    local btn = CreateFrame("Button", "GravityUI_TrainAllButton", ClassTrainerFrame, "UIPanelButtonTemplate")
+    btn:SetSize(100, trainBtn:GetHeight() or 22)
+    btn:SetPoint("RIGHT", trainBtn, "LEFT", -6, 0)
+    btn:SetText("Train All")
+    ClassTrainerFrame._trainAllBtn = btn
+
+    btn:SetScript("OnClick", function()
+        local num = GetNumTrainerServices()
+        for i = 1, num do
+            local _, _, serviceType = GetTrainerServiceInfo(i)
+            if serviceType == "available" then
+                BuyTrainerService(i)
+            end
+        end
+    end)
+
+    hooksecurefunc("ClassTrainerFrame_Update", function()
+        local settings = GetSettings()
+        if not (settings and settings.trainAllButton) then
+            btn:Hide()
+            return
+        end
+
+        local num = GetNumTrainerServices()
+        local hasAvailable = false
+        for i = 1, num do
+            local _, _, serviceType = GetTrainerServiceInfo(i)
+            if serviceType == "available" then
+                hasAvailable = true
+                break
+            end
+        end
+        btn:SetShown(hasAvailable)
+        btn:SetEnabled(hasAvailable)
+    end)
+end
+
+-- ═══════════════════════════════════════════════════════════════
+-- QOL 1.5: ANNOUNCE INSTANCE RESET
+-- ═══════════════════════════════════════════════════════════════
+local function HandleInstanceResetMsg(msg)
+    local settings = GetSettings()
+    if not (settings and settings.instanceResetAnnounce) then return end
+    if not (IsInGroup() or IsInRaid()) then return end
+
+    -- Check for instance reset system message pattern
+    local resetPattern = INSTANCE_RESET_SUCCESS and INSTANCE_RESET_SUCCESS:gsub("%%s", ".+") or "has been reset"
+    if msg and msg:find(resetPattern) then
+        local channel = IsInRaid() and "RAID" or "PARTY"
+        SendChatMessage("GravityUI: " .. msg, channel)
+    end
+end
+
+-- ═══════════════════════════════════════════════════════════════
+-- EVENT LISTENERS FOR QOL 1.1 - 1.5
+-- ═══════════════════════════════════════════════════════════════
+local qolEventFrame = CreateFrame("Frame")
+qolEventFrame:RegisterEvent("PLAYER_LOGIN")
+qolEventFrame:RegisterEvent("BAG_UPDATE_DELAYED")
+qolEventFrame:RegisterEvent("UNIT_AURA")
+qolEventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
+qolEventFrame:RegisterEvent("CHAT_MSG_SYSTEM")
+qolEventFrame:RegisterEvent("ADDON_LOADED")
+
+qolEventFrame:SetScript("OnEvent", function(self, event, arg1)
+    if event == "PLAYER_LOGIN" then
+        SetupAutoUnwrap()
+        C_Timer.After(2, ScanAndOpenContainers)
+        CleanTransforms()
+    elseif event == "BAG_UPDATE_DELAYED" then
+        ScanAndOpenContainers()
+    elseif event == "UNIT_AURA" then
+        if arg1 == "player" then CleanTransforms() end
+    elseif event == "PLAYER_REGEN_ENABLED" then
+        if pendingTransformRemoval then
+            pendingTransformRemoval = false
+            CleanTransforms()
+        end
+        ScanAndOpenContainers()
+    elseif event == "CHAT_MSG_SYSTEM" then
+        HandleInstanceResetMsg(arg1)
+    elseif event == "ADDON_LOADED" then
+        if arg1 == "Blizzard_TrainerUI" or ClassTrainerFrame then
+            AddTrainAllButton()
+        end
+    end
+end)
+

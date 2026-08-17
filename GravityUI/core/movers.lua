@@ -266,6 +266,20 @@ local MODULE_CONFIG_MAP = {
             if ns.CooldownText and ns.CooldownText.Refresh then ns.CooldownText:Refresh() end
         end,
     },
+    ["BattleResTracker"] = {
+        get = function(db) return db.screenindicators and db.screenindicators.battleRes and db.screenindicators.battleRes.enabled ~= false end,
+        set = function(db, val)
+            if db.screenindicators and db.screenindicators.battleRes then db.screenindicators.battleRes.enabled = val end
+            if ns.BattleResTracker and ns.BattleResTracker.Update then ns.BattleResTracker.Update() end
+        end,
+    },
+    ["BloodlustTracker"] = {
+        get = function(db) return db.screenindicators and db.screenindicators.bloodlust and db.screenindicators.bloodlust.enabled ~= false end,
+        set = function(db, val)
+            if db.screenindicators and db.screenindicators.bloodlust then db.screenindicators.bloodlust.enabled = val end
+            if ns.BloodlustTracker and ns.BloodlustTracker.Update then ns.BloodlustTracker.Update() end
+        end,
+    },
 }
 
 function Movers:GetEditModeSettings()
@@ -840,6 +854,10 @@ function Movers:SaveFramePosition(name, frame, point, relPoint, x, y)
     elseif name == "CooldownText" and db.cooldownText then
         db.cooldownText.x = finalX
         db.cooldownText.y = finalY
+    elseif name == "BattleResTracker" and db.screenindicators and db.screenindicators.battleRes then
+        db.screenindicators.battleRes.position = { point = finalPoint, relativePoint = finalRelPoint, x = finalX, y = finalY }
+    elseif name == "BloodlustTracker" and db.screenindicators and db.screenindicators.bloodlust then
+        db.screenindicators.bloodlust.position = { point = finalPoint, relativePoint = finalRelPoint, x = finalX, y = finalY }
     end
 end
 

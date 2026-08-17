@@ -93,7 +93,63 @@ end
 -- BUILDERS
 --==============================================================================================================================================================================================
 
--- 1. Automation
+-- -- 1. QoL (New Subtab with 1.1 - 1.5)
+local function BuildQoL(parent)
+    local scroll, content = GUI:CreateScrollableContent(parent)
+    scroll:SetAllPoints()
+    local db = ns.GetDB(); if not db then return end
+    local dbUI = db.uiimprovements
+    content.rowCount = 0
+
+    local header = GUI:CreateSectionHeader(content, "Quality of Life")
+    header:SetPoint("TOPLEFT", 10, -10)
+    header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
+    content.rowCount = 1.3
+
+    -- 1.1 Auto Open Containers
+    CreateSubLabel(content, "Containers & Loot")
+    AddRow(content, "Auto Open Containers", "checkbox", "autoOpenContainers", dbUI, nil)
+    AddRow(content, "   - Exclude Warbound Containers", "checkbox", "autoOpenContainersExcludeWarbound", dbUI, nil)
+    content.rowCount = content.rowCount + 0.2
+    local contInfo = GUI:CreateInfoBox(content, "Automatically opens bags, boxes, caches and parcels when added to your inventory.")
+    contInfo:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
+    content.rowCount = content.rowCount + (contInfo:GetHeight() / (ROW_HEIGHT+5)) + 0.4
+
+    -- 1.2 Hide Item Transforms
+    CreateSubLabel(content, "Cosmetics & Buffs")
+    AddRow(content, "Hide Item Transforms", "checkbox", "hideTransforms", dbUI, nil)
+    content.rowCount = content.rowCount + 0.2
+    local transInfo = GUI:CreateInfoBox(content, "Automatically cancels cosmetic transform buffs when applied (Chef's Hat, Noggenfogger, Deviate Fish, Savory Deviate Delight, Gamon's Braid, Stylin' Hats, etc.).")
+    transInfo:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
+    content.rowCount = content.rowCount + (transInfo:GetHeight() / (ROW_HEIGHT+5)) + 0.4
+
+    -- 1.3 Auto Unwrap Collections
+    CreateSubLabel(content, "Collections & Trainers")
+    AddRow(content, "Auto Unwrap Collections", "checkbox", "autoUnwrapCollections", dbUI, nil)
+    content.rowCount = content.rowCount + 0.2
+    local unwrapInfo = GUI:CreateInfoBox(content, "Automatically dismisses the fanfare unwrap animation when learning new mounts, pets, or toys.")
+    unwrapInfo:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
+    content.rowCount = content.rowCount + (unwrapInfo:GetHeight() / (ROW_HEIGHT+5)) + 0.3
+
+    -- 1.4 Train All Button
+    AddRow(content, "Train All Button at Trainers", "checkbox", "trainAllButton", dbUI, nil)
+    content.rowCount = content.rowCount + 0.2
+    local trainInfo = GUI:CreateInfoBox(content, "Adds a 'Train All' button next to the learn button at profession and class trainers.")
+    trainInfo:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
+    content.rowCount = content.rowCount + (trainInfo:GetHeight() / (ROW_HEIGHT+5)) + 0.4
+
+    -- 1.5 Announce Instance Reset
+    CreateSubLabel(content, "Instance & Party")
+    AddRow(content, "Announce Instance Reset", "checkbox", "instanceResetAnnounce", dbUI, nil)
+    content.rowCount = content.rowCount + 0.2
+    local resetInfo = GUI:CreateInfoBox(content, "Automatically announces in party/raid chat when your instances have been successfully reset.")
+    resetInfo:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
+    content.rowCount = content.rowCount + (resetInfo:GetHeight() / (ROW_HEIGHT+5)) + 0.4
+
+    content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
+end
+
+-- 2. Automation
 local function BuildAutomation(parent)
     local scroll, content = GUI:CreateScrollableContent(parent)
     scroll:SetAllPoints()
@@ -198,7 +254,6 @@ local function BuildAutomation(parent)
     local cinInfo = GUI:CreateInfoBox(content, "Automatically skips in-game cinematics and movies without any key press. All cutscene types (real cinematics, in-game scenes, and movies) are cancelled automatically.")
     cinInfo:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
     content.rowCount = content.rowCount + (cinInfo:GetHeight() / (ROW_HEIGHT+5)) + 0.2
-
     
     AddRow(content, "Auto-Select Single Gossip Option", "checkbox", "autoSelectGossip", dbUI, nil)
     AddRow(content, "Auto Check EditMode on Spec Switch", "checkbox", "checkEditmodeOnSpecSwitch", dbUI, nil)
@@ -209,9 +264,7 @@ local function BuildAutomation(parent)
     content.rowCount = content.rowCount + (ahInfo:GetHeight() / (ROW_HEIGHT+5)) + 0.2
     
     AddRow(content, "Show Widget Power Value (Prey)", "checkbox", "showWidgetPowerValue", dbUI, function(enabled) if ns.UpdateWidgetPowerValueVisibility then ns.UpdateWidgetPowerValueVisibility(enabled) end end)
-
     
-    -- Quick Salvage moved here? Original logic was inside Automation section. Yes.
     content.rowCount = content.rowCount + 0.5
     AddRow(content, "Enable Quick Salvage", "checkbox", "enabled", dbUI.quickSalvage, nil)
     local modOptions = {{value="ALT", text="Alt"}, {value="ALTSHIFT", text="Alt + Shift"}, {value="ALTCTRL", text="Alt + Ctrl"}}
@@ -224,7 +277,7 @@ local function BuildAutomation(parent)
     content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
 end
 
--- 2. Autohide
+-- 3. Autohide
 local function BuildAutohide(parent)
     local scroll, content = GUI:CreateScrollableContent(parent)
     scroll:SetAllPoints()
@@ -284,6 +337,14 @@ local function BuildAutohide(parent)
     AddRow(content, "Hide Interface on Minigame/Petbattle", "checkbox", "hideOnWorldQuestMinigame", dbUI, RefreshAutohide)
     content.rowCount = content.rowCount + 0.5
 
+    -- 3.4 Guild Chat Privacy Cover
+    CreateSubLabel(content, "Streamer & Privacy")
+    AddRow(content, "Guild Chat Privacy Cover", "checkbox", "guildChatPrivacy", dbUI, nil)
+    content.rowCount = content.rowCount + 0.2
+    local guildCoverInfo = GUI:CreateInfoBox(content, "Places a clickable spoiler overlay over the guild chat tab in the Communities window to protect streamers from displaying internal messages.")
+    guildCoverInfo:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
+    content.rowCount = content.rowCount + (guildCoverInfo:GetHeight() / (ROW_HEIGHT+5)) + 0.4
+
     content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
 end
 
@@ -293,6 +354,7 @@ end
 ns.GUI:RegisterPage("qol", {
     title = "Quality of Life",
     subTabs = {
+        { name = "QoL",                builder = BuildQoL },
         { name = "Automation / Stuff", builder = BuildAutomation },
         { name = "Autohide",           builder = BuildAutohide },
     },

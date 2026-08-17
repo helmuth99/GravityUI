@@ -495,46 +495,131 @@ local function BuildAFKScreen(parent)
     content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
 end
 
--- 10. Healer Mana
-local function BuildHealerMana(parent)
+-- 10. Mana/Lust/BR Tracker
+local function BuildManaLustBRTracker(parent)
     local scroll, content = GUI:CreateScrollableContent(parent)
     scroll:SetAllPoints()
     local db = ns.GetDB(); if not db then return end
-    local hm = db.screenindicators.healerMana
     content.rowCount = 0
-    local refresh = function() if ns.RefreshHealerMana then ns.RefreshHealerMana() end end
-    local header = GUI:CreateSectionHeader(content, "Healer Mana Tracker")
-    header:SetPoint("TOPLEFT", 10, -10)
-    header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
+
+    -- ─────────────────────────────────────────────────────────────
+    -- 1. HEALER MANA TRACKER
+    -- ─────────────────────────────────────────────────────────────
+    local hm = db.screenindicators.healerMana
+    local refreshHM = function() if ns.RefreshHealerMana then ns.RefreshHealerMana() end end
+    local headerHM = GUI:CreateSectionHeader(content, "Healer Mana Tracker")
+    headerHM:SetPoint("TOPLEFT", 10, -10)
+    headerHM:SetPoint("RIGHT", content, "RIGHT", -10, 0)
     content.rowCount = 1.3
-    local infoBox = GUI:CreateInfoBox(content, "Displays spec icon, name and mana% of all healers in the current party or raid. Only visible while grouped.")
-    infoBox:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5)); content.rowCount = content.rowCount + (infoBox:GetHeight() / (ROW_HEIGHT+5)) + 0.2
+
+    local infoHM = GUI:CreateInfoBox(content, "Displays spec icon, name and mana% of all healers in the current party or raid. Only visible while grouped.")
+    infoHM:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
+    content.rowCount = content.rowCount + (infoHM:GetHeight() / (ROW_HEIGHT+5)) + 0.2
+
     CreateSubLabel(content, "General")
-    AddRow(content, "Enable Healer Mana",       "checkbox", "enabled",        hm, refresh)
-    AddRow(content, "Only if I am a Healer",    "checkbox", "onlyIfHealer",   hm, refresh)
-    AddRow(content, "Enable in Dungeons",        "checkbox", "enableInDungeon",hm, refresh)
-    AddRow(content, "Enable in Raids",           "checkbox", "enableInRaid",   hm, refresh)
-    AddRow(content, "Max Healers Shown",         "slider",   1, 5, "maxHealers", hm, refresh, 1)
+    AddRow(content, "Enable Healer Mana",       "checkbox", "enabled",        hm, refreshHM)
+    AddRow(content, "Only if I am a Healer",    "checkbox", "onlyIfHealer",   hm, refreshHM)
+    AddRow(content, "Enable in Dungeons",        "checkbox", "enableInDungeon",hm, refreshHM)
+    AddRow(content, "Enable in Raids",           "checkbox", "enableInRaid",   hm, refreshHM)
+    AddRow(content, "Max Healers Shown",         "slider",   1, 5, "maxHealers", hm, refreshHM, 1)
     content.rowCount = content.rowCount + 0.3
+
     CreateSubLabel(content, "Layout")
     local growOpts = { {value=true, text="Down"}, {value=false, text="Up"} }
-    AddRow(content, "Grow Direction",            "dropdown", growOpts, "growDown", hm, refresh)
-    AddRow(content, "Icon Size",                 "slider",   16, 48, "iconSize",     hm, refresh, 1)
-    AddRow(content, "Font Size",                 "slider",   8,  20, "fontSize",     hm, refresh, 1)
-    AddRow(content, "Frame Spacing",             "slider",   0,  20, "frameSpacing", hm, refresh, 1)
-    AddRow(content, "Frame Width",               "slider",   80, 280, "frameWidth",  hm, refresh, 1)
+    AddRow(content, "Grow Direction",            "dropdown", growOpts, "growDown", hm, refreshHM)
+    AddRow(content, "Icon Size",                 "slider",   16, 48, "iconSize",     hm, refreshHM, 1)
+    AddRow(content, "Font Size",                 "slider",   8,  20, "fontSize",     hm, refreshHM, 1)
+    AddRow(content, "Frame Spacing",             "slider",   0,  20, "frameSpacing", hm, refreshHM, 1)
+    AddRow(content, "Frame Width",               "slider",   80, 280, "frameWidth",  hm, refreshHM, 1)
     content.rowCount = content.rowCount + 0.3
+
     CreateSubLabel(content, "Colors")
-    AddRow(content, "Mana % Color",              "color",    "highManaColor", hm, refresh)
+    AddRow(content, "Mana % Color",              "color",    "highManaColor", hm, refreshHM)
     content.rowCount = content.rowCount + 0.3
+
     CreateSubLabel(content, "Position")
-    local moverBtn = GUI:CreateButton(content, "Toggle Mover", 140, 24, function()
+    local hmMoverBtn = GUI:CreateButton(content, "Toggle Healer Mana Mover", 180, 24, function()
         if ns.HealerMana and ns.HealerMana.ToggleMover then
             ns.HealerMana:ToggleMover()
         end
     end)
-    moverBtn:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT + 5)))
-    content.rowCount = content.rowCount + 1.2
+    hmMoverBtn:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT + 5)))
+    content.rowCount = content.rowCount + 1.6
+
+    -- ─────────────────────────────────────────────────────────────
+    -- 2. BATTLE RES TRACKER
+    -- ─────────────────────────────────────────────────────────────
+    local br = db.screenindicators.battleRes
+    local refreshBR = function() if ns.BattleResTracker and ns.BattleResTracker.Update then ns.BattleResTracker.Update() end end
+    local headerBR = GUI:CreateSectionHeader(content, "Battle Res Tracker")
+    headerBR:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT + 5)))
+    headerBR:SetPoint("RIGHT", content, "RIGHT", -10, 0)
+    content.rowCount = content.rowCount + 1.3
+
+    local infoBR = GUI:CreateInfoBox(content, "Displays remaining battle resurrection charges and countdown timer in dungeons and raids.")
+    infoBR:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
+    content.rowCount = content.rowCount + (infoBR:GetHeight() / (ROW_HEIGHT+5)) + 0.2
+
+    CreateSubLabel(content, "Battle Res Settings")
+    AddRow(content, "Enable Battle Res Tracker", "checkbox", "enabled", br, refreshBR)
+
+    local visOptions = {
+        { value = "MPLUS_AND_RAID", text = "M+ and Raids" },
+        { value = "MPLUS",          text = "M+ Only" },
+        { value = "RAID",           text = "Raids Only" },
+        { value = "ALWAYS",         text = "Always" },
+        { value = "NEVER",          text = "Never" },
+    }
+    AddRow(content, "Visibility",                "dropdown", visOptions, "visibility", br, refreshBR)
+    AddRow(content, "Icon Size",                 "slider",   20, 64, "iconSize",      br, refreshBR, 1)
+    AddRow(content, "Timer Font Size",           "slider",   8, 24, "fontSize",       br, refreshBR, 1)
+    AddRow(content, "Count Font Size",           "slider",   8, 24, "countFontSize",  br, refreshBR, 1)
+    AddRow(content, "Timer Text Color",          "color",    "timerColor",            br, refreshBR)
+    AddRow(content, "Count Text Color",          "color",    "countColor",            br, refreshBR)
+    content.rowCount = content.rowCount + 0.3
+
+    local brMoverBtn = GUI:CreateButton(content, "Toggle Battle Res Mover", 180, 24, function()
+        if ns.BattleResTracker and ns.BattleResTracker.ToggleMover then
+            ns.BattleResTracker.ToggleMover()
+        elseif ns.Movers and ns.Movers.Toggle then
+            ns.Movers:Toggle("BattleResTracker")
+        end
+    end)
+    brMoverBtn:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT + 5)))
+    content.rowCount = content.rowCount + 1.6
+
+    -- ─────────────────────────────────────────────────────────────
+    -- 3. BLOODLUST TRACKER
+    -- ─────────────────────────────────────────────────────────────
+    local bl = db.screenindicators.bloodlust
+    local refreshBL = function() if ns.BloodlustTracker and ns.BloodlustTracker.Update then ns.BloodlustTracker.Update() end end
+    local headerBL = GUI:CreateSectionHeader(content, "Bloodlust Tracker")
+    headerBL:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT + 5)))
+    headerBL:SetPoint("RIGHT", content, "RIGHT", -10, 0)
+    content.rowCount = content.rowCount + 1.3
+
+    local infoBL = GUI:CreateInfoBox(content, "Displays remaining Sated / Exhaustion / Temporal Displacement lockout duration on screen.")
+    infoBL:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
+    content.rowCount = content.rowCount + (infoBL:GetHeight() / (ROW_HEIGHT+5)) + 0.2
+
+    CreateSubLabel(content, "Bloodlust Settings")
+    AddRow(content, "Enable Bloodlust Tracker",  "checkbox", "enabled", bl, refreshBL)
+    AddRow(content, "Visibility",                "dropdown", visOptions, "visibility", bl, refreshBL)
+    AddRow(content, "Icon Size",                 "slider",   20, 64, "iconSize",      bl, refreshBL, 1)
+    AddRow(content, "Timer Font Size",           "slider",   8, 24, "fontSize",       bl, refreshBL, 1)
+    AddRow(content, "Timer Text Color",          "color",    "timerColor",            bl, refreshBL)
+    content.rowCount = content.rowCount + 0.3
+
+    local blMoverBtn = GUI:CreateButton(content, "Toggle Bloodlust Mover", 180, 24, function()
+        if ns.BloodlustTracker and ns.BloodlustTracker.ToggleMover then
+            ns.BloodlustTracker.ToggleMover()
+        elseif ns.Movers and ns.Movers.Toggle then
+            ns.Movers:Toggle("BloodlustTracker")
+        end
+    end)
+    blMoverBtn:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT + 5)))
+    content.rowCount = content.rowCount + 1.4
+
     content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
 end
 
@@ -665,7 +750,7 @@ ns.GUI:RegisterPage("indicators", {
         { name = "Cursor",             builder = BuildCursor },
         { name = "Crosshair",          builder = BuildCrosshair },
         { name = "Stance Text",        builder = BuildStanceText },
-        { name = "Healer Mana",        builder = BuildHealerMana },
+        { name = "Mana/Lust/BR Tracker", builder = BuildManaLustBRTracker },
         { name = "Pet Info",           builder = BuildPet },
         { name = "Combat Timer",       builder = BuildCombatTimer },
         { name = "Cooldown Text",      builder = ns.CooldownText and ns.CooldownText.AddOptions or function() end },
