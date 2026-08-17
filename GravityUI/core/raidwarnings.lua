@@ -108,6 +108,7 @@ local function CreateAlertFrame()
     alertFrame:SetFrameStrata("HIGH")
     alertFrame:SetMovable(true)
     alertFrame:SetUserPlaced(true)
+    alertFrame:EnableMouse(false)
     alertFrame:Hide()
     
     alertText = alertFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalHuge")

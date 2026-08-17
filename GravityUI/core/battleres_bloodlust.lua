@@ -137,6 +137,7 @@ local function CreateBRFrame()
     brCooldownText:SetPoint("CENTER", brFrame, "CENTER", 0, 0)
     brCooldownText:SetTextColor(1, 0.82, 0, 1)
 
+    brFrame:EnableMouse(false)
     brFrame:Hide()
 
     if ns.Movers and ns.Movers.Register then
@@ -211,14 +212,16 @@ function ns.BattleResTracker.Update()
     brCooldownText:SetTextColor(tc[1] or 1, tc[2] or 0.82, tc[3] or 0, tc[4] or 1)
     brCountText:SetTextColor(cc[1] or 1, cc[2] or 1, cc[3] or 1, cc[4] or 1)
 
-    local chargeInfo = C_Spell.GetSpellCharges and C_Spell.GetSpellCharges(BREZ_SPELL_ID)
     local currentCharges, maxCharges, cooldownStart, cooldownDuration
-    if chargeInfo then
-        currentCharges = chargeInfo.currentCharges
-        maxCharges = chargeInfo.maxCharges
-        cooldownStart = chargeInfo.cooldownStartTime
-        cooldownDuration = chargeInfo.cooldownDuration
-    else
+    if C_Spell and C_Spell.GetSpellCharges then
+        local chargeInfo = C_Spell.GetSpellCharges(BREZ_SPELL_ID)
+        if chargeInfo then
+            currentCharges = chargeInfo.currentCharges
+            maxCharges = chargeInfo.maxCharges
+            cooldownStart = chargeInfo.cooldownStartTime
+            cooldownDuration = chargeInfo.cooldownDuration
+        end
+    elseif GetSpellCharges then
         currentCharges, maxCharges, cooldownStart, cooldownDuration = GetSpellCharges(BREZ_SPELL_ID)
     end
 
@@ -320,6 +323,7 @@ local function CreateBLFrame()
     blCooldownText:SetPoint("CENTER", blFrame, "CENTER", 0, 0)
     blCooldownText:SetTextColor(1, 0.2, 0.2, 1)
 
+    blFrame:EnableMouse(false)
     blFrame:Hide()
 
     if ns.Movers and ns.Movers.Register then

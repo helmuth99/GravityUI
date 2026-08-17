@@ -633,7 +633,6 @@ function Movers:HookMoverFrame(name, frame)
     if frame._agHooked then return end
     frame._agHooked = true
 
-    frame:EnableMouse(true)
     frame:SetMovable(true)
 
     if not frame._origStopMovingOrSizing then

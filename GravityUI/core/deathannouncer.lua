@@ -87,6 +87,7 @@ local function CreateAlertFrames()
     container:SetPoint("TOP", UIParent, "CENTER", x, y + (LINE_HEIGHT / 2))
     container:SetFrameStrata("HIGH")
     container:SetFrameLevel(60)
+    container:EnableMouse(false)
     container:Hide()
 
     -- 2. Mover Frame
@@ -153,6 +154,7 @@ local function CreateAlertFrames()
         local line = CreateFrame("Frame", nil, container)
         line:SetSize(450, LINE_HEIGHT)
         line:SetPoint("TOP", container, "TOP", 0, -((i - 1) * (LINE_HEIGHT + 4)))
+        line:EnableMouse(false)
         line:Hide()
 
         local fs = line:CreateFontString(nil, "OVERLAY", "GameFontNormalHuge")
@@ -589,6 +591,38 @@ function DeathAnnouncer.TestMode(force)
     SendDeathChatMessage(s, alertText, testData.name)
 end
 
+local moverPreviewActive = false
+
+function DeathAnnouncer.ShowPreview()
+    if not container then CreateAlertFrames() end
+    local s = GetSettings()
+    local testData = TEST_PLAYERS[1]
+    local displayName = testData.name
+    if not s or s.useClassColor ~= false then
+        displayName = FormatClassColoredName(testData.name, testData.class)
+    end
+    local formatStr = (s and s.messageFormat) or "%s died!"
+    if not formatStr:find("%%s") then formatStr = "%s died!" end
+    local alertText = string.format(formatStr, displayName)
+
+    local line = lines[1]
+    if line then
+        line.ag:Stop()
+        line:SetAlpha(1)
+        line.fs:SetText(alertText)
+        if s and s.showSkullIcon ~= false then
+            line.icon:SetTexture("Interface\\TargetingFrame\\UI-RaidTargetingIcon_8")
+            line.icon:Show()
+        else
+            line.icon:Hide()
+        end
+        line:Show()
+        line.isActive = true
+        moverPreviewActive = true
+    end
+    container:Show()
+end
+
 function DeathAnnouncer.ToggleMover(force)
     if not mover then CreateAlertFrames() end
     local show
@@ -602,10 +636,16 @@ function DeathAnnouncer.ToggleMover(force)
         mover:Show()
         container:Show()
         if not lines[1].isActive then
-            DeathAnnouncer.TestMode(true)
+            DeathAnnouncer.ShowPreview()
         end
     else
         mover:Hide()
+        if moverPreviewActive then
+            moverPreviewActive = false
+            lines[1].ag:Stop()
+            lines[1]:Hide()
+            lines[1].isActive = false
+        end
         local anyActive = false
         for _, l in ipairs(lines) do
             if l.isActive then anyActive = true; break end

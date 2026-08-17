@@ -153,6 +153,7 @@ function CooldownText:CreateBaseFrames()
     mainContainer = CreateFrame("Frame", "GravityUI_CooldownTextContainer", UIParent)
     mainContainer:SetSize(400, 50)
     mainContainer:SetFrameStrata("LOW")
+    mainContainer:EnableMouse(false)
     -- Visibility is handled by Initialize/Refresh
 
     if ns.Movers and ns.Movers.Register then
@@ -199,6 +200,20 @@ function CooldownText:Refresh()
     local anchorPoint = (growDir == "DOWN") and "TOP" or "BOTTOM"
     local modifier = (growDir == "DOWN") and -1 or 1
 
+    local r, g, b, a = 1, 1, 1, 1
+    if DB.useClassColor ~= false then
+        local _, playerClass = UnitClass("player")
+        local color = playerClass and ((CUSTOM_CLASS_COLORS or RAID_CLASS_COLORS)[playerClass])
+        if color then
+            r, g, b = color.r, color.g, color.b
+        end
+    elseif DB.textColor then
+        r = DB.textColor[1] or 1
+        g = DB.textColor[2] or 1
+        b = DB.textColor[3] or 1
+        a = DB.textColor[4] or 1
+    end
+
     -- Ensure we have a pool of FontStrings matching our required count
     for i = 1, #trackedList do
         local fs = self.fsPool[i]
@@ -208,7 +223,7 @@ function CooldownText:Refresh()
         end
         fs:SetFont(fontPath, DB.fontSize, "OUTLINE")
         fs:SetJustifyH("CENTER")
-        fs:SetTextColor(1, 1, 1, 1)
+        fs:SetTextColor(r, g, b, a)
         
         -- Lock their anchors forever based on index. Moving frames inside combat causes taint.
         fs:ClearAllPoints()
@@ -304,11 +319,14 @@ function CooldownText:ToggleMover(forceState)
     if shouldShow then
         mainContainer:Show()
         moverFrame:Show()
+        moverFrame:EnableMouse(true)
         if ns.Movers and ns.Movers.ApplyEditModeStyle then
             ns.Movers:ApplyEditModeStyle(mainContainer, true, "CooldownText")
         end
     else
         moverFrame:Hide()
+        moverFrame:EnableMouse(false)
+        mainContainer:EnableMouse(false)
         if ns.Movers and ns.Movers.ApplyEditModeStyle then
             ns.Movers:ApplyEditModeStyle(mainContainer, false, "CooldownText")
         end
@@ -343,6 +361,22 @@ function CooldownText.AddOptions(parent)
     local raidChk = GUI:CreateCheckbox(content, "Only show in Raid/Dungeon", "onlyRaidDungeon", DB, RefreshSettings)
     raidChk:SetPoint("TOPLEFT", 10, yOffset)
     yOffset = yOffset - 30
+
+    -- Color Settings
+    local colorPicker
+    local classColorChk = GUI:CreateCheckbox(content, "Use Class Color", "useClassColor", DB, function(val)
+        if colorPicker then
+            if val then colorPicker:Hide() else colorPicker:Show() end
+        end
+        RefreshSettings()
+    end)
+    classColorChk:SetPoint("TOPLEFT", 10, yOffset)
+    yOffset = yOffset - 30
+
+    colorPicker = GUI:CreateColorPicker(content, "Custom Text Color", "textColor", DB, RefreshSettings)
+    colorPicker:SetPoint("TOPLEFT", 15, yOffset)
+    if DB.useClassColor ~= false then colorPicker:Hide() end
+    yOffset = yOffset - 35
     
     -- Font Size Slider
     local fontLabel = content:CreateFontString(nil, "OVERLAY", "GameFontHighlight")

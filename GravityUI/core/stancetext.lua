@@ -173,6 +173,7 @@ local function CreateStanceFrame()
     text:SetJustifyH("CENTER")
     f.text = text
 
+    f:EnableMouse(false)
     f:Hide()
     stanceFrame = f
 

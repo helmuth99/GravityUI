@@ -1801,6 +1801,7 @@ function InterruptTracker.Initialize()
     container:SetPoint("CENTER", UIParent, "CENTER", s.x or 0, s.y or 0)
     container:SetMovable(true)
     container:SetClampedToScreen(true)
+    container:EnableMouse(false)
 
     container:SetScript("OnDragStop", function(self)
         self:StopMovingOrSizing()
