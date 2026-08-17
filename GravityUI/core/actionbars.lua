@@ -93,6 +93,9 @@ local function GetBarButtons(barKey)
     return buttons
 end
 
+-- Forward declarations
+local UpdateButtonText, UpdateEmptySlotVisibility
+
 -- Debounced Update Helpers
 local pendingUsabilityUpdate = false
 local function RequestUsabilityUpdate()
@@ -200,7 +203,7 @@ end
 ---------------------------------------------------------------------------
 -- TEXT STYLING
 ---------------------------------------------------------------------------
-local function UpdateButtonText(button, settings)
+UpdateButtonText = function(button, settings)
     if not button or not settings then return end
 
     -- Keybind Text
@@ -519,7 +522,7 @@ local function UpdateButtonUsability(button, settings)
     end
 end
 
-local function UpdateEmptySlotVisibility(button, settings)
+UpdateEmptySlotVisibility = function(button, settings)
     if not settings or not settings.hideEmptySlots then
         if button._guiHiddenEmpty then
             button:SetAlpha(1)
