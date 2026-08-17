@@ -391,6 +391,7 @@ end
 -- ============================================================================
 local function SuppressPOI(block)
     local s = GetSettings()
+    if s.objectiveTrackerSkinning == false then return end
     local pb = block and (block.poiButton or block.PoiButton)
     if not pb then return end
 
@@ -417,6 +418,7 @@ local function SuppressPOI(block)
         _hookedPOIs[pb] = true
         hooksecurefunc(pb, "Show", function(self)
             local cur = GetSettings()
+            if cur.objectiveTrackerSkinning == false then return end
             local hide = (cur.modernSkinning ~= false) and (not cur.showQuestIcons)
             if hide then
                 self:Hide()
@@ -438,7 +440,7 @@ end
 local function ApplyQuestTypeIcon(block)
     if not block then return end
     local s = GetSettings()
-    if s.modernSkinning == false or s.showQuestIcons then
+    if s.objectiveTrackerSkinning == false or s.modernSkinning == false or s.showQuestIcons then
         if _blockIcons[block] then _blockIcons[block]:Hide() end
         return
     end
@@ -685,6 +687,7 @@ local function GetSuperTrackedIDCached() return _superTrackedID end
 local function ApplyFocusHighlight(block)
     if not block then return end
     local s = GetSettings()
+    if s.objectiveTrackerSkinning == false then return end
     if s.modernSkinning == false then return end
 
     local fs = GetBlockTitleFS(block)
@@ -714,6 +717,7 @@ end
 local function StyleObjectiveLine(line)
     if not line or not line.Text then return end
     local s = GetSettings()
+    if s.objectiveTrackerSkinning == false then return end
     if s.modernSkinning == false then return end
 
     StyleObjectiveFS(line.Text)
@@ -735,6 +739,7 @@ end
 local function SetupTitleLayout(block)
     if not block then return end
     local s = GetSettings()
+    if s.objectiveTrackerSkinning == false then return end
     if s.modernSkinning == false then return end
 
     local fs = GetBlockTitleFS(block)
@@ -870,12 +875,13 @@ end
 -- MASTER "ALL OBJECTIVES" HEADER VISIBILITY
 -- ============================================================================
 local function ApplyMasterHeaderVisibility()
+    local s = GetSettings()
+    if s.objectiveTrackerSkinning == false then return end
     local otf = _G.ObjectiveTrackerFrame
     if not otf then return end
     local header = otf.HeaderMenu or otf.Header
     if not header then return end
 
-    local s = GetSettings()
     local isModern = (s.modernSkinning ~= false)
     local shouldHide = isModern and (s.hideMasterHeader ~= false)
 
@@ -883,6 +889,7 @@ local function ApplyMasterHeaderVisibility()
         _masterHeaderShowHooked = true
         header:HookScript("OnShow", function(self)
             local cur = GetSettings()
+            if cur.objectiveTrackerSkinning == false then return end
             if (cur.modernSkinning ~= false) and (cur.hideMasterHeader ~= false) then
                 self:Hide()
             end
@@ -901,6 +908,8 @@ end
 -- ============================================================================
 local function SkinExistingBlocks(tracker)
     if not tracker then return end
+    local s = GetSettings()
+    if s.objectiveTrackerSkinning == false then return end
     if tracker.Header then SkinHeader(tracker.Header) end
     if SharesWidgetPool(tracker) then return end
 
@@ -924,6 +933,8 @@ end
 
 local function HookTracker(tracker)
     if not tracker then return end
+    local s = GetSettings()
+    if s.objectiveTrackerSkinning == false then return end
     if _hookedTrackers[tracker] then return end
     _hookedTrackers[tracker] = true
 
@@ -1193,6 +1204,8 @@ function Objectives:Refresh()
 end
 
 local function UpdateAllFocusHighlights()
+    local s = GetSettings()
+    if s.objectiveTrackerSkinning == false then return end
     EachTracker(function(t)
         if SharesWidgetPool(t) then return end
         if t.usedBlocks then
@@ -1241,6 +1254,8 @@ function Objectives:OnInitialize()
 
     -- Super-tracking event to update focus highlight (fast color-only path)
     self:RegisterEvent("SUPER_TRACKING_CHANGED", function()
+        local s = GetSettings()
+        if s.objectiveTrackerSkinning == false then return end
         if C_SuperTrack and C_SuperTrack.GetSuperTrackedQuestID then
             local id = C_SuperTrack.GetSuperTrackedQuestID()
             _superTrackedID = (id and id ~= 0) and id or nil
