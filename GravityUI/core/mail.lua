@@ -9,8 +9,12 @@ LibStub("AceEvent-3.0"):Embed(Mail)
 local L = ns.L -- Optional if you have localization
 local OpenAllButton, AddressBookButton
 local isOpeningAll = false
-local currentMailIndex = 1
+local currentMailIndex = 0
 local totalGoldLooted = 0
+local skippedMails = {}
+local inventoryFull = false
+local retryCount = 0
+local isCheckingInbox = false
 local lootUpdateFrame = CreateFrame("Frame")
 lootUpdateFrame:Hide()
 
@@ -43,94 +47,160 @@ local function FormatMoneyWithIcons(money)
     return str
 end
 
+local function GetTotalFreeBagSlots()
+    local freeSlots = 0
+    -- Check Bags 0 to 4 (Backpack and standard bags)
+    for i = 0, 4 do
+        local numFree = (C_Container and C_Container.GetContainerNumFreeSlots) and C_Container.GetContainerNumFreeSlots(i) or (GetContainerNumFreeSlots and GetContainerNumFreeSlots(i))
+        if numFree then freeSlots = freeSlots + numFree end
+    end
+    -- Check Reagent Bag (Bag 5 in Retail)
+    local reagentBagID = (Enum.BagIndex and (Enum.BagIndex.ReagentBag or Enum.BagIndex.Reagentbag)) or 5
+    local numFreeReagent = (C_Container and C_Container.GetContainerNumFreeSlots) and C_Container.GetContainerNumFreeSlots(reagentBagID) or (GetContainerNumFreeSlots and GetContainerNumFreeSlots(reagentBagID))
+    if numFreeReagent then
+        freeSlots = freeSlots + numFreeReagent
+    end
+    return freeSlots
+end
+
 -- ============================================================================
 -- OPEN ALL LOGIC
 -- ============================================================================
+local function StopOpening(completed)
+    isOpeningAll = false
+    currentMailIndex = 0
+    skippedMails = {}
+    inventoryFull = false
+    retryCount = 0
+    isCheckingInbox = false
+    lootUpdateFrame:Hide()
+    if OpenAllButton then
+        OpenAllButton:SetText("Open All")
+    end
+    if completed then
+        ns.Print("Finished opening all mail.")
+    end
+    if totalGoldLooted > 0 then
+        ns.Print("|cFF00FF00Looted:|r " .. FormatMoneyWithIcons(totalGoldLooted))
+        totalGoldLooted = 0
+    end
+end
+
 local function ProcessNextMail()
     if not isOpeningAll then return end
-    
-    local numItems, totalInboxCount = GetInboxNumItems()
-    
-    -- Safety check: if our current index is beyond the total items, we've finished the scan
-    if currentMailIndex > numItems or numItems == 0 then
-        -- Done!
-        isOpeningAll = false
-        currentMailIndex = 1
-        OpenAllButton:SetText("Open All")
-        ns.Print("Finished opening all mail.")
-        if totalGoldLooted > 0 then
-            ns.Print("|cFF00FF00Looted:|r " .. FormatMoneyWithIcons(totalGoldLooted))
-        end
+
+    -- Safety check: wait if client is actively processing a mail command
+    if C_Mail and C_Mail.IsCommandPending and C_Mail.IsCommandPending() then
+        lootUpdateFrame.waitTimer = 0.15
+        lootUpdateFrame:Show()
         return
     end
-    
-    -- Check if we can loot the current mail index
-    local _, _, sender, _, money, CODAmount, _, hasItem, wasRead, _, _, _, isGM = GetInboxHeaderInfo(currentMailIndex)
-    
-    if (CODAmount and CODAmount > 0) or isGM then
-        -- Skip COD or GM mail, but continue to next index
-        currentMailIndex = currentMailIndex + 1
-        ProcessNextMail()
+
+    local numItems, totalInboxCount = GetInboxNumItems()
+    numItems = numItems or 0
+    totalInboxCount = totalInboxCount or 0
+
+    if numItems == 0 then
+        -- If more mails exist on the server, request next batch
+        if totalInboxCount > 0 and not isCheckingInbox then
+            isCheckingInbox = true
+            lootUpdateFrame.waitTimer = 1.0
+            lootUpdateFrame:Show()
+            CheckInbox()
+            return
+        end
+        StopOpening(true)
+        return
+    end
+
+    -- If index is out of bounds or uninitialized, start at the end (backward iteration)
+    if currentMailIndex > numItems or currentMailIndex < 1 then
+        currentMailIndex = numItems
+    end
+
+    -- Finished backward pass of current inbox batch
+    if currentMailIndex < 1 then
+        if totalInboxCount > numItems and not isCheckingInbox then
+            isCheckingInbox = true
+            lootUpdateFrame.waitTimer = 1.0
+            lootUpdateFrame:Show()
+            CheckInbox()
+            return
+        end
+        StopOpening(true)
+        return
+    end
+
+    -- Skip mail if already marked as skipped
+    if skippedMails[currentMailIndex] then
+        currentMailIndex = currentMailIndex - 1
+        lootUpdateFrame.waitTimer = 0.05
+        lootUpdateFrame:Show()
+        return
+    end
+
+    -- Safely retrieve header info
+    local packageIcon, stationeryIcon, sender, subject, money, CODAmount, daysLeft, hasItem, wasRead, wasReturned, textCreated, canReply, isGM = GetInboxHeaderInfo(currentMailIndex)
+
+    -- Handle transitioning/empty state during server sync
+    if sender == nil and subject == nil and money == nil and hasItem == nil then
+        retryCount = retryCount + 1
+        if retryCount > 5 then
+            skippedMails[currentMailIndex] = true
+            currentMailIndex = currentMailIndex - 1
+            retryCount = 0
+        end
+        lootUpdateFrame.waitTimer = 0.2
+        lootUpdateFrame:Show()
+        return
+    end
+
+    retryCount = 0
+    money = money or 0
+    CODAmount = CODAmount or 0
+    hasItem = hasItem or 0
+
+    -- Safety check: Skip COD or GM mails
+    if CODAmount > 0 or isGM then
+        skippedMails[currentMailIndex] = true
+        currentMailIndex = currentMailIndex - 1
+        lootUpdateFrame.waitTimer = 0.05
+        lootUpdateFrame:Show()
         return
     end
 
     -- 1. Loot Items
-    if hasItem and hasItem > 0 then
-        -- Check Bag Space
-        local freeSlots = 0
-        for i = 0, 4 do
-            local numFree, _ = C_Container.GetContainerNumFreeSlots(i)
-            freeSlots = freeSlots + numFree
-        end
-        
+    if hasItem > 0 and not inventoryFull then
+        local freeSlots = GetTotalFreeBagSlots()
         if freeSlots == 0 then
-            ns.Print("|cFFFF0000Error:|r Inventory is full. Stopping Open All.")
-            isOpeningAll = false
-            currentMailIndex = 1
-            OpenAllButton:SetText("Open All")
-            return
-        end
-
-        for i = 1, 12 do
-            local itemID = select(2, GetInboxItem(currentMailIndex, i))
-            if itemID then
-                TakeInboxItem(currentMailIndex, i)
-                lootUpdateFrame.waitTimer = 0.35
-                lootUpdateFrame:Show()
-                return -- Stay on same index, it will shift or lose hasItem
+            inventoryFull = true
+            ns.Print("|cFFFF0000Inventory is full.|r Skipping items and collecting remaining money.")
+        else
+            local maxAttachments = ATTACHMENTS_MAX_RECEIVE or 16
+            for i = 1, maxAttachments do
+                local itemName = GetInboxItem(currentMailIndex, i)
+                if itemName then
+                    TakeInboxItem(currentMailIndex, i)
+                    lootUpdateFrame.waitTimer = 0.25
+                    lootUpdateFrame:Show()
+                    return -- Stay on current index for remaining attachments or money
+                end
             end
         end
     end
-    
+
     -- 2. Loot Money
     if money > 0 then
         totalGoldLooted = totalGoldLooted + money
         TakeInboxMoney(currentMailIndex)
-        lootUpdateFrame.waitTimer = 0.35
+        lootUpdateFrame.waitTimer = 0.25
         lootUpdateFrame:Show()
-        return -- Stay on same index
-    end
-    
-    -- 3. Safety Check: Only delete mail from NPCs/Systems (Auction House)
-    -- Players and other senders should stay in the inbox after looting.
-    local isSafeToDelete = false
-    if sender then
-        local ahSender = _G["AUCTION_HOUSE_MAIL_SENDER"]
-        if ahSender and sender == ahSender then
-            isSafeToDelete = true
-        end
+        return -- Stay on current index while server clears money
     end
 
-    if isSafeToDelete then
-        -- Empty and Safe? Delete.
-        DeleteInboxItem(currentMailIndex)
-        -- currentMailIndex stays same because the inbox shifts
-    else
-        -- Not a system mail? Just skip to next index to keep the letter.
-        currentMailIndex = currentMailIndex + 1
-    end
-    
-    lootUpdateFrame.waitTimer = 0.4
+    -- 3. Move backwards to previous mail
+    currentMailIndex = currentMailIndex - 1
+    lootUpdateFrame.waitTimer = 0.1
     lootUpdateFrame:Show()
 end
 
@@ -147,20 +217,40 @@ end)
 -- Error Catching
 Mail:RegisterEvent("UI_ERROR_MESSAGE", function(_, _, message)
     if isOpeningAll then
-        -- Common stoppage reasons
-        if message == ERR_INV_FULL or message == ERR_ITEM_MAX_COUNT then
-            ns.Print("|cFFFF0000Stopping Open All:|r " .. message)
-            isOpeningAll = false
-            if OpenAllButton then OpenAllButton:SetText("Open All") end
+        if message == ERR_INV_FULL then
+            if not inventoryFull then
+                inventoryFull = true
+                ns.Print("|cFFFF0000Inventory is full.|r Skipping items and collecting remaining money.")
+            end
+            if currentMailIndex > 0 then
+                currentMailIndex = currentMailIndex - 1
+                lootUpdateFrame.waitTimer = 0.1
+                lootUpdateFrame:Show()
+            end
+        elseif message == ERR_ITEM_MAX_COUNT then
+            -- Unique item limit reached; skip this mail and continue opening remaining mails
+            if currentMailIndex > 0 then
+                skippedMails[currentMailIndex] = true
+                currentMailIndex = currentMailIndex - 1
+                lootUpdateFrame.waitTimer = 0.1
+                lootUpdateFrame:Show()
+            end
+        end
+    end
+end)
+
+Mail:RegisterEvent("MAIL_INBOX_UPDATE", function()
+    if isOpeningAll then
+        isCheckingInbox = false
+        if lootUpdateFrame.waitTimer and lootUpdateFrame.waitTimer > 0.15 then
+            lootUpdateFrame.waitTimer = 0.15
         end
     end
 end)
 
 Mail:RegisterEvent("MAIL_CLOSED", function()
     if isOpeningAll then
-        isOpeningAll = false
-        currentMailIndex = 1
-        if OpenAllButton then OpenAllButton:SetText("Open All") end
+        StopOpening(false)
     end
 end)
 
@@ -169,15 +259,23 @@ local function OnOpenAllClicked()
     if not s or not s.enabled or not s.openAll then return end
     
     if isOpeningAll then
-        -- Stop
-        isOpeningAll = false
-        OpenAllButton:SetText("Open All")
+        StopOpening(false)
+        return
+    end
+
+    local numItems = GetInboxNumItems()
+    if not numItems or numItems == 0 then
+        ns.Print("Inbox is empty.")
         return
     end
     
     isOpeningAll = true
     totalGoldLooted = 0
-    currentMailIndex = 1
+    skippedMails = {}
+    inventoryFull = false
+    retryCount = 0
+    isCheckingInbox = false
+    currentMailIndex = numItems
     OpenAllButton:SetText("Stop")
     ProcessNextMail()
 end
@@ -488,9 +586,9 @@ end
 
 function Mail:PLAYER_INTERACTION_MANAGER_FRAME_HIDE(event, paneType)
     if paneType == interactionTypeMail then
-        isOpeningAll = false
-        currentMailIndex = 1
-        if OpenAllButton then OpenAllButton:SetText("Open All") end
+        if isOpeningAll then
+            StopOpening(false)
+        end
     end
 end
 

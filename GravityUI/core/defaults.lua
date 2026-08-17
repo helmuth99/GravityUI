@@ -177,24 +177,39 @@ ns.Defaults = {
         objectives = {
             enabled = true,
             -- UI Settings
-            width = 235, -- Standard Blizzard width approx
+            width = 262, -- Standard Blizzard width approx
             height = 410,
             hideBorder = true,
             
             -- Skinning Settings
             objectiveTrackerSkinning = true, -- Master Enable
+            modernSkinning = true, -- Modern Sleek Skinning Style
             autoHideWhenEmpty = true, -- Hide tracker frame when no quests/objectives are tracked
+            hideMasterHeader = true, -- Hide "All Objectives" master header
+            showQuestIcons = true, -- Show Left POI buttons (click to focus)
+            poiIconScale = 0.75, -- Scale for Left POI buttons (0.5 to 1.2)
+            
+            -- Modern Colors & Typography
+            headerColorType = "accent", -- "accent" (Theme Color), "class", "custom"
+            customHeaderColor = { 1, 1, 1, 1 },
+            lineColorType = "accent", -- "accent" (Theme Color), "class", "custom"
+            customLineColor = { 0.047, 0.824, 0.624, 1 },
+            dividerThickness = 2, -- Divider line thickness in pixels (1-5)
+            customTitleColor = { 1.0, 0.910, 0.471, 1 },       -- Gold
+            customFocusColor = { 0.871, 0.251, 1.0, 1 },       -- Purple / Super-Tracked
+            customCompletedColor = { 0.251, 1.0, 0.349, 1 },   -- Green
+            customObjectiveColor = { 0.720, 0.720, 0.720, 1 }, -- Gray
+            headerFontSize = 14,
+            titleFontSize = 14,
+            objectiveFontSize = 12,
+            
+            -- Legacy Background & Cosmetic Bar (when Modern Skinning is off)
             backgroundOpacity = 0.8,
-            
-            -- Background Color
-            disableThemeColorForBackground = false, -- Default: Use Theme
+            disableThemeColorForBackground = false,
             customBackgroundColor = { 0, 0.5, 1, 1 },
-            
-            -- Header Font Color
-            disableThemeColorForHeaderFont = false, -- Default: Use Theme
+            disableThemeColorForHeaderFont = false,
             customHeaderFontColor = { 1, 1, 1, 1 },
             
-            -- Cosmetic Bar
             cosmeticBar = {
                 enable = true,
                 width = 4,
