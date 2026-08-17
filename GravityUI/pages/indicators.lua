@@ -253,6 +253,71 @@ local function BuildPet(parent)
     content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
 end
 
+-- 3b. Combat Status (+Combat / -Combat Text Anzeige)
+local function BuildCombatStatus(parent)
+    local scroll, content = GUI:CreateScrollableContent(parent)
+    scroll:SetAllPoints()
+    local db = ns.GetDB(); if not db then return end
+    local cs = db.screenindicators and db.screenindicators.combatStatus
+    if not cs then return end
+    content.rowCount = 0
+    local refresh = function() if ns.RefreshScreenIndicators then ns.RefreshScreenIndicators() end end
+
+    local header = GUI:CreateSectionHeader(content, "Combat Status Text (+Combat / -Combat)")
+    header:SetPoint("TOPLEFT", 10, -10)
+    header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
+    content.rowCount = 1.3
+
+    CreateSubLabel(content, "General")
+    AddRow(content, "Enable Combat Status Text", "checkbox", "enabled", cs, refresh)
+
+    content.rowCount = content.rowCount + 0.3
+    CreateSubLabel(content, "Preview & Mover")
+    local previewRow = CreateFrame("Frame", nil, content)
+    previewRow:SetSize(content:GetWidth() - 20, 30)
+    previewRow:SetPoint("TOPLEFT", content, "TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT + 5))
+
+    local btnMover = GUI:CreateButton(previewRow, "Toggle Mover", 120, 24, function()
+        if ns.ScreenIndicators and ns.ScreenIndicators.ToggleMover then
+            ns.ScreenIndicators.ToggleMover("combat")
+        end
+    end)
+    btnMover:SetPoint("LEFT", previewRow, "LEFT", 0, 0)
+
+    local btnEnter = GUI:CreateButton(previewRow, "Preview +Combat", 130, 24, function()
+        if ns.ScreenIndicators and ns.ScreenIndicators.PreviewCombatStatus then
+            ns.ScreenIndicators.PreviewCombatStatus("+Combat")
+        end
+    end)
+    btnEnter:SetPoint("LEFT", btnMover, "RIGHT", 10, 0)
+
+    local btnLeave = GUI:CreateButton(previewRow, "Preview -Combat", 130, 24, function()
+        if ns.ScreenIndicators and ns.ScreenIndicators.PreviewCombatStatus then
+            ns.ScreenIndicators.PreviewCombatStatus("-Combat")
+        end
+    end)
+    btnLeave:SetPoint("LEFT", btnEnter, "RIGHT", 10, 0)
+
+    content.rowCount = content.rowCount + 1.3
+
+    CreateSubLabel(content, "Appearance & Timing")
+    AddRow(content, "Font Size", "slider", 10, 60, "fontSize", cs, refresh, 1)
+    AddRow(content, "Display Duration (sec)", "slider", 0.2, 5.0, "displayTime", cs, refresh, 0.1)
+    AddRow(content, "Fade Duration (sec)", "slider", 0.1, 2.0, "fadeTime", cs, refresh, 0.1)
+
+    content.rowCount = content.rowCount + 0.3
+    CreateSubLabel(content, "Colors")
+    AddRow(content, "Enter Combat Color (+Combat)", "color", "enterCombatColor", cs, refresh)
+    AddRow(content, "Leave Combat Color (-Combat)", "color", "leaveCombatColor", cs, refresh)
+
+    content.rowCount = content.rowCount + 0.3
+    CreateSubLabel(content, "Position")
+    AddRow(content, "X Offset", "slider", -1000, 1000, "xOffset", cs, refresh, 1)
+    AddRow(content, "Y Offset", "slider", -1000, 1000, "yOffset", cs, refresh, 1)
+
+    content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
+end
+
 -- 4. Combat Timer (Ported from uiimprovements.lua)
 local function BuildCombatTimer(parent)
     local scroll, content = GUI:CreateScrollableContent(parent)
@@ -752,6 +817,7 @@ ns.GUI:RegisterPage("indicators", {
         { name = "Stance Text",        builder = BuildStanceText },
         { name = "Mana/Lust/BR Tracker", builder = BuildManaLustBRTracker },
         { name = "Pet Info",           builder = BuildPet },
+        { name = "Combat Status",      builder = BuildCombatStatus },
         { name = "Combat Timer",       builder = BuildCombatTimer },
         { name = "Cooldown Text",      builder = ns.CooldownText and ns.CooldownText.AddOptions or function() end },
         { name = "Missing Buffs",      builder = BuildMissingBuffs },
