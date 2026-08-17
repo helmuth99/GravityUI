@@ -862,37 +862,41 @@ local function BuildObjectivesPanel(parent)
     end
     
     local header = GUI:CreateSectionHeader(content, "Objective Tracker")
-    header:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - header.gap - 10
-    
+    local isStylingEnabled = (db.objectiveTrackerSkinning ~= false)
     local isModern = (db.modernSkinning ~= false)
-    local infoText = isModern 
-        and "Modern minimalist styling for the Blizzard Objective Tracker with clean typography, state-based colors (gold titles, purple focus, green completed), customizable accent divider lines, and flat progress bars."
-        or "Classic Objective Tracker skinning with structured background panels, cosmetic accent bars, and theme-matching colors."
+    local infoText
+    if not isStylingEnabled then
+        infoText = "Objective Tracker styling is currently disabled. Blizzard's default Objective Tracker or other tracker addons (such as EllesmereUI) will handle all styling."
+    elseif isModern then
+        infoText = "Modern minimalist styling for the Blizzard Objective Tracker with clean typography, state-based colors (gold titles, purple focus, green completed), customizable accent divider lines, and flat progress bars."
+    else
+        infoText = "Classic Objective Tracker skinning with structured background panels, cosmetic accent bars, and theme-matching colors."
+    end
     local infoBox = GUI:CreateInfoBox(content, infoText)
     infoBox:SetPoint("TOPLEFT", PAD, yOffset)
     yOffset = yOffset - infoBox:GetHeight() - 10
     
     -- Master Toggle
-    local row1 = CreateStylingRow(content, "Enable Styling", "checkbox", "objectiveTrackerSkinning", db, Refresh)
+    local row1 = CreateStylingRow(content, "Enable Styling", "checkbox", "objectiveTrackerSkinning", db, Rebuild)
     row1:SetPoint("TOPLEFT", PAD, yOffset)
     yOffset = yOffset - ROW_HEIGHT - 5
 
-    -- Modern Skinning Toggle
-    local rowModern = CreateStylingRow(content, "Enable Modern Skinning", "checkbox", "modernSkinning", db, Rebuild)
-    rowModern:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - ROW_HEIGHT - 5
+    if isStylingEnabled then
+        -- Modern Skinning Toggle
+        local rowModern = CreateStylingRow(content, "Enable Modern Skinning", "checkbox", "modernSkinning", db, Rebuild)
+        rowModern:SetPoint("TOPLEFT", PAD, yOffset)
+        yOffset = yOffset - ROW_HEIGHT - 5
 
-    -- Shared options
-    local rowAutoHide = CreateStylingRow(content, "Auto-Hide When Empty", "checkbox", "autoHideWhenEmpty", db, function()
-        if ns.Objectives and ns.Objectives.CheckAutoHide then ns.Objectives:CheckAutoHide() end
-    end)
-    rowAutoHide:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - ROW_HEIGHT - 5
+        -- Shared options
+        local rowAutoHide = CreateStylingRow(content, "Auto-Hide When Empty", "checkbox", "autoHideWhenEmpty", db, function()
+            if ns.Objectives and ns.Objectives.CheckAutoHide then ns.Objectives:CheckAutoHide() end
+        end)
+        rowAutoHide:SetPoint("TOPLEFT", PAD, yOffset)
+        yOffset = yOffset - ROW_HEIGHT - 5
 
-    local rowWidth = CreateStylingRow(content, "Tracker Width", "slider", 180, 400, "width", db, Refresh, 1)
-    rowWidth:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - ROW_HEIGHT - 15
+        local rowWidth = CreateStylingRow(content, "Tracker Width", "slider", 180, 400, "width", db, Refresh, 1)
+        rowWidth:SetPoint("TOPLEFT", PAD, yOffset)
+        yOffset = yOffset - ROW_HEIGHT - 15
 
     if isModern then
         -- ====================================================================
@@ -1060,6 +1064,7 @@ local function BuildObjectivesPanel(parent)
         barPickerRow:SetPoint("TOPLEFT", PAD, yOffset)
         yOffset = yOffset - ROW_HEIGHT - 5
         if not db.cosmeticBar.disableThemeColor then barPickerRow:Hide() end
+    end
     end
 
     content:SetHeight(math.abs(yOffset) + 20)
