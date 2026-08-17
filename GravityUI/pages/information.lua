@@ -175,6 +175,17 @@ local function BuildInformationTab(parent)
 
     local changeLogs = {
         {
+            version = "4.01.00",
+            date = "08/17/2026",
+            changes = {
+                "Quality of Life Overhaul: Added new QoL suite (Auto Open Containers with Warband exclusions, Hide Item Transforms, Auto Unwrap Collections, Train All Button, and Announce Instance Reset)",
+                "Trackers: Added new Battle Res and Bloodlust Lockout HUD trackers with custom timers, font colors, and Edit Mode integration",
+                "Frame Mover: Built-in BlizzMove / Shifter module to freely drag, reposition, and persist all standard Blizzard panels",
+                "Privacy: Added clickable Guild Chat Privacy Cover in Communities window for streamers",
+                "EllesmereUI Compatibility: Full decoupling, standalone Minimap icon capture, and secret Shift+Click module activation bypass",
+            },
+        },
+        {
             version = "4.00.56",
             date = "08/17/2026",
             changes = {
@@ -243,8 +254,9 @@ local function BuildInformationTab(parent)
     R({ name="Custom Panels",     desc="Create floating data text strings for any tracked metric, anywhere on screen.",  pageId="datapanels", tabIndex=2 })
     G()
     H("  Quality of Life")
-    R({ name="Automation",     desc="Auto-repair, fast loot, junk selling, quest accept, movie skips -- all automated.", pageId="qol", tabIndex=1 })
-    R({ name="Autohide Setup", desc="Contextual UI hiding based on game events (e.g. minigames) for full immersion.",   pageId="qol", tabIndex=2 })
+    R({ name="QoL Suite",        desc="Auto Open Containers, Hide Transforms, Auto Unwrap Collections, Train All, Instance Reset.", pageId="qol", tabIndex=1 })
+    R({ name="Automation",       desc="Auto-repair, fast loot, junk selling, quest accept/turn-in, and cinematic skips.",          pageId="qol", tabIndex=2 })
+    R({ name="Autohide Setup",   desc="Contextual UI hiding for Objective Tracker, Frames, Nameplates, and Guild Chat Privacy.",   pageId="qol", tabIndex=3 })
     G()
     H("  Features")
     R({ name="Skyriding HUD",     desc="Smooth animated Vigor tracking HUD with unified centered layout.",             stateTable=db.skyriding, stateKey="enabled", pageId="features", tabIndex=1 })
@@ -256,12 +268,15 @@ local function BuildInformationTab(parent)
     R({ name="Targeted Spells",   desc="Castbars & icons for enemy spells targeting you or group members.",             stateTable=db.screenindicators and db.screenindicators.targetedSpells, stateKey="enabled", pageId="features", tabIndex=7 })
     R({ name="Death Announcer",   desc="Broadcasts party and raid player deaths to chat and on-screen alerts.",          stateTable=db.deathAnnouncer, stateKey="enabled", pageId="features", tabIndex=8 })
     R({ name="Alt Manager",       desc="Account-wide matrix for Mythic+ Keystones, Great Vault status, and Currencies.", stateTable=db.altManager, stateKey="enabled", pageId="features", tabIndex=9 })
+    R({ name="Frame Mover",       desc="Freely drag and reposition all standard Blizzard frames (Character, Bank, Merchant, etc.).", stateTable=db.frameMover, stateKey="enabled", pageId="features", tabIndex=10 })
     G()
     H("  Indicators")
     R({ name="Cursor Utilities",   desc="Attach GCD rings, cursor castbars and highlights to your mouse cursor.",       stateTable=db.screenindicators and db.screenindicators.cursor, stateKey="enabled", pageId="indicators", tabIndex=1 })
     R({ name="Crosshair",          desc="Dynamic class-specific targeting crosshair with real-time range color coding.",  stateTable=db.screenindicators and db.screenindicators.crosshair, stateKey="enabled", pageId="indicators", tabIndex=2 })
     R({ name="Stance Text",        desc="On-screen text indicator for Druid forms, Warrior stances, Paladin auras, etc.", stateTable=db.screenindicators and db.screenindicators.stanceText, stateKey="enabled", pageId="indicators", tabIndex=3 })
     R({ name="Healer Mana",        desc="Shows spec icon, name and mana% of all healers in your party or raid.",          stateTable=db.screenindicators and db.screenindicators.healerMana, stateKey="enabled", pageId="indicators", tabIndex=4 })
+    R({ name="Battle Res Tracker", desc="Tracks party and raid battle resurrection pool charges and countdown timer.",    stateTable=db.screenindicators and db.screenindicators.battleRes, stateKey="enabled", pageId="indicators", tabIndex=4 })
+    R({ name="Bloodlust Tracker",  desc="Displays remaining Sated / Exhaustion debuff lockout duration on screen.",      stateTable=db.screenindicators and db.screenindicators.bloodlust, stateKey="enabled", pageId="indicators", tabIndex=4 })
     R({ name="Pet Info",           desc="Pet management tools and large status warnings for Hunters and Warlocks.",       stateTable=db.screenindicators and db.screenindicators.petWarnings, stateKey="enabled", pageId="indicators", tabIndex=5 })
     R({ name="Combat Timer",       desc="Visual stopwatch tracking time spent in combat. Great for M+ and raid analysis.", stateTable=db.uiimprovements and db.uiimprovements.combatTimer, stateKey="enabled", pageId="indicators", tabIndex=6 })
     R({ name="Cooldown Text",      desc="On-screen text alerts when tracked party spells go on cooldown.",                stateTable=db.cooldownText, stateKey="enabled", pageId="indicators", tabIndex=7 })
