@@ -478,15 +478,31 @@ do
     if C_AddOns.IsAddOnLoaded("EllesmereUI") then
         local function AutoDisableEllesmereModules()
             local reloadNeeded = false
+            local db = ns.GetDB()
 
             -- Disable an EllesmereUI sub-addon if it should not run alongside GravityUI.
             -- Returns true if the addon was still loaded this session (= reload required).
             local function Disable(addonName)
+                if db and db.allowedEllesmereModules and db.allowedEllesmereModules[addonName] then
+                    -- If user explicitly unlocked this module, check if they manually disabled it in AddOns list
+                    local state = C_AddOns.GetAddOnEnableState(nil, addonName)
+                    local charState = C_AddOns.GetAddOnEnableState(UnitName("player") or "player", addonName)
+                    if state == 0 and charState == 0 then
+                        db.allowedEllesmereModules[addonName] = nil
+                    else
+                        return
+                    end
+                end
+
                 -- Only act if the addon is actually installed
                 local name = C_AddOns.GetAddOnInfo(addonName)
                 if not name then return end
                 -- Disable for next session
                 C_AddOns.DisableAddOn(addonName)
+                local player = UnitName("player")
+                if player then
+                    C_AddOns.DisableAddOn(addonName, player)
+                end
                 -- If it's still loaded right now, a reload is needed to fully remove it
                 if C_AddOns.IsAddOnLoaded(addonName) then
                     reloadNeeded = true
@@ -499,6 +515,10 @@ do
                 if not name then return end
                 -- Enable for next session
                 C_AddOns.EnableAddOn(addonName)
+                local player = UnitName("player")
+                if player then
+                    C_AddOns.EnableAddOn(addonName, player)
+                end
                 -- If it's not loaded right now, a reload is needed to fully load it
                 if not C_AddOns.IsAddOnLoaded(addonName) then
                     reloadNeeded = true
@@ -506,9 +526,11 @@ do
             end
 
             -- ---------------------------------------------------------------
-            -- Always disabled: GravityUI fully replaces these.
+            -- Always disabled: GravityUI fully replaces these (unless allowed).
             -- ---------------------------------------------------------------
-            Disable("EllesmereUIQoL")
+            if not (db and db.allowedEllesmereModules and db.allowedEllesmereModules["EllesmereUIQoL"]) then
+                Disable("EllesmereUIQoL")
+            end
 
             -- ---------------------------------------------------------------
             -- Conditionally disabled: only when the matching GravityUI
@@ -677,7 +699,16 @@ do
             button2 = "Abbrechen",
             OnAccept = function(self, data)
                 if data and data.folder then
+                    local db = ns.GetDB()
+                    if db then
+                        if not db.allowedEllesmereModules then db.allowedEllesmereModules = {} end
+                        db.allowedEllesmereModules[data.folder] = true
+                    end
                     C_AddOns.EnableAddOn(data.folder)
+                    local player = UnitName("player")
+                    if player then
+                        C_AddOns.EnableAddOn(data.folder, player)
+                    end
                     ReloadUI()
                 end
             end,

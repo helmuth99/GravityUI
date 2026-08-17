@@ -1516,5 +1516,6 @@ ns.Defaults = {
         rememberPositions = false,
         positions = {},
     },
+    allowedEllesmereModules = {},
 }
 }
