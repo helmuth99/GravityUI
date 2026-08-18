@@ -2187,7 +2187,7 @@ end
 local qolEventFrame = CreateFrame("Frame")
 qolEventFrame:RegisterEvent("PLAYER_LOGIN")
 qolEventFrame:RegisterEvent("BAG_UPDATE_DELAYED")
-qolEventFrame:RegisterEvent("UNIT_AURA")
+qolEventFrame:RegisterUnitEvent("UNIT_AURA", "player")
 qolEventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
 qolEventFrame:RegisterEvent("CHAT_MSG_SYSTEM")
 qolEventFrame:RegisterEvent("ADDON_LOADED")

@@ -600,7 +600,12 @@ local function UpdateAbilityIcon()
     abilityIcon:SetPoint("LEFT", skyridingFrame, "RIGHT", 2, yOffset)
     
     local cd = C_Spell.GetSpellCooldown(WHIRLING_SURGE_SPELL_ID)
-    if cd and cd.duration and cd.duration > 0 then
+    local isOnCD = false
+    if cd and cd.duration then
+        local ok, res = pcall(function() return cd.duration > 0 end)
+        if ok and res then isOnCD = true end
+    end
+    if isOnCD then
         abilityIconCooldown:SetCooldown(cd.startTime, cd.duration)
     else
         abilityIconCooldown:Clear()

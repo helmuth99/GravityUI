@@ -90,7 +90,12 @@ local function ShowCharacterTooltip(anchor, alt)
         GameTooltip:AddLine(alt.faction, 1, 1, 1)
     end
 
-    local moneyAmount = alt.money or (alt.guid == UnitGUID("player") and GetMoney()) or 0
+    local moneyAmount = alt.money
+    if not moneyAmount and alt.guid == UnitGUID("player") then
+        local ok, m = pcall(GetMoney)
+        if ok and m and type(m) == "number" then moneyAmount = m end
+    end
+    moneyAmount = moneyAmount or 0
     GameTooltip:AddLine(" ")
     GameTooltip:AddLine(GetMoneyString(moneyAmount, true), 1, 1, 1)
 

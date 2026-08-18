@@ -99,10 +99,14 @@ function Data:UpdateCharacterInfo()
     alt.level = UnitLevel("player") or alt.level
     alt.faction = UnitFactionGroup("player") or alt.faction
     
-    local m = GetMoney()
-    if m and m > 0 then
-        alt.money = m
-    elseif not alt.money then
+    local ok, m = pcall(GetMoney)
+    if ok and m and type(m) == "number" then
+        local okCmp, gt = pcall(function() return m > 0 end)
+        if okCmp and gt then
+            alt.money = m
+        end
+    end
+    if not alt.money then
         alt.money = 0
     end
     alt.lastUpdated = time()
@@ -444,32 +448,34 @@ function Data:UpdateCurrencies()
     for _, currID in ipairs(TRACKED_CURRENCY_IDS) do
         local info = C_CurrencyInfo.GetCurrencyInfo(currID)
         if info and (info.name and info.name ~= "") then
-            local meta = CURRENCY_METADATA[currID] or {}
-            local maxQty = info.maxQuantity or 0
-            if maxQty == 0 and info.maxWeeklyQuantity and info.maxWeeklyQuantity > 0 then
-                maxQty = info.maxWeeklyQuantity
-            end
-            if maxQty == 0 and meta.defaultMax then
-                maxQty = meta.defaultMax
-            end
+            pcall(function()
+                local meta = CURRENCY_METADATA[currID] or {}
+                local maxQty = info.maxQuantity or 0
+                if maxQty == 0 and info.maxWeeklyQuantity and info.maxWeeklyQuantity > 0 then
+                    maxQty = info.maxWeeklyQuantity
+                end
+                if maxQty == 0 and meta.defaultMax then
+                    maxQty = meta.defaultMax
+                end
 
-            if globalTbl and globalTbl.currencyCaps and maxQty > (globalTbl.currencyCaps[currID] or 0) then
-                globalTbl.currencyCaps[currID] = maxQty
-            end
+                if globalTbl and globalTbl.currencyCaps and maxQty > (globalTbl.currencyCaps[currID] or 0) then
+                    globalTbl.currencyCaps[currID] = maxQty
+                end
 
-            alt.currencies[currID] = {
-                id = currID,
-                name = info.name or "",
-                quantity = info.quantity or 0,
-                maxQuantity = maxQty,
-                maxWeeklyQuantity = info.maxWeeklyQuantity or 0,
-                totalEarned = info.totalEarned or info.quantity or 0,
-                quantityEarnedThisWeek = info.quantityEarnedThisWeek or 0,
-                useTotalEarnedForMaxQty = (meta.useTotalEarned == true) or (info.useTotalEarnedForMaxQty == true),
-                iconFileID = info.iconFileID or 0,
-                quality = info.quality or 1,
-                currencyType = meta.type or "other",
-            }
+                alt.currencies[currID] = {
+                    id = currID,
+                    name = info.name or "",
+                    quantity = info.quantity or 0,
+                    maxQuantity = maxQty,
+                    maxWeeklyQuantity = info.maxWeeklyQuantity or 0,
+                    totalEarned = info.totalEarned or info.quantity or 0,
+                    quantityEarnedThisWeek = info.quantityEarnedThisWeek or 0,
+                    useTotalEarnedForMaxQty = (meta.useTotalEarned == true) or (info.useTotalEarnedForMaxQty == true),
+                    iconFileID = info.iconFileID or 0,
+                    quality = info.quality or 1,
+                    currencyType = meta.type or "other",
+                }
+            end)
         end
     end
 end

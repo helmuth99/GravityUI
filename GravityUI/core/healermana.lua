@@ -103,10 +103,13 @@ local function GetUnitManaPercent(unit)
         if ok and pct ~= nil then return pct end
     end
     if UnitPowerMax and UnitPower then
-        local maxMana = UnitPowerMax(unit, Enum.PowerType.Mana)
-        if maxMana and maxMana > 0 then
-            return (UnitPower(unit, Enum.PowerType.Mana) / maxMana) * 100
-        end
+        local ok, pct = pcall(function()
+            local maxMana = UnitPowerMax(unit, Enum.PowerType.Mana)
+            if maxMana and maxMana > 0 then
+                return (UnitPower(unit, Enum.PowerType.Mana) / maxMana) * 100
+            end
+        end)
+        if ok and pct then return pct end
     end
     return 0
 end

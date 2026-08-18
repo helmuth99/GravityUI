@@ -515,7 +515,11 @@ local function PollBL()
 
     _satedActive = true
     local exp = aura.expirationTime
-    local dur = aura.duration or 600
+    local rawDur = aura.duration
+    local dur = 600
+    if rawDur and (not issecretvalue or not issecretvalue(rawDur)) then
+        dur = rawDur
+    end
 
     -- Secret-safe expiration handling
     if exp and (not issecretvalue or not issecretvalue(exp)) and exp > 0 then
@@ -643,7 +647,11 @@ eventFrame:SetScript("OnEvent", function(self, event, unit, updateInfo)
         local isFull = false
         if updateInfo and (not issecretvalue or not issecretvalue(updateInfo)) then
             local v = updateInfo.isFullUpdate
-            if v and (not issecretvalue or not issecretvalue(v)) then isFull = true end
+            if issecretvalue and issecretvalue(v) then
+                isFull = false
+            elseif v == true then
+                isFull = true
+            end
         end
 
         -- Rising edge: Bloodlust/Heroism was just cast!

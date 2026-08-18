@@ -389,8 +389,9 @@ local function SaveGold()
         if not db.global then db.global = {} end
         if not db.global.goldData then db.global.goldData = {} end
         local _, class = UnitClass("player")
+        local ok, m = pcall(GetMoney)
         db.global.goldData[key] = {
-            money = GetMoney() or 0,
+            money = (ok and m and type(m) == "number") and m or 0,
             class = class
         }
     end
@@ -398,7 +399,8 @@ end
 
 DT.Types.gold = {
     Update = function(slot, config)
-        local money = GetMoney() or 0
+        local ok, rawMoney = pcall(GetMoney)
+        local money = (ok and rawMoney and type(rawMoney) == "number") and rawMoney or 0
         local r, g, b = GetValueColor()
         local label = GetLabel("Gold: ", "G: ", config.shortLabel, config.noLabel)
         return string.format("%s|cff%02x%02x%02x%s|r", label, r*255, g*255, b*255, FormatGold(money))
@@ -409,7 +411,8 @@ DT.Types.gold = {
         GameTooltip:AddLine("Gold", 1, 1, 1)
         GameTooltip:AddLine(" ")
 
-        local money = GetMoney() or 0
+        local ok, rawMoney = pcall(GetMoney)
+        local money = (ok and rawMoney and type(rawMoney) == "number") and rawMoney or 0
         local gold = math.floor(money / 10000)
         local silver = math.floor((money % 10000) / 100)
         local copper = money % 100
