@@ -15,6 +15,7 @@ local _blockTitleFSCache = setmetatable({}, { __mode = "k" })
 local _eqtFontRegistry = setmetatable({}, { __mode = "k" })
 local _masterHeaderCollapseHooked = false
 local _masterHeaderShowHooked = false
+local _autoHideShowHooked = false
 
 local SUB_TRACKERS = {
     "ScenarioObjectiveTracker",
@@ -502,24 +503,24 @@ local function ApplyQuestTypeIcon(block)
 end
 
 -- ============================================================================
--- HEADER SKINNING & SPACING (MODERN & CLASSIC)
--- ============================================================================
+-- Never write directly to tracker.fromHeaderOffsetY -- it taints a Blizzard-
+-- owned property and every subsequent read during LayoutContents permanently
+-- poisons the execution context (GetAuraDataByIndex secret-value error).
+-- Store our spacing override in an external weak-keyed table instead.
+local _headerSpacingOverride = setmetatable({}, { __mode = "k" })
+
 local function UpdateTrackerHeaderSpacing(tracker)
     if not tracker then return end
     local s = GetSettings()
     if s.objectiveTrackerSkinning == false then return end
     local isModern = (s.modernSkinning ~= false)
 
-    if tracker._gui_origFromHeaderOffsetY == nil then
-        tracker._gui_origFromHeaderOffsetY = tracker.fromHeaderOffsetY or 0
-    end
-
     if isModern then
         local thickness = s.dividerThickness or 1
         local spacing = s.dividerSpacing or 3
-        tracker.fromHeaderOffsetY = -(thickness + spacing)
+        _headerSpacingOverride[tracker] = -(thickness + spacing)
     else
-        tracker.fromHeaderOffsetY = tracker._gui_origFromHeaderOffsetY
+        _headerSpacingOverride[tracker] = nil
     end
 end
 
@@ -1383,8 +1384,8 @@ function Objectives:OnInitialize()
         end)
     end
 
-    if ObjectiveTrackerFrame and not ObjectiveTrackerFrame._gui_AutoHideHooked then
-        ObjectiveTrackerFrame._gui_AutoHideHooked = true
+    if ObjectiveTrackerFrame and not _autoHideShowHooked then
+        _autoHideShowHooked = true
         hooksecurefunc(ObjectiveTrackerFrame, "Show", function()
             if Objectives.isApplyingAutoHide then return end
             Objectives.isApplyingAutoHide = true
