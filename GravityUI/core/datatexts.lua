@@ -941,7 +941,7 @@ local function BuildFriendsCache()
     wipe(friendsCache.bnetClassic)
     wipe(friendsCache.bnetOther)
 
-    for i = 1, C_FriendList.GetNumFriends() do
+    for i = 1, C_FriendList.GetNumFriends() or 0 do
         local info = C_FriendList.GetFriendInfoByIndex(i)
         if info and info.connected then
             table.insert(friendsCache.wowFriends, info)
