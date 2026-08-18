@@ -1046,16 +1046,19 @@ local function HookTracker(tracker)
 
     if tracker.LayoutContents then
         hooksecurefunc(tracker, "LayoutContents", function(self)
-            if self.progressBarPool and self.progressBarPool.EnumerateActive then
-                for bar in self.progressBarPool:EnumerateActive() do
-                    SkinProgressBar(bar)
+            local t = self
+            C_Timer.After(0, function()
+                if t.progressBarPool and t.progressBarPool.EnumerateActive then
+                    for bar in t.progressBarPool:EnumerateActive() do
+                        SkinProgressBar(bar)
+                    end
                 end
-            end
-            if self.timerBarPool and self.timerBarPool.EnumerateActive then
-                for bar in self.timerBarPool:EnumerateActive() do
-                    SkinTimerBar(bar)
+                if t.timerBarPool and t.timerBarPool.EnumerateActive then
+                    for bar in t.timerBarPool:EnumerateActive() do
+                        SkinTimerBar(bar)
+                    end
                 end
-            end
+            end)
         end)
     end
 
