@@ -2200,7 +2200,7 @@ qolEventFrame:SetScript("OnEvent", function(self, event, arg1)
     elseif event == "BAG_UPDATE_DELAYED" then
         ScanAndOpenContainers()
     elseif event == "UNIT_AURA" then
-        if arg1 == "player" then CleanTransforms() end
+        if arg1 == "player" then C_Timer.After(0, CleanTransforms) end
     elseif event == "PLAYER_REGEN_ENABLED" then
         if pendingTransformRemoval then
             pendingTransformRemoval = false
