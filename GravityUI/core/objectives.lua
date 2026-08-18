@@ -1295,9 +1295,10 @@ function Objectives:Refresh()
     local masterHeader = otf and (otf.HeaderMenu or otf.Header)
     if masterHeader then SkinHeader(masterHeader, true) end
     ApplyMasterHeaderVisibility()
-    if ObjectiveTrackerManager and ObjectiveTrackerManager.Update then
-        ObjectiveTrackerManager:Update()
-    end
+    -- FORBIDDEN: Never call ObjectiveTrackerManager:Update() from addon code.
+    -- It runs Blizzard's entire quest machinery in our tainted execution context,
+    -- and the tables it materializes stay tainted for the rest of the session.
+    -- Cosmetic staleness self-heals on the next natural Blizzard relayout.
     self:CheckAutoHide()
 end
 
