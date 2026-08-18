@@ -395,7 +395,12 @@ local function SuppressPOI(block)
     local pb = block and (block.poiButton or block.PoiButton)
     if not pb then return end
 
-    local shouldHide = (s.modernSkinning ~= false) and (not s.showQuestIcons)
+    local isModern = (s.modernSkinning ~= false)
+    local thickness = isModern and (s.dividerThickness or 1) or 0
+    local spacing = isModern and (s.dividerSpacing or 3) or 0
+    local poiOffsetY = isModern and -(thickness + spacing) or -2
+
+    local shouldHide = isModern and (not s.showQuestIcons)
     if shouldHide then
         if pb:IsShown() then pb:Hide() end
         pb:EnableMouse(false)
@@ -410,7 +415,7 @@ local function SuppressPOI(block)
             pb._gui_parent = parent
             pb:ClearAllPoints()
             local offsetX = -(math.floor(24 * scale) + 8)
-            pb:SetPoint("TOPLEFT", parent, "TOPLEFT", offsetX, -2)
+            pb:SetPoint("TOPLEFT", parent, "TOPLEFT", offsetX, poiOffsetY)
         end
     end
 
@@ -419,7 +424,8 @@ local function SuppressPOI(block)
         hooksecurefunc(pb, "Show", function(self)
             local cur = GetSettings()
             if cur.objectiveTrackerSkinning == false then return end
-            local hide = (cur.modernSkinning ~= false) and (not cur.showQuestIcons)
+            local curModern = (cur.modernSkinning ~= false)
+            local hide = curModern and (not cur.showQuestIcons)
             if hide then
                 self:Hide()
             else
@@ -429,8 +435,11 @@ local function SuppressPOI(block)
                 if parent and (self._gui_parent ~= parent) then
                     self._gui_parent = parent
                     self:ClearAllPoints()
+                    local curThickness = curModern and (cur.dividerThickness or 1) or 0
+                    local curSpacing = curModern and (cur.dividerSpacing or 3) or 0
+                    local curOffsetY = curModern and -(curThickness + curSpacing) or -2
                     local offsetX = -(math.floor(24 * scale) + 8)
-                    self:SetPoint("TOPLEFT", parent, "TOPLEFT", offsetX, -2)
+                    self:SetPoint("TOPLEFT", parent, "TOPLEFT", offsetX, curOffsetY)
                 end
             end
         end)
@@ -468,11 +477,19 @@ local function ApplyQuestTypeIcon(block)
         return
     end
 
+    local isModern = (s.modernSkinning ~= false)
+    local thickness = isModern and (s.dividerThickness or 1) or 0
+    local spacing = isModern and (s.dividerSpacing or 3) or 0
+    local iconOffsetY = 3 - (thickness + spacing)
+
     local ico = _blockIcons[block]
     if not ico then
         ico = block:CreateTexture(nil, "OVERLAY")
-        ico:SetPoint("TOPRIGHT", block, "TOPRIGHT", -2, 3)
+        ico:SetPoint("TOPRIGHT", block, "TOPRIGHT", -2, iconOffsetY)
         _blockIcons[block] = ico
+    else
+        ico:ClearAllPoints()
+        ico:SetPoint("TOPRIGHT", block, "TOPRIGHT", -2, iconOffsetY)
     end
     if ico._lastAtlas ~= atlas then
         ico._lastAtlas = atlas
@@ -485,8 +502,27 @@ local function ApplyQuestTypeIcon(block)
 end
 
 -- ============================================================================
--- HEADER SKINNING (MODERN & CLASSIC)
+-- HEADER SKINNING & SPACING (MODERN & CLASSIC)
 -- ============================================================================
+local function UpdateTrackerHeaderSpacing(tracker)
+    if not tracker then return end
+    local s = GetSettings()
+    if s.objectiveTrackerSkinning == false then return end
+    local isModern = (s.modernSkinning ~= false)
+
+    if tracker._gui_origFromHeaderOffsetY == nil then
+        tracker._gui_origFromHeaderOffsetY = tracker.fromHeaderOffsetY or 0
+    end
+
+    if isModern then
+        local thickness = s.dividerThickness or 1
+        local spacing = s.dividerSpacing or 3
+        tracker.fromHeaderOffsetY = -(thickness + spacing)
+    else
+        tracker.fromHeaderOffsetY = tracker._gui_origFromHeaderOffsetY
+    end
+end
+
 local function SkinHeader(header, isMain)
     if not header then return end
     local s = GetSettings()
@@ -565,12 +601,18 @@ local function SkinHeader(header, isMain)
         local thickness = s.dividerThickness or 1
         local px = GetPhysicalPixelSize(header) * thickness
         header.DividerLine:ClearAllPoints()
-        header.DividerLine:SetPoint("TOPLEFT", header, "BOTTOMLEFT", 0, -2)
-        header.DividerLine:SetPoint("TOPRIGHT", header, "BOTTOMRIGHT", 0, -2)
+        header.DividerLine:SetPoint("TOPLEFT", header, "BOTTOMLEFT", 0, 0)
+        header.DividerLine:SetPoint("TOPRIGHT", header, "BOTTOMRIGHT", 0, 0)
         header.DividerLine:SetHeight(px)
         local lr, lg, lb = GetLineRGB()
         header.DividerLine:SetColorTexture(lr, lg, lb, 1)
         header.DividerLine:Show()
+
+        -- Update header spacing on parent tracker
+        local tracker = header.parentModule or header.module or (header.GetParent and header:GetParent())
+        if tracker and type(tracker) == "table" and tracker.fromHeaderOffsetY ~= nil then
+            UpdateTrackerHeaderSpacing(tracker)
+        end
 
         if not _headerClickOverlays[header] and header.MinimizeButton then
             local mb = header.MinimizeButton
@@ -747,11 +789,16 @@ local function SetupTitleLayout(block)
     StyleTitleFS(fs)
     if fs.SetWordWrap then fs:SetWordWrap(false) end
     if fs.SetNonSpaceWrap then fs:SetNonSpaceWrap(false) end
+
+    local thickness = s.dividerThickness or 1
+    local spacing = s.dividerSpacing or 3
+    local titleOffsetY = -(thickness + spacing)
+
     if fs.GetNumPoints and fs:GetNumPoints() > 0 then
         local point, relTo, relPoint, x, y = fs:GetPoint(1)
         if point then
             fs:ClearAllPoints()
-            fs:SetPoint(point, relTo, relPoint, x or 0, y or 0)
+            fs:SetPoint(point, relTo, relPoint, x or 0, titleOffsetY)
         end
     end
     if fs.SetWidth then fs:SetWidth(s.width or 235) end
@@ -910,6 +957,7 @@ local function SkinExistingBlocks(tracker)
     if not tracker then return end
     local s = GetSettings()
     if s.objectiveTrackerSkinning == false then return end
+    UpdateTrackerHeaderSpacing(tracker)
     if tracker.Header then SkinHeader(tracker.Header) end
     if SharesWidgetPool(tracker) then return end
 
@@ -927,22 +975,26 @@ local function SkinExistingBlocks(tracker)
     if tracker.usedBlocks then
         for _, byTemplate in pairs(tracker.usedBlocks) do
             if type(byTemplate) == "table" then
-                for _, block in pairs(byTemplate) do
-                    if type(block) == "table" then
-                        SkinBlock(block)
-                        if block.lines then
-                            for _, line in pairs(block.lines) do
-                                StyleObjectiveLine(line)
+                if byTemplate.GetNumPoints then
+                    SkinBlock(byTemplate)
+                else
+                    for _, block in pairs(byTemplate) do
+                        if type(block) == "table" then
+                            SkinBlock(block)
+                            if block.lines then
+                                for _, line in pairs(block.lines) do
+                                    StyleObjectiveLine(line)
+                                end
                             end
-                        end
-                        if block.usedProgressBars then
-                            for _, bar in pairs(block.usedProgressBars) do
-                                SkinProgressBar(bar)
+                            if block.usedProgressBars then
+                                for _, bar in pairs(block.usedProgressBars) do
+                                    SkinProgressBar(bar)
+                                end
                             end
-                        end
-                        if block.usedTimerBars then
-                            for _, bar in pairs(block.usedTimerBars) do
-                                SkinTimerBar(bar)
+                            if block.usedTimerBars then
+                                for _, bar in pairs(block.usedTimerBars) do
+                                    SkinTimerBar(bar)
+                                end
                             end
                         end
                     end
@@ -956,6 +1008,7 @@ local function HookTracker(tracker)
     if not tracker then return end
     local s = GetSettings()
     if s.objectiveTrackerSkinning == false then return end
+    UpdateTrackerHeaderSpacing(tracker)
     if _hookedTrackers[tracker] then return end
     _hookedTrackers[tracker] = true
 
@@ -1016,6 +1069,14 @@ local function EachTracker(fn)
     local modules = otf and (otf.modules or otf.MODULES)
     if modules then
         for _, t in ipairs(modules) do
+            if t and not seen[t] then
+                seen[t] = true
+                fn(t)
+            end
+        end
+    end
+    if ObjectiveTrackerManager and ObjectiveTrackerManager.moduleToContainerMap then
+        for t in pairs(ObjectiveTrackerManager.moduleToContainerMap) do
             if t and not seen[t] then
                 seen[t] = true
                 fn(t)
@@ -1200,7 +1261,10 @@ function Objectives:SkinTracker()
     end
     ApplyMasterHeaderVisibility()
 
-    EachTracker(HookTracker)
+    EachTracker(function(t)
+        UpdateTrackerHeaderSpacing(t)
+        HookTracker(t)
+    end)
 
     self:CheckAutoHide()
 end
@@ -1208,6 +1272,7 @@ end
 function Objectives:Refresh()
     -- Reset skin flags so full restyle runs
     EachTracker(function(t)
+        UpdateTrackerHeaderSpacing(t)
         if t.usedBlocks then
             for _, byTemplate in pairs(t.usedBlocks) do
                 if type(byTemplate) == "table" then
@@ -1219,11 +1284,17 @@ function Objectives:Refresh()
         end
         if t.Header then SkinHeader(t.Header) end
         SkinExistingBlocks(t)
+        if t.MarkDirty then
+            t:MarkDirty()
+        end
     end)
     local otf = _G.ObjectiveTrackerFrame
     local masterHeader = otf and (otf.HeaderMenu or otf.Header)
     if masterHeader then SkinHeader(masterHeader, true) end
     ApplyMasterHeaderVisibility()
+    if ObjectiveTrackerManager and ObjectiveTrackerManager.Update then
+        ObjectiveTrackerManager:Update()
+    end
     self:CheckAutoHide()
 end
 

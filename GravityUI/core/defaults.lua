@@ -195,6 +195,7 @@ ns.Defaults = {
             lineColorType = "accent", -- "accent" (Theme Color), "class", "custom"
             customLineColor = { 0.047, 0.824, 0.624, 1 },
             dividerThickness = 2, -- Divider line thickness in pixels (1-5)
+            dividerSpacing = 3,   -- Spacing below divider line in pixels (0-10)
             customTitleColor = { 1.0, 0.910, 0.471, 1 },       -- Gold
             customFocusColor = { 0.871, 0.251, 1.0, 1 },       -- Purple / Super-Tracked
             customCompletedColor = { 0.251, 1.0, 0.349, 1 },   -- Green

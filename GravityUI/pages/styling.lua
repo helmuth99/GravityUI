@@ -968,6 +968,10 @@ local function BuildObjectivesPanel(parent)
         rowLineThickness:SetPoint("TOPLEFT", PAD, yOffset)
         yOffset = yOffset - ROW_HEIGHT - 5
 
+        local rowLineSpacing = CreateStylingRow(content, "Divider Bottom Spacing", "slider", 0, 10, "dividerSpacing", db, Refresh, 1)
+        rowLineSpacing:SetPoint("TOPLEFT", PAD, yOffset)
+        yOffset = yOffset - ROW_HEIGHT - 5
+
         -- Quest Title Color (Gold)
         local rowTitleColor = CreateStylingRow(content, "Quest Title Color", "color", "customTitleColor", db, Refresh)
         rowTitleColor:SetPoint("TOPLEFT", PAD, yOffset)
