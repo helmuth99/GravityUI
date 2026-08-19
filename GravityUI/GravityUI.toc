@@ -21,6 +21,7 @@ Libs\libs.xml
 # Core
 core\constants.lua
 core\ticker.lua
+core\profiler.lua
 core\defaults.lua
 core\media.lua
 core\character.lua

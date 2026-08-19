@@ -1,6 +1,7 @@
 -- GravityUI Performance Shield
 -- Mimics the "Disable Addon Profiler" WeakAura to maximize combat FPS by suppressing
 -- engine-level CPU profiling and intrusive telemetry.
+-- NOTE: Respects db.uiimprovements.profilingBypass (set by /guiprofile) to allow intentional profiling.
 
 local ADDON_NAME, ns = ...
 
@@ -9,6 +10,10 @@ local function EnforceShield()
     if not db or not db.uiimprovements or not db.uiimprovements.performanceShield then return end
 
     -- 1. Disable Engine-level CPU profiling (The expensive part)
+    -- Skip if the user has intentionally enabled profiling via /guiprofile
+    -- The bypass flag is persisted in SavedVariables so it survives restarts
+    if db.uiimprovements.profilingBypass then return end
+
     if GetCVar("scriptProfile") ~= "0" then
         SetCVar("scriptProfile", 0)
     end

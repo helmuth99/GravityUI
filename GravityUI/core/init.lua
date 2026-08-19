@@ -2457,3 +2457,128 @@ SlashCmdList["GUITESTCLEANUP"] = function()
     print("Cleanup complete. Reloading UI...")
     C_Timer.After(2, ReloadUI)
 end
+
+-- =============================================================================
+-- Addon CPU Profiler (/guiprofile)
+-- Usage: /guiprofile        - Show CPU stats (if profiling active)
+--        /guiprofile on     - Enable profiling (bypasses Performance Shield)
+--        /guiprofile off    - Disable profiling (restores Performance Shield)
+--        /guiprofile reset  - Reset cumulative counters
+-- =============================================================================
+SLASH_GUIPROFILE1 = "/guiprofile"
+SlashCmdList["GUIPROFILE"] = function(msg)
+    local cmd = (msg or ""):lower():trim()
+
+    -- /guiprofile modules — Start module-level profiling (no taint, no restart needed)
+    if cmd == "modules" then
+        if ns.Profiler then
+            ns.Profiler.Start()
+        else
+            print("|cffff6060[GravityUI Profiler]|r Profiler module not loaded.")
+        end
+        return
+    end
+
+    -- /guiprofile stop — Stop module-level profiling
+    if cmd == "stop" then
+        if ns.Profiler then
+            ns.Profiler.Stop()
+        else
+            print("|cffff6060[GravityUI Profiler]|r Profiler module not loaded.")
+        end
+        return
+    end
+
+    -- /guiprofile (no args) — Show results (module profiler takes priority if active)
+    if cmd == "" and ns.Profiler and ns.Profiler.IsActive() then
+        ns.Profiler.Report()
+        return
+    end
+
+    -- /guiprofile on — Enable profiling and bypass Performance Shield
+    if cmd == "on" then
+        local db = ns.GetDB()
+        if db and db.uiimprovements then
+            db.uiimprovements.profilingBypass = true
+        end
+        SetCVar("scriptProfile", 1)
+        print("|cff00ccff[GravityUI Profiler]|r Profiling enabled! Performance Shield bypassed.")
+        print("|cffffcc00  Restart WoW now for profiling to take effect.|r")
+        print("|cffffcc00  After restart, play for a few minutes, then type:|r /guiprofile")
+        return
+    end
+
+    -- /guiprofile off — Disable profiling and restore Performance Shield
+    if cmd == "off" then
+        local db = ns.GetDB()
+        if db and db.uiimprovements then
+            db.uiimprovements.profilingBypass = false
+        end
+        SetCVar("scriptProfile", 0)
+        print("|cff00ccff[GravityUI Profiler]|r Profiling disabled. Performance Shield restored.")
+        print("|cffffcc00  Restart WoW to fully remove profiling overhead.|r")
+        return
+    end
+
+    -- /guiprofile reset — Reset cumulative CPU counters
+    if cmd == "reset" then
+        if ResetCPUUsage then
+            ResetCPUUsage()
+            print("|cff00ccff[GravityUI Profiler]|r CPU counters reset. Run /guiprofile again after playing.")
+        else
+            print("|cffff6060[GravityUI Profiler]|r ResetCPUUsage not available. Reload UI to reset counters.")
+        end
+        return
+    end
+
+    -- /guiprofile (no args) — Show CPU stats
+    if not GetCVar("scriptProfile") or GetCVar("scriptProfile") == "0" then
+        print("|cffff6060[GravityUI Profiler]|r Profiling is not active!")
+        print("|cffffcc00  Type:|r /guiprofile on")
+        print("|cffffcc00  Then restart WoW completely (not just /reload).|r")
+        return
+    end
+
+    -- Use C_AddOns (modern) or legacy globals
+    local _GetNumAddOns = (C_AddOns and C_AddOns.GetNumAddOns) or GetNumAddOns
+    local _GetAddOnInfo = (C_AddOns and C_AddOns.GetAddOnInfo) or GetAddOnInfo
+    local _IsAddOnLoaded = (C_AddOns and C_AddOns.IsAddOnLoaded) or IsAddOnLoaded
+    local _GetAddOnCPUUsage = GetAddOnCPUUsage
+
+    UpdateAddOnCPUUsage()
+    local data = {}
+    for i = 1, _GetNumAddOns() do
+        local name = _GetAddOnInfo(i)
+        if _IsAddOnLoaded(i) then
+            local cpu = _GetAddOnCPUUsage(i)
+            if cpu and cpu > 0 then
+                data[#data + 1] = { name = name, cpu = cpu }
+            end
+        end
+    end
+
+    table.sort(data, function(a, b) return a.cpu > b.cpu end)
+
+    print("|cff00ccff[GravityUI Profiler]|r Top Addon CPU Usage:")
+    print("|cff888888" .. string.rep("-", 40) .. "|r")
+    local totalCPU = 0
+    for _, entry in ipairs(data) do
+        totalCPU = totalCPU + entry.cpu
+    end
+    local count = math.min(#data, 15)
+    for i = 1, count do
+        local d = data[i]
+        local pct = (totalCPU > 0) and (d.cpu / totalCPU * 100) or 0
+        local seconds = d.cpu / 1000
+        local color = pct > 20 and "|cffff4444" or pct > 10 and "|cffffaa00" or "|cff44ff44"
+        print(format("  %s%-25s|r %8.1fs  (%5.1f%%)", color, d.name, seconds, pct))
+    end
+    if #data > count then
+        print(format("  |cff888888... and %d more addons|r", #data - count))
+    end
+    print("|cff888888" .. string.rep("-", 40) .. "|r")
+    print(format("  |cffffffffTotal: %.1fs across %d addons|r", totalCPU / 1000, #data))
+    print("|cff888888  /guiprofile reset to clear | /guiprofile off to disable|r")
+end
+
+

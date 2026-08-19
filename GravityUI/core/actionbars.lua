@@ -110,6 +110,7 @@ local function RequestUsabilityUpdate()
 end
 
 local pendingRefresh = false
+local combatDeferredRefresh = false
 local function RequestRefresh()
     if pendingRefresh then return end
     pendingRefresh = true
@@ -126,6 +127,16 @@ local function RequestRefresh()
                         UpdateEmptySlotVisibility(btn, g)
                     end
                 end
+            end
+            -- Queue a full refresh for when combat ends (e.g. vehicle/override bar exit)
+            if not combatDeferredRefresh then
+                combatDeferredRefresh = true
+                ns.QueueOOCAction(function()
+                    combatDeferredRefresh = false
+                    if ns.RefreshActionBars then
+                        ns.RefreshActionBars()
+                    end
+                end)
             end
         else
             if ns.RefreshActionBars then
