@@ -13,6 +13,7 @@ local _hookedPOIs = setmetatable({}, { __mode = "k" })
 local _headerClickOverlays = setmetatable({}, { __mode = "k" })
 local _blockTitleFSCache = setmetatable({}, { __mode = "k" })
 local _eqtFontRegistry = setmetatable({}, { __mode = "k" })
+local _widgetPoolMixinHooked = {}
 local _masterHeaderCollapseHooked = false
 local _masterHeaderShowHooked = false
 local _autoHideShowHooked = false
@@ -1015,12 +1016,27 @@ local function HookTracker(tracker)
 
     if SharesWidgetPool(tracker) then
         if tracker.Header then SkinHeader(tracker.Header) end
-        if tracker.Update then
-            hooksecurefunc(tracker, "Update", function(self)
-                -- Defer header re-skinning to a clean (untainted) execution
-                -- context.  Running SkinHeader synchronously here poisons
-                -- the entire Update → LayoutContents → ShouldShowMawBuffs
-                -- call chain, causing GetAuraDataByIndex secret-value errors.
+        -- ANTI-TAINT: Never hooksecurefunc(instance, "Update", ...) on
+        -- mixin-based tracker instances.  The hooked wrapper is rawset
+        -- onto the instance table for a method that was previously
+        -- inherited via metatable; Blizzard's subsequent call to
+        -- module:Update() resolves the tainted instance-level entry,
+        -- poisoning the entire LayoutContents → ShouldShowMawBuffs →
+        -- GetAuraDataByIndex call chain.
+        --
+        -- Instead, hook LayoutContents on the MIXIN table (where the
+        -- function is defined directly).  hooksecurefunc modifies the
+        -- existing entry in-place rather than creating a new one,
+        -- preserving the secure lookup path.
+        local mixin
+        if tracker == _G.ScenarioObjectiveTracker and _G.ScenarioObjectiveTrackerMixin then
+            mixin = _G.ScenarioObjectiveTrackerMixin
+        elseif tracker == _G.UIWidgetObjectiveTracker and _G.UIWidgetObjectiveTrackerMixin then
+            mixin = _G.UIWidgetObjectiveTrackerMixin
+        end
+        if mixin and mixin.LayoutContents and not _widgetPoolMixinHooked[mixin] then
+            _widgetPoolMixinHooked[mixin] = true
+            hooksecurefunc(mixin, "LayoutContents", function(self)
                 if self.Header then
                     local h = self.Header
                     C_Timer.After(0, function() SkinHeader(h) end)
