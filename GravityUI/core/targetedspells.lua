@@ -1137,8 +1137,6 @@ local function OnDriverEvent(self, event, unit, ...)
         ProcessCast(unit, true)
     elseif event == "NAME_PLATE_UNIT_REMOVED" and unit then
         StopCast(unit)
-    elseif event == "UNIT_TARGET" and unit then
-        ProcessCast(unit, false)
     elseif event == "PLAYER_REGEN_ENABLED" then
         if not testModeActive then
             for _, c in ipairs(activeList) do ReleaseCast(c) end
@@ -1157,7 +1155,8 @@ local function RegisterEvents()
 
     driverFrame:RegisterEvent("NAME_PLATE_UNIT_ADDED")
     driverFrame:RegisterEvent("NAME_PLATE_UNIT_REMOVED")
-    driverFrame:RegisterEvent("UNIT_TARGET")
+    -- NOTE: UNIT_TARGET is handled by the per-unit shards (RegisterUnitEvent),
+    -- not here, to avoid double-firing ProcessCast.
     driverFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
 
     for i = 1, 8, 2 do
