@@ -1257,8 +1257,9 @@ local function InterruptFrame_OnEvent(_, event, unit, ...)
         end
 
     elseif event == "UNIT_AURA" then
-        -- PERF: sub(1,9) avoids pattern-engine overhead for every UNIT_AURA dispatch.
-        if unit and unit:sub(1, 9) == "nameplate" then PushSignal("aura", unit) end
+        -- PERF: byte(1)==110 ('n') avoids string.sub allocation for every UNIT_AURA dispatch.
+        -- No other unit token starts with 'n', so this is safe for nameplate filtering.
+        if unit and unit:byte(1) == 110 then PushSignal("aura", unit) end
     end
 end
 

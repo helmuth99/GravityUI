@@ -1,5 +1,5 @@
 -------------------------------------------------------------------------------
---- GravityUI Module Profiler
+--- GravityUI Module Profiler (v2 — Aug 2026 Rewrite)
 ---
 --- Lightweight per-module CPU profiling using debugprofilestop().
 --- Does NOT require scriptProfile CVar, causes NO taint.
@@ -9,11 +9,15 @@
 ---     /guiprofile stop        - Stop module profiling
 ---     /guiprofile             - Show results (auto-detects mode)
 ---
---- How it works:
----   When active, wraps the central ns.Tick dispatcher to measure each
----   subscriber's execution time. Also hooks standalone OnUpdate frames
----   from known high-frequency modules (ActionBars, Skyriding, Crosshair).
----   Uses debugprofilestop() which is always available and taint-free.
+--- Architecture (v2):
+---   1. TICK SUBSCRIBERS: Uses ns.Tick.SetProfiler(hook) to intercept the
+---      shared ticker's dispatch loop. This captures ALL subscribers — both
+---      existing and newly registered — without re-registration.
+---   2. STANDALONE OnUpdate: Wraps known high-frequency OnUpdate frames.
+---   3. OnEvent HANDLERS: Wraps OnEvent scripts on discovered GravityUI
+---      frames to count event dispatch frequency and CPU cost.
+---   4. UIParent SCAN: Scans all UIParent children for GravityUI-named
+---      frames and hooks both OnUpdate and OnEvent.
 -------------------------------------------------------------------------------
 
 local ADDON_NAME, ns = ...
@@ -24,15 +28,16 @@ ns.Profiler = Profiler
 -- State
 local isActive = false
 local moduleTimings = {}     -- key -> { calls = N, totalMs = N }
+local eventCounts   = {}     -- key -> { [eventName] = count }
 local profilingStartTime = 0 -- GetTime() when profiling started
+local hookedFrameCount = 0   -- count of hooked frames for report
 
 -- Saved references for unhooking
-local originalTickAdd = nil
-local originalTickDispatcher = nil
 local hookedOnUpdates = {}   -- frame -> originalScript
+local hookedOnEvents  = {}   -- frame -> originalScript
 
 -------------------------------------------------------------------------------
--- Timing helpers
+-- Timing helpers (upvalue-cached for hot path)
 -------------------------------------------------------------------------------
 local debugprofilestop = debugprofilestop
 local debugprofilestart = debugprofilestart
@@ -45,35 +50,30 @@ local function EnsureEntry(key)
 end
 
 -------------------------------------------------------------------------------
--- Hook: Wrap ns.Tick's internal dispatch
--- We replace the shared driver's OnUpdate to inject timing around each subscriber.
+-- Hook: Tick Profiler (v2 — uses SetProfiler API)
+-- Installed directly into the shared ticker's dispatch loop.
+-- Captures ALL subscribers instantly.
 -------------------------------------------------------------------------------
 local function InstallTickerHook()
-    -- Access the shared driver frame (it's the parent of ns.Tick)
-    -- We need to hook into the Tick system by wrapping Add to inject timing
-    local origAdd = ns.Tick.Add
-    originalTickAdd = origAdd
-
-    -- Wrap each subscriber function when it's added
-    ns.Tick.Add = function(key, fn)
-        if not isActive then
-            return origAdd(key, fn)
-        end
-        -- Wrap the function with timing
-        local wrappedFn = function(dt)
-            local entry = EnsureEntry("tick:" .. key)
-            debugprofilestart()
-            fn(dt)
-            local elapsed = debugprofilestop()
-            entry.calls = entry.calls + 1
-            entry.totalMs = entry.totalMs + elapsed
-        end
-        return origAdd(key, wrappedFn)
+    if not ns.Tick or not ns.Tick.SetProfiler then
+        print("|cffff4444[GravityUI Profiler]|r Tick.SetProfiler not available — ticker.lua too old?")
+        return
     end
 
-    -- Re-register all current tick subscribers with wrapped versions
-    -- We can't access internals directly, so we'll hook new registrations
-    -- and catch existing ones via the OnUpdate frame itself
+    ns.Tick.SetProfiler(function(key, fn, elapsed)
+        local entry = EnsureEntry("tick:" .. key)
+        debugprofilestart()
+        fn(elapsed)
+        local ms = debugprofilestop()
+        entry.calls = entry.calls + 1
+        entry.totalMs = entry.totalMs + ms
+    end)
+end
+
+local function RemoveTickerHook()
+    if ns.Tick and ns.Tick.SetProfiler then
+        ns.Tick.SetProfiler(nil)
+    end
 end
 
 -------------------------------------------------------------------------------
@@ -81,10 +81,11 @@ end
 -------------------------------------------------------------------------------
 local function WrapOnUpdate(frame, moduleName)
     if not frame or hookedOnUpdates[frame] then return end
-    local origScript = frame:GetScript("OnUpdate")
-    if not origScript then return end
+    local ok, origScript = pcall(frame.GetScript, frame, "OnUpdate")
+    if not ok or not origScript then return end
 
     hookedOnUpdates[frame] = origScript
+    hookedFrameCount = hookedFrameCount + 1
     frame:SetScript("OnUpdate", function(self, elapsed)
         local entry = EnsureEntry(moduleName)
         debugprofilestart()
@@ -105,23 +106,28 @@ local function UnwrapAllOnUpdates()
 end
 
 -------------------------------------------------------------------------------
--- Hook: Wrap OnEvent handlers for event-heavy modules
+-- Hook: Wrap OnEvent handlers with CPU timing + event counting
 -------------------------------------------------------------------------------
-local hookedOnEvents = {} -- frame -> originalScript
-
 local function WrapOnEvent(frame, moduleName)
     if not frame or hookedOnEvents[frame] then return end
-    local origScript = frame:GetScript("OnEvent")
-    if not origScript then return end
+    local ok, origScript = pcall(frame.GetScript, frame, "OnEvent")
+    if not ok or not origScript then return end
 
     hookedOnEvents[frame] = origScript
+    hookedFrameCount = hookedFrameCount + 1
     frame:SetScript("OnEvent", function(self, event, ...)
-        local entry = EnsureEntry(moduleName)
+        -- CPU timing
+        local entry = EnsureEntry("event:" .. moduleName)
         debugprofilestart()
         origScript(self, event, ...)
         local ms = debugprofilestop()
         entry.calls = entry.calls + 1
         entry.totalMs = entry.totalMs + ms
+
+        -- Event frequency counter
+        if not eventCounts[moduleName] then eventCounts[moduleName] = {} end
+        local ec = eventCounts[moduleName]
+        ec[event] = (ec[event] or 0) + 1
     end)
 end
 
@@ -135,27 +141,31 @@ local function UnwrapAllOnEvents()
 end
 
 -------------------------------------------------------------------------------
--- Discovery: Find GravityUI frames to hook
+-- Discovery: Find GravityUI frames to hook (v2 — much more aggressive)
 -------------------------------------------------------------------------------
 local function DiscoverAndHookFrames()
-    -- Hook known high-frequency standalone OnUpdate frames
+    hookedFrameCount = 0
+
+    -- 1. Hook known global frame names (OnUpdate targets)
     local targets = {
-        -- ActionBars fader (20Hz)
         { globalName = "GravityUIActionBarFader",       module = "ActionBars (Fader)" },
-        -- Skyriding HUD (20Hz/2Hz)
         { globalName = "GravityUISkyridingFrame",       module = "Skyriding HUD" },
         { globalName = "GravityUI_SkyridingFrame",      module = "Skyriding HUD" },
+        { globalName = "GravityUI_CombatTimer",         module = "CombatTimer" },
+        { globalName = "GravityUI_CursorIndicator",     module = "Cursor Indicator" },
+        { globalName = "GravityUI_CrosshairFrame",      module = "Crosshair" },
+        { globalName = "GravityUI_ChatHider",           module = "Chat Hider" },
     }
 
-    -- Try to find frames by global name
     for _, t in ipairs(targets) do
         local frame = _G[t.globalName]
         if frame then
             WrapOnUpdate(frame, t.module)
+            WrapOnEvent(frame, t.module)
         end
     end
 
-    -- Hook into ns module frames if they have OnUpdate/OnEvent
+    -- 2. Hook ns module tables (check .frame, .updateFrame, .eventFrame patterns)
     local moduleFrames = {
         { ref = ns.ScreenIndicators,    name = "ScreenIndicators" },
         { ref = ns.ActionBars,          name = "ActionBars" },
@@ -170,37 +180,61 @@ local function DiscoverAndHookFrames()
         { ref = ns.Character,           name = "Character" },
         { ref = ns.Inspect,             name = "Inspect" },
         { ref = ns.Consumables,         name = "Consumables" },
+        { ref = ns.HealerMana,          name = "HealerMana" },
+        { ref = ns.Automation,          name = "Automation" },
+        { ref = ns.DeathAnnouncer,      name = "DeathAnnouncer" },
+        { ref = ns.Mail,                name = "Mail" },
+        { ref = ns.BuffBorders,         name = "BuffBorders" },
+        { ref = ns.StanceText,          name = "StanceText" },
+        { ref = ns.BattleRes,           name = "BattleRes/Bloodlust" },
+        { ref = ns.CooldownText,        name = "CooldownText" },
+        { ref = ns.DataTexts,           name = "DataTexts" },
     }
 
+    -- Sub-frame key patterns to check on each module table
+    local subKeys = { "frame", "updateFrame", "eventFrame", "_frame", "mainFrame" }
+
     for _, m in ipairs(moduleFrames) do
-        if m.ref then
+        if m.ref and type(m.ref) == "table" then
             -- Check if the module itself is a frame
-            if type(m.ref) == "table" and m.ref.GetScript then
+            local isFrame = pcall(function() return m.ref.GetScript end) and m.ref.GetScript
+            if isFrame then
                 WrapOnUpdate(m.ref, m.name)
                 WrapOnEvent(m.ref, m.name)
             end
             -- Check common sub-frame patterns
-            if m.ref.frame and type(m.ref.frame) == "table" and m.ref.frame.GetScript then
-                WrapOnUpdate(m.ref.frame, m.name)
-                WrapOnEvent(m.ref.frame, m.name)
-            end
-            if m.ref.updateFrame and type(m.ref.updateFrame) == "table" and m.ref.updateFrame.GetScript then
-                WrapOnUpdate(m.ref.updateFrame, m.name .. " (update)")
-                WrapOnEvent(m.ref.updateFrame, m.name .. " (update)")
+            for _, subKey in ipairs(subKeys) do
+                local sub = m.ref[subKey]
+                if sub and type(sub) == "table" then
+                    local subIsFrame = pcall(function() return sub.GetScript end) and sub.GetScript
+                    if subIsFrame then
+                        WrapOnUpdate(sub, m.name .. " (" .. subKey .. ")")
+                        WrapOnEvent(sub, m.name .. " (" .. subKey .. ")")
+                    end
+                end
             end
         end
     end
 
-    -- Scan all children of UIParent for GravityUI-named frames
+    -- 3. Aggressive UIParent child scan: hook ALL GravityUI-named frames
     -- pcall required: some Blizzard frames are forbidden/secure
-    for i = 1, (UIParent and UIParent.GetNumChildren and UIParent:GetNumChildren() or 0) do
-        local ok, child = pcall(select, i, UIParent:GetChildren())
-        if ok and child then
-            local nameOk, name = pcall(child.GetName, child)
-            if nameOk and name and (name:find("GravityUI") or name:find("Gravity_")) then
-                local scriptOk, script = pcall(child.GetScript, child, "OnUpdate")
-                if scriptOk and script then
-                    WrapOnUpdate(child, "frame:" .. name)
+    local numChildren = UIParent and UIParent.GetNumChildren and UIParent:GetNumChildren() or 0
+    if numChildren > 0 then
+        local ok, children = pcall(function() return { UIParent:GetChildren() } end)
+        if ok and children then
+            for _, child in ipairs(children) do
+                local nameOk, name = pcall(child.GetName, child)
+                if nameOk and name and (name:find("GravityUI") or name:find("Gravity_")) then
+                    -- Try OnUpdate
+                    local scriptOk, script = pcall(child.GetScript, child, "OnUpdate")
+                    if scriptOk and script then
+                        WrapOnUpdate(child, "frame:" .. name)
+                    end
+                    -- Try OnEvent
+                    local eventOk, eventScript = pcall(child.GetScript, child, "OnEvent")
+                    if eventOk and eventScript then
+                        WrapOnEvent(child, "frame:" .. name)
+                    end
                 end
             end
         end
@@ -218,13 +252,23 @@ function Profiler.Start()
 
     isActive = true
     wipe(moduleTimings)
+    wipe(eventCounts)
     profilingStartTime = GetTime()
 
     -- Install hooks
     InstallTickerHook()
     DiscoverAndHookFrames()
 
-    print("|cff00ccff[GravityUI Profiler]|r Module profiling started!")
+    -- Report what we found
+    local tickCount = ns.Tick and ns.Tick.Count and ns.Tick.Count() or 0
+    local tickKeys = ns.Tick and ns.Tick.ListKeys and ns.Tick.ListKeys() or {}
+
+    print("|cff00ccff[GravityUI Profiler]|r Module profiling started! (v2)")
+    print(format("  |cff888888Tick subscribers: %d  |  Hooked frames: %d|r", tickCount, hookedFrameCount))
+    if tickCount > 0 then
+        local keyStr = table.concat(tickKeys, ", ")
+        print(format("  |cff888888Tick keys: %s|r", keyStr))
+    end
     print("|cffffcc00  Play for 1-2 minutes, then type:|r /guiprofile")
     print("|cffffcc00  To stop:|r /guiprofile stop")
 end
@@ -238,10 +282,7 @@ function Profiler.Stop()
     isActive = false
 
     -- Restore hooks
-    if originalTickAdd then
-        ns.Tick.Add = originalTickAdd
-        originalTickAdd = nil
-    end
+    RemoveTickerHook()
     UnwrapAllOnUpdates()
     UnwrapAllOnEvents()
 
@@ -270,28 +311,63 @@ function Profiler.Report()
 
     table.sort(sorted, function(a, b) return a.totalMs > b.totalMs end)
 
+    -- --- Header ---
     print("|cff00ccff[GravityUI Profiler]|r Module CPU Report (" .. format("%.0fs elapsed", elapsed) .. "):")
-    print("|cff888888" .. string.rep("-", 55) .. "|r")
+    print("|cff888888" .. string.rep("-", 60) .. "|r")
 
     local totalMs = 0
     for _, entry in ipairs(sorted) do
         totalMs = totalMs + entry.totalMs
     end
 
-    local count = math.min(#sorted, 20)
+    -- --- Module Entries ---
+    local count = math.min(#sorted, 25)
     for i = 1, count do
         local d = sorted[i]
         local pct = totalMs > 0 and (d.totalMs / totalMs * 100) or 0
         local color = pct > 25 and "|cffff4444" or pct > 10 and "|cffffaa00" or "|cff44ff44"
-        print(format("  %s%-28s|r %7.1fms  %6.1fms/s  %5.1f%%  (%dk calls)",
+        print(format("  %s%-30s|r %7.1fms  %6.2fms/s  %5.1f%%  (%dk calls)",
             color, d.name, d.totalMs, d.msPerSec, pct, d.calls / 1000))
     end
 
     if #sorted > count then
         print(format("  |cff888888... and %d more|r", #sorted - count))
     end
-    print("|cff888888" .. string.rep("-", 55) .. "|r")
-    print(format("  |cffffffffTotal: %.1fms (%.1fms/s) across %d modules|r",
+
+    -- --- Summary ---
+    print("|cff888888" .. string.rep("-", 60) .. "|r")
+    print(format("  |cffffffffTotal: %.1fms (%.2fms/s) across %d tracked modules|r",
         totalMs, totalMs / elapsed, #sorted))
+
+    -- --- Event Frequency ---
+    local hasEvents = false
+    for _ in pairs(eventCounts) do hasEvents = true; break end
+    if hasEvents then
+        print("")
+        print("|cff00ccff[GravityUI Profiler]|r Event Dispatch Frequency:")
+        print("|cff888888" .. string.rep("-", 60) .. "|r")
+        for modName, events in pairs(eventCounts) do
+            -- Sort events by count
+            local evSorted = {}
+            local evTotal = 0
+            for evName, evCount in pairs(events) do
+                evSorted[#evSorted + 1] = { name = evName, count = evCount }
+                evTotal = evTotal + evCount
+            end
+            table.sort(evSorted, function(a, b) return a.count > b.count end)
+
+            local evPerSec = evTotal / elapsed
+            local evColor = evPerSec > 50 and "|cffff4444" or evPerSec > 10 and "|cffffaa00" or "|cff44ff44"
+            print(format("  %s%-25s|r %5d events (%.1f/s)", evColor, modName, evTotal, evPerSec))
+
+            -- Top 3 events
+            local topCount = math.min(#evSorted, 3)
+            for j = 1, topCount do
+                local e = evSorted[j]
+                print(format("    |cff888888%-30s %5d (%.1f/s)|r", e.name, e.count, e.count / elapsed))
+            end
+        end
+    end
+
     print("|cff888888  /guiprofile stop to finish|r")
 end

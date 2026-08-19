@@ -1,4 +1,4 @@
-﻿-------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 --- GravityUI Shared Ticker
 ---
 --- Self-disarming OnUpdate driver: the driver frame only runs while at least
@@ -40,16 +40,24 @@ local function NewDriver(frame)
     local regFn = {}  -- parallel function array
     local index = {}  -- key -> position
     local count = 0
+    local profilerHook = nil  -- function(key, fn, elapsed) or nil
 
     local drv = {}
 
     frame:Hide()
     frame:SetScript("OnUpdate", function(self, elapsed)
+        local hook = profilerHook  -- upvalue snapshot for this frame
         local i = 1
         while i <= count do
             local key = reg[i]
             local fn  = regFn[i]
-            if fn then fn(elapsed) end
+            if fn then
+                if hook then
+                    hook(key, fn, elapsed)
+                else
+                    fn(elapsed)
+                end
+            end
             if reg[i] == key then
                 i = i + 1
             end
@@ -93,6 +101,22 @@ local function NewDriver(frame)
 
     function drv.Count()
         return count
+    end
+
+    --- Set a profiler hook function. When set, the dispatch loop calls
+    --- hook(key, fn, elapsed) instead of fn(elapsed) for each subscriber.
+    --- Pass nil to remove the hook.
+    function drv.SetProfiler(hook)
+        profilerHook = hook
+    end
+
+    --- Return a list of all currently registered subscriber keys.
+    function drv.ListKeys()
+        local keys = {}
+        for i = 1, count do
+            keys[i] = reg[i]
+        end
+        return keys
     end
 
     return drv
@@ -144,7 +168,9 @@ end
 local _sharedFrame = CreateFrame("Frame")
 local _shared = NewDriver(_sharedFrame)
 
-Tick.Add    = _shared.Add
-Tick.Remove = _shared.Remove
-Tick.Has    = _shared.Has
-Tick.Count  = _shared.Count
+Tick.Add         = _shared.Add
+Tick.Remove      = _shared.Remove
+Tick.Has         = _shared.Has
+Tick.Count       = _shared.Count
+Tick.SetProfiler = _shared.SetProfiler
+Tick.ListKeys    = _shared.ListKeys

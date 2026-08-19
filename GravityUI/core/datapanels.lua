@@ -7,6 +7,7 @@ ns.Datapanels = {}
 local DP = ns.Datapanels
 
 local panels = {} -- Active panel frames
+local _datapanelsTicker = nil
 
 -- =---------------------------------------------------------------------------
 -- HELPER: Create Panel Frame
@@ -322,12 +323,12 @@ function DP:Init()
     end
 
     if ns.Tick.Has("datapanels_update") then ns.Tick.Remove("datapanels_update") end
+    if _datapanelsTicker then _datapanelsTicker.Stop() end
+
+    -- PERF: NewAnimTicker runs the interval in the WoW Animation engine (C-side).
+    -- Previously used Tick.Add which called every frame (~100/s) with manual throttle.
     local tickCount = 0
-    local _elapsed  = 0
-    ns.Tick.Add("datapanels_update", function(dt)
-        _elapsed = _elapsed + dt
-        if _elapsed < 1.0 then return end
-        _elapsed = 0
+    _datapanelsTicker = ns.Tick.NewAnimTicker(function()
         tickCount = tickCount + 1
         local checkPassive = (tickCount % 5 == 0)
         
@@ -340,7 +341,9 @@ function DP:Init()
             end
         end
         if checkPassive then tickCount = 0 end
-    end)
+        return true  -- keep ticking
+    end, 1.0)
+    _datapanelsTicker.Start()
 end
 
 -- Export to ns for initialization

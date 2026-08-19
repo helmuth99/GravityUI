@@ -160,6 +160,10 @@ local function UpdateTimerDisplay()
     end
 end
 
+-- PERF: File-scope AnimTicker — runs in the WoW Animation engine (C-side).
+-- Previously used Tick.Add which called every frame (~100/s) with manual throttle.
+local _combatTicker = nil
+
 local function StartTimer()
     local settings = GetSettings()
     if not settings or not settings.enabled then return end
@@ -173,18 +177,19 @@ local function StartTimer()
     frame.text:SetText("00:00")
     frame:Show()
 
-    -- Self-disarming ticker: only runs during combat, zero CPU otherwise
-    ns.Tick.Remove("combattimer_update")
-    local _elapsed = 0
-    ns.Tick.Add("combattimer_update", function(dt)
-        _elapsed = _elapsed + dt
-        if _elapsed >= 1.0 then _elapsed = 0; UpdateTimerDisplay() end
-    end)
+    -- Start the 1Hz ticker (C-side throttle, zero Lua between ticks)
+    if not _combatTicker then
+        _combatTicker = ns.Tick.NewAnimTicker(function()
+            UpdateTimerDisplay()
+            return true
+        end, 1.0)
+    end
+    _combatTicker.Start()
 end
 
 local function StopTimer()
     CombatTimerState.isInCombat = false
-    ns.Tick.Remove("combattimer_update")
+    if _combatTicker then _combatTicker.Stop() end
     if CombatTimerState.timerFrame then
         CombatTimerState.timerFrame:Hide()
     end
@@ -240,7 +245,7 @@ function CombatTimer.TogglePreview(show, isForceEditMode)
     local frame = CombatTimerState.timerFrame or CreateTimerFrame()
     
     if show then
-        ns.Tick.Remove("combattimer_update")
+        if _combatTicker then _combatTicker.Stop() end
         frame:EnableMouse(true)
         UpdateAppearance()
         frame.text:SetText("01:23")
@@ -265,9 +270,8 @@ function CombatTimer.TogglePreview(show, isForceEditMode)
             local settings = GetSettings()
             if settings and settings.enabled then
                 UpdateAppearance()
-                if not ns.Tick.Has("combattimer_update") then
-                    local _e = 0
-                    ns.Tick.Add("combattimer_update", function(dt) _e=_e+dt; if _e>=1.0 then _e=0; UpdateTimerDisplay() end end)
+                if _combatTicker and not _combatTicker.IsPlaying() then
+                    _combatTicker.Start()
                 end
             else
                 StopTimer()

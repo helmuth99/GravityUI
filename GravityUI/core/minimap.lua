@@ -1153,20 +1153,22 @@ local function MasterUpdate()
     UpdateDatatexts()
 end
 
+local _minimapTicker = nil
+
 local function StartTickers()
-    -- Self-disarming ticker. The elapsed accumulator lives inside the closure
-    -- so dt is always correctly received from the shared driver.
-    local _elapsed = 0
-    ns.Tick.Add("minimap_master", function(dt)
-        _elapsed = _elapsed + dt
-        if _elapsed < 1.0 then return end
-        _elapsed = 0
+    -- PERF: NewAnimTicker runs the interval in the WoW Animation engine (C-side).
+    -- Previously used Tick.Add which called the function every frame (~100/s) just to
+    -- check an elapsed accumulator. NewAnimTicker = zero Lua calls between ticks.
+    if _minimapTicker then _minimapTicker.Start(); return end
+    _minimapTicker = ns.Tick.NewAnimTicker(function()
         MasterUpdate()
-    end)
+        return true  -- keep ticking
+    end, 1.0)
+    _minimapTicker.Start()
 end
 
 local function StopTickers()
-    ns.Tick.Remove("minimap_master")
+    if _minimapTicker then _minimapTicker.Stop() end
 end
 
 -- ═══════════════════════════════════════════════════════════════

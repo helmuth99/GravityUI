@@ -1495,12 +1495,16 @@ eventFrame:SetScript("OnEvent", function(self, event, arg1)
         inChallengeMode = false  -- Key over: restore normal consumable detection
         RequestUpdate(event)
     elseif event == "UNIT_AURA" or event == "UNIT_INVENTORY_CHANGED" then
-        -- PERF: Guard before string.find – avoids pattern matching for every UNIT_AURA dispatch
-        -- in a 40-man raid when an update is already pending (most common case).
+        -- PERF: Guard before any string work – avoids ALL overhead for every UNIT_AURA
+        -- dispatch in a 40-man raid when an update is already pending (most common case).
         if pendingUpdate then return end
-        -- Simple filter: only care about player/party/raid
-        if arg1 and (arg1 == "player" or arg1:sub(1, 5) == "party" or arg1:sub(1, 4) == "raid") then
-            RequestUpdate(event)
+        -- PERF: Use string.byte instead of string.sub to avoid temporary string allocation.
+        -- 112='p' (player/party/pet), 114='r' (raid). This is the hottest path in raids.
+        if arg1 then
+            local b = arg1:byte(1)
+            if b == 112 or b == 114 then  -- 'p'layer/'p'arty or 'r'aid
+                RequestUpdate(event)
+            end
         end
     elseif event == "READY_CHECK" then
         inReadyCheck = true
