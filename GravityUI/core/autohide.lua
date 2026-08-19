@@ -2,6 +2,7 @@
 local ADDON_NAME, ns = ...
 local ApplyHideSettings -- Forward declaration
 local lastHideForMinigame = nil -- specific state tracker for minigame logic
+local _otfShowHooked = false -- anti-taint: keep flag off the Blizzard frame
 
 local function GetSettings()
     local db = ns.GetDB()
@@ -124,8 +125,8 @@ local function ApplyHideSettings()
             -- ObjectiveTrackerFrame:EnableMouse(false)  -- Prevent hidden frame from blocking clicks? Usually standard hide does this.
             
             -- Hook Show() to prevent Blizzard from showing it again (quest updates, boss fights, etc.)
-            if not ObjectiveTrackerFrame._gui_ShowHooked then
-                ObjectiveTrackerFrame._gui_ShowHooked = true
+            if not _otfShowHooked then
+                _otfShowHooked = true
                 hooksecurefunc(ObjectiveTrackerFrame, "Show", function(self)
                     if EditModeManagerFrame and EditModeManagerFrame:IsShown() then return end
                     local s = GetSettings()

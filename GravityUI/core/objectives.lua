@@ -1017,7 +1017,14 @@ local function HookTracker(tracker)
         if tracker.Header then SkinHeader(tracker.Header) end
         if tracker.Update then
             hooksecurefunc(tracker, "Update", function(self)
-                if self.Header then SkinHeader(self.Header) end
+                -- Defer header re-skinning to a clean (untainted) execution
+                -- context.  Running SkinHeader synchronously here poisons
+                -- the entire Update → LayoutContents → ShouldShowMawBuffs
+                -- call chain, causing GetAuraDataByIndex secret-value errors.
+                if self.Header then
+                    local h = self.Header
+                    C_Timer.After(0, function() SkinHeader(h) end)
+                end
             end)
         end
         return
@@ -1380,17 +1387,26 @@ function Objectives:OnInitialize()
 
     if ObjectiveTrackerManager and ObjectiveTrackerManager.Update then
         hooksecurefunc(ObjectiveTrackerManager, "Update", function()
-            self:CheckAutoHide()
+            -- Defer to a clean execution context so that Show()/Hide()
+            -- inside CheckAutoHide never trigger a re-entrant tracker
+            -- update in a tainted call chain.
+            C_Timer.After(0, function() Objectives:CheckAutoHide() end)
         end)
     end
 
     if ObjectiveTrackerFrame and not _autoHideShowHooked then
         _autoHideShowHooked = true
         hooksecurefunc(ObjectiveTrackerFrame, "Show", function()
-            if Objectives.isApplyingAutoHide then return end
-            Objectives.isApplyingAutoHide = true
-            Objectives:CheckAutoHide()
-            Objectives.isApplyingAutoHide = false
+            -- Defer to break taint propagation: calling CheckAutoHide
+            -- synchronously inside Show's post-hook can re-Hide the
+            -- frame while Blizzard is still laying out, tainting the
+            -- subsequent LayoutContents → GetAuraDataByIndex chain.
+            C_Timer.After(0, function()
+                if Objectives.isApplyingAutoHide then return end
+                Objectives.isApplyingAutoHide = true
+                Objectives:CheckAutoHide()
+                Objectives.isApplyingAutoHide = false
+            end)
         end)
     end
 end
