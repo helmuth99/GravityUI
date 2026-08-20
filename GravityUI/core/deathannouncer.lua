@@ -531,10 +531,15 @@ eventFrame:SetScript("OnEvent", function(self, event, unit, ...)
     end
 
     if event == "UNIT_FLAGS" or event == "UNIT_HEALTH" then
-        if unit then
-            if unit == "player" or unit:find("^party%d+$") or unit:find("^raid%d+$") then
-                ProcessUnit(unit)
-            end
+        if not unit then return end
+        -- PERF: byte(1) check avoids string.find pattern allocation.
+        -- player='p'(112), party='p'(112), raid='r'(114)
+        -- Nameplates='n', target='t', boss='b', etc. are all filtered out.
+        local b = unit:byte(1)
+        if b == 112 then -- 'p' = player or partyN
+            ProcessUnit(unit)
+        elseif b == 114 then -- 'r' = raidN
+            ProcessUnit(unit)
         end
         return
     end

@@ -616,22 +616,19 @@ function Module:Init()
     end
 
     -- Periodic Scan (to catch dynamically created bars)
-    -- PERF: NewAnimTicker runs the interval in the WoW Animation engine (C-side).
-    -- Previously used Tick.Add which called every frame (~100/s) with manual throttle.
-    do
-        local ticker = ns.Tick.NewAnimTicker(function()
-            ApplyClickThrough()
-            local anyVisible = false
-            for bar in pairs(Module.knownBars) do
-                if bar:IsVisible() then anyVisible = true; break end
-            end
-            if not anyVisible and next(Module.knownBars) ~= nil then return true end
-            Module:ScanForBars()
-            Module:UpdateLayout()
-            return true  -- keep ticking
-        end, 2.0)
-        ticker.Start()
-    end
+    -- PERF: Tick.Add with interval parameter — the driver accumulates elapsed
+    -- time internally and only calls the function once per 2 seconds.
+    -- Zero unnecessary Lua calls, safe OnUpdate context (no taint).
+    ns.Tick.Add("trackedbuffbar_scan", function()
+        ApplyClickThrough()
+        local anyVisible = false
+        for bar in pairs(Module.knownBars) do
+            if bar:IsVisible() then anyVisible = true; break end
+        end
+        if not anyVisible and next(Module.knownBars) ~= nil then return end
+        Module:ScanForBars()
+        Module:UpdateLayout()
+    end, 2.0)
     
     ApplyClickThrough()
     Module:Refresh()

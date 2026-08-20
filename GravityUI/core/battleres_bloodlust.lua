@@ -121,7 +121,9 @@ local function CheckVisibility(visMode)
     local wantRaid  = (visMode == "MPLUS_AND_RAID" or visMode == "RAID")
 
     if wantMPlus and _state.inChallenge then return true end
-    if wantRaid and _state.inEncounter and _state.encounterIsRaid then return true end
+    -- Show in raids whenever inside the raid instance (not just during boss encounters).
+    -- Players need to see remaining charges between pulls.
+    if wantRaid and instanceType == "raid" then return true end
 
     return false
 end

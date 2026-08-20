@@ -1447,6 +1447,12 @@ end
 -- EVENT DRIVER (Replaces Ticker)
 -- ============================================================================
 local pendingUpdate = false
+-- PERF: Pre-allocated callback avoids closure allocation on every RequestUpdate call.
+local function FlushPendingUpdate()
+    pendingUpdate = false
+    UpdateDisplay()
+end
+
 local function RequestUpdate(event)
     if pendingUpdate then return end
     
@@ -1458,10 +1464,7 @@ local function RequestUpdate(event)
     end
     
     pendingUpdate = true
-    C_Timer.After(delay, function()
-        pendingUpdate = false
-        UpdateDisplay()
-    end)
+    C_Timer.After(delay, FlushPendingUpdate)
 end
 
 local eventFrame = CreateFrame("Frame")

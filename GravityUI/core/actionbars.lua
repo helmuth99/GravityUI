@@ -95,18 +95,19 @@ end
 
 -- Forward declarations
 local UpdateButtonText, UpdateEmptySlotVisibility
-
 -- Debounced Update Helpers
+-- PERF: Pre-allocated callbacks avoid closure allocation on every event dispatch.
 local pendingUsabilityUpdate = false
+local function FlushUsabilityUpdate()
+    if ns.ActionBars and ns.ActionBars.UpdateAllUsability then
+        ns.ActionBars.UpdateAllUsability()
+    end
+    pendingUsabilityUpdate = false
+end
 local function RequestUsabilityUpdate()
     if pendingUsabilityUpdate then return end
     pendingUsabilityUpdate = true
-    C_Timer.After(0.1, function()
-        if ns.ActionBars and ns.ActionBars.UpdateAllUsability then
-            ns.ActionBars.UpdateAllUsability()
-        end
-        pendingUsabilityUpdate = false
-    end)
+    C_Timer.After(0.1, FlushUsabilityUpdate)
 end
 
 local pendingRefresh = false
@@ -1252,7 +1253,9 @@ initFrame:RegisterEvent("ACTIONBAR_UPDATE_USABLE")
 -- Note: ACTIONBAR_UPDATE_COOLDOWN removed - fires too frequently (every CD tick)
 -- Cooldown display is handled by Blizzard natively; we only need usability state
 initFrame:RegisterEvent("SPELL_UPDATE_USABLE")
-initFrame:RegisterEvent("UNIT_POWER_UPDATE")
+-- PERF: RegisterUnitEvent filters at engine level — only fires for "player".
+-- Action bar usability only depends on the player's own power (mana/rage/energy).
+initFrame:RegisterUnitEvent("UNIT_POWER_UPDATE", "player")
 -- Note: PLAYER_TARGET_CHANGED removed - does not affect spell usability,
 -- only range checks (handled by screenindicators.lua crosshair)
 initFrame:RegisterEvent("ACTIONBAR_SLOT_CHANGED")

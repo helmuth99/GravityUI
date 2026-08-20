@@ -742,11 +742,11 @@ local function CatchExistingButtons()
         LayoutGrid()
     end
     
-    -- Delayed Ticker to overcome AddonSkins/Masque overwrites — self-stops after 10 attempts
-    -- PERF: NewAnimTicker runs the interval in the WoW Animation engine (C-side).
-    -- Previously used Tick.Add which called every frame (~100/s) with manual throttle.
+    -- Delayed Ticker to overcome AddonSkins/Masque overwrites — self-removes after 10 attempts
+    -- PERF: Tick.Add with interval parameter — the driver only calls
+    -- the function once per second. Zero unnecessary Lua calls.
     local attempts = 0
-    local ticker = ns.Tick.NewAnimTicker(function()
+    ns.Tick.Add("iconcatcher_scan", function()
         attempts = attempts + 1
         
         local tickCatch = false
@@ -779,10 +779,11 @@ local function CatchExistingButtons()
             LayoutGrid()
         end
         
-        -- Self-stop after 10 loops (return false = stop ticking)
-        return attempts < 10
+        -- Self-disarm after 10 loops
+        if attempts >= 10 then
+            ns.Tick.Remove("iconcatcher_scan")
+        end
     end, 1.0)
-    ticker.Start()
 end
 -- ---------------------------------------------------------------------------
 -- TOGGLE & DRAG LOGIC

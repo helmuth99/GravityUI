@@ -36,10 +36,12 @@ ns.Tick = Tick
 local function NewDriver(frame)
     if not frame then frame = CreateFrame("Frame") end
 
-    local reg   = {}  -- dense key array
-    local regFn = {}  -- parallel function array
-    local index = {}  -- key -> position
-    local count = 0
+    local reg         = {}  -- dense key array
+    local regFn       = {}  -- parallel function array
+    local regInterval = {}  -- optional per-subscriber interval (nil = every frame)
+    local regElapsed  = {}  -- accumulated elapsed per subscriber
+    local index       = {}  -- key -> position
+    local count       = 0
     local profilerHook = nil  -- function(key, fn, elapsed) or nil
 
     local drv = {}
@@ -51,7 +53,23 @@ local function NewDriver(frame)
         while i <= count do
             local key = reg[i]
             local fn  = regFn[i]
-            if fn then
+
+            -- Per-subscriber interval gating (added Aug 2026)
+            -- When interval is set, accumulate elapsed and skip fn() until
+            -- the interval is reached. Zero unnecessary Lua calls.
+            local shouldCall = true
+            local iv = regInterval[i]
+            if iv then
+                local acc = regElapsed[i] + elapsed
+                if acc < iv then
+                    regElapsed[i] = acc
+                    shouldCall = false
+                else
+                    regElapsed[i] = 0
+                end
+            end
+
+            if fn and shouldCall then
                 if hook then
                     hook(key, fn, elapsed)
                 else
@@ -67,31 +85,43 @@ local function NewDriver(frame)
         end
     end)
 
-    function drv.Add(key, fn)
+    --- Register a subscriber. Optional 3rd arg = interval in seconds.
+    --- When interval is set, the driver only calls fn() once per interval,
+    --- accumulating elapsed time internally. Zero Lua calls between intervals.
+    --- Without interval, fn() is called every frame (original behavior).
+    function drv.Add(key, fn, interval)
         if not key or type(fn) ~= "function" then return end
         local i = index[key]
         if i then
-            regFn[i] = fn
+            regFn[i]       = fn
+            regInterval[i] = interval
+            regElapsed[i]  = 0
             return
         end
-        count          = count + 1
-        reg[count]     = key
-        regFn[count]   = fn
-        index[key]     = count
+        count              = count + 1
+        reg[count]         = key
+        regFn[count]       = fn
+        regInterval[count] = interval
+        regElapsed[count]  = 0
+        index[key]         = count
         if count == 1 then frame:Show() end
     end
 
     function drv.Remove(key)
         local i = index[key]
         if not i then return end
-        local lastKey  = reg[count]
-        reg[i]         = lastKey
-        regFn[i]       = regFn[count]
-        index[lastKey] = i
-        reg[count]     = nil
-        regFn[count]   = nil
-        index[key]     = nil
-        count          = count - 1
+        local lastKey      = reg[count]
+        reg[i]             = lastKey
+        regFn[i]           = regFn[count]
+        regInterval[i]     = regInterval[count]
+        regElapsed[i]      = regElapsed[count]
+        index[lastKey]     = i
+        reg[count]         = nil
+        regFn[count]       = nil
+        regInterval[count] = nil
+        regElapsed[count]  = nil
+        index[key]         = nil
+        count              = count - 1
         if count == 0 then frame:Hide() end
     end
 

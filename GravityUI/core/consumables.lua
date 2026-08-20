@@ -3509,24 +3509,38 @@ function frame:OnCombat()
     self.pendingHide = true
 end
 
+-- PERF: Per-unit debounce for UNIT_AURA during Ready Checks.
+-- Uses a single shared flush function instead of per-unit closures to avoid GC pressure.
+local _auraPending = {}  -- unit -> index
+local _auraFlushPending = false
+
+local function FlushPendingAuras()
+    _auraFlushPending = false
+    if not frame:IsShown() then
+        wipe(_auraPending)
+        return
+    end
+    local now = GetTime()
+    for unit, index in pairs(_auraPending) do
+        local member = memberData[index]
+        if member then
+            local ok, result = pcall(scanMemberAuras, unit, now)
+            if ok and result then member.auras = result end
+            refreshRow(index)
+        end
+    end
+    wipe(_auraPending)
+end
+
 function frame:OnUnitAura(unit)
     local index = unitToIndex[unit]
+    if not index then return end
 
-    if not index then
-        return
+    _auraPending[unit] = index  -- overwrites if already pending (dedup)
+    if not _auraFlushPending then
+        _auraFlushPending = true
+        C_Timer.After(0.3, FlushPendingAuras)
     end
-
-    local member = memberData[index]
-
-    if not member then
-        return
-    end
-
-    -- Outer pcall: catches any residual taint that escapes the inner per-aura pcall
-    -- (e.g. if the entire UNIT_AURA call-stack is tainted in a raid context).
-    local ok, result = pcall(scanMemberAuras, unit, GetTime())
-    if ok and result then member.auras = result end
-    refreshRow(index)
 end
 
 function frame:OnHide()
@@ -3721,7 +3735,8 @@ Module.consumables:SetScript("OnEvent", function(self, event, unit, time_to_hide
 
         self:Show()
         self:Update()
-        self:RegisterEvent("UNIT_AURA")
+        -- PERF: Only player auras matter here — use RegisterUnitEvent to filter at engine level.
+        self:RegisterUnitEvent("UNIT_AURA", "player")
         self:RegisterEvent("UNIT_INVENTORY_CHANGED")
 
         if self.cancelDelay then
@@ -3763,15 +3778,17 @@ Module.consumables:SetScript("OnEvent", function(self, event, unit, time_to_hide
         end
 
     elseif event == "UNIT_AURA" or event == "UNIT_INVENTORY_CHANGED" then
-        if unit == "player" then
-            if self.updateTimer then
-                self.updateTimer:Cancel()
-            end
-            self.updateTimer = C_Timer.NewTimer(0.2, function()
-                self:Update()
-                self.updateTimer = nil
-            end)
+        -- UNIT_AURA: filtered to "player" at engine level via RegisterUnitEvent.
+        -- UNIT_INVENTORY_CHANGED: still global, needs a manual guard.
+        if event == "UNIT_INVENTORY_CHANGED" and unit ~= "player" then return end
+
+        if self.updateTimer then
+            self.updateTimer:Cancel()
         end
+        self.updateTimer = C_Timer.NewTimer(0.2, function()
+            self:Update()
+            self.updateTimer = nil
+        end)
     end
 end)
 

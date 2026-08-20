@@ -160,10 +160,6 @@ local function UpdateTimerDisplay()
     end
 end
 
--- PERF: File-scope AnimTicker — runs in the WoW Animation engine (C-side).
--- Previously used Tick.Add which called every frame (~100/s) with manual throttle.
-local _combatTicker = nil
-
 local function StartTimer()
     local settings = GetSettings()
     if not settings or not settings.enabled then return end
@@ -177,19 +173,15 @@ local function StartTimer()
     frame.text:SetText("00:00")
     frame:Show()
 
-    -- Start the 1Hz ticker (C-side throttle, zero Lua between ticks)
-    if not _combatTicker then
-        _combatTicker = ns.Tick.NewAnimTicker(function()
-            UpdateTimerDisplay()
-            return true
-        end, 1.0)
-    end
-    _combatTicker.Start()
+    -- PERF: Tick.Add with interval parameter — the driver only calls
+    -- UpdateTimerDisplay once per second. Zero unnecessary Lua calls.
+    ns.Tick.Remove("combattimer_update")
+    ns.Tick.Add("combattimer_update", UpdateTimerDisplay, 1.0)
 end
 
 local function StopTimer()
     CombatTimerState.isInCombat = false
-    if _combatTicker then _combatTicker.Stop() end
+    ns.Tick.Remove("combattimer_update")
     if CombatTimerState.timerFrame then
         CombatTimerState.timerFrame:Hide()
     end
@@ -245,7 +237,7 @@ function CombatTimer.TogglePreview(show, isForceEditMode)
     local frame = CombatTimerState.timerFrame or CreateTimerFrame()
     
     if show then
-        if _combatTicker then _combatTicker.Stop() end
+        ns.Tick.Remove("combattimer_update")
         frame:EnableMouse(true)
         UpdateAppearance()
         frame.text:SetText("01:23")
@@ -270,8 +262,8 @@ function CombatTimer.TogglePreview(show, isForceEditMode)
             local settings = GetSettings()
             if settings and settings.enabled then
                 UpdateAppearance()
-                if _combatTicker and not _combatTicker.IsPlaying() then
-                    _combatTicker.Start()
+                if not ns.Tick.Has("combattimer_update") then
+                    ns.Tick.Add("combattimer_update", UpdateTimerDisplay, 1.0)
                 end
             else
                 StopTimer()

@@ -1153,22 +1153,15 @@ local function MasterUpdate()
     UpdateDatatexts()
 end
 
-local _minimapTicker = nil
-
 local function StartTickers()
-    -- PERF: NewAnimTicker runs the interval in the WoW Animation engine (C-side).
-    -- Previously used Tick.Add which called the function every frame (~100/s) just to
-    -- check an elapsed accumulator. NewAnimTicker = zero Lua calls between ticks.
-    if _minimapTicker then _minimapTicker.Start(); return end
-    _minimapTicker = ns.Tick.NewAnimTicker(function()
-        MasterUpdate()
-        return true  -- keep ticking
-    end, 1.0)
-    _minimapTicker.Start()
+    -- PERF: Tick.Add with interval parameter — the driver accumulates elapsed
+    -- time internally and only calls MasterUpdate once per second.
+    -- Zero unnecessary Lua calls, safe OnUpdate context (no taint).
+    ns.Tick.Add("minimap_master", MasterUpdate, 1.0)
 end
 
 local function StopTickers()
-    if _minimapTicker then _minimapTicker.Stop() end
+    ns.Tick.Remove("minimap_master")
 end
 
 -- ═══════════════════════════════════════════════════════════════
