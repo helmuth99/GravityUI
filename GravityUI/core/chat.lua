@@ -493,6 +493,11 @@ local function StyleChatTab(tab)
         
         tab.__guiBackdrop = bd
         
+        -- Modern Design: shrink tab frame to text width so tabs sit flush as a unified strip.
+        -- Blizzard's tab frames are ~30-40px wider than the label text; this eliminates
+        -- the visible gaps between backdrop panels.
+        tab.__guiNeedsResize = true
+        
         -- Hook scripts for dynamic updates
         if not tab.__guiHookedScripts then
             tab.__guiHookedScripts = true
@@ -516,6 +521,18 @@ local function StyleChatTab(tab)
                 -- Re-apply our colors/alpha if something else changes it
                 UpdateTabColors(self)
             end)
+        end
+    end
+    
+    -- Modern Design: resize tab to match text so backdrops sit flush
+    local settings = GetSettings()
+    local modernDesign = settings and settings.tabs and settings.tabs.modernDesign
+    if modernDesign and tab.__guiNeedsResize then
+        local labelText = tab.__guiMyText or _G[tab:GetName() .. "Text"]
+        if labelText then
+            local textW = labelText:GetStringWidth() or 40
+            local padded = textW + 24  -- 12px padding each side
+            tab:SetWidth(padded)
         end
     end
     
@@ -1882,12 +1899,14 @@ function ns.Chat.RepositionTabs()
     local anchor = _G["ChatFrame1"] -- Anchor to main chat
     if not anchor then return end
     
-    -- We want the first tab to be flush left with ChatFrame1
-    -- And others to follow with 1px spacing
-    
     local lastTab = nil
     
      if not DOCK.DOCKED_CHAT_FRAMES then return end
+
+     -- Modern Design: 0px gap so backdrops form a unified strip
+     local settings = GetSettings()
+     local isModern = settings and settings.tabs and settings.tabs.modernDesign
+     local spacing = isModern and 0 or 2
      
      for i, chatFrame in ipairs(DOCK.DOCKED_CHAT_FRAMES) do
          local tab = _G[chatFrame:GetName() .. "Tab"]
@@ -1895,8 +1914,8 @@ function ns.Chat.RepositionTabs()
              tab:ClearAllPoints()
              
              if lastTab then
-                 -- Subsequent tabs: Anchor to previous tab's RIGHT with 2px spacing (Increased)
-                 tab:SetPoint("BOTTOMLEFT", lastTab, "BOTTOMRIGHT", 2, 0)
+                 -- Subsequent tabs: Anchor to previous tab's RIGHT with spacing
+                 tab:SetPoint("BOTTOMLEFT", lastTab, "BOTTOMRIGHT", spacing, 0)
              else
                  -- First tab: Anchor to ChatFrame1's TOPLEFT
                  -- Offset updated to -7 to match text alignment better

@@ -5,19 +5,10 @@ local GUI = ns.GUI
 local C = GUI.Colors
 
 ---------------------------------------------------------------------------
--- Gravity RECOMMENDED FPS SETTINGS
+-- Gravity RECOMMENDED FPS SETTINGS (1:1 identical to EllesmereUI)
 ---------------------------------------------------------------------------
 local Gravity_FPS_CVARS = {
-    -- Render & Display
-    ["vsync"] = "0",
-    ["LowLatencyMode"] = "3",                   -- Reflex + Boost
-    ["GxCompatOptionalGpuFeatures"] = "1",
-    ["MSAAQuality"] = "0",                       -- None
-    ["ffxAntiAliasingMode"] = "0",               -- None
-    ["cameraFov"] = "90",
-    ["RenderScale"] = "0.86",                    -- 86% Render Scale
-
-    -- Graphics Quality (aligned with EllesmereUI)
+    -- Graphics Quality
     ["graphicsShadowQuality"] = "1",             -- Fair
     ["graphicsLiquidDetail"] = "0",              -- Low
     ["graphicsParticleDensity"] = "5",           -- Ultra
@@ -32,28 +23,9 @@ local Gravity_FPS_CVARS = {
     ["graphicsEnvironmentDetail"] = "0",         -- Level 1
     ["graphicsGroundClutter"] = "0",             -- Level 1
     ["RAIDsettingsEnabled"] = "0",               -- Same settings everywhere
-
-    -- Advanced
-    ["textureFilteringMode"] = "3",              -- 8x Anisotropic
-    ["shadowRt"] = "0",                          -- RT Shadows off
-    ["rtShadowQuality"] = "0",
-    ["ResampleQuality"] = "3",                   -- FidelityFX SR 1.0
-    ["ResampleSharpness"] = "0.2",
     ["ResampleAlwaysSharpen"] = "1",
-    ["physicsLevel"] = "1",                      -- Player Only
-    ["cameraShake"] = "0",                       -- Off
-    ["maxFPSBk"] = "30",
-    ["useMaxFPSBk"] = "1",                       -- Enable background FPS cap
-
     -- Audio
     ["Sound_EnableReverb"] = "0",                -- Reduce DSP overhead
-
-    -- Profiling (replaces Performance Shield)
-    ["scriptProfile"] = "0",                     -- Disable CPU profiling
-
-    -- Special (not in Apply table)
-    ["cameraDistanceMaxZoomFactor"] = "2.6",
-    ["CameraReduceUnexpectedMovement"] = "1",
 }
 
 ---------------------------------------------------------------------------
@@ -64,18 +36,6 @@ local function _ib(v)  local n = tonumber(v); return (n == 0) and "Disabled" or 
 local function _lvl(v) return "Level " .. ((tonumber(v) or 0) + 1) end
 
 local Gravity_FPS_DISPLAY = {
-    render = {
-        { cvar = "vsync",               name = "VSync",                 display = _ib },
-        { cvar = "LowLatencyMode",      name = "Low Latency Mode",      display = function(v)
-            return ({["0"]="None",["1"]="Built-In",["2"]="Reflex",["3"]="Reflex+Boost",["4"]="XeLL"})[v] or v end },
-        { cvar = "GxCompatOptionalGpuFeatures", name = "Optional GPU Features", display = _b },
-        { cvar = "RenderScale",         name = "Render Scale",          display = function(v)
-            return math.floor((tonumber(v) or 1) * 100) .. "%" end },
-        { cvar = "MSAAQuality",         name = "Multisampling (MSAA)",  display = function(v)
-            return ({["0"]="None",["1"]="2x",["2"]="4x",["3"]="8x"})[v] or v end },
-        { cvar = "ffxAntiAliasingMode", name = "Anti-Aliasing",         display = function(v)
-            return ({["0"]="None",["1"]="Image-Based",["2"]="Multisample",["4"]="CMAA2"})[v] or v end },
-    },
     graphics = {
         { cvar = "graphicsShadowQuality",    name = "Shadow Quality",     display = function(v)
             return ({["0"]="Low",["1"]="Fair",["2"]="Good",["3"]="High",["4"]="Ultra",["5"]="Ultra High"})[v] or v end },
@@ -92,12 +52,10 @@ local Gravity_FPS_DISPLAY = {
         { cvar = "graphicsSpellDensity",     name = "Spell Density",      display = function(v)
             return ({["0"]="Essential",["1"]="Low",["2"]="Fair",["3"]="Good",["4"]="High",["5"]="Ultra"})[v] or v end },
         { cvar = "graphicsOutlineMode",      name = "Outline Mode",       display = function(v)
-            return ({["1"]="Low",["2"]="High",["3"]="Ultra High"})[v] or v end },
+            return ({["0"]="Disabled",["1"]="Low",["2"]="High",["3"]="Ultra High"})[v] or v end },
         { cvar = "graphicsTextureResolution",name = "Texture Resolution", display = function(v)
             return ({["1"]="Low",["2"]="High",["3"]="Ultra"})[v] or v end },
         { cvar = "graphicsProjectedTextures",name = "Projected Textures", display = _b },
-        { cvar = "textureFilteringMode",     name = "Texture Filtering",  display = function(v)
-            return ({["0"]="Bilinear",["1"]="Trilinear",["2"]="4x Aniso",["3"]="8x Aniso",["4"]="8x Aniso",["5"]="16x Aniso"})[v] or v end },
     },
     detail = {
         { cvar = "graphicsViewDistance",     name = "View Distance",      display = _lvl },
@@ -105,16 +63,10 @@ local Gravity_FPS_DISPLAY = {
         { cvar = "graphicsGroundClutter",    name = "Ground Clutter",     display = _lvl },
     },
     advanced = {
-        { cvar = "shadowRt",            name = "Ray Traced Shadows",  display = function(v)
-            return ({["0"]="Disabled",["1"]="Simple",["2"]="High"})[v] or (v == "0" and "Disabled" or "Enabled") end },
-        { cvar = "ResampleQuality",     name = "Resample Quality",    display = function(v)
-            return ({["0"]="Point",["1"]="Bilinear",["2"]="Bicubic",["3"]="FidelityFX SR 1.0"})[v] or v end },
-        { cvar = "ResampleSharpness",   name = "Resample Sharpness",  display = function(v) return tostring(v) end },
-        { cvar = "physicsLevel",        name = "Physics Level",       display = function(v)
-            return ({["0"]="None",["1"]="Player Only",["2"]="Full"})[v] or v end },
-        { cvar = "useMaxFPSBk",         name = "BG FPS Limit",        display = _b },
-        { cvar = "maxFPSBk",            name = "Background FPS",      display = function(v) return v .. " FPS" end },
-        { cvar = "scriptProfile",       name = "CPU Profiling",       display = _ib },
+        { cvar = "RAIDsettingsEnabled",     name = "Raid Settings",      display = function(v)
+            return tonumber(v) == 1 and "Separate" or "Same Everywhere" end },
+        { cvar = "ResampleAlwaysSharpen",   name = "Always Sharpen",     display = _b },
+        { cvar = "Sound_EnableReverb",      name = "Sound Reverb",       display = _b },
     },
 }
 
@@ -189,16 +141,7 @@ local function RestorePreviousFPSSettings()
     return true
 end
 
--- CVARs excluded from the match counter.
--- These are applied via SetCVar but cannot be reliably verified via GetCVar:
--- either WoW overrides them, they need a gxrestart, or they're hardware-dependent.
-local GRAVITY_RESTART_CVARS = {
-    -- These CVARs cannot be reliably verified via GetCVar in the current session
-    -- because WoW overrides them, caps them, or they return inconsistent floats.
-    ["cameraShake"]             = true,
-    ["cameraDistanceMaxZoomFactor"] = true,
-    ["CameraReduceUnexpectedMovement"] = true,
-}
+
 
 local function ApplyGravityFPSSettings()
     -- Backup current settings first
@@ -246,10 +189,7 @@ local function CheckCVarsMatch()
         for _, item in ipairs(items) do
             local cvar = item.cvar
             local expectedVal = Gravity_FPS_CVARS[cvar]
-            
-            -- Skip CVars that require a restart or aren't verifiable, 
-            -- and ensure we have an expected value for it.
-            if expectedVal and not GRAVITY_RESTART_CVARS[cvar] then
+            if expectedVal then
                 totalCount = totalCount + 1
                 local currentVal = C_CVar.GetCVar(cvar)
                 if CvarsEqual(currentVal, expectedVal) then
@@ -584,15 +524,6 @@ local function BuildFPSSettings(parent)
         optLabel:SetJustifyH("LEFT")
 
         local function Refresh()
-            if GRAVITY_RESTART_CVARS[cvar] then
-                -- Applied but not verifiable in current session.
-                -- Show target value in dim green to indicate "set".
-                local rawOpt = Gravity_FPS_CVARS[cvar]
-                local dispOpt = displayFn and displayFn(rawOpt) or (rawOpt or "?")
-                curLabel:SetText("|cff558855" .. dispOpt .. "|r")
-                optLabel:SetText("")
-                return
-            end
             local rawCur = C_CVar.GetCVar(cvar)
             local rawOpt = Gravity_FPS_CVARS[cvar]
             local dispCur = displayFn and displayFn(rawCur) or (rawCur or "?")
@@ -611,10 +542,9 @@ local function BuildFPSSettings(parent)
 
     -- Category definitions
     local catDefs = {
-        { key = "render",   label = "Render & Display" },
         { key = "graphics", label = "Graphics Quality" },
         { key = "detail",   label = "View Distance & Detail" },
-        { key = "advanced", label = "Advanced & Profiling" },
+        { key = "advanced", label = "Advanced" },
     }
 
     for _, cat in ipairs(catDefs) do
