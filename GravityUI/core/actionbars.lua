@@ -1170,12 +1170,18 @@ function ns.RefreshActionBars()
     local g = db.global
 
     -- Hide Empty Slots (Grid Management)
-    -- We use native Alpha-based hiding which is combat-safe.
-    -- SetCVar is only synced when out of combat to avoid triggering Blizzard's protected MultiActionBar_Update.
+    -- TAINT FIX: SetCVar("alwaysShowActionBars") triggers Blizzard's MultiActionBar_Update
+    -- which calls SetScaleBase on protected frames. If called during a tainted execution
+    -- context (any RefreshActionBars path), it causes ADDON_ACTION_BLOCKED.
+    -- Defer to a clean C_Timer context to break the taint chain.
     if not InCombatLockdown() and g.hideEmptySlots ~= nil then
         local targetVal = g.hideEmptySlots and "0" or "1"
         if GetCVar("alwaysShowActionBars") ~= targetVal then
-            pcall(SetCVar, "alwaysShowActionBars", targetVal)
+            C_Timer.After(0, function()
+                if not InCombatLockdown() then
+                    pcall(SetCVar, "alwaysShowActionBars", targetVal)
+                end
+            end)
         end
     end
 
