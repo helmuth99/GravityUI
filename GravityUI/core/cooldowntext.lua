@@ -6,6 +6,96 @@ local GetSpellCooldown = C_Spell.GetSpellCooldown
 local GetSpellCooldownDuration = C_Spell.GetSpellCooldownDuration
 local IsInInstance = IsInInstance
 local strformat = string.format
+local GetSpecialization = (C_SpecializationInfo and C_SpecializationInfo.GetSpecialization) or GetSpecialization
+local GetSpecializationInfo = (C_SpecializationInfo and C_SpecializationInfo.GetSpecializationInfo) or GetSpecializationInfo
+
+-------------------------------------------------------------------------------
+--  MOVEMENT ABILITIES (class -> specID -> {spellIDs})
+-------------------------------------------------------------------------------
+local MOVEMENT_ABILITIES = {
+    DEATHKNIGHT = {[250] = {48265, 212552}, [251] = {48265, 212552}, [252] = {48265, 444010, 444347, 212552}},
+    DEMONHUNTER = {[577] = {195072}, [581] = {189110}, [1480] = {1234796}},
+    DRUID       = {[102] = {102401, 252216, 1850}, [103] = {102401, 252216, 1850}, [104] = {102401, 252216, 106898, 1850}, [105] = {102401, 252216, 1850}},
+    EVOKER      = {[1467] = {358267}, [1468] = {358267}, [1473] = {358267}},
+    HUNTER      = {[253] = {186257, 781}, [254] = {186257, 781}, [255] = {186257, 781}},
+    MAGE        = {[62] = {212653, 1953}, [63] = {212653, 1953}, [64] = {212653, 1953}},
+    MONK        = {[268] = {115008, 109132, 119085, 361138}, [269] = {109132, 119085, 361138, 101545}, [270] = {109132, 119085, 361138}},
+    PALADIN     = {[65] = {190784}, [66] = {190784}, [70] = {190784}},
+    PRIEST      = {[256] = {121536, 73325}, [257] = {121536, 73325}, [258] = {121536, 73325}},
+    ROGUE       = {[259] = {36554, 2983}, [260] = {195457, 2983}, [261] = {36554, 2983}},
+    SHAMAN      = {[262] = {79206, 192063, 58875}, [263] = {192063, 58875}, [264] = {79206, 192063, 58875}},
+    WARLOCK     = {[265] = {48020, 111400}, [266] = {48020, 111400}, [267] = {48020, 111400}},
+    WARRIOR     = {[71] = {6544}, [72] = {6544}, [73] = {6544}},
+}
+
+-- Spells that default to DISABLED (user must opt-in)
+local MOVEMENT_DEFAULT_OFF = {
+    [2983]   = true,  -- Sprint
+    [73325]  = true,  -- Leap of Faith
+    [106898] = true,  -- Stampeding Roar
+    [1850]   = true,  -- Dash
+    [252216] = true,  -- Tiger Dash
+    [212552] = true,  -- Wraith Walk
+    [79206]  = true,  -- Spiritwalker's Grace
+    [58875]  = true,  -- Spirit Walk
+    [111400] = true,  -- Burning Rush
+}
+
+-- Flat preset list for the options checkbox grid
+local MOVEMENT_PRESETS = {
+    { class = "DEATHKNIGHT", ids = {48265} },          -- Death's Advance
+    { class = "DEATHKNIGHT", ids = {212552} },         -- Wraith Walk
+    { class = "DEATHKNIGHT", ids = {444347, 444010} }, -- Death Charge
+    { class = "DEMONHUNTER", ids = {195072} },         -- Fel Rush
+    { class = "DEMONHUNTER", ids = {189110} },         -- Infernal Strike
+    { class = "DEMONHUNTER", ids = {1234796} },        -- Hero spec move
+    { class = "DRUID",       ids = {102401} },         -- Wild Charge
+    { class = "DRUID",       ids = {1850} },           -- Dash
+    { class = "DRUID",       ids = {252216} },         -- Tiger Dash
+    { class = "DRUID",       ids = {106898} },         -- Stampeding Roar
+    { class = "EVOKER",      ids = {358267} },         -- Hover
+    { class = "HUNTER",      ids = {186257} },         -- Aspect of the Cheetah
+    { class = "HUNTER",      ids = {781} },            -- Disengage
+    { class = "MAGE",        ids = {212653, 1953} },   -- Shimmer / Blink
+    { class = "MONK",        ids = {109132, 115008} }, -- Roll / Chi Torpedo
+    { class = "MONK",        ids = {119085} },         -- Tiger's Lust
+    { class = "MONK",        ids = {361138, 101545} }, -- Flying Serpent Kick
+    { class = "PALADIN",     ids = {190784} },         -- Divine Steed
+    { class = "PRIEST",      ids = {121536} },         -- Angelic Feather
+    { class = "PRIEST",      ids = {73325} },          -- Leap of Faith
+    { class = "ROGUE",       ids = {36554} },          -- Shadowstep
+    { class = "ROGUE",       ids = {195457} },         -- Grappling Hook
+    { class = "ROGUE",       ids = {2983} },           -- Sprint
+    { class = "SHAMAN",      ids = {79206} },          -- Spiritwalker's Grace
+    { class = "SHAMAN",      ids = {192063} },         -- Gust of Wind
+    { class = "SHAMAN",      ids = {58875} },          -- Spirit Walk
+    { class = "WARLOCK",     ids = {48020} },          -- Demonic Circle: Teleport
+    { class = "WARLOCK",     ids = {111400} },         -- Burning Rush
+    { class = "WARRIOR",     ids = {6544} },           -- Heroic Leap
+}
+
+-- All preset IDs for identifying custom spells
+local PRESET_IDS = {}
+for _, entry in ipairs(MOVEMENT_PRESETS) do
+    for _, id in ipairs(entry.ids) do PRESET_IDS[id] = true end
+end
+
+-- Check if a preset spell is enabled (respects DB overrides + defaults)
+local function SpellIsEnabled(spellID)
+    if DB and DB.spellOverrides then
+        local primaryID = spellID
+        -- Find the primary ID for this spell (first in its preset group)
+        for _, preset in ipairs(MOVEMENT_PRESETS) do
+            for _, id in ipairs(preset.ids) do
+                if id == spellID then primaryID = preset.ids[1]; break end
+            end
+        end
+        if DB.spellOverrides[primaryID] ~= nil then
+            return DB.spellOverrides[primaryID]
+        end
+    end
+    return not MOVEMENT_DEFAULT_OFF[spellID]
+end
 
 local DB -- File scoped database variable
 local trackedList = {}
@@ -124,12 +214,40 @@ function CooldownText:Initialize()
         fs:SetText("")
     end
 
-    -- 1. Identify which spells to track based on Class and Learning status
+    -- Ensure spellOverrides table exists
+    if not DB.spellOverrides then DB.spellOverrides = {} end
+
+    -- 1. Preset movement abilities for current class/spec
     trackedList = {}
+    local specIndex = GetSpecialization and GetSpecialization()
+    local specID = specIndex and select(1, GetSpecializationInfo(specIndex)) or 0
+    local classData = MOVEMENT_ABILITIES[playerClass]
+    if classData then
+        local specSpells = classData[specID]
+        if specSpells then
+            local seen = {}
+            for _, spellID in ipairs(specSpells) do
+                if SpellIsEnabled(spellID) and not seen[spellID] then
+                    if C_Spell.GetSpellInfo(spellID) then
+                        seen[spellID] = true
+                        local spellName = GetSpellNameFallback(spellID)
+                        table.insert(trackedList, {
+                            spellID = spellID,
+                            class = playerClass,
+                            runtimeName = "No " .. spellName,
+                            isPreset = true,
+                        })
+                    end
+                end
+            end
+        end
+    end
+
+    -- 2. Legacy custom spells (backward compat, skip preset IDs)
     if DB.spellsToTrack then
         for _, spellObj in ipairs(DB.spellsToTrack) do
-            if spellObj.class == playerClass then
-                if C_SpellBook.IsSpellKnown(spellObj.spellID) then
+            if spellObj.class == playerClass and not PRESET_IDS[spellObj.spellID] then
+                if C_Spell.GetSpellInfo(spellObj.spellID) then
                     spellObj.runtimeName = (spellObj.text and spellObj.text ~= "") and spellObj.text or GetSpellNameFallback(spellObj.spellID)
                     table.insert(trackedList, spellObj)
                 end
@@ -470,9 +588,42 @@ function CooldownText.AddOptions(parent)
     yOffset = yOffset - 50
 
     -----------------------------------------------------
-    -- ADD NEW SPELL
+    -- PRESET MOVEMENT ABILITIES
     -----------------------------------------------------
-    local headerSpells = GUI:CreateSectionHeader(content, "Add a Spell to Track")
+    local presetHeader = GUI:CreateSectionHeader(content, "Movement Abilities")
+    presetHeader:SetPoint("TOPLEFT", 10, yOffset)
+    presetHeader:SetPoint("RIGHT", content, "RIGHT", -10, 0)
+    yOffset = yOffset - 35
+
+    local presetInfo = GUI:CreateInfoBox(content, "Toggle which movement abilities to track for your current class. Text automatically shows 'No SpellName' with a cooldown timer.")
+    presetInfo:SetPoint("TOPLEFT", 10, yOffset)
+    presetInfo:SetPoint("RIGHT", content, "RIGHT", -10, 0)
+    yOffset = yOffset - (presetInfo:GetHeight() + 10)
+
+    if not DB.spellOverrides then DB.spellOverrides = {} end
+    local _, playerClass = UnitClass("player")
+
+    for _, preset in ipairs(MOVEMENT_PRESETS) do
+        if preset.class == playerClass then
+            local primaryID = preset.ids[1]
+            local spellName = GetSpellNameFallback(primaryID)
+
+            -- Seed default if not yet set
+            if DB.spellOverrides[primaryID] == nil then
+                DB.spellOverrides[primaryID] = not MOVEMENT_DEFAULT_OFF[primaryID]
+            end
+
+            local chk = GUI:CreateCheckbox(content, spellName .. "  |cffAAAAAA(" .. primaryID .. ")|r", primaryID, DB.spellOverrides, FullRefresh)
+            chk:SetPoint("TOPLEFT", 15, yOffset)
+            yOffset = yOffset - 25
+        end
+    end
+    yOffset = yOffset - 15
+
+    -----------------------------------------------------
+    -- ADD NEW SPELL (custom)
+    -----------------------------------------------------
+    local headerSpells = GUI:CreateSectionHeader(content, "Custom Spells")
     headerSpells:SetPoint("TOPLEFT", 10, yOffset)
     headerSpells:SetPoint("RIGHT", content, "RIGHT", -10, 0)
     yOffset = yOffset - 40

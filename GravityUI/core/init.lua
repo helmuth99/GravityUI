@@ -184,6 +184,104 @@ function Addon:OnInitialize()
             if ns.SyncEllesmereCharSheet      then ns.SyncEllesmereCharSheet()      end
             if ns.SyncEllesmereAccentColor    then ns.SyncEllesmereAccentColor()    end
         end)
+
+        -- EABR (AuraBuff Reminders): Override center-grow to left-aligned grow-right.
+        -- Controlled by db.profile.eabrLeftAlign (default true).
+        -- Two layers: (1) pin the anchor frame's left edge, (2) reposition each icon to TOPLEFT.
+        C_Timer.After(1, function()
+            local btn1 = _G["EABR_Icon1"]
+            if not btn1 then return end
+            local anchor = btn1:GetParent()
+            if not anchor then return end
+
+            local function IsEnabled()
+                local p = ns.db and ns.db.profile
+                return p and p.eabrLeftAlign ~= false
+            end
+
+            local function GetSpacing()
+                local sp = 8
+                local EUILite = _G.EllesmereUI and _G.EllesmereUI.Lite
+                local eabr = EUILite and EUILite.GetAddon and EUILite.GetAddon("EllesmereUIAuraBuffReminders", true)
+                if eabr and eabr.db and eabr.db.profile and eabr.db.profile.display then
+                    sp = eabr.db.profile.display.iconSpacing or sp
+                end
+                return sp
+            end
+
+            -----------------------------------------------------------------
+            -- Layer 1: Pin the anchor frame's left edge.
+            -- EABR's ResizeAnchorCentered re-centers the anchor on resize,
+            -- which shifts the left edge. We capture the initial left edge
+            -- and force TOPLEFT anchoring to keep it fixed.
+            -----------------------------------------------------------------
+            local fixedLeft = nil
+
+            hooksecurefunc(anchor, "SetPoint", function(self, point)
+                if point ~= "CENTER" or InCombatLockdown() then return end
+                if not IsEnabled() then return end
+
+                -- Capture left edge on first layout
+                if not fixedLeft then
+                    fixedLeft = self:GetLeft()
+                end
+
+                local top = self:GetTop()
+                if fixedLeft and top then
+                    self:ClearAllPoints()
+                    self:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", fixedLeft, top)
+                end
+            end)
+
+            -----------------------------------------------------------------
+            -- Layer 2: Reposition each icon from TOPLEFT (grow right).
+            -----------------------------------------------------------------
+            local hookedIcons = {}
+
+            local function HookIcon(btn)
+                if hookedIcons[btn] then return end
+                hookedIcons[btn] = true
+
+                hooksecurefunc(btn, "SetPoint", function(self, point)
+                    if point ~= "CENTER" or InCombatLockdown() then return end
+                    if not IsEnabled() then return end
+
+                    -- Count visible icons up to and including this one
+                    local pos = 0
+                    local j = 1
+                    while true do
+                        local b = _G["EABR_Icon" .. j]
+                        if not b then break end
+                        if b:IsShown() then
+                            pos = pos + 1
+                            if b == self then break end
+                        end
+                        j = j + 1
+                    end
+
+                    local sz = self:GetWidth()
+                    local spacing = GetSpacing()
+                    self:ClearAllPoints()
+                    self:SetPoint("TOPLEFT", anchor, "TOPLEFT", (pos - 1) * (sz + spacing), 0)
+                end)
+            end
+
+            local function ScanAndHook()
+                local k = 1
+                while true do
+                    local b = _G["EABR_Icon" .. k]
+                    if not b then break end
+                    HookIcon(b)
+                    k = k + 1
+                end
+            end
+
+            ScanAndHook()
+            -- Re-scan for new icons whenever Icon1 is re-laid-out
+            hooksecurefunc(btn1, "SetPoint", function(_, point)
+                if point == "CENTER" then ScanAndHook() end
+            end)
+        end)
     end
     
     -- Register for profile change events

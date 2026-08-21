@@ -895,6 +895,42 @@ local function BuildFrameMover(parent)
 end
 
 --==============================================================================================================================================================================================
+-- STUFF
+--==============================================================================================================================================================================================
+local function BuildEllesmereUI(parent)
+    local scroll, content = GUI:CreateScrollableContent(parent)
+    scroll:SetAllPoints()
+
+    local yOffset = -10
+
+    local header = GUI:CreateSectionHeader(content, "Stuff")
+    header:SetPoint("TOPLEFT", 10, yOffset)
+    header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
+    yOffset = yOffset - 35
+
+    local info = GUI:CreateInfoBox(content, "Additional tweaks and integrations. Changes require /reload to take effect.")
+    info:SetPoint("TOPLEFT", 10, yOffset)
+    info:SetPoint("RIGHT", content, "RIGHT", -10, 0)
+    yOffset = yOffset - (info:GetHeight() + 15)
+
+    local db = ns.GetDB and ns.GetDB() or {}
+
+    -- Default to true if not set
+    if db.eabrLeftAlign == nil then db.eabrLeftAlign = true end
+
+    local chk = GUI:CreateCheckbox(content, "AuraBuff Reminders: Left-Aligned (grow right)", "eabrLeftAlign", db, nil)
+    chk:SetPoint("TOPLEFT", 15, yOffset)
+    yOffset = yOffset - 30
+
+    local note = content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    note:SetText("|cffAAAAAA(Requires /reload to toggle)|r")
+    note:SetPoint("TOPLEFT", 15, yOffset)
+    yOffset = yOffset - 30
+
+    content:SetHeight(math.abs(yOffset) + 20)
+end
+
+--==============================================================================================================================================================================================
 -- PAGE REGISTRATION
 --==============================================================================================================================================================================================
 ns.GUI:RegisterPage("features", {
@@ -908,6 +944,7 @@ ns.GUI:RegisterPage("features", {
         { name = "Interrupt Tracker",   builder = BuildInterruptTracker },
         { name = "Gravity Alt Manager", builder = BuildAltManager },
         { name = "Frame Mover",         builder = BuildFrameMover },
+        { name = "Stuff",               builder = BuildEllesmereUI },
     },
     OnBuild = function(content)
         local scrollFrame = content:GetParent()
