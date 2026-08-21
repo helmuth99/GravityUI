@@ -205,8 +205,7 @@ local function BuildInformationTab(parent)
     titleFS:SetText("|cFF" .. accentHex .. "Gravity|r|cFFFFFFFFUI|r")
 
     -- Version
-    local _ok, _ver = pcall(function() return C_AddOns.GetAddOnMetadata("GravityUI", "Version") end)
-    local versionTag = (_ok and _ver) or "@project-version@"
+    local versionTag = ns.VERSION
     local versionFS = banner:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     GUI:SetFont(versionFS, 11, "")
     versionFS:SetPoint("LEFT", titleFS, "RIGHT", 8, -2)

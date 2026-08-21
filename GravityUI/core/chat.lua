@@ -732,7 +732,7 @@ local function RegisterMessageFilter()
     -- The message text is a Blizzard-protected secret string inside the filter chain.
     -- gsub on it silently fails (Blizzard internally pcalls all filters).
     -- Solution: hook OnEvent AFTER the event chain, defer via C_Timer.After(0),
-    -- read the rendered message via GetMessageInfo() (clean string, safe to gsub),
+    -- read the rendered message via GetMessageInfo() (may be a secret string in TWW+),
     -- and inject a second clickable link line directly below the whisper.
     local whisperOutHooked = {}
     local function HookOutgoingWhisperForFrame(chatFrame)
@@ -750,10 +750,13 @@ local function RegisterMessageFilter()
                 if not msg then return end
 
                 -- Find a URL in the already-rendered message line.
-                -- GetMessageInfo() returns a plain clean string — safe to gsub here.
+                -- GetMessageInfo() may return a 'secret' string in TWW+;
+                -- pcall the first match to detect and bail safely.
                 local url
                 for _, pattern in ipairs(URL_PATTERNS) do
-                    url = msg:match(pattern)
+                    local ok, result = pcall(string.match, msg, pattern)
+                    if not ok then return end   -- msg is a secret value, abort
+                    url = result
                     if url then break end
                 end
                 if not url then return end

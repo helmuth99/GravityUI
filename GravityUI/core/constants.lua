@@ -2,8 +2,10 @@
 local ADDON_NAME, ns = ...
 
 ns.ADDON_NAME = ADDON_NAME
-local _ok, _ver = pcall(function() return C_AddOns.GetAddOnMetadata(ADDON_NAME, "Version") end)
-ns.VERSION = (_ok and _ver) or "1.0.0"
+-- NOTE: C_AddOns.GetAddOnMetadata returns a 'secret' value in TWW+ that
+-- cannot be concatenated, tostring'd, or examined.  Embed the packager
+-- token directly instead — CurseForge replaces it at release time.
+ns.VERSION = "@project-version@"
 
 -- Expose namespace globally
 _G.GravityUI = ns
