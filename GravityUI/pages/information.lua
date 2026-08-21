@@ -231,9 +231,10 @@ local function BuildInformationTab(parent)
 
     local changeLogs = {
         {
-            version = "4.00.92",
+            version = "4.00.93",
             date = "08/21/2026",
             changes = {
+                "Actionbars taint error fix on mythic plus start, Objective Tracker optimization on hide",
                 "Settings Panel Restructure: Dissolved Utilities page — Sound Alerts, Color Picker, and Premade Group moved to Features; Tracked Bars moved to Indicators",
                 "Death Announcer relocated from Features to Indicators for logical grouping with on-screen alert modules",
                 "Information page merged into Main as first tab — sidebar entry removed for cleaner navigation",

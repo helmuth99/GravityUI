@@ -230,6 +230,42 @@ local function GetObjectiveRGB()
 end
 
 -- ============================================================================
+-- VISIBILITY GATEKEEPING (Performance Optimization)
+-- ============================================================================
+-- Mirrors autohide.lua's ShouldHideInCurrentInstance logic to prevent
+-- objectives.lua from doing skinning work on a hidden tracker frame.
+-- This eliminates the Show/Hide ping-pong and unnecessary hook execution
+-- in M+ dungeons and other instances where the tracker is hidden.
+local function IsTrackerHiddenByAutohide()
+    local db = ns.db and ns.db.profile and ns.db.profile.uiimprovements
+    if not db then return false end
+    if db.hideObjectiveTrackerAlways then return true end
+    local types = db.hideObjectiveTrackerInstanceTypes
+    if not types then return false end
+    local inInstance, instanceType = IsInInstance()
+    if not inInstance then return false end
+    if instanceType == "party" then
+        local _, _, difficulty = GetInstanceInfo()
+        if difficulty == 8 then return types.mythicPlus or false end
+        if difficulty == 23 then return types.mythicDungeon or false end
+        if difficulty == 1 then return types.normalDungeon or false end
+        if difficulty == 2 then return types.heroicDungeon or false end
+        if difficulty == 205 then return types.followerDungeon or false end
+        return false
+    end
+    return types[instanceType] or false
+end
+
+-- Returns true when skinning hooks should skip work entirely.
+-- Checks both frame visibility and autohide intent to avoid
+-- wasting CPU on frames the player cannot see.
+local function IsSkinningSupressed()
+    local otf = ObjectiveTrackerFrame
+    if not otf or not otf:IsShown() then return true end
+    return IsTrackerHiddenByAutohide()
+end
+
+-- ============================================================================
 -- TYPOGRAPHY & FONT HELPERS
 -- ============================================================================
 local function GetFont()
@@ -1041,12 +1077,14 @@ local function HookTracker(tracker)
     if tracker.AddBlock then
         hooksecurefunc(tracker, "AddBlock", function(_, block)
             if block then _skinned[block] = nil end
+            if IsSkinningSupressed() then return end
             SkinBlock(block)
         end)
     end
 
     if tracker.AddObjective then
         hooksecurefunc(tracker, "AddObjective", function(_, _, line)
+            if IsSkinningSupressed() then return end
             if line and type(line) == "table" and line.IsObjectType then StyleObjectiveLine(line) end
         end)
     end
@@ -1058,6 +1096,8 @@ local function HookTracker(tracker)
         local layoutPending = false
         local function FlushLayoutSkin()
             layoutPending = false
+            -- Skip pool iteration when tracker is hidden (e.g. M+ with autohide)
+            if IsSkinningSupressed() then return end
             if tracker.progressBarPool and tracker.progressBarPool.EnumerateActive then
                 for bar in tracker.progressBarPool:EnumerateActive() do
                     SkinProgressBar(bar)
@@ -1237,7 +1277,12 @@ function Objectives:CheckAutoHide()
 
     local inInstance = IsInInstance and IsInInstance()
     if inInstance then
-        if not ObjectiveTrackerFrame:IsShown() then ObjectiveTrackerFrame:Show() end
+        -- Respect autohide: don't force Show() if autohide has hidden the tracker
+        -- for this instance type.  Without this guard the two systems enter a
+        -- Show/Hide ping-pong on every ObjectiveTrackerManager:Update tick.
+        if not IsTrackerHiddenByAutohide() then
+            if not ObjectiveTrackerFrame:IsShown() then ObjectiveTrackerFrame:Show() end
+        end
         return
     end
 
@@ -1248,7 +1293,13 @@ function Objectives:CheckAutoHide()
 
     local hasContent = HasAnyTrackerContent()
     if hasContent then
-        if not ObjectiveTrackerFrame:IsShown() then ObjectiveTrackerFrame:Show() end
+        if not ObjectiveTrackerFrame:IsShown() then
+            ObjectiveTrackerFrame:Show()
+            -- Deferred re-skin: hooks may have skipped work while tracker
+            -- was hidden (IsSkinningSupressed returned true).  Only fires
+            -- on the hidden→visible transition so cost is negligible.
+            C_Timer.After(0, function() Objectives:SkinTracker() end)
+        end
     else
         if ObjectiveTrackerFrame:IsShown() then ObjectiveTrackerFrame:Hide() end
     end
@@ -1402,6 +1453,8 @@ function Objectives:OnInitialize()
         local function FlushOTMUpdate()
             otmUpdatePending = false
             Objectives:CheckAutoHide()
+            -- Skip header skinning when tracker is hidden (e.g. M+ with autohide)
+            if IsSkinningSupressed() then return end
             local s = GetSettings()
             if s and s.objectiveTrackerSkinning ~= false then
                 for _, name in ipairs(OTM_WIDGET_TRACKERS) do

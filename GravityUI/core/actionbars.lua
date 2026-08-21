@@ -626,21 +626,24 @@ local extraHookInstalled_Zone = false  -- ZoneAbilityFrame
 local function MakeReassert(frameGetter, dbKey)
     return function()
         if gravityIsPositioning then return end
-        if InCombatLockdown() then return end
-        local db = GetDB()
-        if not db or not db.enabled then return end
-        local pos = db.bars and db.bars[dbKey] and db.bars[dbKey].position
-        if not pos then return end
+        -- TAINT FIX: Do NOT read addon DB or call any addon functions here.
+        -- This hook fires inside Blizzard's secure ActionBarController chain.
+        -- Reading ns.db taints the execution context, which propagates through
+        -- EditModeManager → UpdateActionBarLayout → SetScaleBase → BLOCKED,
+        -- then poisons ALL subsequent SetCooldown calls with secret values.
+        -- Defer EVERYTHING to a clean C_Timer.After context.
         C_Timer.After(0, function()
-            local f = frameGetter()
-            if not f or gravityIsPositioning then return end
+            if gravityIsPositioning then return end
             if InCombatLockdown() then return end
-            local db2 = GetDB()
-            local pos2 = db2 and db2.bars and db2.bars[dbKey] and db2.bars[dbKey].position
-            if not pos2 then return end
+            local db = GetDB()
+            if not db or not db.enabled then return end
+            local pos = db.bars and db.bars[dbKey] and db.bars[dbKey].position
+            if not pos then return end
+            local f = frameGetter()
+            if not f then return end
             gravityIsPositioning = true
             f:ClearAllPoints()
-            f:SetPoint(pos2.point, UIParent, pos2.relativePoint, pos2.x, pos2.y)
+            f:SetPoint(pos.point, UIParent, pos.relativePoint, pos.x, pos.y)
             gravityIsPositioning = false
         end)
     end
@@ -1290,13 +1293,12 @@ initFrame:SetScript("OnEvent", function(self, event)
         -- Apply zone keybind mirror after initial bindings are loaded
         C_Timer.After(0.5, function() ApplyZoneAbilityKeybind() end)
     elseif event == "PLAYER_ENTERING_WORLD" then
-        -- WoW's Edit Mode applies its stored layout around PLAYER_ENTERING_WORLD.
-        -- 0.1s: reassert after Blizzard's initial layout pass.
-        -- 1.5s: safety net after Dominos (1.0s) and any other late-init addons settle.
-        C_Timer.After(0.1, function()
-            if InitializeExtraButtons then InitializeExtraButtons() end
-        end)
-        C_Timer.After(1.5, function()
+        -- TAINT FIX: The 0.1s delay was too short — ExtraAbilityContainer:SetScale/SetPoint
+        -- collided with Blizzard's EditMode initialization, tainting the ActionBarController
+        -- chain and poisoning ALL subsequent SetCooldown calls with secret values.
+        -- A single 3s delay lets Blizzard's EditMode, ActionBarController, and Dominos
+        -- fully settle before we reassert our positions.
+        C_Timer.After(3, function()
             if InitializeExtraButtons then InitializeExtraButtons() end
         end)
     elseif event == "ACTIONBAR_SLOT_CHANGED" or event == "UPDATE_BINDINGS" or event == "ACTIONBAR_PAGE_CHANGED" or event == "UPDATE_BONUS_ACTIONBAR" or event == "UPDATE_VEHICLE_ACTIONBAR" then
