@@ -372,6 +372,166 @@ function RaidWarnings.CheckDurability()
 end
 
 -- ============================================================================
+-- GATEWAY USABLE DETECTION
+-- Uses the Gateway Control Shard (item 188152) to detect when a Demonic
+-- Gateway is in range. The shard becomes "usable" when within ~5yd of a gate.
+-- ============================================================================
+local GATEWAY_SHARD_ID = 188152
+local gatewayFrame, gatewayText
+local gatewayTicker = nil
+local gatewayWasUsable = false
+
+local function CreateGatewayFrame()
+    if gatewayFrame then return end
+
+    gatewayFrame = CreateFrame("Frame", "GravityUI_GatewayUsableFrame", UIParent)
+    gatewayFrame:SetSize(300, 40)
+    gatewayFrame:SetPoint("CENTER", 0, 200)
+    gatewayFrame:SetFrameStrata("HIGH")
+    gatewayFrame:Hide()
+
+    gatewayText = gatewayFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalHuge")
+    gatewayText:SetPoint("CENTER")
+    gatewayText:SetJustifyH("CENTER")
+    gatewayText:SetText("Gateway Usable!")
+    gatewayFrame.text = gatewayText
+
+    -- Pulse animation for visibility
+    local ag = gatewayFrame:CreateAnimationGroup()
+    ag:SetLooping("BOUNCE")
+    local pulse = ag:CreateAnimation("Alpha")
+    pulse:SetFromAlpha(0.6)
+    pulse:SetToAlpha(1)
+    pulse:SetDuration(0.8)
+    pulse:SetOrder(1)
+    gatewayFrame.pulseAnim = ag
+
+    ns.GatewayUsableFrame = gatewayFrame
+end
+
+local function ApplyGatewaySettings()
+    if not gatewayFrame then return end
+    local db = ns.GetDB()
+    if not db or not db.raidWarnings then return end
+    local csv = db.raidWarnings
+    local gw = csv.gateway_usable
+    if not gw then return end
+
+    -- Font
+    local defaultFont = "Gravity"
+    if csv.font then defaultFont = csv.font end
+    local fontPath = "Fonts/FRIZQT__.TTF"
+    local LSM = GetLSM()
+    if LSM then
+        local fetched = LSM:Fetch("font", gw.font or defaultFont)
+        if fetched then fontPath = fetched end
+    end
+    gatewayText:SetFont(fontPath, gw.fontSize or 28, "OUTLINE")
+
+    -- Color (default: bright green for "GO!")
+    local r, g, b = 0.2, 1.0, 0.4
+    if gw.color then r, g, b = unpack(gw.color) end
+    gatewayText:SetTextColor(r, g, b)
+
+    -- Position
+    gatewayFrame:ClearAllPoints()
+    gatewayFrame:SetPoint("CENTER", UIParent, "CENTER", gw.x or 0, gw.y or 200)
+end
+
+local function CheckGatewayUsable()
+    local db = ns.GetDB()
+    if not db or not db.raidWarnings or not db.raidWarnings.enabled then
+        if gatewayFrame then gatewayFrame:Hide() end
+        gatewayWasUsable = false
+        return
+    end
+
+    local gw = db.raidWarnings.gateway_usable
+    if not gw or not gw.enabled then
+        if gatewayFrame then gatewayFrame:Hide() end
+        gatewayWasUsable = false
+        return
+    end
+
+    -- Only check while in a group
+    if not IsInGroup() then
+        if gatewayFrame and gatewayFrame:IsShown() then gatewayFrame:Hide() end
+        gatewayWasUsable = false
+        return
+    end
+
+    -- Check if player has the shard and if it's usable (= gateway in range)
+    local isUsable = C_Item and C_Item.IsUsableItem and C_Item.IsUsableItem(GATEWAY_SHARD_ID)
+
+    if isUsable and not gatewayWasUsable then
+        -- Just became usable
+        if not gatewayFrame then CreateGatewayFrame() end
+        ApplyGatewaySettings()
+        gatewayFrame:Show()
+        gatewayFrame:SetAlpha(1)
+        if gatewayFrame.pulseAnim then gatewayFrame.pulseAnim:Play() end
+
+        -- Sound alert
+        if gw.soundEnabled then
+            local soundFile = gw.soundFile
+            local LSM = GetLSM()
+            if LSM and soundFile then
+                local fetched = LSM:Fetch("sound", soundFile)
+                if fetched then
+                    PlaySoundFile(fetched, "Master")
+                end
+            end
+        end
+    elseif not isUsable and gatewayWasUsable then
+        -- Just left range
+        if gatewayFrame then
+            if gatewayFrame.pulseAnim then gatewayFrame.pulseAnim:Stop() end
+            gatewayFrame:Hide()
+        end
+    end
+
+    gatewayWasUsable = isUsable or false
+end
+
+function RaidWarnings.StartGatewayTicker()
+    if gatewayTicker then return end
+    local db = ns.GetDB()
+    if not db or not db.raidWarnings then return end
+    local gw = db.raidWarnings.gateway_usable
+    if not gw or not gw.enabled then return end
+
+    gatewayTicker = C_Timer.NewTicker(0.5, CheckGatewayUsable)
+end
+
+function RaidWarnings.StopGatewayTicker()
+    if gatewayTicker then
+        gatewayTicker:Cancel()
+        gatewayTicker = nil
+    end
+    gatewayWasUsable = false
+    if gatewayFrame then
+        if gatewayFrame.pulseAnim then gatewayFrame.pulseAnim:Stop() end
+        gatewayFrame:Hide()
+    end
+end
+
+function RaidWarnings.EnsureGatewayFrame()
+    CreateGatewayFrame()
+    ApplyGatewaySettings()
+    return ns.GatewayUsableFrame
+end
+
+function RaidWarnings.RefreshGateway()
+    RaidWarnings.StopGatewayTicker()
+    local db = ns.GetDB()
+    if not db or not db.raidWarnings then return end
+    local gw = db.raidWarnings.gateway_usable
+    if gw and gw.enabled and IsInGroup() then
+        RaidWarnings.StartGatewayTicker()
+    end
+end
+
+-- ============================================================================
 -- ADDON COMMUNICATION
 -- ============================================================================
 local COMM_PREFIX = "GravityUI"
@@ -509,6 +669,7 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
     if event == "GROUP_ROSTER_UPDATE" or event == "PLAYER_ENTERING_WORLD" or event == "UPDATE_INVENTORY_DURABILITY" then
         UpdateWatchers()
         RaidWarnings.CheckDurability()
+        RaidWarnings.RefreshGateway()
         
     elseif event == "CHAT_MSG_ADDON" then
         local prefix, message, channel, sender = ...
@@ -617,5 +778,6 @@ function RaidWarnings.Initialize()
     
     -- Initial Check
     C_Timer.After(2, RaidWarnings.CheckDurability)
+    C_Timer.After(3, RaidWarnings.RefreshGateway)
 end
 

@@ -1016,33 +1016,16 @@ local function HookTracker(tracker)
 
     if SharesWidgetPool(tracker) then
         if tracker.Header then SkinHeader(tracker.Header) end
-        -- ANTI-TAINT: Never hooksecurefunc(instance, "Update", ...) on
-        -- mixin-based tracker instances.  The hooked wrapper is rawset
-        -- onto the instance table for a method that was previously
-        -- inherited via metatable; Blizzard's subsequent call to
-        -- module:Update() resolves the tainted instance-level entry,
-        -- poisoning the entire LayoutContents → ShouldShowMawBuffs →
+        -- ANTI-TAINT: Never hook LayoutContents on either the instance
+        -- or the mixin table.  Even a mixin-level hooksecurefunc wraps
+        -- the function entry, and when Blizzard's engine resolves the
+        -- call through __index it sees the tainted wrapper, poisoning
+        -- the entire LayoutContents → ShouldShowMawBuffs →
         -- GetAuraDataByIndex call chain.
         --
-        -- Instead, hook LayoutContents on the MIXIN table (where the
-        -- function is defined directly).  hooksecurefunc modifies the
-        -- existing entry in-place rather than creating a new one,
-        -- preserving the secure lookup path.
-        local mixin
-        if tracker == _G.ScenarioObjectiveTracker and _G.ScenarioObjectiveTrackerMixin then
-            mixin = _G.ScenarioObjectiveTrackerMixin
-        elseif tracker == _G.UIWidgetObjectiveTracker and _G.UIWidgetObjectiveTrackerMixin then
-            mixin = _G.UIWidgetObjectiveTrackerMixin
-        end
-        if mixin and mixin.LayoutContents and not _widgetPoolMixinHooked[mixin] then
-            _widgetPoolMixinHooked[mixin] = true
-            hooksecurefunc(mixin, "LayoutContents", function(self)
-                if self.Header then
-                    local h = self.Header
-                    C_Timer.After(0, function() SkinHeader(h) end)
-                end
-            end)
-        end
+        -- Header re-skinning for widget-pool trackers is handled by the
+        -- deferred ObjectiveTrackerManager.Update post-hook which runs
+        -- in a clean C_Timer.After(0) execution context.
         return
     end
 
@@ -1069,20 +1052,27 @@ local function HookTracker(tracker)
     end
 
     if tracker.LayoutContents then
+        -- PERF: Pre-allocated callback — avoids closure allocation on every
+        -- LayoutContents call.  In M+ the ScenarioObjectiveTracker fires
+        -- LayoutContents on every timer tick / kill count change.
+        local layoutPending = false
+        local function FlushLayoutSkin()
+            layoutPending = false
+            if tracker.progressBarPool and tracker.progressBarPool.EnumerateActive then
+                for bar in tracker.progressBarPool:EnumerateActive() do
+                    SkinProgressBar(bar)
+                end
+            end
+            if tracker.timerBarPool and tracker.timerBarPool.EnumerateActive then
+                for bar in tracker.timerBarPool:EnumerateActive() do
+                    SkinTimerBar(bar)
+                end
+            end
+        end
         hooksecurefunc(tracker, "LayoutContents", function(self)
-            local t = self
-            C_Timer.After(0, function()
-                if t.progressBarPool and t.progressBarPool.EnumerateActive then
-                    for bar in t.progressBarPool:EnumerateActive() do
-                        SkinProgressBar(bar)
-                    end
-                end
-                if t.timerBarPool and t.timerBarPool.EnumerateActive then
-                    for bar in t.timerBarPool:EnumerateActive() do
-                        SkinTimerBar(bar)
-                    end
-                end
-            end)
+            if layoutPending then return end
+            layoutPending = true
+            C_Timer.After(0, FlushLayoutSkin)
         end)
     end
 
@@ -1311,9 +1301,11 @@ function Objectives:Refresh()
         end
         if t.Header then SkinHeader(t.Header) end
         SkinExistingBlocks(t)
-        if t.MarkDirty then
-            t:MarkDirty()
-        end
+        -- FORBIDDEN: Never call t:MarkDirty() from addon code.
+        -- It taints the tracker's dirty flag, causing Blizzard's next
+        -- relayout to run in our tainted execution context and poison
+        -- the LayoutContents → ShouldShowMawBuffs → GetAuraDataByIndex chain.
+        -- Cosmetic staleness self-heals on Blizzard's next natural relayout.
     end)
     local otf = _G.ObjectiveTrackerFrame
     local masterHeader = otf and (otf.HeaderMenu or otf.Header)
@@ -1402,27 +1394,40 @@ function Objectives:OnInitialize()
     end
 
     if ObjectiveTrackerManager and ObjectiveTrackerManager.Update then
+        -- PERF: Pre-allocated callback — OTM:Update fires on every M+ timer
+        -- tick, kill count, progress change.  Previously allocated a new
+        -- closure per call via C_Timer.After(0, function() ...).
+        local otmUpdatePending = false
+        local OTM_WIDGET_TRACKERS = {"ScenarioObjectiveTracker", "UIWidgetObjectiveTracker"}
+        local function FlushOTMUpdate()
+            otmUpdatePending = false
+            Objectives:CheckAutoHide()
+            local s = GetSettings()
+            if s and s.objectiveTrackerSkinning ~= false then
+                for _, name in ipairs(OTM_WIDGET_TRACKERS) do
+                    local t = _G[name]
+                    if t and t.Header then SkinHeader(t.Header) end
+                end
+            end
+        end
         hooksecurefunc(ObjectiveTrackerManager, "Update", function()
-            -- Defer to a clean execution context so that Show()/Hide()
-            -- inside CheckAutoHide never trigger a re-entrant tracker
-            -- update in a tainted call chain.
-            C_Timer.After(0, function() Objectives:CheckAutoHide() end)
+            if otmUpdatePending then return end
+            otmUpdatePending = true
+            C_Timer.After(0, FlushOTMUpdate)
         end)
     end
 
     if ObjectiveTrackerFrame and not _autoHideShowHooked then
         _autoHideShowHooked = true
+        -- PERF: Pre-allocated callback
+        local function DeferredAutoHideCheck()
+            if Objectives.isApplyingAutoHide then return end
+            Objectives.isApplyingAutoHide = true
+            Objectives:CheckAutoHide()
+            Objectives.isApplyingAutoHide = false
+        end
         hooksecurefunc(ObjectiveTrackerFrame, "Show", function()
-            -- Defer to break taint propagation: calling CheckAutoHide
-            -- synchronously inside Show's post-hook can re-Hide the
-            -- frame while Blizzard is still laying out, tainting the
-            -- subsequent LayoutContents → GetAuraDataByIndex chain.
-            C_Timer.After(0, function()
-                if Objectives.isApplyingAutoHide then return end
-                Objectives.isApplyingAutoHide = true
-                Objectives:CheckAutoHide()
-                Objectives.isApplyingAutoHide = false
-            end)
+            C_Timer.After(0, DeferredAutoHideCheck)
         end)
     end
 end

@@ -845,8 +845,12 @@ eventFrame:SetScript("OnEvent", function(_, event, ...)
             C_Timer.After(0.5, ProcessCooldownUpdate)
         end
     elseif event == "PLAYER_REGEN_DISABLED" then
+        -- PERF: Unregister high-frequency events during combat.
+        -- SPELL_UPDATE_COOLDOWN fires every GCD; handler no-ops in combat anyway.
+        eventFrame:UnregisterEvent("SPELL_UPDATE_COOLDOWN")
         if libraryFrames.GroupKeys then libraryFrames.GroupKeys:Hide() end
     elseif event == "PLAYER_REGEN_ENABLED" then
+        eventFrame:RegisterEvent("SPELL_UPDATE_COOLDOWN")
         -- If we have a pending post-run open (combat ended after CHALLENGE_MODE_COMPLETED), show now
         if MPlusTeleport.pendingPostRunOpen then
             MPlusTeleport.pendingPostRunOpen = false

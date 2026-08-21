@@ -355,125 +355,6 @@ local function BuildCombatTimer(parent)
     content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
 end
 
--- 5. Missing Buffs
-local function BuildMissingBuffs(parent)
-    -- Prevent overlapping elements by clearing existing content if we are rebuilding
-    if parent.scroll then
-        parent.scroll:Hide()
-        parent.scroll:SetParent(nil)
-        parent.scroll = nil
-    end
-
-    local scroll, content = GUI:CreateScrollableContent(parent)
-    parent.scroll = scroll
-    scroll:SetAllPoints()
-    local db = ns.GetDB(); if not db then return end
-    local rbDb = db.raidBuffs
-    content.rowCount = 0
-    local refresh = function() if ns.RaidBuffs and ns.RaidBuffs.Refresh then ns.RaidBuffs:Refresh() end end
-    local RB = ns.RaidBuffs
-    if not RB then local err = content:CreateFontString(nil, "OVERLAY", "GameFontRed"); err:SetPoint("TOPLEFT", 10, -10); err:SetText("Error: RaidBuffs module not loaded."); return end
-    local header = GUI:CreateSectionHeader(content, "Missing Raid Buffs")
-    header:SetPoint("TOPLEFT", 10, -10)
-    header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
-    content.rowCount = 1.3
-    local btnConfig = GUI:CreateButton(content, "Toggle Mover / Unlock Position", 250, 24, function() if RB.ToggleMover then RB:ToggleMover() end end)
-    btnConfig:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT + 5)))
-    content.rowCount = content.rowCount + 0.8
-    AddRow(content, "Enable Missing Buffs", "checkbox", "enabled", rbDb, refresh)
-    AddRow(content, "Show 'Buff' Reminder Text", "checkbox", "showBuffReminder", rbDb, refresh)
-    AddRow(content, "   Size", "slider", 8, 32, "reminderFontSize", rbDb, refresh, 1)
-    AddRow(content, "   Color", "color", "reminderColor", rbDb, refresh)
-    AddRow(content, "Show Only In Group/Raid", "checkbox", "showOnlyInGroup", rbDb, refresh)
-    AddRow(content, "Show Only In Instance", "checkbox", "showOnlyInInstance", rbDb, refresh)
-    AddRow(content, "Show Only On Ready Check", "checkbox", "showOnlyOnReadyCheck", rbDb, refresh)
-    AddRow(content, "Ready Check Duration", "slider", 5, 60, "readyCheckDuration", rbDb, refresh, 1)
-    AddRow(content, "Show Only My Class Buffs", "checkbox", "showOnlyPlayerClassBuff", rbDb, refresh)
-    AddRow(content, "Show Only My Missing Buffs", "checkbox", "showOnlyPlayerMissing", rbDb, refresh)
-    content.rowCount = content.rowCount + 0.5
-    CreateSubLabel(content, "Appearance")
-    AddRow(content, "Icon Size", "slider", 16, 128, "iconSize", rbDb, refresh, 4)
-    AddRow(content, "Text Size", "slider", 8, 32, "labelFontSize", rbDb, refresh, 1)
-    AddRow(content, "Spacing", "slider", 0, 50, "spacing", rbDb, refresh, 1)
-    local growOptions = {{value="LEFT", text="Left"}, {value="CENTER", text="Center"}, {value="RIGHT", text="Right"}}
-    AddRow(content, "Grow Direction", "dropdown", growOptions, "growDirection", rbDb, refresh)
-    content.rowCount = content.rowCount + 0.3
-    CreateSubLabel(content, "Expiration Warning")
-    AddRow(content, "Show Glow Warning", "checkbox", "showExpirationGlow", rbDb, refresh)
-    AddRow(content, "Warning Threshold (min)", "slider", 1, 30, "expirationThreshold", rbDb, refresh, 1)
-    AddRow(content, "Glow Color", "color", "glowColor", rbDb, refresh)
-    content.rowCount = content.rowCount + 0.8
-    CreateSubLabel(content, "Category Frames (Split Bars)")
-    local function AddCategoryControl(label, key)
-        local row = CreateFrame("Frame", nil, content); row:SetSize(GUI.CONTENT_WIDTH-20, 24); row:SetPoint("TOPLEFT", 10, -10-(content.rowCount*(ROW_HEIGHT+5)))
-        local txt = row:CreateFontString(nil, "OVERLAY", "GameFontHighlight"); txt:SetPoint("LEFT", 0, 0); txt:SetText(label); txt:SetWidth(120)
-        local function CreateStyledCheck(parent, labelText, dbTable, dbKey, onClick)
-            local cb = CreateFrame("Button", nil, parent, "BackdropTemplate"); cb:SetSize(20, 20); cb:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8x8", edgeFile="Interface\\Buttons\\WHITE8x8", edgeSize=1}); cb:SetBackdropColor(0.15, 0.15, 0.15, 1); cb:SetBackdropBorderColor(0, 0, 0, 1)
-            local check = cb:CreateTexture(nil, "OVERLAY"); check:SetTexture("Interface\\Buttons\\UI-CheckBox-Check"); check:SetPoint("CENTER"); check:SetSize(16, 16); check:SetDesaturated(true); check:SetVertexColor(unpack(GUI.Colors.accent))
-            local function UpdateState() local val = dbTable[dbKey]; if val == nil then val = true end; check:SetShown(val) end; UpdateState()
-            cb:SetScript("OnClick", function() local val = dbTable[dbKey]; if val == nil then val = true end; dbTable[dbKey] = not val; UpdateState(); if onClick then onClick() end end)
-            cb:SetScript("OnEnter", function(self) self:SetBackdropBorderColor(GUI.Colors.accent[1], GUI.Colors.accent[2], GUI.Colors.accent[3], 1) end); cb:SetScript("OnLeave", function(self) self:SetBackdropBorderColor(0, 0, 0, 1) end)
-            if labelText then cb.text = cb:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall"); cb.text:SetPoint("LEFT", cb, "RIGHT", 5, 0); cb.text:SetText(labelText) end
-            return cb
-        end
-        if not rbDb.categorySettings[key] then rbDb.categorySettings[key] = {} end
-        local cbEnable = CreateStyledCheck(row, "Enable", rbDb.categorySettings[key], "enabled", refresh); cbEnable:SetPoint("LEFT", 130, 0)
-        local cbSplit = CreateStyledCheck(row, "Detach / Split", rbDb.splitCategories, key, refresh); cbSplit:SetPoint("LEFT", 220, 0)
-        content.rowCount = content.rowCount + 0.8
-    end
-    AddCategoryControl("Raid Buffs", "raid"); AddCategoryControl("Self Buffs", "self"); AddCategoryControl("Presence Buffs", "presence"); AddCategoryControl("Targeted Buffs", "targeted"); AddCategoryControl("Consumables", "consumables"); AddCategoryControl("Custom Buffs", "custom")
-    local function AddBuffToggle(buff)
-        local row = CreateFrame("Frame", nil, content); row:SetSize(GUI.CONTENT_WIDTH-20, 24); row:SetPoint("TOPLEFT", 10, -10-(content.rowCount*(ROW_HEIGHT + 5)))
-        local cb = CreateFrame("Button", nil, row, "BackdropTemplate"); cb:SetSize(20, 20); cb:SetPoint("LEFT", 0, 0); cb:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8x8", edgeFile="Interface\\Buttons\\WHITE8x8", edgeSize=1}); cb:SetBackdropColor(0.15, 0.15, 0.15, 1); cb:SetBackdropBorderColor(0, 0, 0, 1)
-        local check = cb:CreateTexture(nil, "OVERLAY"); check:SetTexture("Interface\\Buttons\\UI-CheckBox-Check"); check:SetPoint("CENTER"); check:SetSize(16, 16); check:SetDesaturated(true); check:SetVertexColor(unpack(GUI.Colors.accent))
-        local function UpdateState() local val = rbDb.enabledBuffs[buff.key]; if val == nil then val = true end; check:SetShown(val) end; UpdateState()
-        cb:SetScript("OnClick", function() local val = rbDb.enabledBuffs[buff.key]; if val == nil then val = true end; rbDb.enabledBuffs[buff.key] = not val; UpdateState(); refresh() end)
-        cb:SetScript("OnEnter", function(self) self:SetBackdropBorderColor(GUI.Colors.accent[1], GUI.Colors.accent[2], GUI.Colors.accent[3], 1) end); cb:SetScript("OnLeave", function(self) self:SetBackdropBorderColor(0, 0, 0, 1) end)
-        local icon = row:CreateTexture(nil, "ARTWORK"); icon:SetSize(20, 20); icon:SetPoint("LEFT", cb, "RIGHT", 5, 0)
-        local tex = buff.iconOverride; if not tex then local id = type(buff.spellID) == "table" and buff.spellID[1] or buff.spellID; tex = (C_Spell and C_Spell.GetSpellTexture and C_Spell.GetSpellTexture(id)) or (GetSpellTexture and GetSpellTexture(id)) end; icon:SetTexture(tex)
-        local label = row:CreateFontString(nil, "OVERLAY", "GameFontHighlight"); label:SetPoint("LEFT", icon, "RIGHT", 8, 0); label:SetText(buff.name or "Unknown Buff")
-        content.rowCount = content.rowCount + 0.8; return row
-    end
-    content.rowCount = content.rowCount + 0.8; if RB.RAID_BUFFS then CreateSubLabel(content, "Raid Buffs (Group)"); for _, buff in ipairs(RB.RAID_BUFFS) do AddBuffToggle(buff) end end
-    content.rowCount = content.rowCount + 0.5; if RB.PRESENCE_BUFFS then CreateSubLabel(content, "Presence Buffs (One Per Group)"); for _, buff in ipairs(RB.PRESENCE_BUFFS) do AddBuffToggle(buff) end end
-    content.rowCount = content.rowCount + 0.5; if RB.TARGETED_BUFFS then CreateSubLabel(content, "Targeted Buffs (On Others)"); for _, buff in ipairs(RB.TARGETED_BUFFS) do AddBuffToggle(buff) end end
-    content.rowCount = content.rowCount + 0.5; 
-    if RB.SELF_BUFFS then 
-        CreateSubLabel(content, "Self Buffs (Personal)")
-        for _, buff in ipairs(RB.SELF_BUFFS) do 
-            if buff.groupId ~= "consumables" then AddBuffToggle(buff) end
-        end
-        content.rowCount = content.rowCount + 0.5
-        CreateSubLabel(content, "Self Buffs (Consumables)")
-        for _, buff in ipairs(RB.SELF_BUFFS) do 
-            if buff.groupId == "consumables" then AddBuffToggle(buff) end
-        end
-    end
-    content.rowCount = content.rowCount + 0.8; CreateSubLabel(content, "Custom Buffs")
-    local infoBox = GUI:CreateInfoBox(content, "|cffFFCC00Info:|r Add custom spellids for buffs, food or potions.\nYou can track multiple buffs (e.g. food) by separating their IDs with a comma.\nUse |cff00ccff/guienchants|r to find your weapon enchant and add your enchantid like this: |cff00ccff7495:224107|r (enchantid:itemid)")
-    infoBox:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT + 5))); content.rowCount = content.rowCount + (infoBox:GetHeight() / (ROW_HEIGHT + 5)) + 0.2
-    local rowAdd = CreateFrame("Frame", nil, content); rowAdd:SetSize(GUI.CONTENT_WIDTH - 20, 30); rowAdd:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT + 5)))
-    local editBox = CreateFrame("EditBox", nil, rowAdd, "BackdropTemplate"); editBox:SetSize(120, 24); editBox:SetPoint("LEFT", 0, 0); editBox:SetAutoFocus(false); editBox:SetNumeric(false); editBox:SetFontObject("ChatFontNormal"); editBox:SetTextInsets(8, 8, 0, 0); editBox:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8x8", edgeFile="Interface\\Buttons\\WHITE8x8", edgeSize=1}); editBox:SetBackdropColor(0.15, 0.15, 0.15, 1); editBox:SetBackdropBorderColor(0, 0, 0, 1)
-    editBox:SetScript("OnEnter", function(self) self:SetBackdropBorderColor(0, 0.6, 1, 1) end); editBox:SetScript("OnLeave", function(self) self:SetBackdropBorderColor(0, 0, 0, 1) end); editBox:SetScript("OnEnterPressed", function(self) self:ClearFocus() end); editBox:SetScript("OnEscapePressed", function(self) self:ClearFocus() end); editBox.tipText = "Enter Spell ID"; editBox:SetText("Spell ID"); editBox:SetScript("OnEditFocusGained", function(self) if self:GetText() == "Spell ID" then self:SetText("") end end)
-    local btnAdd = GUI:CreateButton(rowAdd, "+ Add Custom Buff", 140, 24, function() local text = editBox:GetText(); local isValid = tonumber(text) or string.find(text, "^%d+%s*:%s*%d+$") or string.find(text, "^[%d%s,]+$"); if isValid and RB and RB.AddCustomBuff then local success, err = RB:AddCustomBuff(text); if success then if BuildMissingBuffs then BuildMissingBuffs(parent) end else print("|cffff0000GravityUI Error:|r " .. (err or "Unknown error in AddCustomBuff")) end end end); btnAdd:SetPoint("LEFT", editBox, "RIGHT", 10, 0)
-    content.rowCount = content.rowCount + 1.2; local customList = rbDb.customBuffs or {}; local sortedKeys = {}; for k in pairs(customList) do table.insert(sortedKeys, k) end; table.sort(sortedKeys)
-    for _, k in ipairs(sortedKeys) do 
-        local buff = customList[k]; local row = AddBuffToggle(buff)
-        if row then
-            local btnDel = GUI:CreateButton(row, "Del", 40, 20, function() if RB.DeleteCustomBuff then RB:DeleteCustomBuff(buff.key); if BuildMissingBuffs then BuildMissingBuffs(parent) end end end); btnDel:SetPoint("RIGHT", row, "RIGHT", -25, 0)
-            local btnEdit = GUI:CreateButton(row, "Edit", 40, 20, function() GUI.EditingCustomBuffKey = (GUI.EditingCustomBuffKey == buff.key) and nil or buff.key; if BuildMissingBuffs then BuildMissingBuffs(parent) end end); btnEdit:SetPoint("RIGHT", btnDel, "LEFT", -5, 0)
-            if GUI.EditingCustomBuffKey == buff.key then
-                content.rowCount = content.rowCount + 0.2; local editRow = CreateFrame("Frame", nil, content); editRow:SetSize(GUI.CONTENT_WIDTH - 20, 30); editRow:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT + 5)))
-                local inlineEdit = CreateFrame("EditBox", nil, editRow, "BackdropTemplate"); inlineEdit:SetSize(180, 24); inlineEdit:SetPoint("LEFT", 46, 0); inlineEdit:SetAutoFocus(true); inlineEdit:SetFontObject("ChatFontNormal"); inlineEdit:SetTextInsets(8, 8, 0, 0); inlineEdit:SetText(tostring(buff.spellID)); inlineEdit:HighlightText(); inlineEdit:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8x8", edgeFile="Interface\\Buttons\\WHITE8x8", edgeSize=1}); inlineEdit:SetBackdropColor(0.15, 0.15, 0.15, 1); inlineEdit:SetBackdropBorderColor(GUI.Colors.accent[1], GUI.Colors.accent[2], GUI.Colors.accent[3], 1)
-                inlineEdit:SetScript("OnEscapePressed", function(self) self:ClearFocus(); GUI.EditingCustomBuffKey = nil; if BuildMissingBuffs then BuildMissingBuffs(parent) end end)
-                local saveFunc = function() local text = inlineEdit:GetText(); if text and text ~= "" and RB and RB.DeleteCustomBuff and RB.AddCustomBuff then if tonumber(text) or string.find(text, "^%d+%s*:%s*%d+$") or string.find(text, "^[%d%s,]+$") then RB:DeleteCustomBuff(buff.key); RB:AddCustomBuff(text) end; GUI.EditingCustomBuffKey = nil; if BuildMissingBuffs then BuildMissingBuffs(parent) end end end
-                inlineEdit:SetScript("OnEnterPressed", saveFunc); local btnSave = GUI:CreateButton(editRow, "Save", 60, 24, saveFunc); btnSave:SetPoint("LEFT", inlineEdit, "RIGHT", 10, 0); local btnCancel = GUI:CreateButton(editRow, "Cancel", 60, 24, function() GUI.EditingCustomBuffKey = nil; if BuildMissingBuffs then BuildMissingBuffs(parent) end end); btnCancel:SetPoint("LEFT", btnSave, "RIGHT", 5, 0); content.rowCount = content.rowCount + 1.2
-            end
-        end
-    end
-    content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
-end
-
 -- 6. Raid Warnings
 local function BuildRaidWarnings(parent)
     -- Prevent overlapping elements by clearing existing content if we are rebuilding
@@ -499,7 +380,41 @@ local function BuildRaidWarnings(parent)
     local macroRow = CreateFrame("Frame", nil, content); macroRow:SetSize(GUI.CONTENT_WIDTH - 40, 26); macroRow:SetPoint("TOPLEFT", 10, -5 - (content.rowCount * (ROW_HEIGHT + 5)))
     local editBox = CreateFrame("EditBox", nil, macroRow, "BackdropTemplate"); editBox:SetSize(GUI.CONTENT_WIDTH - 60, 18); editBox:SetPoint("LEFT", 0, 0); editBox:SetAutoFocus(false); editBox:SetFontObject("GameFontHighlightSmall"); editBox:SetText('/run C_ChatInfo.SendAddonMessage("GravityUI","RW:SPELL_ID",IsInGroup(2)and"INSTANCE_CHAT"or IsInRaid()and"RAID"or"PARTY")'); editBox:SetCursorPosition(0); editBox:SetTextInsets(5, 5, 0, 0); editBox:SetBackdrop({bgFile="Interface\\Buttons\\WHITE8x8", edgeFile="Interface\\Buttons\\WHITE8x8", edgeSize=1}); editBox:SetBackdropColor(0.1, 0.1, 0.1, 0.8); editBox:SetBackdropBorderColor(0, 0, 0, 1)
     editBox:SetScript("OnEnter", function(self) self:SetBackdropBorderColor(GUI.Colors.accent[1], GUI.Colors.accent[2], GUI.Colors.accent[3], 1) end); editBox:SetScript("OnLeave", function(self) if not self:HasFocus() then self:SetBackdropBorderColor(0, 0, 0, 1) end end); editBox:SetScript("OnEditFocusGained", function(self) self:HighlightText(); self:SetBackdropBorderColor(GUI.Colors.accent[1], GUI.Colors.accent[2], GUI.Colors.accent[3], 1) end); editBox:SetScript("OnEscapePressed", function(self) self:ClearFocus(); self:SetBackdropBorderColor(0, 0, 0, 1) end); editBox:SetScript("OnEditFocusLost", function(self) self:SetBackdropBorderColor(0, 0, 0, 1) end); editBox:SetScript("OnTextChanged", function(self, user) if user then self:SetText('/run C_ChatInfo.SendAddonMessage("GravityUI","RW:SPELL_ID",IsInGroup(2)and"INSTANCE_CHAT"or IsInRaid()and"RAID"or"PARTY")'); self:HighlightText() end end)
-    content.rowCount = content.rowCount + 1.2; AddRow(content, "Enable Raid Warnings", "checkbox", "enabled", dbRW, RefreshRW); content.rowCount = content.rowCount + 0.5; CreateSubLabel(content, "Visibility Filters"); AddRow(content, "Show in Party", "checkbox", "showInGroup", dbRW, RefreshRW); AddRow(content, "Show in Raid", "checkbox", "showInRaid", dbRW, RefreshRW); content.rowCount = content.rowCount + 0.5; CreateSubLabel(content, "Text Infos"); local ti = dbRW.textInfos; if not ti then ti = { durabilityEnabled = false, durabilityThreshold = 25, durabilitySize = 24, durabilityColor = {1, 0.2, 0.2, 1}, durabilityX = 0, durabilityY = 200 }; dbRW.textInfos = ti end; AddRow(content, "Durability Check (<25%)", "checkbox", "durabilityEnabled", ti, RefreshRW); AddRow(content, "Durability Threshold %", "slider", 1, 100, "durabilityThreshold", ti, RefreshRW, 1); AddRow(content, "Text Size", "slider", 10, 72, "durabilitySize", ti, RefreshRW, 1); AddRow(content, "Text Color", "color", "durabilityColor", ti, RefreshRW); AddRow(content, "X-Position", "slider", -800, 800, "durabilityX", ti, RefreshRW, 1); AddRow(content, "Y-Position", "slider", -800, 800, "durabilityY", ti, RefreshRW, 1); local previewTIBtn = GUI:CreateButton(content, "Preview Durability Info", 160, 24, function() if ns.TextInfoFrame then if ns.TextInfoFrame:IsShown() then ns.TextInfoFrame:Hide() else RefreshRW(); if ns.TextInfoFrame.text then ns.TextInfoFrame.text:SetText("Durability low") end; ns.TextInfoFrame:Show(); C_Timer.After(5, function() if ns.TextInfoFrame then ns.TextInfoFrame:Hide() end end) end end end); previewTIBtn:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT+5))); content.rowCount = content.rowCount + 1.2; content.rowCount = content.rowCount + 0.5; CreateSubLabel(content, "Events to Track"); AddRow(content, "Soulwells", "checkbox", "soulwell", dbRW.events, RefreshRW); AddRow(content, "Summoning Rituals", "checkbox", "ritual", dbRW.events, RefreshRW); AddRow(content, "Feasts", "checkbox", "feast", dbRW.events, RefreshRW); AddRow(content, "Repair Bots", "checkbox", "repair", dbRW.events, RefreshRW); AddRow(content, "Refreshment Tables (Mage)", "checkbox", "magetable", dbRW.events, RefreshRW); AddRow(content, "Demonic Gateway", "checkbox", "gateway", dbRW.events, RefreshRW); AddRow(content, "Portals Settings", "checkbox", "portal", dbRW.events, RefreshRW); content.rowCount = content.rowCount + 0.5; CreateSubLabel(content, "Sound Alert"); AddRow(content, "Enable Sound", "checkbox", "soundEnabled", dbRW, RefreshRW); local function PlayRWSound(sName) local LSM = LibStub("LibSharedMedia-3.0", true); local sp = LSM and LSM:Fetch("sound", sName); if sp then PlaySoundFile(sp, "Master") elseif sName and sName ~= "" then PlaySoundFile(sName, "Master") end end; local soundOptions = {{value="Sound\\Interface\\RaidWarning.ogg", text="Raid Warning", previewFunc=PlayRWSound}, {value="Sound\\Interface\\ReadyCheck.ogg", text="Ready Check", previewFunc=PlayRWSound}}; local LSM = LibStub("LibSharedMedia-3.0", true); if LSM then soundOptions = {}; for name, _ in pairs(LSM:HashTable("sound")) do table.insert(soundOptions, {value=name, text=name, previewFunc=PlayRWSound}) end; table.sort(soundOptions, function(a,b) return a.text < b.text end) end; AddRow(content, "Alert Sound", "dropdown", soundOptions, "soundFile", dbRW, RefreshRW); content.rowCount = content.rowCount + 0.5; CreateSubLabel(content, "Appearance"); AddRow(content, "Font Size", "slider", 12, 64, "fontSize", dbRW, RefreshRW, 1); AddRow(content, "Text Color", "color", "color", dbRW, RefreshRW); AddRow(content, "X Offset", "slider", -500, 500, "x", dbRW, RefreshRW, 1); AddRow(content, "Y Offset", "slider", -500, 500, "y", dbRW, RefreshRW, 1); local fontOptions = {{value="Fonts\\FRIZQT__.TTF", text="Friz Quadrata"}}; if LSM then fontOptions = {}; for name, _ in pairs(LSM:HashTable("font")) do table.insert(fontOptions, {value=name, text=name}) end; table.sort(fontOptions, function(a,b) return a.text < b.text end) end; AddRow(content, "Font", "dropdown", fontOptions, "font", dbRW, RefreshRW); content.rowCount = content.rowCount + 0.8; local testBtn = GUI:CreateButton(content, "Test Alert", 120, 24, function() if ns.RaidWarnings and ns.RaidWarnings.TestAlert then ns.RaidWarnings.TestAlert() end end); testBtn:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT+5))); local moverBtn = GUI:CreateButton(content, "Toggle Mover", 120, 24, function() if ns.RaidWarnings and ns.RaidWarnings.ToggleMover then ns.RaidWarnings.ToggleMover() end end); moverBtn:SetPoint("LEFT", testBtn, "RIGHT", 10, 0); content.rowCount = content.rowCount + 1.2; CreateSubLabel(content, "Custom Spells"); content.rowCount = content.rowCount + 0.2; local rowAdd = CreateFrame("Frame", nil, content); rowAdd:SetSize(GUI.CONTENT_WIDTH - 20, 30); rowAdd:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT + 5))); local inputID = GUI:CreateInput(rowAdd, "ID", "tempID", {}, function() end); inputID:SetPoint("LEFT", 0, 0); inputID:SetWidth(80); inputID.editBox:SetWidth(80); inputID.editBox:SetNumeric(true); inputID.editBox:SetText(""); local typeOptions = { {value="feast", text="Feast"}, {value="soulwell", text="Soulwell"}, {value="portal", text="Portal"}, {value="ritual", text="Ritual"}, {value="repair", text="Repair Bot"}, {value="magetable", text="Mage Table"}, {value="extra", text="Extra"} }; local tempDB = { type = "feast" }; local dropType = GUI:CreateDropdown(rowAdd, "", typeOptions, "type", tempDB, function() end); dropType:SetPoint("LEFT", inputID, "RIGHT", 10, 0); dropType:SetWidth(110); dropType.dropdown:SetPoint("LEFT", dropType, "LEFT", 0, 0); dropType.dropdown:SetPoint("RIGHT", dropType, "RIGHT", 0, 0); local btnAdd = GUI:CreateButton(rowAdd, "+", 30, 24, function() local id = inputID.editBox:GetText(); local type = tempDB.type; if ns.RaidWarnings and ns.RaidWarnings.AddCustomSpell then if ns.RaidWarnings.AddCustomSpell(id, type) then inputID.editBox:SetText(""); if BuildRaidWarnings then BuildRaidWarnings(parent) end end end end); btnAdd:SetPoint("LEFT", dropType, "RIGHT", 10, -10); content.rowCount = content.rowCount + 1.2; if dbRW.customSpells then local sorted = {}; for id, type in pairs(dbRW.customSpells) do table.insert(sorted, {id=id, type=type}) end; table.sort(sorted, function(a,b) return a.id < b.id end); for _, data in ipairs(sorted) do local row = CreateFrame("Frame", nil, content); row:SetSize(GUI.CONTENT_WIDTH - 20, 24); row:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT + 5))); local label = row:CreateFontString(nil, "OVERLAY", "GameFontHighlight"); label:SetPoint("LEFT", 0, 0); local name = "Unknown"; local spellInfo = C_Spell.GetSpellInfo(data.id); if spellInfo then name = spellInfo.name end; label:SetText(string.format("|cff00ccff%s|r (%s): %s", data.id, data.type, name)); local btnDel = GUI:CreateButton(row, "X", 20, 20, function() if ns.RaidWarnings and ns.RaidWarnings.RemoveCustomSpell then ns.RaidWarnings.RemoveCustomSpell(data.id); if BuildRaidWarnings then BuildRaidWarnings(parent) end end end); btnDel:SetPoint("RIGHT", row, "RIGHT", -35, 0); content.rowCount = content.rowCount + 0.8 end end
+    content.rowCount = content.rowCount + 1.2; AddRow(content, "Enable Raid Warnings", "checkbox", "enabled", dbRW, RefreshRW); content.rowCount = content.rowCount + 0.5; CreateSubLabel(content, "Visibility Filters"); AddRow(content, "Show in Party", "checkbox", "showInGroup", dbRW, RefreshRW); AddRow(content, "Show in Raid", "checkbox", "showInRaid", dbRW, RefreshRW); content.rowCount = content.rowCount + 0.5; CreateSubLabel(content, "Text Infos"); local ti = dbRW.textInfos; if not ti then ti = { durabilityEnabled = false, durabilityThreshold = 25, durabilitySize = 24, durabilityColor = {1, 0.2, 0.2, 1}, durabilityX = 0, durabilityY = 200 }; dbRW.textInfos = ti end; AddRow(content, "Durability Check (<25%)", "checkbox", "durabilityEnabled", ti, RefreshRW); AddRow(content, "Durability Threshold %", "slider", 1, 100, "durabilityThreshold", ti, RefreshRW, 1); AddRow(content, "Text Size", "slider", 10, 72, "durabilitySize", ti, RefreshRW, 1); AddRow(content, "Text Color", "color", "durabilityColor", ti, RefreshRW); AddRow(content, "X-Position", "slider", -800, 800, "durabilityX", ti, RefreshRW, 1); AddRow(content, "Y-Position", "slider", -800, 800, "durabilityY", ti, RefreshRW, 1); local previewTIBtn = GUI:CreateButton(content, "Preview Durability Info", 160, 24, function() if ns.TextInfoFrame then if ns.TextInfoFrame:IsShown() then ns.TextInfoFrame:Hide() else RefreshRW(); if ns.TextInfoFrame.text then ns.TextInfoFrame.text:SetText("Durability low") end; ns.TextInfoFrame:Show(); C_Timer.After(5, function() if ns.TextInfoFrame then ns.TextInfoFrame:Hide() end end) end end end); previewTIBtn:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT+5)));    content.rowCount = content.rowCount + 1.2; content.rowCount = content.rowCount + 0.5
+    -- Gateway Usable Section
+    CreateSubLabel(content, "Gateway Usable (Requires Gateway Control Shard in bags)")
+    local function RefreshGW() if ns.RaidWarnings and ns.RaidWarnings.RefreshGateway then ns.RaidWarnings.RefreshGateway() end end
+    if not dbRW.gateway_usable then dbRW.gateway_usable = {} end
+    local gw = dbRW.gateway_usable
+    AddRow(content, "Enable Gateway Usable Alert", "checkbox", "enabled", gw, RefreshGW)
+    AddRow(content, "Text Size", "slider", 14, 64, "fontSize", gw, RefreshGW, 1)
+    AddRow(content, "Text Color", "color", "color", gw, RefreshGW)
+    AddRow(content, "X-Position", "slider", -800, 800, "x", gw, RefreshGW, 1)
+    AddRow(content, "Y-Position", "slider", -800, 800, "y", gw, RefreshGW, 1)
+    AddRow(content, "Sound Alert", "checkbox", "soundEnabled", gw, RefreshGW)
+    local function PlayGWSound(sName) local LSM = LibStub("LibSharedMedia-3.0", true); local sp = LSM and LSM:Fetch("sound", sName); if sp then PlaySoundFile(sp, "Master") elseif sName and sName ~= "" then PlaySoundFile(sName, "Master") end end
+    local gwSoundOptions = {{value="Sound\\Interface\\RaidWarning.ogg", text="Raid Warning", previewFunc=PlayGWSound}, {value="Sound\\Interface\\ReadyCheck.ogg", text="Ready Check", previewFunc=PlayGWSound}}; local gwLSM = LibStub("LibSharedMedia-3.0", true); if gwLSM then gwSoundOptions = {}; for name, _ in pairs(gwLSM:HashTable("sound")) do table.insert(gwSoundOptions, {value=name, text=name, previewFunc=PlayGWSound}) end; table.sort(gwSoundOptions, function(a,b) return a.text < b.text end) end
+    AddRow(content, "Gateway Sound", "dropdown", gwSoundOptions, "soundFile", gw, RefreshGW)
+    local previewGWBtn = GUI:CreateButton(content, "Preview Gateway Alert", 160, 24, function()
+        local gwf = ns.GatewayUsableFrame
+        if not gwf and ns.RaidWarnings and ns.RaidWarnings.EnsureGatewayFrame then
+            gwf = ns.RaidWarnings.EnsureGatewayFrame()
+        end
+        if not gwf then return end
+        if gwf:IsShown() then
+            gwf:Hide()
+            if gwf.pulseAnim then gwf.pulseAnim:Stop() end
+        else
+            gwf:Show(); gwf:SetAlpha(1)
+            if gwf.pulseAnim then gwf.pulseAnim:Play() end
+            C_Timer.After(5, function()
+                if gwf then gwf:Hide(); if gwf.pulseAnim then gwf.pulseAnim:Stop() end end
+            end)
+        end
+    end)
+    previewGWBtn:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT+5)))
+    content.rowCount = content.rowCount + 1.2; content.rowCount = content.rowCount + 0.5
+    CreateSubLabel(content, "Events to Track"); AddRow(content, "Soulwells", "checkbox", "soulwell", dbRW.events, RefreshRW); AddRow(content, "Summoning Rituals", "checkbox", "ritual", dbRW.events, RefreshRW); AddRow(content, "Feasts", "checkbox", "feast", dbRW.events, RefreshRW); AddRow(content, "Repair Bots", "checkbox", "repair", dbRW.events, RefreshRW); AddRow(content, "Refreshment Tables (Mage)", "checkbox", "magetable", dbRW.events, RefreshRW); AddRow(content, "Demonic Gateway", "checkbox", "gateway", dbRW.events, RefreshRW); AddRow(content, "Portals Settings", "checkbox", "portal", dbRW.events, RefreshRW); content.rowCount = content.rowCount + 0.5; CreateSubLabel(content, "Sound Alert"); AddRow(content, "Enable Sound", "checkbox", "soundEnabled", dbRW, RefreshRW); local function PlayRWSound(sName) local LSM = LibStub("LibSharedMedia-3.0", true); local sp = LSM and LSM:Fetch("sound", sName); if sp then PlaySoundFile(sp, "Master") elseif sName and sName ~= "" then PlaySoundFile(sName, "Master") end end; local soundOptions = {{value="Sound\\Interface\\RaidWarning.ogg", text="Raid Warning", previewFunc=PlayRWSound}, {value="Sound\\Interface\\ReadyCheck.ogg", text="Ready Check", previewFunc=PlayRWSound}}; local LSM = LibStub("LibSharedMedia-3.0", true); if LSM then soundOptions = {}; for name, _ in pairs(LSM:HashTable("sound")) do table.insert(soundOptions, {value=name, text=name, previewFunc=PlayRWSound}) end; table.sort(soundOptions, function(a,b) return a.text < b.text end) end; AddRow(content, "Alert Sound", "dropdown", soundOptions, "soundFile", dbRW, RefreshRW); content.rowCount = content.rowCount + 0.5; CreateSubLabel(content, "Appearance"); AddRow(content, "Font Size", "slider", 12, 64, "fontSize", dbRW, RefreshRW, 1); AddRow(content, "Text Color", "color", "color", dbRW, RefreshRW); AddRow(content, "X Offset", "slider", -500, 500, "x", dbRW, RefreshRW, 1); AddRow(content, "Y Offset", "slider", -500, 500, "y", dbRW, RefreshRW, 1); local fontOptions = {{value="Fonts\\FRIZQT__.TTF", text="Friz Quadrata"}}; if LSM then fontOptions = {}; for name, _ in pairs(LSM:HashTable("font")) do table.insert(fontOptions, {value=name, text=name}) end; table.sort(fontOptions, function(a,b) return a.text < b.text end) end; AddRow(content, "Font", "dropdown", fontOptions, "font", dbRW, RefreshRW); content.rowCount = content.rowCount + 0.8; local testBtn = GUI:CreateButton(content, "Test Alert", 120, 24, function() if ns.RaidWarnings and ns.RaidWarnings.TestAlert then ns.RaidWarnings.TestAlert() end end); testBtn:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT+5))); local moverBtn = GUI:CreateButton(content, "Toggle Mover", 120, 24, function() if ns.RaidWarnings and ns.RaidWarnings.ToggleMover then ns.RaidWarnings.ToggleMover() end end); moverBtn:SetPoint("LEFT", testBtn, "RIGHT", 10, 0); content.rowCount = content.rowCount + 1.2; CreateSubLabel(content, "Custom Spells"); content.rowCount = content.rowCount + 0.2; local rowAdd = CreateFrame("Frame", nil, content); rowAdd:SetSize(GUI.CONTENT_WIDTH - 20, 30); rowAdd:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT + 5))); local inputID = GUI:CreateInput(rowAdd, "ID", "tempID", {}, function() end); inputID:SetPoint("LEFT", 0, 0); inputID:SetWidth(80); inputID.editBox:SetWidth(80); inputID.editBox:SetNumeric(true); inputID.editBox:SetText(""); local typeOptions = { {value="feast", text="Feast"}, {value="soulwell", text="Soulwell"}, {value="portal", text="Portal"}, {value="ritual", text="Ritual"}, {value="repair", text="Repair Bot"}, {value="magetable", text="Mage Table"}, {value="extra", text="Extra"} }; local tempDB = { type = "feast" }; local dropType = GUI:CreateDropdown(rowAdd, "", typeOptions, "type", tempDB, function() end); dropType:SetPoint("LEFT", inputID, "RIGHT", 10, 0); dropType:SetWidth(110); dropType.dropdown:SetPoint("LEFT", dropType, "LEFT", 0, 0); dropType.dropdown:SetPoint("RIGHT", dropType, "RIGHT", 0, 0); local btnAdd = GUI:CreateButton(rowAdd, "+", 30, 24, function() local id = inputID.editBox:GetText(); local type = tempDB.type; if ns.RaidWarnings and ns.RaidWarnings.AddCustomSpell then if ns.RaidWarnings.AddCustomSpell(id, type) then inputID.editBox:SetText(""); if BuildRaidWarnings then BuildRaidWarnings(parent) end end end end); btnAdd:SetPoint("LEFT", dropType, "RIGHT", 10, -10); content.rowCount = content.rowCount + 1.2; if dbRW.customSpells then local sorted = {}; for id, type in pairs(dbRW.customSpells) do table.insert(sorted, {id=id, type=type}) end; table.sort(sorted, function(a,b) return a.id < b.id end); for _, data in ipairs(sorted) do local row = CreateFrame("Frame", nil, content); row:SetSize(GUI.CONTENT_WIDTH - 20, 24); row:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT + 5))); local label = row:CreateFontString(nil, "OVERLAY", "GameFontHighlight"); label:SetPoint("LEFT", 0, 0); local name = "Unknown"; local spellInfo = C_Spell.GetSpellInfo(data.id); if spellInfo then name = spellInfo.name end; label:SetText(string.format("|cff00ccff%s|r (%s): %s", data.id, data.type, name)); local btnDel = GUI:CreateButton(row, "X", 20, 20, function() if ns.RaidWarnings and ns.RaidWarnings.RemoveCustomSpell then ns.RaidWarnings.RemoveCustomSpell(data.id); if BuildRaidWarnings then BuildRaidWarnings(parent) end end end); btnDel:SetPoint("RIGHT", row, "RIGHT", -35, 0); content.rowCount = content.rowCount + 0.8 end end
     content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
 end
 
@@ -820,11 +735,11 @@ ns.GUI:RegisterPage("indicators", {
         { name = "Combat Status",      builder = BuildCombatStatus },
         { name = "Combat Timer",       builder = BuildCombatTimer },
         { name = "Cooldown Text",      builder = ns.CooldownText and ns.CooldownText.AddOptions or function() end },
-        { name = "Missing Buffs",      builder = BuildMissingBuffs },
         { name = "Raid Warnings",      builder = BuildRaidWarnings },
         { name = "Consumables",        builder = BuildConsumables },
         { name = "Difficulty Changer", builder = BuildDifficulty },
         { name = "AFK Screen",         builder = BuildAFKScreen },
+        { name = "Death Announcer",   builder = function(p) if ns._BuildDeathAnnouncer then ns._BuildDeathAnnouncer(p) end end },
     },
     OnBuild = function(content)
         local scrollFrame = content:GetParent()

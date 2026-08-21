@@ -5,92 +5,53 @@ local GUI = ns.GUI
 local C = GUI.Colors
 
 ---------------------------------------------------------------------------
--- Gravity RECOMMENDED FPS SETTINGS (~60 CVars)
+-- Gravity RECOMMENDED FPS SETTINGS
 ---------------------------------------------------------------------------
 local Gravity_FPS_CVARS = {
-    -- Graphics Tab
+    -- Render & Display
     ["vsync"] = "0",
-    ["LowLatencyMode"] = "3",
+    ["LowLatencyMode"] = "3",                   -- Reflex + Boost
     ["GxCompatOptionalGpuFeatures"] = "1",
-    ["MSAAQuality"] = "0",
-    ["ffxAntiAliasingMode"] = "0",              -- None (was CMAA2)
-    ["alphaTestMSAA"] = "1",
+    ["MSAAQuality"] = "0",                       -- None
+    ["ffxAntiAliasingMode"] = "0",               -- None
     ["cameraFov"] = "90",
-    ["RenderScale"] = "0.86",                   -- 86% Render Scale (was 1.0)
+    ["RenderScale"] = "0.86",                    -- 86% Render Scale
 
-    -- Graphics Quality
-    ["graphicsQuality"] = "9",
-    ["graphicsShadowQuality"] = "1",            -- Fair
-    ["graphicsLiquidDetail"] = "0",             -- Low
-    ["graphicsParticleDensity"] = "5",          -- Ultra
-    ["graphicsSSAO"] = "0",
-    ["graphicsDepthEffects"] = "0",
-    ["graphicsComputeEffects"] = "0",
-    ["graphicsOutlineMode"] = "0",              -- 0 (Off)
-    ["OutlineEngineMode"] = "1",
-    ["graphicsTextureResolution"] = "2",
-    ["graphicsSpellDensity"] = "0",             -- Essential
-    ["spellClutter"] = "1",
-    ["spellVisualDensityFilterSetting"] = "1",
-    ["graphicsProjectedTextures"] = "1",
-    ["projectedTextures"] = "1",
-    ["graphicsViewDistance"] = "0",             -- Level 1
-    ["graphicsEnvironmentDetail"] = "0",        -- Level 1
-    ["graphicsGroundClutter"] = "0",            -- Level 1
-    ["RAIDsettingsEnabled"] = "0",              -- Same settings everywhere (no separate Raid quality)
+    -- Graphics Quality (aligned with EllesmereUI)
+    ["graphicsShadowQuality"] = "1",             -- Fair
+    ["graphicsLiquidDetail"] = "0",              -- Low
+    ["graphicsParticleDensity"] = "5",           -- Ultra
+    ["graphicsSSAO"] = "0",                      -- Off
+    ["graphicsDepthEffects"] = "0",              -- Off
+    ["graphicsComputeEffects"] = "0",            -- Off
+    ["graphicsOutlineMode"] = "0",               -- Off
+    ["graphicsTextureResolution"] = "2",         -- High
+    ["graphicsSpellDensity"] = "0",              -- Essential
+    ["graphicsProjectedTextures"] = "1",         -- On
+    ["graphicsViewDistance"] = "0",              -- Level 1
+    ["graphicsEnvironmentDetail"] = "0",         -- Level 1
+    ["graphicsGroundClutter"] = "0",             -- Level 1
+    ["RAIDsettingsEnabled"] = "0",               -- Same settings everywhere
 
-    -- Advanced Tab
-    ["gxTripleBuffer"] = "0",
-    ["textureFilteringMode"] = "3",             -- 8x Anisotropic (was 16x)
-    ["shadowRt"] = "0",
+    -- Advanced
+    ["textureFilteringMode"] = "3",              -- 8x Anisotropic
+    ["shadowRt"] = "0",                          -- RT Shadows off
     ["rtShadowQuality"] = "0",
-    ["ResampleQuality"] = "3",                  -- FidelityFX SR 1.0 (was 4=invalid value!)
-    ["ffxSuperResolution"] = "1",
-    ["VRSMode"] = "0",
-    ["GxApi"] = "D3D12",
-    ["physicsLevel"] = "1",                     -- Player Only (was 0=None)
-    ["maxFPS"] = "144",
-    ["maxFPSBk"] = "30",
-    ["useMaxFPSBk"] = "1",                      -- Enable background FPS cap
-    ["targetFPS"] = "61",
-    ["useTargetFPS"] = "0",
-    ["ResampleSharpness"] = "0.2",               -- Sharpness (was 0)
-    ["cameraShake"] = "0",                     -- Disable camera shake
-    ["Brightness"] = "50",
-    ["Gamma"] = "1.1",
-    -- Audio: reverb runs a full effect bus over the mix when enabled.
-    -- Disabling it trims audio DSP work and keeps spell and interrupt cues dry and crisp.
-    ["Sound_EnableReverb"] = "0",
-
-    -- Additional Optimizations (GravityUI exclusive)
-    ["particulatesEnabled"] = "0",
-    ["clusteredShading"] = "0",
-    ["volumeFogLevel"] = "0",
-    ["reflectionMode"] = "0",
-    ["ffxGlow"] = "0",
-    ["ffxSpecular"] = "0",
-    ["ffxDeathrattle"] = "0",
-    ["farclip"] = "5000",
-    ["horizonStart"] = "1000",
-    ["horizonClip"] = "5000",
-    ["lodObjectCullSize"] = "35",
-    ["lodObjectFadeScale"] = "50",
-    ["lodObjectMinSize"] = "0",
-    ["doodadLodScale"] = "50",
-    ["entityLodDist"] = "7",
-    ["terrainLodDist"] = "350",
-    ["TerrainLodDiv"] = "512",
-    ["waterDetail"] = "1",
-    ["rippleDetail"] = "0",
-    ["weatherDensity"] = "3",                  -- Enabled
-    ["entityShadowFadeScale"] = "15",
-    ["groundEffectDist"] = "40",
+    ["ResampleQuality"] = "3",                   -- FidelityFX SR 1.0
+    ["ResampleSharpness"] = "0.2",
     ["ResampleAlwaysSharpen"] = "1",
-    ["shadowmode"] = "1",
-    ["shadowTextureSize"] = "512",
-    ["nameplateMotion"] = "0",
+    ["physicsLevel"] = "1",                      -- Player Only
+    ["cameraShake"] = "0",                       -- Off
+    ["maxFPSBk"] = "30",
+    ["useMaxFPSBk"] = "1",                       -- Enable background FPS cap
 
-    -- Special
+    -- Audio
+    ["Sound_EnableReverb"] = "0",                -- Reduce DSP overhead
+
+    -- Profiling (replaces Performance Shield)
+    ["scriptProfile"] = "0",                     -- Disable CPU profiling
+
+    -- Special (not in Apply table)
     ["cameraDistanceMaxZoomFactor"] = "2.6",
     ["CameraReduceUnexpectedMovement"] = "1",
 }
@@ -110,9 +71,6 @@ local Gravity_FPS_DISPLAY = {
         { cvar = "GxCompatOptionalGpuFeatures", name = "Optional GPU Features", display = _b },
         { cvar = "RenderScale",         name = "Render Scale",          display = function(v)
             return math.floor((tonumber(v) or 1) * 100) .. "%" end },
-        { cvar = "GxApi",               name = "Graphics API",          display = function(v)
-            local u = string.upper(v or "")
-            if u == "D3D12" then return "DirectX 12" elseif u == "D3D11" then return "DirectX 11" else return v or "Auto" end end },
         { cvar = "MSAAQuality",         name = "Multisampling (MSAA)",  display = function(v)
             return ({["0"]="None",["1"]="2x",["2"]="4x",["3"]="8x"})[v] or v end },
         { cvar = "ffxAntiAliasingMode", name = "Anti-Aliasing",         display = function(v)
@@ -146,30 +104,17 @@ local Gravity_FPS_DISPLAY = {
         { cvar = "graphicsEnvironmentDetail",name = "Environment Detail", display = _lvl },
         { cvar = "graphicsGroundClutter",    name = "Ground Clutter",     display = _lvl },
     },
-    fps = {
-        { cvar = "maxFPS",       name = "Max FPS",           display = function(v) return (v == "0") and "Unlimited" or v .. " FPS" end },
-        { cvar = "useMaxFPSBk",  name = "BG FPS Limit",      display = _b },
-        { cvar = "maxFPSBk",     name = "Background FPS",    display = function(v) return v .. " FPS" end },
-        { cvar = "useTargetFPS", name = "Target FPS System", display = _ib },
-    },
-    post = {
-        { cvar = "ResampleQuality",   name = "Resample Quality",   display = function(v)
-            return ({["0"]="Point",["1"]="Bilinear",["2"]="Bicubic",["3"]="FidelityFX SR 1.0"})[v] or v end },
-        { cvar = "ResampleSharpness", name = "Resample Sharpness", display = function(v) return tostring(v) end },
-        { cvar = "physicsLevel",      name = "Physics Level",      display = function(v)
-            return ({["0"]="None",["1"]="Player Only",["2"]="Full"})[v] or v end },
-        { cvar = "volumeFogLevel",    name = "Volume Fog",         display = _ib },
-        { cvar = "reflectionMode",    name = "Reflections",        display = _ib },
-    },
-    lod = {
+    advanced = {
         { cvar = "shadowRt",            name = "Ray Traced Shadows",  display = function(v)
             return ({["0"]="Disabled",["1"]="Simple",["2"]="High"})[v] or (v == "0" and "Disabled" or "Enabled") end },
-        { cvar = "ffxGlow",            name = "FFX Glow",            display = _ib },
-        { cvar = "weatherDensity",     name = "Weather Density",     display = _ib },
-        { cvar = "shadowmode",         name = "Shadow Mode",         display = function(v)
-            return ({["0"]="Standard",["1"]="Simple"})[v] or v end },
-        { cvar = "particulatesEnabled",name = "Particulates",        display = _b },
-        { cvar = "clusteredShading",   name = "Clustered Shading",   display = _b },
+        { cvar = "ResampleQuality",     name = "Resample Quality",    display = function(v)
+            return ({["0"]="Point",["1"]="Bilinear",["2"]="Bicubic",["3"]="FidelityFX SR 1.0"})[v] or v end },
+        { cvar = "ResampleSharpness",   name = "Resample Sharpness",  display = function(v) return tostring(v) end },
+        { cvar = "physicsLevel",        name = "Physics Level",       display = function(v)
+            return ({["0"]="None",["1"]="Player Only",["2"]="Full"})[v] or v end },
+        { cvar = "useMaxFPSBk",         name = "BG FPS Limit",        display = _b },
+        { cvar = "maxFPSBk",            name = "Background FPS",      display = function(v) return v .. " FPS" end },
+        { cvar = "scriptProfile",       name = "CPU Profiling",       display = _ib },
     },
 }
 
@@ -251,12 +196,6 @@ local GRAVITY_RESTART_CVARS = {
     -- These CVARs cannot be reliably verified via GetCVar in the current session
     -- because WoW overrides them, caps them, or they return inconsistent floats.
     ["cameraShake"]             = true,
-    ["ffxSpecular"]             = true,
-    ["nameplateMotion"]         = true,
-    ["shadowTextureSize"]       = true,
-    ["github_shadowfix"]        = true,  -- placeholder for naming consistency
-    ["gxTripleBuffer"]          = true,
-    ["graphicsQuality"]         = true,
     ["cameraDistanceMaxZoomFactor"] = true,
     ["CameraReduceUnexpectedMovement"] = true,
 }
@@ -327,40 +266,13 @@ end
 ---------------------------------------------------------------------------
 local PADDING = 10
 
-local function BuildWelcome(parent)
+-- Information tab builder is injected from information.lua
+local function BuildInformationPlaceholder(parent)
     local scroll, content = ns.GUI:CreateScrollableContent(parent)
     scroll:SetAllPoints()
-    local db = ns.GetDB()
-    if not db then return end
-    
-    local yOffset = -10
-    
-    local welcomeHeader = ns.GUI:CreateSectionHeader(content, "Welcome to GravityUI")
-    welcomeHeader:SetPoint("TOPLEFT", PADDING, yOffset)
-    yOffset = yOffset - welcomeHeader.gap - 10
-    
-    local welcomeText = ns.GUI:CreateLabel(content, 
-        "A modern, feature-rich UI configuration addon for World of Warcraft.\n" ..
-        "Use the menu on the left to navigate through different settings.",
-        12, C.text)
-    ns.GUI:SetFont(welcomeText, 12, "")
-    welcomeText:SetPoint("TOPLEFT", PADDING, yOffset)
-    welcomeText:SetWidth(640)
-    welcomeText:SetJustifyH("LEFT")
-    yOffset = yOffset - 20
-    
-    -- GravityUI Logo
-    local logoWidth = 640
-    local logoHeight = 360 -- Maintain 16:9, but scale to width
-    local logo = content:CreateTexture(nil, "ARTWORK")
-    logo:SetTexture("Interface\\AddOns\\GravityUI\\assets\\Gravity_UI_Logo.jpg")
-    logo:SetSize(logoWidth, logoHeight)
-    logo:SetAlpha(0.12) -- Make it somewhat transparent to blend with background
-    -- Center it relative to the 640 width of the welcome text block
-    logo:SetPoint("TOPLEFT", PADDING + (640 - logoWidth) / 2, yOffset)
-    yOffset = yOffset - logoHeight - 20
-
-    content:SetHeight(math.abs(yOffset) + 20)
+    local label = ns.GUI:CreateLabel(content, "Loading...", 12, C.text)
+    label:SetPoint("TOPLEFT", PADDING, -20)
+    content:SetHeight(60)
 end
 
 local function BuildThemeColor(parent)
@@ -599,34 +511,13 @@ local function BuildFPSSettings(parent)
 
     -- Description
     local fpsDesc = ns.GUI:CreateInfoBox(content,
-        "|cff00BFFFGravity's|r optimized settings for competitive play (~60 CVars). " ..
+        "|cff00BFFFGravity's|r optimized settings for competitive play. " ..
         "|cff00FF80Green|r = already optimal.  |cffFF8800Orange|r = differs from target. " ..
         "Your current settings are backed up when you first click Apply.")
     fpsDesc:SetPoint("TOPLEFT", PAD, yOffset)
     yOffset = yOffset - fpsDesc:GetHeight() - 20
 
-    -- GravityUI Performance Shield
-    local shieldHeader = ns.GUI:CreateSectionHeader(content, "GravityUI Performance Shield")
-    shieldHeader:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - shieldHeader.gap - 10
 
-    local shieldInfo = ns.GUI:CreateInfoBox(content,
-        "|cff00BFFFMaximizes combat stability|r by disabling Blizzard's internal AddOn CPU profiling and suppressing " ..
-        "expensive performance telemetry. This prevents micro-stutters in high-intensity situations.\n\n" ..
-        "|cffFFCC00Note:|r This will also disable the 'Addon Memory' display in some tooltips to save CPU cycles.")
-    shieldInfo:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - shieldInfo:GetHeight() - 10
-
-    local shieldToggle = ns.GUI:CreateCheckbox(content, "Enable GravityUI Performance Shield", "performanceShield", db.uiimprovements, function(enabled)
-        -- The logic is handled in core/performance_shield.lua, but we can print a courtesy note
-        if enabled then
-            ns.Print("Performance Shield enabled. Profiling suppressed.")
-        else
-            ns.Print("Performance Shield disabled. Profiling restored after /reload.")
-        end
-    end)
-    shieldToggle:SetPoint("TOPLEFT", PAD, yOffset)
-    yOffset = yOffset - 40
 
     -- Forward-declare so row closures can reference it
     local UpdateAllRows
@@ -723,9 +614,7 @@ local function BuildFPSSettings(parent)
         { key = "render",   label = "Render & Display" },
         { key = "graphics", label = "Graphics Quality" },
         { key = "detail",   label = "View Distance & Detail" },
-        { key = "fps",      label = "FPS Limits" },
-        { key = "post",     label = "Post Processing & Physics" },
-        { key = "lod",      label = "Advanced Effects & LOD" },
+        { key = "advanced", label = "Advanced & Profiling" },
     }
 
     for _, cat in ipairs(catDefs) do
@@ -1125,7 +1014,7 @@ end
 ns.GUI:RegisterPage("main", {
     title = "Main",
     subTabs = {
-        { name = "Welcome",       builder = BuildWelcome },
+        { name = "Information",   builder = BuildInformationPlaceholder },
         { name = "Theme Color",   builder = BuildThemeColor },
         { name = "UI Scale",      builder = BuildUIScale },
         { name = "Font Settings",  builder = BuildFontSettings },

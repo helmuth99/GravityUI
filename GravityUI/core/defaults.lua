@@ -41,6 +41,7 @@ ns.Defaults = {
         readyCheck = {
             enable = true, -- Using this alongside skinReadyCheck or instead? best to keep skinReadyCheck for now or alias it. 
             -- Actually, let's just put the color options here.
+            useDefaultPosition = true,
             disableThemeColorBackground = false,
             customBackgroundColor = { 0.1, 0.1, 0.1, 0.95 },
             disableThemeColorFont = false,
@@ -295,6 +296,15 @@ ns.Defaults = {
             durabilityX = 0,
             durabilityY = 200,
         },
+        gateway_usable = {
+            enabled = false,
+            fontSize = 28,
+            color = {0.2, 1.0, 0.4, 1},
+            x = 0,
+            y = 200,
+            soundEnabled = false,
+            soundFile = nil,
+        },
     },
     soundAlerts = {
         enabled = false,
@@ -332,82 +342,12 @@ ns.Defaults = {
         x = 0, 
         y = 0,
     },
-    targetedSpells = {
-        enabled            = false,
-        showBars           = true,
-        showIcons          = true,
-        showSelf           = true,
-        showParty          = true,
-        onlyKickable       = false,
-
-        -- Bars
-        width              = 200,
-        height             = 20,
-        spacing            = 2,
-        maxBars            = 5,
-        growDirection      = "UP",
-        texture            = "Gravity Normal",
-        font               = "Gravity",
-        fontSize           = 12,
-        fontOutline        = "OUTLINE",
-
-        -- Icons
-        iconOnlySelf       = true,
-        iconSize           = 40,
-        iconSpacing        = 4,
-        iconMax            = 5,
-        iconGrowDirection  = "CENTER",
-        iconFont           = "Gravity",
-        iconFontSize       = 14,
-        iconFontOutline    = "OUTLINE",
-        iconShowTargetName = false,
-        iconShowSweep      = true,
-        iconGlow           = true,
-        iconGlowMatchCast  = true,
-        iconGlowColor      = { 1.00, 0.82, 0.00, 0.90 },
-        iconGlowSize       = 2,
-        iconGlowPulse      = true,
-
-        -- Colors (Unified Design)
-        castingColor       = { 1.00, 0.82, 0.00, 0.90 }, -- Yellow (Interruptible Casts)
-        channelingColor    = { 0.60, 0.25, 0.95, 0.90 }, -- Purple (Channeling Casts)
-        shieldColor        = { 0.50, 0.50, 0.50, 0.90 }, -- Shield Gray (Non-Interruptible Casts)
-        backdropColor      = { 0.08, 0.08, 0.08, 0.85 }, -- Bar Track Background
-        textColor          = { 1.00, 1.00, 1.00, 1.00 }, -- Text Color
-        targetClassColor   = true,                       -- Class Color for Target Name (» Name)
-
-        -- Sound (Temporarily disabled in 12.0)
-        soundEnabled       = false,
-        soundFile          = "Targeted",
-        soundChannel       = "Master",
-
-        x = 0,
-        y = -140,
-        iconX = 0,
-        iconY = -80,
-    },
     colorPicker = {
         enabled         = true,   -- Custom Color Picker active (used in GravityUI settings)
         hookAllAddons   = true,   -- Replace Blizzard picker globally for all addons
         useSquarePicker = true,   -- Square (true) or Circle (false)
         savedColors     = {},     -- Persisted saved colors
         recentColors    = {},     -- Recently used colors (auto)
-    },
-    raidBuffs = {
-        enabled = true,
-        showOnlyInGroup = true,
-        showOnlyInInstance = true,
-        providerMode = false,
-        hideLabelBar = true,
-        iconSize = 32,
-        labelFontSize = 12,
-        labelTextColor = nil,
-        position = {
-            y = 0,
-            relPoint = "TOPLEFT",
-            point = "TOPLEFT",
-            x = 170.50061035156,
-        },
     },
     profileInfo =     {
         created = 0,
@@ -774,7 +714,6 @@ ns.Defaults = {
         hideTalkingHead = false,
         muteTalkingHead = false,
         hideOnWorldQuestMinigame = true,
-        performanceShield = true,
         tools = {
             guildInviteRanks = {}, -- [rankID] = true
             autoAssistNames = "",

@@ -78,6 +78,7 @@ local function GetDB()
                 fontSize = 12,
                 showOffline = true,
                 drinkingThreshold = 80,
+                strata = "MEDIUM",
             }
         end
         return db.screenindicators.healerMana
@@ -183,10 +184,11 @@ function HM:CreateHealerFrame(index)
     local iconSize = (db and db.iconSize)   or 24
     local frameW   = (db and db.frameWidth) or 160
     local fontSize = (db and db.fontSize)   or 12
+    local strata   = (db and db.strata)     or "MEDIUM"
 
     local frame = CreateFrame("Frame", "GravityUI_HealerMana_" .. index, self.containerFrame, "BackdropTemplate")
     frame:SetSize(frameW, iconSize)
-    frame:SetFrameStrata("DIALOG")
+    frame:SetFrameStrata(strata)
     frame:SetFrameLevel(self.containerFrame:GetFrameLevel() + 20)
 
     -- Icon background
@@ -242,6 +244,7 @@ function HM:CreateContainer()
 
     local f = CreateFrame("Frame", "GravityUI_HealerMana_Container", UIParent)
     f:SetSize(frameW, iconSize)
+    f:SetFrameStrata((db and db.strata) or "MEDIUM")
     f:SetClampedToScreen(true)
 
     -- Restore saved position
@@ -588,7 +591,7 @@ function HM:ShowPreview()
     -- Create and populate healer frames
     for i, h in ipairs(self.currentHealers) do
         local frame = self:GetHealerFrame(h.frameIndex)
-        frame:SetFrameStrata("DIALOG")
+        frame:SetFrameStrata((db and db.strata) or "MEDIUM")
         frame:SetFrameLevel(self.containerFrame:GetFrameLevel() + 20)
         if frame.iconFrame then
             frame.iconFrame:SetFrameLevel(frame:GetFrameLevel() + 2)
@@ -697,10 +700,16 @@ function HM:UpdateStyles()
     local iconSize = db.iconSize or 24
     local frameW   = db.frameWidth or 160
     local fontSize = db.fontSize or 12
+    local strata   = db.strata or "MEDIUM"
+
+    if self.containerFrame then
+        self.containerFrame:SetFrameStrata(strata)
+    end
 
     for _, frame in pairs(self.healerFrames) do
         if frame then
             frame:SetSize(frameW, iconSize)
+            frame:SetFrameStrata(strata)
             if frame.iconFrame then
                 frame.iconFrame:SetSize(iconSize, iconSize)
             end

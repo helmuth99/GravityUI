@@ -27,7 +27,6 @@ core\media.lua
 core\character.lua
 core\inspect.lua
 core\init.lua
-core\performance_shield.lua
 core\profiles_logic.lua
 
 # Framework
@@ -49,10 +48,8 @@ core\alerts.lua
 core\loot.lua
 core\objectives.lua
 core\instanceframes.lua
-core\raidbuffs.lua
 core\raidwarnings.lua
 core\interrupttracker.lua
-core\targetedspells.lua
 core\deathannouncer.lua
 core\stancetext.lua
 core\altmanager_data.lua

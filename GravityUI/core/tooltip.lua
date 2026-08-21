@@ -124,9 +124,23 @@ local TOOLTIP_BACKDROP = {
     insets   = { left = 1, right = 1, top = 1, bottom = 1 }
 }
 
+-- Skip 3rd-party tooltips that manage their own backdrop (prevents double background).
+-- Walks the parent chain: WQT embeds sub-tooltips (EmbeddedItemTooltip) inside WQT_GameTooltip.
+local function IsThirdPartyTooltip(tt)
+    local f = tt
+    for i = 1, 5 do
+        if not f then break end
+        local n = f:GetName()
+        if n and n:find("WQT_") then return true end
+        f = f:GetParent()
+    end
+    return false
+end
+
 local function ApplyStyle(tooltip)
     if not tooltip or tooltip:IsForbidden() then return end
     if InCombatLockdown() then return end
+    if IsThirdPartyTooltip(tooltip) then return end
     local settings = GetSettings()
     if not settings or not settings.enabled or not settings.customStyle then return end
 

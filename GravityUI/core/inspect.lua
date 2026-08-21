@@ -757,20 +757,35 @@ local function UpdateInspectILvlDisplay()
 
     local ilvl = CalculateInspectAverageILvl(guid)
     if ilvl > 0 then
-        -- Character panel defines GetILvlColor, we can use a local copy or just define it here if needed
-        -- For Inspect, we'll implement the same quality color logic
-        local function GetQualityColor(val)
-            if val >= 252 then return "ffff8000" -- Orange
-            elseif val >= 233 then return "ffa335ee" -- Purple
-            elseif val >= 220 then return "ff0070dd" -- Blue
-            elseif val >= 210 then return "ff1eff00" -- Green
-            elseif val >= 200 then return "ffffffff" -- White
-            else return "ff9d9d9d" -- Grey
-            end
-        end
-        InspectFrame._guiCenterILvl.text:SetText(string.format("|c%s%.1f|r", GetQualityColor(ilvl), ilvl))
+        -- Quality-based coloring (future-proof, matches character panel)
+        local r, g, b = C_Item.GetItemQualityColor(4)  -- 4 = Epic (purple)
+        if not r then r, g, b = 0.64, 0.21, 0.93 end
+        local hex = string.format("ff%02x%02x%02x", math.floor(r*255), math.floor(g*255), math.floor(b*255))
+        InspectFrame._guiCenterILvl.text:SetText(string.format("|c%s%.1f|r", hex, ilvl))
     else
         InspectFrame._guiCenterILvl.text:SetText("")
+    end
+
+    -- M+ Score for inspected player
+    if InspectFrame._guiCenterILvl.mpScore then
+        local unit = InspectFrame.unit
+        if unit and C_PlayerInfo and C_PlayerInfo.GetPlayerMythicPlusRatingSummary then
+            local summary = C_PlayerInfo.GetPlayerMythicPlusRatingSummary(unit)
+            local score = summary and summary.currentSeasonScore
+            if score and score > 0 then
+                local scoreColor = C_ChallengeMode and C_ChallengeMode.GetDungeonScoreRarityColor
+                    and C_ChallengeMode.GetDungeonScoreRarityColor(score)
+                local sr, sg, sb = 1, 1, 1
+                if scoreColor then sr, sg, sb = scoreColor.r, scoreColor.g, scoreColor.b end
+                local sHex = string.format("%02x%02x%02x", math.floor(sr*255), math.floor(sg*255), math.floor(sb*255))
+                InspectFrame._guiCenterILvl.mpScore:SetText(string.format("M+ Score: |cff%s%d|r", sHex, score))
+                InspectFrame._guiCenterILvl.mpScore:Show()
+            else
+                InspectFrame._guiCenterILvl.mpScore:Hide()
+            end
+        else
+            InspectFrame._guiCenterILvl.mpScore:Hide()
+        end
     end
 end
 
@@ -823,6 +838,14 @@ local function SetupInspectTitleArea()
         text:SetFont(GetGlobalFont(), 18, "OUTLINE")
         text:SetPoint("RIGHT")
         center.text = text
+
+        -- M+ Score display below inspect ilvl
+        local mpText = center:CreateFontString(nil, "OVERLAY")
+        mpText:SetFont(GetGlobalFont(), 12, "OUTLINE")
+        mpText:SetPoint("TOP", text, "BOTTOM", 0, -4)
+        mpText:SetJustifyH("RIGHT")
+        center.mpScore = mpText
+
         InspectFrame._guiCenterILvl = center
     end
 end

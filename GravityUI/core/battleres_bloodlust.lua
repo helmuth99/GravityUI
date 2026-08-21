@@ -33,6 +33,7 @@ local function GetBR_DB()
                 countFontSize = 11,
                 borderSize    = 1,
                 borderColor   = { 0, 0, 0, 1 },
+                strata        = "MEDIUM",
                 position      = { point = "CENTER", relativePoint = "CENTER", x = -40, y = 140 },
             }
         end
@@ -52,6 +53,7 @@ local function GetBL_DB()
                 fontSize    = 12,
                 borderSize  = 1,
                 borderColor = { 0, 0, 0, 1 },
+                strata      = "MEDIUM",
                 position    = { point = "CENTER", relativePoint = "CENTER", x = 40, y = 140 },
             }
         end
@@ -142,9 +144,9 @@ local function CreateBRFrame()
     brFrame:SetSize(36, 36)
     brFrame:SetClampedToScreen(true)
     brFrame:SetMovable(true)
-    brFrame:SetFrameStrata("MEDIUM")
-
     local db = GetBR_DB()
+    brFrame:SetFrameStrata((db and db.strata) or "MEDIUM")
+
     local pos = db and db.position
     if pos and pos.point then
         brFrame:SetPoint(pos.point, UIParent, pos.relativePoint or pos.point, pos.x or -40, pos.y or 140)
@@ -312,6 +314,7 @@ function ns.BattleResTracker.Update()
         -- Sizing & styling
         local sz = db.iconSize or 36
         brFrame:SetSize(sz, sz)
+        brFrame:SetFrameStrata(db.strata or "MEDIUM")
         if ns.GUI and ns.GUI.SetFont then
             ns.GUI:SetFont(brCountText, db.countFontSize or 11, "OUTLINE")
             ns.GUI:SetFont(brCooldownText, db.fontSize or 12, "OUTLINE")
@@ -405,9 +408,9 @@ local function CreateBLFrame()
     blFrame:SetSize(36, 36)
     blFrame:SetClampedToScreen(true)
     blFrame:SetMovable(true)
-    blFrame:SetFrameStrata("MEDIUM")
-
     local db = GetBL_DB()
+    blFrame:SetFrameStrata((db and db.strata) or "MEDIUM")
+
     local pos = db and db.position
     if pos and pos.point then
         blFrame:SetPoint(pos.point, UIParent, pos.relativePoint or pos.point, pos.x or 40, pos.y or 140)
@@ -589,6 +592,7 @@ function ns.BloodlustTracker.Update()
     if shouldShow and _satedActive then
         local sz = db.iconSize or 36
         blFrame:SetSize(sz, sz)
+        blFrame:SetFrameStrata(db.strata or "MEDIUM")
         if ns.GUI and ns.GUI.SetFont then
             ns.GUI:SetFont(blCooldownText, db.fontSize or 12, "OUTLINE")
             if buffDurationFS then ns.GUI:SetFont(buffDurationFS, db.fontSize or 12, "OUTLINE") end

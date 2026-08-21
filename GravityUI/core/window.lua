@@ -551,20 +551,31 @@ CreateButtonBar = function(parent)
             if id == "profiles" then idx = i; break end 
         end
         if idx then
-            -- We assume "Installers" is the 4th item in profiles subtabs now
             GUI:ShowPage(idx, 4) 
         end
     end)
     instBtn:SetPoint("LEFT", 15, 0)
     instBtn:SetBackdropColor(C.accent[1], C.accent[2], C.accent[3], 0.5)
     instBtn:SetBackdropBorderColor(C.accent[1], C.accent[2], C.accent[3], 1)
-    
-    -- Add to refresh list
     instBtn.RefreshColors = function(self)
         self:SetBackdropColor(C.accent[1], C.accent[2], C.accent[3], 0.5)
         self:SetBackdropBorderColor(C.accent[1], C.accent[2], C.accent[3], 1)
     end
-    
+
+    -- GUI Edit Mode Button
+    local editBtn = GUI:CreateButton(buttonBar, "GUI Edit Mode", 120, 32, function()
+        if ns.Movers then
+            ns.Movers:SetEditMode(true)
+        end
+    end)
+    editBtn:SetPoint("LEFT", instBtn, "RIGHT", 20, 0)
+    editBtn:SetBackdropColor(0.1, 0.7, 0.3, 0.6)
+    editBtn:SetBackdropBorderColor(0.1, 0.8, 0.3, 1)
+    editBtn.RefreshColors = function(self)
+        self:SetBackdropColor(0.1, 0.7, 0.3, 0.6)
+        self:SetBackdropBorderColor(0.1, 0.8, 0.3, 1)
+    end
+
     -- Cooldown Settings Button
     local cdmBtn = GUI:CreateButton(buttonBar, "CDM Settings", 130, 32, function()
         if CooldownViewerSettings then
@@ -573,208 +584,73 @@ CreateButtonBar = function(parent)
             print("|cFF30D1FFGravityUI:|r Cooldown Settings not available.")
         end
     end)
-    cdmBtn:SetPoint("LEFT", instBtn, "RIGHT", 8, 0)
+    cdmBtn:SetPoint("LEFT", editBtn, "RIGHT", 8, 0)
     
-    -- Helper to open addon config
-    local function OpenAddonConfig(name, slashCmds)
-        if not C_AddOns.IsAddOnLoaded(name) then return false end
-        
-        -- Helper to execute a slash command if key exists
-        local function TryRun(key)
-            if SlashCmdList[key] then
-                SlashCmdList[key]("")
-                return true
-            end
-            return false
-        end
+    -- EllesmereUI Button (with logo)
+    local euiBtn = CreateFrame("Button", nil, buttonBar, "BackdropTemplate")
+    euiBtn:SetSize(130, 32)
+    euiBtn:SetPoint("LEFT", cdmBtn, "RIGHT", 20, 0)
+    euiBtn:SetBackdrop({
+        bgFile = "Interface\\Buttons\\WHITE8x8",
+        edgeFile = "Interface\\Buttons\\WHITE8x8",
+        edgeSize = 1,
+    })
+    euiBtn:SetBackdropColor(0.15, 0.12, 0.25, 0.7)
+    euiBtn:SetBackdropBorderColor(0.5, 0.3, 0.8, 1)
 
-        local cmds = type(slashCmds) == "table" and slashCmds or {slashCmds}
-        
-        -- 1. Try direct keys (UPPERCASE, TitleCase, lowercase)
-        for _, cmd in ipairs(cmds) do
-            if TryRun(cmd) then return true end
-            if TryRun(cmd:upper()) then return true end
-            if TryRun(cmd:lower()) then return true end
-        end
+    -- EUI Logo icon
+    local euiIcon = euiBtn:CreateTexture(nil, "ARTWORK")
+    euiIcon:SetSize(22, 22)
+    euiIcon:SetPoint("LEFT", 6, 0)
+    euiIcon:SetTexture("Interface\\AddOns\\EllesmereUI\\media\\eg-logo")
+    euiIcon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
 
-        -- 2. Brute force scan for the command string
-        -- e.g. look for SLASH_XYZ1 = "/bigwigs" -> run SlashCmdList["XYZ"]
-        for k, v in pairs(_G) do
-            if type(k) == "string" and k:match("^SLASH_") and type(v) == "string" then
-                for _, targetCmd in ipairs(cmds) do
-                     -- targetCmd might be "bw" or "bigwigs"
-                     -- v might be "/bw" or "/bigwigs"
-                     if v:lower() == "/" .. targetCmd:lower() then
-                         -- Extract key: SLASH_KEY1 -> KEY
-                         local key = k:match("^SLASH_(.+)%d+$")
-                         if key and TryRun(key) then 
-                             return true 
-                         end
-                     end
+    -- Text label
+    local euiLabel = euiBtn:CreateFontString(nil, "OVERLAY")
+    if GUI.SetFont then
+        GUI:SetFont(euiLabel, 11, "", {1, 1, 1, 1})
+    else
+        euiLabel:SetFontObject(GameFontNormal)
+    end
+    euiLabel:SetText("EllesmereUI")
+    euiLabel:SetPoint("LEFT", euiIcon, "RIGHT", 4, 0)
+
+    euiBtn:SetScript("OnClick", function()
+        if SlashCmdList["ELLESMEREUI"] then
+            SlashCmdList["ELLESMEREUI"]("")
+        elseif SlashCmdList["EUI"] then
+            SlashCmdList["EUI"]("")
+        elseif C_AddOns.IsAddOnLoaded("EllesmereUI") then
+            -- Brute force scan
+            for k, v in pairs(_G) do
+                if type(k) == "string" and k:match("^SLASH_") and type(v) == "string" then
+                    if v:lower() == "/eui" or v:lower() == "/ellesmereui" then
+                        local key = k:match("^SLASH_(.+)%d+$")
+                        if key and SlashCmdList[key] then
+                            SlashCmdList[key]("")
+                            return
+                        end
+                    end
                 end
             end
-        end
-
-        -- 3. Generic AceConfig fallback
-        local LibStub = _G.LibStub
-        if LibStub then
-            local AceConfigDialog = LibStub("AceConfigDialog-3.0", true)
-            if AceConfigDialog and AceConfigDialog.Open then
-                 if AceConfigDialog:Open(name) then return true end
-            end
-        end
-
-        print("|cFF30D1FFGravityUI:|r Loaded " .. name .. " but could not open config automatically.")
-        return true
-    end
-
-    -- Boss Mods Button (BigWigs / DBM)
-    -- Boss Mods Button (BigWigs / DBM)
-    local bossBtn = GUI:CreateButton(buttonBar, "Boss Mods", 90, 32, function()
-        local opened = false
-
-        -- BigWigs (Try Slash Commands)
-        if not opened and OpenAddonConfig("BigWigs", {"BIGWIGS", "BW"}) then opened = true end
-        
-        -- BigWigs (Try Option Frame directly if slash failed, sometimes its lod)
-        if not opened and C_AddOns.IsAddOnLoaded("BigWigs") then
-             -- Try generic AceConfig load
-             local LibStub = _G.LibStub
-             if LibStub then
-                 local AceConfigDialog = LibStub("AceConfigDialog-3.0", true)
-                 if AceConfigDialog and AceConfigDialog.Open then
-                      if AceConfigDialog:Open("BigWigs") then opened = true end
-                 end
-             end
-             -- Try LoadOnDemand options if needed
-             if not opened and not C_AddOns.IsAddOnLoaded("BigWigs_Options") then
-                 C_AddOns.LoadAddOn("BigWigs_Options")
-                 if LibStub("AceConfigDialog-3.0"):Open("BigWigs") then opened = true end
-             end
-         end
-
-        -- DBM (Deadly Boss Mods)
-        if not opened and OpenAddonConfig("DBM-Core", {"DBM", "DEADLYBOSSMODS"}) then opened = true end
-
-        if not opened then
-             print("|cFF30D1FFGravityUI:|r No supported Boss Mod addon loaded (BigWigs, DBM).")
+            print("|cFF30D1FFGravityUI:|r EllesmereUI loaded but could not open config.")
+        else
+            print("|cFF30D1FFGravityUI:|r EllesmereUI is not loaded.")
         end
     end)
-    bossBtn:SetPoint("LEFT", cdmBtn, "RIGHT", 8, 0)
-    -- Matching User Image styling
-    bossBtn:SetBackdropColor(C.accent[1], C.accent[2], C.accent[3], 0.5)
-    bossBtn:SetBackdropBorderColor(C.accent[1], C.accent[2], C.accent[3], 1)
-    
-    -- Add to refresh list
-    bossBtn.RefreshColors = function(self)
-        self:SetBackdropColor(C.accent[1], C.accent[2], C.accent[3], 0.5)
-        self:SetBackdropBorderColor(C.accent[1], C.accent[2], C.accent[3], 1)
-    end
 
-    -- Nameplates Button
-    local npBtn = GUI:CreateButton(buttonBar, "Nameplates", 90, 32, function()
-        local opened = false
-        
-        -- Plater
-        if not opened and OpenAddonConfig("Plater", "PLATER") then opened = true end
+    euiBtn:SetScript("OnEnter", function(self)
+        self:SetBackdropColor(0.25, 0.2, 0.4, 0.9)
+        self:SetBackdropBorderColor(0.7, 0.4, 1, 1)
+    end)
+    euiBtn:SetScript("OnLeave", function(self)
+        self:SetBackdropColor(0.15, 0.12, 0.25, 0.7)
+        self:SetBackdropBorderColor(0.5, 0.3, 0.8, 1)
+    end)
 
-        -- EllesmereUI (Nameplates module)
-        if not opened and OpenAddonConfig("EllesmereUI", "ELLESMEREUI") then opened = true end
-         
-        if not opened then
-             print("|cFF30D1FFGravityUI:|r No supported Nameplates addon loaded (Plater, EllesmereUI).")
-        end
-    end)
-    npBtn:SetPoint("LEFT", bossBtn, "RIGHT", 8, 0)
-    -- Matching User Image styling
-    npBtn:SetBackdropColor(C.accent[1], C.accent[2], C.accent[3], 0.5)
-    npBtn:SetBackdropBorderColor(C.accent[1], C.accent[2], C.accent[3], 1)
-    
-    -- Add to refresh list
-    npBtn.RefreshColors = function(self)
-        self:SetBackdropColor(C.accent[1], C.accent[2], C.accent[3], 0.5)
-        self:SetBackdropBorderColor(C.accent[1], C.accent[2], C.accent[3], 1)
-    end
-    
-    -- CDM Button (Better Cooldown Manager, Centered Cooldown Manager, Arc UI)
-    local cdmAddonBtn = GUI:CreateButton(buttonBar, "CDM", 50, 32, function()
-        local opened = false
-        
-        -- Centered Cooldown Manager
-        if not opened and OpenAddonConfig("CenteredCooldownManager", "CCM") then opened = true end
-        
-        -- Arc UI
-        if not opened and OpenAddonConfig("ArcUI", "ARCUI") then opened = true end
-
-        -- EllesmereUI (Cooldown Manager module)
-        if not opened and OpenAddonConfig("EllesmereUI", "ELLESMEREUI") then opened = true end
-         
-        if not opened then
-             print("|cFF30D1FFGravityUI:|r No supported CDM addon loaded (CCM, ArcUI, EllesmereUI).")
-        end
-    end)
-    cdmAddonBtn:SetPoint("LEFT", npBtn, "RIGHT", 8, 0)
-    -- Matching User Image styling
-    cdmAddonBtn:SetBackdropColor(C.accent[1], C.accent[2], C.accent[3], 0.5)
-    cdmAddonBtn:SetBackdropBorderColor(C.accent[1], C.accent[2], C.accent[3], 1)
-    
-    -- Add to refresh list (Standard Button)
-    cdmAddonBtn.RefreshColors = function(self)
-        self:SetBackdropColor(C.accent[1], C.accent[2], C.accent[3], 0.5)
-        self:SetBackdropBorderColor(C.accent[1], C.accent[2], C.accent[3], 1)
-    end
-    
-    -- Unitframes Button
-    local ufBtn = GUI:CreateButton(buttonBar, "Unitframes", 90, 32, function()
-        local opened = false
-        
-        -- EllesmereUI
-        if not opened and OpenAddonConfig("EllesmereUI", "ELLESMEREUI") then opened = true end
-        
-        -- MidnightSimpleUnitframes
-        if not opened and OpenAddonConfig("MidnightSimpleUnitframes", "MSUF") then opened = true end
-         
-        if not opened then
-             print("|cFF30D1FFGravityUI:|r No supported Unitframes addon loaded (EllesmereUI, Midnight).")
-        end
-    end)
-    ufBtn:SetPoint("LEFT", cdmAddonBtn, "RIGHT", 8, 0)
-    -- Matching User Image: Standardize to Theme Blue
-    ufBtn:SetBackdropColor(C.accent[1], C.accent[2], C.accent[3], 0.5) -- Semi-transparent Theme Blue
-    ufBtn:SetBackdropBorderColor(C.accent[1], C.accent[2], C.accent[3], 1) -- Theme Blue
-    
-    -- Add to refresh list
-    ufBtn.RefreshColors = function(self)
-        self:SetBackdropColor(C.accent[1], C.accent[2], C.accent[3], 0.5)
-        self:SetBackdropBorderColor(C.accent[1], C.accent[2], C.accent[3], 1)
-    end
- 
-    -- Party / Raid Button
-    local prBtn = GUI:CreateButton(buttonBar, "Party / Raid", 90, 32, function()
-        local opened = false
-        
-        -- Grid2
-        if not opened and OpenAddonConfig("Grid2", "GRID2") then opened = true end
-        
-        -- Cell
-        if not opened and OpenAddonConfig("Cell", "CELL") then opened = true end
-
-        -- EllesmereUI (Raid Frames module)
-        if not opened and OpenAddonConfig("EllesmereUI", "ELLESMEREUI") then opened = true end
- 
-        if not opened then
-            print("|cFF30D1FFGravityUI:|r No supported Party/Raid addon loaded (Grid2, Cell, EllesmereUI).")
-        end
-    end)
-    prBtn:SetPoint("LEFT", ufBtn, "RIGHT", 8, 0)
-    -- Matching User Image: Standardize to Theme Blue
-    prBtn:SetBackdropColor(C.accent[1], C.accent[2], C.accent[3], 0.5)
-    prBtn:SetBackdropBorderColor(C.accent[1], C.accent[2], C.accent[3], 1)
-     
-    -- Add to refresh list
-    prBtn.RefreshColors = function(self)
-        self:SetBackdropColor(C.accent[1], C.accent[2], C.accent[3], 0.5)
-        self:SetBackdropBorderColor(C.accent[1], C.accent[2], C.accent[3], 1)
+    euiBtn.RefreshColors = function(self)
+        self:SetBackdropColor(0.15, 0.12, 0.25, 0.7)
+        self:SetBackdropBorderColor(0.5, 0.3, 0.8, 1)
     end
      
     -- Discord Link & Manual UI Scale Input (Bottom Right)
@@ -894,6 +770,20 @@ CreateSidebarButtons = function()
     frame.sidebarItems = {}
     frame.sidebarButtons = {}
 
+    -- Icon mapping per page ID (custom white icons)
+    local ICON_DIR = "Interface\\AddOns\\GravityUI\\assets\\sidebar\\"
+    local SIDEBAR_ICONS = {
+        main       = ICON_DIR .. "icon_main",
+        minimap    = ICON_DIR .. "icon_minimap",
+        actionbars = ICON_DIR .. "icon_actionbars",
+        datapanels = ICON_DIR .. "icon_datapanels",
+        qol        = ICON_DIR .. "icon_qol",
+        features   = ICON_DIR .. "icon_features",
+        indicators = ICON_DIR .. "icon_indicators",
+        Styling    = ICON_DIR .. "icon_styling",
+        profiles   = ICON_DIR .. "icon_profiles",
+    }
+
     local buttonIndex = 0
 
     for i, pageId in ipairs(GUI.pageOrder) do
@@ -915,17 +805,31 @@ CreateSidebarButtons = function()
             indicator:Hide()
             btn.indicator = indicator
 
+            -- Sidebar Icon
+            local iconPath = SIDEBAR_ICONS[pageId]
+            local iconTex
+            if iconPath then
+                iconTex = btn:CreateTexture(nil, "ARTWORK")
+                iconTex:SetSize(16, 16)
+                iconTex:SetPoint("LEFT", 12, 0)
+                iconTex:SetTexture(iconPath)
+                iconTex:SetVertexColor(0.7, 0.7, 0.7, 0.8)
+            end
+            btn.icon = iconTex
+
+            local textOffset = iconTex and 34 or 15
             local btnText = btn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
             GUI:SetFont(btnText, 13, "")
             btnText:SetText(opts.title or pageId)
             btnText:SetTextColor(C.textMuted[1], C.textMuted[2], C.textMuted[3], 1)
-            btnText:SetPoint("LEFT", 15, 0)
+            btnText:SetPoint("LEFT", textOffset, 0)
 
-            btn.text     = btnText
+            btn.text       = btnText
             btn.pageIndex  = i
             btn.pageId     = pageId
             btn.subTabIndex = 1
             btn.type       = "page"
+            btn._textOffset = textOffset
 
             btn:SetScript("OnClick", function()
                 GUI:ShowPage(i, 1)
@@ -935,7 +839,8 @@ CreateSidebarButtons = function()
                 if GUI.currentPageIndex ~= self.pageIndex then
                     self:SetBackdropColor(1, 1, 1, 0.05)
                     self.text:SetTextColor(C.accentLight[1], C.accentLight[2], C.accentLight[3], 1)
-                    self.text:SetPoint("LEFT", 19, 0)
+                    self.text:SetPoint("LEFT", self._textOffset + 4, 0)
+                    if self.icon then self.icon:SetVertexColor(C.accentLight[1], C.accentLight[2], C.accentLight[3], 1) end
                 end
             end)
 
@@ -943,7 +848,8 @@ CreateSidebarButtons = function()
                 if GUI.currentPageIndex ~= self.pageIndex then
                     self:SetBackdropColor(0, 0, 0, 0)
                     self.text:SetTextColor(C.textMuted[1], C.textMuted[2], C.textMuted[3], 1)
-                    self.text:SetPoint("LEFT", 15, 0)
+                    self.text:SetPoint("LEFT", self._textOffset, 0)
+                    if self.icon then self.icon:SetVertexColor(0.7, 0.7, 0.7, 0.8) end
                 end
             end)
 
@@ -969,17 +875,20 @@ function GUI:RefreshSidebarStyle()
         if not item.indicator or not item.text then break end
         -- Refresh accent color on the stripe
         item.indicator:SetColorTexture(C.accent[1], C.accent[2], C.accent[3], 1)
+        local offset = item._textOffset or 15
 
         if item.pageIndex == curPage then
             item.indicator:Show()
             item:SetBackdropColor(C.accent[1], C.accent[2], C.accent[3], 0.08)
             item.text:SetTextColor(C.accent[1], C.accent[2], C.accent[3], 1)
-            item.text:SetPoint("LEFT", 15, 0)
+            item.text:SetPoint("LEFT", offset, 0)
+            if item.icon then item.icon:SetVertexColor(C.accent[1], C.accent[2], C.accent[3], 1) end
         else
             item.indicator:Hide()
             item:SetBackdropColor(0, 0, 0, 0)
             item.text:SetTextColor(C.textMuted[1], C.textMuted[2], C.textMuted[3], 1)
-            item.text:SetPoint("LEFT", 15, 0)
+            item.text:SetPoint("LEFT", offset, 0)
+            if item.icon then item.icon:SetVertexColor(0.7, 0.7, 0.7, 0.8) end
         end
     end
 end
@@ -996,18 +905,21 @@ UpdateButtonSelection = function()
 
     for _, btn in ipairs(frame.sidebarButtons) do
         local isSelected = (btn.pageIndex == curPage)
+        local offset = btn._textOffset or 15
 
         if isSelected then
             btn.indicator:Show()
             btn.indicator:SetColorTexture(C.accent[1], C.accent[2], C.accent[3], 1)
             btn:SetBackdropColor(C.accent[1], C.accent[2], C.accent[3], 0.08)
             btn.text:SetTextColor(C.accent[1], C.accent[2], C.accent[3], 1)
-            btn.text:SetPoint("LEFT", 15, 0)
+            btn.text:SetPoint("LEFT", offset, 0)
+            if btn.icon then btn.icon:SetVertexColor(C.accent[1], C.accent[2], C.accent[3], 1) end
         else
             btn.indicator:Hide()
             btn:SetBackdropColor(0, 0, 0, 0)
             btn.text:SetTextColor(C.textMuted[1], C.textMuted[2], C.textMuted[3], 1)
-            btn.text:SetPoint("LEFT", 15, 0)
+            btn.text:SetPoint("LEFT", offset, 0)
+            if btn.icon then btn.icon:SetVertexColor(0.7, 0.7, 0.7, 0.8) end
         end
     end
 end

@@ -428,6 +428,18 @@ local function CreateReadyCheckMover()
 end
 
 function Styling:ToggleReadyCheckMover(forceState)
+    -- If using Blizzard default position, never show mover
+    local db = GetDB()
+    if db and db.readyCheck and db.readyCheck.useDefaultPosition then
+        if readyCheckMover then
+            readyCheckMover:Hide()
+            if ns.Movers and ns.Movers.ApplyEditModeStyle then
+                ns.Movers:ApplyEditModeStyle(readyCheckMover, false, "ReadyCheck")
+            end
+        end
+        return
+    end
+
     CreateReadyCheckMover()
     
     local shouldShow = false
@@ -608,6 +620,8 @@ function Styling:SkinReadyCheck()
     -- Re-hide and restore position on show
     frame:HookScript("OnShow", function(self)
         HideBlizzardReadyCheckDecorations()
+        local rcDb = GetDB()
+        if rcDb and rcDb.readyCheck and rcDb.readyCheck.useDefaultPosition then return end
         local pos = Styling:GetReadyCheckPosition()
         if pos then
             self:ClearAllPoints()

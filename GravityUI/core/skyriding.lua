@@ -962,8 +962,17 @@ eventFrame:SetScript("OnEvent", function(self, event, arg1)
         if event == "PLAYER_CAN_GLIDE_CHANGED" then canGlide = arg1
         else isGliding = arg1; groundedTime = 0 end
         UpdateVisibility()
-    elseif event == "PLAYER_REGEN_DISABLED" then inCombat = true; UpdateVisibility()
-    elseif event == "PLAYER_REGEN_ENABLED" then inCombat = false; UpdateVisibility()
+    elseif event == "PLAYER_REGEN_DISABLED" then
+        inCombat = true
+        -- PERF: No flying in combat — unregister high-frequency cooldown events
+        self:UnregisterEvent("SPELL_UPDATE_COOLDOWN")
+        self:UnregisterEvent("SPELL_UPDATE_CHARGES")
+        UpdateVisibility()
+    elseif event == "PLAYER_REGEN_ENABLED" then
+        inCombat = false
+        self:RegisterEvent("SPELL_UPDATE_COOLDOWN")
+        self:RegisterEvent("SPELL_UPDATE_CHARGES")
+        UpdateVisibility()
     elseif event == "SPELL_UPDATE_CHARGES" or event == "SPELL_UPDATE_COOLDOWN" then
         -- Update Cache
         UpdateVigorState()

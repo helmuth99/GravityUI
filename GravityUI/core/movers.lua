@@ -77,92 +77,11 @@ local MODULE_CONFIG_MAP = {
             if ns.RaidWarnings and ns.RaidWarnings.ApplySettings then ns.RaidWarnings.ApplySettings() end
         end,
     },
-    ["RaidBuffs"] = {
-        get = function(db) return db.raidBuffs and db.raidBuffs.enabled ~= false end,
-        set = function(db, val)
-            if db.raidBuffs then db.raidBuffs.enabled = val end
-            if ns.RaidBuffs and ns.RaidBuffs.Refresh then ns.RaidBuffs:Refresh() end
-        end,
-    },
-    ["RaidBuffs_raid"] = {
-        get = function(db) return db.raidBuffs and db.raidBuffs.enabled ~= false and db.raidBuffs.splitCategories and db.raidBuffs.splitCategories.raid == true end,
-        set = function(db, val)
-            if db.raidBuffs then
-                if not db.raidBuffs.splitCategories then db.raidBuffs.splitCategories = {} end
-                db.raidBuffs.splitCategories.raid = val
-            end
-            if ns.RaidBuffs and ns.RaidBuffs.Refresh then ns.RaidBuffs:Refresh() end
-        end,
-    },
-    ["RaidBuffs_presence"] = {
-        get = function(db) return db.raidBuffs and db.raidBuffs.enabled ~= false and db.raidBuffs.splitCategories and db.raidBuffs.splitCategories.presence == true end,
-        set = function(db, val)
-            if db.raidBuffs then
-                if not db.raidBuffs.splitCategories then db.raidBuffs.splitCategories = {} end
-                db.raidBuffs.splitCategories.presence = val
-            end
-            if ns.RaidBuffs and ns.RaidBuffs.Refresh then ns.RaidBuffs:Refresh() end
-        end,
-    },
-    ["RaidBuffs_targeted"] = {
-        get = function(db) return db.raidBuffs and db.raidBuffs.enabled ~= false and db.raidBuffs.splitCategories and db.raidBuffs.splitCategories.targeted == true end,
-        set = function(db, val)
-            if db.raidBuffs then
-                if not db.raidBuffs.splitCategories then db.raidBuffs.splitCategories = {} end
-                db.raidBuffs.splitCategories.targeted = val
-            end
-            if ns.RaidBuffs and ns.RaidBuffs.Refresh then ns.RaidBuffs:Refresh() end
-        end,
-    },
-    ["RaidBuffs_self"] = {
-        get = function(db) return db.raidBuffs and db.raidBuffs.enabled ~= false and db.raidBuffs.splitCategories and db.raidBuffs.splitCategories.self == true end,
-        set = function(db, val)
-            if db.raidBuffs then
-                if not db.raidBuffs.splitCategories then db.raidBuffs.splitCategories = {} end
-                db.raidBuffs.splitCategories.self = val
-            end
-            if ns.RaidBuffs and ns.RaidBuffs.Refresh then ns.RaidBuffs:Refresh() end
-        end,
-    },
-    ["RaidBuffs_consumables"] = {
-        get = function(db) return db.raidBuffs and db.raidBuffs.enabled ~= false and db.raidBuffs.splitCategories and db.raidBuffs.splitCategories.consumables == true end,
-        set = function(db, val)
-            if db.raidBuffs then
-                if not db.raidBuffs.splitCategories then db.raidBuffs.splitCategories = {} end
-                db.raidBuffs.splitCategories.consumables = val
-            end
-            if ns.RaidBuffs and ns.RaidBuffs.Refresh then ns.RaidBuffs:Refresh() end
-        end,
-    },
-    ["RaidBuffs_custom"] = {
-        get = function(db) return db.raidBuffs and db.raidBuffs.enabled ~= false and db.raidBuffs.splitCategories and db.raidBuffs.splitCategories.custom == true end,
-        set = function(db, val)
-            if db.raidBuffs then
-                if not db.raidBuffs.splitCategories then db.raidBuffs.splitCategories = {} end
-                db.raidBuffs.splitCategories.custom = val
-            end
-            if ns.RaidBuffs and ns.RaidBuffs.Refresh then ns.RaidBuffs:Refresh() end
-        end,
-    },
     ["InterruptTracker"] = {
         get = function(db) return db.screenindicators and db.screenindicators.interruptTracker and db.screenindicators.interruptTracker.enabled ~= false end,
         set = function(db, val)
             if db.screenindicators and db.screenindicators.interruptTracker then db.screenindicators.interruptTracker.enabled = val end
             if ns.InterruptTracker and ns.InterruptTracker.ApplySettings then ns.InterruptTracker.ApplySettings() end
-        end,
-    },
-    ["TargetedSpellsBars"] = {
-        get = function(db) return db.screenindicators and db.screenindicators.targetedSpells and db.screenindicators.targetedSpells.enabled ~= false and db.screenindicators.targetedSpells.showBars ~= false end,
-        set = function(db, val)
-            if db.screenindicators and db.screenindicators.targetedSpells then db.screenindicators.targetedSpells.showBars = val end
-            if ns.TargetedSpells and ns.TargetedSpells.ApplySettings then ns.TargetedSpells.ApplySettings() end
-        end,
-    },
-    ["TargetedSpellsIcons"] = {
-        get = function(db) return db.screenindicators and db.screenindicators.targetedSpells and db.screenindicators.targetedSpells.enabled ~= false and db.screenindicators.targetedSpells.showIcons == true end,
-        set = function(db, val)
-            if db.screenindicators and db.screenindicators.targetedSpells then db.screenindicators.targetedSpells.showIcons = val end
-            if ns.TargetedSpells and ns.TargetedSpells.ApplySettings then ns.TargetedSpells.ApplySettings() end
         end,
     },
     ["HealerMana"] = {
@@ -404,9 +323,6 @@ function Movers:SetEditMode(enabled)
         self:HideHUD()
         self:EnableKeyHandler(false)
         self.selectedMover = nil
-        if ns.TargetedSpells and ns.TargetedSpells.TestMode then
-            pcall(ns.TargetedSpells.TestMode, false)
-        end
         if ns.HealerMana and ns.HealerMana.HidePreview then
             pcall(function() ns.HealerMana:HidePreview() end)
         end
@@ -522,7 +438,7 @@ function Movers:ApplyOverlayVisuals(ov, targetFrame, name)
     end
 
     -- Hide overlay labels on modules that render their own rich internal visuals
-    if name == "HealerMana" or name == "InterruptTracker" or name == "XPRep" or name == "WorldMarks" or name == "ReadyCheck" or name == "TargetedSpellsBars" or name == "StanceText" then
+    if name == "HealerMana" or name == "InterruptTracker" or name == "XPRep" or name == "WorldMarks" or name == "ReadyCheck" or name == "StanceText" then
         if ov.title then ov.title:Hide() end
         if ov.dim then ov.dim:Hide() end
     end
@@ -781,61 +697,12 @@ function Movers:SaveFramePosition(name, frame, point, relPoint, x, y)
         db.styling.alerts.alertPosition = { point = finalPoint, relPoint = finalRelPoint, x = finalX, y = finalY }
     elseif name == "Toasts" and db.styling and db.styling.alerts then
         db.styling.alerts.toastPosition = { point = finalPoint, relPoint = finalRelPoint, x = finalX, y = finalY }
-    elseif name == "TargetedSpellsBars" and db.screenindicators and db.screenindicators.targetedSpells then
-        local cx, cy = frame:GetCenter()
-        local scx, scy = UIParent:GetCenter()
-        if cx and scx then
-            db.screenindicators.targetedSpells.x = math.floor(cx - scx + 0.5)
-            db.screenindicators.targetedSpells.y = math.floor(cy - scy + 0.5)
-        end
-    elseif name == "TargetedSpellsIcons" and db.screenindicators and db.screenindicators.targetedSpells then
-        local cx, cy = frame:GetCenter()
-        local scx, scy = UIParent:GetCenter()
-        if cx and scx then
-            db.screenindicators.targetedSpells.iconX = math.floor(cx - scx + 0.5)
-            db.screenindicators.targetedSpells.iconY = math.floor(cy - scy + 0.5)
-        end
     elseif name == "InterruptTracker" and db.screenindicators and db.screenindicators.interruptTracker then
         local cx, cy = frame:GetCenter()
         local scx, scy = UIParent:GetCenter()
         if cx and scx then
             db.screenindicators.interruptTracker.x = math.floor(cx - scx + 0.5)
             db.screenindicators.interruptTracker.y = math.floor(cy - scy + 0.5)
-        end
-    elseif name == "RaidBuffs" and db.raidBuffs then
-        local left = frame:GetLeft()
-        local top = frame:GetTop()
-        local uTop = UIParent:GetTop()
-        if left and top and uTop then
-            local x = math.floor(left + 0.5)
-            local y = math.floor(top - uTop + 0.5)
-            db.raidBuffs.position = { point = "TOPLEFT", x = x, y = y }
-            frame:ClearAllPoints()
-            frame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", x, y)
-        else
-            db.raidBuffs.position = { point = "TOPLEFT", x = finalX, y = finalY }
-            frame:ClearAllPoints()
-            frame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", finalX, finalY)
-        end
-    elseif name:find("^RaidBuffs_") and db.raidBuffs then
-        local cat = name:match("^RaidBuffs_(.+)")
-        if cat then
-            if not db.raidBuffs.categorySettings then db.raidBuffs.categorySettings = {} end
-            if not db.raidBuffs.categorySettings[cat] then db.raidBuffs.categorySettings[cat] = {} end
-            local left = frame:GetLeft()
-            local top = frame:GetTop()
-            local uTop = UIParent:GetTop()
-            if left and top and uTop then
-                local x = math.floor(left + 0.5)
-                local y = math.floor(top - uTop + 0.5)
-                db.raidBuffs.categorySettings[cat].position = { point = "TOPLEFT", x = x, y = y }
-                frame:ClearAllPoints()
-                frame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", x, y)
-            else
-                db.raidBuffs.categorySettings[cat].position = { point = "TOPLEFT", x = finalX, y = finalY }
-                frame:ClearAllPoints()
-                frame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", finalX, finalY)
-            end
         end
     elseif name == "RaidWarnings" and db.raidWarnings then
         db.raidWarnings.x = finalX
@@ -847,12 +714,6 @@ function Movers:SaveFramePosition(name, frame, point, relPoint, x, y)
     elseif name == "CooldownText" and db.cooldownText then
         db.cooldownText.x = finalX
         db.cooldownText.y = finalY
-    elseif name == "TargetedSpellsBars" and db.screenindicators and db.screenindicators.targetedSpells then
-        db.screenindicators.targetedSpells.x = finalX
-        db.screenindicators.targetedSpells.y = finalY
-    elseif name == "TargetedSpellsIcons" and db.screenindicators and db.screenindicators.targetedSpells then
-        db.screenindicators.targetedSpells.iconX = finalX
-        db.screenindicators.targetedSpells.iconY = finalY
     elseif name == "BattleResTracker" and db.screenindicators and db.screenindicators.battleRes then
         db.screenindicators.battleRes.position = { point = finalPoint, relativePoint = finalRelPoint, x = finalX, y = finalY }
     elseif name == "BloodlustTracker" and db.screenindicators and db.screenindicators.bloodlust then

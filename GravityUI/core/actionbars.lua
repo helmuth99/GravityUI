@@ -323,6 +323,8 @@ local function OnElementEnter(self)
     if barKey then
         hoveredElements[barKey] = (hoveredElements[barKey] or 0) + 1
     end
+    -- PERF: Force 20Hz on next tick for responsive fade-in
+    if fadeFrame then fadeFrame._settled = false end
 end
 
 local function OnElementLeave(self)
@@ -330,6 +332,8 @@ local function OnElementLeave(self)
     if barKey then
         hoveredElements[barKey] = math.max(0, (hoveredElements[barKey] or 0) - 1)
     end
+    -- PERF: Force 20Hz on next tick for responsive fade-out
+    if fadeFrame then fadeFrame._settled = false end
 end
 
 local function HookBarElement(frame, barKey)
@@ -355,6 +359,14 @@ local fadeFrame = CreateFrame("Frame")
 local barStates = {}
 local barMetadata = {}
 
+-- PERF: Force 20Hz when combat state changes so "alwaysShowInCombat" responds immediately.
+local fadeCombatWaker = CreateFrame("Frame")
+fadeCombatWaker:RegisterEvent("PLAYER_REGEN_DISABLED")
+fadeCombatWaker:RegisterEvent("PLAYER_REGEN_ENABLED")
+fadeCombatWaker:SetScript("OnEvent", function()
+    if fadeFrame then fadeFrame._settled = false end
+end)
+
 local function RefreshBarMetadata()
     wipe(barMetadata)
     for barKey, frameName in pairs(BAR_FRAMES) do
@@ -368,7 +380,9 @@ end
 
 local function UpdateFade(self, elapsed)
     self.elapsed = (self.elapsed or 0) + elapsed
-    if self.elapsed < 0.05 then return end
+    -- PERF: Adaptive rate — 20Hz during animation, 2Hz when settled
+    local threshold = self._settled and 0.5 or 0.05
+    if self.elapsed < threshold then return end
     
     local tick = self.elapsed
     self.elapsed = 0
@@ -470,6 +484,11 @@ local function UpdateFade(self, elapsed)
             end
         end
     end
+
+    -- PERF: Adaptive throttle — when all bars are settled at their target alpha,
+    -- slow down to 2Hz (0.5s) instead of 20Hz. This keeps hover detection alive
+    -- (avoiding issues with OnEnter at alpha 0) while reducing idle CPU by 90%.
+    self._settled = not isAnyBarDirty
 end
 
 ---------------------------------------------------------------------------
@@ -1173,6 +1192,7 @@ function ns.RefreshActionBars()
     -- Toggle Fade logic
     if db.fade.enabled then
         barStates = {} -- Reset states so they re-init with current alpha
+        fadeFrame._settled = false  -- Start at 20Hz for initial settle
         fadeFrame:SetScript("OnUpdate", UpdateFade)
     else
         fadeFrame:SetScript("OnUpdate", nil)

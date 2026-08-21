@@ -451,17 +451,20 @@ local function BuildRowDefinitions()
     if not db or db.showCurrencies ~= false then
         table.insert(rows, { type = "header", label = "Currencies" })
         local currIDs = AM.Data and AM.Data.GetTrackedCurrencyIDs and AM.Data:GetTrackedCurrencyIDs() or {}
+        local hidden = db and db.hiddenCurrencies or {}
         for _, currID in ipairs(currIDs) do
-            local info = C_CurrencyInfo and C_CurrencyInfo.GetCurrencyInfo and C_CurrencyInfo.GetCurrencyInfo(currID)
-            if info and info.name and info.name ~= "" then
-                table.insert(rows, {
-                    id = "currency_" .. currID,
-                    label = info.name,
-                    icon = info.iconFileID or 0,
-                    category = "currency",
-                    currId = currID,
-                    quality = info.quality or 1,
-                })
+            if not hidden[currID] then
+                local info = C_CurrencyInfo and C_CurrencyInfo.GetCurrencyInfo and C_CurrencyInfo.GetCurrencyInfo(currID)
+                if info and info.name and info.name ~= "" then
+                    table.insert(rows, {
+                        id = "currency_" .. currID,
+                        label = info.name,
+                        icon = info.iconFileID or 0,
+                        category = "currency",
+                        currId = currID,
+                        quality = info.quality or 1,
+                    })
+                end
             end
         end
     end

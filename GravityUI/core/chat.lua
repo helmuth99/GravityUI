@@ -1682,11 +1682,17 @@ local function ApplyTabAutohide(chatFrame)
     end
 
     if settings.hideTabs then
-        -- Initialize Ticker once (centralized)
+        -- Initialize self-rescheduling timer (throttled during combat)
         if not ns.Chat.AutohideTicker then
-            ns.Chat.AutohideTicker = C_Timer.NewTicker(0.2, function()
+            ns.Chat._autohideActive = true
+            local function AutohideLoop()
+                if not ns.Chat._autohideActive then return end
                 UpdateAllTabsVisibility()
-            end)
+                -- 0.2s out of combat (responsive), 1s in combat (save CPU)
+                local interval = InCombatLockdown() and 1.0 or 0.2
+                ns.Chat.AutohideTicker = C_Timer.NewTimer(interval, AutohideLoop)
+            end
+            AutohideLoop()
         end
 
         -- Initialize Alpha and Hooks
@@ -1729,6 +1735,7 @@ local function ApplyTabAutohide(chatFrame)
     else
         -- Disabled: Restore alpha and stop ticker
         if ns.Chat.AutohideTicker then
+            ns.Chat._autohideActive = false
             ns.Chat.AutohideTicker:Cancel()
             ns.Chat.AutohideTicker = nil
         end

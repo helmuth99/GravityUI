@@ -396,179 +396,6 @@ local function BuildInterruptTracker(parent)
     content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
 end
 
--- 7. Targeted Spells
-local function BuildTargetedSpells(parent)
-    local scroll, content = GUI:CreateScrollableContent(parent)
-    scroll:SetAllPoints()
-    local db = ns.GetDB(); if not db then return end
-    if not db.screenindicators then db.screenindicators = {} end
-    if not db.screenindicators.targetedSpells then
-        db.screenindicators.targetedSpells = {}
-    end
-    local c = db.screenindicators.targetedSpells
-
-    -- Ensure defaults exist on live profile
-    if c.enabled == nil then c.enabled = false end
-    if c.showBars == nil then c.showBars = true end
-    if c.showIcons == nil then c.showIcons = false end
-    if c.showSelf == nil then c.showSelf = true end
-    if c.showParty == nil then c.showParty = true end
-    if c.onlyKickable == nil then c.onlyKickable = false end
-
-    if c.width == nil then c.width = 200 end
-    if c.height == nil then c.height = 20 end
-    if c.spacing == nil then c.spacing = 4 end
-    if c.maxBars == nil then c.maxBars = 5 end
-    if c.growDirection == nil then c.growDirection = "UP" end
-    if c.texture == nil then c.texture = "Gravity Normal" end
-    if c.font == nil then c.font = "Gravity" end
-    if c.fontSize == nil then c.fontSize = 12 end
-    if c.fontOutline == nil then c.fontOutline = "OUTLINE" end
-
-    if c.iconSize == nil then c.iconSize = 36 end
-    if c.iconSpacing == nil then c.iconSpacing = 4 end
-    if c.iconMax == nil then c.iconMax = 5 end
-    if c.iconGrowDirection == nil then c.iconGrowDirection = "RIGHT" end
-    if c.iconFont == nil then c.iconFont = "Gravity" end
-    if c.iconFontSize == nil then c.iconFontSize = 13 end
-    if c.iconFontOutline == nil then c.iconFontOutline = "OUTLINE" end
-    if c.iconShowTargetName == nil then c.iconShowTargetName = true end
-    if c.iconShowSweep == nil then c.iconShowSweep = true end
-    if c.iconGlow == nil then c.iconGlow = true end
-    if c.iconGlowMatchCast == nil then c.iconGlowMatchCast = true end
-    if c.iconGlowColor == nil then c.iconGlowColor = { 1.00, 0.82, 0.00, 0.90 } end
-    if c.iconGlowSize == nil then c.iconGlowSize = 4 end
-    if c.iconGlowPulse == nil then c.iconGlowPulse = true end
-
-    if c.castingColor == nil then c.castingColor = { 1.00, 0.82, 0.00, 0.90 } end
-    if c.channelingColor == nil then c.channelingColor = { 0.60, 0.25, 0.95, 0.90 } end
-    if c.shieldColor == nil then c.shieldColor = { 0.50, 0.50, 0.50, 0.90 } end
-    if c.backdropColor == nil then c.backdropColor = { 0.08, 0.08, 0.08, 0.85 } end
-    if c.textColor == nil then c.textColor = { 1, 1, 1, 1 } end
-    if c.targetClassColor == nil then c.targetClassColor = true end
-
-    c.soundEnabled = false
-    if c.soundFile == nil then c.soundFile = "Targeted" end
-    if c.soundChannel == nil then c.soundChannel = "Master" end
-
-    if c.x == nil then c.x = 0 end
-    if c.y == nil then c.y = -140 end
-    if c.iconX == nil then c.iconX = 0 end
-    if c.iconY == nil then c.iconY = -80 end
-
-    content.rowCount = 0
-
-    local function Refresh()
-        if ns.TargetedSpells and ns.TargetedSpells.ApplySettings then ns.TargetedSpells.ApplySettings() end
-        if ns.SyncEllesmereTargetedSpells then ns.SyncEllesmereTargetedSpells() end
-        C_Timer.After(0.05, function() if ns.GUI and ns.GUI.RefreshAll then ns.GUI:RefreshAll() end end)
-    end
-
-    local header = GUI:CreateSectionHeader(content, "Targeted Spells")
-    header:SetPoint("TOPLEFT", 10, -10)
-    header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
-    content.rowCount = 1.3
-
-    AddRow(content, "Enable Targeted Spells", "checkbox", "enabled", c, Refresh)
-    content.rowCount = content.rowCount + 0.2
-    AddRow(content, "Enable Bar Display", "checkbox", "showBars", c, Refresh)
-    AddRow(content, "Enable Icon Display", "checkbox", "showIcons", c, Refresh)
-    content.rowCount = content.rowCount + 0.3
-
-    -- Action Buttons (Test Mode & Movers)
-    local testBtn = GUI:CreateButton(content, "Toggle Test Mode", 130, 24, function()
-        if ns.TargetedSpells and ns.TargetedSpells.TestMode then ns.TargetedSpells.TestMode() end
-    end)
-    testBtn:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT + 5)))
-
-    local barMoverBtn = GUI:CreateButton(content, "Bar Mover", 100, 24, function()
-        if ns.TargetedSpells and ns.TargetedSpells.ToggleBarMover then ns.TargetedSpells.ToggleBarMover() end
-    end)
-    barMoverBtn:SetPoint("LEFT", testBtn, "RIGHT", 10, 0)
-
-    local iconMoverBtn = GUI:CreateButton(content, "Icon Mover", 100, 24, function()
-        if ns.TargetedSpells and ns.TargetedSpells.ToggleIconMover then ns.TargetedSpells.ToggleIconMover() end
-    end)
-    iconMoverBtn:SetPoint("LEFT", barMoverBtn, "RIGHT", 10, 0)
-    content.rowCount = content.rowCount + 1.2
-
-    CreateSubLabel(content, "Filters & Triggers")
-    AddRow(content, "Show Spells Targeting You", "checkbox", "showSelf", c, Refresh)
-    AddRow(content, "Show Spells Targeting Party", "checkbox", "showParty", c, Refresh)
-    AddRow(content, "Only Show Kickable Spells", "checkbox", "onlyKickable", c, Refresh)
-    content.rowCount = content.rowCount + 0.3
-
-    -- ICON MODE SETTINGS
-    CreateSubLabel(content, "Icon Mode Settings")
-    AddRow(content, "Only Show Icons Targeted on You", "checkbox", "iconOnlySelf", c, Refresh)
-    AddRow(content, "Enable Icon Glow", "checkbox", "iconGlow", c, Refresh)
-    AddRow(content, "Match Glow to Cast Color", "checkbox", "iconGlowMatchCast", c, Refresh)
-    AddRow(content, "Custom Glow Color", "color", "iconGlowColor", c, Refresh)
-    AddRow(content, "Glow Size", "slider", 2, 10, "iconGlowSize", c, Refresh, 1)
-    AddRow(content, "Animated Pulse Glow", "checkbox", "iconGlowPulse", c, Refresh)
-    AddRow(content, "Icon Size", "slider", 20, 80, "iconSize", c, Refresh, 1)
-    AddRow(content, "Icon Spacing", "slider", 0, 20, "iconSpacing", c, Refresh, 1)
-    AddRow(content, "Max Icons", "slider", 1, 10, "iconMax", c, Refresh, 1)
-    local iconDirections = {
-        { value = "CENTER", text = "Centered (Horizontal)" },
-        { value = "RIGHT",  text = "Grow Right" },
-        { value = "LEFT",   text = "Grow Left" },
-        { value = "UP",     text = "Grow Up" },
-        { value = "DOWN",   text = "Grow Down" },
-    }
-    AddRow(content, "Icon Grow Direction", "dropdown", iconDirections, "iconGrowDirection", c, Refresh)
-    AddRow(content, "Show Target Name under Icon", "checkbox", "iconShowTargetName", c, Refresh)
-    AddRow(content, "Show Cooldown Sweep", "checkbox", "iconShowSweep", c, Refresh)
-    AddRow(content, "Icon Font Size", "slider", 8, 24, "iconFontSize", c, Refresh, 1)
-    content.rowCount = content.rowCount + 0.3
-
-    -- BAR MODE SETTINGS
-    CreateSubLabel(content, "Bar Mode Settings")
-    AddRow(content, "Bar Width", "slider", 50, 400, "width", c, Refresh, 1)
-    AddRow(content, "Bar Height", "slider", 10, 50, "height", c, Refresh, 1)
-    AddRow(content, "Bar Spacing", "slider", 0, 20, "spacing", c, Refresh, 1)
-    AddRow(content, "Max Bars", "slider", 1, 10, "maxBars", c, Refresh, 1)
-    local barDirections = { { value = "UP", text = "Grow Up" }, { value = "DOWN", text = "Grow Down" } }
-    AddRow(content, "Grow Direction", "dropdown", barDirections, "growDirection", c, Refresh)
-
-    local texOptions = { { value = "Interface\\TargetingFrame\\UI-StatusBar", text = "Blizzard" } }
-    local fontOptions = { { value = "Fonts\\FRIZQT__.TTF", text = "Friz Quadrata" } }
-    local LSM = LibStub("LibSharedMedia-3.0", true)
-    if LSM then
-        fontOptions = {}
-        texOptions = {}
-        for name, _ in pairs(LSM:HashTable("font")) do table.insert(fontOptions, { value = name, text = name }) end
-        table.sort(fontOptions, function(a, b) return a.text < b.text end)
-        for name, _ in pairs(LSM:HashTable("statusbar")) do table.insert(texOptions, { value = name, text = name }) end
-        table.sort(texOptions, function(a, b) return a.text < b.text end)
-    end
-    AddRow(content, "Texture", "dropdown", texOptions, "texture", c, Refresh)
-    AddRow(content, "Font", "dropdown", fontOptions, "font", c, Refresh)
-    AddRow(content, "Font Size", "slider", 8, 32, "fontSize", c, Refresh, 1)
-    local outlines = { { value = "NONE", text = "None" }, { value = "OUTLINE", text = "Outline" }, { value = "THICKOUTLINE", text = "Thick Outline" } }
-    AddRow(content, "Font Outline", "dropdown", outlines, "fontOutline", c, Refresh)
-    content.rowCount = content.rowCount + 0.3
-
-    -- COLORS
-    CreateSubLabel(content, "Colors")
-    AddRow(content, "Casting Bar Color (Interruptible)", "color", "castingColor", c, Refresh)
-    AddRow(content, "Channeling Bar Color", "color", "channelingColor", c, Refresh)
-    AddRow(content, "Shielded / Non-Interruptible Color", "color", "shieldColor", c, Refresh)
-    AddRow(content, "Bar Track Background Color", "color", "backdropColor", c, Refresh)
-    AddRow(content, "Text Color", "color", "textColor", c, Refresh)
-    content.rowCount = content.rowCount + 0.2
-    AddRow(content, "Use Class Color for Target Name (» Name)", "checkbox", "targetClassColor", c, Refresh)
-    content.rowCount = content.rowCount + 0.3
-
-    -- AUDIO ALERT (Deactivated in WoW 12.0)
-    CreateSubLabel(content, "Audio Alert |cffff4444(Deactivated)|r")
-    
-    local noteBox = GUI:CreateInfoBox(content, "|cffFFCC00Audio Alerts Deactivated|r\nAudio alerts for targeted enemy casts are currently deactivated until a reliable, secret-safe target resolution API is available in WoW 12.0.")
-    content.rowCount = content.rowCount + 1.8
-
-    content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
-end
-
 -- 8. Death Announcer
 local function BuildDeathAnnouncer(parent)
     local scroll, content = GUI:CreateScrollableContent(parent)
@@ -696,6 +523,7 @@ local function BuildDeathAnnouncer(parent)
 
     content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
 end
+ns._BuildDeathAnnouncer = BuildDeathAnnouncer -- exposed for indicators page
 
 -- 9. Gravity Alt Manager
 local function BuildAltManager(parent)
@@ -756,6 +584,101 @@ local function BuildAltManager(parent)
     AddRow(content, "Show Mythic+ Dungeons", "checkbox", "showMPlus", c, refreshDashboard)
     AddRow(content, "Show Raid Lockouts", "checkbox", "showRaids", c, refreshDashboard)
     AddRow(content, "Show Currencies (Crests/Valor)", "checkbox", "showCurrencies", c, refreshDashboard)
+
+    -- Per-currency filter: compact icon grid with checkmarks
+    if c.showCurrencies ~= false then
+        if not c.hiddenCurrencies then c.hiddenCurrencies = {} end
+        local currIDs = ns.AltManager and ns.AltManager.Data and ns.AltManager.Data.GetTrackedCurrencyIDs and ns.AltManager.Data:GetTrackedCurrencyIDs() or {}
+
+        local ITEM_W, ITEM_H = 170, 24
+        local COLS = 2
+        local PAD_X, PAD_Y = 8, 4
+        local count = content.rowCount or 0
+        local gridY = -10 - (count * (ROW_HEIGHT + 5)) - 4
+
+        local col, row = 0, 0
+        for _, currID in ipairs(currIDs) do
+            local info = C_CurrencyInfo and C_CurrencyInfo.GetCurrencyInfo and C_CurrencyInfo.GetCurrencyInfo(currID)
+            if info and info.name and info.name ~= "" then
+                local btn = CreateFrame("Button", nil, content)
+                btn:SetSize(ITEM_W, ITEM_H)
+                btn:SetPoint("TOPLEFT", 20 + col * (ITEM_W + PAD_X), gridY - row * (ITEM_H + PAD_Y))
+
+                -- Icon
+                local icon = btn:CreateTexture(nil, "ARTWORK")
+                icon:SetSize(18, 18)
+                icon:SetPoint("LEFT", 0, 0)
+                icon:SetTexture(info.iconFileID or 134400)
+                icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+
+                -- Name
+                local name = btn:CreateFontString(nil, "OVERLAY")
+                if ns.GUI.SetFont then ns.GUI:SetFont(name, 11, "") end
+                name:SetPoint("LEFT", icon, "RIGHT", 6, 0)
+                name:SetPoint("RIGHT", btn, "RIGHT", -22, 0)
+                name:SetJustifyH("LEFT")
+                name:SetWordWrap(false)
+                name:SetText(info.name)
+
+                -- Checkmark
+                local check = btn:CreateTexture(nil, "OVERLAY")
+                check:SetSize(14, 14)
+                check:SetPoint("RIGHT", btn, "RIGHT", -2, 0)
+                check:SetTexture("Interface\\RAIDFRAME\\ReadyCheck-Ready")
+
+                local isHidden = c.hiddenCurrencies[currID]
+                if isHidden then
+                    name:SetTextColor(0.4, 0.4, 0.4, 1)
+                    icon:SetDesaturated(true)
+                    icon:SetAlpha(0.4)
+                    check:Hide()
+                else
+                    name:SetTextColor(0.9, 0.9, 0.9, 1)
+                    icon:SetDesaturated(false)
+                    icon:SetAlpha(1)
+                    check:Show()
+                end
+
+                btn:SetScript("OnClick", function()
+                    if c.hiddenCurrencies[currID] then
+                        c.hiddenCurrencies[currID] = nil
+                        name:SetTextColor(0.9, 0.9, 0.9, 1)
+                        icon:SetDesaturated(false)
+                        icon:SetAlpha(1)
+                        check:Show()
+                    else
+                        c.hiddenCurrencies[currID] = true
+                        name:SetTextColor(0.4, 0.4, 0.4, 1)
+                        icon:SetDesaturated(true)
+                        icon:SetAlpha(0.4)
+                        check:Hide()
+                    end
+                    refreshDashboard()
+                end)
+
+                btn:SetScript("OnEnter", function(self)
+                    if not c.hiddenCurrencies[currID] then
+                        name:SetTextColor(1, 1, 1, 1)
+                    end
+                end)
+                btn:SetScript("OnLeave", function(self)
+                    if not c.hiddenCurrencies[currID] then
+                        name:SetTextColor(0.9, 0.9, 0.9, 1)
+                    end
+                end)
+
+                col = col + 1
+                if col >= COLS then
+                    col = 0
+                    row = row + 1
+                end
+            end
+        end
+        -- Account for grid height in content layout
+        local totalRows = row + (col > 0 and 1 or 0)
+        content.rowCount = count + math.ceil(totalRows * (ITEM_H + PAD_Y) / (ROW_HEIGHT + 5)) + 0.3
+    end
+
     AddRow(content, "Only Max Level Characters", "checkbox", "onlyMaxLevel", c, onFilterChange)
     AddRow(content, "Show 0-Rated Characters", "checkbox", "showZeroRated", c, onFilterChange)
     AddRow(content, "Visible Characters", "slider", 3, 8, "visibleColumns", c, refreshDashboard, 1)
@@ -983,8 +906,6 @@ ns.GUI:RegisterPage("features", {
         { name = "Mail",                builder = BuildMailExtras },
         { name = "Guildtools",          builder = BuildTools },
         { name = "Interrupt Tracker",   builder = BuildInterruptTracker },
-        { name = "Targeted Spells",     builder = BuildTargetedSpells },
-        { name = "Death Announcer",     builder = BuildDeathAnnouncer },
         { name = "Gravity Alt Manager", builder = BuildAltManager },
         { name = "Frame Mover",         builder = BuildFrameMover },
     },

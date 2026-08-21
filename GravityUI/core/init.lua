@@ -183,7 +183,6 @@ function Addon:OnInitialize()
             if ns.SyncEllesmereVigorBar       then ns.SyncEllesmereVigorBar()       end
             if ns.SyncEllesmereCharSheet      then ns.SyncEllesmereCharSheet()      end
             if ns.SyncEllesmereAccentColor    then ns.SyncEllesmereAccentColor()    end
-            if ns.SyncEllesmereTargetedSpells then ns.SyncEllesmereTargetedSpells() end
         end)
     end
     
@@ -201,7 +200,6 @@ function Addon:OnInitialize()
                 if ns.SyncEllesmereVigorBar       then ns.SyncEllesmereVigorBar()       end
                 if ns.SyncEllesmereCharSheet      then ns.SyncEllesmereCharSheet()      end
                 if ns.SyncEllesmereAccentColor    then ns.SyncEllesmereAccentColor()    end
-                if ns.SyncEllesmereTargetedSpells then ns.SyncEllesmereTargetedSpells() end
             end
 
             -- Refresh in-game UI elements (Minimap, Datapanels, Colors, local changes)
@@ -342,10 +340,6 @@ function Addon:OnEnable()
         if ns.InterruptTracker.ApplySettings then ns.InterruptTracker.ApplySettings() end
     end
 
-    if ns.TargetedSpells and ns.TargetedSpells.Initialize then
-        ns.TargetedSpells.Initialize()
-        if ns.TargetedSpells.ApplySettings then ns.TargetedSpells.ApplySettings() end
-    end
 
     if ns.Consumables and ns.Consumables.Initialize then 
         ns.Consumables.Initialize()
@@ -564,10 +558,7 @@ do
                     Disable("EllesmereUIActionBars")
                 end
 
-                -- AuraBuff Reminders: disable when GravityUI Missing Buffs is active
-                if db.raidBuffs and (db.raidBuffs.enabled ~= false) then
-                    Disable("EllesmereUIAuraBuffReminders")
-                end
+
             end
 
             -- Nameplates: disable EllesmereUINameplates when Plater is loaded,
@@ -641,7 +632,6 @@ do
     if C_AddOns.IsAddOnLoaded("EllesmereUI") then
         local LOCK_FOLDER         = "EllesmereUIBlizzardSkin"
         local LOCK_TOOLTIP        = "Managed by GravityUI \226\128\147 Blizz UI styling is handled by GravityUI's Styling module."
-        local AURABUFF_FOLDER     = "EllesmereUIAuraBuffReminders"
         local BAGS_FOLDER          = "EllesmereUIBags"
         local CHAT_FOLDER          = "EllesmereUIChat"
         local MINIMAP_FOLDER       = "EllesmereUIMinimap"
@@ -691,11 +681,7 @@ do
             return db and db.actionbars and (db.actionbars.enabled ~= false)
         end
 
-        -- Returns true when GravityUI's Missing Buffs (Raid Buff Reminders) is enabled
-        local function IsGravityUIAuraBuffEnabled()
-            local db = ns.GetDB()
-            return db and db.raidBuffs and (db.raidBuffs.enabled ~= false)
-        end
+
 
         StaticPopupDialogs["GRAVITYUI_CONFIRM_ENABLE_MODULE"] = {
             text = "Möchtest du das Modul '%s' in EllesmereUI wirklich aktivieren?\n\nGravityUI besitzt bereits eigene Quality of Life Funktionen.",
@@ -909,13 +895,7 @@ do
             end)
         end
 
-        -- AuraBuff Reminders: managed by GravityUI Missing Buffs → navigate to Indicators page
-        local function ApplyAuraBuffHide()
-            if not IsGravityUIAuraBuffEnabled() then return end
-            local E = _G.EllesmereUI
-            if not (E and E._sidebarButtons) then return end
-            MakePlaceholder(E._sidebarButtons[AURABUFF_FOLDER], "by GravityUI", "indicators")
-        end
+
 
         -- QoL: managed by GravityUI when disabled in WoW, but if user explicitly activated EllesmereUIQoL, leave it unlocked
         local function ApplyAlwaysHidden()
@@ -959,7 +939,7 @@ do
             ApplyBagsHide()
             ApplyMythicTimerHide()
             ApplyDamageMetersHide()
-            ApplyAuraBuffHide()
+
 
             -- Replace Script handlers and wrap RefreshSidebarOverrideLocks only once
             if not scriptsPatched then
@@ -980,7 +960,7 @@ do
                         ApplyBagsHide()
                         ApplyMythicTimerHide()
                         ApplyDamageMetersHide()
-                        ApplyAuraBuffHide()
+
                     end
                 end
             end
@@ -1308,70 +1288,6 @@ do
     end
 end
 
--------------------------------------------------------------------------------
--- ns.SyncEllesmereTargetedSpells – always defined (even without EllesmereUI).
--- When GravityUI's Targeted Spells is on and EllesmereUI / EllesmereUIMythicTimer
--- is loaded, this disables EllesmereUI's Targeted Spell Bars (tsb.enabled = false)
--- to prevent two targeted cast bar systems running simultaneously.
--------------------------------------------------------------------------------
-do
-    local function IsGravityUITargetedSpellsEnabled()
-        local db = ns.GetDB()
-        if not db then return false end
-        local ts = db.screenindicators and db.screenindicators.targetedSpells
-        return ts and (ts.enabled == true)
-    end
-
-    ns.SyncEllesmereTargetedSpells = function()
-        if not (C_AddOns.IsAddOnLoaded("EllesmereUI") or C_AddOns.IsAddOnLoaded("EllesmereUIMythicTimer")) then return end
-        if not IsGravityUITargetedSpellsEnabled() then return end
-
-        local changed = false
-
-        -- 1. Sync to active AceDB handle if initialized
-        if _G._EMT_AceDB and _G._EMT_AceDB.profile then
-            local p = _G._EMT_AceDB.profile
-            if p.tsb and p.tsb.enabled ~= false then
-                p.tsb.enabled = false
-                changed = true
-            end
-        end
-
-        -- 2. Sync to EllesmereUIDB SavedVariables across profiles
-        if _G.EllesmereUIDB and _G.EllesmereUIDB.profiles then
-            for _, profile in pairs(_G.EllesmereUIDB.profiles) do
-                if profile.addons and profile.addons["EllesmereUIMythicTimer"] then
-                    local tsb = profile.addons["EllesmereUIMythicTimer"].tsb
-                    if tsb and tsb.enabled ~= false then
-                        tsb.enabled = false
-                        changed = true
-                    end
-                end
-            end
-        end
-
-        -- 3. Sync to standalone EllesmereUIMythicTimerDB if present
-        if _G.EllesmereUIMythicTimerDB and _G.EllesmereUIMythicTimerDB.profiles then
-            for _, profile in pairs(_G.EllesmereUIMythicTimerDB.profiles) do
-                if profile.tsb and profile.tsb.enabled ~= false then
-                    profile.tsb.enabled = false
-                    changed = true
-                end
-            end
-        end
-
-        -- 4. Trigger EllesmereUIMythicTimer runtime refresh to deactivate immediately
-        local emtNS = _G.EllesmereUI and _G.EllesmereUI._ModuleNS and _G.EllesmereUI._ModuleNS["EllesmereUIMythicTimer"]
-        if emtNS and emtNS.TSB_Refresh then
-            emtNS.TSB_Refresh()
-        end
-
-        -- 5. Refresh EllesmereUI widgets if options are currently visible
-        local E = _G.EllesmereUI
-        if E and E.RefreshWidgets then E:RefreshWidgets() end
-        if E and E.RefreshPage then E:RefreshPage() end
-    end
-end
 
 -------------------------------------------------------------------------------
 -- ns.SyncEllesmereAccentColor – always defined (even without EllesmereUI).
@@ -1858,161 +1774,9 @@ end
 
 -------------------------------------------------------------------------------
 -- EllesmereUI – "Managed by GravityUI" overlay for the TARGETED SPELL BARS
--- section inside Mythic+ Tools → Targeted Spell Bars.
 --
--- When GravityUI's Targeted Spells (Features > Targeted Spells > Enable Targeted Spells)
--- is enabled, EllesmereUI's Targeted Spell Bars is disabled via SyncEllesmereTargetedSpells
--- and this overlay locks the Targeted Spell Bars settings page so the user cannot
 -- re-enable it through EllesmereUI.
 --
--- In reverse, if EllesmereUI's Targeted Spell Bars is enabled by the user while
--- GravityUI's Targeted Spells was disabled (or via external profile import),
--- we listen for TSB_Refresh and disable GravityUI's Targeted Spells to avoid conflicts.
--------------------------------------------------------------------------------
-do
-    if C_AddOns.IsAddOnLoaded("EllesmereUI") or C_AddOns.IsAddOnLoaded("EllesmereUIMythicTimer") then
-        local TSB_CACHE_KEY   = "EllesmereUIMythicTimer::Targeted Spell Bars"
-        local TSB_SECTION_KEY = "TARGETED SPELL BARS"   -- frame._sectionName value
-        local tsbSectionOverlay = nil
-        local tsbHooksInstalled = false
-
-        local function IsGravityUITargetedSpellsEnabled()
-            local db = ns.GetDB()
-            if not db then return false end
-            local ts = db.screenindicators and db.screenindicators.targetedSpells
-            return ts and (ts.enabled == true)
-        end
-
-        local function GetTSBWrapper()
-            local E = _G.EllesmereUI
-            if not (E and E._pageCache) then return nil end
-            local entry = E._pageCache[TSB_CACHE_KEY]
-            return entry and entry.wrapper or nil
-        end
-
-        local function FindTSBHeader(wrapper)
-            if not wrapper then return nil end
-            for _, child in next, {wrapper:GetChildren()} do
-                if child._isSectionHeader and child._sectionName == TSB_SECTION_KEY then
-                    return child
-                end
-            end
-            return nil
-        end
-
-        local function PlaceTSBOverlay()
-            ns.SyncEllesmereTargetedSpells()
-
-            local E = _G.EllesmereUI
-            if not E then return end
-
-            if not IsGravityUITargetedSpellsEnabled() then
-                if tsbSectionOverlay then tsbSectionOverlay:Hide() end
-                return
-            end
-
-            local wrapper = GetTSBWrapper()
-            if not wrapper then return end
-
-            local header = FindTSBHeader(wrapper)
-            if not header then return end
-
-            if not tsbSectionOverlay then
-                tsbSectionOverlay = CreateFrame("Frame", nil, wrapper)
-                tsbSectionOverlay:EnableMouse(true)
-                tsbSectionOverlay:SetFrameStrata("DIALOG")
-                tsbSectionOverlay:SetFrameLevel(200)
-
-                local bg = tsbSectionOverlay:CreateTexture(nil, "BACKGROUND")
-                bg:SetAllPoints()
-                bg:SetColorTexture(0.02, 0.02, 0.06, 0.82)
-
-                local lbl = tsbSectionOverlay:CreateFontString(nil, "OVERLAY")
-                lbl:SetFont("Fonts\\FRIZQT__.TTF", 13, "OUTLINE")
-                lbl:SetTextColor(ns.GetAccentColor())  -- GravityUI accent
-                lbl:SetText("Managed by GravityUI")
-                lbl:SetPoint("CENTER", tsbSectionOverlay, "CENTER", 0, 10)
-
-                local sub = tsbSectionOverlay:CreateFontString(nil, "OVERLAY")
-                sub:SetFont("Fonts\\FRIZQT__.TTF", 10, "")
-                sub:SetTextColor(0.75, 0.75, 0.75, 1)
-                sub:SetText("Change it under Features > Targeted Spells")
-                sub:SetPoint("TOP", lbl, "BOTTOM", 0, -5)
-
-                tsbSectionOverlay:SetScript("OnEnter", function(self)
-                    if E and E.ShowWidgetTooltip then
-                        E.ShowWidgetTooltip(self,
-                            "This section is managed by GravityUI.\n" ..
-                            "To configure Targeted Spells, open GravityUI (|cffFFCC00/gui|r)\n" ..
-                            "and go to |cffFFCC00Features > Targeted Spells|r.")
-                    end
-                end)
-                tsbSectionOverlay:SetScript("OnLeave", function()
-                    if E and E.HideWidgetTooltip then E.HideWidgetTooltip() end
-                end)
-                tsbSectionOverlay:SetScript("OnMouseUp", function()
-                    if E and E.Toggle then pcall(function() E:Toggle() end) end
-                    C_Timer.After(0.05, function()
-                        if ns.GUI then
-                            ns.GUI:Show()
-                            C_Timer.After(0, function() ns.GUI:ShowPage("features") end)
-                        end
-                    end)
-                end)
-            end
-
-            -- Two-anchor stretch:
-            tsbSectionOverlay:SetParent(wrapper)
-            tsbSectionOverlay:SetFrameStrata("DIALOG")
-            tsbSectionOverlay:SetFrameLevel(200)
-            tsbSectionOverlay:ClearAllPoints()
-            tsbSectionOverlay:SetPoint("TOPLEFT",     header,  "BOTTOMLEFT",  0, 0)
-            tsbSectionOverlay:SetPoint("BOTTOMRIGHT", wrapper, "BOTTOMRIGHT", 0, 0)
-            tsbSectionOverlay:Show()
-        end
-
-        -- Install hooks on PLAYER_LOGIN
-        local tsbHookFrame = CreateFrame("Frame")
-        tsbHookFrame:RegisterEvent("PLAYER_LOGIN")
-        tsbHookFrame:SetScript("OnEvent", function(self)
-            self:UnregisterAllEvents()
-            if tsbHooksInstalled then return end
-            local E = _G.EllesmereUI
-            if not E then return end
-            tsbHooksInstalled = true
-            local function TsbSchedule() C_Timer.After(0, PlaceTSBOverlay) end
-            hooksecurefunc(E, "Show",         TsbSchedule)
-            hooksecurefunc(E, "Toggle",       TsbSchedule)
-            hooksecurefunc(E, "ShowModule",   TsbSchedule)
-            hooksecurefunc(E, "SelectModule", TsbSchedule)
-            if E.SelectPage then
-                hooksecurefunc(E, "SelectPage", TsbSchedule)
-            end
-
-            -- Reverse hook: If user enables Targeted Spell Bars in EllesmereUI,
-            -- auto-disable GravityUI's Targeted Spells so they never collide.
-            local emtNS = E._ModuleNS and E._ModuleNS["EllesmereUIMythicTimer"]
-            if emtNS and emtNS.TSB_Refresh then
-                hooksecurefunc(emtNS, "TSB_Refresh", function()
-                    local p = _G._EMT_AceDB and _G._EMT_AceDB.profile
-                    local euiTsbEnabled = p and p.tsb and (p.tsb.enabled == true)
-                    if euiTsbEnabled then
-                        local gdb = ns.GetDB()
-                        if gdb and gdb.screenindicators and gdb.screenindicators.targetedSpells and gdb.screenindicators.targetedSpells.enabled then
-                            gdb.screenindicators.targetedSpells.enabled = false
-                            if ns.TargetedSpells and ns.TargetedSpells.ApplySettings then
-                                ns.TargetedSpells.ApplySettings()
-                            end
-                            if ns.GUI and ns.GUI.RefreshAll then
-                                ns.GUI:RefreshAll()
-                            end
-                        end
-                    end
-                end)
-            end
-        end)
-    end
-end
 
 -------------------------------------------------------------------------------
 -- EllesmereUI – Hunter Rapid Fire Channel Ticks Bridge
@@ -2248,7 +2012,6 @@ function Addon:PLAYER_ENTERING_WORLD(event, isInitialLogin, isReloadingUi)
         if ns.Loot and ns.Loot.Initialize then ns.Loot:Initialize() end
         if ns.RaidWarnings and ns.RaidWarnings.Initialize then ns.RaidWarnings:Initialize() end
         if ns.InterruptTracker and ns.InterruptTracker.Initialize then ns.InterruptTracker:Initialize() end
-        if ns.TargetedSpells and ns.TargetedSpells.Initialize then ns.TargetedSpells:Initialize() end
         if ns.TrackedBuffBar and ns.TrackedBuffBar.Init then ns.TrackedBuffBar:Init() end
     end)
     

@@ -555,19 +555,20 @@ local function CreateTauntCursorFrame()
     frame.cd = cd
     frame.cdText = cdText
 
-    local elapsed = 0
-    frame:SetScript("OnUpdate", function(self, dt)
-        elapsed = elapsed + dt
-        if elapsed < 0.05 then return end
-        elapsed = 0
+    -- PERF: Instead of a separate OnUpdate calling GetCursorPosition(),
+    -- parent to the main cursorFrame and use offsets. The main cursor's
+    -- single 20Hz OnUpdate handles all positioning.
+    local function AnchorTauntToCursor()
         local s = GetCursorSettings()
         local offX = (s and s.tauntCursorOffsetX) or 12
         local offY = (s and s.tauntCursorOffsetY) or 12
-        local x, y = GetCursorPosition()
-        self:SetPoint("CENTER", UIParent, "BOTTOMLEFT",
-            (x / effectiveScale) + offX,
-            (y / effectiveScale) + offY)
-    end)
+        frame:ClearAllPoints()
+        if cursorFrame then
+            frame:SetPoint("CENTER", cursorFrame, "CENTER", offX - cursorOffsetX, offY - cursorOffsetY)
+        end
+    end
+    frame.AnchorToCursor = AnchorTauntToCursor
+    AnchorTauntToCursor()
     tauntCursorFrame = frame
     ApplyTauntCursorSettings()
 end
@@ -705,19 +706,20 @@ local function CreateDispelCursorFrame()
     frame.cd = cd
     frame.cdText = cdText
 
-    local elapsed = 0
-    frame:SetScript("OnUpdate", function(self, dt)
-        elapsed = elapsed + dt
-        if elapsed < 0.05 then return end
-        elapsed = 0
+    -- PERF: Instead of a separate OnUpdate calling GetCursorPosition(),
+    -- parent to the main cursorFrame and use offsets. The main cursor's
+    -- single 20Hz OnUpdate handles all positioning.
+    local function AnchorDispelToCursor()
         local s = GetCursorSettings()
         local offX = (s and s.dispelCursorOffsetX) or -12
         local offY = (s and s.dispelCursorOffsetY) or 12
-        local x, y = GetCursorPosition()
-        self:SetPoint("CENTER", UIParent, "BOTTOMLEFT",
-            (x / effectiveScale) + offX,
-            (y / effectiveScale) + offY)
-    end)
+        frame:ClearAllPoints()
+        if cursorFrame then
+            frame:SetPoint("CENTER", cursorFrame, "CENTER", offX - cursorOffsetX, offY - cursorOffsetY)
+        end
+    end
+    frame.AnchorToCursor = AnchorDispelToCursor
+    AnchorDispelToCursor()
     dispelCursorFrame = frame
     ApplyDispelCursorSettings()
 end

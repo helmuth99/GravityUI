@@ -90,262 +90,359 @@ local function CreateSubLabel(parent, text)
 end
 
 --==============================================================================================================================================================================================
+-- SHARED COLUMN LAYOUT HELPERS
+--==============================================================================================================================================================================================
+local COL_W = 280
+local COL_GAP = 15
+local COL_PAD = 10
+
+local function CreateTwoColumns(content)
+    local leftCol = CreateFrame("Frame", nil, content)
+    leftCol:SetPoint("TOPLEFT", COL_PAD, -10)
+    leftCol:SetWidth(COL_W)
+    leftCol.rowCount = 0
+
+    local rightCol = CreateFrame("Frame", nil, content)
+    rightCol:SetPoint("TOPLEFT", COL_PAD + COL_W + COL_GAP, -10)
+    rightCol:SetWidth(COL_W)
+    rightCol.rowCount = 0
+
+    return leftCol, rightCol
+end
+
+local function ColAddRow(col, label, type, ...)
+    local row = CreatePropertyRow(col, label, type, ...)
+    local count = col.rowCount or 0
+    row:SetPoint("TOPLEFT", 0, -(count * (ROW_HEIGHT + 5)))
+    col.rowCount = count + 1
+    return row
+end
+
+local function ColSubLabel(col, text)
+    local row = col.rowCount or 0
+    local y = -(row * (ROW_HEIGHT + 5))
+    local label = col:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+    label:SetPoint("TOPLEFT", 0, y)
+    label:SetText(text)
+    label:SetTextColor(unpack(C.accent))
+    col.rowCount = row + 1.0
+end
+
+local function ColInfoLine(col, text)
+    local row = col.rowCount or 0
+    local y = -(row * (ROW_HEIGHT + 5))
+    local info = col:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    if ns.GUI.SetFont then ns.GUI:SetFont(info, 10, "") end
+    info:SetPoint("TOPLEFT", 4, y + 4)
+    info:SetWidth(COL_W - 10)
+    info:SetJustifyH("LEFT")
+    info:SetText("|cff888888" .. text .. "|r")
+    col.rowCount = row + 0.5
+end
+
+-- Stacked dropdown: label on one row, dropdown below it (fits column width)
+local function ColDropdown(col, labelText, options, key, dbTable, callback)
+    -- Label row
+    local count = col.rowCount or 0
+    local y = -(count * (ROW_HEIGHT + 5))
+    local label = col:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    if ns.GUI.SetFont then ns.GUI:SetFont(label, 12, "") end
+    label:SetPoint("TOPLEFT", 0, y)
+    label:SetText(labelText)
+    label:SetTextColor(unpack(C.text))
+    col.rowCount = count + 0.4
+
+    -- Dropdown row
+    local ddCount = col.rowCount
+    local ddY = -(ddCount * (ROW_HEIGHT + 5))
+    local widget = GUI:CreateDropdown(col, "", options, key, dbTable, callback)
+    widget:SetPoint("TOPLEFT", 0, ddY)
+    widget:SetWidth(COL_W - 10)
+    widget.dropdown:ClearAllPoints()
+    widget.dropdown:SetPoint("LEFT", widget, "LEFT", 0, 0)
+    widget.dropdown:SetPoint("RIGHT", widget, "RIGHT", 0, 0)
+    col.rowCount = ddCount + 1.1
+
+    if ns.GUI and ns.GUI.RegisterInSearchIndex then
+        ns.GUI:RegisterInSearchIndex(labelText, widget)
+    end
+    return widget
+end
+
+-- Stacked input: label on one row, input field below it (fits column width)
+local function ColInput(col, labelText, key, dbTable, callback)
+    local count = col.rowCount or 0
+    local y = -(count * (ROW_HEIGHT + 5))
+    local label = col:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    if ns.GUI.SetFont then ns.GUI:SetFont(label, 12, "") end
+    label:SetPoint("TOPLEFT", 0, y)
+    label:SetText(labelText)
+    label:SetTextColor(unpack(C.text))
+    col.rowCount = count + 0.4
+
+    local inCount = col.rowCount
+    local inY = -(inCount * (ROW_HEIGHT + 5))
+    local widget = GUI:CreateInput(col, "", key, dbTable, callback)
+    widget:SetPoint("TOPLEFT", 0, inY)
+    widget:SetWidth(COL_W - 10)
+    if widget.editBox then
+        widget.editBox:ClearAllPoints()
+        widget.editBox:SetPoint("LEFT", widget, "LEFT", 0, 0)
+        widget.editBox:SetPoint("RIGHT", widget, "RIGHT", 0, 0)
+    end
+    col.rowCount = inCount + 1.1
+
+    if ns.GUI and ns.GUI.RegisterInSearchIndex then
+        ns.GUI:RegisterInSearchIndex(labelText, widget)
+    end
+    return widget
+end
+
+local function FinishColumns(content, leftCol, rightCol)
+    local leftH = leftCol.rowCount * (ROW_HEIGHT + 5)
+    local rightH = rightCol.rowCount * (ROW_HEIGHT + 5)
+    leftCol:SetHeight(leftH + 20)
+    rightCol:SetHeight(rightH + 20)
+    content:SetHeight(math.max(leftH, rightH) + 40)
+end
+
+--==============================================================================================================================================================================================
 -- BUILDERS
 --==============================================================================================================================================================================================
 
--- -- 1. QoL (New Subtab with 1.1 - 1.5)
+-- -- 1. QoL (2-column layout)
 local function BuildQoL(parent)
     local scroll, content = GUI:CreateScrollableContent(parent)
     scroll:SetAllPoints()
     local db = ns.GetDB(); if not db then return end
     local dbUI = db.uiimprovements
-    content.rowCount = 0
 
-    local header = GUI:CreateSectionHeader(content, "Quality of Life")
-    header:SetPoint("TOPLEFT", 10, -10)
-    header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
-    content.rowCount = 1.3
+    local leftCol, rightCol = CreateTwoColumns(content)
 
-    -- 1.1 Auto Open Containers
-    CreateSubLabel(content, "Containers & Loot")
-    AddRow(content, "Auto Open Containers", "checkbox", "autoOpenContainers", dbUI, nil)
-    AddRow(content, "   - Exclude Warbound Containers", "checkbox", "autoOpenContainersExcludeWarbound", dbUI, nil)
-    content.rowCount = content.rowCount + 0.2
-    local contInfo = GUI:CreateInfoBox(content, "Automatically opens bags, boxes, caches and parcels when added to your inventory.")
-    contInfo:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
-    content.rowCount = content.rowCount + (contInfo:GetHeight() / (ROW_HEIGHT+5)) + 0.4
+    ---------------------------------------------------------------------------
+    -- LEFT COLUMN: Useful Stuff (moved from Automation)
+    ---------------------------------------------------------------------------
+    ColSubLabel(leftCol, "Useful Stuff")
 
-    -- 1.2 Hide Item Transforms
-    CreateSubLabel(content, "Cosmetics & Buffs")
-    AddRow(content, "Hide Item Transforms", "checkbox", "hideTransforms", dbUI, nil)
-    content.rowCount = content.rowCount + 0.2
-    local transInfo = GUI:CreateInfoBox(content, "Automatically cancels cosmetic transform buffs when applied (Chef's Hat, Noggenfogger, Deviate Fish, Savory Deviate Delight, Gamon's Braid, Stylin' Hats, etc.).")
-    transInfo:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
-    content.rowCount = content.rowCount + (transInfo:GetHeight() / (ROW_HEIGHT+5)) + 0.4
+    ColAddRow(leftCol, "Faster Auto Loot", "checkbox", "fastAutoLoot", dbUI, function(enabled) if enabled then SetCVar("autoLootDefault", "1") end end)
+    ColInfoLine(leftCol, "Instantly loots all items.")
 
-    -- 1.3 Auto Unwrap Collections
-    CreateSubLabel(content, "Collections & Trainers")
-    AddRow(content, "Auto Unwrap Collections", "checkbox", "autoUnwrapCollections", dbUI, nil)
-    content.rowCount = content.rowCount + 0.2
-    local unwrapInfo = GUI:CreateInfoBox(content, "Automatically dismisses the fanfare unwrap animation when learning new mounts, pets, or toys.")
-    unwrapInfo:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
-    content.rowCount = content.rowCount + (unwrapInfo:GetHeight() / (ROW_HEIGHT+5)) + 0.3
+    ColAddRow(leftCol, "Enable Delete Fix", "checkbox", "deleteFix", dbUI, function(enabled) if ns.ToggleDeleteFix then ns.ToggleDeleteFix(enabled) end end)
+    ColInfoLine(leftCol, "Destroy items without typing DELETE.")
 
-    -- 1.4 Train All Button
-    AddRow(content, "Train All Button at Trainers", "checkbox", "trainAllButton", dbUI, nil)
-    content.rowCount = content.rowCount + 0.2
-    local trainInfo = GUI:CreateInfoBox(content, "Adds a 'Train All' button next to the learn button at profession and class trainers.")
-    trainInfo:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
-    content.rowCount = content.rowCount + (trainInfo:GetHeight() / (ROW_HEIGHT+5)) + 0.4
+    ColAddRow(leftCol, "Death Release Protection", "checkbox", "deathReleaseProtection", dbUI, nil)
+    ColInfoLine(leftCol, "Hold ALT 1s before Release Spirit.")
 
-    -- 1.5 Announce Instance Reset
-    CreateSubLabel(content, "Instance & Party")
-    AddRow(content, "Announce Instance Reset", "checkbox", "instanceResetAnnounce", dbUI, nil)
-    content.rowCount = content.rowCount + 0.2
-    local resetInfo = GUI:CreateInfoBox(content, "Automatically announces in party/raid chat when your instances have been successfully reset.")
-    resetInfo:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
-    content.rowCount = content.rowCount + (resetInfo:GetHeight() / (ROW_HEIGHT+5)) + 0.4
+    ColAddRow(leftCol, "Faster Movie Skip", "checkbox", "fasterMovieSkip", dbUI, nil)
+    ColInfoLine(leftCol, "ESC/SPACE/ENTER to skip movies.")
 
-    content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
+    ColAddRow(leftCol, "Auto Skip Cinematics", "checkbox", "autoSkipCinematics", dbUI, nil)
+    ColInfoLine(leftCol, "Skips all cutscenes automatically.")
+
+    ColAddRow(leftCol, "Auto-Select Gossip", "checkbox", "autoSelectGossip", dbUI, nil)
+    ColInfoLine(leftCol, "Auto-pick single NPC dialog option.")
+
+    ColAddRow(leftCol, "EditMode on Spec Switch", "checkbox", "checkEditmodeOnSpecSwitch", dbUI, nil)
+
+    ColAddRow(leftCol, "AH: Current Expansion", "checkbox", "ahCurrentExpansionFilter", dbUI, nil)
+    ColInfoLine(leftCol, "Auto-filter AH to current expansion.")
+
+    ColAddRow(leftCol, "Widget Power (Prey)", "checkbox", "showWidgetPowerValue", dbUI, function(enabled) if ns.UpdateWidgetPowerValueVisibility then ns.UpdateWidgetPowerValueVisibility(enabled) end end)
+
+    leftCol.rowCount = leftCol.rowCount + 0.5
+    ColSubLabel(leftCol, "Quick Salvage")
+    ColAddRow(leftCol, "Enable Quick Salvage", "checkbox", "enabled", dbUI.quickSalvage, nil)
+    local modOptions = {{value="ALT", text="Alt"}, {value="ALTSHIFT", text="Alt + Shift"}, {value="ALTCTRL", text="Alt + Ctrl"}}
+    ColDropdown(leftCol, "Modifier", modOptions, "modifier", dbUI.quickSalvage, nil)
+    ColInfoLine(leftCol, "Hold modifier + hover to salvage.")
+
+    ---------------------------------------------------------------------------
+    -- RIGHT COLUMN: Original QoL items
+    ---------------------------------------------------------------------------
+    ColSubLabel(rightCol, "Containers & Loot")
+    ColAddRow(rightCol, "Auto Open Containers", "checkbox", "autoOpenContainers", dbUI, nil)
+    ColAddRow(rightCol, "   - Excl. Warbound", "checkbox", "autoOpenContainersExcludeWarbound", dbUI, nil)
+    ColInfoLine(rightCol, "Auto-opens bags, caches, parcels.")
+
+    rightCol.rowCount = rightCol.rowCount + 0.3
+    ColSubLabel(rightCol, "Cosmetics & Buffs")
+    ColAddRow(rightCol, "Hide Item Transforms", "checkbox", "hideTransforms", dbUI, nil)
+    ColInfoLine(rightCol, "Cancels cosmetic transform buffs.")
+
+    rightCol.rowCount = rightCol.rowCount + 0.3
+    ColSubLabel(rightCol, "Collections & Trainers")
+    ColAddRow(rightCol, "Auto Unwrap Collections", "checkbox", "autoUnwrapCollections", dbUI, nil)
+    ColInfoLine(rightCol, "Skips fanfare animation for mounts/pets.")
+
+    ColAddRow(rightCol, "Train All at Trainers", "checkbox", "trainAllButton", dbUI, nil)
+    ColInfoLine(rightCol, "Adds 'Train All' button at trainers.")
+
+    rightCol.rowCount = rightCol.rowCount + 0.3
+    ColSubLabel(rightCol, "Instance & Party")
+    ColAddRow(rightCol, "Announce Instance Reset", "checkbox", "instanceResetAnnounce", dbUI, nil)
+    ColInfoLine(rightCol, "Announces resets in party/raid chat.")
+
+    FinishColumns(content, leftCol, rightCol)
 end
 
--- 2. Automation
+-- 2. Automation (2-column layout)
 local function BuildAutomation(parent)
     local scroll, content = GUI:CreateScrollableContent(parent)
     scroll:SetAllPoints()
     local db = ns.GetDB(); if not db then return end
     local dbUI = db.uiimprovements
-    content.rowCount = 0
 
-    local header = GUI:CreateSectionHeader(content, "Automation")
-    header:SetPoint("TOPLEFT", 10, -10)
-    header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
-    content.rowCount = 1.3
+    local leftCol, rightCol = CreateTwoColumns(content)
 
-    AddRow(content, "Auto Insert M+ Keys", "checkbox", "autoInsertKey", dbUI, nil)
-    AddRow(content, "Auto Combat Log in M+", "checkbox", "autoCombatLog", dbUI, nil)
-    AddRow(content, "Auto Log Raid (Normal)", "checkbox", "autoCombatLogRaidNormal", dbUI, nil)
-    AddRow(content, "Auto Log Raid (Heroic)", "checkbox", "autoCombatLogRaidHeroic", dbUI, nil)
-    AddRow(content, "Auto Log Raid (Mythic)", "checkbox", "autoCombatLogRaidMythic", dbUI, nil)
-    AddRow(content, "Sell Gray Items", "checkbox", "sellJunk", dbUI, nil)
-    
+    ---------------------------------------------------------------------------
+    -- LEFT COLUMN: Dungeon & Raid
+    ---------------------------------------------------------------------------
+    ColSubLabel(leftCol, "Dungeon & Raid")
+
+    ColAddRow(leftCol, "Auto Insert M+ Keys", "checkbox", "autoInsertKey", dbUI, nil)
+    ColInfoLine(leftCol, "Auto-insert keystone at start.")
+
+    ColAddRow(leftCol, "Auto Combat Log in M+", "checkbox", "autoCombatLog", dbUI, nil)
+    ColAddRow(leftCol, "Auto Log Raid (Normal)", "checkbox", "autoCombatLogRaidNormal", dbUI, nil)
+    ColAddRow(leftCol, "Auto Log Raid (Heroic)", "checkbox", "autoCombatLogRaidHeroic", dbUI, nil)
+    ColAddRow(leftCol, "Auto Log Raid (Mythic)", "checkbox", "autoCombatLogRaidMythic", dbUI, nil)
+    ColInfoLine(leftCol, "Logs combat for Warcraft Logs upload.")
+
+    leftCol.rowCount = leftCol.rowCount + 0.3
+    ColSubLabel(leftCol, "Vendor")
+
+    ColAddRow(leftCol, "Sell Gray Items", "checkbox", "sellJunk", dbUI, nil)
+    ColInfoLine(leftCol, "Auto-sell junk at any vendor.")
+
     local repairOptions = {{value="off", text="Off"}, {value="personal", text="Personal Gold"}, {value="guild", text="Guild Bank First"}}
-    AddRow(content, "Auto Repair", "dropdown", repairOptions, "autoRepair", dbUI, nil)
-    
-    AddRow(content, "Auto Accept Role Check (Group)", "checkbox", "autoRoleAccept", dbUI, nil)
-    AddRow(content, "LFG Queue on double click", "checkbox", "lfgQuickJoin", dbUI, nil)
-    
-    -- Per-character LFG role selections (flat keys in ns.db.char to avoid AceDB nested-table bug)
+    ColDropdown(leftCol, "Auto Repair", repairOptions, "autoRepair", dbUI, nil)
+    ColInfoLine(leftCol, "Repair gear at repair vendors.")
+
+    leftCol.rowCount = leftCol.rowCount + 0.3
+    ColSubLabel(leftCol, "Quests")
+
+    ColAddRow(leftCol, "Auto Accept Quests", "checkbox", "autoAcceptQuest", dbUI, nil)
+    ColAddRow(leftCol, "Auto Turn-In Quests", "checkbox", "autoTurnInQuest", dbUI, nil)
+    ColAddRow(leftCol, "Shift Pauses Accept/Turn-In", "checkbox", "questHoldShift", dbUI, nil)
+    ColInfoLine(leftCol, "Hold Shift to prevent auto-accept.")
+
+    ---------------------------------------------------------------------------
+    -- RIGHT COLUMN: Social & Group
+    ---------------------------------------------------------------------------
+    ColSubLabel(rightCol, "Group & LFG")
+
+    ColAddRow(rightCol, "Auto Accept Role Check", "checkbox", "autoRoleAccept", dbUI, nil)
+    ColAddRow(rightCol, "LFG Queue on Double Click", "checkbox", "lfgQuickJoin", dbUI, nil)
+    ColInfoLine(rightCol, "Double-click a group to auto-apply.")
+
+    -- Per-character LFG role selections
     local dbChar = ns.db and ns.db.char
     if dbChar then
-        -- Determine which roles are available for this class
         local _, classFilename = UnitClass("player")
         local canTank = classFilename == "WARRIOR" or classFilename == "PALADIN" or classFilename == "DRUID"
                      or classFilename == "DEATHKNIGHT" or classFilename == "MONK" or classFilename == "DEMONHUNTER"
         local canHeal = classFilename == "PALADIN" or classFilename == "PRIEST" or classFilename == "SHAMAN"
                      or classFilename == "DRUID" or classFilename == "MONK" or classFilename == "EVOKER"
-        
-        content.rowCount = content.rowCount + 0.3
-        local roleInfo = GUI:CreateInfoBox(content, "|cffFFCC00LFG Roles (per Character):|r Select which roles to auto-apply when double-clicking a group. Icons also appear in the LFG window (top right).")
-        roleInfo:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
-        content.rowCount = content.rowCount + (roleInfo:GetHeight() / (ROW_HEIGHT+5)) + 0.2
-        
-        -- Flat keys in char scope: persists correctly across reloads
-        AddRow(content, "   - DPS",    "checkbox", "lfgRole_dps",    dbChar, nil)
+
+        rightCol.rowCount = rightCol.rowCount + 0.3
+        ColSubLabel(rightCol, "LFG Roles (per Character)")
+        ColAddRow(rightCol, "   - DPS", "checkbox", "lfgRole_dps", dbChar, nil)
         if canHeal then
-            AddRow(content, "   - Healer", "checkbox", "lfgRole_healer", dbChar, nil)
+            ColAddRow(rightCol, "   - Healer", "checkbox", "lfgRole_healer", dbChar, nil)
         end
         if canTank then
-            AddRow(content, "   - Tank",   "checkbox", "lfgRole_tank",   dbChar, nil)
+            ColAddRow(rightCol, "   - Tank", "checkbox", "lfgRole_tank", dbChar, nil)
         end
+        ColInfoLine(rightCol, "Roles for LFG quick-apply.")
     end
-    
-    local inviteOptions = {{value="off", text="Off"}, {value="all", text="All Invites"}, {value="friends", text="Friends Only"}, {value="guild", text="Guild Only"}, {value="both", text="Friends & Guild"}}
-    AddRow(content, "Auto Accept Invites", "dropdown", inviteOptions, "autoAcceptInvites", dbUI, nil)
-    
-    content.rowCount = content.rowCount + 0.2
-    AddRow(content, "Invite on Whisper", "checkbox", "inviteOnWhisper", dbUI, nil)
-    AddRow(content, "   - Invite All", "checkbox", "inviteOnWhisperAll", dbUI, nil)
-    AddRow(content, "   - Only Friends / BNet", "checkbox", "inviteOnWhisperFriends", dbUI, nil)
-    AddRow(content, "   - Only Guild Members", "checkbox", "inviteOnWhisperGuild", dbUI, nil)
-    AddRow(content, "   - Keywords (comma separated)", "input", "inviteOnWhisperKeywords", dbUI, nil)
-    
-    content.rowCount = content.rowCount + 0.2
-    local whisperInfo = GUI:CreateInfoBox(content, "Auto invite players who whisper a keyword. Filter Priority: Invite All > Friends/Guild.")
-    whisperInfo:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
-    content.rowCount = content.rowCount + (whisperInfo:GetHeight() / (ROW_HEIGHT+5)) + 0.2
-    
-    AddRow(content, "Auto Accept Quests", "checkbox", "autoAcceptQuest", dbUI, nil)
-    AddRow(content, "Auto Turn-In Quests", "checkbox", "autoTurnInQuest", dbUI, nil)
-    AddRow(content, "Shift Pauses Accept & Turn-In", "checkbox", "questHoldShift", dbUI, nil)
-    
-    content.rowCount = content.rowCount + 0.5
-    local usefulHeader = GUI:CreateSectionHeader(content, "Useful Stuff")
-    usefulHeader:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
-    usefulHeader:SetPoint("RIGHT", content, "RIGHT", -10, 0)
-    content.rowCount = content.rowCount + 1.0
-    
-    AddRow(content, "Faster Auto Loot", "checkbox", "fastAutoLoot", dbUI, function(enabled) if enabled then SetCVar("autoLootDefault", "1") end end)
-    content.rowCount = content.rowCount + 0.2
-    local lootInfo = GUI:CreateInfoBox(content, "Faster Auto Loot instantly loots all items and enables WoW's Auto Loot setting.")
-    lootInfo:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
-    content.rowCount = content.rowCount + (lootInfo:GetHeight() / (ROW_HEIGHT+5)) + 0.2
-    
-    AddRow(content, "Enable Delete Fix", "checkbox", "deleteFix", dbUI, function(enabled) if ns.ToggleDeleteFix then ns.ToggleDeleteFix(enabled) end end)
-    content.rowCount = content.rowCount + 0.2
-    local delInfo = GUI:CreateInfoBox(content, "Allows destroying Good/Superior items without typing DELETE.")
-    delInfo:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
-    content.rowCount = content.rowCount + (delInfo:GetHeight() / (ROW_HEIGHT+5)) + 0.2
-    
-    AddRow(content, "Death Release Protection", "checkbox", "deathReleaseProtection", dbUI, nil)
-    content.rowCount = content.rowCount + 0.2
-    local deathInfo = GUI:CreateInfoBox(content, "Forces you to hold ALT for 1 second before 'Release Spirit' can be clicked.")
-    deathInfo:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
-    content.rowCount = content.rowCount + (deathInfo:GetHeight() / (ROW_HEIGHT+5)) + 0.2
-    
-    AddRow(content, "Faster Movie Skip", "checkbox", "fasterMovieSkip", dbUI, nil)
-    content.rowCount = content.rowCount + 0.2
-    local movieInfo = GUI:CreateInfoBox(content, "Use ESC, SPACE, or ENTER to skip cancel Cinematic/Movie dialogs instantly.")
-    movieInfo:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
-    content.rowCount = content.rowCount + (movieInfo:GetHeight() / (ROW_HEIGHT+5)) + 0.2
-    
-    AddRow(content, "Auto Skip Cinematics", "checkbox", "autoSkipCinematics", dbUI, nil)
-    content.rowCount = content.rowCount + 0.2
-    local cinInfo = GUI:CreateInfoBox(content, "Automatically skips in-game cinematics and movies without any key press. All cutscene types (real cinematics, in-game scenes, and movies) are cancelled automatically.")
-    cinInfo:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
-    content.rowCount = content.rowCount + (cinInfo:GetHeight() / (ROW_HEIGHT+5)) + 0.2
-    
-    AddRow(content, "Auto-Select Single Gossip Option", "checkbox", "autoSelectGossip", dbUI, nil)
-    AddRow(content, "Auto Check EditMode on Spec Switch", "checkbox", "checkEditmodeOnSpecSwitch", dbUI, nil)
-    AddRow(content, "AH: Filter Current Expansion", "checkbox", "ahCurrentExpansionFilter", dbUI, nil)
-    content.rowCount = content.rowCount + 0.2
-    local ahInfo = GUI:CreateInfoBox(content, "Automatically sets the filter to the current expansion when opening the auction house.")
-    ahInfo:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
-    content.rowCount = content.rowCount + (ahInfo:GetHeight() / (ROW_HEIGHT+5)) + 0.2
-    
-    AddRow(content, "Show Widget Power Value (Prey)", "checkbox", "showWidgetPowerValue", dbUI, function(enabled) if ns.UpdateWidgetPowerValueVisibility then ns.UpdateWidgetPowerValueVisibility(enabled) end end)
-    
-    content.rowCount = content.rowCount + 0.5
-    AddRow(content, "Enable Quick Salvage", "checkbox", "enabled", dbUI.quickSalvage, nil)
-    local modOptions = {{value="ALT", text="Alt"}, {value="ALTSHIFT", text="Alt + Shift"}, {value="ALTCTRL", text="Alt + Ctrl"}}
-    AddRow(content, "Quick Salvage Modifier", "dropdown", modOptions, "modifier", dbUI.quickSalvage, nil)
-    content.rowCount = content.rowCount + 0.2
-    local qsInfo = GUI:CreateInfoBox(content, "Hold the modifier and hover over items in your bags to Mill, Prospect, or Disenchant instantly.")
-    qsInfo:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
-    content.rowCount = content.rowCount + (qsInfo:GetHeight() / (ROW_HEIGHT+5)) + 0.2
 
-    content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
+    rightCol.rowCount = rightCol.rowCount + 0.3
+    ColSubLabel(rightCol, "Invites")
+
+    local inviteOptions = {{value="off", text="Off"}, {value="all", text="All Invites"}, {value="friends", text="Friends Only"}, {value="guild", text="Guild Only"}, {value="both", text="Friends & Guild"}}
+    ColDropdown(rightCol, "Auto Accept Invites", inviteOptions, "autoAcceptInvites", dbUI, nil)
+
+    rightCol.rowCount = rightCol.rowCount + 0.3
+    ColSubLabel(rightCol, "Invite on Whisper")
+    ColAddRow(rightCol, "Enable", "checkbox", "inviteOnWhisper", dbUI, nil)
+    ColAddRow(rightCol, "   - Invite All", "checkbox", "inviteOnWhisperAll", dbUI, nil)
+    ColAddRow(rightCol, "   - Friends / BNet Only", "checkbox", "inviteOnWhisperFriends", dbUI, nil)
+    ColAddRow(rightCol, "   - Guild Members Only", "checkbox", "inviteOnWhisperGuild", dbUI, nil)
+    ColInput(rightCol, "   - Keywords (comma sep.)", "inviteOnWhisperKeywords", dbUI, nil)
+    ColInfoLine(rightCol, "Priority: All > Friends > Guild.")
+
+    FinishColumns(content, leftCol, rightCol)
 end
 
--- 3. Autohide
+-- 3. Autohide (2-column layout)
 local function BuildAutohide(parent)
     local scroll, content = GUI:CreateScrollableContent(parent)
     scroll:SetAllPoints()
     local db = ns.GetDB(); if not db then return end
     local dbUI = db.uiimprovements
-    content.rowCount = 0
-    
+
     local function RefreshAutohide() if ns.ApplyAutohideSettings then ns.ApplyAutohideSettings() end end
-    
-    local header = GUI:CreateSectionHeader(content, "Autohide")
-    header:SetPoint("TOPLEFT", 10, -10)
-    header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
-    content.rowCount = 1.3
-    
+
     -- Ensure subtable
     if not dbUI.hideObjectiveTrackerInstanceTypes then
         dbUI.hideObjectiveTrackerInstanceTypes = {mythicPlus=false, mythicDungeon=false, normalDungeon=false, heroicDungeon=false, followerDungeon=false, raid=false, pvp=false, arena=false}
     end
 
-    CreateSubLabel(content, "Objective Tracker")
-    AddRow(content, "Hide Always", "checkbox", "hideObjectiveTrackerAlways", dbUI, RefreshAutohide)
+    local leftCol, rightCol = CreateTwoColumns(content)
+
+    ---------------------------------------------------------------------------
+    -- LEFT COLUMN: Objective Tracker + Nameplates
+    ---------------------------------------------------------------------------
+    ColSubLabel(leftCol, "Objective Tracker")
+    ColAddRow(leftCol, "Hide Always", "checkbox", "hideObjectiveTrackerAlways", dbUI, RefreshAutohide)
 
     local instanceTypes = {
-        {key="mythicPlus", label="Hide in Mythic+"}, {key="mythicDungeon", label="Hide in Mythic Dungeons"},
-        {key="heroicDungeon", label="Hide in Heroic Dungeons"}, {key="normalDungeon", label="Hide in Normal Dungeons"},
-        {key="followerDungeon", label="Hide in Follower Dungeons"}, {key="raid", label="Hide in Raids"},
-        {key="pvp", label="Hide in Battlegrounds"}, {key="arena", label="Hide in Arenas"},
+        {key="mythicPlus", label="   - In Mythic+"},
+        {key="mythicDungeon", label="   - In Mythic Dungeons"},
+        {key="heroicDungeon", label="   - In Heroic Dungeons"},
+        {key="normalDungeon", label="   - In Normal Dungeons"},
+        {key="followerDungeon", label="   - In Follower Dungeons"},
+        {key="raid", label="   - In Raids"},
+        {key="pvp", label="   - In Battlegrounds"},
+        {key="arena", label="   - In Arenas"},
     }
     for _, it in ipairs(instanceTypes) do
-        AddRow(content, "   - " .. it.label, "checkbox", it.key, dbUI.hideObjectiveTrackerInstanceTypes, RefreshAutohide)
+        ColAddRow(leftCol, it.label, "checkbox", it.key, dbUI.hideObjectiveTrackerInstanceTypes, RefreshAutohide)
     end
-    content.rowCount = content.rowCount + 0.5 
 
-    CreateSubLabel(content, "Frames & Buttons")
-    AddRow(content, "Hide Compact Raid Frame Manager", "checkbox", "hideRaidFrameManager", dbUI, RefreshAutohide)
-    AddRow(content, "Hide Buff Frame Collapse Button", "checkbox", "hideBuffCollapseButton", dbUI, RefreshAutohide)
-    AddRow(content, "Hide Talking Head Frame", "checkbox", "hideTalkingHead", dbUI, RefreshAutohide)
-    AddRow(content, "Mute Talking Head Voice", "checkbox", "muteTalkingHead", dbUI, RefreshAutohide)
-    AddRow(content, "Hide World Map Blackout", "checkbox", "hideWorldMapBlackout", dbUI, RefreshAutohide)
-    content.rowCount = content.rowCount + 0.5
+    leftCol.rowCount = leftCol.rowCount + 0.3
+    ColSubLabel(leftCol, "Nameplates")
+    ColAddRow(leftCol, "Hide Friendly Players", "checkbox", "hideFriendlyPlayerNameplates", dbUI, RefreshAutohide)
+    ColAddRow(leftCol, "Hide Friendly NPCs", "checkbox", "hideFriendlyNPCNameplates", dbUI, RefreshAutohide)
 
-    CreateSubLabel(content, "Nameplates")
-    AddRow(content, "Hide Friendly Player Nameplates", "checkbox", "hideFriendlyPlayerNameplates", dbUI, RefreshAutohide)
-    AddRow(content, "Hide Friendly NPC Nameplates", "checkbox", "hideFriendlyNPCNameplates", dbUI, RefreshAutohide)
-    content.rowCount = content.rowCount + 0.5
+    ---------------------------------------------------------------------------
+    -- RIGHT COLUMN: Frames, Messages, Minigames, Privacy
+    ---------------------------------------------------------------------------
+    ColSubLabel(rightCol, "Frames & Buttons")
+    ColAddRow(rightCol, "Hide Raid Frame Manager", "checkbox", "hideRaidFrameManager", dbUI, RefreshAutohide)
+    ColAddRow(rightCol, "Hide Buff Collapse Button", "checkbox", "hideBuffCollapseButton", dbUI, RefreshAutohide)
+    ColAddRow(rightCol, "Hide Talking Head Frame", "checkbox", "hideTalkingHead", dbUI, RefreshAutohide)
+    ColAddRow(rightCol, "Mute Talking Head Voice", "checkbox", "muteTalkingHead", dbUI, RefreshAutohide)
+    ColAddRow(rightCol, "Hide World Map Blackout", "checkbox", "hideWorldMapBlackout", dbUI, RefreshAutohide)
 
-    CreateSubLabel(content, "Combat & Messages")
-    AddRow(content, "Hide Error Messages (Red Text)", "checkbox", "hideErrorMessages", dbUI, RefreshAutohide)
-    AddRow(content, "Suppress HelpTip Popups", "checkbox", "suppressHelpTips", dbUI, RefreshAutohide)
-    content.rowCount = content.rowCount + 0.2
-    local helpTipInfo = GUI:CreateInfoBox(content, "Hides Blizzard's yellow tutorial popup bubbles (e.g. 'Focus on a quest by clicking its icon'). Existing tips are dismissed immediately; new ones are suppressed automatically.")
-    helpTipInfo:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
-    content.rowCount = content.rowCount + (helpTipInfo:GetHeight() / (ROW_HEIGHT+5)) + 0.2
-    content.rowCount = content.rowCount + 0.5
+    rightCol.rowCount = rightCol.rowCount + 0.3
+    ColSubLabel(rightCol, "Combat & Messages")
+    ColAddRow(rightCol, "Hide Error Messages", "checkbox", "hideErrorMessages", dbUI, RefreshAutohide)
+    ColInfoLine(rightCol, "Hides red error text in combat.")
+    ColAddRow(rightCol, "Suppress HelpTip Popups", "checkbox", "suppressHelpTips", dbUI, RefreshAutohide)
+    ColInfoLine(rightCol, "Hides yellow tutorial bubbles.")
 
-    CreateSubLabel(content, "World Quest Minigames/Petbattles")
-    AddRow(content, "Hide Interface on Minigame/Petbattle", "checkbox", "hideOnWorldQuestMinigame", dbUI, RefreshAutohide)
-    content.rowCount = content.rowCount + 0.5
+    rightCol.rowCount = rightCol.rowCount + 0.3
+    ColSubLabel(rightCol, "Minigames & Pet Battles")
+    ColAddRow(rightCol, "Hide UI on Minigame/Petbattle", "checkbox", "hideOnWorldQuestMinigame", dbUI, RefreshAutohide)
+    ColInfoLine(rightCol, "Cleans up UI during WQ minigames.")
 
-    -- 3.4 Guild Chat Privacy Cover
-    CreateSubLabel(content, "Streamer & Privacy")
-    AddRow(content, "Guild Chat Privacy Cover", "checkbox", "guildChatPrivacy", dbUI, nil)
-    content.rowCount = content.rowCount + 0.2
-    local guildCoverInfo = GUI:CreateInfoBox(content, "Places a clickable spoiler overlay over the guild chat tab in the Communities window to protect streamers from displaying internal messages.")
-    guildCoverInfo:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
-    content.rowCount = content.rowCount + (guildCoverInfo:GetHeight() / (ROW_HEIGHT+5)) + 0.4
+    rightCol.rowCount = rightCol.rowCount + 0.3
+    ColSubLabel(rightCol, "Streamer & Privacy")
+    ColAddRow(rightCol, "Guild Chat Privacy Cover", "checkbox", "guildChatPrivacy", dbUI, nil)
+    ColInfoLine(rightCol, "Spoiler overlay on guild chat tab.")
 
-    content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
+    FinishColumns(content, leftCol, rightCol)
 end
 
 --==============================================================================================================================================================================================
@@ -354,9 +451,9 @@ end
 ns.GUI:RegisterPage("qol", {
     title = "Quality of Life",
     subTabs = {
-        { name = "QoL",                builder = BuildQoL },
-        { name = "Automation / Stuff", builder = BuildAutomation },
-        { name = "Autohide",           builder = BuildAutohide },
+        { name = "QoL",          builder = BuildQoL },
+        { name = "Automation",   builder = BuildAutomation },
+        { name = "Autohide",     builder = BuildAutohide },
     },
     OnBuild = function(content)
         local scrollFrame = content:GetParent()

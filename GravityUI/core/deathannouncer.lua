@@ -255,10 +255,18 @@ end
 -- ============================================================================
 -- AUDIO & CHAT HELPERS
 -- ============================================================================
+local lastSoundTime = 0
+local SOUND_COOLDOWN = 2.0  -- Max one death sound per 2 seconds (prevents wipe spam)
+
 local function PlayDeathSound(s)
     if not s or not s.soundEnabled then return end
     local soundFile = s.soundFile
     if not soundFile or soundFile == "None" or soundFile == "" then return end
+
+    -- Throttle: skip if we played a sound recently
+    local now = GetTime()
+    if (now - lastSoundTime) < SOUND_COOLDOWN then return end
+    lastSoundTime = now
 
     local lsm = GetLSM()
     local soundPath = lsm and lsm:Fetch("sound", soundFile)
@@ -500,22 +508,67 @@ end
 local eventFrame = CreateFrame("Frame")
 eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 eventFrame:RegisterEvent("GROUP_ROSTER_UPDATE")
-eventFrame:RegisterEvent("UNIT_FLAGS")
-eventFrame:RegisterEvent("UNIT_HEALTH")
 eventFrame:RegisterEvent("PLAYER_DEAD")
 eventFrame:RegisterEvent("PLAYER_ALIVE")
 eventFrame:RegisterEvent("PLAYER_UNGHOST")
+
+-- PERF: Use per-unit event frames instead of unfiltered UNIT_HEALTH/UNIT_FLAGS.
+-- Unfiltered registration fires for ALL units (nameplates, bosses, targets),
+-- causing hundreds of Lua dispatches per second in M+ combat.
+-- Dynamic registration ensures we only receive events for actual group members.
+local unitEventFrames = {}
+
+local function RefreshUnitEventRegistration()
+    -- Unregister all old unit event frames
+    for _, f in pairs(unitEventFrames) do
+        f:UnregisterAllEvents()
+        f:SetScript("OnEvent", nil)
+    end
+    wipe(unitEventFrames)
+
+    local units = { "player" }
+    if IsInRaid() then
+        for i = 1, GetNumGroupMembers() do
+            units[#units + 1] = "raid" .. i
+        end
+    elseif IsInGroup() then
+        for i = 1, GetNumGroupMembers() - 1 do
+            units[#units + 1] = "party" .. i
+        end
+    end
+
+    -- RegisterUnitEvent accepts up to 2 units per frame, so batch in pairs
+    local handler = function(self, event, unit)
+        if unit then ProcessUnit(unit) end
+    end
+
+    for i = 1, #units, 2 do
+        local f = CreateFrame("Frame")
+        local u1, u2 = units[i], units[i + 1]
+        if u2 then
+            f:RegisterUnitEvent("UNIT_HEALTH", u1, u2)
+            f:RegisterUnitEvent("UNIT_FLAGS", u1, u2)
+        else
+            f:RegisterUnitEvent("UNIT_HEALTH", u1)
+            f:RegisterUnitEvent("UNIT_FLAGS", u1)
+        end
+        f:SetScript("OnEvent", handler)
+        unitEventFrames[#unitEventFrames + 1] = f
+    end
+end
 
 eventFrame:SetScript("OnEvent", function(self, event, unit, ...)
     if event == "PLAYER_ENTERING_WORLD" then
         if not container then CreateAlertFrames() end
         DeathAnnouncer.ApplySettings()
         ScanRoster(true)
+        RefreshUnitEventRegistration()
         return
     end
 
     if event == "GROUP_ROSTER_UPDATE" then
         ScanRoster(false)
+        RefreshUnitEventRegistration()
         return
     end
 
@@ -527,20 +580,6 @@ eventFrame:SetScript("OnEvent", function(self, event, unit, ...)
     if event == "PLAYER_ALIVE" or event == "PLAYER_UNGHOST" then
         local guid = UnitGUID("player")
         if guid then isDeadState[guid] = false end
-        return
-    end
-
-    if event == "UNIT_FLAGS" or event == "UNIT_HEALTH" then
-        if not unit then return end
-        -- PERF: byte(1) check avoids string.find pattern allocation.
-        -- player='p'(112), party='p'(112), raid='r'(114)
-        -- Nameplates='n', target='t', boss='b', etc. are all filtered out.
-        local b = unit:byte(1)
-        if b == 112 then -- 'p' = player or partyN
-            ProcessUnit(unit)
-        elseif b == 114 then -- 'r' = raidN
-            ProcessUnit(unit)
-        end
         return
     end
 end)

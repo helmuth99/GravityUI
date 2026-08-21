@@ -274,17 +274,36 @@ local function BuildReadyCheckPanel(parent)
     end
     yOffset = yOffset - 5
 
-    local moveBtn = GUI:CreateButton(content, "Toggle Mover", 160, 24, function()
+    -- Position Settings
+    local moveBtn, resetBtn -- forward declare for visibility toggle
+
+    local rowDefault = CreateStylingRow(content, "Use Blizzard Default Position", "checkbox", "useDefaultPosition", ns.db.profile.styling.readyCheck, function(value)
+        if moveBtn then moveBtn[value and "Hide" or "Show"](moveBtn) end
+        if resetBtn then resetBtn[value and "Hide" or "Show"](resetBtn) end
+        if value then
+            -- Reset to default position
+            if ns.Styling and ns.Styling.ResetReadyCheckPosition then ns.Styling:ResetReadyCheckPosition() end
+        end
+    end)
+    rowDefault:SetPoint("TOPLEFT", PAD, yOffset)
+    yOffset = yOffset - ROW_HEIGHT - 5
+
+    moveBtn = GUI:CreateButton(content, "Toggle Mover", 160, 24, function()
         if ns.Styling and ns.Styling.ToggleReadyCheckMover then ns.Styling:ToggleReadyCheckMover() end
     end)
     moveBtn:SetPoint("TOPLEFT", PAD, yOffset)
     
-    local resetBtn = GUI:CreateButton(content, "Reset Position", 160, 24, function()
+    resetBtn = GUI:CreateButton(content, "Reset Position", 160, 24, function()
         if ns.Styling and ns.Styling.ResetReadyCheckPosition then ns.Styling:ResetReadyCheckPosition() end
     end)
     resetBtn:SetPoint("LEFT", moveBtn, "RIGHT", 10, 0)
     yOffset = yOffset - 40
-    
+
+    -- Hide mover buttons if using default position
+    if ns.db.profile.styling.readyCheck.useDefaultPosition then
+        moveBtn:Hide()
+        resetBtn:Hide()
+    end
 
     
     content:SetHeight(math.abs(yOffset) + 40)

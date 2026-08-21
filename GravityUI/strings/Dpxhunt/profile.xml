@@ -6,7 +6,6 @@
     <Script file="bigwigs.lua" />
     <Script file="plater.lua" />
     <Script file="ellesmere.lua" />
-    <Script file="exboss.lua" />
     <Script file="gravityui.lua" />
     <Script file="optional.lua" />
 </Ui>

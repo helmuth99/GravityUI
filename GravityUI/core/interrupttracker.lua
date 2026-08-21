@@ -1146,14 +1146,18 @@ local function InterruptFrame_OnEvent(_, event, unit, ...)
     if not s or not s.enabled or not IsTrackerAllowed() then return end
 
     if event == "UNIT_SPELLCAST_SUCCEEDED" then
+        -- PERF: byte-based unit filter — avoids pattern allocation.
+        -- 'p'=112 + 'a'=97 matches party/partypet but not player/pet.
         if not unit or unit == "player" or unit == "pet" then return end
-        if not unit:find("^party") then return end
+        local b1, b2 = unit:byte(1, 2)
+        if b1 ~= 112 or b2 ~= 97 then return end  -- not party*
 
         -- Resolve partypet → owner party unit (partypet4 → party4)
         local resolveUnit = unit
-        if unit:find("^partypet") then
-            local idx = unit:match("partypet(%d)")
-            if not idx then return end
+        -- PERF: byte-based partypet detection — 'partypet' has byte(6)='p'(112)
+        if unit:byte(6) == 112 then  -- partypet
+            local idx = unit:sub(9)  -- partypetN → N
+            if not idx or idx == "" then return end
             resolveUnit = "party" .. idx
         end
 
@@ -1189,7 +1193,8 @@ local function InterruptFrame_OnEvent(_, event, unit, ...)
         end
 
     elseif event == "UNIT_SPELLCAST_INTERRUPTED" then
-        if not unit or not unit:find("^nameplate") then return end
+        -- PERF: byte(1)==110 ('n') matches nameplate* without pattern allocation.
+        if not unit or unit:byte(1) ~= 110 then return end
         PushSignal("interrupt", unit)
         -- 12.0.5 Mob-Attribution: since UNIT_SPELLCAST_SUCCEEDED is gone for party,
         -- we attribute inline when we see the mob interrupted.
@@ -1257,13 +1262,22 @@ local function InterruptFrame_OnEvent(_, event, unit, ...)
         end
 
     elseif event == "UNIT_AURA" then
-        -- PERF: byte(1)==110 ('n') avoids string.sub allocation for every UNIT_AURA dispatch.
-        -- No other unit token starts with 'n', so this is safe for nameplate filtering.
-        if unit and unit:byte(1) == 110 then PushSignal("aura", unit) end
+        -- PERF: Only process nameplate aura changes when we have pending signals to correlate.
+        -- This eliminates 99% of UNIT_AURA overhead in raids, since aura events only matter
+        -- in the ~50ms window after a party member casts an interrupt spell.
+        -- byte(1)==110 ('n') avoids string.sub allocation for nameplate filtering.
+        if needsCorrelation and unit and unit:byte(1) == 110 then PushSignal("aura", unit) end
     end
 end
 
-local function InterruptFrame_OnUpdate()
+-- PERF: Throttle the correlator to 20Hz instead of every frame.
+-- The signal-tape correlation is time-windowed (55ms) so sub-frame precision isn't needed.
+local _correlatorElapsed = 0
+local function InterruptFrame_OnUpdate(self, elapsed)
+    _correlatorElapsed = _correlatorElapsed + (elapsed or 0)
+    if _correlatorElapsed < 0.05 then return end
+    _correlatorElapsed = 0
+
     if needsCorrelation then
         local s = GetSettings()
         if s and s.enabled and IsTrackerAllowed() then

@@ -1702,8 +1702,8 @@ local function SetupTitleArea()
     -- Create center ilvl display (title bar) - shows equipped | overall
     if not CharacterFrame._guiCenterILvl then
         local centerFrame = CreateFrame("Frame", nil, CharacterFrame)
-        centerFrame:SetSize(200, 20)
-        centerFrame:SetPoint("TOPRIGHT", CharacterFrame, "TOPRIGHT", -132, -18)  -- Shifted Down to -18 for better centering
+        centerFrame:SetSize(200, 40)
+        centerFrame:SetPoint("TOPRIGHT", CharacterFrame, "TOPRIGHT", -132, 2)  -- Aligned with character name
         centerFrame:SetFrameStrata("DIALOG")
         centerFrame:SetFrameLevel(50)
 
@@ -1713,6 +1713,14 @@ local function SetupTitleArea()
         centerText:SetJustifyH("RIGHT")
 
         centerFrame.text = centerText
+
+        -- M+ Score display below center ilvl
+        local mpText = centerFrame:CreateFontString(nil, "OVERLAY")
+        mpText:SetFont(font, 12, "OUTLINE")
+        mpText:SetPoint("TOP", centerText, "BOTTOM", 0, -4)
+        mpText:SetJustifyH("RIGHT")
+        centerFrame.mpScore = mpText
+
         CharacterFrame._guiCenterILvl = centerFrame
     end
 end
@@ -2876,20 +2884,13 @@ end
 -- Get color for item level (tiered based on gear quality)
 ---------------------------------------------------------------------------
 local function GetILvlColor(ilvl)
-    -- Color tiers for modern retail (User: 220+ blue, 233+ purple)
-    if ilvl >= 252 then
-        return 1, 0.5, 0           -- Orange (Mythic raid tier)
-    elseif ilvl >= 233 then
-        return 0.64, 0.21, 0.93    -- Purple (User requirement)
-    elseif ilvl >= 220 then
-        return 0, 0.44, 0.87       -- Blue (User requirement)
-    elseif ilvl >= 210 then
-        return 0, 1, 0             -- Green (Heroic dungeon)
-    elseif ilvl >= 200 then
-        return 1, 1, 1             -- White (Normal)
-    else
-        return 0.62, 0.62, 0.62    -- Grey (Below normal)
+    -- Quality-based coloring (future-proof, like EllesmereUI)
+    -- Average equipped ilvl in endgame is always epic-quality gear
+    local r, g, b = C_Item.GetItemQualityColor(4)  -- 4 = Epic (purple)
+    if r then
+        return r, g, b
     end
+    return 0.64, 0.21, 0.93  -- Fallback purple
 end
 
 ---------------------------------------------------------------------------
@@ -2985,8 +2986,27 @@ local function UpdateILvlDisplay()
         local equippedHex = string.format("%02x%02x%02x", math.floor(eR*255), math.floor(eG*255), math.floor(eB*255))
         local overallHex = string.format("%02x%02x%02x", math.floor(oR*255), math.floor(oG*255), math.floor(oB*255))
         
-        local centerStr = string.format("|cff%s%.1f|r  |  |cff%s%.1f|r", equippedHex, equipped, overallHex, overall)
-        centerFrame.text:SetText(centerStr)
+        centerFrame.text:SetText(string.format("|cff%s%.1f|r  |  |cff%s%.1f|r", equippedHex, equipped, overallHex, overall))
+
+        -- M+ Score on separate smaller FontString below ilvl
+        if centerFrame.mpScore then
+            if C_ChallengeMode and C_ChallengeMode.GetOverallDungeonScore then
+                local score = C_ChallengeMode.GetOverallDungeonScore()
+                if score and score > 0 then
+                    local scoreColor = C_ChallengeMode.GetDungeonScoreRarityColor
+                        and C_ChallengeMode.GetDungeonScoreRarityColor(score)
+                    local r, g, b = 1, 1, 1
+                    if scoreColor then r, g, b = scoreColor.r, scoreColor.g, scoreColor.b end
+                    local sHex = string.format("%02x%02x%02x", math.floor(r*255), math.floor(g*255), math.floor(b*255))
+                    centerFrame.mpScore:SetText(string.format("M+ Score: |cff%s%d|r", sHex, score))
+                    centerFrame.mpScore:Show()
+                else
+                    centerFrame.mpScore:Hide()
+                end
+            else
+                centerFrame.mpScore:Hide()
+            end
+        end
     end
 end
 

@@ -168,12 +168,82 @@ local function BuildInformationTab(parent)
     local db = ns.GetDB()
     if not db then return end
 
+    -- BANNER -------------------------------------------------------
+    local BANNER_H = 90
+    local bannerW = GUI.CONTENT_WIDTH - 45
+    local banner = CreateFrame("Frame", nil, content, "BackdropTemplate")
+    banner:SetSize(bannerW, BANNER_H)
+    banner:SetPoint("TOPLEFT", PAD, y)
+    GUI:CreateBackdrop(banner, {0.06, 0.06, 0.08, 1}, {C.accent[1]*0.4, C.accent[2]*0.4, C.accent[3]*0.4, 0.6})
+
+    -- Logo image (right-aligned, cropped to banner height)
+    local logo = banner:CreateTexture(nil, "ARTWORK")
+    logo:SetTexture("Interface\\AddOns\\GravityUI\\assets\\Gravity_UI_Logo.jpg")
+    logo:SetSize(BANNER_H, BANNER_H)
+    logo:SetPoint("RIGHT", banner, "RIGHT", -8, 0)
+    logo:SetAlpha(0.35)
+
+    -- Dark gradient overlay left-to-right over the logo area
+    local grad = banner:CreateTexture(nil, "ARTWORK", nil, 1)
+    grad:SetTexture("Interface\\Buttons\\WHITE8x8")
+    grad:SetSize(BANNER_H + 40, BANNER_H)
+    grad:SetPoint("LEFT", logo, "LEFT", -40, 0)
+    grad:SetGradient("HORIZONTAL", CreateColor(0.06, 0.06, 0.08, 1), CreateColor(0.06, 0.06, 0.08, 0))
+
+    -- Accent bar left edge
+    local accentBar = banner:CreateTexture(nil, "OVERLAY")
+    accentBar:SetTexture("Interface\\Buttons\\WHITE8x8")
+    accentBar:SetSize(3, BANNER_H)
+    accentBar:SetPoint("LEFT", 0, 0)
+    accentBar:SetVertexColor(C.accent[1], C.accent[2], C.accent[3], 1)
+
+    -- Title (uses dynamic theme accent)
+    local accentHex = string.format("%02X%02X%02X", C.accent[1]*255, C.accent[2]*255, C.accent[3]*255)
+    local titleFS = banner:CreateFontString(nil, "OVERLAY", "GameFontNormalHuge")
+    GUI:SetFont(titleFS, 22, "")
+    titleFS:SetPoint("TOPLEFT", 16, -14)
+    titleFS:SetText("|cFF" .. accentHex .. "Gravity|r|cFFFFFFFFUI|r")
+
+    -- Version
+    local versionTag = GetAddOnMetadata and GetAddOnMetadata("GravityUI", "Version") or "@project-version@"
+    local versionFS = banner:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    GUI:SetFont(versionFS, 11, "")
+    versionFS:SetPoint("LEFT", titleFS, "RIGHT", 8, -2)
+    versionFS:SetTextColor(C.accent[1], C.accent[2], C.accent[3], 0.9)
+    versionFS:SetText(versionTag)
+
+    -- Subtitle
+    local subFS = banner:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    GUI:SetFont(subFS, 11, "")
+    subFS:SetPoint("TOPLEFT", titleFS, "BOTTOMLEFT", 0, -4)
+    subFS:SetTextColor(0.7, 0.7, 0.7, 1)
+    subFS:SetText("A complete UI overhaul for World of Warcraft")
+
+
+
+
+    y = y - BANNER_H - 16
+
     -- SECTION 1: LATEST CHANGELOG (newest entry only) ----------
     local changelogHeader = GUI:CreateSectionHeader(content, "Latest Changelog")
     changelogHeader:SetPoint("TOPLEFT", PAD, y)
     y = y - changelogHeader.gap - 10
 
     local changeLogs = {
+        {
+            version = "4.00.91",
+            date = "08/21/2026",
+            changes = {
+                "Settings Panel Restructure: Dissolved Utilities page — Sound Alerts, Color Picker, and Premade Group moved to Features; Tracked Bars moved to Indicators",
+                "Death Announcer relocated from Features to Indicators for logical grouping with on-screen alert modules",
+                "Information page merged into Main as first tab — sidebar entry removed for cleaner navigation",
+                "Button Bar Overhaul: Added GUI Edit Mode quick-launch button, EllesmereUI config opener with logo; removed Boss Mods, Nameplates, CDM, Unitframes, and Party/Raid buttons",
+                "Ready Check: Added 'Use Blizzard Default Position' toggle — when enabled, hides mover from Edit Mode and uses default centered position",
+                "Cooldown Text Expansion: 3 display modes (Text, Icon, Bar), sound alerts, Time Spiral flash for proc resets, per-class mobility spell presets for 13 classes",
+                "Feature Hub: Complete audit of all tab indices and page references after restructure — fixed duplicate entries, corrected Difficulty/AFK Screen indices",
+                "Performance Audit: Verified zero combat impact across Action Bars (20Hz fade with dirty-checks), Minimap (1Hz master ticker), Icon Catcher (self-disarming startup scan), and all Utility modules",
+            },
+        },
         {
             version = "4.01.00",
             date = "08/17/2026",
@@ -193,16 +263,6 @@ local function BuildInformationTab(parent)
                 "Edit Mode HUD: Added manual X and Y coordinate input boxes for real-time pixel-perfect positioning and direct value entry",
                 "Edit Mode Decoupling: GravityUI Edit Mode now independent from Blizzard Edit Mode, accessible via dedicated button or /guiedit",
                 "Blizzard Edit Mode: Objective Tracker frame auto-shows and remains selectable without conflict",
-            },
-        },
-        {
-            version = "4.00.35",
-            date = "08/11/2026",
-            changes = {
-                "Ready for WoW 12.1 -- all core modules verified and updated for the new API surface",
-                "Performance: ExtraActionButton & ZoneAbility positioning system rewritten -- persistent drift-free save/restore across sessions, Edit Mode toggles, and Dominos interactions",
-                "Performance: SetPoint hook now uses per-frame installation flags (no single shared guard) -- ZoneAbilityFrame hook correctly retried if frame was nil at PLAYER_LOGIN",
-                "General stability improvements and minor memory optimizations across actionbars.lua",
             },
         },
     }
@@ -265,10 +325,11 @@ local function BuildInformationTab(parent)
     R({ name="Mail Extras",       desc="Open All button, address book for alts, and gold loot messages.",               stateTable=db.uiimprovements and db.uiimprovements.mail, stateKey="enabled", pageId="features", tabIndex=4 })
     R({ name="Group & Guild",     desc="Guild invite tool and automatic role promotion for assistants.",                 pageId="features", tabIndex=5 })
     R({ name="Interrupt Tracker", desc="Tracks interrupt cooldowns of party members in M+ dungeons.",                   stateTable=db.screenindicators and db.screenindicators.interruptTracker, stateKey="enabled", pageId="features", tabIndex=6 })
-    R({ name="Targeted Spells",   desc="Castbars & icons for enemy spells targeting you or group members.",             stateTable=db.screenindicators and db.screenindicators.targetedSpells, stateKey="enabled", pageId="features", tabIndex=7 })
-    R({ name="Death Announcer",   desc="Broadcasts party and raid player deaths to chat and on-screen alerts.",          stateTable=db.deathAnnouncer, stateKey="enabled", pageId="features", tabIndex=8 })
-    R({ name="Alt Manager",       desc="Account-wide matrix for Mythic+ Keystones, Great Vault status, and Currencies.", stateTable=db.altManager, stateKey="enabled", pageId="features", tabIndex=9 })
-    R({ name="Frame Mover",       desc="Freely drag and reposition all standard Blizzard frames (Character, Bank, Merchant, etc.).", stateTable=db.frameMover, stateKey="enabled", pageId="features", tabIndex=10 })
+    R({ name="Alt Manager",       desc="Account-wide matrix for Mythic+ Keystones, Great Vault status, and Currencies.", stateTable=db.altManager, stateKey="enabled", pageId="features", tabIndex=7 })
+    R({ name="Frame Mover",       desc="Freely drag and reposition all standard Blizzard frames (Character, Bank, Merchant, etc.).", stateTable=db.frameMover, stateKey="enabled", pageId="features", tabIndex=8 })
+    R({ name="Sound Alerts",      desc="Integrate custom SharedMedia sounds into Blizzard's CooldownViewer.",           stateTable=db.soundAlerts, stateKey="enabled", pageId="features", tabIndex=9 })
+    R({ name="Color Picker",      desc="Full HSV color picker with saved slots, class colors, hex input, and live preview.", stateTable=db.colorPicker, stateKey="enabled", pageId="features", tabIndex=10 })
+    R({ name="Premade Group",     desc="Group Finder and GroupFinderIO enhancements with role filters and auto-accept.",     stateTable=db.premadeGroup, stateKey="enabled", pageId="features", tabIndex=11 })
     G()
     H("  Indicators")
     R({ name="Cursor Utilities",   desc="Attach GCD rings, cursor castbars and highlights to your mouse cursor.",       stateTable=db.screenindicators and db.screenindicators.cursor, stateKey="enabled", pageId="indicators", tabIndex=1 })
@@ -280,18 +341,13 @@ local function BuildInformationTab(parent)
     R({ name="Pet Info",           desc="Pet management tools and large status warnings for Hunters and Warlocks.",       stateTable=db.screenindicators and db.screenindicators.petWarnings, stateKey="enabled", pageId="indicators", tabIndex=5 })
     R({ name="Combat Status",      desc="On-screen text notification (+Combat / -Combat) when entering and leaving combat.", stateTable=db.screenindicators and db.screenindicators.combatStatus, stateKey="enabled", pageId="indicators", tabIndex=6 })
     R({ name="Combat Timer",       desc="Visual stopwatch tracking time spent in combat. Great for M+ and raid analysis.", stateTable=db.uiimprovements and db.uiimprovements.combatTimer, stateKey="enabled", pageId="indicators", tabIndex=7 })
-    R({ name="Cooldown Text",      desc="On-screen text alerts when tracked party spells go on cooldown.",                stateTable=db.cooldownText, stateKey="enabled", pageId="indicators", tabIndex=8 })
-    R({ name="Missing Buffs",      desc="Dynamically tracks missing raid buffs based on group class composition.",         stateTable=db.raidBuffs, stateKey="enabled", pageId="indicators", tabIndex=9 })
-    R({ name="Raid Warnings",      desc="Large centralized alerts for Soulwells, Feasts, Mage Tables, and Rituals.",      stateTable=db.raidWarnings, stateKey="enabled", pageId="indicators", tabIndex=10 })
-    R({ name="Consumables",        desc="Shows missing consumables for group members during a Ready Check.",               stateTable=db.screenindicators and db.screenindicators.consumables, stateKey="enabled", pageId="indicators", tabIndex=11 })
-    R({ name="Difficulty",         desc="Status bar showing current instance difficulty with a quick-change dropdown.",    stateTable=db.screenindicators and db.screenindicators.difficulty, stateKey="enabled", pageId="indicators", tabIndex=12 })
-    R({ name="AFK Screen",         desc="Immersive character orbit when AFK. Displays real time, guild, and rank.",        stateTable=db.screenindicators and db.screenindicators.afkScreen, stateKey="enabled", pageId="indicators", tabIndex=13 })
-    G()
-    H("  Utilities")
-    R({ name="Sound Alerts",   desc="Integrate custom SharedMedia sounds into Blizzard's CooldownViewer.",             stateTable=db.soundAlerts, stateKey="enabled", pageId="utilities", tabIndex=1 })
-    R({ name="Tracked Bars",   desc="Configurable progress bars tracking spells, items or timers with custom thresholds.",  stateTable=db.actionbars and db.actionbars.cdmBuffbar, stateKey="enabled", pageId="utilities", tabIndex=2 })
-    R({ name="Color Picker",   desc="Full HSV color picker with saved slots, class colors, hex input, and live preview.",   stateTable=db.colorPicker, stateKey="enabled", pageId="utilities", tabIndex=3 })
-    R({ name="Premade Group",  desc="Group Finder and GroupFinderIO enhancements with role filters and auto-accept.",       stateTable=db.premadeGroup, stateKey="enabled", pageId="utilities", tabIndex=4 })
+    R({ name="Cooldown Text",      desc="Movement cooldown tracker with preset spell lists, sound alerts, and display modes.", stateTable=db.cooldownText, stateKey="enabled", pageId="indicators", tabIndex=8 })
+    R({ name="Raid Warnings",      desc="Large centralized alerts for Soulwells, Feasts, Mage Tables, and Rituals.",      stateTable=db.raidWarnings, stateKey="enabled", pageId="indicators", tabIndex=9 })
+    R({ name="Consumables",        desc="Shows missing consumables for group members during a Ready Check.",               stateTable=db.screenindicators and db.screenindicators.consumables, stateKey="enabled", pageId="indicators", tabIndex=10 })
+    R({ name="Difficulty",         desc="Status bar showing current instance difficulty with a quick-change dropdown.",    stateTable=db.screenindicators and db.screenindicators.difficulty, stateKey="enabled", pageId="indicators", tabIndex=11 })
+    R({ name="AFK Screen",         desc="Immersive character orbit when AFK. Displays real time, guild, and rank.",        stateTable=db.screenindicators and db.screenindicators.afkScreen, stateKey="enabled", pageId="indicators", tabIndex=12 })
+    R({ name="Death Announcer",    desc="Broadcasts party and raid player deaths to chat and on-screen alerts.",          stateTable=db.deathAnnouncer, stateKey="enabled", pageId="indicators", tabIndex=13 })
+    R({ name="Tracked Bars",       desc="Configurable progress bars tracking spells, items or timers with custom thresholds.",  stateTable=db.actionbars and db.actionbars.cdmBuffbar, stateKey="enabled", pageId="indicators", tabIndex=14 })
     G()
     H("  UI Styling")
     R({ name="Character Panel",    desc="Embeds item level, durability, enchants and gems on character slot icons.",        stateTable=db.uiimprovements and db.uiimprovements.character, stateKey="enabled", pageId="Styling", tabIndex=1 })
@@ -316,39 +372,98 @@ local function BuildInformationTab(parent)
     R({ name="Installer",       desc="Relaunch the first-time setup and addon dependency installers.",                 pageId="profiles", tabIndex=4 })
     G()
 
+    -- Collect all toggleable module references for bulk operations
+    local toggleableModules = {}
+    local function CollectToggleable(f)
+        if f.stateTable and f.stateKey then
+            table.insert(toggleableModules, f)
+        end
+    end
+
+    -- Re-collect (we already created the rows, so just rebuild the list from the same data)
+    -- Minimap
+    CollectToggleable({ stateTable=db.minimap, stateKey="enabled" })
+    CollectToggleable({ stateTable=db.minimap and db.minimap.catcher, stateKey="enabled" })
+    -- Action Bars
+    CollectToggleable({ stateTable=db.actionbars, stateKey="enabled" })
+    CollectToggleable({ stateTable=db.actionbars and db.actionbars.fade, stateKey="enabled" })
+    -- Datapanels
+    CollectToggleable({ stateTable=db.minimap and db.minimap.datatext, stateKey="enabled" })
+    -- Features
+    CollectToggleable({ stateTable=db.skyriding, stateKey="enabled" })
+    CollectToggleable({ stateTable=db.uiimprovements, stateKey="mplusTeleportEnabled" })
+    CollectToggleable({ stateTable=db.uiimprovements and db.uiimprovements.marks, stateKey="enabled" })
+    CollectToggleable({ stateTable=db.uiimprovements and db.uiimprovements.mail, stateKey="enabled" })
+    CollectToggleable({ stateTable=db.screenindicators and db.screenindicators.interruptTracker, stateKey="enabled" })
+    CollectToggleable({ stateTable=db.altManager, stateKey="enabled" })
+    CollectToggleable({ stateTable=db.frameMover, stateKey="enabled" })
+    CollectToggleable({ stateTable=db.soundAlerts, stateKey="enabled" })
+    CollectToggleable({ stateTable=db.colorPicker, stateKey="enabled" })
+    CollectToggleable({ stateTable=db.premadeGroup, stateKey="enabled" })
+    -- Indicators
+    CollectToggleable({ stateTable=db.screenindicators and db.screenindicators.cursor, stateKey="enabled" })
+    CollectToggleable({ stateTable=db.screenindicators and db.screenindicators.crosshair, stateKey="enabled" })
+    CollectToggleable({ stateTable=db.screenindicators and db.screenindicators.stanceText, stateKey="enabled" })
+    CollectToggleable({ stateTable=db.screenindicators and db.screenindicators.healerMana, stateKey="enabled" })
+    CollectToggleable({ stateTable=db.screenindicators and db.screenindicators.battleRes, stateKey="enabled" })
+    CollectToggleable({ stateTable=db.screenindicators and db.screenindicators.bloodlust, stateKey="enabled" })
+    CollectToggleable({ stateTable=db.screenindicators and db.screenindicators.petWarnings, stateKey="enabled" })
+    CollectToggleable({ stateTable=db.screenindicators and db.screenindicators.combatStatus, stateKey="enabled" })
+    CollectToggleable({ stateTable=db.uiimprovements and db.uiimprovements.combatTimer, stateKey="enabled" })
+    CollectToggleable({ stateTable=db.cooldownText, stateKey="enabled" })
+    CollectToggleable({ stateTable=db.raidWarnings, stateKey="enabled" })
+    CollectToggleable({ stateTable=db.screenindicators and db.screenindicators.consumables, stateKey="enabled" })
+    CollectToggleable({ stateTable=db.screenindicators and db.screenindicators.difficulty, stateKey="enabled" })
+    CollectToggleable({ stateTable=db.screenindicators and db.screenindicators.afkScreen, stateKey="enabled" })
+    CollectToggleable({ stateTable=db.deathAnnouncer, stateKey="enabled" })
+    CollectToggleable({ stateTable=db.actionbars and db.actionbars.cdmBuffbar, stateKey="enabled" })
+    -- Styling
+    CollectToggleable({ stateTable=db.uiimprovements and db.uiimprovements.character, stateKey="enabled" })
+    CollectToggleable({ stateTable=db.uiimprovements and db.uiimprovements.chat, stateKey="enabled" })
+    CollectToggleable({ stateTable=db.uiimprovements and db.uiimprovements.tooltip, stateKey="enabled" })
+    CollectToggleable({ stateTable=db.styling and db.styling.objectives, stateKey="objectiveTrackerSkinning" })
+    CollectToggleable({ stateTable=db.styling and db.styling.loot, stateKey="enabled" })
+    CollectToggleable({ stateTable=db.styling and db.styling.gamemenu, stateKey="enabled" })
+    CollectToggleable({ stateTable=db.styling, stateKey="skinReadyCheck" })
+    CollectToggleable({ stateTable=db.styling and db.styling.keystone, stateKey="enabled" })
+    CollectToggleable({ stateTable=db.styling and db.styling.powerBar, stateKey="enabled" })
+    CollectToggleable({ stateTable=db.styling and db.styling.alerts, stateKey="enabled" })
+    CollectToggleable({ stateTable=db.styling and db.styling.chatBubbles, stateKey="enabled" })
+    CollectToggleable({ stateTable=db.styling and db.styling.instanceFrames, stateKey="enabled" })
+    CollectToggleable({ stateTable=db.styling and db.styling.xpRep, stateKey="enabled" })
+    CollectToggleable({ stateTable=db.styling and db.styling.staticPopups, stateKey="enabled" })
+
+    -- Enable All / Disable All Buttons
+    hy = hy - 6
+    local btnEnableAll = GUI:CreateButton(hubFrame, "Enable All", 120, 26, function()
+        for _, m in ipairs(toggleableModules) do
+            if m.stateTable then m.stateTable[m.stateKey] = true end
+        end
+        print("|cff00BFFFGravityUI:|r All modules |cff00FF00enabled|r. Please |cff00FF00/reload|r to apply.")
+        BuildInformationTab(parent)
+    end)
+    btnEnableAll:SetPoint("TOPLEFT", 0, hy)
+
+    local btnDisableAll = GUI:CreateButton(hubFrame, "Disable All", 120, 26, function()
+        for _, m in ipairs(toggleableModules) do
+            if m.stateTable then m.stateTable[m.stateKey] = false end
+        end
+        print("|cff00BFFFGravityUI:|r All modules |cffFF5555disabled|r. Please |cff00FF00/reload|r to apply.")
+        BuildInformationTab(parent)
+    end)
+    btnDisableAll:SetPoint("LEFT", btnEnableAll, "RIGHT", 10, 0)
+
+    hy = hy - 32
+
     hubFrame:SetHeight(math.abs(hy) + 4)
     y = y + hy - 20
     content:SetHeight(math.abs(y) + 60)
 end
 
 -- ============================================================
--- PAGE REGISTRATION
+-- INJECT INTO MAIN PAGE (replaces Welcome tab)
 -- ============================================================
-ns.GUI:RegisterPage("information", {
-    title = "Information",
-    subTabs = {
-        { name = "Information", builder = BuildInformationTab },
-    },
-    OnBuild = function(content)
-        local scrollFrame = content:GetParent()
-        content:Hide()
-        if scrollFrame and scrollFrame.ScrollBar then
-            scrollFrame.ScrollBar:Hide()
-            scrollFrame.ScrollBar:HookScript("OnShow", function(self) self:Hide() end)
-            scrollFrame:EnableMouseWheel(false)
-        end
-        local opts = GUI.pages["information"]
-        opts.subTabsContainer = ns.GUI:CreateSubTabs(scrollFrame, opts.subTabs)
-        opts.subTabsContainer:SetPoint("TOPLEFT", 10, -10)
-        opts.subTabsContainer:SetPoint("TOPRIGHT", -10, 0)
-    end,
-    OnShow = function(content, subIndex)
-        local opts = GUI.pages["information"]
-        if not opts.subTabsContainer then return end
-        subIndex = subIndex or 1
-        for _, cf in pairs(opts.subTabsContainer.tabContents) do cf:Hide() end
-        if opts.subTabsContainer.tabContents[subIndex] then
-            opts.subTabsContainer.tabContents[subIndex]:Show()
-        end
-    end,
-})
+local mainPage = GUI.pages and GUI.pages["main"]
+if mainPage and mainPage.subTabs and mainPage.subTabs[1] then
+    mainPage.subTabs[1].builder = BuildInformationTab
+end

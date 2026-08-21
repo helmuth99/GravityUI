@@ -345,30 +345,19 @@ local function BuildPremadeGroup(parent)
 end
 
 --==============================================================================================================================================================================================
--- PAGE REGISTRATION
+-- INJECT INTO FEATURES & INDICATORS (no separate Utilities page)
 --==============================================================================================================================================================================================
-ns.GUI:RegisterPage("utilities", {
-    title = "Utilities",
-    subTabs = {
-        { name = "Sound Alerts",  builder = BuildSoundAlerts },
-        { name = "Tracked Bars",  builder = BuildTrackedBars },
-        { name = "Color Picker",  builder = BuildColorPickerSettings },
-        { name = "Premade Group",  builder = BuildPremadeGroup },
-    },
-    OnBuild = function(content)
-        local scrollFrame = content:GetParent()
-        content:Hide()
-        if scrollFrame.ScrollBar then scrollFrame.ScrollBar:Hide(); scrollFrame.ScrollBar:HookScript("OnShow", function(self) self:Hide() end) end
-        local opts = GUI.pages["utilities"]
-        opts.subTabsContainer = GUI:CreateSubTabs(scrollFrame, opts.subTabs)
-        opts.subTabsContainer:SetPoint("TOPLEFT", 10, -10)
-        opts.subTabsContainer:SetPoint("TOPRIGHT", -10, 0)
-    end,
-    OnShow = function(content, subIndex)
-        local opts = GUI.pages["utilities"]
-        if not opts.subTabsContainer then return end
-        subIndex = subIndex or 1
-        for _, cf in pairs(opts.subTabsContainer.tabContents) do cf:Hide() end
-        if opts.subTabsContainer.tabContents[subIndex] then opts.subTabsContainer.tabContents[subIndex]:Show() end
-    end
-})
+
+-- Tracked Bars → Indicators
+local indicatorPage = GUI.pages and GUI.pages["indicators"]
+if indicatorPage and indicatorPage.subTabs then
+    table.insert(indicatorPage.subTabs, { name = "Tracked Bars", builder = BuildTrackedBars })
+end
+
+-- Sound Alerts, Color Picker, Premade Group → Features
+local featuresPage = GUI.pages and GUI.pages["features"]
+if featuresPage and featuresPage.subTabs then
+    table.insert(featuresPage.subTabs, { name = "Sound Alerts",  builder = BuildSoundAlerts })
+    table.insert(featuresPage.subTabs, { name = "Color Picker",  builder = BuildColorPickerSettings })
+    table.insert(featuresPage.subTabs, { name = "Premade Group", builder = BuildPremadeGroup })
+end
