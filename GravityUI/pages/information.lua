@@ -231,7 +231,7 @@ local function BuildInformationTab(parent)
 
     local changeLogs = {
         {
-            version = "4.00.91",
+            version = "4.00.92",
             date = "08/21/2026",
             changes = {
                 "Settings Panel Restructure: Dissolved Utilities page — Sound Alerts, Color Picker, and Premade Group moved to Features; Tracked Bars moved to Indicators",
