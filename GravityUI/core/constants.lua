@@ -2,7 +2,8 @@
 local ADDON_NAME, ns = ...
 
 ns.ADDON_NAME = ADDON_NAME
-ns.VERSION = C_AddOns.GetAddOnMetadata(ADDON_NAME, "Version") or "1.0.0"
+local _ok, _ver = pcall(function() return C_AddOns.GetAddOnMetadata(ADDON_NAME, "Version") end)
+ns.VERSION = (_ok and _ver) or "1.0.0"
 
 -- Expose namespace globally
 _G.GravityUI = ns

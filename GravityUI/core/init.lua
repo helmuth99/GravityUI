@@ -2067,7 +2067,8 @@ local GameTooltip = GameTooltip
 function GravityUI_CompartmentOnEnter(self, button)
     GameTooltip:ClearLines()
     GameTooltip:SetOwner(type(self) ~= "string" and self or button, "ANCHOR_LEFT")
-    GameTooltip:AddLine("GravityUI" .. ns.VERSION)
+    GameTooltip:AddLine("GravityUI " .. ns.VERSION)
+
     GameTooltip:AddLine("Left-click to open settings")
     GameTooltip:Show()
 end
