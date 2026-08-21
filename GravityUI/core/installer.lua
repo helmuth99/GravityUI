@@ -456,8 +456,11 @@ function Installer:ApplyEllesmereGlobalSettings()
     -- UI Scale CVar is managed through ppUIScale above; Lag Tolerance via GravityUI.
     pcall(SetCVar, "cameraDistanceMaxZoomFactor", 2.6)   -- Max Camera Distance
     pcall(SetCVar, "ActionButtonUseKeyDown",      1)     -- Cast Actions on Key Down
-    pcall(SetCVar, "enableFloatingCombatText",    1)     -- Show Combat Damage Text
-    pcall(SetCVar, "floatingCombatTextCombatHealing", 0) -- Show Combat Healing Text (off)
+    -- Combat text CVars: read from GravityUI profile DB to preserve user preference
+    local guiUI = ns.db and ns.db.profile and ns.db.profile.uiimprovements
+    pcall(SetCVar, "enableFloatingCombatText",         (guiUI and guiUI.scrollingCombatText)  and "1" or "0")
+    pcall(SetCVar, "floatingCombatTextCombatDamage_v2", (guiUI and guiUI.showDamageNumbers)   and "1" or "0")
+    pcall(SetCVar, "floatingCombatTextCombatHealing_v2",(guiUI and guiUI.showHealingNumbers)  and "1" or "0")
     pcall(SetCVar, "ScriptErrors",               "HIDE") -- Suppress Lua Errors
 
     -- ── Blizz UI Enhanced – Dragon Riding (EllesmereUIDragonRidingDB) ─────
