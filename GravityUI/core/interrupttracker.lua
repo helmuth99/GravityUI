@@ -812,6 +812,10 @@ local function StartCooldown(guid, name, class, spellId, isReady, isTest)
                 if activeReductions[guid]["PCT_" .. spellId] then
                     duration = duration * (1 - activeReductions[guid]["PCT_" .. spellId])
                 end
+                -- On-Kick reduction (e.g. DK Coldthirst: -3s on successful kick)
+                if activeReductions[guid].onKick then
+                    duration = duration - activeReductions[guid].onKick
+                end
             end
             
             info.expiration = GetTime() + duration
@@ -873,6 +877,10 @@ local function StartCooldown(guid, name, class, spellId, isReady, isTest)
             if activeReductions[guid]["PCT_" .. spellId] then
                 duration = duration * (1 - activeReductions[guid]["PCT_" .. spellId])
             end
+            -- On-Kick reduction (e.g. DK Coldthirst: -3s on successful kick)
+            if activeReductions[guid].onKick then
+                duration = duration - activeReductions[guid].onKick
+            end
         end
         expiration = GetTime() + duration
         f.time:SetText(string.format("%.1f", duration))
@@ -904,10 +912,31 @@ local function HandlePartyCast(memberName, spellID)
     local entry = partyRegistry[memberName]
     if not entry then return end
     local cd = INTERRUPTS[spellID] or entry.baseCd or 15
+    local guid = entry.guid
+
+    -- Apply Spec Override (e.g. Resto Shaman Wind Shear: 30s instead of 12s)
+    if guid and activeSpecs[guid] and SPEC_COOLDOWN_OVERRIDES[spellID] then
+        cd = SPEC_COOLDOWN_OVERRIDES[spellID][activeSpecs[guid]] or cd
+    end
+
+    -- Apply Talent Reductions (mirrors StartCooldown logic)
+    if guid and activeReductions[guid] then
+        if activeReductions[guid][spellID] then
+            cd = cd - activeReductions[guid][spellID]
+        end
+        if activeReductions[guid]["PCT_" .. spellID] then
+            cd = cd * (1 - activeReductions[guid]["PCT_" .. spellID])
+        end
+        -- On-Kick reduction (e.g. DK Coldthirst: -3s on successful kick)
+        if activeReductions[guid].onKick then
+            cd = cd - activeReductions[guid].onKick
+        end
+    end
+
     local now = GetTime()
     entry.cdEnd = now + cd
-    if entry.guid then
-        StartCooldown(entry.guid, memberName, entry.class, spellID)
+    if guid then
+        StartCooldown(guid, memberName, entry.class, spellID)
     end
 end
 
