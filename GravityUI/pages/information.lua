@@ -231,7 +231,7 @@ local function BuildInformationTab(parent)
 
     local changeLogs = {
         {
-            version = "4.00.93",
+            version = "4.00.94",
             date = "08/21/2026",
             changes = {
                 "Actionbars taint error fix on mythic plus start, Objective Tracker optimization on hide",
