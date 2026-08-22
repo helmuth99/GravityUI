@@ -1141,10 +1141,10 @@ function ns.RefreshActionBars()
             end
         end
 
-        -- Reset Hide Empty Slots CVar (optional cleanup)
-        if not InCombatLockdown() then
-            pcall(SetCVar, "alwaysShowActionBars", "1")
-        end
+        -- NOTE: We deliberately do NOT touch SetCVar("alwaysShowActionBars") here.
+        -- It synchronously triggers MultiActionBar_Update → ShowBase() which is
+        -- protected and would cause ADDON_ACTION_BLOCKED. Empty-slot visibility
+        -- is handled by GravityUI's own UpdateEmptySlotVisibility (alpha-based).
 
         -- Disable Fade logic
         fadeFrame:SetScript("OnUpdate", nil)
@@ -1170,20 +1170,15 @@ function ns.RefreshActionBars()
     local g = db.global
 
     -- Hide Empty Slots (Grid Management)
-    -- TAINT FIX: SetCVar("alwaysShowActionBars") triggers Blizzard's MultiActionBar_Update
-    -- which calls SetScaleBase on protected frames. If called during a tainted execution
-    -- context (any RefreshActionBars path), it causes ADDON_ACTION_BLOCKED.
-    -- Defer to a clean C_Timer context to break the taint chain.
-    if not InCombatLockdown() and g.hideEmptySlots ~= nil then
-        local targetVal = g.hideEmptySlots and "0" or "1"
-        if GetCVar("alwaysShowActionBars") ~= targetVal then
-            C_Timer.After(0, function()
-                if not InCombatLockdown() then
-                    pcall(SetCVar, "alwaysShowActionBars", targetVal)
-                end
-            end)
-        end
-    end
+    -- NOTE: We deliberately do NOT call SetCVar("alwaysShowActionBars") here.
+    -- It synchronously triggers Blizzard's ActionBarController_UpdateAll →
+    -- MultiActionBar_Update → bar:SetShown() → ShowBase(), which is a
+    -- protected function. ANY call to SetCVar from addon code taints this
+    -- chain (even via C_Timer.After or OnUpdate) because the engine still
+    -- considers it addon-initiated.
+    -- Empty-slot visibility is instead handled entirely by GravityUI's own
+    -- UpdateEmptySlotVisibility() which uses SetAlpha(0) on individual buttons.
+    -- This is purely cosmetic and does not require CVar manipulation.
 
     for barKey, _ in pairs(BAR_BUTTONS) do
         local frame = _G[BAR_FRAMES[barKey]]
@@ -1267,6 +1262,15 @@ function ns.RefreshActionBars()
     end
 end
 
+
+---------------------------------------------------------------------------
+-- NOTE: SetCVar("alwaysShowActionBars") intentionally NOT used.
+-- Any addon-initiated SetCVar call synchronously triggers Blizzard's
+-- ActionBarController_UpdateAll → MultiActionBar_Update → ShowBase()
+-- (protected). This causes ADDON_ACTION_BLOCKED regardless of deferral
+-- mechanism (C_Timer, OnUpdate, etc.). GravityUI uses its own alpha-based
+-- empty-slot hiding via UpdateEmptySlotVisibility() instead.
+---------------------------------------------------------------------------
 
 ---------------------------------------------------------------------------
 -- INITIALIZATION

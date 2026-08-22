@@ -101,13 +101,18 @@ local function GetUnitManaPercent(unit)
     if UnitPowerPercent then
         local ok, pct = pcall(UnitPowerPercent, unit, Enum.PowerType.Mana, true,
             CurveConstants and CurveConstants.ScaleTo100 or nil)
-        if ok and pct ~= nil then return pct end
+        -- TAINT FIX: UnitPowerPercent can return secret numbers when execution
+        -- is tainted. type() returns "number" for secrets, so check issecretvalue.
+        if ok and pct ~= nil and not (issecretvalue and issecretvalue(pct)) then return pct end
     end
     if UnitPowerMax and UnitPower then
         local ok, pct = pcall(function()
             local maxMana = UnitPowerMax(unit, Enum.PowerType.Mana)
-            if maxMana and maxMana > 0 then
-                return (UnitPower(unit, Enum.PowerType.Mana) / maxMana) * 100
+            if maxMana and maxMana > 0 and not (issecretvalue and issecretvalue(maxMana)) then
+                local cur = UnitPower(unit, Enum.PowerType.Mana)
+                if not (issecretvalue and issecretvalue(cur)) then
+                    return (cur / maxMana) * 100
+                end
             end
         end)
         if ok and pct then return pct end
@@ -517,7 +522,8 @@ function HM:UpdateMana()
             if isDrinking then
                 isRegen = true
                 h.regenUntil = GetTime() + 2  -- grace period: show "Drinking" for 2s after hitting 100%
-            elseif type(curMana) == "number" and type(h.lastMana) == "number" then
+            elseif type(curMana) == "number" and not IsSecret(curMana)
+                   and type(h.lastMana) == "number" and not IsSecret(h.lastMana) then
                 -- Fallback: detect mana rising while healer is out of combat
                 local inCombat = pcall(UnitAffectingCombat, h.unit) and UnitAffectingCombat(h.unit)
                 if h.connected and curMana > h.lastMana and not inCombat then
@@ -532,8 +538,8 @@ function HM:UpdateMana()
             end
 
             h.isRegen = isRegen
-            -- Only store lastMana if it's a real number (prevent secret corruption)
-            if type(curMana) == "number" then
+            -- Only store lastMana if it's a real, non-secret number
+            if type(curMana) == "number" and not IsSecret(curMana) then
                 h.lastMana = curMana
             end
             self:UpdateManaDisplay(frame, h.unit, h.connected, h.isRegen)

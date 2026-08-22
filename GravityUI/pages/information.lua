@@ -231,9 +231,11 @@ local function BuildInformationTab(parent)
 
     local changeLogs = {
         {
-            version = "4.00.99",
+            version = "4.01.00",
             date = "08/22/2026",
             changes = {
+                "Taint Fix: Eliminated ADDON_ACTION_BLOCKED for MultiBarBottomLeft:ShowBase() — removed all SetCVar('alwaysShowActionBars') calls which synchronously triggered Blizzard's protected ActionBarController chain; empty-slot hiding now handled entirely via alpha-based UpdateEmptySlotVisibility",
+                "Taint Fix: Fixed secret number crash in Healer Mana tracker — UnitPowerPercent can return secret values under taint; added issecretvalue() guards to GetUnitManaPercent, mana comparison, and lastMana storage",
                 "Actionbars taint error fix on mythic plus start, Objective Tracker optimization on hide",
                 "Settings Panel Restructure: Dissolved Utilities page — Sound Alerts, Color Picker, and Premade Group moved to Features; Tracked Bars moved to Indicators",
                 "Death Announcer relocated from Features to Indicators for logical grouping with on-screen alert modules",
@@ -246,7 +248,7 @@ local function BuildInformationTab(parent)
             },
         },
         {
-            version = "4.01.00",
+            version = "4.00.99",
             date = "08/17/2026",
             changes = {
                 "Quality of Life Overhaul: Added new QoL suite (Auto Open Containers with Warband exclusions, Hide Item Transforms, Auto Unwrap Collections, Train All Button, and Announce Instance Reset)",
