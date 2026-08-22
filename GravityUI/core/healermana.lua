@@ -101,18 +101,13 @@ local function GetUnitManaPercent(unit)
     if UnitPowerPercent then
         local ok, pct = pcall(UnitPowerPercent, unit, Enum.PowerType.Mana, true,
             CurveConstants and CurveConstants.ScaleTo100 or nil)
-        -- TAINT FIX: UnitPowerPercent can return secret numbers when execution
-        -- is tainted. type() returns "number" for secrets, so check issecretvalue.
-        if ok and pct ~= nil and not (issecretvalue and issecretvalue(pct)) then return pct end
+        if ok and pct ~= nil then return pct end
     end
     if UnitPowerMax and UnitPower then
         local ok, pct = pcall(function()
             local maxMana = UnitPowerMax(unit, Enum.PowerType.Mana)
-            if maxMana and maxMana > 0 and not (issecretvalue and issecretvalue(maxMana)) then
-                local cur = UnitPower(unit, Enum.PowerType.Mana)
-                if not (issecretvalue and issecretvalue(cur)) then
-                    return (cur / maxMana) * 100
-                end
+            if maxMana and maxMana > 0 then
+                return (UnitPower(unit, Enum.PowerType.Mana) / maxMana) * 100
             end
         end)
         if ok and pct then return pct end
@@ -166,15 +161,20 @@ function HM:UpdateManaDisplay(frame, unit, connected, isRegen)
     if connected then
         local pct = GetUnitManaPercent(unit)
         frame.icon:SetVertexColor(1, 1, 1)
+        -- TAINT FIX: pct may be a secret number when execution is tainted.
+        -- format() would error on a secret, so pcall it and fall back to "?%".
+        local displayText
         if isRegen then
-            -- Actively regenerating (drinking, Innervate, mana pot etc.) → green + Drinking status
             frame.mana:SetTextColor(0.3, 1, 0.4)
-            frame.mana:SetText(format("%.0f%%  |cff55ff77Drinking|r", pct or 0))
+            local ok, txt = pcall(format, "%.0f%%  |cff55ff77Drinking|r", pct or 0)
+            displayText = ok and txt or "?%  |cff55ff77Drinking|r"
         else
             local col = db.highManaColor or { 0.4, 0.8, 1 }
             frame.mana:SetTextColor(col[1], col[2], col[3])
-            frame.mana:SetText(format("%.0f%%", pct or 0))
+            local ok, txt = pcall(format, "%.0f%%", pct or 0)
+            displayText = ok and txt or "?%"
         end
+        frame.mana:SetText(displayText)
     else
         frame.mana:SetTextColor(0.5, 0.5, 0.5)
         frame.mana:SetText("OFFLINE")
@@ -522,11 +522,17 @@ function HM:UpdateMana()
             if isDrinking then
                 isRegen = true
                 h.regenUntil = GetTime() + 2  -- grace period: show "Drinking" for 2s after hitting 100%
-            elseif type(curMana) == "number" and not IsSecret(curMana)
-                   and type(h.lastMana) == "number" and not IsSecret(h.lastMana) then
-                -- Fallback: detect mana rising while healer is out of combat
+            elseif type(curMana) == "number" and type(h.lastMana) == "number" then
+                -- Fallback: detect mana rising while healer is out of combat.
+                -- TAINT FIX: curMana or lastMana may be a secret number.
+                -- pcall the comparison so secret values don't crash.
                 local inCombat = pcall(UnitAffectingCombat, h.unit) and UnitAffectingCombat(h.unit)
-                if h.connected and curMana > h.lastMana and not inCombat then
+                local manaRising = false
+                if h.connected and not inCombat then
+                    local cmpOk, cmpResult = pcall(function() return curMana > h.lastMana end)
+                    manaRising = cmpOk and cmpResult
+                end
+                if manaRising then
                     isRegen = true
                     h.regenUntil = GetTime() + 2
                 elseif h.regenUntil and GetTime() < h.regenUntil then

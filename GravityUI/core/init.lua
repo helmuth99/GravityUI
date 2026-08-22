@@ -210,24 +210,45 @@ function Addon:OnInitialize()
                 return sp
             end
 
-            -- Force-reposition all visible EABR icons to TOPLEFT (grow right).
-            -- Also pins the anchor's left edge so it doesn't shift on resize.
-            local function ForceReposition()
-                if InCombatLockdown() or not IsEnabled() then return end
+            -- Persistent left-edge X coordinate.
+            -- Captured ONCE at startup from the anchor's current position,
+            -- then reused for every subsequent reposition so that the bar
+            -- always grows rightward from this fixed left edge.
+            local savedLeftX = nil
+            local savedTopY  = nil
+            local isRepositioning = false  -- re-entrancy guard for our own SetPoint/ClearAllPoints calls
 
-                -- Pin anchor: compute where the left edge IS from its center,
-                -- then re-anchor to keep that left edge fixed.
+            -- Capture the initial left edge from wherever EABR placed the anchor.
+            local function CaptureLeftEdge()
+                if savedLeftX then return end  -- already captured
                 local cx = anchor:GetCenter()
                 local top = anchor:GetTop()
                 local w = anchor:GetWidth()
-                if cx and top and w then
-                    local left = cx - (w / 2)
-                    anchor:ClearAllPoints()
-                    anchor:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", left, top)
+                if cx and top and w and w > 0 then
+                    savedLeftX = cx - (w / 2)
+                    savedTopY  = top
                 end
+            end
 
-                -- Reposition icons
+            -- Pin the anchor's left edge and reposition all visible icons.
+            local function PinAndReposition()
+                if InCombatLockdown() or not IsEnabled() then return end
+                if isRepositioning then return end
+
+                CaptureLeftEdge()
+                if not savedLeftX then return end
+
+                isRepositioning = true
+
+                -- Pin anchor to saved left edge (top stays where it was, or
+                -- uses the latest top if EABR moved it vertically).
+                local top = anchor:GetTop() or savedTopY
+                anchor:ClearAllPoints()
+                anchor:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", savedLeftX, top)
+
+                -- Reposition icons left-to-right from anchor's TOPLEFT
                 local spacing = GetSpacing()
+                local visIndex = 0
                 local i = 1
                 while true do
                     local btn = _G["EABR_Icon" .. i]
@@ -235,27 +256,39 @@ function Addon:OnInitialize()
                     if btn:IsShown() then
                         local sz = btn:GetWidth()
                         btn:ClearAllPoints()
-                        btn:SetPoint("TOPLEFT", anchor, "TOPLEFT", (i - 1) * (sz + spacing), 0)
+                        btn:SetPoint("TOPLEFT", anchor, "TOPLEFT", visIndex * (sz + spacing), 0)
+                        visIndex = visIndex + 1
                     end
                     i = i + 1
                 end
+
+                isRepositioning = false
             end
 
             -----------------------------------------------------------------
-            -- Layer 1: Hook anchor's SetPoint("CENTER") to pin left edge.
+            -- Layer 1: Hook anchor's SetPoint — intercept EABR's CENTER
+            -- calls and re-pin to our saved TOPLEFT.
             -----------------------------------------------------------------
             hooksecurefunc(anchor, "SetPoint", function(self, point)
-                if point ~= "CENTER" or InCombatLockdown() then return end
+                if isRepositioning then return end
+                if InCombatLockdown() then return end
                 if not IsEnabled() then return end
-
-                local cx = self:GetCenter()
-                local top = self:GetTop()
-                local w = self:GetWidth()
-                if cx and top and w then
-                    local left = cx - (w / 2)
-                    self:ClearAllPoints()
-                    self:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", left, top)
+                -- EABR sets CENTER; we override to TOPLEFT
+                if point == "CENTER" then
+                    PinAndReposition()
                 end
+            end)
+
+            -----------------------------------------------------------------
+            -- Layer 1b: Hook anchor's SetWidth — EABR resizes the anchor
+            -- when the icon count changes, which shifts the center. Re-pin
+            -- immediately so the left edge doesn't drift.
+            -----------------------------------------------------------------
+            hooksecurefunc(anchor, "SetWidth", function()
+                if isRepositioning then return end
+                if InCombatLockdown() then return end
+                if not IsEnabled() then return end
+                PinAndReposition()
             end)
 
             -----------------------------------------------------------------
@@ -269,6 +302,7 @@ function Addon:OnInitialize()
 
                 hooksecurefunc(btn, "SetPoint", function(self, point)
                     if point ~= "CENTER" or InCombatLockdown() then return end
+                    if isRepositioning then return end
                     if not IsEnabled() then return end
 
                     -- Count visible icons up to and including this one
@@ -317,9 +351,13 @@ function Addon:OnInitialize()
             eabrWorldFrame:SetScript("OnEvent", function()
                 C_Timer.After(2, function()
                     ScanAndHook()
-                    ForceReposition()
+                    PinAndReposition()
                 end)
             end)
+
+            -- Initial reposition
+            CaptureLeftEdge()
+            PinAndReposition()
         end)
     end
     
