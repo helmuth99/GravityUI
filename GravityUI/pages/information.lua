@@ -231,9 +231,10 @@ local function BuildInformationTab(parent)
 
     local changeLogs = {
         {
-            version = "4.01.00",
+            version = "4.01.02",
             date = "08/22/2026",
             changes = {
+                "Reworked Action Bars and Mouseover Logic"
                 "Taint Fix: Eliminated ADDON_ACTION_BLOCKED for MultiBarBottomLeft:ShowBase() — removed all SetCVar('alwaysShowActionBars') calls which synchronously triggered Blizzard's protected ActionBarController chain; empty-slot hiding now handled entirely via alpha-based UpdateEmptySlotVisibility",
                 "Taint Fix: Fixed secret number crash in Healer Mana tracker — UnitPowerPercent can return secret values under taint; added issecretvalue() guards to GetUnitManaPercent, mana comparison, and lastMana storage",
                 "Actionbars taint error fix on mythic plus start, Objective Tracker optimization on hide",

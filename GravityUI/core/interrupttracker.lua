@@ -797,7 +797,9 @@ local function StartCooldown(guid, name, class, spellId, isReady, isTest)
     -- print("GravityUI Debug: StartCooldown", name, spellId, isReady)
 
     -- Check duplicates (Key-based mapping for O(1) and guaranteed uniqueness)
-    local key = guid .. spellId
+    -- TAINT FIX: guid from UnitGUID can be a secret string; pcall the concat
+    local keyOk, key = pcall(function() return guid .. spellId end)
+    if not keyOk then return end
     local info = activeBars[key]
     
     if info then
@@ -856,13 +858,18 @@ local function StartCooldown(guid, name, class, spellId, isReady, isTest)
     -- Create new
     local f = GetBar()
     
-    local spellName, _, spellIcon = C_Spell.GetSpellName(spellId), nil, C_Spell.GetSpellTexture(spellId)
+    -- TAINT FIX: C_Spell can return secrets under taint
+    local snOk, spellName = pcall(C_Spell.GetSpellName, spellId)
+    if not snOk or (issecretvalue and issecretvalue(spellName)) then spellName = nil end
+    local siOk, spellIcon = pcall(C_Spell.GetSpellTexture, spellId)
+    if not siOk or (issecretvalue and issecretvalue(spellIcon)) then spellIcon = nil end
     
     -- Apply styling with class info
     StyleBar(f, class)
     
     f.icon:SetTexture(spellIcon)
-    f.name:SetText(name) 
+    -- TAINT FIX: name from UnitName can be secret
+    pcall(f.name.SetText, f.name, name)
     
     local duration = 0
     local expiration = 0
@@ -959,11 +966,15 @@ local function AutoRegisterPartyByClass()
         if UnitExists(u) then
             local name = UnitName(u)
             local _, cls = UnitClass(u)
-            -- Skip if already known to have no kick
-            if name and cls and CLASS_INTERRUPTS[cls] and not partyRegistry[name] and not noKickPlayers[name] then
+            -- TAINT FIX: UnitName/UnitClass can return secrets; skip if tainted
+            if issecretvalue and (issecretvalue(name) or issecretvalue(cls)) then
+                -- skip this unit; retry loop will catch it later
+            elseif name and cls and CLASS_INTERRUPTS[cls] and not partyRegistry[name] and not noKickPlayers[name] then
                 local role = UnitGroupRolesAssigned(u)
                 if role ~= "HEALER" or HEALER_KEEPS_KICK[cls] then
                     local guid   = UnitGUID(u)
+                    -- TAINT FIX: UnitGUID can return a secret
+                    if issecretvalue and issecretvalue(guid) then guid = nil end
                     local sid    = CLASS_INTERRUPTS[cls]
                     local specID = GetInspectSpecialization(u)
                     local noKick = false
@@ -1132,15 +1143,19 @@ local function OwnKick(spellID)
     if not IsTrackerAllowed() then return end
     spellID = SPELL_ALIASES[spellID] or spellID
     if not INTERRUPTS[spellID] then return end
+    -- TAINT FIX: UnitGUID/UnitName/UnitClass can return secrets
     local guid = UnitGUID("player")
+    if issecretvalue and issecretvalue(guid) then return end
     local name = UnitName("player")
+    if issecretvalue and issecretvalue(name) then name = "Player" end
     local _, class = UnitClass("player")
+    if issecretvalue and issecretvalue(class) then class = "WARRIOR" end
     InterruptTracker._pendingOwnKickAt = GetTime()
     StartCooldown(guid, name, class, spellID)
     -- Broadcast to other GravityUI users (secondary confirmation channel)
     if not _addonMsgBlocked then
         local channel = IsInGroup(LE_PARTY_CATEGORY_INSTANCE) and "INSTANCE_CHAT" or "PARTY"
-        local ok, ret = pcall(C_ChatInfo.SendAddonMessage, "GRV_INT", tostring(spellID), channel)
+        local ok, ret = pcall(function() return C_ChatInfo.SendAddonMessage("GRV_INT", tostring(spellID), channel) end)
         if ok and ret == 11 then _addonMsgBlocked = true end
     end
 end
@@ -1353,13 +1368,17 @@ end
 function InterruptTracker:CHAT_MSG_ADDON(event, prefix, text, channel, sender)
     if prefix ~= "GRV_INT" then return end
     if not IsTrackerAllowed() then return end
-    local name = Ambiguate(sender, "none")
+    -- TAINT FIX: sender and all derived values can be secret strings
+    if issecretvalue and issecretvalue(sender) then return end
+    local ambOk, name = pcall(Ambiguate, sender, "none")
+    if not ambOk or not name or (issecretvalue and issecretvalue(name)) then return end
     if UnitIsUnit(name, "player") then return end
     local spellId = tonumber(text)
     if not spellId or not INTERRUPTS[spellId] then return end
     local guid = UnitGUID(name)
-    if not guid then return end
+    if not guid or (issecretvalue and issecretvalue(guid)) then return end
     local _, class = UnitClass(name)
+    if issecretvalue and issecretvalue(class) then class = "WARRIOR" end
     StartCooldown(guid, name, class, spellId)
 end
 

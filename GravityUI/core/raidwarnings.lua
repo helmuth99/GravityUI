@@ -267,12 +267,18 @@ function RaidWarnings.ShowAlert(spellName, providerName, key)
         if type(soundFile) == "number" then
             PlaySound(soundFile, "Master")
         else
-            soundFile = tostring(soundFile)
-            -- If it's still a "key" that wasn't fetched, default to standard sound
-            if not string.find(soundFile, "\\") and not string.find(soundFile, "/") then
-                PlaySound(8959, "Master") -- Raid Warning Sound ID Fallback
+            -- TAINT FIX: soundFile from LSM:Fetch can be a secret string
+            local ok, sf = pcall(tostring, soundFile)
+            if not ok then
+                PlaySound(8959, "Master")
             else
-                PlaySoundFile(soundFile, "Master")
+                soundFile = sf
+                -- If it's still a "key" that wasn't fetched, default to standard sound
+                if not string.find(soundFile, "\\") and not string.find(soundFile, "/") then
+                    PlaySound(8959, "Master") -- Raid Warning Sound ID Fallback
+                else
+                    PlaySoundFile(soundFile, "Master")
+                end
             end
         end
     end
@@ -642,15 +648,17 @@ ProcessSpellCast = function(unitTarget, castGUID, spellID)
     lastCastGUID = castGUID
     lastCastTime = now
     
-    local spellName = C_Spell.GetSpellName(spellID) or "Unknown Spell"
-    local providerName = UnitName(unitTarget) or "Unknown"
+    local nameOk, spellName = pcall(C_Spell.GetSpellName, spellID)
+    if not nameOk or not spellName or (issecretvalue and issecretvalue(spellName)) then spellName = "Unknown Spell" end
+    local provOk, providerName = pcall(UnitName, unitTarget)
+    if not provOk or not providerName or (issecretvalue and issecretvalue(providerName)) then providerName = "Unknown" end
     
     -- Show Alert (Locally Detected)
     RaidWarnings.ShowAlert(spellName, providerName, key)
     
     -- Broadcast to Party/Raid
     local channel = IsInGroup(LE_PARTY_CATEGORY_INSTANCE) and "INSTANCE_CHAT" or (IsInRaid() and "RAID" or "PARTY")
-    pcall(C_ChatInfo.SendAddonMessage, COMM_PREFIX, "RW:"..spellID..":"..key, channel)
+    pcall(function() C_ChatInfo.SendAddonMessage(COMM_PREFIX, "RW:"..spellID..":"..key, channel) end)
 end
 
 -- ============================================================================
@@ -676,11 +684,16 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
         
         if prefix ~= COMM_PREFIX then return end
         
-        -- Ignore messages from self (we already showed local alert)
+        -- TAINT FIX: UnitName, GetRealmName, sender, and message can all be
+        -- secret strings when execution is tainted. Guard all string ops.
         local myself = UnitName("player")
-        if sender == myself or sender == (myself.."-"..GetRealmName()) then return end
+        if issecretvalue and (issecretvalue(myself) or issecretvalue(sender)) then return end
+        local realmOk, realm = pcall(GetRealmName)
+        if not realmOk or (issecretvalue and issecretvalue(realm)) then return end
+        if sender == myself or sender == (myself.."-"..realm) then return end
         
         -- Parse Message: "RW:SpellID:Key" (Key is optional)
+        if issecretvalue and issecretvalue(message) then return end
         if string.sub(message, 1, 3) == "RW:" then
             local _, spellID, key = strsplit(":", message)
             spellID = tonumber(spellID)
@@ -698,20 +711,27 @@ eventFrame:SetScript("OnEvent", function(self, event, ...)
             
             -- Throttle remote messages (same sender + same spell within 1s)
             local now = GetTime()
-            local throttleKey = sender .. "_" .. spellID
+            local throttleOk, throttleKey = pcall(function() return sender .. "_" .. spellID end)
+            if not throttleOk then return end
             if commThrottle[throttleKey] and (now - commThrottle[throttleKey]) < 1.0 then return end
             commThrottle[throttleKey] = now
             
             -- Fetch Spell Name locally to ensure client language match
-            local spellName = C_Spell.GetSpellName(spellID) or "Unknown Spell"
+            local nameOk, spellName = pcall(C_Spell.GetSpellName, spellID)
+            if not nameOk or not spellName or (issecretvalue and issecretvalue(spellName)) then
+                spellName = "Unknown Spell"
+            end
             
             -- Show Alert
             -- Remove Realm from sender name for cleaner UI
-            if string.find(sender, "-") then
-                sender = string.match(sender, "([^-]+)")
+            local cleanSender = sender
+            local findOk, dashPos = pcall(string.find, sender, "-")
+            if findOk and dashPos then
+                local matchOk, matched = pcall(string.match, sender, "([^-]+)")
+                if matchOk and matched then cleanSender = matched end
             end
             
-            RaidWarnings.ShowAlert(spellName, sender, key)
+            RaidWarnings.ShowAlert(spellName, cleanSender, key)
         end
     end
 end)

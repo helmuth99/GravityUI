@@ -925,6 +925,19 @@ local function BuildEllesmereUI(parent)
     local note = content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     note:SetText("|cffAAAAAA(Requires /reload to toggle)|r")
     note:SetPoint("TOPLEFT", 15, yOffset)
+    yOffset = yOffset - 40
+
+    -- CDM Center X toggle
+    if db.cdmCenterX == nil then db.cdmCenterX = true end
+
+    local cdmChk = GUI:CreateCheckbox(content, "EllesmereUI CDM Bar: Force Centered (X=0)", "cdmCenterX", db, nil)
+    cdmChk:SetPoint("TOPLEFT", 15, yOffset)
+    yOffset = yOffset - 30
+
+    local cdmNote = content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    cdmNote:SetText("|cffAAAAAA(Centers the Cooldown Manager bar horizontally. Disable to use EllesmereUI's default position. Requires /reload)|r")
+    cdmNote:SetPoint("TOPLEFT", 15, yOffset)
+    cdmNote:SetPoint("RIGHT", content, "RIGHT", -15, 0)
     yOffset = yOffset - 30
 
     content:SetHeight(math.abs(yOffset) + 20)

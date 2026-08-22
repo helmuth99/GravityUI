@@ -173,10 +173,10 @@ local function InjectGravityUIButton(updateVisibilityOnly)
             if shouldShow then
                 existingBtn:Show()
                  -- Force layout update if needed
-                 GameMenuFrame:MarkDirty()
+                 pcall(GameMenuFrame.Layout, GameMenuFrame)
             else
                 existingBtn:Hide()
-                GameMenuFrame:MarkDirty()
+                pcall(GameMenuFrame.Layout, GameMenuFrame)
             end
         end
         return
@@ -213,7 +213,7 @@ local function InjectGravityUIButton(updateVisibilityOnly)
             end
         end)
         guiButton.layoutIndex = macrosIndex + 1
-        GameMenuFrame:MarkDirty()
+        pcall(GameMenuFrame.Layout, GameMenuFrame)
     end
 end
 
@@ -264,9 +264,14 @@ function Styling:SkinGameMenu()
         end
     end
 
-
-
-    if GameMenuFrame.MarkDirty then GameMenuFrame:MarkDirty() end
+    -- Force an immediate layout so our padding changes are applied NOW,
+    -- while we're in addon context (allowed outside combat). MarkDirty()
+    -- would queue a deferred Layout() that runs in Blizzard's secure context
+    -- and triggers ADDON_ACTION_BLOCKED because our padding values taint
+    -- the SetSize() call.
+    if GameMenuFrame.Layout then
+        pcall(GameMenuFrame.Layout, GameMenuFrame)
+    end
 end
 
 function Styling:RefreshGameMenu()

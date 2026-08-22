@@ -48,18 +48,18 @@ local BAR_FRAMES = {
     bags = "BagsBar",
 }
 
--- Hider frame for absolute hiding
--- Aggressive hooks to keep bars at full opacity initially
-C_Timer.After(1, function()
-    for i = 1, 8 do
-        local barKey = "bar" .. i
-        local f = _G[BAR_FRAMES[barKey]]
-        if f then
-            f:SetAlpha(1)
-            -- f:SetScale(1) -- REMOVED: Causes ADDON_ACTION_BLOCKED and overrides EditMode
-        end
-    end
-end)
+-- Blizzard ActionBar frames whose internal state must NOT be touched by addons.
+-- Setting alpha on these taints their protected SetFrameStrata/ShowBase chain.
+-- Non-protected frames (microbar, bags) can safely use frame-level alpha.
+local PROTECTED_BAR_FRAMES = {
+    bar1 = true, bar2 = true, bar3 = true, bar4 = true,
+    bar5 = true, bar6 = true, bar7 = true, bar8 = true,
+}
+
+-- -- REMOVED: SetAlpha(1) on Blizzard bar frames caused taint propagation.
+-- Blizzard's UpdateFrameStrata / SetShowGrid chain later triggers
+-- ADDON_ACTION_BLOCKED for MultiBarBottomLeft:SetFrameStrata().
+-- Alpha is managed by GravityUI's own fading system (UpdateBarFading).
 
 -- Moved to top
 
@@ -404,11 +404,13 @@ local function UpdateFade(self, elapsed)
 
     if #barMetadata == 0 then RefreshBarMetadata() end
 
-    -- Link Bars Check
+    -- Link Bars Check — check ALL bars that participate in mouseover fading
     local isMouseOverAnyLink = false
     if linkBars then
-        for i = 1, 8 do
-            if IsMouseOverBar("bar" .. i) then
+        for i = 1, #barMetadata do
+            local bk = barMetadata[i].key
+            local bdb = db.bars[bk]
+            if not (bdb and bdb.alwaysShow) and IsMouseOverBar(bk) then
                 isMouseOverAnyLink = true
                 break
             end
@@ -441,7 +443,7 @@ local function UpdateFade(self, elapsed)
         
         local isHovered = false
         if not forceShow then
-             isHovered = IsMouseOverBar(barKey) or (linkBars and isMouseOverAnyLink and barKey:match("bar%d"))
+             isHovered = IsMouseOverBar(barKey) or (linkBars and isMouseOverAnyLink)
         end
         
         if isHovered then
@@ -475,7 +477,11 @@ local function UpdateFade(self, elapsed)
 
         if dirty then
             isAnyBarDirty = true
-            if frame then frame:SetAlpha(state.currentAlpha) end
+            -- Only set frame-level alpha on non-protected frames (microbar, bags, pet, stance).
+            -- Protected bar frames (bar1-8) must NOT be touched to avoid taint.
+            if frame and not PROTECTED_BAR_FRAMES[barKey] then
+                frame:SetAlpha(state.currentAlpha)
+            end
             for j = 1, #buttons do
                 local btn = buttons[j]
                 if not btn._guiHiddenEmpty then
@@ -1148,15 +1154,15 @@ function ns.RefreshActionBars()
 
         -- Disable Fade logic
         fadeFrame:SetScript("OnUpdate", nil)
-        for barKey, frameName in pairs(BAR_FRAMES) do
-            local f = _G[frameName]
-            if f then f:SetAlpha(1) end
-            
-            -- Also ensure buttons are visible (needed if frame is missing)
+        for barKey, _ in pairs(BAR_FRAMES) do
+            -- Reset frame alpha only for non-protected frames
+            if not PROTECTED_BAR_FRAMES[barKey] then
+                local f = _G[BAR_FRAMES[barKey]]
+                if f then f:SetAlpha(1) end
+            end
             local buttons = GetBarButtons(barKey)
             if buttons then
                 for _, btn in ipairs(buttons) do
-                    -- Only reset alpha, don't show if hidden by other settings
                     if not btn._guiHiddenEmpty then
                         btn:SetAlpha(1)
                     end
@@ -1198,13 +1204,36 @@ function ns.RefreshActionBars()
         barStates = {} -- Reset states so they re-init with current alpha
         fadeFrame._settled = false  -- Start at 20Hz for initial settle
         fadeFrame:SetScript("OnUpdate", UpdateFade)
+
+        -- Immediately restore bars that have alwaysShow = true
+        -- (so toggling "Mouseover Fade" off restores the bar instantly)
+        for barKey, _ in pairs(BAR_FRAMES) do
+            local barDB = db.bars[barKey]
+            if barDB and barDB.alwaysShow then
+                -- Reset frame alpha for non-protected frames
+                if not PROTECTED_BAR_FRAMES[barKey] then
+                    local f = _G[BAR_FRAMES[barKey]]
+                    if f then f:SetAlpha(1) end
+                end
+                -- Reset button alpha
+                local buttons = GetBarButtons(barKey)
+                for _, btn in ipairs(buttons) do
+                    if not btn._guiHiddenEmpty then
+                        btn:SetAlpha(1)
+                    end
+                end
+                -- Pre-seed state so ticker doesn't re-fade
+                barStates[barKey] = { lastHoverTime = 0, currentAlpha = 1 }
+            end
+        end
     else
         fadeFrame:SetScript("OnUpdate", nil)
-        for barKey, frameName in pairs(BAR_FRAMES) do
-            local f = _G[frameName]
-            if f then f:SetAlpha(1) end
-            
-            -- Also ensure buttons are visible (needed if frame is missing)
+        for barKey, _ in pairs(BAR_FRAMES) do
+            -- Reset frame alpha only for non-protected frames
+            if not PROTECTED_BAR_FRAMES[barKey] then
+                local f = _G[BAR_FRAMES[barKey]]
+                if f then f:SetAlpha(1) end
+            end
             local buttons = GetBarButtons(barKey)
             if buttons then
                 for _, btn in ipairs(buttons) do

@@ -336,7 +336,9 @@ function HM:AddHealer(unit, frameIndex)
     local name = UnitName(unit)
     if IsSecret(name) then name = "Healer" else name = name or "Healer" end
     local _, classToken = UnitClass(unit)
+    if IsSecret(classToken) then classToken = "PRIEST" end  -- safe fallback
     local guid = UnitGUID(unit)
+    if IsSecret(guid) then guid = "unknown-" .. frameIndex end  -- safe fallback
     self.currentHealers[#self.currentHealers + 1] = {
         unit       = unit,
         guid       = guid,
@@ -355,13 +357,16 @@ function HM:UpdateHealerFrame(healer)
     local frame = self:GetHealerFrame(healer.frameIndex)
     local icon
     if healer.specID then
-        icon = select(4, GetSpecializationInfoByID(healer.specID))
+        -- TAINT FIX: GetSpecializationInfoByID can return secrets under taint
+        local ok, _, _, _, specIcon = pcall(GetSpecializationInfoByID, healer.specID)
+        if ok and specIcon and not IsSecret(specIcon) then icon = specIcon end
     else
         self:QueueInspect(healer)
     end
     frame.icon:SetTexture(icon or FALLBACK_ICON)
     local r, g, b = GetClassColor(healer.class)
-    frame.name:SetText(healer.name)
+    -- TAINT FIX: healer.name may become secret if re-scanned under taint
+    pcall(frame.name.SetText, frame.name, healer.name)
     frame.name:SetTextColor(r, g, b)
     self:UpdateManaDisplay(frame, healer.unit, healer.connected, healer.isRegen)
     frame:Show()

@@ -2173,15 +2173,22 @@ local function UpdateAFKAppearance()
     
     -- Name & Title Format
     local nameObj = UnitName("player")
+    -- TAINT FIX: UnitName / UnitPVPName can return secret strings
+    if issecretvalue and issecretvalue(nameObj) then nameObj = "Player" end
     local pvpName = UnitPVPName("player") or nameObj
+    if issecretvalue and issecretvalue(pvpName) then pvpName = nameObj end
     
     local titlePrefix, titleSuffix = "", ""
     if s.showTitle then
-        local safeMatchName = string.gsub(nameObj, "([%(%)%.%%%+%-%*%?%[%^%$])", "%%%1")
-        local p, s_str = string.match(pvpName, "^(.*)" .. safeMatchName .. "(.*)$")
-        if p and s_str then
-            titlePrefix = p:trim()
-            titleSuffix = s_str:trim()
+        local ok, safeMatchName = pcall(string.gsub, nameObj, "([%(%)%.%%%+%-%*%?%[%^%$])", "%%%1")
+        if ok and safeMatchName then
+            local mOk, p, s_str = pcall(function()
+                return string.match(pvpName, "^(.*)" .. safeMatchName .. "(.*)$")
+            end)
+            if mOk and p and s_str then
+                titlePrefix = p:trim()
+                titleSuffix = s_str:trim()
+            end
         end
     end
     
@@ -2191,7 +2198,7 @@ local function UpdateAFKAppearance()
     
     f.nameText:SetFont(font, 36, outline)
     f.nameText:SetTextColor(r, g, b, 1) -- Class/Theme colored Name
-    f.nameText:SetText(nameObj)
+    pcall(f.nameText.SetText, f.nameText, nameObj)
     
     f.titleSuffixText:SetFont(font, 20, outline)
     f.titleSuffixText:SetTextColor(1, 1, 1, 1)
@@ -2215,11 +2222,12 @@ local function UpdateAFKAppearance()
     -- Guild Format
     f.guildText:SetFont(font, 20, outline)
     if s.showGuild then
-        local guildName, guildRankName = GetGuildInfo("player")
-        if guildName then
+        local gOk, guildName, guildRankName = pcall(GetGuildInfo, "player")
+        if gOk and guildName and not (issecretvalue and issecretvalue(guildName)) then
             local guildStr = guildName
+            if issecretvalue and issecretvalue(guildRankName) then guildRankName = nil end
             if s.showBrackets then guildStr = "<" .. guildStr .. ">" end
-            if s.showRank then guildStr = guildStr .. " " .. guildRankName end
+            if s.showRank and guildRankName then guildStr = guildStr .. " " .. guildRankName end
             f.guildText:SetText(guildStr)
             f.guildText:SetTextColor(1, 1, 1, 1) -- White Guild Text
         else

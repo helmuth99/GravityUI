@@ -955,6 +955,9 @@ end
 do
     local function EnforceCooldownsX()
         if InCombatLockdown() then return end
+        -- Respect user toggle: Features > Stuff > "EllesmereUI CDM Bar: Force Centered"
+        local db = ns.GetDB and ns.GetDB()
+        if db and db.cdmCenterX == false then return end
 
         local cdmDB = _G.EllesmereUICooldownManagerDB
         local cp    = cdmDB and cdmDB.profiles and cdmDB.profiles["GravityUI"]
@@ -1007,6 +1010,9 @@ do
     local _cdmCenterFrame = CreateFrame("Frame")
     _cdmCenterFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
     _cdmCenterFrame:SetScript("OnEvent", function()
+        -- Respect user toggle
+        local gdb = ns.GetDB and ns.GetDB()
+        if gdb and gdb.cdmCenterX == false then return end
         -- Seed DB immediately before CDM's first layout pass
         local cdmDB = _G.EllesmereUICooldownManagerDB
         local cp    = cdmDB and cdmDB.profiles and cdmDB.profiles["GravityUI"]

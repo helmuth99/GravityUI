@@ -618,12 +618,17 @@ function Movers:SetSelectedMoverPosition(targetX, targetY)
 end
 
 function Movers:SaveFramePosition(name, frame, point, relPoint, x, y)
+    -- Re-entrancy guard: OnDragStop → StopMovingOrSizing hook → HandleSnapAndSave
+    -- → SaveFramePosition → OnDragStop ... would recurse infinitely without this.
+    if frame._isSaving then return end
+    frame._isSaving = true
+
     if frame:GetScript("OnDragStop") then
         pcall(frame:GetScript("OnDragStop"), frame)
     end
 
     local db = ns.GetDB and ns.GetDB()
-    if not db then return end
+    if not db then frame._isSaving = false; return end
 
     local p, _, rp, px, py = frame:GetPoint()
     local finalX = math.floor((px or x or 0) + 0.5)
@@ -719,6 +724,8 @@ function Movers:SaveFramePosition(name, frame, point, relPoint, x, y)
     elseif name == "BloodlustTracker" and db.screenindicators and db.screenindicators.bloodlust then
         db.screenindicators.bloodlust.position = { point = finalPoint, relativePoint = finalRelPoint, x = finalX, y = finalY }
     end
+
+    frame._isSaving = false
 end
 
 local keyHandlerFrame

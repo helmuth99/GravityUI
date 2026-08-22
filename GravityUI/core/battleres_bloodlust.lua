@@ -185,12 +185,17 @@ local function CreateBRFrame()
     brBorder:SetAllPoints()
     brBorder:SetColorTexture(0, 0, 0, 0)
 
-    brCountText = brFrame:CreateFontString(nil, "OVERLAY", nil, 2)
+    -- Text overlay: sits ABOVE the Cooldown swipe so numbers are always readable
+    local brTextOverlay = CreateFrame("Frame", nil, brFrame)
+    brTextOverlay:SetAllPoints(brFrame)
+    brTextOverlay:SetFrameLevel(brCD:GetFrameLevel() + 2)
+
+    brCountText = brTextOverlay:CreateFontString(nil, "OVERLAY", nil, 2)
     if ns.GUI and ns.GUI.SetFont then ns.GUI:SetFont(brCountText, 11, "OUTLINE") else brCountText:SetFont(STANDARD_TEXT_FONT, 11, "OUTLINE") end
     brCountText:SetPoint("BOTTOMRIGHT", brFrame, "BOTTOMRIGHT", -2, 2)
     brCountText:SetTextColor(1, 1, 1, 1)
 
-    brCooldownText = brFrame:CreateFontString(nil, "OVERLAY", nil, 2)
+    brCooldownText = brTextOverlay:CreateFontString(nil, "OVERLAY", nil, 2)
     if ns.GUI and ns.GUI.SetFont then ns.GUI:SetFont(brCooldownText, 12, "OUTLINE") else brCooldownText:SetFont(STANDARD_TEXT_FONT, 12, "OUTLINE") end
     brCooldownText:SetPoint("CENTER", brFrame, "CENTER", 0, 0)
     brCooldownText:SetTextColor(1, 0.82, 0, 1)
@@ -449,7 +454,12 @@ local function CreateBLFrame()
     blBorder:SetAllPoints()
     blBorder:SetColorTexture(0, 0, 0, 0)
 
-    blCooldownText = blFrame:CreateFontString(nil, "OVERLAY", nil, 2)
+    -- Text overlay: sits ABOVE the Cooldown swipe so numbers are always readable
+    local blTextOverlay = CreateFrame("Frame", nil, blFrame)
+    blTextOverlay:SetAllPoints(blFrame)
+    blTextOverlay:SetFrameLevel(blCD:GetFrameLevel() + 2)
+
+    blCooldownText = blTextOverlay:CreateFontString(nil, "OVERLAY", nil, 2)
     if ns.GUI and ns.GUI.SetFont then ns.GUI:SetFont(blCooldownText, 12, "OUTLINE") else blCooldownText:SetFont(STANDARD_TEXT_FONT, 12, "OUTLINE") end
     blCooldownText:SetPoint("CENTER", blFrame, "CENTER", 0, 0)
     blCooldownText:SetTextColor(1, 0.2, 0.2, 1)

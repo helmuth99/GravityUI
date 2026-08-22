@@ -300,33 +300,44 @@ local function BuildMouseoverSettings(parent)
     AddRow(content, "Min Brightness (Alpha)", "slider", 0, 1, "fadeOutAlpha", f, refresh, 0.05)
     AddRow(content, "Fade Out Delay", "slider", 0, 2, "fadeOutDelay", f, refresh, 0.1)
     AddRow(content, "Always Show in Combat", "checkbox", "alwaysShowInCombat", f, refresh)
-    AddRow(content, "Link Action Bars 1-8", "checkbox", "linkBars1to8", f, refresh)
+    AddRow(content, "Link all Mouseover Bars", "checkbox", "linkBars1to8", f, refresh)
     content.rowCount = content.rowCount + 0.5
 
-    -- Always Show Toggles
-    CreateSubLabel(content, "Always Show (Ignore Mouseover)")
-    
-    local barList = {
-        { key = "bar1", label = "Bar 1" },
-        { key = "bar2", label = "Bar 2" },
-        { key = "bar3", label = "Bar 3" },
-        { key = "bar4", label = "Bar 4" },
-        { key = "bar5", label = "Bar 5" },
-        { key = "bar6", label = "Bar 6" },
-        { key = "bar7", label = "Bar 7" },
-        { key = "bar8", label = "Bar 8" },
-        { key = "pet", label = "Pet Bar" },
-        { key = "stance", label = "Stance Bar" },
-        { key = "microbar", label = "Micro Menu" },
-        { key = "bags", label = "Bags" },
-        { key = "extraActionButton", label = "Extra Action Button" },
-        { key = "zoneAbility", label = "Zone Ability" },
+    -- Mouseover Fade Toggles (inverted: checked = bar fades, unchecked = always visible)
+    -- Internally stored as alwaysShow (true = always visible = NOT fading)
+    local function AddInvertedRow(parent, label, barKey)
+        local barDB = abs.bars[barKey]
+        if not barDB then return end
+        -- Create a proxy table that inverts the alwaysShow value for the checkbox
+        local proxy = { mouseoverFade = not barDB.alwaysShow }
+        local row = CreatePropertyRow(parent, label, "checkbox", "mouseoverFade", proxy, function()
+            barDB.alwaysShow = not proxy.mouseoverFade
+            refresh()
+        end)
+        row:SetParent(parent)
+        row:SetPoint("TOPLEFT", 10, -parent.rowCount * (ROW_HEIGHT + 5))
+        parent.rowCount = parent.rowCount + 1
+        return row
+    end
+
+    CreateSubLabel(content, "Action Bars")
+    for i = 1, 8 do
+        AddInvertedRow(content, "Mouseover Fade Bar " .. i, "bar" .. i)
+    end
+
+    content.rowCount = content.rowCount + 0.5
+    CreateSubLabel(content, "Other Bars")
+    local otherBars = {
+        { key = "pet",               label = "Mouseover Fade Pet Bar" },
+        { key = "stance",            label = "Mouseover Fade Stance Bar" },
+        { key = "microbar",          label = "Mouseover Fade Micro Menu" },
+        { key = "bags",              label = "Mouseover Fade Bags" },
+        { key = "extraActionButton", label = "Mouseover Fade Extra Action Button" },
+        { key = "zoneAbility",       label = "Mouseover Fade Zone Ability" },
     }
     
-    for _, info in ipairs(barList) do
-        if abs.bars[info.key] then
-            AddRow(content, "Always Show " .. info.label, "checkbox", "alwaysShow", abs.bars[info.key], refresh)
-        end
+    for _, info in ipairs(otherBars) do
+        AddInvertedRow(content, info.label, info.key)
     end
 
     content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
