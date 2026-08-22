@@ -231,8 +231,8 @@ local function BuildInformationTab(parent)
 
     local changeLogs = {
         {
-            version = "4.00.94",
-            date = "08/21/2026",
+            version = "4.00.99",
+            date = "08/22/2026",
             changes = {
                 "Actionbars taint error fix on mythic plus start, Objective Tracker optimization on hide",
                 "Settings Panel Restructure: Dissolved Utilities page — Sound Alerts, Color Picker, and Premade Group moved to Features; Tracked Bars moved to Indicators",
