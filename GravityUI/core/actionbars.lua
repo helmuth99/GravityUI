@@ -1201,7 +1201,9 @@ function ns.RefreshActionBars()
 
     -- Toggle Fade logic
     if db.fade.enabled then
-        barStates = {} -- Reset states so they re-init with current alpha
+        -- Do NOT wipe barStates here — that would discard in-progress fade
+        -- animations and cause bars to "blink" (flash to alpha 1 then re-fade).
+        -- Only ensure alwaysShow bars are pinned at alpha 1.
         fadeFrame._settled = false  -- Start at 20Hz for initial settle
         fadeFrame:SetScript("OnUpdate", UpdateFade)
 
