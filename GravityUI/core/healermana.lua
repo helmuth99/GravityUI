@@ -124,27 +124,28 @@ local function IsUnitDrinking(unit)
     if not C_UnitAuras or not C_UnitAuras.GetAuraDataByIndex then return false end
     for i = 1, 40 do
         local ok, aura = pcall(C_UnitAuras.GetAuraDataByIndex, unit, i, "HELPFUL")
-        if not ok or not aura or IsSecret(aura) then break end
-
-        local spellId = aura.spellId
-        if spellId and not IsSecret(spellId) then
-            if spellId == 29166 or spellId == 64901 or spellId == 16191 then
-                return true
+        if not ok or not aura then break end          -- end of list or API error
+        if not IsSecret(aura) then                    -- skip secret auras, don't break
+            local spellId = aura.spellId
+            if spellId and not IsSecret(spellId) then
+                if spellId == 29166 or spellId == 64901 or spellId == 16191 then
+                    return true
+                end
             end
-        end
 
-        local name = aura.name
-        if name and not IsSecret(name) and type(name) == "string" then
-            local lower = string.lower(name)
-            if string.find(lower, "drink") or string.find(lower, "trink") or string.find(lower, "boisson") or string.find(lower, "boire") or string.find(lower, "beber") or string.find(lower, "refreshment") then
-                return true
+            local name = aura.name
+            if name and not IsSecret(name) and type(name) == "string" then
+                local lower = string.lower(name)
+                if string.find(lower, "drink") or string.find(lower, "trink") or string.find(lower, "boisson") or string.find(lower, "boire") or string.find(lower, "beber") or string.find(lower, "refreshment") then
+                    return true
+                end
             end
-        end
 
-        local icon = aura.icon
-        if icon and not IsSecret(icon) then
-            if icon == 132794 or icon == 132800 or icon == 132805 or icon == 134071 or icon == 134062 or icon == 134073 or icon == 4638734 or icon == 4638735 then
-                return true
+            local icon = aura.icon
+            if icon and not IsSecret(icon) then
+                if icon == 132794 or icon == 132800 or icon == 132805 or icon == 134071 or icon == 134062 or icon == 134073 or icon == 4638734 or icon == 4638735 then
+                    return true
+                end
             end
         end
     end
@@ -508,19 +509,33 @@ function HM:UpdateMana()
         local frame = self.healerFrames[h.frameIndex]
         if frame and frame:IsShown() then
             h.connected = UnitIsConnected(h.unit)
-            local curMana = UnitPowerPercent(h.unit, Enum.PowerType.Mana, true,
-                CurveConstants and CurveConstants.ScaleTo100 or nil)
+            -- Use pcall-safe helper instead of raw UnitPowerPercent (secret values in Midnight)
+            local curMana = GetUnitManaPercent(h.unit)
 
             local isRegen = false
             local isDrinking = IsUnitDrinking(h.unit)
             if isDrinking then
                 isRegen = true
-            elseif curMana and not IsSecret(curMana) and h.lastMana and not IsSecret(h.lastMana) and type(curMana) == "number" and type(h.lastMana) == "number" then
-                isRegen = h.connected and (curMana > h.lastMana) and (curMana < 100)
+                h.regenUntil = GetTime() + 2  -- grace period: show "Drinking" for 2s after hitting 100%
+            elseif type(curMana) == "number" and type(h.lastMana) == "number" then
+                -- Fallback: detect mana rising while healer is out of combat
+                local inCombat = pcall(UnitAffectingCombat, h.unit) and UnitAffectingCombat(h.unit)
+                if h.connected and curMana > h.lastMana and not inCombat then
+                    isRegen = true
+                    h.regenUntil = GetTime() + 2
+                elseif h.regenUntil and GetTime() < h.regenUntil then
+                    -- Grace period: keep showing "Drinking" briefly after reaching 100%
+                    isRegen = true
+                end
+            elseif h.regenUntil and GetTime() < h.regenUntil then
+                isRegen = true
             end
 
             h.isRegen = isRegen
-            h.lastMana = curMana
+            -- Only store lastMana if it's a real number (prevent secret corruption)
+            if type(curMana) == "number" then
+                h.lastMana = curMana
+            end
             self:UpdateManaDisplay(frame, h.unit, h.connected, h.isRegen)
         end
     end

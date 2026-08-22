@@ -187,7 +187,8 @@ function Addon:OnInitialize()
 
         -- EABR (AuraBuff Reminders): Override center-grow to left-aligned grow-right.
         -- Controlled by db.profile.eabrLeftAlign (default true).
-        -- Two layers: (1) pin the anchor frame's left edge, (2) reposition each icon to TOPLEFT.
+        -- Hooks persist across loading screens; a PLAYER_ENTERING_WORLD handler
+        -- force-repositions icons after zone transitions.
         C_Timer.After(1, function()
             local btn1 = _G["EABR_Icon1"]
             if not btn1 then return end
@@ -209,32 +210,56 @@ function Addon:OnInitialize()
                 return sp
             end
 
-            -----------------------------------------------------------------
-            -- Layer 1: Pin the anchor frame's left edge.
-            -- EABR's ResizeAnchorCentered re-centers the anchor on resize,
-            -- which shifts the left edge. We capture the initial left edge
-            -- and force TOPLEFT anchoring to keep it fixed.
-            -----------------------------------------------------------------
-            local fixedLeft = nil
+            -- Force-reposition all visible EABR icons to TOPLEFT (grow right).
+            -- Also pins the anchor's left edge so it doesn't shift on resize.
+            local function ForceReposition()
+                if InCombatLockdown() or not IsEnabled() then return end
 
+                -- Pin anchor: compute where the left edge IS from its center,
+                -- then re-anchor to keep that left edge fixed.
+                local cx = anchor:GetCenter()
+                local top = anchor:GetTop()
+                local w = anchor:GetWidth()
+                if cx and top and w then
+                    local left = cx - (w / 2)
+                    anchor:ClearAllPoints()
+                    anchor:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", left, top)
+                end
+
+                -- Reposition icons
+                local spacing = GetSpacing()
+                local i = 1
+                while true do
+                    local btn = _G["EABR_Icon" .. i]
+                    if not btn then break end
+                    if btn:IsShown() then
+                        local sz = btn:GetWidth()
+                        btn:ClearAllPoints()
+                        btn:SetPoint("TOPLEFT", anchor, "TOPLEFT", (i - 1) * (sz + spacing), 0)
+                    end
+                    i = i + 1
+                end
+            end
+
+            -----------------------------------------------------------------
+            -- Layer 1: Hook anchor's SetPoint("CENTER") to pin left edge.
+            -----------------------------------------------------------------
             hooksecurefunc(anchor, "SetPoint", function(self, point)
                 if point ~= "CENTER" or InCombatLockdown() then return end
                 if not IsEnabled() then return end
 
-                -- Capture left edge on first layout
-                if not fixedLeft then
-                    fixedLeft = self:GetLeft()
-                end
-
+                local cx = self:GetCenter()
                 local top = self:GetTop()
-                if fixedLeft and top then
+                local w = self:GetWidth()
+                if cx and top and w then
+                    local left = cx - (w / 2)
                     self:ClearAllPoints()
-                    self:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", fixedLeft, top)
+                    self:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", left, top)
                 end
             end)
 
             -----------------------------------------------------------------
-            -- Layer 2: Reposition each icon from TOPLEFT (grow right).
+            -- Layer 2: Hook each icon's SetPoint("CENTER") → TOPLEFT.
             -----------------------------------------------------------------
             local hookedIcons = {}
 
@@ -280,6 +305,20 @@ function Addon:OnInitialize()
             -- Re-scan for new icons whenever Icon1 is re-laid-out
             hooksecurefunc(btn1, "SetPoint", function(_, point)
                 if point == "CENTER" then ScanAndHook() end
+            end)
+
+            -----------------------------------------------------------------
+            -- Layer 3: Force-reposition after loading screens.
+            -- EABR re-initializes after zone transitions; our hooks fire
+            -- but the anchor position can shift. This catches the edge case.
+            -----------------------------------------------------------------
+            local eabrWorldFrame = CreateFrame("Frame")
+            eabrWorldFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
+            eabrWorldFrame:SetScript("OnEvent", function()
+                C_Timer.After(2, function()
+                    ScanAndHook()
+                    ForceReposition()
+                end)
             end)
         end)
     end
