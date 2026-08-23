@@ -222,33 +222,43 @@ UpdateButtonText = function(button, settings)
     local hotkey = button.HotKey
     if hotkey then
         if settings.showKeybinds then
-            local text = hotkey:GetText()
-            
-            -- Filter out Blizzard's RANGE_INDICATOR (dot) as we handle range via icon color
-            if text == _G.RANGE_INDICATOR then
-                text = ""
-            end
+            -- SECRET VALUE ISOLATION: hotkey:GetText() can return a "secret string"
+            -- when the execution path is tainted (e.g., during protected binding updates).
+            -- Any string operation (comparison, gsub, concatenation) on a secret value
+            -- crashes with "attempt to perform string conversion on a secret string value".
+            -- Wrapping in pcall ensures we gracefully skip text processing in tainted contexts.
+            local ok, text = pcall(function()
+                local t = hotkey:GetText()
+                if type(t) ~= "string" then return nil end
+                
+                -- Filter out Blizzard's RANGE_INDICATOR (dot) as we handle range via icon color
+                if t == _G.RANGE_INDICATOR then
+                    t = ""
+                end
 
-            if text then
-                text = text:gsub("(s%-)", "S")
-                text = text:gsub("(a%-)", "A")
-                text = text:gsub("(c%-)", "C")
-                text = text:gsub("(st%-)", "C") -- German Strg
-                text = text:gsub("(KEY_)", "")
-                text = text:gsub("MOUSEWHEELUP", "WU")
-                text = text:gsub("MOUSEWHEELDOWN", "WD")
-                text = text:gsub("BUTTON3", "M3")
-                text = text:gsub("BUTTON4", "M4")
-                text = text:gsub("BUTTON5", "M5")
-                text = text:gsub("NUMPAD", "N")
-                text = text:gsub("PAGEUP", "PU")
-                text = text:gsub("PAGEDOWN", "PD")
-                text = text:gsub("SPACE", "Spc")
-                text = text:gsub("INSERT", "Ins")
-                text = text:gsub("HOME", "Hm")
-                text = text:gsub("DELETE", "Del")
-                hotkey:SetText(text)
-            end
+                if t then
+                    t = t:gsub("(s%-)", "S")
+                    t = t:gsub("(a%-)", "A")
+                    t = t:gsub("(c%-)", "C")
+                    t = t:gsub("(st%-)", "C") -- German Strg
+                    t = t:gsub("(KEY_)", "")
+                    t = t:gsub("MOUSEWHEELUP", "WU")
+                    t = t:gsub("MOUSEWHEELDOWN", "WD")
+                    t = t:gsub("BUTTON3", "M3")
+                    t = t:gsub("BUTTON4", "M4")
+                    t = t:gsub("BUTTON5", "M5")
+                    t = t:gsub("NUMPAD", "N")
+                    t = t:gsub("PAGEUP", "PU")
+                    t = t:gsub("PAGEDOWN", "PD")
+                    t = t:gsub("SPACE", "Spc")
+                    t = t:gsub("INSERT", "Ins")
+                    t = t:gsub("HOME", "Hm")
+                    t = t:gsub("DELETE", "Del")
+                    hotkey:SetText(t)
+                end
+                return t
+            end)
+            if not ok then text = nil end
             
             hotkey:Show()
             local font, size, outline = hotkey:GetFont()
