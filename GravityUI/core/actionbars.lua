@@ -618,41 +618,22 @@ end
 -- Positioning is handled by Blizzard's Edit Mode — no custom movers needed.
 ---------------------------------------------------------------------------
 
--- Initialize Extra Buttons (Art, Scale, Skinning)
--- Positioning is delegated to Blizzard's Edit Mode — we only apply cosmetic changes.
+-- Initialize Extra Buttons (Artwork & Skinning only)
+-- Positioning and Scale are delegated to Blizzard's Edit Mode.
+-- TAINT FIX (2026-08): Removed SetScale/EnableMouse on ExtraAbilityContainer
+-- and ZoneAbilityFrame. These protected-frame modifications tainted Blizzard's
+-- ActionBarController chain, silently blocking ALL SetCooldown() calls and
+-- causing cooldown swipes/text to disappear after M+ key start.
 InitializeExtraButtons = function()
-    -- Safety: Cannot modify protected frames (ExtraAbilityContainer) in combat
-    if InCombatLockdown() then
-        local f = CreateFrame("Frame")
-        f:RegisterEvent("PLAYER_REGEN_ENABLED")
-        f:SetScript("OnEvent", function(self)
-            InitializeExtraButtons()
-            self:UnregisterAllEvents()
-        end)
-        return
-    end
-
     local db = GetDB()
     if not db or not db.enabled then return end
     
-    -- Extra Action Button (ExtraAbilityContainer contains the button)
-    if ExtraAbilityContainer then
+    -- Extra Action Button — cosmetic skinning only
+    if ExtraActionButton1 then
         local settings = db.bars.extraActionButton
-        local frame = ExtraAbilityContainer
-
-        -- HITBOX FIX: The container is much larger than the visible button.
-        -- When positioned over action bars, it eats mouse clicks meant for those
-        -- buttons. Disable mouse on the container — the actual ExtraActionButton1
-        -- inside it still receives clicks normally via its own EnableMouse(true).
-        frame:EnableMouse(false)
-
-        -- Scale
-        if settings.scale then 
-            pcall(function() frame:SetScale(settings.scale) end)
-        end
         
         -- Artwork (The texture is usually on ExtraActionButton1.style)
-        if ExtraActionButton1 and ExtraActionButton1.style then
+        if ExtraActionButton1.style then
             if settings.hideArtwork then
                 ExtraActionButton1.style:Hide()
                 ExtraActionButton1.style:SetAlpha(0)
@@ -663,23 +644,13 @@ InitializeExtraButtons = function()
         end
 
         -- Apply same skinning as regular action buttons (border, backdrop, icon zoom)
-        if ExtraActionButton1 then
-            SkinButton(ExtraActionButton1, { showBorders = true, showBackdrop = true })
-        end
+        SkinButton(ExtraActionButton1, { showBorders = true, showBackdrop = true })
     end
     
-    -- Zone Ability (ZoneAbilityFrame)
+    -- Zone Ability — cosmetic skinning only
     local zoneFrame = _G.ZoneAbilityFrame
     if zoneFrame then
         local zSettings = db.bars.zoneAbility
-
-        -- HITBOX FIX: Same treatment as ExtraAbilityContainer above.
-        zoneFrame:EnableMouse(false)
-
-        -- Scale
-        if zSettings.scale then 
-            pcall(function() zoneFrame:SetScale(zSettings.scale) end)
-        end
         
         -- Artwork (ZoneAbilityFrame.SpellButton.Style)
         if zoneFrame.SpellButton and zoneFrame.SpellButton.Style then
@@ -1036,8 +1007,8 @@ function ns.RefreshActionBars()
     -- Do NOT call UpdateAllUsability() here - it causes SPELL_ACTIVATION_OVERLAY_HIDE
     -- flood on ALL registered buttons at once during initialization
     
-    -- Initialize Extra Buttons (only out of combat)
-    if InitializeExtraButtons and not InCombatLockdown() then InitializeExtraButtons() end
+    -- Initialize Extra Buttons (cosmetic only, safe in all states)
+    if InitializeExtraButtons then InitializeExtraButtons() end
 
     -- Dominos Skinning (only if both master toggle and Dominos toggle are enabled)
     if C_AddOns.IsAddOnLoaded("Dominos") and db.skinDominos then
@@ -1119,12 +1090,8 @@ initFrame:SetScript("OnEvent", function(self, event)
         -- Apply zone keybind mirror after initial bindings are loaded
         C_Timer.After(0.5, function() ApplyZoneAbilityKeybind() end)
     elseif event == "PLAYER_ENTERING_WORLD" then
-        -- TAINT FIX: The 0.1s delay was too short — ExtraAbilityContainer:SetScale/SetPoint
-        -- collided with Blizzard's EditMode initialization, tainting the ActionBarController
-        -- chain and poisoning ALL subsequent SetCooldown calls with secret values.
-        -- A single 3s delay lets Blizzard's EditMode, ActionBarController, and Dominos
-        -- fully settle before we reassert our positions.
-        C_Timer.After(3, function()
+        -- Cosmetic-only: no protected frame ops, short delay is sufficient
+        C_Timer.After(0.5, function()
             if InitializeExtraButtons then InitializeExtraButtons() end
         end)
     elseif event == "ACTIONBAR_SLOT_CHANGED" or event == "UPDATE_BINDINGS" or event == "ACTIONBAR_PAGE_CHANGED" or event == "UPDATE_BONUS_ACTIONBAR" or event == "UPDATE_VEHICLE_ACTIONBAR" then
@@ -1173,4 +1140,27 @@ dominosHookFrame:SetScript("OnEvent", function(self, event, addonName)
         self:UnregisterEvent("ADDON_LOADED")
     end
 end)
+
+---------------------------------------------------------------------------
+-- DIAGNOSTIC: /gravitydebugcd
+-- Helps diagnose taint-related cooldown failures at affected users.
+---------------------------------------------------------------------------
+SLASH_GRAVITYDEBUGCD1 = "/gravitydebugcd"
+SlashCmdList["GRAVITYDEBUGCD"] = function()
+    print("|cFF30D1FFGravityUI CD Debug:|r")
+    print("  InCombatLockdown:", tostring(InCombatLockdown()))
+    local btn = ActionButton1
+    if btn and btn.cooldown then
+        local start, dur = btn.cooldown:GetCooldownTimes()
+        print("  AB1 CD times:", start, dur)
+        print("  AB1 CD shown:", tostring(btn.cooldown:IsShown()))
+        print("  AB1 CD alpha:", btn.cooldown:GetAlpha())
+    end
+    if ExtraAbilityContainer then
+        print("  ExtraAbility scale:", ExtraAbilityContainer:GetScale())
+        print("  ExtraAbility mouseEnabled:", tostring(ExtraAbilityContainer:IsMouseEnabled()))
+    end
+    local ok, secure = pcall(issecurevariable, ActionButton1, "cooldown")
+    if ok then print("  AB1.cooldown secure:", tostring(secure)) end
+end
 

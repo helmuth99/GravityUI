@@ -358,12 +358,10 @@ local function BuildSpecialButtons(parent)
     content.rowCount = 1.3
 
     local eb = abs.bars.extraActionButton
-    AddRow(content, "Extra Action Button Scale", "slider", 0.5, 2.0, "scale", eb, refresh, 0.05)
     AddRow(content, "Hide Extra Action Art", "checkbox", "hideArtwork", eb, refresh)
     content.rowCount = content.rowCount + 0.5
     
     local zb = abs.bars.zoneAbility
-    AddRow(content, "Zone Ability Scale", "slider", 0.5, 2.0, "scale", zb, refresh, 0.05)
     AddRow(content, "Hide Zone Ability Art", "checkbox", "hideArtwork", zb, refresh)
     AddRow(content, "Mirror Zone/ExtraActionButton Keybind", "checkbox", "mirrorExtraKeybind", zb, function()
         if ns.ActionBars and ns.ActionBars.RefreshZoneAbilityKeybind then
