@@ -370,19 +370,14 @@ local function BuildSpecialButtons(parent)
             ns.ActionBars.RefreshZoneAbilityKeybind()
         end
     end)
-    content.rowCount = content.rowCount + 0.5
-    
-    local movRow = CreateFrame("Frame", nil, content)
-    movRow:SetSize(content:GetWidth() - 20, 30)
-    movRow:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
-    
-    local mBtn = GUI:CreateButton(movRow, "Toggle Position Movers", 220, 24, function() 
-        if ns.ActionBars and ns.ActionBars.ToggleExtraButtonMovers then
-            ns.ActionBars.ToggleExtraButtonMovers()
-        end
-    end)
-    mBtn:SetPoint("LEFT", 0, 0)
-    content.rowCount = content.rowCount + 1.5
+    -- Note: Positioning is handled via Blizzard's Edit Mode (Esc → Edit Mode)
+    local noteRow = CreateFrame("Frame", nil, content)
+    noteRow:SetSize(content:GetWidth() - 20, 30)
+    noteRow:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
+    local noteText = noteRow:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    noteText:SetPoint("LEFT", 0, 0)
+    noteText:SetText("|cff88aaccPosition these buttons via Blizzard's Edit Mode (Esc > Edit Mode)|r")
+    content.rowCount = content.rowCount + 1
     
     content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
 end

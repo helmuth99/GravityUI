@@ -1389,6 +1389,9 @@ local function UpdateAllFocusHighlights()
 end
 
 function Objectives:OnInitialize()
+    local s = GetSettings()
+    local skinningEnabled = (s.objectiveTrackerSkinning ~= false)
+
     self:RegisterEvent("PLAYER_ENTERING_WORLD", function()
         _refreshClassifyCache()
         Objectives:SkinTracker()
@@ -1413,10 +1416,34 @@ function Objectives:OnInitialize()
     self:RegisterEvent("TRACKED_ACHIEVEMENT_LIST_CHANGED", "CheckAutoHide")
     self:RegisterEvent("PERKS_PROGRAM_DATA_REFRESH", "CheckAutoHide")
     self:RegisterEvent("PERKS_ACTIVITY_COMPLETED", "CheckAutoHide")
-    self:RegisterEvent("SCENARIO_UPDATE", "CheckAutoHide")
-    self:RegisterEvent("CRITERIA_UPDATE", "CheckAutoHide")
     self:RegisterEvent("ZONE_CHANGED_NEW_AREA", "CheckAutoHide")
     self:RegisterEvent("ZONE_CHANGED", "CheckAutoHide")
+
+    -- ANTI-TAINT: SCENARIO_UPDATE and CRITERIA_UPDATE drive both auto-hide
+    -- AND widget-tracker header re-skinning.  Previously this was done via
+    -- hooksecurefunc(ObjectiveTrackerManager, "Update", ...) which tainted
+    -- the entire LayoutContents → ShouldShowMawBuffs → GetAuraDataByIndex
+    -- chain, causing "Auras cannot be accessed when secret" errors.
+    -- Event-based updates run in a clean execution context (no taint).
+    local OTM_WIDGET_TRACKERS = {"ScenarioObjectiveTracker", "UIWidgetObjectiveTracker"}
+    local function SkinWidgetTrackerHeaders()
+        if IsSkinningSupressed() then return end
+        local cur = GetSettings()
+        if cur and cur.objectiveTrackerSkinning ~= false then
+            for _, name in ipairs(OTM_WIDGET_TRACKERS) do
+                local t = _G[name]
+                if t and t.Header then SkinHeader(t.Header) end
+            end
+        end
+    end
+    self:RegisterEvent("SCENARIO_UPDATE", function()
+        Objectives:CheckAutoHide()
+        C_Timer.After(0, SkinWidgetTrackerHeaders)
+    end)
+    self:RegisterEvent("CRITERIA_UPDATE", function()
+        Objectives:CheckAutoHide()
+        C_Timer.After(0, SkinWidgetTrackerHeaders)
+    end)
 
     -- Super-tracking event to update focus highlight (fast color-only path)
     self:RegisterEvent("SUPER_TRACKING_CHANGED", function()
@@ -1433,58 +1460,32 @@ function Objectives:OnInitialize()
     C_Timer.After(3, function() self:SkinTracker() end)
     C_Timer.After(6, function() self:SkinTracker() end)
 
-    if ObjectiveTracker_CollapseModule then
-        hooksecurefunc("ObjectiveTracker_CollapseModule", function()
-            C_Timer.After(0.1, function() self:SkinTracker() end)
-        end)
-    end
-    if ObjectiveTracker_ExpandModule then
-        hooksecurefunc("ObjectiveTracker_ExpandModule", function()
-            C_Timer.After(0.1, function() self:SkinTracker() end)
-        end)
-    end
-
-    if ObjectiveTrackerManager and ObjectiveTrackerManager.Update then
-        -- PERF: Pre-allocated callback — OTM:Update fires on every M+ timer
-        -- tick, kill count, progress change.  Previously allocated a new
-        -- closure per call via C_Timer.After(0, function() ...).
-        local otmUpdatePending = false
-        local OTM_WIDGET_TRACKERS = {"ScenarioObjectiveTracker", "UIWidgetObjectiveTracker"}
-        local function FlushOTMUpdate()
-            otmUpdatePending = false
-            Objectives:CheckAutoHide()
-            -- Skip header skinning when tracker is hidden (e.g. M+ with autohide)
-            if IsSkinningSupressed() then return end
-            local s = GetSettings()
-            if s and s.objectiveTrackerSkinning ~= false then
-                for _, name in ipairs(OTM_WIDGET_TRACKERS) do
-                    local t = _G[name]
-                    if t and t.Header then SkinHeader(t.Header) end
-                end
-            end
-        end
-        hooksecurefunc(ObjectiveTrackerManager, "Update", function()
-            if otmUpdatePending then return end
-            otmUpdatePending = true
-            C_Timer.After(0, FlushOTMUpdate)
-        end)
-    end
-
-    if ObjectiveTrackerFrame and not _autoHideShowHooked then
+    -- ANTI-TAINT: Use HookScript("OnShow") instead of hooksecurefunc(frame, "Show").
+    -- hooksecurefunc wraps the protected Show() method, tainting any secure
+    -- caller (e.g. ObjectiveTrackerManager:Update → container layout).
+    -- HookScript attaches to the OnShow script handler, which runs AFTER
+    -- the secure Show() completes in its own clean context.
+    if skinningEnabled and ObjectiveTrackerFrame and not _autoHideShowHooked then
         _autoHideShowHooked = true
-        -- PERF: Pre-allocated callback
         local function DeferredAutoHideCheck()
             if Objectives.isApplyingAutoHide then return end
             Objectives.isApplyingAutoHide = true
             Objectives:CheckAutoHide()
             Objectives.isApplyingAutoHide = false
         end
-        hooksecurefunc(ObjectiveTrackerFrame, "Show", function()
+        ObjectiveTrackerFrame:HookScript("OnShow", function()
             C_Timer.After(0, DeferredAutoHideCheck)
         end)
     end
+
+    -- NOTE: ObjectiveTracker_CollapseModule / ExpandModule hooks removed.
+    -- Previously used hooksecurefunc to trigger SkinTracker() after
+    -- collapse/expand, but this taints the execution context.
+    -- Cosmetic staleness self-heals on the next natural Blizzard relayout
+    -- or through the C_Timer.After(1/3/6) startup skinning above.
 end
 
 function Objectives:Initialize()
     self:OnInitialize()
 end
+

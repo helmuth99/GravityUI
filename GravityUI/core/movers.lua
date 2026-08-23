@@ -30,18 +30,6 @@ local MODULE_CONFIG_MAP = {
             if ns.Minimap and ns.Minimap.Refresh then ns.Minimap:Refresh() end
         end,
     },
-    ["ExtraActionButton"] = {
-        get = function(db) return db.actionbars and db.actionbars.enabled ~= false end,
-        set = function(db, val)
-            if db.actionbars then db.actionbars.enabled = val end
-        end,
-    },
-    ["ZoneAbility"] = {
-        get = function(db) return db.actionbars and db.actionbars.enabled ~= false end,
-        set = function(db, val)
-            if db.actionbars then db.actionbars.enabled = val end
-        end,
-    },
     ["CombatTimer"] = {
         get = function(db) return db.uiimprovements and db.uiimprovements.combatTimer and db.uiimprovements.combatTimer.enabled ~= false end,
         set = function(db, val)

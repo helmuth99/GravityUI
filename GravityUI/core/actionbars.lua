@@ -614,145 +614,12 @@ function ActionBars.UpdateAllUsability()
 end
 
 ---------------------------------------------------------------------------
--- EXTRA BUTTONS (Movers)
+-- EXTRA BUTTONS (Skinning & Scale)
+-- Positioning is handled by Blizzard's Edit Mode — no custom movers needed.
 ---------------------------------------------------------------------------
-local movers = {}
-local moversLocked = true
 
--- Guard flag: prevents our own SetPoint calls from retriggering the reassert hook.
-local gravityIsPositioning = false
-
--- Installs hooksecurefunc on each extra button frame's SetPoint so GravityUI
--- reasserts its saved position immediately after any external system moves the frame.
--- Per-frame flags allow retry: ZoneAbilityFrame may not exist at PLAYER_LOGIN
--- but will exist by PLAYER_ENTERING_WORLD. Each call to this function will
--- install hooks for any frames that are now available.
-local extraHookInstalled_EAB  = false  -- ExtraAbilityContainer
-local extraHookInstalled_Zone = false  -- ZoneAbilityFrame
-local function MakeReassert(frameGetter, dbKey)
-    return function()
-        if gravityIsPositioning then return end
-        -- TAINT FIX: Do NOT read addon DB or call any addon functions here.
-        -- This hook fires inside Blizzard's secure ActionBarController chain.
-        -- Reading ns.db taints the execution context, which propagates through
-        -- EditModeManager → UpdateActionBarLayout → SetScaleBase → BLOCKED,
-        -- then poisons ALL subsequent SetCooldown calls with secret values.
-        -- Defer EVERYTHING to a clean C_Timer.After context.
-        C_Timer.After(0, function()
-            if gravityIsPositioning then return end
-            if InCombatLockdown() then return end
-            local db = GetDB()
-            if not db or not db.enabled then return end
-            local pos = db.bars and db.bars[dbKey] and db.bars[dbKey].position
-            if not pos then return end
-            local f = frameGetter()
-            if not f then return end
-            gravityIsPositioning = true
-            f:ClearAllPoints()
-            f:SetPoint(pos.point, UIParent, pos.relativePoint, pos.x, pos.y)
-            gravityIsPositioning = false
-        end)
-    end
-end
-local function InstallExtraButtonPositionHooks()
-    -- TAINT FIX: Only install SetPoint reassert hooks if the frame is still
-    -- inside the managed container. Once reparented to UIParent (our managed
-    -- frame fix), Blizzard no longer calls SetPoint on these frames, making
-    -- the hook unnecessary. Removing it eliminates a major taint vector:
-    -- hooksecurefunc on a protected frame's SetPoint fires inside Blizzard's
-    -- secure ActionBarController chain, which poisons SetCooldown with
-    -- "secret string values".
-    if not extraHookInstalled_EAB and ExtraAbilityContainer then
-        if ExtraAbilityContainer:GetParent() ~= UIParent then
-            extraHookInstalled_EAB = true
-            hooksecurefunc(ExtraAbilityContainer, "SetPoint",
-                MakeReassert(function() return ExtraAbilityContainer end, "extraActionButton"))
-        end
-    end
-    if not extraHookInstalled_Zone and _G.ZoneAbilityFrame then
-        if _G.ZoneAbilityFrame:GetParent() ~= UIParent then
-            extraHookInstalled_Zone = true
-            hooksecurefunc(_G.ZoneAbilityFrame, "SetPoint",
-                MakeReassert(function() return _G.ZoneAbilityFrame end, "zoneAbility"))
-        end
-    end
-end
-
-local function SaveMoverPosition(mover)
-    local point, _, relativePoint, x, y = mover:GetPoint()
-    local db = GetDB()
-    if db and db.bars and db.bars[mover.key] then
-        db.bars[mover.key].position = {
-            point = point,
-            relativePoint = relativePoint,
-            x = x,
-            y = y
-        }
-    end
-end
-
-local function CreateMover(key, parentFrame, labelText)
-    if movers[key] then return movers[key] end
-    
-    local mover = CreateFrame("Frame", nil, UIParent)
-    mover:SetSize(parentFrame:GetWidth(), parentFrame:GetHeight())
-    mover:SetFrameStrata("DIALOG")
-    mover:EnableMouse(true)
-    mover:SetMovable(true)
-    mover:SetClampedToScreen(true)
-    mover:RegisterForDrag("LeftButton")
-    
-    mover.text = mover:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    mover.text:SetPoint("CENTER")
-    mover.text:SetText(labelText)
-    
-    if ns.Movers and ns.Movers.ApplyEditModeStyle then
-        ns.Movers:ApplyEditModeStyle(mover, true) -- Default to true when shown explicitly
-    else
-        mover.bg = mover:CreateTexture(nil, "BACKGROUND")
-        mover.bg:SetAllPoints()
-        mover.bg:SetColorTexture(0, 0.5, 1, 0.5)
-    end
-    
-    mover:SetScript("OnDragStart", function(self)
-        self:StartMoving()
-    end)
-    
-    mover:SetScript("OnDragStop", function(self)
-        self:StopMovingOrSizing()
-
-        -- Apply frame position (guard prevents our own SetPoint from triggering the hook)
-        gravityIsPositioning = true
-        parentFrame:ClearAllPoints()
-        parentFrame:SetPoint("CENTER", self, "CENTER")
-        gravityIsPositioning = false
-
-        -- Save the mover's raw GetPoint() result — reliable, no coordinate math.
-        -- After StopMovingOrSizing() the mover is re-anchored to UIParent TOPLEFT.
-        -- Storing this TOPLEFT offset directly and applying it to the game frame
-        -- on restore gives a consistent, drift-free position every session.
-        local db = GetDB()
-        if db and db.bars and db.bars[key] then
-            local point, _, relativePoint, x, y = self:GetPoint()
-            db.bars[key].position = {
-                point         = point         or "TOPLEFT",
-                relativePoint = relativePoint or "TOPLEFT",
-                x = x or 0,
-                y = y or 0,
-            }
-        end
-    end)
-    
-    mover:Hide()
-    mover.key = key
-    mover.parentFrame = parentFrame
-    movers[key] = mover
-    
-    return mover
-end
-
--- Initialize Extra Buttons (Art, Scale, Position)
--- Made global for scoping (or move definition up) - Moving up is cleaner, but for now declaring local above Refresh
+-- Initialize Extra Buttons (Art, Scale, Skinning)
+-- Positioning is delegated to Blizzard's Edit Mode — we only apply cosmetic changes.
 InitializeExtraButtons = function()
     -- Safety: Cannot modify protected frames (ExtraAbilityContainer) in combat
     if InCombatLockdown() then
@@ -772,19 +639,6 @@ InitializeExtraButtons = function()
     if ExtraAbilityContainer then
         local settings = db.bars.extraActionButton
         local frame = ExtraAbilityContainer
-        
-        -- MANAGED FRAME FIX: Remove from Blizzard's managed positioning system.
-        -- The UIParentBottomManagedFrameContainer auto-stacks frames vertically,
-        -- constantly overriding our saved position. We must unregister + reparent
-        -- to take full ownership of positioning.
-        if UIParentBottomManagedFrameContainer and UIParentBottomManagedFrameContainer.RemoveManagedFrame then
-            pcall(function()
-                UIParentBottomManagedFrameContainer:RemoveManagedFrame(frame)
-            end)
-        end
-        if frame:GetParent() ~= UIParent then
-            frame:SetParent(UIParent)
-        end
 
         -- HITBOX FIX: The container is much larger than the visible button.
         -- When positioned over action bars, it eats mouse clicks meant for those
@@ -792,46 +646,9 @@ InitializeExtraButtons = function()
         -- inside it still receives clicks normally via its own EnableMouse(true).
         frame:EnableMouse(false)
 
-        -- EDIT MODE FIX: Hide Blizzard's Edit Mode "Extra Abilities" selection overlay.
-        -- Since GravityUI manages positioning via its own mover system, the Blizzard
-        -- "Click To Edit" box is redundant and overlaps action bar buttons.
-        -- TAINT FIX: Do NOT call frame methods (Hide/Show) directly inside a
-        -- hooksecurefunc callback — that fires in Blizzard's secure context and
-        -- taints the ActionBarController → SetCooldown chain, producing
-        -- "attempt to perform string conversion on a secret string value" errors.
-        -- Instead, defer ALL frame modifications via C_Timer.After(0).
-        if frame.Selection then
-            frame.Selection:SetAlpha(0)
-            frame.Selection:EnableMouse(false)
-            if not frame._guiSelectionHooked then
-                frame._guiSelectionHooked = true
-                hooksecurefunc(frame.Selection, "Show", function(self)
-                    C_Timer.After(0, function()
-                        if self and self.SetAlpha then
-                            self:SetAlpha(0)
-                            self:EnableMouse(false)
-                        end
-                    end)
-                end)
-            end
-        end
-        -- Also hide the highlight glow that appears when hovering in Edit Mode
-        if frame.HighlightSystem and type(frame.HighlightSystem) == "table" then
-            frame.HighlightSystem:SetAlpha(0)
-            frame.HighlightSystem:EnableMouse(false)
-        end
-
         -- Scale
         if settings.scale then 
             pcall(function() frame:SetScale(settings.scale) end)
-        end
-        
-        -- Position (GravityUI is authoritative — guard flag prevents hook re-entry)
-        if settings.position then
-            gravityIsPositioning = true
-            frame:ClearAllPoints()
-            frame:SetPoint(settings.position.point, UIParent, settings.position.relativePoint, settings.position.x, settings.position.y)
-            gravityIsPositioning = false
         end
         
         -- Artwork (The texture is usually on ExtraActionButton1.style)
@@ -849,90 +666,19 @@ InitializeExtraButtons = function()
         if ExtraActionButton1 then
             SkinButton(ExtraActionButton1, { showBorders = true, showBackdrop = true })
         end
-
-        if not movers["extraActionButton"] then
-        local mover = CreateMover("extraActionButton", frame, "Extra Action Button")
-        if ns.Movers and ns.Movers.Register then
-            ns.Movers:Register("ExtraActionButton", mover, function(f, enabled, force)
-                -- Reassert frame positions before showing movers so they appear
-                -- in the correct place even if an external system repositioned the frame.
-                if enabled or force then
-                    InitializeExtraButtons()
-                end
-                if enabled then
-                    mover:Show()
-                else
-                    mover:Hide()
-                end
-            end, "Extra Action Button")
-        end
-    end
-    
-        local moverEAB = movers["extraActionButton"]
-        if moverEAB then
-            moverEAB:SetSize(160 * (settings.scale or 1), 80 * (settings.scale or 1))
-            moverEAB:ClearAllPoints()
-            -- Position the mover at the saved location so it matches the restored frame.
-            -- Fall back to centering on the frame only when no saved position exists yet.
-            if settings.position then
-                moverEAB:SetPoint(settings.position.point, UIParent, settings.position.relativePoint, settings.position.x, settings.position.y)
-            else
-                moverEAB:SetPoint("CENTER", frame, "CENTER")
-            end
-        end
     end
     
     -- Zone Ability (ZoneAbilityFrame)
     local zoneFrame = _G.ZoneAbilityFrame
     if zoneFrame then
         local zSettings = db.bars.zoneAbility
-        
-        -- MANAGED FRAME FIX: Same treatment as ExtraAbilityContainer above.
-        -- Remove ZoneAbilityFrame from the managed layout system to prevent
-        -- Blizzard from overriding our saved position.
-        if UIParentBottomManagedFrameContainer and UIParentBottomManagedFrameContainer.RemoveManagedFrame then
-            pcall(function()
-                UIParentBottomManagedFrameContainer:RemoveManagedFrame(zoneFrame)
-            end)
-        end
-        if zoneFrame:GetParent() ~= UIParent then
-            zoneFrame:SetParent(UIParent)
-        end
-        zoneFrame:EnableMouse(false)
 
-        -- EDIT MODE FIX: Same treatment — hide Blizzard's Edit Mode overlay.
-        -- See ExtraAbilityContainer block above for taint rationale.
-        if zoneFrame.Selection then
-            zoneFrame.Selection:SetAlpha(0)
-            zoneFrame.Selection:EnableMouse(false)
-            if not zoneFrame._guiSelectionHooked then
-                zoneFrame._guiSelectionHooked = true
-                hooksecurefunc(zoneFrame.Selection, "Show", function(self)
-                    C_Timer.After(0, function()
-                        if self and self.SetAlpha then
-                            self:SetAlpha(0)
-                            self:EnableMouse(false)
-                        end
-                    end)
-                end)
-            end
-        end
-        if zoneFrame.HighlightSystem and type(zoneFrame.HighlightSystem) == "table" then
-            zoneFrame.HighlightSystem:SetAlpha(0)
-            zoneFrame.HighlightSystem:EnableMouse(false)
-        end
+        -- HITBOX FIX: Same treatment as ExtraAbilityContainer above.
+        zoneFrame:EnableMouse(false)
 
         -- Scale
         if zSettings.scale then 
             pcall(function() zoneFrame:SetScale(zSettings.scale) end)
-        end
-        
-        -- Position (GravityUI is authoritative — guard flag prevents hook re-entry)
-        if zSettings.position then
-            gravityIsPositioning = true
-            zoneFrame:ClearAllPoints()
-            zoneFrame:SetPoint(zSettings.position.point, UIParent, zSettings.position.relativePoint, zSettings.position.x, zSettings.position.y)
-            gravityIsPositioning = false
         end
         
         -- Artwork (ZoneAbilityFrame.SpellButton.Style)
@@ -959,64 +705,9 @@ InitializeExtraButtons = function()
                 end
             end
         end
-
-        if not movers["zoneAbility"] then
-            local mover = CreateMover("zoneAbility", zoneFrame, "Zone Ability")
-            if ns.Movers and ns.Movers.Register then
-                ns.Movers:Register("ZoneAbility", mover, function(f, enabled, force)
-                    -- Reassert frame positions before showing movers so they appear
-                    -- in the correct place even if an external system repositioned the frame.
-                    if enabled or force then
-                        InitializeExtraButtons()
-                    end
-                    if enabled then
-                        mover:Show()
-                    else
-                        mover:Hide()
-                    end
-                end, "Zone Ability")
-            end
-        end
-        
-        local moverZone = movers["zoneAbility"]
-        if moverZone then
-            moverZone:SetSize(160 * (zSettings.scale or 1), 80 * (zSettings.scale or 1))
-            moverZone:ClearAllPoints()
-            -- Position the mover at the saved location so it matches the restored frame.
-            -- Fall back to centering on the frame only when no saved position exists yet.
-            if zSettings.position then
-                moverZone:SetPoint(zSettings.position.point, UIParent, zSettings.position.relativePoint, zSettings.position.x, zSettings.position.y)
-            else
-                moverZone:SetPoint("CENTER", zoneFrame, "CENTER")
-            end
-        end
-    end
-
-    -- Install SetPoint hooks once, so GravityUI reasserts against any future
-    -- external repositioning (Edit Mode, Dominos, other addons).
-    InstallExtraButtonPositionHooks()
-end
-
-function ActionBars.ToggleExtraButtonMovers()
-    -- Kept for legacy compatibility / manual slash commands if any, but Edit Mode will handle visibility via ns.Movers
-    if InCombatLockdown() then return end
-    moversLocked = not moversLocked
-    
-    if not moversLocked then
-        InitializeExtraButtons() -- Ensure movers are created/updated
-        local count = 0
-        for _, mover in pairs(movers) do
-            mover:Show()
-            count = count + 1
-        end
-        print("|cFF30D1FFGravityUI:|r Movers Unlocked (" .. count .. " active).")
-    else
-        for _, mover in pairs(movers) do
-            mover:Hide()
-        end
-        print("|cFF30D1FFGravityUI:|r Movers Locked.")
     end
 end
+
 
 -- ---------------------------------------------------------------------------
 -- ZONE ABILITY KEYBIND MIRROR
@@ -1459,7 +1150,6 @@ ns.SkinDominosButtons = function()
 end
 
 -- Hook: when Dominos finishes loading, trigger a refresh once the DB is ready.
--- Also reasserts ExtraButton/ZoneAbility positions since Dominos may move them.
 local dominosHookFrame = CreateFrame("Frame")
 dominosHookFrame:RegisterEvent("ADDON_LOADED")
 dominosHookFrame:SetScript("OnEvent", function(self, event, addonName)
@@ -1468,32 +1158,19 @@ dominosHookFrame:SetScript("OnEvent", function(self, event, addonName)
         local waitFrame = CreateFrame("Frame")
         waitFrame:RegisterEvent("PLAYER_LOGIN")
         waitFrame:SetScript("OnEvent", function(wf)
-            -- 0.5s: skin refresh; 1.0s: position reassert after Dominos settles
             C_Timer.After(0.5, function()
                 local db = GetDB()
                 if db and db.skinDominos then
                     ns.RefreshActionBars()
                 end
             end)
+            -- Re-apply skinning (scale, artwork) to extra buttons after Dominos settles
             C_Timer.After(1.0, function()
-                -- Reassert GravityUI positions over whatever Dominos placed
                 InitializeExtraButtons()
             end)
             wf:UnregisterEvent("PLAYER_LOGIN")
         end)
         self:UnregisterEvent("ADDON_LOADED")
     end
-end)
-
--- Reassert ExtraButton/ZoneAbility positions after WoW Edit Mode saves.
--- EDIT_MODE_LAYOUTS_UPDATED fires whenever the user confirms changes in the
--- Edit Mode UI — at that point Blizzard re-applies the Edit Mode layout and
--- moves our frames. We reassert on the next frame to win.
-local editModeReassertFrame = CreateFrame("Frame")
-editModeReassertFrame:RegisterEvent("EDIT_MODE_LAYOUTS_UPDATED")
-editModeReassertFrame:SetScript("OnEvent", function()
-    C_Timer.After(0, function()
-        InitializeExtraButtons()
-    end)
 end)
 
