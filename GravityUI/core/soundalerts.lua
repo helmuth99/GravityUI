@@ -74,7 +74,20 @@ local function GetPayloadMeta(payload)
     local settings = GetSettings()
     if not settings then return nil end
     
-    return settings.payloadMeta[payload]
+    -- Direct lookup first
+    local meta = settings.payloadMeta[payload]
+    if meta then return meta end
+    
+    -- SavedVariables can store negative numeric keys as strings; try string key
+    meta = settings.payloadMeta[tostring(payload)]
+    if meta then
+        -- Migrate to numeric key for future lookups
+        settings.payloadMeta[payload] = meta
+        settings.payloadMeta[tostring(payload)] = nil
+        return meta
+    end
+    
+    return nil
 end
 
 -- ============================================================================
@@ -127,15 +140,6 @@ end
 -- ============================================================================
 local function NoOp() end
 
-local soundCategoryKeyToText = {
-    Animals = COOLDOWN_VIEWER_SETTINGS_SOUND_ALERT_CATEGORY_ANIMALS,
-    Devices = COOLDOWN_VIEWER_SETTINGS_SOUND_ALERT_CATEGORY_DEVICES,
-    Impacts = COOLDOWN_VIEWER_SETTINGS_SOUND_ALERT_CATEGORY_IMPACTS,
-    Instruments = COOLDOWN_VIEWER_SETTINGS_SOUND_ALERT_CATEGORY_INSTRUMENTS,
-    War2 = COOLDOWN_VIEWER_SETTINGS_SOUND_ALERT_CATEGORY_WAR2,
-    War3 = COOLDOWN_VIEWER_SETTINGS_SOUND_ALERT_CATEGORY_WAR3,
-}
-
 local function SetupSampleUtilityButton(button, clickHandler)
     local playSampleButton = MenuTemplates.AttachUtilityButton(button)
     playSampleButton.Texture:Hide()
@@ -143,19 +147,6 @@ local function SetupSampleUtilityButton(button, clickHandler)
     MenuTemplates.SetUtilityButtonTooltipText(playSampleButton, COOLDOWN_VIEWER_SETTINGS_ALERT_MENU_PLAY_SAMPLE)
     MenuTemplates.SetUtilityButtonAnchor(playSampleButton, MenuVariants.GearButtonAnchor, button)
     MenuTemplates.SetUtilityButtonClickHandler(playSampleButton, clickHandler)
-end
-
-local function AddBuiltinSoundAlertButton(ownerFrame, description, buttonText, alertPayload)
-    local btn = description:CreateButton(buttonText, function(elementData)
-        CooldownViewerAlert_SetPayload(ownerFrame.workingCopyOfAlert, elementData)
-    end, alertPayload)
-
-    btn:AddInitializer(function(button)
-        SetupSampleUtilityButton(button, function()
-            local alert = CooldownViewerAlert_Create(Enum.CooldownViewerAlertType.Sound, Enum.CooldownViewerAlertEventType.Available, alertPayload)
-            CooldownViewerAlert_PlayAlert(ownerFrame, ownerFrame:GetCooldownName(), alert)
-        end)
-    end)
 end
 
 local function AddSharedMediaButton(ownerFrame, description, mediaName)
@@ -181,44 +172,58 @@ local function SetupPayloadDropdown(editAlertFrame)
     local settings = GetSettings()
     if not settings or not settings.enabled then return end
 
-    -- Inject a label override that shows our custom sound name
+    -- Inject a label override that shows our custom sound name.
+    -- Must be re-applied each time DisplayForAlert fires because Blizzard
+    -- resets the selection text to its own resolver on every call.
     editAlertFrame.PayloadDropdown:SetSelectionText(function(_selections)
         return GetCustomSoundLabel(editAlertFrame.workingCopyOfAlert)
             or CooldownViewerAlert_GetPayloadText(editAlertFrame.workingCopyOfAlert)
     end)
 
-    editAlertFrame.PayloadDropdown:SetupMenu(function(_dropdown, rootDescription)
-        rootDescription:SetTag("COOLDOWN_VIEWER_ALERT_PAYLOAD")
+    -- Force an immediate text update so the label shows our custom name
+    -- instead of being blank when editing an alert that uses a GravityUI sound.
+    if editAlertFrame.PayloadDropdown.Update then
+        editAlertFrame.PayloadDropdown:Update()
+    elseif editAlertFrame.PayloadDropdown.GenerateMenu then
+        -- Some versions use GenerateMenu to refresh text display
+    end
+end
 
-        -- Blizzard built-in sounds first
-        if CooldownViewerSoundData then
-            local function BuildBuiltin(desc, tbl)
-                for key, value in pairs(tbl) do
-                    if value.soundEnum and value.text then
-                        AddBuiltinSoundAlertButton(editAlertFrame, desc, value.text, value.soundEnum)
-                    elseif type(value) == "table" then
-                        local catName = soundCategoryKeyToText[key] or tostring(key)
-                        local sub = desc:CreateButton(catName, NoOp, -1)
-                        BuildBuiltin(sub, value)
-                    end
+-- ============================================================================
+-- MENU MODIFIER: Appends GravityUI section to Blizzard's Sound Alert dropdown.
+-- Uses Menu.ModifyMenu which fires whenever a tagged menu opens, so we never
+-- replace Blizzard's generator — we only append our entries at the end.
+-- ============================================================================
+local menuModifierInstalled = false
+
+local function InstallMenuModifier()
+    if menuModifierInstalled then return end
+    if not Menu or not Menu.ModifyMenu then return end
+    menuModifierInstalled = true
+
+    Menu.ModifyMenu("COOLDOWN_VIEWER_ALERT_PAYLOAD", function(owner, rootDescription, contextData)
+        local settings = GetSettings()
+        if not settings or not settings.enabled then return end
+
+        -- Find the editAlertFrame from the dropdown owner
+        local editAlertFrame = owner and owner:GetParent()
+        if not editAlertFrame or not editAlertFrame.workingCopyOfAlert then
+            local frame = owner
+            for i = 1, 5 do
+                if not frame then break end
+                if frame.workingCopyOfAlert then
+                    editAlertFrame = frame
+                    break
                 end
+                frame = frame:GetParent()
             end
-            BuildBuiltin(rootDescription, CooldownViewerSoundData)
-        end
-        if CooldownViewerSound and CooldownViewerSound.TextToSpeech then
-            AddBuiltinSoundAlertButton(
-                editAlertFrame,
-                rootDescription,
-                COOLDOWN_VIEWER_SETTINGS_ALERT_LABEL_SOUND_TYPE_TEXT_TO_SPEECH,
-                CooldownViewerSound.TextToSpeech
-            )
         end
 
-        -- GravityUI section (LibSharedMedia)
+        -- GravityUI submenu with LibSharedMedia sounds
         local names = GetSharedMediaNames()
         local gravityRoot = rootDescription:CreateButton(GRAVITY_MENU_LABEL, NoOp, -1)
-        gravityRoot:SetScrollMode(250) -- Makes the submenu scrollable if it exceeds 250px height
-        
+        gravityRoot:SetScrollMode(250)
+
         if names then
             for _, mediaName in ipairs(names) do
                 AddSharedMediaButton(editAlertFrame, gravityRoot, mediaName)
@@ -261,6 +266,7 @@ local function InstallHooks()
     if not settings or not settings.enabled then return end
 
     hooksecurefunc(CooldownViewerSettingsEditAlert, "DisplayForAlert", SetupPayloadDropdown)
+    InstallMenuModifier()
     
     -- Taint workaround: Force a reload when saving alerts that use custom sounds
     -- This prevents the "attempt to perform boolean test on local 'hasTotem' (a secret boolean value tainted by 'GravityUI')" error

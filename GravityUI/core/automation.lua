@@ -244,6 +244,9 @@ local function CreateRoleCheckbox(parent, roleName, texCoord, anchorFrame, ancho
     local btn = CreateFrame("CheckButton", "GravityUI_LFGRole_"..roleName, parent)
     btn:SetSize(22, 22)
     btn:SetPoint(anchorPoint, anchorFrame, anchorRelPoint, offsetX, offsetY)
+    -- PVEFrame.TitleContainer sits at frame level 510 and blocks clicks on
+    -- anything below it. Push our role buttons above the title container.
+    btn:SetFrameLevel(520)
     
     -- Guard: prevents OnClick from firing when SetChecked() is called programmatically
     local isProgrammatic = false

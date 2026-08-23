@@ -2346,6 +2346,123 @@ local function CachedGetStat(cacheKey, func, ...)
 end
 
 ---------------------------------------------------------------------------
+-- STAT CACHE WARMUP: Pre-populate the cache at login / spec change / combat
+-- end so that CachedGetStat always has a fallback value. Without this, opening
+-- the character panel for the first time in combat shows "-" and "0 (0.0%)"
+-- because the APIs return secret/nil and the cache is empty.
+-- IMPORTANT: Cache keys MUST match the keys used in CachedGetStat() calls
+-- inside BuildStatsLayout. Mismatched keys render the warmup useless.
+---------------------------------------------------------------------------
+local function WarmStatCache()
+    -- Only warm when stat APIs are accessible (outside combat / untainted)
+    local unit = "player"
+
+    -- Health & Power (keys: "healthMax", "powerMax")
+    pcall(function()
+        local hm = UnitHealthMax(unit)
+        if hm and not issecretvalue(hm) then statCache["healthMax"] = hm end
+        local pt = UnitPowerType(unit)
+        local pm = UnitPowerMax(unit, pt)
+        if pm and not issecretvalue(pm) then statCache["powerMax"] = pm end
+    end)
+
+    -- Primary stats (keys: "stat1", "stat2", "stat3", "stat4")
+    for _, idx in ipairs({1, 2, 3, 4}) do
+        pcall(function()
+            local v = UnitStat(unit, idx)
+            if v and not issecretvalue(v) then statCache["stat"..idx] = v end
+        end)
+    end
+
+    -- Secondary stats (keys: "<STATKEY>_pct", "<STATKEY>_rat")
+    pcall(function()
+        local v = GetCritChance()
+        if v and not issecretvalue(v) then statCache["CRIT_pct"] = v end
+    end)
+    pcall(function()
+        local v = GetCombatRating(CR_CRIT_MELEE)
+        if v and not issecretvalue(v) then statCache["CRIT_rat"] = v end
+    end)
+    pcall(function()
+        local v = GetHaste()
+        if v and not issecretvalue(v) then statCache["HASTE_pct"] = v end
+    end)
+    pcall(function()
+        local v = GetCombatRating(CR_HASTE_MELEE)
+        if v and not issecretvalue(v) then statCache["HASTE_rat"] = v end
+    end)
+    pcall(function()
+        local v = GetMasteryEffect()
+        if v and not issecretvalue(v) then statCache["MASTERY_pct"] = v end
+    end)
+    pcall(function()
+        local v = GetCombatRating(CR_MASTERY)
+        if v and not issecretvalue(v) then statCache["MASTERY_rat"] = v end
+    end)
+    pcall(function()
+        local v = GetCombatRatingBonus(CR_VERSATILITY_DAMAGE_DONE)
+        if v and not issecretvalue(v) then statCache["VERSATILITY_pct"] = v end
+    end)
+    pcall(function()
+        local v = GetCombatRating(CR_VERSATILITY_DAMAGE_DONE)
+        if v and not issecretvalue(v) then statCache["VERSATILITY_rat"] = v end
+    end)
+
+    -- Attack stats (keys: "atkPower", "spellPower", "atkSpeed")
+    pcall(function()
+        local base, pos, neg = UnitAttackPower(unit)
+        if base and not issecretvalue(base) then
+            statCache["atkPower"] = base + pos + neg
+        end
+    end)
+    pcall(function()
+        local v = GetSpellBonusDamage(2) -- Holy school as generic spell power
+        if v and not issecretvalue(v) then statCache["spellPower"] = v end
+    end)
+    pcall(function()
+        local speed = UnitAttackSpeed(unit)
+        if speed and not issecretvalue(speed) then statCache["atkSpeed"] = speed end
+    end)
+
+    -- Defense stats (keys: "armor", "dodge", "parry", "block")
+    pcall(function()
+        local _, effectiveArmor = UnitArmor(unit)
+        if effectiveArmor and not issecretvalue(effectiveArmor) then statCache["armor"] = effectiveArmor end
+    end)
+    pcall(function()
+        local v = GetDodgeChance()
+        if v and not issecretvalue(v) then statCache["dodge"] = v end
+    end)
+    pcall(function()
+        local v = GetParryChance()
+        if v and not issecretvalue(v) then statCache["parry"] = v end
+    end)
+    pcall(function()
+        local v = GetBlockChance()
+        if v and not issecretvalue(v) then statCache["block"] = v end
+    end)
+
+    -- General stats (keys: "leech", "avoidance", speed uses "speedPct"/"runSpeed"/etc.)
+    pcall(function()
+        local v = GetLifesteal()
+        if v and not issecretvalue(v) then statCache["leech"] = v end
+    end)
+    pcall(function()
+        local _, runSpeed, flightSpeed, swimSpeed = GetUnitSpeed("player")
+        if runSpeed and not issecretvalue(runSpeed) then
+            statCache["speedPct"] = (runSpeed / 7) * 100
+            statCache["runSpeed"] = runSpeed
+            statCache["flightSpeed"] = flightSpeed
+            statCache["swimSpeed"] = swimSpeed
+        end
+    end)
+    pcall(function()
+        local v = GetAvoidance()
+        if v and not issecretvalue(v) then statCache["avoidance"] = v end
+    end)
+end
+
+---------------------------------------------------------------------------
 -- BUILD: Create all stat frames once (called on panel creation, spec change,
 -- or stat-format change). Stores a flat list of entries with update closures.
 ---------------------------------------------------------------------------
@@ -3910,6 +4027,7 @@ eventFrame:RegisterEvent("UPDATE_INVENTORY_DURABILITY")
 eventFrame:RegisterEvent("SOCKET_INFO_UPDATE")
 eventFrame:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
 eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
+eventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")  -- Refresh stat cache after combat ends
 eventFrame:RegisterEvent("INSPECT_READY")
 eventFrame:RegisterEvent("GET_ITEM_INFO_RECEIVED")
 -- Enchant events
@@ -4097,11 +4215,23 @@ eventFrame:SetScript("OnEvent", function(self, event, arg1)
     elseif event == "PLAYER_EQUIPMENT_CHANGED" or event == "UPDATE_INVENTORY_DURABILITY" or
            event == "SOCKET_INFO_UPDATE" then
         ScheduleGearUpdate()
+        -- Refresh stat cache when gear changes so combat-opens show updated values
+        C_Timer.After(0.3, function()
+            if not InCombatLockdown() then
+                WarmStatCache()
+            end
+        end)
 
     -- SPEC CHANGE: rebuild stats layout + update gear
     elseif event == "PLAYER_SPECIALIZATION_CHANGED" then
         RebuildStatsPanel()
         ScheduleGearUpdate()
+        -- Refresh stat cache for new spec
+        C_Timer.After(0.5, function()
+            if not InCombatLockdown() then
+                WarmStatCache()
+            end
+        end)
         
     elseif event == "PLAYER_ENTERING_WORLD" then
         -- Delayed init check
@@ -4110,9 +4240,25 @@ eventFrame:SetScript("OnEvent", function(self, event, arg1)
                 HookCharacterFrame()
             end
         end)
+        -- Pre-populate stat cache so combat-opens show real values
+        C_Timer.After(1.0, function()
+            if not InCombatLockdown() then
+                WarmStatCache()
+            end
+        end)
         
     elseif event == "INSPECT_READY" then
         ScheduleGearUpdate()
+
+    elseif event == "PLAYER_REGEN_ENABLED" then
+        -- Combat ended: refresh stat cache so next combat-open shows fresh values
+        C_Timer.After(0.2, function()
+            WarmStatCache()
+            -- Also refresh visible stats if panel is open
+            if CharacterFrame and CharacterFrame:IsShown() and statsPanelBuilt then
+                UpdateStatValues()
+            end
+        end)
 
     elseif event == "GET_ITEM_INFO_RECEIVED" then
         -- C_Item.GetItemInfo is async: gem icons are nil on first frame open if the

@@ -233,6 +233,28 @@ function DP:RefreshAll()
                 panels[id] = frame
             end
             UpdatePanelSlots(frame, config)
+
+            -- EDIT MODE INTEGRATION: Register each custom panel with GravityUI's
+            -- mover system so it appears in Edit Mode as a draggable overlay.
+            if ns.Movers and ns.Movers.Register and not frame._guiMoverRegistered then
+                frame._guiMoverRegistered = true
+                local moverName = "DataPanel_" .. id
+                local panelLabel = "Panel: " .. (config.name or id)
+                ns.Movers:Register(moverName, frame, function(f, enabled, force)
+                    if enabled or force then
+                        -- Show the existing mover overlay in GravityUI Edit Mode
+                        if frame.mover then
+                            frame.mover:Show()
+                            frame.mover.text:SetText(config.name or id)
+                        end
+                    else
+                        -- Hide mover overlay when exiting Edit Mode (unless panel is unlocked)
+                        if frame.mover and config.locked then
+                            frame.mover:Hide()
+                        end
+                    end
+                end, panelLabel)
+            end
         elseif frame then
             frame:Hide()
         end

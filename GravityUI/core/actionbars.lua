@@ -655,15 +655,26 @@ local function MakeReassert(frameGetter, dbKey)
     end
 end
 local function InstallExtraButtonPositionHooks()
+    -- TAINT FIX: Only install SetPoint reassert hooks if the frame is still
+    -- inside the managed container. Once reparented to UIParent (our managed
+    -- frame fix), Blizzard no longer calls SetPoint on these frames, making
+    -- the hook unnecessary. Removing it eliminates a major taint vector:
+    -- hooksecurefunc on a protected frame's SetPoint fires inside Blizzard's
+    -- secure ActionBarController chain, which poisons SetCooldown with
+    -- "secret string values".
     if not extraHookInstalled_EAB and ExtraAbilityContainer then
-        extraHookInstalled_EAB = true
-        hooksecurefunc(ExtraAbilityContainer, "SetPoint",
-            MakeReassert(function() return ExtraAbilityContainer end, "extraActionButton"))
+        if ExtraAbilityContainer:GetParent() ~= UIParent then
+            extraHookInstalled_EAB = true
+            hooksecurefunc(ExtraAbilityContainer, "SetPoint",
+                MakeReassert(function() return ExtraAbilityContainer end, "extraActionButton"))
+        end
     end
     if not extraHookInstalled_Zone and _G.ZoneAbilityFrame then
-        extraHookInstalled_Zone = true
-        hooksecurefunc(_G.ZoneAbilityFrame, "SetPoint",
-            MakeReassert(function() return _G.ZoneAbilityFrame end, "zoneAbility"))
+        if _G.ZoneAbilityFrame:GetParent() ~= UIParent then
+            extraHookInstalled_Zone = true
+            hooksecurefunc(_G.ZoneAbilityFrame, "SetPoint",
+                MakeReassert(function() return _G.ZoneAbilityFrame end, "zoneAbility"))
+        end
     end
 end
 
@@ -762,6 +773,54 @@ InitializeExtraButtons = function()
         local settings = db.bars.extraActionButton
         local frame = ExtraAbilityContainer
         
+        -- MANAGED FRAME FIX: Remove from Blizzard's managed positioning system.
+        -- The UIParentBottomManagedFrameContainer auto-stacks frames vertically,
+        -- constantly overriding our saved position. We must unregister + reparent
+        -- to take full ownership of positioning.
+        if UIParentBottomManagedFrameContainer and UIParentBottomManagedFrameContainer.RemoveManagedFrame then
+            pcall(function()
+                UIParentBottomManagedFrameContainer:RemoveManagedFrame(frame)
+            end)
+        end
+        if frame:GetParent() ~= UIParent then
+            frame:SetParent(UIParent)
+        end
+
+        -- HITBOX FIX: The container is much larger than the visible button.
+        -- When positioned over action bars, it eats mouse clicks meant for those
+        -- buttons. Disable mouse on the container — the actual ExtraActionButton1
+        -- inside it still receives clicks normally via its own EnableMouse(true).
+        frame:EnableMouse(false)
+
+        -- EDIT MODE FIX: Hide Blizzard's Edit Mode "Extra Abilities" selection overlay.
+        -- Since GravityUI manages positioning via its own mover system, the Blizzard
+        -- "Click To Edit" box is redundant and overlaps action bar buttons.
+        -- TAINT FIX: Do NOT call frame methods (Hide/Show) directly inside a
+        -- hooksecurefunc callback — that fires in Blizzard's secure context and
+        -- taints the ActionBarController → SetCooldown chain, producing
+        -- "attempt to perform string conversion on a secret string value" errors.
+        -- Instead, defer ALL frame modifications via C_Timer.After(0).
+        if frame.Selection then
+            frame.Selection:SetAlpha(0)
+            frame.Selection:EnableMouse(false)
+            if not frame._guiSelectionHooked then
+                frame._guiSelectionHooked = true
+                hooksecurefunc(frame.Selection, "Show", function(self)
+                    C_Timer.After(0, function()
+                        if self and self.SetAlpha then
+                            self:SetAlpha(0)
+                            self:EnableMouse(false)
+                        end
+                    end)
+                end)
+            end
+        end
+        -- Also hide the highlight glow that appears when hovering in Edit Mode
+        if frame.HighlightSystem and type(frame.HighlightSystem) == "table" then
+            frame.HighlightSystem:SetAlpha(0)
+            frame.HighlightSystem:EnableMouse(false)
+        end
+
         -- Scale
         if settings.scale then 
             pcall(function() frame:SetScale(settings.scale) end)
@@ -828,6 +887,41 @@ InitializeExtraButtons = function()
     if zoneFrame then
         local zSettings = db.bars.zoneAbility
         
+        -- MANAGED FRAME FIX: Same treatment as ExtraAbilityContainer above.
+        -- Remove ZoneAbilityFrame from the managed layout system to prevent
+        -- Blizzard from overriding our saved position.
+        if UIParentBottomManagedFrameContainer and UIParentBottomManagedFrameContainer.RemoveManagedFrame then
+            pcall(function()
+                UIParentBottomManagedFrameContainer:RemoveManagedFrame(zoneFrame)
+            end)
+        end
+        if zoneFrame:GetParent() ~= UIParent then
+            zoneFrame:SetParent(UIParent)
+        end
+        zoneFrame:EnableMouse(false)
+
+        -- EDIT MODE FIX: Same treatment — hide Blizzard's Edit Mode overlay.
+        -- See ExtraAbilityContainer block above for taint rationale.
+        if zoneFrame.Selection then
+            zoneFrame.Selection:SetAlpha(0)
+            zoneFrame.Selection:EnableMouse(false)
+            if not zoneFrame._guiSelectionHooked then
+                zoneFrame._guiSelectionHooked = true
+                hooksecurefunc(zoneFrame.Selection, "Show", function(self)
+                    C_Timer.After(0, function()
+                        if self and self.SetAlpha then
+                            self:SetAlpha(0)
+                            self:EnableMouse(false)
+                        end
+                    end)
+                end)
+            end
+        end
+        if zoneFrame.HighlightSystem and type(zoneFrame.HighlightSystem) == "table" then
+            zoneFrame.HighlightSystem:SetAlpha(0)
+            zoneFrame.HighlightSystem:EnableMouse(false)
+        end
+
         -- Scale
         if zSettings.scale then 
             pcall(function() zoneFrame:SetScale(zSettings.scale) end)
