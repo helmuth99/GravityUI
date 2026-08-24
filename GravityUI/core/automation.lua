@@ -1243,6 +1243,81 @@ local function OnAuctionHouseShow()
     end
 end
 
+-- ---------------------------------------------------------------------------
+-- Spell Queue Window Auto-Optimization
+-- Spec-aware SQW tuning: categorizes specs into profiles with different
+-- ping multipliers and clamp ranges. Inspired by TSpellQueueOptimizer.
+-- ---------------------------------------------------------------------------
+local SQW_CHANNEL_HEAVY = {
+    [258]  = true,  -- Priest: Shadow
+    [270]  = true,  -- Monk: Mistweaver
+    [1467] = true,  -- Evoker: Devastation
+    [1468] = true,  -- Evoker: Preservation
+    [265]  = true,  -- Warlock: Affliction
+}
+local SQW_AUG_EVOKER = {
+    [1473] = true,  -- Evoker: Augmentation
+}
+local SQW_PROC_REACTIVE = {
+    [62]  = true, [63]  = true, [64]  = true,  -- Mage: Arcane / Fire / Frost
+    [103] = true,                                -- Druid: Feral
+    [262] = true, [263] = true,                  -- Shaman: Ele / Enh
+    [577] = true, [581] = true,                  -- DH: Havoc / Vengeance
+}
+-- Everything not listed above falls into burst_precise (default)
+
+--- Compute optimal SQW (ms) from current latency and active specialization.
+--- Uses a "ping + offset" formula (community consensus: ping + 100–150ms),
+--- with spec-aware tuning for different playstyle needs.
+---
+--- channel_heavy : ping + 130, clamped 130–250 ms — channels benefit from extra buffer
+--- aug_evoker    : ping + 110, clamped 110–220 ms — empowered casts + buff timing
+--- proc_reactive : ping + 90,  clamped 100–200 ms — tighter to avoid queuing wrong procs
+--- burst_precise : ping + 100, clamped 110–220 ms — balanced default (default)
+function ns.ComputeOptimalSQW()
+    local _, _, homeMs, worldMs = GetNetStats()
+    local ping = math.max(tonumber(homeMs) or 0, tonumber(worldMs) or 0)
+    if ping <= 0 then return 150 end  -- safe default
+
+    local specIndex = GetSpecialization and GetSpecialization()
+    local specId = specIndex and GetSpecializationInfo(specIndex) or 0
+
+    local raw
+    if SQW_CHANNEL_HEAVY[specId] then
+        raw = math.max(130, math.min(250, ping + 130))
+    elseif SQW_AUG_EVOKER[specId] then
+        raw = math.max(110, math.min(220, ping + 110))
+    elseif SQW_PROC_REACTIVE[specId] then
+        raw = math.max(100, math.min(200, ping + 90))
+    else
+        raw = math.max(110, math.min(220, ping + 100))
+    end
+
+    return math.floor((raw + 5) / 10) * 10  -- round to nearest 10
+end
+
+--- Return a human-readable label for the current spec's SQW profile.
+function ns.GetSQWSpecProfile()
+    local specIndex = GetSpecialization and GetSpecialization()
+    local specId = specIndex and GetSpecializationInfo(specIndex) or 0
+    if SQW_AUG_EVOKER[specId]   then return "Support / Empowered" end
+    if SQW_CHANNEL_HEAVY[specId] then return "Channel-heavy" end
+    if SQW_PROC_REACTIVE[specId] then return "Proc / Reactive" end
+    return "Burst / Precise"
+end
+
+--- Apply the auto-optimized SQW if the feature is enabled.
+local function ApplyAutoSQW(reason)
+    local s = GetSettings()
+    if not s or not s.sqwAutoOptimize then return end
+
+    local optimal = ns.ComputeOptimalSQW()
+    SetCVar("SpellQueueWindow", tostring(optimal))
+    -- Also update the saved manual value so the slider reflects the auto value
+    -- when the settings panel is opened
+    s.spellQueueWindow = optimal
+end
+
 local lastSpec = nil
 
 local function OnSpecSwitchEditModeCheck()
@@ -1605,7 +1680,12 @@ automationFrame:SetScript("OnEvent", function(self, event, ...)
              if s then
                  if s.showDamageNumbers ~= nil then SetCVar("floatingCombatTextCombatDamage", s.showDamageNumbers and "1" or "0") end
                  if s.showHealingNumbers ~= nil then SetCVar("floatingCombatTextCombatHealing", s.showHealingNumbers and "1" or "0") end
-                 if s.spellQueueWindow then SetCVar("SpellQueueWindow", tostring(s.spellQueueWindow)) end
+                 -- SQW: auto-optimize overrides manual value on login
+                 if s.sqwAutoOptimize then
+                     ApplyAutoSQW("login")
+                 elseif s.spellQueueWindow then
+                     SetCVar("SpellQueueWindow", tostring(s.spellQueueWindow))
+                 end
                  
                  if s.deleteFix then SmartDelete:InitHooks() end
              end
@@ -1627,6 +1707,7 @@ automationFrame:SetScript("OnEvent", function(self, event, ...)
             if lastSpec and currentSpec and currentSpec ~= lastSpec then
                 lastSpec = currentSpec
                 OnSpecSwitchEditModeCheck()
+                ApplyAutoSQW("spec_change")
             elseif not lastSpec and currentSpec then
                 lastSpec = currentSpec
             end

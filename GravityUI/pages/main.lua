@@ -603,30 +603,118 @@ local function BuildCombat(parent)
     local cb2 = ns.GUI:CreateCheckbox(content, "Show Healing Numbers", "showHealingNumbers", dbUI, function(enabled) SetCVar("floatingCombatTextCombatHealing_v2", enabled and "1" or "0") end)
     cb2:SetPoint("TOPLEFT", PADDING, yOffset)
     yOffset = yOffset - 40
-    
-    if dbUI.spellQueueWindow == nil then dbUI.spellQueueWindow = tonumber(GetCVar("SpellQueueWindow")) or 400 end
-    local slider = ns.GUI:CreateSlider(content, "Spell Queue Window (ms)", 0, 400, "spellQueueWindow", dbUI, function(val) SetCVar("SpellQueueWindow", tostring(val)) end, 10)
-    slider:SetPoint("TOPLEFT", PADDING, yOffset)
-    slider:SetWidth(400)
-    yOffset = yOffset - 55
+    -- -----------------------------------------------------------------------
+    -- Spell Queue Window Section
+    -- -----------------------------------------------------------------------
+    local sqwHeader = ns.GUI:CreateSectionHeader(content, "Spell Queue Window")
+    sqwHeader:SetPoint("TOPLEFT", PADDING, yOffset)
+    yOffset = yOffset - sqwHeader.gap - 10
 
-    -- Info box
-    local sqInfo = ns.GUI:CreateInfoBox(content,
+    -- Default: preserve current SQW value
+    if dbUI.spellQueueWindow == nil then dbUI.spellQueueWindow = tonumber(GetCVar("SpellQueueWindow")) or 400 end
+    if dbUI.sqwAutoOptimize == nil then dbUI.sqwAutoOptimize = false end
+
+    -- Helper: get current ping
+    local function GetCurrentPing()
+        local _, _, homeMs, worldMs = GetNetStats()
+        return math.max(tonumber(homeMs) or 0, tonumber(worldMs) or 0)
+    end
+
+    -- Helper: get current spec display name
+    local function GetSpecDisplayName()
+        local specIndex = GetSpecialization and GetSpecialization()
+        if not specIndex then return "—" end
+        local _, specName = GetSpecializationInfo(specIndex)
+        return specName or "—"
+    end
+
+    -- ── Auto-optimize toggle ──
+    -- Containers for conditional show/hide
+    local autoContainer = CreateFrame("Frame", nil, content)
+    autoContainer:SetSize(700, 100)
+
+    local manualContainer = CreateFrame("Frame", nil, content)
+    manualContainer:SetSize(700, 200)
+
+    local function UpdateAutoModeVisibility()
+        if dbUI.sqwAutoOptimize then
+            autoContainer:Show()
+            manualContainer:Hide()
+        else
+            autoContainer:Hide()
+            manualContainer:Show()
+        end
+    end
+
+    local cbAuto = ns.GUI:CreateCheckbox(content, "Auto-Optimize (Spec & Latency based)", "sqwAutoOptimize", dbUI, function(enabled)
+        dbUI.sqwAutoOptimize = enabled
+        if enabled then
+            -- Apply auto SQW immediately
+            local optimal = ns.ComputeOptimalSQW()
+            dbUI.spellQueueWindow = optimal
+            SetCVar("SpellQueueWindow", tostring(optimal))
+            ns.Print(string.format("SQW auto-optimized to |cff00ccff%dms|r (%s)", optimal, ns.GetSQWSpecProfile()))
+        end
+        UpdateAutoModeVisibility()
+    end)
+    cbAuto:SetPoint("TOPLEFT", PADDING, yOffset)
+    yOffset = yOffset - 32
+
+    -- ── Auto mode: read-only info labels ──
+    autoContainer:SetPoint("TOPLEFT", PADDING + 20, yOffset)
+    local autoY = 0
+
+    local profileLabel = ns.GUI:CreateLabel(autoContainer, "", 11, C.textMuted)
+    ns.GUI:SetFont(profileLabel, 11, "")
+    profileLabel:SetPoint("TOPLEFT", 0, autoY)
+    autoY = autoY - 20
+
+    local sqwValueLabel = ns.GUI:CreateLabel(autoContainer, "", 12, C.textBright)
+    ns.GUI:SetFont(sqwValueLabel, 12, "")
+    sqwValueLabel:SetPoint("TOPLEFT", 0, autoY)
+    autoY = autoY - 20
+
+    local autoPingLabel = ns.GUI:CreateLabel(autoContainer, "", 11, C.textMuted)
+    ns.GUI:SetFont(autoPingLabel, 11, "")
+    autoPingLabel:SetPoint("TOPLEFT", 0, autoY)
+    autoY = autoY - 20
+
+    local autoInfo = ns.GUI:CreateInfoBox(autoContainer,
+        "SQW is automatically calculated based on your current specialization and latency. " ..
+        "Recalculates on login and spec change. Disable to set a manual value.")
+    autoInfo:SetPoint("TOPLEFT", 0, autoY)
+
+    local function UpdateAutoLabels()
+        local ping = GetCurrentPing()
+        local specName = GetSpecDisplayName()
+        local profile = ns.GetSQWSpecProfile()
+        local sqw = ns.ComputeOptimalSQW()
+        profileLabel:SetText(string.format("|cffaaaaaaSpec Profile:|r |cff66ccff%s|r", profile))
+        sqwValueLabel:SetText(string.format("|cffaaaaaaCurrent SQW:|r |cff44ff88%d ms|r", sqw))
+        autoPingLabel:SetText(string.format("|cffaaaaaaPing:|r |cff%s%d ms|r  |cffaaaaaa| Spec:|r |cffffffff%s|r",
+            ping > 150 and "ff6644" or ping > 80 and "ffcc44" or "44ff88", ping, specName))
+    end
+    UpdateAutoLabels()
+
+    -- ── Manual mode: slider + info box + optimal button ──
+    manualContainer:SetPoint("TOPLEFT", PADDING, yOffset)
+    local manualY = 0
+
+    local slider = ns.GUI:CreateSlider(manualContainer, "Spell Queue Window (ms)", 0, 400, "spellQueueWindow", dbUI, function(val) SetCVar("SpellQueueWindow", tostring(val)) end, 10)
+    slider:SetPoint("TOPLEFT", 0, manualY)
+    slider:SetWidth(400)
+    manualY = manualY - 55
+
+    local sqInfo = ns.GUI:CreateInfoBox(manualContainer,
         "Adjust your Spell Queue Window (0–400ms) to roughly 100ms above your average latency (ping) for optimal performance. " ..
         "Example: 40ms ping → set to ~140ms. Too low = missed inputs. Too high = delayed response.")
-    sqInfo:SetPoint("TOPLEFT", PADDING, yOffset)
-    yOffset = yOffset - sqInfo:GetHeight() - 10
+    sqInfo:SetPoint("TOPLEFT", 0, manualY)
+    manualY = manualY - sqInfo:GetHeight() - 10
 
-    -- Ping label + optimal button on the same row
-    local pingLabel = ns.GUI:CreateLabel(content, "", 11, C.textMuted)
+    local pingLabel = ns.GUI:CreateLabel(manualContainer, "", 11, C.textMuted)
     ns.GUI:SetFont(pingLabel, 11, "")
-    pingLabel:SetPoint("TOPLEFT", PADDING, yOffset)
+    pingLabel:SetPoint("TOPLEFT", 0, manualY)
     pingLabel:SetWidth(240)
-
-    local function GetCurrentPing()
-        local _, _, homeMs = GetNetStats()
-        return tonumber(homeMs) or 0
-    end
 
     local function UpdatePingLabel()
         local ms = GetCurrentPing()
@@ -635,18 +723,15 @@ local function BuildCombat(parent)
     end
     UpdatePingLabel()
 
-    local optBtn = ns.GUI:CreateButton(content, "Set Optimal  (Ping + 100ms)", 200, 26, function()
+    local optBtn = ns.GUI:CreateButton(manualContainer, "Set Optimal  (Ping + 100ms)", 200, 26, function()
         local ms = GetCurrentPing()
         local optimal = math.min(400, math.max(0, ms + 100))
-        -- Round to nearest 10 to match slider step
         optimal = math.floor(optimal / 10 + 0.5) * 10
         dbUI.spellQueueWindow = optimal
         SetCVar("SpellQueueWindow", tostring(optimal))
-        -- container.SetValue has no self-wrapper → must use dot syntax, not colon
-        -- Also directly update the raw slider thumb (x100 multiplier) + editbox text
         if slider then
             if slider.SetValue then slider.SetValue(optimal, true) end
-            if slider.slider then slider.slider:SetValue(optimal * 100) end  -- thumb position
+            if slider.slider then slider.slider:SetValue(optimal * 100) end
             if slider.editBox then slider.editBox:SetText(string.format("%.2f", optimal)) end
         end
         UpdatePingLabel()
@@ -654,10 +739,16 @@ local function BuildCombat(parent)
     end)
     optBtn:SetPoint("LEFT", pingLabel, "RIGHT", 12, 0)
 
-    -- Refresh ping label when panel is shown (live value each visit)
-    content:HookScript("OnShow", UpdatePingLabel)
+    -- Refresh labels when panel is shown
+    content:HookScript("OnShow", function()
+        UpdatePingLabel()
+        UpdateAutoLabels()
+    end)
 
-    yOffset = yOffset - 36
+    -- Set initial visibility
+    UpdateAutoModeVisibility()
+
+    yOffset = yOffset - 140
 
     content:SetHeight(math.abs(yOffset) + 20)
 end

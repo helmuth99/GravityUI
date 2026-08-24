@@ -746,8 +746,6 @@ do
                 if db.actionbars and (db.actionbars.enabled ~= false) then
                     Disable("EllesmereUIActionBars")
                 end
-
-
             end
 
             -- Nameplates: disable EllesmereUINameplates when Plater is loaded,
@@ -2211,10 +2209,13 @@ function Addon:PLAYER_ENTERING_WORLD(event, isInitialLogin, isReloadingUi)
         if ns.Mail and ns.Mail.Initialize then ns.Mail.Initialize() end
     end)
 
-
-    
-
-    
+    -- Garbage Collection: Force a full GC cycle after every loading screen.
+    -- This prevents Lua memory from accumulating over long sessions, which
+    -- causes increasing GC pauses and FPS degradation. The 3s delay ensures
+    -- all post-load initialization has completed before collecting.
+    C_Timer.After(3, function()
+        collectgarbage("collect")
+    end)
 
 end
 

@@ -577,6 +577,7 @@ ns.Defaults = {
         },
 
         spellQueueWindow = 150,
+        sqwAutoOptimize = true,
         chat =         {
             enabled = true,
             glass =             {

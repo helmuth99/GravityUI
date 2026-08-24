@@ -290,20 +290,11 @@ local function LayoutGrid()
     
     local buttons = {}
     for btn, _ in pairs(Catcher.caughtIcons) do
-        local isHidden = false
-        if btn.dataObject and btn.dataObject.hide then
-            isHidden = true
-        elseif btn.db and btn.db.hide then
-            isHidden = true
-        end
-
-        if not isHidden then
-            table.insert(buttons, btn)
-        else
-            btn.GravityExt_IsUpdating = true
-            btn:Hide()
-            btn.GravityExt_IsUpdating = false
-        end
+        -- The Icon Catcher controls visibility itself via the drawer toggle.
+        -- Do NOT skip buttons based on the addon's db.hide preference —
+        -- all caught buttons must receive a grid position to prevent them
+        -- from appearing at the Minimap edge when the drawer opens.
+        table.insert(buttons, btn)
     end
     
     -- Ensure consistent order
@@ -407,7 +398,18 @@ local function CatchButton(buttonFrame, debugName, skipLayout)
     
     Catcher.caughtIcons[buttonFrame] = true
     
-    -- Parent to GridContainer so it natively inherits drawer visibility!
+    -- CRITICAL: On /reload, WoW frame objects persist but our Lua closures are recreated.
+    -- The old hooks reference the OLD GridContainer (a different frame after reload).
+    -- We MUST clear stale method replacements BEFORE calling any methods on the button,
+    -- otherwise the old SetParent hook redirects to the stale OLD GridContainer.
+    buttonFrame.GravityExt_Hooked = nil
+    rawset(buttonFrame, "SetPoint", nil)
+    rawset(buttonFrame, "ClearAllPoints", nil)
+    rawset(buttonFrame, "SetFrameStrata", nil)
+    rawset(buttonFrame, "SetFrameLevel", nil)
+    rawset(buttonFrame, "SetParent", nil)
+    
+    -- NOW it's safe to call methods — they go through the C-API directly
     buttonFrame:SetParent(GridContainer)
     buttonFrame:SetFrameStrata("MEDIUM")
     buttonFrame:SetFrameLevel(50)
@@ -417,27 +419,38 @@ local function CatchButton(buttonFrame, debugName, skipLayout)
     if buttonFrame:GetScript("OnDragStop") then buttonFrame:SetScript("OnDragStop", nil) end
     if buttonFrame.SetMovable then buttonFrame:SetMovable(false) end
     
-    -- Enforce position: if the Addon tries to SetPoint (like Details! does on click), force it back.
     if not buttonFrame.GravityExt_Hooked then
         local origSetPoint = buttonFrame.SetPoint
         buttonFrame.SetPoint = function(self, ...)
-            if not self.GravityExt_IsUpdating and self.GravityExt_Anchor1 then
+            if self.GravityExt_IsUpdating then
+                -- Internal update from LayoutGrid — allow it through
+                origSetPoint(self, ...)
+            elseif self.GravityExt_Anchor1 then
+                -- We already have a grid position — enforce it
                 self.GravityExt_IsUpdating = true
                 self:ClearAllPoints()
                 origSetPoint(self, self.GravityExt_Anchor1, GridContainer, self.GravityExt_Anchor2, self.GravityExt_xOff, self.GravityExt_yOff)
                 self.GravityExt_IsUpdating = false
             else
-                origSetPoint(self, ...)
+                -- Between CatchButton() and LayoutGrid(): anchor not yet assigned.
+                -- Drop external SetPoint calls (e.g. LibDBIcon:Refresh → updatePosition)
+                -- to prevent the button from escaping to the Minimap edge.
+                -- LayoutGrid will assign the correct position shortly.
             end
         end
         
         local origClearAllPoints = buttonFrame.ClearAllPoints
         buttonFrame.ClearAllPoints = function(self)
-            origClearAllPoints(self)
-            if not self.GravityExt_IsUpdating and self.GravityExt_Anchor1 then
+            if self.GravityExt_IsUpdating then
+                origClearAllPoints(self)
+            elseif self.GravityExt_Anchor1 then
+                origClearAllPoints(self)
                 self.GravityExt_IsUpdating = true
                 origSetPoint(self, self.GravityExt_Anchor1, GridContainer, self.GravityExt_Anchor2, self.GravityExt_xOff, self.GravityExt_yOff)
                 self.GravityExt_IsUpdating = false
+            else
+                -- Pre-LayoutGrid: allow the clear but don't restore (no position to restore yet)
+                origClearAllPoints(self)
             end
         end
         
@@ -642,6 +655,48 @@ local function CatchButton(buttonFrame, debugName, skipLayout)
                 end
             end)
         end
+        
+        -- ---------------------------------------------------------------
+        -- FALLBACK GUARDS via hooksecurefunc
+        -- The direct method replacements (buttonFrame.SetPoint = ...) can be
+        -- bypassed by WoW's C engine internals. hooksecurefunc is Blizzard's
+        -- guaranteed mechanism that fires AFTER any SetPoint/SetFrameLevel call,
+        -- even those dispatched through the C-API. These guards undo any
+        -- unwanted changes immediately after they happen.
+        -- ---------------------------------------------------------------
+        
+        -- Guard: Undo external SetPoint calls that anchor to non-GridContainer
+        hooksecurefunc(buttonFrame, "SetPoint", function(self, point, relativeTo, ...)
+            if self.GravityExt_IsUpdating then return end
+            if not self.GravityExt_Anchor1 then return end
+            -- If we got here, an external SetPoint fired. Re-enforce grid position.
+            if relativeTo ~= GridContainer then
+                self.GravityExt_IsUpdating = true
+                self:ClearAllPoints()
+                self:SetPoint(self.GravityExt_Anchor1, GridContainer, self.GravityExt_Anchor2, self.GravityExt_xOff, self.GravityExt_yOff)
+                self.GravityExt_IsUpdating = false
+            end
+        end)
+        
+        -- Guard: Enforce frame level >= 50
+        hooksecurefunc(buttonFrame, "SetFrameLevel", function(self, level)
+            if self.GravityExt_IsUpdatingLevel then return end
+            if level < 50 then
+                self.GravityExt_IsUpdatingLevel = true
+                self:SetFrameLevel(50)
+                self.GravityExt_IsUpdatingLevel = false
+            end
+        end)
+        
+        -- Guard: Prevent reparenting away from GridContainer
+        hooksecurefunc(buttonFrame, "SetParent", function(self, newParent)
+            if self.GravityExt_IsUpdating then return end
+            if newParent ~= GridContainer then
+                self.GravityExt_IsUpdating = true
+                self:SetParent(GridContainer)
+                self.GravityExt_IsUpdating = false
+            end
+        end)
         
         buttonFrame.GravityExt_Hooked = true
     end
@@ -1117,8 +1172,46 @@ eventFrame:SetScript("OnEvent", function(self, event, isInitialLogin, isReloadin
             -- Hook LibDBIcon for any future buttons created during gameplay
             if LDBIcon and not LDBIconHooked then
                 LDBIcon.RegisterCallback("GravityUI_IconCatcher", "LibDBIcon_IconCreated", OnLDBIconCreated)
+                
+                -- Hook LibDBIcon:Refresh to prevent it from repositioning caught buttons.
+                -- Refresh calls updatePosition() which uses the C-API SetPoint directly,
+                -- bypassing our instance-level Lua hook on the button.
+                if LDBIcon.Refresh and not LDBIcon._GravityRefreshHooked then
+                    local origRefresh = LDBIcon.Refresh
+                    LDBIcon.Refresh = function(self, name, db)
+                        local btn = self:GetMinimapButton(name)
+                        if btn and Catcher.caughtIcons[btn] then
+                            -- Button is caught — only allow the db update, skip repositioning
+                            if db then btn.db = db end
+                            return
+                        end
+                        return origRefresh(self, name, db)
+                    end
+                    LDBIcon._GravityRefreshHooked = true
+                end
+                
                 LDBIconHooked = true
             end
+            
+            -- Delayed re-enforcement: after all addons finish late init,
+            -- re-parent and re-position any caught buttons that escaped.
+            C_Timer.After(1.5, function()
+                local anyEscaped = false
+                for btn, _ in pairs(Catcher.caughtIcons) do
+                    local parent = btn:GetParent()
+                    if parent ~= GridContainer then
+                        btn.GravityExt_IsUpdating = true
+                        btn:SetParent(GridContainer)
+                        btn.GravityExt_IsUpdating = false
+                        anyEscaped = true
+                    end
+                end
+                if anyEscaped then
+                    LayoutGrid()
+                end
+                -- Always re-layout once to enforce correct positions
+                LayoutGrid()
+            end)
         end)
     end
 end)
@@ -1203,3 +1296,5 @@ do
 end
 
 Catcher.LayoutGrid = LayoutGrid
+
+

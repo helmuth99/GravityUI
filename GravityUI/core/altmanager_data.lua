@@ -28,16 +28,20 @@ local function GetDB()
 end
 
 local function GetGlobalAltsTable()
+    -- IMPORTANT: Always use AceDB's ns.db.global accessor when available.
+    -- Direct writes to _G.GravityUI_DB.global bypass AceDB's internal proxy
+    -- and may be overwritten or lost when AceDB saves on logout/login.
+    if ns.db and ns.db.global then
+        if not ns.db.global.altManager then ns.db.global.altManager = { alts = {}, lastWeeklyReset = 0 } end
+        if not ns.db.global.altManager.alts then ns.db.global.altManager.alts = {} end
+        return ns.db.global.altManager.alts
+    end
+    -- Fallback: AceDB not yet initialized (very early load), use raw SavedVariables
     if _G.GravityUI_DB then
         if not _G.GravityUI_DB.global then _G.GravityUI_DB.global = {} end
         if not _G.GravityUI_DB.global.altManager then _G.GravityUI_DB.global.altManager = { alts = {}, lastWeeklyReset = 0 } end
         if not _G.GravityUI_DB.global.altManager.alts then _G.GravityUI_DB.global.altManager.alts = {} end
         return _G.GravityUI_DB.global.altManager.alts
-    end
-    if ns.db and ns.db.global then
-        if not ns.db.global.altManager then ns.db.global.altManager = { alts = {}, lastWeeklyReset = 0 } end
-        if not ns.db.global.altManager.alts then ns.db.global.altManager.alts = {} end
-        return ns.db.global.altManager.alts
     end
     if not _G.GravityUI_DB then _G.GravityUI_DB = { global = { altManager = { alts = {} } } } end
     return _G.GravityUI_DB.global.altManager.alts
@@ -181,16 +185,21 @@ function Data:UpdateKeystone()
         end
     end
 
+    -- GUARD: Only overwrite keystone data if we actually found valid data.
+    -- During logout or early login, APIs may return nil/0 — preserve existing.
+    if not keyMapID or keyMapID == 0 then return end
+    if not keyLevel or keyLevel == 0 then return end
+
     local keyName = ""
     local keyIcon = 0
-    if keyMapID and keyMapID > 0 and C_ChallengeMode and C_ChallengeMode.GetMapUIInfo then
+    if C_ChallengeMode and C_ChallengeMode.GetMapUIInfo then
         local name, _, _, texture = C_ChallengeMode.GetMapUIInfo(keyMapID)
         keyName = name or "Mythic Keystone"
         keyIcon = texture or 525134
     end
 
     local colorHex = "ffffffff"
-    if keyLevel and keyLevel > 0 and C_ChallengeMode and C_ChallengeMode.GetKeystoneLevelRarityColor then
+    if C_ChallengeMode and C_ChallengeMode.GetKeystoneLevelRarityColor then
         local col = C_ChallengeMode.GetKeystoneLevelRarityColor(keyLevel)
         if col and col.GenerateHexColor then
             colorHex = col:GenerateHexColor()
@@ -198,9 +207,9 @@ function Data:UpdateKeystone()
     end
 
     alt.keystone = {
-        mapId = keyMapID or 0,
+        mapId = keyMapID,
         name = keyName,
-        level = keyLevel or 0,
+        level = keyLevel,
         link = keyItemLink or "",
         icon = keyIcon,
         color = colorHex,
@@ -253,55 +262,58 @@ function Data:UpdateMythicPlus()
     if not alt then return end
 
     alt.mythicplus = alt.mythicplus or {}
-    alt.mythicplus.dungeons = {}
-    alt.mythicplus.runHistory = {}
 
-    -- Rating
+    -- Rating: only update if API returns valid data, never overwrite with 0
     if C_PlayerInfo and C_PlayerInfo.GetPlayerMythicPlusRatingSummary then
         local ratingSummary = C_PlayerInfo.GetPlayerMythicPlusRatingSummary("player")
-        if ratingSummary and ratingSummary.currentSeasonScore then
+        if ratingSummary and ratingSummary.currentSeasonScore and ratingSummary.currentSeasonScore > 0 then
             alt.mythicplus.rating = math.floor(ratingSummary.currentSeasonScore + 0.5)
-        else
-            alt.mythicplus.rating = 0
         end
+        -- If API returns nil/0, preserve existing rating
     end
 
-    -- Run History
+    -- Run History: only overwrite if we get valid data
     if C_MythicPlus and C_MythicPlus.GetRunHistory then
         local runs = C_MythicPlus.GetRunHistory(false, true) or {}
-        for _, r in ipairs(runs) do
-            table.insert(alt.mythicplus.runHistory, {
-                mapChallengeModeID = r.mapChallengeModeID,
-                level = r.level or 0,
-                thisWeek = (r.thisWeek == true),
-                completed = (r.completed == true),
-            })
+        if #runs > 0 then
+            alt.mythicplus.runHistory = {}
+            for _, r in ipairs(runs) do
+                table.insert(alt.mythicplus.runHistory, {
+                    mapChallengeModeID = r.mapChallengeModeID,
+                    level = r.level or 0,
+                    thisWeek = (r.thisWeek == true),
+                    completed = (r.completed == true),
+                })
+            end
         end
     end
 
-    -- Season Dungeons
+    -- Season Dungeons: only overwrite if map table returns data
     if C_ChallengeMode and C_ChallengeMode.GetMapTable then
         local maps = C_ChallengeMode.GetMapTable() or {}
-        for _, mapID in ipairs(maps) do
-            local name, id, timeLimit, texture = C_ChallengeMode.GetMapUIInfo(mapID)
-            local bestTimed, bestNotTimed = 0, 0
-            if C_MythicPlus and C_MythicPlus.GetSeasonBestForMap then
-                local tRun, ntRun = C_MythicPlus.GetSeasonBestForMap(mapID)
-                bestTimed = (tRun and tRun.level) or 0
-                bestNotTimed = (ntRun and ntRun.level) or 0
+        if #maps > 0 then
+            alt.mythicplus.dungeons = {}
+            for _, mapID in ipairs(maps) do
+                local name, id, timeLimit, texture = C_ChallengeMode.GetMapUIInfo(mapID)
+                local bestTimed, bestNotTimed = 0, 0
+                if C_MythicPlus and C_MythicPlus.GetSeasonBestForMap then
+                    local tRun, ntRun = C_MythicPlus.GetSeasonBestForMap(mapID)
+                    bestTimed = (tRun and tRun.level) or 0
+                    bestNotTimed = (ntRun and ntRun.level) or 0
+                end
+
+                local bestLvl = math.max(bestTimed, bestNotTimed)
+                local inTime = (bestTimed >= bestNotTimed and bestTimed > 0)
+
+                alt.mythicplus.dungeons[mapID] = {
+                    mapId = mapID,
+                    name = name or ("Dungeon " .. mapID),
+                    icon = texture or 0,
+                    timeLimit = timeLimit or 0,
+                    bestLevel = bestLvl,
+                    inTime = inTime,
+                }
             end
-
-            local bestLvl = math.max(bestTimed, bestNotTimed)
-            local inTime = (bestTimed >= bestNotTimed and bestTimed > 0)
-
-            alt.mythicplus.dungeons[mapID] = {
-                mapId = mapID,
-                name = name or ("Dungeon " .. mapID),
-                icon = texture or 0,
-                timeLimit = timeLimit or 0,
-                bestLevel = bestLvl,
-                inTime = inTime,
-            }
         end
     end
 end
@@ -314,6 +326,7 @@ local SEASON_RAIDS = {
         name = "The Tidebound Grotto",
         abbr = "TG",
         instanceID = 2987,
+        journalInstanceID = 1307,
         encounters = {
             "Nymrissa Wavecaller",
         },
@@ -322,6 +335,7 @@ local SEASON_RAIDS = {
         name = "The Venomous Abyss",
         abbr = "TVA",
         instanceID = 3004,
+        journalInstanceID = 1308,
         encounters = {
             "Nek'zali the Soulcoiler",
             "Entombed Sentinels",
@@ -343,6 +357,20 @@ function Data:UpdateRaidLockouts()
     local alt = self:GetOrCreateCurrentAlt()
     if not alt then return end
 
+    -- Request fresh lockout data from the server; the response arrives
+    -- asynchronously via UPDATE_INSTANCE_INFO which triggers another scan.
+    if RequestRaidInfo then RequestRaidInfo() end
+
+    local numSaved = GetNumSavedInstances() or 0
+
+    -- GUARD: If numSaved == 0 and we already have raid data saved,
+    -- preserve existing data. APIs may return 0 during logout or early login.
+    -- Only rebuild if: (a) we have lockout data to scan, or (b) no existing data.
+    if numSaved == 0 and alt.raids and next(alt.raids) then
+        return
+    end
+
+    -- Reset bosses to fresh state for re-scanning
     alt.raids = {
         LFR = { bosses = {} },
         Normal = { bosses = {} },
@@ -363,7 +391,24 @@ function Data:UpdateRaidLockouts()
         end
     end
 
-    local numSaved = GetNumSavedInstances()
+    -- Build name lookup using localized instance names from the Encounter Journal.
+    -- This ensures matching works on ALL client locales (EN, DE, FR, ES, etc.).
+    local nameLookup = {}
+    local bossOffset = 0
+    for _, r in ipairs(SEASON_RAIDS) do
+        local localizedName = r.name  -- fallback: English name
+        if EJ_GetInstanceInfo and r.journalInstanceID then
+            local ejName = EJ_GetInstanceInfo(r.journalInstanceID)
+            if ejName and ejName ~= "" then localizedName = ejName end
+        end
+        nameLookup[localizedName] = { bossOffset = bossOffset }
+        -- Also register the English name as fallback
+        if localizedName ~= r.name then
+            nameLookup[r.name] = { bossOffset = bossOffset }
+        end
+        bossOffset = bossOffset + #r.encounters
+    end
+
     for i = 1, numSaved do
         local name, _, _, difficulty, locked, extended, _, isRaid, _, diffName, numEncounters = GetSavedInstanceInfo(i)
         if isRaid and locked then
@@ -381,12 +426,15 @@ function Data:UpdateRaidLockouts()
             end
 
             if diffKey and alt.raids[diffKey] and alt.raids[diffKey].bosses then
-                for b = 1, (numEncounters or 0) do
-                    local bName, _, isKilled = GetSavedInstanceEncounterInfo(i, b)
-                    if isKilled and bName then
-                        for _, bossObj in ipairs(alt.raids[diffKey].bosses) do
-                            if bossObj.name == bName or bName:find(bossObj.name, 1, true) or bossObj.name:find(bName, 1, true) then
-                                bossObj.killed = true
+                local raidInfo = name and nameLookup[name]
+
+                if raidInfo then
+                    for b = 1, (numEncounters or 0) do
+                        local _, _, isKilled = GetSavedInstanceEncounterInfo(i, b)
+                        if isKilled then
+                            local targetIdx = raidInfo.bossOffset + b
+                            if alt.raids[diffKey].bosses[targetIdx] then
+                                alt.raids[diffKey].bosses[targetIdx].killed = true
                             end
                         end
                     end
@@ -771,6 +819,7 @@ eventFrame:RegisterEvent("CHAT_MSG_LOOT")
 eventFrame:RegisterEvent("BOSS_KILL")
 eventFrame:RegisterEvent("ENCOUNTER_END")
 eventFrame:RegisterEvent("PLAYER_LOGOUT")
+eventFrame:RegisterEvent("UPDATE_INSTANCE_INFO")
 
 local throttled = false
 local function TriggerScan()
@@ -787,10 +836,34 @@ end
 
 eventFrame:SetScript("OnEvent", function(self, event, arg1, ...)
     if event == "PLAYER_ENTERING_WORLD" then
+        -- Request fresh data from server APIs — these are async and trigger
+        -- their own events (CHALLENGE_MODE_MAPS_UPDATE, UPDATE_INSTANCE_INFO)
+        if C_MythicPlus then
+            if C_MythicPlus.RequestMapInfo then C_MythicPlus.RequestMapInfo() end
+            if C_MythicPlus.RequestCurrentAffixes then C_MythicPlus.RequestCurrentAffixes() end
+        end
+        if RequestRaidInfo then RequestRaidInfo() end
+
+        -- Staggered scans: data APIs return at different times after login
         Data:UpdateAll()
-        C_Timer.After(1.5, function()
+        C_Timer.After(2, function() Data:UpdateAll() end)
+        C_Timer.After(5, function()
             Data:UpdateAll()
+            if AM.UI and AM.UI.Refresh then AM.UI:Refresh() end
         end)
+        C_Timer.After(10, function()
+            Data:UpdateAll()
+            if AM.UI and AM.UI.Refresh then AM.UI:Refresh() end
+        end)
+    elseif event == "CHALLENGE_MODE_MAPS_UPDATE" then
+        -- M+ rating and dungeon data is now available
+        Data:UpdateMythicPlus()
+        Data:UpdateKeystone()
+        if AM.UI and AM.UI.Refresh then AM.UI:Refresh() end
+    elseif event == "UPDATE_INSTANCE_INFO" then
+        -- Raid lockout data is now available
+        Data:UpdateRaidLockouts()
+        if AM.UI and AM.UI.Refresh then AM.UI:Refresh() end
     elseif event == "CHAT_MSG_LOOT" then
         local msg = arg1
         local db = GetDB()
@@ -805,7 +878,12 @@ eventFrame:SetScript("OnEvent", function(self, event, arg1, ...)
         end
         TriggerScan()
     elseif event == "PLAYER_LOGOUT" then
-        Data:UpdateAll()
+        -- Only update data that is safe and reliable during logout.
+        -- DO NOT call UpdateRaidLockouts or UpdateMythicPlus here!
+        -- During logout, GetSavedInstanceEncounterInfo returns isKilled=false
+        -- and M+ APIs may return 0, destroying correctly saved data.
+        Data:UpdateCharacterInfo()
+        Data:UpdateCurrencies()
     else
         TriggerScan()
     end
