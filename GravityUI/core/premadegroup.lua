@@ -497,6 +497,11 @@ local function HookEntryCreationShow()
 
     entryCreationFrame:HookScript("OnHide", function()
         if inFormDropdown then inFormDropdown:Hide() end
+        if copyPopup then copyPopup:Hide() end
+        -- Reset selection so the popup doesn't reappear on next open
+        state.selectedGroupKey = 0
+        state.pendingTitle = nil
+        if inFormButtonText then inFormButtonText:SetText("Select Group Key…") end
     end)
 end
 
