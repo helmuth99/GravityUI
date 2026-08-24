@@ -7,77 +7,6 @@ local PremadeGroup = {}
 ns.PremadeGroup = PremadeGroup
 
 ---------------------------------------------------------------------------
--- SEASON CONFIG  (Midnight Season 1 — update per season)
--- Maps English dungeon name → LFG Activity ID
----------------------------------------------------------------------------
-local DUNGEON_TO_ACTIVITY_ID = {
-    ["Algeth'ar Academy"]       = 1160,
-    ["Magisters' Terrace"]      = 1760,
-    ["Maisara Caverns"]         = 1764,
-    ["Nexus-Point Xenas"]       = 1768,
-    ["Pit of Saron"]            = 1770,
-    ["Seat of the Triumvirate"] = 486,
-    ["Skyreach"]                = 182,
-    ["Windrunner Spire"]        = 1542,
-}
-
----------------------------------------------------------------------------
--- LOCALIZATION  (locale display name → English name)
----------------------------------------------------------------------------
-local DUNGEON_NAME_MAP = {}
-local DUNGEON_DISPLAY_MAP = {}
-
-local function BuildLocalizationMaps()
-    local localeData = {
-        ["deDE"] = {
-            ["Akademie von Algeth'ar"]   = "Algeth'ar Academy",
-            ["Terrasse der Magister"]    = "Magisters' Terrace",
-            ["Maisarakavernen"]          = "Maisara Caverns",
-            ["Nexuspunkt Xenas"]         = "Nexus-Point Xenas",
-            ["Die Grube von Saron"]      = "Pit of Saron",
-            ["Der Sitz des Triumvirats"] = "Seat of the Triumvirate",
-            ["Die Himmelsnadel"]         = "Skyreach",
-            ["Windläuferturm"]           = "Windrunner Spire",
-        },
-        ["esES"] = {
-            ["Academia Algeth'ar"]       = "Algeth'ar Academy",
-            ["Bancal del Magister"]      = "Magisters' Terrace",
-            ["Cavernas Maisara"]         = "Maisara Caverns",
-            ["Punto de Nexo Xenas"]      = "Nexus-Point Xenas",
-            ["Foso de Saron"]            = "Pit of Saron",
-            ["Sede del Triunvirato"]     = "Seat of the Triumvirate",
-            ["Aguja de Skyreach"]        = "Skyreach",
-            ["Aguja Brisaveloz"]         = "Windrunner Spire",
-        },
-        ["frFR"] = {
-            ["Académie d'Algeth'ar"]     = "Algeth'ar Academy",
-            ["Terrasse des Magistères"]  = "Magisters' Terrace",
-            ["Cavernes de Maisara"]      = "Maisara Caverns",
-            ["Point-nexus Xenas"]        = "Nexus-Point Xenas",
-            ["Fosse de Saron"]           = "Pit of Saron",
-            ["Siège du Triumvirat"]      = "Seat of the Triumvirate",
-            ["Orée-du-Ciel"]             = "Skyreach",
-            ["Flèche de Coursevent"]     = "Windrunner Spire",
-        },
-    }
-
-    -- Populate flat DUNGEON_NAME_MAP (all locales → english)
-    for _, localeMap in pairs(localeData) do
-        for localName, englishName in pairs(localeMap) do
-            DUNGEON_NAME_MAP[localName] = englishName
-        end
-    end
-
-    -- Populate DUNGEON_DISPLAY_MAP for the current client locale (english → local)
-    local clientLocale = GetLocale()
-    if localeData[clientLocale] then
-        for localName, englishName in pairs(localeData[clientLocale]) do
-            DUNGEON_DISPLAY_MAP[englishName] = localName
-        end
-    end
-end
-
----------------------------------------------------------------------------
 -- HELPERS
 ---------------------------------------------------------------------------
 local function IsEnabled()
@@ -88,9 +17,10 @@ end
 -- Playstyle value → display name mapping (matches Blizzard's LFG values)
 local PLAYSTYLE_LABELS = {
     [0] = "Don't set",
-    [1] = "Moderate",
+    [1] = "Learning",
     [2] = "Relaxed",
-    [3] = "Hardcore",
+    [3] = "Competitive",
+    [4] = "Carry Offered",
 }
 
 local function GetPlaystyle()
@@ -108,34 +38,137 @@ local function GetFont()
     return fontPath or [[Interface\AddOns\GravityUI\media\font\Gravity.ttf]]
 end
 
-local function NormalizeDungeonName(name)
-    return DUNGEON_NAME_MAP[name] or name
+---------------------------------------------------------------------------
+-- DYNAMIC ACTIVITY LOOKUP  (KeyLister pattern)
+-- Builds a map of localized dungeon name → {categoryID, groupID, activityID}
+-- by walking the 3-tier LFG hierarchy.  Works across seasons automatically.
+---------------------------------------------------------------------------
+local dungeonActivityMap = {}  -- [localizedDungeonName] = {categoryID, groupID, activityID}
+
+local function RebuildDungeonActivityMap()
+    wipe(dungeonActivityMap)
+    local categories = C_LFGList.GetAvailableCategories()
+    if not categories then return end
+    for _, catID in ipairs(categories) do
+        local groups = C_LFGList.GetAvailableActivityGroups(catID)
+        if groups then
+            for _, grpID in ipairs(groups) do
+                local activities = C_LFGList.GetAvailableActivities(catID, grpID)
+                if activities then
+                    for _, actID in ipairs(activities) do
+                        local info = C_LFGList.GetActivityInfoTable(actID)
+                        if info and info.isMythicPlusActivity then
+                            local groupName = C_LFGList.GetActivityGroupInfo(grpID)
+                            if groupName then
+                                dungeonActivityMap[groupName] = {
+                                    categoryID = catID,
+                                    groupID    = grpID,
+                                    activityID = actID,
+                                }
+                            end
+                            break
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+
+--- Look up the LFG entry (category/group/activity) for a challenge map ID.
+local function FindActivityForMapID(challengeMapID)
+    if not next(dungeonActivityMap) then RebuildDungeonActivityMap() end
+
+    local mapName = C_ChallengeMode.GetMapUIInfo(challengeMapID)
+    if not mapName then return nil end
+
+    -- Direct match
+    if dungeonActivityMap[mapName] then return dungeonActivityMap[mapName] end
+
+    -- Fallback: strip common prefixes and try again
+    local cleanName = mapName:gsub("Operation: ", ""):gsub("Tazavesh: ", "")
+    if dungeonActivityMap[cleanName] then return dungeonActivityMap[cleanName] end
+
+    return nil
 end
 
 ---------------------------------------------------------------------------
 -- KEYSTONE DATA  (reads from mplusteleport.lua's shared groupKeys table)
 ---------------------------------------------------------------------------
+--- Build a map of player names → class token for players currently in the group.
+--- Stores both short ("Name") and full ("Name-Realm") forms so we match
+--- regardless of how groupKeys was keyed (Ambiguate "none" vs "short" vs UnitName).
+local function GetCurrentGroupMembers()
+    local members = {}
+
+    local function AddUnit(unit)
+        local name, realm = UnitName(unit)
+        if not name or name == "" or name == UNKNOWNOBJECT then return end
+        local _, class = UnitClass(unit)
+        local token = class or true
+        members[name] = token                              -- short form
+        if realm and realm ~= "" then
+            members[name .. "-" .. realm] = token          -- full "Name-Realm"
+        end
+        -- Also store Ambiguated forms for consistency
+        local fullName = GetUnitName(unit, true)            -- "Name-Realm" (always)
+        if fullName then
+            local ok, amb = pcall(Ambiguate, fullName, "none")
+            if ok and amb then members[amb] = token end
+            ok, amb = pcall(Ambiguate, fullName, "short")
+            if ok and amb then members[amb] = token end
+        end
+    end
+
+    AddUnit("player")
+    if IsInGroup() then
+        local prefix = IsInRaid() and "raid" or "party"
+        for i = 1, GetNumGroupMembers() do
+            AddUnit(prefix .. i)
+        end
+    end
+    return members
+end
+
+local function ClassColoredName(name, classToken)
+    if classToken and RAID_CLASS_COLORS and RAID_CLASS_COLORS[classToken] then
+        local c = RAID_CLASS_COLORS[classToken]
+        return string.format("|cff%02x%02x%02x%s|r", c.r * 255, c.g * 255, c.b * 255, name)
+    end
+    return name
+end
+
 local function GetAllGroupKeystones()
     local results = {}
+    local seen = {} -- deduplicate: same player may be stored under multiple key formats
 
-    -- 1. Own keystone from bags
     local MPT = ns.MPlusTeleport
     if MPT and MPT.GetGroupKeys then
         local shared = MPT:GetGroupKeys()
         if shared then
+            -- Only show keys from players currently in the group
+            local members = GetCurrentGroupMembers()
             for playerName, kd in pairs(shared) do
-                if kd and kd.mapID and kd.level then
-                    local dungeonName = C_ChallengeMode.GetMapUIInfo(kd.mapID) or "Unknown"
-                    -- Strip prefixes for cleaner display
-                    dungeonName = dungeonName:gsub("Operation: ", ""):gsub("Tazavesh: ", "")
-                    local text = dungeonName .. " +" .. kd.level
-                    table.insert(results, {
-                        text    = text,
-                        value   = #results + 1,
-                        player  = playerName,
-                        mapID   = kd.mapID,
-                        level   = kd.level,
-                    })
+                local classToken = members[playerName]
+                if classToken and kd and kd.mapID and kd.level then
+                    -- Normalize to short name for dedup & display
+                    local ok, shortName = pcall(Ambiguate, playerName, "short")
+                    local displayName = (ok and shortName and shortName ~= "") and shortName or playerName
+                    if not seen[displayName] then
+                        seen[displayName] = true
+                        local dungeonName = C_ChallengeMode.GetMapUIInfo(kd.mapID) or "Unknown"
+                        -- Strip prefixes for cleaner display
+                        dungeonName = dungeonName:gsub("Operation: ", ""):gsub("Tazavesh: ", "")
+                        local coloredName = ClassColoredName(displayName, classToken)
+                        local text = dungeonName .. " +" .. kd.level .. "  " .. coloredName
+                        table.insert(results, {
+                            text    = text,
+                            value   = #results + 1,
+                            player  = playerName,
+                            mapID   = kd.mapID,
+                            level   = kd.level,
+                        })
+                    end
                 end
             end
         end
@@ -155,9 +188,7 @@ local state = {
     groupKeys        = {},
 }
 
-local dropdownButtonText = nil
 local groupKeysDropdown  = nil
-local dropdownButton     = nil
 local copyPopup          = nil
 local inFormDropdown     = nil  -- in-form key selector button (right panel)
 local inFormButtonText   = nil  -- label FontString of the in-form button
@@ -166,48 +197,54 @@ local inFormButtonText   = nil  -- label FontString of the in-form button
 local GetOrCreateDropdownMenu
 local InitializeDropdownMenu
 
-local function UpdateBothButtonTexts(text)
-    if dropdownButtonText then dropdownButtonText:SetText(text) end
-    if inFormButtonText   then inFormButtonText:SetText(text)   end
+local function UpdateButtonText(text)
+    if inFormButtonText then inFormButtonText:SetText(text) end
 end
 
 
 ---------------------------------------------------------------------------
 -- LFG ENTRY CREATION HOOK
 ---------------------------------------------------------------------------
+
+--- Resolve a keystone entry into a title and LFG entry data.
+--- Uses dynamic activity lookup — no hardcoded season tables needed.
 local function GetPendingTitleFromKeystone(keystone)
-    -- keystone.text = "DungeonName +N"
-    local dungeonName = keystone.text:match("^(.-)%s*%+")
-    if not dungeonName then dungeonName = keystone.text end
-    dungeonName = dungeonName:gsub("^%s+", ""):gsub("%s+$", "")
-    dungeonName = NormalizeDungeonName(dungeonName)
+    if not keystone or not keystone.mapID then return nil end
 
-    local activityID = DUNGEON_TO_ACTIVITY_ID[dungeonName]
-    if not activityID then return nil end
+    local entry = FindActivityForMapID(keystone.mapID)
+    if not entry then return nil end
 
-    local level = keystone.text:match("%+(%d+)")
-    return (level and ("+" .. level)), activityID, dungeonName
+    local level = keystone.level
+    local title = level and ("+" .. level) or nil
+    return title, entry
 end
 
-local function ApplyActivityToFrame(creationFrame, activityID, dungeonName)
-    creationFrame.selectedActivity = activityID
-    if creationFrame.UpdateActivityDependentViews then
-        pcall(function() creationFrame:UpdateActivityDependentViews() end)
-    end
+--- Apply the selected keystone's dungeon + level to the Entry Creation form.
+local function ApplyActivityToFrame(creationFrame, entry, level)
+    -- Set the activity (Blizzard uses this to determine which dungeon is selected)
+    creationFrame.selectedActivity = entry.activityID
+
     C_Timer.After(0, function()
-        -- Apply the playstyle selected in GravityUI settings
-        local playstyleValue = GetPlaystyle()
-        local playstyleDropdown = LFGListEntryCreationPlayStyleDropdown
-        if playstyleDropdown and playstyleValue > 0 then
-            creationFrame.generalPlaystyle = playstyleValue
-            pcall(function() UIDropDownMenu_SetSelectedValue(playstyleDropdown, playstyleValue) end)
-            pcall(function() playstyleDropdown:OverrideText(PLAYSTYLE_LABELS[playstyleValue] or "Relaxed") end)
+        -- Update the dungeon dropdown text
+        local dungeonName = C_LFGList.GetActivityGroupInfo(entry.groupID)
+        if dungeonName and creationFrame.GroupDropdown then
+            pcall(function() creationFrame.GroupDropdown:OverrideText(dungeonName) end)
         end
 
-        -- Set the dungeon dropdown text
-        if creationFrame.GroupDropdown then
-            local displayName = DUNGEON_DISPLAY_MAP[dungeonName] or dungeonName
-            pcall(function() creationFrame.GroupDropdown:OverrideText(displayName) end)
+        -- NOTE: We cannot SetText() on the title field (creationFrame.Name)
+        -- because Blizzard protects it with security taint.
+        -- The CopyPopup is shown instead so the user can paste the title.
+
+        -- Set the playstyle
+        local playstyleValue = GetPlaystyle()
+        if playstyleValue > 0 then
+            local psDropdown = LFGListEntryCreationPlayStyleDropdown
+                            or creationFrame.PlayStyleDropdown
+            if psDropdown then
+                creationFrame.generalPlaystyle = playstyleValue
+                pcall(function() UIDropDownMenu_SetSelectedValue(psDropdown, playstyleValue) end)
+                pcall(function() psDropdown:OverrideText(PLAYSTYLE_LABELS[playstyleValue] or "Relaxed") end)
+            end
         end
     end)
 end
@@ -216,31 +253,75 @@ local function CreateCopyPopup(entryCreationFrame)
     if copyPopup then return copyPopup end
 
     local popup = CreateFrame("Frame", "GravityUI_PremadeGroupCopyPopup", UIParent, "BackdropTemplate")
-    popup:SetSize(290, 58)
+    popup:SetSize(320, 90)
     popup:SetFrameStrata("DIALOG")
+    popup:SetFrameLevel(500)
+    popup:SetMovable(true)
+    popup:EnableMouse(true)
+    popup:RegisterForDrag("LeftButton")
+    popup:SetScript("OnDragStart", popup.StartMoving)
+    popup:SetScript("OnDragStop", popup.StopMovingOrSizing)
 
-    local r, g, b = 0.11, 0.12, 0.13
-    if ns.GetThemeBgColor then r, g, b = ns.GetThemeBgColor() end
+    -- Background (dark glassmorphic)
+    local bgR, bgG, bgB = 0.08, 0.09, 0.10
+    if ns.GetThemeBgColor then bgR, bgG, bgB = ns.GetThemeBgColor() end
     popup:SetBackdrop({
         bgFile   = "Interface/Tooltips/UI-Tooltip-Background",
         edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
-        tile = true, tileSize = 16, edgeSize = 14,
-        insets = { left = 4, right = 4, top = 4, bottom = 4 },
+        tile = true, tileSize = 16, edgeSize = 1,
+        insets = { left = 1, right = 1, top = 1, bottom = 1 },
     })
-    popup:SetBackdropColor(r, g, b, 0.95)
+    popup:SetBackdropColor(bgR, bgG, bgB, 0.96)
+    popup:SetBackdropBorderColor(0.25, 0.25, 0.28, 0.8)
     popup:Hide()
 
-    local label = popup:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    label:SetPoint("TOP", popup, "TOP", 0, -9)
-    label:SetFont(GetFont(), 11, "OUTLINE")
-    label:SetText("|cffFFCC00Ctrl+C|r to copy the new title, then close")
-    label:SetTextColor(0.9, 0.9, 0.9, 1)
+    -- Accent bar (top edge, theme colored)
+    local accentR, accentG, accentB = 0, 0.72, 1
+    if ns.GetThemeColor then accentR, accentG, accentB = ns.GetThemeColor() end
+    local accent = popup:CreateTexture(nil, "OVERLAY")
+    accent:SetHeight(2)
+    accent:SetPoint("TOPLEFT", popup, "TOPLEFT", 1, -1)
+    accent:SetPoint("TOPRIGHT", popup, "TOPRIGHT", -1, -1)
+    accent:SetColorTexture(accentR, accentG, accentB, 0.9)
 
-    local editBox = CreateFrame("EditBox", nil, popup, "InputBoxTemplate")
-    editBox:SetSize(248, 24)
-    editBox:SetPoint("BOTTOM", popup, "BOTTOM", 0, 9)
+    -- Header label
+    local header = popup:CreateFontString(nil, "OVERLAY")
+    header:SetFont(GetFont(), 12, "OUTLINE")
+    header:SetPoint("TOP", popup, "TOP", 0, -14)
+    header:SetText("|cffFFCC00Paste Title|r")
+
+    -- Instruction text
+    local hint = popup:CreateFontString(nil, "OVERLAY")
+    hint:SetFont(GetFont(), 10, "")
+    hint:SetPoint("TOP", header, "BOTTOM", 0, -4)
+    hint:SetTextColor(0.65, 0.65, 0.65, 1)
+    hint:SetText("Ctrl+C to copy  ·  Ctrl+V in the title field")
+
+    -- EditBox (styled, no default Blizzard look)
+    local editBox = CreateFrame("EditBox", nil, popup)
+    editBox:SetSize(280, 26)
+    editBox:SetPoint("BOTTOM", popup, "BOTTOM", 0, 14)
     editBox:SetAutoFocus(false)
     editBox:SetPropagateKeyboardInput(false)
+    editBox:SetFont(GetFont(), 14, "OUTLINE")
+    editBox:SetTextColor(1, 1, 1, 1)
+    editBox:SetJustifyH("CENTER")
+
+    -- EditBox background
+    local ebBg = editBox:CreateTexture(nil, "BACKGROUND")
+    ebBg:SetAllPoints()
+    ebBg:SetColorTexture(0.12, 0.13, 0.15, 0.8)
+
+    -- EditBox border (subtle)
+    local ebBorder = CreateFrame("Frame", nil, editBox, "BackdropTemplate")
+    ebBorder:SetPoint("TOPLEFT", -1, 1)
+    ebBorder:SetPoint("BOTTOMRIGHT", 1, -1)
+    ebBorder:SetBackdrop({
+        edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
+        edgeSize = 1,
+    })
+    ebBorder:SetBackdropBorderColor(accentR, accentG, accentB, 0.4)
+
     editBox:SetScript("OnEscapePressed", function() popup:Hide() end)
     editBox:SetScript("OnEditFocusGained", function(self) self:HighlightText() end)
     editBox:SetScript("OnKeyDown", function(self, key)
@@ -255,9 +336,31 @@ local function CreateCopyPopup(entryCreationFrame)
         end
     end)
 
+    -- Close button (minimal X)
+    local closeBtn = CreateFrame("Button", nil, popup)
+    closeBtn:SetSize(16, 16)
+    closeBtn:SetPoint("TOPRIGHT", popup, "TOPRIGHT", -4, -4)
+    closeBtn:SetNormalFontObject("GameFontNormalSmall")
+    local closeTxt = closeBtn:CreateFontString(nil, "OVERLAY")
+    closeTxt:SetFont(GetFont(), 12, "OUTLINE")
+    closeTxt:SetPoint("CENTER")
+    closeTxt:SetText("|cff888888×|r")
+    closeBtn:SetScript("OnClick", function() popup:Hide() end)
+    closeBtn:SetScript("OnEnter", function() closeTxt:SetText("|cffFFFFFF×|r") end)
+    closeBtn:SetScript("OnLeave", function() closeTxt:SetText("|cff888888×|r") end)
+
     popup.editBox = editBox
     popup:SetScript("OnShow", function(p)
         p.editBox:SetText(state.pendingTitle or "")
+        -- Fade in
+        p:SetAlpha(0)
+        local elapsed = 0
+        p:SetScript("OnUpdate", function(self, dt)
+            elapsed = elapsed + dt
+            local alpha = math.min(elapsed / 0.15, 1)
+            self:SetAlpha(alpha)
+            if alpha >= 1 then self:SetScript("OnUpdate", nil) end
+        end)
         C_Timer.After(0, function()
             p.editBox:SetFocus()
             p.editBox:HighlightText()
@@ -271,7 +374,7 @@ end
 local function CreateInFormDropdown(entryCreationFrame)
     if inFormDropdown then return inFormDropdown end
 
-    -- Dynamically anchor relative to the Blizzard activity dropdown (The Blinding Vale)
+    -- Dynamically anchor relative to the Blizzard activity dropdown
     -- so our button always sits exactly above it, flush left and right.
     local btn = CreateFrame("Button", "GravityUI_PremadeGroupInFormBtn", entryCreationFrame)
     btn:SetHeight(20)
@@ -359,11 +462,11 @@ local function HookEntryCreationShow()
         local inForm = CreateInFormDropdown(self)
         inForm:Show()
 
-        -- Sync the in-form text with whatever is currently selected on the left
+        -- Sync the in-form text with whatever is currently selected
         if state.selectedGroupKey and state.selectedGroupKey > 0 then
             local selectedKeystone = state.groupKeys[state.selectedGroupKey]
             if selectedKeystone then
-                UpdateBothButtonTexts(selectedKeystone.text)
+                UpdateButtonText(selectedKeystone.text)
             end
         else
             if inFormButtonText then inFormButtonText:SetText("Select Group Key…") end
@@ -377,11 +480,11 @@ local function HookEntryCreationShow()
         local selectedKeystone = state.groupKeys[state.selectedGroupKey]
         if not selectedKeystone then return end
 
-        local title, activityID, dungeonName = GetPendingTitleFromKeystone(selectedKeystone)
+        local title, entry = GetPendingTitleFromKeystone(selectedKeystone)
         if not title then return end
         state.pendingTitle = title
 
-        ApplyActivityToFrame(self, activityID, dungeonName)
+        ApplyActivityToFrame(self, entry, selectedKeystone.level)
 
         -- Show copy popup for group members' keystones (player can't paste directly)
         if selectedKeystone.player ~= UnitName("player") then
@@ -420,17 +523,24 @@ InitializeDropdownMenu = function(self, level)
         info.checked = (state.selectedGroupKey == i)
         info.func = function()
             state.selectedGroupKey = i
-            UpdateBothButtonTexts(keyData.text)
+            UpdateButtonText(keyData.text)
             CloseDropDownMenus()
             -- If the creation form is already open, apply immediately
             if LFGListFrame and LFGListFrame.EntryCreation
                     and LFGListFrame.EntryCreation:IsShown() then
+                local ecFrame = LFGListFrame.EntryCreation
                 local selectedKeystone = state.groupKeys[i]
                 if selectedKeystone then
-                    local title, activityID, dungeonName = GetPendingTitleFromKeystone(selectedKeystone)
+                    local title, entry = GetPendingTitleFromKeystone(selectedKeystone)
                     if title then
                         state.pendingTitle = title
-                        ApplyActivityToFrame(LFGListFrame.EntryCreation, activityID, dungeonName)
+                        ApplyActivityToFrame(ecFrame, entry, selectedKeystone.level)
+
+                        -- Show CopyPopup so user can paste the title
+                        local popup = CreateCopyPopup(ecFrame)
+                        popup:ClearAllPoints()
+                        popup:SetPoint("CENTER", UIParent, "CENTER", 0, 100)
+                        popup:Show()
                     end
                 end
             end
@@ -439,7 +549,7 @@ InitializeDropdownMenu = function(self, level)
     end
 end
 
--- Shared dropdown frame (re-used by both the left-panel button and the in-form button)
+-- Shared dropdown frame (used by the in-form button)
 GetOrCreateDropdownMenu = function()
     if groupKeysDropdown then return groupKeysDropdown end
     groupKeysDropdown = CreateFrame("Frame", "GravityUI_PremadeGroupDropdownMenu", UIParent, "UIDropDownMenuTemplate")
@@ -449,83 +559,11 @@ GetOrCreateDropdownMenu = function()
     return groupKeysDropdown
 end
 
-function PremadeGroup:CreateDropdown()
-    if dropdownButton then return end  -- already created
-    if InCombatLockdown() then return end
-    if not GroupFinderFrame or not GroupFinderFrameGroupButton3 then return end
-
-    -- Button that triggers the dropdown (full width of nav button)
-    dropdownButton = CreateFrame("Button", "GravityUI_PremadeGroupDropdown", GroupFinderFrame)
-    dropdownButton:SetPoint("TOPLEFT", GroupFinderFrameGroupButton3, "BOTTOMLEFT", 0, -5)
-    dropdownButton:SetSize(GroupFinderFrameGroupButton3:GetWidth(), 26)
-    dropdownButton:SetFrameLevel(UIParent:GetFrameLevel() + 100)
-
-    -- Background
-    local bgTex = dropdownButton:CreateTexture(nil, "BACKGROUND")
-    bgTex:SetAllPoints()
-    bgTex:SetColorTexture(0.06, 0.07, 0.08, 0.85)
-
-    -- Border
-    if ns.GUI and ns.GUI.CreateBackdrop then
-        ns.GUI:CreateBackdrop(dropdownButton, {0.06, 0.07, 0.08, 0.85})
-    else
-        local border = dropdownButton:CreateTexture(nil, "BORDER")
-        border:SetAllPoints()
-        border:SetColorTexture(0.2, 0.2, 0.22, 1)
-    end
-
-    -- Arrow icon
-    local arrow = dropdownButton:CreateTexture(nil, "OVERLAY")
-    arrow:SetSize(14, 14)
-    arrow:SetPoint("RIGHT", dropdownButton, "RIGHT", -8, 0)
-    arrow:SetTexture("Interface\\ChatFrame\\ChatFrameExpandArrow")
-
-    -- Label text
-    dropdownButtonText = dropdownButton:CreateFontString(nil, "OVERLAY")
-    dropdownButtonText:SetFont(GetFont(), 12, "OUTLINE")
-    dropdownButtonText:SetPoint("LEFT", dropdownButton, "LEFT", 10, 0)
-    dropdownButtonText:SetPoint("RIGHT", arrow, "LEFT", -4, 0)
-    dropdownButtonText:SetText("Select Group Key…")
-
-    local r, g, b = 0, 0.72, 1
-    if ns.GetThemeColor then r, g, b = ns.GetThemeColor() end
-    dropdownButtonText:SetTextColor(r, g, b, 1)
-
-    -- Tooltip + hover
-    dropdownButton:SetScript("OnEnter", function(self)
-        bgTex:SetColorTexture(0.12, 0.14, 0.16, 0.95)
-        GameTooltip:SetOwner(self, "ANCHOR_TOP")
-        GameTooltip:SetText("Group Key Selector", 1, 1, 1)
-        GameTooltip:AddLine("Select a group member's keystone\nto pre-fill the Premade Group creation.", 0.8, 0.8, 0.8, true)
-        GameTooltip:Show()
-    end)
-    dropdownButton:SetScript("OnLeave", function()
-        bgTex:SetColorTexture(0.06, 0.07, 0.08, 0.85)
-        GameTooltip:Hide()
-    end)
-
-    dropdownButton:SetScript("OnClick", function(self)
-        ToggleDropDownMenu(1, nil, GetOrCreateDropdownMenu(), self, 0, -4)
-    end)
-end
-
-function PremadeGroup:SetEnabled(enabled)
-    if dropdownButton then
-        dropdownButton:SetShown(enabled)
-    end
-end
-
 ---------------------------------------------------------------------------
 -- PUBLIC API
 ---------------------------------------------------------------------------
 function PremadeGroup:ApplySettings()
-    local enabled = IsEnabled()
-    if enabled then
-        self:CreateDropdown()
-        self:SetEnabled(true)
-    else
-        self:SetEnabled(false)
-    end
+    -- No-op if disabled; in-form dropdown visibility is handled by the OnShow hook
 end
 
 ---------------------------------------------------------------------------
@@ -535,7 +573,6 @@ local initFrame = CreateFrame("Frame")
 initFrame:RegisterEvent("ADDON_LOADED")
 initFrame:SetScript("OnEvent", function(_, event, name)
     if event == "ADDON_LOADED" and name == ADDON_NAME then
-        BuildLocalizationMaps()
         PremadeGroup:ApplySettings()
         HookEntryCreationShow()
     end

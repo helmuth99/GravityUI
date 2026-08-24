@@ -324,9 +324,10 @@ local function BuildPremadeGroup(parent)
 
     local playstyleOptions = {
         { value = 0, text = "Don't set" },
+        { value = 1, text = "Learning" },
         { value = 2, text = "Relaxed" },
-        { value = 1, text = "Moderate" },
-        { value = 3, text = "Hardcore" },
+        { value = 3, text = "Competitive" },
+        { value = 4, text = "Carry Offered" },
     }
     AddRow(content, "Default Playstyle", "dropdown", playstyleOptions, "premadeGroupPlaystyle", uiDB, Refresh)
 

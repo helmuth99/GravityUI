@@ -694,7 +694,7 @@ ns.Defaults = {
         hideObjectiveTrackerAlways = false,
         mplusTeleportEnabled = true,
         premadeGroupEnabled = false,
-        premadeGroupPlaystyle = 2, -- 0=Don't set, 1=Moderate, 2=Relaxed, 3=Hardcore
+        premadeGroupPlaystyle = 2, -- 0=Don't set, 1=Learning, 2=Relaxed, 3=Competitive, 4=Carry Offered
         groupKeyListEnabled = true,
         groupChatCommands = true,
         autoInsertKey = true,
