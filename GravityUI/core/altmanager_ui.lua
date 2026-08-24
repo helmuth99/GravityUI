@@ -22,6 +22,14 @@ local ROW_HEIGHT = 20
 local HEADER_ROW_HEIGHT = 22
 local DEFAULT_VISIBLE_ALTS = 5
 
+-- Performance: Dirty-flag system to avoid unnecessary refreshes
+local isDirty = true
+local cachedRowDefs = nil
+
+-- Performance: Reusable tables for FormatVaultSummary (zero-alloc hot path)
+local reuseVaultSlots = {}
+local reuseVaultTexts = {}
+
 -- Great Vault Threshold Types (Enum.WeeklyRewardChestThresholdType)
 local RAID_VAULT_TYPE    = (Enum and Enum.WeeklyRewardChestThresholdType and Enum.WeeklyRewardChestThresholdType.Raid) or 0
 local DUNGEON_VAULT_TYPE = (Enum and Enum.WeeklyRewardChestThresholdType and Enum.WeeklyRewardChestThresholdType.Activities) or 1
@@ -394,39 +402,39 @@ local function BuildRowDefinitions()
     local rows = {}
 
     -- 1. Character Section (Always shown)
-    table.insert(rows, { type = "header", label = "Character" })
-    table.insert(rows, { id = "char_name",     label = "Character",        category = "char" })
-    table.insert(rows, { id = "char_realm",    label = "Realm",            category = "char" })
-    table.insert(rows, { id = "char_ilvl",     label = "Item Level",       category = "char" })
-    table.insert(rows, { id = "char_rating",   label = "Rating",           category = "char" })
-    table.insert(rows, { id = "char_key",      label = "Current Keystone", category = "char" })
+    rows[#rows + 1] = { type = "header", label = "Character" }
+    rows[#rows + 1] = { id = "char_name",     label = "Character",        category = "char" }
+    rows[#rows + 1] = { id = "char_realm",    label = "Realm",            category = "char" }
+    rows[#rows + 1] = { id = "char_ilvl",     label = "Item Level",       category = "char" }
+    rows[#rows + 1] = { id = "char_rating",   label = "Rating",           category = "char" }
+    rows[#rows + 1] = { id = "char_key",      label = "Current Keystone", category = "char" }
 
     -- 2. Great Vault Section
     if not db or db.showVault ~= false then
-        table.insert(rows, { type = "header", label = "Great Vault" })
-        table.insert(rows, { id = "vault_raid",    label = "Raids",            category = "vault", vaultType = RAID_VAULT_TYPE })
-        table.insert(rows, { id = "vault_dungeon", label = "Dungeons",         category = "vault", vaultType = DUNGEON_VAULT_TYPE })
-        table.insert(rows, { id = "vault_world",   label = "World",            category = "vault", vaultType = WORLD_VAULT_TYPE })
+        rows[#rows + 1] = { type = "header", label = "Great Vault" }
+        rows[#rows + 1] = { id = "vault_raid",    label = "Raids",            category = "vault", vaultType = RAID_VAULT_TYPE }
+        rows[#rows + 1] = { id = "vault_dungeon", label = "Dungeons",         category = "vault", vaultType = DUNGEON_VAULT_TYPE }
+        rows[#rows + 1] = { id = "vault_world",   label = "World",            category = "vault", vaultType = WORLD_VAULT_TYPE }
     end
 
     -- 3. Prey Hunts Section
     if not db or db.showPrey ~= false then
-        table.insert(rows, { type = "header", label = "Prey Hunts" })
-        table.insert(rows, { id = "prey_normal",    label = "Normal",    category = "prey", preyKey = "normal" })
-        table.insert(rows, { id = "prey_hard",      label = "Hard",      category = "prey", preyKey = "hard" })
-        table.insert(rows, { id = "prey_nightmare", label = "Nightmare", category = "prey", preyKey = "nightmare" })
+        rows[#rows + 1] = { type = "header", label = "Prey Hunts" }
+        rows[#rows + 1] = { id = "prey_normal",    label = "Normal",    category = "prey", preyKey = "normal" }
+        rows[#rows + 1] = { id = "prey_hard",      label = "Hard",      category = "prey", preyKey = "hard" }
+        rows[#rows + 1] = { id = "prey_nightmare", label = "Nightmare", category = "prey", preyKey = "nightmare" }
     end
 
     -- 4. Dungeons Section (Season 18 / Current Season Dungeons)
     if not db or db.showMPlus ~= false then
-        table.insert(rows, { type = "header", label = "Dungeons" })
+        rows[#rows + 1] = { type = "header", label = "Dungeons" }
         for _, d in ipairs(SEASON_DUNGEONS) do
             local texture = 0
             if C_ChallengeMode and C_ChallengeMode.GetMapUIInfo then
                 local _, _, _, tex = C_ChallengeMode.GetMapUIInfo(d.challengeModeID)
                 texture = tex or 0
             end
-            table.insert(rows, {
+            rows[#rows + 1] = {
                 id = "dungeon_" .. d.challengeModeID,
                 label = d.name,
                 icon = texture,
@@ -434,42 +442,55 @@ local function BuildRowDefinitions()
                 dungeon = d,
                 challengeModeID = d.challengeModeID,
                 mapId = d.mapId,
-            })
+            }
         end
     end
 
     -- 5. Raids Section
     if not db or db.showRaids ~= false then
-        table.insert(rows, { type = "header", label = "Raids" })
-        table.insert(rows, { id = "raid_lfr",    label = "LFR",    category = "raid", diffKey = "LFR" })
-        table.insert(rows, { id = "raid_normal", label = "Normal", category = "raid", diffKey = "Normal" })
-        table.insert(rows, { id = "raid_heroic", label = "Heroic", category = "raid", diffKey = "Heroic" })
-        table.insert(rows, { id = "raid_mythic", label = "Mythic", category = "raid", diffKey = "Mythic" })
+        rows[#rows + 1] = { type = "header", label = "Raids" }
+        rows[#rows + 1] = { id = "raid_lfr",    label = "LFR",    category = "raid", diffKey = "LFR" }
+        rows[#rows + 1] = { id = "raid_normal", label = "Normal", category = "raid", diffKey = "Normal" }
+        rows[#rows + 1] = { id = "raid_heroic", label = "Heroic", category = "raid", diffKey = "Heroic" }
+        rows[#rows + 1] = { id = "raid_mythic", label = "Mythic", category = "raid", diffKey = "Mythic" }
     end
 
     -- 6. Currencies Section (Current Season Mistcrests & Delves)
     if not db or db.showCurrencies ~= false then
-        table.insert(rows, { type = "header", label = "Currencies" })
+        rows[#rows + 1] = { type = "header", label = "Currencies" }
         local currIDs = AM.Data and AM.Data.GetTrackedCurrencyIDs and AM.Data:GetTrackedCurrencyIDs() or {}
         local hidden = db and db.hiddenCurrencies or {}
         for _, currID in ipairs(currIDs) do
             if not hidden[currID] then
                 local info = C_CurrencyInfo and C_CurrencyInfo.GetCurrencyInfo and C_CurrencyInfo.GetCurrencyInfo(currID)
                 if info and info.name and info.name ~= "" then
-                    table.insert(rows, {
+                    rows[#rows + 1] = {
                         id = "currency_" .. currID,
                         label = info.name,
                         icon = info.iconFileID or 0,
                         category = "currency",
                         currId = currID,
                         quality = info.quality or 1,
-                    })
+                    }
                 end
             end
         end
     end
 
     return rows
+end
+
+-- Performance: Cache row definitions to avoid C-API calls on every refresh.
+-- Invalidated on explicit user action (Refresh button, window toggle).
+local function GetRowDefinitions(forceRebuild)
+    if forceRebuild or not cachedRowDefs then
+        cachedRowDefs = BuildRowDefinitions()
+    end
+    return cachedRowDefs
+end
+
+local function InvalidateRowCache()
+    cachedRowDefs = nil
 end
 
 -- ============================================================================
@@ -612,6 +633,7 @@ function UI:CreateMainWindow()
     btnRefresh.icon = refreshIcon
     btnRefresh:SetScript("OnClick", function()
         if AM.Data and AM.Data.UpdateAll then AM.Data:UpdateAll() end
+        InvalidateRowCache()
         UI:Refresh()
     end)
     btnRefresh:SetScript("OnEnter", function(self)
@@ -750,17 +772,23 @@ end
 -- DATAGRID RENDERING
 -- ============================================================================
 
+-- Performance: Stable sort comparator — hoisted to avoid closure creation
+local function VaultSlotSortComparator(a, b) return (a.index or 0) < (b.index or 0) end
+
 local function FormatVaultSummary(alt, vaultType)
     if not alt or not alt.vault or not alt.vault.slots then return "|cff666666-  -  -|r" end
-    local slots = {}
+    -- Reuse tables instead of allocating new ones every call
+    local slots = reuseVaultSlots
+    wipe(slots)
     for _, s in ipairs(alt.vault.slots) do
         if s.type == vaultType then
-            table.insert(slots, s)
+            slots[#slots + 1] = s
         end
     end
-    table.sort(slots, function(a, b) return (a.index or 0) < (b.index or 0) end)
+    table.sort(slots, VaultSlotSortComparator)
 
-    local texts = {}
+    local texts = reuseVaultTexts
+    wipe(texts)
     for i = 1, 3 do
         local text = "-"
         local colStr = "ff666666" -- Grey
@@ -789,17 +817,153 @@ local function FormatVaultSummary(alt, vaultType)
             end
         end
 
-        table.insert(texts, string.format("|c%s%s|r", colStr, text))
+        texts[i] = string.format("|c%s%s|r", colStr, text)
     end
     return table.concat(texts, "  ")
 end
 
+-- ============================================================================
+-- PERFORMANCE: Stable handler functions (defined once, never re-created)
+-- Cells/frames store .rowDef, .altRef, .rowIdx as metadata for handlers to read.
+-- ============================================================================
+
+-- Performance: Hoisted quality color table — avoids re-creation per refresh
+local QUALITY_COLORS = {
+    [0] = { 0.62, 0.62, 0.62 }, -- Poor
+    [1] = { 1.00, 1.00, 1.00 }, -- Common
+    [2] = { 0.12, 1.00, 0.00 }, -- Uncommon (Green)
+    [3] = { 0.00, 0.44, 0.87 }, -- Rare (Blue)
+    [4] = { 0.64, 0.21, 0.93 }, -- Epic (Purple)
+    [5] = { 1.00, 0.50, 0.00 }, -- Legendary (Orange)
+    [6] = { 0.90, 0.80, 0.50 }, -- Artifact
+}
+local DEFAULT_QUALITY_COLOR = { 0.85, 0.88, 0.92 }
+
+-- Stable SetRowHover — reads .rowIdx from the calling frame
+local function SetRowHover(rowIdx, highlight)
+    local lrf = leftRowFrames[rowIdx]
+    local crf = charRowFrames[rowIdx]
+    if highlight then
+        local r, g, b = GetAccentColor()
+        if lrf then lrf:SetBackdropColor(r, g, b, 0.18) end
+        if crf then crf:SetBackdropColor(r, g, b, 0.18) end
+    else
+        if lrf then lrf:SetBackdropColor(lrf.bgR, lrf.bgG, lrf.bgB, lrf.bgA) end
+        if crf then crf:SetBackdropColor(crf.bgR, crf.bgG, crf.bgB, crf.bgA) end
+    end
+end
+
+-- Row-level stable handlers (for left label frames and char row frames)
+local function OnEnterRow(self)
+    if not self.isHeader then SetRowHover(self.rowIdx, true) end
+end
+local function OnLeaveRow(self)
+    if not self.isHeader then SetRowHover(self.rowIdx, false) end
+end
+
+-- Label button stable handlers
+local function OnEnterLabelDungeon(self)
+    local lrf = self:GetParent()
+    ShowDungeonTooltip(self, lrf.rowDef.dungeon)
+    SetRowHover(lrf.rowIdx, true)
+end
+local function OnLeaveLabelDungeon(self)
+    GameTooltip:Hide()
+    local lrf = self:GetParent()
+    SetRowHover(lrf.rowIdx, false)
+end
+local function OnEnterLabelRaid(self)
+    local lrf = self:GetParent()
+    local alts = (AM.Data and AM.Data.GetAllAltsList and AM.Data:GetAllAltsList()) or {}
+    ShowRaidTooltip(self, alts[1], lrf.rowDef.diffKey)
+    SetRowHover(lrf.rowIdx, true)
+end
+local function OnLeaveLabelRaid(self)
+    GameTooltip:Hide()
+    local lrf = self:GetParent()
+    SetRowHover(lrf.rowIdx, false)
+end
+local function OnEnterLabelCurrency(self)
+    local lrf = self:GetParent()
+    SetRowHover(lrf.rowIdx, true)
+    GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+    GameTooltip:SetCurrencyByID(lrf.rowDef.currId)
+    GameTooltip:Show()
+end
+local function OnLeaveLabelCurrency(self)
+    GameTooltip:Hide()
+    local lrf = self:GetParent()
+    SetRowHover(lrf.rowIdx, false)
+end
+
+-- Cell stable handlers — read .altRef and .rowDef from cell
+local function OnEnterCellCharName(self)
+    ShowCharacterTooltip(self, self.altRef)
+    SetRowHover(self.rowIdx, true)
+end
+local function OnLeaveCellGeneric(self)
+    GameTooltip:Hide()
+    SetRowHover(self.rowIdx, false)
+end
+local function OnMouseUpCellCharName(self, btn)
+    if btn == "RightButton" and self.altRef and self.altRef.guid ~= UnitGUID("player") then
+        AM.Data:PurgeAlt(self.altRef.guid)
+    end
+end
+local function OnEnterCellCharRealm(self)
+    ShowCharacterTooltip(self, self.altRef)
+    SetRowHover(self.rowIdx, true)
+end
+local function OnEnterCellIlvl(self)
+    ShowItemLevelTooltip(self, self.altRef)
+    SetRowHover(self.rowIdx, true)
+end
+local function OnEnterCellRating(self)
+    ShowRatingTooltip(self, self.altRef)
+    SetRowHover(self.rowIdx, true)
+end
+local function OnEnterCellKey(self)
+    ShowKeystoneTooltip(self, self.altRef)
+    SetRowHover(self.rowIdx, true)
+end
+local function OnEnterCellVault(self)
+    ShowVaultTooltip(self, self.altRef, self.rowDef.vaultType)
+    SetRowHover(self.rowIdx, true)
+end
+local function OnEnterCellPrey(self)
+    ShowPreyTooltip(self, self.altRef, self.rowDef.preyKey)
+    SetRowHover(self.rowIdx, true)
+end
+local function OnEnterCellDungeon(self)
+    ShowDungeonTooltip(self, self.rowDef.dungeon)
+    SetRowHover(self.rowIdx, true)
+end
+local function OnEnterCellRaid(self)
+    ShowRaidTooltip(self, self.altRef, self.rowDef.diffKey)
+    SetRowHover(self.rowIdx, true)
+end
+local function OnEnterCellCurrency(self)
+    ShowCurrencyTooltip(self, self.altRef, self.rowDef.currId)
+    SetRowHover(self.rowIdx, true)
+end
+
+-- Scroll wheel handler for cells (stable, no closure)
+local function OnMouseWheelCell(self, delta)
+    UI:ScrollHorizontal(delta)
+end
+
+-- ============================================================================
+-- REFRESH — Performance-optimized: stable handlers, cached row defs, dirty flag
+-- ============================================================================
+
 function UI:Refresh()
     if not mainFrame or not mainFrame:IsShown() then return end
 
+    isDirty = false
+
     local alts = (AM.Data and AM.Data.GetAllAltsList and AM.Data:GetAllAltsList()) or {}
     local numAlts = #alts
-    local rowDefs = BuildRowDefinitions()
+    local rowDefs = GetRowDefinitions()
     local db = GetDB()
 
     local maxVisible = (db and db.visibleColumns and db.visibleColumns > 0 and db.visibleColumns) or DEFAULT_VISIBLE_ALTS
@@ -866,11 +1030,17 @@ function UI:Refresh()
 
         local lrf = leftRowFrames[rIdx]
         lrf.isHeader = isHeader
+        lrf.rowIdx = rIdx
+        lrf.rowDef = row
         lrf.bgR, lrf.bgG, lrf.bgB, lrf.bgA = bgR, bgG, bgB, bgA
         lrf:SetHeight(rHeight)
         lrf:SetPoint("TOPLEFT", mainFrame.leftContainer, "TOPLEFT", 0, -currentY)
         lrf:SetBackdropColor(bgR, bgG, bgB, bgA)
         lrf:Show()
+
+        -- Stable handlers — set once, read metadata from frame
+        lrf:SetScript("OnEnter", OnEnterRow)
+        lrf:SetScript("OnLeave", OnLeaveRow)
 
         lrf.labelBtn:SetScript("OnEnter", nil)
         lrf.labelBtn:SetScript("OnLeave", nil)
@@ -879,60 +1049,20 @@ function UI:Refresh()
             lrf.labelBtn:SetAttribute("spell", nil)
         end
 
-        local function SetRowHover(highlight)
-            local crf = charRowFrames[rIdx]
-            if highlight then
-                local r, g, b = GetAccentColor()
-                lrf:SetBackdropColor(r, g, b, 0.18)
-                if crf then crf:SetBackdropColor(r, g, b, 0.18) end
-            else
-                lrf:SetBackdropColor(lrf.bgR, lrf.bgG, lrf.bgB, lrf.bgA)
-                if crf then crf:SetBackdropColor(crf.bgR, crf.bgG, crf.bgB, crf.bgA) end
-            end
-        end
-
-        lrf:SetScript("OnEnter", function()
-            if not isHeader then SetRowHover(true) end
-        end)
-        lrf:SetScript("OnLeave", function()
-            if not isHeader then SetRowHover(false) end
-        end)
-
         if row.category == "dungeon" and row.dungeon then
             local spellID = GetKnownTeleport(row.dungeon)
             if spellID and not InCombatLockdown() then
                 lrf.labelBtn:SetAttribute("type", "spell")
                 lrf.labelBtn:SetAttribute("spell", spellID)
             end
-            lrf.labelBtn:SetScript("OnEnter", function(self)
-                ShowDungeonTooltip(self, row.dungeon)
-                SetRowHover(true)
-            end)
-            lrf.labelBtn:SetScript("OnLeave", function()
-                GameTooltip:Hide()
-                SetRowHover(false)
-            end)
+            lrf.labelBtn:SetScript("OnEnter", OnEnterLabelDungeon)
+            lrf.labelBtn:SetScript("OnLeave", OnLeaveLabelDungeon)
         elseif row.category == "raid" then
-            lrf.labelBtn:SetScript("OnEnter", function(self)
-                local firstAlt = alts and alts[1]
-                ShowRaidTooltip(self, firstAlt, row.diffKey)
-                SetRowHover(true)
-            end)
-            lrf.labelBtn:SetScript("OnLeave", function()
-                GameTooltip:Hide()
-                SetRowHover(false)
-            end)
+            lrf.labelBtn:SetScript("OnEnter", OnEnterLabelRaid)
+            lrf.labelBtn:SetScript("OnLeave", OnLeaveLabelRaid)
         elseif row.category == "currency" then
-            lrf.labelBtn:SetScript("OnEnter", function(self)
-                SetRowHover(true)
-                GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-                GameTooltip:SetCurrencyByID(row.currId)
-                GameTooltip:Show()
-            end)
-            lrf.labelBtn:SetScript("OnLeave", function()
-                GameTooltip:Hide()
-                SetRowHover(false)
-            end)
+            lrf.labelBtn:SetScript("OnEnter", OnEnterLabelCurrency)
+            lrf.labelBtn:SetScript("OnLeave", OnLeaveLabelCurrency)
         end
 
         if isHeader then
@@ -955,16 +1085,7 @@ function UI:Refresh()
             lrf.label:SetPoint("RIGHT", lrf.labelBtn, "RIGHT", -6, 0)
             lrf.label:SetFont(GetFont(), 10, "")
             if row.category == "currency" and row.quality then
-                local qualityColors = {
-                    [0] = { 0.62, 0.62, 0.62 }, -- Poor
-                    [1] = { 1.00, 1.00, 1.00 }, -- Common
-                    [2] = { 0.12, 1.00, 0.00 }, -- Uncommon (Green)
-                    [3] = { 0.00, 0.44, 0.87 }, -- Rare (Blue)
-                    [4] = { 0.64, 0.21, 0.93 }, -- Epic (Purple)
-                    [5] = { 1.00, 0.50, 0.00 }, -- Legendary (Orange)
-                    [6] = { 0.90, 0.80, 0.50 }, -- Artifact
-                }
-                local qCol = qualityColors[row.quality] or { 0.85, 0.88, 0.92 }
+                local qCol = QUALITY_COLORS[row.quality] or DEFAULT_QUALITY_COLOR
                 lrf.label:SetTextColor(qCol[1], qCol[2], qCol[3], 1)
             else
                 lrf.label:SetTextColor(0.85, 0.88, 0.92, 1)
@@ -980,15 +1101,14 @@ function UI:Refresh()
             crf:SetHeight(ROW_HEIGHT)
             crf:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8x8" })
             crf:EnableMouseWheel(true)
-            crf:SetScript("OnMouseWheel", function(self, delta)
-                UI:ScrollHorizontal(delta)
-            end)
+            crf:SetScript("OnMouseWheel", OnMouseWheelCell)
             crf.cells = {}
             charRowFrames[rIdx] = crf
         end
 
         local crf = charRowFrames[rIdx]
         crf.isHeader = isHeader
+        crf.rowIdx = rIdx
         crf.bgR, crf.bgG, crf.bgB, crf.bgA = bgR, bgG, bgB, bgA
         crf:SetHeight(rHeight)
         crf:SetWidth(charsTotalWidth)
@@ -996,12 +1116,9 @@ function UI:Refresh()
         crf:SetBackdropColor(bgR, bgG, bgB, bgA)
         crf:Show()
 
-        crf:SetScript("OnEnter", function()
-            if not isHeader then SetRowHover(true) end
-        end)
-        crf:SetScript("OnLeave", function()
-            if not isHeader then SetRowHover(false) end
-        end)
+        -- Stable handlers
+        crf:SetScript("OnEnter", OnEnterRow)
+        crf:SetScript("OnLeave", OnLeaveRow)
 
         -- Character Cells per Row
         for cIdx, alt in ipairs(alts) do
@@ -1011,9 +1128,7 @@ function UI:Refresh()
                 cell:SetHeight(rHeight)
                 cell:SetWidth(CHAR_WIDTH)
                 cell:EnableMouseWheel(true)
-                cell:SetScript("OnMouseWheel", function(self, delta)
-                    UI:ScrollHorizontal(delta)
-                end)
+                cell:SetScript("OnMouseWheel", OnMouseWheelCell)
 
                 local icon = cell:CreateTexture(nil, "ARTWORK")
                 icon:SetSize(14, 14)
@@ -1043,6 +1158,11 @@ function UI:Refresh()
             end
 
             local cell = crf.cells[cIdx]
+            -- Store metadata for stable handlers (no closures needed)
+            cell.rowDef = row
+            cell.altRef = alt
+            cell.rowIdx = rIdx
+
             cell:SetHeight(rHeight)
             cell:SetPoint("LEFT", crf, "LEFT", (cIdx - 1) * CHAR_WIDTH, 0)
             cell:Show()
@@ -1085,45 +1205,23 @@ function UI:Refresh()
                     cell.text:SetPoint("CENTER", cell, "CENTER", 0, 0)
                 end
 
-                cell:SetScript("OnMouseUp", function(_, btn)
-                    if btn == "RightButton" and alt.guid ~= UnitGUID("player") then
-                        AM.Data:PurgeAlt(alt.guid)
-                    end
-                end)
-                cell:SetScript("OnEnter", function(self)
-                    ShowCharacterTooltip(self, alt)
-                    SetRowHover(true)
-                end)
-                cell:SetScript("OnLeave", function()
-                    GameTooltip:Hide()
-                    SetRowHover(false)
-                end)
+                cell:SetScript("OnMouseUp", OnMouseUpCellCharName)
+                cell:SetScript("OnEnter", OnEnterCellCharName)
+                cell:SetScript("OnLeave", OnLeaveCellGeneric)
 
             elseif row.id == "char_realm" then
                 cell.text:ClearAllPoints(); cell.text:SetPoint("CENTER")
                 cell.text:SetTextColor(0.65, 0.72, 0.8, 1)
                 cell.text:SetText(alt.realm or "")
-                cell:SetScript("OnEnter", function(self)
-                    ShowCharacterTooltip(self, alt)
-                    SetRowHover(true)
-                end)
-                cell:SetScript("OnLeave", function()
-                    GameTooltip:Hide()
-                    SetRowHover(false)
-                end)
+                cell:SetScript("OnEnter", OnEnterCellCharRealm)
+                cell:SetScript("OnLeave", OnLeaveCellGeneric)
 
             elseif row.id == "char_ilvl" then
                 cell.text:ClearAllPoints(); cell.text:SetPoint("CENTER")
                 cell.text:SetTextColor(0.66, 0.45, 0.95, 1) -- Epic Purple
                 cell.text:SetText(string.format("%.1f", alt.ilvlEquipped or 0))
-                cell:SetScript("OnEnter", function(self)
-                    ShowItemLevelTooltip(self, alt)
-                    SetRowHover(true)
-                end)
-                cell:SetScript("OnLeave", function()
-                    GameTooltip:Hide()
-                    SetRowHover(false)
-                end)
+                cell:SetScript("OnEnter", OnEnterCellIlvl)
+                cell:SetScript("OnLeave", OnLeaveCellGeneric)
 
             elseif row.id == "char_rating" then
                 cell.text:ClearAllPoints(); cell.text:SetPoint("CENTER")
@@ -1134,14 +1232,8 @@ function UI:Refresh()
                     if scCol and scCol.GenerateHexColor then scoreHex = scCol:GenerateHexColor() end
                 end
                 cell.text:SetText(string.format("|c%s%d|r", scoreHex, score))
-                cell:SetScript("OnEnter", function(self)
-                    ShowRatingTooltip(self, alt)
-                    SetRowHover(true)
-                end)
-                cell:SetScript("OnLeave", function()
-                    GameTooltip:Hide()
-                    SetRowHover(false)
-                end)
+                cell:SetScript("OnEnter", OnEnterCellRating)
+                cell:SetScript("OnLeave", OnLeaveCellGeneric)
 
             elseif row.id == "char_key" then
                 cell.text:ClearAllPoints(); cell.text:SetPoint("CENTER")
@@ -1151,26 +1243,14 @@ function UI:Refresh()
                 else
                     cell.text:SetText("|cff666666-|r")
                 end
-                cell:SetScript("OnEnter", function(self)
-                    ShowKeystoneTooltip(self, alt)
-                    SetRowHover(true)
-                end)
-                cell:SetScript("OnLeave", function()
-                    GameTooltip:Hide()
-                    SetRowHover(false)
-                end)
+                cell:SetScript("OnEnter", OnEnterCellKey)
+                cell:SetScript("OnLeave", OnLeaveCellGeneric)
 
             elseif row.category == "vault" then
                 cell.text:ClearAllPoints(); cell.text:SetPoint("CENTER")
                 cell.text:SetText(FormatVaultSummary(alt, row.vaultType))
-                cell:SetScript("OnEnter", function(self)
-                    ShowVaultTooltip(self, alt, row.vaultType)
-                    SetRowHover(true)
-                end)
-                cell:SetScript("OnLeave", function()
-                    GameTooltip:Hide()
-                    SetRowHover(false)
-                end)
+                cell:SetScript("OnEnter", OnEnterCellVault)
+                cell:SetScript("OnLeave", OnLeaveCellGeneric)
 
             elseif row.category == "prey" then
                 cell.text:ClearAllPoints(); cell.text:SetPoint("CENTER")
@@ -1182,14 +1262,8 @@ function UI:Refresh()
                 else
                     cell.text:SetText("|cff666666-|r")
                 end
-                cell:SetScript("OnEnter", function(self)
-                    ShowPreyTooltip(self, alt, row.preyKey)
-                    SetRowHover(true)
-                end)
-                cell:SetScript("OnLeave", function()
-                    GameTooltip:Hide()
-                    SetRowHover(false)
-                end)
+                cell:SetScript("OnEnter", OnEnterCellPrey)
+                cell:SetScript("OnLeave", OnLeaveCellGeneric)
 
             elseif row.category == "dungeon" then
                 cell.text:ClearAllPoints(); cell.text:SetPoint("CENTER")
@@ -1209,14 +1283,8 @@ function UI:Refresh()
                     end
                 end
 
-                cell:SetScript("OnEnter", function(self)
-                    ShowDungeonTooltip(self, row.dungeon)
-                    SetRowHover(true)
-                end)
-                cell:SetScript("OnLeave", function()
-                    GameTooltip:Hide()
-                    SetRowHover(false)
-                end)
+                cell:SetScript("OnEnter", OnEnterCellDungeon)
+                cell:SetScript("OnLeave", OnLeaveCellGeneric)
 
             elseif row.category == "raid" then
                 cell.text:Hide()
@@ -1235,14 +1303,8 @@ function UI:Refresh()
                     end
                 end
 
-                cell:SetScript("OnEnter", function(self)
-                    ShowRaidTooltip(self, alt, row.diffKey)
-                    SetRowHover(true)
-                end)
-                cell:SetScript("OnLeave", function()
-                    GameTooltip:Hide()
-                    SetRowHover(false)
-                end)
+                cell:SetScript("OnEnter", OnEnterCellRaid)
+                cell:SetScript("OnLeave", OnLeaveCellGeneric)
 
             elseif row.category == "currency" then
                 cell.text:ClearAllPoints(); cell.text:SetPoint("CENTER")
@@ -1297,14 +1359,8 @@ function UI:Refresh()
                     end
                 end
 
-                cell:SetScript("OnEnter", function(self)
-                    ShowCurrencyTooltip(self, alt, row.currId)
-                    SetRowHover(true)
-                end)
-                cell:SetScript("OnLeave", function()
-                    GameTooltip:Hide()
-                    SetRowHover(false)
-                end)
+                cell:SetScript("OnEnter", OnEnterCellCurrency)
+                cell:SetScript("OnLeave", OnLeaveCellGeneric)
             end
         end
 
@@ -1338,12 +1394,23 @@ function UI:Refresh()
     self:UpdateNavControls(numAlts, visibleAlts)
 end
 
+-- Performance: Mark UI as needing refresh. Called by event engine instead of Refresh()
+-- directly. The actual refresh happens only when the window is visible.
+function UI:MarkDirty()
+    isDirty = true
+    if mainFrame and mainFrame:IsShown() then
+        self:Refresh()
+    end
+end
+
 function UI:ToggleWindow()
     local f = self:CreateMainWindow()
     if f:IsShown() then
         f:Hide()
     else
         if AM.Data and AM.Data.UpdateAll then AM.Data:UpdateAll() end
+        InvalidateRowCache()
+        isDirty = true
         f:Show()
         self:Refresh()
     end
@@ -1356,3 +1423,4 @@ SLASH_GRAVITYALT3 = "/alt"
 SlashCmdList["GRAVITYALT"] = function()
     UI:ToggleWindow()
 end
+

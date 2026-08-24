@@ -357,9 +357,10 @@ function Data:UpdateRaidLockouts()
     local alt = self:GetOrCreateCurrentAlt()
     if not alt then return end
 
-    -- Request fresh lockout data from the server; the response arrives
-    -- asynchronously via UPDATE_INSTANCE_INFO which triggers another scan.
-    if RequestRaidInfo then RequestRaidInfo() end
+    -- NOTE: Do NOT call RequestRaidInfo() here!
+    -- It triggers UPDATE_INSTANCE_INFO asynchronously, which would call
+    -- this function again, creating an infinite event loop that kills FPS.
+    -- RequestRaidInfo() is called only once during PLAYER_ENTERING_WORLD.
 
     local numSaved = GetNumSavedInstances() or 0
 
@@ -828,8 +829,10 @@ local function TriggerScan()
     C_Timer.After(0.8, function()
         throttled = false
         Data:UpdateAll()
-        if AM.UI and AM.UI.Refresh then
-            AM.UI:Refresh()
+        -- Performance: Use MarkDirty instead of Refresh — only refreshes UI
+        -- if the window is currently visible, otherwise sets a dirty flag.
+        if AM.UI and AM.UI.MarkDirty then
+            AM.UI:MarkDirty()
         end
     end)
 end
@@ -849,21 +852,17 @@ eventFrame:SetScript("OnEvent", function(self, event, arg1, ...)
         C_Timer.After(2, function() Data:UpdateAll() end)
         C_Timer.After(5, function()
             Data:UpdateAll()
-            if AM.UI and AM.UI.Refresh then AM.UI:Refresh() end
+            if AM.UI and AM.UI.MarkDirty then AM.UI:MarkDirty() end
         end)
         C_Timer.After(10, function()
             Data:UpdateAll()
-            if AM.UI and AM.UI.Refresh then AM.UI:Refresh() end
+            if AM.UI and AM.UI.MarkDirty then AM.UI:MarkDirty() end
         end)
-    elseif event == "CHALLENGE_MODE_MAPS_UPDATE" then
-        -- M+ rating and dungeon data is now available
-        Data:UpdateMythicPlus()
-        Data:UpdateKeystone()
-        if AM.UI and AM.UI.Refresh then AM.UI:Refresh() end
-    elseif event == "UPDATE_INSTANCE_INFO" then
-        -- Raid lockout data is now available
-        Data:UpdateRaidLockouts()
-        if AM.UI and AM.UI.Refresh then AM.UI:Refresh() end
+    elseif event == "CHALLENGE_MODE_MAPS_UPDATE"
+        or event == "UPDATE_INSTANCE_INFO" then
+        -- Async server responses — route through throttled scan to avoid
+        -- burst-refreshing the UI on rapid successive events.
+        TriggerScan()
     elseif event == "CHAT_MSG_LOOT" then
         local msg = arg1
         local db = GetDB()
@@ -888,3 +887,4 @@ eventFrame:SetScript("OnEvent", function(self, event, arg1, ...)
         TriggerScan()
     end
 end)
+
