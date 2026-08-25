@@ -473,13 +473,13 @@ function ns.ApplyCombatTextSettings()
     if not (db and db.uiimprovements) then return end
     local ui = db.uiimprovements
     if ui.scrollingCombatText ~= nil then
-        SetCVar("enableFloatingCombatText",          ui.scrollingCombatText and "1" or "0")
+        pcall(SetCVar, "enableFloatingCombatText",          ui.scrollingCombatText and "1" or "0")
     end
     if ui.showDamageNumbers ~= nil then
-        SetCVar("floatingCombatTextCombatDamage_v2",  ui.showDamageNumbers  and "1" or "0")
+        pcall(SetCVar, "floatingCombatTextCombatDamage_v2",  ui.showDamageNumbers  and "1" or "0")
     end
     if ui.showHealingNumbers ~= nil then
-        SetCVar("floatingCombatTextCombatHealing_v2", ui.showHealingNumbers and "1" or "0")
+        pcall(SetCVar, "floatingCombatTextCombatHealing_v2", ui.showHealingNumbers and "1" or "0")
     end
 end
 

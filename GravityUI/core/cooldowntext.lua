@@ -711,7 +711,8 @@ function CooldownText.AddOptions(parent)
             end
             
             local displayName = spellItem.text or "Auto-Name"
-            row.text:SetText(strformat("[%s]  %s  (|cffAAAAAAID: %d|r)", spellItem.class, displayName, spellItem.spellID))
+            local displayClass = spellItem.class or "Unknown"
+            row.text:SetText(strformat("[%s]  %s  (|cffAAAAAAID: %d|r)", displayClass, displayName, spellItem.spellID))
             
             row.btnDel:SetScript("OnClick", function()
                 table.remove(DB.spellsToTrack, index)

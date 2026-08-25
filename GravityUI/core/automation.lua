@@ -205,7 +205,14 @@ local function OverrideLfgApplicationDialog()
         _G.LFDRoleCheckPopupAcceptButton:HookScript("OnShow", function()
             local cfg = GetSettings()
             if cfg and cfg.autoRoleAccept then
-                _G.LFDRoleCheckPopupAcceptButton:Click()
+                -- TAINT FIX: Defer Click() out of the OnShow secure context.
+                -- Calling Click() directly here fires the button's internal
+                -- protected handler from a tainted call stack → ADDON_ACTION_FORBIDDEN.
+                C_Timer.After(0, function()
+                    if _G.LFDRoleCheckPopupAcceptButton and _G.LFDRoleCheckPopupAcceptButton:IsShown() then
+                        _G.LFDRoleCheckPopupAcceptButton:Click()
+                    end
+                end)
             end
         end)
         HooksState.lfdRolePopup = true
@@ -1312,7 +1319,7 @@ local function ApplyAutoSQW(reason)
     if not s or not s.sqwAutoOptimize then return end
 
     local optimal = ns.ComputeOptimalSQW()
-    SetCVar("SpellQueueWindow", tostring(optimal))
+    pcall(SetCVar, "SpellQueueWindow", tostring(optimal))
     -- Also update the saved manual value so the slider reflects the auto value
     -- when the settings panel is opened
     s.spellQueueWindow = optimal
@@ -1678,14 +1685,21 @@ automationFrame:SetScript("OnEvent", function(self, event, ...)
              lastSpec = ns.GetSpecialization()
              local s = GetSettings()
              if s then
-                 if s.showDamageNumbers ~= nil then SetCVar("floatingCombatTextCombatDamage", s.showDamageNumbers and "1" or "0") end
-                 if s.showHealingNumbers ~= nil then SetCVar("floatingCombatTextCombatHealing", s.showHealingNumbers and "1" or "0") end
-                 -- SQW: auto-optimize overrides manual value on login
-                 if s.sqwAutoOptimize then
-                     ApplyAutoSQW("login")
-                 elseif s.spellQueueWindow then
-                     SetCVar("SpellQueueWindow", tostring(s.spellQueueWindow))
-                 end
+                 -- TAINT FIX: Defer SetCVar calls out of the PLAYER_ENTERING_WORLD
+                 -- event handler. SetCVar synchronously triggers Blizzard's internal
+                 -- Settings → CallbackRegistry chain, which contains protected
+                 -- callbacks. Calling from within the event handler taints the
+                 -- entire chain, producing ADDON_ACTION_FORBIDDEN 'callback()'.
+                 C_Timer.After(0, function()
+                     if s.showDamageNumbers ~= nil then pcall(SetCVar, "floatingCombatTextCombatDamage", s.showDamageNumbers and "1" or "0") end
+                     if s.showHealingNumbers ~= nil then pcall(SetCVar, "floatingCombatTextCombatHealing", s.showHealingNumbers and "1" or "0") end
+                     -- SQW: auto-optimize overrides manual value on login
+                     if s.sqwAutoOptimize then
+                         ApplyAutoSQW("login")
+                     elseif s.spellQueueWindow then
+                         pcall(SetCVar, "SpellQueueWindow", tostring(s.spellQueueWindow))
+                     end
+                 end)
                  
                  if s.deleteFix then SmartDelete:InitHooks() end
              end
