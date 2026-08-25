@@ -1402,11 +1402,7 @@ ns.Defaults = {
         onlyRaidDungeon = false,
         useClassColor = true,
         textColor = { 1, 1, 1, 1 },
-        spellsToTrack = {
-            { spellID = 1953,   class = "MAGE", text = "No Blink on cd" },
-            { spellID = 212653, class = "MAGE", text = "No Shimmer" },
-            { spellID = 1234796, class = "DEMONHUNTER", text = "No Shift" },
-        }
+        spellsToTrack = {}
     },
     char = {
         lfgRole_tank = false,

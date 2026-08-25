@@ -122,21 +122,13 @@ local function GetSettings()
                 tickInterval = 0.2,
                 growDirection = "DOWN",
                 onlyRaidDungeon = false,
-                spellsToTrack = {
-                    { spellID = 1953,   class = "MAGE", text = "No Blink on cd" },
-                    { spellID = 212653, class = "MAGE", text = "No Shimmer" },
-                    { spellID = 1234796, class = "DEMONHUNTER", text = "No Shift" },
-                }
+                spellsToTrack = {}
             }
         end
         
         -- Fallback check for missing spell tracking specifically (e.g. older versions)
         if not mainDB.cooldownText.spellsToTrack then
-            mainDB.cooldownText.spellsToTrack = {
-                { spellID = 1953,   class = "MAGE", text = "No Blink" },
-                { spellID = 212653, class = "MAGE", text = "No Shimmer" },
-                { spellID = 1234796, class = "DEMONHUNTER", text = "No Shift" },
-            }
+            mainDB.cooldownText.spellsToTrack = {}
         end
         
         DB = mainDB.cooldownText
@@ -154,11 +146,7 @@ local function GetSettings()
             tickInterval = 0.2,
             growDirection = "DOWN",
             onlyRaidDungeon = false,
-            spellsToTrack = {
-                { spellID = 1953,   class = "MAGE", text = "No Blink" },
-                { spellID = 212653, class = "MAGE", text = "No Shimmer" },
-                { spellID = 1234796, class = "DEMONHUNTER", text = "No Shift" },
-            }
+            spellsToTrack = {}
         }
     end
     DB = ns.cooldownTextFallback
