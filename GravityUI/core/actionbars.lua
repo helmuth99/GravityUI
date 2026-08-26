@@ -93,6 +93,45 @@ local function GetBarButtons(barKey)
     return buttons
 end
 
+---------------------------------------------------------------------------
+-- TAINT-SAFE ALPHA (WoW 12.x)
+---------------------------------------------------------------------------
+-- Calling btn:SetAlpha() or HookScript() on Blizzard SecureActionButtons
+-- (bar1-8) taints the button's internal state. Blizzard's own OnEvent handler
+-- then runs in a tainted context, causing "secret values" errors in
+-- SetCooldown() and ADDON_ACTION_BLOCKED for SetShown().
+-- Fix: Fade child regions individually, leaving the button object untouched.
+
+local function ApplyFadeToButton(btn, alpha)
+    btn._guiFadeAlpha = alpha
+    -- Standard regions (base alpha 1.0)
+    local icon = btn.icon or btn.Icon
+    if icon then icon:SetAlpha(alpha) end
+    -- NOTE: btn.cooldown deliberately skipped — CD swirls stay visible
+    if btn.HotKey then btn.HotKey:SetAlpha(alpha) end
+    if btn.Count then btn.Count:SetAlpha(alpha) end
+    if btn.Name then btn.Name:SetAlpha(alpha) end
+    if btn.Flash then btn.Flash:SetAlpha(alpha) end
+    if btn.NewActionTexture then btn.NewActionTexture:SetAlpha(alpha) end
+    if btn.Border then btn.Border:SetAlpha(alpha) end
+    if btn.SpellHighlightTexture then btn.SpellHighlightTexture:SetAlpha(alpha) end
+    if btn.AutoCastShine then btn.AutoCastShine:SetAlpha(alpha) end
+    -- NormalTexture: already hidden (alpha 0) by SkinButton — never touch
+    -- GravityUI overlays
+    if btn._guiBackdrop then
+        btn._guiBackdrop:SetAlpha((btn._guiBackdropBaseAlpha or 0.8) * alpha)
+    end
+    -- Border & Gloss use SetVertexColor for base opacity; SetAlpha multiplies.
+    if btn._guiNormal then btn._guiNormal:SetAlpha(alpha) end
+    if btn._guiGloss then btn._guiGloss:SetAlpha(alpha) end
+end
+
+local function SetSafeButtonAlpha(btn, barKey, alpha)
+    -- SetAlpha() is a C API call and does NOT propagate Lua taint.
+    -- The taint source was HookScript() (now removed for protected bars).
+    btn:SetAlpha(alpha)
+end
+
 -- Forward declarations
 local UpdateButtonText, UpdateEmptySlotVisibility
 -- Debounced Update Helpers
@@ -125,7 +164,7 @@ local function RequestRefresh()
                     local buttons = GetBarButtons(barKey)
                     for _, btn in ipairs(buttons) do
                         UpdateButtonText(btn, g)
-                        UpdateEmptySlotVisibility(btn, g)
+                        UpdateEmptySlotVisibility(btn, g, barKey)
                     end
                 end
             end
@@ -175,7 +214,8 @@ local function SkinButton(button, settings)
             button._guiBackdrop:SetColorTexture(0, 0, 0, 1)
             button._guiBackdrop:SetAllPoints(button)
         end
-        button._guiBackdrop:SetAlpha(settings.backdropAlpha or 0.8)
+        button._guiBackdropBaseAlpha = settings.backdropAlpha or 0.8
+        button._guiBackdrop:SetAlpha(button._guiBackdropBaseAlpha * (button._guiFadeAlpha or 1))
         button._guiBackdrop:Show()
     elseif button._guiBackdrop then
         button._guiBackdrop:Hide()
@@ -192,6 +232,7 @@ local function SkinButton(button, settings)
             button._guiNormal:SetAllPoints(button)
         end
         button._guiNormal:Show()
+        if button._guiFadeAlpha then button._guiNormal:SetAlpha(button._guiFadeAlpha) end
     elseif button._guiNormal then
         button._guiNormal:Hide()
     end
@@ -207,6 +248,7 @@ local function SkinButton(button, settings)
         end
         button._guiGloss:SetVertexColor(1, 1, 1, settings.glossAlpha or 0.6)
         button._guiGloss:Show()
+        if button._guiFadeAlpha then button._guiGloss:SetAlpha(button._guiFadeAlpha) end
     elseif button._guiGloss then
         button._guiGloss:Hide()
     end
@@ -348,6 +390,11 @@ end
 
 local function HookBarElement(frame, barKey)
     if not frame or frame._guiHoverHooked then return end
+    -- TAINT FIX (12.x): Do NOT HookScript on protected bar frames/buttons.
+    -- HookScript taints the frame's script dispatch, causing all subsequent
+    -- OnEvent handlers to run in tainted context (SetCooldown/SetShown errors).
+    -- Hover detection for protected bars falls back to frame:IsMouseOver().
+    if PROTECTED_BAR_FRAMES[barKey] then return end
     frame._guiBarKey = barKey
     frame:HookScript("OnEnter", OnElementEnter)
     frame:HookScript("OnLeave", OnElementLeave)
@@ -355,10 +402,23 @@ local function HookBarElement(frame, barKey)
 end
 
 local function IsMouseOverBar(barKey)
-    -- O(1) Event-driven check
+    -- O(1) Event-driven check (populated by HookScript on non-protected bars)
     if hoveredElements[barKey] and hoveredElements[barKey] > 0 then return true end
     
-    -- Safety Fallback: Just check the parent frame once (O(1)) instead of looping all buttons
+    if PROTECTED_BAR_FRAMES[barKey] then
+        -- Protected bars have no HookScript — check individual buttons instead.
+        -- Bar frames (MainMenuBar etc.) span huge areas making frame:IsMouseOver()
+        -- useless. Per-button IsMouseOver() is precise and O(12) per bar per tick.
+        local buttons = buttonCache[barKey]
+        if buttons then
+            for i = 1, #buttons do
+                if buttons[i]:IsMouseOver() then return true end
+            end
+        end
+        return false
+    end
+    
+    -- Non-protected: check parent frame (small enough to be accurate)
     local frame = _G[BAR_FRAMES[barKey]]
     if frame and frame:IsMouseOver() then return true end
     
@@ -495,7 +555,7 @@ local function UpdateFade(self, elapsed)
             for j = 1, #buttons do
                 local btn = buttons[j]
                 if not btn._guiHiddenEmpty then
-                    btn:SetAlpha(state.currentAlpha)
+                    SetSafeButtonAlpha(btn, barKey, state.currentAlpha)
                 end
             end
         end
@@ -569,10 +629,10 @@ local function UpdateButtonUsability(button, settings)
     end
 end
 
-UpdateEmptySlotVisibility = function(button, settings)
+UpdateEmptySlotVisibility = function(button, settings, barKey)
     if not settings or not settings.hideEmptySlots then
         if button._guiHiddenEmpty then
-            button:SetAlpha(1)
+            SetSafeButtonAlpha(button, barKey, button._guiFadeAlpha or 1)
             button._guiHiddenEmpty = nil
         end
         return
@@ -583,14 +643,14 @@ UpdateEmptySlotVisibility = function(button, settings)
     if action then
         local hasAction = HasAction(action)
         if hasAction then
-            button:SetAlpha(1)
+            SetSafeButtonAlpha(button, barKey, button._guiFadeAlpha or 1)
             button._guiHiddenEmpty = nil
         else
-            button:SetAlpha(0)
+            SetSafeButtonAlpha(button, barKey, 0)
             button._guiHiddenEmpty = true
         end
     elseif button._guiHiddenEmpty then
-        button:SetAlpha(1)
+        SetSafeButtonAlpha(button, barKey, button._guiFadeAlpha or 1)
         button._guiHiddenEmpty = nil
     end
 end
@@ -603,7 +663,7 @@ local function UpdateAllEmptySlots()
     for barKey, _ in pairs(BAR_BUTTONS) do
         local buttons = GetBarButtons(barKey)
         for _, btn in ipairs(buttons) do
-            UpdateEmptySlotVisibility(btn, g)
+            UpdateEmptySlotVisibility(btn, g, barKey)
         end
     end
 end
@@ -908,7 +968,8 @@ function ns.RefreshActionBars()
                     icon:SetDesaturated(false)
                     btn._guiTinted = nil
                 end
-                btn:SetAlpha(1)
+                SetSafeButtonAlpha(btn, barKey, 1)
+                btn._guiFadeAlpha = nil
                 btn._guiHiddenEmpty = nil
             end
         end
@@ -930,7 +991,7 @@ function ns.RefreshActionBars()
             if buttons then
                 for _, btn in ipairs(buttons) do
                     if not btn._guiHiddenEmpty then
-                        btn:SetAlpha(1)
+                        SetSafeButtonAlpha(btn, barKey, 1)
                     end
                 end
             end
@@ -960,7 +1021,7 @@ function ns.RefreshActionBars()
         for _, btn in ipairs(buttons) do
             SkinButton(btn, g)
             UpdateButtonText(btn, g)
-            UpdateEmptySlotVisibility(btn, g)
+            UpdateEmptySlotVisibility(btn, g, barKey)
             HookBarElement(btn, barKey)
         end
     end
@@ -987,7 +1048,7 @@ function ns.RefreshActionBars()
                 local buttons = GetBarButtons(barKey)
                 for _, btn in ipairs(buttons) do
                     if not btn._guiHiddenEmpty then
-                        btn:SetAlpha(1)
+                        SetSafeButtonAlpha(btn, barKey, 1)
                     end
                 end
                 -- Pre-seed state so ticker doesn't re-fade
@@ -1006,7 +1067,7 @@ function ns.RefreshActionBars()
             if buttons then
                 for _, btn in ipairs(buttons) do
                     if not btn._guiHiddenEmpty then
-                        btn:SetAlpha(1)
+                        SetSafeButtonAlpha(btn, barKey, 1)
                     end
                 end
             end

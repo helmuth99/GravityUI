@@ -1773,6 +1773,7 @@ end
 -- SPEC / ROLE CHANGE HANDLERS (BliZzi parity)
 -- ============================================================================
 local function OnSpecializationChanged(unit)
+    if not IsTrackerAllowed() then return end
     if not unit or unit == "player" then return end
     local ok, name = pcall(UnitName, unit)
     if not ok or not name then return end
