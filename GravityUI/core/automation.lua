@@ -201,22 +201,10 @@ local function OverrideLfgApplicationDialog()
         HooksState.lfgAppDialog = true
     end
     
-    if not HooksState.lfdRolePopup and _G.LFDRoleCheckPopupAcceptButton then
-        _G.LFDRoleCheckPopupAcceptButton:HookScript("OnShow", function()
-            local cfg = GetSettings()
-            if cfg and cfg.autoRoleAccept then
-                -- TAINT FIX: Defer Click() out of the OnShow secure context.
-                -- Calling Click() directly here fires the button's internal
-                -- protected handler from a tainted call stack → ADDON_ACTION_FORBIDDEN.
-                C_Timer.After(0, function()
-                    if _G.LFDRoleCheckPopupAcceptButton and _G.LFDRoleCheckPopupAcceptButton:IsShown() then
-                        _G.LFDRoleCheckPopupAcceptButton:Click()
-                    end
-                end)
-            end
-        end)
-        HooksState.lfdRolePopup = true
-    end
+    -- NOTE: LFDRoleCheckPopupAcceptButton auto-click was removed.
+    -- Role acceptance is handled exclusively by CompleteLFGRoleCheck(true)
+    -- in OnRoleCheckShow() (LFG_ROLE_CHECK_SHOW event).  The button hook
+    -- caused a duplicate "has chosen" message in chat.
 end
 
 local function InjectGravityLfgListeners()

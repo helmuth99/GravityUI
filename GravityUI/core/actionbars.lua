@@ -450,8 +450,10 @@ end
 
 local function UpdateFade(self, elapsed)
     self.elapsed = (self.elapsed or 0) + elapsed
-    -- PERF: Adaptive rate — 20Hz during animation, 2Hz when settled
-    local threshold = self._settled and 0.5 or 0.05
+    -- PERF: Adaptive rate — 20Hz during animation, 10Hz when settled.
+    -- 10Hz (0.1s) keeps hover detection responsive on protected bars (bar1-8)
+    -- which cannot use HookScript and rely on IsMouseOver() polling.
+    local threshold = self._settled and 0.1 or 0.05
     if self.elapsed < threshold then return end
     
     local tick = self.elapsed
@@ -532,12 +534,16 @@ local function UpdateFade(self, elapsed)
         local dirty = false
         if math.abs(state.currentAlpha - targetAlpha) > 0.01 then
             local duration = shouldShow and fadeInDur or fadeOutDur
-            local step = tick / duration
-            
-            if state.currentAlpha < targetAlpha then
-                state.currentAlpha = math.min(targetAlpha, state.currentAlpha + step)
+            -- Duration 0 (or near-zero) = instant snap, no interpolation
+            if duration < 0.01 then
+                state.currentAlpha = targetAlpha
             else
-                state.currentAlpha = math.max(targetAlpha, state.currentAlpha - step)
+                local step = tick / duration
+                if state.currentAlpha < targetAlpha then
+                    state.currentAlpha = math.min(targetAlpha, state.currentAlpha + step)
+                else
+                    state.currentAlpha = math.max(targetAlpha, state.currentAlpha - step)
+                end
             end
             dirty = true
         elseif state.currentAlpha ~= targetAlpha then
@@ -562,8 +568,8 @@ local function UpdateFade(self, elapsed)
     end
 
     -- PERF: Adaptive throttle — when all bars are settled at their target alpha,
-    -- slow down to 2Hz (0.5s) instead of 20Hz. This keeps hover detection alive
-    -- (avoiding issues with OnEnter at alpha 0) while reducing idle CPU by 90%.
+    -- slow down to 10Hz (0.1s) instead of 20Hz. This keeps hover detection alive
+    -- (avoiding issues with OnEnter at alpha 0) while reducing idle CPU by ~50%.
     self._settled = not isAnyBarDirty
 end
 

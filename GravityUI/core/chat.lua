@@ -728,6 +728,21 @@ local function RegisterMessageFilter()
         ChatFrame_AddMessageEventFilter(ev, Filter)
     end
 
+    -- World channel abbreviation filter (Trade, General, Services, LFG, etc.)
+    -- Modifies the channel display name in the event args BEFORE WoW's formatter
+    -- builds the channel prefix.  All arg access is wrapped in pcall because
+    -- some event args may be secret strings in WoW 12.x.
+    -- NOTE: Group channels (Party/Raid/Guild) are NOT abbreviated — their
+    -- CHAT_*_GET format strings are protected globals in 12.x.
+    ChatFrame_AddMessageEventFilter("CHAT_MSG_CHANNEL", function(_, _, msg, sender, lang, channelString, target, flags, unknown, channelNumber, channelBaseName, ...)
+        if not _abbrevOn then return end
+        if type(channelNumber) ~= "number" then return end
+        local abbr = WORLD_CHANNEL_ABBR[tostring(channelNumber)]
+        if abbr then
+            return false, msg, sender, lang, abbr, target, flags, unknown, channelNumber, abbr, ...
+        end
+    end)
+
     -- WHISPER_INFORM (outgoing whispers) taint workaround:
     -- The message text is a Blizzard-protected secret string inside the filter chain.
     -- gsub on it silently fails (Blizzard internally pcalls all filters).
@@ -792,23 +807,16 @@ function HookTransformText(text)
     return MakeURLsClickable(text)
 end
 
--- Per-frame hook: registers the URL filter once and wraps AddMessage so that
--- channel name abbreviation sees the fully-formatted display string (including
--- the channel prefix WoW prepends — e.g. "[3. Trade (Services) - City]").
+-- Per-frame hook: registers the URL and channel-abbreviation message filters.
+-- TAINT FIX: We no longer wrap chatFrame.AddMessage.  Replacing AddMessage puts
+-- addon code on the call stack during Blizzard's secure whisper processing,
+-- tainting chatEditLastTell and breaking click-to-whisper / player context menus.
+-- Channel abbreviation now uses format string overrides (group channels) and
+-- ChatFrame_AddMessageEventFilter (world channels) — both are safe.
 local function HookChatMessages(chatFrame)
     if chatFrame.__guiChatMessageHooked then return end
     chatFrame.__guiChatMessageHooked = true
     RegisterMessageFilter()
-
-    -- Wrap AddMessage: this is called with the complete formatted line,
-    -- AFTER WoW has added the channel name / sender prefix.
-    local _origAddMessage = chatFrame.AddMessage
-    chatFrame.AddMessage = function(self, msg, r, g, b, id)
-        if _abbrevOn and type(msg) == "string" then
-            msg = AbbreviateChannelText(msg)
-        end
-        return _origAddMessage(self, msg, r, g, b, id)
-    end
 end
 
 ---------------------------------------------------------------------------

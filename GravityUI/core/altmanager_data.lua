@@ -481,6 +481,7 @@ function Data:GetCurrencyMetadata(currId)
     return CURRENCY_METADATA[currId]
 end
 
+
 function Data:UpdateCurrencies()
     local alt = self:GetOrCreateCurrentAlt()
     if not alt then return end
