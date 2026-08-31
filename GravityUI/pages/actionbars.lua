@@ -106,7 +106,11 @@ local lockProxy = setmetatable({}, {
     __index = function(t, k)
         if k == "buttonLock" then
             local isLocked = GetCVar("lockActionBars") == "1"
-            return isLocked and "locked" or "unlocked"
+            if not isLocked then return "unlocked" end
+            -- Return saved modifier, default to "shift" if locked but no modifier saved
+            local db = ns.GetDB()
+            local saved = db and db.actionbars and db.actionbars.global and db.actionbars.global.lockModifier
+            return saved or "shift"
         end
     end,
     __newindex = function(t, k, v)
@@ -115,6 +119,11 @@ local lockProxy = setmetatable({}, {
                 SetCVar("lockActionBars", "0")
             else
                 SetCVar("lockActionBars", "1")
+            end
+            -- Persist the modifier selection in the DB
+            local db = ns.GetDB()
+            if db and db.actionbars and db.actionbars.global then
+                db.actionbars.global.lockModifier = (v ~= "unlocked") and v or nil
             end
         end
     end
@@ -332,8 +341,6 @@ local function BuildMouseoverSettings(parent)
         { key = "stance",            label = "Mouseover Fade Stance Bar" },
         { key = "microbar",          label = "Mouseover Fade Micro Menu" },
         { key = "bags",              label = "Mouseover Fade Bags" },
-        { key = "extraActionButton", label = "Mouseover Fade Extra Action Button" },
-        { key = "zoneAbility",       label = "Mouseover Fade Zone Ability" },
     }
     
     for _, info in ipairs(otherBars) do

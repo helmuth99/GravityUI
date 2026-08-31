@@ -94,41 +94,39 @@ local function GetBarButtons(barKey)
 end
 
 ---------------------------------------------------------------------------
--- TAINT-SAFE ALPHA (WoW 12.x)
+-- BAR-LEVEL ALPHA (SAB-proven pattern)
 ---------------------------------------------------------------------------
--- Calling btn:SetAlpha() or HookScript() on Blizzard SecureActionButtons
--- (bar1-8) taints the button's internal state. Blizzard's own OnEvent handler
--- then runs in a tainted context, causing "secret values" errors in
--- SetCooldown() and ADDON_ACTION_BLOCKED for SetShown().
--- Fix: Fade child regions individually, leaving the button object untouched.
+-- Fading is done at the BAR FRAME level, not per-button.
+-- SetAlpha() is a C API call that does NOT propagate Lua taint — it is safe
+-- to call on protected bar frames at any time, including during combat.
+-- Per-button SetAlpha is only used for empty-slot hiding (cosmetic).
+-- This approach is 12× fewer API calls per bar per tick and matches the
+-- pattern used by SimpleActionBars which has zero taint issues.
 
-local function ApplyFadeToButton(btn, alpha)
-    btn._guiFadeAlpha = alpha
-    -- Standard regions (base alpha 1.0)
-    local icon = btn.icon or btn.Icon
-    if icon then icon:SetAlpha(alpha) end
-    -- NOTE: btn.cooldown deliberately skipped — CD swirls stay visible
-    if btn.HotKey then btn.HotKey:SetAlpha(alpha) end
-    if btn.Count then btn.Count:SetAlpha(alpha) end
-    if btn.Name then btn.Name:SetAlpha(alpha) end
-    if btn.Flash then btn.Flash:SetAlpha(alpha) end
-    if btn.NewActionTexture then btn.NewActionTexture:SetAlpha(alpha) end
-    if btn.Border then btn.Border:SetAlpha(alpha) end
-    if btn.SpellHighlightTexture then btn.SpellHighlightTexture:SetAlpha(alpha) end
-    if btn.AutoCastShine then btn.AutoCastShine:SetAlpha(alpha) end
-    -- NormalTexture: already hidden (alpha 0) by SkinButton — never touch
-    -- GravityUI overlays
-    if btn._guiBackdrop then
-        btn._guiBackdrop:SetAlpha((btn._guiBackdropBaseAlpha or 0.8) * alpha)
+local function SetBarFrameAlpha(barKey, alpha)
+    -- SPECIAL CASE: bar1 maps to "MainMenuBar" which is the master container
+    -- for ALL action bars in WoW 12.x. Setting its alpha would hide everything
+    -- and Blizzard's ActionBarController continuously resets it anyway.
+    -- For bar1, fade individual buttons instead (same as SAB's "MainActionBar"
+    -- approach, but using per-button since we reference the wrong container).
+    if barKey == "bar1" then
+        local buttons = GetBarButtons(barKey)
+        for i = 1, #buttons do
+            local btn = buttons[i]
+            if not btn._guiHiddenEmpty then
+                btn:SetAlpha(alpha)
+            end
+        end
+        return
     end
-    -- Border & Gloss use SetVertexColor for base opacity; SetAlpha multiplies.
-    if btn._guiNormal then btn._guiNormal:SetAlpha(alpha) end
-    if btn._guiGloss then btn._guiGloss:SetAlpha(alpha) end
+    local frame = _G[BAR_FRAMES[barKey]]
+    if frame then
+        frame:SetAlpha(alpha)
+    end
 end
 
 local function SetSafeButtonAlpha(btn, barKey, alpha)
-    -- SetAlpha() is a C API call and does NOT propagate Lua taint.
-    -- The taint source was HookScript() (now removed for protected bars).
+    -- Used only for per-button visibility (empty slot hiding).
     btn:SetAlpha(alpha)
 end
 
@@ -156,15 +154,21 @@ local function RequestRefresh()
     pendingRefresh = true
     C_Timer.After(0.2, function()
         if InCombatLockdown() then
-            -- Lightweight in-combat refresh: only update button text and empty slot alpha
+            -- Lightweight in-combat refresh: only update non-protected bars.
+            -- TAINT FIX: Protected bars (bar1-8) must NOT be touched from
+            -- addon code during combat. Their text/visibility state is managed
+            -- by Blizzard's own Update cycle; our hooksecurefunc on the Mixin
+            -- methods handles re-styling after each Blizzard update.
             local db = GetDB()
             if db and db.enabled and db.global then
                 local g = db.global
                 for barKey, _ in pairs(BAR_BUTTONS) do
-                    local buttons = GetBarButtons(barKey)
-                    for _, btn in ipairs(buttons) do
-                        UpdateButtonText(btn, g)
-                        UpdateEmptySlotVisibility(btn, g, barKey)
+                    if not PROTECTED_BAR_FRAMES[barKey] then
+                        local buttons = GetBarButtons(barKey)
+                        for _, btn in ipairs(buttons) do
+                            UpdateButtonText(btn, g)
+                            UpdateEmptySlotVisibility(btn, g, barKey)
+                        end
                     end
                 end
             end
@@ -196,7 +200,15 @@ local function SkinButton(button, settings)
     -- Strip Blizzard Artwork
     if not button._guiStripped then
         local nt = button:GetNormalTexture()
-        if nt then nt:SetAlpha(0) end
+        if nt then
+            nt:SetAlpha(0)
+            -- TAINT FIX: Blizzard's UpdateButtonArt() re-shows the NormalTexture
+            -- on every bar art refresh. Hook OnShow to keep it hidden permanently.
+            if not nt._guiHideHooked then
+                nt:HookScript("OnShow", function(self) self:SetAlpha(0) end)
+                nt._guiHideHooked = true
+            end
+        end
         
         local icon = button.icon or button.Icon
         if icon then
@@ -215,7 +227,7 @@ local function SkinButton(button, settings)
             button._guiBackdrop:SetAllPoints(button)
         end
         button._guiBackdropBaseAlpha = settings.backdropAlpha or 0.8
-        button._guiBackdrop:SetAlpha(button._guiBackdropBaseAlpha * (button._guiFadeAlpha or 1))
+        button._guiBackdrop:SetAlpha(button._guiBackdropBaseAlpha)
         button._guiBackdrop:Show()
     elseif button._guiBackdrop then
         button._guiBackdrop:Hide()
@@ -232,7 +244,6 @@ local function SkinButton(button, settings)
             button._guiNormal:SetAllPoints(button)
         end
         button._guiNormal:Show()
-        if button._guiFadeAlpha then button._guiNormal:SetAlpha(button._guiFadeAlpha) end
     elseif button._guiNormal then
         button._guiNormal:Hide()
     end
@@ -248,7 +259,6 @@ local function SkinButton(button, settings)
         end
         button._guiGloss:SetVertexColor(1, 1, 1, settings.glossAlpha or 0.6)
         button._guiGloss:Show()
-        if button._guiFadeAlpha then button._guiGloss:SetAlpha(button._guiFadeAlpha) end
     elseif button._guiGloss then
         button._guiGloss:Hide()
     end
@@ -390,11 +400,10 @@ end
 
 local function HookBarElement(frame, barKey)
     if not frame or frame._guiHoverHooked then return end
-    -- TAINT FIX (12.x): Do NOT HookScript on protected bar frames/buttons.
-    -- HookScript taints the frame's script dispatch, causing all subsequent
-    -- OnEvent handlers to run in tainted context (SetCooldown/SetShown errors).
-    -- Hover detection for protected bars falls back to frame:IsMouseOver().
-    if PROTECTED_BAR_FRAMES[barKey] then return end
+    -- HookScript on buttons for OnEnter/OnLeave is safe — the hook callbacks
+    -- only increment/decrement a Lua counter. They do NOT modify button state,
+    -- so there is no taint propagation. This matches SAB's proven pattern.
+    -- (The real taint was from UpdateButtonText during combat, now fixed.)
     frame._guiBarKey = barKey
     frame:HookScript("OnEnter", OnElementEnter)
     frame:HookScript("OnLeave", OnElementLeave)
@@ -402,26 +411,8 @@ local function HookBarElement(frame, barKey)
 end
 
 local function IsMouseOverBar(barKey)
-    -- O(1) Event-driven check (populated by HookScript on non-protected bars)
+    -- O(1) event-driven check — populated by HookScript on ALL bars.
     if hoveredElements[barKey] and hoveredElements[barKey] > 0 then return true end
-    
-    if PROTECTED_BAR_FRAMES[barKey] then
-        -- Protected bars have no HookScript — check individual buttons instead.
-        -- Bar frames (MainMenuBar etc.) span huge areas making frame:IsMouseOver()
-        -- useless. Per-button IsMouseOver() is precise and O(12) per bar per tick.
-        local buttons = buttonCache[barKey]
-        if buttons then
-            for i = 1, #buttons do
-                if buttons[i]:IsMouseOver() then return true end
-            end
-        end
-        return false
-    end
-    
-    -- Non-protected: check parent frame (small enough to be accurate)
-    local frame = _G[BAR_FRAMES[barKey]]
-    if frame and frame:IsMouseOver() then return true end
-    
     return false
 end
 
@@ -450,10 +441,10 @@ end
 
 local function UpdateFade(self, elapsed)
     self.elapsed = (self.elapsed or 0) + elapsed
-    -- PERF: Adaptive rate — 20Hz during animation, 10Hz when settled.
-    -- 10Hz (0.1s) keeps hover detection responsive on protected bars (bar1-8)
-    -- which cannot use HookScript and rely on IsMouseOver() polling.
-    local threshold = self._settled and 0.1 or 0.05
+    -- PERF: Adaptive rate — 20Hz during animation, 5Hz when settled.
+    -- Hover detection is now fully event-driven (HookScript on all bars),
+    -- so we only need the ticker for smooth fade interpolation.
+    local threshold = self._settled and 0.2 or 0.05
     if self.elapsed < threshold then return end
     
     local tick = self.elapsed
@@ -495,7 +486,6 @@ local function UpdateFade(self, elapsed)
         local meta = barMetadata[i]
         local barKey = meta.key
         local frame = meta.frame
-        local buttons = meta.buttons
         
         -- Initialize state
         local state = barStates[barKey]
@@ -503,8 +493,6 @@ local function UpdateFade(self, elapsed)
             local current = 1
             if frame then
                 current = frame:GetAlpha()
-            elseif buttons and buttons[1] then
-                current = buttons[1]:GetAlpha()
             end
             barStates[barKey] = { lastHoverTime = 0, currentAlpha = current } 
             state = barStates[barKey]
@@ -553,23 +541,16 @@ local function UpdateFade(self, elapsed)
 
         if dirty then
             isAnyBarDirty = true
-            -- Only set frame-level alpha on non-protected frames (microbar, bags, pet, stance).
-            -- Protected bar frames (bar1-8) must NOT be touched to avoid taint.
-            if frame and not PROTECTED_BAR_FRAMES[barKey] then
-                frame:SetAlpha(state.currentAlpha)
-            end
-            for j = 1, #buttons do
-                local btn = buttons[j]
-                if not btn._guiHiddenEmpty then
-                    SetSafeButtonAlpha(btn, barKey, state.currentAlpha)
-                end
-            end
+            -- BAR-LEVEL ALPHA: SetAlpha on the bar frame itself.
+            -- This is a C API call — safe on all frames including protected.
+            -- Matches SAB's proven pattern. All children (buttons, cooldowns,
+            -- overlays) inherit the bar's alpha multiplicatively.
+            SetBarFrameAlpha(barKey, state.currentAlpha)
         end
     end
 
     -- PERF: Adaptive throttle — when all bars are settled at their target alpha,
-    -- slow down to 10Hz (0.1s) instead of 20Hz. This keeps hover detection alive
-    -- (avoiding issues with OnEnter at alpha 0) while reducing idle CPU by ~50%.
+    -- slow down to 5Hz (0.2s) since hover detection is event-driven.
     self._settled = not isAnyBarDirty
 end
 
@@ -636,9 +617,14 @@ local function UpdateButtonUsability(button, settings)
 end
 
 UpdateEmptySlotVisibility = function(button, settings, barKey)
+    -- TAINT FIX: Never modify protected action buttons during combat.
+    -- Reading button.action and calling HasAction() from addon code in combat
+    -- taints the execution context, causing ADDON_ACTION_BLOCKED downstream.
+    if PROTECTED_BAR_FRAMES[barKey] and InCombatLockdown() then return end
+
     if not settings or not settings.hideEmptySlots then
         if button._guiHiddenEmpty then
-            SetSafeButtonAlpha(button, barKey, button._guiFadeAlpha or 1)
+            SetSafeButtonAlpha(button, barKey, 1)
             button._guiHiddenEmpty = nil
         end
         return
@@ -649,14 +635,14 @@ UpdateEmptySlotVisibility = function(button, settings, barKey)
     if action then
         local hasAction = HasAction(action)
         if hasAction then
-            SetSafeButtonAlpha(button, barKey, button._guiFadeAlpha or 1)
+            SetSafeButtonAlpha(button, barKey, 1)
             button._guiHiddenEmpty = nil
         else
             SetSafeButtonAlpha(button, barKey, 0)
             button._guiHiddenEmpty = true
         end
     elseif button._guiHiddenEmpty then
-        SetSafeButtonAlpha(button, barKey, button._guiFadeAlpha or 1)
+        SetSafeButtonAlpha(button, barKey, 1)
         button._guiHiddenEmpty = nil
     end
 end
@@ -985,22 +971,10 @@ function ns.RefreshActionBars()
         -- protected and would cause ADDON_ACTION_BLOCKED. Empty-slot visibility
         -- is handled by GravityUI's own UpdateEmptySlotVisibility (alpha-based).
 
-        -- Disable Fade logic
+        -- Disable Fade logic — reset ALL bar frames to full alpha
         fadeFrame:SetScript("OnUpdate", nil)
         for barKey, _ in pairs(BAR_FRAMES) do
-            -- Reset frame alpha only for non-protected frames
-            if not PROTECTED_BAR_FRAMES[barKey] then
-                local f = _G[BAR_FRAMES[barKey]]
-                if f then f:SetAlpha(1) end
-            end
-            local buttons = GetBarButtons(barKey)
-            if buttons then
-                for _, btn in ipairs(buttons) do
-                    if not btn._guiHiddenEmpty then
-                        SetSafeButtonAlpha(btn, barKey, 1)
-                    end
-                end
-            end
+            SetBarFrameAlpha(barKey, 1)
         end
         return
     end
@@ -1041,42 +1015,19 @@ function ns.RefreshActionBars()
         fadeFrame:SetScript("OnUpdate", UpdateFade)
 
         -- Immediately restore bars that have alwaysShow = true
-        -- (so toggling "Mouseover Fade" off restores the bar instantly)
         for barKey, _ in pairs(BAR_FRAMES) do
             local barDB = db.bars[barKey]
             if barDB and barDB.alwaysShow then
-                -- Reset frame alpha for non-protected frames
-                if not PROTECTED_BAR_FRAMES[barKey] then
-                    local f = _G[BAR_FRAMES[barKey]]
-                    if f then f:SetAlpha(1) end
-                end
-                -- Reset button alpha
-                local buttons = GetBarButtons(barKey)
-                for _, btn in ipairs(buttons) do
-                    if not btn._guiHiddenEmpty then
-                        SetSafeButtonAlpha(btn, barKey, 1)
-                    end
-                end
+                SetBarFrameAlpha(barKey, 1)
                 -- Pre-seed state so ticker doesn't re-fade
                 barStates[barKey] = { lastHoverTime = 0, currentAlpha = 1 }
             end
         end
     else
         fadeFrame:SetScript("OnUpdate", nil)
+        -- Reset ALL bar frames to full alpha
         for barKey, _ in pairs(BAR_FRAMES) do
-            -- Reset frame alpha only for non-protected frames
-            if not PROTECTED_BAR_FRAMES[barKey] then
-                local f = _G[BAR_FRAMES[barKey]]
-                if f then f:SetAlpha(1) end
-            end
-            local buttons = GetBarButtons(barKey)
-            if buttons then
-                for _, btn in ipairs(buttons) do
-                    if not btn._guiHiddenEmpty then
-                        SetSafeButtonAlpha(btn, barKey, 1)
-                    end
-                end
-            end
+            SetBarFrameAlpha(barKey, 1)
         end
     end
     
@@ -1141,6 +1092,47 @@ end
 ---------------------------------------------------------------------------
 -- Polling functionality removed in favor of event-driven updates to save CPU.
 -- Events: ACTIONBAR_UPDATE_USABLE, SPELL_UPDATE_USABLE, UNIT_POWER_UPDATE handle this efficiently.
+
+---------------------------------------------------------------------------
+-- TAINT-SAFE MIXIN HOOKS (SAB pattern)
+---------------------------------------------------------------------------
+-- hooksecurefunc on Mixin methods is taint-safe: the hook runs AFTER
+-- Blizzard's own protected call, inheriting Blizzard's secure execution
+-- context. This replaces the C_Timer.After-based in-combat refresh that
+-- tainted the ActionBarController chain.
+
+local function ReapplyButtonStyle(button)
+    if not button or not button._guiStripped then return end
+    local db = GetDB()
+    if not db or not db.enabled or not db.global then return end
+    UpdateButtonText(button, db.global)
+
+    -- Re-hide NormalTexture that Blizzard's UpdateButtonArt may have re-shown
+    local nt = button.GetNormalTexture and button:GetNormalTexture()
+    if nt then nt:SetAlpha(0) end
+
+    -- Re-apply icon zoom (Blizzard's Update resets TexCoords)
+    local icon = button.icon or button.Icon
+    if icon then
+        local zoom = 0.07
+        icon:SetTexCoord(zoom, 1 - zoom, zoom, 1 - zoom)
+    end
+end
+
+if ActionBarActionButtonMixin then
+    if type(ActionBarActionButtonMixin.Update) == "function" then
+        hooksecurefunc(ActionBarActionButtonMixin, "Update", ReapplyButtonStyle)
+    end
+    if type(ActionBarActionButtonMixin.UpdateHotkeys) == "function" then
+        hooksecurefunc(ActionBarActionButtonMixin, "UpdateHotkeys", ReapplyButtonStyle)
+    end
+end
+if PetActionButtonMixin and type(PetActionButtonMixin.Update) == "function" then
+    hooksecurefunc(PetActionButtonMixin, "Update", ReapplyButtonStyle)
+end
+if StanceButtonMixin and type(StanceButtonMixin.Update) == "function" then
+    hooksecurefunc(StanceButtonMixin, "Update", ReapplyButtonStyle)
+end
 
 
 local initFrame = CreateFrame("Frame")

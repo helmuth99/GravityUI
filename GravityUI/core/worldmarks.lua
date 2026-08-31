@@ -25,7 +25,17 @@ function WorldMarks.Refresh()
     local settings = GetSettings()
     if not settings then return end
 
-    -- Visual Updates (Safe in Combat)
+    -- TAINT FIX: GravityUI_MarksBar contains SecureActionButtons (macro-driven
+    -- raid markers). Show()/Hide() on this frame are protected during combat.
+    -- Defer the refresh to out-of-combat if we're in lockdown.
+    if InCombatLockdown() then
+        if ns.QueueOOCAction then
+            ns.QueueOOCAction(function() WorldMarks.Refresh() end)
+        end
+        return
+    end
+
+    -- Visual Updates (only safe outside combat)
     if WorldMarks.preview then
         frame:Show()
         frame:SetAlpha(1)

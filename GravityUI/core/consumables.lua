@@ -2600,6 +2600,8 @@ frame.resizer = resizer
 local positionRestored = false
 
 local function restorePosition()
+    if InCombatLockdown() then return end
+
     local db = ns.GetDB()
     if not db or not db.screenindicators or not db.screenindicators.consumables then return end
     
@@ -3450,8 +3452,20 @@ function frame:OnReadyCheck(initiatorUnit, timeToHide)
         titleBar.timerText:SetText("")
     end
 
-    restorePosition()
-    self:Show()
+    -- TAINT FIX: GravityUIRaidFrame is protected (SecureActionButton children).
+    -- Show() and ClearAllPoints() are forbidden during combat lockdown.
+    -- Defer frame visibility to out-of-combat; data scanning above is pure Lua and safe.
+    if InCombatLockdown() then
+        if ns.QueueOOCAction then
+            ns.QueueOOCAction(function()
+                restorePosition()
+                frame:Show()
+            end)
+        end
+    else
+        restorePosition()
+        self:Show()
+    end
 end
 
 function frame:OnReadyCheckConfirm(unit, ready)
