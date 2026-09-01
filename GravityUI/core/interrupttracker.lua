@@ -1177,54 +1177,38 @@ local function OnInspectReady(guid)
     InvalidateAllyKickCache()  -- Spec changed, re-infer next time
 
     -- If this is a confirmed healer spec with no interrupt, remove any existing bar immediately
+    local name = UnitName(unit)
+    local cleanName = name and Ambiguate(name, "none")
     if SPEC_NO_INTERRUPT[specID] then
-        local name = UnitName(unit)
-        if name then noKickPlayers[name] = true end
-        if partyRegistry and name then partyRegistry[name] = nil end
-        for key, info in pairs(activeBars) do
-            if info.guid == guid then
-                ClearActiveBar(key)
-            end
+        if cleanName then
+            noKickPlayers[cleanName] = true
+            partyRegistry[cleanName] = nil
+            ClearActiveBar(cleanName)
+            UpdateLayout()
         end
-        UpdateLayout()
         return
     end
 
-    -- Check if this spec has a different interrupt than the class default
-    local specInterrupt = SPEC_INTERRUPTS[specID]
-    if specInterrupt then
-        for key, info in pairs(activeBars) do
-            if info.guid == guid and info.spellId ~= specInterrupt then
-                local newKey = guid .. specInterrupt
-                if activeBars[newKey] then
-                    ClearActiveBar(key)
-                else
-                    activeBars[key] = nil
-                    info.spellId = specInterrupt
-                    local icon = C_Spell.GetSpellTexture(specInterrupt)
-                    if icon and info.frame then
-                        info.frame.icon:SetTexture(icon)
-                    end
-                    info.duration = 0
-                    info.expiration = 0
-                    local s = GetSettings()
-                    if s and s.showReadyText then
-                        info.frame.time:SetText("Ready")
-                    else
-                        info.frame.time:SetText("")
-                    end
-                    info.frame.bar:SetValue(1)
-                    local cr, cg, cb, ca = 1, 1, 1, 1
-                    if s and s.useSpecificCooldownColor then
-                       local c = s.cooldownTextColor or {1, 1, 1, 1}
-                       cr, cg, cb, ca = c[1] or 1, c[2] or 1, c[3] or 1, c[4] or 1
-                    end
-                    info.frame.time:SetTextColor(cr, cg, cb, ca)
-                    activeBars[newKey] = info
-                end
-                break
+    -- Update active bar and partyRegistry with spec interrupt / cooldown
+    if cleanName and activeBars[cleanName] then
+        local info = activeBars[cleanName]
+        local specInterrupt = SPEC_INTERRUPTS[specID]
+        if specInterrupt then
+            info.spellId = specInterrupt
+            local icon = C_Spell.GetSpellTexture(specInterrupt)
+            if icon and info.frame then
+                info.frame.icon:SetTexture(icon)
             end
         end
+        if partyRegistry[cleanName] then
+            partyRegistry[cleanName].spellID = info.spellId
+            local baseCd = INTERRUPTS[info.spellId] or 15
+            if SPEC_COOLDOWN_OVERRIDES[info.spellId] and SPEC_COOLDOWN_OVERRIDES[info.spellId][specID] then
+                baseCd = SPEC_COOLDOWN_OVERRIDES[info.spellId][specID]
+            end
+            partyRegistry[cleanName].baseCd = baseCd
+        end
+        StyleBar(info.frame, info.class)
     end
 end
 
