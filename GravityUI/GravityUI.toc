@@ -54,6 +54,8 @@ core\deathannouncer.lua
 core\stancetext.lua
 core\altmanager_data.lua
 core\altmanager_ui.lua
+data\bossloadouts_data.lua
+core\bossloadouts.lua
 
 core\combattimer.lua
 core\mplusteleport.lua
