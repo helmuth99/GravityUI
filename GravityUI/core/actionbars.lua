@@ -413,6 +413,12 @@ end
 local function IsMouseOverBar(barKey)
     -- O(1) event-driven check — populated by HookScript on ALL bars.
     if hoveredElements[barKey] and hoveredElements[barKey] > 0 then return true end
+    -- Fallback: MouseIsOver() for bars without individual button hooks
+    -- (microbar, bags) whose container frames don't fire OnEnter.
+    if not BAR_BUTTONS[barKey] then
+        local frame = _G[BAR_FRAMES[barKey]]
+        if frame and frame:IsVisible() and frame:IsMouseOver() then return true end
+    end
     return false
 end
 
@@ -1003,6 +1009,23 @@ function ns.RefreshActionBars()
             UpdateButtonText(btn, g)
             UpdateEmptySlotVisibility(btn, g, barKey)
             HookBarElement(btn, barKey)
+        end
+    end
+
+    -- Hook mouseover for bars that have no buttons in BAR_BUTTONS
+    -- (microbar, bags) — they still need OnEnter/OnLeave for fade detection.
+    for barKey, frameName in pairs(BAR_FRAMES) do
+        if not BAR_BUTTONS[barKey] then
+            local frame = _G[frameName]
+            if frame then
+                HookBarElement(frame, barKey)
+                -- Also hook ALL direct children (micro buttons, bag slots)
+                -- regardless of widget type — some are Frames, not Buttons.
+                local children = { frame:GetChildren() }
+                for _, child in ipairs(children) do
+                    HookBarElement(child, barKey)
+                end
+            end
         end
     end
 

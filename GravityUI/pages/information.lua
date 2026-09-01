@@ -231,17 +231,14 @@ local function BuildInformationTab(parent)
 
     local changeLogs = {
         {
-            version = "4.01.05",
-            date = "08/23/2026",
+            version = "4.01.15",
+            date = "09/01/2026",
             changes = {
-                "Character Panel: Added WarmStatCache() — stats are now cached before combat lockdown and persist during combat display; cache updates on login, spec change, equipment change, and entering instances",
-                "Action Bars: Fixed HighlightSystem crash (attempt to index field 'HighlightSystem' a function value) — added type guard for Extra Action Button initialization",
-                "LFG Role Buttons: Fixed unclickable role selection icons — PVEFrame.TitleContainer (frame level 510) was blocking GravityUI role buttons (frame level 3); elevated to frame level 520",
-                "Instance Frames: Replaced BackdropTemplate frames with pure textures in PVEFrame skinning to eliminate mouse click interception on LFG elements",
-                "Sound Alerts: Rebuilt dropdown injection using Menu.ModifyMenu — Blizzard's native dropdown (categories, Text to Speech) is now preserved intact with GravityUI appended as a submenu",
-                "Sound Alerts: Fixed empty label after /reload — SavedVariables store negative numeric keys as strings; added string-key fallback with automatic migration in GetPayloadMeta",
-                "Custom Datapanels: Integrated into GravityUI Edit Mode via ns.Movers:Register() for drag-and-drop repositioning",
-                "Performance Audit: Full review of all 57 core files — confirmed zero CLEU usage, all OnUpdate handlers throttled at 0.05s standard, self-disarming shared ticker, no critical or high-impact issues found (Score: 10/10)",
+                "[NEW] Player Marks: Assign raid target icons to players via Ready Check. Supports per-role marks in M+ dungeons (Tank/Healer) and individual player assignments in raids with custom boss/NPC targets. Uses SecureActionButton macros with post-click verification and chat feedback.",
+                "Action Bars: Complete rework of the fading system — per-bar mouseover fade with configurable alpha, smooth interpolation, and combat override. Fixed Extra Action Button scaling deferred to out-of-combat. Added Action Button Lock with persistent CVar synchronization.",
+                "Interrupt Tracker: Reworked party member interrupt attribution for WoW 12.x — resolved secret GUID handling in M+ dungeons using pcall(UnitNameFromGUID). Fixed bar color, font, and backdrop theming with full class color and theme color priority support.",
+                "Profiles: Updated default profile settings with new module defaults (playermarks, interruptTracker colors). Improved SavedVariables initialization and migration logic.",
+                "Ready Check Styling: Fixed custom background and font color options. Added theme color toggle for both background and text elements.",
             },
         },
     }
@@ -303,12 +300,13 @@ local function BuildInformationTab(parent)
     R({ name="World Marks",       desc="World markers, flares, quick access to ready checks and pull timers.",          stateTable=db.uiimprovements and db.uiimprovements.marks, stateKey="enabled", pageId="features", tabIndex=3 })
     R({ name="Mail Extras",       desc="Open All button, address book for alts, and gold loot messages.",               stateTable=db.uiimprovements and db.uiimprovements.mail, stateKey="enabled", pageId="features", tabIndex=4 })
     R({ name="Group & Guild",     desc="Guild invite tool and automatic role promotion for assistants.",                 pageId="features", tabIndex=5 })
-    R({ name="Interrupt Tracker", desc="Tracks interrupt cooldowns of party members in M+ dungeons.",                   stateTable=db.screenindicators and db.screenindicators.interruptTracker, stateKey="enabled", pageId="features", tabIndex=6 })
-    R({ name="Alt Manager",       desc="Account-wide matrix for Mythic+ Keystones, Great Vault status, and Currencies.", stateTable=db.altManager, stateKey="enabled", pageId="features", tabIndex=7 })
-    R({ name="Frame Mover",       desc="Freely drag and reposition all standard Blizzard frames (Character, Bank, Merchant, etc.).", stateTable=db.frameMover, stateKey="enabled", pageId="features", tabIndex=8 })
-    R({ name="Sound Alerts",      desc="Integrate custom SharedMedia sounds into Blizzard's CooldownViewer.",           stateTable=db.soundAlerts, stateKey="enabled", pageId="features", tabIndex=9 })
-    R({ name="Color Picker",      desc="Full HSV color picker with saved slots, class colors, hex input, and live preview.", stateTable=db.colorPicker, stateKey="enabled", pageId="features", tabIndex=10 })
-    R({ name="Premade Group",     desc="Group Finder and GroupFinderIO enhancements with role filters and auto-accept.",     stateTable=db.premadeGroup, stateKey="enabled", pageId="features", tabIndex=11 })
+    R({ name="Player Marks",      desc="Assign raid target icons via Ready Check — role-based for M+ and per-player for raids.", stateTable=db.playermarks, stateKey="enabled", pageId="features", tabIndex=6 })
+    R({ name="Interrupt Tracker", desc="Tracks interrupt cooldowns of party members in M+ dungeons.",                   stateTable=db.screenindicators and db.screenindicators.interruptTracker, stateKey="enabled", pageId="features", tabIndex=7 })
+    R({ name="Alt Manager",       desc="Account-wide matrix for Mythic+ Keystones, Great Vault status, and Currencies.", stateTable=db.altManager, stateKey="enabled", pageId="features", tabIndex=8 })
+    R({ name="Frame Mover",       desc="Freely drag and reposition all standard Blizzard frames (Character, Bank, Merchant, etc.).", stateTable=db.frameMover, stateKey="enabled", pageId="features", tabIndex=9 })
+    R({ name="Sound Alerts",      desc="Integrate custom SharedMedia sounds into Blizzard's CooldownViewer.",           stateTable=db.soundAlerts, stateKey="enabled", pageId="features", tabIndex=10 })
+    R({ name="Color Picker",      desc="Full HSV color picker with saved slots, class colors, hex input, and live preview.", stateTable=db.colorPicker, stateKey="enabled", pageId="features", tabIndex=11 })
+    R({ name="Premade Group",     desc="Group Finder and GroupFinderIO enhancements with role filters and auto-accept.",     stateTable=db.premadeGroup, stateKey="enabled", pageId="features", tabIndex=12 })
     G()
     H("  Indicators")
     R({ name="Cursor Utilities",   desc="Attach GCD rings, cursor castbars and highlights to your mouse cursor.",       stateTable=db.screenindicators and db.screenindicators.cursor, stateKey="enabled", pageId="indicators", tabIndex=1 })

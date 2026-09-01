@@ -342,6 +342,17 @@ ns.Defaults = {
         x = 0, 
         y = 0,
     },
+    playermarks = {
+        enabled = false,
+        dungeon = {
+            TANK = 0,
+            HEALER = 0,
+        },
+        raid = {
+            players = {},
+            customTargets = {},
+        },
+    },
     colorPicker = {
         enabled         = true,   -- Custom Color Picker active (used in GravityUI settings)
         hookAllAddons   = true,   -- Replace Blizzard picker globally for all addons

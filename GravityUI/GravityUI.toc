@@ -59,6 +59,7 @@ core\combattimer.lua
 core\mplusteleport.lua
 core\premadegroup.lua
 core\worldmarks.lua
+core\playermarks.lua
 core\autohide.lua
 core\buffborders.lua
 core\chat.lua

@@ -16,21 +16,21 @@ local INTERRUPT_CONFIG = {
     { class = "DEMONHUNTER", spellID = 183752, cd = 15, isDefault = true }, -- Disrupt
     -- DRUID
     { class = "DRUID", spellID = 106839, cd = 15, isDefault = true },       -- Skull Bash (Feral/Guardian)
-    { class = "DRUID", spellID = 78675, cd = 45, specID = 102 },            -- Solar Beam (Balance) – 45s not 60s
+    { class = "DRUID", spellID = 78675, cd = 45, specID = 102 },            -- Solar Beam (Balance) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ 45s not 60s
     -- EVOKER
-    { class = "EVOKER", spellID = 351338, cd = 18, isDefault = true, talents = { [412713] = { pctReduction = 0.1 } } }, -- Quell – 18s not 40s
+    { class = "EVOKER", spellID = 351338, cd = 18, isDefault = true, talents = { [412713] = { pctReduction = 0.1 } } }, -- Quell ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ 18s not 40s
     -- HUNTER
     { class = "HUNTER", spellID = 147362, cd = 24, isDefault = true, talents = { [388039] = { reduction = 2 } } }, -- Counter Shot
     { class = "HUNTER", spellID = 187707, cd = 15, specID = 255, talents = { [388039] = { reduction = 2 } } },     -- Muzzle (Survival)
     -- MAGE
-    { class = "MAGE", spellID = 2139, cd = 20, isDefault = true },          -- Counterspell – 20s not 24s
+    { class = "MAGE", spellID = 2139, cd = 20, isDefault = true },          -- Counterspell ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ 20s not 24s
     -- MONK
     { class = "MONK", spellID = 116705, cd = 15, isDefault = true },        -- Spear Hand Strike
     -- PALADIN
     { class = "PALADIN", spellID = 96231, cd = 15, isDefault = true },      -- Rebuke
     { class = "PALADIN", spellID = 420090, cd = 15 },                       -- NPC Rebuke (Follower Dungeon)
     -- PRIEST
-    { class = "PRIEST", spellID = 15487, cd = 30, specID = 258, isDefault = true }, -- Silence (Shadow) – 30s not 45s
+    { class = "PRIEST", spellID = 15487, cd = 30, specID = 258, isDefault = true }, -- Silence (Shadow) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ 30s not 45s
     -- ROGUE
     { class = "ROGUE", spellID = 1766, cd = 15, isDefault = true },         -- Kick
     -- SHAMAN
@@ -51,70 +51,47 @@ local INTERRUPTS = {}              -- [spellID] = baseCD
 local CLASS_INTERRUPTS = {}        -- [class] = defaultSpellID
 local SPEC_INTERRUPTS = {}         -- [specID] = spellID
 local SPEC_COOLDOWN_OVERRIDES = {} -- [spellID] = { [specID] = cd }
-local CD_REDUCTION_TALENTS = {}    -- [talentID] = { affects, reduction, pctReduction }
-local CD_ON_KICK_TALENTS = {       -- [talentID] = { reduction }
-    [378848] = { reduction = 3 }   -- DK: Coldthirst
-}
--- 12.0.5: SPEC_EXTRA_KICKS[266] removed — Demo Warlock no longer has a second interrupt.
--- They only have Axe Toss (via Felguard pet). Grimoire of Sacrifice / Fel Ravager
--- extra bars were simplified out in the 12.0.5 rework.
-local SPEC_EXTRA_KICKS = {}
 
 local SPELL_ALIASES = {
     [1276467] = 132409, -- Fel Ravager summon -> Spell Lock extra bar
     [89766] = 119914,   -- Felguard Axe Toss (pet) -> Axe Toss (player)
 }
--- String-keyed version for taint-safe lookups (tostring(taintedID) still works)
-local SPELL_ALIASES_STR = {}
--- Automatically register talents that grant an extra kick
-local EXTRA_KICK_TALENTS = {
-    [385110] = { id = 1276467, cd = 25, name = "Fel Ravager" }, -- Warlock Grimoire of Sacrifice
-}
 -- Specs that have NO interrupt at all (healer specs that can't kick)
--- BliZzi SPEC_NO_INTERRUPT equivalent
 local SPEC_NO_INTERRUPT = {
     [65]  = true,  -- Paladin: Holy
     [256] = true,  -- Priest: Discipline
     [257] = true,  -- Priest: Holy
     [270] = true,  -- Monk: Mistweaver
     [105] = true,  -- Druid: Restoration
-    -- NOTE: Shaman Restoration (264) intentionally excluded — Resto Shaman keeps Wind Shear
+    -- NOTE: Shaman Restoration (264) intentionally excluded Ã¢â‚¬â€ Resto Shaman keeps Wind Shear
 }
 
--- Classes that keep their interrupt even as healer spec (BliZzi HEALER_KEEPS_KICK parity)
+-- Classes that keep their interrupt even as healer spec
 local HEALER_KEEPS_KICK = {
     SHAMAN = true,  -- Restoration Shaman keeps Wind Shear
 }
 
+-- Classes that CAN have healer specs and must wait for spec confirmation before being registered.
+local HEALER_CAPABLE_CLASS = {
+    PALADIN = true,
+    PRIEST = true,
+    DRUID = true,
+    MONK = true,
+    SHAMAN = true,
+    EVOKER = true,
+}
+
 local function BuildInterruptTables()
     for _, data in ipairs(INTERRUPT_CONFIG) do
-        -- 1. Base Cooldown Table
         INTERRUPTS[data.spellID] = data.cd
-        
-        -- 2. Class Defaults
         if data.isDefault then
             CLASS_INTERRUPTS[data.class] = data.spellID
         end
-        
-        -- 3. Spec Specific Mappings
         if data.specID then
             SPEC_INTERRUPTS[data.specID] = data.spellID
         end
-        
-        -- 4. Spec Specific CD Overrides
         if data.overrides then
             SPEC_COOLDOWN_OVERRIDES[data.spellID] = data.overrides
-        end
-
-        -- 5. Talent Reductions
-        if data.talents then
-            for talentID, talentData in pairs(data.talents) do
-                CD_REDUCTION_TALENTS[talentID] = {
-                    affects = data.spellID,
-                    reduction = talentData.reduction,
-                    pctReduction = talentData.pctReduction
-                }
-            end
         end
     end
 
@@ -122,16 +99,9 @@ local function BuildInterruptTables()
         if INTERRUPTS[targetID] then
             INTERRUPTS[aliasID] = INTERRUPTS[targetID]
         end
-        SPELL_ALIASES_STR[tostring(aliasID)] = targetID
     end
 end
 BuildInterruptTables()
-
--- String-keyed INTERRUPTS for taint-safe lookups (built after BuildInterruptTables)
-local INTERRUPTS_STR = {}
-do
-    for id in pairs(INTERRUPTS) do INTERRUPTS_STR[tostring(id)] = id end
-end
 
 -- noKick: names of party members known to have no interrupt (healer spec confirmed)
 local noKickPlayers = {}   -- [name] = true
@@ -155,20 +125,10 @@ local CLASS_COLORS = {
 -- Active Bars State
 local activeBars = {}
 local framePool = {}
--- PERF: Hoisted to module scope – wipe() instead of new-table allocation in UpdateLayout.
 local sortedBars = {}
 
--- Object & Signal Pools (Zero-Allocation Architecture)
+-- Object Pool (Zero-Allocation Architecture) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â only infoPool kept for bar recycling
 local infoPool = {}
-local signalPool = {}
-local candidatePool = {}
-
-local scratchTargeting  = {}
-local scratchInRange    = {}
-local scratchAll        = {}
-local scratchCasts      = {}
-local scratchInterrupts = {}
-local scratchAuras      = {}
 
 local function AcquireInfo(guid, name, class, spellId, duration, expiration, f)
     local info = table.remove(infoPool)
@@ -209,205 +169,96 @@ local function ClearAllActiveBars()
     end
 end
 
-local function AcquireSignal(kind, unit, at)
-    local s = table.remove(signalPool)
-    if not s then
-        s = { kind = kind, unit = unit, at = at, consumed = false }
-    else
-        s.kind = kind
-        s.unit = unit
-        s.at = at
-        s.consumed = false
-    end
-    return s
-end
-
-local function ReleaseSignal(s)
-    if s then
-        s.kind = nil
-        s.unit = nil
-        s.consumed = true
-        signalPool[#signalPool + 1] = s
-    end
-end
-
-local function AcquireCandidate(name, unit, spellID, dist)
-    local c = table.remove(candidatePool)
-    if not c then c = {} end
-    c.name = name
-    c.unit = unit
-    c.spellID = spellID
-    c.dist = dist
-    return c
-end
-
-local function ReleaseCandidate(c)
-    if c then
-        c.name = nil
-        c.unit = nil
-        candidatePool[#candidatePool + 1] = c
-    end
-end
-
-local function ReleaseCandidateList(list)
-    for i = 1, #list do
-        ReleaseCandidate(list[i])
-        list[i] = nil
-    end
-end
-
-local function GetUnitDistanceToMob(pu, mobX, mobY, mobMap)
-    if not mobX or not mobMap then return nil end
-    local px, py, _, pm = UnitPosition(pu)
-    if not px or pm ~= mobMap then return nil end
-    return math.sqrt((mobX - px)^2 + (mobY - py)^2)
-end
-
-local function PickClosestCandidate(set)
-    if #set == 0 then return nil end
-    local best, bd, fb = nil, math.huge, nil
-    for i = 1, #set do
-        local c = set[i]
-        if c.dist then
-            if c.dist < bd then best, bd = c, c.dist end
-        elseif not fb then fb = c end
-    end
-    return best or fb
-end
-
 -- ============================================================================
 -- DYNAMIC COOLDOWN DATA
 -- ============================================================================
 
-local activeReductions = {}
 local activeSpecs = {}
 local container = nil
 local testModeActive = false
 
--- ============================================================================
--- SPELL ID LAUNDERING (Slider only – StatusBar path removed in 12.0.5)
--- ============================================================================
-local launderSlider = CreateFrame("Slider", nil, UIParent)
-launderSlider:SetMinMaxValues(0, 9999999)
-launderSlider:SetSize(1, 1)
-launderSlider:Hide()
-local onSliderChangedResult = nil
-launderSlider:SetScript("OnValueChanged", function(_, v) onSliderChangedResult = v end)
-
 -- Party Registry: tracks known interrupt spell per party member
 local partyRegistry = {}  -- [name] = { class, spellID, baseCd, cdEnd, guid, unit }
-local recentCasts    = {}  -- [name] = { t, spellID }  used by signal-tape correlation
 
--- Signal-Tape Engine (BliZzi approach, 12.0.5 compatible)
-local signalTape       = {}
-local needsCorrelation = false
-local lastCorrelateAt  = 0
-local SIGNAL_RETENTION   = 0.35
-local CORRELATE_INTERVAL = 0.04
-local MATCH_WINDOW       = 0.055
-local AURA_SUPPRESS      = 0.028
+-- ============================================================================
+-- NAMEPLATE INTERRUPT DETECTION (MiniAura-proven pattern, 12.x compatible)
+-- ============================================================================
+-- Instead of trying to read tainted party spellIDs from UNIT_SPELLCAST_SUCCEEDED,
+-- we detect interrupts via UNIT_SPELLCAST_INTERRUPTED on nameplate units and
+-- identify the kicker via UnitNameFromGUID(interruptedBy).
 
-local function PushSignal(kind, unit)
-    signalTape[#signalTape + 1] = AcquireSignal(kind, unit, GetTime())
-    needsCorrelation = true
+local NAMEPLATE_PREFIX = "^nameplate"
+local REPEAT_WINDOW = 0.5   -- Dedup: same mob within 0.5s (engine fires per-token)
+local OWN_CAST_WINDOW = 0.5 -- Match own kick to mob interrupt within 0.5s
+local lastRecordedAt = {}    -- [unitToken] = timestamp
+
+-- Decodes the interrupter from stop-event payloads (MiniAura KickEvents pattern).
+-- Returns: interruptedBy (GUID, may be secret), interruptedSpellId (may be secret)
+-- Returns nil, nil if the cast merely ended (not interrupted).
+local function GetInterrupter(event, ...)
+    if event == "UNIT_SPELLCAST_INTERRUPTED" then
+        -- Args after unit: castGUID, spellID, interruptedBy
+        local _, spellId, interruptedBy = ...
+        return interruptedBy, spellId
+    elseif event == "UNIT_SPELLCAST_CHANNEL_STOP" then
+        -- Args after unit: castGUID, spellID, interruptedBy
+        local _, spellId, interruptedBy = ...
+        return interruptedBy, spellId
+    elseif event == "UNIT_SPELLCAST_EMPOWER_STOP" then
+        -- Args after unit: castGUID, spellID, closedByInterrupt, interruptedBy
+        local _, spellId, _, interruptedBy = ...
+        return interruptedBy, spellId
+    end
+    return nil, nil
 end
 
-local function PruneSignalTape(now)
-    local minAt = now - SIGNAL_RETENTION
-    local writeIdx = 1
-    local n = #signalTape
-    for readIdx = 1, n do
-        local s = signalTape[readIdx]
-        if s and s.at and s.at >= minAt then
-            if writeIdx ~= readIdx then
-                signalTape[writeIdx] = s
-                signalTape[readIdx] = nil
-            end
-            writeIdx = writeIdx + 1
-        else
-            ReleaseSignal(s)
-            signalTape[readIdx] = nil
+-- Infer which ally kicked when the name is secret.
+-- If only 1 party member has an interrupt off-CD, it must be them.
+local allyKickBuiltAt = -math.huge
+local ALLY_KICK_TTL = 30
+local cachedAllyName, cachedAllySpellID
+
+local function InferAllyKick()
+    local now = GetTime()
+    if now - allyKickBuiltAt < ALLY_KICK_TTL then
+        return cachedAllyName, cachedAllySpellID
+    end
+    allyKickBuiltAt = now
+    cachedAllyName, cachedAllySpellID = nil, nil
+
+    local onlyName, onlySpellID, candidateCount = nil, nil, 0
+    for name, entry in pairs(partyRegistry) do
+        if not entry.cdEnd or entry.cdEnd < now then  -- off CD
+            candidateCount = candidateCount + 1
+            onlyName, onlySpellID = name, entry.spellID
         end
     end
+
+    if candidateCount == 1 then
+        cachedAllyName, cachedAllySpellID = onlyName, onlySpellID
+    end
+    return cachedAllyName, cachedAllySpellID
+end
+
+-- Invalidate the inference cache (called on roster/spec changes)
+local function InvalidateAllyKickCache()
+    allyKickBuiltAt = -math.huge
+end
+
+-- Real cooldown from the game engine (accounts for talents, Haste, resets)
+local MIN_REPORTED_COOLDOWN = 2  -- anything shorter is GCD
+local function PlayerSpellCooldown(spellId)
+    local info = C_Spell and C_Spell.GetSpellCooldown and C_Spell.GetSpellCooldown(spellId)
+    if not info or not info.duration then return nil, nil end
+    if issecretvalue and (issecretvalue(info.duration) or issecretvalue(info.startTime)) then
+        return nil, nil
+    end
+    if info.duration < MIN_REPORTED_COOLDOWN then return nil, nil end
+    return info.startTime, info.duration
 end
 
 -- Back-compat stub (called from OnGroupRosterUpdate / Initialize)
 local function RegisterPartyWatchers() end
-
--- ============================================================================
--- RESOLVE INTERRUPT SPELL (BliZzi ResolveInterruptSpell port)
--- Handles tainted spellIDs from party UNIT_SPELLCAST_SUCCEEDED in 12.0.5.
--- Priority: spell-name lookup (issecretvalue guard) → GetBaseSpell → direct ID
---           → alias lookup → slider launder
--- Returns: cleanID (number) or nil
--- ============================================================================
-local function ResolveInterruptSpell(spellID)
-    -- Guard: nil spellID is a no-op
-    if spellID == nil then return nil end
-
-    -- 1. Spell-name path: often works even when the ID is tainted
-    local okN, spellName = pcall(C_Spell.GetSpellName, spellID)
-    if okN and spellName and not issecretvalue(spellName) then
-        -- fall through to ID-based paths; name used as confirmation only
-    end
-
-    -- 2. GetBaseSpell can sometimes give a clean ID
-    local cleanID = spellID
-    do
-        local ok2, baseID = pcall(C_Spell.GetBaseSpell, spellID)
-        if ok2 and baseID then cleanID = baseID end
-    end
-
-    -- 3. Direct ID lookup (cleanID may still be tainted — wrap in pcall)
-    do
-        local ok3, hit = pcall(function() return INTERRUPTS[cleanID] end)
-        if ok3 and hit then
-            local ok4, alias = pcall(function() return SPELL_ALIASES[cleanID] end)
-            return (ok4 and alias) or cleanID
-        end
-    end
-
-    -- 4. String-based alias lookup
-    -- tostring() on a tainted value produces a tainted string;
-    -- indexing a table with a tainted string also crashes → wrap everything in pcall.
-    do
-        local okS, idStr = pcall(tostring, spellID)
-        if okS and idStr then
-            local okA, aliasTarget = pcall(function() return SPELL_ALIASES_STR[idStr] end)
-            if okA and aliasTarget then
-                local okB, hitB = pcall(function() return INTERRUPTS[aliasTarget] end)
-                if okB and hitB then return aliasTarget end
-            end
-            local okC, rawNum = pcall(function() return INTERRUPTS_STR[idStr] end)
-            if okC and rawNum then return rawNum end
-        end
-    end
-
-    -- 5. Slider launder (last resort)
-    -- After SetValue the OnValueChanged fires synchronously; the result is
-    -- a laundered (untainted) number if the engine accepted the value.
-    onSliderChangedResult = nil
-    pcall(launderSlider.SetValue, launderSlider, 0)
-    onSliderChangedResult = nil
-    local sliderOk = pcall(launderSlider.SetValue, launderSlider, spellID)
-    if sliderOk and onSliderChangedResult and onSliderChangedResult ~= 0 then
-        local okT, s = pcall(tostring, onSliderChangedResult)
-        if okT and s then
-            local num = tonumber(s)
-            if num then
-                local ok5, hit5 = pcall(function() return INTERRUPTS[num] end)
-                if ok5 and hit5 then
-                    local ok6, alias6 = pcall(function() return SPELL_ALIASES[num] end)
-                    return (ok6 and alias6) or num
-                end
-            end
-        end
-    end
-
-    return nil
-end
-
-
 
 
 -- ============================================================================
@@ -805,21 +656,7 @@ local function StartCooldown(guid, name, class, spellId, isReady, isTest)
     if info then
         -- Refresh existing bar
         if not isReady then
-            -- Dynamic CD Logic
             local duration = baseCD
-            if activeReductions[guid] then
-                if activeReductions[guid][spellId] then
-                    duration = duration - activeReductions[guid][spellId]
-                end
-                if activeReductions[guid]["PCT_" .. spellId] then
-                    duration = duration * (1 - activeReductions[guid]["PCT_" .. spellId])
-                end
-                -- On-Kick reduction (e.g. DK Coldthirst: -3s on successful kick)
-                if activeReductions[guid].onKick then
-                    duration = duration - activeReductions[guid].onKick
-                end
-            end
-            
             info.expiration = GetTime() + duration
             info.duration = duration
             
@@ -876,19 +713,6 @@ local function StartCooldown(guid, name, class, spellId, isReady, isTest)
     
     if not isReady then
         duration = baseCD
-        -- Dynamic CD Logic
-        if activeReductions[guid] then
-            if activeReductions[guid][spellId] then
-                duration = duration - activeReductions[guid][spellId]
-            end
-            if activeReductions[guid]["PCT_" .. spellId] then
-                duration = duration * (1 - activeReductions[guid]["PCT_" .. spellId])
-            end
-            -- On-Kick reduction (e.g. DK Coldthirst: -3s on successful kick)
-            if activeReductions[guid].onKick then
-                duration = duration - activeReductions[guid].onKick
-            end
-        end
         expiration = GetTime() + duration
         f.time:SetText(string.format("%.1f", duration))
     else
@@ -926,20 +750,6 @@ local function HandlePartyCast(memberName, spellID)
         cd = SPEC_COOLDOWN_OVERRIDES[spellID][activeSpecs[guid]] or cd
     end
 
-    -- Apply Talent Reductions (mirrors StartCooldown logic)
-    if guid and activeReductions[guid] then
-        if activeReductions[guid][spellID] then
-            cd = cd - activeReductions[guid][spellID]
-        end
-        if activeReductions[guid]["PCT_" .. spellID] then
-            cd = cd * (1 - activeReductions[guid]["PCT_" .. spellID])
-        end
-        -- On-Kick reduction (e.g. DK Coldthirst: -3s on successful kick)
-        if activeReductions[guid].onKick then
-            cd = cd - activeReductions[guid].onKick
-        end
-    end
-
     local now = GetTime()
     entry.cdEnd = now + cd
     if guid then
@@ -957,7 +767,7 @@ local HEALER_CAPABLE_CLASS = {
     PRIEST  = true,  -- Discipline / Holy / Shadow
     MONK    = true,  -- Mistweaver / Brewmaster / Windwalker
     DRUID   = true,  -- Restoration / Balance / Feral / Guardian
-    -- NOTE: SHAMAN excluded intentionally — Resto Shaman keeps Wind Shear (HEALER_KEEPS_KICK)
+    -- NOTE: SHAMAN excluded intentionally ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Resto Shaman keeps Wind Shear (HEALER_KEEPS_KICK)
 }
 
 local function AutoRegisterPartyByClass()
@@ -1023,7 +833,7 @@ local function AutoRegisterPartyByClass()
                         if entry then
                             -- Already registered: upgrade/demote as needed
                             if SPEC_NO_INTERRUPT[specID] then
-                                -- Confirmed healer spec → remove bar + registry entry
+                                -- Confirmed healer spec ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ remove bar + registry entry
                                 local guid = entry.guid
                                 if guid then
                                     for key, info in pairs(activeBars) do
@@ -1044,7 +854,7 @@ local function AutoRegisterPartyByClass()
                             end
                         elseif not noKickPlayers[name] and CLASS_INTERRUPTS[cls] then
                             -- Not yet registered (was deferred because HEALER_CAPABLE_CLASS + spec unknown).
-                            -- Now we have spec data — register if appropriate.
+                            -- Now we have spec data ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â register if appropriate.
                             if SPEC_NO_INTERRUPT[specID] then
                                 noKickPlayers[name] = true
                             elseif role ~= "HEALER" or HEALER_KEEPS_KICK[cls] then
@@ -1068,72 +878,6 @@ local function AutoRegisterPartyByClass()
 end
 
 -- ============================================================================
--- SIGNAL CORRELATION
--- ============================================================================
-local function CorrelateSignals()
-    local now = GetTime()
-    if not needsCorrelation then return end
-    if now - lastCorrelateAt < CORRELATE_INTERVAL then return end
-    lastCorrelateAt = now
-    PruneSignalTape(now)
-
-    wipe(scratchCasts)
-    wipe(scratchInterrupts)
-    wipe(scratchAuras)
-
-    for i = 1, #signalTape do
-        local s = signalTape[i]
-        if s and not s.consumed then
-            if     s.kind == "cast"      then scratchCasts[#scratchCasts + 1]           = s
-            elseif s.kind == "interrupt" then scratchInterrupts[#scratchInterrupts + 1] = s
-            elseif s.kind == "aura"      then scratchAuras[#scratchAuras + 1]           = s
-            end
-        end
-    end
-
-    if #scratchInterrupts == 0 or #scratchCasts == 0 then needsCorrelation = false; return end
-
-    table.sort(scratchInterrupts, function(a, b) return a.at < b.at end)
-    local fresh = scratchInterrupts[#scratchInterrupts]
-
-    -- Aura suppress: buff change on same mob within 28ms → not a real interrupt
-    for i = 1, #scratchAuras do
-        if scratchAuras[i].unit == fresh.unit and math.abs(fresh.at - scratchAuras[i].at) <= AURA_SUPPRESS then
-            fresh.consumed = true; needsCorrelation = false; return
-        end
-    end
-
-    -- Cluster suppress: multiple interrupts at once → AoE stun, not a kick
-    local cluster = 0
-    for i = 1, #scratchInterrupts do
-        if math.abs(scratchInterrupts[i].at - fresh.at) <= 0.018 then cluster = cluster + 1 end
-    end
-    if cluster > 1 then
-        for i = 1, #scratchInterrupts do scratchInterrupts[i].consumed = true end
-        needsCorrelation = false; return
-    end
-
-    fresh.consumed = true
-    local best, bestDiff = nil, math.huge
-    for i = 1, #scratchCasts do
-        local diff = math.abs(fresh.at - scratchCasts[i].at)
-        if diff <= MATCH_WINDOW and diff < bestDiff then bestDiff = diff; best = scratchCasts[i] end
-    end
-
-    if best then
-        best.consumed = true
-        if best.unit ~= "player" then
-            local memberName = UnitName(best.unit)
-            if memberName then
-                local rc = recentCasts[memberName]
-                if rc and rc.spellID then HandlePartyCast(memberName, rc.spellID) end
-            end
-        end
-    end
-    needsCorrelation = false
-end
-
--- ============================================================================
 -- OWN PLAYER KICK (player spellID is always untainted)
 -- ============================================================================
 local _addonMsgBlocked = false
@@ -1151,7 +895,21 @@ local function OwnKick(spellID)
     local _, class = UnitClass("player")
     if issecretvalue and issecretvalue(class) then class = "WARRIOR" end
     InterruptTracker._pendingOwnKickAt = GetTime()
-    StartCooldown(guid, name, class, spellID)
+
+    -- Use real CD from the game engine (accounts for talents, Haste, resets)
+    local startTime, realDuration = PlayerSpellCooldown(spellID)
+    if realDuration then
+        StartCooldown(guid, name, class, spellID)
+        -- Patch the bar's duration/expiration to match the real cooldown
+        local keyOk, key = pcall(function() return guid .. spellID end)
+        if keyOk and activeBars[key] then
+            activeBars[key].duration = realDuration
+            activeBars[key].expiration = startTime + realDuration
+        end
+    else
+        StartCooldown(guid, name, class, spellID)
+    end
+
     -- Broadcast to other GravityUI users (secondary confirmation channel)
     if not _addonMsgBlocked then
         local channel = IsInGroup(LE_PARTY_CATEGORY_INSTANCE) and "INSTANCE_CHAT" or "PARTY"
@@ -1166,172 +924,75 @@ local _framesEnabled = false
 
 local function PlayerFrame_OnEvent(_, _, unit, _, spellID)
     if unit == "pet" then
-        -- Pet spellID is tainted in 12.0 – launder via slider
-        onSliderChangedResult = nil
-        launderSlider:SetValue(0)
-        pcall(launderSlider.SetValue, launderSlider, spellID)
-        local clean = onSliderChangedResult
-        if clean then OwnKick(clean) end
+        -- Pet spellID may be tainted ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â try resolving via alias
+        if spellID and not (issecretvalue and issecretvalue(spellID)) then
+            OwnKick(spellID)
+        end
         return
     end
-    -- Player: untainted – fast path
+    -- Player: untainted ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ fast path
     OwnKick(spellID)
-    PushSignal("cast", "player")
 end
 
 -- ============================================================================
--- UNIFIED EVENT FRAME (12.0.5 Signal-Tape)
--- Handles party casts, mob interrupts, nameplate auras on ONE frame.
--- NOTE: UNIT_SPELLCAST_SUCCEEDED for party no longer fires in 12.0.5.
---       Party attribution uses UNIT_SPELLCAST_INTERRUPTED + mob heuristic.
+-- NAMEPLATE INTERRUPT EVENT HANDLER (MiniAura-proven pattern)
+-- Detects interrupts on nameplate units and attributes to the kicker via
+-- UnitNameFromGUID. No UNIT_SPELLCAST_SUCCEEDED for party needed.
 -- ============================================================================
 local function InterruptFrame_OnEvent(_, event, unit, ...)
     local s = GetSettings()
     if not s or not s.enabled or not IsTrackerAllowed() then return end
 
-    if event == "UNIT_SPELLCAST_SUCCEEDED" then
-        -- PERF: byte-based unit filter — avoids pattern allocation.
-        -- 'p'=112 + 'a'=97 matches party/partypet but not player/pet.
-        if not unit or unit == "player" or unit == "pet" then return end
-        local b1, b2 = unit:byte(1, 2)
-        if b1 ~= 112 or b2 ~= 97 then return end  -- not party*
+    -- Only process nameplate units (byte(1)==110 = 'n')
+    if not unit or unit:byte(1) ~= 110 then return end
 
-        -- Resolve partypet → owner party unit (partypet4 → party4)
-        local resolveUnit = unit
-        -- PERF: byte-based partypet detection — 'partypet' has byte(6)='p'(112)
-        if unit:byte(6) == 112 then  -- partypet
-            local idx = unit:sub(9)  -- partypetN → N
-            if not idx or idx == "" then return end
-            resolveUnit = "party" .. idx
-        end
+    -- Decode the interrupter from the event payload
+    local interruptedBy, interruptSpellId = GetInterrupter(event, ...)
 
-        -- UnitName may return a tainted string in 12.0.5.
-        -- Probe it by trying to use it as a table key inside pcall.
-        local memberName
-        do
-            local ok, n = pcall(UnitName, resolveUnit)
-            if not ok or not n then return end
-            local keyOk = pcall(function() local _ = partyRegistry[n] end)
-            if not keyOk then return end  -- tainted name, skip entirely
-            memberName = n
-        end
+    -- interruptedBy: nil = natural cast end, secret/readable = someone interrupted
+    if not interruptedBy then return end
+    -- NOTE: interruptedBy is often SECRET in WoW 12.x, but UnitNameFromGUID()
+    -- can still resolve it. We use pcall to safely handle any taint errors.
 
-        local _, spellID = ...
-        -- Use centralized resolver (BliZzi parity: name-path → GetBaseSpell → ID → alias → slider)
-        local cleanID = ResolveInterruptSpell(spellID)
+    -- Only process enemy nameplates
+    if not UnitCanAttack("player", unit) then return end
 
-        if cleanID then
-            recentCasts[memberName] = { t = GetTime(), spellID = cleanID }
-            PushSignal("cast", resolveUnit)
-        elseif not (pcall(C_Spell.GetSpellName, spellID) and not issecretvalue(select(2, pcall(C_Spell.GetSpellName, spellID)))) then
-            -- Name lookup failed entirely (tainted spellID AND GetSpellName failed).
-            -- Fall back to the registered interrupt for this player — ONLY if NOT on CD.
-            local ok, entry = pcall(function() return partyRegistry[memberName] end)
-            if ok and entry and entry.spellID and entry.spellID > 0 then
-                local isOnCD = entry.cdEnd and entry.cdEnd > GetTime()
-                if not isOnCD then
-                    recentCasts[memberName] = { t = GetTime(), spellID = entry.spellID }
-                    PushSignal("cast", resolveUnit)
-                end
-            end
-        end
+    -- Dedup: same mob within REPEAT_WINDOW (engine fires per-token for same interrupt)
+    local now = GetTime()
+    local last = lastRecordedAt[unit]
+    if last and (now - last) <= REPEAT_WINDOW then return end
+    lastRecordedAt[unit] = now
 
-    elseif event == "UNIT_SPELLCAST_INTERRUPTED" then
-        -- PERF: byte(1)==110 ('n') matches nameplate* without pattern allocation.
-        if not unit or unit:byte(1) ~= 110 then return end
-        PushSignal("interrupt", unit)
-        -- 12.0.5 Mob-Attribution: since UNIT_SPELLCAST_SUCCEEDED is gone for party,
-        -- we attribute inline when we see the mob interrupted.
-        local now = GetTime()
+    -- Own kick? (already handled by OwnKick via PlayerFrame)
+    if InterruptTracker._pendingOwnKickAt and
+       (now - InterruptTracker._pendingOwnKickAt) <= OWN_CAST_WINDOW then
+        InterruptTracker._pendingOwnKickAt = nil  -- consume
+        return
+    end
 
-        -- If the local player just kicked within 0.5s, this mob interrupt belongs
-        -- to us — OwnKick() already called StartCooldown(). Skip party attribution
-        -- entirely to prevent falsely triggering another player's bar.
-        if InterruptTracker._pendingOwnKickAt and (now - InterruptTracker._pendingOwnKickAt) < 0.5 then
-            InterruptTracker._pendingOwnKickAt = nil  -- consume so rapid-fire doesn't suppress next party kick
+    -- === Kicker Attribution ===
+
+    -- Tier 1: Resolve name from GUID (works even on secret GUIDs per ExBoss pattern)
+    local ok, kickerName = pcall(UnitNameFromGUID, interruptedBy)
+    if ok and kickerName and not (issecretvalue and issecretvalue(kickerName)) then
+        local entry = partyRegistry[kickerName]
+        if entry and entry.spellID then
+            HandlePartyCast(kickerName, entry.spellID)
+            InvalidateAllyKickCache()
             return
         end
-
-        local mobX, mobY, _, mobMap = UnitPosition(unit)
-        local MAX_RANGE = 35
-
-        wipe(scratchTargeting)
-        wipe(scratchInRange)
-        wipe(scratchAll)
-
-        for i = 1, 4 do
-            local pu = "party" .. i
-            if UnitExists(pu) then
-                -- UnitName may return tainted string in 12.0.5 – probe before indexing
-                local nm
-                do
-                    local ok, n = pcall(UnitName, pu)
-                    if ok and n then
-                        local keyOk = pcall(function() local _ = partyRegistry[n] end)
-                        if keyOk then nm = n end
-                    end
-                end
-                local entry = nm and partyRegistry[nm]
-                if entry and entry.spellID and (not entry.cdEnd or entry.cdEnd < now) then
-                    local d = GetUnitDistanceToMob(pu, mobX, mobY, mobMap)
-                    local c = AcquireCandidate(nm, pu, entry.spellID, d)
-                    scratchAll[#scratchAll + 1] = c
-                    if UnitIsUnit(pu .. "target", unit) then scratchTargeting[#scratchTargeting + 1] = c end
-                    if not d or d <= MAX_RANGE       then scratchInRange[#scratchInRange + 1]   = c end
-                end
-            end
-        end
-
-        local winner
-        if     #scratchTargeting == 1 then winner = scratchTargeting[1]
-        elseif #scratchTargeting  > 1 then winner = PickClosestCandidate(scratchTargeting)
-        elseif #scratchInRange   == 1 then winner = scratchInRange[1]
-        elseif #scratchInRange    > 1 then winner = PickClosestCandidate(scratchInRange)
-        elseif #scratchAll       == 1 then winner = scratchAll[1]
-        end
-
-        local winnerName, winnerSpellID
-        if winner then
-            winnerName = winner.name
-            winnerSpellID = winner.spellID
-        end
-
-        ReleaseCandidateList(scratchAll)
-        wipe(scratchTargeting)
-        wipe(scratchInRange)
-
-        if winnerName and winnerSpellID then
-            recentCasts[winnerName] = { t = now, spellID = winnerSpellID }
-            HandlePartyCast(winnerName, winnerSpellID)
-        end
-
-    elseif event == "UNIT_AURA" then
-        -- PERF: Only process nameplate aura changes when we have pending signals to correlate.
-        -- This eliminates 99% of UNIT_AURA overhead in raids, since aura events only matter
-        -- in the ~50ms window after a party member casts an interrupt spell.
-        -- byte(1)==110 ('n') avoids string.sub allocation for nameplate filtering.
-        if needsCorrelation and unit and unit:byte(1) == 110 then PushSignal("aura", unit) end
     end
-end
 
--- PERF: Throttle the correlator to 20Hz instead of every frame.
--- The signal-tape correlation is time-windowed (55ms) so sub-frame precision isn't needed.
-local _correlatorElapsed = 0
-local function InterruptFrame_OnUpdate(self, elapsed)
-    _correlatorElapsed = _correlatorElapsed + (elapsed or 0)
-    if _correlatorElapsed < 0.05 then return end
-    _correlatorElapsed = 0
-
-    if needsCorrelation then
-        local s = GetSettings()
-        if s and s.enabled and IsTrackerAllowed() then
-            CorrelateSignals()
-        else
-            needsCorrelation = false
-            PruneSignalTape(math.huge)
-            wipe(signalTape)
-        end
+    -- Tier 2: Single candidate inference (only 1 party member has kick off-CD)
+    local inferredName, inferredSpellID = InferAllyKick()
+    if inferredName and inferredSpellID then
+        HandlePartyCast(inferredName, inferredSpellID)
+        InvalidateAllyKickCache()
+        return
     end
+
+    -- Tier 3: Unattributable — silently ignore.
+    -- GRV_INT addon messages provide exact attribution for other GravityUI users.
 end
 
 local function EnableTrackerFrames()
@@ -1340,10 +1001,10 @@ local function EnableTrackerFrames()
     _playerFrame:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player", "pet")
 
     _interruptFrame:SetScript("OnEvent", InterruptFrame_OnEvent)
-    _interruptFrame:SetScript("OnUpdate", InterruptFrame_OnUpdate)
-    _interruptFrame:RegisterEvent("UNIT_SPELLCAST_SUCCEEDED")
+    -- MiniAura pattern: listen for stop events on ALL units (filtered to nameplates in handler)
     _interruptFrame:RegisterEvent("UNIT_SPELLCAST_INTERRUPTED")
-    _interruptFrame:RegisterEvent("UNIT_AURA")
+    _interruptFrame:RegisterEvent("UNIT_SPELLCAST_CHANNEL_STOP")
+    _interruptFrame:RegisterEvent("UNIT_SPELLCAST_EMPOWER_STOP")
     _framesEnabled = true
 end
 
@@ -1354,15 +1015,12 @@ local function DisableTrackerFrames()
 
     _interruptFrame:UnregisterAllEvents()
     _interruptFrame:SetScript("OnEvent", nil)
-    _interruptFrame:SetScript("OnUpdate", nil)
 
-    needsCorrelation = false
-    PruneSignalTape(math.huge)
-    wipe(signalTape)
+    wipe(lastRecordedAt)
     _framesEnabled = false
 end
 
--- ============================================================================
+
 -- GRV_INT ADDON MESSAGE HANDLER (secondary confirmation from other GravityUI users)
 -- ============================================================================
 function InterruptTracker:CHAT_MSG_ADDON(event, prefix, text, channel, sender)
@@ -1432,65 +1090,11 @@ end
 -- DYNAMIC COOLDOWNS (INSPECT)
 -- ============================================================================
 
-local function ProcessInspect(guid)
-    if not guid then return end
-    
-    -- Clear previous reductions for this GUID
-    activeReductions[guid] = {}
-    
-    -- C_Traits scanning
-    local configID = -1 -- Constants.TraitConsts.INSPECT_TRAIT_CONFIG_ID
-    local ok, configInfo = pcall(C_Traits.GetConfigInfo, configID)
-    if not ok or not configInfo or not configInfo.treeIDs or #configInfo.treeIDs == 0 then return end
-
-    local treeID = configInfo.treeIDs[1]
-    local ok2, nodeIDs = pcall(C_Traits.GetTreeNodes, treeID)
-    if not ok2 or not nodeIDs then return end
-
-    for _, nodeID in ipairs(nodeIDs) do
-        local ok3, nodeInfo = pcall(C_Traits.GetNodeInfo, configID, nodeID)
-        if ok3 and nodeInfo and nodeInfo.activeEntry and nodeInfo.activeRank and nodeInfo.activeRank > 0 then
-            local entryID = nodeInfo.activeEntry.entryID
-            if entryID then
-                local ok4, entryInfo = pcall(C_Traits.GetEntryInfo, configID, entryID)
-                if ok4 and entryInfo and entryInfo.definitionID then
-                    local ok5, defInfo = pcall(C_Traits.GetDefinitionInfo, entryInfo.definitionID)
-                    if ok5 and defInfo and defInfo.spellID then
-                        local talent = CD_REDUCTION_TALENTS[defInfo.spellID]
-                        if talent and talent.affects then
-                            if talent.reduction then
-                                activeReductions[guid][talent.affects] = (activeReductions[guid][talent.affects] or 0) + talent.reduction
-                            elseif talent.pctReduction then
-                                activeReductions[guid]["PCT_" .. talent.affects] = (activeReductions[guid]["PCT_" .. talent.affects] or 0) + talent.pctReduction
-                            end
-                        end
-                        
-                        local onKick = CD_ON_KICK_TALENTS[defInfo.spellID]
-                        if onKick then
-                            activeReductions[guid].onKick = (activeReductions[guid].onKick or 0) + onKick.reduction
-                        end
-
-                        local extraKick = EXTRA_KICK_TALENTS[defInfo.spellID]
-                        if extraKick then
-                            if not activeReductions[guid].extraKicks then
-                                activeReductions[guid].extraKicks = {}
-                            end
-                            table.insert(activeReductions[guid].extraKicks, extraKick)
-                        end
-                    end
-                end
-            end
-        end
-    end
-end
-
 local function OnInspectReady(guid)
-    ProcessInspect(guid)
-    
-    -- Check Spec Interrupt
+    if not guid then return end
+
+    -- Resolve unit from GUID
     local unit = nil
-    
-    -- Safe Comparison Helper
     local function SafeEq(a, b)
         local ok, res = pcall(function() return a == b end)
         return ok and res
@@ -1508,108 +1112,62 @@ local function OnInspectReady(guid)
              end
         end
     end
-    
-    if unit then
-        local specID = GetInspectSpecialization(unit)
-        if specID and specID > 0 then
-            activeSpecs[guid] = specID
-            
-            -- If this is a confirmed healer spec with no interrupt, remove any existing bar immediately
-            if SPEC_NO_INTERRUPT[specID] then
-                local _, cls = UnitClass(unit)
-                local name = UnitName(unit)
-                if name then noKickPlayers[name] = true end
-                if partyRegistry and name then partyRegistry[name] = nil end
-                for key, info in pairs(activeBars) do
-                    if info.guid == guid then
-                        ClearActiveBar(key)
-                    end
-                end
-                UpdateLayout()
-                return  -- No further processing needed for this unit
-            end
-            
-            local specInterrupt = SPEC_INTERRUPTS[specID]
-            if specInterrupt then
-                -- Find existing bar for this GUID that uses the wrong (default class) spellId
-                for key, info in pairs(activeBars) do
-                    if info.guid == guid and info.spellId ~= specInterrupt then
-                        -- Re-key the bar so future UNIT_SPELLCAST_SUCCEEDED events find it correctly
-                        local newKey = guid .. specInterrupt
-                        -- If a bar already exists for the spec interrupt, hide the old frame
-                        if activeBars[newKey] then
-                            ClearActiveBar(key)
-                        else
-                            activeBars[key] = nil
-                            info.spellId = specInterrupt
-                            -- Update Icon
-                            local icon = C_Spell.GetSpellTexture(specInterrupt)
-                            if icon and info.frame then
-                                info.frame.icon:SetTexture(icon)
-                            end
 
-                            -- Reset to Ready (Switching specs resets CDs usually)
-                            info.duration = 0
-                            info.expiration = 0
+    if not unit then return end
 
-                            local s = GetSettings()
-                            if s and s.showReadyText then
-                                info.frame.time:SetText("Ready")
-                            else
-                                info.frame.time:SetText("")
-                            end
+    local specID = GetInspectSpecialization(unit)
+    if not specID or specID <= 0 then return end
 
-                            info.frame.bar:SetValue(1)
-                            local cr, cg, cb, ca = 1, 1, 1, 1
-                            if s and s.useSpecificCooldownColor then
-                               local c = s.cooldownTextColor or {1, 1, 1, 1}
-                               cr, cg, cb, ca = c[1] or 1, c[2] or 1, c[3] or 1, c[4] or 1
-                            end
-                            info.frame.time:SetTextColor(cr, cg, cb, ca)
-                            activeBars[newKey] = info
-                        end
-                        break -- Only one default bar per GUID to replace
-                    end
-                end
+    activeSpecs[guid] = specID
+    InvalidateAllyKickCache()  -- Spec changed, re-infer next time
+
+    -- If this is a confirmed healer spec with no interrupt, remove any existing bar immediately
+    if SPEC_NO_INTERRUPT[specID] then
+        local name = UnitName(unit)
+        if name then noKickPlayers[name] = true end
+        if partyRegistry and name then partyRegistry[name] = nil end
+        for key, info in pairs(activeBars) do
+            if info.guid == guid then
+                ClearActiveBar(key)
             end
-            
-            -- Handle Spec extra kicks (e.g Warlock Axe Toss)
-            if SPEC_EXTRA_KICKS[specID] then
-                if not activeReductions[guid] then activeReductions[guid] = {} end
-                if not activeReductions[guid].extraKicks then activeReductions[guid].extraKicks = {} end
-                
-                for _, extraKick in ipairs(SPEC_EXTRA_KICKS[specID]) do
-                    local alreadyExists = false
-                    for _, ek in ipairs(activeReductions[guid].extraKicks) do
-                        if ek.id == extraKick.id then alreadyExists = true break end
+        end
+        UpdateLayout()
+        return
+    end
+
+    -- Check if this spec has a different interrupt than the class default
+    local specInterrupt = SPEC_INTERRUPTS[specID]
+    if specInterrupt then
+        for key, info in pairs(activeBars) do
+            if info.guid == guid and info.spellId ~= specInterrupt then
+                local newKey = guid .. specInterrupt
+                if activeBars[newKey] then
+                    ClearActiveBar(key)
+                else
+                    activeBars[key] = nil
+                    info.spellId = specInterrupt
+                    local icon = C_Spell.GetSpellTexture(specInterrupt)
+                    if icon and info.frame then
+                        info.frame.icon:SetTexture(icon)
                     end
-                    if not alreadyExists then
-                        table.insert(activeReductions[guid].extraKicks, extraKick)
+                    info.duration = 0
+                    info.expiration = 0
+                    local s = GetSettings()
+                    if s and s.showReadyText then
+                        info.frame.time:SetText("Ready")
+                    else
+                        info.frame.time:SetText("")
                     end
+                    info.frame.bar:SetValue(1)
+                    local cr, cg, cb, ca = 1, 1, 1, 1
+                    if s and s.useSpecificCooldownColor then
+                       local c = s.cooldownTextColor or {1, 1, 1, 1}
+                       cr, cg, cb, ca = c[1] or 1, c[2] or 1, c[3] or 1, c[4] or 1
+                    end
+                    info.frame.time:SetTextColor(cr, cg, cb, ca)
+                    activeBars[newKey] = info
                 end
-            end
-            
-            -- If we have extra kicks, start tracking them 
-            if activeReductions[guid] and activeReductions[guid].extraKicks then
-                local _, class = UnitClass(unit)
-                local name = UnitName(unit)
-                for _, extra in ipairs(activeReductions[guid].extraKicks) do
-                    local extraSpellID = extra.id
-                    local extraCD = extra.cd
-                    if not INTERRUPTS[extraSpellID] then
-                        INTERRUPTS[extraSpellID] = extraCD -- Add to master table if missing
-                    end
-                    
-                    if not activeBars[guid .. extraSpellID] then
-                        -- Initialize it as ready
-                        StartCooldown(guid, name, class, extraSpellID)
-                        local info = activeBars[guid .. extraSpellID]
-                        if info then
-                            info.expiration = 0 -- Ready immediately
-                            if not testModeActive then updateFrame:Show() end
-                        end
-                    end
-                end
+                break
             end
         end
     end
@@ -2002,7 +1560,7 @@ function InterruptTracker.ApplySettings()
           StyleBar(info.frame, info.class)
      end
      
-     -- PERF: Settings changed – force the OnUpdate cache to re-read on next tick.
+     -- PERF: Settings changed ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ force the OnUpdate cache to re-read on next tick.
      UpdateLayout()
 end
 

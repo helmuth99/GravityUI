@@ -1,0 +1,339 @@
+-- GravityUI - Player Marks
+-- Automatic raid target icon assignment via SecureActionButton
+-- Uses /tm macro triggered by physical click to bypass SetRaidTarget protection
+local ADDON_NAME, ns = ...
+
+-- ============================================================================
+-- CONSTANTS
+-- ============================================================================
+local MARK_NAMES = {
+    [0] = "None",
+    [1] = "Star",
+    [2] = "Circle",
+    [3] = "Diamond",
+    [4] = "Triangle",
+    [5] = "Moon",
+    [6] = "Square",
+    [7] = "Cross",
+    [8] = "Skull",
+}
+
+local MARK_ICONS = {
+    [1] = "|TInterface\\TargetingFrame\\UI-RaidTargetingIcon_1:0|t",
+    [2] = "|TInterface\\TargetingFrame\\UI-RaidTargetingIcon_2:0|t",
+    [3] = "|TInterface\\TargetingFrame\\UI-RaidTargetingIcon_3:0|t",
+    [4] = "|TInterface\\TargetingFrame\\UI-RaidTargetingIcon_4:0|t",
+    [5] = "|TInterface\\TargetingFrame\\UI-RaidTargetingIcon_5:0|t",
+    [6] = "|TInterface\\TargetingFrame\\UI-RaidTargetingIcon_6:0|t",
+    [7] = "|TInterface\\TargetingFrame\\UI-RaidTargetingIcon_7:0|t",
+    [8] = "|TInterface\\TargetingFrame\\UI-RaidTargetingIcon_8:0|t",
+}
+
+-- Export for settings UI
+ns.PlayerMarks = {
+    MARK_NAMES = MARK_NAMES,
+    MARK_ICONS = MARK_ICONS,
+}
+
+-- ============================================================================
+-- DATABASE ACCESS
+-- ============================================================================
+local function GetDB()
+    local db = ns.GetDB()
+    if not db then return nil end
+    if not db.playermarks then
+        db.playermarks = {
+            enabled = true,
+            dungeon = {
+                TANK = 0,
+                HEALER = 0,
+            },
+            raid = {
+                players = {},
+                customTargets = {},
+            },
+        }
+    end
+    return db.playermarks
+end
+
+-- ============================================================================
+-- PERMISSION CHECK
+-- ============================================================================
+local function CanSetMarks()
+    if not IsInGroup() and GetNumGroupMembers() <= 1 then return false end
+    if IsInRaid() then
+        return UnitIsGroupLeader("player") or UnitIsGroupAssistant("player")
+    end
+    -- In 5-man party (including follower dungeons), anyone can set marks
+    return true
+end
+
+-- ============================================================================
+-- MACRO BUILDER
+-- ============================================================================
+local function BuildMacro()
+    local pdb = GetDB()
+    if not pdb then return "", {} end
+
+    local macro = ""
+    local assignments = {} -- { { name = "X", mark = 6 }, ... }
+
+    if IsInRaid() then
+        -- Raid: Player-specific marks (only set, not clear — too many players)
+        for playerName, markIndex in pairs(pdb.raid.players) do
+            if markIndex and markIndex > 0 then
+                macro = macro .. "/target " .. playerName .. "\n/tm " .. markIndex .. "\n"
+                assignments[#assignments + 1] = { name = playerName, mark = markIndex }
+            end
+        end
+        -- Custom Targets (bosses/NPCs) — only if mark > 0
+        for _, entry in ipairs(pdb.raid.customTargets) do
+            if entry.name and entry.name ~= "" and entry.mark and entry.mark > 0 then
+                macro = macro .. "/target " .. entry.name .. "\n/tm " .. entry.mark .. "\n"
+                assignments[#assignments + 1] = { name = entry.name, mark = entry.mark }
+            end
+        end
+    else
+        -- M+ / Follower Dungeon: Role-based
+        local numMembers = GetNumGroupMembers()
+        for i = 1, numMembers do
+            local unit = IsInRaid() and ("raid" .. i) or ("party" .. i)
+            if UnitExists(unit) and not UnitIsUnit(unit, "player") then
+                local role = UnitGroupRolesAssigned(unit)
+                local name = UnitName(unit)
+                local mark = pdb.dungeon[role]
+                if mark ~= nil and name then
+                    -- mark 0 = clear, mark > 0 = set
+                    macro = macro .. "/target " .. name .. "\n/tm " .. mark .. "\n"
+                    assignments[#assignments + 1] = { name = name, mark = mark }
+                end
+            end
+        end
+    end
+
+    -- Restore original target
+    if macro ~= "" then
+        macro = macro .. "/targetlasttarget"
+    end
+
+    return macro, assignments
+end
+
+-- ============================================================================
+-- SECURE BUTTON CREATION
+-- ============================================================================
+local markButton
+local pendingAssignments = {} -- stored for PostClick chat output
+
+local function CreateMarkButton()
+    if markButton then return markButton end
+
+    markButton = CreateFrame("Button", "GravityUI_SetMarksButton", UIParent, "SecureActionButtonTemplate")
+    markButton:SetSize(140, 28)
+    markButton:RegisterForClicks("AnyUp", "AnyDown")
+    markButton:SetAttribute("type", "macro")
+    markButton:SetAttribute("macrotext", "")
+    markButton:SetFrameStrata("DIALOG")
+    markButton:SetFrameLevel(100)
+    markButton:Hide()
+
+    -- Visual styling
+    local bg = markButton:CreateTexture(nil, "BACKGROUND")
+    bg:SetAllPoints()
+    bg:SetColorTexture(0, 0, 0, 0.8)
+    markButton._bg = bg
+
+    local border = markButton:CreateTexture(nil, "BORDER")
+    border:SetPoint("TOPLEFT", -1, 1)
+    border:SetPoint("BOTTOMRIGHT", 1, -1)
+    border:SetColorTexture(0.3, 0.3, 0.3, 0.8)
+    markButton._border = border
+
+    -- Inner background (over border)
+    local inner = markButton:CreateTexture(nil, "ARTWORK")
+    inner:SetAllPoints()
+    inner:SetColorTexture(0.12, 0.12, 0.15, 0.95)
+    markButton._inner = inner
+
+    local text = markButton:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    text:SetPoint("CENTER", 0, 0)
+    text:SetText("|TInterface\\TargetingFrame\\UI-RaidTargetingIcon_1:14|t Set Marks")
+    if ns.GUI and ns.GUI.SetFont then
+        ns.GUI:SetFont(text, 11, "OUTLINE")
+    end
+    markButton._text = text
+
+    -- Hover effect
+    markButton:SetScript("OnEnter", function(self)
+        self._inner:SetColorTexture(0.2, 0.2, 0.25, 0.95)
+    end)
+    markButton:SetScript("OnLeave", function(self)
+        self._inner:SetColorTexture(0.12, 0.12, 0.15, 0.95)
+    end)
+
+    -- Verify marks after click
+    local function VerifyMarks(btn)
+        -- Permission warning
+        if IsInRaid() and not UnitIsGroupLeader("player") and not UnitIsGroupAssistant("player") then
+            print("|cFF30D1FF[GravityUI]|r |cFFFF4444Marks failed:|r You need Raid Leader or Assistant to set marks in raid.")
+            btn:Hide()
+            return
+        end
+
+        -- Verify after short delay to let the macro finish
+        C_Timer.After(0.5, function()
+            for _, a in ipairs(pendingAssignments) do
+                local icon = MARK_ICONS[a.mark] or ""
+                local markName = MARK_NAMES[a.mark] or "?"
+
+                -- Try to find the unit and check its mark
+                local unitID = nil
+                if IsInRaid() then
+                    for i = 1, GetNumGroupMembers() do
+                        local u = "raid" .. i
+                        if UnitExists(u) and UnitName(u) == a.name then
+                            unitID = u; break
+                        end
+                    end
+                else
+                    for i = 1, GetNumGroupMembers() do
+                        local u = "party" .. i
+                        if UnitExists(u) and UnitName(u) == a.name then
+                            unitID = u; break
+                        end
+                    end
+                end
+
+                if not unitID then
+                    -- Custom target (boss/NPC) — can't verify
+                    if a.mark > 0 then
+                        print("|cFF30D1FF[GravityUI]|r " .. icon .. " " .. markName .. " on |cFFFFFFFF" .. a.name .. "|r — |cFFFFCC00attempted (boss/NPC)|r")
+                    end
+                else
+                    if a.mark == 0 then
+                        -- Clearing mark
+                        print("|cFF30D1FF[GravityUI]|r clears mark on |cFFFFFFFF" .. a.name .. "|r — |cFF44FF44OK|r")
+                    else
+                        -- pcall: GetRaidTargetIndex may return secret values in follower dungeons
+                        local ok, verified = pcall(function()
+                            local m = GetRaidTargetIndex(unitID)
+                            return m == a.mark
+                        end)
+                        if ok and verified then
+                            print("|cFF30D1FF[GravityUI]|r " .. icon .. " " .. markName .. " on |cFFFFFFFF" .. a.name .. "|r — |cFF44FF44OK|r")
+                        elseif not ok then
+                            -- Secret value — assume it worked
+                            print("|cFF30D1FF[GravityUI]|r " .. icon .. " " .. markName .. " on |cFFFFFFFF" .. a.name .. "|r — |cFF44FF44OK|r")
+                        else
+                            print("|cFF30D1FF[GravityUI]|r " .. icon .. " " .. markName .. " on |cFFFFFFFF" .. a.name .. "|r — |cFFFF4444FAILED|r")
+                        end
+                    end
+                end
+            end
+            btn:Hide()
+        end)
+    end
+
+    -- Use OnMouseUp for reliable click detection (PostClick can be unreliable on secure buttons)
+    markButton:SetScript("OnMouseUp", function(self)
+        VerifyMarks(self)
+    end)
+
+    return markButton
+end
+
+-- ============================================================================
+-- EVENT HANDLING
+-- ============================================================================
+local eventFrame = CreateFrame("Frame")
+
+local function ShowMarkButton()
+    local pdb = GetDB()
+    if not pdb or not pdb.enabled then return end
+    if not CanSetMarks() then return end
+
+    -- Build macro
+    local macro, assignments = BuildMacro()
+    if macro == "" then return end
+
+    local btn = CreateMarkButton()
+
+    -- Can only set attributes out of combat
+    if InCombatLockdown() then return end
+
+    btn:SetAttribute("macrotext", macro)
+    pendingAssignments = assignments
+
+    -- Position: try to anchor near ReadyCheckFrame, otherwise center-bottom
+    if ReadyCheckFrame and ReadyCheckFrame:IsShown() then
+        btn:ClearAllPoints()
+        btn:SetPoint("TOP", ReadyCheckFrame, "BOTTOM", 0, -5)
+    else
+        btn:ClearAllPoints()
+        btn:SetPoint("CENTER", UIParent, "CENTER", 0, -100)
+    end
+
+    btn:Show()
+end
+
+local function HideMarkButton()
+    if markButton then
+        markButton:Hide()
+    end
+end
+
+eventFrame:SetScript("OnEvent", function(_, event)
+    if event == "READY_CHECK" then
+        ShowMarkButton()
+    elseif event == "READY_CHECK_FINISHED" then
+        -- Small delay to allow clicking
+        C_Timer.After(2, function()
+            HideMarkButton()
+        end)
+    elseif event == "PLAYER_REGEN_ENABLED" then
+        -- Re-check if button should be hidden after combat
+        if markButton and markButton:IsShown() then
+            HideMarkButton()
+        end
+    end
+end)
+
+eventFrame:RegisterEvent("READY_CHECK")
+eventFrame:RegisterEvent("READY_CHECK_FINISHED")
+eventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
+
+-- ============================================================================
+-- MANUAL TRIGGER (slash command or button in settings)
+-- ============================================================================
+ns.PlayerMarks.ShowMarkButton = ShowMarkButton
+ns.PlayerMarks.HideMarkButton = HideMarkButton
+ns.PlayerMarks.BuildMacro = BuildMacro
+ns.PlayerMarks.CanSetMarks = CanSetMarks
+ns.PlayerMarks.GetDB = GetDB
+ns.PlayerMarks._createButton = CreateMarkButton
+
+-- Slash command for manual testing
+SLASH_GRAVITYMARKS1 = "/gravitymarks"
+SlashCmdList["GRAVITYMARKS"] = function()
+    local pdb = GetDB()
+    if not pdb then
+        print("|cFF30D1FF[GravityUI]|r Player Marks: No database available.")
+        return
+    end
+    if not IsInGroup() then
+        print("|cFF30D1FF[GravityUI]|r Player Marks: You are not in a group.")
+        return
+    end
+    if not CanSetMarks() then
+        print("|cFF30D1FF[GravityUI]|r Player Marks: You need to be Raid Leader or Assistant.")
+        return
+    end
+    local macro = BuildMacro()
+    if macro == "" then
+        print("|cFF30D1FF[GravityUI]|r Player Marks: No marks configured.")
+        return
+    end
+    ShowMarkButton()
+    print("|cFF30D1FF[GravityUI]|r Player Marks: Click the 'Set Marks' button to apply.")
+end

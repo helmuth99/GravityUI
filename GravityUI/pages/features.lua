@@ -944,6 +944,294 @@ local function BuildEllesmereUI(parent)
 end
 
 --==============================================================================================================================================================================================
+-- 10. PLAYER MARKS
+--==============================================================================================================================================================================================
+local _pmScroll, _pmContent  -- cached to avoid duplication on rebuild
+
+local function BuildPlayerMarks(parent)
+    -- On rebuild: clear old content instead of creating duplicate scroll frames
+    if _pmContent then
+        for _, child in ipairs({ _pmContent:GetChildren() }) do
+            child:Hide(); child:SetParent(nil)
+        end
+        -- Clear font strings too
+        for _, region in ipairs({ _pmContent:GetRegions() }) do
+            region:Hide(); region:SetParent(nil)
+        end
+        _pmContent.rowCount = 0
+    end
+
+    if not _pmScroll then
+        _pmScroll, _pmContent = GUI:CreateScrollableContent(parent)
+        _pmScroll:SetAllPoints()
+    end
+
+    local content = _pmContent
+    local PM = ns.PlayerMarks
+    if not PM then return end
+    local pdb = PM.GetDB()
+    if not pdb then return end
+
+    -- Mark dropdown options (shared between all dropdowns)
+    local markOptions = {{ value = 0, text = "None" }}
+    for i = 1, 8 do
+        markOptions[#markOptions + 1] = {
+            value = i,
+            text = (PM.MARK_ICONS[i] or "") .. " " .. PM.MARK_NAMES[i],
+        }
+    end
+
+    local header = GUI:CreateSectionHeader(content, "Player Marks")
+    header:SetPoint("TOPLEFT", 10, -10)
+    header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
+    content.rowCount = 1.3
+
+    local infoBox = GUI:CreateInfoBox(content, "Assign raid target icons to players. When a Ready Check starts, a 'Set Marks' button appears. Click it to apply all configured marks.\n\nRequires: Raid Leader or Assistant (Raid) / Party Leader (Dungeon).\n\nSlash Command: /gravitymarks")
+    infoBox:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT + 5))
+    content.rowCount = content.rowCount + (infoBox:GetHeight() / (ROW_HEIGHT + 5)) + 0.2
+
+    AddRow(content, "Enable Player Marks", "checkbox", "enabled", pdb, function() end)
+    content.rowCount = content.rowCount + 0.8
+
+    -- ================================================================
+    -- TRACK raidListStart for both columns
+    -- ================================================================
+    local raidListStart = content.rowCount
+
+    -- ================================================================
+    -- LEFT COLUMN: RAID / PARTY MARKS
+    -- ================================================================
+    local raidSection = GUI:CreateSectionHeader(content, "Raid — Player Marks")
+    raidSection:SetPoint("TOPLEFT", 10, -raidListStart * (ROW_HEIGHT + 5))
+    raidSection:SetPoint("RIGHT", content, "CENTER", -5, 0)
+
+    local leftY = -(raidListStart + 1) * (ROW_HEIGHT + 5)
+    local playerCount = 0
+
+    local function AddPlayerRow(unit)
+        local name = UnitName(unit)
+        local _, cls = UnitClass(unit)
+        if not name or not cls then return end
+
+        local row = CreateFrame("Frame", nil, content)
+        row:SetSize(GUI.CONTENT_WIDTH / 2 - 35, ROW_HEIGHT)
+        row:SetPoint("TOPLEFT", 10, leftY)
+
+        local label = row:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+        if ns.GUI.SetFont then ns.GUI:SetFont(label, 11, "") end
+        label:SetPoint("LEFT", 0, 0)
+        label:SetWidth(120)
+        label:SetJustifyH("LEFT")
+        local color = RAID_CLASS_COLORS[cls]
+        if color then
+            label:SetText(string.format("|cff%02x%02x%02x%s|r", color.r*255, color.g*255, color.b*255, name))
+        else
+            label:SetText(name)
+        end
+
+        local playerWrapper = { selected = pdb.raid.players[name] or 0 }
+        local dd = GUI:CreateDropdown(row, "", markOptions, "selected", playerWrapper, function(val)
+            pdb.raid.players[name] = val
+            if val == 0 then pdb.raid.players[name] = nil end
+        end)
+        dd:SetPoint("LEFT", label, "RIGHT", 5, 0)
+        dd:SetWidth(130)
+        dd.dropdown:ClearAllPoints()
+        dd.dropdown:SetPoint("LEFT", dd, "LEFT", 0, 0)
+        dd.dropdown:SetPoint("RIGHT", dd, "RIGHT", 0, 0)
+
+        leftY = leftY - (ROW_HEIGHT + 2)
+        playerCount = playerCount + 1
+    end
+
+    if IsInRaid() then
+        for i = 1, GetNumGroupMembers() do
+            local unit = "raid" .. i
+            if UnitExists(unit) and not UnitIsUnit(unit, "player") then
+                AddPlayerRow(unit)
+            end
+        end
+    end
+
+    if playerCount == 0 then
+        local noGroup = content:CreateFontString(nil, "OVERLAY", "GameFontDisable")
+        noGroup:SetPoint("TOPLEFT", 10, leftY)
+        if IsInRaid() then
+            noGroup:SetText("No other raid members found.")
+        else
+            noGroup:SetText("Join a raid to assign player marks.\nUse M+ Dungeon for party/dungeon marks.")
+        end
+        if ns.GUI.SetFont then ns.GUI:SetFont(noGroup, 11, "") end
+        leftY = leftY - ROW_HEIGHT
+        playerCount = 1
+    end
+
+    -- Refresh button
+    local refreshBtn = GUI:CreateButton(content, "Refresh List", 100, 22, function()
+        BuildPlayerMarks(parent)
+    end)
+    refreshBtn:SetPoint("TOPLEFT", 10, leftY - 5)
+    leftY = leftY - 35
+
+    -- Custom Targets section
+    leftY = leftY - 10
+    local customHeader = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    customHeader:SetPoint("TOPLEFT", 10, leftY)
+    customHeader:SetText("Custom Targets (Bosses/NPCs)")
+    customHeader:SetTextColor(unpack(GUI.Colors.accent))
+    if ns.GUI.SetFont then ns.GUI:SetFont(customHeader, 12, "") end
+    leftY = leftY - (ROW_HEIGHT + 5)
+
+    -- Custom target input row (all elements on same line)
+    local customRow = CreateFrame("Frame", nil, content)
+    customRow:SetSize(GUI.CONTENT_WIDTH / 2 - 25, 28)
+    customRow:SetPoint("TOPLEFT", 10, leftY)
+
+    -- Plain EditBox (no CreateInput wrapper to avoid label offset)
+    local editBox = CreateFrame("EditBox", nil, customRow, "BackdropTemplate")
+    editBox:SetSize(140, 24)
+    editBox:SetPoint("LEFT", 0, 0)
+    editBox:SetAutoFocus(false)
+    editBox:SetFontObject(GameFontHighlightSmall)
+    editBox:SetTextInsets(8, 8, 0, 0)
+    editBox:SetBackdrop({
+        bgFile = "Interface\\Buttons\\WHITE8x8",
+        edgeFile = "Interface\\Buttons\\WHITE8x8",
+        edgeSize = 1,
+    })
+    editBox:SetBackdropColor(0.15, 0.15, 0.15, 1)
+    editBox:SetBackdropBorderColor(0.3, 0.3, 0.3, 1)
+    editBox:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
+    editBox:SetScript("OnEnterPressed", function(self) self:ClearFocus() end)
+
+    local tempCustomDB = { mark = 1 }
+    local customDD = GUI:CreateDropdown(customRow, "", markOptions, "mark", tempCustomDB, function() end)
+    customDD:SetPoint("LEFT", editBox, "RIGHT", 5, 0)
+    customDD:SetWidth(100)
+    customDD.dropdown:ClearAllPoints()
+    customDD.dropdown:SetPoint("LEFT", customDD, "LEFT", 0, 0)
+    customDD.dropdown:SetPoint("RIGHT", customDD, "RIGHT", 0, 0)
+
+    local addBtn = GUI:CreateButton(customRow, "+", 30, 24, function()
+        local targetName = editBox:GetText() or ""
+        if targetName == "" then return end
+        table.insert(pdb.raid.customTargets, { name = targetName, mark = tempCustomDB.mark })
+        editBox:SetText("")
+        BuildPlayerMarks(parent)
+    end)
+    addBtn:SetPoint("LEFT", customDD, "RIGHT", 5, 0)
+
+    leftY = leftY - (ROW_HEIGHT + 5)
+
+    -- Show existing custom targets
+    for idx, entry in ipairs(pdb.raid.customTargets) do
+        local ctRow = CreateFrame("Frame", nil, content)
+        ctRow:SetSize(GUI.CONTENT_WIDTH / 2 - 25, 24)
+        ctRow:SetPoint("TOPLEFT", 10, leftY)
+
+        local ctLabel = ctRow:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+        if ns.GUI.SetFont then ns.GUI:SetFont(ctLabel, 11, "") end
+        ctLabel:SetPoint("LEFT", 0, 0)
+        local markIcon = PM.MARK_ICONS[entry.mark] or ""
+        ctLabel:SetText(markIcon .. " " .. entry.name)
+
+        local delBtn = GUI:CreateButton(ctRow, "X", 20, 20, function()
+            table.remove(pdb.raid.customTargets, idx)
+            BuildPlayerMarks(parent)
+        end)
+        delBtn:SetPoint("LEFT", ctLabel, "RIGHT", 10, 0)
+
+        leftY = leftY - 28
+    end
+
+    -- ================================================================
+    -- RIGHT COLUMN: M+ DUNGEON MARKS
+    -- ================================================================
+    local dungeonSection = GUI:CreateSectionHeader(content, "M+ Dungeon — Role Marks")
+    dungeonSection:ClearAllPoints()
+    dungeonSection:SetPoint("TOPLEFT", content, "TOP", 5, -raidListStart * (ROW_HEIGHT + 5))
+    dungeonSection:SetPoint("RIGHT", content, "RIGHT", -10, 0)
+
+    local rightY = -(raidListStart + 1) * (ROW_HEIGHT + 5)
+
+    -- Tank dropdown
+    local tankRow = CreateFrame("Frame", nil, content)
+    tankRow:SetSize(GUI.CONTENT_WIDTH / 2 - 25, ROW_HEIGHT)
+    tankRow:SetPoint("TOPLEFT", content, "TOP", 5, rightY)
+
+    local tankLabel = tankRow:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    if ns.GUI.SetFont then ns.GUI:SetFont(tankLabel, 12, "") end
+    tankLabel:SetPoint("LEFT", 0, 0)
+    tankLabel:SetWidth(80)
+    tankLabel:SetJustifyH("LEFT")
+    tankLabel:SetText("Tank")
+    tankLabel:SetTextColor(unpack(GUI.Colors.text))
+
+    local tankDD = GUI:CreateDropdown(tankRow, "", markOptions, "TANK", pdb.dungeon, function() end)
+    tankDD:SetPoint("LEFT", tankLabel, "RIGHT", 10, 0)
+    tankDD:SetWidth(150)
+    tankDD.dropdown:ClearAllPoints()
+    tankDD.dropdown:SetPoint("LEFT", tankDD, "LEFT", 0, 0)
+    tankDD.dropdown:SetPoint("RIGHT", tankDD, "RIGHT", 0, 0)
+
+    rightY = rightY - (ROW_HEIGHT + 5)
+
+    -- Healer dropdown
+    local healerRow = CreateFrame("Frame", nil, content)
+    healerRow:SetSize(GUI.CONTENT_WIDTH / 2 - 25, ROW_HEIGHT)
+    healerRow:SetPoint("TOPLEFT", content, "TOP", 5, rightY)
+
+    local healerLabel = healerRow:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    if ns.GUI.SetFont then ns.GUI:SetFont(healerLabel, 12, "") end
+    healerLabel:SetPoint("LEFT", 0, 0)
+    healerLabel:SetWidth(80)
+    healerLabel:SetJustifyH("LEFT")
+    healerLabel:SetText("Healer")
+    healerLabel:SetTextColor(unpack(GUI.Colors.text))
+
+    local healerDD = GUI:CreateDropdown(healerRow, "", markOptions, "HEALER", pdb.dungeon, function() end)
+    healerDD:SetPoint("LEFT", healerLabel, "RIGHT", 10, 0)
+    healerDD:SetWidth(150)
+    healerDD.dropdown:ClearAllPoints()
+    healerDD.dropdown:SetPoint("LEFT", healerDD, "LEFT", 0, 0)
+    healerDD.dropdown:SetPoint("RIGHT", healerDD, "RIGHT", 0, 0)
+
+    rightY = rightY - (ROW_HEIGHT + 5) * 2
+
+    -- Info text
+    local dungeonInfo = content:CreateFontString(nil, "OVERLAY", "GameFontDisable")
+    dungeonInfo:SetPoint("TOPLEFT", content, "TOP", 5, rightY)
+    dungeonInfo:SetPoint("RIGHT", content, "RIGHT", -15, 0)
+    dungeonInfo:SetJustifyH("LEFT")
+    dungeonInfo:SetText("Role-based marks are auto-assigned\nto the Tank and Healer in your M+ group.\n\nCustom Targets are only available in Raid.")
+    if ns.GUI.SetFont then ns.GUI:SetFont(dungeonInfo, 10, "") end
+
+    -- Test button at bottom
+    local bottomY = math.min(leftY, rightY) - 20
+    local testBtn = GUI:CreateButton(content, "Test 'Set Marks' Button", 170, 26, function()
+        if not ns.PlayerMarks then return end
+        -- Force-show without group check for testing
+        local btn = ns.PlayerMarks._createButton and ns.PlayerMarks._createButton()
+        if not btn then
+            -- Fallback: just show via normal path
+            ns.PlayerMarks.ShowMarkButton()
+            return
+        end
+        if InCombatLockdown() then
+            print("|cFF30D1FF[GravityUI]|r Cannot show in combat.")
+            return
+        end
+        btn:SetAttribute("macrotext", "/run print('|cFF30D1FF[GravityUI]|r Player Marks test — would set marks here!')")
+        btn:ClearAllPoints()
+        btn:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
+        btn:Show()
+    end)
+    testBtn:SetPoint("TOPLEFT", 10, bottomY)
+
+    content:SetHeight(math.abs(bottomY) + 50)
+end
+
+--==============================================================================================================================================================================================
 -- PAGE REGISTRATION
 --==============================================================================================================================================================================================
 ns.GUI:RegisterPage("features", {
@@ -954,6 +1242,7 @@ ns.GUI:RegisterPage("features", {
         { name = "World Marks",         builder = BuildWorldMarks },
         { name = "Mail",                builder = BuildMailExtras },
         { name = "Guildtools",          builder = BuildTools },
+        { name = "Player Marks",        builder = BuildPlayerMarks },
         { name = "Interrupt Tracker",   builder = BuildInterruptTracker },
         { name = "Gravity Alt Manager", builder = BuildAltManager },
         { name = "Frame Mover",         builder = BuildFrameMover },
