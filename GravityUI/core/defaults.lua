@@ -1413,7 +1413,10 @@ ns.Defaults = {
         onlyRaidDungeon = false,
         useClassColor = true,
         textColor = { 1, 1, 1, 1 },
-        spellsToTrack = {}
+        spellsToTrack = {},
+        freeMovementAlert = true,
+        freeMovementSound = false,
+        freeMovementSoundFile = "Move",
     },
     char = {
         lfgRole_tank = false,

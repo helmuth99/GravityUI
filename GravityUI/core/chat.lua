@@ -728,21 +728,6 @@ local function RegisterMessageFilter()
         ChatFrame_AddMessageEventFilter(ev, Filter)
     end
 
-    -- World channel abbreviation filter (Trade, General, Services, LFG, etc.)
-    -- Modifies the channel display name in the event args BEFORE WoW's formatter
-    -- builds the channel prefix.  All arg access is wrapped in pcall because
-    -- some event args may be secret strings in WoW 12.x.
-    -- NOTE: Group channels (Party/Raid/Guild) are NOT abbreviated — their
-    -- CHAT_*_GET format strings are protected globals in 12.x.
-    ChatFrame_AddMessageEventFilter("CHAT_MSG_CHANNEL", function(_, _, msg, sender, lang, channelString, target, flags, unknown, channelNumber, channelBaseName, ...)
-        if not _abbrevOn then return end
-        if type(channelNumber) ~= "number" then return end
-        local abbr = WORLD_CHANNEL_ABBR[tostring(channelNumber)]
-        if abbr then
-            return false, msg, sender, lang, abbr, target, flags, unknown, channelNumber, abbr, ...
-        end
-    end)
-
     -- WHISPER_INFORM (outgoing whispers) taint workaround:
     -- The message text is a Blizzard-protected secret string inside the filter chain.
     -- gsub on it silently fails (Blizzard internally pcalls all filters).
@@ -800,11 +785,11 @@ local function RegisterMessageFilter()
 end
 
 -- Text transform pipeline — called from the message filter for every chat line.
--- NOTE: AbbreviateChannelText is NOT here — channel prefix is added by WoW
--- AFTER the filter runs, so we intercept at AddMessage instead (see below).
 function HookTransformText(text)
     if not text or type(text) ~= "string" then return text end
-    return MakeURLsClickable(text)
+    local ok, result = pcall(MakeURLsClickable, text)
+    if ok and result then return result end
+    return text
 end
 
 -- Per-frame hook: registers the URL and channel-abbreviation message filters.

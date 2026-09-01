@@ -456,7 +456,7 @@ local TRACKED_CURRENCY_IDS = {
     3310, -- Coffer Key Shards
     3028, -- Restored Coffer Key
     3356, -- Untainted Mana-Crystals
-    3513, -- Nebulous Voidcore
+    3418, -- Nebulous Voidcore
 }
 
 local CURRENCY_METADATA = {
@@ -470,7 +470,7 @@ local CURRENCY_METADATA = {
     [3310] = { useTotalEarned = false, type = "delve" },
     [3028] = { useTotalEarned = false, type = "delve" },
     [3356] = { useTotalEarned = false, type = "delve" },
-    [3513] = { useTotalEarned = true, type = "bonusroll" },
+    [3418] = { useTotalEarned = false, type = "bonusroll" },
 }
 
 function Data:GetTrackedCurrencyIDs()

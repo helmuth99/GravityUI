@@ -80,6 +80,61 @@ for _, entry in ipairs(MOVEMENT_PRESETS) do
     for _, id in ipairs(entry.ids) do PRESET_IDS[id] = true end
 end
 
+-------------------------------------------------------------------------------
+--  FREE MOVEMENT BUFFS (Evoker Time Spiral, Spatial Paradox)
+-------------------------------------------------------------------------------
+local FREE_MOVEMENT_BUFFS = {
+    { id = 375226, label = "FREE MOVEMENT" },    -- Time Spiral buff
+    { id = 374968, label = "FREE MOVEMENT" },    -- Time Spiral spell aura fallback
+    { id = 406732, label = "SPATIAL PARADOX" },  -- Spatial Paradox
+    { id = 406789, label = "SPATIAL PARADOX" },  -- Spatial Paradox fallback
+    { id = 443328, label = "SPATIAL PARADOX" },  -- Spatial Paradox (PvP / Hero)
+}
+
+local testAlertExpiration = 0
+local lastActiveBuffID = nil
+
+local function PlayAlertSound(soundName, channel)
+    channel = channel or "Master"
+    local LSM = LibStub and LibStub("LibSharedMedia-3.0", true)
+    local soundPath = LSM and LSM:Fetch("sound", soundName)
+    if soundPath and soundPath ~= "" then
+        PlaySoundFile(soundPath, channel)
+    else
+        PlaySound(SOUNDKIT.RAID_WARNING or 8959, channel)
+    end
+end
+
+local function GetActiveFreeMovementBuff()
+    local now = GetTime()
+    if testAlertExpiration > now then
+        return { label = "FREE MOVEMENT", id = 375226 }, testAlertExpiration - now
+    end
+    if not C_UnitAuras or not C_UnitAuras.GetPlayerAuraBySpellID then return nil end
+    for _, buff in ipairs(FREE_MOVEMENT_BUFFS) do
+        local aura = C_UnitAuras.GetPlayerAuraBySpellID(buff.id)
+        if aura then
+            if aura.expirationTime and aura.expirationTime > now then
+                return buff, aura.expirationTime - now
+            elseif not aura.expirationTime or aura.expirationTime == 0 then
+                return buff, aura.duration or 10
+            end
+        end
+    end
+    return nil
+end
+
+function CooldownText:TestFreeMovementAlert(duration)
+    duration = duration or 6
+    testAlertExpiration = GetTime() + duration
+    if mainContainer and not mainContainer:IsShown() then mainContainer:Show() end
+    if DB and DB.freeMovementSound ~= false then
+        PlayAlertSound(DB.freeMovementSoundFile or "Notice")
+    end
+    self:StartTicker()
+    self:UpdateCooldowns()
+end
+
 -- Check if a preset spell is enabled (respects DB overrides + defaults)
 local function SpellIsEnabled(spellID)
     if DB and DB.spellOverrides then
@@ -119,16 +174,30 @@ local function GetSettings()
                 y = 18,
                 fontSize = 20,
                 spacing = 4,
-                tickInterval = 0.2,
+                tickInterval = 0.1,
                 growDirection = "DOWN",
                 onlyRaidDungeon = false,
-                spellsToTrack = {}
+                useClassColor = true,
+                textColor = { 1, 1, 1, 1 },
+                spellsToTrack = {},
+                freeMovementAlert = true,
+                freeMovementSound = true,
+                freeMovementSoundFile = "Notice",
             }
         end
         
         -- Fallback check for missing spell tracking specifically (e.g. older versions)
         if not mainDB.cooldownText.spellsToTrack then
             mainDB.cooldownText.spellsToTrack = {}
+        end
+        if mainDB.cooldownText.freeMovementAlert == nil then
+            mainDB.cooldownText.freeMovementAlert = true
+        end
+        if mainDB.cooldownText.freeMovementSound == nil then
+            mainDB.cooldownText.freeMovementSound = true
+        end
+        if not mainDB.cooldownText.freeMovementSoundFile then
+            mainDB.cooldownText.freeMovementSoundFile = "Notice"
         end
         
         DB = mainDB.cooldownText
@@ -143,10 +212,15 @@ local function GetSettings()
             y = 18,
             fontSize = 20,
             spacing = 4,
-            tickInterval = 0.2,
+            tickInterval = 0.1,
             growDirection = "DOWN",
             onlyRaidDungeon = false,
-            spellsToTrack = {}
+            useClassColor = true,
+            textColor = { 1, 1, 1, 1 },
+            spellsToTrack = {},
+            freeMovementAlert = true,
+            freeMovementSound = true,
+            freeMovementSoundFile = "Notice",
         }
     end
     DB = ns.cooldownTextFallback
@@ -243,13 +317,13 @@ function CooldownText:Initialize()
         end
     end
 
-    if #trackedList == 0 and ticker then 
+    if #trackedList == 0 and not (DB and DB.freeMovementAlert) and ticker then 
         ticker:Cancel() 
         ticker = nil 
     end
 
     self:Refresh()
-    if #trackedList > 0 then
+    if #trackedList > 0 or (DB and DB.freeMovementAlert) then
         self:StartTicker()
     end
     self:UpdateCooldowns()
@@ -266,6 +340,11 @@ function CooldownText:CreateBaseFrames()
     mainContainer:SetClampedToScreen(true)
     -- Visibility is handled by Initialize/Refresh
 
+    if not self.alertFS then
+        local alertFS = mainContainer:CreateFontString(nil, "OVERLAY")
+        self.alertFS = alertFS
+    end
+
     if ns.Movers and ns.Movers.Register then
         ns.Movers:Register("CooldownText", mainContainer, function(frame, enabled, force) CooldownText:ToggleMover(force) end, "Cooldown Tracker")
     end
@@ -277,11 +356,16 @@ function CooldownText:CreateBaseFrames()
     -- Zone change: update instance cache cheaply
     self.frame:RegisterEvent("PLAYER_ENTERING_WORLD")
     self.frame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
+    self.frame:RegisterUnitEvent("UNIT_AURA", "player")
     -- NOTE: SPELL_UPDATE_COOLDOWN is intentionally NOT registered here.
-    -- The ticker handles updates at a controlled rate (default 0.2s) to avoid
+    -- The ticker handles updates at a controlled rate (default 0.1s) to avoid
     -- the event-storm caused by rapid GCD/cooldown fires during combat.
-    self.frame:SetScript("OnEvent", function(selfFrame, event)
-        if event == "PLAYER_ENTERING_WORLD" or event == "ZONE_CHANGED_NEW_AREA" then
+    self.frame:SetScript("OnEvent", function(selfFrame, event, unit)
+        if event == "UNIT_AURA" then
+            if DB and DB.freeMovementAlert then
+                self:UpdateCooldowns()
+            end
+        elseif event == "PLAYER_ENTERING_WORLD" or event == "ZONE_CHANGED_NEW_AREA" then
             UpdateInstanceCache()
             C_Timer.After(0.5, function() self:Initialize() end)
         else
@@ -303,6 +387,22 @@ function CooldownText:Refresh()
     local growDir = DB.growDirection or "DOWN"
     local anchorPoint = (growDir == "DOWN") and "TOP" or "BOTTOM"
     local modifier = (growDir == "DOWN") and -1 or 1
+
+    -- Setup Free Movement Alert FontString
+    if not self.alertFS then
+        self.alertFS = mainContainer:CreateFontString(nil, "OVERLAY")
+    end
+    self.alertFS:SetFont(fontPath, (DB.fontSize or 20) + 2, "OUTLINE")
+    self.alertFS:SetJustifyH("CENTER")
+    self.alertFS:ClearAllPoints()
+    if growDir == "DOWN" then
+        self.alertFS:SetPoint("BOTTOM", mainContainer, "TOP", 0, 6)
+    else
+        self.alertFS:SetPoint("TOP", mainContainer, "BOTTOM", 0, -6)
+    end
+    if not isMoverShown then
+        self.alertFS:SetText("")
+    end
 
     local r, g, b, a = 1, 1, 1, 1
     if DB.useClassColor ~= false then
@@ -357,6 +457,40 @@ function CooldownText:UpdateCooldowns()
     
     local shouldHideAll = DB.onlyRaidDungeon and not cachedIsInDungeonOrRaid
 
+    -- 1. Free Movement Alert (Evoker Time Spiral / Spatial Paradox)
+    if DB.freeMovementAlert ~= false and self.alertFS then
+        local activeBuff, remaining = GetActiveFreeMovementBuff()
+        if activeBuff and remaining and remaining > 0 then
+            -- High-visibility pulsing animation between vibrant Cyan and pure White
+            local pulse = (math.sin(GetTime() * 10) + 1) * 0.5
+            local r = 0.0 + (1.0 - 0.0) * pulse
+            local g = 0.85 + (1.0 - 0.85) * pulse
+            local b = 1.0
+            self.alertFS:SetTextColor(r, g, b, 1)
+            self.alertFS:SetText(strformat("%s: %.1fs", activeBuff.label, remaining))
+            self.alertFS:Show()
+
+            if lastActiveBuffID ~= activeBuff.id then
+                lastActiveBuffID = activeBuff.id
+                if DB.freeMovementSound ~= false then
+                    PlayAlertSound(DB.freeMovementSoundFile or "Notice")
+                end
+            end
+        else
+            if lastActiveBuffID then
+                lastActiveBuffID = nil
+            end
+            if not isMoverShown then
+                self.alertFS:SetText("")
+                self.alertFS:Hide()
+            end
+        end
+    elseif self.alertFS and not isMoverShown then
+        self.alertFS:SetText("")
+        self.alertFS:Hide()
+    end
+
+    -- 2. Tracked Cooldowns
     for i, spellObj in ipairs(trackedList) do
         local fs = self.fsPool[i]
         if fs then
@@ -382,7 +516,7 @@ function CooldownText:StartTicker()
     if ticker then
         ticker:Cancel()
     end
-    local interval = DB.tickInterval or 0.2
+    local interval = DB.tickInterval or 0.1
     ticker = C_Timer.NewTicker(interval, function() self:UpdateCooldowns() end)
 end
 
@@ -436,6 +570,12 @@ function CooldownText:ToggleMover(forceState)
         moverFrame:Show()
         moverFrame:EnableMouse(true)
 
+        if self.alertFS and DB.freeMovementAlert ~= false then
+            self.alertFS:SetTextColor(0, 0.9, 1, 1)
+            self.alertFS:SetText("FREE MOVEMENT: 8.5s")
+            self.alertFS:Show()
+        end
+
         self.fsPool = self.fsPool or {}
         if not self.fsPool[1] then
             local fs = mainContainer:CreateFontString(nil, "OVERLAY")
@@ -472,6 +612,10 @@ function CooldownText:ToggleMover(forceState)
         moverFrame:Hide()
         moverFrame:EnableMouse(false)
         mainContainer:EnableMouse(false)
+        if self.alertFS then
+            self.alertFS:SetText("")
+            self.alertFS:Hide()
+        end
         if ns.Movers and ns.Movers.ApplyEditModeStyle then
             ns.Movers:ApplyEditModeStyle(mainContainer, false, "CooldownText")
         end
@@ -574,6 +718,56 @@ function CooldownText.AddOptions(parent)
     end)
     btnMover:SetPoint("TOPLEFT", 10, yOffset)
     yOffset = yOffset - 50
+
+    -----------------------------------------------------
+    -- MOVEMENT ALERT (Evoker Time Spiral & Spatial Paradox)
+    -----------------------------------------------------
+    local alertHeader = GUI:CreateSectionHeader(content, "Movement Alert (Evoker)")
+    alertHeader:SetPoint("TOPLEFT", 10, yOffset)
+    alertHeader:SetPoint("RIGHT", content, "RIGHT", -10, 0)
+    yOffset = yOffset - 35
+
+    local alertInfo = GUI:CreateInfoBox(content, "Displays a prominent pulsing 'FREE MOVEMENT' alert with a live countdown timer whenever an Evoker casts Time Spiral (free major movement ability) or Spatial Paradox.")
+    alertInfo:SetPoint("TOPLEFT", 10, yOffset)
+    alertInfo:SetPoint("RIGHT", content, "RIGHT", -10, 0)
+    yOffset = yOffset - (alertInfo:GetHeight() + 10)
+
+    local chkAlert = GUI:CreateCheckbox(content, "Enable Free Movement Alert", "freeMovementAlert", DB, RefreshSettings)
+    chkAlert:SetPoint("TOPLEFT", 10, yOffset)
+    yOffset = yOffset - 30
+
+    local chkSound = GUI:CreateCheckbox(content, "Play Sound on Movement Alert", "freeMovementSound", DB, RefreshSettings)
+    chkSound:SetPoint("TOPLEFT", 10, yOffset)
+    yOffset = yOffset - 30
+
+    local soundOptions = {
+        { value = "Notice", text = "Notice", previewFunc = function(s) PlayAlertSound(s) end },
+        { value = "Warning", text = "Warning", previewFunc = function(s) PlayAlertSound(s) end },
+        { value = "Sound\\Interface\\RaidWarning.ogg", text = "Raid Warning", previewFunc = function(s) PlayAlertSound(s) end },
+        { value = "Sound\\Interface\\ReadyCheck.ogg", text = "Ready Check", previewFunc = function(s) PlayAlertSound(s) end },
+    }
+    local LSM = LibStub and LibStub("LibSharedMedia-3.0", true)
+    if LSM then
+        soundOptions = {}
+        for name, _ in pairs(LSM:HashTable("sound")) do
+            table.insert(soundOptions, { value = name, text = name, previewFunc = function(s) PlayAlertSound(s) end })
+        end
+        table.sort(soundOptions, function(a, b) return a.text < b.text end)
+    end
+
+    local sndLabel = content:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    sndLabel:SetText("Alert Sound:")
+    sndLabel:SetPoint("TOPLEFT", 15, yOffset - 5)
+    local ddSound = GUI:CreateDropdown(content, "", soundOptions, "freeMovementSoundFile", DB, RefreshSettings)
+    ddSound:SetPoint("LEFT", sndLabel, "RIGHT", 15, 0)
+    if ddSound.dropdown then ddSound.dropdown:SetWidth(150) end
+    yOffset = yOffset - 35
+
+    local btnTestAlert = GUI:CreateButton(content, "Test Movement Alert", 160, 26, function()
+        ns.CooldownText:TestFreeMovementAlert(5)
+    end)
+    btnTestAlert:SetPoint("TOPLEFT", 10, yOffset)
+    yOffset = yOffset - 45
 
     -----------------------------------------------------
     -- PRESET MOVEMENT ABILITIES
@@ -730,4 +924,12 @@ function CooldownText.AddOptions(parent)
     end
     
     content.RenderTrackedList()
+end
+
+SLASH_GRAVITYMOVEMENT1 = "/gravitymovement"
+SLASH_GRAVITYMOVEMENT2 = "/guimovement"
+SlashCmdList["GRAVITYMOVEMENT"] = function()
+    if ns.CooldownText and ns.CooldownText.TestFreeMovementAlert then
+        ns.CooldownText:TestFreeMovementAlert(6)
+    end
 end
