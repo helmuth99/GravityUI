@@ -1044,7 +1044,22 @@ local function BuildPlayerMarks(parent)
         playerCount = playerCount + 1
     end
 
+    -- Clean up stale player marks (players no longer in raid)
     if IsInRaid() then
+        local currentNames = {}
+        for i = 1, GetNumGroupMembers() do
+            local u = "raid" .. i
+            if UnitExists(u) then
+                local n = UnitName(u)
+                if n then currentNames[n] = true end
+            end
+        end
+        for savedName, _ in pairs(pdb.raid.players) do
+            if not currentNames[savedName] then
+                pdb.raid.players[savedName] = nil
+            end
+        end
+        -- Build rows
         for i = 1, GetNumGroupMembers() do
             local unit = "raid" .. i
             if UnitExists(unit) and not UnitIsUnit(unit, "player") then
@@ -1071,6 +1086,15 @@ local function BuildPlayerMarks(parent)
         BuildPlayerMarks(parent)
     end)
     refreshBtn:SetPoint("TOPLEFT", 10, leftY - 5)
+
+    -- Clear All Marks button (raid only — M+ role marks are persistent)
+    local clearBtn = GUI:CreateButton(content, "Clear All Marks", 120, 22, function()
+        wipe(pdb.raid.players)
+        wipe(pdb.raid.customTargets)
+        print("|cFF30D1FF[GravityUI]|r Raid player marks and custom targets cleared.")
+        BuildPlayerMarks(parent)
+    end)
+    clearBtn:SetPoint("LEFT", refreshBtn, "RIGHT", 8, 0)
     leftY = leftY - 35
 
     -- Custom Targets section

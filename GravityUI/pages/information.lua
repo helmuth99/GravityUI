@@ -231,7 +231,7 @@ local function BuildInformationTab(parent)
 
     local changeLogs = {
         {
-            version = "4.01.15",
+            version = "4.01.17",
             date = "09/01/2026",
             changes = {
                 "[NEW] Player Marks: Assign raid target icons to players via Ready Check. Supports per-role marks in M+ dungeons (Tank/Healer) and individual player assignments in raids with custom boss/NPC targets. Uses SecureActionButton macros with post-click verification and chat feedback.",
