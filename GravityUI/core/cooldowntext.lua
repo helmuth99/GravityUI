@@ -91,6 +91,7 @@ local FREE_MOVEMENT_BUFFS = {
     { id = 443328, label = "SPATIAL PARADOX" },  -- Spatial Paradox (PvP / Hero)
 }
 
+local TEST_ALERT_BUFF = { label = "FREE MOVEMENT", id = 375226 }
 local testAlertExpiration = 0
 local lastActiveBuffID = nil
 
@@ -108,7 +109,7 @@ end
 local function GetActiveFreeMovementBuff()
     local now = GetTime()
     if testAlertExpiration > now then
-        return { label = "FREE MOVEMENT", id = 375226 }, testAlertExpiration - now
+        return TEST_ALERT_BUFF, testAlertExpiration - now
     end
     if not C_UnitAuras or not C_UnitAuras.GetPlayerAuraBySpellID then return nil end
     for _, buff in ipairs(FREE_MOVEMENT_BUFFS) do
