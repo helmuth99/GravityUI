@@ -5,7 +5,7 @@ ns.ADDON_NAME = ADDON_NAME
 -- NOTE: C_AddOns.GetAddOnMetadata returns a 'secret' value in TWW+ that
 -- cannot be concatenated, tostring'd, or examined.  Embed the packager
 -- token directly instead — CurseForge replaces it at release time.
-ns.VERSION = "v4.01.14"
+ns.VERSION = "@project-version@"
 
 -- Expose namespace globally
 _G.GravityUI = ns
