@@ -80,9 +80,26 @@ local function BuildMacro()
     local assignments = {} -- { { name = "X", mark = 6 }, ... }
 
     if IsInRaid() then
-        -- Raid: Player-specific marks (only set, not clear — too many players)
+        -- Raid: Player-specific marks (only for active raid members, only set when mark > 0)
+        local currentRaidNames = {}
+        local numRaid = GetNumGroupMembers()
+        for i = 1, numRaid do
+            local u = "raid" .. i
+            if UnitExists(u) then
+                local n = UnitName(u)
+                if n then currentRaidNames[n] = true end
+            end
+        end
+
+        -- Clean up players who are no longer in the raid
+        for savedName in pairs(pdb.raid.players) do
+            if not currentRaidNames[savedName] then
+                pdb.raid.players[savedName] = nil
+            end
+        end
+
         for playerName, markIndex in pairs(pdb.raid.players) do
-            if markIndex and markIndex > 0 then
+            if markIndex and markIndex > 0 and currentRaidNames[playerName] then
                 macro = macro .. "/target " .. playerName .. "\n/tm " .. markIndex .. "\n"
                 assignments[#assignments + 1] = { name = playerName, mark = markIndex }
             end
@@ -95,17 +112,25 @@ local function BuildMacro()
             end
         end
     else
-        -- M+ / Follower Dungeon: Role-based
-        local numMembers = GetNumGroupMembers()
-        for i = 1, numMembers do
-            local unit = IsInRaid() and ("raid" .. i) or ("party" .. i)
-            if UnitExists(unit) and not UnitIsUnit(unit, "player") then
+        -- M+ / Follower Dungeon: Role-based (include player and all party members)
+        -- Only assign when mark > 0 (None / 0 does nothing and does NOT clear existing marks)
+        local units = { "player" }
+        local numSub = GetNumSubgroupMembers()
+        for i = 1, numSub do
+            units[#units + 1] = "party" .. i
+        end
+
+        for _, unit in ipairs(units) do
+            if UnitExists(unit) then
                 local role = UnitGroupRolesAssigned(unit)
                 local name = UnitName(unit)
                 local mark = pdb.dungeon[role]
-                if mark ~= nil and name then
-                    -- mark 0 = clear, mark > 0 = set
-                    macro = macro .. "/target " .. name .. "\n/tm " .. mark .. "\n"
+                if mark and mark > 0 and name then
+                    if UnitIsUnit(unit, "player") then
+                        macro = macro .. "/target player\n/tm " .. mark .. "\n"
+                    else
+                        macro = macro .. "/target " .. name .. "\n/tm " .. mark .. "\n"
+                    end
                     assignments[#assignments + 1] = { name = name, mark = mark }
                 end
             end
@@ -197,10 +222,14 @@ local function CreateMarkButton()
                         end
                     end
                 else
-                    for i = 1, GetNumGroupMembers() do
-                        local u = "party" .. i
-                        if UnitExists(u) and UnitName(u) == a.name then
-                            unitID = u; break
+                    if UnitName("player") == a.name then
+                        unitID = "player"
+                    else
+                        for i = 1, GetNumSubgroupMembers() do
+                            local u = "party" .. i
+                            if UnitExists(u) and UnitName(u) == a.name then
+                                unitID = u; break
+                            end
                         end
                     end
                 end
@@ -296,12 +325,36 @@ eventFrame:SetScript("OnEvent", function(_, event)
         if markButton and markButton:IsShown() then
             HideMarkButton()
         end
+    elseif event == "GROUP_ROSTER_UPDATE" then
+        local pdb = GetDB()
+        if pdb and pdb.raid and pdb.raid.players then
+            if not IsInRaid() then
+                -- Leaving a raid resets temporary player marks
+                wipe(pdb.raid.players)
+            else
+                -- In raid: clean up players who left
+                local currentNames = {}
+                for i = 1, GetNumGroupMembers() do
+                    local u = "raid" .. i
+                    if UnitExists(u) then
+                        local n = UnitName(u)
+                        if n then currentNames[n] = true end
+                    end
+                end
+                for savedName in pairs(pdb.raid.players) do
+                    if not currentNames[savedName] then
+                        pdb.raid.players[savedName] = nil
+                    end
+                end
+            end
+        end
     end
 end)
 
 eventFrame:RegisterEvent("READY_CHECK")
 eventFrame:RegisterEvent("READY_CHECK_FINISHED")
 eventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
+eventFrame:RegisterEvent("GROUP_ROSTER_UPDATE")
 
 -- ============================================================================
 -- MANUAL TRIGGER (slash command or button in settings)

@@ -54,7 +54,10 @@ local SPEC_COOLDOWN_OVERRIDES = {} -- [spellID] = { [specID] = cd }
 
 local SPELL_ALIASES = {
     [1276467] = 132409, -- Fel Ravager summon -> Spell Lock extra bar
-    [89766] = 119914,   -- Felguard Axe Toss (pet) -> Axe Toss (player)
+    [89766]   = 119914, -- Felguard Axe Toss (pet) -> Axe Toss (player)
+    [119898]  = 19647,  -- Command Demon (Spell Lock) -> Spell Lock
+    [171138]  = 19647,  -- Grimoire Felhunter (Spell Lock) -> Spell Lock
+    [420090]  = 96231,  -- NPC Rebuke -> Rebuke
 }
 -- Specs that have NO interrupt at all (healer specs that can't kick)
 local SPEC_NO_INTERRUPT = {
@@ -359,17 +362,28 @@ end
 -- Call detection immediately
 DetectElvUI()
 
+local function GetSafeClassColor(class)
+    if not class then return nil end
+    if C_ClassColor and C_ClassColor.GetClassColor then
+        local ok, col = pcall(C_ClassColor.GetClassColor, class)
+        if ok and col and col.r then return col end
+    end
+    if issecretvalue and issecretvalue(class) then return nil end
+    if type(class) == "string" and RAID_CLASS_COLORS and RAID_CLASS_COLORS[class] then
+        return RAID_CLASS_COLORS[class]
+    end
+    return nil
+end
+
 local function StyleBar(f, class)
     local s = GetSettings()
     if not s then return end
-    
-    -- Safety for NPCs/Invalid Class
-    if not class or not RAID_CLASS_COLORS[class] then class = "PRIEST" end
     
     local width = s.width or 200
     local height = s.height or 20
     
     f:SetSize(width, height)
+    f.bar:SetSize(width, height)
     
     -- Texture
     local texture = "Interface\\TargetingFrame\\UI-StatusBar"
@@ -394,22 +408,31 @@ local function StyleBar(f, class)
     f.name:SetFont(font, size, flags)
     f.time:SetFont(font, size, flags)
     
-    -- Layout
+    -- Layout: Icon & Text Anchors
     f.icon:ClearAllPoints()
     f.icon:SetSize(height, height)
-    f.icon:SetPoint("RIGHT", f, "LEFT", 0, 0)
+    f.icon:SetPoint("RIGHT", f.bar, "LEFT", 0, 0)
+    if s.showIcon ~= false then
+        f.icon:Show()
+    else
+        f.icon:Hide()
+    end
     
     f.name:ClearAllPoints()
     f.name:SetPoint("LEFT", f.bar, "LEFT", 4, 0)
+    f.name:SetPoint("RIGHT", f.time, "LEFT", -4, 0)
+    f.name:Show()
     
     f.time:ClearAllPoints()
     f.time:SetPoint("RIGHT", f.bar, "RIGHT", -4, 0)
+    f.time:Show()
     
+    local classCol = GetSafeClassColor(class)
+
     -- Colors: Background (Bar BG)
     local bgr, bgg, bgb, bga = 0, 0, 0, 0.5
-    if s.useClassColorBackdrop and class and RAID_CLASS_COLORS[class] then
-        local c = RAID_CLASS_COLORS[class]
-        bgr, bgg, bgb, bga = c.r, c.g, c.b, 0.5
+    if s.useClassColorBackdrop and classCol then
+        bgr, bgg, bgb, bga = classCol.r, classCol.g, classCol.b, 0.5
     elseif s.useThemeBackdropColor and ns.GetThemeBgColor then
          bgr, bgg, bgb, bga = ns.GetThemeBgColor()
     elseif s.backdropColor then
@@ -420,9 +443,8 @@ local function StyleBar(f, class)
     
     -- Colors: Bar
     local r, g, b, a = 1, 1, 1, 1
-    if s.useClassColor and class and RAID_CLASS_COLORS[class] then
-        local c = RAID_CLASS_COLORS[class]
-        r, g, b, a = c.r, c.g, c.b, 1
+    if s.useClassColor and classCol then
+        r, g, b, a = classCol.r, classCol.g, classCol.b, 1
     elseif s.useThemeBarColor and ns.GetAccentColor then
         r, g, b, a = ns.GetAccentColor()
     else
@@ -433,9 +455,8 @@ local function StyleBar(f, class)
     
     -- Colors: Text (Name)
     local tr, tg, tb, ta = 1, 1, 1, 1
-    if s.useClassColorText and class and RAID_CLASS_COLORS[class] then
-        local c = RAID_CLASS_COLORS[class]
-        tr, tg, tb, ta = c.r, c.g, c.b, 1
+    if s.useClassColorText and classCol then
+        tr, tg, tb, ta = classCol.r, classCol.g, classCol.b, 1
     elseif s.useThemeFontColor and ns.GetAccentColor then
         tr, tg, tb, ta = ns.GetAccentColor()
     else
@@ -479,6 +500,23 @@ local function GetBar()
     return f
 end
 
+local function ClearActiveBar(key)
+    local info = activeBars[key]
+    if info then
+        if info.frame then
+            info.frame:Hide()
+        end
+        ReleaseInfo(info)
+        activeBars[key] = nil
+    end
+end
+
+local function ClearAllActiveBars()
+    for key in pairs(activeBars) do
+        ClearActiveBar(key)
+    end
+end
+
 local function UpdateLayout()
     if not container then return end
     local s = GetSettings()
@@ -511,8 +549,14 @@ local function UpdateLayout()
              return aExp < bExp
         end
         
-        -- Tie-breaker: sort alphabetically by name
-        return a.name < b.name
+        -- Tie-breaker: safe name/pointer comparison
+        local aNameOk, aName = pcall(tostring, a.name)
+        local bNameOk, bName = pcall(tostring, b.name)
+        if aNameOk and bNameOk and not (issecretvalue and (issecretvalue(aName) or issecretvalue(bName))) then
+            local cmpOk, res = pcall(function() return aName < bName end)
+            if cmpOk then return res end
+        end
+        return tostring(a) < tostring(b)
     end)
     
     local barCount = #sortedBars
@@ -628,41 +672,47 @@ local updateFrame = CreateFrame("Frame", "GravityUI_InterruptTrackerUpdate", UIP
 updateFrame:Hide()
 updateFrame:SetScript("OnUpdate", OnUpdate)
 
--- ============================================================================
--- LOGIC
--- ============================================================================
-
+-- ===============================================================
 local function StartCooldown(guid, name, class, spellId, isReady, isTest)
     local s = GetSettings()
     if not s or not s.enabled then return end
     if not isTest and not IsTrackerAllowed() then return end
     
-    local baseCD = INTERRUPTS[spellId]
-    if not baseCD then return end
+    local baseCD = (spellId and INTERRUPTS[spellId]) or 15
     
-    -- Apply Spec-Specific Cooldown Override
-    if activeSpecs[guid] and SPEC_COOLDOWN_OVERRIDES[spellId] and SPEC_COOLDOWN_OVERRIDES[spellId][activeSpecs[guid]] then
-        baseCD = SPEC_COOLDOWN_OVERRIDES[spellId][activeSpecs[guid]]
+    -- Apply Spec-Specific Cooldown Override (guarded against secret GUID)
+    local spec = nil
+    if guid and not (issecretvalue and issecretvalue(guid)) then
+        spec = activeSpecs[guid]
     end
-    
-    -- print("GravityUI Debug: StartCooldown", name, spellId, isReady)
+    if spec and spellId and SPEC_COOLDOWN_OVERRIDES[spellId] and SPEC_COOLDOWN_OVERRIDES[spellId][spec] then
+        baseCD = SPEC_COOLDOWN_OVERRIDES[spellId][spec]
+    end
 
-    -- Check duplicates (Key-based mapping for O(1) and guaranteed uniqueness)
-    -- TAINT FIX: guid from UnitGUID can be a secret string; pcall the concat
-    local keyOk, key = pcall(function() return guid .. spellId end)
-    if not keyOk then return end
-    local info = activeBars[key]
+    -- Clean name for persistent keying
+    local cleanName = nil
+    if name and not (issecretvalue and issecretvalue(name)) then
+        cleanName = Ambiguate(name, "none")
+    end
+
+    -- Check duplicates: by character name (guarantees strictly 1 bar per player)
+    local info = cleanName and activeBars[cleanName]
     
     if info then
         -- Refresh existing bar
         if not isReady then
+            local now = GetTime()
+            -- Dedup: ignore duplicate kick events within 0.5s of cooldown start
+            if info.duration > 0 and (info.expiration - now) > (baseCD - 0.5) then
+                return
+            end
             local duration = baseCD
-            info.expiration = GetTime() + duration
+            info.expiration = now + duration
             info.duration = duration
             
             -- Update Text
             info.frame.time:SetText(string.format("%.1f", duration))
-             -- Reset Color to CD Color
+            -- Reset Color to CD Color
             local r, g, b, a = 1, 1, 1, 1
             if s.useSpecificCooldownColor and s.cooldownTextColor then
                 local c = s.cooldownTextColor
@@ -692,21 +742,26 @@ local function StartCooldown(guid, name, class, spellId, isReady, isTest)
         return
     end
     
+    -- If no cleanName could be resolved, do not create unkeyed orphan bars
+    if not cleanName then return end
+
     -- Create new
     local f = GetBar()
     
-    -- TAINT FIX: C_Spell can return secrets under taint
-    local snOk, spellName = pcall(C_Spell.GetSpellName, spellId)
-    if not snOk or (issecretvalue and issecretvalue(spellName)) then spellName = nil end
-    local siOk, spellIcon = pcall(C_Spell.GetSpellTexture, spellId)
-    if not siOk or (issecretvalue and issecretvalue(spellIcon)) then spellIcon = nil end
+    local spellIcon = nil
+    if spellId and not (issecretvalue and issecretvalue(spellId)) then
+        local siOk, icon = pcall(C_Spell.GetSpellTexture, spellId)
+        if siOk and icon then spellIcon = icon end
+    end
+    if not spellIcon then
+        spellIcon = C_Spell.GetSpellTexture(1766)
+    end
     
     -- Apply styling with class info
     StyleBar(f, class)
     
     f.icon:SetTexture(spellIcon)
-    -- TAINT FIX: name from UnitName can be secret
-    pcall(f.name.SetText, f.name, name)
+    pcall(f.name.SetText, f.name, cleanName)
     
     local duration = 0
     local expiration = 0
@@ -724,13 +779,11 @@ local function StartCooldown(guid, name, class, spellId, isReady, isTest)
         f.bar:SetValue(1)
     end
     
-    local info = AcquireInfo(guid, name, class, spellId, duration, expiration, f)
-    activeBars[key] = info
+    local newInfo = AcquireInfo(guid, cleanName, class, spellId or 1766, duration, expiration, f)
+    activeBars[cleanName] = newInfo
     
     updateFrame:Show() -- Ensure OnUpdate is running
     UpdateLayout()
-    
-    -- (Say Kick Logic Removed)
 end
 
 
@@ -744,11 +797,6 @@ local function HandlePartyCast(memberName, spellID)
     if not entry then return end
     local cd = INTERRUPTS[spellID] or entry.baseCd or 15
     local guid = entry.guid
-
-    -- Apply Spec Override (e.g. Resto Shaman Wind Shear: 30s instead of 12s)
-    if guid and activeSpecs[guid] and SPEC_COOLDOWN_OVERRIDES[spellID] then
-        cd = SPEC_COOLDOWN_OVERRIDES[spellID][activeSpecs[guid]] or cd
-    end
 
     local now = GetTime()
     entry.cdEnd = now + cd
@@ -918,81 +966,89 @@ local function OwnKick(spellID)
     end
 end
 
+-- ============================================================================
+-- NAMEPLATE INTERRUPT EVENT HANDLER (MiniAura-proven pattern, 12.x / Midnight compatible)
+-- ============================================================================
+-- Decodes the interrupter from stop-event payloads (MiniAura pattern).
+-- Returns: interruptedBy (GUID), interruptedSpellId
+local function GetInterrupter(event, ...)
+    if event == "UNIT_SPELLCAST_INTERRUPTED" or event == "UNIT_SPELLCAST_CHANNEL_STOP" then
+        local _, _, spellId, interruptedBy = ...
+        return interruptedBy, spellId
+    elseif event == "UNIT_SPELLCAST_EMPOWER_STOP" then
+        local _, _, spellId, _, interruptedBy = ...
+        return interruptedBy, spellId
+    end
+    return nil, nil
+end
+
+local NAMEPLATE_PREFIX = "^nameplate"
+local REPEAT_WINDOW = 0.5   -- Dedup: same mob within 0.5s (engine fires per-token)
+local OWN_CAST_WINDOW = 0.5 -- Match own kick to mob interrupt within 0.5s
+local lastRecordedAt = {}    -- [unitToken] = timestamp
+local lastPartyCastTime = {} -- [unitToken] = timestamp
+
 local _playerFrame = CreateFrame("Frame")
 local _interruptFrame = CreateFrame("Frame")
 local _framesEnabled = false
 
 local function PlayerFrame_OnEvent(_, _, unit, _, spellID)
-    if unit == "pet" then
-        -- Pet spellID may be tainted ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â try resolving via alias
-        if spellID and not (issecretvalue and issecretvalue(spellID)) then
-            OwnKick(spellID)
-        end
-        return
+    if not spellID or not IsTrackerAllowed() then return end
+    if unit == "player" or unit == "pet" then
+        if issecretvalue and issecretvalue(spellID) then return end
+        local normalizedID = SPELL_ALIASES[spellID] or spellID
+        if not INTERRUPTS[normalizedID] then return end
+        OwnKick(normalizedID)
     end
-    -- Player: untainted ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ fast path
-    OwnKick(spellID)
 end
 
--- ============================================================================
--- NAMEPLATE INTERRUPT EVENT HANDLER (MiniAura-proven pattern)
--- Detects interrupts on nameplate units and attributes to the kicker via
--- UnitNameFromGUID. No UNIT_SPELLCAST_SUCCEEDED for party needed.
--- ============================================================================
-local function InterruptFrame_OnEvent(_, event, unit, ...)
+local function InterruptFrame_OnEvent(self, event, unit, arg2, arg3, arg4, arg5)
     local s = GetSettings()
     if not s or not s.enabled or not IsTrackerAllowed() then return end
 
-    -- Only process nameplate units (byte(1)==110 = 'n')
-    if not unit or unit:byte(1) ~= 110 then return end
+    local interruptedBy
+    if event == "UNIT_SPELLCAST_INTERRUPTED" or event == "UNIT_SPELLCAST_CHANNEL_STOP" then
+        interruptedBy = arg4
+    elseif event == "UNIT_SPELLCAST_EMPOWER_STOP" then
+        interruptedBy = arg5
+    end
 
-    -- Decode the interrupter from the event payload
-    local interruptedBy, interruptSpellId = GetInterrupter(event, ...)
-
-    -- interruptedBy: nil = natural cast end, secret/readable = someone interrupted
-    if not interruptedBy then return end
-    -- NOTE: interruptedBy is often SECRET in WoW 12.x, but UnitNameFromGUID()
-    -- can still resolve it. We use pcall to safely handle any taint errors.
-
-    -- Only process enemy nameplates
+    if interruptedBy == nil then return end
+    if not unit or unit:sub(1, 9) ~= "nameplate" then return end
     if not UnitCanAttack("player", unit) then return end
 
-    -- Dedup: same mob within REPEAT_WINDOW (engine fires per-token for same interrupt)
     local now = GetTime()
     local last = lastRecordedAt[unit]
     if last and (now - last) <= REPEAT_WINDOW then return end
     lastRecordedAt[unit] = now
 
-    -- Own kick? (already handled by OwnKick via PlayerFrame)
-    if InterruptTracker._pendingOwnKickAt and
-       (now - InterruptTracker._pendingOwnKickAt) <= OWN_CAST_WINDOW then
-        InterruptTracker._pendingOwnKickAt = nil  -- consume
+    -- Check if player kicked (handled by OwnKick via PlayerFrame)
+    if InterruptTracker._pendingOwnKickAt and (now - InterruptTracker._pendingOwnKickAt) <= OWN_CAST_WINDOW then
+        InterruptTracker._pendingOwnKickAt = nil
         return
     end
 
-    -- === Kicker Attribution ===
-
-    -- Tier 1: Resolve name from GUID (works even on secret GUIDs per ExBoss pattern)
-    local ok, kickerName = pcall(UnitNameFromGUID, interruptedBy)
-    if ok and kickerName and not (issecretvalue and issecretvalue(kickerName)) then
-        local entry = partyRegistry[kickerName]
-        if entry and entry.spellID then
-            HandlePartyCast(kickerName, entry.spellID)
-            InvalidateAllyKickCache()
-            return
+    -- Ally kick: Find candidate from party members who currently have their kick Ready
+    local readyCandidate, readyEntry = nil, nil
+    for memberName, entry in pairs(partyRegistry) do
+        local barInfo = activeBars[memberName]
+        if barInfo and (barInfo.duration == 0 or now >= barInfo.expiration) then
+            readyCandidate = memberName
+            readyEntry = entry
+            break
         end
     end
 
-    -- Tier 2: Single candidate inference (only 1 party member has kick off-CD)
-    local inferredName, inferredSpellID = InferAllyKick()
-    if inferredName and inferredSpellID then
-        HandlePartyCast(inferredName, inferredSpellID)
-        InvalidateAllyKickCache()
+    if readyCandidate and readyEntry then
+        StartCooldown(readyEntry.guid, readyCandidate, readyEntry.class, readyEntry.spellID)
         return
     end
 
-    -- Tier 3: Unattributable — silently ignore.
-    -- GRV_INT addon messages provide exact attribution for other GravityUI users.
+    -- Fallback: If all were on cooldown, refresh the first party member's cooldown
+    for memberName, entry in pairs(partyRegistry) do
+        StartCooldown(entry.guid, memberName, entry.class, entry.spellID)
+        break
+    end
 end
 
 local function EnableTrackerFrames()
@@ -1001,7 +1057,6 @@ local function EnableTrackerFrames()
     _playerFrame:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player", "pet")
 
     _interruptFrame:SetScript("OnEvent", InterruptFrame_OnEvent)
-    -- MiniAura pattern: listen for stop events on ALL units (filtered to nameplates in handler)
     _interruptFrame:RegisterEvent("UNIT_SPELLCAST_INTERRUPTED")
     _interruptFrame:RegisterEvent("UNIT_SPELLCAST_CHANNEL_STOP")
     _interruptFrame:RegisterEvent("UNIT_SPELLCAST_EMPOWER_STOP")
@@ -1232,15 +1287,18 @@ local function OnGroupRosterUpdate()
     -- Build partyRegistry for new members
     AutoRegisterPartyByClass()
 
-    local members = {}
+    local currentPartyNames = {}
     
     local function HandleMember(unit)
         if not UnitExists(unit) then return end
         
-        local ok, guid = pcall(UnitGUID, unit)
-        if not ok or not guid then return end
+        local name = UnitName(unit)
+        if not name then return end
+        local cleanName = Ambiguate(name, "none")
+        currentPartyNames[cleanName] = true
         
-        members[guid] = true
+        local ok, guid = pcall(UnitGUID, unit)
+        if not ok or not guid then guid = cleanName end
         
         -- Queue Inspect (Dynamic CD)
         if not UnitIsUnit(unit, "player") then
@@ -1252,37 +1310,38 @@ local function OnGroupRosterUpdate()
         local role = UnitGroupRolesAssigned(unit)
         
         -- Skip healers that aren't shamans (they usually don't have interrupts by default)
-        -- Filter 1: Explicit LFG healer role
-        if role == "HEALER" and not HEALER_KEEPS_KICK[class] then return end
+        if role == "HEALER" and not HEALER_KEEPS_KICK[class] then
+            if activeBars[cleanName] then ClearActiveBar(cleanName) end
+            return
+        end
         
-        -- Filter 2: Spec-based check (catches healers with role "NONE", e.g. manually formed groups)
-        local specID = activeSpecs[guid] or (GetInspectSpecialization and UnitExists(unit) and GetInspectSpecialization(unit))
+        -- Spec-based check
+        local specID = (guid and not (issecretvalue and issecretvalue(guid)) and activeSpecs[guid]) or (GetInspectSpecialization and UnitExists(unit) and GetInspectSpecialization(unit))
         if specID and specID > 0 then
-            if SPEC_NO_INTERRUPT[specID] then return end
+            if SPEC_NO_INTERRUPT[specID] then
+                if activeBars[cleanName] then ClearActiveBar(cleanName) end
+                return
+            end
         else
-            -- Spec not yet known: if a player CAN be a healer and role is NONE/unknown, skip until spec is confirmed
             if UnitIsPlayer(unit) and (not role or role == "NONE") and HEALER_CAPABLE_CLASS[class] then return end
         end
         
         -- Priority: Spec-specific interrupt > Class interrupt
         local interruptID = CLASS_INTERRUPTS[class]
-        if activeSpecs[guid] and SPEC_INTERRUPTS[activeSpecs[guid]] then
-            interruptID = SPEC_INTERRUPTS[activeSpecs[guid]]
+        if specID and SPEC_INTERRUPTS[specID] then
+            interruptID = SPEC_INTERRUPTS[specID]
         end
         
         if interruptID then
-            -- Check if bar exists
-            local found = false
-            for key, info in pairs(activeBars) do
-                if info.guid == guid and info.spellId == interruptID then
-                    found = true
-                    break
-                end
-            end
-            
-            if not found then
-                 local name = UnitName(unit)
-                 StartCooldown(guid, name, class, interruptID, true) -- Force Ready State
+            if activeBars[cleanName] then
+                -- Already exists: update class & spellId and re-style
+                local info = activeBars[cleanName]
+                info.class = class
+                info.spellId = interruptID
+                info.guid = guid
+                StyleBar(info.frame, class)
+            else
+                StartCooldown(guid, cleanName, class, interruptID, true) -- Force Ready State
             end
         end
     end
@@ -1297,17 +1356,15 @@ local function OnGroupRosterUpdate()
     HandleMember("player")
     
     -- Clean up removed members (activeBars + partyRegistry)
-    for key, info in pairs(activeBars) do
-        if not members[info.guid] and not testModeActive then
+    for key in pairs(activeBars) do
+        if not currentPartyNames[key] and not testModeActive then
              ClearActiveBar(key)
         end
     end
     for name in pairs(partyRegistry) do
-        local found = false
-        for i = 1, 4 do
-            if UnitExists("party"..i) and UnitName("party"..i) == name then found = true; break end
+        if not currentPartyNames[name] then
+            partyRegistry[name] = nil
         end
-        if not found then partyRegistry[name] = nil end
     end
     
     UpdateLayout()
