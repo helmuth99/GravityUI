@@ -202,12 +202,6 @@ local function SkinButton(button, settings)
         local nt = button:GetNormalTexture()
         if nt then
             nt:SetAlpha(0)
-            -- TAINT FIX: Blizzard's UpdateButtonArt() re-shows the NormalTexture
-            -- on every bar art refresh. Hook OnShow to keep it hidden permanently.
-            if not nt._guiHideHooked then
-                nt:HookScript("OnShow", function(self) self:SetAlpha(0) end)
-                nt._guiHideHooked = true
-            end
         end
         
         local icon = button.icon or button.Icon
@@ -1117,45 +1111,18 @@ end
 -- Events: ACTIONBAR_UPDATE_USABLE, SPELL_UPDATE_USABLE, UNIT_POWER_UPDATE handle this efficiently.
 
 ---------------------------------------------------------------------------
--- TAINT-SAFE MIXIN HOOKS (SAB pattern)
+-- ANTI-TAINT PROTOCOL (Retail WoW / Midnight)
 ---------------------------------------------------------------------------
--- hooksecurefunc on Mixin methods is taint-safe: the hook runs AFTER
--- Blizzard's own protected call, inheriting Blizzard's secure execution
--- context. This replaces the C_Timer.After-based in-combat refresh that
--- tainted the ActionBarController chain.
+-- NEVER hooksecurefunc methods on ActionBarActionButtonMixin,
+-- PetActionButtonMixin, or StanceButtonMixin.
+-- In Retail WoW, modifying mixin tables marks the entire mixin as tainted.
+-- When ActionBarButtonEventsFrame dispatches events (ACTIONBAR_UPDATE_COOLDOWN),
+-- the tainted mixin propagates to the event handler, causing SetCooldown()
+-- to reject secret numbers with:
+-- "bad argument #1 to 'SetCooldown' (Secret values are only allowed during untainted execution)"
+-- All styling (fonts, keybind formatting, textures) is instead applied
+-- purely out-of-combat via event-driven RefreshActionBars() / RequestRefresh().
 
-local function ReapplyButtonStyle(button)
-    if not button or not button._guiStripped then return end
-    local db = GetDB()
-    if not db or not db.enabled or not db.global then return end
-    UpdateButtonText(button, db.global)
-
-    -- Re-hide NormalTexture that Blizzard's UpdateButtonArt may have re-shown
-    local nt = button.GetNormalTexture and button:GetNormalTexture()
-    if nt then nt:SetAlpha(0) end
-
-    -- Re-apply icon zoom (Blizzard's Update resets TexCoords)
-    local icon = button.icon or button.Icon
-    if icon then
-        local zoom = 0.07
-        icon:SetTexCoord(zoom, 1 - zoom, zoom, 1 - zoom)
-    end
-end
-
-if ActionBarActionButtonMixin then
-    if type(ActionBarActionButtonMixin.Update) == "function" then
-        hooksecurefunc(ActionBarActionButtonMixin, "Update", ReapplyButtonStyle)
-    end
-    if type(ActionBarActionButtonMixin.UpdateHotkeys) == "function" then
-        hooksecurefunc(ActionBarActionButtonMixin, "UpdateHotkeys", ReapplyButtonStyle)
-    end
-end
-if PetActionButtonMixin and type(PetActionButtonMixin.Update) == "function" then
-    hooksecurefunc(PetActionButtonMixin, "Update", ReapplyButtonStyle)
-end
-if StanceButtonMixin and type(StanceButtonMixin.Update) == "function" then
-    hooksecurefunc(StanceButtonMixin, "Update", ReapplyButtonStyle)
-end
 
 
 local initFrame = CreateFrame("Frame")

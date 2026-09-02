@@ -202,7 +202,7 @@ local function CreateMarkButton()
         -- Permission warning
         if IsInRaid() and not UnitIsGroupLeader("player") and not UnitIsGroupAssistant("player") then
             print("|cFF30D1FF[GravityUI]|r |cFFFF4444Marks failed:|r You need Raid Leader or Assistant to set marks in raid.")
-            btn:Hide()
+            HideMarkButton()
             return
         end
 
@@ -260,7 +260,7 @@ local function CreateMarkButton()
                     end
                 end
             end
-            btn:Hide()
+            HideMarkButton()
         end)
     end
 
@@ -281,6 +281,7 @@ local function ShowMarkButton()
     local pdb = GetDB()
     if not pdb or not pdb.enabled then return end
     if not CanSetMarks() then return end
+    if InCombatLockdown() then return end
 
     -- Build macro
     local macro, assignments = BuildMacro()
@@ -288,7 +289,7 @@ local function ShowMarkButton()
 
     local btn = CreateMarkButton()
 
-    -- Can only set attributes out of combat
+    -- Can only set attributes and show out of combat
     if InCombatLockdown() then return end
 
     btn:SetAttribute("macrotext", macro)
@@ -303,13 +304,28 @@ local function ShowMarkButton()
         btn:SetPoint("CENTER", UIParent, "CENTER", 0, -100)
     end
 
+    btn:SetAlpha(1)
     btn:Show()
 end
 
-local function HideMarkButton()
-    if markButton then
-        markButton:Hide()
+HideMarkButton = function()
+    if not markButton then return end
+    if InCombatLockdown() then
+        -- TAINT FIX: Cannot call Hide() on a protected SecureActionButton during combat lockdown.
+        -- Visually hide immediately via SetAlpha(0) (safe C-API) and queue actual Hide() for OOC.
+        markButton:SetAlpha(0)
+        if ns.QueueOOCAction then
+            ns.QueueOOCAction(function()
+                if markButton then
+                    markButton:Hide()
+                    markButton:SetAlpha(1)
+                end
+            end)
+        end
+        return
     end
+    markButton:SetAlpha(1)
+    markButton:Hide()
 end
 
 eventFrame:SetScript("OnEvent", function(_, event)
@@ -320,6 +336,9 @@ eventFrame:SetScript("OnEvent", function(_, event)
         C_Timer.After(2, function()
             HideMarkButton()
         end)
+    elseif event == "PLAYER_REGEN_DISABLED" then
+        -- Entering combat: immediately suppress mark button
+        HideMarkButton()
     elseif event == "PLAYER_REGEN_ENABLED" then
         -- Re-check if button should be hidden after combat
         if markButton and markButton:IsShown() then
@@ -353,6 +372,7 @@ end)
 
 eventFrame:RegisterEvent("READY_CHECK")
 eventFrame:RegisterEvent("READY_CHECK_FINISHED")
+eventFrame:RegisterEvent("PLAYER_REGEN_DISABLED")
 eventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
 eventFrame:RegisterEvent("GROUP_ROSTER_UPDATE")
 
