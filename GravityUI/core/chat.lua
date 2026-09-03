@@ -1446,16 +1446,18 @@ local function StyleEditBox(chatFrame)
         -- Blizzard calls AddHistoryLine on the editbox when text is submitted.
         -- Hook the INSTANCE method (not global SendChatMessage) to stay taint-safe.
         hooksecurefunc(editBox, "AddHistoryLine", function(self, text)
-            if not text or #text == 0 then return end
-            -- Skip secure slash commands to avoid ADDON_ACTION_FORBIDDEN on re-send
-            local cmd = text:match("^%s*(/%S+)")
-            if cmd and IsSecureCmd and IsSecureCmd(cmd) then return end
-            local h = self._guiHistData.history
-            -- Store oldest-first (newest entry at end)
-            if h[#h] ~= text then
-                h[#h + 1] = text
-                if #h > 50 then table.remove(h, 1) end
-            end
+            pcall(function()
+                if not text or type(text) ~= "string" or #text == 0 then return end
+                -- Skip secure slash commands to avoid ADDON_ACTION_FORBIDDEN on re-send
+                local cmd = text:match("^%s*(/%S+)")
+                if cmd and IsSecureCmd and IsSecureCmd(cmd) then return end
+                local h = self._guiHistData.history
+                -- Store oldest-first (newest entry at end)
+                if h[#h] ~= text then
+                    h[#h + 1] = text
+                    if #h > 50 then table.remove(h, 1) end
+                end
+            end)
         end)
 
         -- Up/Down: navigate history (only plain arrow, not Alt+arrow)

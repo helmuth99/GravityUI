@@ -72,6 +72,17 @@ local function GetDB()
 end
 
 local buttonCache = {}
+local buttonData = setmetatable({}, { __mode = "k" })
+
+local function GetButtonData(btn)
+    if not btn then return nil end
+    local data = buttonData[btn]
+    if not data then
+        data = {}
+        buttonData[btn] = data
+    end
+    return data
+end
 
 local function GetBarButtons(barKey)
     if buttonCache[barKey] then return buttonCache[barKey] end
@@ -113,7 +124,8 @@ local function SetBarFrameAlpha(barKey, alpha)
         local buttons = GetBarButtons(barKey)
         for i = 1, #buttons do
             local btn = buttons[i]
-            if not btn._guiHiddenEmpty then
+            local bData = GetButtonData(btn)
+            if not (bData and bData.hiddenEmpty) then
                 btn:SetAlpha(alpha)
             end
         end
@@ -127,6 +139,7 @@ end
 
 local function SetSafeButtonAlpha(btn, barKey, alpha)
     -- Used only for per-button visibility (empty slot hiding).
+    if PROTECTED_BAR_FRAMES[barKey] and InCombatLockdown() then return end
     btn:SetAlpha(alpha)
 end
 
@@ -156,9 +169,7 @@ local function RequestRefresh()
         if InCombatLockdown() then
             -- Lightweight in-combat refresh: only update non-protected bars.
             -- TAINT FIX: Protected bars (bar1-8) must NOT be touched from
-            -- addon code during combat. Their text/visibility state is managed
-            -- by Blizzard's own Update cycle; our hooksecurefunc on the Mixin
-            -- methods handles re-styling after each Blizzard update.
+            -- addon code during combat.
             local db = GetDB()
             if db and db.enabled and db.global then
                 local g = db.global
@@ -196,9 +207,10 @@ end
 ---------------------------------------------------------------------------
 local function SkinButton(button, settings)
     if not button or not settings then return end
+    local bData = GetButtonData(button)
     
     -- Strip Blizzard Artwork
-    if not button._guiStripped then
+    if not bData.stripped then
         local nt = button:GetNormalTexture()
         if nt then
             nt:SetAlpha(0)
@@ -210,53 +222,75 @@ local function SkinButton(button, settings)
             icon:SetTexCoord(zoom, 1 - zoom, zoom, 1 - zoom)
             icon:SetAllPoints(button)
         end
-        button._guiStripped = true
+        bData.stripped = true
     end
 
     -- Backdrop
     if settings.showBackdrop then
-        if not button._guiBackdrop then
-            button._guiBackdrop = button:CreateTexture(nil, "BACKGROUND", nil, -8)
-            button._guiBackdrop:SetColorTexture(0, 0, 0, 1)
-            button._guiBackdrop:SetAllPoints(button)
+        if not bData.backdrop then
+            bData.backdrop = button:CreateTexture(nil, "BACKGROUND", nil, -8)
+            bData.backdrop:SetColorTexture(0, 0, 0, 1)
+            bData.backdrop:SetAllPoints(button)
         end
-        button._guiBackdropBaseAlpha = settings.backdropAlpha or 0.8
-        button._guiBackdrop:SetAlpha(button._guiBackdropBaseAlpha)
-        button._guiBackdrop:Show()
-    elseif button._guiBackdrop then
-        button._guiBackdrop:Hide()
+        bData.backdropBaseAlpha = settings.backdropAlpha or 0.8
+        bData.backdrop:SetAlpha(bData.backdropBaseAlpha)
+        bData.backdrop:Show()
+    elseif bData.backdrop then
+        bData.backdrop:Hide()
     end
 
     -- Borders
     if settings.showBorders then
-        if not button._guiNormal then
+        if not bData.borderNormal then
             -- Use BORDER layer (always below OVERLAY where HotKey/Count FontStrings live).
             -- sublayer 7 keeps it on top of BACKGROUND/backdrop but under all OVERLAY text.
-            button._guiNormal = button:CreateTexture(nil, "BORDER", nil, 7)
-            button._guiNormal:SetTexture(TEXTURES.normal)
-            button._guiNormal:SetVertexColor(0, 0, 0, 1)
-            button._guiNormal:SetAllPoints(button)
+            bData.borderNormal = button:CreateTexture(nil, "BORDER", nil, 7)
+            bData.borderNormal:SetTexture(TEXTURES.normal)
+            bData.borderNormal:SetVertexColor(0, 0, 0, 1)
+            bData.borderNormal:SetAllPoints(button)
         end
-        button._guiNormal:Show()
-    elseif button._guiNormal then
-        button._guiNormal:Hide()
+        bData.borderNormal:Show()
+    elseif bData.borderNormal then
+        bData.borderNormal:Hide()
     end
 
     -- Gloss
     if settings.showGloss then
-        if not button._guiGloss then
+        if not bData.gloss then
             -- OVERLAY sublayer -1: above icon (ARTWORK) but below HotKey/Count text (OVERLAY 0+)
-            button._guiGloss = button:CreateTexture(nil, "OVERLAY", nil, -1)
-            button._guiGloss:SetTexture(TEXTURES.gloss)
-            button._guiGloss:SetBlendMode("ADD")
-            button._guiGloss:SetAllPoints(button)
+            bData.gloss = button:CreateTexture(nil, "OVERLAY", nil, -1)
+            bData.gloss:SetTexture(TEXTURES.gloss)
+            bData.gloss:SetBlendMode("ADD")
+            bData.gloss:SetAllPoints(button)
         end
-        button._guiGloss:SetVertexColor(1, 1, 1, settings.glossAlpha or 0.6)
-        button._guiGloss:Show()
-    elseif button._guiGloss then
-        button._guiGloss:Hide()
+        bData.gloss:SetVertexColor(1, 1, 1, settings.glossAlpha or 0.6)
+        bData.gloss:Show()
+    elseif bData.gloss then
+        bData.gloss:Hide()
     end
 end
+
+local function UnskinButton(button)
+    if not button then return end
+    local bData = buttonData[button]
+    if not bData then return end
+    if bData.stripped then
+        local icon = button.icon or button.Icon
+        if icon then icon:SetTexCoord(0, 1, 0, 1); icon:SetAllPoints(button) end
+        local nt = button:GetNormalTexture()
+        if nt then nt:SetAlpha(1) end
+        bData.stripped = nil
+    end
+    if bData.backdrop then bData.backdrop:Hide() end
+    if bData.borderNormal then bData.borderNormal:Hide() end
+    if bData.gloss then bData.gloss:Hide() end
+    if bData.tinted then
+        local icon = button.icon or button.Icon
+        if icon then icon:SetVertexColor(1, 1, 1, 1); icon:SetDesaturated(false) end
+        bData.tinted = nil
+    end
+end
+ns.UnskinButton = UnskinButton
 
 ---------------------------------------------------------------------------
 -- TEXT STYLING
@@ -372,46 +406,19 @@ UpdateButtonText = function(button, settings)
         end
     end
 end
-local hoveredElements = {}
 
-local function OnElementEnter(self)
-    local barKey = self._guiBarKey
-    if barKey then
-        hoveredElements[barKey] = (hoveredElements[barKey] or 0) + 1
-    end
-    -- PERF: Force 20Hz on next tick for responsive fade-in
-    if fadeFrame then fadeFrame._settled = false end
-end
-
-local function OnElementLeave(self)
-    local barKey = self._guiBarKey
-    if barKey then
-        hoveredElements[barKey] = math.max(0, (hoveredElements[barKey] or 0) - 1)
-    end
-    -- PERF: Force 20Hz on next tick for responsive fade-out
-    if fadeFrame then fadeFrame._settled = false end
-end
-
-local function HookBarElement(frame, barKey)
-    if not frame or frame._guiHoverHooked then return end
-    -- HookScript on buttons for OnEnter/OnLeave is safe — the hook callbacks
-    -- only increment/decrement a Lua counter. They do NOT modify button state,
-    -- so there is no taint propagation. This matches SAB's proven pattern.
-    -- (The real taint was from UpdateButtonText during combat, now fixed.)
-    frame._guiBarKey = barKey
-    frame:HookScript("OnEnter", OnElementEnter)
-    frame:HookScript("OnLeave", OnElementLeave)
-    frame._guiHoverHooked = true
-end
-
+---------------------------------------------------------------------------
+-- HOVER DETECTION (Hook-Free / Taint-Proof)
+---------------------------------------------------------------------------
 local function IsMouseOverBar(barKey)
-    -- O(1) event-driven check — populated by HookScript on ALL bars.
-    if hoveredElements[barKey] and hoveredElements[barKey] > 0 then return true end
-    -- Fallback: MouseIsOver() for bars without individual button hooks
-    -- (microbar, bags) whose container frames don't fire OnEnter.
-    if not BAR_BUTTONS[barKey] then
-        local frame = _G[BAR_FRAMES[barKey]]
-        if frame and frame:IsVisible() and frame:IsMouseOver() then return true end
+    local frameName = BAR_FRAMES[barKey]
+    local frame = frameName and _G[frameName]
+    if frame and frame:IsVisible() and frame:IsMouseOver() then
+        return true
+    end
+    -- Fallback for bar1: MainActionBar is the EditMode visual/mouse frame
+    if barKey == "bar1" and MainActionBar and MainActionBar:IsVisible() and MainActionBar:IsMouseOver() then
+        return true
     end
     return false
 end
@@ -442,8 +449,6 @@ end
 local function UpdateFade(self, elapsed)
     self.elapsed = (self.elapsed or 0) + elapsed
     -- PERF: Adaptive rate — 20Hz during animation, 5Hz when settled.
-    -- Hover detection is now fully event-driven (HookScript on all bars),
-    -- so we only need the ticker for smooth fade interpolation.
     local threshold = self._settled and 0.2 or 0.05
     if self.elapsed < threshold then return end
     
@@ -575,15 +580,17 @@ end
 -- USABILITY INDICATORS
 ---------------------------------------------------------------------------
 local function UpdateButtonUsability(button, settings)
+    if InCombatLockdown() then return end
     if not button.action then return end
     local icon = button.icon or button.Icon
     if not icon then return end
+    local bData = GetButtonData(button)
 
     if not settings.usabilityIndicator then
-        if button._guiTinted then
+        if bData.tinted then
             icon:SetVertexColor(1, 1, 1, 1)
             icon:SetDesaturated(false)
-            button._guiTinted = nil
+            bData.tinted = nil
         end
         return
     end
@@ -594,7 +601,7 @@ local function UpdateButtonUsability(button, settings)
 
         if not isUsable then
             -- Performance: Only call API if state actually changed (prevents Blizzard overlay cascade)
-            if button._guiTinted ~= "unusable" then
+            if bData.tinted ~= "unusable" then
                 if settings.usabilityDesaturate then
                     icon:SetDesaturated(true)
                     icon:SetVertexColor(0.6, 0.6, 0.6, 1)
@@ -602,30 +609,29 @@ local function UpdateButtonUsability(button, settings)
                     icon:SetDesaturated(false)
                     icon:SetVertexColor(0.4, 0.4, 0.4, 1)
                 end
-                button._guiTinted = "unusable"
+                bData.tinted = "unusable"
             end
             return
         end
     end
 
     -- Normal: Only reset if we were previously tinted
-    if button._guiTinted then
+    if bData.tinted then
         icon:SetVertexColor(1, 1, 1, 1)
         icon:SetDesaturated(false)
-        button._guiTinted = nil
+        bData.tinted = nil
     end
 end
 
 UpdateEmptySlotVisibility = function(button, settings, barKey)
     -- TAINT FIX: Never modify protected action buttons during combat.
-    -- Reading button.action and calling HasAction() from addon code in combat
-    -- taints the execution context, causing ADDON_ACTION_BLOCKED downstream.
     if PROTECTED_BAR_FRAMES[barKey] and InCombatLockdown() then return end
+    local bData = GetButtonData(button)
 
     if not settings or not settings.hideEmptySlots then
-        if button._guiHiddenEmpty then
+        if bData.hiddenEmpty then
             SetSafeButtonAlpha(button, barKey, 1)
-            button._guiHiddenEmpty = nil
+            bData.hiddenEmpty = nil
         end
         return
     end
@@ -636,14 +642,14 @@ UpdateEmptySlotVisibility = function(button, settings, barKey)
         local hasAction = HasAction(action)
         if hasAction then
             SetSafeButtonAlpha(button, barKey, 1)
-            button._guiHiddenEmpty = nil
+            bData.hiddenEmpty = nil
         else
             SetSafeButtonAlpha(button, barKey, 0)
-            button._guiHiddenEmpty = true
+            bData.hiddenEmpty = true
         end
-    elseif button._guiHiddenEmpty then
+    elseif bData.hiddenEmpty then
         SetSafeButtonAlpha(button, barKey, 1)
-        button._guiHiddenEmpty = nil
+        bData.hiddenEmpty = nil
     end
 end
 
@@ -664,12 +670,16 @@ function ActionBars.UpdateAllUsability()
     local db = GetDB()
     if not db or not db.enabled then return end
     local g = db.global
+    local inCombat = InCombatLockdown()
     
     for barKey, _ in pairs(BAR_BUTTONS) do
-        local buttons = GetBarButtons(barKey)
-        for _, btn in ipairs(buttons) do
-            if btn:IsVisible() then
-                UpdateButtonUsability(btn, g)
+        -- TAINT FIX: Never touch protected bars during combat lockdown
+        if not (inCombat and PROTECTED_BAR_FRAMES[barKey]) then
+            local buttons = GetBarButtons(barKey)
+            for _, btn in ipairs(buttons) do
+                if btn:IsVisible() then
+                    UpdateButtonUsability(btn, g)
+                end
             end
         end
     end
@@ -802,19 +812,20 @@ end
 -- Adds or updates the keybind label on the zone ability button
 local function UpdateZoneAbilityKeybindText(spellBtn, keyText)
     if not spellBtn then return end
+    local bData = GetButtonData(spellBtn)
     -- Create FontString if it doesn't exist yet
-    if not spellBtn._guiHotKey then
-        spellBtn._guiHotKey = spellBtn:CreateFontString(nil, "OVERLAY")
-        spellBtn._guiHotKey:SetFont("Fonts/FRIZQT__.TTF", 12, "OUTLINE")
-        spellBtn._guiHotKey:SetTextColor(1, 1, 1, 1)
-        spellBtn._guiHotKey:SetPoint("TOPRIGHT", spellBtn, "TOPRIGHT", 0, -2)
+    if not bData.hotkey then
+        bData.hotkey = spellBtn:CreateFontString(nil, "OVERLAY")
+        bData.hotkey:SetFont("Fonts/FRIZQT__.TTF", 12, "OUTLINE")
+        bData.hotkey:SetTextColor(1, 1, 1, 1)
+        bData.hotkey:SetPoint("TOPRIGHT", spellBtn, "TOPRIGHT", 0, -2)
     end
     if keyText and keyText ~= "" then
-        spellBtn._guiHotKey:SetText(keyText)
-        spellBtn._guiHotKey:Show()
+        bData.hotkey:SetText(keyText)
+        bData.hotkey:Show()
     else
-        spellBtn._guiHotKey:SetText("")
-        spellBtn._guiHotKey:Hide()
+        bData.hotkey:SetText("")
+        bData.hotkey:Hide()
     end
 end
 
@@ -933,6 +944,15 @@ function ns.RefreshActionBars()
     local db = GetDB()
     if not db then return end
 
+    if InCombatLockdown() then
+        ns.QueueOOCAction(function()
+            if ns.RefreshActionBars then
+                ns.RefreshActionBars()
+            end
+        end)
+        return
+    end
+
     -- Flush Cache
     buttonCache = {}
     RefreshBarMetadata()
@@ -943,26 +963,26 @@ function ns.RefreshActionBars()
         for barKey, _ in pairs(BAR_BUTTONS) do
             local buttons = GetBarButtons(barKey)
             for _, btn in ipairs(buttons) do
-                if btn._guiStripped then
+                local bData = GetButtonData(btn)
+                if bData.stripped then
                     local icon = btn.icon or btn.Icon
                     if icon then
                         icon:SetTexCoord(0, 1, 0, 1)
                         icon:SetAllPoints(btn)
                     end
                 end
-                if btn._guiBackdrop then btn._guiBackdrop:Hide() end
-                if btn._guiNormal then btn._guiNormal:Hide() end
-                if btn._guiGloss then btn._guiGloss:Hide() end
+                if bData.backdrop then bData.backdrop:Hide() end
+                if bData.normal then bData.normal:Hide() end
+                if bData.gloss then bData.gloss:Hide() end
                 
                 local icon = btn.icon or btn.Icon
-                if icon and btn._guiTinted then
+                if icon and bData.tinted then
                     icon:SetVertexColor(1, 1, 1, 1)
                     icon:SetDesaturated(false)
-                    btn._guiTinted = nil
+                    bData.tinted = nil
                 end
                 SetSafeButtonAlpha(btn, barKey, 1)
-                btn._guiFadeAlpha = nil
-                btn._guiHiddenEmpty = nil
+                bData.hiddenEmpty = nil
             end
         end
 
@@ -982,44 +1002,13 @@ function ns.RefreshActionBars()
     -- Apply Global Skinning
     local g = db.global
 
-    -- Hide Empty Slots (Grid Management)
-    -- NOTE: We deliberately do NOT call SetCVar("alwaysShowActionBars") here.
-    -- It synchronously triggers Blizzard's ActionBarController_UpdateAll →
-    -- MultiActionBar_Update → bar:SetShown() → ShowBase(), which is a
-    -- protected function. ANY call to SetCVar from addon code taints this
-    -- chain (even via C_Timer.After or OnUpdate) because the engine still
-    -- considers it addon-initiated.
-    -- Empty-slot visibility is instead handled entirely by GravityUI's own
-    -- UpdateEmptySlotVisibility() which uses SetAlpha(0) on individual buttons.
-    -- This is purely cosmetic and does not require CVar manipulation.
-
+    -- Empty-slot visibility is handled purely cosmetically via UpdateEmptySlotVisibility().
     for barKey, _ in pairs(BAR_BUTTONS) do
-        local frame = _G[BAR_FRAMES[barKey]]
-        if frame then HookBarElement(frame, barKey) end
-        
         local buttons = GetBarButtons(barKey)
         for _, btn in ipairs(buttons) do
             SkinButton(btn, g)
             UpdateButtonText(btn, g)
             UpdateEmptySlotVisibility(btn, g, barKey)
-            HookBarElement(btn, barKey)
-        end
-    end
-
-    -- Hook mouseover for bars that have no buttons in BAR_BUTTONS
-    -- (microbar, bags) — they still need OnEnter/OnLeave for fade detection.
-    for barKey, frameName in pairs(BAR_FRAMES) do
-        if not BAR_BUTTONS[barKey] then
-            local frame = _G[frameName]
-            if frame then
-                HookBarElement(frame, barKey)
-                -- Also hook ALL direct children (micro buttons, bag slots)
-                -- regardless of widget type — some are Frames, not Buttons.
-                local children = { frame:GetChildren() }
-                for _, child in ipairs(children) do
-                    HookBarElement(child, barKey)
-                end
-            end
         end
     end
 
@@ -1055,9 +1044,8 @@ function ns.RefreshActionBars()
     -- Initialize Extra Buttons (cosmetic only, safe in all states)
     if InitializeExtraButtons then InitializeExtraButtons() end
 
-    -- Dominos Skinning (only if both master toggle and Dominos toggle are enabled)
-    if C_AddOns.IsAddOnLoaded("Dominos") and db.skinDominos then
-        local g = db.global
+    -- Dominos Skinning / Un-skinning
+    if C_AddOns.IsAddOnLoaded("Dominos") then
         local dominosPatterns = {
             { prefix = "DominosActionButton",             from = 1,  to = 24  }, -- Bars 1-2
             { prefix = "MultiBarRightActionButton",       from = 1,  to = 12  }, -- Bar 3
@@ -1069,26 +1057,43 @@ function ns.RefreshActionBars()
             { prefix = "MultiBar6ActionButton",           from = 1,  to = 12  }, -- Bar 13
             { prefix = "MultiBar7ActionButton",           from = 1,  to = 12  }, -- Bar 14
         }
-        for _, p in ipairs(dominosPatterns) do
-            for i = p.from, p.to do
-                local btn = _G[p.prefix .. i]
-                if btn then
-                    SkinButton(btn, g)
-                    UpdateButtonText(btn, g)
+        if db.skinDominos then
+            local g = db.global
+            for _, p in ipairs(dominosPatterns) do
+                for i = p.from, p.to do
+                    local btn = _G[p.prefix .. i]
+                    if btn then
+                        SkinButton(btn, g)
+                        UpdateButtonText(btn, g)
+                    end
+                end
+            end
+        else
+            for _, p in ipairs(dominosPatterns) do
+                for i = p.from, p.to do
+                    local btn = _G[p.prefix .. i]
+                    if btn then UnskinButton(btn) end
                 end
             end
         end
     end
 
-    -- Bartender4 Skinning (only if both master toggle and BT4 toggle are enabled)
+    -- Bartender4 Skinning / Un-skinning
     -- BT4 uses simple sequential naming: BT4Button1-120 (10 bars × 12 buttons)
-    if C_AddOns.IsAddOnLoaded("Bartender4") and db.skinBartender4 then
-        local g = db.global
-        for i = 1, 120 do
-            local btn = _G["BT4Button" .. i]
-            if btn then
-                SkinButton(btn, g)
-                UpdateButtonText(btn, g)
+    if C_AddOns.IsAddOnLoaded("Bartender4") then
+        if db.skinBartender4 then
+            local g = db.global
+            for i = 1, 120 do
+                local btn = _G["BT4Button" .. i]
+                if btn then
+                    SkinButton(btn, g)
+                    UpdateButtonText(btn, g)
+                end
+            end
+        else
+            for i = 1, 120 do
+                local btn = _G["BT4Button" .. i]
+                if btn then UnskinButton(btn) end
             end
         end
     end

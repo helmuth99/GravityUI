@@ -37,8 +37,20 @@ local BAG_PATTERNS = {
 }
 
 ---------------------------------------------------------------------------
--- Helpers
+-- Helpers & State
 ---------------------------------------------------------------------------
+
+local tooltipState = {
+    guildAdded = false,
+    serverAdded = false,
+    mountAdded = false,
+}
+
+local function ResetTooltipState()
+    tooltipState.guildAdded = false
+    tooltipState.serverAdded = false
+    tooltipState.mountAdded = false
+end
 
 local function GetSettings()
     local db = ns.GetDB()
@@ -117,13 +129,6 @@ end
 -- Backdrop Styling
 ---------------------------------------------------------------------------
 
-local TOOLTIP_BACKDROP = {
-    bgFile   = "Interface\\Buttons\\WHITE8x8",
-    edgeFile = "Interface\\Buttons\\WHITE8x8",
-    edgeSize = 1,
-    insets   = { left = 1, right = 1, top = 1, bottom = 1 }
-}
-
 -- Skip 3rd-party tooltips that manage their own backdrop (prevents double background).
 -- Walks the parent chain: WQT embeds sub-tooltips (EmbeddedItemTooltip) inside WQT_GameTooltip.
 local function IsThirdPartyTooltip(tt)
@@ -137,26 +142,101 @@ local function IsThirdPartyTooltip(tt)
     return false
 end
 
+local customBackdrops = setmetatable({}, { __mode = "k" })
+
+local function GetCustomBackdrop(tooltip)
+    if not tooltip then return nil end
+    local bd = customBackdrops[tooltip]
+    if not bd then
+        bd = CreateFrame("Frame", nil, tooltip)
+        bd:SetAllPoints(tooltip)
+        bd:SetFrameLevel(math.max(0, tooltip:GetFrameLevel() - 1))
+
+        -- Clean background inside 1px border
+        local bg = bd:CreateTexture(nil, "BACKGROUND", nil, -8)
+        bg:SetPoint("TOPLEFT", bd, "TOPLEFT", 1, -1)
+        bg:SetPoint("BOTTOMRIGHT", bd, "BOTTOMRIGHT", -1, 1)
+        bg:SetColorTexture(0, 0, 0, 0.8)
+        bd.bg = bg
+
+        -- 1px Top Line
+        local top = bd:CreateTexture(nil, "BORDER", nil, 7)
+        top:SetPoint("TOPLEFT", bd, "TOPLEFT", 0, 0)
+        top:SetPoint("TOPRIGHT", bd, "TOPRIGHT", 0, 0)
+        top:SetHeight(1)
+        bd.top = top
+
+        -- 1px Bottom Line
+        local bottom = bd:CreateTexture(nil, "BORDER", nil, 7)
+        bottom:SetPoint("BOTTOMLEFT", bd, "BOTTOMLEFT", 0, 0)
+        bottom:SetPoint("BOTTOMRIGHT", bd, "BOTTOMRIGHT", 0, 0)
+        bottom:SetHeight(1)
+        bd.bottom = bottom
+
+        -- 1px Left Line
+        local left = bd:CreateTexture(nil, "BORDER", nil, 7)
+        left:SetPoint("TOPLEFT", bd, "TOPLEFT", 0, 0)
+        left:SetPoint("BOTTOMLEFT", bd, "BOTTOMLEFT", 0, 0)
+        left:SetWidth(1)
+        bd.left = left
+
+        -- 1px Right Line
+        local right = bd:CreateTexture(nil, "BORDER", nil, 7)
+        right:SetPoint("TOPRIGHT", bd, "TOPRIGHT", 0, 0)
+        right:SetPoint("BOTTOMRIGHT", bd, "BOTTOMRIGHT", 0, 0)
+        right:SetWidth(1)
+        bd.right = right
+
+        customBackdrops[tooltip] = bd
+    end
+    return bd
+end
+
 local function ApplyStyle(tooltip)
-    if not tooltip or tooltip:IsForbidden() then return end
+    if not tooltip or (tooltip.IsForbidden and tooltip:IsForbidden()) then return end
     if InCombatLockdown() then return end
     if IsThirdPartyTooltip(tooltip) then return end
     local settings = GetSettings()
-    if not settings or not settings.enabled or not settings.customStyle then return end
+    if not settings or not settings.enabled then return end
 
-    if tooltip.NineSlice then tooltip.NineSlice:Hide(); tooltip.NineSlice:SetAlpha(0) end
-    if not tooltip.SetBackdrop then Mixin(tooltip, BackdropTemplateMixin) end
+    local bd = customBackdrops[tooltip]
+    if not settings.customStyle then
+        if bd then bd:Hide() end
+        if tooltip.NineSlice then
+            tooltip.NineSlice:Show()
+            tooltip.NineSlice:SetAlpha(1)
+        end
+        return
+    end
+
+    -- Hide Blizzard NineSlice and overlay textures that obscure custom borders
+    if tooltip.NineSlice then
+        tooltip.NineSlice:SetAlpha(0)
+        tooltip.NineSlice:Hide()
+        if tooltip.NineSlice.TopOverlay then tooltip.NineSlice.TopOverlay:SetAlpha(0) end
+        if tooltip.NineSlice.BottomOverlay then tooltip.NineSlice.BottomOverlay:SetAlpha(0) end
+    end
+    if tooltip.TopOverlay then tooltip.TopOverlay:SetAlpha(0) end
+    if tooltip.BottomOverlay then tooltip.BottomOverlay:SetAlpha(0) end
+    if tooltip.Background then tooltip.Background:SetAlpha(0) end
+    if tooltip.Glow then tooltip.Glow:SetAlpha(0) end
 
     local bgR, bgG, bgB = SanitizeColor(settings.bgColor, 0, 0, 0, 1)
     local alpha = tonumber(settings.bgAlpha) or 0.8
     local br, bg_, bb, ba = GetColorFromSettings(settings.useThemeColor, settings.borderColor)
 
-    local ok = pcall(function() tooltip:SetBackdrop(TOOLTIP_BACKDROP) end)
-    if ok then
-        pcall(function()
-            tooltip:SetBackdropColor(bgR, bgG, bgB, alpha)
-            tooltip:SetBackdropBorderColor(br, bg_, bb, ba)
-        end)
+    bd = GetCustomBackdrop(tooltip)
+    if bd then
+        bd:SetFrameLevel(math.max(0, tooltip:GetFrameLevel() - 1))
+        bd:ClearAllPoints()
+        bd:SetPoint("TOPLEFT", tooltip, "TOPLEFT", 0, 0)
+        bd:SetPoint("BOTTOMRIGHT", tooltip, "BOTTOMRIGHT", 0, 0)
+        bd.bg:SetColorTexture(bgR, bgG, bgB, alpha)
+        bd.top:SetColorTexture(br, bg_, bb, ba)
+        bd.bottom:SetColorTexture(br, bg_, bb, ba)
+        bd.left:SetColorTexture(br, bg_, bb, ba)
+        bd.right:SetColorTexture(br, bg_, bb, ba)
+        bd:Show()
     end
 
     if settings.fontSize then
@@ -186,6 +266,7 @@ end
 ---------------------------------------------------------------------------
 
 local healthBarSetup = false
+local healthBarAnchored = false
 
 local C_ClassColor_GetClassColor = C_ClassColor and C_ClassColor.GetClassColor
 
@@ -225,15 +306,14 @@ local function ApplyBarForUnit(bar, unit)
     bar:SetAlpha(1)
 
     -- Re-anchor bar flush with tooltip border, height 4px (one-time per session)
-    -- PERF: guard flag prevents allocating a closure on every OnValueChanged HP-tick
-    if not bar.gravityAnchored then
+    if not healthBarAnchored then
         pcall(function()
             bar:SetHeight(4)
             bar:ClearAllPoints()
             bar:SetPoint("TOPLEFT",  GameTooltip, "BOTTOMLEFT",  0, 0)
             bar:SetPoint("TOPRIGHT", GameTooltip, "BOTTOMRIGHT", 0, 0)
         end)
-        bar.gravityAnchored = true
+        healthBarAnchored = true
     end
 
     -- Texture
@@ -617,7 +697,7 @@ local function InjectUnitInfo(tooltip, data)
         -- ── Guild fallback (only if Blizzard didn't render the line) ─────────
         -- In instances/raids Blizzard omits the guild line entirely; inject it.
         if unit and isPlayer and guildName and settings.showGuildInfo
-        and not guildFoundInTooltip and not tooltip.__guiGuildAdded then
+        and not guildFoundInTooltip and not tooltipState.guildAdded then
             pcall(function()
                 local gc = settings.guildColor or {0.2, 0.9, 0.2, 1}
                 local gText = CHex(tonumber(gc[1]) or 0.2, tonumber(gc[2]) or 0.9, tonumber(gc[3]) or 0.2)
@@ -626,12 +706,12 @@ local function InjectUnitInfo(tooltip, data)
                     gText = gText .. " |cffb0b0b0[" .. guildRank .. "]|r"
                 end
                 tooltip:AddLine(gText)
-                tooltip.__guiGuildAdded = true
+                tooltipState.guildAdded = true
             end)
         end
 
         -- ── Server / Realm (only for cross-realm players) ────────────────
-        if unit and settings.showServer and not tooltip.__guiServerAdded then
+        if unit and settings.showServer and not tooltipState.serverAdded then
             pcall(function()
                 if not UnitIsPlayer(unit) then return end
                 -- UnitName returns a non-nil realm only for cross-realm players.
@@ -639,17 +719,17 @@ local function InjectUnitInfo(tooltip, data)
                 local _, unitRealm = UnitName(unit)
                 if unitRealm and unitRealm ~= "" then
                     tooltip:AddLine("|cffaaaaaa" .. "Server:|r |cffffffff" .. unitRealm .. "|r")
-                    tooltip.__guiServerAdded = true
+                    tooltipState.serverAdded = true
                 end
             end)
         end
 
         -- ── Mount ───────────────────────────────────────────────────────────
-        if unit and settings.showMount and not tooltip.__guiMountAdded then
+        if unit and settings.showMount and not tooltipState.mountAdded then
             local mName = GetMountName(unit)
             if mName then
                 tooltip:AddLine("|cffaaaaaa" .. "Mount:|r |cffffffff" .. mName .. "|r")
-                tooltip.__guiMountAdded = true
+                tooltipState.mountAdded = true
             end
         end
     end) -- pcall
@@ -663,19 +743,19 @@ local function InitHooks()
     SetupHealthBar()
 
     -- Reset per-tooltip injection flags on clear/hide
-    GameTooltip:HookScript("OnTooltipCleared", function(self) self.__guiMountAdded = nil; self.__guiServerAdded = nil; self.__guiGuildAdded = nil end)
-    GameTooltip:HookScript("OnHide", function(self) self.__guiMountAdded = nil; self.__guiServerAdded = nil; self.__guiGuildAdded = nil end)
+    GameTooltip:HookScript("OnTooltipCleared", function() ResetTooltipState() end)
+    GameTooltip:HookScript("OnHide", function() ResetTooltipState() end)
 
     -- When leaving combat, refresh the tooltip if it's still visible.
     -- Guild, rank, mount and spec are skipped in combat; this picks them up again.
     local combatFrame = CreateFrame("Frame")
     combatFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
     combatFrame:SetScript("OnEvent", function()
-        if GameTooltip:IsShown() and not GameTooltip:IsForbidden() then
+        if GameTooltip:IsShown() and not (GameTooltip.IsForbidden and GameTooltip:IsForbidden()) then
             pcall(function()
                 local _, unit = GameTooltip:GetUnit()
                 if unit and type(unit) == "string" then
-                    GameTooltip.__guiMountAdded = nil  -- allow mount re-add
+                    ResetTooltipState()
                     GameTooltip:SetUnit(unit)
                 end
             end)
@@ -683,16 +763,25 @@ local function InitHooks()
     end)
 
     hooksecurefunc("GameTooltip_SetDefaultAnchor", function(tooltip, parent)
-        tooltip.__guiLastID = nil
+        ResetTooltipState()
         local settings = GetSettings()
         if not settings or not settings.enabled then return end
+        if InCombatLockdown() then return end
+        if not parent or not tooltip or (tooltip.IsForbidden and tooltip:IsForbidden()) then return end
+        if parent.IsForbidden and parent:IsForbidden() then return end
+
         local context = GetTooltipContext(parent)
         if not ShouldShowTooltip(context) then
             tooltip:Hide()
             return
         end
         if settings.anchorToCursor then
-            tooltip:SetOwner(parent, "ANCHOR_CURSOR")
+            pcall(function()
+                local scale = UIParent:GetEffectiveScale() or 1
+                local x, y = GetCursorPosition()
+                tooltip:ClearAllPoints()
+                tooltip:SetPoint("BOTTOMLEFT", UIParent, "BOTTOMLEFT", (x / scale) + 16, (y / scale) + 16)
+            end)
         end
     end)
 
