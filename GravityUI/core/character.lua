@@ -438,28 +438,18 @@ local function GetGemInfo(unit, slotId)
     end
 
     -- Get filled gems (up to 4 slots)
+    -- Uses C_Item.GetItemGemID (synchronous, ID-based) instead of GetItemGem
+    -- (which relies on async C_Item.GetItemInfo for icons, returning nil on uncached items)
     local filledCount = 0
     for i = 1, 4 do
-        -- GetItemGem returns TWO values: gemName, gemLink (we need the link for icon lookup)
-        local gemName, gemLink = GetItemGem(itemLink, i)
-			
-        if gemLink then
+        local gemID = C_Item.GetItemGemID(itemLink, i)
+        if gemID then
             filledCount = filledCount + 1
-            -- Get gem icon texture from item info (icon is the 10th return value)
-            local _, _, _, _, _, _, gemSubType, _, _, gemIcon = C_Item.GetItemInfo(gemLink)
-
-            -- If GetItemInfo didn't return icon yet (item not cached), try C_Item API
-            if not gemIcon and C_Item and C_Item.GetItemIconByID then
-                local itemID = GetItemInfoInstant(gemLink)
-                if itemID then
-                    gemIcon = C_Item.GetItemIconByID(itemID)
-                end
-            end
-
+            local texture = C_Item.GetItemIconByID(gemID)
+            local _, gemLink = C_Item.GetItemInfo(gemID)
             table.insert(gems, {
-                link = gemLink,
-                icon = gemIcon,
-                type = gemSubType or "Prismatic",
+                link = gemLink or ("item:" .. gemID),
+                icon = texture,
                 filled = true,
             })
         end
