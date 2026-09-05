@@ -188,12 +188,11 @@ function Addon:OnInitialize()
         -- EABR (AuraBuff Reminders): Override center-grow to left-aligned grow-right.
         -- Controlled by db.profile.eabrLeftAlign (default true).
         --
-        -- How it works:
-        -- EABR positions its anchor with SetPoint("CENTER", UIParent, "CENTER", x, y)
-        -- and resizes it with SetWidth(totalWidth). This causes center-growth.
-        -- We intercept SetPoint to capture the user's intended position and convert
-        -- CENTER to TOPLEFT. On SetWidth changes, we re-pin the TOPLEFT so icons
-        -- grow only to the right.
+        -- EABR's LayoutIcons() positions icons via SetPoint("CENTER", iconAnchor, "CENTER")
+        -- and then calls ResizeAnchorCentered() → iconAnchor:SetSize(totalW, h).
+        -- We hook SetSize on the anchor — that fires AFTER all icons are positioned —
+        -- and reposition everything TOPLEFT in one clean pass. No per-icon SetPoint
+        -- hooks, no race conditions.
         C_Timer.After(1, function()
             local btn1 = _G["EABR_Icon1"]
             if not btn1 then return end
@@ -215,34 +214,37 @@ function Addon:OnInitialize()
                 return sp
             end
 
-            local isRepositioning = false
-            -- Store the fixed TOPLEFT position (pixel coords relative to BOTTOMLEFT of UIParent)
-            local pinX = nil
-            local pinY = nil
-
-            -- Compute where the anchor's TOPLEFT is right now (in screen pixels)
-            local function GetCurrentTopLeft()
-                local left = anchor:GetLeft()
-                local top  = anchor:GetTop()
-                return left, top
+            local function GetScale()
+                local sc = 1.0
+                local EUILite = _G.EllesmereUI and _G.EllesmereUI.Lite
+                local eabr = EUILite and EUILite.GetAddon and EUILite.GetAddon("EllesmereUIAuraBuffReminders", true)
+                if eabr and eabr.db and eabr.db.profile and eabr.db.profile.display then
+                    sc = eabr.db.profile.display.scale or sc
+                end
+                return sc
             end
 
-            -- Pin anchor to TOPLEFT and reposition all icons left-to-right
-            local function PinAndReposition()
+            -- Capture the initial TOPLEFT position of the anchor so the
+            -- left edge never moves when icons are added/removed.
+            local pinX, pinY
+            local isRepositioning = false
+
+            local function CapturePin()
+                local left = anchor:GetLeft()
+                local top  = anchor:GetTop()
+                if left and top then
+                    pinX = left
+                    pinY = top
+                end
+            end
+
+            -- Reposition all visible EABR icons left-to-right from anchor TOPLEFT.
+            local function RepositionAll()
                 if InCombatLockdown() or not IsEnabled() then return end
                 if isRepositioning then return end
-                if not pinX or not pinY then
-                    -- Capture current position on first run
-                    pinX, pinY = GetCurrentTopLeft()
-                    if not pinX then return end
-                end
-
                 isRepositioning = true
 
-                anchor:ClearAllPoints()
-                anchor:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", pinX, pinY)
-
-                -- Reposition icons left-to-right from anchor's TOPLEFT
+                -- Collect all visible icons
                 local spacing = GetSpacing()
                 local visIndex = 0
                 local i = 1
@@ -258,13 +260,30 @@ function Addon:OnInitialize()
                     i = i + 1
                 end
 
+                -- Re-pin anchor to TOPLEFT so it doesn't center-shift
+                if pinX and pinY then
+                    anchor:ClearAllPoints()
+                    anchor:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", pinX, pinY)
+                end
+
                 isRepositioning = false
             end
 
             -----------------------------------------------------------------
-            -- Hook anchor's SetPoint — intercept EABR's CENTER positioning.
-            -- When EABR sets CENTER, convert to our fixed TOPLEFT.
-            -- When the user DRAGS the frame (also SetPoint), update our pin.
+            -- HOOK 1: iconAnchor:SetSize() — fires at the end of every
+            -- EABR LayoutIcons() call after all icons are CENTER-positioned.
+            -- We immediately reposition them TOPLEFT.
+            -----------------------------------------------------------------
+            hooksecurefunc(anchor, "SetSize", function()
+                if isRepositioning then return end
+                if InCombatLockdown() then return end
+                if not IsEnabled() then return end
+                RepositionAll()
+            end)
+
+            -----------------------------------------------------------------
+            -- HOOK 2: iconAnchor:SetPoint() — intercept EABR's CENTER
+            -- positioning and convert to our pinned TOPLEFT.
             -----------------------------------------------------------------
             hooksecurefunc(anchor, "SetPoint", function(self, point, relTo, relPoint, x, y)
                 if isRepositioning then return end
@@ -272,88 +291,23 @@ function Addon:OnInitialize()
                 if not IsEnabled() then return end
 
                 if point == "CENTER" then
-                    -- EABR is repositioning with CENTER anchor.
-                    -- Convert the CENTER coords to TOPLEFT coords.
+                    -- EABR is setting CENTER; convert to TOPLEFT and capture pin.
                     local h = anchor:GetHeight() or 0
                     local w = anchor:GetWidth() or 0
                     local screenW = UIParent:GetWidth()
                     local screenH = UIParent:GetHeight()
-                    -- CENTER x,y is offset from UIParent CENTER
-                    -- TOPLEFT x = screenW/2 + x - w/2
-                    -- TOPLEFT y = screenH/2 + y + h/2
                     if x and y and screenW and screenH then
                         pinX = (screenW / 2) + x - (w / 2)
                         pinY = (screenH / 2) + y + (h / 2)
                     end
-                    PinAndReposition()
-                elseif point == "TOPLEFT" then
-                    -- Either our own call (guarded) or user drag result.
-                    -- Update pin if it came from outside.
+                    RepositionAll()
+                elseif point == "TOPLEFT" and not isRepositioning then
+                    -- User drag or our own call; update pin.
                     if x and y then
                         pinX = x
                         pinY = y
                     end
                 end
-            end)
-
-            -----------------------------------------------------------------
-            -- Hook SetWidth — EABR resizes the anchor when icon count
-            -- changes. Re-pin so the left edge stays fixed.
-            -----------------------------------------------------------------
-            hooksecurefunc(anchor, "SetWidth", function()
-                if isRepositioning then return end
-                if InCombatLockdown() then return end
-                if not IsEnabled() then return end
-                PinAndReposition()
-            end)
-
-            -----------------------------------------------------------------
-            -- Hook each icon's SetPoint("CENTER") → TOPLEFT
-            -----------------------------------------------------------------
-            local hookedIcons = {}
-
-            local function HookIcon(btn)
-                if hookedIcons[btn] then return end
-                hookedIcons[btn] = true
-
-                hooksecurefunc(btn, "SetPoint", function(self, point)
-                    if point ~= "CENTER" or InCombatLockdown() then return end
-                    if isRepositioning then return end
-                    if not IsEnabled() then return end
-
-                    -- Count visible icons up to and including this one
-                    local pos = 0
-                    local j = 1
-                    while true do
-                        local b = _G["EABR_Icon" .. j]
-                        if not b then break end
-                        if b:IsShown() then
-                            pos = pos + 1
-                            if b == self then break end
-                        end
-                        j = j + 1
-                    end
-
-                    local sz = self:GetWidth()
-                    local spacing = GetSpacing()
-                    self:ClearAllPoints()
-                    self:SetPoint("TOPLEFT", anchor, "TOPLEFT", (pos - 1) * (sz + spacing), 0)
-                end)
-            end
-
-            local function ScanAndHook()
-                local k = 1
-                while true do
-                    local b = _G["EABR_Icon" .. k]
-                    if not b then break end
-                    HookIcon(b)
-                    k = k + 1
-                end
-            end
-
-            ScanAndHook()
-            hooksecurefunc(btn1, "SetPoint", function(_, point)
-                if point == "CENTER" then ScanAndHook() end
             end)
 
             -----------------------------------------------------------------
@@ -363,16 +317,17 @@ function Addon:OnInitialize()
             eabrWorldFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
             eabrWorldFrame:SetScript("OnEvent", function()
                 C_Timer.After(2, function()
-                    -- Re-capture position after zone change (EABR re-initializes)
                     pinX, pinY = nil, nil
-                    ScanAndHook()
-                    PinAndReposition()
+                    CapturePin()
+                    RepositionAll()
                 end)
             end)
 
             -- Initial reposition
-            PinAndReposition()
+            CapturePin()
+            RepositionAll()
         end)
+
     end
     
     -- Register for profile change events
