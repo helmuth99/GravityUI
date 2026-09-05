@@ -64,6 +64,26 @@ local PROTECTED_BAR_FRAMES = {
 -- Moved to top
 
 ---------------------------------------------------------------------------
+-- TRANSITION GUARD — Taint Prevention for Cooldown Dispatch
+---------------------------------------------------------------------------
+-- During scenario/instance transitions (M+ key start, bar paging, vehicle
+-- enter/exit), Blizzard's ActionBarController performs internal state changes.
+-- If addon code modifies button properties (textures, fonts, alpha) in this
+-- window, taint propagates into ActionBarButtonEventsFrame's dispatch loop,
+-- silently breaking SetCooldown() for ALL buttons (cooldown swirls vanish).
+-- The transition lock blocks all button modifications for a short window.
+local transitionLockUntil = 0
+local TRANSITION_LOCK_DURATION = 2.0  -- seconds
+
+local function IsTransitionLocked()
+    return GetTime() < transitionLockUntil
+end
+
+local function BeginTransitionLock()
+    transitionLockUntil = GetTime() + TRANSITION_LOCK_DURATION
+end
+
+---------------------------------------------------------------------------
 -- HELPERS
 ---------------------------------------------------------------------------
 local function GetDB()
@@ -162,6 +182,7 @@ end
 
 local pendingRefresh = false
 local combatDeferredRefresh = false
+local pendingTransitionTextRefresh = false
 local function RequestRefresh()
     if pendingRefresh then return end
     pendingRefresh = true
@@ -1001,15 +1022,40 @@ function ns.RefreshActionBars()
 
     -- Apply Global Skinning
     local g = db.global
+    local transLocked = IsTransitionLocked()
 
-    -- Empty-slot visibility is handled purely cosmetically via UpdateEmptySlotVisibility().
+    -- SkinButton() is always safe — it only uses C API calls (SetAlpha,
+    -- SetTexCoord, CreateTexture) that do NOT propagate Lua taint.
+    -- UpdateButtonText/UpdateEmptySlotVisibility touch Blizzard FontStrings
+    -- and protected button alpha, so those are deferred during transitions.
     for barKey, _ in pairs(BAR_BUTTONS) do
         local buttons = GetBarButtons(barKey)
         for _, btn in ipairs(buttons) do
             SkinButton(btn, g)
-            UpdateButtonText(btn, g)
-            UpdateEmptySlotVisibility(btn, g, barKey)
+            if not transLocked then
+                UpdateButtonText(btn, g)
+                UpdateEmptySlotVisibility(btn, g, barKey)
+            end
         end
+    end
+
+    -- If text/visibility was skipped, queue a deferred refresh for those only.
+    if transLocked and not pendingTransitionTextRefresh then
+        pendingTransitionTextRefresh = true
+        C_Timer.After(TRANSITION_LOCK_DURATION + 0.1, function()
+            pendingTransitionTextRefresh = false
+            if InCombatLockdown() then return end  -- will be caught by OOC queue
+            local db2 = GetDB()
+            if not db2 or not db2.enabled then return end
+            local g2 = db2.global
+            for barKey2, _ in pairs(BAR_BUTTONS) do
+                local buttons2 = GetBarButtons(barKey2)
+                for _, btn2 in ipairs(buttons2) do
+                    UpdateButtonText(btn2, g2)
+                    UpdateEmptySlotVisibility(btn2, g2, barKey2)
+                end
+            end
+        end)
     end
 
     -- Toggle Fade logic
@@ -1147,18 +1193,60 @@ initFrame:RegisterEvent("UPDATE_BINDINGS")
 initFrame:RegisterEvent("ACTIONBAR_PAGE_CHANGED")
 initFrame:RegisterEvent("UPDATE_BONUS_ACTIONBAR")
 initFrame:RegisterEvent("UPDATE_VEHICLE_ACTIONBAR")
+-- TRANSITION GUARD: Events that signal Blizzard is restructuring action bars.
+-- During these transitions, touching button properties can taint the
+-- ActionBarController → SetCooldown dispatch chain.
+initFrame:RegisterEvent("CHALLENGE_MODE_START")
+initFrame:RegisterEvent("CHALLENGE_MODE_COMPLETED")
+initFrame:RegisterEvent("SCENARIO_UPDATE")
+initFrame:RegisterEvent("UPDATE_OVERRIDE_ACTIONBAR")
+initFrame:RegisterEvent("UPDATE_POSSESS_BAR")
+initFrame:RegisterEvent("ENCOUNTER_START")
+initFrame:RegisterEvent("ENCOUNTER_END")
+initFrame:RegisterUnitEvent("UNIT_ENTERED_VEHICLE", "player")
+initFrame:RegisterUnitEvent("UNIT_EXITED_VEHICLE", "player")
 
-initFrame:SetScript("OnEvent", function(self, event)
+initFrame:SetScript("OnEvent", function(self, event, ...)
     if event == "PLAYER_LOGIN" then
         ns.RefreshActionBars()
         -- Apply zone keybind mirror after initial bindings are loaded
         C_Timer.After(0.5, function() ApplyZoneAbilityKeybind() end)
     elseif event == "PLAYER_ENTERING_WORLD" then
-        -- Cosmetic-only: no protected frame ops, short delay is sufficient
-        C_Timer.After(0.5, function()
-            if InitializeExtraButtons then InitializeExtraButtons() end
+        local isLogin, isReload = ...
+        if isLogin or isReload then
+            -- Login/Reload: No taint chain exists yet — skin immediately.
+            C_Timer.After(0.5, function()
+                if InitializeExtraButtons then InitializeExtraButtons() end
+            end)
+        else
+            -- Instance/zone transition: Lock out button modifications.
+            BeginTransitionLock()
+            C_Timer.After(TRANSITION_LOCK_DURATION + 0.5, function()
+                if InitializeExtraButtons then InitializeExtraButtons() end
+            end)
+        end
+    elseif event == "CHALLENGE_MODE_START"
+        or event == "CHALLENGE_MODE_COMPLETED"
+        or event == "SCENARIO_UPDATE"
+        or event == "UPDATE_OVERRIDE_ACTIONBAR"
+        or event == "UPDATE_POSSESS_BAR"
+        or event == "UNIT_ENTERED_VEHICLE"
+        or event == "UNIT_EXITED_VEHICLE"
+        or event == "ENCOUNTER_START"
+        or event == "ENCOUNTER_END" then
+        -- TRANSITION GUARD: Lock out all button modifications.
+        BeginTransitionLock()
+        -- Queue a clean refresh after the lock expires.
+        C_Timer.After(TRANSITION_LOCK_DURATION + 0.1, function()
+            if not IsTransitionLocked() then
+                RequestRefresh()
+            end
         end)
     elseif event == "ACTIONBAR_SLOT_CHANGED" or event == "UPDATE_BINDINGS" or event == "ACTIONBAR_PAGE_CHANGED" or event == "UPDATE_BONUS_ACTIONBAR" or event == "UPDATE_VEHICLE_ACTIONBAR" then
+        -- TRANSITION GUARD: Bar paging events also need the lock.
+        if event == "ACTIONBAR_PAGE_CHANGED" or event == "UPDATE_BONUS_ACTIONBAR" or event == "UPDATE_VEHICLE_ACTIONBAR" then
+            BeginTransitionLock()
+        end
         RequestRefresh()
         -- Re-mirror zone keybind whenever bindings change (e.g. player re-bound ExtraActionButton1)
         if event == "UPDATE_BINDINGS" then
@@ -1206,6 +1294,101 @@ dominosHookFrame:SetScript("OnEvent", function(self, event, addonName)
 end)
 
 ---------------------------------------------------------------------------
+-- COOLDOWN WATCHDOG — Recovery for tainted cooldown dispatch
+---------------------------------------------------------------------------
+-- Even with the transition guard, taint can still occur from other addons
+-- or unexpected transitions. This watchdog periodically checks whether
+-- action button cooldowns are stuck and recovers them using the
+-- DurationObject API (taint-safe).
+local watchdogFrame = CreateFrame("Frame")
+local WATCHDOG_INTERVAL = 2.0  -- seconds between checks
+local watchdogElapsed = 0
+local watchdogRecoveryCount = 0
+
+local function RecoverButtonCooldown(btn)
+    if not btn or not btn.action then return false end
+    local cooldown = btn.cooldown or btn.Cooldown
+    if not cooldown then return false end
+
+    -- Only attempt recovery if the C_ActionBar DurationObject API exists
+    if not (C_ActionBar and C_ActionBar.GetActionCooldownDuration
+        and C_ActionBar.GetActionCooldown) then
+        return false
+    end
+
+    local action = btn.action
+    local ok, cdInfo = pcall(C_ActionBar.GetActionCooldown, action)
+    if not ok or type(cdInfo) ~= "table" then return false end
+
+    local shouldHaveCD = cdInfo.isActive ~= false
+        and type(cdInfo.duration) == "number"
+        and cdInfo.duration > 1.5  -- Ignore GCD (<=1.5s)
+
+    if not shouldHaveCD then return false end
+
+    -- Check if the cooldown swipe is actually showing
+    local cdShown = cooldown:IsShown()
+    local cdAlpha = cooldown:GetAlpha()
+    local start, dur = cooldown:GetCooldownTimes()
+    local cdActive = (start and start > 0) and (dur and dur > 0)
+
+    -- If there SHOULD be a cooldown but nothing is rendering → stuck
+    if cdActive and cdShown and cdAlpha > 0 then
+        return false  -- CD is displaying correctly, nothing to fix
+    end
+
+    -- Recovery: Use DurationObject API (bypasses tainted dispatch)
+    local okDur, durationObj = pcall(C_ActionBar.GetActionCooldownDuration, action)
+    if okDur and durationObj then
+        pcall(cooldown.SetCooldownFromDurationObject, cooldown, durationObj)
+        watchdogRecoveryCount = watchdogRecoveryCount + 1
+        return true
+    end
+    return false
+end
+
+local function WatchdogTick(self, elapsed)
+    watchdogElapsed = watchdogElapsed + elapsed
+    if watchdogElapsed < WATCHDOG_INTERVAL then return end
+    watchdogElapsed = 0
+
+    -- Only run during combat (that's when taint blocks SetCooldown)
+    if not InCombatLockdown() then return end
+
+    -- Check a subset of buttons each tick to minimize CPU cost
+    -- Rotate through bars: bar1 has the highest impact
+    local recoveredAny = false
+    for _, barKey in ipairs({"bar1", "bar2", "bar3", "bar4", "bar5", "bar6", "bar7", "bar8"}) do
+        local buttons = GetBarButtons(barKey)
+        for _, btn in ipairs(buttons) do
+            if RecoverButtonCooldown(btn) then
+                recoveredAny = true
+            end
+        end
+    end
+
+    -- If we recovered anything, also check charge cooldowns
+    if recoveredAny and C_ActionBar.GetActionChargeDuration then
+        for _, barKey in ipairs({"bar1", "bar2", "bar3"}) do
+            local buttons = GetBarButtons(barKey)
+            for _, btn in ipairs(buttons) do
+                if btn.chargeCooldown and btn.action then
+                    local okCh, chargeInfo = pcall(C_ActionBar.GetActionCharges, btn.action)
+                    if okCh and type(chargeInfo) == "table" and chargeInfo.maxCharges > 1 and chargeInfo.isActive ~= false then
+                        local okDur, durObj = pcall(C_ActionBar.GetActionChargeDuration, btn.action)
+                        if okDur and durObj then
+                            pcall(btn.chargeCooldown.SetCooldownFromDurationObject, btn.chargeCooldown, durObj)
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+
+watchdogFrame:SetScript("OnUpdate", WatchdogTick)
+
+---------------------------------------------------------------------------
 -- DIAGNOSTIC: /gravitydebugcd
 -- Helps diagnose taint-related cooldown failures at affected users.
 ---------------------------------------------------------------------------
@@ -1213,6 +1396,8 @@ SLASH_GRAVITYDEBUGCD1 = "/gravitydebugcd"
 SlashCmdList["GRAVITYDEBUGCD"] = function()
     print("|cFF30D1FFGravityUI CD Debug:|r")
     print("  InCombatLockdown:", tostring(InCombatLockdown()))
+    print("  TransitionLocked:", tostring(IsTransitionLocked()))
+    print("  Watchdog recoveries:", watchdogRecoveryCount)
     local btn = ActionButton1
     if btn and btn.cooldown then
         local start, dur = btn.cooldown:GetCooldownTimes()
@@ -1226,5 +1411,22 @@ SlashCmdList["GRAVITYDEBUGCD"] = function()
     end
     local ok, secure = pcall(issecurevariable, ActionButton1, "cooldown")
     if ok then print("  AB1.cooldown secure:", tostring(secure)) end
+    -- Test watchdog detection on all bar1 buttons
+    print("  -- Bar1 CD status --")
+    local buttons = GetBarButtons("bar1")
+    for i, b in ipairs(buttons) do
+        if b.action and HasAction(b.action) then
+            local cd = b.cooldown or b.Cooldown
+            if cd then
+                local s, d = cd:GetCooldownTimes()
+                local shown = cd:IsShown()
+                local alpha = cd:GetAlpha()
+                if (s and s > 0) or (d and d > 0) then
+                    print(string.format("    [%d] action=%d cdTimes=%d/%d shown=%s alpha=%.2f",
+                        i, b.action, s or 0, d or 0, tostring(shown), alpha or 0))
+                end
+            end
+        end
+    end
 end
 
