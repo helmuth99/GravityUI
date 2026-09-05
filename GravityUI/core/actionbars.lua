@@ -1320,9 +1320,13 @@ local function RecoverButtonCooldown(btn)
     local ok, cdInfo = pcall(C_ActionBar.GetActionCooldown, action)
     if not ok or type(cdInfo) ~= "table" then return false end
 
-    local shouldHaveCD = cdInfo.isActive ~= false
-        and type(cdInfo.duration) == "number"
-        and cdInfo.duration > 1.5  -- Ignore GCD (<=1.5s)
+    -- Wrap comparisons in pcall: cdInfo values may be "secret numbers" (taint-protected)
+    local shouldHaveCD = false
+    pcall(function()
+        shouldHaveCD = cdInfo.isActive ~= false
+            and type(cdInfo.duration) == "number"
+            and cdInfo.duration > 1.5
+    end)
 
     if not shouldHaveCD then return false end
 
