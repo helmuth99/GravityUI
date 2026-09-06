@@ -1062,7 +1062,7 @@ local function BuildPlayerMarks(parent)
         -- Build rows
         for i = 1, GetNumGroupMembers() do
             local unit = "raid" .. i
-            if UnitExists(unit) and not UnitIsUnit(unit, "player") then
+            if UnitExists(unit) then
                 AddPlayerRow(unit)
             end
         end
