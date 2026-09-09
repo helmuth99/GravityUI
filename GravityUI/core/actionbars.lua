@@ -1243,8 +1243,12 @@ initFrame:SetScript("OnEvent", function(self, event, ...)
             end
         end)
     elseif event == "ACTIONBAR_SLOT_CHANGED" or event == "UPDATE_BINDINGS" or event == "ACTIONBAR_PAGE_CHANGED" or event == "UPDATE_BONUS_ACTIONBAR" or event == "UPDATE_VEHICLE_ACTIONBAR" then
-        -- TRANSITION GUARD: Bar paging events also need the lock.
-        if event == "ACTIONBAR_PAGE_CHANGED" or event == "UPDATE_BONUS_ACTIONBAR" or event == "UPDATE_VEHICLE_ACTIONBAR" then
+        -- TRANSITION GUARD: These events trigger Blizzard's internal button
+        -- restructuring (UpdateAction → UpdatePressAndHoldAction → SetAttribute).
+        -- If GravityUI modifies button children (HotKey, icon, NormalTexture) in
+        -- this window, those buttons become tainted and Blizzard's SetAttribute
+        -- call is blocked with ADDON_ACTION_BLOCKED.
+        if event == "ACTIONBAR_SLOT_CHANGED" or event == "ACTIONBAR_PAGE_CHANGED" or event == "UPDATE_BONUS_ACTIONBAR" or event == "UPDATE_VEHICLE_ACTIONBAR" then
             BeginTransitionLock()
         end
         RequestRefresh()
@@ -1293,104 +1297,20 @@ dominosHookFrame:SetScript("OnEvent", function(self, event, addonName)
     end
 end)
 
----------------------------------------------------------------------------
--- COOLDOWN WATCHDOG — Recovery for tainted cooldown dispatch
----------------------------------------------------------------------------
--- Even with the transition guard, taint can still occur from other addons
--- or unexpected transitions. This watchdog periodically checks whether
--- action button cooldowns are stuck and recovers them using the
--- DurationObject API (taint-safe).
-local watchdogFrame = CreateFrame("Frame")
-local WATCHDOG_INTERVAL = 2.0  -- seconds between checks
-local watchdogElapsed = 0
-local watchdogRecoveryCount = 0
-
-local function RecoverButtonCooldown(btn)
-    if not btn or not btn.action then return false end
-    local cooldown = btn.cooldown or btn.Cooldown
-    if not cooldown then return false end
-
-    -- Only attempt recovery if the C_ActionBar DurationObject API exists
-    if not (C_ActionBar and C_ActionBar.GetActionCooldownDuration
-        and C_ActionBar.GetActionCooldown) then
-        return false
-    end
-
-    local action = btn.action
-    local ok, cdInfo = pcall(C_ActionBar.GetActionCooldown, action)
-    if not ok or type(cdInfo) ~= "table" then return false end
-
-    -- Wrap comparisons in pcall: cdInfo values may be "secret numbers" (taint-protected)
-    local shouldHaveCD = false
-    pcall(function()
-        shouldHaveCD = cdInfo.isActive ~= false
-            and type(cdInfo.duration) == "number"
-            and cdInfo.duration > 1.5
-    end)
-
-    if not shouldHaveCD then return false end
-
-    -- Check if the cooldown swipe is actually showing
-    local cdShown = cooldown:IsShown()
-    local cdAlpha = cooldown:GetAlpha()
-    local start, dur = cooldown:GetCooldownTimes()
-    local cdActive = (start and start > 0) and (dur and dur > 0)
-
-    -- If there SHOULD be a cooldown but nothing is rendering → stuck
-    if cdActive and cdShown and cdAlpha > 0 then
-        return false  -- CD is displaying correctly, nothing to fix
-    end
-
-    -- Recovery: Use DurationObject API (bypasses tainted dispatch)
-    local okDur, durationObj = pcall(C_ActionBar.GetActionCooldownDuration, action)
-    if okDur and durationObj then
-        pcall(cooldown.SetCooldownFromDurationObject, cooldown, durationObj)
-        watchdogRecoveryCount = watchdogRecoveryCount + 1
-        return true
-    end
-    return false
-end
-
-local function WatchdogTick(self, elapsed)
-    watchdogElapsed = watchdogElapsed + elapsed
-    if watchdogElapsed < WATCHDOG_INTERVAL then return end
-    watchdogElapsed = 0
-
-    -- Only run during combat (that's when taint blocks SetCooldown)
-    if not InCombatLockdown() then return end
-
-    -- Check a subset of buttons each tick to minimize CPU cost
-    -- Rotate through bars: bar1 has the highest impact
-    local recoveredAny = false
-    for _, barKey in ipairs({"bar1", "bar2", "bar3", "bar4", "bar5", "bar6", "bar7", "bar8"}) do
-        local buttons = GetBarButtons(barKey)
-        for _, btn in ipairs(buttons) do
-            if RecoverButtonCooldown(btn) then
-                recoveredAny = true
-            end
-        end
-    end
-
-    -- If we recovered anything, also check charge cooldowns
-    if recoveredAny and C_ActionBar.GetActionChargeDuration then
-        for _, barKey in ipairs({"bar1", "bar2", "bar3"}) do
-            local buttons = GetBarButtons(barKey)
-            for _, btn in ipairs(buttons) do
-                if btn.chargeCooldown and btn.action then
-                    local okCh, chargeInfo = pcall(C_ActionBar.GetActionCharges, btn.action)
-                    if okCh and type(chargeInfo) == "table" and chargeInfo.maxCharges > 1 and chargeInfo.isActive ~= false then
-                        local okDur, durObj = pcall(C_ActionBar.GetActionChargeDuration, btn.action)
-                        if okDur and durObj then
-                            pcall(btn.chargeCooldown.SetCooldownFromDurationObject, btn.chargeCooldown, durObj)
-                        end
-                    end
-                end
-            end
-        end
-    end
-end
-
-watchdogFrame:SetScript("OnUpdate", WatchdogTick)
+-- ---------------------------------------------------------------------------
+-- COOLDOWN WATCHDOG — REMOVED (2026-09)
+-- ---------------------------------------------------------------------------
+-- The watchdog was designed to recover stuck cooldown swirls by calling
+-- SetCooldownFromDurationObject on action button cooldown frames.
+-- However, pcall does NOT isolate WoW's taint system. The OnUpdate handler
+-- executes in addon-tainted context, and any method call on Blizzard's
+-- cooldown frames (GetCooldownTimes, SetCooldownFromDurationObject) from
+-- that context permanently taints the cooldown frame. This caused Blizzard's
+-- own ACTIONBAR_UPDATE_COOLDOWN → ActionButton_UpdateCooldown → SetCooldown()
+-- to reject secret numbers with "Secret values are only allowed during
+-- untainted execution", producing 100s of errors per combat session.
+-- The root cause (missing transition guard for ACTIONBAR_SLOT_CHANGED) has
+-- been fixed above, eliminating the need for this recovery mechanism.
 
 ---------------------------------------------------------------------------
 -- DIAGNOSTIC: /gravitydebugcd
@@ -1401,7 +1321,6 @@ SlashCmdList["GRAVITYDEBUGCD"] = function()
     print("|cFF30D1FFGravityUI CD Debug:|r")
     print("  InCombatLockdown:", tostring(InCombatLockdown()))
     print("  TransitionLocked:", tostring(IsTransitionLocked()))
-    print("  Watchdog recoveries:", watchdogRecoveryCount)
     local btn = ActionButton1
     if btn and btn.cooldown then
         local start, dur = btn.cooldown:GetCooldownTimes()
