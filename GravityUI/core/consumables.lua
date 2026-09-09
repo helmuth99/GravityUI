@@ -719,6 +719,7 @@ Module.db.vantusItemsByRaid = {
     [2912] = { 245880, 245879 }, -- The Voidspire
     [2913] = { 245880, 245879 }, -- March on Quel'Danas
     [2939] = { 245880, 245879 }, -- The Dreamrift
+    [3004] = { 272195, 272194 }, -- The Venomous Abyss
 }
 
 Module.db = Module.db or {}

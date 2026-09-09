@@ -1525,8 +1525,13 @@ SlashCmdList["GUIROLE"] = function()
     ns.UpdateGroupRoles()
 end
 
+local autoPromoteNotified = {} -- Track which players we've already notified about
+
 local function AutoPromoteRoles()
-    if not IsInGroup() or not UnitIsGroupLeader("player") then return end
+    if not IsInGroup() or not UnitIsGroupLeader("player") then
+        wipe(autoPromoteNotified)
+        return
+    end
     local settings = GetSettings()
     if not settings or not settings.tools then return end
     
@@ -1549,6 +1554,7 @@ local function AutoPromoteRoles()
     
     local numMembers = GetNumGroupMembers()
     local isRaid = IsInRaid()
+    local pending = {}
     
     for i = 1, numMembers do
         local unit = isRaid and ("raid"..i) or ("party"..i)
@@ -1557,15 +1563,22 @@ local function AutoPromoteRoles()
             local fullName = GetUnitName(unit, true)
             
             if name then
-                -- Auto Assist (Raid only, typically not protected)
+                -- Detect members needing Assistant promotion (Raid only)
                 if isRaid and IsInList(name, fullName, assistNames) then
-                    if not UnitIsGroupAssistant(unit) then
-                        PromoteToAssistant(unit)
-                        ns.Print("Auto-Promoted |cff00FF00" .. name .. "|r to Assistant.")
+                    if not UnitIsGroupAssistant(unit) and not autoPromoteNotified[name] then
+                        pending[#pending + 1] = name
+                        autoPromoteNotified[name] = true
                     end
                 end
             end
         end
+    end
+    
+    -- TAINT SAFETY: PromoteToAssistant() is a protected function that cannot
+    -- be called from addon event handlers. Notify the user to run /guirole
+    -- which executes in a secure, user-initiated context.
+    if #pending > 0 then
+        ns.Print("Members need Assistant: |cff00FF00" .. table.concat(pending, ", ") .. "|r — type |cffFFD100/guirole|r to promote.")
     end
 end
 
