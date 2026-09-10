@@ -1525,11 +1525,13 @@ SlashCmdList["GUIROLE"] = function()
     ns.UpdateGroupRoles()
 end
 
-local autoPromoteNotified = {} -- Track which players we've already notified about
+local autoPromoteNotified = {} -- Track which players we've already notified/promoted
+local autoPromoteCombatQueue = {} -- Units queued for promotion after combat ends
 
 local function AutoPromoteRoles()
     if not IsInGroup() or not UnitIsGroupLeader("player") then
         wipe(autoPromoteNotified)
+        wipe(autoPromoteCombatQueue)
         return
     end
     local settings = GetSettings()
@@ -1554,7 +1556,7 @@ local function AutoPromoteRoles()
     
     local numMembers = GetNumGroupMembers()
     local isRaid = IsInRaid()
-    local pending = {}
+    local toPromote = {}
     
     for i = 1, numMembers do
         local unit = isRaid and ("raid"..i) or ("party"..i)
@@ -1563,23 +1565,75 @@ local function AutoPromoteRoles()
             local fullName = GetUnitName(unit, true)
             
             if name then
-                -- Detect members needing Assistant promotion (Raid only)
+                -- Assistant Promotion (Raid only)
                 if isRaid and IsInList(name, fullName, assistNames) then
                     if not UnitIsGroupAssistant(unit) and not autoPromoteNotified[name] then
-                        pending[#pending + 1] = name
                         autoPromoteNotified[name] = true
+                        if InCombatLockdown() then
+                            -- Cannot call PromoteToAssistant() in combat — queue for after combat
+                            autoPromoteCombatQueue[#autoPromoteCombatQueue + 1] = { name = name }
+                            ns.Print("Queued |cff00FF00" .. name .. "|r for Assistant promotion (after combat).")
+                        else
+                            toPromote[#toPromote + 1] = { unit = unit, name = name }
+                        end
                     end
                 end
             end
         end
     end
     
-    -- TAINT SAFETY: PromoteToAssistant() is a protected function that cannot
-    -- be called from addon event handlers. Notify the user to run /guirole
-    -- which executes in a secure, user-initiated context.
-    if #pending > 0 then
-        ns.Print("Members need Assistant: |cff00FF00" .. table.concat(pending, ", ") .. "|r — type |cffFFD100/guirole|r to promote.")
+    -- TAINT SAFETY: Defer PromoteToAssistant() out of the event handler stack
+    -- via C_Timer.After(0). Calling it directly inside GROUP_ROSTER_UPDATE taints
+    -- the execution frame, which propagates to Blizzard's ActionBar SetShown().
+    if #toPromote > 0 then
+        C_Timer.After(0, function()
+            if not IsInGroup() or not UnitIsGroupLeader("player") or InCombatLockdown() then return end
+            for _, entry in ipairs(toPromote) do
+                -- Re-resolve: unit indices may have shifted between the event and the timer
+                local n = GetNumGroupMembers()
+                local r = IsInRaid()
+                for j = 1, n do
+                    local u = r and ("raid"..j) or ("party"..j)
+                    local uName = GetUnitName(u, false)
+                    if uName and uName == entry.name and not UnitIsGroupAssistant(u) then
+                        PromoteToAssistant(u)
+                        ns.Print("Promoted |cff00FF00" .. entry.name .. "|r to Assistant.")
+                        break
+                    end
+                end
+            end
+        end)
     end
+end
+
+-- Process combat-deferred promotions when combat ends
+local function FlushCombatPromoteQueue()
+    if #autoPromoteCombatQueue == 0 then return end
+    if not IsInGroup() or not UnitIsGroupLeader("player") then
+        wipe(autoPromoteCombatQueue)
+        return
+    end
+    
+    -- Defer out of PLAYER_REGEN_ENABLED handler for the same taint reason
+    local queued = {unpack(autoPromoteCombatQueue)}
+    wipe(autoPromoteCombatQueue)
+    
+    C_Timer.After(0, function()
+        if not IsInGroup() or not UnitIsGroupLeader("player") or InCombatLockdown() then return end
+        local isRaid = IsInRaid()
+        for _, entry in ipairs(queued) do
+            local numMembers = GetNumGroupMembers()
+            for i = 1, numMembers do
+                local unit = isRaid and ("raid"..i) or ("party"..i)
+                local name = GetUnitName(unit, false)
+                if name and name == entry.name and not UnitIsGroupAssistant(unit) then
+                    PromoteToAssistant(unit)
+                    ns.Print("Promoted |cff00FF00" .. name .. "|r to Assistant (queued from combat).")
+                    break
+                end
+            end
+        end
+    end)
 end
 
 automationFrame:SetScript("OnEvent", function(self, event, ...)
@@ -2306,6 +2360,7 @@ qolEventFrame:SetScript("OnEvent", function(self, event, arg1)
             CleanTransforms()
         end
         ScanAndOpenContainers()
+        FlushCombatPromoteQueue()
     elseif event == "CHAT_MSG_SYSTEM" then
         HandleInstanceResetMsg(arg1)
     elseif event == "ADDON_LOADED" then

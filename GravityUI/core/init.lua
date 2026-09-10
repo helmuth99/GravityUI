@@ -2191,7 +2191,15 @@ end
 
 local oocFrame = CreateFrame("Frame")
 oocFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
-oocFrame:SetScript("OnEvent", ProcessOOCQueue)
+oocFrame:SetScript("OnEvent", function()
+    -- TAINT FIX: Defer OOC queue processing out of PLAYER_REGEN_ENABLED.
+    -- Running queued actions (e.g. RefreshActionBars → UpdateButtonText) directly
+    -- in the event handler taints the execution context. Blizzard's
+    -- ACTIONBAR_UPDATE_COOLDOWN dispatch fires in the same frame and inherits
+    -- the taint, causing SetCooldown() to reject secret values with:
+    -- "Secret values are only allowed during untainted execution."
+    C_Timer.After(0, ProcessOOCQueue)
+end)
 
 -- Addon Compartment Functions (for addon button in minimap area)
 function GravityUI_CompartmentClick()

@@ -188,30 +188,24 @@ local function RequestRefresh()
     pendingRefresh = true
     C_Timer.After(0.2, function()
         if InCombatLockdown() then
-            -- Lightweight in-combat refresh: only update non-protected bars.
-            -- TAINT FIX: Protected bars (bar1-8) must NOT be touched from
-            -- addon code during combat.
-            local db = GetDB()
-            if db and db.enabled and db.global then
-                local g = db.global
-                for barKey, _ in pairs(BAR_BUTTONS) do
-                    if not PROTECTED_BAR_FRAMES[barKey] then
-                        local buttons = GetBarButtons(barKey)
-                        for _, btn in ipairs(buttons) do
-                            UpdateButtonText(btn, g)
-                            UpdateEmptySlotVisibility(btn, g, barKey)
-                        end
-                    end
-                end
-            end
-            -- Queue a full refresh for when combat ends (e.g. vehicle/override bar exit)
+            -- TAINT FIX (2026-09): Do NOT modify ANY button children during
+            -- combat — not even "non-protected" bars (pet, stance). All action
+            -- buttons share Blizzard's ActionBarButtonEventsFrame dispatch loop.
+            -- Tainting any single button's children (HotKey/Name/Count FontStrings)
+            -- propagates taint to the entire loop, causing SetCooldown() to reject
+            -- secret values on ALL buttons.
+            -- Queue a full refresh for when combat ends.
             if not combatDeferredRefresh then
                 combatDeferredRefresh = true
                 ns.QueueOOCAction(function()
                     combatDeferredRefresh = false
-                    if ns.RefreshActionBars then
-                        ns.RefreshActionBars()
-                    end
+                    -- Defer further to run in a clean stack frame, after
+                    -- Blizzard's post-combat ACTIONBAR_UPDATE_COOLDOWN burst.
+                    C_Timer.After(0.1, function()
+                        if not InCombatLockdown() and ns.RefreshActionBars then
+                            ns.RefreshActionBars()
+                        end
+                    end)
                 end)
             end
         else
