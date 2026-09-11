@@ -231,14 +231,16 @@ local function BuildInformationTab(parent)
 
     local changeLogs = {
         {
-            version = "4.01.17",
-            date = "09/01/2026",
+            version = "4.01.31",
+            date = "09/11/2026",
             changes = {
-                "[NEW] Player Marks: Assign raid target icons to players via Ready Check. Supports per-role marks in M+ dungeons (Tank/Healer) and individual player assignments in raids with custom boss/NPC targets. Uses SecureActionButton macros with post-click verification and chat feedback.",
-                "Action Bars: Complete rework of the fading system — per-bar mouseover fade with configurable alpha, smooth interpolation, and combat override. Fixed Extra Action Button scaling deferred to out-of-combat. Added Action Button Lock with persistent CVar synchronization.",
-                "Interrupt Tracker: Reworked party member interrupt attribution for WoW 12.x — resolved secret GUID handling in M+ dungeons using pcall(UnitNameFromGUID). Fixed bar color, font, and backdrop theming with full class color and theme color priority support.",
-                "Profiles: Updated default profile settings with new module defaults (playermarks, interruptTracker colors). Improved SavedVariables initialization and migration logic.",
-                "Ready Check Styling: Fixed custom background and font color options. Added theme color toggle for both background and text elements.",
+                "[NEW] Edit Mode: Integrated Settings Panel — adjust module settings (enable/disable, font sizes, colors, durations) directly from Edit Mode without opening the main config. Settings panel auto-collapses and expands per-module on click.",
+                "[NEW] Edit Mode: Extra Abilities Container (ExtraActionButton + Zone Ability) is now movable via a non-reparenting proxy mover. Position is saved per character.",
+                "[NEW] Edit Mode: Bag Bar and Micro Menu Bar are now fully draggable with Blizzard layout manager suppression to prevent position resets.",
+                "[NEW] Edit Mode: Added settings providers for all modules — Minimap, XP/Rep Bar, Pet Warnings, Combat Status, Healer Mana, Battle Res Tracker, Bloodlust Tracker, Combat Timer, Raid Warnings, World Marks, Cooldown Text, Difficulty, Loot Window, Interrupt Tracker, Stance Text, Alerts, Toasts, Icon Catcher, Death Announcer, Crosshair, Ready Check, Bonus Roll, Loot Rolls, Power Bar Alt, Widgets, and DataPanels.",
+                "Action Bars: Updated all default bar sizes and global text settings to refined values — smaller button sizes (36/34/30px), tighter spacing (1px), adjusted font sizes and colors for keybinds, macro names, and cooldown text.",
+                "DataPanels: Fixed Edit Mode settings using wrong DB field (numSlots instead of slots table). Added Width/Height sliders with live refresh.",
+                "Death Announcer: Fixed DB path to top-level db.deathAnnouncer. Added full settings panel (Enabled, Font Size, Duration, Class Color).",
             },
         },
     }

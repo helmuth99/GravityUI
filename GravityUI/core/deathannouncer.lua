@@ -256,15 +256,33 @@ end
 -- AUDIO & CHAT HELPERS
 -- ============================================================================
 local lastSoundTime = 0
-local SOUND_COOLDOWN = 2.0  -- Max one death sound per 2 seconds (prevents wipe spam)
+local SOUND_COOLDOWN = 1.5  -- Min gap between death sounds
+local recentDeathCount = 0
+local recentDeathWindowStart = 0
+local WIPE_WINDOW = 5.0     -- Time window to detect mass-deaths
+local WIPE_THRESHOLD = 3    -- After this many deaths in the window, suppress sounds (raid wipe)
 
 local function PlayDeathSound(s)
     if not s or not s.soundEnabled then return end
     local soundFile = s.soundFile
     if not soundFile or soundFile == "None" or soundFile == "" then return end
 
-    -- Throttle: skip if we played a sound recently
     local now = GetTime()
+
+    -- Track deaths in a rolling window for wipe detection
+    if (now - recentDeathWindowStart) > WIPE_WINDOW then
+        -- Reset window
+        recentDeathWindowStart = now
+        recentDeathCount = 1
+    else
+        recentDeathCount = recentDeathCount + 1
+    end
+
+    -- Suppress sound during wipes (mass deaths in raid)
+    -- In M+ (5-man) you rarely get 3+ deaths at the exact same moment
+    if recentDeathCount > WIPE_THRESHOLD then return end
+
+    -- Basic cooldown throttle
     if (now - lastSoundTime) < SOUND_COOLDOWN then return end
     lastSoundTime = now
 

@@ -711,6 +711,22 @@ function Movers:SaveFramePosition(name, frame, point, relPoint, x, y)
         db.screenindicators.battleRes.position = { point = finalPoint, relativePoint = finalRelPoint, x = finalX, y = finalY }
     elseif name == "BloodlustTracker" and db.screenindicators and db.screenindicators.bloodlust then
         db.screenindicators.bloodlust.position = { point = finalPoint, relativePoint = finalRelPoint, x = finalX, y = finalY }
+    else
+        -- Generic handler for action bars (ActionBar_MainBar, ActionBar_Bar2, etc.)
+        local abKey = name:match("^ActionBar_(.+)$")
+        if abKey and db.actionbars and db.actionbars.bars then
+            if not db.actionbars.bars[abKey] then db.actionbars.bars[abKey] = {} end
+            db.actionbars.bars[abKey].position = { point = finalPoint, relativePoint = finalRelPoint, x = finalX, y = finalY }
+
+            -- For ExtraAbilities proxy: sync the real Blizzard container position
+            if abKey == "ExtraAbilities" then
+                local container = _G.ExtraAbilityContainer
+                if container and not InCombatLockdown() then
+                    container:ClearAllPoints()
+                    container:SetPoint(finalPoint, UIParent, finalRelPoint, finalX, finalY)
+                end
+            end
+        end
     end
 
     frame._isSaving = false
@@ -982,7 +998,7 @@ function Movers:CreateHUD()
 
     hudFrame = CreateFrame("Frame", "GravityUI_EditMode_HUD", UIParent, "BackdropTemplate")
     hudFrame:SetSize(860, 68)
-    hudFrame:SetPoint("TOP", UIParent, "TOP", 0, -20)
+    hudFrame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 0, 0)
     hudFrame:SetFrameStrata("FULLSCREEN_DIALOG")
     hudFrame:SetFrameLevel(200)
     hudFrame:SetMovable(true)
@@ -1242,8 +1258,398 @@ end
 
 function Movers:HideHUD()
     if hudFrame then hudFrame:Hide() end
+    self:HideSettingsPanel()
 end
 
+-- ============================================================================
+-- GENERIC SETTINGS PANEL (Provider Registry + Tabs + Collapsible)
+-- ============================================================================
+
+Movers.settingsProviders = {}   -- [pattern] = { label, tabs = { {label, build}, ... } }
+local settingsPanel             -- the floating settings frame
+local _spCollapsed = true       -- session-only collapse state (default collapsed)
+local _spCurrentProvider = nil  -- currently active provider key
+local _spCurrentTab = 1         -- currently active tab index
+local _spRows = {}              -- active settings rows
+
+-- ── Provider Registration API ─────────────────────────────────────────────
+function Movers:RegisterSettingsProvider(pattern, config)
+    if config.build and not config.tabs then
+        config.tabs = { { label = config.label or "Settings", build = config.build } }
+    end
+    self.settingsProviders[pattern] = config
+end
+
+local function FindProvider(moverName)
+    if not moverName then return nil, nil end
+    local providers = Movers.settingsProviders
+    if providers[moverName] then return moverName, providers[moverName] end
+    for pattern, config in pairs(providers) do
+        if pattern:find("*", 1, true) then
+            local prefix = pattern:gsub("%*", "")
+            if moverName:sub(1, #prefix) == prefix then
+                return pattern, config
+            end
+        end
+    end
+    return nil, nil
+end
+
+-- ── Slider Widget ─────────────────────────────────────────────────────────
+local function CreateSPSlider(parent, label, min, max, step, getValue, setValue, yPos)
+    local row = CreateFrame("Frame", nil, parent)
+    row:SetSize(parent:GetWidth() - 24, 22)
+    row:SetPoint("TOPLEFT", 12, yPos)
+
+    local lbl = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    lbl:SetPoint("LEFT", 0, 0)
+    lbl:SetWidth(110)
+    lbl:SetJustifyH("LEFT")
+    lbl:SetText("|cffdddddd" .. label .. ":|r")
+
+    local slider = CreateFrame("Slider", nil, row, "BackdropTemplate")
+    slider:SetSize(140, 12)
+    slider:SetPoint("LEFT", lbl, "RIGHT", 8, 0)
+    slider:SetMinMaxValues(min, max)
+    slider:SetValueStep(step)
+    slider:SetObeyStepOnDrag(true)
+    slider:SetOrientation("HORIZONTAL")
+    slider:SetBackdrop({
+        bgFile   = "Interface\\Buttons\\WHITE8x8",
+        edgeFile = "Interface\\Buttons\\WHITE8x8",
+        edgeSize = 1,
+        insets   = { left = 0, right = 0, top = 0, bottom = 0 },
+    })
+    slider:SetBackdropColor(0.08, 0.10, 0.14, 0.95)
+    slider:SetBackdropBorderColor(0.20, 0.40, 0.60, 0.8)
+
+    local thumb = slider:CreateTexture(nil, "OVERLAY")
+    thumb:SetSize(10, 16)
+    thumb:SetColorTexture(0.00, 0.75, 1.00, 1.00)
+    slider:SetThumbTexture(thumb)
+
+    local valText = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    valText:SetPoint("LEFT", slider, "RIGHT", 8, 0)
+    valText:SetText(tostring(getValue()))
+
+    slider:SetValue(getValue())
+    slider:SetScript("OnValueChanged", function(self, val)
+        val = math.floor(val / step + 0.5) * step
+        valText:SetText(tostring(val))
+        setValue(val)
+    end)
+    slider:SetScript("OnEnter", function(self) self:SetBackdropBorderColor(0.00, 0.90, 1.00, 1.00) end)
+    slider:SetScript("OnLeave", function(self) self:SetBackdropBorderColor(0.20, 0.40, 0.60, 0.8) end)
+
+    row.slider = slider
+    row.valText = valText
+    row.Refresh = function()
+        slider:SetValue(getValue())
+        valText:SetText(tostring(getValue()))
+    end
+    return row
+end
+
+-- ── Dropdown Widget ───────────────────────────────────────────────────────
+local function CreateSPDropdown(parent, label, options, getValue, setValue, yPos)
+    local row = CreateFrame("Frame", nil, parent)
+    row:SetSize(parent:GetWidth() - 24, 22)
+    row:SetPoint("TOPLEFT", 12, yPos)
+
+    local lbl = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    lbl:SetPoint("LEFT", 0, 0)
+    lbl:SetWidth(110)
+    lbl:SetJustifyH("LEFT")
+    lbl:SetText("|cffdddddd" .. label .. ":|r")
+
+    local btnFrame = CreateFrame("Button", nil, row, "BackdropTemplate")
+    btnFrame:SetSize(120, 18)
+    btnFrame:SetPoint("LEFT", lbl, "RIGHT", 8, 0)
+    btnFrame:SetBackdrop({
+        bgFile = "Interface\\Buttons\\WHITE8x8",
+        edgeFile = "Interface\\Buttons\\WHITE8x8",
+        edgeSize = 1,
+    })
+    btnFrame:SetBackdropColor(0.1, 0.12, 0.18, 0.95)
+    btnFrame:SetBackdropBorderColor(0.3, 0.5, 0.7, 1)
+
+    local valText = btnFrame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    valText:SetPoint("CENTER", 0, 0)
+
+    local function UpdateText()
+        local cur = getValue()
+        for _, opt in ipairs(options) do
+            if opt.value == cur then valText:SetText(opt.text); return end
+        end
+        valText:SetText(cur or "")
+    end
+    UpdateText()
+
+    btnFrame:SetScript("OnClick", function()
+        local cur = getValue()
+        local idx = 1
+        for i, opt in ipairs(options) do
+            if opt.value == cur then idx = i; break end
+        end
+        idx = idx % #options + 1
+        setValue(options[idx].value)
+        UpdateText()
+    end)
+
+    row.Refresh = function() UpdateText() end
+    return row
+end
+
+-- ── Checkbox Widget ───────────────────────────────────────────────────────
+local function CreateSPCheckbox(parent, label, getValue, setValue, yPos)
+    local row = CreateFrame("Frame", nil, parent)
+    row:SetSize(parent:GetWidth() - 24, 22)
+    row:SetPoint("TOPLEFT", 12, yPos)
+
+    local cb = CreateFrame("CheckButton", nil, row, "InterfaceOptionsCheckButtonTemplate")
+    cb:SetSize(18, 18)
+    cb:SetPoint("LEFT", 0, 0)
+    cb:SetChecked(getValue())
+    cb:SetScript("OnClick", function(self) setValue(self:GetChecked()) end)
+
+    local t = cb.Text or cb:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    t:SetText("|cffdddddd" .. label .. "|r")
+    t:SetPoint("LEFT", cb, "RIGHT", 4, 0)
+    cb.Text = t
+
+    row.Refresh = function() cb:SetChecked(getValue()) end
+    return row
+end
+
+-- Expose widget creators for providers
+ns.SPSlider = CreateSPSlider
+ns.SPDropdown = CreateSPDropdown
+ns.SPCheckbox = CreateSPCheckbox
+
+-- ── Settings Panel Frame ──────────────────────────────────────────────────
+local function ClearPanelContent()
+    for _, row in ipairs(_spRows) do
+        row:Hide()
+        row:SetParent(nil)
+    end
+    wipe(_spRows)
+end
+
+local function BuildTabContent(moverName)
+    if not settingsPanel or not _spCurrentProvider then return end
+
+    ClearPanelContent()
+
+    local provider = Movers.settingsProviders[_spCurrentProvider]
+    if not provider or not provider.tabs then return end
+
+    local tab = provider.tabs[_spCurrentTab]
+    if not tab or not tab.build then return end
+
+    local contentTop = -6
+    if #provider.tabs > 1 then contentTop = -6 end  -- tab bar handled by offset
+
+    local rows, finalY = tab.build(settingsPanel.content, moverName, contentTop, -26)
+    if rows then
+        for _, row in ipairs(rows) do
+            _spRows[#_spRows + 1] = row
+        end
+    end
+
+    local totalH = math.abs(finalY or contentTop) + 12
+    settingsPanel.content:SetHeight(totalH)
+
+    local tabBarH = (#provider.tabs > 1) and 26 or 0
+    settingsPanel:SetHeight(24 + tabBarH + totalH + 4)
+end
+
+function Movers:CreateSettingsPanel()
+    if settingsPanel then return end
+    if not hudFrame then self:CreateHUD() end
+
+    settingsPanel = CreateFrame("Frame", "GravityUI_EditMode_Settings", hudFrame, "BackdropTemplate")
+    settingsPanel:SetWidth(hudFrame:GetWidth())
+    settingsPanel:SetHeight(200)
+    settingsPanel:SetPoint("TOPLEFT", hudFrame, "BOTTOMLEFT", 0, -2)
+    settingsPanel:SetFrameStrata("FULLSCREEN_DIALOG")
+    settingsPanel:SetFrameLevel(198)
+
+    settingsPanel:SetBackdrop({
+        bgFile   = "Interface\\Buttons\\WHITE8x8",
+        edgeFile = "Interface\\Buttons\\WHITE8x8",
+        edgeSize = 1,
+        insets   = { left = 0, right = 0, top = 0, bottom = 0 },
+    })
+    settingsPanel:SetBackdropColor(0.06, 0.07, 0.10, 0.97)
+    settingsPanel:SetBackdropBorderColor(0.00, 0.60, 0.85, 0.9)
+
+    -- ── Title Bar ──
+    local titleBar = CreateFrame("Frame", nil, settingsPanel)
+    titleBar:SetHeight(22)
+    titleBar:SetPoint("TOPLEFT", 0, 0)
+    titleBar:SetPoint("TOPRIGHT", 0, 0)
+
+    local titleFS = titleBar:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    titleFS:SetPoint("LEFT", 8, 0)
+    titleFS:SetText("|cff30d1ffSettings|r")
+    settingsPanel.titleFS = titleFS
+
+    -- Collapse toggle button
+    local collapseBtn = CreateFrame("Button", nil, titleBar)
+    collapseBtn:SetSize(18, 18)
+    collapseBtn:SetPoint("RIGHT", titleBar, "RIGHT", -4, 0)
+    local collapseText = collapseBtn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    collapseText:SetPoint("CENTER", 0, 0)
+    collapseText:SetText("|cff30d1ff▶|r")  -- starts collapsed
+    collapseBtn:SetScript("OnClick", function()
+        _spCollapsed = not _spCollapsed
+        collapseText:SetText(_spCollapsed and "|cff30d1ff▶|r" or "|cff30d1ff▼|r")
+        if _spCollapsed then
+            settingsPanel.content:Hide()
+            settingsPanel.tabBar:Hide()
+            settingsPanel:SetHeight(24)
+        else
+            settingsPanel.content:Show()
+            settingsPanel.tabBar:Show()
+            Movers:RefreshSettingsPanel()
+        end
+    end)
+    settingsPanel.collapseText = collapseText
+
+    -- ── Tab Bar ──
+    local tabBar = CreateFrame("Frame", nil, settingsPanel)
+    tabBar:SetHeight(24)
+    tabBar:SetPoint("TOPLEFT", 0, -22)
+    tabBar:SetPoint("TOPRIGHT", 0, -22)
+    settingsPanel.tabBar = tabBar
+    settingsPanel.tabButtons = {}
+
+    -- ── Content Area ──
+    local content = CreateFrame("Frame", nil, settingsPanel)
+    content:SetPoint("TOPLEFT", settingsPanel.tabBar, "BOTTOMLEFT", 0, 0)
+    content:SetPoint("RIGHT", settingsPanel, "RIGHT", 0, 0)
+    content:SetHeight(200)
+    settingsPanel.content = content
+
+    settingsPanel:Hide()
+end
+
+local function UpdateTabBar(provider, moverName)
+    if not settingsPanel or not provider then return end
+
+    for _, btn in ipairs(settingsPanel.tabButtons) do btn:Hide() end
+    wipe(settingsPanel.tabButtons)
+
+    local tabs = provider.tabs
+    if not tabs or #tabs <= 1 then
+        settingsPanel.tabBar:SetHeight(0.001)
+        return
+    end
+
+    settingsPanel.tabBar:SetHeight(24)
+    local xOff = 8
+    for i, tabDef in ipairs(tabs) do
+        local btn = CreateFrame("Button", nil, settingsPanel.tabBar, "BackdropTemplate")
+        btn:SetHeight(20)
+        btn:SetPoint("LEFT", settingsPanel.tabBar, "LEFT", xOff, 0)
+        btn:SetBackdrop({
+            bgFile   = "Interface\\Buttons\\WHITE8x8",
+            edgeFile = "Interface\\Buttons\\WHITE8x8",
+            edgeSize = 1,
+        })
+
+        local fs = btn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        fs:SetPoint("CENTER", 0, 0)
+        fs:SetText(tabDef.label or ("Tab " .. i))
+        btn:SetWidth(fs:GetStringWidth() + 20)
+
+        local isActive = (i == _spCurrentTab)
+        if isActive then
+            btn:SetBackdropColor(0.00, 0.45, 0.65, 0.95)
+            btn:SetBackdropBorderColor(0.00, 0.75, 1.00, 1)
+            fs:SetTextColor(1, 1, 1, 1)
+        else
+            btn:SetBackdropColor(0.10, 0.12, 0.16, 0.9)
+            btn:SetBackdropBorderColor(0.25, 0.35, 0.50, 0.8)
+            fs:SetTextColor(0.6, 0.6, 0.6, 1)
+        end
+
+        btn:SetScript("OnClick", function()
+            _spCurrentTab = i
+            Movers:RefreshSettingsPanel()
+        end)
+        btn:SetScript("OnEnter", function(self)
+            if i ~= _spCurrentTab then self:SetBackdropBorderColor(0.00, 0.75, 1.00, 0.8) end
+        end)
+        btn:SetScript("OnLeave", function(self)
+            if i ~= _spCurrentTab then self:SetBackdropBorderColor(0.25, 0.35, 0.50, 0.8) end
+        end)
+
+        xOff = xOff + btn:GetWidth() + 4
+        settingsPanel.tabButtons[#settingsPanel.tabButtons + 1] = btn
+    end
+end
+
+function Movers:ShowSettingsPanel(moverName)
+    if not settingsPanel then self:CreateSettingsPanel() end
+
+    local patternKey, provider = FindProvider(moverName)
+    if not provider then
+        self:HideSettingsPanel()
+        return
+    end
+
+    -- Reset tab if provider changed
+    if _spCurrentProvider ~= patternKey then
+        _spCurrentTab = 1
+    end
+    _spCurrentProvider = patternKey
+
+    if #provider.tabs < _spCurrentTab then _spCurrentTab = 1 end
+
+    local titleLabel = provider.label or "Settings"
+    settingsPanel.titleFS:SetText("|cff30d1ff" .. titleLabel .. "|r")
+    settingsPanel.collapseText:SetText(_spCollapsed and "|cff30d1ff▶|r" or "|cff30d1ff▼|r")
+
+    if _spCollapsed then
+        settingsPanel.content:Hide()
+        settingsPanel.tabBar:Hide()
+        settingsPanel:SetHeight(24)
+    else
+        settingsPanel.content:Show()
+        settingsPanel.tabBar:Show()
+        UpdateTabBar(provider, moverName)
+        BuildTabContent(moverName)
+    end
+
+    settingsPanel:Show()
+end
+
+function Movers:HideSettingsPanel()
+    if settingsPanel then
+        ClearPanelContent()
+        settingsPanel:Hide()
+    end
+    _spCurrentProvider = nil
+end
+
+function Movers:RefreshSettingsPanel()
+    if not settingsPanel or not settingsPanel:IsShown() or not _spCurrentProvider then return end
+    local name = self.selectedMover
+    if not name then self:HideSettingsPanel(); return end
+
+    local _, provider = FindProvider(name)
+    if not provider then self:HideSettingsPanel(); return end
+
+    UpdateTabBar(provider, name)
+    BuildTabContent(name)
+end
+
+-- Legacy compat
+function Movers:ShowActionBarHUD(barKey) self:ShowSettingsPanel("ActionBar_" .. barKey) end
+function Movers:HideActionBarHUD() self:HideSettingsPanel() end
+
+-- ── UpdateHUD ─────────────────────────────────────────────────────────────
 function Movers:UpdateHUD()
     if not hudFrame or not hudFrame:IsShown() then return end
 
@@ -1288,6 +1694,14 @@ function Movers:UpdateHUD()
         else
             hudFrame.toggleModuleBtn.text:SetText("|cff00FF80Enable Module|r")
         end
+
+        -- Show settings panel if a provider exists for the selected element
+        local _, provider = FindProvider(name)
+        if provider then
+            self:ShowSettingsPanel(name)
+        else
+            self:HideSettingsPanel()
+        end
     else
         hudFrame.selectedText:SetText("|cff888888No element selected|r")
         if hudFrame.xInput and not hudFrame.xInput:HasFocus() then
@@ -1301,6 +1715,7 @@ function Movers:UpdateHUD()
             hudFrame.yInput:SetAlpha(0.3)
         end
         hudFrame.toggleModuleBtn:Hide()
+        self:HideSettingsPanel()
     end
 end
 
@@ -1429,4 +1844,568 @@ _initFrame:RegisterEvent("PLAYER_LOGIN")
 _initFrame:SetScript("OnEvent", function(self)
     Movers:Initialize()
     self:UnregisterAllEvents()
+
+    -- Register settings providers for all modules (deferred so DB is ready)
+    C_Timer.After(0.1, function()
+        local db = ns.GetDB and ns.GetDB()
+        if not db then return end
+        local si = db.screenindicators  -- shorthand
+
+        -- ── Minimap ──
+        Movers:RegisterSettingsProvider("Minimap", {
+            label = "Minimap Settings",
+            build = function(parent, moverName, yPos, rowStep)
+                local mdb = db.minimap
+                if not mdb then return {}, yPos end
+                local rows, r = {}, nil
+
+                r = ns.SPSlider(parent, "Scale", 0.5, 2.0, 0.05,
+                    function() return mdb.scale or 1 end,
+                    function(v) mdb.scale = v; if Minimap then Minimap:SetScale(v) end end, yPos)
+                rows[#rows + 1] = r; yPos = yPos + rowStep
+
+                local shapeOpts = {
+                    { value = "square", text = "Square" },
+                    { value = "round",  text = "Round" },
+                }
+                r = ns.SPDropdown(parent, "Shape", shapeOpts,
+                    function() return mdb.shape or "square" end,
+                    function(v) mdb.shape = v end, yPos)
+                rows[#rows + 1] = r; yPos = yPos + rowStep
+
+                r = ns.SPCheckbox(parent, "Show Clock",
+                    function() return mdb.showClock ~= false end,
+                    function(v) mdb.showClock = v end, yPos)
+                rows[#rows + 1] = r; yPos = yPos + rowStep
+
+                r = ns.SPCheckbox(parent, "Show Coordinates",
+                    function() return mdb.showCoords == true end,
+                    function(v) mdb.showCoords = v end, yPos)
+                rows[#rows + 1] = r; yPos = yPos + rowStep
+
+                return rows, yPos
+            end,
+        })
+
+        -- ── Difficulty Indicator ── (db.minimap.difficultyConfig)
+        Movers:RegisterSettingsProvider("GravityUI_Difficulty", {
+            label = "Difficulty Indicator",
+            build = function(parent, moverName, yPos, rowStep)
+                local ddb = db.minimap and db.minimap.difficultyConfig
+                if not ddb then return {}, yPos end
+                local rows, r = {}, nil
+
+                r = ns.SPSlider(parent, "Scale", 0.5, 2.0, 0.1,
+                    function() return ddb.scale or 1 end,
+                    function(v) ddb.scale = v end, yPos)
+                rows[#rows + 1] = r; yPos = yPos + rowStep
+
+                return rows, yPos
+            end,
+        })
+
+        -- ── XP/Rep Bar ── (db.styling.xpRep)
+        Movers:RegisterSettingsProvider("XPRep", {
+            label = "XP/Rep Bar Settings",
+            build = function(parent, moverName, yPos, rowStep)
+                local xdb = db.styling and db.styling.xpRep
+                if not xdb then return {}, yPos end
+                local rows, r = {}, nil
+
+                r = ns.SPSlider(parent, "Width", 100, 1200, 10,
+                    function() return xdb.width or 500 end,
+                    function(v) xdb.width = v end, yPos)
+                rows[#rows + 1] = r; yPos = yPos + rowStep
+
+                r = ns.SPSlider(parent, "Height", 4, 30, 1,
+                    function() return xdb.height or 14 end,
+                    function(v) xdb.height = v end, yPos)
+                rows[#rows + 1] = r; yPos = yPos + rowStep
+
+                r = ns.SPSlider(parent, "Font Size", 6, 20, 1,
+                    function() return xdb.fontSize or 10 end,
+                    function(v) xdb.fontSize = v end, yPos)
+                rows[#rows + 1] = r; yPos = yPos + rowStep
+
+                r = ns.SPCheckbox(parent, "Always Show Text",
+                    function() return xdb.alwaysShowText == true end,
+                    function(v) xdb.alwaysShowText = v end, yPos)
+                rows[#rows + 1] = r; yPos = yPos + rowStep
+
+                r = ns.SPCheckbox(parent, "Mouseover Only",
+                    function() return xdb.mouseover == true end,
+                    function(v) xdb.mouseover = v end, yPos)
+                rows[#rows + 1] = r; yPos = yPos + rowStep
+
+                return rows, yPos
+            end,
+        })
+
+        -- ── Pet Warnings ── (db.screenindicators.petWarnings)
+        Movers:RegisterSettingsProvider("PetWarnings", {
+            label = "Pet Warnings",
+            build = function(parent, moverName, yPos, rowStep)
+                local pw = si and si.petWarnings
+                if not pw then return {}, yPos end
+                local rows, r = {}, nil
+
+                r = ns.SPCheckbox(parent, "Enabled",
+                    function() return pw.enabled ~= false end,
+                    function(v) pw.enabled = v end, yPos)
+                rows[#rows + 1] = r; yPos = yPos + rowStep
+
+                r = ns.SPSlider(parent, "Font Size", 12, 48, 1,
+                    function() return pw.fontSize or 28 end,
+                    function(v) pw.fontSize = v end, yPos)
+                rows[#rows + 1] = r; yPos = yPos + rowStep
+
+                r = ns.SPCheckbox(parent, "Pet Dead Warning",
+                    function() return pw.petDeadWarning ~= false end,
+                    function(v) pw.petDeadWarning = v end, yPos)
+                rows[#rows + 1] = r; yPos = yPos + rowStep
+
+                r = ns.SPCheckbox(parent, "Pet Attack Warning",
+                    function() return pw.petAttackWarning ~= false end,
+                    function(v) pw.petAttackWarning = v end, yPos)
+                rows[#rows + 1] = r; yPos = yPos + rowStep
+
+                return rows, yPos
+            end,
+        })
+
+        -- ── Combat Status ── (db.screenindicators.combatStatus)
+        Movers:RegisterSettingsProvider("CombatStatus", {
+            label = "Combat Status",
+            build = function(parent, moverName, yPos, rowStep)
+                local cs = si and si.combatStatus
+                if not cs then return {}, yPos end
+                local rows, r = {}, nil
+
+                r = ns.SPCheckbox(parent, "Enabled",
+                    function() return cs.enabled ~= false end,
+                    function(v) cs.enabled = v end, yPos)
+                rows[#rows + 1] = r; yPos = yPos + rowStep
+
+                r = ns.SPSlider(parent, "Font Size", 8, 32, 1,
+                    function() return cs.fontSize or 14 end,
+                    function(v) cs.fontSize = v end, yPos)
+                rows[#rows + 1] = r; yPos = yPos + rowStep
+
+                r = ns.SPSlider(parent, "Display Time", 0.3, 5, 0.1,
+                    function() return cs.displayTime or 0.8 end,
+                    function(v) cs.displayTime = v end, yPos)
+                rows[#rows + 1] = r; yPos = yPos + rowStep
+
+                r = ns.SPSlider(parent, "Fade Time", 0.1, 3, 0.1,
+                    function() return cs.fadeTime or 0.3 end,
+                    function(v) cs.fadeTime = v end, yPos)
+                rows[#rows + 1] = r; yPos = yPos + rowStep
+
+                return rows, yPos
+            end,
+        })
+
+        -- ── Healer Mana ── (db.screenindicators.healerMana)
+        Movers:RegisterSettingsProvider("HealerMana", {
+            label = "Healer Mana Tracker",
+            build = function(parent, moverName, yPos, rowStep)
+                local hm = si and si.healerMana
+                if not hm then return {}, yPos end
+                local rows, r = {}, nil
+
+                r = ns.SPCheckbox(parent, "Enabled",
+                    function() return hm.enabled == true end,
+                    function(v) hm.enabled = v end, yPos)
+                rows[#rows + 1] = r; yPos = yPos + rowStep
+
+                r = ns.SPSlider(parent, "Icon Size", 16, 48, 1,
+                    function() return hm.iconSize or 24 end,
+                    function(v) hm.iconSize = v end, yPos)
+                rows[#rows + 1] = r; yPos = yPos + rowStep
+
+                r = ns.SPSlider(parent, "Font Size", 8, 24, 1,
+                    function() return hm.fontSize or 12 end,
+                    function(v) hm.fontSize = v end, yPos)
+                rows[#rows + 1] = r; yPos = yPos + rowStep
+
+                r = ns.SPSlider(parent, "Frame Width", 80, 300, 5,
+                    function() return hm.frameWidth or 160 end,
+                    function(v) hm.frameWidth = v end, yPos)
+                rows[#rows + 1] = r; yPos = yPos + rowStep
+
+                r = ns.SPSlider(parent, "Max Healers", 1, 5, 1,
+                    function() return hm.maxHealers or 3 end,
+                    function(v) hm.maxHealers = v end, yPos)
+                rows[#rows + 1] = r; yPos = yPos + rowStep
+
+                r = ns.SPCheckbox(parent, "Grow Down",
+                    function() return hm.growDown ~= false end,
+                    function(v) hm.growDown = v end, yPos)
+                rows[#rows + 1] = r; yPos = yPos + rowStep
+
+                return rows, yPos
+            end,
+        })
+
+        -- ── Battle Res Tracker ── (db.screenindicators.battleRes)
+        Movers:RegisterSettingsProvider("BattleResTracker", {
+            label = "Battle Res Tracker",
+            build = function(parent, moverName, yPos, rowStep)
+                local br = si and si.battleRes
+                if not br then return {}, yPos end
+                local rows, r = {}, nil
+
+                r = ns.SPCheckbox(parent, "Enabled",
+                    function() return br.enabled == true end,
+                    function(v) br.enabled = v end, yPos)
+                rows[#rows + 1] = r; yPos = yPos + rowStep
+
+                r = ns.SPSlider(parent, "Icon Size", 20, 64, 1,
+                    function() return br.iconSize or 36 end,
+                    function(v) br.iconSize = v end, yPos)
+                rows[#rows + 1] = r; yPos = yPos + rowStep
+
+                r = ns.SPSlider(parent, "Font Size", 8, 24, 1,
+                    function() return br.fontSize or 12 end,
+                    function(v) br.fontSize = v end, yPos)
+                rows[#rows + 1] = r; yPos = yPos + rowStep
+
+                return rows, yPos
+            end,
+        })
+
+        -- ── Bloodlust Tracker ── (db.screenindicators.bloodlust)
+        Movers:RegisterSettingsProvider("BloodlustTracker", {
+            label = "Bloodlust Tracker",
+            build = function(parent, moverName, yPos, rowStep)
+                local bl = si and si.bloodlust
+                if not bl then return {}, yPos end
+                local rows, r = {}, nil
+
+                r = ns.SPCheckbox(parent, "Enabled",
+                    function() return bl.enabled == true end,
+                    function(v) bl.enabled = v end, yPos)
+                rows[#rows + 1] = r; yPos = yPos + rowStep
+
+                r = ns.SPSlider(parent, "Icon Size", 20, 64, 1,
+                    function() return bl.iconSize or 36 end,
+                    function(v) bl.iconSize = v end, yPos)
+                rows[#rows + 1] = r; yPos = yPos + rowStep
+
+                r = ns.SPSlider(parent, "Font Size", 8, 24, 1,
+                    function() return bl.fontSize or 12 end,
+                    function(v) bl.fontSize = v end, yPos)
+                rows[#rows + 1] = r; yPos = yPos + rowStep
+
+                return rows, yPos
+            end,
+        })
+
+        -- ── Combat Timer ──
+        Movers:RegisterSettingsProvider("CombatTimer", {
+            label = "Combat Timer Settings",
+            build = function(parent, moverName, yPos, rowStep)
+                local ctdb = db.uiimprovements and db.uiimprovements.combatTimer
+                if not ctdb then return {}, yPos end
+                local rows, r = {}, nil
+
+                r = ns.SPSlider(parent, "Font Size", 8, 32, 1,
+                    function() return ctdb.fontSize or 14 end,
+                    function(v) ctdb.fontSize = v end, yPos)
+                rows[#rows + 1] = r; yPos = yPos + rowStep
+
+                return rows, yPos
+            end,
+        })
+
+        -- ── Raid Warnings ──
+        Movers:RegisterSettingsProvider("RaidWarnings", {
+            label = "Raid Warnings Settings",
+            build = function(parent, moverName, yPos, rowStep)
+                local rwdb = db.raidWarnings
+                if not rwdb then return {}, yPos end
+                local rows, r = {}, nil
+
+                r = ns.SPSlider(parent, "Font Size", 12, 48, 1,
+                    function() return rwdb.fontSize or 24 end,
+                    function(v) rwdb.fontSize = v end, yPos)
+                rows[#rows + 1] = r; yPos = yPos + rowStep
+
+                r = ns.SPSlider(parent, "Duration", 1, 15, 0.5,
+                    function() return rwdb.duration or 5 end,
+                    function(v) rwdb.duration = v end, yPos)
+                rows[#rows + 1] = r; yPos = yPos + rowStep
+
+                return rows, yPos
+            end,
+        })
+
+        -- ── World Marks ──
+        Movers:RegisterSettingsProvider("WorldMarks", {
+            label = "World Marks Settings",
+            build = function(parent, moverName, yPos, rowStep)
+                local wmdb = db.uiimprovements and db.uiimprovements.marks
+                if not wmdb then return {}, yPos end
+                local rows, r = {}, nil
+
+                r = ns.SPSlider(parent, "Button Size", 16, 48, 1,
+                    function() return wmdb.buttonSize or 24 end,
+                    function(v) wmdb.buttonSize = v end, yPos)
+                rows[#rows + 1] = r; yPos = yPos + rowStep
+
+                return rows, yPos
+            end,
+        })
+
+        -- ── Cooldown Tracker ──
+        Movers:RegisterSettingsProvider("CooldownText", {
+            label = "Cooldown Tracker Settings",
+            build = function(parent, moverName, yPos, rowStep)
+                local cddb = db.cooldownText
+                if not cddb then return {}, yPos end
+                local rows, r = {}, nil
+
+                r = ns.SPSlider(parent, "Icon Size", 20, 64, 1,
+                    function() return cddb.iconSize or 36 end,
+                    function(v) cddb.iconSize = v end, yPos)
+                rows[#rows + 1] = r; yPos = yPos + rowStep
+
+                r = ns.SPSlider(parent, "Max Icons", 1, 12, 1,
+                    function() return cddb.maxIcons or 6 end,
+                    function(v) cddb.maxIcons = v end, yPos)
+                rows[#rows + 1] = r; yPos = yPos + rowStep
+
+                r = ns.SPSlider(parent, "Spacing", 0, 20, 1,
+                    function() return cddb.spacing or 4 end,
+                    function(v) cddb.spacing = v end, yPos)
+                rows[#rows + 1] = r; yPos = yPos + rowStep
+
+                return rows, yPos
+            end,
+        })
+
+        -- ── Loot Window ──
+        Movers:RegisterSettingsProvider("LootWindow", {
+            label = "Loot Window Settings",
+            build = function(parent, moverName, yPos, rowStep)
+                local ldb = db.styling and db.styling.loot
+                if not ldb then return {}, yPos end
+                local rows, r = {}, nil
+
+                r = ns.SPCheckbox(parent, "Loot Under Mouse",
+                    function() return ldb.lootUnderMouse == true end,
+                    function(v) ldb.lootUnderMouse = v end, yPos)
+                rows[#rows + 1] = r; yPos = yPos + rowStep
+
+                return rows, yPos
+            end,
+        })
+
+        -- ── Interrupt Tracker ──
+        Movers:RegisterSettingsProvider("InterruptTracker", {
+            label = "Interrupt Tracker Settings",
+            build = function(parent, moverName, yPos, rowStep)
+                local itdb = si and si.interruptTracker
+                if not itdb then return {}, yPos end
+                local rows, r = {}, nil
+
+                r = ns.SPSlider(parent, "Icon Size", 20, 64, 1,
+                    function() return itdb.iconSize or 32 end,
+                    function(v) itdb.iconSize = v end, yPos)
+                rows[#rows + 1] = r; yPos = yPos + rowStep
+
+                return rows, yPos
+            end,
+        })
+
+        -- ── Stance Text ──
+        Movers:RegisterSettingsProvider("StanceText", {
+            label = "Stance Text",
+            build = function(parent, moverName, yPos, rowStep)
+                local stdb = db.uiimprovements and db.uiimprovements.stanceText
+                if not stdb then return {}, yPos end
+                local rows, r = {}, nil
+
+                r = ns.SPSlider(parent, "Font Size", 8, 24, 1,
+                    function() return stdb.fontSize or 12 end,
+                    function(v) stdb.fontSize = v end, yPos)
+                rows[#rows + 1] = r; yPos = yPos + rowStep
+
+                return rows, yPos
+            end,
+        })
+
+        -- ── Alerts Anchor ──
+        Movers:RegisterSettingsProvider("Alerts", {
+            label = "Alerts Anchor",
+            build = function(parent, moverName, yPos, rowStep)
+                local rows = {}
+                -- Position-only element, no additional settings
+                return rows, yPos
+            end,
+        })
+
+        -- ── Toasts Anchor ──
+        Movers:RegisterSettingsProvider("Toasts", {
+            label = "Toasts Anchor",
+            build = function(parent, moverName, yPos, rowStep)
+                local rows = {}
+                return rows, yPos
+            end,
+        })
+
+        -- ── Icon Catcher ──
+        Movers:RegisterSettingsProvider("IconCatcher", {
+            label = "Icon Catcher",
+            build = function(parent, moverName, yPos, rowStep)
+                local icdb = db.uiimprovements and db.uiimprovements.iconCatcher
+                if not icdb then return {}, yPos end
+                local rows, r = {}, nil
+
+                r = ns.SPSlider(parent, "Icon Size", 20, 64, 1,
+                    function() return icdb.iconSize or 36 end,
+                    function(v) icdb.iconSize = v end, yPos)
+                rows[#rows + 1] = r; yPos = yPos + rowStep
+
+                return rows, yPos
+            end,
+        })
+
+        -- ── Death Announcer ── (top-level: db.deathAnnouncer)
+        Movers:RegisterSettingsProvider("DeathAnnouncer", {
+            label = "Death Announcer",
+            build = function(parent, moverName, yPos, rowStep)
+                local dadb = db.deathAnnouncer
+                if not dadb then return {}, yPos end
+                local rows, r = {}, nil
+
+                r = ns.SPCheckbox(parent, "Enabled",
+                    function() return dadb.enabled == true end,
+                    function(v) dadb.enabled = v end, yPos)
+                rows[#rows + 1] = r; yPos = yPos + rowStep
+
+                r = ns.SPSlider(parent, "Font Size", 12, 48, 1,
+                    function() return dadb.fontSize or 24 end,
+                    function(v) dadb.fontSize = v end, yPos)
+                rows[#rows + 1] = r; yPos = yPos + rowStep
+
+                r = ns.SPSlider(parent, "Duration", 1, 10, 0.5,
+                    function() return dadb.duration or 3 end,
+                    function(v) dadb.duration = v end, yPos)
+                rows[#rows + 1] = r; yPos = yPos + rowStep
+
+                r = ns.SPCheckbox(parent, "Use Class Color",
+                    function() return dadb.useClassColor ~= false end,
+                    function(v) dadb.useClassColor = v end, yPos)
+                rows[#rows + 1] = r; yPos = yPos + rowStep
+
+                return rows, yPos
+            end,
+        })
+
+        -- ── Crosshair ── (db.screenindicators.crosshair)
+        Movers:RegisterSettingsProvider("Crosshair", {
+            label = "Crosshair Settings",
+            build = function(parent, moverName, yPos, rowStep)
+                local ch = si and si.crosshair
+                if not ch then return {}, yPos end
+                local rows, r = {}, nil
+
+                r = ns.SPCheckbox(parent, "Enabled",
+                    function() return ch.enabled == true end,
+                    function(v) ch.enabled = v end, yPos)
+                rows[#rows + 1] = r; yPos = yPos + rowStep
+
+                r = ns.SPSlider(parent, "Size", 3, 30, 1,
+                    function() return ch.size or 9 end,
+                    function(v) ch.size = v end, yPos)
+                rows[#rows + 1] = r; yPos = yPos + rowStep
+
+                r = ns.SPSlider(parent, "Thickness", 1, 6, 1,
+                    function() return ch.thickness or 2 end,
+                    function(v) ch.thickness = v end, yPos)
+                rows[#rows + 1] = r; yPos = yPos + rowStep
+
+                r = ns.SPCheckbox(parent, "Color on Range",
+                    function() return ch.changeColorOnRange ~= false end,
+                    function(v) ch.changeColorOnRange = v end, yPos)
+                rows[#rows + 1] = r; yPos = yPos + rowStep
+
+                r = ns.SPCheckbox(parent, "Only In Combat",
+                    function() return ch.onlyInCombat == true end,
+                    function(v) ch.onlyInCombat = v end, yPos)
+                rows[#rows + 1] = r; yPos = yPos + rowStep
+
+                return rows, yPos
+            end,
+        })
+
+        -- ── Ready Check ── (db.styling.readyCheck)
+        Movers:RegisterSettingsProvider("ReadyCheck", {
+            label = "Ready Check",
+            build = function(parent, moverName, yPos, rowStep)
+                local rc = db.styling and db.styling.readyCheck
+                if not rc then return {}, yPos end
+                local rows, r = {}, nil
+
+                r = ns.SPCheckbox(parent, "Use Default Position",
+                    function() return rc.useDefaultPosition ~= false end,
+                    function(v) rc.useDefaultPosition = v end, yPos)
+                rows[#rows + 1] = r; yPos = yPos + rowStep
+
+                return rows, yPos
+            end,
+        })
+
+        -- ── Position-only movers (no custom settings, just label) ──
+        local positionOnlyMovers = {
+            { name = "BonusRoll",          label = "Bonus Roll" },
+            { name = "LootRolls",          label = "Loot Rolls" },
+            { name = "PowerBarAlt",        label = "Power Bar (Alt)" },
+            { name = "WidgetBelowMinimap", label = "Widget Below Minimap" },
+            { name = "WidgetPowerBar",     label = "Widget Power Bar" },
+            { name = "WidgetTopCenter",    label = "Widget Top Center" },
+        }
+
+        for _, info in ipairs(positionOnlyMovers) do
+            Movers:RegisterSettingsProvider(info.name, {
+                label = info.label,
+                build = function(parent, moverName, yPos, rowStep)
+                    return {}, yPos
+                end,
+            })
+        end
+
+        -- ── Data Panels (dynamic: DataPanel_*) ──
+        Movers:RegisterSettingsProvider("DataPanel_*", {
+            label = "Data Panel Settings",
+            build = function(parent, moverName, yPos, rowStep)
+                local panelId = moverName:match("^DataPanel_(.+)$")
+                if not panelId then return {}, yPos end
+                local dpdb = db.datapanels and db.datapanels.custom and db.datapanels.custom[panelId]
+                if not dpdb then return {}, yPos end
+                local rows, r = {}, nil
+                local refreshDP = function()
+                    if ns.DP and ns.DP.RefreshAll then ns.DP:RefreshAll() end
+                end
+
+                r = ns.SPSlider(parent, "Num Slots", 0, 5, 1,
+                    function() return dpdb.numSlots or 3 end,
+                    function(v) dpdb.numSlots = v; refreshDP() end, yPos)
+                rows[#rows + 1] = r; yPos = yPos + rowStep
+
+                r = ns.SPSlider(parent, "Width", 80, 600, 10,
+                    function() return dpdb.width or 200 end,
+                    function(v) dpdb.width = v; refreshDP() end, yPos)
+                rows[#rows + 1] = r; yPos = yPos + rowStep
+
+                r = ns.SPSlider(parent, "Height", 14, 50, 1,
+                    function() return dpdb.height or 22 end,
+                    function(v) dpdb.height = v; refreshDP() end, yPos)
+                rows[#rows + 1] = r; yPos = yPos + rowStep
+
+                return rows, yPos
+            end,
+        })
+    end)
 end)

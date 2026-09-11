@@ -1,0 +1,26 @@
+<Bindings>
+	<Binding name="GRAVITYUI_BAR9_BUTTON1" header="GRAVITYUI_BAR9" category="GravityUI" />
+	<Binding name="GRAVITYUI_BAR9_BUTTON2" category="GravityUI" />
+	<Binding name="GRAVITYUI_BAR9_BUTTON3" category="GravityUI" />
+	<Binding name="GRAVITYUI_BAR9_BUTTON4" category="GravityUI" />
+	<Binding name="GRAVITYUI_BAR9_BUTTON5" category="GravityUI" />
+	<Binding name="GRAVITYUI_BAR9_BUTTON6" category="GravityUI" />
+	<Binding name="GRAVITYUI_BAR9_BUTTON7" category="GravityUI" />
+	<Binding name="GRAVITYUI_BAR9_BUTTON8" category="GravityUI" />
+	<Binding name="GRAVITYUI_BAR9_BUTTON9" category="GravityUI" />
+	<Binding name="GRAVITYUI_BAR9_BUTTON10" category="GravityUI" />
+	<Binding name="GRAVITYUI_BAR9_BUTTON11" category="GravityUI" />
+	<Binding name="GRAVITYUI_BAR9_BUTTON12" category="GravityUI" />
+	<Binding name="GRAVITYUI_BAR10_BUTTON1" header="GRAVITYUI_BAR10" category="GravityUI" />
+	<Binding name="GRAVITYUI_BAR10_BUTTON2" category="GravityUI" />
+	<Binding name="GRAVITYUI_BAR10_BUTTON3" category="GravityUI" />
+	<Binding name="GRAVITYUI_BAR10_BUTTON4" category="GravityUI" />
+	<Binding name="GRAVITYUI_BAR10_BUTTON5" category="GravityUI" />
+	<Binding name="GRAVITYUI_BAR10_BUTTON6" category="GravityUI" />
+	<Binding name="GRAVITYUI_BAR10_BUTTON7" category="GravityUI" />
+	<Binding name="GRAVITYUI_BAR10_BUTTON8" category="GravityUI" />
+	<Binding name="GRAVITYUI_BAR10_BUTTON9" category="GravityUI" />
+	<Binding name="GRAVITYUI_BAR10_BUTTON10" category="GravityUI" />
+	<Binding name="GRAVITYUI_BAR10_BUTTON11" category="GravityUI" />
+	<Binding name="GRAVITYUI_BAR10_BUTTON12" category="GravityUI" />
+</Bindings>

@@ -1,4 +1,4 @@
--- GravityUI - Action Bars Page
+-- GravityUI - Action Bars Page (Updated for own-button architecture)
 local ADDON_NAME, ns = ...
 
 local GUI = ns.GUI
@@ -94,6 +94,11 @@ local anchorOptions = {
     {value = "BOTTOMRIGHT", text = "Bottom Right"},
 }
 
+local orientationOptions = {
+    {value = "horizontal", text = "Horizontal"},
+    {value = "vertical", text = "Vertical"},
+}
+
 local lockOptions = {
     {value = "unlocked", text = "Unlocked"},
     {value = "shift", text = "Locked - Shift to drag"},
@@ -107,7 +112,6 @@ local lockProxy = setmetatable({}, {
         if k == "buttonLock" then
             local isLocked = GetCVar("lockActionBars") == "1"
             if not isLocked then return "unlocked" end
-            -- Return saved modifier, default to "shift" if locked but no modifier saved
             local db = ns.GetDB()
             local saved = db and db.actionbars and db.actionbars.global and db.actionbars.global.lockModifier
             return saved or "shift"
@@ -120,7 +124,6 @@ local lockProxy = setmetatable({}, {
             else
                 SetCVar("lockActionBars", "1")
             end
-            -- Persist the modifier selection in the DB
             local db = ns.GetDB()
             if db and db.actionbars and db.actionbars.global then
                 db.actionbars.global.lockModifier = (v ~= "unlocked") and v or nil
@@ -142,10 +145,6 @@ local function BuildActionBarsSettings(parent)
     content.rowCount = 0
     local refresh = function() if ns.RefreshActionBars then ns.RefreshActionBars() end end
 
-
-    
-
-
     -- Settings Header
     content.rowCount = content.rowCount + 0.5
     local settingsHeader = GUI:CreateSectionHeader(content, "Action Bars Settings")
@@ -154,7 +153,7 @@ local function BuildActionBarsSettings(parent)
     content.rowCount = content.rowCount + 1.3
 
     -- Info Box
-    local infoText = "Enable your Action Bars in World of Warcraft > Action Bars.\n\n|cFFFFFFFFNote:|r GravityUI is only styling the Default Actionbars, for more extras use AddOns like Dominos, Bartender4."
+    local infoText = "GravityUI creates its own action bar buttons for zero-taint cooldown rendering.\nCooldowns will never disappear during raids or M+ starts.\n\n|cFFFFFFFFNote:|r Positions are set via /gui > Mover Mode. Bar 9 & 10 keybinds are set in WoW Key Bindings > GravityUI."
     local infoBox = GUI:CreateInfoBox(content, infoText)
     infoBox:SetPoint("TOPLEFT", 10, -content.rowCount * 35)
     content.rowCount = content.rowCount + (infoBox:GetHeight() / 35) + 0.2
@@ -184,7 +183,6 @@ local function BuildActionBarsSettings(parent)
         content.rowCount = content.rowCount + 1.0
     end
 
-
     local qaRow = CreateFrame("Frame", nil, content)
     qaRow:SetSize(content:GetWidth() - 20, 30)
     qaRow:SetPoint("TOPLEFT", 10, -content.rowCount * 35)
@@ -193,7 +191,6 @@ local function BuildActionBarsSettings(parent)
         if ns.Addon and ns.Addon.SlashCommandKeybind then
             ns.Addon:SlashCommandKeybind()
         else
-             -- Fallback if Addon method missing for some reason
             if not C_AddOns.IsAddOnLoaded("Blizzard_QuickKeybind") then
                 C_AddOns.LoadAddOn("Blizzard_QuickKeybind")
             end
@@ -203,6 +200,14 @@ local function BuildActionBarsSettings(parent)
         end
     end)
     kbBtn:SetPoint("LEFT", 0, 0)
+
+    local importBtn = GUI:CreateButton(qaRow, "Import from Blizzard Bars", 220, 24, function()
+        if ns.ImportBlizzardPositions then
+            ns.ImportBlizzardPositions()
+        end
+    end)
+    importBtn:SetPoint("LEFT", kbBtn, "RIGHT", 8, 0)
+
     content.rowCount = content.rowCount + 1
 
     -- Appearance Section
@@ -221,12 +226,10 @@ local function BuildActionBarsSettings(parent)
     AddRow(content, "Action Button Lock", "dropdown", lockOptions, "buttonLock", lockProxy, refresh)
     AddRow(content, "Dim Unusable Buttons", "checkbox", "usabilityIndicator", g, refresh)
     AddRow(content, "Desaturate Unusable", "checkbox", "usabilityDesaturate", g, refresh)
-    AddRow(content, "Unthrottled CPU Usage", "checkbox", "fastUsabilityUpdates", g, refresh)
     content.rowCount = content.rowCount + 0.5
     
     -- Text Display Section
     CreateSubLabel(content, "Text Display")
-    -- Keybinds
     AddRow(content, "Show Keybind Text", "checkbox", "showKeybinds", g, refresh)
     AddRow(content, "Hide Empty Keybinds", "checkbox", "hideEmptyKeybinds", g, refresh)
     AddRow(content, "Keybind Text Size", "slider", 8, 32, "keybindFontSize", g, refresh, 1)
@@ -252,11 +255,66 @@ local function BuildActionBarsSettings(parent)
     AddRow(content, "Stack Text X-Offset", "slider", -20, 20, "countOffsetX", g, refresh, 1)
     AddRow(content, "Stack Text Y-Offset", "slider", -20, 20, "countOffsetY", g, refresh, 1)
     AddRow(content, "Stack Count Color", "color", "countColor", g, refresh)
+    content.rowCount = content.rowCount + 0.5
+
+    -- Cooldown Countdown Text
+    AddRow(content, "Cooldown Text Size", "slider", 6, 28, "cooldownFontSize", g, refresh, 1)
+    AddRow(content, "Cooldown Text X-Offset", "slider", -20, 20, "cooldownTextXOffset", g, refresh, 1)
+    AddRow(content, "Cooldown Text Y-Offset", "slider", -20, 20, "cooldownTextYOffset", g, refresh, 1)
+    AddRow(content, "Cooldown Text Color", "color", "cooldownTextColor", g, refresh)
 
     content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
 end
 
--- 2. Mouseover Settings
+-- 2. Bar Layout (per-bar settings)
+local function BuildBarLayoutSettings(parent)
+    local scroll, content = GUI:CreateScrollableContent(parent)
+    scroll:SetAllPoints()
+    local db = ns.GetDB(); if not db then return end
+    local abs = db.actionbars
+    content.rowCount = 0
+    local refresh = function() if ns.RefreshActionBars then ns.RefreshActionBars() end end
+
+    local header = GUI:CreateSectionHeader(content, "Per-Bar Layout")
+    header:SetPoint("TOPLEFT", 10, -10)
+    header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
+    content.rowCount = 1.3
+
+    local barConfigs = {
+        { key = "MainBar",   label = "Action Bar 1 (Main)" },
+        { key = "Bar2",      label = "Action Bar 2" },
+        { key = "Bar3",      label = "Action Bar 3" },
+        { key = "Bar4",      label = "Action Bar 4" },
+        { key = "Bar5",      label = "Action Bar 5" },
+        { key = "Bar6",      label = "Action Bar 6" },
+        { key = "Bar7",      label = "Action Bar 7" },
+        { key = "Bar8",      label = "Action Bar 8" },
+        { key = "Bar9",      label = "Action Bar 9" },
+        { key = "Bar10",     label = "Action Bar 10" },
+        { key = "StanceBar", label = "Stance Bar" },
+        { key = "PetBar",    label = "Pet Bar" },
+    }
+
+    for _, cfg in ipairs(barConfigs) do
+        if not abs.bars[cfg.key] then
+            abs.bars[cfg.key] = {}
+        end
+        local barDB = abs.bars[cfg.key]
+        CreateSubLabel(content, cfg.label)
+        AddRow(content, "Enabled", "checkbox", "enabled", barDB, refresh)
+        AddRow(content, "Columns", "slider", 1, 12, "columns", barDB, refresh, 1)
+        AddRow(content, "Rows", "slider", 1, 12, "rows", barDB, refresh, 1)
+        AddRow(content, "Button Width", "slider", 20, 80, "buttonWidth", barDB, refresh, 1)
+        AddRow(content, "Button Height", "slider", 20, 80, "buttonHeight", barDB, refresh, 1)
+        AddRow(content, "Spacing", "slider", 0, 20, "spacing", barDB, refresh, 1)
+        AddRow(content, "Orientation", "dropdown", orientationOptions, "orientation", barDB, refresh)
+        content.rowCount = content.rowCount + 0.5
+    end
+
+    content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
+end
+
+-- 3. Mouseover Settings
 local function BuildMouseoverSettings(parent)
     local scroll, content = GUI:CreateScrollableContent(parent)
     scroll:SetAllPoints()
@@ -280,12 +338,12 @@ local function BuildMouseoverSettings(parent)
     AddRow(content, "Link all Mouseover Bars", "checkbox", "linkBars1to8", f, refresh)
     content.rowCount = content.rowCount + 0.5
 
-    -- Mouseover Fade Toggles (inverted: checked = bar fades, unchecked = always visible)
-    -- Internally stored as alwaysShow (true = always visible = NOT fading)
     local function AddInvertedRow(parent, label, barKey)
         local barDB = abs.bars[barKey]
-        if not barDB then return end
-        -- Create a proxy table that inverts the alwaysShow value for the checkbox
+        if not barDB then
+            abs.bars[barKey] = {}
+            barDB = abs.bars[barKey]
+        end
         local proxy = { mouseoverFade = not barDB.alwaysShow }
         local row = CreatePropertyRow(parent, label, "checkbox", "mouseoverFade", proxy, function()
             barDB.alwaysShow = not proxy.mouseoverFade
@@ -298,17 +356,18 @@ local function BuildMouseoverSettings(parent)
     end
 
     CreateSubLabel(content, "Action Bars")
-    for i = 1, 8 do
-        AddInvertedRow(content, "Mouseover Fade Bar " .. i, "bar" .. i)
+    AddInvertedRow(content, "Mouseover Fade Bar 1 (Main)", "MainBar")
+    for i = 2, 10 do
+        AddInvertedRow(content, "Mouseover Fade Bar " .. i, "Bar" .. i)
     end
 
     content.rowCount = content.rowCount + 0.5
     CreateSubLabel(content, "Other Bars")
     local otherBars = {
-        { key = "pet",               label = "Mouseover Fade Pet Bar" },
-        { key = "stance",            label = "Mouseover Fade Stance Bar" },
-        { key = "microbar",          label = "Mouseover Fade Micro Menu" },
-        { key = "bags",              label = "Mouseover Fade Bags" },
+        { key = "StanceBar",  label = "Mouseover Fade Stance Bar" },
+        { key = "PetBar",     label = "Mouseover Fade Pet Bar" },
+        { key = "MicroBar",   label = "Mouseover Fade Micro Menu" },
+        { key = "BagBar",     label = "Mouseover Fade Bags" },
     }
     
     for _, info in ipairs(otherBars) do
@@ -318,7 +377,7 @@ local function BuildMouseoverSettings(parent)
     content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
 end
 
--- 3. Special Buttons
+-- 4. Special Buttons
 local function BuildSpecialButtons(parent)
     local scroll, content = GUI:CreateScrollableContent(parent)
     scroll:SetAllPoints()
@@ -333,17 +392,19 @@ local function BuildSpecialButtons(parent)
     content.rowCount = 1.3
 
     local eb = abs.bars.extraActionButton
+    if not eb then abs.bars.extraActionButton = {}; eb = abs.bars.extraActionButton end
     AddRow(content, "Hide Extra Action Art", "checkbox", "hideArtwork", eb, refresh)
     content.rowCount = content.rowCount + 0.5
     
     local zb = abs.bars.zoneAbility
+    if not zb then abs.bars.zoneAbility = {}; zb = abs.bars.zoneAbility end
     AddRow(content, "Hide Zone Ability Art", "checkbox", "hideArtwork", zb, refresh)
     AddRow(content, "Mirror Zone/ExtraActionButton Keybind", "checkbox", "mirrorExtraKeybind", zb, function()
         if ns.ActionBars and ns.ActionBars.RefreshZoneAbilityKeybind then
             ns.ActionBars.RefreshZoneAbilityKeybind()
         end
     end)
-    -- Note: Positioning is handled via Blizzard's Edit Mode (Esc → Edit Mode)
+    -- Position note
     local noteRow = CreateFrame("Frame", nil, content)
     noteRow:SetSize(content:GetWidth() - 20, 30)
     noteRow:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
@@ -362,7 +423,8 @@ ns.GUI:RegisterPage("actionbars", {
     title = "Action Bars",
     subTabs = {
         { name = "Action Bars Settings", builder = BuildActionBarsSettings },
-        { name = "Mouseover Settings", builder = BuildMouseoverSettings },
+        { name = "Bar Layout",           builder = BuildBarLayoutSettings },
+        { name = "Mouseover Settings",   builder = BuildMouseoverSettings },
         { name = "Extra Action Buttons", builder = BuildSpecialButtons },
     },
     OnBuild = function(content)
