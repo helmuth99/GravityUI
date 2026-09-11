@@ -617,7 +617,7 @@ local function ForceCooldownPaint(btn)
         if durObj then
             cd:SetCooldownFromDurationObject(durObj)
         else
-            cd:Clear()
+            pcall(cd.Clear, cd)  -- 12.1.5: Clear() restricted on protected frames
         end
     end
 end
@@ -1289,7 +1289,7 @@ do
                 local durObj = C_ActionBar.GetActionCooldownDuration(action)
                 if durObj then cd:SetCooldownFromDurationObject(durObj) end
             elseif fd.cdWasActive then
-                cd:Clear()
+                pcall(cd.Clear, cd)  -- 12.1.5: Clear() restricted on protected frames
             end
         end
 
@@ -1301,7 +1301,7 @@ do
                     local chargeDur = C_ActionBar.GetActionChargeDuration(action)
                     if chargeDur then btn.chargeCooldown:SetCooldownFromDurationObject(chargeDur) end
                 else
-                    btn.chargeCooldown:Clear()
+                    pcall(btn.chargeCooldown.Clear, btn.chargeCooldown)  -- 12.1.5 safe
                 end
             end
         end
