@@ -201,7 +201,10 @@ if ActionBarActionEventsFrame then ActionBarActionEventsFrame:UnregisterAllEvent
 -------------------------------------------------------------------------------
 do
     local _abefEvents = {
-        "ACTIONBAR_UPDATE_COOLDOWN", "ACTIONBAR_UPDATE_STATE",
+        -- Note: ACTIONBAR_UPDATE_COOLDOWN intentionally excluded.
+        -- Our central dispatcher handles cooldowns via SetCooldownFromDurationObject.
+        -- Blizzard's broadcaster would dispatch SetCooldown with secret values in tainted context.
+        "ACTIONBAR_UPDATE_STATE",
         "ACTIONBAR_UPDATE_USABLE", "ACTIONBAR_SLOT_CHANGED",
         "PLAYER_ENTERING_WORLD",
     }
