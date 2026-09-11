@@ -92,7 +92,7 @@ local STOCK_BAR_DISPOSAL = {
     { name = "MultiBar6" },
     { name = "MultiBar7" },
     { name = "StanceBar" },
-    { name = "PetActionBar" },
+    { name = "PetActionBar",       retainEvents = true },
 }
 
 -- Native binding command map (Bar key → command prefix for SetOverrideBindingClick)
@@ -534,9 +534,17 @@ local function GetOrCreateButton(slot, parent, info, index)
         btn = _G[name]
         if not btn then
             btn = CreateFrame("CheckButton", name, parent, "ActionBarButtonTemplate, SecureActionButtonTemplate")
-            -- Neuter UpdateButtonArt: it resets NormalTexture/PushedTexture
-            -- atlases on every call, causing mass GPU redraws
+            -- Neuter Blizzard mixin methods that cause taint or GPU thrashing.
+            -- Our own dispatchers handle all of these:
+            --   UpdateButtonArt  → resets textures, GPU spam
+            --   UpdatePressAndHoldAction → SetAttribute() in combat (taint)
+            --   Update → calls ActionButton_UpdateCooldown with secret values (taint)
+            --           and various other methods we handle ourselves
             btn.UpdateButtonArt = function() end
+            btn.UpdatePressAndHoldAction = function() end
+            btn.UpdateAction = function() end  -- calls UpdatePingAttributes → ClearAttribute (taint)
+            btn.UpdateUsable = function() end  -- assertion spam on custom buttons
+            btn.Update = function() end
         end
 
         -- Template OnLoad self-registers events; the central dispatcher owns them
@@ -570,13 +578,27 @@ local function GetOrCreateButton(slot, parent, info, index)
         btn:SetParent(parent)
         btn:SetID(0)
         btn:SetAttribute("action", slot)
+        btn.action = slot  -- Blizzard's overlay glow reads this property
+
+        -- Keep btn.action synced when SecureStateDriver changes the attribute
+        if not GFD(btn).actionSyncHooked then
+            GFD(btn).actionSyncHooked = true
+            btn:HookScript("OnAttributeChanged", function(self, name, value)
+                if name == "action" then
+                    self.action = value
+                end
+            end)
+        end
 
         -- Register our per-button events
         ReRegisterButtonEvents(btn, "action")
     end
 
     if btn then
-        allButtons[slot] = btn
+        -- Don't store pet/stance in allButtons — they collide with MainBar slots 1-12
+        if not info.isPetBar and not info.isStance then
+            allButtons[slot] = btn
+        end
     end
     return btn
 end
@@ -600,6 +622,625 @@ local function ForceCooldownPaint(btn)
     end
 end
 ns.ForceCooldownPaint = ForceCooldownPaint
+
+-------------------------------------------------------------------------------
+--  Central Overlay Glow Dispatcher
+--  Handles proc glow (SpellActivationAlert) for our custom buttons since
+--  they've been removed from ActionBarButtonEventsFrame.
+--  Resolves macros to their underlying spellID for accurate glow matching.
+-------------------------------------------------------------------------------
+do
+
+    -- Resolve button → spellID (handles spells AND macros)
+    local function GetButtonSpellID(btn)
+        local action = btn.action or btn:GetAttribute("action")
+        if not action or not HasAction(action) then return nil end
+        local actionType, id, subType = GetActionInfo(action)
+        if actionType == "spell" then
+            return id
+        elseif actionType == "macro" then
+            if subType == "spell" then return id end
+            local macroName = GetActionText(action)
+            local macroIndex = macroName and GetMacroIndexByName(macroName)
+            if macroIndex and macroIndex > 0 then
+                if GetMacroItem and GetMacroItem(macroIndex) then return nil end
+                return GetMacroSpell and GetMacroSpell(macroIndex)
+            end
+        end
+        return nil
+    end
+
+    local activeGlows = {}  -- btn → true
+
+    ---------------------------------------------------------------------------
+    -- Glow Style mapping
+    -- Our settings key → EllesmereUI.Glows style index (1-based)
+    ---------------------------------------------------------------------------
+    local GLOW_STYLE_MAP = {
+        pixel    = 1,  -- Pixel Glow (procedural ants)
+        abg      = 2,  -- Action Button Glow
+        shine    = 3,  -- Auto-Cast Shine
+        gcd      = 5,  -- GCD FlipBook
+        modern   = 6,  -- Modern WoW Glow
+        classic  = 7,  -- Classic WoW Glow
+        border   = 0,  -- Our built-in pulsing border (no EUI equivalent)
+    }
+
+    ---------------------------------------------------------------------------
+    --  Built-in Fallback: Pulsing Border Glow (no dependency)
+    ---------------------------------------------------------------------------
+    local function CreateBorderGlow(btn, color, width)
+        local glow = CreateFrame("Frame", nil, btn)
+        glow:SetAllPoints(btn)
+        glow:SetFrameLevel(btn:GetFrameLevel() + 5)
+        local r, g, b, a = color[1] or 1, color[2] or 0.8, color[3] or 0, color[4] or 1
+        local w = width or 2
+        local t = glow:CreateTexture(nil, "OVERLAY"); t:SetColorTexture(r, g, b, a)
+        t:SetPoint("TOPLEFT"); t:SetPoint("TOPRIGHT"); t:SetHeight(w); glow._top = t
+        local bo = glow:CreateTexture(nil, "OVERLAY"); bo:SetColorTexture(r, g, b, a)
+        bo:SetPoint("BOTTOMLEFT"); bo:SetPoint("BOTTOMRIGHT"); bo:SetHeight(w); glow._bottom = bo
+        local l = glow:CreateTexture(nil, "OVERLAY"); l:SetColorTexture(r, g, b, a)
+        l:SetPoint("TOPLEFT"); l:SetPoint("BOTTOMLEFT"); l:SetWidth(w); glow._left = l
+        local ri = glow:CreateTexture(nil, "OVERLAY"); ri:SetColorTexture(r, g, b, a)
+        ri:SetPoint("TOPRIGHT"); ri:SetPoint("BOTTOMRIGHT"); ri:SetWidth(w); glow._right = ri
+        local ag = glow:CreateAnimationGroup(); ag:SetLooping("REPEAT")
+        local a1 = ag:CreateAnimation("Alpha")
+        a1:SetFromAlpha(1); a1:SetToAlpha(0.3); a1:SetDuration(0.4); a1:SetOrder(1)
+        local a2 = ag:CreateAnimation("Alpha")
+        a2:SetFromAlpha(0.3); a2:SetToAlpha(1); a2:SetDuration(0.4); a2:SetOrder(2)
+        glow._pulse = ag; glow:Hide()
+        return glow
+    end
+
+    local function UpdateBorderGlowStyle(glow, color, width)
+        if not glow then return end
+        local r, g, b, a = color[1] or 1, color[2] or 0.8, color[3] or 0, color[4] or 1
+        local w = width or 2
+        if glow._top then glow._top:SetColorTexture(r, g, b, a); glow._top:SetHeight(w) end
+        if glow._bottom then glow._bottom:SetColorTexture(r, g, b, a); glow._bottom:SetHeight(w) end
+        if glow._left then glow._left:SetColorTexture(r, g, b, a); glow._left:SetWidth(w) end
+        if glow._right then glow._right:SetColorTexture(r, g, b, a); glow._right:SetWidth(w) end
+    end
+
+    ---------------------------------------------------------------------------
+    --  Built-in Fallback: Pixel Glow (orbiting squares)
+    ---------------------------------------------------------------------------
+    local PIXEL_COUNT = 8
+    local PIXEL_SIZE = 3
+    local PIXEL_SPEED = 1.8
+    local function CreatePixelGlow(btn, color)
+        local glow = CreateFrame("Frame", nil, btn)
+        glow:SetAllPoints(btn); glow:SetFrameLevel(btn:GetFrameLevel() + 5)
+        local r, g, b, a = color[1] or 1, color[2] or 0.8, color[3] or 0, color[4] or 1
+        local pixels = {}
+        for i = 1, PIXEL_COUNT do
+            local px = glow:CreateTexture(nil, "OVERLAY")
+            px:SetColorTexture(r, g, b, a); px:SetSize(PIXEL_SIZE, PIXEL_SIZE)
+            pixels[i] = px
+        end
+        glow._pixels = pixels; glow._phase = 0
+        glow:SetScript("OnUpdate", function(self, elapsed)
+            self._phase = (self._phase + elapsed * PIXEL_SPEED) % 1
+            local fw, fh = self:GetWidth(), self:GetHeight()
+            if fw < 1 or fh < 1 then return end
+            local perimeter = 2 * (fw + fh)
+            for i, px in ipairs(self._pixels) do
+                local t = (self._phase + (i - 1) / PIXEL_COUNT) % 1
+                local d = t * perimeter
+                local x, y
+                if d < fw then x, y = d, 0
+                elseif d < fw + fh then x, y = fw, -(d - fw)
+                elseif d < 2 * fw + fh then x, y = fw - (d - fw - fh), -fh
+                else x, y = 0, -(fh - (d - 2 * fw - fh)) end
+                px:ClearAllPoints()
+                px:SetPoint("TOPLEFT", self, "TOPLEFT", x - PIXEL_SIZE/2, y + PIXEL_SIZE/2)
+            end
+        end)
+        glow:Hide(); return glow
+    end
+
+    ---------------------------------------------------------------------------
+    --  Built-in FlipBook Glow (Modern WoW, Classic WoW, Action Button Glow)
+    --  Uses Blizzard's own textures + WoW's native FlipBook animation API
+    ---------------------------------------------------------------------------
+    local FLIPBOOK_STYLES = {
+        modern  = { atlas = "UI-HUD-ActionBar-Proc-Loop-Flipbook", rows = 6, columns = 5, frames = 30, duration = 1.0, padding = 1.4 },
+        classic = { texture = [[Interface\SpellActivationOverlay\IconAlertAnts]], rows = 5, columns = 5, frames = 22, duration = 0.3, padding = 1.25, frameW = 48, frameH = 48 },
+        abg     = { atlas = "UI-HUD-ActionBar-Proc-Loop-Flipbook", rows = 6, columns = 5, frames = 30, duration = 1.0, padding = 1.4 },
+        gcd     = { atlas = "UI-HUD-ActionBar-Proc-Loop-Flipbook", rows = 6, columns = 5, frames = 30, duration = 0.6, padding = 1.4 },
+    }
+
+    local function CreateFlipBookGlow(btn, styleDef, color)
+        local wrapper = CreateFrame("Frame", nil, btn)
+        wrapper:SetAllPoints(btn)
+        wrapper:SetFrameLevel(btn:GetFrameLevel() + 5)
+
+        local sz = btn:GetWidth() or 36
+        local texSz = sz * (styleDef.padding or 1)
+
+        local tex = wrapper:CreateTexture(nil, "OVERLAY", nil, 7)
+        tex:SetPoint("CENTER")
+        tex:SetSize(texSz, texSz)
+        tex:SetBlendMode("ADD")
+        if styleDef.atlas then
+            tex:SetAtlas(styleDef.atlas)
+        elseif styleDef.texture then
+            tex:SetTexture(styleDef.texture)
+        end
+        if color then
+            tex:SetDesaturated(true)
+            tex:SetVertexColor(color[1] or 1, color[2] or 0.8, color[3] or 0)
+        end
+
+        local ag = tex:CreateAnimationGroup()
+        ag:SetLooping("REPEAT")
+        local anim = ag:CreateAnimation("FlipBook")
+        anim:SetFlipBookRows(styleDef.rows or 6)
+        anim:SetFlipBookColumns(styleDef.columns or 5)
+        anim:SetFlipBookFrames(styleDef.frames or 30)
+        anim:SetDuration(styleDef.duration or 1.0)
+        if styleDef.frameW then anim:SetFlipBookFrameWidth(styleDef.frameW) end
+        if styleDef.frameH then anim:SetFlipBookFrameHeight(styleDef.frameH) end
+
+        wrapper._flipTex = tex
+        wrapper._flipAG = ag
+        wrapper:Hide()
+        return wrapper
+    end
+
+    ---------------------------------------------------------------------------
+    --  Built-in Auto-Cast Shine (orbiting sparkle dots)
+    ---------------------------------------------------------------------------
+    local SHINE_TEX    = [[Interface\Artifacts\Artifacts]]
+    local SHINE_L, SHINE_R = 0.8115234375, 0.9169921875
+    local SHINE_T, SHINE_B = 0.8798828125, 0.9853515625
+
+    local function CreateShineGlow(btn, color)
+        local wrapper = CreateFrame("Frame", nil, btn)
+        wrapper:SetAllPoints(btn)
+        wrapper:SetFrameLevel(btn:GetFrameLevel() + 5)
+        local dots = {}
+        local sizes = { 7, 6, 5, 4 }
+        for layer = 1, 4 do
+            for i = 1, 4 do
+                local dot = wrapper:CreateTexture(nil, "OVERLAY", nil, 7)
+                dot:SetTexture(SHINE_TEX)
+                dot:SetTexCoord(SHINE_L, SHINE_R, SHINE_T, SHINE_B)
+                dot:SetDesaturated(true)
+                dot:SetBlendMode("ADD")
+                dot:SetSize(sizes[layer], sizes[layer])
+                dot:SetVertexColor(color[1] or 1, color[2] or 0.8, color[3] or 0, 1)
+                dots[#dots + 1] = { tex = dot, layer = layer, idx = i }
+            end
+        end
+        wrapper._shineDots = dots
+        wrapper._shinePhase = { 0, 0.25, 0.5, 0.75 }
+        wrapper:SetScript("OnUpdate", function(self, elapsed)
+            local w, h = self:GetWidth(), self:GetHeight()
+            if w < 1 or h < 1 then return end
+            local hw, hh = w * 0.5, h * 0.5
+            for _, d in ipairs(self._shineDots) do
+                local phase = self._shinePhase[d.layer]
+                local t = (phase + (d.idx - 1) * 0.25) % 1
+                local angle = t * 6.2832
+                local radius = math.min(hw, hh) * 0.9
+                d.tex:ClearAllPoints()
+                d.tex:SetPoint("CENTER", self, "CENTER",
+                    math.cos(angle) * radius, math.sin(angle) * radius)
+            end
+            for i = 1, 4 do
+                self._shinePhase[i] = (self._shinePhase[i] + elapsed * 0.5) % 1
+            end
+        end)
+        wrapper:Hide()
+        return wrapper
+    end
+
+    ---------------------------------------------------------------------------
+    --  EllesmereUI.Glows wrapper frame per button
+    ---------------------------------------------------------------------------
+    local function GetGlowWrapper(btn)
+        if btn._gravGlowWrapper then return btn._gravGlowWrapper end
+        local wrapper = CreateFrame("Frame", nil, btn)
+        wrapper:SetAllPoints(btn)
+        wrapper:SetFrameLevel(btn:GetFrameLevel() + 5)
+        btn._gravGlowWrapper = wrapper
+        wrapper:Show()
+        return wrapper
+    end
+
+    ---------------------------------------------------------------------------
+    --  Helper: Hide all glow frames on a button
+    ---------------------------------------------------------------------------
+    local function HideAllGlowFrames(btn)
+        if btn._gravGlow then
+            if btn._gravGlow._pulse then btn._gravGlow._pulse:Stop() end
+            btn._gravGlow:Hide()
+        end
+        if btn._gravPixel then btn._gravPixel:Hide() end
+        if btn._gravFlipBook then
+            if btn._gravFlipBook._flipAG then btn._gravFlipBook._flipAG:Stop() end
+            btn._gravFlipBook:Hide()
+        end
+        if btn._gravShine then btn._gravShine:Hide() end
+        local EG = EllesmereUI and EllesmereUI.Glows
+        if btn._gravGlowWrapper and EG then
+            EG.StopGlow(btn._gravGlowWrapper)
+        end
+    end
+
+    ---------------------------------------------------------------------------
+    --  ShowGlow / HideGlow
+    ---------------------------------------------------------------------------
+    local function ShowGlow(btn)
+        if activeGlows[btn] then return end
+        activeGlows[btn] = true
+
+        local db = GetDB()
+        local g = db and db.global
+        local style = g and g.procGlowStyle or "border"
+        local color = g and g.procGlowColor or { 1, 0.8, 0, 1 }
+        local cr, cg, cb = color[1] or 1, color[2] or 0.8, color[3] or 0
+
+        -- Hide all first
+        HideAllGlowFrames(btn)
+
+        -- 1) Try EllesmereUI.Glows API (best quality, if loaded)
+        local euiIdx = GLOW_STYLE_MAP[style]
+        local EG = EllesmereUI and EllesmereUI.Glows
+        if EG and euiIdx and euiIdx > 0 then
+            local wrapper = GetGlowWrapper(btn)
+            local sz = btn:GetWidth() or 36
+            EG.StartGlow(wrapper, euiIdx, sz, cr, cg, cb)
+            return
+        end
+
+        -- 2) Built-in FlipBook (modern, classic, abg, gcd)
+        local fbDef = FLIPBOOK_STYLES[style]
+        if fbDef then
+            if not btn._gravFlipBook then
+                btn._gravFlipBook = CreateFlipBookGlow(btn, fbDef, color)
+            end
+            btn._gravFlipBook:Show()
+            if btn._gravFlipBook._flipAG then
+                btn._gravFlipBook._flipAG:Stop()
+                btn._gravFlipBook._flipAG:Play()
+            end
+            return
+        end
+
+        -- 3) Built-in Auto-Cast Shine
+        if style == "shine" then
+            if not btn._gravShine then
+                btn._gravShine = CreateShineGlow(btn, color)
+            end
+            btn._gravShine:Show()
+            return
+        end
+
+        -- 4) Built-in Pixel Glow
+        if style == "pixel" then
+            if not btn._gravPixel then
+                btn._gravPixel = CreatePixelGlow(btn, color)
+            end
+            btn._gravPixel._phase = 0; btn._gravPixel:Show()
+            return
+        end
+
+        -- 5) Border glow (default, always available)
+        local width = g and g.procGlowBorderWidth or 2
+        if not btn._gravGlow then
+            btn._gravGlow = CreateBorderGlow(btn, color, width)
+        else
+            UpdateBorderGlowStyle(btn._gravGlow, color, width)
+        end
+        btn._gravGlow:Show()
+        if btn._gravGlow._pulse then btn._gravGlow._pulse:Play() end
+    end
+
+    local function HideGlow(btn)
+        if not activeGlows[btn] then return end
+        activeGlows[btn] = nil
+        HideAllGlowFrames(btn)
+    end
+
+    -- Full rescan: check all buttons against IsSpellOverlayed
+    local rescanPending = false
+    local lastScan = 0
+    local function GlowRescan()
+        rescanPending = false
+        lastScan = GetTime()
+        local ISO = C_SpellActivationOverlay and C_SpellActivationOverlay.IsSpellOverlayed
+        if not ISO then return end
+        -- Remove stale glows
+        for btn in pairs(activeGlows) do
+            local id = GetButtonSpellID(btn)
+            if not id or not ISO(id) then
+                HideGlow(btn)
+            end
+        end
+        -- Add new glows
+        for _, info in ipairs(BAR_CONFIG) do
+            local btns = barButtons[info.key]
+            if btns then
+                for _, btn in ipairs(btns) do
+                    if btn and not activeGlows[btn] then
+                        local id = GetButtonSpellID(btn)
+                        if id and ISO(id) then
+                            ShowGlow(btn)
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    local function QueueRescan()
+        if rescanPending then return end
+        rescanPending = true
+        local elapsed = GetTime() - lastScan
+        C_Timer_After(elapsed >= 0.25 and 0 or (0.25 - elapsed), GlowRescan)
+    end
+
+    local glowDispatcher = CreateFrame("Frame")
+    glowDispatcher:RegisterEvent("SPELL_ACTIVATION_OVERLAY_GLOW_SHOW")
+    glowDispatcher:RegisterEvent("SPELL_ACTIVATION_OVERLAY_GLOW_HIDE")
+    glowDispatcher:RegisterEvent("ACTIONBAR_SLOT_CHANGED")
+    glowDispatcher:RegisterEvent("ACTIONBAR_PAGE_CHANGED")
+    glowDispatcher:RegisterEvent("UPDATE_BONUS_ACTIONBAR")
+
+    glowDispatcher:SetScript("OnEvent", function(_, event, arg1)
+        if event == "ACTIONBAR_SLOT_CHANGED" or event == "ACTIONBAR_PAGE_CHANGED"
+            or event == "UPDATE_BONUS_ACTIONBAR" then
+            QueueRescan()
+            return
+        end
+
+        local isShow = (event == "SPELL_ACTIVATION_OVERLAY_GLOW_SHOW")
+
+        if isShow then
+            -- SHOW: scan all buttons for matching spellID
+            for _, info in ipairs(BAR_CONFIG) do
+                local btns = barButtons[info.key]
+                if btns then
+                    for _, btn in ipairs(btns) do
+                        if btn then
+                            local id = GetButtonSpellID(btn)
+                            if id and id == arg1 then
+                                ShowGlow(btn)
+                            end
+                        end
+                    end
+                end
+            end
+        else
+            -- HIDE: only check buttons with active glows
+            local toHide
+            for btn in pairs(activeGlows) do
+                local id = GetButtonSpellID(btn)
+                local ISO = C_SpellActivationOverlay and C_SpellActivationOverlay.IsSpellOverlayed
+                if (id and id == arg1) or not id or (ISO and not ISO(id)) then
+                    if not toHide then toHide = {} end
+                    toHide[#toHide + 1] = btn
+                end
+            end
+            if toHide then
+                for i = 1, #toHide do HideGlow(toHide[i]) end
+            end
+        end
+    end)
+end
+
+-------------------------------------------------------------------------------
+--  Out-of-Range Icon Coloring (event-based)
+--  Uses C_ActionBar.EnableActionRangeCheck + ACTION_RANGE_CHECK_UPDATE.
+--  Only tints spells that have a range requirement (checksRange flag).
+--  Self-buffs (AMS, IBF, etc.) are correctly excluded.
+-------------------------------------------------------------------------------
+do
+    local _rangeSlots = {}       -- [actionSlot] = true (tracked slots)
+    local _rangeOutOf = {}       -- [actionSlot] = true (currently out of range)
+    local _rangeEventFrame
+
+    -- Apply or remove the range tint on a button's icon
+    local function ApplyRangeTint(btn, isOut)
+        local ico = btn.icon or btn.Icon
+        if not ico then return end
+        local fd = GFD(btn)
+        local db = GetDB()
+        local g = db and db.global
+        if isOut and g and g.outOfRangeColoring then
+            local c = g.outOfRangeColor or { 0.8, 0.1, 0.1 }
+            ico:SetVertexColor(c[1] or 0.8, c[2] or 0.1, c[3] or 0.1)
+            fd.rangeTinted = true
+        elseif fd.rangeTinted then
+            fd.rangeTinted = nil
+            ico:SetVertexColor(1, 1, 1, 1)
+        end
+    end
+
+    -- Enable range checking for all active button slots
+    local function EnableRangeChecking()
+        local db = GetDB()
+        local g = db and db.global
+        if not g or not g.outOfRangeColoring then return end
+        if not C_ActionBar or not C_ActionBar.EnableActionRangeCheck then return end
+
+        for _, info in ipairs(BAR_CONFIG) do
+            local btns = barButtons[info.key]
+            if btns then
+                for _, btn in ipairs(btns) do
+                    if btn then
+                        local action = btn.action or btn:GetAttribute("action")
+                        if action and HasAction(action) and not _rangeSlots[action] then
+                            _rangeSlots[action] = true
+                            pcall(C_ActionBar.EnableActionRangeCheck, action, true)
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    -- Disable all range checking and clear tints
+    local function DisableRangeChecking()
+        if C_ActionBar and C_ActionBar.EnableActionRangeCheck then
+            for slot in pairs(_rangeSlots) do
+                pcall(C_ActionBar.EnableActionRangeCheck, slot, false)
+            end
+        end
+        wipe(_rangeSlots)
+        wipe(_rangeOutOf)
+        -- Clear tints on all buttons
+        for _, info in ipairs(BAR_CONFIG) do
+            local btns = barButtons[info.key]
+            if btns then
+                for _, btn in ipairs(btns) do
+                    if btn then ApplyRangeTint(btn, false) end
+                end
+            end
+        end
+    end
+
+    -- Sweep all buttons: poll live range state and repaint
+    local function RangeSweep()
+        local db = GetDB()
+        local g = db and db.global
+        if not g or not g.outOfRangeColoring then return end
+        for _, info in ipairs(BAR_CONFIG) do
+            local btns = barButtons[info.key]
+            if btns then
+                for _, btn in ipairs(btns) do
+                    if btn then
+                        local action = btn.action or btn:GetAttribute("action")
+                        if action and HasAction(action) then
+                            local isOut = (SafeIsActionInRange(action) == false)
+                            _rangeOutOf[action] = isOut or nil
+                            ApplyRangeTint(btn, isOut)
+                        else
+                            ApplyRangeTint(btn, false)
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    -- Override Blizzard's keybind range coloring
+    -- Hook HotKey:SetVertexColor directly so Blizzard can never make it red
+    local function HookHotKeyColor(btn)
+        local hk = btn.HotKey
+        if not hk or hk._gravColorHooked then return end
+        hk._gravColorHooked = true
+
+        local origSetVertexColor = hk.SetVertexColor
+        hk.SetVertexColor = function(self, r, g, b, a)
+            -- Detect Blizzard's red range coloring (r > 0.7, g < 0.3)
+            -- and suppress it, keeping our configured color
+            if r and g and r > 0.7 and g < 0.3 then
+                local db = GetDB()
+                local gs = db and db.global
+                if gs then
+                    local c = gs.keybindColor
+                    if c then
+                        return origSetVertexColor(self, c[1], c[2], c[3], c[4] or 1)
+                    else
+                        return origSetVertexColor(self, 0.75, 0.75, 0.75, 1)
+                    end
+                end
+            end
+            return origSetVertexColor(self, r, g, b, a)
+        end
+    end
+
+    -- Apply hooks to all buttons
+    local _keybindOverrideStarted = false
+    function ActionBars.StartKeybindRangeOverride()
+        if _keybindOverrideStarted then return end
+        _keybindOverrideStarted = true
+        for _, info in ipairs(BAR_CONFIG) do
+            local btns = barButtons[info.key]
+            if btns then
+                for _, btn in ipairs(btns) do
+                    if btn then HookHotKeyColor(btn) end
+                end
+            end
+        end
+    end
+
+    -- Set up the range event listener
+    local function SetupRangeEvents()
+        if _rangeEventFrame then return end
+        _rangeEventFrame = CreateFrame("Frame")
+        _rangeEventFrame:RegisterEvent("ACTION_RANGE_CHECK_UPDATE")
+        _rangeEventFrame:RegisterEvent("ACTIONBAR_SLOT_CHANGED")
+        _rangeEventFrame:RegisterEvent("ACTIONBAR_PAGE_CHANGED")
+        _rangeEventFrame:RegisterEvent("UPDATE_SHAPESHIFT_FORM")
+
+        _rangeEventFrame:SetScript("OnEvent", function(_, event, slot, inRange, checksRange)
+            if event == "ACTION_RANGE_CHECK_UPDATE" then
+                if not _rangeSlots[slot] then return end
+                local isOut = checksRange and not inRange
+                local wasOut = _rangeOutOf[slot]
+                if isOut == (wasOut or false) then return end
+                _rangeOutOf[slot] = isOut or nil
+
+                for _, info in ipairs(BAR_CONFIG) do
+                    local btns = barButtons[info.key]
+                    if btns then
+                        for _, btn in ipairs(btns) do
+                            if btn then
+                                local a = btn.action or btn:GetAttribute("action")
+                                if a == slot then
+                                    ApplyRangeTint(btn, isOut)
+                                end
+                            end
+                        end
+                    end
+                end
+            elseif event == "ACTIONBAR_SLOT_CHANGED" then
+                if slot and slot > 0 then
+                    _rangeOutOf[slot] = nil
+                    if C_ActionBar and C_ActionBar.EnableActionRangeCheck then
+                        if HasAction(slot) then
+                            _rangeSlots[slot] = true
+                            pcall(C_ActionBar.EnableActionRangeCheck, slot, true)
+                        else
+                            _rangeSlots[slot] = nil
+                            pcall(C_ActionBar.EnableActionRangeCheck, slot, false)
+                        end
+                    end
+                    local btn = allButtons[slot]
+                    if btn then ApplyRangeTint(btn, false) end
+                else
+                    EnableRangeChecking()
+                    RangeSweep()
+                end
+            elseif event == "ACTIONBAR_PAGE_CHANGED"
+                or event == "UPDATE_SHAPESHIFT_FORM" then
+                C_Timer_After(0.1, function()
+                    EnableRangeChecking()
+                    RangeSweep()
+                end)
+            end
+        end)
+    end
+
+    -- Public API for settings toggle
+    function ActionBars.EnableRangeColoring()
+        SetupRangeEvents()
+        EnableRangeChecking()
+        C_Timer_After(0.1, RangeSweep)
+    end
+
+    function ActionBars.DisableRangeColoring()
+        DisableRangeChecking()
+    end
+
+    -- Expose for refresh calls
+    ns._RangeSweep = RangeSweep
+    ns._EnableRangeChecking = EnableRangeChecking
+end
 
 -------------------------------------------------------------------------------
 --  Central Cooldown Dispatcher (Secret-Safe)
@@ -683,8 +1324,29 @@ do
             if tex then
                 icon:SetTexture(tex)
                 icon:Show()
+                -- Immediately apply usability dimming
+                local db = GetDB()
+                local gs = db and db.global
+                local fd = GFD(btn)
+                local isUsable = SafeIsUsableAction(action)
+                if gs and gs.usabilityIndicator and not isUsable then
+                    if gs.usabilityDesaturate then
+                        icon:SetDesaturated(true)
+                        icon:SetVertexColor(0.6, 0.6, 0.6, 1)
+                    else
+                        icon:SetDesaturated(false)
+                        icon:SetVertexColor(0.65, 0.65, 0.65, 1)
+                    end
+                    fd.usableState = "unusable"
+                else
+                    icon:SetVertexColor(1, 1, 1, 1)
+                    icon:SetDesaturated(false)
+                    fd.usableState = nil
+                end
             else
                 icon:Hide()
+                local fd = GFD(btn)
+                fd.usableState = nil
             end
         end
         -- Cooldown
@@ -697,6 +1359,15 @@ do
             else
                 if display == nil then display = "" end
                 btn.Count:SetText(display)
+            end
+        end
+        -- Macro name
+        if btn.Name then
+            local db = GetDB()
+            local g = db and db.global
+            if g and g.showMacroNames then
+                local macroText = HasAction(action) and GetActionText(action) or ""
+                btn.Name:SetText(macroText)
             end
         end
     end
@@ -723,7 +1394,7 @@ do
                 if btns then
                     for _, btn in ipairs(btns) do
                         if btn then
-                            local action = btn:GetAttribute("action")
+                            local action = btn.action or btn:GetAttribute("action")
                             if action then RefreshButtonContent(btn, action) end
                         end
                     end
@@ -760,7 +1431,7 @@ do
                                             icon:SetVertexColor(0.6, 0.6, 0.6, 1)
                                         else
                                             icon:SetDesaturated(false)
-                                            icon:SetVertexColor(0.4, 0.4, 0.4, 1)
+                                            icon:SetVertexColor(0.65, 0.65, 0.65, 1)
                                         end
                                         fd.usableState = "unusable"
                                     end
@@ -791,6 +1462,10 @@ do
     dispatcher:RegisterEvent("UPDATE_BONUS_ACTIONBAR")
     dispatcher:RegisterEvent("UPDATE_VEHICLE_ACTIONBAR")
     dispatcher:RegisterEvent("UPDATE_OVERRIDE_ACTIONBAR")
+    dispatcher:RegisterEvent("PLAYER_TALENT_UPDATE")
+    if C_EventUtils and C_EventUtils.IsEventValid and C_EventUtils.IsEventValid("TRAIT_CONFIG_UPDATED") then
+        dispatcher:RegisterEvent("TRAIT_CONFIG_UPDATED")
+    end
     dispatcher:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player")
 
     dispatcher:SetScript("OnEvent", function(self, event, arg1)
@@ -804,16 +1479,38 @@ do
             DispatchCooldownUpdate()
         elseif event == "SPELL_UPDATE_ICON" then
             DispatchSlotChanged(0)
-        elseif event == "PLAYER_ENTERING_WORLD"
-            or event == "UPDATE_SHAPESHIFT_FORM"
+        elseif event == "PLAYER_ENTERING_WORLD" then
+            -- Longer delay: SecureStateDriver needs time to evaluate
+            -- bonusbar/vehicle conditions after login/reload
+            C_Timer_After(0.5, function()
+                DispatchSlotChanged(0)
+                DispatchCooldownUpdate()
+            end)
+            -- Second pass: some mount states resolve very late
+            C_Timer_After(1.5, function()
+                DispatchSlotChanged(0)
+                DispatchCooldownUpdate()
+            end)
+        elseif event == "UPDATE_SHAPESHIFT_FORM"
             or event == "ACTIONBAR_PAGE_CHANGED"
             or event == "UPDATE_BONUS_ACTIONBAR"
             or event == "UPDATE_VEHICLE_ACTIONBAR"
             or event == "UPDATE_OVERRIDE_ACTIONBAR" then
-            DispatchSlotChanged(0)
-            DispatchCooldownUpdate()
+            -- Delay slightly to let SecureStateDriver _childupdate finish
+            -- updating button action attributes before we read them
+            C_Timer_After(0.1, function()
+                DispatchSlotChanged(0)
+                DispatchCooldownUpdate()
+            end)
         elseif event == "UNIT_SPELLCAST_SUCCEEDED" then
             DispatchCooldownUpdate()
+        elseif event == "PLAYER_TALENT_UPDATE" or event == "TRAIT_CONFIG_UPDATED" then
+            -- Talent change: full refresh with delay to let slots settle
+            C_Timer_After(0.3, function()
+                DispatchSlotChanged(0)
+                DispatchUsableUpdate()
+                DispatchCooldownUpdate()
+            end)
         end
     end)
 end
@@ -868,9 +1565,34 @@ local function SkinButton(button, settings)
     -- ── Fit all Blizzard overlay textures to button bounds ────────────
     -- These are hardcoded to 64x64 (or atlas-based) and must be pinned
     -- to the button so they scale with custom button sizes.
-    FitTextureToButton(button.HighlightTexture)
-    FitTextureToButton(button.PushedTexture)
-    FitTextureToButton(button.CheckedTexture)
+
+    -- Ensure PushedTexture uses our custom texture (UpdateButtonArt is neutered)
+    local pt = button:GetPushedTexture()
+    if pt then
+        pt:SetTexture(TEXTURES.pushed)
+        pt:SetBlendMode("ADD")
+        pt:SetVertexColor(0.97, 0.84, 0.60, 0.5)  -- warm gold, subtle
+        FitTextureToButton(pt)
+    end
+
+    -- Highlight on mouseover
+    local ht = button:GetHighlightTexture()
+    if ht then
+        ht:SetTexture(TEXTURES.highlight)
+        ht:SetBlendMode("ADD")
+        ht:SetVertexColor(1, 1, 1, 0.35)  -- soft white glow
+        FitTextureToButton(ht)
+    end
+
+    -- Checked state (auto-attack, toggle abilities)
+    local ct = button:GetCheckedTexture()
+    if ct then
+        ct:SetTexture(TEXTURES.checked)
+        ct:SetBlendMode("ADD")
+        ct:SetVertexColor(0.97, 0.84, 0.60, 0.6)  -- warm gold
+        FitTextureToButton(ct)
+    end
+
     FitTextureToButton(button.Border)
     FitTextureToButton(button.NewActionTexture)
     FitTextureToButton(button.Flash)
@@ -1108,6 +1830,13 @@ local function UpdateButtonText(button, settings)
     local name = button.Name
     if name then
         if settings.showMacroNames then
+            -- Populate text (Blizzard's Update() is neutered)
+            local action = button.action or button:GetAttribute("action")
+            local macroText = ""
+            if action and HasAction(action) then
+                macroText = GetActionText(action) or ""
+            end
+            name:SetText(macroText)
             name:Show()
             name:SetFont(name:GetFont(), settings.macroNameFontSize or 10, "OUTLINE")
             name:ClearAllPoints()
@@ -1339,7 +2068,28 @@ local function SetupBar(info)
     if not db or not db.enabled then return end
 
     local barDB = db.bars and db.bars[info.key]
-    if barDB and barDB.enabled == false then return end
+    if barDB and barDB.enabled == false then
+        -- Hide the frame if it exists
+        if barFrames[info.key] then barFrames[info.key]:Hide() end
+        return
+    end
+
+    -- Auto-hide stance bar for classes with no stances (DK, Mage, etc.)
+    if info.isStance then
+        local numForms = GetNumShapeshiftForms and GetNumShapeshiftForms() or 0
+        if numForms == 0 then return end
+    end
+
+    -- Auto-hide pet bar when no pet is active
+    if info.isPetBar then
+        local hasPet = UnitExists("pet")
+        if not hasPet then
+            -- Still create the frame but keep it hidden
+            local frame = barFrames[info.key] or CreateBarFrame(info)
+            frame:Hide()
+            return
+        end
+    end
 
     -- Create bar frame
     local frame = barFrames[info.key] or CreateBarFrame(info)
@@ -1362,7 +2112,9 @@ local function SetupBar(info)
             if blizzBar then blizzBar:SetAttribute("actionpage", page) end
             self:ChildUpdate("gui-page", page)
         ]])
-        RegisterStateDriver(frame, "page", conditions)
+        -- RegisterStateDriver is deferred until AFTER buttons are created
+        -- so that the initial ChildUpdate hits all child buttons.
+        frame._pagingConditions = conditions
     end
 
     -- Create buttons
@@ -1375,6 +2127,9 @@ local function SetupBar(info)
     local btnH = (barDB and barDB.buttonHeight) or 45
     local spacing = (barDB and barDB.spacing) or 4
     local isVertical = (barDB and barDB.orientation == "vertical")
+    local growDir = (barDB and barDB.growDirection) or "TOPLEFT"
+    local visibleButtons = (barDB and barDB.visibleButtons) or info.count
+    if visibleButtons > info.count then visibleButtons = info.count end
 
     for i = 1, info.count do
         local slot
@@ -1414,7 +2169,11 @@ local function SetupBar(info)
             end
 
             btn:ClearAllPoints()
-            btn:SetPoint("TOPLEFT", frame, "TOPLEFT", col * (btnW + spacing), -row * (btnH + spacing))
+            -- Growth direction: flip col/row offsets based on anchor
+            local xMul = (growDir == "TOPRIGHT" or growDir == "BOTTOMRIGHT") and -1 or 1
+            local yMul = (growDir == "BOTTOMLEFT" or growDir == "BOTTOMRIGHT") and 1 or -1
+            local anchor = growDir
+            btn:SetPoint(anchor, frame, anchor, xMul * col * (btnW + spacing), yMul * row * (btnH + spacing))
             btn:SetSize(btnW, btnH)
 
             -- ── Scale all overlay effects to button size ──────────────
@@ -1470,13 +2229,17 @@ local function SetupBar(info)
                 btn:SetAttributeNoHandler("_childupdate-gui-page", BuildPageChildSnippet(i))
             end
 
-            btn:Show()
+            if i <= visibleButtons then
+                btn:Show()
+            else
+                btn:Hide()
+            end
         end
     end
 
     -- Set bar frame size
-    local totalCols = isVertical and ceil(info.count / rows) or cols
-    local totalRows = isVertical and rows or ceil(info.count / cols)
+    local totalCols = isVertical and ceil(visibleButtons / rows) or math.min(cols, visibleButtons)
+    local totalRows = isVertical and rows or ceil(visibleButtons / cols)
     frame:SetSize(totalCols * (btnW + spacing) - spacing, totalRows * (btnH + spacing) - spacing)
 
     -- Restore saved position
@@ -1490,8 +2253,19 @@ local function SetupBar(info)
     frame:SetMovable(true)
     frame:SetClampedToScreen(true)
 
-    -- Show
-    frame:Show()
+    -- Register the StateDriver NOW, after all buttons have been created
+    -- and their _childupdate-gui-page snippets assigned
+    if info.nativeMainBar and frame._pagingConditions then
+        RegisterStateDriver(frame, "page", frame._pagingConditions)
+        frame._pagingConditions = nil
+    end
+
+    -- Show (pet bar only if pet is active)
+    if info.isPetBar then
+        if UnitExists("pet") then frame:Show() else frame:Hide() end
+    else
+        frame:Show()
+    end
 end
 
 -------------------------------------------------------------------------------
@@ -1577,27 +2351,14 @@ local function UpdateKeybinds()
                                 isFlyout = (actionType == "flyout")
                             end
 
-                            local useClickRoute = isCustomBar or barHasCustomPaging or isFlyout
-
-                            if useClickRoute then
-                                -- Click-route: key → synthetic click on our button
-                                -- Reads our paged "action" attribute correctly
-                                if key1 and btnName then
-                                    SetOverrideBindingClick(keybindOwner, false, key1, btnName, "LeftButton")
-                                end
-                                if key2 and btnName then
-                                    SetOverrideBindingClick(keybindOwner, false, key2, btnName, "LeftButton")
-                                end
-                            else
-                                -- Native command route: key → ACTIONBUTTON1, MULTIACTIONBAR1BUTTON1, etc.
-                                -- Engine handles key-state pairing (empower hold-and-release,
-                                -- press-and-hold repeat, queued empowers) natively
-                                if key1 then
-                                    SetOverrideBinding(keybindOwner, false, key1, cmd)
-                                end
-                                if key2 then
-                                    SetOverrideBinding(keybindOwner, false, key2, cmd)
-                                end
+                            -- Always use click-route: key → synthetic click on our button
+                            -- This ensures PushedTexture shows on keyboard input.
+                            -- pressAndHoldAction attribute handles empower spells.
+                            if key1 and btnName then
+                                SetOverrideBindingClick(keybindOwner, false, key1, btnName, "LeftButton")
+                            end
+                            if key2 and btnName then
+                                SetOverrideBindingClick(keybindOwner, false, key2, btnName, "LeftButton")
                             end
 
                             -- Empower detection (pressAndHoldAction attr for mouse clicks)
@@ -1906,6 +2667,68 @@ function ns.RefreshActionBars()
     end
 end
 
+-------------------------------------------------------------------------------
+--  Keyboard Pushed-State Flash
+--  SetOverrideBinding routes keybinds to native engine commands, so buttons
+--  never enter PUSHED state from keyboard input.  Fix: hook ActionButtonDown
+--  for the main bar, and MultiActionButtonDown for multi-bars.  Additionally
+--  hook ActionButtonUp to hide the texture on key release.
+-------------------------------------------------------------------------------
+do
+    local _pushedHooked = false
+
+    local function PushDown(btn)
+        if not btn then return end
+        -- Use native button state instead of timer-based Show/Hide
+        pcall(btn.SetButtonState, btn, "PUSHED", true)
+    end
+
+    local function PushUp(btn)
+        if not btn then return end
+        pcall(btn.SetButtonState, btn, "NORMAL")
+    end
+
+    function ActionBars.HookKeyboardPush()
+        if _pushedHooked then return end
+        _pushedHooked = true
+
+        -- Hook ActionButtonDown/Up (main bar key presses)
+        if ActionButtonDown then
+            hooksecurefunc("ActionButtonDown", function(id)
+                PushDown(allButtons[tonumber(id)])
+            end)
+        end
+        if ActionButtonUp then
+            hooksecurefunc("ActionButtonUp", function(id)
+                PushUp(allButtons[tonumber(id)])
+            end)
+        end
+
+        -- Hook MultiActionButtonDown/Up (secondary bars)
+        local multiBarPage = {
+            MultiBarBottomLeft  = 6,
+            MultiBarBottomRight = 5,
+            MultiBarRight       = 3,
+            MultiBarLeft        = 4,
+            MultiBar5           = 13,
+            MultiBar6           = 14,
+            MultiBar7           = 15,
+        }
+        if MultiActionButtonDown then
+            hooksecurefunc("MultiActionButtonDown", function(barName, id)
+                local page = multiBarPage[barName]
+                if page then PushDown(allButtons[(page - 1) * 12 + id]) end
+            end)
+        end
+        if MultiActionButtonUp then
+            hooksecurefunc("MultiActionButtonUp", function(barName, id)
+                local page = multiBarPage[barName]
+                if page then PushUp(allButtons[(page - 1) * 12 + id]) end
+            end)
+        end
+    end
+end
+
 -- Usability update (external callers)
 function ActionBars.UpdateAllUsability()
     local db = GetDB()
@@ -1931,7 +2754,7 @@ function ActionBars.UpdateAllUsability()
                                         icon:SetVertexColor(0.6, 0.6, 0.6, 1)
                                     else
                                         icon:SetDesaturated(false)
-                                        icon:SetVertexColor(0.4, 0.4, 0.4, 1)
+                                        icon:SetVertexColor(0.65, 0.65, 0.65, 1)
                                     end
                                     fd.usableState = "unusable"
                                 end
@@ -2131,62 +2954,168 @@ local BLIZZ_BAR_MAP = {
     { key = "PetBar",    frame = "PetActionBar",         btn = "PetActionButton" },
 }
 
+-- Popup dialogs for import flow
+StaticPopupDialogs["GRAVITYUI_IMPORT_STEP1"] = {
+    text = "|cff30d1ffGravityUI|r\n\nA UI reload is required to capture your current Blizzard bar positions, sizes, and layout.\n\nGravityUI Action Bars will be temporarily disabled.",
+    button1 = "Reload UI",
+    button2 = "Cancel",
+    OnAccept = function()
+        local db = ns.GetDB and ns.GetDB()
+        if not db then return end
+        db.importPending = true
+        if db.actionbars then db.actionbars.enabled = false end
+        ReloadUI()
+    end,
+    timeout = 0,
+    whileDead = true,
+    hideOnEscape = true,
+    preferredIndex = 3,
+}
+
+StaticPopupDialogs["GRAVITYUI_IMPORT_STEP2"] = {
+    text = "|cff30d1ffGravityUI|r\n\n|cff00ff00%d|r bar positions captured successfully!\n\nClick below to enable GravityUI Action Bars with your Blizzard positions.",
+    button1 = "Apply & Reload",
+    button2 = "Cancel",
+    OnAccept = function()
+        local db = ns.GetDB and ns.GetDB()
+        if not db then return end
+        if db.actionbars then db.actionbars.enabled = true end
+        db.importPending = nil
+        ReloadUI()
+    end,
+    OnCancel = function()
+        local db = ns.GetDB and ns.GetDB()
+        if not db then return end
+        db.importPending = nil
+    end,
+    timeout = 0,
+    whileDead = true,
+    hideOnEscape = false,
+    preferredIndex = 3,
+}
+
+-- Step 1: User clicks Import → show confirmation popup
 function ns.ImportBlizzardPositions()
-    local db = GetDB()
-    if not db or not db.bars then return end
+    if InCombatLockdown() then
+        print("|cff30d1ffGravityUI:|r Cannot import during combat.")
+        return
+    end
+    StaticPopup_Show("GRAVITYUI_IMPORT_STEP1")
+end
+
+-- Step 2: Called on PLAYER_LOGIN when importPending is set
+-- Blizzard bars are visible (our bars disabled), read everything
+local function CompleteBlizzardImport()
+    local rootDB = ns.GetDB()
+    if not rootDB then return end
+    local db = rootDB.actionbars
+    if not db then return end
+    if not db.bars then db.bars = {} end
 
     local imported = 0
+    -- UIParent screen rect for coordinate conversion
+    local uiLeft, uiBottom, uiWidth, uiHeight = UIParent:GetRect()
+    local uiScale = UIParent:GetEffectiveScale()
+
     for _, map in ipairs(BLIZZ_BAR_MAP) do
         local blizzFrame = _G[map.frame]
-        if blizzFrame and blizzFrame.GetPoint and blizzFrame:GetNumPoints() > 0 then
+        if blizzFrame then
             if not db.bars[map.key] then db.bars[map.key] = {} end
             local barDB = db.bars[map.key]
 
-            -- Position
-            local point, relativeTo, relativePoint, x, y = blizzFrame:GetPoint(1)
-            if point then
+            -- ── Position ──
+            -- Use FIRST BUTTON position, not bar frame.
+            -- MainMenuBar is a large container (includes micro menu, bags)
+            -- so its center doesn't match the action button area.
+            local posRef = _G[map.btn .. "1"] or blizzFrame
+            local refLeft, refTop
+            if posRef.GetLeft and posRef.GetTop then
+                refLeft = posRef:GetLeft()
+                refTop = posRef:GetTop()
+            end
+            local refScale = posRef:GetEffectiveScale()
+            if refLeft and refTop and uiScale > 0 then
+                -- Convert to UIParent coordinate space (TOPLEFT anchor)
+                local relX = refLeft * refScale / uiScale
+                local relY = refTop * refScale / uiScale - uiHeight
+
                 barDB.position = {
-                    point = point,
-                    relativePoint = relativePoint or point,
-                    x = x or 0,
-                    y = y or 0,
+                    point = "TOPLEFT",
+                    relativePoint = "TOPLEFT",
+                    x = math.floor(relX + 0.5),
+                    y = math.floor(relY + 0.5),
                 }
                 imported = imported + 1
             end
 
-            -- Button size from first button
+            -- ── Button size ──
+            -- Use GetWidth/GetHeight (local coords, already scaled correctly)
             local btn1 = _G[map.btn .. "1"]
-            if btn1 and btn1.GetWidth then
+            if btn1 then
                 local w, h = btn1:GetWidth(), btn1:GetHeight()
-                if w and w > 10 and h and h > 10 then
-                    barDB.buttonWidth = math.floor(w + 0.5)
-                    barDB.buttonHeight = math.floor(h + 0.5)
+                -- If button has a different scale than UIParent, adjust
+                local btnScale = btn1:GetEffectiveScale()
+                if w and h and w > 5 and h > 5 then
+                    local adjustedW = w * btnScale / uiScale
+                    local adjustedH = h * btnScale / uiScale
+                    barDB.buttonWidth = math.floor(adjustedW + 0.5)
+                    barDB.buttonHeight = math.floor(adjustedH + 0.5)
                 end
-            end
 
-            -- Spacing from first two buttons
-            local btn2 = _G[map.btn .. "2"]
-            if btn1 and btn2 and btn1.GetRight and btn2.GetLeft then
-                local right = btn1:GetRight()
-                local left = btn2:GetLeft()
-                if right and left then
-                    local gap = math.floor(left - right + 0.5)
-                    if gap >= 0 and gap <= 20 then
-                        barDB.spacing = gap
+                -- ── Columns/Rows detection ──
+                local numButtons = 12
+                if map.key == "StanceBar" or map.key == "PetBar" then numButtons = 10 end
+
+                local _, b1Y = btn1:GetCenter()
+                local sameRow = 1
+                local visibleCount = btn1:IsShown() and 1 or 0
+                for i = 2, numButtons do
+                    local btn = _G[map.btn .. i]
+                    if btn and btn:IsShown() then
+                        visibleCount = visibleCount + 1
+                        local _, bY = btn:GetCenter()
+                        if bY and b1Y and math.abs(bY - b1Y) < 10 then
+                            sameRow = sameRow + 1
+                        else
+                            break
+                        end
+                    else
+                        break
+                    end
+                end
+
+                if sameRow > 0 then
+                    barDB.columns = sameRow
+                    barDB.rows = math.ceil(numButtons / sameRow)
+                end
+                -- Always show all buttons — Blizzard may hide empty slots
+                barDB.visibleButtons = numButtons
+
+                -- ── Spacing ──
+                local btn2 = _G[map.btn .. "2"]
+                if btn2 and btn2:IsShown() then
+                    local r1 = btn1:GetRight()
+                    local l2 = btn2:GetLeft()
+                    if r1 and l2 then
+                        local gap = (l2 - r1) * (btn1:GetEffectiveScale() / uiScale)
+                        gap = math.floor(gap + 0.5)
+                        if gap >= 0 and gap <= 20 then
+                            barDB.spacing = gap
+                        end
                     end
                 end
             end
+
+            barDB.enabled = true
+            print("|cff30d1ffImport|r " .. map.key .. ": pos=" .. (barDB.position and (barDB.position.x .. "," .. barDB.position.y) or "nil")
+                .. " size=" .. (barDB.buttonWidth or "?") .. "x" .. (barDB.buttonHeight or "?")
+                .. " cols=" .. (barDB.columns or "?") .. " rows=" .. (barDB.rows or "?")
+                .. " vis=" .. (barDB.visibleButtons or "?") .. " spc=" .. (barDB.spacing or "?"))
         end
     end
 
-    -- Refresh bars with new positions
-    if ns.RefreshActionBars then
-        C_Timer.After(0.05, function()
-            if not InCombatLockdown() then ns.RefreshActionBars() end
-        end)
-    end
-
-    print("|cff30d1ffGravityUI:|r " .. imported .. " Action Bar positions imported from Blizzard.")
+    -- Show popup with capture count
+    StaticPopup_Show("GRAVITYUI_IMPORT_STEP2", imported)
 end
 
 -------------------------------------------------------------------------------
@@ -2202,10 +3131,29 @@ initFrame:RegisterEvent("UPDATE_OVERRIDE_ACTIONBAR")
 initFrame:RegisterEvent("UPDATE_VEHICLE_ACTIONBAR")
 initFrame:RegisterUnitEvent("UNIT_ENTERED_VEHICLE", "player")
 initFrame:RegisterUnitEvent("UNIT_EXITED_VEHICLE", "player")
+initFrame:RegisterUnitEvent("UNIT_PET", "player")
+initFrame:RegisterEvent("PET_BAR_UPDATE")
 
 initFrame:SetScript("OnEvent", function(self, event, ...)
     if event == "PLAYER_LOGIN" then
+        -- Check if we need to complete a Blizzard import (Step 2)
+        -- Note: importPending is on the ROOT db (ns.GetDB()), not the actionbars sub-DB
+        local rootDB = ns.GetDB()
+        if rootDB and rootDB.importPending then
+            -- Delay to ensure all Blizzard bars are fully positioned
+            C_Timer_After(1.0, CompleteBlizzardImport)
+            return  -- Don't init our bars yet
+        end
         ns.RefreshActionBars()
+        ActionBars.HookKeyboardPush()
+        -- Always suppress Blizzard's red keybind text
+        ActionBars.StartKeybindRangeOverride()
+        -- Init range coloring if enabled
+        local db = GetDB()
+        local g = db and db.global
+        if g and g.outOfRangeColoring then
+            C_Timer_After(0.5, function() ActionBars.EnableRangeColoring() end)
+        end
         C_Timer_After(0.5, ApplyZoneAbilityKeybind)
     elseif event == "PLAYER_ENTERING_WORLD" then
         local isLogin, isReload = ...
@@ -2221,9 +3169,87 @@ initFrame:SetScript("OnEvent", function(self, event, ...)
             UpdateKeybinds()
             ApplyZoneAbilityKeybind()
         end
+    elseif event == "UNIT_PET" or event == "PET_BAR_UPDATE" then
+        -- Pet summoned/dismissed/updated: toggle pet bar + refresh icons
+        local petFrame = barFrames["PetBar"]
+        if UnitExists("pet") then
+            -- If pet bar was never fully set up (e.g. login on mount),
+            -- run full SetupBar now to create buttons
+            if not petFrame or not barButtons["PetBar"] or #barButtons["PetBar"] == 0 then
+                if not InCombatLockdown() then
+                    for _, info in ipairs(BAR_CONFIG) do
+                        if info.isPetBar then
+                            SetupBar(info)
+                            -- Apply skinning to newly created pet buttons
+                            local db = GetDB()
+                            if db then
+                                local g = db.global
+                                local petBtns = barButtons["PetBar"]
+                                if petBtns and g then
+                                    for _, btn in ipairs(petBtns) do
+                                        if btn then
+                                            SkinButton(btn, g)
+                                            UpdateButtonText(btn, g)
+                                            ApplyCooldownFont(btn, g)
+                                        end
+                                    end
+                                end
+                            end
+                            UpdateKeybinds()
+                            break
+                        end
+                    end
+                end
+            else
+                if not InCombatLockdown() then petFrame:Show() end
+                -- Refresh pet button icons (delayed to let game register abilities)
+                local function RefreshPetIcons()
+                    local petBtns = barButtons["PetBar"]
+                    if not petBtns then return end
+                    for i, btn in ipairs(petBtns) do
+                        if btn then
+                            local name, texture, isToken, isActive, autoCastAllowed, autoCastEnabled, spellID = GetPetActionInfo(i)
+                            local icon = btn.icon or btn.Icon
+                            if icon then
+                                if texture then
+                                    if isToken then
+                                        icon:SetTexture(_G[texture])
+                                    else
+                                        icon:SetTexture(texture)
+                                    end
+                                    icon:Show()
+                                else
+                                    icon:Hide()
+                                end
+                            end
+                        end
+                    end
+                end
+                RefreshPetIcons()
+                -- Second pass after abilities fully load
+                C_Timer_After(0.5, RefreshPetIcons)
+            end
+        else
+            if petFrame then
+                if not InCombatLockdown() then
+                    petFrame:Hide()
+                else
+                    -- Defer hide until combat ends
+                    petFrame._hidePending = true
+                end
+            end
+        end
     elseif event == "PLAYER_REGEN_ENABLED" then
         -- Combat ended: refresh deferred operations
         ns.InvalidateBroadcasterState()
+        -- Deferred pet bar hide
+        local petFrame = barFrames["PetBar"]
+        if petFrame and petFrame._hidePending then
+            petFrame._hidePending = nil
+            if not UnitExists("pet") then
+                petFrame:Hide()
+            end
+        end
         C_Timer_After(0.1, function()
             if not InCombatLockdown() then
                 UpdateKeybinds()
@@ -2309,6 +3335,13 @@ C_Timer_After(0, function()
         { value = "vertical",   text = "Vertical" },
     }
 
+    local growOpts = {
+        { value = "TOPLEFT",     text = "Top Left (→↓)" },
+        { value = "BOTTOMLEFT",  text = "Bottom Left (→↑)" },
+        { value = "TOPRIGHT",    text = "Top Right (←↓)" },
+        { value = "BOTTOMRIGHT", text = "Bottom Right (←↑)" },
+    }
+
     ns.Movers:RegisterSettingsProvider("ActionBar_*", {
         label = "Action Bar Settings",
         tabs = {
@@ -2321,6 +3354,22 @@ C_Timer_After(0, function()
 
                     local rows = {}
                     local r
+                    local maxBtns = (barKey == "StanceBar" or barKey == "PetBar") and 10 or 12
+
+                    r = ns.SPCheckbox(parent, "Enabled",
+                        function() return barDB.enabled ~= false end,
+                        function(v) barDB.enabled = v; abRefresh() end, yPos)
+                    rows[#rows + 1] = r; yPos = yPos + rowStep
+
+                    r = ns.SPCheckbox(parent, "Always Show",
+                        function() return barDB.alwaysShow ~= false end,
+                        function(v) barDB.alwaysShow = v; abRefresh() end, yPos)
+                    rows[#rows + 1] = r; yPos = yPos + rowStep
+
+                    r = ns.SPSlider(parent, "Visible Buttons", 1, maxBtns, 1,
+                        function() return barDB.visibleButtons or maxBtns end,
+                        function(v) barDB.visibleButtons = v; abRefresh() end, yPos)
+                    rows[#rows + 1] = r; yPos = yPos + rowStep
 
                     r = ns.SPSlider(parent, "Columns", 1, 12, 1,
                         function() return barDB.columns or 12 end,
@@ -2350,6 +3399,11 @@ C_Timer_After(0, function()
                     r = ns.SPDropdown(parent, "Orientation", orientOpts,
                         function() return barDB.orientation or "horizontal" end,
                         function(v) barDB.orientation = v; abRefresh() end, yPos)
+                    rows[#rows + 1] = r; yPos = yPos + rowStep
+
+                    r = ns.SPDropdown(parent, "Growth Direction", growOpts,
+                        function() return barDB.growDirection or "TOPLEFT" end,
+                        function(v) barDB.growDirection = v; abRefresh() end, yPos)
                     rows[#rows + 1] = r; yPos = yPos + rowStep
 
                     return rows, yPos

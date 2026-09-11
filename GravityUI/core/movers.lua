@@ -1217,6 +1217,36 @@ function Movers:CreateHUD()
     )
     hudFrame.showDisabledCheck = showDisabledCheck
 
+    local showSettingsCheck = CreateHUDCheck("ShowSettings", "Show Settings",
+        function() return Movers:GetEditModeSettings().showSettings or false end,
+        function(v)
+            local cfg = Movers:GetEditModeSettings()
+            cfg.showSettings = v
+            -- Toggle the settings panel collapse state
+            if not settingsPanel then Movers:CreateSettingsPanel() end
+            _spCollapsed = not v
+            if settingsPanel.collapseText then
+                settingsPanel.collapseText:SetText(_spCollapsed and "|cff30d1ff▶|r" or "|cff30d1ff▼|r")
+            end
+            if _spCollapsed then
+                settingsPanel.content:Hide()
+                settingsPanel.tabBar:Hide()
+                settingsPanel:SetHeight(24)
+            else
+                settingsPanel.content:Show()
+                settingsPanel.tabBar:Show()
+                -- Re-show the current mover's settings panel
+                if _spCurrentProvider and Movers.selectedMover then
+                    Movers:ShowSettingsPanel(Movers.selectedMover)
+                else
+                    Movers:RefreshSettingsPanel()
+                end
+            end
+        end,
+        "TOPLEFT", hudFrame, "TOPLEFT", 620, -36
+    )
+    hudFrame.showSettingsCheck = showSettingsCheck
+
     -- ── COLUMN 4: Done / Exit Button (Far Right) ──────────────────────────
     local exitBtn = CreateFrame("Button", nil, hudFrame, "BackdropTemplate")
     exitBtn:SetSize(90, 48)
@@ -1602,6 +1632,9 @@ function Movers:ShowSettingsPanel(moverName)
     -- Reset tab if provider changed
     if _spCurrentProvider ~= patternKey then
         _spCurrentTab = 1
+        -- Respect "Show Settings" checkbox: expand if checked, collapse if not
+        local showSettings = Movers:GetEditModeSettings().showSettings
+        _spCollapsed = not showSettings
     end
     _spCurrentProvider = patternKey
 

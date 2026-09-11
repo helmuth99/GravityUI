@@ -99,6 +99,13 @@ local orientationOptions = {
     {value = "vertical", text = "Vertical"},
 }
 
+local growOptions = {
+    {value = "TOPLEFT", text = "Top Left (→↓)"},
+    {value = "BOTTOMLEFT", text = "Bottom Left (→↑)"},
+    {value = "TOPRIGHT", text = "Top Right (←↓)"},
+    {value = "BOTTOMRIGHT", text = "Bottom Right (←↑)"},
+}
+
 local lockOptions = {
     {value = "unlocked", text = "Unlocked"},
     {value = "shift", text = "Locked - Shift to drag"},
@@ -263,6 +270,37 @@ local function BuildActionBarsSettings(parent)
     AddRow(content, "Cooldown Text Y-Offset", "slider", -20, 20, "cooldownTextYOffset", g, refresh, 1)
     AddRow(content, "Cooldown Text Color", "color", "cooldownTextColor", g, refresh)
 
+    -- Proc Glow
+    CreateSubLabel(content, "Proc Glow")
+    local glowStyleOptions = {
+        { value = "border",  text = "Pulsing Border" },
+        { value = "pixel",   text = "Pixel Glow" },
+        { value = "abg",     text = "Action Button Glow" },
+        { value = "shine",   text = "Auto-Cast Shine" },
+        { value = "gcd",     text = "GCD" },
+        { value = "modern",  text = "Modern WoW Glow" },
+        { value = "classic", text = "Classic WoW Glow" },
+    }
+    AddRow(content, "Glow Style", "dropdown", glowStyleOptions, "procGlowStyle", g, refresh)
+    AddRow(content, "Border Color", "color", "procGlowColor", g, refresh)
+    AddRow(content, "Border Width", "slider", 1, 6, "procGlowBorderWidth", g, refresh, 1)
+
+    -- ── Out-of-Range Coloring ────────────────────────────────────────
+    CreateSubLabel(content, "Out-of-Range Coloring")
+
+    AddRow(content, "Enable Range Coloring", "checkbox", "outOfRangeColoring", g, function()
+        if ns.RefreshActionBars then ns.RefreshActionBars() end
+        local AB = ns.ActionBars
+        if AB then
+            if g.outOfRangeColoring then
+                AB.EnableRangeColoring()
+            else
+                AB.DisableRangeColoring()
+            end
+        end
+    end)
+    AddRow(content, "Out-of-Range Color", "color", "outOfRangeColor", g, refresh)
+
     content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
 end
 
@@ -295,23 +333,103 @@ local function BuildBarLayoutSettings(parent)
         { key = "PetBar",    label = "Pet Bar" },
     }
 
+    -- Persistent collapse state
+    if not abs.collapse_settings then abs.collapse_settings = {} end
+
+    -- Master list of all elements: { type="header"|"row", frame=..., barKey=..., headerText=... }
+    local allElements = {}
+
     for _, cfg in ipairs(barConfigs) do
         if not abs.bars[cfg.key] then
             abs.bars[cfg.key] = {}
         end
         local barDB = abs.bars[cfg.key]
-        CreateSubLabel(content, cfg.label)
-        AddRow(content, "Enabled", "checkbox", "enabled", barDB, refresh)
-        AddRow(content, "Columns", "slider", 1, 12, "columns", barDB, refresh, 1)
-        AddRow(content, "Rows", "slider", 1, 12, "rows", barDB, refresh, 1)
-        AddRow(content, "Button Width", "slider", 20, 80, "buttonWidth", barDB, refresh, 1)
-        AddRow(content, "Button Height", "slider", 20, 80, "buttonHeight", barDB, refresh, 1)
-        AddRow(content, "Spacing", "slider", 0, 20, "spacing", barDB, refresh, 1)
-        AddRow(content, "Orientation", "dropdown", orientationOptions, "orientation", barDB, refresh)
-        content.rowCount = content.rowCount + 0.5
+
+        -- Collapsible header button
+        local headerBtn = CreateFrame("Button", nil, content)
+        headerBtn:SetSize(GUI.CONTENT_WIDTH - 20, 22)
+
+        local headerText = headerBtn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        if ns.GUI.SetFont then
+            ns.GUI:SetFont(headerText, 12, "")
+        else
+            headerText:SetFont(STANDARD_TEXT_FONT, 12, "")
+        end
+        headerText:SetPoint("LEFT", 0, 0)
+        headerText:SetTextColor(unpack(GUI.Colors.accent))
+        headerBtn:SetHighlightTexture("Interface\\Buttons\\UI-Listbox-Highlight2", "ADD")
+
+        allElements[#allElements + 1] = { type = "header", frame = headerBtn, barKey = cfg.key, headerText = headerText, label = cfg.label }
+
+        -- Create setting rows
+        local maxBtns = (cfg.key == "StanceBar" or cfg.key == "PetBar") and 10 or 12
+        if barDB.visibleButtons == nil then barDB.visibleButtons = maxBtns end
+
+        local rowDefs = {
+            {"Enabled", "checkbox", "enabled", barDB, refresh},
+            {"Visible Buttons", "slider", 1, maxBtns, "visibleButtons", barDB, refresh, 1},
+            {"Columns", "slider", 1, 12, "columns", barDB, refresh, 1},
+            {"Rows", "slider", 1, 12, "rows", barDB, refresh, 1},
+            {"Button Width", "slider", 20, 80, "buttonWidth", barDB, refresh, 1},
+            {"Button Height", "slider", 20, 80, "buttonHeight", barDB, refresh, 1},
+            {"Spacing", "slider", 0, 20, "spacing", barDB, refresh, 1},
+            {"Orientation", "dropdown", orientationOptions, "orientation", barDB, refresh},
+            {"Growth Direction", "dropdown", growOptions, "growDirection", barDB, refresh},
+        }
+
+        for _, def in ipairs(rowDefs) do
+            local row = CreatePropertyRow(content, def[1], def[2], def[3], def[4], def[5], def[6], def[7], def[8])
+            row:SetParent(content)
+            allElements[#allElements + 1] = { type = "row", frame = row, barKey = cfg.key }
+        end
     end
 
-    content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
+    -- Relayout: position all visible elements, hide collapsed rows
+    local function Relayout()
+        local yPos = 0
+        local baseY = content.rowCount_base or 0
+        local curRow = baseY
+
+        for _, elem in ipairs(allElements) do
+            local isExpanded = abs.collapse_settings[elem.barKey] ~= false
+            if elem.type == "header" then
+                local arrow = isExpanded and "▼ " or "▶ "
+                elem.headerText:SetText(arrow .. elem.label)
+                elem.frame:ClearAllPoints()
+                elem.frame:SetPoint("TOPLEFT", 10, -curRow * (ROW_HEIGHT + 5))
+                elem.frame:Show()
+                curRow = curRow + 0.8
+            else
+                if isExpanded then
+                    elem.frame:ClearAllPoints()
+                    elem.frame:SetPoint("TOPLEFT", 10, -curRow * (ROW_HEIGHT + 5))
+                    elem.frame:Show()
+                    curRow = curRow + 1
+                else
+                    elem.frame:Hide()
+                end
+            end
+        end
+        curRow = curRow + 0.3
+        content:SetHeight(50 + (curRow * (ROW_HEIGHT + 5)))
+    end
+
+    -- Store base row count (header + section label above)
+    content.rowCount_base = content.rowCount
+
+    -- Wire up header clicks
+    for _, elem in ipairs(allElements) do
+        if elem.type == "header" then
+            elem.frame:SetScript("OnClick", function()
+                local cur = abs.collapse_settings[elem.barKey]
+                abs.collapse_settings[elem.barKey] = (cur == false) and true or false
+                Relayout()
+            end)
+        end
+    end
+
+    -- Initial layout
+    Relayout()
 end
 
 -- 3. Mouseover Settings

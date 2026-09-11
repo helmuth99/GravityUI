@@ -152,7 +152,10 @@ local function HideBlizzardBorders()
         if MinimapBorderTop then MinimapBorderTop:Hide() end
         if MinimapCluster.BorderTop then MinimapCluster.BorderTop:Hide() end
         if MinimapNorthTag then MinimapNorthTag:Hide() end
-        if MinimapCompassTexture then MinimapCompassTexture:Hide() end
+        -- Don't Hide() MinimapCompassTexture — external addons (Northern Sky
+        -- Raidtools) read its GetRotation() for directional overlays.
+        -- Hide() stops the engine from updating rotation. Use Alpha instead.
+        if MinimapCompassTexture then MinimapCompassTexture:SetAlpha(0) end
         
         -- Use robust hiding for the clock
         if TimeManagerClockButton then
@@ -163,7 +166,7 @@ local function HideBlizzardBorders()
         if MinimapBorderTop then MinimapBorderTop:Show() end
         if MinimapCluster.BorderTop then MinimapCluster.BorderTop:Show() end
         if MinimapNorthTag then MinimapNorthTag:Show() end
-        if MinimapCompassTexture then MinimapCompassTexture:Show() end
+        if MinimapCompassTexture then MinimapCompassTexture:SetAlpha(1) end
         if TimeManagerClockButton then TimeManagerClockButton:Show() end
     end
 end
@@ -1298,12 +1301,18 @@ function ns.RefreshMinimap()
     SetupMinimapDragging()
     SetupAutoZoom() -- Apply Auto Zoom settings
 
-    if s.rotate then
-        SetCVar("rotateMinimap", "1")
-        if Minimap.SetRotates then Minimap:SetRotates(true) end
-    else
-        SetCVar("rotateMinimap", "0")
-        if Minimap.SetRotates then Minimap.SetRotates(false) end
+    -- Rotation: apply our preference ONLY on initial setup.
+    -- External addons (Northern Sky Raidtools) call MinimapCluster:SetRotateMinimap(true)
+    -- during boss encounters. If we re-apply SetRotates(false) on every refresh,
+    -- we override their rotation and break compass-based overlays.
+    if not ns._minimapRotationApplied then
+        ns._minimapRotationApplied = true
+        if Minimap.SetRotates then
+            Minimap:SetRotates(s.rotate and true or false)
+        end
+        if MinimapCluster and MinimapCluster.SetRotateMinimap then
+            MinimapCluster:SetRotateMinimap(s.rotate and true or false)
+        end
     end
     
     -- Quest Blobs

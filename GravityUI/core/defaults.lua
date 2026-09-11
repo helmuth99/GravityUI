@@ -1239,6 +1239,13 @@ ns.Defaults = {
             cooldownTextYOffset = 0,
             cooldownTextColor = { [1] = 1, [2] = 1, [3] = 1 },
             cooldownFitToButton = true,
+            -- Proc Glow settings
+            procGlowStyle = "border",  -- "border" = colored pulsing border, "shine" = Blizzard AutoCastShine
+            procGlowColor = { [1] = 1, [2] = 0.8, [3] = 0, [4] = 1 },  -- yellow default
+            procGlowBorderWidth = 2,
+            -- Out-of-Range coloring (event-based, uses C_ActionBar.EnableActionRangeCheck)
+            outOfRangeColoring = true,
+            outOfRangeColor = { [1] = 0.8, [2] = 0.1, [3] = 0.1 },
         },
         absExpanded = true,
         fadeExpanded = true,

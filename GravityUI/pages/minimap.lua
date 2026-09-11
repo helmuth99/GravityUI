@@ -111,7 +111,10 @@ local function BuildSettingsTab(parent)
     AddRow(genContainer, "Lock Minimap", "checkbox", "lock", m, refresh)
 
     AddRow(genContainer, "Auto Zoom Out", "checkbox", "autoZoom", m, refresh)
-    AddRow(genContainer, "Rotate Minimap", "checkbox", "rotate", m, refresh)
+    AddRow(genContainer, "Rotate Minimap", "checkbox", "rotate", m, function()
+        ns._minimapRotationApplied = false  -- allow re-application
+        refresh()
+    end)
     
     local shapeOptions = { {value = "SQUARE", text = "Square"}, {value = "ROUND", text = "Round"} }
     AddRow(genContainer, "Shape", "dropdown", shapeOptions, "shape", m, refresh)

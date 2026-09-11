@@ -925,6 +925,9 @@ local function BuildEditMode(parent)
     local cbSnapElem = ns.GUI:CreateCheckbox(optRow2, "Snap to Elements", "snapToElements", cfg, function(v) end)
     cbSnapElem:SetPoint("LEFT", optRow2, "LEFT", 240, 0)
 
+    local cbShowSettings = ns.GUI:CreateCheckbox(optRow2, "Show Settings", "showSettings", cfg, function(v) end)
+    cbShowSettings:SetPoint("LEFT", optRow2, "LEFT", 450, 0)
+
     yOffset = yOffset - 34
 
     -- Row 3: Grid Size Dropdown
