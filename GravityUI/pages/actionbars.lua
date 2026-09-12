@@ -273,6 +273,7 @@ local function BuildActionBarsSettings(parent)
     -- Proc Glow
     CreateSubLabel(content, "Proc Glow")
     local glowStyleOptions = {
+        { value = "none",    text = "None (Disabled)" },
         { value = "border",  text = "Pulsing Border" },
         { value = "pixel",   text = "Pixel Glow" },
         { value = "abg",     text = "Action Button Glow" },

@@ -882,6 +882,7 @@ do
         local db = GetDB()
         local g = db and db.global
         local style = g and g.procGlowStyle or "border"
+        if style == "none" then return end  -- user disabled proc glow
         local color = g and g.procGlowColor or { 1, 0.8, 0, 1 }
         local cr, cg, cb = color[1] or 1, color[2] or 0.8, color[3] or 0
 
@@ -1320,10 +1321,11 @@ do
     -- Per-button content refresh for slot change
     local function RefreshButtonContent(btn, action)
         if not btn or not action then return end
+        local hasAct = HasAction(action)
         -- Icon
         local icon = btn.icon or btn.Icon
         if icon then
-            local tex = HasAction(action) and GetActionTexture(action)
+            local tex = hasAct and GetActionTexture(action)
             if tex then
                 icon:SetTexture(tex)
                 icon:Show()
@@ -1348,20 +1350,32 @@ do
                 end
             else
                 icon:Hide()
+                icon:SetDesaturated(false)
+                icon:SetVertexColor(1, 1, 1, 1)
                 local fd = GFD(btn)
                 fd.usableState = nil
+                fd.rangeTinted = nil
             end
         end
-        -- Cooldown
-        PushButtonCooldown(btn)
-        -- Count (secret-safe)
-        if btn.Count and C_ActionBar.GetActionDisplayCount then
-            local display = C_ActionBar.GetActionDisplayCount(action)
-            if issecretvalue and issecretvalue(display) then
-                btn.Count:SetText(display)
+        -- Cooldown: clear if slot is empty
+        if hasAct then
+            PushButtonCooldown(btn)
+        else
+            local cd = btn.cooldown
+            if cd then pcall(cd.Clear, cd) end
+            if btn.chargeCooldown then pcall(btn.chargeCooldown.Clear, btn.chargeCooldown) end
+        end
+        -- Count: clear if slot is empty
+        if btn.Count then
+            if hasAct and C_ActionBar.GetActionDisplayCount then
+                local display = C_ActionBar.GetActionDisplayCount(action)
+                if issecretvalue and issecretvalue(display) then
+                    btn.Count:SetText(display)
+                else
+                    btn.Count:SetText(display or "")
+                end
             else
-                if display == nil then display = "" end
-                btn.Count:SetText(display)
+                btn.Count:SetText("")
             end
         end
         -- Macro name
@@ -1369,8 +1383,10 @@ do
             local db = GetDB()
             local g = db and db.global
             if g and g.showMacroNames then
-                local macroText = HasAction(action) and GetActionText(action) or ""
+                local macroText = hasAct and GetActionText(action) or ""
                 btn.Name:SetText(macroText)
+            else
+                btn.Name:SetText("")
             end
         end
     end
