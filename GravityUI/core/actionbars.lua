@@ -167,9 +167,25 @@ local function SafeIsActionInRange(action)
 end
 
 local function SafeIsUsableAction(action)
-    local ok, usable = pcall(IsUsableAction, action)
-    if not ok then return true end
-    return usable and true or false
+    local isUsable, noMana
+    if C_ActionBar and C_ActionBar.IsUsableAction then
+        local ok, u, n = pcall(C_ActionBar.IsUsableAction, action)
+        if ok then
+            isUsable, noMana = u, n
+        else
+            return true, false
+        end
+    elseif IsUsableAction then
+        local ok, u, n = pcall(IsUsableAction, action)
+        if ok then
+            isUsable, noMana = u, n
+        else
+            return true, false
+        end
+    else
+        return true, false
+    end
+    return isUsable and true or false, noMana and true or false
 end
 
 -------------------------------------------------------------------------------
@@ -1254,7 +1270,7 @@ end
 do
     local dispatcher = CreateFrame("Frame")
 
-    -- Cooldown visuals: desaturate, alpha dim on CD
+    -- Cooldown visuals: desaturate + dim on CD
     local function RefreshCooldownVisuals(btn)
         local db = GetDB()
         if not db then return end
@@ -1264,16 +1280,34 @@ do
         if not action or not HasAction(action) then return end
         local icon = btn.icon or btn.Icon
         if not icon then return end
+        local fd = GFD(btn)
 
         local cdInfo = C_ActionBar.GetActionCooldown(action)
         local isOnCD = cdInfo and cdInfo.isActive and not cdInfo.isOnGCD
 
         if isOnCD then
-            if g.usabilityDesaturate then
-                icon:SetDesaturated(true)
+            icon:SetDesaturated(true)
+            icon:SetVertexColor(0.5, 0.5, 0.5, 1)
+            fd.cdDimmed = true
+        elseif fd.cdDimmed then
+            fd.cdDimmed = nil
+            -- Restore: re-evaluate usability so we don't undo unusable dimming
+            local isUsable, noMana = SafeIsUsableAction(action)
+            if not isUsable then
+                if noMana then
+                    icon:SetDesaturated(false)
+                    icon:SetVertexColor(0.5, 0.5, 1.0, 1)
+                    fd.usableState = "nomana"
+                else
+                    icon:SetDesaturated(true)
+                    icon:SetVertexColor(0.4, 0.4, 0.4, 1)
+                    fd.usableState = "unusable"
+                end
+            else
+                icon:SetDesaturated(false)
+                icon:SetVertexColor(1, 1, 1, 1)
+                fd.usableState = nil
             end
-        else
-            icon:SetDesaturated(false)
         end
     end
     ns._RefreshCooldownVisuals = RefreshCooldownVisuals
@@ -1333,16 +1367,17 @@ do
                 local db = GetDB()
                 local gs = db and db.global
                 local fd = GFD(btn)
-                local isUsable = SafeIsUsableAction(action)
+                local isUsable, noMana = SafeIsUsableAction(action)
                 if gs and gs.usabilityIndicator and not isUsable then
-                    if gs.usabilityDesaturate then
-                        icon:SetDesaturated(true)
-                        icon:SetVertexColor(0.6, 0.6, 0.6, 1)
-                    else
+                    if noMana then
                         icon:SetDesaturated(false)
-                        icon:SetVertexColor(0.65, 0.65, 0.65, 1)
+                        icon:SetVertexColor(0.5, 0.5, 1.0, 1)
+                        fd.usableState = "nomana"
+                    else
+                        icon:SetDesaturated(true)
+                        icon:SetVertexColor(0.4, 0.4, 0.4, 1)
+                        fd.usableState = "unusable"
                     end
-                    fd.usableState = "unusable"
                 else
                     icon:SetVertexColor(1, 1, 1, 1)
                     icon:SetDesaturated(false)
@@ -1441,18 +1476,19 @@ do
                         if action and HasAction(action) then
                             local icon = btn.icon or btn.Icon
                             if icon then
-                                local isUsable = SafeIsUsableAction(action)
+                                local isUsable, noMana = SafeIsUsableAction(action)
                                 local fd = GFD(btn)
                                 if not isUsable then
-                                    if fd.usableState ~= "unusable" then
-                                        if g.usabilityDesaturate then
-                                            icon:SetDesaturated(true)
-                                            icon:SetVertexColor(0.6, 0.6, 0.6, 1)
-                                        else
+                                    local newState = noMana and "nomana" or "unusable"
+                                    if fd.usableState ~= newState then
+                                        if noMana then
                                             icon:SetDesaturated(false)
-                                            icon:SetVertexColor(0.65, 0.65, 0.65, 1)
+                                            icon:SetVertexColor(0.5, 0.5, 1.0, 1)
+                                        else
+                                            icon:SetDesaturated(true)
+                                            icon:SetVertexColor(0.4, 0.4, 0.4, 1)
                                         end
-                                        fd.usableState = "unusable"
+                                        fd.usableState = newState
                                     end
                                 else
                                     if fd.usableState then
@@ -2807,18 +2843,19 @@ function ActionBars.UpdateAllUsability()
                     if action and HasAction(action) then
                         local icon = btn.icon or btn.Icon
                         if icon then
-                            local isUsable = SafeIsUsableAction(action)
+                            local isUsable, noMana = SafeIsUsableAction(action)
                             local fd = GFD(btn)
                             if not isUsable then
-                                if fd.usableState ~= "unusable" then
-                                    if g.usabilityDesaturate then
-                                        icon:SetDesaturated(true)
-                                        icon:SetVertexColor(0.6, 0.6, 0.6, 1)
-                                    else
+                                local newState = noMana and "nomana" or "unusable"
+                                if fd.usableState ~= newState then
+                                    if noMana then
                                         icon:SetDesaturated(false)
-                                        icon:SetVertexColor(0.65, 0.65, 0.65, 1)
+                                        icon:SetVertexColor(0.5, 0.5, 1.0, 1)
+                                    else
+                                        icon:SetDesaturated(true)
+                                        icon:SetVertexColor(0.4, 0.4, 0.4, 1)
                                     end
-                                    fd.usableState = "unusable"
+                                    fd.usableState = newState
                                 end
                             elseif fd.usableState then
                                 icon:SetVertexColor(1, 1, 1, 1)
