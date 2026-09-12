@@ -789,11 +789,11 @@ local function BuildAltManager(parent)
                     btnDel:SetPoint("RIGHT", charCard, "RIGHT", -6, 0)
                     charCard.btnDel = btnDel
 
-                    local btnDown = GUI:CreateButton(charCard, "▼", 26, 20)
+                    local btnDown = GUI:CreateButton(charCard, "v", 26, 20)
                     btnDown:SetPoint("RIGHT", btnDel, "LEFT", -6, 0)
                     charCard.btnDown = btnDown
 
-                    local btnUp = GUI:CreateButton(charCard, "▲", 26, 20)
+                    local btnUp = GUI:CreateButton(charCard, "^", 26, 20)
                     btnUp:SetPoint("RIGHT", btnDown, "LEFT", -4, 0)
                     charCard.btnUp = btnUp
 

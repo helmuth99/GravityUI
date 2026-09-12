@@ -394,7 +394,7 @@ local function BuildBarLayoutSettings(parent)
         for _, elem in ipairs(allElements) do
             local isExpanded = abs.collapse_settings[elem.barKey] ~= false
             if elem.type == "header" then
-                local arrow = isExpanded and "▼ " or "▶ "
+                local arrow = isExpanded and "v " or "> "
                 elem.headerText:SetText(arrow .. elem.label)
                 elem.frame:ClearAllPoints()
                 elem.frame:SetPoint("TOPLEFT", 10, -curRow * (ROW_HEIGHT + 5))

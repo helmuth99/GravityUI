@@ -1110,6 +1110,51 @@ function Styling:RefreshPowerBar()
 end
 
 -------------------------------------------------------------------------------
+-- WIDGET SCALING HELPER (shared by PowerBar, TopCenter, BelowMinimap)
+-------------------------------------------------------------------------------
+
+local WIDGET_SCALE_MAP = {
+    WidgetPowerBar     = { dbKey = "widgetPowerBar",     frameName = "UIWidgetPowerBarContainerFrame" },
+    WidgetTopCenter    = { dbKey = "widgetTopCenter",    frameName = "UIWidgetTopCenterContainerFrame" },
+    WidgetBelowMinimap = { dbKey = "widgetBelowMinimap", frameName = "UIWidgetBelowMinimapContainerFrame" },
+}
+
+local function ApplyWidgetScale(widgetKey)
+    local info = WIDGET_SCALE_MAP[widgetKey]
+    if not info then return end
+    local db = GetDB()
+    local wdb = db and db[info.dbKey]
+    local scale = (wdb and wdb.scale) or 1
+    local container = _G[info.frameName]
+    if container then
+        container:SetScale(math.max(0.3, math.min(2, scale)))
+    end
+end
+
+local function SetWidgetScale(widgetKey, scale)
+    local info = WIDGET_SCALE_MAP[widgetKey]
+    if not info then return end
+    local db = GetDB()
+    if db then
+        db[info.dbKey] = db[info.dbKey] or {}
+        db[info.dbKey].scale = scale
+    end
+    ApplyWidgetScale(widgetKey)
+end
+
+local function GetWidgetScale(widgetKey)
+    local info = WIDGET_SCALE_MAP[widgetKey]
+    if not info then return 1 end
+    local db = GetDB()
+    local wdb = db and db[info.dbKey]
+    return (wdb and wdb.scale) or 1
+end
+
+ns.ApplyWidgetScale = ApplyWidgetScale
+ns.SetWidgetScale   = SetWidgetScale
+ns.GetWidgetScale   = GetWidgetScale
+
+-------------------------------------------------------------------------------
 -- WIDGET POWER BAR CONTAINER (UIWidgetPowerBarContainerFrame)
 -------------------------------------------------------------------------------
 
@@ -1194,6 +1239,9 @@ local function CreateWidgetPowerBarMover()
     widgetPowerBarMover.text:SetFont(GetFontPath(), 10, "OUTLINE")
     widgetPowerBarMover.text:SetText("Widget Power Bar")
     
+    widgetPowerBarMover:SetScript("OnMouseDown", function(self, btn)
+        if btn == "LeftButton" and ns.Movers then ns.Movers:SelectMover("WidgetPowerBar") end
+    end)
     widgetPowerBarMover:SetScript("OnDragStart", function(self) self:StartMoving() end)
     widgetPowerBarMover:SetScript("OnDragStop", function(self)
         self:StopMovingOrSizing()
@@ -1258,6 +1306,7 @@ function Styling:InitWidgetPowerBar()
 
     if ns.Movers and ns.Movers.Register then
         ns.Movers:Register("WidgetPowerBar", widgetPowerBarMover, function(frame, enabled, force) Styling:ToggleWidgetPowerBarMover(force) end, "Widget Power Bar")
+        ApplyWidgetScale("WidgetPowerBar")
     end
 
     local function GetActivePreyPercent()
@@ -1569,6 +1618,9 @@ local function CreateWidgetBelowMinimapMover()
     widgetBelowMinimapMover.text:SetFont(GetFontPath(), 10, "OUTLINE")
     widgetBelowMinimapMover.text:SetText("Widget Below Minimap")
     
+    widgetBelowMinimapMover:SetScript("OnMouseDown", function(self, btn)
+        if btn == "LeftButton" and ns.Movers then ns.Movers:SelectMover("WidgetBelowMinimap") end
+    end)
     widgetBelowMinimapMover:SetScript("OnDragStart", function(self) self:StartMoving() end)
     widgetBelowMinimapMover:SetScript("OnDragStop", function(self)
         self:StopMovingOrSizing()
@@ -1633,6 +1685,7 @@ function Styling:InitWidgetBelowMinimap()
 
     if ns.Movers and ns.Movers.Register then
         ns.Movers:Register("WidgetBelowMinimap", widgetBelowMinimapMover, function(frame, enabled, force) Styling:ToggleWidgetBelowMinimapMover(force) end, "Widget Below Minimap")
+        ApplyWidgetScale("WidgetBelowMinimap")
     end
 end
 
@@ -1706,6 +1759,9 @@ local function CreateWidgetTopCenterMover()
     widgetTopCenterMover.text:SetFont(GetFontPath(), 10, "OUTLINE")
     widgetTopCenterMover.text:SetText("Widget Top Center")
     
+    widgetTopCenterMover:SetScript("OnMouseDown", function(self, btn)
+        if btn == "LeftButton" and ns.Movers then ns.Movers:SelectMover("WidgetTopCenter") end
+    end)
     widgetTopCenterMover:SetScript("OnDragStart", function(self) self:StartMoving() end)
     widgetTopCenterMover:SetScript("OnDragStop", function(self)
         self:StopMovingOrSizing()
@@ -1770,6 +1826,7 @@ function Styling:InitWidgetTopCenter()
 
     if ns.Movers and ns.Movers.Register then
         ns.Movers:Register("WidgetTopCenter", widgetTopCenterMover, function(frame, enabled, force) Styling:ToggleWidgetTopCenterMover(force) end, "Widget Top Center")
+        ApplyWidgetScale("WidgetTopCenter")
     end
 end
 
@@ -1807,6 +1864,8 @@ end
 function Styling:SkinInstanceFrames()
     -- TBD: Port skinInstanceFrames
 end
+
+-- Widget settings provider is registered in movers.lua (uses ns.GetWidgetScale/ns.SetWidgetScale)
 
 -------------------------------------------------------------------------------
 -- INITIALIZATION

@@ -994,7 +994,7 @@ function GUI:CreateDropdown(parent, label, items, dbKey, dbTable, onChange)
     -- Arrow icon
     local arrow = dropdown:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     SetFont(arrow, 10, "", C.textMuted)
-    arrow:SetText("▼")
+    arrow:SetText("v")
     arrow:SetPoint("RIGHT", -6, 0)
     
     container.dropdown = dropdown
@@ -1166,7 +1166,7 @@ function GUI:CreateDropdown(parent, label, items, dbKey, dbTable, onChange)
                 
                 local playIcon = playBtn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
                 SetFont(playIcon, 10, "", C.text)
-                playIcon:SetText("▶")
+                playIcon:SetText(">")
                 playIcon:SetPoint("CENTER", 1, 0)
                 
                 playBtn:SetScript("OnEnter", function(self) 

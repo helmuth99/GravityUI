@@ -323,6 +323,11 @@ function Movers:SetEditMode(enabled)
         end
     end
     self:UpdateDisplay()
+    -- When exiting edit mode, apply any bar enable/disable changes made during the session
+    if not enabled then
+        local AB = ns and ns.RefreshActionBars
+        if AB then AB() end
+    end
 end
 
 function Movers:SetShowGravityElements(enabled)
@@ -992,6 +997,7 @@ end
 -- ============================================================================
 
 local hudFrame
+local settingsPanel             -- the floating settings frame (forward-declared for CreateHUD closures)
 
 function Movers:CreateHUD()
     if hudFrame then return end
@@ -1135,8 +1141,8 @@ function Movers:CreateHUD()
         return btn
     end
 
-    local upBtn    = CreateNudgeBtn(hudFrame, "▲", 0, 1,   "TOPLEFT", hudFrame, "TOPLEFT", 350, -12)
-    local downBtn  = CreateNudgeBtn(hudFrame, "▼", 0, -1,  "TOPLEFT", hudFrame, "TOPLEFT", 350, -35)
+    local upBtn    = CreateNudgeBtn(hudFrame, "^", 0, 1,   "TOPLEFT", hudFrame, "TOPLEFT", 350, -12)
+    local downBtn  = CreateNudgeBtn(hudFrame, "v", 0, -1,  "TOPLEFT", hudFrame, "TOPLEFT", 350, -35)
     local leftBtn  = CreateNudgeBtn(hudFrame, "<", -1, 0,  "RIGHT", upBtn, "LEFT", -2, -11)
     local rightBtn = CreateNudgeBtn(hudFrame, ">", 1, 0,   "LEFT", upBtn, "RIGHT", 2, -11)
 
@@ -1155,6 +1161,7 @@ function Movers:CreateHUD()
         end)
         return cb
     end
+
 
     -- Top Checkbox Row
     local gridCheck = CreateHUDCheck("Grid", "Grid", 
@@ -1226,7 +1233,7 @@ function Movers:CreateHUD()
             if not settingsPanel then Movers:CreateSettingsPanel() end
             _spCollapsed = not v
             if settingsPanel.collapseText then
-                settingsPanel.collapseText:SetText(_spCollapsed and "|cff30d1ff▶|r" or "|cff30d1ff▼|r")
+                settingsPanel.collapseText:SetText(_spCollapsed and "|cff30d1ff>|r" or "|cff30d1ffv|r")
             end
             if _spCollapsed then
                 settingsPanel.content:Hide()
@@ -1296,7 +1303,7 @@ end
 -- ============================================================================
 
 Movers.settingsProviders = {}   -- [pattern] = { label, tabs = { {label, build}, ... } }
-local settingsPanel             -- the floating settings frame
+-- settingsPanel is forward-declared before CreateHUD (line ~994)
 local _spCollapsed = true       -- session-only collapse state (default collapsed)
 local _spCurrentProvider = nil  -- currently active provider key
 local _spCurrentTab = 1         -- currently active tab index
@@ -1530,10 +1537,10 @@ function Movers:CreateSettingsPanel()
     collapseBtn:SetPoint("RIGHT", titleBar, "RIGHT", -4, 0)
     local collapseText = collapseBtn:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     collapseText:SetPoint("CENTER", 0, 0)
-    collapseText:SetText("|cff30d1ff▶|r")  -- starts collapsed
+    collapseText:SetText("|cff30d1ff>|r")  -- starts collapsed
     collapseBtn:SetScript("OnClick", function()
         _spCollapsed = not _spCollapsed
-        collapseText:SetText(_spCollapsed and "|cff30d1ff▶|r" or "|cff30d1ff▼|r")
+        collapseText:SetText(_spCollapsed and "|cff30d1ff>|r" or "|cff30d1ffv|r")
         if _spCollapsed then
             settingsPanel.content:Hide()
             settingsPanel.tabBar:Hide()
@@ -1642,7 +1649,7 @@ function Movers:ShowSettingsPanel(moverName)
 
     local titleLabel = provider.label or "Settings"
     settingsPanel.titleFS:SetText("|cff30d1ff" .. titleLabel .. "|r")
-    settingsPanel.collapseText:SetText(_spCollapsed and "|cff30d1ff▶|r" or "|cff30d1ff▼|r")
+    settingsPanel.collapseText:SetText(_spCollapsed and "|cff30d1ff>|r" or "|cff30d1ffv|r")
 
     if _spCollapsed then
         settingsPanel.content:Hide()
@@ -2404,6 +2411,16 @@ _initFrame:SetScript("OnEvent", function(self)
             Movers:RegisterSettingsProvider(info.name, {
                 label = info.label,
                 build = function(parent, moverName, yPos, rowStep)
+                    -- Widget Scale slider
+                    if ns.GetWidgetScale and ns.SetWidgetScale then
+                        local rows = {}
+                        local wKey = info.name
+                        local r = CreateSPSlider(parent, "Scale", 0.3, 2.0, 0.05,
+                            function() return ns.GetWidgetScale(wKey) end,
+                            function(v) ns.SetWidgetScale(wKey, v) end, yPos)
+                        rows[#rows + 1] = r; yPos = yPos + rowStep
+                        return rows, yPos
+                    end
                     return {}, yPos
                 end,
             })

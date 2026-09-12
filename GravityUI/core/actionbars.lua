@@ -2088,7 +2088,11 @@ local function SetupBar(info)
 
     local barDB = db.bars and db.bars[info.key]
     if barDB and barDB.enabled == false then
-        -- Hide the frame if it exists
+        -- Still create the frame so it can be registered with the mover system
+        -- and re-enabled via the edit mode overlay
+        if not barFrames[info.key] then
+            CreateBarFrame(info)
+        end
         if barFrames[info.key] then barFrames[info.key]:Hide() end
         return
     end
@@ -2525,25 +2529,42 @@ function ns.RefreshActionBars()
     -- when exiting edit mode, causing ALL action bars to vanish.
     if ns.Movers and ns.Movers.Register then
         local abToggle = function(frame, show, editActive)
-            -- No-op: fading system handles bar visibility.
-            -- The mover overlay is handled separately by ApplyEditModeStyle.
+            -- In edit mode: show the frame so the overlay (child) is visible.
+            -- Disabled bars need to be visible for the red overlay to render.
+            -- On exit: leave frames visible; RefreshActionBars (called on exit) handles hiding.
+            if show and frame and not InCombatLockdown() then
+                frame:Show()
+            end
         end
         for _, info in ipairs(BAR_CONFIG) do
             local frame = barFrames[info.key]
             if frame then
+                local barKey = info.key  -- capture for closures
                 ns.Movers:Register(
-                    "ActionBar_" .. info.key,
+                    "ActionBar_" .. barKey,
                     frame,
                     abToggle,
                     info.label,
                     function(dbRoot)
-                        return dbRoot and dbRoot.actionbars and dbRoot.actionbars.enabled ~= false
+                        if not dbRoot or not dbRoot.actionbars then return true end
+                        local bars = dbRoot.actionbars.bars
+                        if bars and bars[barKey] then
+                            return bars[barKey].enabled ~= false
+                        end
+                        return true
                     end,
                     function(val, dbRoot)
                         if dbRoot and dbRoot.actionbars then
-                            dbRoot.actionbars.enabled = val
+                            if not dbRoot.actionbars.bars then dbRoot.actionbars.bars = {} end
+                            if not dbRoot.actionbars.bars[barKey] then dbRoot.actionbars.bars[barKey] = {} end
+                            dbRoot.actionbars.bars[barKey].enabled = val
                         end
-                        if ns.RefreshActionBars then ns.RefreshActionBars() end
+                        -- Don't refresh bars while in edit mode — it would hide the
+                        -- bar frame (and its overlay child) for disabled bars.
+                        -- The actual visibility update happens when exiting edit mode.
+                        if not (ns.Movers and ns.Movers.isEditMode) then
+                            if ns.RefreshActionBars then ns.RefreshActionBars() end
+                        end
                     end
                 )
             end
@@ -2563,10 +2584,12 @@ function ns.RefreshActionBars()
                     wrapper:SetClampedToScreen(true)
                     wrapper:SetUserPlaced(true)
 
-                    -- Reparent Blizzard frame into our wrapper
-                    frame:SetParent(wrapper)
-                    frame:ClearAllPoints()
-                    frame:SetPoint("CENTER", wrapper, "CENTER", 0, 0)
+                    -- Reparent Blizzard frame into our wrapper (pcall for safety)
+                    pcall(function()
+                        frame:SetParent(wrapper)
+                        frame:ClearAllPoints()
+                        frame:SetPoint("CENTER", wrapper, "CENTER", 0, 0)
+                    end)
 
                     -- Prevent Blizzard's FramePositionManager from resetting position
                     frame.ignoreFramePositionManager = true
@@ -2574,13 +2597,12 @@ function ns.RefreshActionBars()
                         frame.layoutParent = nil
                     end
 
-                    -- Hook ClearAllPoints to immediately re-anchor to wrapper
-                    -- Blizzard layout may try to reposition the child frame
-                    local origClear = frame.ClearAllPoints
-                    frame.ClearAllPoints = function(f, ...)
-                        origClear(f, ...)
-                        f:SetPoint("CENTER", wrapper, "CENTER", 0, 0)
-                    end
+                    -- Hook ClearAllPoints to re-anchor to wrapper (use hooksecurefunc for safety)
+                    hooksecurefunc(frame, "ClearAllPoints", function(f)
+                        if wrapper and wrapper:IsShown() then
+                            pcall(f.SetPoint, f, "CENTER", wrapper, "CENTER", 0, 0)
+                        end
+                    end)
                 end
 
                 -- Size wrapper to match the Blizzard frame
@@ -2589,6 +2611,16 @@ function ns.RefreshActionBars()
                     wrapper:SetSize(w, h)
                 else
                     wrapper:SetSize(200, 40)  -- fallback
+                end
+
+                -- Periodic size sync — Blizzard frames may resize after initial load
+                if not wrapper._sizeHooked then
+                    wrapper._sizeHooked = true
+                    hooksecurefunc(frame, "SetSize", function(f, fw, fh)
+                        if wrapper and fw and fh and fw > 0 and fh > 0 then
+                            wrapper:SetSize(fw, fh)
+                        end
+                    end)
                 end
 
                 -- Restore saved position
@@ -2600,11 +2632,22 @@ function ns.RefreshActionBars()
                 end
 
                 wrapper:Show()
+                frame:Show()
+
+                -- Toggle function: ensure wrapper + child are always visible
+                local extraToggle = function(wrapFrame, show, editActive)
+                    if not wrapFrame then return end
+                    if not InCombatLockdown() then
+                        wrapFrame:Show()
+                        pcall(frame.Show, frame)
+                        pcall(frame.SetPoint, frame, "CENTER", wrapFrame, "CENTER", 0, 0)
+                    end
+                end
 
                 ns.Movers:Register(
                     "ActionBar_" .. info.key,
                     wrapper,
-                    abToggle,  -- no-op
+                    extraToggle,
                     info.label,
                     function() return true end,
                     nil
