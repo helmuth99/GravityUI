@@ -1639,8 +1639,8 @@ local function SkinButton(button, settings)
         FitTextureToButton(ht)
     end
 
-    -- Checked state (auto-attack, toggle abilities)
-    local ct = button:GetCheckedTexture()
+    -- Checked state (auto-attack, toggle abilities) — only on CheckButtons
+    local ct = button.GetCheckedTexture and button:GetCheckedTexture()
     if ct then
         ct:SetTexture(TEXTURES.checked)
         ct:SetBlendMode("ADD")
@@ -2904,8 +2904,32 @@ function ActionBars.UpdateAllUsability()
 end
 
 -------------------------------------------------------------------------------
---  Extra Action Button / Zone Ability (Skinning only)
+--  Extra Action Button / Zone Ability (Skinning + Event Restoration)
+--  We killed Blizzard's ActionBarButtonEventsFrame broadcaster for our custom
+--  buttons, but ExtraActionButton1 (a Blizzard protected button) relied on it
+--  for cooldown swirls, state updates, and usability changes.
+--  Fix: re-register events directly on the button so its native OnEvent fires,
+--  and set the keybind text ourselves (UpdateButtonText only covers our bars).
 -------------------------------------------------------------------------------
+local function RefreshExtraActionKeybind()
+    if not ExtraActionButton1 then return end
+    local hk = ExtraActionButton1.HotKey
+    if not hk then return end
+    local key1 = GetBindingKey("EXTRAACTIONBUTTON1")
+    if key1 then
+        hk:SetText(FormatKeyText(key1))
+        hk:ClearAllPoints()
+        hk:SetPoint("TOPRIGHT", ExtraActionButton1, "TOPRIGHT", 0, -2)
+        hk:SetFont("Fonts/FRIZQT__.TTF", 12, "OUTLINE")
+        hk:SetTextColor(1, 1, 1, 1)
+        hk:Show()
+    else
+        hk:SetText("")
+        hk:Hide()
+    end
+end
+ns.RefreshExtraActionKeybind = RefreshExtraActionKeybind
+
 function ns.InitializeExtraButtons()
     local db = GetDB()
     if not db or not db.enabled then return end
@@ -2922,27 +2946,65 @@ function ns.InitializeExtraButtons()
             end
         end
         SkinButton(ExtraActionButton1, { showBorders = true, showBackdrop = true })
+
+        -- Re-register events directly on ExtraActionButton1 so Blizzard's
+        -- native ActionButton_OnEvent handles cooldowns/state/usability.
+        -- (Our broadcaster kill removed these globally.)
+        local bData = GFD(ExtraActionButton1)
+        if not bData.selfEventsRestored then
+            bData.selfEventsRestored = true
+            ExtraActionButton1:RegisterEvent("ACTIONBAR_UPDATE_COOLDOWN")
+            ExtraActionButton1:RegisterEvent("ACTIONBAR_UPDATE_STATE")
+            ExtraActionButton1:RegisterEvent("ACTIONBAR_UPDATE_USABLE")
+            ExtraActionButton1:RegisterEvent("ACTIONBAR_SLOT_CHANGED")
+            ExtraActionButton1:RegisterEvent("PLAYER_ENTERING_WORLD")
+        end
+
+        -- Set keybind text
+        RefreshExtraActionKeybind()
     end
 
     local zoneFrame = _G.ZoneAbilityFrame
     if zoneFrame then
         local zb = db.bars and db.bars.zoneAbility
-        if zoneFrame.SpellButton and zoneFrame.SpellButton.Style then
-            if zb and zb.hideArtwork then
-                zoneFrame.SpellButton.Style:Hide()
-                zoneFrame.SpellButton.Style:SetAlpha(0)
+        local shouldHide = zb and zb.hideArtwork
+
+        -- ZoneAbilityFrame.Style is the ornate border on the frame itself
+        if zoneFrame.Style then
+            if shouldHide then
+                zoneFrame.Style:Hide()
+                zoneFrame.Style:SetAlpha(0)
             else
-                zoneFrame.SpellButton.Style:Show()
-                zoneFrame.SpellButton.Style:SetAlpha(1)
+                zoneFrame.Style:Show()
+                zoneFrame.Style:SetAlpha(1)
             end
         end
+
+        -- Also hide per-button artwork (NormalTexture) if present
+        local function HideZoneBtnArt(btn)
+            if not btn then return end
+            local art = btn.Style or btn.NormalTexture
+            if art then
+                if shouldHide then
+                    art:Hide()
+                    art:SetAlpha(0)
+                else
+                    art:Show()
+                    art:SetAlpha(1)
+                end
+            end
+        end
+
         local function SkinZoneBtn(btn)
             if btn then SkinButton(btn, { showBorders = true, showBackdrop = true }) end
         end
+
         if zoneFrame.SpellButton then
+            HideZoneBtnArt(zoneFrame.SpellButton)
             SkinZoneBtn(zoneFrame.SpellButton)
         elseif zoneFrame.SpellButtonContainer and zoneFrame.SpellButtonContainer.EnumerateActive then
             for btn in zoneFrame.SpellButtonContainer:EnumerateActive() do
+                HideZoneBtnArt(btn)
                 SkinZoneBtn(btn)
             end
         end
@@ -3015,6 +3077,14 @@ local function ApplyZoneAbilityKeybind()
     local spellBtn = GetZoneAbilityButton()
     if not spellBtn then return end
 
+    -- If ExtraActionButton1 is active, it gets priority for the keybind.
+    -- Only show the text on the zone ability button, don't override the binding.
+    local extraActive = ExtraActionButton1 and ExtraActionButton1:IsShown() and HasExtraActionBar and HasExtraActionBar()
+    if extraActive then
+        UpdateZoneAbilityKeybindText(spellBtn, FormatKeyText(key1))
+        return
+    end
+
     local btnName = spellBtn:GetName()
     if btnName then
         SetOverrideBindingClick(zoneKeybindOwner, false, key1, btnName, "LeftButton")
@@ -3060,6 +3130,7 @@ local zoneAbilityHookFrame = CreateFrame("Frame")
 zoneAbilityHookFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 zoneAbilityHookFrame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
 zoneAbilityHookFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
+zoneAbilityHookFrame:RegisterEvent("UPDATE_EXTRA_ACTIONBAR")
 zoneAbilityHookFrame:SetScript("OnEvent", function(_, event)
     if event == "PLAYER_REGEN_ENABLED" then
         if zoneKeybindPending then
@@ -3300,6 +3371,7 @@ initFrame:SetScript("OnEvent", function(self, event, ...)
         if not InCombatLockdown() then
             UpdateKeybinds()
             ApplyZoneAbilityKeybind()
+            RefreshExtraActionKeybind()
         end
     elseif event == "UNIT_PET" or event == "PET_BAR_UPDATE" then
         -- Pet summoned/dismissed/updated: toggle pet bar + refresh icons

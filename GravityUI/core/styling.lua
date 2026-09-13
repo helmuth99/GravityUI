@@ -1114,9 +1114,9 @@ end
 -------------------------------------------------------------------------------
 
 local WIDGET_SCALE_MAP = {
-    WidgetPowerBar     = { dbKey = "widgetPowerBar",     frameName = "UIWidgetPowerBarContainerFrame" },
-    WidgetTopCenter    = { dbKey = "widgetTopCenter",    frameName = "UIWidgetTopCenterContainerFrame" },
-    WidgetBelowMinimap = { dbKey = "widgetBelowMinimap", frameName = "UIWidgetBelowMinimapContainerFrame" },
+    WidgetPowerBar     = { dbKey = "widgetPowerBar",     frameName = "UIWidgetPowerBarContainerFrame",     moverName = "GravityUI_WidgetPowerBarMover" },
+    WidgetTopCenter    = { dbKey = "widgetTopCenter",    frameName = "UIWidgetTopCenterContainerFrame",    moverName = "GravityUI_WidgetTopCenterMover" },
+    WidgetBelowMinimap = { dbKey = "widgetBelowMinimap", frameName = "UIWidgetBelowMinimapContainerFrame", moverName = "GravityUI_WidgetBelowMinimapMover" },
 }
 
 local function ApplyWidgetScale(widgetKey)
@@ -1125,10 +1125,14 @@ local function ApplyWidgetScale(widgetKey)
     local db = GetDB()
     local wdb = db and db[info.dbKey]
     local scale = (wdb and wdb.scale) or 1
+    scale = math.max(0.3, math.min(2, scale))
     local container = _G[info.frameName]
     if container then
-        container:SetScale(math.max(0.3, math.min(2, scale)))
+        container:SetScale(scale)
     end
+    -- NOTE: The mover stays at scale 1.0. Position sync between the mover
+    -- (scale 1) and the container (scale s) is handled in the Init/OnDragStop
+    -- functions by compensating coordinates: mover_pos = container_pos * scale.
 end
 
 local function SetWidgetScale(widgetKey, scale)
@@ -1246,10 +1250,13 @@ local function CreateWidgetPowerBarMover()
     widgetPowerBarMover:SetScript("OnDragStop", function(self)
         self:StopMovingOrSizing()
         local point, _, relPoint, x, y = self:GetPoint()
-        Styling:SaveWidgetPowerBarPosition(point, relPoint, x, y)
+        -- Mover coords are screen-space (scale 1); divide by container scale
+        local s = container:GetScale() or 1
+        local cx, cy = math.floor(x / s + 0.5), math.floor(y / s + 0.5)
+        Styling:SaveWidgetPowerBarPosition(point, relPoint, cx, cy)
         if container then
             container:ClearAllPoints()
-            container:SetPoint(point, UIParent, relPoint or "CENTER", x, y)
+            container:SetPoint(point, UIParent, relPoint or "CENTER", cx, cy)
         end
     end)
 end
@@ -1284,10 +1291,6 @@ function Styling:InitWidgetPowerBar()
     if pos and pos.point then
         container:ClearAllPoints()
         container:SetPoint(pos.point, UIParent, pos.relPoint or "CENTER", pos.x or 0, pos.y or 0)
-        if widgetPowerBarMover then
-            widgetPowerBarMover:ClearAllPoints()
-            widgetPowerBarMover:SetPoint(pos.point, UIParent, pos.relPoint or "CENTER", pos.x or 0, pos.y or 0)
-        end
     end
 
     hooksecurefunc(container, "SetPoint", function(self, point, relativeTo)
@@ -1307,6 +1310,14 @@ function Styling:InitWidgetPowerBar()
     if ns.Movers and ns.Movers.Register then
         ns.Movers:Register("WidgetPowerBar", widgetPowerBarMover, function(frame, enabled, force) Styling:ToggleWidgetPowerBarMover(force) end, "Widget Power Bar")
         ApplyWidgetScale("WidgetPowerBar")
+    end
+
+    -- Sync mover position AFTER scale is applied.
+    -- DB stores container-native coords; mover (scale 1) needs pos * scale.
+    if widgetPowerBarMover and pos and pos.point then
+        local s = container:GetScale() or 1
+        widgetPowerBarMover:ClearAllPoints()
+        widgetPowerBarMover:SetPoint(pos.point, UIParent, pos.relPoint or "CENTER", (pos.x or 0) * s, (pos.y or 0) * s)
     end
 
     local function GetActivePreyPercent()
@@ -1625,10 +1636,12 @@ local function CreateWidgetBelowMinimapMover()
     widgetBelowMinimapMover:SetScript("OnDragStop", function(self)
         self:StopMovingOrSizing()
         local point, _, relPoint, x, y = self:GetPoint()
-        Styling:SaveWidgetBelowMinimapPosition(point, relPoint, x, y)
+        local s = container:GetScale() or 1
+        local cx, cy = math.floor(x / s + 0.5), math.floor(y / s + 0.5)
+        Styling:SaveWidgetBelowMinimapPosition(point, relPoint, cx, cy)
         if container then
             container:ClearAllPoints()
-            container:SetPoint(point, UIParent, relPoint or "CENTER", x, y)
+            container:SetPoint(point, UIParent, relPoint or "CENTER", cx, cy)
         end
     end)
 end
@@ -1663,10 +1676,6 @@ function Styling:InitWidgetBelowMinimap()
     if pos and pos.point then
         container:ClearAllPoints()
         container:SetPoint(pos.point, UIParent, pos.relPoint or "CENTER", pos.x or 0, pos.y or 0)
-        if widgetBelowMinimapMover then
-            widgetBelowMinimapMover:ClearAllPoints()
-            widgetBelowMinimapMover:SetPoint(pos.point, UIParent, pos.relPoint or "CENTER", pos.x or 0, pos.y or 0)
-        end
     end
 
     hooksecurefunc(container, "SetPoint", function(self, point, relativeTo)
@@ -1686,6 +1695,13 @@ function Styling:InitWidgetBelowMinimap()
     if ns.Movers and ns.Movers.Register then
         ns.Movers:Register("WidgetBelowMinimap", widgetBelowMinimapMover, function(frame, enabled, force) Styling:ToggleWidgetBelowMinimapMover(force) end, "Widget Below Minimap")
         ApplyWidgetScale("WidgetBelowMinimap")
+    end
+
+    -- Sync mover position AFTER scale is applied.
+    if widgetBelowMinimapMover and pos and pos.point then
+        local s = container:GetScale() or 1
+        widgetBelowMinimapMover:ClearAllPoints()
+        widgetBelowMinimapMover:SetPoint(pos.point, UIParent, pos.relPoint or "CENTER", (pos.x or 0) * s, (pos.y or 0) * s)
     end
 end
 
@@ -1766,10 +1782,12 @@ local function CreateWidgetTopCenterMover()
     widgetTopCenterMover:SetScript("OnDragStop", function(self)
         self:StopMovingOrSizing()
         local point, _, relPoint, x, y = self:GetPoint()
-        Styling:SaveWidgetTopCenterPosition(point, relPoint, x, y)
+        local s = container:GetScale() or 1
+        local cx, cy = math.floor(x / s + 0.5), math.floor(y / s + 0.5)
+        Styling:SaveWidgetTopCenterPosition(point, relPoint, cx, cy)
         if container then
             container:ClearAllPoints()
-            container:SetPoint(point, UIParent, relPoint or "CENTER", x, y)
+            container:SetPoint(point, UIParent, relPoint or "CENTER", cx, cy)
         end
     end)
 end
@@ -1804,10 +1822,6 @@ function Styling:InitWidgetTopCenter()
     if pos and pos.point then
         container:ClearAllPoints()
         container:SetPoint(pos.point, UIParent, pos.relPoint or "CENTER", pos.x or 0, pos.y or 0)
-        if widgetTopCenterMover then
-            widgetTopCenterMover:ClearAllPoints()
-            widgetTopCenterMover:SetPoint(pos.point, UIParent, pos.relPoint or "CENTER", pos.x or 0, pos.y or 0)
-        end
     end
 
     hooksecurefunc(container, "SetPoint", function(self, point, relativeTo)
@@ -1827,6 +1841,13 @@ function Styling:InitWidgetTopCenter()
     if ns.Movers and ns.Movers.Register then
         ns.Movers:Register("WidgetTopCenter", widgetTopCenterMover, function(frame, enabled, force) Styling:ToggleWidgetTopCenterMover(force) end, "Widget Top Center")
         ApplyWidgetScale("WidgetTopCenter")
+    end
+
+    -- Sync mover position AFTER scale is applied.
+    if widgetTopCenterMover and pos and pos.point then
+        local s = container:GetScale() or 1
+        widgetTopCenterMover:ClearAllPoints()
+        widgetTopCenterMover:SetPoint(pos.point, UIParent, pos.relPoint or "CENTER", (pos.x or 0) * s, (pos.y or 0) * s)
     end
 end
 

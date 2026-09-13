@@ -680,17 +680,26 @@ function Movers:SaveFramePosition(name, frame, point, relPoint, x, y)
         local fy = math.floor((py or y or 0) + 0.5)
         db.styling.powerBar.position = { point = pt, relPoint = rpt, relativePoint = rpt, x = fx, y = fy }
     elseif name == "WidgetPowerBar" and db.styling and db.styling.widgetPowerBar then
-        db.styling.widgetPowerBar.position = { point = finalPoint, relPoint = finalRelPoint, x = finalX, y = finalY }
         local c = _G.UIWidgetPowerBarContainerFrame
-        if c then c:ClearAllPoints(); c:SetPoint(finalPoint, UIParent, finalRelPoint, finalX, finalY) end
+        local s = c and c:GetEffectiveScale() / UIParent:GetEffectiveScale() or 1
+        local cx = math.floor(finalX / s + 0.5)
+        local cy = math.floor(finalY / s + 0.5)
+        db.styling.widgetPowerBar.position = { point = finalPoint, relPoint = finalRelPoint, x = cx, y = cy }
+        if c then c:ClearAllPoints(); c:SetPoint(finalPoint, UIParent, finalRelPoint, cx, cy) end
     elseif name == "WidgetBelowMinimap" and db.styling and db.styling.widgetBelowMinimap then
-        db.styling.widgetBelowMinimap.position = { point = finalPoint, relPoint = finalRelPoint, x = finalX, y = finalY }
         local c = _G.UIWidgetBelowMinimapContainerFrame
-        if c then c:ClearAllPoints(); c:SetPoint(finalPoint, UIParent, finalRelPoint, finalX, finalY) end
+        local s = c and c:GetEffectiveScale() / UIParent:GetEffectiveScale() or 1
+        local cx = math.floor(finalX / s + 0.5)
+        local cy = math.floor(finalY / s + 0.5)
+        db.styling.widgetBelowMinimap.position = { point = finalPoint, relPoint = finalRelPoint, x = cx, y = cy }
+        if c then c:ClearAllPoints(); c:SetPoint(finalPoint, UIParent, finalRelPoint, cx, cy) end
     elseif name == "WidgetTopCenter" and db.styling and db.styling.widgetTopCenter then
-        db.styling.widgetTopCenter.position = { point = finalPoint, relPoint = finalRelPoint, x = finalX, y = finalY }
         local c = _G.UIWidgetTopCenterContainerFrame
-        if c then c:ClearAllPoints(); c:SetPoint(finalPoint, UIParent, finalRelPoint, finalX, finalY) end
+        local s = c and c:GetEffectiveScale() / UIParent:GetEffectiveScale() or 1
+        local cx = math.floor(finalX / s + 0.5)
+        local cy = math.floor(finalY / s + 0.5)
+        db.styling.widgetTopCenter.position = { point = finalPoint, relPoint = finalRelPoint, x = cx, y = cy }
+        if c then c:ClearAllPoints(); c:SetPoint(finalPoint, UIParent, finalRelPoint, cx, cy) end
     elseif name == "Alerts" and db.styling and db.styling.alerts then
         db.styling.alerts.alertPosition = { point = finalPoint, relPoint = finalRelPoint, x = finalX, y = finalY }
     elseif name == "Toasts" and db.styling and db.styling.alerts then
