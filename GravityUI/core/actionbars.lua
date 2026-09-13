@@ -199,6 +199,21 @@ hiddenParent:Hide()
 local function QuietlyHideBlizzButton(btn)
     btn:UnregisterAllEvents()
     btn:SetAttributeNoHandler("statehidden", true)
+
+    -- Remove from Blizzard's broadcaster .frames list.
+    -- The broadcaster dispatches events to ALL buttons in this list;
+    -- UnregisterAllEvents() on the button itself is insufficient because
+    -- the button doesn't receive events directly — the broadcaster does,
+    -- then calls each button's OnEvent. If the button stays in .frames,
+    -- re-enabling the broadcaster (for vehicle/press-and-hold) will dispatch
+    -- ACTIONBAR_SLOT_CHANGED → UpdateAction → Update → ActionButton_UpdateCooldown
+    -- which calls SetCooldown with secret values in our tainted context.
+    if ActionBarButtonEventsFrame and type(ActionBarButtonEventsFrame.frames) == "table" then
+        local fr = ActionBarButtonEventsFrame.frames
+        for k, f in pairs(fr) do
+            if f == btn then fr[k] = nil end
+        end
+    end
 end
 
 -------------------------------------------------------------------------------
