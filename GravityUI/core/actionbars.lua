@@ -217,22 +217,20 @@ local function QuietlyHideBlizzButton(btn)
 end
 
 -------------------------------------------------------------------------------
---  Kill Blizzard's event broadcasters at file load
---  Both dispatch to ALL registered buttons, causing mass redraws.
---  Our central dispatcher handles the needed events.
--------------------------------------------------------------------------------
-if ActionBarButtonEventsFrame then ActionBarButtonEventsFrame:UnregisterAllEvents() end
-if ActionBarActionEventsFrame then ActionBarActionEventsFrame:UnregisterAllEvents() end
-
--------------------------------------------------------------------------------
 --  Broadcaster Precision Kill & Controlled Revive
---  Vehicle/override buttons (OverrideActionBarButton1-6) and ExtraActionButton1
---  still need Blizzard's broadcaster for their cooldown/state updates.
---  Press-and-hold (Evoker empowered spells) needs ACTIONBAR_SLOT_CHANGED.
+--  When GravityUI bars are ENABLED: kill broadcasters and selectively restore
+--  only what vehicle/override/press-and-hold buttons need. Our central
+--  dispatcher handles cooldowns via SetCooldownFromDurationObject (secret-safe).
+--  When GravityUI bars are DISABLED: restore full default broadcaster state
+--  so third-party bar addons (Dominos, Bartender4) work normally.
+--
+--  NOTE: NO unconditional broadcaster kill at file load.
+--  The kill is deferred to RefreshActionBars → SetBroadcasterBarsDisabled,
+--  because at file load time we don't know if bars will be enabled.
 -------------------------------------------------------------------------------
 do
     local _abefEvents = {
-        -- Note: ACTIONBAR_UPDATE_COOLDOWN intentionally excluded.
+        -- Note: ACTIONBAR_UPDATE_COOLDOWN intentionally excluded when bars are ENABLED.
         -- Our central dispatcher handles cooldowns via SetCooldownFromDurationObject.
         -- Blizzard's broadcaster would dispatch SetCooldown with secret values in tainted context.
         "ACTIONBAR_UPDATE_STATE",
@@ -243,9 +241,16 @@ do
         "UNIT_SPELLCAST_SUCCEEDED", "UNIT_SPELLCAST_FAILED",
         "UNIT_SPELLCAST_INTERRUPTED",
     }
+    -- Full default event set for broadcaster restoration (bars disabled)
+    local _abefFullEvents = {
+        "ACTIONBAR_UPDATE_STATE", "ACTIONBAR_UPDATE_USABLE",
+        "ACTIONBAR_UPDATE_COOLDOWN", "ACTIONBAR_SLOT_CHANGED",
+        "PLAYER_ENTERING_WORLD", "UPDATE_SHAPESHIFT_FORM",
+    }
 
     local _vehNeed, _extraNeed, _phNeed = false, false, false
-    local _broadcasterMode = "off"
+    local _barsDisabled = true  -- Start disabled; RefreshActionBars sets the real state
+    local _broadcasterMode = ""
     local _broadcasterSlot = true
     local _classPH
 
@@ -265,6 +270,27 @@ do
     end
 
     local function ApplyBroadcaster()
+        -- When GravityUI bars are disabled, restore full default broadcaster
+        -- so third-party bar addons (Dominos, Bartender4) work normally.
+        if _barsDisabled then
+            if _broadcasterMode == "default" then return end
+            _broadcasterMode = "default"
+            if ActionBarButtonEventsFrame then
+                ActionBarButtonEventsFrame:UnregisterAllEvents()
+                for _, ev in ipairs(_abefFullEvents) do
+                    ActionBarButtonEventsFrame:RegisterEvent(ev)
+                end
+            end
+            if ActionBarActionEventsFrame then
+                ActionBarActionEventsFrame:UnregisterAllEvents()
+                for _, ev in ipairs(_aaefEvents) do
+                    ActionBarActionEventsFrame:RegisterUnitEvent(ev, "player")
+                end
+            end
+            return
+        end
+
+        -- GravityUI bars are enabled: selective broadcaster management
         local want = (_vehNeed or _extraNeed) and "full"
             or ((_phNeed or ClassMayPressHold()) and "ph" or "off")
         if want == "full" and CooldownsSecret() then
@@ -298,6 +324,15 @@ do
                 ActionBarButtonEventsFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
             end
         end
+    end
+
+    ns.SetBroadcasterBarsDisabled = function(disabled)
+        local wasDisabled = _barsDisabled
+        _barsDisabled = disabled and true or false
+        if wasDisabled ~= _barsDisabled then
+            _broadcasterMode = ""  -- Force re-evaluation
+        end
+        ApplyBroadcaster()
     end
 
     ns.SetBroadcasterPressHoldNeed = function(v)
@@ -2485,8 +2520,53 @@ function ns.RefreshActionBars()
         for barKey, frame in pairs(barFrames) do
             frame:Hide()
         end
+
+        -- Tell the broadcaster system we're disabled.
+        -- This restores full default broadcaster state (including ACTIONBAR_UPDATE_COOLDOWN)
+        -- so third-party bar addons (Dominos, Bartender4) work normally.
+        -- Critically, this persists across InvalidateBroadcasterState() calls
+        -- (zone changes, combat end) so the broadcasters stay alive.
+        ns.SetBroadcasterBarsDisabled(true)
+
+        -- Third-party bar skinning: apply even when GravityUI bars are disabled
+        local g = db.global
+        if C_AddOns.IsAddOnLoaded("Dominos") and db.skinDominos then
+            local dominosPatterns = {
+                { prefix = "DominosActionButton",             from = 1,  to = 24  },
+                { prefix = "MultiBarRightActionButton",       from = 1,  to = 12  },
+                { prefix = "MultiBarLeftActionButton",        from = 1,  to = 12  },
+                { prefix = "MultiBarBottomRightActionButton", from = 1,  to = 12  },
+                { prefix = "MultiBarBottomLeftActionButton",  from = 1,  to = 12  },
+                { prefix = "DominosActionButton",             from = 73, to = 132 },
+                { prefix = "MultiBar5ActionButton",           from = 1,  to = 12  },
+                { prefix = "MultiBar6ActionButton",           from = 1,  to = 12  },
+                { prefix = "MultiBar7ActionButton",           from = 1,  to = 12  },
+            }
+            for _, p in ipairs(dominosPatterns) do
+                for i = p.from, p.to do
+                    local btn = _G[p.prefix .. i]
+                    if btn then
+                        SkinButton(btn, g)
+                        UpdateButtonText(btn, g)
+                    end
+                end
+            end
+        end
+        if C_AddOns.IsAddOnLoaded("Bartender4") and db.skinBartender4 then
+            for i = 1, 120 do
+                local btn = _G["BT4Button" .. i]
+                if btn then
+                    SkinButton(btn, g)
+                    UpdateButtonText(btn, g)
+                end
+            end
+        end
+
         return
     end
+
+    -- GravityUI bars are enabled: take over broadcaster management
+    ns.SetBroadcasterBarsDisabled(false)
 
     -- Hide Blizzard bars
     HideStockBars()
