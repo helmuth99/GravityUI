@@ -2761,16 +2761,14 @@ function ns.RefreshActionBars()
         end
 
         -- Register extra bars (BagBar, MicroBar) for mover system.
-        -- These are Blizzard Edit Mode-managed frames. We do NOT reparent
-        -- them (that breaks Blizzard's layout system, causing them to jump
-        -- to the center and disappear). Instead, we create a holder that
-        -- passively FOLLOWS the Blizzard frame's position.
+        -- We do NOT reparent them (that breaks Blizzard's layout system).
+        -- Instead: movable holder frame + force-anchor the Blizzard frame
+        -- to the holder. Hooks suppress Blizzard's position resets.
         for _, info in ipairs(EXTRA_BARS) do
             local function RegisterExtraBar(info, attempt)
                 attempt = attempt or 1
                 local frame = info.frameName and _G[info.frameName]
                 if not frame then
-                    -- Frame doesn't exist yet — retry up to 3 times at 0.5s intervals
                     if attempt < 3 then
                         C_Timer_After(0.5, function()
                             RegisterExtraBar(info, attempt + 1)
@@ -2783,44 +2781,90 @@ function ns.RefreshActionBars()
                 local holder = _G[holderName]
                 if not holder then
                     holder = CreateFrame("Frame", holderName, UIParent)
+                    holder:SetMovable(true)
                     holder:SetClampedToScreen(true)
 
-                    -- Passive-follow: the holder tracks the Blizzard frame's
-                    -- position. We never reparent the Blizzard frame.
-                    local function SyncFollow()
+                    -- Size sync
+                    local function SyncSize()
                         local fw, fh = frame:GetWidth(), frame:GetHeight()
                         if fw and fw > 1 and fh and fh > 1 then
                             holder:SetSize(fw, fh)
+                        else
+                            holder:SetSize(200, 40)
                         end
-                        holder:ClearAllPoints()
-                        holder:SetPoint("CENTER", frame, "CENTER", 0, 0)
                     end
-                    SyncFollow()
+                    SyncSize()
+                    frame:HookScript("OnSizeChanged", SyncSize)
 
-                    -- Re-sync when Blizzard resizes the frame
-                    frame:HookScript("OnSizeChanged", function() SyncFollow() end)
+                    -- Force the Blizzard frame to anchor to our holder.
+                    -- Guard flag prevents recursion from our own SetPoint calls.
+                    local function RepositionBlizzFrame()
+                        if holder._repositioning or InCombatLockdown() then return end
+                        holder._repositioning = true
+                        pcall(function()
+                            frame:ClearAllPoints()
+                            frame:SetPoint("CENTER", holder, "CENTER", 0, 0)
+                        end)
+                        holder._repositioning = false
+                    end
 
-                    -- Re-sync after Blizzard's Edit Mode repositions the frame
+                    -- Suppress Blizzard's SetPoint resets (deferred to avoid mid-layout issues)
+                    hooksecurefunc(frame, "SetPoint", function()
+                        if not holder._repositioning then
+                            C_Timer_After(0, RepositionBlizzFrame)
+                        end
+                    end)
+
+                    -- Suppress ApplySystemAnchor (Edit Mode) resets
                     if frame.ApplySystemAnchor then
                         hooksecurefunc(frame, "ApplySystemAnchor", function()
-                            C_Timer_After(0, SyncFollow)
+                            C_Timer_After(0, RepositionBlizzFrame)
                         end)
                     end
 
-                    -- Prevent Blizzard's FramePositionManager from interfering
+                    -- Prevent FramePositionManager from interfering
                     frame.ignoreFramePositionManager = true
+                    if frame.layoutParent then
+                        frame.layoutParent = nil
+                    end
+
+                    -- Initial position: saved or captured from Blizzard
+                    local freshDB = GetDB()
+                    local barDB = freshDB and freshDB.bars and freshDB.bars[info.key]
+                    if barDB and barDB.position then
+                        local pos = barDB.position
+                        holder:ClearAllPoints()
+                        holder:SetPoint(pos.point or "CENTER", UIParent, pos.relativePoint or "CENTER", pos.x or 0, pos.y or 0)
+                    else
+                        -- Capture Blizzard's current position for the holder
+                        local bL, bT = frame:GetLeft(), frame:GetTop()
+                        local bR, bB = frame:GetRight(), frame:GetBottom()
+                        if bL and bT and bR and bB and (bR - bL) > 1 then
+                            local bS = frame:GetEffectiveScale()
+                            local uiS = UIParent:GetEffectiveScale()
+                            local uiW, uiH = UIParent:GetSize()
+                            local cx = (bL + bR) * 0.5 * bS / uiS - uiW / 2
+                            local cy = (bT + bB) * 0.5 * bS / uiS - uiH / 2
+                            holder:ClearAllPoints()
+                            holder:SetPoint("CENTER", UIParent, "CENTER", cx, cy)
+                        else
+                            holder:ClearAllPoints()
+                            holder:SetPoint("BOTTOM", UIParent, "BOTTOM", 0, 0)
+                        end
+                    end
+
+                    -- Apply initial Blizzard frame reposition
+                    RepositionBlizzFrame()
                 end
 
                 holder:Show()
 
-                -- Toggle function: ensure holder stays visible and synced
+                -- Toggle function: keep holder + Blizzard frame in sync
                 local extraToggle = function(wrapFrame, show, editActive)
                     if not wrapFrame then return end
                     if not InCombatLockdown() then
                         wrapFrame:Show()
                         pcall(frame.Show, frame)
-                        wrapFrame:ClearAllPoints()
-                        wrapFrame:SetPoint("CENTER", frame, "CENTER", 0, 0)
                     end
                 end
 
