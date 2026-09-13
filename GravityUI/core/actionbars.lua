@@ -614,6 +614,38 @@ local function GetOrCreateButton(slot, parent, info, index)
             btn.UpdateAction = function() end  -- calls UpdatePingAttributes → ClearAttribute (taint)
             btn.UpdateUsable = function() end  -- assertion spam on custom buttons
             btn.Update = function() end
+
+            -- Pickup modifier support (EllesmereUI approach).
+            -- When shift-click (or configured PICKUPACTION modifier) is held,
+            -- flip useOnKeyDown to false so the DOWN edge doesn't cast.
+            -- The UP edge then fires Blizzard's ActionBarButtonTemplate handler
+            -- which checks IsModifiedClick("PICKUPACTION") → PickupAction.
+            -- MOUSE-ONLY via IsUnderMouse: keybinds arrive as OnClick too
+            -- (SetOverrideBindingClick), and modified keybinds must cast normally.
+            -- Guard with attribute to prevent double-wrapping on /reload.
+            if not btn:GetAttribute("gravPickupWrap") and not InCombatLockdown() then
+                btn:SetAttribute("gravPickupWrap", true)
+                SecureHandlerWrapScript(btn, "OnClick", btn, [[
+                    if self:GetAttribute("gravFullyLocked") then return end
+                    local flipped = self:GetAttribute("gravPickupFlipped")
+                    if down then
+                        if IsModifiedClick("PICKUPACTION") and self:IsUnderMouse() then
+                            if self:GetAttribute("useOnKeyDown") ~= false then
+                                self:SetAttribute("gravPickupFlipped", true)
+                                self:SetAttribute("useOnKeyDown", false)
+                            end
+                        elseif flipped then
+                            self:SetAttribute("gravPickupFlipped", false)
+                            self:SetAttribute("useOnKeyDown", true)
+                        end
+                    elseif flipped then
+                        return nil, "restore"
+                    end
+                ]], [[
+                    self:SetAttribute("gravPickupFlipped", false)
+                    self:SetAttribute("useOnKeyDown", true)
+                ]])
+            end
         end
 
         -- Template OnLoad self-registers events; the central dispatcher owns them
@@ -2592,6 +2624,33 @@ function ns.RefreshActionBars()
         end
     end
 
+    -- Sync PICKUPACTION modifier with our lock setting on startup.
+    -- This ensures the correct modifier is active after /reload.
+    local lockMod = g and g.lockModifier or "shift"
+    local MODIFIER_MAP = { shift = "SHIFT", alt = "ALT", ctrl = "CTRL" }
+    local wowMod = MODIFIER_MAP[lockMod]
+    if wowMod and GetCVar("lockActionBars") == "1" then
+        SetModifiedClick("PICKUPACTION", wowMod)
+        SaveBindings(GetCurrentBindingSet())
+    end
+
+    -- Propagate fully-locked state to buttons
+    ns.ApplyPickupLock = function(fullyLocked)
+        for _, info in ipairs(BAR_CONFIG) do
+            if not info.isStance and not info.isPetBar then
+                local btns = barButtons[info.key]
+                if btns then
+                    for _, btn in ipairs(btns) do
+                        if btn and not InCombatLockdown() then
+                            btn:SetAttribute("gravFullyLocked", fullyLocked or nil)
+                        end
+                    end
+                end
+            end
+        end
+    end
+    ns.ApplyPickupLock(lockMod == "none" and GetCVar("lockActionBars") == "1")
+
     -- Keybinds
     UpdateKeybinds()
 
@@ -2702,10 +2761,10 @@ function ns.RefreshActionBars()
         end
 
         -- Register extra bars (BagBar, MicroBar) for mover system.
-        -- These are protected Blizzard frames that reject StartMoving().
-        -- Solution: wrap them in our own movable frame.
-        -- Uses deferred retry because Blizzard may not have created
-        -- MicroMenuContainer / BagsBar yet when this runs on first login.
+        -- These are Blizzard Edit Mode-managed frames. We do NOT reparent
+        -- them (that breaks Blizzard's layout system, causing them to jump
+        -- to the center and disappear). Instead, we create a holder that
+        -- passively FOLLOWS the Blizzard frame's position.
         for _, info in ipairs(EXTRA_BARS) do
             local function RegisterExtraBar(info, attempt)
                 attempt = attempt or 1
@@ -2720,95 +2779,54 @@ function ns.RefreshActionBars()
                     return
                 end
 
-                local wrapperName = "GravityUI_" .. info.key .. "_Wrapper"
-                local wrapper = _G[wrapperName]
-                if not wrapper then
-                    wrapper = CreateFrame("Frame", wrapperName, UIParent)
-                    wrapper:SetMovable(true)
-                    wrapper:SetClampedToScreen(true)
-                    wrapper:SetUserPlaced(true)
+                local holderName = "GravityUI_" .. info.key .. "_Wrapper"
+                local holder = _G[holderName]
+                if not holder then
+                    holder = CreateFrame("Frame", holderName, UIParent)
+                    holder:SetClampedToScreen(true)
 
-                    -- Capture original Blizzard position BEFORE reparenting
-                    local origPoint, origRelTo, origRelPoint, origX, origY = frame:GetPoint()
+                    -- Passive-follow: the holder tracks the Blizzard frame's
+                    -- position. We never reparent the Blizzard frame.
+                    local function SyncFollow()
+                        local fw, fh = frame:GetWidth(), frame:GetHeight()
+                        if fw and fw > 1 and fh and fh > 1 then
+                            holder:SetSize(fw, fh)
+                        end
+                        holder:ClearAllPoints()
+                        holder:SetPoint("CENTER", frame, "CENTER", 0, 0)
+                    end
+                    SyncFollow()
 
-                    -- Reparent Blizzard frame into our wrapper (pcall for safety)
-                    pcall(function()
-                        frame:SetParent(wrapper)
-                        frame:ClearAllPoints()
-                        frame:SetPoint("CENTER", wrapper, "CENTER", 0, 0)
-                    end)
+                    -- Re-sync when Blizzard resizes the frame
+                    frame:HookScript("OnSizeChanged", function() SyncFollow() end)
 
-                    -- Prevent Blizzard's FramePositionManager from resetting position
-                    frame.ignoreFramePositionManager = true
-                    if frame.layoutParent then
-                        frame.layoutParent = nil
+                    -- Re-sync after Blizzard's Edit Mode repositions the frame
+                    if frame.ApplySystemAnchor then
+                        hooksecurefunc(frame, "ApplySystemAnchor", function()
+                            C_Timer_After(0, SyncFollow)
+                        end)
                     end
 
-                    -- Hook ClearAllPoints to re-anchor to wrapper (use hooksecurefunc for safety)
-                    hooksecurefunc(frame, "ClearAllPoints", function(f)
-                        if wrapper and wrapper:IsShown() then
-                            pcall(f.SetPoint, f, "CENTER", wrapper, "CENTER", 0, 0)
-                        end
-                    end)
-
-                    -- Store original position for fallback
-                    wrapper._origPoint = origPoint
-                    wrapper._origRelPoint = origRelPoint
-                    wrapper._origX = origX
-                    wrapper._origY = origY
+                    -- Prevent Blizzard's FramePositionManager from interfering
+                    frame.ignoreFramePositionManager = true
                 end
 
-                -- Size wrapper to match the Blizzard frame
-                local w, h = frame:GetSize()
-                if w and h and w > 0 and h > 0 then
-                    wrapper:SetSize(w, h)
-                else
-                    wrapper:SetSize(200, 40)  -- fallback
-                end
+                holder:Show()
 
-                -- Periodic size sync — Blizzard frames may resize after initial load
-                if not wrapper._sizeHooked then
-                    wrapper._sizeHooked = true
-                    hooksecurefunc(frame, "SetSize", function(f, fw, fh)
-                        if wrapper and fw and fh and fw > 0 and fh > 0 then
-                            wrapper:SetSize(fw, fh)
-                        end
-                    end)
-                end
-
-                -- Restore saved position (re-read db in case deferred)
-                local freshDB = GetDB()
-                local barDB = freshDB and freshDB.bars and freshDB.bars[info.key]
-                if barDB and barDB.position then
-                    local pos = barDB.position
-                    wrapper:ClearAllPoints()
-                    wrapper:SetPoint(pos.point or "CENTER", UIParent, pos.relativePoint or "CENTER", pos.x or 0, pos.y or 0)
-                else
-                    -- No saved position — use Blizzard frame's original position as default
-                    wrapper:ClearAllPoints()
-                    local pt = wrapper._origPoint or "BOTTOM"
-                    local rp = wrapper._origRelPoint or "BOTTOM"
-                    local ox = wrapper._origX or 0
-                    local oy = wrapper._origY or 0
-                    wrapper:SetPoint(pt, UIParent, rp, ox, oy)
-                end
-
-                wrapper:Show()
-                frame:Show()
-
-                -- Toggle function: ensure wrapper + child are always visible
+                -- Toggle function: ensure holder stays visible and synced
                 local extraToggle = function(wrapFrame, show, editActive)
                     if not wrapFrame then return end
                     if not InCombatLockdown() then
                         wrapFrame:Show()
                         pcall(frame.Show, frame)
-                        pcall(frame.SetPoint, frame, "CENTER", wrapFrame, "CENTER", 0, 0)
+                        wrapFrame:ClearAllPoints()
+                        wrapFrame:SetPoint("CENTER", frame, "CENTER", 0, 0)
                     end
                 end
 
                 ns.Movers:Register(
                     "ActionBar_" .. info.key,
-                    wrapper,
+                    holder,
                     extraToggle,
                     info.label,
                     function() return true end,

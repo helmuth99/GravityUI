@@ -131,9 +131,22 @@ local lockProxy = setmetatable({}, {
             else
                 SetCVar("lockActionBars", "1")
             end
+            -- Sync WoW's PICKUPACTION modified click to match our setting.
+            -- IsModifiedClick("PICKUPACTION") in the secure pickup snippet
+            -- reads this to determine which modifier key triggers pickup.
+            local MODIFIER_MAP = { shift = "SHIFT", alt = "ALT", ctrl = "CTRL" }
+            local wowMod = MODIFIER_MAP[v]
+            if wowMod then
+                SetModifiedClick("PICKUPACTION", wowMod)
+                SaveBindings(GetCurrentBindingSet())
+            end
             local db = ns.GetDB()
             if db and db.actionbars and db.actionbars.global then
                 db.actionbars.global.lockModifier = (v ~= "unlocked") and v or nil
+            end
+            -- Propagate fully-locked state to buttons
+            if ns.ApplyPickupLock then
+                ns.ApplyPickupLock(v == "none")
             end
         end
     end
