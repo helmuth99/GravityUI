@@ -136,7 +136,7 @@ local lockProxy = setmetatable({}, {
             -- reads this to determine which modifier key triggers pickup.
             local MODIFIER_MAP = { shift = "SHIFT", alt = "ALT", ctrl = "CTRL" }
             local wowMod = MODIFIER_MAP[v]
-            if wowMod then
+            if wowMod and not InCombatLockdown() then
                 SetModifiedClick("PICKUPACTION", wowMod)
                 SaveBindings(GetCurrentBindingSet())
             end
@@ -200,6 +200,15 @@ local function BuildActionBarsSettings(parent)
             ns.RefreshActionBars()
         end)
         bt4Check:SetPoint("TOPLEFT", 10, -content.rowCount * 35)
+        content.rowCount = content.rowCount + 1.0
+    end
+
+    -- Blizzard Skinning (only shown when GravityUI bars are disabled)
+    if not abs.enabled then
+        local blizzCheck = GUI:CreateCheckbox(content, "Skin Blizzard Action Bars (matching style)", "skinBlizzard", abs, function()
+            ns.RefreshActionBars()
+        end)
+        blizzCheck:SetPoint("TOPLEFT", 10, -content.rowCount * 35)
         content.rowCount = content.rowCount + 1.0
     end
 

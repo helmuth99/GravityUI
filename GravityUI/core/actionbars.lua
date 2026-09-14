@@ -153,6 +153,11 @@ local function GetDB()
     return db and db.actionbars
 end
 
+local function AreBarsEnabled()
+    local db = GetDB()
+    return db and db.enabled
+end
+
 -- Safe API wrappers
 local GetOverrideBarIndex = GetOverrideBarIndex or (C_ActionBar and C_ActionBar.GetOverrideBarIndex) or function() return 14 end
 local GetVehicleBarIndex = GetVehicleBarIndex or (C_ActionBar and C_ActionBar.GetVehicleBarIndex) or function() return 12 end
@@ -1051,6 +1056,7 @@ do
     local lastScan = 0
     local function GlowRescan()
         rescanPending = false
+        if not AreBarsEnabled() then return end
         lastScan = GetTime()
         local ISO = C_SpellActivationOverlay and C_SpellActivationOverlay.IsSpellOverlayed
         if not ISO then return end
@@ -1085,13 +1091,14 @@ do
     end
 
     local glowDispatcher = CreateFrame("Frame")
-    glowDispatcher:RegisterEvent("SPELL_ACTIVATION_OVERLAY_GLOW_SHOW")
-    glowDispatcher:RegisterEvent("SPELL_ACTIVATION_OVERLAY_GLOW_HIDE")
-    glowDispatcher:RegisterEvent("ACTIONBAR_SLOT_CHANGED")
-    glowDispatcher:RegisterEvent("ACTIONBAR_PAGE_CHANGED")
-    glowDispatcher:RegisterEvent("UPDATE_BONUS_ACTIONBAR")
+    -- Events are NOT registered at file load.
+    -- They are enabled/disabled via ns.EnableGlowDispatcher / ns.DisableGlowDispatcher
+    -- which RefreshActionBars calls based on the enabled state.
 
     glowDispatcher:SetScript("OnEvent", function(_, event, arg1)
+        -- Safety guard: if bars got disabled between event fire and handler
+        if not AreBarsEnabled() then return end
+
         if event == "ACTIONBAR_SLOT_CHANGED" or event == "ACTIONBAR_PAGE_CHANGED"
             or event == "UPDATE_BONUS_ACTIONBAR" then
             QueueRescan()
@@ -1131,6 +1138,27 @@ do
             end
         end
     end)
+
+    local _glowDispatcherActive = false
+    ns.EnableGlowDispatcher = function()
+        if _glowDispatcherActive then return end
+        _glowDispatcherActive = true
+        glowDispatcher:RegisterEvent("SPELL_ACTIVATION_OVERLAY_GLOW_SHOW")
+        glowDispatcher:RegisterEvent("SPELL_ACTIVATION_OVERLAY_GLOW_HIDE")
+        glowDispatcher:RegisterEvent("ACTIONBAR_SLOT_CHANGED")
+        glowDispatcher:RegisterEvent("ACTIONBAR_PAGE_CHANGED")
+        glowDispatcher:RegisterEvent("UPDATE_BONUS_ACTIONBAR")
+    end
+
+    ns.DisableGlowDispatcher = function()
+        if not _glowDispatcherActive then return end
+        _glowDispatcherActive = false
+        glowDispatcher:UnregisterAllEvents()
+        -- Clear any active glows so they don't linger
+        for btn in pairs(activeGlows) do
+            HideGlow(btn)
+        end
+    end
 end
 
 -------------------------------------------------------------------------------
@@ -1587,25 +1615,14 @@ do
         end
     end
 
-    dispatcher:RegisterEvent("ACTIONBAR_UPDATE_COOLDOWN")
-    dispatcher:RegisterEvent("SPELL_UPDATE_COOLDOWN")
-    dispatcher:RegisterEvent("ACTIONBAR_SLOT_CHANGED")
-    dispatcher:RegisterEvent("ACTIONBAR_UPDATE_USABLE")
-    dispatcher:RegisterEvent("SPELL_UPDATE_CHARGES")
-    dispatcher:RegisterEvent("SPELL_UPDATE_ICON")
-    dispatcher:RegisterEvent("PLAYER_ENTERING_WORLD")
-    dispatcher:RegisterEvent("UPDATE_SHAPESHIFT_FORM")
-    dispatcher:RegisterEvent("ACTIONBAR_PAGE_CHANGED")
-    dispatcher:RegisterEvent("UPDATE_BONUS_ACTIONBAR")
-    dispatcher:RegisterEvent("UPDATE_VEHICLE_ACTIONBAR")
-    dispatcher:RegisterEvent("UPDATE_OVERRIDE_ACTIONBAR")
-    dispatcher:RegisterEvent("PLAYER_TALENT_UPDATE")
-    if C_EventUtils and C_EventUtils.IsEventValid and C_EventUtils.IsEventValid("TRAIT_CONFIG_UPDATED") then
-        dispatcher:RegisterEvent("TRAIT_CONFIG_UPDATED")
-    end
-    dispatcher:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player")
+    -- Events are NOT registered at file load.
+    -- They are enabled/disabled via ns.EnableCooldownDispatcher / ns.DisableCooldownDispatcher
+    -- which RefreshActionBars calls based on the enabled state.
 
     dispatcher:SetScript("OnEvent", function(self, event, arg1)
+        -- Safety guard: if bars got disabled between event fire and handler
+        if not AreBarsEnabled() then return end
+
         if event == "ACTIONBAR_UPDATE_COOLDOWN" or event == "SPELL_UPDATE_COOLDOWN" then
             DispatchCooldownUpdate()
         elseif event == "ACTIONBAR_SLOT_CHANGED" then
@@ -1620,11 +1637,13 @@ do
             -- Longer delay: SecureStateDriver needs time to evaluate
             -- bonusbar/vehicle conditions after login/reload
             C_Timer_After(0.5, function()
+                if not AreBarsEnabled() then return end
                 DispatchSlotChanged(0)
                 DispatchCooldownUpdate()
             end)
             -- Second pass: some mount states resolve very late
             C_Timer_After(1.5, function()
+                if not AreBarsEnabled() then return end
                 DispatchSlotChanged(0)
                 DispatchCooldownUpdate()
             end)
@@ -1636,6 +1655,7 @@ do
             -- Delay slightly to let SecureStateDriver _childupdate finish
             -- updating button action attributes before we read them
             C_Timer_After(0.1, function()
+                if not AreBarsEnabled() then return end
                 DispatchSlotChanged(0)
                 DispatchCooldownUpdate()
             end)
@@ -1644,12 +1664,42 @@ do
         elseif event == "PLAYER_TALENT_UPDATE" or event == "TRAIT_CONFIG_UPDATED" then
             -- Talent change: full refresh with delay to let slots settle
             C_Timer_After(0.3, function()
+                if not AreBarsEnabled() then return end
                 DispatchSlotChanged(0)
                 DispatchUsableUpdate()
                 DispatchCooldownUpdate()
             end)
         end
     end)
+
+    local _cooldownDispatcherActive = false
+    ns.EnableCooldownDispatcher = function()
+        if _cooldownDispatcherActive then return end
+        _cooldownDispatcherActive = true
+        dispatcher:RegisterEvent("ACTIONBAR_UPDATE_COOLDOWN")
+        dispatcher:RegisterEvent("SPELL_UPDATE_COOLDOWN")
+        dispatcher:RegisterEvent("ACTIONBAR_SLOT_CHANGED")
+        dispatcher:RegisterEvent("ACTIONBAR_UPDATE_USABLE")
+        dispatcher:RegisterEvent("SPELL_UPDATE_CHARGES")
+        dispatcher:RegisterEvent("SPELL_UPDATE_ICON")
+        dispatcher:RegisterEvent("PLAYER_ENTERING_WORLD")
+        dispatcher:RegisterEvent("UPDATE_SHAPESHIFT_FORM")
+        dispatcher:RegisterEvent("ACTIONBAR_PAGE_CHANGED")
+        dispatcher:RegisterEvent("UPDATE_BONUS_ACTIONBAR")
+        dispatcher:RegisterEvent("UPDATE_VEHICLE_ACTIONBAR")
+        dispatcher:RegisterEvent("UPDATE_OVERRIDE_ACTIONBAR")
+        dispatcher:RegisterEvent("PLAYER_TALENT_UPDATE")
+        if C_EventUtils and C_EventUtils.IsEventValid and C_EventUtils.IsEventValid("TRAIT_CONFIG_UPDATED") then
+            dispatcher:RegisterEvent("TRAIT_CONFIG_UPDATED")
+        end
+        dispatcher:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player")
+    end
+
+    ns.DisableCooldownDispatcher = function()
+        if not _cooldownDispatcherActive then return end
+        _cooldownDispatcherActive = false
+        dispatcher:UnregisterAllEvents()
+    end
 end
 
 -------------------------------------------------------------------------------
@@ -2445,6 +2495,73 @@ local function HideStockBars()
 end
 
 -------------------------------------------------------------------------------
+--  Restore Blizzard Stock Bars (counterpart to HideStockBars)
+--  Called when GravityUI bars are disabled to fully restore Blizzard's default
+--  action bar system. Re-parents frames back to UIParent, re-registers
+--  Blizzard buttons with the broadcaster, and clears our custom skinning.
+-------------------------------------------------------------------------------
+local function RestoreStockBars()
+    if InCombatLockdown() then return end
+
+    -- Re-parent Blizzard bar frames back to UIParent
+    for _, entry in ipairs(STOCK_BAR_DISPOSAL) do
+        local bar = _G[entry.name]
+        if bar then
+            bar:SetParent(UIParent)
+            bar:Show()
+        end
+    end
+
+    -- Restore Blizzard action buttons to broadcaster and re-enable their events
+    for _, info in ipairs(BAR_CONFIG) do
+        if info.blizzBtnPrefix and not info.isStance and not info.isPetBar then
+            for i = 1, info.count do
+                local btn = _G[info.blizzBtnPrefix .. i]
+                if btn then
+                    -- Clear our statehidden flag
+                    btn:SetAttributeNoHandler("statehidden", nil)
+
+                    -- Re-add to Blizzard's broadcaster .frames list
+                    if ActionBarButtonEventsFrame and type(ActionBarButtonEventsFrame.frames) == "table" then
+                        local fr = ActionBarButtonEventsFrame.frames
+                        -- Check if already in list (avoid duplicates)
+                        local found = false
+                        for _, f in pairs(fr) do
+                            if f == btn then found = true; break end
+                        end
+                        if not found then
+                            fr[#fr + 1] = btn
+                        end
+                    end
+
+                    -- Re-register default button events so Blizzard's OnEvent fires
+                    btn:RegisterEvent("ACTIONBAR_UPDATE_STATE")
+                    btn:RegisterEvent("ACTIONBAR_UPDATE_USABLE")
+                    btn:RegisterEvent("ACTIONBAR_UPDATE_COOLDOWN")
+                    btn:RegisterEvent("ACTIONBAR_SLOT_CHANGED")
+                    btn:RegisterEvent("SPELL_UPDATE_CHARGES")
+                    btn:RegisterEvent("SPELL_UPDATE_ICON")
+                    btn:RegisterEvent("UPDATE_SHAPESHIFT_FORM")
+                    btn:RegisterEvent("PLAYER_ENTERING_WORLD")
+
+                    -- Remove our custom skinning
+                    UnskinButton(btn)
+
+                    -- Show the button
+                    btn:Show()
+                end
+            end
+        end
+    end
+
+    -- Restore StatusTrackingBarManager
+    if StatusTrackingBarManager then
+        StatusTrackingBarManager:SetParent(UIParent)
+        StatusTrackingBarManager:Show()
+    end
+end
+
+-------------------------------------------------------------------------------
 --  Keybind System
 -------------------------------------------------------------------------------
 local keybindOwner = CreateFrame("Frame", "GravityUIKeybindOwner", UIParent)
@@ -2560,6 +2677,19 @@ function ns.RefreshActionBars()
         -- (zone changes, combat end) so the broadcasters stay alive.
         ns.SetBroadcasterBarsDisabled(true)
 
+        -- Disable our custom dispatchers so they don't interfere with Blizzard's bars
+        if ns.DisableCooldownDispatcher then ns.DisableCooldownDispatcher() end
+        if ns.DisableGlowDispatcher then ns.DisableGlowDispatcher() end
+
+        -- Restore Blizzard's stock bars (re-parent, re-register events, re-add to broadcaster)
+        RestoreStockBars()
+
+        -- Clear our keybind overrides so Blizzard's native bindings take effect
+        ClearOverrideBindings(keybindOwner)
+
+        -- Disable our range coloring (Blizzard handles its own)
+        if ActionBars.DisableRangeColoring then ActionBars.DisableRangeColoring() end
+
         -- Third-party bar skinning: apply even when GravityUI bars are disabled
         local g = db.global
         if C_AddOns.IsAddOnLoaded("Dominos") and db.skinDominos then
@@ -2594,11 +2724,29 @@ function ns.RefreshActionBars()
             end
         end
 
+        -- Blizzard Action Bar Skinning: apply GravityUI visual style to default buttons
+        if db.skinBlizzard then
+            for _, info in ipairs(BAR_CONFIG) do
+                if info.blizzBtnPrefix then
+                    for i = 1, info.count do
+                        local btn = _G[info.blizzBtnPrefix .. i]
+                        if btn then
+                            SkinButton(btn, g)
+                        end
+                    end
+                end
+            end
+        end
+
         return
     end
 
     -- GravityUI bars are enabled: take over broadcaster management
     ns.SetBroadcasterBarsDisabled(false)
+
+    -- Enable our custom dispatchers for cooldown/charge/icon/glow management
+    if ns.EnableCooldownDispatcher then ns.EnableCooldownDispatcher() end
+    if ns.EnableGlowDispatcher then ns.EnableGlowDispatcher() end
 
     -- Hide Blizzard bars
     HideStockBars()
@@ -3505,14 +3653,16 @@ initFrame:SetScript("OnEvent", function(self, event, ...)
             return  -- Don't init our bars yet
         end
         ns.RefreshActionBars()
-        ActionBars.HookKeyboardPush()
-        -- Always suppress Blizzard's red keybind text
-        ActionBars.StartKeybindRangeOverride()
-        -- Init range coloring if enabled
-        local db = GetDB()
-        local g = db and db.global
-        if g and g.outOfRangeColoring then
-            C_Timer_After(0.5, function() ActionBars.EnableRangeColoring() end)
+        if AreBarsEnabled() then
+            ActionBars.HookKeyboardPush()
+            -- Always suppress Blizzard's red keybind text
+            ActionBars.StartKeybindRangeOverride()
+            -- Init range coloring if enabled
+            local db = GetDB()
+            local g = db and db.global
+            if g and g.outOfRangeColoring then
+                C_Timer_After(0.5, function() ActionBars.EnableRangeColoring() end)
+            end
         end
         C_Timer_After(0.5, ApplyZoneAbilityKeybind)
     elseif event == "PLAYER_ENTERING_WORLD" then
