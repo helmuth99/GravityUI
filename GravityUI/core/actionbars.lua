@@ -246,6 +246,16 @@ do
         "UNIT_SPELLCAST_SUCCEEDED", "UNIT_SPELLCAST_FAILED",
         "UNIT_SPELLCAST_INTERRUPTED",
     }
+    -- Full default event set for ActionBarActionEventsFrame restoration (bars disabled).
+    -- Includes SPELL_ACTIVATION_OVERLAY_GLOW_SHOW/HIDE which Blizzard's ActionButton.lua
+    -- registers here to dispatch proc glow show/hide to stock action buttons.
+    -- Without these, Blizzard's built-in overlay glow is broken when our bars are disabled.
+    local _aaefFullEvents = {
+        "UNIT_SPELLCAST_SUCCEEDED", "UNIT_SPELLCAST_FAILED",
+        "UNIT_SPELLCAST_INTERRUPTED",
+        "SPELL_ACTIVATION_OVERLAY_GLOW_SHOW",
+        "SPELL_ACTIVATION_OVERLAY_GLOW_HIDE",
+    }
     -- Full default event set for broadcaster restoration (bars disabled)
     local _abefFullEvents = {
         "ACTIONBAR_UPDATE_STATE", "ACTIONBAR_UPDATE_USABLE",
@@ -288,8 +298,14 @@ do
             end
             if ActionBarActionEventsFrame then
                 ActionBarActionEventsFrame:UnregisterAllEvents()
-                for _, ev in ipairs(_aaefEvents) do
-                    ActionBarActionEventsFrame:RegisterUnitEvent(ev, "player")
+                -- Spellcast events are unit-scoped, overlay glow events are not
+                for _, ev in ipairs(_aaefFullEvents) do
+                    if ev == "SPELL_ACTIVATION_OVERLAY_GLOW_SHOW"
+                    or ev == "SPELL_ACTIVATION_OVERLAY_GLOW_HIDE" then
+                        ActionBarActionEventsFrame:RegisterEvent(ev)
+                    else
+                        ActionBarActionEventsFrame:RegisterUnitEvent(ev, "player")
+                    end
                 end
             end
             return
