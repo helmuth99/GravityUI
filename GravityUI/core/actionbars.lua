@@ -247,20 +247,32 @@ do
         "UNIT_SPELLCAST_INTERRUPTED",
     }
     -- Full default event set for ActionBarActionEventsFrame restoration (bars disabled).
-    -- Includes SPELL_ACTIVATION_OVERLAY_GLOW_SHOW/HIDE which Blizzard's ActionButton.lua
-    -- registers here to dispatch proc glow show/hide to stock action buttons.
-    -- Without these, Blizzard's built-in overlay glow is broken when our bars are disabled.
+    -- Must match Blizzard's ActionButton.lua registration exactly so that proc glows,
+    -- auto-repeat indicators, and spellcast flash all work on stock/Dominos/BT4 buttons.
+    -- NOTE: spellcast events are unit-scoped ("player"), all others use RegisterEvent.
     local _aaefFullEvents = {
         "UNIT_SPELLCAST_SUCCEEDED", "UNIT_SPELLCAST_FAILED",
         "UNIT_SPELLCAST_INTERRUPTED",
         "SPELL_ACTIVATION_OVERLAY_GLOW_SHOW",
         "SPELL_ACTIVATION_OVERLAY_GLOW_HIDE",
+        "START_AUTOREPEAT_SPELL",
+        "STOP_AUTOREPEAT_SPELL",
     }
-    -- Full default event set for broadcaster restoration (bars disabled)
+    -- Unit-scoped subset (for RegisterUnitEvent)
+    local _aaefUnitEvents = {
+        UNIT_SPELLCAST_SUCCEEDED = true,
+        UNIT_SPELLCAST_FAILED = true,
+        UNIT_SPELLCAST_INTERRUPTED = true,
+    }
+    -- Full default event set for ActionBarButtonEventsFrame restoration (bars disabled).
+    -- Must match Blizzard's ActionButton.lua registration exactly so that cooldowns,
+    -- charge counts, icon updates, and keybind text all work on stock/Dominos/BT4 buttons.
     local _abefFullEvents = {
         "ACTIONBAR_UPDATE_STATE", "ACTIONBAR_UPDATE_USABLE",
         "ACTIONBAR_UPDATE_COOLDOWN", "ACTIONBAR_SLOT_CHANGED",
         "PLAYER_ENTERING_WORLD", "UPDATE_SHAPESHIFT_FORM",
+        "SPELL_UPDATE_CHARGES", "SPELL_UPDATE_ICON",
+        "UPDATE_BINDINGS",
     }
 
     local _vehNeed, _extraNeed, _phNeed = false, false, false
@@ -298,13 +310,12 @@ do
             end
             if ActionBarActionEventsFrame then
                 ActionBarActionEventsFrame:UnregisterAllEvents()
-                -- Spellcast events are unit-scoped, overlay glow events are not
+                -- Unit-scoped events use RegisterUnitEvent, all others use RegisterEvent
                 for _, ev in ipairs(_aaefFullEvents) do
-                    if ev == "SPELL_ACTIVATION_OVERLAY_GLOW_SHOW"
-                    or ev == "SPELL_ACTIVATION_OVERLAY_GLOW_HIDE" then
-                        ActionBarActionEventsFrame:RegisterEvent(ev)
-                    else
+                    if _aaefUnitEvents[ev] then
                         ActionBarActionEventsFrame:RegisterUnitEvent(ev, "player")
+                    else
+                        ActionBarActionEventsFrame:RegisterEvent(ev)
                     end
                 end
             end
@@ -2702,8 +2713,13 @@ function ns.RefreshActionBars()
         if ns.DisableCooldownDispatcher then ns.DisableCooldownDispatcher() end
         if ns.DisableGlowDispatcher then ns.DisableGlowDispatcher() end
 
-        -- Restore Blizzard's stock bars (re-parent, re-register events, re-add to broadcaster)
-        RestoreStockBars()
+        -- Restore Blizzard's stock bars ONLY if no third-party bar addon is managing them.
+        -- Dominos/Bartender4 hide Blizzard's bars their own way; RestoreStockBars()
+        -- would undo that by re-parenting to UIParent and calling :Show().
+        local hasThirdPartyBars = C_AddOns.IsAddOnLoaded("Dominos") or C_AddOns.IsAddOnLoaded("Bartender4")
+        if not hasThirdPartyBars then
+            RestoreStockBars()
+        end
 
         -- Clear our keybind overrides so Blizzard's native bindings take effect
         ClearOverrideBindings(keybindOwner)
