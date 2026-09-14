@@ -1392,6 +1392,75 @@ local consumables_size = 48
 local FONT = ns.GetFont()
 
 -------------------------------------------------------------------------------
+--- "Last Used" Consumable Tracking (Bag-Count Diff)
+--- On BAG_UPDATE_DELAYED we rebuild item counts and diff against a previous
+--- snapshot. Any tracked item whose count decreased was used → save as
+--- "last used" in SavedVariables so the update functions prioritize it.
+--- Approach inspired by EllesmereUI's AuraBuffReminders.
+-------------------------------------------------------------------------------
+
+-- Sets for O(1) lookup: itemID → category key in SavedVariables
+local _trackedItems = {}  -- itemID → "lastDmgPotItem" | "lastHealPotItem" | "lastFlaskItem"
+local _prevCounts   = {}  -- itemID → count (previous snapshot)
+
+-- Build the tracked-item lookup from our item lists (runs once at load)
+local function BuildTrackedItemSets()
+    for _, id in ipairs(Module.db.potionItemIDs) do
+        _trackedItems[id] = "lastDmgPotItem"
+    end
+    for _, id in ipairs(Module.db.healingPotionItemIDs) do
+        _trackedItems[id] = "lastHealPotItem"
+    end
+    for _, id in ipairs(Module.db.flaskItemIDs) do
+        _trackedItems[id] = "lastFlaskItem"
+    end
+end
+BuildTrackedItemSets()
+
+-- Snapshot current bag counts for all tracked items
+local function SnapshotBagCounts()
+    wipe(_prevCounts)
+    for itemID in pairs(_trackedItems) do
+        local count = GetItemCount(itemID, false, true)
+        if count and count > 0 then
+            _prevCounts[itemID] = count
+        end
+    end
+end
+
+-- Diff bag counts: any tracked item whose count decreased was used
+local function DetectUsedItems()
+    local cdb = ns.GetDB()
+    local consDB = cdb and cdb.screenindicators and cdb.screenindicators.consumables
+    if not consDB then return end
+
+    for itemID, oldCount in pairs(_prevCounts) do
+        local newCount = GetItemCount(itemID, false, true) or 0
+        if newCount < oldCount then
+            local dbKey = _trackedItems[itemID]
+            if dbKey then
+                consDB[dbKey] = itemID
+            end
+        end
+    end
+
+    -- Rebuild snapshot for next diff
+    SnapshotBagCounts()
+end
+
+local _lastUsedTracker = CreateFrame("Frame")
+_lastUsedTracker:RegisterEvent("BAG_UPDATE_DELAYED")
+_lastUsedTracker:RegisterEvent("PLAYER_LOGIN")
+_lastUsedTracker:SetScript("OnEvent", function(_, event)
+    if event == "PLAYER_LOGIN" then
+        -- Initial snapshot after a short delay so bags are fully loaded
+        C_Timer.After(1, SnapshotBagCounts)
+    elseif event == "BAG_UPDATE_DELAYED" then
+        DetectUsedItems()
+    end
+end)
+
+-------------------------------------------------------------------------------
 --- Construct the button frame
 -------------------------------------------------------------------------------
 
@@ -1401,8 +1470,7 @@ Module.consumables:SetSize(consumables_size * 5, consumables_size)
 Module.consumables:SetFrameStrata("DIALOG")
 Module.consumables:SetFrameLevel(100)
 Module.consumables:SetMovable(true)
-Module.consumables:EnableMouse(true)
-Module.consumables:RegisterForDrag("LeftButton")
+Module.consumables:EnableMouse(false)
 Module.consumables:Hide()
 Module.consumables.buttons = {}
 
@@ -1427,14 +1495,9 @@ local function savePersonalPosition(self)
     }
 end
 
-Module.consumables:SetScript("OnDragStart", function(self)
-    if not InCombatLockdown() then
-        self:StartMoving()
-        self.isMoving = true
-    end
-end)
-
-Module.consumables:SetScript("OnDragStop", savePersonalPosition)
+-- NOTE: OnDragStart/OnDragStop not needed on the container.
+-- The dragHandle below handles dragging. Container has EnableMouse(false)
+-- so clicks pass through to elements underneath.
 
 Module.consumables:HookScript("OnHide", function(self)
     if self.isMoving then
@@ -1511,11 +1574,8 @@ local function savePersonalPosition(self)
     }
 end
 
-Module.consumables:SetScript("OnDragStart", function(self)
-    self:StartMoving()
-end)
 
-Module.consumables:SetScript("OnDragStop", savePersonalPosition)
+
 
 -------------------------------------------------------------------------------
 --- Combat state driver
@@ -1707,6 +1767,7 @@ local function updateElvUIParent(self) end
 
 local function scanPlayerAuras(buttons, now)
     local isFlask, isRune, isVantus
+    local foodExpiring, flaskExpiring, runeExpiring
 
     for i = 1, 60 do
         local ok, auraData = pcall(C_UnitAuras.GetAuraDataByIndex, "player", i, "HELPFUL")
@@ -1720,34 +1781,50 @@ local function scanPlayerAuras(buttons, now)
         local icon   = tonumber(auraData.icon)
         local expiry = auraData.expirationTime
         local READY  = "Interface\\RaidFrame\\ReadyCheck-Ready"
+        local remaining = expiry - now
 
         if not sid then -- skip entirely if spellId is unreadable
         elseif Module.db.foodBuffIDs[sid] or Module.db.foodIconIDs[icon] then
             buttons.food.statustexture:SetTexture(READY)
             buttons.food.texture:SetDesaturated(false)
             buttons.food.timeleft:SetFormattedText(GARRISON_DURATION_MINUTES,
-                                                   ceil((expiry - now) / 60))
+                                                   ceil(remaining / 60))
             buttons.food.tooltipAuraID = auraData.auraInstanceID
+            -- Show the specific food aura icon (same pattern as flask/rune).
+            -- Skip generic eating/drinking icons (132805, 133950) — keep only
+            -- the real Well Fed icon or the buff-specific icon.
+            if icon and icon ~= 132805 and icon ~= 133950 then
+                buttons.food.texture:SetTexture(icon)
+                -- Persist as "last used" so we can show it when no buff is active
+                local cdb = ns.GetDB()
+                if cdb and cdb.screenindicators and cdb.screenindicators.consumables then
+                    cdb.screenindicators.consumables.lastFoodIcon = icon
+                    cdb.screenindicators.consumables.lastFoodName = auraData.name
+                end
+            end
+            if remaining <= 300 then foodExpiring = true end
 
         elseif Module.db.flaskBuffIDs[sid] then
             buttons.flask.statustexture:SetTexture(READY)
             buttons.flask.texture:SetDesaturated(false)
             buttons.flask.timeleft:SetFormattedText(GARRISON_DURATION_MINUTES,
-                                                    ceil((expiry - now) / 60))
+                                                    ceil(remaining / 60))
             if icon then buttons.flask.texture:SetTexture(icon) end
             isFlask = true
 
             if expiry - now <= 600 then
                 isFlask = false
             end
+            if remaining <= 300 then flaskExpiring = true end
 
         elseif Module.db.runeBuffIDs[sid] then
             buttons.rune.statustexture:SetTexture(READY)
             buttons.rune.texture:SetDesaturated(false)
             if icon then buttons.rune.texture:SetTexture(icon) end
             buttons.rune.timeleft:SetFormattedText(GARRISON_DURATION_MINUTES,
-                                                   ceil((expiry - now) / 60))
+                                                   ceil(remaining / 60))
             isRune = true
+            if remaining <= 300 then runeExpiring = true end
 
         elseif Module.db.vantusBuffIDs[sid] then
             local name = auraData.name or ""
@@ -1755,7 +1832,7 @@ local function scanPlayerAuras(buttons, now)
         end
     end
 
-    return isFlask, isRune, isVantus
+    return isFlask, isRune, isVantus, foodExpiring, flaskExpiring, runeExpiring
 end
 
 local function updateHealthstones(buttons)
@@ -1784,15 +1861,27 @@ local function updateFlasks(buttons, isFlask, LCG)
     local flask_count = 0
     local flask_item_id
 
-    for flask_index = 1, #Module.db.flaskItemIDs do
-        local fid = Module.db.flaskItemIDs[flask_index]
-        local count = GetItemCount(fid, false, false)
-
+    -- Prefer the last-used flask if it's still in bags
+    local cdb = ns.GetDB()
+    local consDB = cdb and cdb.screenindicators and cdb.screenindicators.consumables
+    if consDB and consDB.lastFlaskItem then
+        local count = GetItemCount(consDB.lastFlaskItem, false, false)
         if count and count > 0 then
-            flask_item_id = fid
+            flask_item_id = consDB.lastFlaskItem
             flask_count = count
+        end
+    end
 
-            break
+    -- Fallback: iterate the full list
+    if not flask_item_id then
+        for flask_index = 1, #Module.db.flaskItemIDs do
+            local fid = Module.db.flaskItemIDs[flask_index]
+            local count = GetItemCount(fid, false, false)
+
+            if count and count > 0 and (not flask_item_id or count > flask_count) then
+                flask_item_id = fid
+                flask_count = count
+            end
         end
     end
 
@@ -2098,15 +2187,28 @@ local function updateDamagePotions(buttons)
     local inventoryItem,
           inventoryItemCount
 
-    for i = 1, #Module.db.potionItemIDs do
-        local item  = Module.db.potionItemIDs[i]
-        local count = GetItemCount(item, false, true)
-
+    -- Prefer the last-used potion if it's still in bags
+    local cdb = ns.GetDB()
+    local consDB = cdb and cdb.screenindicators and cdb.screenindicators.consumables
+    if consDB and consDB.lastDmgPotItem then
+        local count = GetItemCount(consDB.lastDmgPotItem, false, true)
         if count and count > 0 then
-            inventoryItem      = item
+            inventoryItem = consDB.lastDmgPotItem
             inventoryItemCount = count
+        end
+    end
 
-            break
+    -- Fallback: pick the potion with the highest count in bags.
+    -- Players typically have more of the potion they actually use.
+    if not inventoryItem then
+        for i = 1, #Module.db.potionItemIDs do
+            local item  = Module.db.potionItemIDs[i]
+            local count = GetItemCount(item, false, true)
+
+            if count and count > 0 and (not inventoryItemCount or count > inventoryItemCount) then
+                inventoryItem      = item
+                inventoryItemCount = count
+            end
         end
     end
 
@@ -2125,15 +2227,27 @@ local function updateHealingPotions(buttons)
     local inventoryItem,
           inventoryItemCount
 
-    for i = 1, #Module.db.healingPotionItemIDs do
-        local item  = Module.db.healingPotionItemIDs[i]
-        local count = GetItemCount(item, false, true)
-
+    -- Prefer the last-used healing potion if it's still in bags
+    local cdb = ns.GetDB()
+    local consDB = cdb and cdb.screenindicators and cdb.screenindicators.consumables
+    if consDB and consDB.lastHealPotItem then
+        local count = GetItemCount(consDB.lastHealPotItem, false, true)
         if count and count > 0 then
-            inventoryItem      = item
+            inventoryItem = consDB.lastHealPotItem
             inventoryItemCount = count
+        end
+    end
 
-            break
+    -- Fallback: pick the healing potion with the highest count in bags.
+    if not inventoryItem then
+        for i = 1, #Module.db.healingPotionItemIDs do
+            local item  = Module.db.healingPotionItemIDs[i]
+            local count = GetItemCount(item, false, true)
+
+            if count and count > 0 and (not inventoryItemCount or count > inventoryItemCount) then
+                inventoryItem      = item
+                inventoryItemCount = count
+            end
         end
     end
 
@@ -2323,10 +2437,34 @@ function Module.consumables:Update()
         buttons[i].tooltipItemID = nil
     end
 
+    -- Restore "last used" icons so buttons show the player's most recent
+    -- consumable instead of generic category icons. Stays desaturated (no buff)
+    -- but lets the player quickly identify what they last consumed.
+    local cdb = ns.GetDB()
+    local consDB = cdb and cdb.screenindicators and cdb.screenindicators.consumables
+    if consDB then
+        if consDB.lastFoodIcon then
+            buttons.food.texture:SetTexture(consDB.lastFoodIcon)
+        end
+        if consDB.lastFlaskItem then
+            local flaskIcon = GetItemIcon(consDB.lastFlaskItem)
+            if flaskIcon then buttons.flask.texture:SetTexture(flaskIcon) end
+        end
+        if consDB.lastDmgPotItem then
+            local potIcon = GetItemIcon(consDB.lastDmgPotItem)
+            if potIcon then buttons.dmgpot.texture:SetTexture(potIcon) end
+        end
+        if consDB.lastHealPotItem then
+            local potIcon = GetItemIcon(consDB.lastHealPotItem)
+            if potIcon then buttons.healpot.texture:SetTexture(potIcon) end
+        end
+    end
+
     local LCG = LibStub("LibCustomGlow-1.0", true)
     local now = GetTime()
 
-    local isFlask, isRune, isVantus = scanPlayerAuras(buttons, now)
+    local isFlask, isRune, isVantus,
+          foodExpiring, flaskExpiring, runeExpiring = scanPlayerAuras(buttons, now)
 
     updateHealthstones(buttons)
     updateFlasks(buttons, isFlask, LCG)
@@ -2335,6 +2473,27 @@ function Module.consumables:Update()
     updateDamagePotions(buttons)
     updateHealingPotions(buttons)
     updateVantusRune(buttons, isVantus)
+
+    -- Blinking glow for buffs expiring in < 5 minutes
+    if LCG then
+        if foodExpiring then
+            LCG.PixelGlow_Start(buttons.food, {1, 0.4, 0, 1}, nil, nil, nil, nil, nil, nil, nil, "GravityExpiring")
+        else
+            LCG.PixelGlow_Stop(buttons.food, "GravityExpiring")
+        end
+
+        if flaskExpiring then
+            LCG.PixelGlow_Start(buttons.flask, {1, 0.4, 0, 1}, nil, nil, nil, nil, nil, nil, nil, "GravityExpiring")
+        else
+            LCG.PixelGlow_Stop(buttons.flask, "GravityExpiring")
+        end
+
+        if runeExpiring then
+            LCG.PixelGlow_Start(buttons.rune, {1, 0.4, 0, 1}, nil, nil, nil, nil, nil, nil, nil, "GravityExpiring")
+        else
+            LCG.PixelGlow_Stop(buttons.rune, "GravityExpiring")
+        end
+    end
 
     if not InCombatLockdown() then
         -- Chain potion buttons after the last dynamic button.
@@ -2391,6 +2550,16 @@ function Module.consumables:Repos(isRL)
 
         self.dragHandle:Show()
 
+        -- The initiator doesn't see a ReadyCheckFrame dialog, but
+        -- ReadyCheckListenerFrame and ReadyCheckFrame stay visible with
+        -- EnableMouse(true), blocking clicks below our consumables bar.
+        if ReadyCheckListenerFrame then
+            ReadyCheckListenerFrame:EnableMouse(false)
+        end
+        if ReadyCheckFrame then
+            ReadyCheckFrame:EnableMouse(false)
+        end
+
         self.isRLpos = true
     elseif self.isRLpos then
         local parent
@@ -2404,6 +2573,14 @@ function Module.consumables:Repos(isRL)
         self:SetParent(parent)
         self:ClearAllPoints()
         self:SetPoint("BOTTOM", parent, "TOP", 0, 5)
+
+        -- Restore mouse interaction for future non-initiator ready checks
+        if ReadyCheckListenerFrame then
+            ReadyCheckListenerFrame:EnableMouse(true)
+        end
+        if ReadyCheckFrame then
+            ReadyCheckFrame:EnableMouse(true)
+        end
 
         self.isRLpos = false
     end

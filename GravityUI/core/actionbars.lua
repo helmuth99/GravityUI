@@ -678,6 +678,26 @@ local function GetOrCreateButton(slot, parent, info, index)
                     self:SetAttribute("useOnKeyDown", true)
                 ]])
             end
+
+            -- Block drag-based pickup/place during combat.
+            -- Blizzard's ActionBarButtonTemplate OnDragStart calls PickupAction()
+            -- and OnReceiveDrag calls PlaceAction() — both are protected functions
+            -- that are blocked on addon-created buttons in combat, causing
+            -- ADDON_ACTION_BLOCKED errors. Wrap to silently suppress.
+            local origDrag = btn:GetScript("OnDragStart")
+            if origDrag then
+                btn:SetScript("OnDragStart", function(self, ...)
+                    if InCombatLockdown() then return end
+                    origDrag(self, ...)
+                end)
+            end
+            local origReceive = btn:GetScript("OnReceiveDrag")
+            if origReceive then
+                btn:SetScript("OnReceiveDrag", function(self, ...)
+                    if InCombatLockdown() then return end
+                    origReceive(self, ...)
+                end)
+            end
         end
 
         -- Template OnLoad self-registers events; the central dispatcher owns them
