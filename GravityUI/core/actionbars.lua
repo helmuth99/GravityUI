@@ -1502,13 +1502,13 @@ do
                 fd.rangeTinted = nil
             end
         end
-        -- Cooldown: clear if slot is empty
+        -- Cooldown: always clear stale cooldowns before pushing new ones.
+        -- This prevents mount-bar cooldown swirls from persisting after dismount.
+        local cd = btn.cooldown
+        if cd then pcall(cd.Clear, cd) end
+        if btn.chargeCooldown then pcall(btn.chargeCooldown.Clear, btn.chargeCooldown) end
         if hasAct then
             PushButtonCooldown(btn)
-        else
-            local cd = btn.cooldown
-            if cd then pcall(cd.Clear, cd) end
-            if btn.chargeCooldown then pcall(btn.chargeCooldown.Clear, btn.chargeCooldown) end
         end
         -- Count: clear if slot is empty
         if btn.Count then
@@ -1700,6 +1700,10 @@ do
         _cooldownDispatcherActive = false
         dispatcher:UnregisterAllEvents()
     end
+
+    -- Expose for RefreshActionBars to trigger initial content refresh after re-enable
+    ns._DispatchSlotChanged = DispatchSlotChanged
+    ns._DispatchCooldownUpdate = DispatchCooldownUpdate
 end
 
 -------------------------------------------------------------------------------
@@ -2285,7 +2289,8 @@ local function SetupBar(info)
     -- Create bar frame
     local frame = barFrames[info.key] or CreateBarFrame(info)
 
-    -- Paging (MainBar only)
+    -- Paging (MainBar only) — always rebuild conditions on each SetupBar call
+    -- so re-enabling a disabled bar correctly re-registers the StateDriver
     if info.nativeMainBar then
         local pagingConfig = barDB and barDB.paging
         local conditions
@@ -2771,6 +2776,12 @@ function ns.RefreshActionBars()
             end
         end
     end
+
+    -- Initial content refresh: update icons, cooldowns, and charges.
+    -- Needed because PLAYER_ENTERING_WORLD doesn't fire on a simple toggle,
+    -- so buttons would show stale content without this.
+    if ns._DispatchSlotChanged then ns._DispatchSlotChanged(0) end
+    if ns._DispatchCooldownUpdate then ns._DispatchCooldownUpdate() end
 
     -- Sync PICKUPACTION modifier with our lock setting on startup.
     -- This ensures the correct modifier is active after /reload.
