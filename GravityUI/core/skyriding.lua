@@ -606,7 +606,8 @@ local function UpdateAbilityIcon()
         if ok and res then isOnCD = true end
     end
     if isOnCD then
-        abilityIconCooldown:SetCooldown(cd.startTime, cd.duration)
+        -- TAINT FIX: cd.startTime/cd.duration can be secret in 12.1.5
+        pcall(abilityIconCooldown.SetCooldown, abilityIconCooldown, cd.startTime, cd.duration)
     else
         abilityIconCooldown:Clear()
     end

@@ -431,6 +431,10 @@ local function OnUnitDied(unit, guid)
     local plainName = UnitName(unit)
     local _, classFilename = UnitClass(unit)
 
+    -- TAINT FIX: UnitName/UnitClass can return secrets in M+/Raid
+    if plainName and issecretvalue and issecretvalue(plainName) then plainName = nil end
+    if classFilename and issecretvalue and issecretvalue(classFilename) then classFilename = nil end
+
     if (not plainName or plainName == "") and guid then
         local _, engClass, _, _, _, n = GetPlayerInfoByGUID(guid)
         if n and n ~= "" then plainName = n end

@@ -541,8 +541,10 @@ local function UpdateSlotOverlay(overlay, unit, cachedData)
         if cachedData.enchant then
              color = settings.inspectEnchantTextColor or settings.enchantTextColor or DEFAULT_ENCHANT_TEXT_COLOR
              if settings.inspectEnchantClassColor or settings.enchantClassColor then
-                  local _, class = UnitClass(unit)
-                  local c = RAID_CLASS_COLORS[class]
+                   local _, class = UnitClass(unit)
+                   -- TAINT FIX: UnitClass can return secrets in M+/Raid
+                   if class and issecretvalue and issecretvalue(class) then class = nil end
+                   local c = class and RAID_CLASS_COLORS[class]
                   if c then color = {c.r, c.g, c.b} end
              end
              overlay.enchant:SetText(cachedData.enchant)
@@ -676,8 +678,11 @@ local function UpdateInspectILvlDisplay()
     if not guid then return end
 
     local name = UnitName(unit) or "Unknown"
+    -- TAINT FIX: UnitName/UnitClass can return secrets in M+/Raid
+    if issecretvalue and issecretvalue(name) then name = "Unknown" end
     local level = UnitLevel(unit)
     local _, class = UnitClass(unit)
+    if class and issecretvalue and issecretvalue(class) then class = nil end
     local specID = GetInspectSpecialization(unit)
     local specName = ""
     if specID and specID ~= 0 then
@@ -730,7 +735,12 @@ local function UpdateInspectILvlDisplay()
     -- Ensure it is not buried under TitleContainer
     InspectFrame._guiILvlDisplay:SetFrameLevel(InspectFrame:GetFrameLevel() + 50)
     
-    local classInfo = C_CreatureInfo.GetClassInfo(select(3, UnitClass(unit)))
+    -- TAINT FIX: UnitClass can return secrets in M+/Raid; pcall to protect GetClassInfo
+    local classID = select(3, UnitClass(unit))
+    local classInfo
+    if classID and (not issecretvalue or not issecretvalue(classID)) then
+        classInfo = C_CreatureInfo.GetClassInfo(classID)
+    end
     local className = classInfo and classInfo.className or ""
     -- Level (white) + Spec/Class (class colored) — avoid double space when spec is empty
     local levelClassStr

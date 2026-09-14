@@ -1011,6 +1011,9 @@ local function BuildPlayerMarks(parent)
     local function AddPlayerRow(unit)
         local name = UnitName(unit)
         local _, cls = UnitClass(unit)
+        -- TAINT FIX: UnitName/UnitClass can return secrets in M+/Raid
+        if name and issecretvalue and issecretvalue(name) then name = nil end
+        if cls and issecretvalue and issecretvalue(cls) then cls = nil end
         if not name or not cls then return end
 
         local row = CreateFrame("Frame", nil, content)
@@ -1051,7 +1054,8 @@ local function BuildPlayerMarks(parent)
             local u = "raid" .. i
             if UnitExists(u) then
                 local n = UnitName(u)
-                if n then currentNames[n] = true end
+                -- TAINT FIX: UnitName can return a secret in M+/Raid
+                if n and (not issecretvalue or not issecretvalue(n)) then currentNames[n] = true end
             end
         end
         for savedName, _ in pairs(pdb.raid.players) do

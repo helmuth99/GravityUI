@@ -52,8 +52,11 @@ Module.F.GetRosterInfo = function(index)
         elseif index <= 5 then
             local unit = 'party' .. (index - 1)
             name = UnitName(unit)
+            -- TAINT FIX: UnitName/UnitClass can return secrets in M+/Raid
+            if name and issecretvalue and issecretvalue(name) then name = nil end
             subgroup = 1
             class = select(2, UnitClass(unit))
+            if class and issecretvalue and issecretvalue(class) then class = nil end
             online = UnitIsConnected(unit)
             isDead = UnitIsDeadOrGhost(unit)
         end
@@ -179,6 +182,14 @@ Module.db.foodItemIDs = {
     ----------------------------------------------------------------------------
     --- Feasts
 
+    -- 12.1.0 - Curse of Ula'tek (Season 2)
+    275269, -- [Epic] Hearty Feast of Knowledge   | 107.8 Stam, 71.5 Highest Secondary Stat
+    275268, -- [Epic] Hearty Loa's Gathering      | 107.8 Stam, 71.5 Highest Secondary Stat
+    275267, -- [Epic] Hearty Amani Cornucopia      | 107.8 Stam, 71.5 Highest Secondary Stat
+    275266, -- [Rare] Feast of Knowledge           | 107.8 Stam, 71.5 Highest Secondary Stat
+    275265, -- [Rare] Loa's Gathering              | 107.8 Stam, 71.5 Highest Secondary Stat
+    275264, -- [Rare] Amani Cornucopia             | 107.8 Stam, 71.5 Highest Secondary Stat
+
     242745, -- [Epic] Hearty Blooming Feast       | 98 Stam, 65 Primary Stat
     266996, -- [Epic] Hearty Harandar Celebration | 98 Stam, 65 Primary Stat
     242744, -- [Epic] Hearty Quel'dorei Medley    | 98 Stam, 65 Primary Stat
@@ -195,6 +206,14 @@ Module.db.foodItemIDs = {
 
     ----------------------------------------------------------------------------
     --- Personal Food
+
+    -- 12.1.0 - Curse of Ula'tek (Season 2)
+    275263, -- [Rare] Hearty Sweet-And-Sour Skewers | Highest Secondary Stat
+    275262, -- [Rare] Hearty Puffer Plate            | Highest Secondary Stat
+    275259, -- [Rare] Hearty Venom-Spiced Cutlets    | Primary Stat
+    275261, -- [Rare] Sweet-And-Sour Skewers         | Highest Secondary Stat
+    275260, -- [Rare] Puffer Plate                   | Highest Secondary Stat
+    275258, -- [Rare] Venom-Spiced Cutlets           | Primary Stat
 
     242275, -- [Rare] Royal Roast                   | 50 Primary Stat
     242279, -- [Rare] Baked Lucky Loa               | 46 Primary Stat
@@ -541,8 +560,11 @@ Module.db.vantusBuffIDs = {
     --- Midnight
 
     -- 12.1.0 - The Venomous Abyss (Season 2)
-    -- Vantus Rune applies raid-wide. One SpellID covers all bosses.
-    [1303164] = true, -- Vantus Rune: Tides (The Venomous Abyss, EncounterID 3492)
+    -- Vantus Rune applies raid-wide. Buff aura IDs (not the item-use spells!):
+    [1303170] = true, -- Vantus Rune: Tides (Buff Aura, Rank 1)
+    [1303171] = true, -- Vantus Rune: Tides (Buff Aura, Rank 2)
+    [1303164] = true, -- Vantus Rune: Tides (Item Use Spell, Q1 — fallback)
+    [1303166] = true, -- Vantus Rune: Tides (Item Use Spell, Q2 — fallback)
 
     -- 12.0.0 - Voidspire
     [1276687] = true, [1276688] = true, -- Imperator Averzian
@@ -915,6 +937,11 @@ Module.db = Module.db or {}
 -------------------------------------------------------------------------------
 
 Module.db.potionBuffIDs = {
+    -- 12.1.0 - Midnight (Season 2)
+    [1295147] = true, -- Lustrous Gleam (Liquid Luster)
+    [1289746] = true, -- Alluring Nostrum
+    [1289744] = true, -- Concentrated Silvermoon Health Potion
+
     -- 12.0.0 - Midnight
     [1236616] = true, -- Light's Potential
     [1236998] = true, -- Draught of Rampant Abandon
@@ -1010,6 +1037,14 @@ Module.db.potionBuffIDs = {
 -------------------------------------------------------------------------------
 
 Module.db.potionItemIDs = {
+    -- 12.1.0 - Fleeting (Season 2)
+    274763, 274764, -- Fleeting Liquid Luster
+    274765, 274766, -- Fleeting Alluring Nostrum
+
+    -- 12.1.0 - Full duration (Season 2)
+    271886, 271887, -- Liquid Luster
+    271889, 271890, -- Alluring Nostrum
+
     -- 12.0.0 - Fleeting
     245916, 245917, -- Fleeting Lightfused Mana Potion
     245897, 245898, -- Fleeting Light's Potential
@@ -1070,6 +1105,7 @@ Module.db.healthstoneSpellIDs = {
 -------------------------------------------------------------------------------
 
 Module.db.healingPotionSpellIDs = {
+    [1289744] = true, -- 12.1.0: Concentrated Silvermoon Health Potion
     [1234768] = true, -- 12.0.0: Silvermoon Health Potion
     [1263074] = true, -- 12.0.0: Amani Extract
     [1236590] = true, -- 12.0.0: Refreshing Serum
@@ -1099,6 +1135,9 @@ Module.db.healingPotionSpellIDs = {
 -------------------------------------------------------------------------------
 
 Module.db.healingPotionItemIDs = {
+    -- 12.1.0 - Full duration (Season 2)
+    271883, 271884, -- Concentrated Silvermoon Health Potion
+
     -- 12.0.0 - Full duration
     241304, 241305, -- Silvermoon Health Potion
     241298, 241299, -- Amani Extract

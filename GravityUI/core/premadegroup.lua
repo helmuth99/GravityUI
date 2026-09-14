@@ -103,8 +103,11 @@ local function GetCurrentGroupMembers()
 
     local function AddUnit(unit)
         local name, realm = UnitName(unit)
+        -- TAINT FIX: UnitName/UnitClass can return secrets in M+/Raid
+        if name and issecretvalue and issecretvalue(name) then return end
         if not name or name == "" or name == UNKNOWNOBJECT then return end
         local _, class = UnitClass(unit)
+        if class and issecretvalue and issecretvalue(class) then class = nil end
         local token = class or true
         members[name] = token                              -- short form
         if realm and realm ~= "" then

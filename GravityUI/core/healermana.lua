@@ -483,18 +483,26 @@ function HM:FindHealers()
         for i = 1, GetNumGroupMembers() do
             if count >= maxH then break end
             local unit = "raid" .. i
-            if UnitExists(unit) and UnitGroupRolesAssigned(unit) == "HEALER" then
-                count = count + 1
-                self:AddHealer(unit, count)
+            if UnitExists(unit) then
+                local role = UnitGroupRolesAssigned(unit)
+                -- TAINT FIX: UnitGroupRolesAssigned can return a secret in M+/Raid
+                if role and (not issecretvalue or not issecretvalue(role)) and role == "HEALER" then
+                    count = count + 1
+                    self:AddHealer(unit, count)
+                end
             end
         end
     else
         for i = 1, 4 do
             if count >= maxH then break end
             local unit = "party" .. i
-            if UnitExists(unit) and UnitGroupRolesAssigned(unit) == "HEALER" then
-                count = count + 1
-                self:AddHealer(unit, count)
+            if UnitExists(unit) then
+                local role = UnitGroupRolesAssigned(unit)
+                -- TAINT FIX: UnitGroupRolesAssigned can return a secret in M+/Raid
+                if role and (not issecretvalue or not issecretvalue(role)) and role == "HEALER" then
+                    count = count + 1
+                    self:AddHealer(unit, count)
+                end
             end
         end
     end

@@ -87,7 +87,8 @@ local function BuildMacro()
             local u = "raid" .. i
             if UnitExists(u) then
                 local n = UnitName(u)
-                if n then currentRaidNames[n] = true end
+                -- TAINT FIX: UnitName can return a secret in M+/Raid
+                if n and (not issecretvalue or not issecretvalue(n)) then currentRaidNames[n] = true end
             end
         end
 
@@ -123,8 +124,11 @@ local function BuildMacro()
         for _, unit in ipairs(units) do
             if UnitExists(unit) then
                 local role = UnitGroupRolesAssigned(unit)
+                -- TAINT FIX: UnitGroupRolesAssigned/UnitName can return secrets in M+/Raid
+                if role and issecretvalue and issecretvalue(role) then role = nil end
                 local name = UnitName(unit)
-                local mark = pdb.dungeon[role]
+                if name and issecretvalue and issecretvalue(name) then name = nil end
+                local mark = role and pdb.dungeon[role]
                 if mark and mark > 0 and name then
                     if UnitIsUnit(unit, "player") then
                         macro = macro .. "/target player\n/tm " .. mark .. "\n"
@@ -217,8 +221,12 @@ local function CreateMarkButton()
                 if IsInRaid() then
                     for i = 1, GetNumGroupMembers() do
                         local u = "raid" .. i
-                        if UnitExists(u) and UnitName(u) == a.name then
-                            unitID = u; break
+                        if UnitExists(u) then
+                            -- TAINT FIX: UnitName can return a secret in M+/Raid
+                            local n = UnitName(u)
+                            if n and (not issecretvalue or not issecretvalue(n)) and n == a.name then
+                                unitID = u; break
+                            end
                         end
                     end
                 else
@@ -227,8 +235,12 @@ local function CreateMarkButton()
                     else
                         for i = 1, GetNumSubgroupMembers() do
                             local u = "party" .. i
-                            if UnitExists(u) and UnitName(u) == a.name then
-                                unitID = u; break
+                            if UnitExists(u) then
+                                -- TAINT FIX: UnitName can return a secret in M+/Raid
+                                local n = UnitName(u)
+                                if n and (not issecretvalue or not issecretvalue(n)) and n == a.name then
+                                    unitID = u; break
+                                end
                             end
                         end
                     end
@@ -357,7 +369,8 @@ eventFrame:SetScript("OnEvent", function(_, event)
                     local u = "raid" .. i
                     if UnitExists(u) then
                         local n = UnitName(u)
-                        if n then currentNames[n] = true end
+                        -- TAINT FIX: UnitName can return a secret in M+/Raid
+                        if n and (not issecretvalue or not issecretvalue(n)) then currentNames[n] = true end
                     end
                 end
                 for savedName in pairs(pdb.raid.players) do

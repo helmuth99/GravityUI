@@ -238,7 +238,8 @@ local function UpdateButtonCooldowns(frame)
             end
 
             if isCooldown then
-                btn.cd:SetCooldown(start, duration)
+                -- TAINT FIX: start/duration from C_Spell.GetSpellCooldown can be secret in 12.1.5
+                pcall(btn.cd.SetCooldown, btn.cd, start, duration)
                 btn.cd:SetHideCountdownNumbers(false)
                 btn.icon:SetDesaturated(true)
                 btn.icon:SetAlpha(0.6)
@@ -442,19 +443,26 @@ function MPlusTeleport:UpdateGroupKeys()
                     local unit = (IsInRaid() and "raid"..i) or "party"..i
                     if i > num then break end
                     if not UnitIsUnit(unit, "player") then
-                        local name = Ambiguate(UnitName(unit) or "", "short")
-                        if name ~= "" then
-                            local _, class = UnitClass(unit)
-                            local kd = groupKeys[name]
-                            -- Show all group members; kd may be nil for players without a compatible addon
-                            table.insert(data, {
-                                name     = name,
-                                mapID    = kd and kd.mapID or nil,
-                                level    = kd and kd.level or nil,
-                                isLeader = UnitIsGroupLeader(unit),
-                                class    = class,
-                                noKey    = (kd == nil), -- true = no addon response yet
-                            })
+                        local rawName = UnitName(unit)
+                        -- TAINT FIX: UnitName/UnitClass/UnitIsGroupLeader can return secrets in M+/Raid
+                        if rawName and (not issecretvalue or not issecretvalue(rawName)) then
+                            local name = Ambiguate(rawName or "", "short")
+                            if name ~= "" then
+                                local _, class = UnitClass(unit)
+                                if class and issecretvalue and issecretvalue(class) then class = nil end
+                                local leader = UnitIsGroupLeader(unit)
+                                if leader and issecretvalue and issecretvalue(leader) then leader = false end
+                                local kd = groupKeys[name]
+                                -- Show all group members; kd may be nil for players without a compatible addon
+                                table.insert(data, {
+                                    name     = name,
+                                    mapID    = kd and kd.mapID or nil,
+                                    level    = kd and kd.level or nil,
+                                    isLeader = leader,
+                                    class    = class,
+                                    noKey    = (kd == nil), -- true = no addon response yet
+                                })
+                            end
                         end
                     end
                 end
