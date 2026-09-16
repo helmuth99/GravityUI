@@ -1095,9 +1095,31 @@ local function BuildPlayerMarks(parent)
 
     -- Clear All Marks button (raid only — M+ role marks are persistent)
     local clearBtn = GUI:CreateButton(content, "Clear All Marks", 120, 22, function()
+        -- 1. Clear saved assignments
         wipe(pdb.raid.players)
         wipe(pdb.raid.customTargets)
-        print("|cFF30D1FF[GravityUI]|r Raid player marks and custom targets cleared.")
+
+        -- 2. Remove actual in-game raid target icons from all group members
+        if CanSetMarks() then
+            if IsInRaid() then
+                for i = 1, GetNumGroupMembers() do
+                    local u = "raid" .. i
+                    if UnitExists(u) then
+                        pcall(SetRaidTarget, u, 0)
+                    end
+                end
+            else
+                pcall(SetRaidTarget, "player", 0)
+                for i = 1, GetNumSubgroupMembers() do
+                    local u = "party" .. i
+                    if UnitExists(u) then
+                        pcall(SetRaidTarget, u, 0)
+                    end
+                end
+            end
+        end
+
+        print("|cFF30D1FF[GravityUI]|r All player marks cleared (saved + in-game icons).")
         BuildPlayerMarks(parent)
     end)
     clearBtn:SetPoint("LEFT", refreshBtn, "RIGHT", 8, 0)

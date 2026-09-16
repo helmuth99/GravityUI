@@ -153,7 +153,8 @@ local function GetSlotItemLevel(unit, slotId, itemLink)
     -- 3. Parse tooltip for ACTUAL displayed ilvl (Auth Fallback - Heavy)
     if C_TooltipInfo and C_TooltipInfo.GetInventoryItem then
         local tooltipData = C_TooltipInfo.GetInventoryItem(unit, slotId)
-        if tooltipData and tooltipData.lines then
+        if tooltipData then
+            if TooltipUtil and TooltipUtil.SurfaceArgs then TooltipUtil.SurfaceArgs(tooltipData) end
             for _, line in ipairs(tooltipData.lines) do
                 local text = line.leftText or ""
                 local tooltipIlvl = text:match(ILVL_PATTERN)
@@ -212,19 +213,49 @@ local function GetEnchantText(unit, slotId)
         end
     end
 
-    -- Scan tooltip
+    -- PRIMARY: Extract enchantID directly from item link (locale-independent, no tooltip needed)
+    -- ItemLink format: |Hitem:itemID:enchantID:gem1:gem2:gem3:gem4:...|h[Name]|h
+    local enchantID = itemLink:match("item:%d+:(%d+)")
+    enchantID = tonumber(enchantID)
+    if enchantID and enchantID > 0 then
+        -- We know it's enchanted. Try to get the name from tooltip for display.
+        local data = C_TooltipInfo.GetInventoryItem(unit, slotId)
+        if data then
+            if TooltipUtil and TooltipUtil.SurfaceArgs then
+                TooltipUtil.SurfaceArgs(data)
+            end
+            if data.lines then
+                for _, line in ipairs(data.lines) do
+                    if line.leftText then
+                        local text = line.leftText
+                        if text:match(ENCHANTED_PREFIX) or text:match(ENCHANT_PREFIX) or text:match(SCOPE_PREFIX) then
+                            local enchant = text:gsub("Enchanted: ", ""):gsub("Enchant: ", ""):gsub("Scope: ", "")
+                            enchant = enchant:gsub("^Enchant%s+.-%s*%-%s*", "")
+                            return enchant, true
+                        end
+                    end
+                end
+            end
+        end
+        -- EnchantID exists but couldn't resolve name — still mark as enchanted
+        return "Enchant #" .. enchantID, true
+    end
+
+    -- FALLBACK: Tooltip scan (for edge cases where enchantID might be 0 but tooltip shows enchant)
     local data = C_TooltipInfo.GetInventoryItem(unit, slotId)
-    if data and data.lines then
-        for _, line in ipairs(data.lines) do
-            -- Type 2 = Enchant (usually), but scanning text is safer
-            if line.leftText then 
-                local text = line.leftText
-                -- Detect "Enchanted: +Stat" or just "+Stat" or "Scope"
-                if text:match(ENCHANTED_PREFIX) or text:match(ENCHANT_PREFIX) or text:match(SCOPE_PREFIX) then
-                     local enchant = text:gsub("Enchanted: ", ""):gsub("Enchant: ", ""):gsub("Scope: ", "")
-                     -- Strip "Enchant SlotType - " prefix (e.g. "Enchant Helm - ", "Enchant Ring - ")
-                     enchant = enchant:gsub("^Enchant%s+.-%s*%-%s*", "")
-                     return enchant, true
+    if data then
+        if TooltipUtil and TooltipUtil.SurfaceArgs then
+            TooltipUtil.SurfaceArgs(data)
+        end
+        if data.lines then
+            for _, line in ipairs(data.lines) do
+                if line.leftText then 
+                    local text = line.leftText
+                    if text:match(ENCHANTED_PREFIX) or text:match(ENCHANT_PREFIX) or text:match(SCOPE_PREFIX) then
+                         local enchant = text:gsub("Enchanted: ", ""):gsub("Enchant: ", ""):gsub("Scope: ", "")
+                         enchant = enchant:gsub("^Enchant%s+.-%s*%-%s*", "")
+                         return enchant, true
+                    end
                 end
             end
         end
@@ -245,6 +276,7 @@ local UPGRADE_TRACK_PATTERN_ALT = ": (.+)%s+(%d+)%s*/%s*(%d+)"
 local function GetUpgradeTrack(unit, slotId)
     if not C_TooltipInfo or not C_TooltipInfo.GetInventoryItem then return nil, nil, nil end
     local tooltipData = C_TooltipInfo.GetInventoryItem(unit, slotId)
+    if tooltipData and TooltipUtil and TooltipUtil.SurfaceArgs then TooltipUtil.SurfaceArgs(tooltipData) end
     if not tooltipData or not tooltipData.lines then return nil, nil, nil end
     for _, line in ipairs(tooltipData.lines) do
         local text = line.leftText or ""
@@ -264,6 +296,7 @@ local function GetGemInfo(unit, slotId)
 
     -- Count sockets via tooltip
     local data = C_TooltipInfo.GetInventoryItem(unit, slotId)
+    if data and TooltipUtil and TooltipUtil.SurfaceArgs then TooltipUtil.SurfaceArgs(data) end
     if data and data.lines then
         for _, line in ipairs(data.lines) do
             if line.type == 3 then totalSockets = totalSockets + 1 end
