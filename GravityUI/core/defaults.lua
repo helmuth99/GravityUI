@@ -1519,6 +1519,7 @@ ns.Defaults = {
         openOnRightClick = true,
         showVault = true,
         showPrey = true,
+        showDelves = true,
         showMPlus = true,
         showRaids = true,
         showCurrencies = true,

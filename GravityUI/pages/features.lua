@@ -536,6 +536,7 @@ local function BuildAltManager(parent)
             openOnRightClick = true,
             showVault = true,
             showPrey = true,
+            showDelves = true,
             showMPlus = true,
             showRaids = true,
             showCurrencies = true,
@@ -581,6 +582,7 @@ local function BuildAltManager(parent)
     CreateSubLabel(content, "Display & Filter")
     AddRow(content, "Show Great Vault Status", "checkbox", "showVault", c, refreshDashboard)
     AddRow(content, "Show Prey Hunts", "checkbox", "showPrey", c, refreshDashboard)
+    AddRow(content, "Show Delves (Bounty Map)", "checkbox", "showDelves", c, refreshDashboard)
     AddRow(content, "Show Mythic+ Dungeons", "checkbox", "showMPlus", c, refreshDashboard)
     AddRow(content, "Show Raid Lockouts", "checkbox", "showRaids", c, refreshDashboard)
     AddRow(content, "Show Currencies (Crests/Valor)", "checkbox", "showCurrencies", c, refreshDashboard)

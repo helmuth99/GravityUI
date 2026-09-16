@@ -319,6 +319,48 @@ function Data:UpdateMythicPlus()
 end
 
 -- ============================================================================
+-- DIFFICULTY ID → KEY MAPPING (Locale-Independent)
+-- Comprehensive numeric lookup covering all known raid difficulty IDs.
+-- This ensures correct difficulty detection on ALL client languages.
+-- ============================================================================
+local DIFFICULTY_TO_KEY = {
+    -- Standard Modern Raid Difficulties
+    [14]  = "Normal",   -- Normal Raid
+    [15]  = "Heroic",   -- Heroic Raid
+    [16]  = "Mythic",   -- Mythic Raid
+    [17]  = "LFR",      -- Looking For Raid
+    -- Fated / Special Season Variants
+    [233] = "Mythic",   -- Fated Mythic (Dragonflight)
+    [232] = "Heroic",   -- Fated Heroic (Dragonflight)
+    [231] = "Normal",   -- Fated Normal (Dragonflight)
+    [230] = "LFR",      -- Fated LFR (Dragonflight)
+    -- Timewalking Raid
+    [151] = "Normal",   -- Timewalking Raid (maps to Normal-equivalent loot)
+    -- Legacy (not commonly encountered, but safe to map)
+    [3]   = "Normal",   -- 10-Player Normal (legacy)
+    [4]   = "Normal",   -- 25-Player Normal (legacy)
+    [5]   = "Heroic",   -- 10-Player Heroic (legacy)
+    [6]   = "Heroic",   -- 25-Player Heroic (legacy)
+    [7]   = "LFR",      -- Legacy LFR (25)
+}
+
+-- Fallback: Use GetDifficultyInfo() API to determine diffKey from flags.
+-- This is locale-independent and works for any difficulty ID not in our table.
+local function GetDiffKeyFromAPI(difficultyID)
+    if not GetDifficultyInfo then return nil end
+    local name, groupType, isHeroic, isChallengeMode, displayHeroic, displayMythic, toggleDifficultyID = GetDifficultyInfo(difficultyID)
+    if not name then return nil end
+    if displayMythic or isChallengeMode then return "Mythic" end
+    if isHeroic or displayHeroic then return "Heroic" end
+    -- LFR detection: groupType "raid" + not heroic + not mythic + difficultyID is one of the LFR types
+    -- Unfortunately GetDifficultyInfo doesn't have an explicit "isLFR" flag,
+    -- so we check if it's a raid that isn't heroic/mythic and has a specific toggleDifficultyID pattern
+    if difficultyID == 17 or difficultyID == 230 or difficultyID == 7 then return "LFR" end
+    -- Default for unrecognized raid difficulties: Normal
+    return "Normal"
+end
+
+-- ============================================================================
 -- SEASON RAIDS & ENCOUNTERS
 -- ============================================================================
 local SEASON_RAIDS = {
@@ -416,14 +458,25 @@ function Data:UpdateRaidLockouts()
             local diffKey = nil
             local baseDiff = (DifficultyUtil and DifficultyUtil.GetBaseDifficultyID and DifficultyUtil.GetBaseDifficultyID(difficulty)) or difficulty
 
-            if baseDiff == 14 or (diffName and (diffName:find("Normal") or diffName:find("normal"))) then
-                diffKey = "Normal"
-            elseif baseDiff == 15 or (diffName and (diffName:find("Heroic") or diffName:find("heroisch"))) then
-                diffKey = "Heroic"
-            elseif baseDiff == 16 or baseDiff == 233 or (diffName and (diffName:find("Mythic") or diffName:find("mythisch"))) then
-                diffKey = "Mythic"
-            elseif baseDiff == 17 or (diffName and (diffName:find("LFR") or diffName:find("Schlachtzugsbrowser") or diffName:find("Looking For Raid"))) then
-                diffKey = "LFR"
+            -- Tier 1: Comprehensive numeric ID lookup (locale-independent, fastest)
+            diffKey = DIFFICULTY_TO_KEY[baseDiff]
+
+            -- Tier 2: GetDifficultyInfo API flags (locale-independent fallback)
+            if not diffKey then
+                diffKey = GetDiffKeyFromAPI(baseDiff)
+            end
+
+            -- Tier 3: Legacy string fallback (EN/DE, kept for safety — never remove)
+            if not diffKey and diffName then
+                if diffName:find("Normal") or diffName:find("normal") then
+                    diffKey = "Normal"
+                elseif diffName:find("Heroic") or diffName:find("heroisch") then
+                    diffKey = "Heroic"
+                elseif diffName:find("Mythic") or diffName:find("mythisch") then
+                    diffKey = "Mythic"
+                elseif diffName:find("LFR") or diffName:find("Schlachtzugsbrowser") or diffName:find("Looking For Raid") then
+                    diffKey = "LFR"
+                end
             end
 
             if diffKey and alt.raids[diffKey] and alt.raids[diffKey].bosses then
@@ -643,6 +696,38 @@ function Data:CheckWeeklyReset()
     end
 end
 
+-- ============================================================================
+-- DELVE MAP TRACKING (Trovehunter's Bounty)
+-- ============================================================================
+local DELVE_MAP_ITEM_IDS = {
+    [228942] = true,  -- Trovehunter's Bounty (primary)
+    [233116] = true,  -- Trovehunter's Bounty (variant)
+}
+
+function Data:UpdateDelveMap()
+    local alt = self:GetOrCreateCurrentAlt()
+    if not alt then return end
+
+    alt.delveMap = alt.delveMap or { hasMap = false, mapCount = 0 }
+    alt.delveMap.hasMap = false
+    alt.delveMap.mapCount = 0
+
+    if not C_Container or not C_Container.GetContainerNumSlots then return end
+
+    for bag = 0, 4 do
+        local numSlots = C_Container.GetContainerNumSlots(bag) or 0
+        for slot = 1, numSlots do
+            local itemID = C_Container.GetContainerItemID(bag, slot)
+            if itemID and DELVE_MAP_ITEM_IDS[itemID] then
+                local itemInfo = C_Container.GetContainerItemInfo(bag, slot)
+                local count = (itemInfo and itemInfo.stackCount) or 1
+                alt.delveMap.mapCount = alt.delveMap.mapCount + count
+                alt.delveMap.hasMap = true
+            end
+        end
+    end
+end
+
 function Data:UpdateAll()
     self:CheckWeeklyReset()
     self:UpdateCharacterInfo()
@@ -652,6 +737,7 @@ function Data:UpdateAll()
     self:UpdateMythicPlus()
     self:UpdateRaidLockouts()
     self:UpdateCurrencies()
+    self:UpdateDelveMap()
 end
 
 -- ============================================================================
@@ -867,7 +953,7 @@ eventFrame:SetScript("OnEvent", function(self, event, arg1, ...)
     elseif event == "CHAT_MSG_LOOT" then
         local msg = arg1
         local db = GetDB()
-        if db and db.announceParty and msg and (msg:find("keystone:") or msg:find("item:180653") or msg:find("item:151086") or msg:find("item:229645") or msg:find("Schlüsselstein") or msg:find("Keystone")) then
+        if db and db.announceParty and msg and (msg:find("keystone:") or msg:find("item:180653") or msg:find("item:151086") or msg:find("item:229645")) then
             local link = msg:match("(|c%x+|Hitem:[^|]+|h%[[^%]]+%]%|h|r)") or msg:match("(|c%x+|Hkeystone:[^|]+|h%[[^%]]+%]%|h|r)")
             if link then
                 local channel = (IsInRaid() and "RAID") or (IsInGroup() and "PARTY") or nil

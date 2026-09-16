@@ -205,6 +205,15 @@ local function QuietlyHideBlizzButton(btn)
     btn:UnregisterAllEvents()
     btn:SetAttributeNoHandler("statehidden", true)
 
+    -- Neuter mixin methods that cause taint when events re-fire on stock buttons.
+    -- Even though we UnregisterAllEvents, Blizzard can re-register events during
+    -- vehicle transitions or broadcaster mode changes.  Without this, the chain
+    -- OnEvent → UpdateAction → Update → UpdatePressAndHoldAction → SetAttribute()
+    -- fires in our tainted context and triggers ADDON_ACTION_BLOCKED.
+    if btn.UpdatePressAndHoldAction then btn.UpdatePressAndHoldAction = function() end end
+    if btn.UpdateAction then btn.UpdateAction = function() end end
+    if btn.Update then btn.Update = function() end end
+
     -- Remove from Blizzard's broadcaster .frames list.
     -- The broadcaster dispatches events to ALL buttons in this list;
     -- UnregisterAllEvents() on the button itself is insufficient because
@@ -2544,6 +2553,68 @@ local function HideStockBars()
     if StatusTrackingBarManager and db and not db.useBlizzardDataBars then
         StatusTrackingBarManager:SetParent(hiddenParent)
     end
+
+    -- Create a custom Vehicle Leave Button.
+    -- Blizzard's MainMenuBarVehicleLeaveButton is a child of MainMenuBar which
+    -- we just hid. Reparenting it is fragile (Blizzard re-hides it internally).
+    -- Instead, we create our own SecureActionButton with VehicleExit().
+    if not _G["GravityUI_VehicleLeaveButton"] then
+        local vlb = CreateFrame("Button", "GravityUI_VehicleLeaveButton", UIParent, "SecureActionButtonTemplate, BackdropTemplate")
+        vlb:SetSize(32, 32)
+        vlb:SetPoint("BOTTOM", UIParent, "BOTTOM", 280, 40)
+        vlb:SetFrameStrata("HIGH")
+        vlb:SetFrameLevel(100)
+        vlb:SetMovable(true)
+        vlb:SetClampedToScreen(true)
+        vlb:RegisterForClicks("AnyUp", "AnyDown")
+
+        -- Secure macro: /leavevehicle handles all vehicle types through the
+        -- secure execution path (VehicleExit is a protected API that can't
+        -- be called via CallMethod without breaking the secure chain)
+        vlb:SetAttribute("type", "macro")
+        vlb:SetAttribute("macrotext", "/leavevehicle")
+
+        -- Visual: Dark backdrop with accent-colored icon
+        vlb:SetBackdrop({
+            bgFile = "Interface\\Buttons\\WHITE8x8",
+            edgeFile = "Interface\\Buttons\\WHITE8x8",
+            edgeSize = 1,
+        })
+        vlb:SetBackdropColor(0.08, 0.08, 0.12, 0.9)
+        vlb:SetBackdropBorderColor(0.3, 0.3, 0.4, 1)
+
+        local icon = vlb:CreateTexture(nil, "ARTWORK")
+        icon:SetSize(20, 20)
+        icon:SetPoint("CENTER")
+        icon:SetTexture("Interface\\Vehicles\\UI-Vehicles-Button-Exit-Up")
+        icon:SetTexCoord(0.14, 0.86, 0.14, 0.86)
+        vlb.icon = icon
+
+        vlb:SetScript("OnEnter", function(self)
+            self:SetBackdropBorderColor(1, 0.3, 0.3, 1)
+            self.icon:SetVertexColor(1, 0.4, 0.4, 1)
+            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+            GameTooltip:SetText(LEAVE_VEHICLE or "Leave Vehicle", 1, 1, 1)
+            GameTooltip:Show()
+        end)
+        vlb:SetScript("OnLeave", function(self)
+            self:SetBackdropBorderColor(0.3, 0.3, 0.4, 1)
+            self.icon:SetVertexColor(1, 1, 1, 1)
+            GameTooltip:Hide()
+        end)
+
+        -- Restore saved position
+        local barDB = db and db.bars and db.bars.VehicleLeave
+        if barDB and barDB.position then
+            local pos = barDB.position
+            vlb:ClearAllPoints()
+            vlb:SetPoint(pos.point or "BOTTOM", UIParent, pos.relativePoint or "BOTTOM", pos.x or 280, pos.y or 40)
+        end
+
+        -- State driver: [canexitvehicle] covers ALL vehicle types including
+        -- carriages/taxis that don't trigger [vehicleui]
+        RegisterStateDriver(vlb, "visibility", "[canexitvehicle] show; [vehicleui] show; [possessbar] show; [overridebar] show; hide")
+    end
 end
 
 -------------------------------------------------------------------------------
@@ -2564,6 +2635,14 @@ local function RestoreStockBars()
         end
     end
 
+    -- Remove custom vehicle leave button when restoring stock bars
+    local vlb = _G["GravityUI_VehicleLeaveButton"]
+    if vlb then
+        UnregisterStateDriver(vlb, "visibility")
+        vlb:Hide()
+        vlb:SetParent(hiddenParent)
+    end
+
     -- Restore Blizzard action buttons to broadcaster and re-enable their events
     for _, info in ipairs(BAR_CONFIG) do
         if info.blizzBtnPrefix and not info.isStance and not info.isPetBar then
@@ -2572,6 +2651,14 @@ local function RestoreStockBars()
                 if btn then
                     -- Clear our statehidden flag
                     btn:SetAttributeNoHandler("statehidden", nil)
+
+                    -- Restore neutered mixin methods from Blizzard's ActionButtonMixin
+                    local mixin = ActionButtonMixin
+                    if mixin then
+                        if mixin.UpdatePressAndHoldAction then btn.UpdatePressAndHoldAction = mixin.UpdatePressAndHoldAction end
+                        if mixin.UpdateAction then btn.UpdateAction = mixin.UpdateAction end
+                        if mixin.Update then btn.Update = mixin.Update end
+                    end
 
                     -- Re-add to Blizzard's broadcaster .frames list
                     if ActionBarButtonEventsFrame and type(ActionBarButtonEventsFrame.frames) == "table" then
@@ -3164,6 +3251,49 @@ function ns.RefreshActionBars()
             )
         end)
     end
+
+    -- Register Vehicle Leave Button for mover system
+    C_Timer.After(0.6, function()
+        if InCombatLockdown() then return end
+        local vlb = _G["GravityUI_VehicleLeaveButton"]
+        if vlb and ns.Movers and ns.Movers.Register then
+            vlb._gravityOnMoveStop = function()
+                if InCombatLockdown() then return end
+                local point, _, relPoint, x, y = vlb:GetPoint()
+                if point then
+                    if not db.bars then db.bars = {} end
+                    if not db.bars.VehicleLeave then db.bars.VehicleLeave = {} end
+                    db.bars.VehicleLeave.position = {
+                        point = point,
+                        relativePoint = relPoint,
+                        x = math.floor(x + 0.5),
+                        y = math.floor(y + 0.5),
+                    }
+                end
+            end
+
+            local VLB_STATE_DRIVER = "[canexitvehicle] show; [vehicleui] show; [possessbar] show; [overridebar] show; hide"
+
+            ns.Movers:Register(
+                "ActionBar_VehicleLeave",
+                vlb,
+                function(frame, show, editActive)
+                    if not frame or InCombatLockdown() then return end
+                    if show then
+                        -- Edit mode: unregister state driver so button stays visible
+                        UnregisterStateDriver(frame, "visibility")
+                        frame:Show()
+                    else
+                        -- Exiting edit mode: re-register state driver
+                        RegisterStateDriver(frame, "visibility", VLB_STATE_DRIVER)
+                    end
+                end,
+                "Vehicle Leave Button",
+                function() return true end,
+                nil
+            )
+        end
+    end)
 end
 
 -------------------------------------------------------------------------------

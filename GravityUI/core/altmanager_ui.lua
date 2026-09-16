@@ -313,6 +313,24 @@ local function ShowPreyTooltip(anchor, alt, preyKey)
     GameTooltip:Show()
 end
 
+local function ShowDelveMapTooltip(anchor, alt)
+    if not alt then return end
+    GameTooltip:SetOwner(anchor, "ANCHOR_RIGHT")
+    GameTooltip:ClearLines()
+    GameTooltip:SetText("Trovehunter's Bounty", 1, 0.82, 0)
+
+    local dm = alt.delveMap
+    if dm and dm.hasMap then
+        GameTooltip:AddDoubleLine("Status:", string.format("|cff4ade80%d in Bags|r", dm.mapCount or 1), 1, 0.82, 0, 1, 1, 1)
+    else
+        GameTooltip:AddDoubleLine("Status:", "|cff888888None|r", 1, 0.82, 0, 1, 1, 1)
+    end
+
+    GameTooltip:AddLine(" ")
+    GameTooltip:AddLine("A consumable map that grants a bonus chest with Hero-track gear at the end of a Tier 8+ Delve.", 0.75, 0.75, 0.75, true)
+    GameTooltip:Show()
+end
+
 local function ShowDungeonTooltip(anchor, dungeon)
     if not dungeon then return end
     GameTooltip:SetOwner(anchor, "ANCHOR_RIGHT")
@@ -423,6 +441,12 @@ local function BuildRowDefinitions()
         rows[#rows + 1] = { id = "prey_normal",    label = "Normal",    category = "prey", preyKey = "normal" }
         rows[#rows + 1] = { id = "prey_hard",      label = "Hard",      category = "prey", preyKey = "hard" }
         rows[#rows + 1] = { id = "prey_nightmare", label = "Nightmare", category = "prey", preyKey = "nightmare" }
+    end
+
+    -- 3b. Delves Section
+    if not db or db.showDelves ~= false then
+        rows[#rows + 1] = { type = "header", label = "Delves" }
+        rows[#rows + 1] = { id = "delve_map", label = "Bounty Map", icon = 5927654, category = "delve_map" }
     end
 
     -- 4. Dungeons Section (Season 18 / Current Season Dungeons)
@@ -934,6 +958,10 @@ local function OnEnterCellPrey(self)
     ShowPreyTooltip(self, self.altRef, self.rowDef.preyKey)
     SetRowHover(self.rowIdx, true)
 end
+local function OnEnterCellDelveMap(self)
+    ShowDelveMapTooltip(self, self.altRef)
+    SetRowHover(self.rowIdx, true)
+end
 local function OnEnterCellDungeon(self)
     ShowDungeonTooltip(self, self.rowDef.dungeon)
     SetRowHover(self.rowIdx, true)
@@ -1263,6 +1291,21 @@ function UI:Refresh()
                     cell.text:SetText("|cff666666-|r")
                 end
                 cell:SetScript("OnEnter", OnEnterCellPrey)
+                cell:SetScript("OnLeave", OnLeaveCellGeneric)
+
+            elseif row.category == "delve_map" then
+                cell.text:ClearAllPoints(); cell.text:SetPoint("CENTER")
+                local dm = alt.delveMap
+                if dm and dm.hasMap then
+                    if dm.mapCount > 1 then
+                        cell.text:SetText(string.format("|cff4ade80\226\156\147 %d|r", dm.mapCount))
+                    else
+                        cell.text:SetText("|cff4ade80\226\156\147|r")
+                    end
+                else
+                    cell.text:SetText("|cff666666-|r")
+                end
+                cell:SetScript("OnEnter", OnEnterCellDelveMap)
                 cell:SetScript("OnLeave", OnLeaveCellGeneric)
 
             elseif row.category == "dungeon" then
