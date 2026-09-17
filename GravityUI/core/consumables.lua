@@ -1826,7 +1826,8 @@ local function scanPlayerAuras(buttons, now)
             isRune = true
             if remaining <= 300 then runeExpiring = true end
 
-        elseif Module.db.vantusBuffIDs[sid] then
+        elseif Module.db.vantusBuffIDs[sid]
+               or (auraData.name and auraData.name:find("Vantus", 1, true)) then
             local name = auraData.name or ""
             isVantus = name:gsub("^Vantus Rune: ", "")
         end
@@ -3172,7 +3173,10 @@ local function scanMemberAuras(unit, now)
                         result.runeIconID = aura.icon
                     end
 
-                    if not result.hasVantus and db.vantusBuffIDs[sid] then
+                    if not result.hasVantus
+                       and (db.vantusBuffIDs[sid]
+                            or (aura.name and aura.name:find("Vantus", 1, true)))
+                    then
                         result.hasVantus    = true
                         result.vantusAuraID = aura.auraInstanceID
                         result.vantusIconID = aura.icon

@@ -1100,7 +1100,7 @@ local function BuildPlayerMarks(parent)
         wipe(pdb.raid.customTargets)
 
         -- 2. Remove actual in-game raid target icons from all group members
-        if CanSetMarks() then
+        if ns.PlayerMarks.CanSetMarks() then
             if IsInRaid() then
                 for i = 1, GetNumGroupMembers() do
                     local u = "raid" .. i
