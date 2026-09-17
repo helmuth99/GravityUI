@@ -2089,6 +2089,171 @@ SlashCmdList["GRAVITYBONUSROLL"] = function(msg)
     end
 end
 
+---------------------------------------------------------------------------
+-- BONUS ROLL CONFIRM: SAFETY PROMPT BEFORE USING A BONUS ROLL
+--
+-- Intercepts the Roll / Pass buttons on BonusRollFrame and shows a
+-- StaticPopup confirmation dialog. The Roll popup displays the player's
+-- current loot specialization so they can double-check before spending.
+--
+-- Settings (db.uiimprovements.bonusRollConfirm):
+--   .enabled           – master toggle
+--   .passPromptEnabled  – also prompt when passing
+---------------------------------------------------------------------------
+
+-- Static popup definitions
+StaticPopupDialogs["GRAVITYUI_BONUS_ROLL_CONFIRM"] = {
+    text = "|cFF30D1FFGravityUI|r\n\nAre you sure you want to use a |cffFFCC00Bonus Roll|r?\n\nLoot spec: |cffffd100%s|r",
+    button1 = "Confirm",
+    button2 = "Cancel",
+    OnAccept = nil,
+    OnCancel = function()
+        print("|cFF30D1FFGravityUI:|r Bonus roll cancelled.")
+    end,
+    timeout = 0,
+    whileDead = false,
+    hideOnEscape = true,
+    preferredIndex = 3,
+}
+
+StaticPopupDialogs["GRAVITYUI_BONUS_PASS_CONFIRM"] = {
+    text = "|cFF30D1FFGravityUI|r\n\nAre you sure you want to |cffFF6666pass|r on this bonus roll?",
+    button1 = "Confirm",
+    button2 = "Cancel",
+    OnAccept = nil,
+    OnCancel = function()
+        print("|cFF30D1FFGravityUI:|r Pass cancelled.")
+    end,
+    timeout = 0,
+    whileDead = false,
+    hideOnEscape = true,
+    preferredIndex = 3,
+}
+
+-- Returns the player's current loot spec name for the confirmation prompt
+local function BRC_LootSpecText()
+    local specID = GetLootSpecialization and GetLootSpecialization()
+    if specID and specID > 0 then
+        local _, name = GetSpecializationInfoByID(specID)
+        if name then return name end
+    else
+        local index = GetSpecialization and GetSpecialization()
+        if index then
+            local _, name = GetSpecializationInfo(index)
+            if name then return name .. " (current spec)" end
+        end
+    end
+    return "Unknown"
+end
+
+local brcHooked = false
+
+local function BRC_GetSettings()
+    local db = ns.GetDB and ns.GetDB()
+    return db and db.uiimprovements and db.uiimprovements.bonusRollConfirm
+end
+
+local function BRC_HookButton(btn, isRoll)
+    if not btn or btn._brcHooked then return end
+    btn._brcHooked = true
+
+    local originalOnClick = btn:GetScript("OnClick")
+    if not originalOnClick then return end
+
+    local dialog     = isRoll and "GRAVITYUI_BONUS_ROLL_CONFIRM" or "GRAVITYUI_BONUS_PASS_CONFIRM"
+    local confirmMsg = isRoll and "|cFF30D1FFGravityUI:|r Bonus roll used." or "|cFF30D1FFGravityUI:|r Bonus roll passed."
+
+    btn:SetScript("OnClick", function(self, button, down)
+        local cfg = BRC_GetSettings()
+        -- If disabled, or pass-prompt disabled for the pass button, just run original
+        if not cfg or not cfg.enabled then
+            originalOnClick(self, button, down)
+            return
+        end
+        if not isRoll and not cfg.passPromptEnabled then
+            originalOnClick(self, button, down)
+            return
+        end
+
+        -- Show confirmation popup
+        StaticPopupDialogs[dialog].OnAccept = function()
+            originalOnClick(self, button, down)
+            print(confirmMsg)
+        end
+        StaticPopup_Show(dialog, isRoll and BRC_LootSpecText() or nil)
+    end)
+end
+
+local function BRC_HookRollFrame()
+    if brcHooked then return end
+    if not BonusRollFrame then return end
+
+    -- Try known named paths for the roll button
+    local rollBtn = (BonusRollFrame.PromptFrame and BonusRollFrame.PromptFrame.RollButton)
+                 or BonusRollFrame.RollButton
+
+    -- Iterate children and hook buttons
+    local function HookChildren(frame)
+        for i = 1, frame:GetNumChildren() do
+            local child = select(i, frame:GetChildren())
+            if child:IsObjectType("Button") then
+                local isRoll = (child == rollBtn)
+                BRC_HookButton(child, isRoll)
+            end
+            HookChildren(child)
+        end
+    end
+
+    HookChildren(BonusRollFrame)
+    brcHooked = true
+end
+
+-- Hook into BONUS_ROLL_STARTED + BonusRollFrame_StartBonusRoll
+local brcInitFrame = CreateFrame("Frame")
+brcInitFrame:RegisterEvent("ADDON_LOADED")
+brcInitFrame:RegisterEvent("BONUS_ROLL_STARTED")
+brcInitFrame:SetScript("OnEvent", function(self, event, arg1)
+    if event == "ADDON_LOADED" and arg1 == ADDON_NAME then
+        BRC_HookRollFrame()
+        if BonusRollFrame_StartBonusRoll and not brcHooked then
+            hooksecurefunc("BonusRollFrame_StartBonusRoll", BRC_HookRollFrame)
+        end
+    elseif event == "BONUS_ROLL_STARTED" then
+        BRC_HookRollFrame()
+    end
+end)
+
+-- Expose for features page test button
+ns.BonusRollConfirm = {
+    LootSpecText = BRC_LootSpecText,
+    TestRollConfirm = function()
+        local cfg = BRC_GetSettings()
+        if not cfg or not cfg.enabled then
+            print("|cFF30D1FFGravityUI:|r Bonus Roll Security is disabled. Enable it in Features > Bonus Roll.")
+            return
+        end
+        StaticPopupDialogs["GRAVITYUI_BONUS_ROLL_CONFIRM"].OnAccept = function()
+            print("|cFF30D1FFGravityUI:|r Test — Bonus roll would be used.")
+        end
+        StaticPopup_Show("GRAVITYUI_BONUS_ROLL_CONFIRM", BRC_LootSpecText())
+    end,
+    TestPassConfirm = function()
+        local cfg = BRC_GetSettings()
+        if not cfg or not cfg.enabled then
+            print("|cFF30D1FFGravityUI:|r Bonus Roll Security is disabled. Enable it in Features > Bonus Roll.")
+            return
+        end
+        if not cfg.passPromptEnabled then
+            print("|cFF30D1FFGravityUI:|r Pass Prompt is disabled. Enable it in Features > Bonus Roll.")
+            return
+        end
+        StaticPopupDialogs["GRAVITYUI_BONUS_PASS_CONFIRM"].OnAccept = function()
+            print("|cFF30D1FFGravityUI:|r Test — Bonus roll would be passed.")
+        end
+        StaticPopup_Show("GRAVITYUI_BONUS_PASS_CONFIRM")
+    end,
+}
+
 -- ═══════════════════════════════════════════════════════════════
 -- QOL 1.1: AUTO OPEN CONTAINERS
 -- ═══════════════════════════════════════════════════════════════

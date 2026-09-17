@@ -1285,6 +1285,54 @@ local function BuildPlayerMarks(parent)
 end
 
 --==============================================================================================================================================================================================
+-- 11. BONUS ROLL SECURITY
+--==============================================================================================================================================================================================
+local function BuildBonusRoll(parent)
+    local scroll, content = GUI:CreateScrollableContent(parent)
+    scroll:SetAllPoints()
+    local db = ns.GetDB(); if not db then return end
+    local dbUI = db.uiimprovements
+    if not dbUI.bonusRollConfirm then dbUI.bonusRollConfirm = { enabled = true, passPromptEnabled = true } end
+    local brc = dbUI.bonusRollConfirm
+    content.rowCount = 0
+
+    local header = GUI:CreateSectionHeader(content, "Bonus Roll Security")
+    header:SetPoint("TOPLEFT", 10, -10)
+    header:SetPoint("RIGHT", content, "RIGHT", -10, 0)
+    content.rowCount = 1.3
+
+    local infoBox = GUI:CreateInfoBox(content, "Adds a safety confirmation dialog before using or passing on a Bonus Roll.\n\nThe confirmation shows your current |cffFFCC00Loot Specialization|r so you can double-check before spending your roll token.")
+    infoBox:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
+    content.rowCount = content.rowCount + (infoBox:GetHeight() / (ROW_HEIGHT+5)) + 0.2
+
+    AddRow(content, "Enable Bonus Roll Security", "checkbox", "enabled", brc, nil)
+    AddRow(content, "Enable Pass Prompt", "checkbox", "passPromptEnabled", brc, nil)
+    content.rowCount = content.rowCount + 0.5
+
+    CreateSubLabel(content, "Test Mode")
+    local testRollBtn = GUI:CreateButton(content, "Test Roll Confirm", 160, 26, function()
+        if ns.BonusRollConfirm and ns.BonusRollConfirm.TestRollConfirm then
+            ns.BonusRollConfirm.TestRollConfirm()
+        end
+    end)
+    testRollBtn:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT+5)))
+
+    local testPassBtn = GUI:CreateButton(content, "Test Pass Confirm", 160, 26, function()
+        if ns.BonusRollConfirm and ns.BonusRollConfirm.TestPassConfirm then
+            ns.BonusRollConfirm.TestPassConfirm()
+        end
+    end)
+    testPassBtn:SetPoint("LEFT", testRollBtn, "RIGHT", 10, 0)
+    content.rowCount = content.rowCount + 1.5
+
+    local noteInfo = GUI:CreateInfoBox(content, "|cffAAAAAA• Test Roll Confirm: Shows the roll confirmation popup with your current loot spec.\n• Test Pass Confirm: Shows the pass confirmation popup.\n\nThese test buttons only show the popup — no actual bonus roll is consumed.|r")
+    noteInfo:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
+    content.rowCount = content.rowCount + (noteInfo:GetHeight() / (ROW_HEIGHT+5)) + 0.2
+
+    content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
+end
+
+--==============================================================================================================================================================================================
 -- PAGE REGISTRATION
 --==============================================================================================================================================================================================
 ns.GUI:RegisterPage("features", {
@@ -1299,6 +1347,7 @@ ns.GUI:RegisterPage("features", {
         { name = "Interrupt Tracker",   builder = BuildInterruptTracker },
         { name = "Gravity Alt Manager", builder = BuildAltManager },
         { name = "Frame Mover",         builder = BuildFrameMover },
+        { name = "Bonus Roll",          builder = BuildBonusRoll },
         { name = "Stuff",               builder = BuildEllesmereUI },
     },
     OnBuild = function(content)

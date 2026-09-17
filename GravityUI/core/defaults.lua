@@ -726,6 +726,10 @@ ns.Defaults = {
         hideTalkingHead = false,
         muteTalkingHead = false,
         hideOnWorldQuestMinigame = true,
+        bonusRollConfirm = {
+            enabled = true,          -- Master toggle: show confirmation before using a bonus roll
+            passPromptEnabled = false, -- Also prompt when passing on a bonus roll
+        },
         tools = {
             guildInviteRanks = {}, -- [rankID] = true
             autoAssistNames = "",

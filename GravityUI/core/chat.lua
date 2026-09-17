@@ -1630,16 +1630,16 @@ end
 
 -- Helper: Check if mouse is over ANY part of the chat (Dock, Frame, or Tab)
 local function IsMouseOverChat()
-    if GeneralDockManager and MouseIsOver(GeneralDockManager) then return true end
+    if GeneralDockManager and GeneralDockManager:IsMouseOver() then return true end
     
     -- Also check the ChatFrame1 specifically if it's the primary dock
-    if ChatFrame1 and MouseIsOver(ChatFrame1) then return true end
+    if ChatFrame1 and ChatFrame1:IsMouseOver() then return true end
 
     for i = 1, 10 do
         local cf = _G["ChatFrame"..i]
         local tab = _G["ChatFrame"..i.."Tab"]
-        if cf and cf:IsShown() and MouseIsOver(cf) then return true end
-        if tab and tab:IsShown() and MouseIsOver(tab) then return true end
+        if cf and cf:IsShown() and cf:IsMouseOver() then return true end
+        if tab and tab:IsShown() and tab:IsMouseOver() then return true end
     end
     return false
 end
