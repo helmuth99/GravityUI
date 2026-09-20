@@ -1465,7 +1465,7 @@ do
                     icon:SetVertexColor(0.5, 0.5, 1.0, 1)
                     fd.usableState = "nomana"
                 else
-                    icon:SetDesaturated(true)
+                    icon:SetDesaturated(false)
                     icon:SetVertexColor(0.4, 0.4, 0.4, 1)
                     fd.usableState = "unusable"
                 end
@@ -1540,7 +1540,7 @@ do
                         icon:SetVertexColor(0.5, 0.5, 1.0, 1)
                         fd.usableState = "nomana"
                     else
-                        icon:SetDesaturated(true)
+                        icon:SetDesaturated(false)
                         icon:SetVertexColor(0.4, 0.4, 0.4, 1)
                         fd.usableState = "unusable"
                     end
@@ -1651,7 +1651,7 @@ do
                                             icon:SetDesaturated(false)
                                             icon:SetVertexColor(0.5, 0.5, 1.0, 1)
                                         else
-                                            icon:SetDesaturated(true)
+                                            icon:SetDesaturated(false)
                                             icon:SetVertexColor(0.4, 0.4, 0.4, 1)
                                         end
                                         fd.usableState = newState
