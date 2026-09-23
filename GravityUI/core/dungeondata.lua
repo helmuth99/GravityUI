@@ -245,3 +245,53 @@ function DungeonData.GetShortName(mapID)
     end
     return "???"
 end
+
+---------------------------------------------------------------------------
+-- NAME -> SPELL (reverse lookup for LFG teleport prompt)
+---------------------------------------------------------------------------
+local NAME_TO_SPELL = {}
+local nameTableBuilt = false
+
+local function BuildNameToSpellTable()
+    if not C_ChallengeMode or not C_ChallengeMode.GetMapUIInfo then return end
+    for mapID, spellID in pairs(MAPID_TO_SPELL) do
+        local name = C_ChallengeMode.GetMapUIInfo(mapID)
+        if name and type(name) == "string" and name ~= "" then
+            NAME_TO_SPELL[name:lower()] = spellID
+        end
+    end
+    -- Also add hardcoded English names from NAME_TO_SHORT for broader coverage
+    for name, _ in pairs(NAME_TO_SHORT) do
+        local lower = name:lower()
+        if not NAME_TO_SPELL[lower] then
+            -- Try to find a matching mapID by checking GetMapUIInfo results
+            for mapID, spellID in pairs(MAPID_TO_SPELL) do
+                local uiName = C_ChallengeMode.GetMapUIInfo(mapID)
+                if uiName and uiName == name then
+                    NAME_TO_SPELL[lower] = spellID
+                    break
+                end
+            end
+        end
+    end
+    nameTableBuilt = next(NAME_TO_SPELL) ~= nil
+end
+
+--- Resolve a dungeon display name (from LFG activity info) to a teleport spellID.
+--- Strips trailing parenthetical suffixes like "(Mythic Keystone)".
+--- Returns a plain integer spellID or nil.
+function DungeonData.ResolveTeleportByName(displayName)
+    if type(displayName) ~= "string" then return nil end
+    local n = displayName:lower():gsub("%s*%b()%s*$", "")
+    local spellID = NAME_TO_SPELL[n]
+    if not spellID and not nameTableBuilt then
+        BuildNameToSpellTable()
+        spellID = NAME_TO_SPELL[n]
+    end
+    return spellID
+end
+
+-- Build the table once at load time (may be empty if C_ChallengeMode data isn't cached yet;
+-- ResolveTeleportByName self-heals on first miss)
+BuildNameToSpellTable()
+

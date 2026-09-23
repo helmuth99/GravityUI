@@ -704,9 +704,16 @@ ns.Defaults = {
 
         hideObjectiveTrackerAlways = false,
         mplusTeleportEnabled = true,
+
+        focusCastSound = {
+            enabled = false,
+            soundFile = "Focus",
+            soundChannel = "Master",
+        },
         premadeGroupEnabled = false,
         premadeGroupPlaystyle = 2, -- 0=Don't set, 1=Learning, 2=Relaxed, 3=Competitive, 4=Carry Offered
         groupKeyListEnabled = true,
+        lfgTeleportReminder = true,
         groupChatCommands = true,
         autoInsertKey = true,
         hideErrorMessages = true,
@@ -1220,7 +1227,7 @@ ns.Defaults = {
                 [4] = 1,
             },
             backdropAlpha = 0.3,
-            usabilityDesaturate = false,
+            usabilityDesaturate = true,
             showBackdrop = true,
             macroNameOffsetX = 0,
             countAnchor = "BOTTOMRIGHT",

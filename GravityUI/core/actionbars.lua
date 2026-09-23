@@ -193,6 +193,34 @@ local function SafeIsUsableAction(action)
     return isUsable and true or false, noMana and true or false
 end
 
+-- Determine if an action slot contains a spell that the player has NOT learned.
+-- Returns true only for spell/macro actions where the underlying spellID is
+-- verifiably not in the player's known spells (talent not selected, etc.).
+-- Uses pcall throughout because GetActionInfo can return secret values.
+local function IsActionNotLearned(action)
+    if not HasAction(action) then return false end
+    local ok, actionType, id, subType = pcall(GetActionInfo, action)
+    if not ok or not actionType then return false end
+    local spellID
+    if actionType == "spell" then
+        spellID = id
+    elseif actionType == "macro" and subType == "spell" then
+        spellID = id
+    end
+    if not spellID or spellID == 0 then return false end
+    -- IsSpellKnownOrOverridesKnown is the most reliable check
+    if IsSpellKnownOrOverridesKnown then
+        local kok, known = pcall(IsSpellKnownOrOverridesKnown, spellID)
+        if kok then return not known end
+    end
+    -- Fallback: IsPlayerSpell
+    if IsPlayerSpell then
+        local pok, pknown = pcall(IsPlayerSpell, spellID)
+        if pok then return not pknown end
+    end
+    return false
+end
+
 -------------------------------------------------------------------------------
 --  Hidden Dump Frame — reparenting stock frames here is safer than :Hide(),
 --  which can trigger taint chains in protected code paths.
@@ -1464,6 +1492,10 @@ do
                     icon:SetDesaturated(false)
                     icon:SetVertexColor(0.5, 0.5, 1.0, 1)
                     fd.usableState = "nomana"
+                elseif IsActionNotLearned(action) then
+                    icon:SetDesaturated(true)
+                    icon:SetVertexColor(0.3, 0.3, 0.3, 1)
+                    fd.usableState = "notlearned"
                 else
                     icon:SetDesaturated(false)
                     icon:SetVertexColor(0.4, 0.4, 0.4, 1)
@@ -1539,6 +1571,10 @@ do
                         icon:SetDesaturated(false)
                         icon:SetVertexColor(0.5, 0.5, 1.0, 1)
                         fd.usableState = "nomana"
+                    elseif IsActionNotLearned(action) then
+                        icon:SetDesaturated(true)
+                        icon:SetVertexColor(0.3, 0.3, 0.3, 1)
+                        fd.usableState = "notlearned"
                     else
                         icon:SetDesaturated(false)
                         icon:SetVertexColor(0.4, 0.4, 0.4, 1)
@@ -1645,11 +1681,21 @@ do
                                 local isUsable, noMana = SafeIsUsableAction(action)
                                 local fd = GFD(btn)
                                 if not isUsable then
-                                    local newState = noMana and "nomana" or "unusable"
+                                    local newState
+                                    if noMana then
+                                        newState = "nomana"
+                                    elseif IsActionNotLearned(action) then
+                                        newState = "notlearned"
+                                    else
+                                        newState = "unusable"
+                                    end
                                     if fd.usableState ~= newState then
                                         if noMana then
                                             icon:SetDesaturated(false)
                                             icon:SetVertexColor(0.5, 0.5, 1.0, 1)
+                                        elseif newState == "notlearned" then
+                                            icon:SetDesaturated(true)
+                                            icon:SetVertexColor(0.3, 0.3, 0.3, 1)
                                         else
                                             icon:SetDesaturated(false)
                                             icon:SetVertexColor(0.4, 0.4, 0.4, 1)
@@ -1717,8 +1763,9 @@ do
             end)
         elseif event == "UNIT_SPELLCAST_SUCCEEDED" then
             DispatchCooldownUpdate()
-        elseif event == "PLAYER_TALENT_UPDATE" or event == "TRAIT_CONFIG_UPDATED" then
-            -- Talent change: full refresh with delay to let slots settle
+        elseif event == "PLAYER_TALENT_UPDATE" or event == "TRAIT_CONFIG_UPDATED"
+            or event == "SPELLS_CHANGED" then
+            -- Talent/spell change: full refresh with delay to let slots settle
             C_Timer_After(0.3, function()
                 if not AreBarsEnabled() then return end
                 DispatchSlotChanged(0)
@@ -1745,6 +1792,7 @@ do
         dispatcher:RegisterEvent("UPDATE_VEHICLE_ACTIONBAR")
         dispatcher:RegisterEvent("UPDATE_OVERRIDE_ACTIONBAR")
         dispatcher:RegisterEvent("PLAYER_TALENT_UPDATE")
+        dispatcher:RegisterEvent("SPELLS_CHANGED")
         if C_EventUtils and C_EventUtils.IsEventValid and C_EventUtils.IsEventValid("TRAIT_CONFIG_UPDATED") then
             dispatcher:RegisterEvent("TRAIT_CONFIG_UPDATED")
         end
@@ -3377,13 +3425,23 @@ function ActionBars.UpdateAllUsability()
                             local isUsable, noMana = SafeIsUsableAction(action)
                             local fd = GFD(btn)
                             if not isUsable then
-                                local newState = noMana and "nomana" or "unusable"
+                                local newState
+                                if noMana then
+                                    newState = "nomana"
+                                elseif IsActionNotLearned(action) then
+                                    newState = "notlearned"
+                                else
+                                    newState = "unusable"
+                                end
                                 if fd.usableState ~= newState then
                                     if noMana then
                                         icon:SetDesaturated(false)
                                         icon:SetVertexColor(0.5, 0.5, 1.0, 1)
-                                    else
+                                    elseif newState == "notlearned" then
                                         icon:SetDesaturated(true)
+                                        icon:SetVertexColor(0.3, 0.3, 0.3, 1)
+                                    else
+                                        icon:SetDesaturated(false)
                                         icon:SetVertexColor(0.4, 0.4, 0.4, 1)
                                     end
                                     fd.usableState = newState

@@ -206,6 +206,13 @@ local function BuildTeleport(parent)
     btnGroupPreview:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT+5)))
     content.rowCount = content.rowCount + 1.2
 
+    content.rowCount = content.rowCount + 0.5
+    CreateSubLabel(content, "LFG Teleport Reminder")
+    local lfgInfo = GUI:CreateInfoBox(content, "Shows a popup with a one-click teleport button when you join a dungeon group via the Group Finder.")
+    lfgInfo:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
+    content.rowCount = content.rowCount + (lfgInfo:GetHeight() / (ROW_HEIGHT+5)) + 0.2
+    AddRow(content, "Show LFG Teleport Reminder", "checkbox", "lfgTeleportReminder", dbUI, function() if ns.LFGTeleport and ns.LFGTeleport.ApplySettings then ns.LFGTeleport.ApplySettings() end end)
+
     content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
 end
 
@@ -940,7 +947,87 @@ local function BuildEllesmereUI(parent)
     cdmNote:SetText("|cffAAAAAA(Centers the Cooldown Manager bar horizontally. Disable to use EllesmereUI's default position. Requires /reload)|r")
     cdmNote:SetPoint("TOPLEFT", 15, yOffset)
     cdmNote:SetPoint("RIGHT", content, "RIGHT", -15, 0)
-    yOffset = yOffset - 30
+    yOffset = yOffset - 40
+
+    -- Focus Castbar Sound Alert
+    local focusHdr = GUI:CreateSectionHeader(content, "Focus Castbar Sound")
+    focusHdr:SetPoint("TOPLEFT", 10, yOffset)
+    focusHdr:SetPoint("RIGHT", content, "RIGHT", -10, 0)
+    yOffset = yOffset - 35
+
+    local focusInfo = GUI:CreateInfoBox(content, "Plays a sound alert when your Focus target starts casting a spell.")
+    focusInfo:SetPoint("TOPLEFT", 10, yOffset)
+    focusInfo:SetPoint("RIGHT", content, "RIGHT", -10, 0)
+    yOffset = yOffset - (focusInfo:GetHeight() + 12)
+
+    local dbUI = db.uiimprovements or {}
+    if not dbUI.focusCastSound then dbUI.focusCastSound = { enabled = false, soundFile = "Focus", soundChannel = "Master" } end
+    local fcs = dbUI.focusCastSound
+    local function RefreshFCS() if ns.FocusCastSound and ns.FocusCastSound.ApplySettings then ns.FocusCastSound.ApplySettings() end end
+
+    local fcsChk = GUI:CreateCheckbox(content, "Enable Focus Cast Sound", "enabled", fcs, RefreshFCS)
+    fcsChk:SetPoint("TOPLEFT", 15, yOffset)
+    yOffset = yOffset - 32
+
+    -- Sound dropdown with preview
+    local function PlayPreviewFCS(soundName)
+        soundName = soundName or fcs.soundFile
+        if not soundName or soundName == "" then return end
+        local lsm = LibStub("LibSharedMedia-3.0", true)
+        local soundPath = lsm and lsm:Fetch("sound", soundName)
+        if soundPath then PlaySoundFile(soundPath, fcs.soundChannel or "Master") end
+    end
+
+    local soundOptions = { { value = "Focus", text = "Focus", previewFunc = PlayPreviewFCS } }
+    local LSM_local = LibStub("LibSharedMedia-3.0", true)
+    if LSM_local then
+        soundOptions = {}
+        for name, _ in pairs(LSM_local:HashTable("sound")) do
+            table.insert(soundOptions, { value = name, text = name, previewFunc = PlayPreviewFCS })
+        end
+        table.sort(soundOptions, function(a, b) return a.text < b.text end)
+    end
+
+    local soundLabel = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    if ns.GUI.SetFont then ns.GUI:SetFont(soundLabel, 12, "") end
+    soundLabel:SetText("Sound File")
+    soundLabel:SetTextColor(unpack(GUI.Colors.text))
+    soundLabel:SetPoint("TOPLEFT", 15, yOffset)
+
+    local soundDD = GUI:CreateDropdown(content, "", soundOptions, "soundFile", fcs, RefreshFCS)
+    soundDD:SetPoint("LEFT", soundLabel, "RIGHT", 10, 0)
+    soundDD:SetWidth(WIDGET_WIDTH)
+    soundDD.dropdown:ClearAllPoints()
+    soundDD.dropdown:SetPoint("LEFT", soundDD, "LEFT", 0, 0)
+    soundDD.dropdown:SetPoint("RIGHT", soundDD, "RIGHT", 0, 0)
+    yOffset = yOffset - 32
+
+    local channelOptions = {
+        { value = "Master", text = "Master" },
+        { value = "SFX", text = "SFX" },
+        { value = "Ambience", text = "Ambience" },
+        { value = "Dialog", text = "Dialog" },
+    }
+
+    local chanLabel = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    if ns.GUI.SetFont then ns.GUI:SetFont(chanLabel, 12, "") end
+    chanLabel:SetText("Sound Channel")
+    chanLabel:SetTextColor(unpack(GUI.Colors.text))
+    chanLabel:SetPoint("TOPLEFT", 15, yOffset)
+
+    local chanDD = GUI:CreateDropdown(content, "", channelOptions, "soundChannel", fcs, RefreshFCS)
+    chanDD:SetPoint("LEFT", chanLabel, "RIGHT", 10, 0)
+    chanDD:SetWidth(WIDGET_WIDTH)
+    chanDD.dropdown:ClearAllPoints()
+    chanDD.dropdown:SetPoint("LEFT", chanDD, "LEFT", 0, 0)
+    chanDD.dropdown:SetPoint("RIGHT", chanDD, "RIGHT", 0, 0)
+    yOffset = yOffset - 32
+
+    local testBtn = GUI:CreateButton(content, "Test Sound", 100, 24, function()
+        if ns.FocusCastSound and ns.FocusCastSound.TestSound then ns.FocusCastSound.TestSound() end
+    end)
+    testBtn:SetPoint("TOPLEFT", 15, yOffset)
+    yOffset = yOffset - 35
 
     content:SetHeight(math.abs(yOffset) + 20)
 end

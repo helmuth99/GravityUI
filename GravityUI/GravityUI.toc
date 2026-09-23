@@ -57,6 +57,8 @@ core\altmanager_ui.lua
 
 core\combattimer.lua
 core\mplusteleport.lua
+core\lfgteleport.lua
+core\focuscastsound.lua
 core\premadegroup.lua
 core\worldmarks.lua
 core\playermarks.lua
