@@ -969,6 +969,10 @@ local function BuildEllesmereUI(parent)
     llChk:SetPoint("TOPLEFT", 15, yOffset)
     yOffset = yOffset - 32
 
+    local llLockChk = GUI:CreateCheckbox(content, "Lock Position", "locked", llDB, nil)
+    llLockChk:SetPoint("TOPLEFT", 15, yOffset)
+    yOffset = yOffset - 32
+
     local llWidthLabel = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     if ns.GUI.SetFont then ns.GUI:SetFont(llWidthLabel, 12, "") end
     llWidthLabel:SetText("Bar Width")

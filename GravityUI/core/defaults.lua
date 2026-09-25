@@ -714,6 +714,7 @@ ns.Defaults = {
 
         liquidLuster = {
             enabled = false,
+            locked = true,
             width = 260,
             height = 20,
             useThemeColor = true,

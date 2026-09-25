@@ -150,7 +150,11 @@ local function BuildBar()
     bar:SetMovable(true)
     bar:EnableMouse(true)
     bar:RegisterForDrag("LeftButton")
-    bar:SetScript("OnDragStart", function(self) self:StartMoving() end)
+    bar:SetScript("OnDragStart", function(self)
+        local s = GetSettings()
+        if s and s.locked then return end
+        self:StartMoving()
+    end)
     bar:SetScript("OnDragStop", function(self) self:StopMovingOrSizing(); SavePosition() end)
     bar:SetClampedToScreen(true)
 
