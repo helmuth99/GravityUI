@@ -231,16 +231,13 @@ local function BuildInformationTab(parent)
 
     local changeLogs = {
         {
-            version = "4.01.31",
-            date = "09/11/2026",
+            version = "4.01.55",
+            date = "09/26/2026",
             changes = {
-                "[NEW] Edit Mode: Integrated Settings Panel — adjust module settings (enable/disable, font sizes, colors, durations) directly from Edit Mode without opening the main config. Settings panel auto-collapses and expands per-module on click.",
-                "[NEW] Edit Mode: Extra Abilities Container (ExtraActionButton + Zone Ability) is now movable via a non-reparenting proxy mover. Position is saved per character.",
-                "[NEW] Edit Mode: Bag Bar and Micro Menu Bar are now fully draggable with Blizzard layout manager suppression to prevent position resets.",
-                "[NEW] Edit Mode: Added settings providers for all modules — Minimap, XP/Rep Bar, Pet Warnings, Combat Status, Healer Mana, Battle Res Tracker, Bloodlust Tracker, Combat Timer, Raid Warnings, World Marks, Cooldown Text, Difficulty, Loot Window, Interrupt Tracker, Stance Text, Alerts, Toasts, Icon Catcher, Death Announcer, Crosshair, Ready Check, Bonus Roll, Loot Rolls, Power Bar Alt, Widgets, and DataPanels.",
-                "Action Bars: Updated all default bar sizes and global text settings to refined values — smaller button sizes (36/34/30px), tighter spacing (1px), adjusted font sizes and colors for keybinds, macro names, and cooldown text.",
-                "DataPanels: Fixed Edit Mode settings using wrong DB field (numSlots instead of slots table). Added Width/Height sliders with live refresh.",
-                "Death Announcer: Fixed DB path to top-level db.deathAnnouncer. Added full settings panel (Enabled, Font Size, Duration, Class Color).",
+                "[NEW] Liquid Luster Bar: Customizable progress bar for the Liquid Luster potion (Features > Stuff). Tracks 5 stacks of Lustrous Gleam with tick markers, Versatility readout, and time remaining. Supports custom texture, font, bar/background/max-stack colors, and a Use Theme Color toggle. Uses cast detection for reliable combat tracking.",
+                "Alt Manager: Fixed current Mythic+ Keystone name being too long — dungeon names are now abbreviated.",
+                "LFG Teleport Reminder: Button now uses your theme accent color for consistent styling.",
+                "Action Bars: Fixed proc-based usability tinting using C_Spell.IsSpellUsable for accurate button states.",
             },
         },
     }
