@@ -158,17 +158,21 @@ local function CreateMarksBar()
             local targetID = iconToTargetID[i]
             local worldID = iconToWorldID[i]
             
-            -- LEFT CLICK: Target Marker
+            -- LEFT CLICK: Set Target Marker
             btn:SetAttribute("type1", "macro")
             btn:SetAttribute("macrotext1", "/tm " .. targetID)
             
-            -- SHIFT+LEFT CLICK: World Marker
+            -- RIGHT CLICK: Clear Target Marker
+            btn:SetAttribute("type2", "macro")
+            btn:SetAttribute("macrotext2", "/tm 0")
+
+            -- SHIFT+LEFT CLICK: Place World Marker on ground
             btn:SetAttribute("shift-type1", "macro")
             btn:SetAttribute("shift-macrotext1", "/wm " .. worldID)
 
-            -- RIGHT CLICK: World Marker (Convenience)
-            btn:SetAttribute("type2", "macro")
-            btn:SetAttribute("macrotext2", "/wm " .. worldID)
+            -- SHIFT+RIGHT CLICK: Clear World Marker
+            btn:SetAttribute("shift-type2", "macro")
+            btn:SetAttribute("shift-macrotext2", "/cwm " .. worldID)
 
         elseif i == 9 then
             -- Clear Button
