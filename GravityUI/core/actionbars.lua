@@ -190,7 +190,35 @@ local function SafeIsUsableAction(action)
     else
         return true, false
     end
+
+    -- Cross-check: The action-bar API can incorrectly report proc-based spells
+    -- (e.g. Soul Reaper procced by Dark Transformation) as usable when the proc
+    -- buff is not active. C_Spell.IsSpellUsable is authoritative for this case.
+    if isUsable and C_Spell and C_Spell.IsSpellUsable then
+        local ok2, actionType, id = pcall(GetActionInfo, action)
+        if ok2 and actionType == "spell" and id and id > 0 then
+            local ok3, spellUsable = pcall(C_Spell.IsSpellUsable, id)
+            if ok3 and spellUsable == false then
+                return false, false
+            end
+        end
+    end
+
     return isUsable and true or false, noMana and true or false
+end
+
+-- Restore an icon to its "normal" vertex color, respecting any active range tint.
+-- Call this instead of bare icon:SetVertexColor(1,1,1,1) when clearing usability
+-- or cooldown dimming, so we don't wipe out the out-of-range red tint.
+local function RestoreIconColor(icon, fd)
+    if fd.rangeTinted then
+        local db = GetDB()
+        local g = db and db.global
+        local c = g and g.outOfRangeColor or { 0.8, 0.1, 0.1 }
+        icon:SetVertexColor(c[1] or 0.8, c[2] or 0.1, c[3] or 0.1)
+    else
+        icon:SetVertexColor(1, 1, 1, 1)
+    end
 end
 
 -- Determine if an action slot contains a spell that the player has NOT learned.
@@ -1269,7 +1297,18 @@ do
             fd.rangeTinted = true
         elseif fd.rangeTinted then
             fd.rangeTinted = nil
-            ico:SetVertexColor(1, 1, 1, 1)
+            -- Respect usability dimming when removing range tint
+            if fd.usableState == "nomana" then
+                ico:SetVertexColor(0.5, 0.5, 1.0, 1)
+            elseif fd.usableState == "notlearned" then
+                ico:SetVertexColor(0.3, 0.3, 0.3, 1)
+            elseif fd.usableState == "unusable" then
+                ico:SetVertexColor(0.4, 0.4, 0.4, 1)
+            elseif fd.cdDimmed then
+                ico:SetVertexColor(0.5, 0.5, 0.5, 1)
+            else
+                ico:SetVertexColor(1, 1, 1, 1)
+            end
         end
     end
 
@@ -1503,7 +1542,7 @@ do
                 end
             else
                 icon:SetDesaturated(false)
-                icon:SetVertexColor(1, 1, 1, 1)
+                RestoreIconColor(icon, fd)
                 fd.usableState = nil
             end
         end
@@ -1581,7 +1620,7 @@ do
                         fd.usableState = "unusable"
                     end
                 else
-                    icon:SetVertexColor(1, 1, 1, 1)
+                    RestoreIconColor(icon, fd)
                     icon:SetDesaturated(false)
                     fd.usableState = nil
                 end
@@ -1673,7 +1712,7 @@ do
             local btns = barButtons[info.key]
             if btns then
                 for _, btn in ipairs(btns) do
-                    if btn and btn:IsVisible() then
+                    if btn and btn:IsShown() then
                         local action = btn:GetAttribute("action")
                         if action and HasAction(action) then
                             local icon = btn.icon or btn.Icon
@@ -1704,7 +1743,7 @@ do
                                     end
                                 else
                                     if fd.usableState then
-                                        icon:SetVertexColor(1, 1, 1, 1)
+                                        RestoreIconColor(icon, fd)
                                         icon:SetDesaturated(false)
                                         fd.usableState = nil
                                     end
@@ -1729,7 +1768,7 @@ do
             DispatchCooldownUpdate()
         elseif event == "ACTIONBAR_SLOT_CHANGED" then
             DispatchSlotChanged(arg1 or 0)
-        elseif event == "ACTIONBAR_UPDATE_USABLE" then
+        elseif event == "ACTIONBAR_UPDATE_USABLE" or event == "SPELL_UPDATE_USABLE" then
             DispatchUsableUpdate()
         elseif event == "SPELL_UPDATE_CHARGES" then
             DispatchCooldownUpdate()
@@ -1783,6 +1822,7 @@ do
         dispatcher:RegisterEvent("SPELL_UPDATE_COOLDOWN")
         dispatcher:RegisterEvent("ACTIONBAR_SLOT_CHANGED")
         dispatcher:RegisterEvent("ACTIONBAR_UPDATE_USABLE")
+        dispatcher:RegisterEvent("SPELL_UPDATE_USABLE")
         dispatcher:RegisterEvent("SPELL_UPDATE_CHARGES")
         dispatcher:RegisterEvent("SPELL_UPDATE_ICON")
         dispatcher:RegisterEvent("PLAYER_ENTERING_WORLD")
@@ -3417,7 +3457,7 @@ function ActionBars.UpdateAllUsability()
         local btns = barButtons[info.key]
         if btns then
             for _, btn in ipairs(btns) do
-                if btn and btn:IsVisible() then
+                if btn and btn:IsShown() then
                     local action = btn:GetAttribute("action")
                     if action and HasAction(action) then
                         local icon = btn.icon or btn.Icon
@@ -3447,7 +3487,7 @@ function ActionBars.UpdateAllUsability()
                                     fd.usableState = newState
                                 end
                             elseif fd.usableState then
-                                icon:SetVertexColor(1, 1, 1, 1)
+                                RestoreIconColor(icon, fd)
                                 icon:SetDesaturated(false)
                                 fd.usableState = nil
                             end

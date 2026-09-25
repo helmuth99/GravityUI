@@ -66,6 +66,7 @@ local POPUP_H     = BTN_TOP + BTN_H + PAD
 --  State (plain upvalues; never keyed by a possibly-secret resultID)
 -------------------------------------------------------------------------------
 local popup, secureBtn
+local popupAccent, popupTitle, popupHdrBg  -- color-dependent refs for RefreshColors
 local pendingSpellID        -- resolved teleport spell (static integer) to use
 local pendingName           -- dungeon display name for the title
 local pendingAttrSpellID    -- spell attr stashed to write when leaving combat
@@ -74,7 +75,7 @@ local pendingHide           -- hide requested in combat; hide on PLAYER_REGEN_EN
 
 -- Forward declarations
 local BuildPopup, ShowPrompt, HidePrompt, ClearPending
-local UpdateButtonVisuals, ResolveDungeon
+local UpdateButtonVisuals, ResolveDungeon, RefreshPopupColors
 local SavePosition, ApplySavedPosition
 
 -------------------------------------------------------------------------------
@@ -127,30 +128,30 @@ BuildPopup = function()
     end
 
     -- Header bar
-    local hdrBg = popup:CreateTexture(nil, "BORDER")
-    hdrBg:SetColorTexture(0, 0, 0, 0.3)
-    hdrBg:SetPoint("TOPLEFT", 1, -1)
-    hdrBg:SetPoint("TOPRIGHT", -1, 0)
-    hdrBg:SetHeight(TITLE_H)
+    popupHdrBg = popup:CreateTexture(nil, "BORDER")
+    popupHdrBg:SetColorTexture(0, 0, 0, 0.3)
+    popupHdrBg:SetPoint("TOPLEFT", 1, -1)
+    popupHdrBg:SetPoint("TOPRIGHT", -1, 0)
+    popupHdrBg:SetHeight(TITLE_H)
 
     -- Theme accent stripe (left edge of header)
     local accentR, accentG, accentB = 1, 0.82, 0
-    if ns.GetThemeColor then accentR, accentG, accentB = ns.GetThemeColor() end
-    local accent = popup:CreateTexture(nil, "BORDER", nil, 3)
-    accent:SetWidth(2)
-    accent:SetPoint("TOPLEFT", popup, "TOPLEFT", 0, 0)
-    accent:SetPoint("BOTTOMLEFT", popup, "BOTTOMLEFT", 0, 0)
-    accent:SetColorTexture(accentR, accentG, accentB, 1)
+    if ns.GetAccentColor then accentR, accentG, accentB = ns.GetAccentColor() end
+    popupAccent = popup:CreateTexture(nil, "BORDER", nil, 3)
+    popupAccent:SetWidth(2)
+    popupAccent:SetPoint("TOPLEFT", popup, "TOPLEFT", 0, 0)
+    popupAccent:SetPoint("BOTTOMLEFT", popup, "BOTTOMLEFT", 0, 0)
+    popupAccent:SetColorTexture(accentR, accentG, accentB, 1)
 
     -- Title text
-    local title = popup:CreateFontString(nil, "OVERLAY")
-    title:SetFont(GetFont(), 11, "OUTLINE")
-    title:SetPoint("TOPLEFT", PAD, -8)
-    title:SetPoint("TOPRIGHT", -(PAD + 16), -8)
-    title:SetJustifyH("LEFT")
-    title:SetWordWrap(false)
-    title:SetText("LFG Reminder")
-    title:SetTextColor(accentR, accentG, accentB, 1)
+    popupTitle = popup:CreateFontString(nil, "OVERLAY")
+    popupTitle:SetFont(GetFont(), 11, "OUTLINE")
+    popupTitle:SetPoint("TOPLEFT", PAD, -8)
+    popupTitle:SetPoint("TOPRIGHT", -(PAD + 16), -8)
+    popupTitle:SetJustifyH("LEFT")
+    popupTitle:SetWordWrap(false)
+    popupTitle:SetText("LFG Reminder")
+    popupTitle:SetTextColor(accentR, accentG, accentB, 1)
 
     -- Dungeon name label
     local nameFS = popup:CreateFontString(nil, "OVERLAY")
@@ -250,6 +251,14 @@ BuildPopup = function()
 
     ApplySavedPosition()
     popup:Hide()
+
+    -- Hook into global accent refresh so live theme changes update this popup
+    local origRefresh = ns.RefreshAccentColors
+    ns.RefreshAccentColors = function()
+        if origRefresh then origRefresh() end
+        RefreshPopupColors()
+    end
+
     return popup
 end
 
@@ -275,6 +284,21 @@ UpdateButtonVisuals = function()
         end
     else
         secureBtn._cd:Clear()
+    end
+end
+
+--- Refresh accent / bg colors on the popup when the user changes their theme.
+RefreshPopupColors = function()
+    if not popup then return end
+    local aR, aG, aB = 1, 0.82, 0
+    if ns.GetAccentColor then aR, aG, aB = ns.GetAccentColor() end
+    if popupAccent then popupAccent:SetColorTexture(aR, aG, aB, 1) end
+    if popupTitle  then popupTitle:SetTextColor(aR, aG, aB, 1) end
+    -- Background refresh
+    if popup.Backdrop then
+        local bgR, bgG, bgB = 0.11, 0.12, 0.13
+        if ns.GetThemeBgColor then bgR, bgG, bgB = ns.GetThemeBgColor() end
+        popup.Backdrop:SetBackdropColor(bgR, bgG, bgB, 0.92)
     end
 end
 
@@ -344,6 +368,18 @@ end
 -------------------------------------------------------------------------------
 local ev = CreateFrame("Frame")
 
+-- Separate frame for UNIT_SPELLCAST_SUCCEEDED (unit-scoped event)
+local castWatcher = CreateFrame("Frame")
+castWatcher:SetScript("OnEvent", function(_, event, unit, _, spellID)
+    if event == "UNIT_SPELLCAST_SUCCEEDED" and unit == "player" then
+        if pendingSpellID and spellID == pendingSpellID then
+            -- Teleport cast finished → close the popup
+            ClearPending()
+            HidePrompt()
+        end
+    end
+end)
+
 ev:RegisterEvent("PLAYER_LOGIN")
 ev:SetScript("OnEvent", function(self, event, arg1, arg2)
     if event == "PLAYER_LOGIN" then
@@ -356,6 +392,7 @@ ev:SetScript("OnEvent", function(self, event, arg1, arg2)
             ev:RegisterEvent("ZONE_CHANGED_NEW_AREA")
             ev:RegisterEvent("PLAYER_REGEN_DISABLED")
             ev:RegisterEvent("PLAYER_REGEN_ENABLED")
+            castWatcher:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player")
         end
         return
     elseif event == "PLAYER_REGEN_ENABLED" then
@@ -414,11 +451,13 @@ ns.LFGTeleport = {
             ev:RegisterEvent("ZONE_CHANGED_NEW_AREA")
             ev:RegisterEvent("PLAYER_REGEN_DISABLED")
             ev:RegisterEvent("PLAYER_REGEN_ENABLED")
+            castWatcher:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player")
         else
             ClearPending()
             HidePrompt()
             ev:UnregisterEvent("LFG_LIST_JOINED_GROUP")
             ev:UnregisterEvent("GROUP_ROSTER_UPDATE")
+            castWatcher:UnregisterEvent("UNIT_SPELLCAST_SUCCEEDED")
             -- Keep PLAYER_REGEN_ENABLED registered if there's a pending flush
             if not (pendingHide or pendingAttrSpellID) then
                 ev:UnregisterEvent("PLAYER_REGEN_ENABLED")

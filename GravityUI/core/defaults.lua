@@ -587,6 +587,13 @@ ns.Defaults = {
             hideDebuffFrame = false,
         },
 
+        liquidLuster = {
+            enabled = false,
+            width = 260,
+            height = 20,
+            position = nil, -- saved as { p, rp, x, y }
+        },
+
         spellQueueWindow = 150,
         sqwAutoOptimize = true,
         chat =         {
@@ -705,6 +712,17 @@ ns.Defaults = {
         hideObjectiveTrackerAlways = false,
         mplusTeleportEnabled = true,
 
+        liquidLuster = {
+            enabled = false,
+            width = 260,
+            height = 20,
+            useThemeColor = true,
+            barColor = { 0, 0.75, 1, 1 },
+            bgColor = { 0.08, 0.08, 0.10, 0.85 },
+            lastStackColor = { 0.95, 0.55, 0.1, 1 },
+            texture = "Gravity",
+            font = "",  -- empty = use global font
+        },
         focusCastSound = {
             enabled = false,
             soundFile = "Focus",

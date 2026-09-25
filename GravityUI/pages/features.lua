@@ -949,6 +949,177 @@ local function BuildEllesmereUI(parent)
     cdmNote:SetPoint("RIGHT", content, "RIGHT", -15, 0)
     yOffset = yOffset - 40
 
+    -- Liquid Luster Bar
+    local llHdr = GUI:CreateSectionHeader(content, "Liquid Luster Bar")
+    llHdr:SetPoint("TOPLEFT", 10, yOffset)
+    llHdr:SetPoint("RIGHT", content, "RIGHT", -10, 0)
+    yOffset = yOffset - 35
+
+    local llInfo = GUI:CreateInfoBox(content, "Shows a progress bar when you use the Liquid Luster potion. Tracks the Lustrous Gleam buff (5 stacks, +420 Versa per stack every 6s).\n\n• Displays current Versatility value, stack count, and time remaining.\n• 6-second tick markers for visual pacing.\n• Drag to reposition. Uses your theme accent color.\n• Test: /lltest")
+    llInfo:SetPoint("TOPLEFT", 10, yOffset)
+    llInfo:SetPoint("RIGHT", content, "RIGHT", -10, 0)
+    yOffset = yOffset - (llInfo:GetHeight() + 12)
+
+    local dbUI = db.uiimprovements or {}
+    if not dbUI.liquidLuster then dbUI.liquidLuster = { enabled = false, width = 260, height = 20 } end
+    local llDB = dbUI.liquidLuster
+    local function RefreshLL() if ns.LiquidLuster and ns.LiquidLuster.ApplySettings then ns.LiquidLuster.ApplySettings() end end
+
+    local llChk = GUI:CreateCheckbox(content, "Enable Liquid Luster Bar", "enabled", llDB, RefreshLL)
+    llChk:SetPoint("TOPLEFT", 15, yOffset)
+    yOffset = yOffset - 32
+
+    local llWidthLabel = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    if ns.GUI.SetFont then ns.GUI:SetFont(llWidthLabel, 12, "") end
+    llWidthLabel:SetText("Bar Width")
+    llWidthLabel:SetTextColor(unpack(GUI.Colors.text))
+    llWidthLabel:SetPoint("TOPLEFT", 15, yOffset)
+
+    local llWidthSlider = GUI:CreateSlider(content, "", 100, 500, "width", llDB, RefreshLL, 10)
+    llWidthSlider:SetHeight(ROW_HEIGHT)
+    llWidthSlider:SetWidth(220)
+    llWidthSlider:SetPoint("LEFT", llWidthLabel, "RIGHT", 10, 0)
+    llWidthSlider.editBox:ClearAllPoints()
+    llWidthSlider.editBox:SetPoint("RIGHT", llWidthSlider, "RIGHT", 0, 0)
+    llWidthSlider.slider:ClearAllPoints()
+    llWidthSlider.slider:SetPoint("LEFT", llWidthSlider, "LEFT", 0, 0)
+    llWidthSlider.slider:SetPoint("RIGHT", llWidthSlider.editBox, "LEFT", -10, 0)
+    yOffset = yOffset - 32
+
+    local llHeightLabel = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    if ns.GUI.SetFont then ns.GUI:SetFont(llHeightLabel, 12, "") end
+    llHeightLabel:SetText("Bar Height")
+    llHeightLabel:SetTextColor(unpack(GUI.Colors.text))
+    llHeightLabel:SetPoint("TOPLEFT", 15, yOffset)
+
+    local llHeightSlider = GUI:CreateSlider(content, "", 10, 40, "height", llDB, RefreshLL, 1)
+    llHeightSlider:SetHeight(ROW_HEIGHT)
+    llHeightSlider:SetWidth(220)
+    llHeightSlider:SetPoint("LEFT", llHeightLabel, "RIGHT", 10, 0)
+    llHeightSlider.editBox:ClearAllPoints()
+    llHeightSlider.editBox:SetPoint("RIGHT", llHeightSlider, "RIGHT", 0, 0)
+    llHeightSlider.slider:ClearAllPoints()
+    llHeightSlider.slider:SetPoint("LEFT", llHeightSlider, "LEFT", 0, 0)
+    llHeightSlider.slider:SetPoint("RIGHT", llHeightSlider.editBox, "LEFT", -10, 0)
+    yOffset = yOffset - 32
+
+    local LL_LABEL_X = 15
+    local LL_WIDGET_X = 120  -- consistent left edge for all widgets
+
+    -- Texture Dropdown
+    local LSM = LibStub("LibSharedMedia-3.0", true)
+    local texOptions = {}
+    if LSM then
+        for name, _ in pairs(LSM:HashTable("statusbar")) do
+            table.insert(texOptions, { value = name, text = name })
+        end
+        table.sort(texOptions, function(a, b) return a.text < b.text end)
+    end
+
+    local llTexLabel = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    if ns.GUI.SetFont then ns.GUI:SetFont(llTexLabel, 12, "") end
+    llTexLabel:SetText("Bar Texture")
+    llTexLabel:SetTextColor(unpack(GUI.Colors.text))
+    llTexLabel:SetPoint("TOPLEFT", LL_LABEL_X, yOffset)
+
+    local llTexDD = GUI:CreateDropdown(content, "", texOptions, "texture", llDB, RefreshLL)
+    llTexDD:SetPoint("LEFT", llTexLabel, "RIGHT", 10, 0)
+    llTexDD:SetWidth(220)
+    if llTexDD.dropdown then
+        llTexDD.dropdown:ClearAllPoints()
+        llTexDD.dropdown:SetPoint("LEFT", llTexDD, "LEFT", 0, 0)
+        llTexDD.dropdown:SetPoint("RIGHT", llTexDD, "RIGHT", 0, 0)
+    end
+    yOffset = yOffset - 34
+
+    -- Font Dropdown
+    local fontOptions = {}
+    if LSM then
+        for name, _ in pairs(LSM:HashTable("font")) do
+            table.insert(fontOptions, { value = name, text = name })
+        end
+        table.sort(fontOptions, function(a, b) return a.text < b.text end)
+    end
+    table.insert(fontOptions, 1, { value = "", text = "(Use Global Font)" })
+
+    local llFontLabel = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    if ns.GUI.SetFont then ns.GUI:SetFont(llFontLabel, 12, "") end
+    llFontLabel:SetText("Font")
+    llFontLabel:SetTextColor(unpack(GUI.Colors.text))
+    llFontLabel:SetPoint("TOPLEFT", LL_LABEL_X, yOffset)
+
+    local llFontDD = GUI:CreateDropdown(content, "", fontOptions, "font", llDB, RefreshLL)
+    llFontDD:SetPoint("LEFT", llFontLabel, "RIGHT", 10, 0)
+    llFontDD:SetWidth(220)
+    if llFontDD.dropdown then
+        llFontDD.dropdown:ClearAllPoints()
+        llFontDD.dropdown:SetPoint("LEFT", llFontDD, "LEFT", 0, 0)
+        llFontDD.dropdown:SetPoint("RIGHT", llFontDD, "RIGHT", 0, 0)
+    end
+    yOffset = yOffset - 34
+
+    -- Use Theme Color toggle
+    local llThemeChk = GUI:CreateCheckbox(content, "Use Theme Color", "useThemeColor", llDB, RefreshLL)
+    llThemeChk:SetPoint("TOPLEFT", LL_LABEL_X, yOffset)
+    yOffset = yOffset - 32
+
+    -- Color Pickers Row 1: Bar Color + Background (only when theme color off)
+    local llBarColorLabel = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    if ns.GUI.SetFont then ns.GUI:SetFont(llBarColorLabel, 12, "") end
+    llBarColorLabel:SetText("Bar Color")
+    llBarColorLabel:SetTextColor(unpack(GUI.Colors.text))
+    llBarColorLabel:SetPoint("TOPLEFT", LL_LABEL_X, yOffset)
+
+    local llBarColorPicker = GUI:CreateColorPicker(content, "", "barColor", llDB, RefreshLL)
+    llBarColorPicker:SetPoint("LEFT", llBarColorLabel, "RIGHT", 10, 0)
+
+    local llBgColorLabel = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    if ns.GUI.SetFont then ns.GUI:SetFont(llBgColorLabel, 12, "") end
+    llBgColorLabel:SetText("Background")
+    llBgColorLabel:SetTextColor(unpack(GUI.Colors.text))
+    llBgColorLabel:SetPoint("TOPLEFT", 220, yOffset)
+
+    local llBgColorPicker = GUI:CreateColorPicker(content, "", "bgColor", llDB, RefreshLL)
+    llBgColorPicker:SetPoint("LEFT", llBgColorLabel, "RIGHT", 10, 0)
+    yOffset = yOffset - 28
+
+    -- Color Picker Row 2: Max Stack Color (always visible)
+    local llLastColorLabel = content:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    if ns.GUI.SetFont then ns.GUI:SetFont(llLastColorLabel, 12, "") end
+    llLastColorLabel:SetText("Max Stack Color")
+    llLastColorLabel:SetTextColor(unpack(GUI.Colors.text))
+    llLastColorLabel:SetPoint("TOPLEFT", LL_LABEL_X, yOffset)
+
+    local llLastColorPicker = GUI:CreateColorPicker(content, "", "lastStackColor", llDB, RefreshLL)
+    llLastColorPicker:SetPoint("LEFT", llLastColorLabel, "RIGHT", 10, 0)
+    yOffset = yOffset - 32
+
+    -- Show/hide color pickers based on useThemeColor
+    local function UpdateColorVisibility()
+        local show = not llDB.useThemeColor
+        llBarColorLabel:SetShown(show)
+        llBarColorPicker:SetShown(show)
+        llBgColorLabel:SetShown(show)
+        llBgColorPicker:SetShown(show)
+    end
+    UpdateColorVisibility()
+
+    -- Hook the theme checkbox switch to update visibility
+    local themeSwitch = llThemeChk.switch
+    if themeSwitch then
+        local origMouseDown = themeSwitch:GetScript("OnMouseDown")
+        themeSwitch:SetScript("OnMouseDown", function(self, ...)
+            if origMouseDown then origMouseDown(self, ...) end
+            UpdateColorVisibility()
+        end)
+    end
+
+    local llTestBtn = GUI:CreateButton(content, "Test Bar", 100, 24, function()
+        if ns.LiquidLuster and ns.LiquidLuster.TestBar then ns.LiquidLuster.TestBar() end
+    end)
+    llTestBtn:SetPoint("TOPLEFT", LL_LABEL_X, yOffset)
+    yOffset = yOffset - 40
+
     -- Focus Castbar Sound Alert
     local focusHdr = GUI:CreateSectionHeader(content, "Focus Castbar Sound")
     focusHdr:SetPoint("TOPLEFT", 10, yOffset)

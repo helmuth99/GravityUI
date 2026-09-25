@@ -47,6 +47,31 @@ local SEASON_DUNGEONS = {
     { name = "Voidscar Arena",        abbr = "VA",  mapId = 2923, challengeModeID = 585, teleports = {1286804} },
 }
 
+-- Build reverse lookup: full dungeon name → short abbreviation for compact display
+local DUNGEON_ABBR = {}
+for _, d in ipairs(SEASON_DUNGEONS) do
+    if d.name and d.abbr then
+        DUNGEON_ABBR[d.name] = d.abbr
+    end
+end
+
+--- Abbreviate a dungeon name for compact display.
+--- Uses the SEASON_DUNGEONS abbreviation if available, otherwise takes
+--- the first letter of each word (e.g. "Ruby Life Pools" → "RLP").
+local function AbbrDungeonName(fullName)
+    if not fullName or fullName == "" then return "?" end
+    local abbr = DUNGEON_ABBR[fullName]
+    if abbr then return abbr end
+    -- Fallback: first letter of each word (skip articles)
+    local initials = ""
+    for word in fullName:gmatch("%S+") do
+        if word ~= "of" and word ~= "the" then
+            initials = initials .. word:sub(1, 1):upper()
+        end
+    end
+    return initials ~= "" and initials or fullName:sub(1, 4)
+end
+
 local function GetDB()
     local db = ns.GetDB and ns.GetDB()
     if db and db.altManager then return db.altManager end
@@ -1267,7 +1292,7 @@ function UI:Refresh()
                 cell.text:ClearAllPoints(); cell.text:SetPoint("CENTER")
                 local key = alt.keystone
                 if key and key.level and key.level > 0 then
-                    cell.text:SetText(string.format("|c%s+%d %s|r", key.color or "ffffffff", key.level, (key.name or ""):sub(1, 10)))
+                    cell.text:SetText(string.format("|c%s+%d %s|r", key.color or "ffffffff", key.level, AbbrDungeonName(key.name)))
                 else
                     cell.text:SetText("|cff666666-|r")
                 end
