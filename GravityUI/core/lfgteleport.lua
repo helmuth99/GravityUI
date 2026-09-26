@@ -242,7 +242,7 @@ BuildPopup = function()
             if cdInfo and cdInfo.duration and cdInfo.duration > 0 then
                 GameTooltip:SetText("Teleport on Cooldown", 1, 0.8, 0)
             else
-                GameTooltip:SetText("Teleport to " .. (pendingName or "dungeon"), 0.3, 1, 0.5)
+                GameTooltip:SetText("Teleport to " .. (pendingName or "dungeon"), 1, 1, 1)
             end
         end
         GameTooltip:Show()
