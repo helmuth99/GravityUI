@@ -5,6 +5,7 @@
 -- Displays: current Versa value | tick count (X/5) | time remaining.
 -- Tick markers every 6 seconds on the bar for visual pacing.
 local ADDON_NAME, ns = ...
+if ns.IS_FOREVER then return end
 
 ns.LiquidLuster = {}
 local LL = ns.LiquidLuster

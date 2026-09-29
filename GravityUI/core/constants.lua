@@ -68,3 +68,28 @@ ns.Colors = {
     mastery = { 0.545, 0.361, 0.965, 1 },      -- Purple
     versatility = { 0.024, 0.714, 0.831, 1 },  -- Cyan
 }
+
+-- WoW: Forever detection (Interface 16xxx = Forever client)
+local _buildInterface = select(4, GetBuildInfo()) or 0
+ns.IS_FOREVER = _buildInterface >= 16000 and _buildInterface < 17000
+ns.IS_RETAIL  = not ns.IS_FOREVER
+
+-- Forever: LibOpenRaid's expansion data files all have version guards that
+-- exclude Forever's interface range (16xxx). The globals they normally
+-- initialize stay nil, causing "attempt to index nil" errors.
+-- We set empty fallback tables so the library degrades gracefully.
+if ns.IS_FOREVER then
+    LIB_OPEN_RAID_PLAYERCOOLDOWNS      = LIB_OPEN_RAID_PLAYERCOOLDOWNS      or {}
+    LIB_OPEN_RAID_COOLDOWNS_INFO       = LIB_OPEN_RAID_COOLDOWNS_INFO       or {}
+    LIB_OPEN_RAID_COOLDOWNS_BY_SPEC    = LIB_OPEN_RAID_COOLDOWNS_BY_SPEC    or {}
+    LIB_OPEN_RAID_COOLDOWNS_SHARED_ID  = LIB_OPEN_RAID_COOLDOWNS_SHARED_ID  or {}
+    LIB_OPEN_RAID_MELEE_SPECS          = LIB_OPEN_RAID_MELEE_SPECS          or {}
+    LIB_OPEN_RAID_RANGED_SPECS         = LIB_OPEN_RAID_RANGED_SPECS         or {}
+    LIB_OPEN_RAID_HEALER_SPECS         = LIB_OPEN_RAID_HEALER_SPECS         or {}
+    LIB_OPEN_RAID_TANK_SPECS           = LIB_OPEN_RAID_TANK_SPECS           or {}
+    LIB_OPEN_RAID_ALL_POTIONS          = LIB_OPEN_RAID_ALL_POTIONS          or {}
+    LIB_OPEN_RAID_ALL_FLASKS           = LIB_OPEN_RAID_ALL_FLASKS           or {}
+    LIB_OPEN_RAID_FOOD_BUFF            = LIB_OPEN_RAID_FOOD_BUFF            or {}
+    LIB_OPEN_RAID_AUGMENT_BUFF         = LIB_OPEN_RAID_AUGMENT_BUFF         or {}
+    LIB_OPEN_RAID_WEAPON_ENCHANT_IDS   = LIB_OPEN_RAID_WEAPON_ENCHANT_IDS   or {}
+end

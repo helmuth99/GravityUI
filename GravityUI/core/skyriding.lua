@@ -4,6 +4,7 @@
 -- Ported 1:1 from GravityUI
 ---------------------------------------------------------------------------
 local ADDON_NAME, ns = ...
+if ns.IS_FOREVER then return end
 local LSM = LibStub("LibSharedMedia-3.0")
 
 local skyridingFrame

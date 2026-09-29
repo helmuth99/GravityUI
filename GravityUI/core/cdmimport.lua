@@ -1,4 +1,5 @@
 local ADDON_NAME, ns = ...
+if ns.IS_FOREVER then return end
 
 ---------------------------------------------------------------------------
 -- GravityUI CDM Import (/guicdm)

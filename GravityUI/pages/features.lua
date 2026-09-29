@@ -1599,19 +1599,36 @@ end
 --==============================================================================================================================================================================================
 ns.GUI:RegisterPage("features", {
     title = "Features",
-    subTabs = {
-        { name = "Dragonriding",        builder = BuildDragonriding },
-        { name = "M+ Teleport",         builder = BuildTeleport },
-        { name = "World Marks",         builder = BuildWorldMarks },
-        { name = "Mail",                builder = BuildMailExtras },
-        { name = "Guildtools",          builder = BuildTools },
-        { name = "Player Marks",        builder = BuildPlayerMarks },
-        { name = "Interrupt Tracker",   builder = BuildInterruptTracker },
-        { name = "Gravity Alt Manager", builder = BuildAltManager },
-        { name = "Frame Mover",         builder = BuildFrameMover },
-        { name = "Bonus Roll",          builder = BuildBonusRoll },
-        { name = "Stuff",               builder = BuildEllesmereUI },
-    },
+    subTabs = (function()
+        local tabs = {
+            { name = "Dragonriding",        builder = BuildDragonriding },
+            { name = "M+ Teleport",         builder = BuildTeleport },
+            { name = "World Marks",         builder = BuildWorldMarks },
+            { name = "Mail",                builder = BuildMailExtras },
+            { name = "Guildtools",          builder = BuildTools },
+            { name = "Player Marks",        builder = BuildPlayerMarks },
+            { name = "Interrupt Tracker",   builder = BuildInterruptTracker },
+            { name = "Gravity Alt Manager", builder = BuildAltManager },
+            { name = "Frame Mover",         builder = BuildFrameMover },
+            { name = "Bonus Roll",          builder = BuildBonusRoll },
+            { name = "Stuff",               builder = BuildEllesmereUI },
+        }
+        if ns.IS_FOREVER then
+            local FOREVER_HIDDEN = {
+                ["Dragonriding"] = true,
+                ["M+ Teleport"] = true,
+                ["Gravity Alt Manager"] = true,
+            }
+            local filtered = {}
+            for _, tab in ipairs(tabs) do
+                if not FOREVER_HIDDEN[tab.name] then
+                    table.insert(filtered, tab)
+                end
+            end
+            return filtered
+        end
+        return tabs
+    end)(),
     OnBuild = function(content)
         local scrollFrame = content:GetParent()
         content:Hide()

@@ -3,6 +3,7 @@
 -- Account-wide character, M+, Great Vault, Raid, and Currency tracker
 -- ============================================================================
 local ADDON_NAME, ns = ...
+if ns.IS_FOREVER then return end
 
 ns.AltManager = ns.AltManager or {}
 local AM = ns.AltManager

@@ -1,5 +1,6 @@
 -- GravityUI Consumables Module
 local ADDON_NAME, ns = ...
+if ns.IS_FOREVER then return end
 
 local openRaidLib = LibStub("LibOpenRaid-1.0", true)
 

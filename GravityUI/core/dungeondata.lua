@@ -1,6 +1,7 @@
 -- GravityUI - Dungeon Data
 -- Central source for dungeon short names and teleport spells
 local ADDON_NAME, ns = ...
+if ns.IS_FOREVER then return end
 
 local DungeonData = {}
 ns.DungeonData = DungeonData

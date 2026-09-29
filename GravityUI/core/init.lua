@@ -2335,7 +2335,9 @@ SlashCmdList["GUITESTCLEANUP"] = function()
     -- Iterate registry from Installer (requires access, assumed global ns.GUI.Installer)
     if ns.GUI and ns.GUI.Installer and ns.GUI.Installer.registry then
         for _, addon in ipairs(ns.GUI.Installer.registry) do
-            if addon.Check() then
+            if ns.IS_FOREVER and addon.foreverSupported == false then
+                -- skip: addon not supported in Forever
+            elseif addon.Check() then
                 -- Try to delete profile
                 -- Note: Most addons don't have a standardized DeleteProfile in the registry, 
                 -- so we might need to rely on the underlying DB object if available.

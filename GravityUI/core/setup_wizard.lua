@@ -307,6 +307,8 @@ local function PopulateAddonRows(listContainer, selectionState)
     for _, addon in ipairs(registry) do
         if WIZARD_HIDDEN[addon.name] then
             -- skip: available under /gui -> Installer
+        elseif ns.IS_FOREVER and addon.foreverSupported == false then
+            -- skip: addon not supported in Forever
         elseif addon.category == "Optional" then
             table.insert(optional,  addon)
         else
@@ -544,7 +546,9 @@ function Wizard:Show()
     f._selectionState = f._selectionState or {}
     if GUI.Installer then
         for _, addon in ipairs(GUI.Installer.registry) do
-            if not addon.Check() then
+            if ns.IS_FOREVER and addon.foreverSupported == false then
+                f._selectionState[addon.name] = false
+            elseif not addon.Check() then
                 f._selectionState[addon.name] = false
             end
         end

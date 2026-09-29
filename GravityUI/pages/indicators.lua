@@ -726,21 +726,36 @@ end
 --==============================================================================================================================================================================================
 ns.GUI:RegisterPage("indicators", {
     title = "Indicators",
-    subTabs = {
-        { name = "Cursor",             builder = BuildCursor },
-        { name = "Crosshair",          builder = BuildCrosshair },
-        { name = "Stance Text",        builder = BuildStanceText },
-        { name = "Mana/Lust/BR Tracker", builder = BuildManaLustBRTracker },
-        { name = "Pet Info",           builder = BuildPet },
-        { name = "Combat Status",      builder = BuildCombatStatus },
-        { name = "Combat Timer",       builder = BuildCombatTimer },
-        { name = "Cooldown Text",      builder = ns.CooldownText and ns.CooldownText.AddOptions or function() end },
-        { name = "Raid Warnings",      builder = BuildRaidWarnings },
-        { name = "Consumables",        builder = BuildConsumables },
-        { name = "Difficulty Changer", builder = BuildDifficulty },
-        { name = "AFK Screen",         builder = BuildAFKScreen },
-        { name = "Death Announcer",   builder = function(p) if ns._BuildDeathAnnouncer then ns._BuildDeathAnnouncer(p) end end },
-    },
+    subTabs = (function()
+        local tabs = {
+            { name = "Cursor",             builder = BuildCursor },
+            { name = "Crosshair",          builder = BuildCrosshair },
+            { name = "Stance Text",        builder = BuildStanceText },
+            { name = "Mana/Lust/BR Tracker", builder = BuildManaLustBRTracker },
+            { name = "Pet Info",           builder = BuildPet },
+            { name = "Combat Status",      builder = BuildCombatStatus },
+            { name = "Combat Timer",       builder = BuildCombatTimer },
+            { name = "Cooldown Text",      builder = ns.CooldownText and ns.CooldownText.AddOptions or function() end },
+            { name = "Raid Warnings",      builder = BuildRaidWarnings },
+            { name = "Consumables",        builder = BuildConsumables },
+            { name = "Difficulty Changer", builder = BuildDifficulty },
+            { name = "AFK Screen",         builder = BuildAFKScreen },
+            { name = "Death Announcer",   builder = function(p) if ns._BuildDeathAnnouncer then ns._BuildDeathAnnouncer(p) end end },
+        }
+        if ns.IS_FOREVER then
+            local FOREVER_HIDDEN = {
+                ["Consumables"] = true,
+            }
+            local filtered = {}
+            for _, tab in ipairs(tabs) do
+                if not FOREVER_HIDDEN[tab.name] then
+                    table.insert(filtered, tab)
+                end
+            end
+            return filtered
+        end
+        return tabs
+    end)(),
     OnBuild = function(content)
         local scrollFrame = content:GetParent()
         content:Hide()

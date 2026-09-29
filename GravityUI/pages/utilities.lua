@@ -358,7 +358,11 @@ end
 -- Sound Alerts, Color Picker, Premade Group → Features
 local featuresPage = GUI.pages and GUI.pages["features"]
 if featuresPage and featuresPage.subTabs then
-    table.insert(featuresPage.subTabs, { name = "Sound Alerts",  builder = BuildSoundAlerts })
+    if not ns.IS_FOREVER then
+        table.insert(featuresPage.subTabs, { name = "Sound Alerts",  builder = BuildSoundAlerts })
+    end
     table.insert(featuresPage.subTabs, { name = "Color Picker",  builder = BuildColorPickerSettings })
-    table.insert(featuresPage.subTabs, { name = "Premade Group", builder = BuildPremadeGroup })
+    if not ns.IS_FOREVER then
+        table.insert(featuresPage.subTabs, { name = "Premade Group", builder = BuildPremadeGroup })
+    end
 end

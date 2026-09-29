@@ -886,10 +886,11 @@ end
 
 local function CheckResumeLogging()
     resumeLoggingPending = false
-    -- M+ Check
+    -- M+ Check (guard: C_ChallengeMode may not exist in Forever)
     local settings = GetSettings()
     if settings and settings.autoCombatLog then
-        if C_ChallengeMode.IsChallengeModeActive() and not LoggingCombat() then
+        if C_ChallengeMode and C_ChallengeMode.IsChallengeModeActive
+           and C_ChallengeMode.IsChallengeModeActive() and not LoggingCombat() then
             EnsureAdvancedLogging()
             LoggingCombat(true)
             print("|cFF30D1FFGravityUI:|r Combat logging resumed (reconnected to M+)")
@@ -1414,11 +1415,17 @@ automationFrame:RegisterEvent("DELETE_ITEM_CONFIRM")
 automationFrame:RegisterEvent("PLAYER_DEAD")
 automationFrame:RegisterEvent("PLAYER_ALIVE")
 automationFrame:RegisterEvent("PLAYER_UNGHOST")
-automationFrame:RegisterEvent("CHALLENGE_MODE_START")
-automationFrame:RegisterEvent("CHALLENGE_MODE_COMPLETED")
-automationFrame:RegisterEvent("CHALLENGE_MODE_RESET")
+-- Forever: M+ events only in Retail
+if not ns.IS_FOREVER then
+    automationFrame:RegisterEvent("CHALLENGE_MODE_START")
+    automationFrame:RegisterEvent("CHALLENGE_MODE_COMPLETED")
+    automationFrame:RegisterEvent("CHALLENGE_MODE_RESET")
+end
 automationFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
-automationFrame:RegisterEvent("CHALLENGE_MODE_KEYSTONE_RECEPTABLE_OPEN")
+-- Forever: Keystone event only in Retail
+if not ns.IS_FOREVER then
+    automationFrame:RegisterEvent("CHALLENGE_MODE_KEYSTONE_RECEPTABLE_OPEN")
+end
 automationFrame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
 automationFrame:RegisterEvent("PLAYER_DIFFICULTY_CHANGED")
 automationFrame:RegisterEvent("LFG_LIST_SEARCH_RESULTS_RECEIVED")

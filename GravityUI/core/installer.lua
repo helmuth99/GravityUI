@@ -34,7 +34,13 @@ Installer.registry = {
         label = "GravityUI",
         isCore = true,
         Check = function() return _G.GravityUI_DB end,
-        GetProfile = function() return GetAceProfileFromGlobal("GravityUI_DB") end,
+        GetProfile = function()
+            -- Prefer the live AceDB profile (works regardless of realm name)
+            if ns.db and ns.db.GetCurrentProfile then
+                return ns.db:GetCurrentProfile()
+            end
+            return GetAceProfileFromGlobal("GravityUI_DB")
+        end,
         SetProfile = function(self, profileName)
              if ns.db then ns.db:SetProfile(profileName) return true end
         end,
@@ -63,29 +69,41 @@ Installer.registry = {
         GetProfile = function()
             local layoutInfo = C_EditMode.GetLayouts()
             if layoutInfo and layoutInfo.activeLayout then
+                -- 1. Match by layoutIdentifier (Retail)
                 for _, layout in ipairs(layoutInfo.layouts) do
                     local id = layout.layoutIdentifier or layout.layoutID or layout.id
                     if id and id == layoutInfo.activeLayout then
                         return layout.layoutName
                     end
                 end
-                local assumedIndex = layoutInfo.activeLayout - 2
-                if assumedIndex > 0 and layoutInfo.layouts[assumedIndex] then
-                    return layoutInfo.layouts[assumedIndex].layoutName
+                -- 2. Numeric: brute-force offset scan (Retail=2, Forever=3, etc.)
+                if type(layoutInfo.activeLayout) == "number" then
+                    for offset = 0, 5 do
+                        local idx = layoutInfo.activeLayout - offset
+                        if idx > 0 and idx <= #layoutInfo.layouts then
+                            return layoutInfo.layouts[idx].layoutName
+                        end
+                    end
                 end
                 return "Unknown ID: " .. tostring(layoutInfo.activeLayout)
             end
             return nil
         end,
+        -- Preset offset: number of non-custom slots before the layouts array.
+        -- Forever has 3 presets (Modern, Classic + hidden), Retail has 2.
+        _getPresetOffset = function(self)
+            return ns.IS_FOREVER and 3 or 2
+        end,
         SetProfile = function(self, profileName)
             local layoutInfo = C_EditMode.GetLayouts()
-            
+            local offset = self:_getPresetOffset()
+
             for i, layout in ipairs(layoutInfo.layouts) do
                 if layout.layoutName == profileName then
                     if layout.layoutIdentifier then
                          C_EditMode.SetActiveLayout(layout.layoutIdentifier)
-                    else 
-                        C_EditMode.SetActiveLayout(i + 2)
+                    else
+                        C_EditMode.SetActiveLayout(i + offset)
                     end
                     return true
                 end
@@ -94,8 +112,102 @@ Installer.registry = {
         end,
         Import = function(self, data, profileName)
             if InCombatLockdown() then return end
-             local layoutInfo = C_EditMode.ConvertStringToLayoutInfo(data)
-             pcall(function() EditModeManagerFrame:ImportLayout(layoutInfo, Enum.EditModeLayoutType.Account, profileName) end)
+            -- Ensure Blizzard_EditMode is loaded (it's a LoD addon)
+            if not EditModeManagerFrame then
+                pcall(C_AddOns.LoadAddOn, "Blizzard_EditMode")
+            end
+            local ok1, layoutInfo = pcall(C_EditMode.ConvertStringToLayoutInfo, data)
+            if not ok1 or not layoutInfo then
+                print("|cffff0000GravityUI:|r EditMode import failed — ConvertStringToLayoutInfo error: " .. tostring(layoutInfo))
+                return
+            end
+
+            local layoutType = Enum and Enum.EditModeLayoutType and Enum.EditModeLayoutType.Account or 1
+
+            if ns.IS_FOREVER then
+                -- Forever: ImportLayout calls C_EditMode.SaveLayouts internally via C code
+                -- (unhookable), and requires interfaceStyle on each layout. Additionally,
+                -- EditModeManagerFrame.highestLayoutIndexByType must be initialized.
+                -- Solution: bypass ImportLayout entirely, build the entry manually.
+                if EditModeManagerFrame then
+                    if not EditModeManagerFrame.highestLayoutIndexByType then
+                        EditModeManagerFrame.highestLayoutIndexByType = {}
+                        local existing = C_EditMode.GetLayouts()
+                        if existing and existing.layouts then
+                            for i, layout in ipairs(existing.layouts) do
+                                local lt = layout.layoutType or 1
+                                local idx = i + 3  -- Forever has 3 preset slots
+                                if not EditModeManagerFrame.highestLayoutIndexByType[lt] or idx > EditModeManagerFrame.highestLayoutIndexByType[lt] then
+                                    EditModeManagerFrame.highestLayoutIndexByType[lt] = idx
+                                end
+                            end
+                        end
+                        local accountType = Enum.EditModeLayoutType.Account
+                        if not EditModeManagerFrame.highestLayoutIndexByType[accountType] then
+                            EditModeManagerFrame.highestLayoutIndexByType[accountType] = 3
+                        end
+                    end
+                end
+
+                local existingLayouts = C_EditMode.GetLayouts()
+                if not existingLayouts then
+                    print("|cffff0000GravityUI:|r EditMode import failed — GetLayouts returned nil")
+                    return
+                end
+
+                -- Check if layout with this name already exists → update it
+                for _, layout in ipairs(existingLayouts.layouts) do
+                    if layout.layoutName == profileName then
+                        layout.systems = layoutInfo.systems or layout.systems
+                        layout.interfaceStyle = layout.interfaceStyle or 0
+                        layout.layoutType = layout.layoutType or layoutType
+                        local ok, err = pcall(C_EditMode.SaveLayouts, existingLayouts)
+                        if ok then
+                            print("|cFF30D1FFGravityUI:|r EditMode layout '" .. profileName .. "' updated")
+                        else
+                            print("|cffff0000GravityUI:|r EditMode save error: " .. tostring(err))
+                        end
+                        return
+                    end
+                end
+
+                -- Create new layout with all required Forever fields
+                local newLayout = {
+                    layoutName     = profileName,
+                    layoutType     = layoutType,  -- Account = 1
+                    interfaceStyle = 0,
+                    systems        = layoutInfo.systems or {},
+                }
+                table.insert(existingLayouts.layouts, newLayout)
+
+                -- Update highestLayoutIndexByType
+                if EditModeManagerFrame and EditModeManagerFrame.highestLayoutIndexByType then
+                    local newIdx = #existingLayouts.layouts + 3
+                    local lt = layoutType
+                    if not EditModeManagerFrame.highestLayoutIndexByType[lt] or newIdx > EditModeManagerFrame.highestLayoutIndexByType[lt] then
+                        EditModeManagerFrame.highestLayoutIndexByType[lt] = newIdx
+                    end
+                end
+
+                local ok, err = pcall(C_EditMode.SaveLayouts, existingLayouts)
+                if ok then
+                    print("|cFF30D1FFGravityUI:|r EditMode layout '" .. profileName .. "' imported successfully")
+                else
+                    print("|cffff0000GravityUI:|r EditMode SaveLayouts error: " .. tostring(err))
+                end
+            else
+                -- Retail: standard ImportLayout path
+                if EditModeManagerFrame and EditModeManagerFrame.ImportLayout then
+                    local ok2, err = pcall(function() EditModeManagerFrame:ImportLayout(layoutInfo, layoutType, profileName) end)
+                    if not ok2 then
+                        print("|cffff0000GravityUI:|r EditMode ImportLayout error: " .. tostring(err))
+                    else
+                        print("|cFF30D1FFGravityUI:|r EditMode layout '" .. profileName .. "' imported successfully")
+                    end
+                else
+                    print("|cffff0000GravityUI:|r EditModeManagerFrame not available for import")
+                end
+            end
         end,
         HasProfile = function(self, profileName)
             local layoutInfo = C_EditMode.GetLayouts()
@@ -166,6 +278,7 @@ Installer.registry = {
         name = "Plater",
         label = "Plater",
         category = "Optional",
+        foreverSupported = false,
         Check = function() return _G.Plater and _G.Plater.db end,
         GetProfile = function() return _G.Plater.db:GetCurrentProfile() end,
         SetProfile = function(self, profileName)
@@ -224,6 +337,7 @@ Installer.registry = {
         name = "Baganator",
         label = "Baganator",
         category = "Optional",
+        foreverSupported = false,
         Check = function() return C_AddOns.IsAddOnLoaded("Baganator") end,
         GetProfile = function() 
              if _G.BAGANATOR_CONFIG and _G.BAGANATOR_CONFIG.Profiles and _G.BAGANATOR_CURRENT_PROFILE then
@@ -270,6 +384,7 @@ Installer.registry = {
         name = "Details",
         label = "Details!",
         category = "Optional",
+        foreverSupported = false,
         Check = function() return _G.Details and _G.Details.ApplyProfile end,
         GetProfile = function() 
             -- Details usually stores profile in _G.Details.profile (string) or _G.Details.db:GetCurrentProfile()
@@ -318,6 +433,7 @@ Installer.registry = {
         name = "Dominos",
         label = "Dominos",
         category = "Optional",
+        foreverSupported = false,
         Check = function()
             return C_AddOns.IsAddOnLoaded("Dominos") and _G.DominosDB ~= nil
         end,
@@ -420,7 +536,9 @@ function Installer:ApplyEllesmereGlobalSettings()
     db.reskinGossip           = true
     db.reskinQuest            = true
     db.reskinInspectRecipe    = true
-    db.reskinDelves           = true
+    if not ns.IS_FOREVER then
+        db.reskinDelves       = true
+    end
 
     -- ── Blizz UI Enhanced – Tooltips, Menus & Popups ─────────────────────
     -- Source: EUI_BlizzardSkin_Options.lua (BuildTooltipsPage)
@@ -469,7 +587,8 @@ function Installer:ApplyEllesmereGlobalSettings()
     -- We seed the defaults here to match the screenshot settings (bar disabled,
     -- layout values as shown). Source: DB_DEFAULTS in
     -- EllesmereUIBlizzardSkin_DragonRiding.lua
-    if C_AddOns.IsAddOnLoaded("EllesmereUIBlizzardSkin") then
+    -- Forever: Skip — Dragonriding/Skyriding does not exist in Forever
+    if not ns.IS_FOREVER and C_AddOns.IsAddOnLoaded("EllesmereUIBlizzardSkin") then
         local drdb = _G.EllesmereUIDragonRidingDB
         if not drdb then
             _G.EllesmereUIDragonRidingDB = {}
@@ -509,7 +628,8 @@ function Installer:ApplyEllesmereGlobalSettings()
     -- Format: profile.cdmBarPositions["cooldowns"] = { point, relPoint, x, y }
     -- We force x=0 (centered horizontally) and leave y unchanged.
     -- Source: SaveCDMBarPosition() in EllesmereUICooldownManager.lua line 3244.
-    if C_AddOns.IsAddOnLoaded("EllesmereUICooldownManager") then
+    -- Forever: Skip — BCDM/CDM does not exist in Forever
+    if not ns.IS_FOREVER and C_AddOns.IsAddOnLoaded("EllesmereUICooldownManager") then
         local cdmDB = _G.EllesmereUICooldownManagerDB
         if cdmDB and cdmDB.profiles then
             local profileName = "GravityUI"
@@ -556,6 +676,10 @@ function Installer:GetSystemStatus(targetProfile)
     local report = {}
 
     for _, addon in ipairs(self.registry) do
+        -- Forever: skip addons explicitly marked as unsupported
+        if ns.IS_FOREVER and addon.foreverSupported == false then
+            -- skip entirely — addon is not relevant in Forever
+        else
         local isLoaded = addon.Check and addon.Check()
         
         if isLoaded then
@@ -598,6 +722,7 @@ function Installer:GetSystemStatus(targetProfile)
             -- Unloaded addons don't fail the check for "System Configured" 
             -- (because if you didn't install the addon, it's fine)
         end
+        end -- Forever filter else
     end
     
     -- Post-Processing: Mutual Exclusion (e.g. BCDM vs replacement CDM)
@@ -831,12 +956,27 @@ function Installer:Synchronize(targetProfile, allowList)
     -- (This logic is already in SetProfile for EditMode above, so loop handles it)
 
     -- Finish
-    GUI:ShowConfirmation({
-        title = "Sync Complete",
-        message = "Profiles set to '"..targetProfile.."'.\nReload UI now?",
-        acceptText = "Reload UI",
-        onAccept = function() ReloadUI() end
-    })
+    if ns.IS_FOREVER then
+        -- Forever: ReloadUI() is protected — must use StaticPopup (hardware click)
+        StaticPopupDialogs["GRAVITYUI_SYNC_COMPLETE"] = StaticPopupDialogs["GRAVITYUI_SYNC_COMPLETE"] or {
+            text = "Profiles set to '%s'.\nReload UI now?",
+            button1 = "Reload UI",
+            button2 = "Later",
+            OnAccept = function() ReloadUI() end,
+            timeout = 0,
+            whileDead = true,
+            hideOnEscape = true,
+            preferredIndex = 3,
+        }
+        StaticPopup_Show("GRAVITYUI_SYNC_COMPLETE", targetProfile)
+    else
+        GUI:ShowConfirmation({
+            title = "Sync Complete",
+            message = "Profiles set to '"..targetProfile.."'.\nReload UI now?",
+            acceptText = "Reload UI",
+            onAccept = function() ReloadUI() end
+        })
+    end
 end
 
 -- Full Install (Import + Sync)
@@ -899,12 +1039,27 @@ function Installer:Install(targetProfile, sourceProfileName, allowList)
     end
 
     -- Finish
-    GUI:ShowConfirmation({
-        title = "Installation Complete",
-        message = "All profiles imported and set to '"..targetProfile.."'.\nReload UI now?",
-        acceptText = "Reload UI",
-        onAccept = function() ReloadUI() end
-    })
+    if ns.IS_FOREVER then
+        -- Forever: ReloadUI() is protected — must use StaticPopup (hardware click)
+        StaticPopupDialogs["GRAVITYUI_INSTALL_COMPLETE"] = StaticPopupDialogs["GRAVITYUI_INSTALL_COMPLETE"] or {
+            text = "All profiles imported and set to '%s'.\nReload UI now?",
+            button1 = "Reload UI",
+            button2 = "Later",
+            OnAccept = function() ReloadUI() end,
+            timeout = 0,
+            whileDead = true,
+            hideOnEscape = true,
+            preferredIndex = 3,
+        }
+        StaticPopup_Show("GRAVITYUI_INSTALL_COMPLETE", targetProfile)
+    else
+        GUI:ShowConfirmation({
+            title = "Installation Complete",
+            message = "All profiles imported and set to '"..targetProfile.."'.\nReload UI now?",
+            acceptText = "Reload UI",
+            onAccept = function() ReloadUI() end
+        })
+    end
 end
 
 -- ---------------------------------------------------------------------------
@@ -1032,4 +1187,184 @@ do
         C_Timer.After(3.0, EnforceCooldownsX)
         C_Timer.After(6.0, EnforceCooldownsX)
     end)
+end
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- DIAGNOSTIC: /guidebugem — Dump EditMode API state for Forever debugging
+-- ─────────────────────────────────────────────────────────────────────────────
+do
+    local p = function(msg) print("|cFF30D1FFGravityUI EditMode Debug:|r " .. msg) end
+
+    SLASH_GUIDEBUGEM1 = "/guidebugem"
+    SlashCmdList["GUIDEBUGEM"] = function()
+        p("=== C_EditMode API ===")
+        if not C_EditMode then
+            p("|cffff0000C_EditMode does NOT exist|r")
+            return
+        end
+
+        -- List all C_EditMode functions
+        local funcs = {}
+        for k, v in pairs(C_EditMode) do
+            table.insert(funcs, k .. " (" .. type(v) .. ")")
+        end
+        table.sort(funcs)
+        p("Functions: " .. table.concat(funcs, ", "))
+
+        -- GetLayouts
+        if C_EditMode.GetLayouts then
+            local ok, layoutInfo = pcall(C_EditMode.GetLayouts)
+            if ok and layoutInfo then
+                p("activeLayout: " .. tostring(layoutInfo.activeLayout) .. " (type: " .. type(layoutInfo.activeLayout) .. ")")
+                if layoutInfo.layouts then
+                    p("Layout count: " .. #layoutInfo.layouts)
+                    for i, layout in ipairs(layoutInfo.layouts) do
+                        local fields = {}
+                        for k, v in pairs(layout) do
+                            if type(v) ~= "table" then
+                                table.insert(fields, k .. "=" .. tostring(v))
+                            else
+                                table.insert(fields, k .. "={table}")
+                            end
+                        end
+                        p("  [" .. i .. "] " .. table.concat(fields, ", "))
+                    end
+                end
+                -- Dump all top-level keys
+                local topKeys = {}
+                for k in pairs(layoutInfo) do table.insert(topKeys, k) end
+                p("layoutInfo keys: " .. table.concat(topKeys, ", "))
+            else
+                p("|cffff0000GetLayouts() failed: " .. tostring(layoutInfo) .. "|r")
+            end
+        else
+            p("|cffff0000C_EditMode.GetLayouts does not exist|r")
+        end
+
+        -- ConvertStringToLayoutInfo
+        p("ConvertStringToLayoutInfo: " .. tostring(C_EditMode.ConvertStringToLayoutInfo ~= nil))
+
+        -- EditModeManagerFrame
+        p("=== EditModeManagerFrame ===")
+        if EditModeManagerFrame then
+            local methods = {}
+            local mt = getmetatable(EditModeManagerFrame)
+            if mt and mt.__index then
+                for k in pairs(mt.__index) do
+                    if k:find("Import") or k:find("Layout") or k:find("Save") then
+                        table.insert(methods, k)
+                    end
+                end
+            end
+            -- Also check direct keys
+            for k in pairs(EditModeManagerFrame) do
+                if type(k) == "string" and (k:find("Import") or k:find("Layout") or k:find("Save")) then
+                    table.insert(methods, k)
+                end
+            end
+            table.sort(methods)
+            p("Layout/Import methods: " .. (next(methods) and table.concat(methods, ", ") or "NONE found"))
+        else
+            p("|cffff0000EditModeManagerFrame does NOT exist|r")
+            -- Try loading it
+            if C_AddOns and C_AddOns.LoadAddOn then
+                p("Trying C_AddOns.LoadAddOn('Blizzard_EditMode')...")
+                local ok = pcall(C_AddOns.LoadAddOn, "Blizzard_EditMode")
+                p("Result: " .. tostring(ok) .. ", EditModeManagerFrame: " .. tostring(EditModeManagerFrame ~= nil))
+            end
+        end
+
+        -- Enum
+        p("=== Enums ===")
+        if Enum and Enum.EditModeLayoutType then
+            local vals = {}
+            for k, v in pairs(Enum.EditModeLayoutType) do
+                table.insert(vals, k .. "=" .. tostring(v))
+            end
+            p("EditModeLayoutType: " .. table.concat(vals, ", "))
+        else
+            p("Enum.EditModeLayoutType: |cffff0000NOT FOUND|r")
+        end
+    end
+
+    -- /guitestem — Actually attempt the EditMode import with verbose step-by-step output
+    SLASH_GUITESTEM1 = "/guitestem"
+    SlashCmdList["GUITESTEM"] = function()
+        p("=== STEP-BY-STEP EDITMODE IMPORT TEST ===")
+
+        -- Step 1: Find the import string
+        local imports
+        if _G.GravityUI and _G.GravityUI.profiles then
+            for profileName, profile in pairs(_G.GravityUI.profiles) do
+                if profile.imports and profile.imports.EditMode then
+                    imports = profile.imports.EditMode
+                    p("Step 1: Found EditMode string in profile '" .. profileName .. "'")
+                    break
+                end
+            end
+        end
+        if not imports then
+            p("|cffff0000Step 1 FAILED: No EditMode import string found in any profile|r")
+            return
+        end
+        local data = imports.data
+        if not data or data == "" then
+            p("|cffff0000Step 1 FAILED: EditMode data is empty|r")
+            return
+        end
+        p("Step 1: String length = " .. #data .. " chars, first 80: " .. data:sub(1, 80))
+
+        -- Step 2: ConvertStringToLayoutInfo
+        p("Step 2: Calling C_EditMode.ConvertStringToLayoutInfo...")
+        local ok1, result = pcall(C_EditMode.ConvertStringToLayoutInfo, data)
+        if not ok1 then
+            p("|cffff0000Step 2 FAILED: pcall error: " .. tostring(result) .. "|r")
+            return
+        end
+        if not result then
+            p("|cffff0000Step 2 FAILED: returned nil (string format incompatible?)|r")
+            return
+        end
+        -- Dump what we got
+        local resultKeys = {}
+        for k in pairs(result) do table.insert(resultKeys, k .. "(" .. type(result[k]) .. ")") end
+        p("Step 2 OK: layoutInfo keys = " .. table.concat(resultKeys, ", "))
+        if result.systems then
+            p("Step 2: systems count = " .. #result.systems)
+        end
+
+        -- Step 3: EditModeManagerFrame
+        if not EditModeManagerFrame then
+            p("Step 3: EditModeManagerFrame is nil, loading Blizzard_EditMode...")
+            pcall(C_AddOns.LoadAddOn, "Blizzard_EditMode")
+        end
+        if not EditModeManagerFrame then
+            p("|cffff0000Step 3 FAILED: EditModeManagerFrame still nil after LoadAddOn|r")
+            return
+        end
+        p("Step 3: EditModeManagerFrame exists")
+        p("Step 3: ImportLayout method = " .. tostring(EditModeManagerFrame.ImportLayout ~= nil))
+
+        -- Step 4: Try ImportLayout
+        local layoutType = Enum.EditModeLayoutType.Account  -- = 1
+        local profileName = "GravityUI"
+        p("Step 4: Calling ImportLayout(layoutInfo, " .. tostring(layoutType) .. ", '" .. profileName .. "')...")
+        local ok2, err = pcall(function()
+            EditModeManagerFrame:ImportLayout(result, layoutType, profileName)
+        end)
+        if not ok2 then
+            p("|cffff0000Step 4 FAILED: " .. tostring(err) .. "|r")
+        else
+            p("|cff00ff00Step 4 OK: ImportLayout returned successfully|r")
+        end
+
+        -- Step 5: Verify
+        local layoutInfo = C_EditMode.GetLayouts()
+        if layoutInfo and layoutInfo.layouts then
+            p("Step 5: Layouts after import (" .. #layoutInfo.layouts .. "):")
+            for i, layout in ipairs(layoutInfo.layouts) do
+                p("  [" .. i .. "] " .. tostring(layout.layoutName))
+            end
+        end
+    end
 end

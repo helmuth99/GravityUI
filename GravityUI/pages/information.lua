@@ -294,18 +294,26 @@ local function BuildInformationTab(parent)
     R({ name="Autohide Setup",   desc="Contextual UI hiding for Objective Tracker, Frames, Nameplates, and Guild Chat Privacy.",   pageId="qol", tabIndex=3 })
     G()
     H("  Features")
-    R({ name="Skyriding HUD",     desc="Smooth animated Vigor tracking HUD with unified centered layout.",             stateTable=db.skyriding, stateKey="enabled", pageId="features", tabIndex=1 })
-    R({ name="M+ Teleports",      desc="Clickable dungeon portals embedded in the Mythic+ LFG UI.",                   stateTable=db.uiimprovements, stateKey="mplusTeleportEnabled", pageId="features", tabIndex=2 })
-    R({ name="World Marks",       desc="World markers, flares, quick access to ready checks and pull timers.",          stateTable=db.uiimprovements and db.uiimprovements.marks, stateKey="enabled", pageId="features", tabIndex=3 })
-    R({ name="Mail Extras",       desc="Open All button, address book for alts, and gold loot messages.",               stateTable=db.uiimprovements and db.uiimprovements.mail, stateKey="enabled", pageId="features", tabIndex=4 })
-    R({ name="Group & Guild",     desc="Guild invite tool and automatic role promotion for assistants.",                 pageId="features", tabIndex=5 })
-    R({ name="Player Marks",      desc="Assign raid target icons via Ready Check — role-based for M+ and per-player for raids.", stateTable=db.playermarks, stateKey="enabled", pageId="features", tabIndex=6 })
-    R({ name="Interrupt Tracker", desc="Tracks interrupt cooldowns of party members in M+ dungeons.",                   stateTable=db.screenindicators and db.screenindicators.interruptTracker, stateKey="enabled", pageId="features", tabIndex=7 })
-    R({ name="Alt Manager",       desc="Account-wide matrix for Mythic+ Keystones, Great Vault status, and Currencies.", stateTable=db.altManager, stateKey="enabled", pageId="features", tabIndex=8 })
-    R({ name="Frame Mover",       desc="Freely drag and reposition all standard Blizzard frames (Character, Bank, Merchant, etc.).", stateTable=db.frameMover, stateKey="enabled", pageId="features", tabIndex=9 })
-    R({ name="Sound Alerts",      desc="Integrate custom SharedMedia sounds into Blizzard's CooldownViewer.",           stateTable=db.soundAlerts, stateKey="enabled", pageId="features", tabIndex=10 })
-    R({ name="Color Picker",      desc="Full HSV color picker with saved slots, class colors, hex input, and live preview.", stateTable=db.colorPicker, stateKey="enabled", pageId="features", tabIndex=11 })
-    R({ name="Premade Group",     desc="Group Finder and GroupFinderIO enhancements with role filters and auto-accept.",     stateTable=db.premadeGroup, stateKey="enabled", pageId="features", tabIndex=12 })
+    if not ns.IS_FOREVER then
+        R({ name="Skyriding HUD",     desc="Smooth animated Vigor tracking HUD with unified centered layout.",             stateTable=db.skyriding, stateKey="enabled", pageId="features", tabIndex=1 })
+        R({ name="M+ Teleports",      desc="Clickable dungeon portals embedded in the Mythic+ LFG UI.",                   stateTable=db.uiimprovements, stateKey="mplusTeleportEnabled", pageId="features", tabIndex=2 })
+    end
+    R({ name="World Marks",       desc="World markers, flares, quick access to ready checks and pull timers.",          stateTable=db.uiimprovements and db.uiimprovements.marks, stateKey="enabled", pageId="features", tabIndex=ns.IS_FOREVER and 1 or 3 })
+    R({ name="Mail Extras",       desc="Open All button, address book for alts, and gold loot messages.",               stateTable=db.uiimprovements and db.uiimprovements.mail, stateKey="enabled", pageId="features", tabIndex=ns.IS_FOREVER and 2 or 4 })
+    R({ name="Group & Guild",     desc="Guild invite tool and automatic role promotion for assistants.",                 pageId="features", tabIndex=ns.IS_FOREVER and 3 or 5 })
+    R({ name="Player Marks",      desc="Assign raid target icons via Ready Check — role-based for M+ and per-player for raids.", stateTable=db.playermarks, stateKey="enabled", pageId="features", tabIndex=ns.IS_FOREVER and 4 or 6 })
+    R({ name="Interrupt Tracker", desc="Tracks interrupt cooldowns of party members in M+ dungeons.",                   stateTable=db.screenindicators and db.screenindicators.interruptTracker, stateKey="enabled", pageId="features", tabIndex=ns.IS_FOREVER and 5 or 7 })
+    if not ns.IS_FOREVER then
+        R({ name="Alt Manager",       desc="Account-wide matrix for Mythic+ Keystones, Great Vault status, and Currencies.", stateTable=db.altManager, stateKey="enabled", pageId="features", tabIndex=8 })
+    end
+    R({ name="Frame Mover",       desc="Freely drag and reposition all standard Blizzard frames (Character, Bank, Merchant, etc.).", stateTable=db.frameMover, stateKey="enabled", pageId="features", tabIndex=ns.IS_FOREVER and 6 or 9 })
+    if not ns.IS_FOREVER then
+        R({ name="Sound Alerts",      desc="Integrate custom SharedMedia sounds into Blizzard's CooldownViewer.",           stateTable=db.soundAlerts, stateKey="enabled", pageId="features", tabIndex=10 })
+    end
+    R({ name="Color Picker",      desc="Full HSV color picker with saved slots, class colors, hex input, and live preview.", stateTable=db.colorPicker, stateKey="enabled", pageId="features", tabIndex=ns.IS_FOREVER and 7 or 11 })
+    if not ns.IS_FOREVER then
+        R({ name="Premade Group",     desc="Group Finder and GroupFinderIO enhancements with role filters and auto-accept.",     stateTable=db.premadeGroup, stateKey="enabled", pageId="features", tabIndex=12 })
+    end
     G()
     H("  Indicators")
     R({ name="Cursor Utilities",   desc="Attach GCD rings, cursor castbars and highlights to your mouse cursor.",       stateTable=db.screenindicators and db.screenindicators.cursor, stateKey="enabled", pageId="indicators", tabIndex=1 })
@@ -319,11 +327,13 @@ local function BuildInformationTab(parent)
     R({ name="Combat Timer",       desc="Visual stopwatch tracking time spent in combat. Great for M+ and raid analysis.", stateTable=db.uiimprovements and db.uiimprovements.combatTimer, stateKey="enabled", pageId="indicators", tabIndex=7 })
     R({ name="Cooldown Text",      desc="Movement cooldown tracker with preset spell lists, sound alerts, and display modes.", stateTable=db.cooldownText, stateKey="enabled", pageId="indicators", tabIndex=8 })
     R({ name="Raid Warnings",      desc="Large centralized alerts for Soulwells, Feasts, Mage Tables, and Rituals.",      stateTable=db.raidWarnings, stateKey="enabled", pageId="indicators", tabIndex=9 })
-    R({ name="Consumables",        desc="Shows missing consumables for group members during a Ready Check.",               stateTable=db.screenindicators and db.screenindicators.consumables, stateKey="enabled", pageId="indicators", tabIndex=10 })
-    R({ name="Difficulty",         desc="Status bar showing current instance difficulty with a quick-change dropdown.",    stateTable=db.screenindicators and db.screenindicators.difficulty, stateKey="enabled", pageId="indicators", tabIndex=11 })
-    R({ name="AFK Screen",         desc="Immersive character orbit when AFK. Displays real time, guild, and rank.",        stateTable=db.screenindicators and db.screenindicators.afkScreen, stateKey="enabled", pageId="indicators", tabIndex=12 })
-    R({ name="Death Announcer",    desc="Broadcasts party and raid player deaths to chat and on-screen alerts.",          stateTable=db.deathAnnouncer, stateKey="enabled", pageId="indicators", tabIndex=13 })
-    R({ name="Tracked Bars",       desc="Configurable progress bars tracking spells, items or timers with custom thresholds.",  stateTable=db.actionbars and db.actionbars.cdmBuffbar, stateKey="enabled", pageId="indicators", tabIndex=14 })
+    if not ns.IS_FOREVER then
+        R({ name="Consumables",        desc="Shows missing consumables for group members during a Ready Check.",               stateTable=db.screenindicators and db.screenindicators.consumables, stateKey="enabled", pageId="indicators", tabIndex=10 })
+    end
+    R({ name="Difficulty",         desc="Status bar showing current instance difficulty with a quick-change dropdown.",    stateTable=db.screenindicators and db.screenindicators.difficulty, stateKey="enabled", pageId="indicators", tabIndex=ns.IS_FOREVER and 10 or 11 })
+    R({ name="AFK Screen",         desc="Immersive character orbit when AFK. Displays real time, guild, and rank.",        stateTable=db.screenindicators and db.screenindicators.afkScreen, stateKey="enabled", pageId="indicators", tabIndex=ns.IS_FOREVER and 11 or 12 })
+    R({ name="Death Announcer",    desc="Broadcasts party and raid player deaths to chat and on-screen alerts.",          stateTable=db.deathAnnouncer, stateKey="enabled", pageId="indicators", tabIndex=ns.IS_FOREVER and 12 or 13 })
+    R({ name="Tracked Bars",       desc="Configurable progress bars tracking spells, items or timers with custom thresholds.",  stateTable=db.actionbars and db.actionbars.cdmBuffbar, stateKey="enabled", pageId="indicators", tabIndex=ns.IS_FOREVER and 13 or 14 })
     G()
     H("  UI Styling")
     R({ name="Character Panel",    desc="Embeds item level, durability, enchants and gems on character slot icons.",        stateTable=db.uiimprovements and db.uiimprovements.character, stateKey="enabled", pageId="Styling", tabIndex=1 })
@@ -366,16 +376,24 @@ local function BuildInformationTab(parent)
     -- Datapanels
     CollectToggleable({ stateTable=db.minimap and db.minimap.datatext, stateKey="enabled" })
     -- Features
-    CollectToggleable({ stateTable=db.skyriding, stateKey="enabled" })
-    CollectToggleable({ stateTable=db.uiimprovements, stateKey="mplusTeleportEnabled" })
+    if not ns.IS_FOREVER then
+        CollectToggleable({ stateTable=db.skyriding, stateKey="enabled" })
+        CollectToggleable({ stateTable=db.uiimprovements, stateKey="mplusTeleportEnabled" })
+    end
     CollectToggleable({ stateTable=db.uiimprovements and db.uiimprovements.marks, stateKey="enabled" })
     CollectToggleable({ stateTable=db.uiimprovements and db.uiimprovements.mail, stateKey="enabled" })
     CollectToggleable({ stateTable=db.screenindicators and db.screenindicators.interruptTracker, stateKey="enabled" })
-    CollectToggleable({ stateTable=db.altManager, stateKey="enabled" })
+    if not ns.IS_FOREVER then
+        CollectToggleable({ stateTable=db.altManager, stateKey="enabled" })
+    end
     CollectToggleable({ stateTable=db.frameMover, stateKey="enabled" })
-    CollectToggleable({ stateTable=db.soundAlerts, stateKey="enabled" })
+    if not ns.IS_FOREVER then
+        CollectToggleable({ stateTable=db.soundAlerts, stateKey="enabled" })
+    end
     CollectToggleable({ stateTable=db.colorPicker, stateKey="enabled" })
-    CollectToggleable({ stateTable=db.premadeGroup, stateKey="enabled" })
+    if not ns.IS_FOREVER then
+        CollectToggleable({ stateTable=db.premadeGroup, stateKey="enabled" })
+    end
     -- Indicators
     CollectToggleable({ stateTable=db.screenindicators and db.screenindicators.cursor, stateKey="enabled" })
     CollectToggleable({ stateTable=db.screenindicators and db.screenindicators.crosshair, stateKey="enabled" })

@@ -12,6 +12,7 @@
 --   - The secure button is created ONCE at login (out of combat); only the
 --     "spell" attribute is rewritten later, and only out of combat.
 local ADDON_NAME, ns = ...
+if ns.IS_FOREVER then return end
 
 local LSM = LibStub("LibSharedMedia-3.0", true)
 local issecretvalue = issecretvalue or function() return false end

@@ -108,12 +108,29 @@ function Addon:SafeReload()
             end
         end
     else
-        ReloadUI()
+        if ns.IS_FOREVER then
+            Addon:ShowReloadPopup()
+        else
+            ReloadUI()
+        end
     end
 end
 
 function Addon:ShowReloadPopup()
-    if ns.GUI and ns.GUI.ShowConfirmation then
+    if ns.IS_FOREVER then
+        -- Forever: ReloadUI() is protected — must use StaticPopup (hardware click)
+        StaticPopupDialogs["GRAVITYUI_RELOAD_READY"] = StaticPopupDialogs["GRAVITYUI_RELOAD_READY"] or {
+            text = "|cff30d1ffGravityUI|r\n\nReload the UI now?",
+            button1 = "Reload Now",
+            button2 = "Later",
+            OnAccept = function() ReloadUI() end,
+            timeout = 0,
+            whileDead = true,
+            hideOnEscape = true,
+            preferredIndex = 3,
+        }
+        StaticPopup_Show("GRAVITYUI_RELOAD_READY")
+    elseif ns.GUI and ns.GUI.ShowConfirmation then
         ns.GUI:ShowConfirmation({
             title = "Reload Ready",
             message = "Combat ended. Click to reload the UI.",

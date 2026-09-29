@@ -834,6 +834,10 @@ local function BuildInstallerTab(parent)
         local list = {}
         -- Iterate the registry to find names matching our labels
         for _, addon in ipairs(GUI.Installer.registry) do
+            -- Forever: skip addons not supported in Forever
+            if ns.IS_FOREVER and addon.foreverSupported == false then
+                -- skip
+            else
             -- If selectionState[addon.label] is true (or nil->true default)
             local function AddStringHeader(key, d)
             if not d or type(d) ~= "table" or type(d.data) ~= "string" then return end
@@ -846,6 +850,7 @@ local function BuildInstallerTab(parent)
             if s then
                 list[addon.name] = true
             end
+            end -- Forever filter else
         end
         return list
     end

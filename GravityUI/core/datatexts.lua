@@ -1453,7 +1453,8 @@ DT.Types.coords = {
     OnClick = function() ToggleWorldMap() end
 }
 
--- 9. SPEC / PLAYERSPEC
+-- 9. SPEC / PLAYERSPEC (Retail only — GetSpecialization API does not exist in Forever)
+if not ns.IS_FOREVER then
 DT.Types.spec = {
     Update = function(slot, config)
         local spec = GetSpecialization()
@@ -1519,6 +1520,7 @@ DT.Types.spec = {
         end
     end
 }
+end -- not IS_FOREVER
 
 
 -- ============================================================================

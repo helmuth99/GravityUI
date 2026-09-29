@@ -2,6 +2,7 @@
 -- Integrates GroupKeys (by Kubi) Premade Group dropdown into GravityUI.
 -- Key Broadcasting is handled separately by mplusteleport.lua.
 local ADDON_NAME, ns = ...
+if ns.IS_FOREVER then return end
 
 local PremadeGroup = {}
 ns.PremadeGroup = PremadeGroup

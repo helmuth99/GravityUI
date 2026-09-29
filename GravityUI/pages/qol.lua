@@ -299,10 +299,13 @@ local function BuildAutomation(parent)
     ---------------------------------------------------------------------------
     ColSubLabel(leftCol, "Dungeon & Raid")
 
-    ColAddRow(leftCol, "Auto Insert M+ Keys", "checkbox", "autoInsertKey", dbUI, nil)
-    ColInfoLine(leftCol, "Auto-insert keystone at start.")
+    -- Forever: M+ features hidden (system doesn't exist)
+    if not ns.IS_FOREVER then
+        ColAddRow(leftCol, "Auto Insert M+ Keys", "checkbox", "autoInsertKey", dbUI, nil)
+        ColInfoLine(leftCol, "Auto-insert keystone at start.")
 
-    ColAddRow(leftCol, "Auto Combat Log in M+", "checkbox", "autoCombatLog", dbUI, nil)
+        ColAddRow(leftCol, "Auto Combat Log in M+", "checkbox", "autoCombatLog", dbUI, nil)
+    end
     ColAddRow(leftCol, "Auto Log Raid (Normal)", "checkbox", "autoCombatLogRaidNormal", dbUI, nil)
     ColAddRow(leftCol, "Auto Log Raid (Heroic)", "checkbox", "autoCombatLogRaidHeroic", dbUI, nil)
     ColAddRow(leftCol, "Auto Log Raid (Mythic)", "checkbox", "autoCombatLogRaidMythic", dbUI, nil)
@@ -406,6 +409,17 @@ local function BuildAutohide(parent)
         {key="pvp", label="   - In Battlegrounds"},
         {key="arena", label="   - In Arenas"},
     }
+    -- Forever: filter out M+ and Follower Dungeon instance types
+    if ns.IS_FOREVER then
+        local FOREVER_HIDDEN_TYPES = { mythicPlus = true, followerDungeon = true }
+        local filtered = {}
+        for _, it in ipairs(instanceTypes) do
+            if not FOREVER_HIDDEN_TYPES[it.key] then
+                table.insert(filtered, it)
+            end
+        end
+        instanceTypes = filtered
+    end
     for _, it in ipairs(instanceTypes) do
         ColAddRow(leftCol, it.label, "checkbox", it.key, dbUI.hideObjectiveTrackerInstanceTypes, RefreshAutohide)
     end

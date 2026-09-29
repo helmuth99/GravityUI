@@ -1,6 +1,7 @@
 -- GravityUI - Quick Salvage Module
 -- One-click Milling, Prospecting, Disenchanting
 local ADDON_NAME, ns = ...
+if ns.IS_FOREVER then return end
 
 local QuickSalvage = {}
 ns.QuickSalvage = QuickSalvage
