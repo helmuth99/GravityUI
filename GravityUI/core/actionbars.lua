@@ -1696,9 +1696,29 @@ do
                 end
             end
         else
-            -- Single slot
+            -- Single slot. On override/mount/bonus bars (e.g. Skyriding) a button's
+            -- effective action differs from its index, so match by effective action
+            -- as well as by slot index.
+            local done
+            for _, info in ipairs(BAR_CONFIG) do
+                local btns = barButtons[info.key]
+                if btns then
+                    for _, btn in ipairs(btns) do
+                        if btn then
+                            local action = btn.action or btn:GetAttribute("action")
+                            if action and action == changedSlot then
+                                RefreshButtonContent(btn, action)
+                                done = true
+                            end
+                        end
+                    end
+                end
+            end
             local btn = allButtons[changedSlot]
-            if btn then RefreshButtonContent(btn, changedSlot) end
+            if btn and not done then
+                local action = btn.action or btn:GetAttribute("action") or changedSlot
+                RefreshButtonContent(btn, action)
+            end
         end
     end
 
