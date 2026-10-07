@@ -2160,12 +2160,15 @@ local function BRC_GetSettings()
     return db and db.uiimprovements and db.uiimprovements.bonusRollConfirm
 end
 
+local brcHookCount = 0
+
 local function BRC_HookButton(btn, isRoll)
     if not btn or btn._brcHooked then return end
-    btn._brcHooked = true
 
     local originalOnClick = btn:GetScript("OnClick")
     if not originalOnClick then return end
+    btn._brcHooked = true
+    brcHookCount = brcHookCount + 1
 
     local dialog     = isRoll and "GRAVITYUI_BONUS_ROLL_CONFIRM" or "GRAVITYUI_BONUS_PASS_CONFIRM"
     local confirmMsg = isRoll and "|cFF30D1FFGravityUI:|r Bonus roll used." or "|cFF30D1FFGravityUI:|r Bonus roll passed."
@@ -2194,6 +2197,7 @@ end
 local function BRC_HookRollFrame()
     if brcHooked then return end
     if not BonusRollFrame then return end
+    brcHookCount = 0
 
     -- Try known named paths for the roll button
     local rollBtn = (BonusRollFrame.PromptFrame and BonusRollFrame.PromptFrame.RollButton)
@@ -2212,23 +2216,57 @@ local function BRC_HookRollFrame()
     end
 
     HookChildren(BonusRollFrame)
-    brcHooked = true
+    -- Only consider it done if the Roll button itself got hooked; otherwise retry later
+    brcHooked = (rollBtn and rollBtn._brcHooked) and true or false
+end
+
+local brcShowHooked, brcStartHooked = false, false
+local function BRC_EnsureHooks()
+    if BonusRollFrame and not brcShowHooked then
+        brcShowHooked = true
+        BonusRollFrame:HookScript("OnShow", function() C_Timer.After(0, BRC_HookRollFrame) end)
+    end
+    if BonusRollFrame_StartBonusRoll and not brcStartHooked then
+        brcStartHooked = true
+        hooksecurefunc("BonusRollFrame_StartBonusRoll", function() C_Timer.After(0, BRC_HookRollFrame) end)
+    end
+    BRC_HookRollFrame()
 end
 
 -- Hook into BONUS_ROLL_STARTED + BonusRollFrame_StartBonusRoll
 local brcInitFrame = CreateFrame("Frame")
 brcInitFrame:RegisterEvent("ADDON_LOADED")
+brcInitFrame:RegisterEvent("PLAYER_LOGIN")
 brcInitFrame:RegisterEvent("BONUS_ROLL_STARTED")
 brcInitFrame:SetScript("OnEvent", function(self, event, arg1)
-    if event == "ADDON_LOADED" and arg1 == ADDON_NAME then
-        BRC_HookRollFrame()
-        if BonusRollFrame_StartBonusRoll and not brcHooked then
-            hooksecurefunc("BonusRollFrame_StartBonusRoll", BRC_HookRollFrame)
-        end
-    elseif event == "BONUS_ROLL_STARTED" then
-        BRC_HookRollFrame()
+    if event == "ADDON_LOADED" and arg1 ~= ADDON_NAME and arg1 ~= "Blizzard_BonusRoll" then return end
+    BRC_EnsureHooks()
+    if event == "BONUS_ROLL_STARTED" then
+        C_Timer.After(0, BRC_EnsureHooks)
     end
 end)
+
+SLASH_GRAVITYBRCDEBUG1 = "/gravitybrcdebug"
+SlashCmdList["GRAVITYBRCDEBUG"] = function()
+    local P = "|cFF30D1FFGravityUI BRC:|r "
+    if not BonusRollFrame then print(P .. "BonusRollFrame = nil") return end
+    local cfg = BRC_GetSettings()
+    print(P .. "cfg.enabled=" .. tostring(cfg and cfg.enabled) .. " brcHooked=" .. tostring(brcHooked))
+    local rollBtn = (BonusRollFrame.PromptFrame and BonusRollFrame.PromptFrame.RollButton) or BonusRollFrame.RollButton
+    print(P .. "RollButton=" .. tostring(rollBtn))
+    local function Walk(frame, depth)
+        for i = 1, frame:GetNumChildren() do
+            local c = select(i, frame:GetChildren())
+            if c:IsObjectType("Button") then
+                print(P .. string.rep(" ", depth) .. tostring(c:GetName() or c:GetObjectType())
+                    .. " OnClick=" .. tostring(c:GetScript("OnClick") ~= nil)
+                    .. " hooked=" .. tostring(c._brcHooked) .. " protected=" .. tostring(c:IsProtected()))
+            end
+            Walk(c, depth + 1)
+        end
+    end
+    Walk(BonusRollFrame, 0)
+end
 
 -- Expose for features page test button
 ns.BonusRollConfirm = {
