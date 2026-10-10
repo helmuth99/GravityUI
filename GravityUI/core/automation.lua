@@ -571,29 +571,60 @@ end
 -- QUESTS: AUTO ACCEPT & AUTO TURN-IN
 ---------------------------------------------------------------------------
 
--- v2026-08: GUID-based NPC suppression (EUI pattern).
--- Holding Shift at ANY quest event during a visit marks the current NPC's
--- GUID as suppressed. All subsequent events for that NPC stay manual even
--- after Shift is released -- so releasing Shift to click a gossip option
--- can no longer accidentally re-arm automation. The mark is cleared 0.15s
--- after a close event (NPC unit is gone by then on a true close but still
--- present during panel transitions).
+-- Visit suppression:
+-- Holding Shift at ANY point during an NPC conversation session marks the
+-- visit as suppressed. All subsequent dialog steps (e.g. Gossip -> QuestDetail,
+-- or QuestProgress -> QuestComplete) stay manual even after Shift is released.
+-- The suppression is cleanly cleared 0.2s after dialog frames (QuestFrame,
+-- GossipFrame, QuestGreetingFrame) have fully closed.
+local isVisitSuppressed = false
 local suppressedNPCGUID = nil
 
 local function CurrentNPCGUID()
-    return UnitGUID("npc") or UnitGUID("questnpc")
+    if UnitExists("target") and not UnitIsPlayer("target") then
+        return UnitGUID("target")
+    end
+    return nil
 end
 
 local function VisitSuppressed()
+    local settings = GetSettings()
+    if not settings or not settings.questHoldShift then
+        return false
+    end
+
     local npc = CurrentNPCGUID()
     if IsShiftKeyDown() then
+        isVisitSuppressed = true
         if npc then suppressedNPCGUID = npc end
         return true
     end
+
+    if isVisitSuppressed then
+        return true
+    end
+
     if npc and npc == suppressedNPCGUID then
         return true
     end
+
     return false
+end
+
+local function ClearSuppressionIfClosed()
+    C_Timer.After(0.2, function()
+        local isOpen = (QuestFrame and QuestFrame:IsShown())
+                    or (GossipFrame and GossipFrame:IsShown())
+                    or (QuestGreetingFrame and QuestGreetingFrame:IsShown())
+        if not isOpen then
+            isVisitSuppressed = false
+            suppressedNPCGUID = nil
+        end
+    end)
+end
+
+local function OnQuestGreeting()
+    if VisitSuppressed() then return end
 end
 
 local function OnQuestDetail()
@@ -703,22 +734,11 @@ end
 
 local function OnGossipClosed()
     gossipClicked = {}
-    -- Deferred clear: on a true close the npc unit is gone shortly after the event;
-    -- on a panel transition it is still present. Only clear the GUID when no NPC remains
-    -- so panel transitions can't corrupt suppression state.
-    C_Timer.After(0.15, function()
-        if not CurrentNPCGUID() then
-            suppressedNPCGUID = nil
-        end
-    end)
+    ClearSuppressionIfClosed()
 end
 
 local function OnQuestFinished()
-    C_Timer.After(0.15, function()
-        if not CurrentNPCGUID() then
-            suppressedNPCGUID = nil
-        end
-    end)
+    ClearSuppressionIfClosed()
 end
 
 ---------------------------------------------------------------------------
@@ -1405,6 +1425,7 @@ automationFrame:RegisterEvent("MERCHANT_SHOW")
 automationFrame:RegisterEvent("LFG_ROLE_CHECK_SHOW")
 automationFrame:RegisterEvent("PARTY_INVITE_REQUEST")
 automationFrame:RegisterEvent("QUEST_DETAIL")
+automationFrame:RegisterEvent("QUEST_GREETING")
 automationFrame:RegisterEvent("QUEST_PROGRESS")
 automationFrame:RegisterEvent("QUEST_COMPLETE")
 automationFrame:RegisterEvent("QUEST_FINISHED")
@@ -1720,6 +1741,8 @@ automationFrame:SetScript("OnEvent", function(self, event, ...)
         OnPartyInvite(...)
     elseif event == "QUEST_DETAIL" then
         OnQuestDetail()
+    elseif event == "QUEST_GREETING" then
+        OnQuestGreeting()
     elseif event == "QUEST_PROGRESS" then
         OnQuestProgress()
     elseif event == "QUEST_COMPLETE" then

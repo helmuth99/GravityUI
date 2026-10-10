@@ -27,6 +27,7 @@ local RegisterAttributeDriver = RegisterAttributeDriver
 local NUM_ACTIONBAR_BUTTONS = NUM_ACTIONBAR_BUTTONS or 12
 local NUM_AB_PAGES = NUM_ACTIONBAR_PAGES or 6
 local C_Timer_After = C_Timer.After
+local ApplyZoneAbilityKeybind, RefreshExtraActionKeybind
 
 -------------------------------------------------------------------------------
 --  Constants
@@ -2256,6 +2257,7 @@ end
 local fadeFrame = CreateFrame("Frame")
 local barStates = {}
 local barMetadata = {}
+local _quickKeybindActive = false
 
 local fadeCombatWaker = CreateFrame("Frame")
 fadeCombatWaker:RegisterEvent("PLAYER_REGEN_DISABLED")
@@ -2338,6 +2340,13 @@ local function UpdateFade(self, elapsed)
     local fadeInDur = db.fade.fadeInDuration or 0.2
     local fadeOutDur = db.fade.fadeOutDuration or 0.4
 
+    if _quickKeybindActive then
+        for i = 1, #barMetadata do
+            SetBarFrameAlpha(barMetadata[i].key, 1)
+        end
+        return
+    end
+
     if #barMetadata == 0 then RefreshBarMetadata() end
 
     local isMouseOverAnyLink = false
@@ -2411,6 +2420,68 @@ local function UpdateFade(self, elapsed)
     end
 
     self._settled = not isAnyBarDirty
+end
+
+-------------------------------------------------------------------------------
+--  Quick Keybind Mode Support: Button Setup & Visuals
+-------------------------------------------------------------------------------
+local function InitButtonQuickKeybind(btn)
+    if not btn or btn:IsForbidden() then return end
+    if not _G.QuickKeybindButtonTemplateMixin then return end
+
+    local fd = GFD(btn)
+    if not fd.qkbInit then
+        fd.qkbInit = true
+        if not btn.QuickKeybindButtonOnClick then
+            Mixin(btn, _G.QuickKeybindButtonTemplateMixin)
+        end
+        if not btn.QuickKeybindHighlightTexture then
+            local tex = btn:CreateTexture(nil, "OVERLAY")
+            tex:SetAllPoints(btn)
+            tex:SetColorTexture(0, 0.7, 1, 0.35)
+            tex:SetBlendMode("ADD")
+            tex:Hide()
+            btn.QuickKeybindHighlightTexture = tex
+        end
+        if not fd.qkbHooked then
+            fd.qkbHooked = true
+            btn:HookScript("OnClick", function(self, button)
+                if self.QuickKeybindButtonOnClick then
+                    self:QuickKeybindButtonOnClick(button)
+                end
+            end)
+            btn:HookScript("OnEnter", function(self)
+                if self.QuickKeybindButtonOnEnter then
+                    self:QuickKeybindButtonOnEnter()
+                end
+            end)
+            btn:HookScript("OnLeave", function(self)
+                if self.QuickKeybindButtonOnLeave then
+                    self:QuickKeybindButtonOnLeave()
+                end
+            end)
+        end
+    end
+end
+
+local function SetButtonQuickKeybindEffects(btn, show)
+    if not btn or btn:IsForbidden() then return end
+    if btn.DoModeChange then
+        btn:DoModeChange(show)
+    elseif btn.QuickKeybindHighlightTexture then
+        btn.QuickKeybindHighlightTexture:SetShown(show)
+    end
+    -- Suppress action attribute during QKB so clicking or keybinding doesn't cast spells
+    if not InCombatLockdown() and btn.commandName and btn:GetAttribute("action") then
+        if show then
+            btn:SetAttribute("type", nil)
+        else
+            btn:SetAttribute("type", "action")
+        end
+    end
+    if btn.UpdateMouseWheelHandler then
+        btn:UpdateMouseWheelHandler()
+    end
 end
 
 -------------------------------------------------------------------------------
@@ -2512,10 +2583,12 @@ local function SetupBar(info)
             bData.barKey = info.key
             bData.btnIndex = i
 
-            -- Set commandName for Blizzard Quick Keybind support
+            -- Set commandName for Blizzard Quick Keybind support.
+            -- Stance/Pet buttons are Blizzard-owned and handled natively by Quick Keybind.
             local bindPrefix = BINDING_MAP[info.key]
             if bindPrefix then
                 btn.commandName = bindPrefix .. i
+                InitButtonQuickKeybind(btn)
             end
 
             -- Layout
@@ -2890,6 +2963,95 @@ local function UpdateKeybinds()
     end
 
     ns.SetBroadcasterPressHoldNeed(hasPH)
+end
+
+-------------------------------------------------------------------------------
+--  Quick Keybind Mode Management
+-------------------------------------------------------------------------------
+-- Re-read bindings into the hotkey FontStrings of all GravityUI buttons.
+-- UpdateButtonText expects the GLOBAL settings table (db.global).
+local function RefreshAllKeybindText()
+    local db = GetDB()
+    local g = db and db.global
+    if not g then return end
+    for _, info in ipairs(BAR_CONFIG) do
+        local btns = barButtons[info.key]
+        if btns then
+            for _, btn in ipairs(btns) do
+                if btn then UpdateButtonText(btn, g) end
+            end
+        end
+    end
+end
+ActionBars.RefreshAllKeybindText = RefreshAllKeybindText
+
+function ActionBars.SetQuickKeybindMode(show)
+    if InCombatLockdown() then
+        -- Protected SetAttribute is blocked in combat: restore the action type
+        -- of the buttons as soon as combat ends so they can never stay disabled.
+        if not show then
+            _quickKeybindActive = false
+            ns.QueueOOCAction(function() ActionBars.SetQuickKeybindMode(false) end)
+        end
+        return
+    end
+    _quickKeybindActive = show and true or false
+
+    for _, info in ipairs(BAR_CONFIG) do
+        local btns = barButtons[info.key]
+        if btns then
+            for _, btn in ipairs(btns) do
+                if btn and btn.commandName and not info.isStance and not info.isPetBar then
+                    InitButtonQuickKeybind(btn)
+                    SetButtonQuickKeybindEffects(btn, show)
+                end
+            end
+        end
+        if show then
+            SetBarFrameAlpha(info.key, 1)
+        end
+    end
+
+    -- The fade system tracks each bar's alpha in barStates. We forced every bar
+    -- (including Micro/Bag bars handled in UpdateFade) to alpha 1, so tell it
+    -- they are fully visible; otherwise it sees "already at target" on exit and
+    -- never fades them back out until the next mouseover.
+    local now = GetTime()
+    for _, state in pairs(barStates) do
+        state.currentAlpha = 1
+        state.lastHoverTime = now
+    end
+
+    if not show then
+        -- Refresh bindings and hotkey text when exiting keybind mode
+        UpdateKeybinds()
+        if ApplyZoneAbilityKeybind then ApplyZoneAbilityKeybind() end
+        if RefreshExtraActionKeybind then RefreshExtraActionKeybind() end
+
+        RefreshAllKeybindText()
+        if fadeFrame then
+            fadeFrame._settled = false
+        end
+    end
+end
+
+local _qkbHooked = false
+function ActionBars.HookQuickKeybindFrame()
+    if _qkbHooked then return end
+    local qkb = _G.QuickKeybindFrame
+    if not qkb then return end
+    _qkbHooked = true
+
+    qkb:HookScript("OnShow", function()
+        ActionBars.SetQuickKeybindMode(true)
+    end)
+    qkb:HookScript("OnHide", function()
+        ActionBars.SetQuickKeybindMode(false)
+    end)
+
+    if qkb:IsShown() then
+        ActionBars.SetQuickKeybindMode(true)
+    end
 end
 
 -------------------------------------------------------------------------------
@@ -3527,7 +3689,7 @@ end
 --  Fix: re-register events directly on the button so its native OnEvent fires,
 --  and set the keybind text ourselves (UpdateButtonText only covers our bars).
 -------------------------------------------------------------------------------
-local function RefreshExtraActionKeybind()
+RefreshExtraActionKeybind = function()
     if not ExtraActionButton1 then return end
     local hk = ExtraActionButton1.HotKey
     if not hk then return end
@@ -3671,7 +3833,7 @@ local function UpdateZoneAbilityKeybindText(spellBtn, keyText)
     end
 end
 
-local function ApplyZoneAbilityKeybind()
+ApplyZoneAbilityKeybind = function()
     if InCombatLockdown() then
         zoneKeybindPending = true
         return
@@ -3942,6 +4104,7 @@ end
 -------------------------------------------------------------------------------
 local initFrame = CreateFrame("Frame")
 initFrame:RegisterEvent("PLAYER_LOGIN")
+initFrame:RegisterEvent("ADDON_LOADED")
 initFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 initFrame:RegisterEvent("UPDATE_BINDINGS")
 initFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
@@ -3954,7 +4117,13 @@ initFrame:RegisterUnitEvent("UNIT_PET", "player")
 initFrame:RegisterEvent("PET_BAR_UPDATE")
 
 initFrame:SetScript("OnEvent", function(self, event, ...)
-    if event == "PLAYER_LOGIN" then
+    if event == "ADDON_LOADED" then
+        local addonName = ...
+        if addonName == "Blizzard_QuickKeybind" then
+            ActionBars.HookQuickKeybindFrame()
+        end
+    elseif event == "PLAYER_LOGIN" then
+        ActionBars.HookQuickKeybindFrame()
         -- Check if we need to complete a Blizzard import (Step 2)
         -- Note: importPending is on the ROOT db (ns.GetDB()), not the actionbars sub-DB
         local rootDB = ns.GetDB()
@@ -3990,6 +4159,7 @@ initFrame:SetScript("OnEvent", function(self, event, ...)
             UpdateKeybinds()
             ApplyZoneAbilityKeybind()
             RefreshExtraActionKeybind()
+            RefreshAllKeybindText()
         end
     elseif event == "UNIT_PET" or event == "PET_BAR_UPDATE" then
         -- Pet summoned/dismissed/updated: toggle pet bar + refresh icons

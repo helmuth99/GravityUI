@@ -2095,6 +2095,10 @@ function Addon:SlashCommandKeybind()
     if not C_AddOns.IsAddOnLoaded("Blizzard_QuickKeybind") then
         C_AddOns.LoadAddOn("Blizzard_QuickKeybind")
     end
+
+    if ns.ActionBars and ns.ActionBars.HookQuickKeybindFrame then
+        ns.ActionBars.HookQuickKeybindFrame()
+    end
     
     if QuickKeybindFrame then
         if QuickKeybindFrame:IsShown() then
