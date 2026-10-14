@@ -1641,7 +1641,13 @@ local function PositionStatsPanelForLayout()
         statsPanel:SetPoint("BOTTOMRIGHT", CharacterFrame, "BOTTOMRIGHT", 42, -35)
         statsPanel:SetWidth(160)
         statsPanel:SetFrameLevel(10)
-        statsPanel:Show()
+        -- Only show on the Character tab (this can run while Rep/Currency is active)
+        if (not PaperDollFrame or PaperDollFrame:IsShown())
+            and (PanelTemplates_GetSelectedTab(CharacterFrame) or 1) == 1 then
+            statsPanel:Show()
+        else
+            statsPanel:Hide()
+        end
 
         -- If just created, trigger ScheduleUpdate to populate content
         if justCreated then
@@ -3994,15 +4000,22 @@ local function HookCharacterFrame()
                     end)
                 end
                 -- Ensure stats panel shows (may not exist yet on first load due to delayed creation)
+                -- Guard: user may have switched to Reputation/Currency before the timer fires
                 C_Timer.After(0.15, function()
-                    if statsPanel then
-                        statsPanel:Show()
+                    if PaperDollFrame and PaperDollFrame:IsShown()
+                        and (PanelTemplates_GetSelectedTab(CharacterFrame) or 1) == 1 then
+                        if statsPanel then
+                            statsPanel:Show()
+                        end
                     end
                 end)
                 -- Restore Blizzard's sidebar to Stats (Tab1) so content panes are correct
                 C_Timer.After(0.05, function()
-                    if PaperDollSidebarTab1 then
-                        PaperDollSidebarTab1:Click()
+                    if PaperDollFrame and PaperDollFrame:IsShown()
+                        and (PanelTemplates_GetSelectedTab(CharacterFrame) or 1) == 1 then
+                        if PaperDollSidebarTab1 then
+                            PaperDollSidebarTab1:Click()
+                        end
                     end
                 end)
             end
