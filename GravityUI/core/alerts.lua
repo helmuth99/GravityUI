@@ -2,6 +2,17 @@ local ADDON_NAME, ns = ...
 local GUI = ns.GUI
 local C = ns.Colors
 
+-- GetItemQualityColor global was removed in retail; wrap C_Item version
+local function GetItemQualityColor(quality)
+    if C_Item and C_Item.GetItemQualityColor then
+        local r, g, b = C_Item.GetItemQualityColor(quality)
+        if r then return r, g, b end
+    end
+    local c = ITEM_QUALITY_COLORS and ITEM_QUALITY_COLORS[quality or 1]
+    if c then return c.r, c.g, c.b end
+    return 1, 1, 1
+end
+
 -- Module
 ns.Alerts = {}
 local Alerts = ns.Alerts

@@ -156,8 +156,13 @@ end
 ---------------------------------------------------------------------------
 local function GetItemQualityColorRGB(quality)
     if quality and quality >= 0 then
-        local r, g, b = GetItemQualityColor(quality)
-        return r, g, b
+        local getColor = (C_Item and C_Item.GetItemQualityColor) or GetItemQualityColor
+        if getColor then
+            local r, g, b = getColor(quality)
+            if r then return r, g, b end
+        end
+        local c = ITEM_QUALITY_COLORS and ITEM_QUALITY_COLORS[quality]
+        if c then return c.r, c.g, c.b end
     end
     return 1, 1, 1  -- White fallback
 end

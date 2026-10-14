@@ -3,6 +3,17 @@ local GUI = ns.GUI
 local C = ns.Colors
 local LSM = LibStub("LibSharedMedia-3.0", true)
 
+-- GetItemQualityColor global was removed in retail; wrap C_Item version
+local function GetItemQualityColor(quality)
+    if C_Item and C_Item.GetItemQualityColor then
+        local r, g, b = C_Item.GetItemQualityColor(quality)
+        if r then return r, g, b end
+    end
+    local c = ITEM_QUALITY_COLORS and ITEM_QUALITY_COLORS[quality or 1]
+    if c then return c.r, c.g, c.b end
+    return 1, 1, 1
+end
+
 -- Module
 ns.Loot = {}
 local Loot = ns.Loot
@@ -45,11 +56,11 @@ local function IsUncollectedTransmog(itemLink)
         return false
     end
     
-    local itemID = GetItemInfoInstant(itemLink)
+    local itemID = C_Item.GetItemInfoInstant(itemLink)
     if not itemID then return false end
 
     -- Check if it's equipment (Weapon or Armor)
-    local _, _, _, _, _, classID = GetItemInfoInstant(itemLink)
+    local _, _, _, _, _, classID = C_Item.GetItemInfoInstant(itemLink)
     if classID ~= 2 and classID ~= 4 then return false end
 
     -- Check if we can learn it
