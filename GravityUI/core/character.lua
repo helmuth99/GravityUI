@@ -304,7 +304,7 @@ local function GetEnchantText(unit, slotId)
     if slotId == INVSLOT_OFFHAND then
         local itemID = GetInventoryItemID(unit, slotId)
         if itemID then
-            local _, _, _, itemEquipLoc = GetItemInfoInstant(itemID)
+            local _, _, _, itemEquipLoc = C_Item.GetItemInfoInstant(itemID)
             -- INVTYPE_SHIELD and INVTYPE_HOLDABLE cannot be enchanted
             if itemEquipLoc == "INVTYPE_SHIELD" or itemEquipLoc == "INVTYPE_HOLDABLE" then
                 return nil, false -- Not enchantable

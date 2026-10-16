@@ -1891,7 +1891,7 @@ local function updateFlasks(buttons, isFlask, LCG)
         buttons.flask.tooltipItemID = flask_item_id
 
         if not isFlask then
-            local texture = select(5, GetItemInfoInstant(flask_item_id))
+            local texture = select(5, C_Item.GetItemInfoInstant(flask_item_id))
 
             if texture then
                 buttons.flask.texture:SetTexture(texture)
@@ -1936,7 +1936,7 @@ local function updateWeaponEnchants(buttons, LCG)
     local offhandItemID = GetInventoryItemID("player", 17)
 
     if offhandItemID then
-        local itemClassID = select(6, GetItemInfoInstant(offhandItemID))
+        local itemClassID = select(6, C_Item.GetItemInfoInstant(offhandItemID))
 
         if itemClassID == 2 then
             offhandCanBeEnchanted = true
