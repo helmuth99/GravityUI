@@ -1620,7 +1620,7 @@ function Loot:Initialize()
                              
                              -- Retry Ilvl
                              if self.guiIlvl and link then
-                                 local effectiveLevel = GetDetailedItemLevelInfo(link)
+                                 local effectiveLevel = (C_Item and C_Item.GetDetailedItemLevelInfo or GetDetailedItemLevelInfo)(link)
                                  local _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, isCrafted = C_Item.GetItemInfo(link)
                                  
                                  -- Fallback to standard GetItemInfo if detailed fails
@@ -1638,7 +1638,7 @@ function Loot:Initialize()
                                          self.itemLoadingChecked = true
                                          local item = Item:CreateFromItemLink(link)
                                          item:ContinueOnItemLoad(function()
-                                            local level = GetDetailedItemLevelInfo(link) or item:GetCurrentItemLevel()
+                                            local level = C_Item.GetDetailedItemLevelInfo(link) or item:GetCurrentItemLevel()
                                             if level then 
                                                 self.guiIlvl:SetText(level) 
                                                 self.guiIlvl:Show()

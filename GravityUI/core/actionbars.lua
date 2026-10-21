@@ -1821,6 +1821,26 @@ do
                 DispatchSlotChanged(0)
                 DispatchCooldownUpdate()
             end)
+        elseif event == "CURRENT_SPELL_CAST_CHANGED" then
+            -- Targeting spells (e.g. Anti-Magic Zone) cancelled via ESC: make sure
+            -- the button's checked highlight reflects the real state.
+            C_Timer_After(0, function()
+                if not AreBarsEnabled() then return end
+                for _, info in ipairs(BAR_CONFIG) do
+                    local btns = barButtons[info.key]
+                    if btns then
+                        for _, btn in ipairs(btns) do
+                            if btn and btn.SetChecked and btn:IsShown() then
+                                local action = btn.action or btn:GetAttribute("action")
+                                if action and HasAction(action) then
+                                    local on = IsCurrentAction(action) or IsAutoRepeatAction(action)
+                                    btn:SetChecked(on and true or false)
+                                end
+                            end
+                        end
+                    end
+                end
+            end)
         elseif event == "UNIT_SPELLCAST_SUCCEEDED" then
             DispatchCooldownUpdate()
         elseif event == "PLAYER_TALENT_UPDATE" or event == "TRAIT_CONFIG_UPDATED"
@@ -1853,6 +1873,7 @@ do
         dispatcher:RegisterEvent("UPDATE_VEHICLE_ACTIONBAR")
         dispatcher:RegisterEvent("UPDATE_OVERRIDE_ACTIONBAR")
         dispatcher:RegisterEvent("PLAYER_TALENT_UPDATE")
+        dispatcher:RegisterEvent("CURRENT_SPELL_CAST_CHANGED")
         dispatcher:RegisterEvent("SPELLS_CHANGED")
         if C_EventUtils and C_EventUtils.IsEventValid and C_EventUtils.IsEventValid("TRAIT_CONFIG_UPDATED") then
             dispatcher:RegisterEvent("TRAIT_CONFIG_UPDATED")
