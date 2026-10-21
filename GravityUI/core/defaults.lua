@@ -161,8 +161,6 @@ ns.Defaults = {
             nameFontSize = 12,
             nameFontOutline = "OUTLINE",
             nameFontColor = { 1, 1, 1, 1 },
-            skinBonusRoll = true,
-            bonusRollPos = nil,  -- BonusRollFrame saved position (migrated from GravityUI_BonusRollPos)
         },
         lootResults = {
             enabled = true,
@@ -755,6 +753,8 @@ ns.Defaults = {
         bonusRollConfirm = {
             enabled = true,          -- Master toggle: show confirmation before using a bonus roll
             passPromptEnabled = false, -- Also prompt when passing on a bonus roll
+            customPosition = false,    -- Apply custom position to the bonus roll frame
+            pos = nil,                 -- { point, relPoint, x, y }
         },
         tools = {
             guildInviteRanks = {}, -- [rankID] = true

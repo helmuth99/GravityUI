@@ -1571,6 +1571,20 @@ local function BuildBonusRoll(parent)
     AddRow(content, "Enable Pass Prompt", "checkbox", "passPromptEnabled", brc, nil)
     content.rowCount = content.rowCount + 0.5
 
+    CreateSubLabel(content, "Position")
+    AddRow(content, "Enable Custom Position (turn off if the window bugs)", "checkbox", "customPosition", brc, function(value)
+        if ns.BonusRollPosition then ns.BonusRollPosition.SetEnabled(value) end
+    end)
+    local showBtn = GUI:CreateButton(content, "Show / Hide Mover", 160, 26, function()
+        if ns.BonusRollPosition then ns.BonusRollPosition.TogglePreview() end
+    end)
+    showBtn:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT+5)))
+    local resetPosBtn = GUI:CreateButton(content, "Reset Position", 160, 26, function()
+        if ns.BonusRollPosition then ns.BonusRollPosition.Reset() end
+    end)
+    resetPosBtn:SetPoint("LEFT", showBtn, "RIGHT", 10, 0)
+    content.rowCount = content.rowCount + 1.5
+
     CreateSubLabel(content, "Test Mode")
     local testRollBtn = GUI:CreateButton(content, "Test Roll Confirm", 160, 26, function()
         if ns.BonusRollConfirm and ns.BonusRollConfirm.TestRollConfirm then

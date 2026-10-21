@@ -133,12 +133,6 @@ local MODULE_CONFIG_MAP = {
             if db.styling and db.styling.alerts then db.styling.alerts.enabled = val end
         end,
     },
-    ["BonusRoll"] = {
-        get = function(db) return db.styling and db.styling.lootRoll and db.styling.lootRoll.skinBonusRoll ~= false end,
-        set = function(db, val)
-            if db.styling and db.styling.lootRoll then db.styling.lootRoll.skinBonusRoll = val end
-        end,
-    },
     ["XPRep"] = {
         get = function(db) return db.styling and db.styling.xpRep and db.styling.xpRep.enabled ~= false end,
         set = function(db, val)
@@ -2408,7 +2402,6 @@ _initFrame:SetScript("OnEvent", function(self)
 
         -- ── Position-only movers (no custom settings, just label) ──
         local positionOnlyMovers = {
-            { name = "BonusRoll",          label = "Bonus Roll" },
             { name = "LootRolls",          label = "Loot Rolls" },
             { name = "PowerBarAlt",        label = "Power Bar (Alt)" },
             { name = "WidgetBelowMinimap", label = "Widget Below Minimap" },
