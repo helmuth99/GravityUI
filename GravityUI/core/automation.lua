@@ -878,24 +878,32 @@ local function CheckRaidLogging()
             -- Enable Logging
             wasLoggingBeforeRaid = false
             isRaidLoggingActive = true
+            settings.raidLogOwned = true
             EnsureAdvancedLogging()
             LoggingCombat(true)
             print("|cFF30D1FFGravityUI:|r Combat logging started for Raid")
         elseif not isRaidLoggingActive then
-            -- Already logging, but not stored by us (User manually enabled)
-            wasLoggingBeforeRaid = true
             isRaidLoggingActive = true
+            if settings.raidLogOwned then
+                -- We started this log before a /reload: still ours
+                wasLoggingBeforeRaid = false
+            else
+                -- Already logging, but not started by us (User manually enabled)
+                wasLoggingBeforeRaid = true
+            end
             print("|cFF30D1FFGravityUI:|r Combat logging is |cFF00FF00ACTIVE|r for Raid")
         end
     else
         -- Should NOT log (left raid or disabled)
-        if isRaidLoggingActive then
-            if not wasLoggingBeforeRaid and isLogging then
+        if isRaidLoggingActive or settings.raidLogOwned then
+            -- raidLogOwned covers the case where state was lost via /reload
+            if (settings.raidLogOwned or not wasLoggingBeforeRaid) and isLogging then
                 LoggingCombat(false)
                 print("|cFF30D1FFGravityUI:|r Combat logging stopped (Raid)")
             end
             isRaidLoggingActive = false
             wasLoggingBeforeRaid = false
+            settings.raidLogOwned = nil
         end
     end
 end
