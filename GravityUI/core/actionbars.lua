@@ -1781,6 +1781,39 @@ do
     -- They are enabled/disabled via ns.EnableCooldownDispatcher / ns.DisableCooldownDispatcher
     -- which RefreshActionBars calls based on the enabled state.
 
+    -- Re-sync the checked highlight with the real state (targeting spells / macros).
+    local function SyncCheckedStates()
+        if not AreBarsEnabled() then return end
+        for _, info in ipairs(BAR_CONFIG) do
+            local btns = barButtons[info.key]
+            if btns then
+                for _, btn in ipairs(btns) do
+                    if btn and btn.SetChecked and btn:IsShown() then
+                        local action = btn.action or btn:GetAttribute("action")
+                        if action and HasAction(action) then
+                            local on = IsCurrentAction(action) or IsAutoRepeatAction(action)
+                            -- Macros (e.g. AMZ @cursor) can report IsCurrentAction=true long
+                            -- after the spell was placed. Only show checked while the game is
+                            -- really waiting for a target click, or for auto-repeat.
+                            if on and GetActionInfo(action) == "macro"
+                                and not IsAutoRepeatAction(action)
+                                and not (SpellIsTargeting and SpellIsTargeting()) then
+                                on = false
+                            end
+                            btn:SetChecked(on and true or false)
+                            -- Release a stale (locked) pushed state, e.g. after clicking a
+                            -- ground-target button and cancelling with ESC.
+                            if not on and btn.GetButtonState and btn:GetButtonState() == "PUSHED"
+                                and not IsMouseButtonDown() then
+                                pcall(btn.SetButtonState, btn, "NORMAL", false)
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+
     dispatcher:SetScript("OnEvent", function(self, event, arg1)
         -- Safety guard: if bars got disabled between event fire and handler
         if not AreBarsEnabled() then return end
@@ -1822,27 +1855,14 @@ do
                 DispatchCooldownUpdate()
             end)
         elseif event == "CURRENT_SPELL_CAST_CHANGED" then
-            -- Targeting spells (e.g. Anti-Magic Zone) cancelled via ESC: make sure
-            -- the button's checked highlight reflects the real state.
-            C_Timer_After(0, function()
-                if not AreBarsEnabled() then return end
-                for _, info in ipairs(BAR_CONFIG) do
-                    local btns = barButtons[info.key]
-                    if btns then
-                        for _, btn in ipairs(btns) do
-                            if btn and btn.SetChecked and btn:IsShown() then
-                                local action = btn.action or btn:GetAttribute("action")
-                                if action and HasAction(action) then
-                                    local on = IsCurrentAction(action) or IsAutoRepeatAction(action)
-                                    btn:SetChecked(on and true or false)
-                                end
-                            end
-                        end
-                    end
-                end
-            end)
+            -- Targeting spells (e.g. Anti-Magic Zone) cancelled via ESC or placed:
+            -- make sure the button's checked highlight reflects the real state.
+            -- Second delayed pass catches macros whose state settles a moment later.
+            C_Timer_After(0, SyncCheckedStates)
+            C_Timer_After(0.15, SyncCheckedStates)
         elseif event == "UNIT_SPELLCAST_SUCCEEDED" then
             DispatchCooldownUpdate()
+            C_Timer_After(0.15, SyncCheckedStates)
         elseif event == "PLAYER_TALENT_UPDATE" or event == "TRAIT_CONFIG_UPDATED"
             or event == "SPELLS_CHANGED" then
             -- Talent/spell change: full refresh with delay to let slots settle
@@ -3597,15 +3617,26 @@ end
 do
     local _pushedHooked = false
 
+    local function PushUp(btn)
+        if not btn then return end
+        -- Explicitly unlock: PushDown locks the state, so a plain "NORMAL" may not stick
+        pcall(btn.SetButtonState, btn, "NORMAL", false)
+    end
+
     local function PushDown(btn)
         if not btn then return end
         -- Use native button state instead of timer-based Show/Hide
         pcall(btn.SetButtonState, btn, "PUSHED", true)
-    end
-
-    local function PushUp(btn)
-        if not btn then return end
-        pcall(btn.SetButtonState, btn, "NORMAL")
+        -- Failsafe: macros with ground targeting (e.g. AMZ @cursor) often never
+        -- deliver the Up event, which left the button lit forever.
+        local action = btn.action or btn:GetAttribute("action")
+        if action and HasAction(action) and GetActionInfo(action) == "macro" then
+            local token = (btn._gravPushToken or 0) + 1
+            btn._gravPushToken = token
+            C_Timer.After(0.3, function()
+                if btn._gravPushToken == token then PushUp(btn) end
+            end)
+        end
     end
 
     function ActionBars.HookKeyboardPush()
@@ -3647,6 +3678,32 @@ do
             end)
         end
     end
+end
+
+-- Diagnostic: /gravitydebugbtn lists buttons that are checked/pushed and why.
+SLASH_GRAVITYDEBUGBTN1 = "/gravitydebugbtn"
+SlashCmdList["GRAVITYDEBUGBTN"] = function()
+    local n = 0
+    for _, info in ipairs(BAR_CONFIG) do
+        local btns = barButtons[info.key]
+        if btns then
+            for i, btn in ipairs(btns) do
+                if btn and btn.GetButtonState then
+                    local state = btn:GetButtonState()
+                    local checked = btn.GetChecked and btn:GetChecked()
+                    if state == "PUSHED" or checked then
+                        n = n + 1
+                        local action = btn.action or btn:GetAttribute("action")
+                        local atype = action and GetActionInfo(action)
+                        print(("|cff00ccffGravityUI|r %s[%d] action=%s type=%s state=%s checked=%s isCurrent=%s targeting=%s"):format(
+                            info.key, i, tostring(action), tostring(atype), tostring(state), tostring(checked),
+                            tostring(action and IsCurrentAction(action)), tostring(SpellIsTargeting and SpellIsTargeting())))
+                    end
+                end
+            end
+        end
+    end
+    if n == 0 then print("|cff00ccffGravityUI|r no button is checked/pushed") end
 end
 
 -- Usability update (external callers)
