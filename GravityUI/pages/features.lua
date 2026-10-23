@@ -1621,7 +1621,6 @@ ns.GUI:RegisterPage("features", {
             { name = "Mail",                builder = BuildMailExtras },
             { name = "Guildtools",          builder = BuildTools },
             { name = "Player Marks",        builder = BuildPlayerMarks },
-            { name = "Interrupt Tracker",   builder = BuildInterruptTracker },
             { name = "Gravity Alt Manager", builder = BuildAltManager },
             { name = "Frame Mover",         builder = BuildFrameMover },
             { name = "Bonus Roll",          builder = BuildBonusRoll },

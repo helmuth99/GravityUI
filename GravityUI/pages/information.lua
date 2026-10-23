@@ -302,17 +302,16 @@ local function BuildInformationTab(parent)
     R({ name="Mail Extras",       desc="Open All button, address book for alts, and gold loot messages.",               stateTable=db.uiimprovements and db.uiimprovements.mail, stateKey="enabled", pageId="features", tabIndex=ns.IS_FOREVER and 2 or 4 })
     R({ name="Group & Guild",     desc="Guild invite tool and automatic role promotion for assistants.",                 pageId="features", tabIndex=ns.IS_FOREVER and 3 or 5 })
     R({ name="Player Marks",      desc="Assign raid target icons via Ready Check — role-based for M+ and per-player for raids.", stateTable=db.playermarks, stateKey="enabled", pageId="features", tabIndex=ns.IS_FOREVER and 4 or 6 })
-    R({ name="Interrupt Tracker", desc="Tracks interrupt cooldowns of party members in M+ dungeons.",                   stateTable=db.screenindicators and db.screenindicators.interruptTracker, stateKey="enabled", pageId="features", tabIndex=ns.IS_FOREVER and 5 or 7 })
     if not ns.IS_FOREVER then
-        R({ name="Alt Manager",       desc="Account-wide matrix for Mythic+ Keystones, Great Vault status, and Currencies.", stateTable=db.altManager, stateKey="enabled", pageId="features", tabIndex=8 })
+        R({ name="Alt Manager",       desc="Account-wide matrix for Mythic+ Keystones, Great Vault status, and Currencies.", stateTable=db.altManager, stateKey="enabled", pageId="features", tabIndex=7 })
     end
-    R({ name="Frame Mover",       desc="Freely drag and reposition all standard Blizzard frames (Character, Bank, Merchant, etc.).", stateTable=db.frameMover, stateKey="enabled", pageId="features", tabIndex=ns.IS_FOREVER and 6 or 9 })
+    R({ name="Frame Mover",       desc="Freely drag and reposition all standard Blizzard frames (Character, Bank, Merchant, etc.).", stateTable=db.frameMover, stateKey="enabled", pageId="features", tabIndex=ns.IS_FOREVER and 5 or 8 })
     if not ns.IS_FOREVER then
-        R({ name="Sound Alerts",      desc="Integrate custom SharedMedia sounds into Blizzard's CooldownViewer.",           stateTable=db.soundAlerts, stateKey="enabled", pageId="features", tabIndex=10 })
+        R({ name="Sound Alerts",      desc="Integrate custom SharedMedia sounds into Blizzard's CooldownViewer.",           stateTable=db.soundAlerts, stateKey="enabled", pageId="features", tabIndex=9 })
     end
-    R({ name="Color Picker",      desc="Full HSV color picker with saved slots, class colors, hex input, and live preview.", stateTable=db.colorPicker, stateKey="enabled", pageId="features", tabIndex=ns.IS_FOREVER and 7 or 11 })
+    R({ name="Color Picker",      desc="Full HSV color picker with saved slots, class colors, hex input, and live preview.", stateTable=db.colorPicker, stateKey="enabled", pageId="features", tabIndex=ns.IS_FOREVER and 6 or 10 })
     if not ns.IS_FOREVER then
-        R({ name="Premade Group",     desc="Group Finder and GroupFinderIO enhancements with role filters and auto-accept.",     stateTable=db.premadeGroup, stateKey="enabled", pageId="features", tabIndex=12 })
+        R({ name="Premade Group",     desc="Group Finder and GroupFinderIO enhancements with role filters and auto-accept.",     stateTable=db.premadeGroup, stateKey="enabled", pageId="features", tabIndex=11 })
     end
     G()
     H("  Indicators")
@@ -382,7 +381,6 @@ local function BuildInformationTab(parent)
     end
     CollectToggleable({ stateTable=db.uiimprovements and db.uiimprovements.marks, stateKey="enabled" })
     CollectToggleable({ stateTable=db.uiimprovements and db.uiimprovements.mail, stateKey="enabled" })
-    CollectToggleable({ stateTable=db.screenindicators and db.screenindicators.interruptTracker, stateKey="enabled" })
     if not ns.IS_FOREVER then
         CollectToggleable({ stateTable=db.altManager, stateKey="enabled" })
     end

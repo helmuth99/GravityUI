@@ -49,7 +49,6 @@ core\loot.lua
 core\objectives.lua
 core\instanceframes.lua
 core\raidwarnings.lua
-core\interrupttracker.lua
 core\deathannouncer.lua
 core\stancetext.lua
 core\altmanager_data.lua
