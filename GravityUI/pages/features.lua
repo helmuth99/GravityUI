@@ -1559,6 +1559,14 @@ local function BuildBonusRoll(parent)
     AddRow(content, "Enable Pass Prompt", "checkbox", "passPromptEnabled", brc, nil)
     content.rowCount = content.rowCount + 0.5
 
+    CreateSubLabel(content, "Position")
+    AddRow(content, "Allow moving the Bonus Roll window (Left Click & Drag)", "checkbox", "moveEnabled", brc, nil)
+    local btnReset = GUI:CreateButton(content, "Reset Bonus Roll Position", 220, 24, function()
+        if ns.BonusRollResetPosition then ns.BonusRollResetPosition() end
+    end)
+    btnReset:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT + 5)))
+    content.rowCount = content.rowCount + 1.2
+
     content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
 end
 

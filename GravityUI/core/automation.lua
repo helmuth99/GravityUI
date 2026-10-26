@@ -2070,6 +2070,106 @@ end)
 
 -- (removed: debug, test and custom position helpers)
 
+---------------------------------------------------------------------------
+-- BONUS ROLL MOVER: drag the BonusRollFrame, position is saved
+--   Left-drag  : move the frame (out of combat)
+--   Right-click: save is automatic on drop; use Reset button / /gravitybrreset
+-- Settings (db.uiimprovements.bonusRollConfirm):
+--   .moveEnabled, .hasPosition, .point, .relPoint, .x, .y
+---------------------------------------------------------------------------
+local brmApplying = false
+local brmPending = false
+
+local function BRM_CanTouch(frame)
+    if not InCombatLockdown() then return true end
+    return frame.IsProtected and not frame:IsProtected()
+end
+
+local function BRM_Apply()
+    local cfg = BRC_GetSettings()
+    local f = _G.BonusRollFrame
+    if not (cfg and cfg.moveEnabled and cfg.hasPosition and f) then return end
+    if not BRM_CanTouch(f) then brmPending = true return end
+    brmPending = false
+    brmApplying = true
+    f:ClearAllPoints()
+    f:SetPoint(cfg.point or "CENTER", UIParent, cfg.relPoint or "CENTER", cfg.x or 0, cfg.y or 0)
+    brmApplying = false
+end
+
+local brmSetup = false
+local function BRM_Setup()
+    local f = _G.BonusRollFrame
+    if not f or brmSetup then return end
+    brmSetup = true
+
+    f:SetMovable(true)
+    f:SetClampedToScreen(true)
+    f:RegisterForDrag("LeftButton")
+    f:HookScript("OnDragStart", function(self)
+        local cfg = BRC_GetSettings()
+        if not (cfg and cfg.moveEnabled) or InCombatLockdown() then return end
+        self:StartMoving()
+    end)
+    f:HookScript("OnDragStop", function(self)
+        self:StopMovingOrSizing()
+        local cfg = BRC_GetSettings()
+        if not (cfg and cfg.moveEnabled) then return end
+        local point, _, relPoint, x, y = self:GetPoint(1)
+        cfg.point, cfg.relPoint, cfg.x, cfg.y = point, relPoint, x, y
+        cfg.hasPosition = true
+    end)
+
+    -- Blizzard re-anchors the frame on every roll; re-apply our saved spot
+    hooksecurefunc(f, "SetPoint", function()
+        if brmApplying then return end
+        local cfg = BRC_GetSettings()
+        if cfg and cfg.moveEnabled and cfg.hasPosition then
+            BRM_Apply()
+        end
+    end)
+    f:HookScript("OnShow", function() BRM_Apply() end)
+    BRM_Apply()
+end
+
+function ns.BonusRollResetPosition()
+    local cfg = BRC_GetSettings()
+    if not cfg then return end
+    if InCombatLockdown() then
+        print("|cFF30D1FFGravityUI:|r Cannot reset bonus roll position in combat.")
+        return
+    end
+    cfg.hasPosition = false
+    cfg.point, cfg.relPoint, cfg.x, cfg.y = nil, nil, nil, nil
+    local f = _G.BonusRollFrame
+    if f then
+        brmApplying = true
+        f:ClearAllPoints()
+        f:SetPoint("BOTTOM", UIParent, "BOTTOM", 0, 150)
+        brmApplying = false
+    end
+    print("|cFF30D1FFGravityUI:|r Bonus roll position reset.")
+end
+
+SLASH_GRAVITYBRRESET1 = "/gravitybrreset"
+SlashCmdList["GRAVITYBRRESET"] = function() ns.BonusRollResetPosition() end
+
+local brmFrame = CreateFrame("Frame")
+brmFrame:RegisterEvent("ADDON_LOADED")
+brmFrame:RegisterEvent("PLAYER_LOGIN")
+brmFrame:RegisterEvent("BONUS_ROLL_STARTED")
+brmFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
+brmFrame:SetScript("OnEvent", function(_, event, arg1)
+    if event == "ADDON_LOADED" and arg1 ~= ADDON_NAME and arg1 ~= "Blizzard_BonusRoll" then return end
+    if event == "PLAYER_REGEN_ENABLED" then
+        if brmPending then BRM_Apply() end
+        return
+    end
+    BRM_Setup()
+    if event == "BONUS_ROLL_STARTED" then C_Timer.After(0, BRM_Apply) end
+end)
+
+
 
 
 -- ═══════════════════════════════════════════════════════════════

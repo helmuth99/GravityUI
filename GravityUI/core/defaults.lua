@@ -753,6 +753,7 @@ ns.Defaults = {
         bonusRollConfirm = {
             enabled = true,          -- Master toggle: show confirmation before using a bonus roll
             passPromptEnabled = false, -- Also prompt when passing on a bonus roll
+            moveEnabled = true,        -- Allow dragging the BonusRollFrame (position saved in .point/.x/.y)
         },
         tools = {
             guildInviteRanks = {}, -- [rankID] = true

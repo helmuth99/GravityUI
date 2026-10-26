@@ -1326,21 +1326,10 @@ function Loot:UpdateRollPositions()
     
     -- Blizzard GroupLootContainer Management
     -- We want to completely override its layout logic.
-    local container = _G.GroupLootContainer
-    if container then
-        container:EnableMouse(false)
-        container:SetSize(1, 1) 
-        container:ClearAllPoints()
-        -- Move it off-screen or hide it conceptually so it doesn't interfere, 
-        -- BUT we need it visible for the frames to be shown? 
-        -- Actually GroupLootFrame1..4 are children of UIParent usually (or re-parented to Container).
-        -- Let's check parentage. Usually they are UIParent.
-        -- We just need to position the frames ourselves.
-        
-        -- To prevent Blizzard from re-anchoring them, we might need to hook/overwrite GroupLootContainer_Update?
-        -- We already hooked it to call this function.
-        -- So essentially, we just re-do the anchoring *after* Blizzard does it.
-    end
+    -- NOTE: Do NOT clear points / resize GroupLootContainer. BonusRollFrame (and
+    -- other alerts) are children of the container and are anchored to it by Blizzard;
+    -- clearing its anchors made the bonus roll window vanish.
+    -- We only re-anchor the GroupLootFrameN roll frames below, after Blizzard's update.
 
     local lastFrame = nil
     
