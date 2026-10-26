@@ -753,8 +753,6 @@ ns.Defaults = {
         bonusRollConfirm = {
             enabled = true,          -- Master toggle: show confirmation before using a bonus roll
             passPromptEnabled = false, -- Also prompt when passing on a bonus roll
-            customPosition = false,    -- Apply custom position to the bonus roll frame
-            pos = nil,                 -- { point, relPoint, x, y }
         },
         tools = {
             guildInviteRanks = {}, -- [rankID] = true

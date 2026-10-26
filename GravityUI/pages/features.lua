@@ -1571,40 +1571,6 @@ local function BuildBonusRoll(parent)
     AddRow(content, "Enable Pass Prompt", "checkbox", "passPromptEnabled", brc, nil)
     content.rowCount = content.rowCount + 0.5
 
-    CreateSubLabel(content, "Position")
-    AddRow(content, "Enable Custom Position (turn off if the window bugs)", "checkbox", "customPosition", brc, function(value)
-        if ns.BonusRollPosition then ns.BonusRollPosition.SetEnabled(value) end
-    end)
-    local showBtn = GUI:CreateButton(content, "Show / Hide Mover", 160, 26, function()
-        if ns.BonusRollPosition then ns.BonusRollPosition.TogglePreview() end
-    end)
-    showBtn:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT+5)))
-    local resetPosBtn = GUI:CreateButton(content, "Reset Position", 160, 26, function()
-        if ns.BonusRollPosition then ns.BonusRollPosition.Reset() end
-    end)
-    resetPosBtn:SetPoint("LEFT", showBtn, "RIGHT", 10, 0)
-    content.rowCount = content.rowCount + 1.5
-
-    CreateSubLabel(content, "Test Mode")
-    local testRollBtn = GUI:CreateButton(content, "Test Roll Confirm", 160, 26, function()
-        if ns.BonusRollConfirm and ns.BonusRollConfirm.TestRollConfirm then
-            ns.BonusRollConfirm.TestRollConfirm()
-        end
-    end)
-    testRollBtn:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT+5)))
-
-    local testPassBtn = GUI:CreateButton(content, "Test Pass Confirm", 160, 26, function()
-        if ns.BonusRollConfirm and ns.BonusRollConfirm.TestPassConfirm then
-            ns.BonusRollConfirm.TestPassConfirm()
-        end
-    end)
-    testPassBtn:SetPoint("LEFT", testRollBtn, "RIGHT", 10, 0)
-    content.rowCount = content.rowCount + 1.5
-
-    local noteInfo = GUI:CreateInfoBox(content, "|cffAAAAAA• Test Roll Confirm: Shows the roll confirmation popup with your current loot spec.\n• Test Pass Confirm: Shows the pass confirmation popup.\n\nThese test buttons only show the popup — no actual bonus roll is consumed.|r")
-    noteInfo:SetPoint("TOPLEFT", 10, -content.rowCount * (ROW_HEIGHT+5))
-    content.rowCount = content.rowCount + (noteInfo:GetHeight() / (ROW_HEIGHT+5)) + 0.2
-
     content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
 end
 
