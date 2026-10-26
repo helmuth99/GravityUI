@@ -924,18 +924,6 @@ local function BuildEllesmereUI(parent)
 
     local db = ns.GetDB and ns.GetDB() or {}
 
-    -- Default to true if not set
-    if db.eabrLeftAlign == nil then db.eabrLeftAlign = true end
-
-    local chk = GUI:CreateCheckbox(content, "AuraBuff Reminders: Left-Aligned (grow right)", "eabrLeftAlign", db, nil)
-    chk:SetPoint("TOPLEFT", 15, yOffset)
-    yOffset = yOffset - 30
-
-    local note = content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    note:SetText("|cffAAAAAA(Requires /reload to toggle)|r")
-    note:SetPoint("TOPLEFT", 15, yOffset)
-    yOffset = yOffset - 40
-
     -- CDM Center X toggle
     if db.cdmCenterX == nil then db.cdmCenterX = true end
 
