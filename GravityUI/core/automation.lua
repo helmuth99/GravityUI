@@ -2088,7 +2088,7 @@ end
 local function BRM_Apply()
     local cfg = BRC_GetSettings()
     local f = _G.BonusRollFrame
-    if not (cfg and cfg.moveEnabled and cfg.hasPosition and f) then return end
+    if not (cfg and cfg.moveEnabled ~= false and cfg.hasPosition and f) then return end
     if not BRM_CanTouch(f) then brmPending = true return end
     brmPending = false
     brmApplying = true
@@ -2105,26 +2105,43 @@ local function BRM_Setup()
 
     f:SetMovable(true)
     f:SetClampedToScreen(true)
+    f:EnableMouse(true)
     f:RegisterForDrag("LeftButton")
-    f:HookScript("OnDragStart", function(self)
+    local function OnStart()
         local cfg = BRC_GetSettings()
-        if not (cfg and cfg.moveEnabled) or InCombatLockdown() then return end
-        self:StartMoving()
-    end)
-    f:HookScript("OnDragStop", function(self)
-        self:StopMovingOrSizing()
+        if not (cfg and cfg.moveEnabled ~= false) or InCombatLockdown() then return end
+        f:StartMoving()
+    end
+    local function OnStop()
+        f:StopMovingOrSizing()
         local cfg = BRC_GetSettings()
-        if not (cfg and cfg.moveEnabled) then return end
-        local point, _, relPoint, x, y = self:GetPoint(1)
-        cfg.point, cfg.relPoint, cfg.x, cfg.y = point, relPoint, x, y
+        if not (cfg and cfg.moveEnabled ~= false) then return end
+        -- Save relative to UIParent (frame is parented to GroupLootContainer)
+        local cx, cy = f:GetCenter()
+        if not cx then return end
+        cfg.point, cfg.relPoint, cfg.x, cfg.y = "CENTER", "BOTTOMLEFT", cx, cy
         cfg.hasPosition = true
-    end)
+        BRM_Apply()
+    end
+    f:HookScript("OnDragStart", OnStart)
+    f:HookScript("OnDragStop", OnStop)
+    -- Child frames (prompt, buttons) would otherwise swallow the drag
+    local function ForwardDrag(child)
+        if child.RegisterForDrag and child:IsMouseEnabled() then
+            child:RegisterForDrag("LeftButton")
+            child:HookScript("OnDragStart", OnStart)
+            child:HookScript("OnDragStop", OnStop)
+        end
+    end
+    for _, child in ipairs({ f:GetChildren() }) do
+        if child ~= f.PromptFrame or true then ForwardDrag(child) end
+    end
 
     -- Blizzard re-anchors the frame on every roll; re-apply our saved spot
     hooksecurefunc(f, "SetPoint", function()
         if brmApplying then return end
         local cfg = BRC_GetSettings()
-        if cfg and cfg.moveEnabled and cfg.hasPosition then
+        if cfg and cfg.moveEnabled ~= false and cfg.hasPosition then
             BRM_Apply()
         end
     end)
