@@ -195,7 +195,10 @@ local function SafeIsUsableAction(action)
     -- Cross-check: The action-bar API can incorrectly report proc-based spells
     -- (e.g. Soul Reaper procced by Dark Transformation) as usable when the proc
     -- buff is not active. C_Spell.IsSpellUsable is authoritative for this case.
-    if isUsable and C_Spell and C_Spell.IsSpellUsable then
+    -- Forever: skipped. There C_Spell.IsSpellUsable can lag behind (or disagree with
+    -- ranked spell IDs on the bar), and when it flips back no ACTIONBAR_UPDATE_USABLE
+    -- fires -> buttons stayed greyed out although usable.
+    if isUsable and not ns.IS_FOREVER and C_Spell and C_Spell.IsSpellUsable then
         local ok2, actionType, id = pcall(GetActionInfo, action)
         if ok2 and actionType == "spell" and id and id > 0 then
             local ok3, spellUsable = pcall(C_Spell.IsSpellUsable, id)
@@ -1518,6 +1521,17 @@ do
 
         local cdInfo = C_ActionBar.GetActionCooldown(action)
         local isOnCD = cdInfo and cdInfo.isActive and not cdInfo.isOnGCD
+        -- Forever: isOnGCD can arrive as nil during the GCD; "not nil" counted the
+        -- GCD as a real cooldown and greyed the button (stranded if no event followed).
+        -- Only treat it as a real cooldown when it is clearly longer than a GCD.
+        if ns.IS_FOREVER and isOnCD and cdInfo.isOnGCD == nil then
+            local dur = cdInfo.duration
+            if type(dur) == "number" and not (issecretvalue and issecretvalue(dur)) then
+                isOnCD = dur > 1.6
+            else
+                isOnCD = false
+            end
+        end
 
         if isOnCD then
             icon:SetDesaturated(true)
@@ -1777,6 +1791,29 @@ do
         end
     end
 
+    -- Forever: deferred re-check of usability. Usable state can change without a
+    -- follow-up ACTIONBAR_UPDATE_USABLE (target change, values read stale at event
+    -- time), which left buttons greyed out. Throttled: max one pending re-check.
+    local _usableRecheckPending = false
+    local function ScheduleUsableRecheck(delay)
+        if _usableRecheckPending then return end
+        _usableRecheckPending = true
+        C_Timer_After(delay or 0.2, function()
+            _usableRecheckPending = false
+            if not AreBarsEnabled() then return end
+            DispatchUsableUpdate()
+            -- Also clear stale cooldown dimming (desaturated + darkened)
+            for _, info in ipairs(BAR_CONFIG) do
+                local btns = barButtons[info.key]
+                if btns then
+                    for _, btn in ipairs(btns) do
+                        if btn and GFD(btn).cdDimmed then RefreshCooldownVisuals(btn) end
+                    end
+                end
+            end
+        end)
+    end
+
     -- Events are NOT registered at file load.
     -- They are enabled/disabled via ns.EnableCooldownDispatcher / ns.DisableCooldownDispatcher
     -- which RefreshActionBars calls based on the enabled state.
@@ -1824,6 +1861,10 @@ do
             DispatchSlotChanged(arg1 or 0)
         elseif event == "ACTIONBAR_UPDATE_USABLE" or event == "SPELL_UPDATE_USABLE" then
             DispatchUsableUpdate()
+            if ns.IS_FOREVER then ScheduleUsableRecheck(0.2) end
+        elseif event == "PLAYER_TARGET_CHANGED" then
+            -- Forever only (registered there): target-dependent usability
+            ScheduleUsableRecheck(0.05)
         elseif event == "SPELL_UPDATE_CHARGES" then
             DispatchCooldownUpdate()
         elseif event == "SPELL_UPDATE_ICON" then
@@ -1899,6 +1940,9 @@ do
             dispatcher:RegisterEvent("TRAIT_CONFIG_UPDATED")
         end
         dispatcher:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player")
+        if ns.IS_FOREVER then
+            dispatcher:RegisterEvent("PLAYER_TARGET_CHANGED")
+        end
     end
 
     ns.DisableCooldownDispatcher = function()
