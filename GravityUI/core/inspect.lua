@@ -7,6 +7,12 @@ local ADDON_NAME, ns = ...
 ns.Inspect = ns.Inspect or {}
 local Inspect = ns.Inspect
 
+-- Forever: the inspect frame there is a different Blizzard frame (classic slot
+-- layout incl. Ranged/Ammo, no spec API like GetInspectSpecialization).
+-- This module is built for the Retail frame only, so it stands down on Forever
+-- (same as character.lua).
+if ns.IS_FOREVER then return end
+
 local C = ns.Colors or {}
 local GEM_SIZE = 12
 local GEM_SPACING = 2
