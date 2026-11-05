@@ -1299,8 +1299,10 @@ local function PopulateFriendsPopup(anchor)
             local cc = GetClassColor(info.className)
             local lc = GetLevelColor(info.level)
             local status = info.isAFK and " |cffFFFF00[AFK]|r" or info.isDND and " |cffFF4444[DND]|r" or ""
+            -- Display only: Forever strips the internal realm ID; Retail shows info.name unchanged
             local nameStr = string.format("|cff%02x%02x%02x%s|r%s",
-                cc.r*255, cc.g*255, cc.b*255, StripMyRealm(info.name or ""), status)
+                cc.r*255, cc.g*255, cc.b*255,
+                ns.IS_FOREVER and StripMyRealm(info.name or "") or (info.name or ""), status)
             local wn = info.name
             AddRow(
                 info.level, lc,
