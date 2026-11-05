@@ -179,6 +179,11 @@ end
 
 local myRealmPattern
 local function StripMyRealm(name)
+    -- Forever is realmless: realm suffixes are internal server IDs
+    -- (e.g. "Name-CAMWOWEU5Realm1PvE") -> strip any realm for display.
+    if ns.IS_FOREVER and type(name) == "string" and not (issecretvalue and issecretvalue(name)) then
+        return (name:match("^([^%-]+)")) or name
+    end
     if not myRealmPattern then
         local realm = GetNormalizedRealmName()
         if realm then myRealmPattern = "%-" .. realm else return name end
@@ -1295,7 +1300,7 @@ local function PopulateFriendsPopup(anchor)
             local lc = GetLevelColor(info.level)
             local status = info.isAFK and " |cffFFFF00[AFK]|r" or info.isDND and " |cffFF4444[DND]|r" or ""
             local nameStr = string.format("|cff%02x%02x%02x%s|r%s",
-                cc.r*255, cc.g*255, cc.b*255, info.name or "", status)
+                cc.r*255, cc.g*255, cc.b*255, StripMyRealm(info.name or ""), status)
             local wn = info.name
             AddRow(
                 info.level, lc,
@@ -1310,13 +1315,14 @@ local function PopulateFriendsPopup(anchor)
     -- BNet Retail section
     if #friendsCache.bnetRetail > 0 then
         if #friendsCache.wowFriends > 0 then yOff = yOff + 4 end  -- small gap
-        AddSection("Battle.net (Retail)", 0.31, 0.69, 0.9)
+        AddSection(ns.IS_FOREVER and "Battle.net (Forever)" or "Battle.net (Retail)", 0.31, 0.69, 0.9)
         for _, info in ipairs(friendsCache.bnetRetail) do
             local cc = GetClassColor(info.className)
             local lc = GetLevelColor(info.characterLevel)
             local status = info.isAFK and " |cffFFFF00[AFK]|r" or info.isDND and " |cffFF4444[DND]|r" or ""
             local myRealm = GetNormalizedRealmName()
-            local realmPart = (info.realmName and info.realmName ~= "" and info.realmName ~= myRealm) and string.format("|cff888888-%s|r", info.realmName) or ""
+            -- Forever is realmless (internal server IDs as realm names) -> never show a realm
+            local realmPart = (not ns.IS_FOREVER and info.realmName and info.realmName ~= "" and info.realmName ~= myRealm) and string.format("|cff888888-%s|r", info.realmName) or ""
             local charPart = (info.characterName and info.characterName ~= "")
                 and string.format("|cff%02x%02x%02x%s|r%s", cc.r*255, cc.g*255, cc.b*255, info.characterName, realmPart)
                 or ""

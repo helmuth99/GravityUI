@@ -2060,6 +2060,24 @@ ns.UnskinButton = UnskinButton
 -------------------------------------------------------------------------------
 local FONT_PATH = "Fonts\\FRIZQT__.TTF"  -- fallback; matches Blizzard default
 
+-- Countdown number visibility ("Show Numbers for Cooldowns" / countdownForCooldowns).
+-- Blizzard applies this per button from ActionBarButtonEventsFrame
+-- (ActionButton_UpdateCooldownNumberHidden). Our buttons are removed from that
+-- list, so they only got the value once from the template's OnLoad and never
+-- again -> we apply it ourselves (on refresh + on CVAR_UPDATE).
+local _GetCVarBool = (C_CVar and C_CVar.GetCVarBool) or GetCVarBool
+local function CooldownNumbersEnabled()
+    return _GetCVarBool and _GetCVarBool("countdownForCooldowns") and true or false
+end
+ns.CooldownNumbersEnabled = CooldownNumbersEnabled
+
+local function ApplyCooldownNumbersHidden(btn)
+    local cd = btn and btn.cooldown
+    if cd and cd.SetHideCountdownNumbers then
+        pcall(cd.SetHideCountdownNumbers, cd, not CooldownNumbersEnabled())
+    end
+end
+
 local function EffectiveCooldownSize(cdFrame, cdSize, fitToButton)
     if not fitToButton then return cdSize end
     local host = cdFrame and (cdFrame:GetParent() or cdFrame)
@@ -2104,6 +2122,9 @@ end
 
 local function ApplyCooldownFont(btn, settings)
     if not btn or not settings then return end
+
+    -- Respect Blizzard's "Show Numbers for Cooldowns" CVar on our buttons.
+    ApplyCooldownNumbersHidden(btn)
 
     local fontSize = settings.cooldownFontSize or 14
     local xOff = settings.cooldownTextXOffset or 0
@@ -4193,6 +4214,7 @@ initFrame:RegisterUnitEvent("UNIT_ENTERED_VEHICLE", "player")
 initFrame:RegisterUnitEvent("UNIT_EXITED_VEHICLE", "player")
 initFrame:RegisterUnitEvent("UNIT_PET", "player")
 initFrame:RegisterEvent("PET_BAR_UPDATE")
+initFrame:RegisterEvent("CVAR_UPDATE")  -- live toggle of "Show Numbers for Cooldowns"
 
 initFrame:SetScript("OnEvent", function(self, event, ...)
     if event == "ADDON_LOADED" then
@@ -4202,6 +4224,15 @@ initFrame:SetScript("OnEvent", function(self, event, ...)
         end
     elseif event == "PLAYER_LOGIN" then
         ActionBars.HookQuickKeybindFrame()
+        -- Forever: "Show Numbers for Cooldowns" defaults to OFF there (Retail: ON).
+        -- Turn it on once per account so our bars show countdown numbers like on
+        -- Retail; afterwards the user's choice in Blizzard's options is respected.
+        if ns.IS_FOREVER and ns.db and ns.db.global and not ns.db.global.foreverCooldownNumbersInit then
+            ns.db.global.foreverCooldownNumbersInit = true
+            if not CooldownNumbersEnabled() and SetCVar then
+                pcall(SetCVar, "countdownForCooldowns", "1")
+            end
+        end
         -- Check if we need to complete a Blizzard import (Step 2)
         -- Note: importPending is on the ROOT db (ns.GetDB()), not the actionbars sub-DB
         local rootDB = ns.GetDB()
@@ -4232,6 +4263,22 @@ initFrame:SetScript("OnEvent", function(self, event, ...)
         end
         -- Refresh broadcaster state on zone transitions
         ns.InvalidateBroadcasterState()
+    elseif event == "CVAR_UPDATE" then
+        local cvarName = ...
+        if cvarName == "countdownForCooldowns" and AreBarsEnabled() then
+            local db = GetDB()
+            local g = db and db.global
+            if g then
+                for _, info in ipairs(BAR_CONFIG) do
+                    local btns = barButtons[info.key]
+                    if btns then
+                        for _, btn in ipairs(btns) do
+                            if btn then ApplyCooldownFont(btn, g) end
+                        end
+                    end
+                end
+            end
+        end
     elseif event == "UPDATE_BINDINGS" then
         if not InCombatLockdown() then
             UpdateKeybinds()
