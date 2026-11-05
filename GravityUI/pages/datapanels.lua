@@ -132,7 +132,7 @@ local function BuildMinimapPanel(parent)
         {value = "durability", text = "Durability"},
         {value = "bags", text = "Bags"},
         {value = "coords", text = "Coordinates"},
-        {value = "spec", text = "Spec / Loot"},
+        {value = "spec", text = ns.IS_FOREVER and "Talents" or "Spec / Loot"},
     }
 
     if ns.Datatexts and ns.Datatexts.LDB_Objects then
@@ -265,7 +265,7 @@ local function BuildCustomPanels(parent)
         {value = "durability", text = "Durability"},
         {value = "bags", text = "Bags"},
         {value = "coords", text = "Coordinates"},
-        {value = "spec", text = "Spec / Loot"},
+        {value = "spec", text = ns.IS_FOREVER and "Talents" or "Spec / Loot"},
     }
     if ns.Datatexts and ns.Datatexts.LDB_Objects then
         local ldbList = {}

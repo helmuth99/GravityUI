@@ -1530,6 +1530,126 @@ DT.Types.spec = {
 }
 end -- not IS_FOREVER
 
+-- 9b. TALENTS (Forever replacement for SPEC / PLAYERSPEC)
+-- Forever has no specializations; talents are the classic 3 trees, exposed via
+-- C_Traits as one tree whose display groups are the 3 classic trees.
+-- Registered under the same type key "spec" so existing panel slots keep working.
+if ns.IS_FOREVER then
+local talentCache = { dirty = true, trees = {}, unspent = 0 }
+
+local function RebuildTalentCache()
+    wipe(talentCache.trees)
+    talentCache.unspent = 0
+    if not (C_ClassTalents and C_ClassTalents.GetActiveConfigID and C_Traits) then return end
+    local configID = C_ClassTalents.GetActiveConfigID()
+    local config = configID and C_Traits.GetConfigInfo(configID)
+    local treeID = config and config.treeIDs and config.treeIDs[1]
+    if not treeID then return end
+    local groups = C_Traits.GetGroupDisplayInfoByTreeID and C_Traits.GetGroupDisplayInfoByTreeID(treeID)
+    if type(groups) ~= "table" then return end
+    table.sort(groups, function(a, b) return (a.orderIndex or 0) < (b.orderIndex or 0) end)
+    local byGroup = {}
+    for i, g in ipairs(groups) do
+        local t = { name = g.displayName or ("Tree " .. i), points = 0 }
+        talentCache.trees[i] = t
+        byGroup[g.groupID] = t
+    end
+    for _, nodeID in ipairs(C_Traits.GetTreeNodes(treeID) or {}) do
+        local info = C_Traits.GetNodeInfo(configID, nodeID)
+        if info and info.isVisible and info.groupIDs then
+            for _, groupID in ipairs(info.groupIDs) do
+                local t = byGroup[groupID]
+                if t then
+                    t.points = t.points + (info.activeRank or 0)
+                    break
+                end
+            end
+        end
+    end
+    local currency = C_Traits.GetTreeCurrencyInfo and C_Traits.GetTreeCurrencyInfo(configID, treeID, false)
+    talentCache.unspent = (currency and currency[1] and currency[1].quantity) or 0
+end
+
+local function GetTalentData()
+    if talentCache.dirty then
+        talentCache.dirty = false
+        if not pcall(RebuildTalentCache) then
+            wipe(talentCache.trees)
+            talentCache.unspent = 0
+        end
+    end
+    return talentCache
+end
+
+-- Recalculate only when talents/level change (Update runs on the panel ticker)
+local talentEvents = CreateFrame("Frame")
+for _, ev in ipairs({
+    "PLAYER_ENTERING_WORLD", "PLAYER_LEVEL_UP", "TRAIT_CONFIG_UPDATED",
+    "TRAIT_NODE_CHANGED", "TRAIT_TREE_CURRENCY_INFO_UPDATED", "ACTIVE_COMBAT_CONFIG_CHANGED",
+}) do
+    pcall(talentEvents.RegisterEvent, talentEvents, ev)
+end
+talentEvents:SetScript("OnEvent", function() talentCache.dirty = true end)
+
+DT.Types.spec = {
+    Update = function(slot, config)
+        local data = GetTalentData()
+        local r, g, b = GetValueColor()
+        local label = GetLabel("Talents: ", "T: ", config.shortLabel, config.noLabel)
+        local value
+        if #data.trees > 0 then
+            local parts = {}
+            for i, t in ipairs(data.trees) do parts[i] = tostring(t.points) end
+            value = table.concat(parts, "/")
+        else
+            value = "-"
+        end
+        local unspent = (data.unspent and data.unspent > 0) and string.format(" |cff00ff00+%d|r", data.unspent) or ""
+        return string.format("%s|cff%02x%02x%02x%s|r%s", label, r*255, g*255, b*255, value, unspent)
+    end,
+    OnEnter = function(self)
+        local data = GetTalentData()
+        GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
+        GameTooltip:ClearLines()
+        GameTooltip:AddLine("Talents", 1, 1, 1)
+        GameTooltip:AddLine(" ")
+        if #data.trees > 0 then
+            local best = 0
+            for _, t in ipairs(data.trees) do if t.points > best then best = t.points end end
+            for _, t in ipairs(data.trees) do
+                local isMain = best > 0 and t.points == best
+                GameTooltip:AddDoubleLine(t.name, tostring(t.points),
+                    1, 1, 1, isMain and 0.1 or 0.8, isMain and 1 or 0.8, isMain and 0.1 or 0.8)
+            end
+        else
+            GameTooltip:AddLine("No talent data available", 0.7, 0.7, 0.7)
+        end
+        if data.unspent and data.unspent > 0 then
+            GameTooltip:AddLine(" ")
+            GameTooltip:AddDoubleLine("Unspent points:", tostring(data.unspent), 1, 1, 1, 0.1, 1, 0.1)
+        end
+        GameTooltip:AddLine(" ")
+        local ar, ag, ab = GetValueColor()
+        GameTooltip:AddLine("|cffFFFFFFLeft Click:|r Open Talents", ar, ag, ab)
+        GameTooltip:Show()
+    end,
+    OnClick = function(self, button)
+        if button ~= "LeftButton" then return end
+        GameTooltip:Hide()
+        -- EllesmereUI's classic talent window (Forever Essentials), if active
+        local euiToggle = _G.EUI_ClassicTalentsToggle
+        if euiToggle and euiToggle.Click then
+            euiToggle:Click()
+            return
+        end
+        if InCombatLockdown() then return end
+        if TalentMicroButton and TalentMicroButton.Click then
+            pcall(TalentMicroButton.Click, TalentMicroButton)
+        end
+    end
+}
+end -- IS_FOREVER
+
 
 -- ============================================================================
 -- MAIN INTERFACE
