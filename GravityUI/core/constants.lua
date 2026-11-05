@@ -93,3 +93,33 @@ if ns.IS_FOREVER then
     LIB_OPEN_RAID_AUGMENT_BUFF         = LIB_OPEN_RAID_AUGMENT_BUFF         or {}
     LIB_OPEN_RAID_WEAPON_ENCHANT_IDS   = LIB_OPEN_RAID_WEAPON_ENCHANT_IDS   or {}
 end
+
+-- Specialization API wrappers (safe on every client).
+-- Retail/Midnight: functions live in C_SpecializationInfo (or legacy globals).
+-- Forever: the spec system does not exist -> wrappers return nil instead of
+-- erroring with "attempt to call a nil value".
+-- Defined here (constants.lua loads before character.lua / init.lua).
+do
+    local CSI = C_SpecializationInfo
+    local _getSpec     = (CSI and CSI.GetSpecialization) or GetSpecialization
+    local _getSpecInfo = (CSI and CSI.GetSpecializationInfo) or GetSpecializationInfo
+    local _getSpecRole = (CSI and CSI.GetSpecializationRole) or GetSpecializationRole
+    local _getMastery  = CSI and CSI.GetSpecializationMasterySpells
+
+    ns.GetSpecialization = function(...)
+        if _getSpec then return _getSpec(...) end
+        return nil
+    end
+    ns.GetSpecializationInfo = function(specIndex, ...)
+        if _getSpecInfo and specIndex then return _getSpecInfo(specIndex, ...) end
+        return nil
+    end
+    ns.GetSpecializationRole = function(specIndex, ...)
+        if _getSpecRole and specIndex then return _getSpecRole(specIndex, ...) end
+        return nil
+    end
+    ns.GetSpecializationMasterySpells = function(specIndex, ...)
+        if _getMastery and specIndex then return _getMastery(specIndex, ...) end
+        return nil
+    end
+end

@@ -6,6 +6,13 @@
 local ADDON_NAME, ns = ...
 ns.Character = ns.Character or {}
 local Character = ns.Character
+
+-- Forever: the character sheet there is a different Blizzard frame (classic slot
+-- layout incl. Ranged/Ammo, ScrollBox-based CharacterStatsPane, other sidebar tabs).
+-- This module is built for the Retail sheet only and overlaps/breaks it, so it
+-- stands down completely on Forever and leaves the sheet to Blizzard / other skins.
+if ns.IS_FOREVER then return end
+
 local issecretvalue = issecretvalue or function() return false end
 
 ---------------------------------------------------------------------------
@@ -2582,8 +2589,10 @@ local function BuildStatsLayout(panel, unit)
                 end)
 
                 -- Stat-specific tooltips
-                local primaryStat = select(7, GetSpecializationInfo(GetSpecialization() or 1))
-                local role = GetSpecializationRole(GetSpecialization() or 1) or ""
+                -- nil-safe wrappers (Forever has no specs -> primaryStat/role stay nil/"")
+                local curSpec = ns.GetSpecialization()
+                local primaryStat = curSpec and select(7, ns.GetSpecializationInfo(curSpec)) or nil
+                local role = (curSpec and ns.GetSpecializationRole(curSpec)) or ""
                 pcall(function()
                     if stat.statIndex == 1 then -- Strength
                         if (not primaryStat or primaryStat == 1) then
@@ -2700,9 +2709,9 @@ local function BuildStatsLayout(panel, unit)
                         local masteryRating = GetCombatRating(CR_MASTERY)
                         local masteryBonus = GetCombatRatingBonus(CR_MASTERY)
                         local description = ""
-                        local spec = GetSpecialization()
+                        local spec = ns.GetSpecialization()
                         if spec then
-                            local masterySpells = C_SpecializationInfo.GetSpecializationMasterySpells(spec)
+                            local masterySpells = ns.GetSpecializationMasterySpells(spec)
                             if masterySpells and masterySpells[1] then
                                 description = C_Spell.GetSpellDescription(masterySpells[1]) or ""
                             end
@@ -3032,9 +3041,9 @@ local function UpdateILvlDisplay()
     -- Get spec and class
     local specName = ""
     local className = ""
-    local specIndex = GetSpecialization()
+    local specIndex = ns.GetSpecialization()  -- nil-safe (Forever has no specs)
     if specIndex then
-        local _, specNameLocal = GetSpecializationInfo(specIndex)
+        local _, specNameLocal = ns.GetSpecializationInfo(specIndex)
         specName = specNameLocal or ""
     end
     local _, classNameLocal = UnitClass("player")

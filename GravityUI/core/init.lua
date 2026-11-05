@@ -16,10 +16,18 @@ ns.trackedFonts = {}
 -- from globals into C_SpecializationInfo. Any GravityUI code that needs these should
 -- call ns.GetSpecialization() / ns.GetSpecializationInfo() so both expansions work.
 -- (Libs like LibOpenRaid and LibDualSpec already have their own local wrappers.)
+-- NOTE: The nil-safe wrappers are defined in constants.lua (loaded earlier, also
+-- covers Forever where the spec API does not exist). Only fall back here if missing.
 do
     local CSI = C_SpecializationInfo
-    ns.GetSpecialization = (CSI and CSI.GetSpecialization) or GetSpecialization
-    ns.GetSpecializationInfo = (CSI and CSI.GetSpecializationInfo) or GetSpecializationInfo
+    if not ns.GetSpecialization then
+        local fn = (CSI and CSI.GetSpecialization) or GetSpecialization
+        ns.GetSpecialization = function(...) if fn then return fn(...) end end
+    end
+    if not ns.GetSpecializationInfo then
+        local fn = (CSI and CSI.GetSpecializationInfo) or GetSpecializationInfo
+        ns.GetSpecializationInfo = function(idx, ...) if fn and idx then return fn(idx, ...) end end
+    end
 end
 
 
