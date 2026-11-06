@@ -1821,22 +1821,28 @@ end
 --==============================================================================================================================================================================================
 GUI:RegisterPage("Styling", {
     title = "UI Styling",
-    subTabs = {
-        { name = "Character Panel", builder = BuildCharacter },
-        { name = "Chat", builder = BuildChat },
-        { name = "Tooltip", builder = BuildTooltip },
-        { name = "Objective Tracker", builder = BuildObjectivesPanel },
-        { name = "Loot", builder = BuildLootPanel },
-        { name = "Game Menu", builder = BuildGameMenuPanel },
-        { name = "Ready Check", builder = BuildReadyCheckPanel },
-        { name = "Keystone", builder = BuildKeystonePanel },
-        { name = "Power Bar", builder = BuildPowerBarPanel },
-        { name = "Alert Frames", builder = BuildAlertsPanel },
-        { name = "Chat Bubbles", builder = BuildChatBubblesPanel },
-        { name = "Instance", builder = BuildInstancePanel },
-        { name = "XP / Rep", builder = BuildXPRepPanel },
-        { name = "Static Popups", builder = BuildStaticPopupsPanel },
-    },
+    subTabs = (function()
+        local tabs = {
+            { name = "Character Panel", builder = BuildCharacter },
+            { name = "Chat", builder = BuildChat },
+            { name = "Tooltip", builder = BuildTooltip },
+            { name = "Objective Tracker", builder = BuildObjectivesPanel },
+            { name = "Loot", builder = BuildLootPanel },
+            { name = "Game Menu", builder = BuildGameMenuPanel },
+            { name = "Ready Check", builder = BuildReadyCheckPanel },
+            { name = "Keystone", builder = BuildKeystonePanel },
+            { name = "Power Bar", builder = BuildPowerBarPanel },
+            { name = "Alert Frames", builder = BuildAlertsPanel },
+            { name = "Chat Bubbles", builder = BuildChatBubblesPanel },
+            { name = "Instance", builder = BuildInstancePanel },
+            { name = "XP / Rep", builder = BuildXPRepPanel },
+            { name = "Static Popups", builder = BuildStaticPopupsPanel },
+        }
+        -- Forever: Character/Inspect panel styling is disabled there (different
+        -- Blizzard frames) -> hide the tab so EllesmereUI's sheet can be used.
+        if ns.IS_FOREVER then table.remove(tabs, 1) end
+        return tabs
+    end)(),
     OnBuild = function(content)
         local scrollFrame = content:GetParent()
         content:Hide()

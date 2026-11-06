@@ -1278,6 +1278,9 @@ end
 -------------------------------------------------------------------------------
 do
     ns.SyncEllesmereCharSheet = function()
+        -- Forever: GravityUI's character/inspect module is disabled there (different
+        -- Blizzard frame), so never block EllesmereUI's own Forever character sheet.
+        if ns.IS_FOREVER then return end
         if not C_AddOns.IsAddOnLoaded("EllesmereUI") then return end
         local db = ns.GetDB()
         if not db then return end
@@ -1292,6 +1295,21 @@ do
             -- Trigger a widget refresh so the dropdown re-reads the DB value.
             if E and E.RefreshWidgets then E:RefreshWidgets() end
         end
+    end
+
+    -- Forever: GravityUI's Character Panel Styling is not available there
+    -- (character.lua / inspect.lua stand down). Persist it as disabled so the
+    -- setting reflects reality. Forever uses its own SavedVariables (separate WTF),
+    -- so Retail settings are untouched.
+    if ns.IS_FOREVER then
+        local f = CreateFrame("Frame")
+        f:RegisterEvent("PLAYER_LOGIN")
+        f:SetScript("OnEvent", function(self)
+            self:UnregisterAllEvents()
+            local db = ns.GetDB()
+            local c = db and db.uiimprovements and db.uiimprovements.character
+            if c then c.enabled = false end
+        end)
     end
 end
 
@@ -1671,6 +1689,7 @@ do
         local csHooksInstalled = false
 
         local function IsGravityUICharPanelEnabled()
+            if ns.IS_FOREVER then return false end  -- module disabled on Forever
             local db = ns.GetDB()
             if not db then return false end
             return db.uiimprovements and db.uiimprovements.character and

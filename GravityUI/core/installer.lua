@@ -505,8 +505,12 @@ function Installer:ApplyEllesmereGlobalSettings()
     -- BlizzardSkin stores ALL its settings account-wide in EllesmereUIDB
     -- (NOT in the per-character profile string), so ImportProfile never
     -- touches them. We must set them explicitly on first install.
-    db.themedCharacterSheet  = false  -- off: GravityUI has its own character sheet
-    db.themedInspectSheet    = false  -- off: GravityUI has its own inspect sheet
+    -- Forever: GravityUI's character/inspect styling is disabled there, so leave
+    -- EllesmereUI's own (Forever) character sheet available.
+    if not ns.IS_FOREVER then
+        db.themedCharacterSheet  = false  -- off: GravityUI has its own character sheet
+        db.themedInspectSheet    = false  -- off: GravityUI has its own inspect sheet
+    end
     db.reskinBorders         = true   -- Reskin Blizzard Window Borders
     db.reskinLFGMenu         = true
     db.reskinGreatVault       = true
@@ -844,11 +848,18 @@ end
 
 -- Helper to get available source profiles string data
 -- These are profiles we can IMPORT FROM (defined in strings/ folder)
+-- Forever: profiles without up-to-date Forever strings are not offered there.
+local FOREVER_HIDDEN_PROFILES = {
+    ["Dpxhunt"] = true,
+}
+
 function Installer:GetSourceProfiles()
     local sources = {}
     if _G.GravityUI and _G.GravityUI.profiles then
         for name, _ in pairs(_G.GravityUI.profiles) do
-            table.insert(sources, name)
+            if not (ns.IS_FOREVER and FOREVER_HIDDEN_PROFILES[name]) then
+                table.insert(sources, name)
+            end
         end
     end
     table.sort(sources, function(a, b)

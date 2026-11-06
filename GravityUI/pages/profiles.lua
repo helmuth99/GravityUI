@@ -480,6 +480,9 @@ local function BuildGravityStringsTab(parent)
 
         local function AddStringHeader(key, d)
             if not d or type(d) ~= "table" or type(d.data) ~= "string" then return end
+            -- Forever: only show strings made for Forever (flagged forever = true in the
+            -- *_forever.lua string files); Retail strings are irrelevant there.
+            if ns.IS_FOREVER and not d.forever then return end
             if shown[key] then return end
             shown[key] = true
 
