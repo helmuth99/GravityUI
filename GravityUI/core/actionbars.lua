@@ -365,16 +365,36 @@ do
         return (ok and secret) and true or false
     end
 
+    -- Forever: Blizzard's shaman totem bar (MultiCastActionBarFrame /
+    -- MultiCastActionButton1-12) lives on ActionBarButtonEventsFrame and is on
+    -- screen there. Its icons only refresh through that frame's own (untainted)
+    -- ACTIONBAR_SLOT_CHANGED etc. registrations. Once we unregister them, nothing
+    -- of ours can put them back untainted -> picking a totem in the flyout kept
+    -- the old icon (tooltip was right). For shamans on Forever we therefore never
+    -- touch ActionBarButtonEventsFrame (same approach as EllesmereUI). Our own
+    -- buttons are removed from its frames list, so it only reaches Blizzard's.
+    local _keepBlizzABEF
+    local function KeepBlizzABEF()
+        if _keepBlizzABEF == nil then
+            local _, class = UnitClass("player")
+            if not class then return false end
+            _keepBlizzABEF = (ns.IS_FOREVER and class == "SHAMAN") and true or false
+        end
+        return _keepBlizzABEF
+    end
+
     local function ApplyBroadcaster()
+        local ABEF = (not KeepBlizzABEF()) and ActionBarButtonEventsFrame or nil
+
         -- When GravityUI bars are disabled, restore full default broadcaster
         -- so third-party bar addons (Dominos, Bartender4) work normally.
         if _barsDisabled then
             if _broadcasterMode == "default" then return end
             _broadcasterMode = "default"
-            if ActionBarButtonEventsFrame then
-                ActionBarButtonEventsFrame:UnregisterAllEvents()
+            if ABEF then
+                ABEF:UnregisterAllEvents()
                 for _, ev in ipairs(_abefFullEvents) do
-                    ActionBarButtonEventsFrame:RegisterEvent(ev)
+                    ABEF:RegisterEvent(ev)
                 end
             end
             if ActionBarActionEventsFrame then
@@ -401,14 +421,14 @@ do
         if want == _broadcasterMode and slotOK == _broadcasterSlot then return end
         _broadcasterMode, _broadcasterSlot = want, slotOK
 
-        if ActionBarButtonEventsFrame then ActionBarButtonEventsFrame:UnregisterAllEvents() end
+        if ABEF then ABEF:UnregisterAllEvents() end
         if ActionBarActionEventsFrame then ActionBarActionEventsFrame:UnregisterAllEvents() end
 
         if want == "full" then
-            if ActionBarButtonEventsFrame then
+            if ABEF then
                 for _, ev in ipairs(_abefEvents) do
                     if slotOK or ev ~= "ACTIONBAR_SLOT_CHANGED" then
-                        ActionBarButtonEventsFrame:RegisterEvent(ev)
+                        ABEF:RegisterEvent(ev)
                     end
                 end
             end
@@ -418,11 +438,11 @@ do
                 end
             end
         elseif want == "ph" then
-            if ActionBarButtonEventsFrame then
+            if ABEF then
                 if slotOK then
-                    ActionBarButtonEventsFrame:RegisterEvent("ACTIONBAR_SLOT_CHANGED")
+                    ABEF:RegisterEvent("ACTIONBAR_SLOT_CHANGED")
                 end
-                ActionBarButtonEventsFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
+                ABEF:RegisterEvent("PLAYER_ENTERING_WORLD")
             end
         end
     end
@@ -4259,6 +4279,51 @@ initFrame:RegisterUnitEvent("UNIT_EXITED_VEHICLE", "player")
 initFrame:RegisterUnitEvent("UNIT_PET", "player")
 initFrame:RegisterEvent("PET_BAR_UPDATE")
 initFrame:RegisterEvent("CVAR_UPDATE")  -- live toggle of "Show Numbers for Cooldowns"
+
+-- Forever: the stance bar is only built when the player already has forms
+-- (SetupBar skips it at 0 forms). Druids/Warriors/Rogues learn their forms
+-- while levelling, and GetNumShapeshiftForms() can still read 0 at PLAYER_LOGIN
+-- on Forever -> the bar stayed missing / with stale buttons until /reload.
+-- Rebuild the bars once whenever the number of forms changes.
+local _lastFormCount = nil
+local _formRecheckPending = false
+local function CheckFormCountChanged()
+    _formRecheckPending = false
+    if not AreBarsEnabled() then return end
+    local n = (GetNumShapeshiftForms and GetNumShapeshiftForms()) or 0
+    if _lastFormCount == nil then
+        _lastFormCount = n
+        return
+    end
+    if n ~= _lastFormCount then
+        _lastFormCount = n
+        -- RefreshActionBars queues itself until combat ends if needed
+        ns.RefreshActionBars()
+    end
+end
+if ns.IS_FOREVER then
+    local formFrame = CreateFrame("Frame")
+    formFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
+    formFrame:RegisterEvent("SPELLS_CHANGED")
+    formFrame:RegisterEvent("UPDATE_SHAPESHIFT_FORMS")
+    formFrame:RegisterEvent("PLAYER_LEVEL_UP")
+    formFrame:SetScript("OnEvent", function(_, event)
+        if event == "PLAYER_ENTERING_WORLD" and _lastFormCount == nil then
+            -- Baseline = what the bars were built with at login
+            C_Timer_After(0, function()
+                if _lastFormCount == nil then
+                    local built = barButtons and barButtons["StanceBar"]
+                    _lastFormCount = (built and #built > 0) and ((GetNumShapeshiftForms and GetNumShapeshiftForms()) or 0) or 0
+                end
+                CheckFormCountChanged()
+            end)
+            return
+        end
+        if _formRecheckPending then return end
+        _formRecheckPending = true
+        C_Timer_After(0.3, CheckFormCountChanged)  -- debounce event bursts
+    end)
+end
 
 initFrame:SetScript("OnEvent", function(self, event, ...)
     if event == "ADDON_LOADED" then

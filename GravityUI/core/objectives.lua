@@ -1264,11 +1264,27 @@ local function HasAnyTrackerContent()
     return false
 end
 
+-- Another addon owns tracker visibility (e.g. Questie's own tracker on Forever /
+-- Classic hides Blizzard's ObjectiveTrackerFrame via an OnShow hook).
+-- If we kept forcing Show() here, Questie hides it again in its OnShow hook,
+-- our OnShow hook re-runs CheckAutoHide next frame -> Show again -> endless
+-- Show/Hide ping-pong every frame (full tracker layout + re-skin each time),
+-- which froze the client.
+local function IsTrackerOwnedByOtherAddon()
+    local Q = _G.Questie
+    if Q and Q.db and Q.db.profile and Q.db.profile.trackerEnabled then
+        return true
+    end
+    return false
+end
+Objectives.IsTrackerOwnedByOtherAddon = IsTrackerOwnedByOtherAddon
+
 function Objectives:CheckAutoHide()
     local db = ns.db and ns.db.profile and ns.db.profile.styling and ns.db.profile.styling.objectives
     if not db or not db.objectiveTrackerSkinning then return end
     if not db.autoHideWhenEmpty then return end
     if not ObjectiveTrackerFrame then return end
+    if IsTrackerOwnedByOtherAddon() then return end  -- never fight Questie over visibility
 
     if EditModeManagerFrame and EditModeManagerFrame:IsShown() then
         if not ObjectiveTrackerFrame:IsShown() then ObjectiveTrackerFrame:Show() end
@@ -1469,6 +1485,7 @@ function Objectives:OnInitialize()
         _autoHideShowHooked = true
         local function DeferredAutoHideCheck()
             if Objectives.isApplyingAutoHide then return end
+            if IsTrackerOwnedByOtherAddon() then return end  -- Questie hides it; don't re-show
             Objectives.isApplyingAutoHide = true
             Objectives:CheckAutoHide()
             Objectives.isApplyingAutoHide = false

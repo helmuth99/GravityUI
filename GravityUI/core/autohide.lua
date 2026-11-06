@@ -145,7 +145,12 @@ local function ApplyHideSettings()
                 end)
             end
         else
-            ObjectiveTrackerFrame:Show()
+            -- Don't re-show when Questie's tracker owns visibility (it hides Blizzard's tracker)
+            local owned = ns.Objectives and ns.Objectives.IsTrackerOwnedByOtherAddon
+                and ns.Objectives.IsTrackerOwnedByOtherAddon()
+            if not owned then
+                ObjectiveTrackerFrame:Show()
+            end
             -- ObjectiveTrackerFrame:EnableMouse(true)
         end
     end
