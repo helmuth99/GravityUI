@@ -584,6 +584,12 @@ local function BuildPagingConditions(barKey, pagingConfig, defaultPage)
         end
     end
 
+    -- Forever: every class pages bar 1 by its stance/form offset (6 + offset);
+    -- cover all offsets after any explicit per-form pick (same as EllesmereUI).
+    if barKey == "MainBar" and ns.IS_FOREVER then
+        parts[#parts + 1] = "[bonusbar:1] 7; [bonusbar:2] 8; [bonusbar:3] 9; [bonusbar:4] 10"
+    end
+
     -- Dragonriding
     if barKey == "MainBar" then
         parts[#parts + 1] = "[bonusbar:5] 11"
@@ -614,7 +620,11 @@ local function GetClassPagingConditions()
         conditions = conditions .. "[bar:" .. i .. "] " .. i .. "; "
     end
 
-    if class == "DRUID" then
+    if ns.IS_FOREVER then
+        -- WoW Forever pages bar 1 natively by the stance/form offset for EVERY
+        -- class (druid forms, warrior stances, rogue stealth): page 6 + offset.
+        conditions = conditions .. "[bonusbar:1] 7; [bonusbar:2] 8; [bonusbar:3] 9; [bonusbar:4] 10; "
+    elseif class == "DRUID" then
         conditions = conditions .. "[bonusbar:1,stealth] 7; [bonusbar:1] 7; [bonusbar:3] 9; [bonusbar:4] 10; "
     elseif class == "ROGUE" then
         conditions = conditions .. "[bonusbar:1] 7; "
