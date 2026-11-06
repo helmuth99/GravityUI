@@ -528,6 +528,47 @@ local function GetStatusbarTexture(name)
     return "Interface\\TargetingFrame\\UI-StatusBar"
 end
 
+-- Roll buttons: Retail exposes them as parentKeys (NeedButton/GreedButton/...);
+-- older/classic-style frames (Forever) may only have named globals
+-- (GroupLootFrame1RollButton = Need). Resolve both.
+local function GetRollButtons(frame)
+    local n = frame.GetName and frame:GetName()
+    local function pick(...)
+        for i = 1, select("#", ...) do
+            local k = select(i, ...)
+            local b = frame[k] or (n and _G[n .. k])
+            if b then return b end
+        end
+    end
+    return pick("NeedButton", "RollButton"), pick("GreedButton"), pick("PassButton"),
+           pick("DisenchantButton"), pick("TransmogButton")
+end
+
+local function GetRollReservedWidth(frame)
+    local need, greed, pass, de, tmog = GetRollButtons(frame)
+    local w = 5
+    for _, b in ipairs({ pass, tmog, greed, need, de }) do
+        if b and (b:IsShown() or not ns.IS_FOREVER) then w = w + 22 + 2 end
+    end
+    return w
+end
+
+-- Forever: Blizzard's roll frame shows its own bind label ("BoP") that overlaps
+-- our button row; GravityUI shows its own BoE/BoU text instead.
+local function HideForeverRollExtras(frame)
+    if not ns.IS_FOREVER or not frame or not frame.GetRegions then return end
+    for _, r in ipairs({ frame:GetRegions() }) do
+        if r and r.GetObjectType and r:GetObjectType() == "FontString"
+           and r ~= frame.Name and r ~= frame.guiBindText then
+            local t = r:GetText()
+            if type(t) == "string" and not (issecretvalue and issecretvalue(t))
+               and t:match("^%s*Bo[PEU]%s*$") then
+                r:Hide()
+            end
+        end
+    end
+end
+
 local function UpdateGroupLootStyle(frame)
     if not frame then return end
     local db = GetDB()
@@ -699,51 +740,38 @@ local function UpdateGroupLootStyle(frame)
     end
 
     
-    -- Re-arrange buttons. Order: Pass (Rightmost) <- Transmog <- Greed <- Need
-    
+    -- Re-arrange buttons. Order: Pass (Rightmost) <- Transmog <- Disenchant <- Greed <- Need
+    local needBtn, greedBtn, passBtn, deBtn, tmogBtn = GetRollButtons(frame)
+
     -- 1. Pass (Rightmost)
     local lastAnchor = frame
     -- Shift Up to center above bar (Height 40, Bar 8, Btn 26)
     -- Layout: Button Bottom = 8px + 4px padding = 12px from bottom.
     local btnY = 12
-    
-    if frame.PassButton then 
-        SkinButton(frame.PassButton)
-        frame.PassButton:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -5, btnY)
-        lastAnchor = frame.PassButton
-        xOffset = -2
+    local xOffset = -2
+
+    if passBtn then
+        SkinButton(passBtn)
+        passBtn:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -5, btnY)
+        lastAnchor = passBtn
     end
-    
-    -- 2. Transmog
-    if frame.TransmogButton then 
-        SkinButton(frame.TransmogButton)
-        frame.TransmogButton:SetPoint("RIGHT", lastAnchor, "LEFT", xOffset, 0)
-        lastAnchor = frame.TransmogButton
-        xOffset = -2
-    end
-    
-    -- 2.5 Disenchant
-    if frame.DisenchantButton then 
-        SkinButton(frame.DisenchantButton)
-        frame.DisenchantButton:SetPoint("RIGHT", lastAnchor, "LEFT", xOffset, 0)
-        lastAnchor = frame.DisenchantButton
-        xOffset = -2
-    end
-    
-    -- 3. Greed
-    if frame.GreedButton then 
-        SkinButton(frame.GreedButton)
-        frame.GreedButton:SetPoint("RIGHT", lastAnchor, "LEFT", xOffset, 0)
-        lastAnchor = frame.GreedButton
-        xOffset = -2
-    end
-    
-    -- 4. Need
-    if frame.NeedButton then 
-        SkinButton(frame.NeedButton)
-        frame.NeedButton:SetPoint("RIGHT", lastAnchor, "LEFT", xOffset, 0)
-        lastAnchor = frame.NeedButton
-        xOffset = -2
+
+    -- 2. Transmog / 2.5 Disenchant / 3. Greed / 4. Need (only visible ones take a slot)
+    for _, btn in ipairs({ tmogBtn, deBtn, greedBtn, needBtn }) do
+        if btn then
+            SkinButton(btn)
+            if btn:IsShown() or not ns.IS_FOREVER then
+                if lastAnchor == frame then
+                    btn:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -5, btnY)
+                else
+                    btn:SetPoint("RIGHT", lastAnchor, "LEFT", xOffset, 0)
+                end
+                lastAnchor = btn
+            else
+                -- hidden (e.g. no disenchant on Forever): keep it out of the row
+                btn:SetPoint("RIGHT", lastAnchor, "RIGHT", 0, 0)
+            end
+        end
     end
     
     -- Store leftmost button for anchoring Name/BindText
@@ -782,13 +810,7 @@ local function UpdateGroupLootStyle(frame)
     local centerY = timerHeight / 2
     
     -- Calculate reserved width for buttons
-    local reservedWidth = 5 
-    if frame.PassButton then reservedWidth = reservedWidth + 22 + 2 end
-    if frame.TransmogButton then reservedWidth = reservedWidth + 22 + 2 end
-    if frame.GreedButton then reservedWidth = reservedWidth + 22 + 2 end
-    if frame.NeedButton then reservedWidth = reservedWidth + 22 + 2 end
-    -- Add Disenchant if it exists
-    if frame.DisenchantButton then reservedWidth = reservedWidth + 22 + 2 end
+    local reservedWidth = GetRollReservedWidth(frame)
 
     if frame.Name then
         frame.Name:ClearAllPoints()
@@ -875,13 +897,7 @@ local function OnGroupLootShow(frame)
              local centerY = timerHeight / 2 -- Visual center above timer
              
              -- Calculate reserved width for buttons
-             local reservedWidth = 5 
-             if frame.PassButton then reservedWidth = reservedWidth + 22 + 2 end
-             if frame.TransmogButton then reservedWidth = reservedWidth + 22 + 2 end
-             if frame.GreedButton then reservedWidth = reservedWidth + 22 + 2 end
-             if frame.NeedButton then reservedWidth = reservedWidth + 22 + 2 end
-             -- Add Disenchant if it exists
-             if frame.DisenchantButton then reservedWidth = reservedWidth + 22 + 2 end
+             local reservedWidth = GetRollReservedWidth(frame)
              
              frame.Name:ClearAllPoints()
              frame.Name:SetPoint("LEFT", frame, "LEFT", 0, centerY)
@@ -1427,6 +1443,16 @@ function Loot:Initialize()
                     -- Cache DB reference on show so OnUpdate avoids repeated lookups
                     self._cachedLootDB = GetDB()
                     self._lastKnownWidth = nil  -- reset so width-check triggers on first tick
+                    -- Forever: Blizzard re-lays out the roll buttons on every roll
+                    -- (classic stacked Need/Greed). Re-apply our layout after its OnShow.
+                    if ns.IS_FOREVER then
+                        C_Timer.After(0, function()
+                            if self:IsShown() then
+                                OnGroupLootShow(self)
+                                HideForeverRollExtras(self)
+                            end
+                        end)
+                    end
                 end)
 
                 -- Robustness: Add OnUpdate to retry data loading and enforce layout
