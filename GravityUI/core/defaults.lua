@@ -1374,9 +1374,7 @@ ns.Defaults = {
             },
             StanceBar = {
                 enabled = true,
-                -- Forever: druids/warriors/rogues switch forms constantly there, so the
-                -- stance bar is always visible by default (Retail: mouseover-only).
-                alwaysShow = ns.IS_FOREVER and true or false,
+                alwaysShow = false,
                 columns = 10, rows = 1,
                 buttonWidth = 20, buttonHeight = 20,
                 spacing = 1,
