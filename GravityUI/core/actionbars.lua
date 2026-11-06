@@ -2687,6 +2687,12 @@ local function SetupBar(info)
     local growDir = (barDB and barDB.growDirection) or "TOPLEFT"
     local visibleButtons = (barDB and barDB.visibleButtons) or info.count
     if visibleButtons > info.count then visibleButtons = info.count end
+    -- Forever: only show as many stance buttons as the player has forms
+    -- (no empty boxes; the bar is rebuilt when a new form is learned).
+    if info.isStance and ns.IS_FOREVER then
+        local numForms = (GetNumShapeshiftForms and GetNumShapeshiftForms()) or 0
+        if numForms > 0 and visibleButtons > numForms then visibleButtons = numForms end
+    end
 
     for i = 1, info.count do
         local slot
@@ -2734,6 +2740,15 @@ local function SetupBar(info)
             local anchor = growDir
             btn:SetPoint(anchor, frame, anchor, xMul * col * (btnW + spacing), yMul * row * (btnH + spacing))
             btn:SetSize(btnW, btnH)
+            if info.isStance then
+                -- Remember our layout so it can be re-asserted after Blizzard's
+                -- stance bar code moves/hides the reused StanceButtons (Forever).
+                GFD(btn).stanceLayout = {
+                    frame = frame, anchor = anchor,
+                    x = xMul * col * (btnW + spacing), y = yMul * row * (btnH + spacing),
+                    w = btnW, h = btnH, show = (i <= visibleButtons),
+                }
+            end
 
             -- ── Scale all overlay effects to button size ──────────────
             -- Cooldown swirl: must fill the button exactly
@@ -4323,6 +4338,125 @@ if ns.IS_FOREVER then
         _formRecheckPending = true
         C_Timer_After(0.3, CheckFormCountChanged)  -- debounce event bursts
     end)
+end
+
+-- Forever: StanceBar guard.
+-- GravityUI reuses Blizzard's StanceButton1-10 inside its own bar. On Forever,
+-- Blizzard's stance bar code (ActionBarController -> StanceBar:Update/Layout on
+-- shapeshift events) still runs and pulls the buttons back into the hidden
+-- Blizzard StanceBar / hides them, and their icons are painted by that bar's
+-- (unregistered) events. Result: the bar frame exists (visible in GUI edit mode)
+-- but the buttons are invisible in game. We re-assert our layout and paint the
+-- form icons/active state/cooldowns ourselves.
+if ns.IS_FOREVER then
+    local stanceGuardPending = false
+    local stanceNeedsReanchor = false
+
+    local function GetStanceIcon(btn)
+        local n = btn.GetName and btn:GetName()
+        return btn.icon or btn.Icon or (n and _G[n .. "Icon"])
+    end
+    local function GetStanceCooldown(btn)
+        local n = btn.GetName and btn:GetName()
+        return btn.cooldown or (n and _G[n .. "Cooldown"])
+    end
+
+    local function PaintStanceButtons()
+        local btns = barButtons["StanceBar"]
+        if not btns then return end
+        local numForms = (GetNumShapeshiftForms and GetNumShapeshiftForms()) or 0
+        for i, btn in ipairs(btns) do
+            if i <= numForms and GetShapeshiftFormInfo then
+                local ok, texture, isActive, isCastable = pcall(GetShapeshiftFormInfo, i)
+                if ok then
+                    local icon = GetStanceIcon(btn)
+                    if icon then
+                        if texture then icon:SetTexture(texture) end
+                        icon:Show()
+                        icon:SetDesaturated(not isCastable)
+                        icon:SetVertexColor(isCastable and 1 or 0.4, isCastable and 1 or 0.4, isCastable and 1 or 0.4)
+                    end
+                    if btn.SetChecked then btn:SetChecked(isActive and true or false) end
+                end
+                local cd = GetStanceCooldown(btn)
+                if cd and GetShapeshiftFormCooldown then
+                    local okc, start, duration, enable = pcall(GetShapeshiftFormCooldown, i)
+                    if okc and start and duration then
+                        pcall(cd.SetCooldown, cd, start, duration, enable)
+                    end
+                end
+            end
+        end
+    end
+
+    local function ReanchorStanceButtons()
+        if InCombatLockdown() then
+            stanceNeedsReanchor = true
+            return
+        end
+        stanceNeedsReanchor = false
+        local btns = barButtons["StanceBar"]
+        if not btns then return end
+        for _, btn in ipairs(btns) do
+            local L = GFD(btn).stanceLayout
+            if L and L.frame then
+                if btn:GetParent() ~= L.frame then btn:SetParent(L.frame) end
+                local p, rel = btn:GetPoint(1)
+                if btn:GetNumPoints() ~= 1 or p ~= L.anchor or rel ~= L.frame then
+                    btn:ClearAllPoints()
+                    btn:SetPoint(L.anchor, L.frame, L.anchor, L.x, L.y)
+                end
+                btn:SetSize(L.w, L.h)
+                if L.show then
+                    btn:SetAttributeNoHandler("statehidden", nil)
+                    if not btn:IsShown() then btn:Show() end
+                elseif btn:IsShown() then
+                    btn:Hide()
+                end
+            end
+        end
+    end
+
+    local function StanceGuard()
+        stanceGuardPending = false
+        if not AreBarsEnabled() then return end
+        ReanchorStanceButtons()
+        PaintStanceButtons()
+    end
+    local function QueueStanceGuard()
+        if stanceGuardPending then return end
+        stanceGuardPending = true
+        C_Timer_After(0, StanceGuard)  -- after Blizzard's own handler ran
+    end
+    ns.QueueStanceGuard = QueueStanceGuard
+
+    local stanceGuardFrame = CreateFrame("Frame")
+    for _, ev in ipairs({
+        "PLAYER_ENTERING_WORLD", "UPDATE_SHAPESHIFT_FORMS", "UPDATE_SHAPESHIFT_FORM",
+        "UPDATE_SHAPESHIFT_USABLE", "UPDATE_SHAPESHIFT_COOLDOWN", "SPELLS_CHANGED",
+        "ACTIONBAR_UPDATE_COOLDOWN", "PLAYER_REGEN_ENABLED",
+    }) do
+        pcall(stanceGuardFrame.RegisterEvent, stanceGuardFrame, ev)
+    end
+    stanceGuardFrame:SetScript("OnEvent", function(_, event)
+        if event == "PLAYER_REGEN_ENABLED" and not stanceNeedsReanchor then return end
+        QueueStanceGuard()
+    end)
+
+    -- Catch Blizzard's stance bar relayouts directly (if those methods exist).
+    local sb = _G.StanceBar
+    if sb then
+        for _, m in ipairs({ "Update", "UpdateState", "Layout", "UpdateShownButtons" }) do
+            if type(sb[m]) == "function" then
+                hooksecurefunc(sb, m, QueueStanceGuard)
+            end
+        end
+    end
+    for _, fn in ipairs({ "StanceBar_Update", "StanceBar_UpdateState", "ShapeshiftBar_Update", "ShapeshiftBar_UpdateState" }) do
+        if type(_G[fn]) == "function" then
+            hooksecurefunc(fn, QueueStanceGuard)
+        end
+    end
 end
 
 initFrame:SetScript("OnEvent", function(self, event, ...)
