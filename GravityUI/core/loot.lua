@@ -531,6 +531,46 @@ end
 -- Roll buttons: Retail exposes them as parentKeys (NeedButton/GreedButton/...);
 -- older/classic-style frames (Forever) may only have named globals
 -- (GroupLootFrame1RollButton = Need). Resolve both.
+-- Forever: the buttons are neither keys of the roll frame nor named globals
+-- (only IconFrame is) -> they live in a sub-container. Find them by walking the
+-- children and classifying each button by its parentKey / name / texture.
+local _rollBtnCache = setmetatable({}, { __mode = "k" })
+
+local function ClassifyRollButton(btn, key)
+    local parts = { key or "", (btn.GetName and btn:GetName()) or "" }
+    local nt = btn.GetNormalTexture and btn:GetNormalTexture()
+    if nt then
+        local atlas = nt.GetAtlas and nt:GetAtlas()
+        local tex = nt.GetTexture and nt:GetTexture()
+        parts[#parts + 1] = tostring(atlas or "")
+        parts[#parts + 1] = tostring(tex or "")
+    end
+    local s = table.concat(parts, " "):lower()
+    if s:find("need") or s:find("dice") then return "need" end
+    if s:find("greed") or s:find("coin") then return "greed" end
+    if s:find("pass") then return "pass" end
+    if s:find("disenchant") or s:find("%-de%-") or s:find("_de_") then return "de" end
+    if s:find("transmog") then return "tmog" end
+    if s:find("roll") then return "need" end
+    return nil
+end
+
+local function ScanRollButtons(root, f, depth, out)
+    local keymap = {}
+    for k, v in pairs(f) do
+        if type(k) == "string" and type(v) == "table" and v.GetObjectType then keymap[v] = k end
+    end
+    for _, child in ipairs({ f:GetChildren() }) do
+        if child ~= root.IconFrame and not (child.IsForbidden and child:IsForbidden()) then
+            if child.IsObjectType and child:IsObjectType("Button") then
+                local role = ClassifyRollButton(child, keymap[child])
+                if role and not out[role] then out[role] = child end
+            end
+            if depth < 3 then ScanRollButtons(root, child, depth + 1, out) end
+        end
+    end
+end
+
 local function GetRollButtons(frame)
     local n = frame.GetName and frame:GetName()
     local function pick(...)
@@ -540,14 +580,57 @@ local function GetRollButtons(frame)
             if b then return b end
         end
     end
-    return pick("NeedButton", "RollButton"), pick("GreedButton"), pick("PassButton"),
-           pick("DisenchantButton"), pick("TransmogButton")
+    local need, greed, pass = pick("NeedButton", "RollButton"), pick("GreedButton"), pick("PassButton")
+    local de, tmog = pick("DisenchantButton"), pick("TransmogButton")
+    if ns.IS_FOREVER and not (need and greed and pass) then
+        local found = _rollBtnCache[frame]
+        -- Only trust a complete result: at load time Need/Greed have no texture
+        -- yet (classification fails), so a partial cache must be re-scanned.
+        if not found or not (found.need and found.greed and found.pass) then
+            found = {}
+            ScanRollButtons(frame, frame, 1, found)
+            _rollBtnCache[frame] = found
+        end
+        need, greed, pass = need or found.need, greed or found.greed, pass or found.pass
+        de, tmog = de or found.de, tmog or found.tmog
+    end
+    return need, greed, pass, de, tmog
+end
+
+-- Debug: /run GravityUI_DebugRollButtons()  (while a roll frame is open)
+function GravityUI_DebugRollButtons()
+    for i = 1, 4 do
+        local f = _G["GroupLootFrame" .. i]
+        if f and f:IsShown() then
+            _rollBtnCache[f] = nil
+            local need, greed, pass, de, tmog = GetRollButtons(f)
+            print("GroupLootFrame" .. i, "need", need and "ok" or "-", "greed", greed and "ok" or "-",
+                "pass", pass and "ok" or "-", "de", de and "ok" or "-", "tmog", tmog and "ok" or "-")
+            print("  tick sig:", tostring(f._guiRollBtnSig), "forever:", tostring(ns.IS_FOREVER))
+            if ns._LayoutRollButtonsForever then
+                f._guiRollErr = nil
+                local ok, res = pcall(ns._LayoutRollButtonsForever, f)
+                print("  layout now:", tostring(ok), tostring(res), "err:", tostring(f._guiRollErr))
+            end
+            for label, b in pairs({ need = need, greed = greed, pass = pass, tmog = tmog }) do
+                if b then
+                    local p, rel, rp, x, y = b:GetPoint(1)
+                    local relName = rel and (rel == f and "rollframe" or (rel.GetName and rel:GetName()) or tostring(rel)) or "nil"
+                    print("  ", label, "shown", tostring(b:IsShown()), "parentIsFrame", tostring(b:GetParent() == f),
+                        "point", tostring(p), relName, tostring(rp), tostring(x), tostring(y))
+                end
+            end
+        end
+    end
 end
 
 local function GetRollReservedWidth(frame)
     local need, greed, pass, de, tmog = GetRollButtons(frame)
     local w = 5
-    for _, b in ipairs({ pass, tmog, greed, need, de }) do
+    -- NOTE: numeric loop, not ipairs: entries can be nil (e.g. no Disenchant button)
+    local list = { pass, tmog, greed, need, de }
+    for i = 1, 5 do
+        local b = list[i]
         if b and (b:IsShown() or not ns.IS_FOREVER) then w = w + 22 + 2 end
     end
     return w
@@ -568,6 +651,47 @@ local function HideForeverRollExtras(frame)
         end
     end
 end
+
+-- Forever: Blizzard keeps (re)anchoring the roll buttons in its classic stacked
+-- layout (Greed under Need) and shows/hides them after our OnShow pass. This
+-- enforces our single-row layout; called from the frame's 0.2s tick.
+-- Returns a signature of the visible buttons so callers can detect changes.
+local function LayoutRollButtonsForever(frame)
+    if not ns.IS_FOREVER or not frame then return "" end
+    local needBtn, greedBtn, passBtn, deBtn, tmogBtn = GetRollButtons(frame)
+    local btnY, gap, size = 12, -2, 22
+    local lastAnchor = frame
+    local sig = ""
+    -- NOTE: numeric loop, not ipairs: entries can be nil (Forever has no Disenchant button)
+    local list = { passBtn, tmogBtn, deBtn, greedBtn, needBtn }
+    for idx = 1, 5 do
+        local btn = list[idx]
+        if btn and btn:IsShown() then
+            sig = sig .. idx
+            local ok, err = pcall(function()
+                -- Do NOT reparent: Blizzard's OnClick reads the roll ID via the
+                -- button's parent chain; re-anchoring to the roll frame is enough.
+                if btn:GetWidth() ~= size then btn:SetSize(size, size) end
+                local p, rel = btn:GetPoint(1)
+                local wantRel = (lastAnchor == frame) and frame or lastAnchor
+                local wantP = (lastAnchor == frame) and "BOTTOMRIGHT" or "RIGHT"
+                if btn:GetNumPoints() ~= 1 or p ~= wantP or rel ~= wantRel then
+                    btn:ClearAllPoints()
+                    if lastAnchor == frame then
+                        btn:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -5, btnY)
+                    else
+                        btn:SetPoint("RIGHT", lastAnchor, "LEFT", gap, 0)
+                    end
+                end
+                btn:SetFrameLevel(frame:GetFrameLevel() + 5)
+            end)
+            if not ok then frame._guiRollErr = tostring(err) end
+            lastAnchor = btn
+        end
+    end
+    return sig
+end
+ns._LayoutRollButtonsForever = LayoutRollButtonsForever
 
 local function UpdateGroupLootStyle(frame)
     if not frame then return end
@@ -757,7 +881,10 @@ local function UpdateGroupLootStyle(frame)
     end
 
     -- 2. Transmog / 2.5 Disenchant / 3. Greed / 4. Need (only visible ones take a slot)
-    for _, btn in ipairs({ tmogBtn, deBtn, greedBtn, needBtn }) do
+    -- NOTE: numeric loop, not ipairs: entries can be nil (e.g. no Disenchant button)
+    local list = { tmogBtn, deBtn, greedBtn, needBtn }
+    for li = 1, 4 do
+        local btn = list[li]
         if btn then
             SkinButton(btn)
             if btn:IsShown() or not ns.IS_FOREVER then
@@ -1446,6 +1573,7 @@ function Loot:Initialize()
                     -- Forever: Blizzard re-lays out the roll buttons on every roll
                     -- (classic stacked Need/Greed). Re-apply our layout after its OnShow.
                     if ns.IS_FOREVER then
+                        self._guiRollBtnSig = nil  -- force a full re-layout on the next tick
                         C_Timer.After(0, function()
                             if self:IsShown() then
                                 OnGroupLootShow(self)
@@ -1461,6 +1589,17 @@ function Loot:Initialize()
                     self.gravityUpdateTimer = self.gravityUpdateTimer + elapsed
                     if self.gravityUpdateTimer > 0.2 then
                         self.gravityUpdateTimer = 0
+                        -- Forever: keep our button row (Blizzard re-stacks Need/Greed and
+                        -- shows buttons late). Re-anchor name/bind text when the set changes.
+                        if ns.IS_FOREVER then
+                            local sig = LayoutRollButtonsForever(self)
+                            if sig ~= self._guiRollBtnSig then
+                                self._guiRollBtnSig = sig
+                                OnGroupLootShow(self)
+                                LayoutRollButtonsForever(self)
+                                HideForeverRollExtras(self)
+                            end
+                        end
                         -- 1. Enforce Width (Blizzard likes to reset this)
                         -- PERF: Use cached db and gate on actual width change to avoid
                         -- calling UpdateRollPositions() every 0.2s needlessly.
