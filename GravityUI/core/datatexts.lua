@@ -895,6 +895,12 @@ DT.Types.guild = {
         local total, online = GetNumGuildMembers()
         local r, g, b = GetValueColor()
         local guildName = GetGuildInfo("player") or "Guild"
+        -- Forever: guilds often carry a " Forever" suffix (e.g. "GRAVITY Forever");
+        -- drop it so the datatext shows the plain name ("GRAVITY").
+        if ns.IS_FOREVER and type(guildName) == "string" and not (issecretvalue and issecretvalue(guildName)) then
+            local stripped = guildName:gsub("%s+[Ff][Oo][Rr][Ee][Vv][Ee][Rr]$", "")
+            if stripped ~= "" then guildName = stripped end
+        end
         -- Truncate long guild names so they don't overflow the slot
         if #guildName > GUILD_MAX_CHARS then
             guildName = guildName:sub(1, GUILD_MAX_CHARS) .. "..."

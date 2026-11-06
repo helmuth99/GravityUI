@@ -4419,6 +4419,7 @@ if ns.IS_FOREVER then
 
     local function StanceGuard()
         stanceGuardPending = false
+        if _G.GRAVITYUI_NO_STANCEGUARD then return end  -- debug switch (/run GRAVITYUI_NO_STANCEGUARD=true)
         if not AreBarsEnabled() then return end
         ReanchorStanceButtons()
         PaintStanceButtons()
