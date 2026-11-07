@@ -270,9 +270,17 @@ local function QuietlyHideBlizzButton(btn)
     -- vehicle transitions or broadcaster mode changes.  Without this, the chain
     -- OnEvent → UpdateAction → Update → UpdatePressAndHoldAction → SetAttribute()
     -- fires in our tainted context and triggers ADDON_ACTION_BLOCKED.
-    if btn.UpdatePressAndHoldAction then btn.UpdatePressAndHoldAction = function() end end
-    if btn.UpdateAction then btn.UpdateAction = function() end end
-    if btn.Update then btn.Update = function() end end
+    -- Forever: skipped. There Blizzard's own secure paths call these methods on
+    -- the hidden stock buttons (e.g. opening Talents -> MultiActionBar_ShowAllGrids
+    -- -> bar:SetShowGrid -> button methods -> bar:UpdateFrameStrata). Running our
+    -- replacement functions there taints that path and SetFrameStrata gets
+    -- blocked (ADDON_ACTION_BLOCKED MultiBarBottomLeft:SetFrameStrata). EllesmereUI
+    -- likewise leaves these methods untouched on Forever.
+    if not ns.IS_FOREVER then
+        if btn.UpdatePressAndHoldAction then btn.UpdatePressAndHoldAction = function() end end
+        if btn.UpdateAction then btn.UpdateAction = function() end end
+        if btn.Update then btn.Update = function() end end
+    end
 
     -- Remove from Blizzard's broadcaster .frames list.
     -- The broadcaster dispatches events to ALL buttons in this list;
