@@ -263,7 +263,16 @@ hiddenParent:Hide()
 
 local function QuietlyHideBlizzButton(btn)
     btn:UnregisterAllEvents()
-    btn:SetAttributeNoHandler("statehidden", true)
+    -- Forever: do NOT set "statehidden". Blizzard's own secure path reads it
+    -- (opening Talents -> MultiActionBar_ShowAllGrids -> bar:SetShowGrid ->
+    -- button:SetShowGrid reads GetAttribute("statehidden")). An attribute written
+    -- by addon code is tainted, so that read taints the rest of the chain and
+    -- the following bar:UpdateFrameStrata -> SetFrameStrata gets blocked
+    -- (ADDON_ACTION_BLOCKED MultiBarBottomLeft:SetFrameStrata). The stock bars
+    -- are reparented to the hidden parent, so the buttons stay invisible anyway.
+    if not ns.IS_FOREVER then
+        btn:SetAttributeNoHandler("statehidden", true)
+    end
 
     -- Neuter mixin methods that cause taint when events re-fire on stock buttons.
     -- Even though we UnregisterAllEvents, Blizzard can re-register events during
@@ -357,6 +366,7 @@ do
     local _broadcasterMode = ""
     local _broadcasterSlot = true
     local _classPH
+    local _broadcasterTouched = false  -- true once we changed ABEF/AAEF registrations
 
     local function ClassMayPressHold()
         if _classPH == nil then
@@ -399,6 +409,10 @@ do
         if _barsDisabled then
             if _broadcasterMode == "default" then return end
             _broadcasterMode = "default"
+            -- Forever: if we never quieted the broadcasters this session they are
+            -- still Blizzard's own (untainted) registrations -> leave them alone.
+            -- Re-registering from addon code would taint every dispatch.
+            if ns.IS_FOREVER and not _broadcasterTouched then return end
             if ABEF then
                 ABEF:UnregisterAllEvents()
                 for _, ev in ipairs(_abefFullEvents) do
@@ -422,12 +436,17 @@ do
         -- GravityUI bars are enabled: selective broadcaster management
         local want = (_vehNeed or _extraNeed) and "full"
             or ((_phNeed or ClassMayPressHold()) and "ph" or "off")
-        if want == "full" and CooldownsSecret() then
+        -- Forever (like EllesmereUI): never the tick set. Our registrations taint
+        -- every dispatch, and Blizzard's handlers then write tainted fields onto
+        -- its own buttons, which later breaks secure paths (blocked SetShown /
+        -- SetFrameStrata in combat).
+        if want == "full" and (CooldownsSecret() or ns.IS_FOREVER) then
             want = (_phNeed or ClassMayPressHold()) and "ph" or "off"
         end
         local slotOK = not InCombatLockdown()
         if want == _broadcasterMode and slotOK == _broadcasterSlot then return end
         _broadcasterMode, _broadcasterSlot = want, slotOK
+        _broadcasterTouched = true
 
         if ABEF then ABEF:UnregisterAllEvents() end
         if ActionBarActionEventsFrame then ActionBarActionEventsFrame:UnregisterAllEvents() end
@@ -2863,8 +2882,11 @@ end
 -------------------------------------------------------------------------------
 --  Hide Blizzard Stock Bars
 -------------------------------------------------------------------------------
+local stockBarsHidden = false  -- set once HideStockBars ran this session
+
 local function HideStockBars()
     if InCombatLockdown() then return end
+    stockBarsHidden = true
 
     for _, entry in ipairs(STOCK_BAR_DISPOSAL) do
         local bar = _G[entry.name]
@@ -2965,6 +2987,10 @@ end
 -------------------------------------------------------------------------------
 local function RestoreStockBars()
     if InCombatLockdown() then return end
+    -- Forever: if we never hid the stock bars this session, leave them completely
+    -- untouched. Every write below (reparent, events, frames list) would come from
+    -- addon code and taint Blizzard's own action bar paths for nothing.
+    if ns.IS_FOREVER and not stockBarsHidden then return end
 
     -- Re-parent Blizzard bar frames back to UIParent
     for _, entry in ipairs(STOCK_BAR_DISPOSAL) do
@@ -2989,11 +3015,15 @@ local function RestoreStockBars()
             for i = 1, info.count do
                 local btn = _G[info.blizzBtnPrefix .. i]
                 if btn then
-                    -- Clear our statehidden flag
-                    btn:SetAttributeNoHandler("statehidden", nil)
+                    -- Clear our statehidden flag (Forever: never set, see QuietlyHideBlizzButton)
+                    if not ns.IS_FOREVER then
+                        btn:SetAttributeNoHandler("statehidden", nil)
+                    end
 
                     -- Restore neutered mixin methods from Blizzard's ActionButtonMixin
-                    local mixin = ActionButtonMixin
+                    -- Forever: they are never neutered there, and re-assigning them
+                    -- from addon code would leave tainted method fields on the buttons.
+                    local mixin = (not ns.IS_FOREVER) and ActionButtonMixin or nil
                     if mixin then
                         if mixin.UpdatePressAndHoldAction then btn.UpdatePressAndHoldAction = mixin.UpdatePressAndHoldAction end
                         if mixin.UpdateAction then btn.UpdateAction = mixin.UpdateAction end
