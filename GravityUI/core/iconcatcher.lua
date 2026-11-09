@@ -729,7 +729,10 @@ local function CatchExistingButtons()
         BtwQuestsMinimapButton = true,
         BTWQuestsMinimapButton = true,
         BtWQuestsMinimapButton = true,
-        ExpansionLandingPageMinimapButton = true, -- Patch 12.0.7: Expansion Landing Page
+        -- Patch 12.0.7: Expansion Landing Page. Forever: no landing page there; the
+        -- button has no title and Blizzard's SetTooltip errors on hover once we
+        -- catch/show it -> leave it to Blizzard (like EllesmereUI).
+        ExpansionLandingPageMinimapButton = (not ns.IS_FOREVER) or nil,
         -- EllesmereUIMinimapButton is handled separately below (caught or hidden depending on Catcher state).
     }
     
