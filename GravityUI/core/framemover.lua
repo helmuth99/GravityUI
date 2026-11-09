@@ -117,6 +117,21 @@ local DRAG_HEADERS = {
 ---------------------------------------------------------------------------
 local securePositioner = CreateFrame("Frame", nil, UIParent, "SecureHandlerBaseTemplate")
 
+-- Which frames must only be moved through the secure path.
+-- Forever: UI-panel windows managed by UIParentPanelManager (e.g. PlayerSpellsFrame)
+-- may not report IsProtected() yet when we hook them, but Blizzard later sizes
+-- them with protected calls (PlayerSpellsFrame:SetWidth in UpdateSize). Moving
+-- them with insecure SetPoint/StartMoving taints their anchors, the panel
+-- manager's layout reads become tainted and SetWidth gets ADDON_ACTION_BLOCKED.
+local function NeedsSecureMove(frame)
+    if frame:IsProtected() then return true end
+    if ns.IS_FOREVER then
+        local name = frame.GetName and frame:GetName()
+        if name and UIPanelWindows and UIPanelWindows[name] then return true end
+    end
+    return false
+end
+
 local function SecureSetPoint(frame, point, relPoint, x, y)
     if InCombatLockdown() then return false end
     securePositioner:SetFrameRef("f", frame)
@@ -154,12 +169,12 @@ end
 local function RestorePosition(frame, frameName)
     local db = GetDB()
     if not (db and db.enabled and db.rememberPositions) then return end
-    if InCombatLockdown() and frame:IsProtected() then return end
+    if InCombatLockdown() and NeedsSecureMove(frame) then return end
     
     local pos = db.positions and db.positions[frameName]
     if pos and pos.point then
         ignoreSetPoint[frame] = true
-        if frame:IsProtected() then
+        if NeedsSecureMove(frame) then
             SecureSetPoint(frame, pos.point, pos.relativePoint or pos.point, pos.xOfs or 0, pos.yOfs or 0)
         else
             frame:ClearAllPoints()
@@ -248,7 +263,7 @@ local function MakeMovable(frameName)
     local headerName = DRAG_HEADERS[frameName]
     local handle = headerName and _G[headerName] or (frame.TitleContainer or frame)
 
-    local isProtected = frame:IsProtected()
+    local isProtected = NeedsSecureMove(frame)
 
     -- P0: NEVER call SetMovable/SetClampedToScreen on protected frames.
     -- It taints the entire frame tree and causes secret-value crashes in
@@ -382,7 +397,7 @@ function FM.ResetFrame(frameName)
     local f = _G[frameName]
     if f then
         ignoreSetPoint[f] = true
-        if f:IsProtected() then
+        if NeedsSecureMove(f) then
             SecureSetPoint(f, "CENTER", "CENTER", 0, 0)
         elseif f.ClearAllPoints then
             f:ClearAllPoints()
@@ -444,7 +459,7 @@ eventFrame:SetScript("OnEvent", function(self, event, arg1)
         self:UnregisterEvent("PLAYER_REGEN_ENABLED")
         for i = 1, #deferredMovable do
             local f = deferredMovable[i]
-            if f and not f:IsProtected() then
+            if f and not NeedsSecureMove(f) then
                 f:SetMovable(true)
                 f:SetClampedToScreen(true)
             end

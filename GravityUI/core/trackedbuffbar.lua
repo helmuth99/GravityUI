@@ -568,6 +568,10 @@ function Module:Refresh()
 end
 
 function Module:Init()
+    -- Forever has no Blizzard Cooldown Manager (BuffBarCooldownViewer), so
+    -- there is nothing to skin; skip the periodic scan entirely.
+    if ns.IS_FOREVER then return end
+
     local db = GetSettings()
     if not db then return end
 

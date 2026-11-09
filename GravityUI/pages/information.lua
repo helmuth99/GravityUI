@@ -6,6 +6,62 @@ local C = GUI.Colors
 -- ============================================================
 -- COMPACT MODULE ROW  (26 px)
 -- ============================================================
+-- Overview row name -> sub-tab name, so rows jump to the right tab even when
+-- the tab list differs (Forever hides tabs, Utilities injects tabs at the end).
+local ROW_TAB_NAMES = {
+    actionbars = {
+        ["Action Bars"]          = "Action Bars Settings",
+        ["Mouseover Settings"]   = "Mouseover Settings",
+        ["Extra Action Buttons"] = "Extra Action Buttons",
+    },
+    features = {
+        ["Skyriding HUD"] = "Dragonriding",
+        ["M+ Teleports"]  = "M+ Teleport",
+        ["World Marks"]   = "World Marks",
+        ["Mail Extras"]   = "Mail",
+        ["Group & Guild"] = "Guildtools",
+        ["Player Marks"]  = "Player Marks",
+        ["Alt Manager"]   = "Gravity Alt Manager",
+        ["Frame Mover"]   = "Frame Mover",
+        ["Sound Alerts"]  = "Sound Alerts",
+        ["Color Picker"]  = "Color Picker",
+        ["Premade Group"] = "Premade Group",
+    },
+    indicators = {
+        ["Cursor Utilities"]   = "Cursor",
+        ["Crosshair"]          = "Crosshair",
+        ["Stance Text"]        = "Stance Text",
+        ["Healer Mana"]        = ns.IS_FOREVER and "Healer Mana" or "Mana/Lust/BR Tracker",
+        ["Battle Res Tracker"] = "Mana/Lust/BR Tracker",
+        ["Bloodlust Tracker"]  = "Mana/Lust/BR Tracker",
+        ["Pet Info"]           = "Pet Info",
+        ["Combat Status"]      = "Combat Status",
+        ["Combat Timer"]       = "Combat Timer",
+        ["Cooldown Text"]      = "Cooldown Text",
+        ["Raid Warnings"]      = "Raid Warnings",
+        ["Consumables"]        = "Consumables",
+        ["Difficulty"]         = "Difficulty Changer",
+        ["AFK Screen"]         = "AFK Screen",
+        ["Death Announcer"]    = "Death Announcer",
+        ["Tracked Bars"]       = "Tracked Bars",
+    },
+    Styling = {
+        ["Character Panel"]   = "Character Panel",
+        ["Chat Styling"]      = "Chat",
+        ["Tooltip Styling"]   = "Tooltip",
+        ["Objective Tracker"] = "Objective Tracker",
+        ["Loot Enhancement"]  = "Loot",
+        ["Game Menu"]         = "Game Menu",
+        ["Ready Check"]       = "Ready Check",
+        ["Keystone"]          = "Keystone",
+        ["Power Bar"]         = "Power Bar",
+        ["Alert Frames"]      = "Alert Frames",
+        ["Chat Bubbles"]      = "Chat Bubbles",
+        ["Instance Frames"]   = "Instance",
+        ["XP & Reputation"]   = "XP / Rep",
+        ["Static Popups"]     = "Static Popups",
+    },
+}
 local function CreateModuleRow(parent, f, hy, rowWidth)
     local ROW_H = 26
     local row = CreateFrame("Button", nil, parent, "BackdropTemplate")
@@ -21,7 +77,21 @@ local function CreateModuleRow(parent, f, hy, rowWidth)
         self:SetBackdropBorderColor(C.border[1], C.border[2], C.border[3], 0.6)
     end)
     if f.pageId then
-        row:SetScript("OnClick", function() GUI:ShowPage(f.pageId, f.tabIndex) end)
+        row:SetScript("OnClick", function()
+            -- Resolve the sub-tab by name when given (tab lists differ between
+            -- Retail and Forever); fall back to the static index.
+            local idx = f.tabIndex
+            local tabName = f.tabName or (ROW_TAB_NAMES[f.pageId] and ROW_TAB_NAMES[f.pageId][f.name])
+            if tabName then
+                local page = GUI.pages and GUI.pages[f.pageId]
+                if page and page.subTabs then
+                    for i, t in ipairs(page.subTabs) do
+                        if t.name == tabName then idx = i; break end
+                    end
+                end
+            end
+            GUI:ShowPage(f.pageId, idx)
+        end)
     end
     local dot = row:CreateTexture(nil, "OVERLAY")
     dot:SetTexture("Interface\\Buttons\\WHITE8x8")
@@ -282,7 +352,9 @@ local function BuildInformationTab(parent)
     H("  Action Bars")
     R({ name="Action Bars",          desc="Custom skinned, dynamically fading action bars with backdrop and hotkey fonts.",  stateTable=db.actionbars, stateKey="enabled", pageId="actionbars", tabIndex=1 })
     R({ name="Mouseover Settings",   desc="Configure fade rules based on mouse interaction, duration and combat state.",   stateTable=db.actionbars and db.actionbars.fade, stateKey="enabled", pageId="actionbars", tabIndex=2 })
-    R({ name="Extra Action Buttons", desc="Scale and reposition the Extra Action Button, Zone Ability, and Encounter bars.", pageId="actionbars", tabIndex=3 })
+    if not ns.IS_FOREVER then
+        R({ name="Extra Action Buttons", desc="Scale and reposition the Extra Action Button, Zone Ability, and Encounter bars.", pageId="actionbars", tabIndex=3 })
+    end
     G()
     H("  Datapanels")
     R({ name="Minimap Datapanel", desc="Info bar below the minimap: durability, gold, latency, or time.",            stateTable=db.minimap and db.minimap.datatext, stateKey="enabled", pageId="datapanels", tabIndex=1 })
@@ -319,8 +391,10 @@ local function BuildInformationTab(parent)
     R({ name="Crosshair",          desc="Dynamic class-specific targeting crosshair with real-time range color coding.",  stateTable=db.screenindicators and db.screenindicators.crosshair, stateKey="enabled", pageId="indicators", tabIndex=2 })
     R({ name="Stance Text",        desc="On-screen text indicator for Druid forms, Warrior stances, Paladin auras, etc.", stateTable=db.screenindicators and db.screenindicators.stanceText, stateKey="enabled", pageId="indicators", tabIndex=3 })
     R({ name="Healer Mana",        desc="Shows spec icon, name and mana% of all healers in your party or raid.",          stateTable=db.screenindicators and db.screenindicators.healerMana, stateKey="enabled", pageId="indicators", tabIndex=4 })
-    R({ name="Battle Res Tracker", desc="Tracks party and raid battle resurrection pool charges and countdown timer.",    stateTable=db.screenindicators and db.screenindicators.battleRes, stateKey="enabled", pageId="indicators", tabIndex=4 })
-    R({ name="Bloodlust Tracker",  desc="Displays remaining Sated / Exhaustion debuff lockout duration on screen.",      stateTable=db.screenindicators and db.screenindicators.bloodlust, stateKey="enabled", pageId="indicators", tabIndex=4 })
+    if not ns.IS_FOREVER then
+        R({ name="Battle Res Tracker", desc="Tracks party and raid battle resurrection pool charges and countdown timer.",    stateTable=db.screenindicators and db.screenindicators.battleRes, stateKey="enabled", pageId="indicators", tabIndex=4 })
+        R({ name="Bloodlust Tracker",  desc="Displays remaining Sated / Exhaustion debuff lockout duration on screen.",      stateTable=db.screenindicators and db.screenindicators.bloodlust, stateKey="enabled", pageId="indicators", tabIndex=4 })
+    end
     R({ name="Pet Info",           desc="Pet management tools and large status warnings for Hunters and Warlocks.",       stateTable=db.screenindicators and db.screenindicators.petWarnings, stateKey="enabled", pageId="indicators", tabIndex=5 })
     R({ name="Combat Status",      desc="On-screen text notification (+Combat / -Combat) when entering and leaving combat.", stateTable=db.screenindicators and db.screenindicators.combatStatus, stateKey="enabled", pageId="indicators", tabIndex=6 })
     R({ name="Combat Timer",       desc="Visual stopwatch tracking time spent in combat. Great for M+ and raid analysis.", stateTable=db.uiimprovements and db.uiimprovements.combatTimer, stateKey="enabled", pageId="indicators", tabIndex=7 })
@@ -332,7 +406,9 @@ local function BuildInformationTab(parent)
     R({ name="Difficulty",         desc="Status bar showing current instance difficulty with a quick-change dropdown.",    stateTable=db.screenindicators and db.screenindicators.difficulty, stateKey="enabled", pageId="indicators", tabIndex=ns.IS_FOREVER and 10 or 11 })
     R({ name="AFK Screen",         desc="Immersive character orbit when AFK. Displays real time, guild, and rank.",        stateTable=db.screenindicators and db.screenindicators.afkScreen, stateKey="enabled", pageId="indicators", tabIndex=ns.IS_FOREVER and 11 or 12 })
     R({ name="Death Announcer",    desc="Broadcasts party and raid player deaths to chat and on-screen alerts.",          stateTable=db.deathAnnouncer, stateKey="enabled", pageId="indicators", tabIndex=ns.IS_FOREVER and 12 or 13 })
-    R({ name="Tracked Bars",       desc="Configurable progress bars tracking spells, items or timers with custom thresholds.",  stateTable=db.actionbars and db.actionbars.cdmBuffbar, stateKey="enabled", pageId="indicators", tabIndex=ns.IS_FOREVER and 13 or 14 })
+    if not ns.IS_FOREVER then
+        R({ name="Tracked Bars",       desc="Configurable progress bars tracking spells, items or timers with custom thresholds.",  stateTable=db.actionbars and db.actionbars.cdmBuffbar, stateKey="enabled", pageId="indicators", tabIndex=14 })
+    end
     G()
     H("  UI Styling")
     -- Forever: "Character Panel" tab is hidden there -> following tab indices shift by 1
@@ -346,7 +422,9 @@ local function BuildInformationTab(parent)
     R({ name="Loot Enhancement",   desc="Modernized loot frames with loot-under-mouse positioning.",                       stateTable=db.styling and db.styling.loot, stateKey="enabled", pageId="Styling", tabIndex=5 - sOff })
     R({ name="Game Menu",          desc="Fully customized Escape menu with dark mode and structural gradients.",            stateTable=db.styling and db.styling.gamemenu, stateKey="enabled", pageId="Styling", tabIndex=6 - sOff })
     R({ name="Ready Check",        desc="Replaces the Blizzard Ready Check popup with a dark-themed custom frame.",        stateTable=db.styling, stateKey="skinReadyCheck", pageId="Styling", tabIndex=7 - sOff })
-    R({ name="Keystone",           desc="Overrides the M+ Keystone pedestal frame with clean lines and legible text.",     stateTable=db.styling and db.styling.keystone, stateKey="enabled", pageId="Styling", tabIndex=8 - sOff })
+    if not ns.IS_FOREVER then
+        R({ name="Keystone",           desc="Overrides the M+ Keystone pedestal frame with clean lines and legible text.",     stateTable=db.styling and db.styling.keystone, stateKey="enabled", pageId="Styling", tabIndex=8 })
+    end
     R({ name="Power Bar",          desc="Skins the Player Alternative Power bar (sanity, corruption) as a flat bar.",      stateTable=db.styling and db.styling.powerBar, stateKey="enabled", pageId="Styling", tabIndex=9 - sOff })
     R({ name="Alert Frames",       desc="Skins Blizzard alert toasts (Achievements, Loot Rolls) with GravityUI theme.",   stateTable=db.styling and db.styling.alerts, stateKey="enabled", pageId="Styling", tabIndex=10 - sOff })
     R({ name="Chat Bubbles",       desc="Styles 3D in-world chat bubbles with custom fonts and flat dark backgrounds.",    stateTable=db.styling and db.styling.chatBubbles, stateKey="enabled", pageId="Styling", tabIndex=11 - sOff })
@@ -401,27 +479,37 @@ local function BuildInformationTab(parent)
     CollectToggleable({ stateTable=db.screenindicators and db.screenindicators.crosshair, stateKey="enabled" })
     CollectToggleable({ stateTable=db.screenindicators and db.screenindicators.stanceText, stateKey="enabled" })
     CollectToggleable({ stateTable=db.screenindicators and db.screenindicators.healerMana, stateKey="enabled" })
-    CollectToggleable({ stateTable=db.screenindicators and db.screenindicators.battleRes, stateKey="enabled" })
-    CollectToggleable({ stateTable=db.screenindicators and db.screenindicators.bloodlust, stateKey="enabled" })
+    if not ns.IS_FOREVER then
+        CollectToggleable({ stateTable=db.screenindicators and db.screenindicators.battleRes, stateKey="enabled" })
+        CollectToggleable({ stateTable=db.screenindicators and db.screenindicators.bloodlust, stateKey="enabled" })
+    end
     CollectToggleable({ stateTable=db.screenindicators and db.screenindicators.petWarnings, stateKey="enabled" })
     CollectToggleable({ stateTable=db.screenindicators and db.screenindicators.combatStatus, stateKey="enabled" })
     CollectToggleable({ stateTable=db.uiimprovements and db.uiimprovements.combatTimer, stateKey="enabled" })
     CollectToggleable({ stateTable=db.cooldownText, stateKey="enabled" })
     CollectToggleable({ stateTable=db.raidWarnings, stateKey="enabled" })
-    CollectToggleable({ stateTable=db.screenindicators and db.screenindicators.consumables, stateKey="enabled" })
+    if not ns.IS_FOREVER then
+        CollectToggleable({ stateTable=db.screenindicators and db.screenindicators.consumables, stateKey="enabled" })
+    end
     CollectToggleable({ stateTable=db.screenindicators and db.screenindicators.difficulty, stateKey="enabled" })
     CollectToggleable({ stateTable=db.screenindicators and db.screenindicators.afkScreen, stateKey="enabled" })
     CollectToggleable({ stateTable=db.deathAnnouncer, stateKey="enabled" })
-    CollectToggleable({ stateTable=db.actionbars and db.actionbars.cdmBuffbar, stateKey="enabled" })
+    if not ns.IS_FOREVER then
+        CollectToggleable({ stateTable=db.actionbars and db.actionbars.cdmBuffbar, stateKey="enabled" })
+    end
     -- Styling
-    CollectToggleable({ stateTable=db.uiimprovements and db.uiimprovements.character, stateKey="enabled" })
+    if not ns.IS_FOREVER then
+        CollectToggleable({ stateTable=db.uiimprovements and db.uiimprovements.character, stateKey="enabled" })
+    end
     CollectToggleable({ stateTable=db.uiimprovements and db.uiimprovements.chat, stateKey="enabled" })
     CollectToggleable({ stateTable=db.uiimprovements and db.uiimprovements.tooltip, stateKey="enabled" })
     CollectToggleable({ stateTable=db.styling and db.styling.objectives, stateKey="objectiveTrackerSkinning" })
     CollectToggleable({ stateTable=db.styling and db.styling.loot, stateKey="enabled" })
     CollectToggleable({ stateTable=db.styling and db.styling.gamemenu, stateKey="enabled" })
     CollectToggleable({ stateTable=db.styling, stateKey="skinReadyCheck" })
-    CollectToggleable({ stateTable=db.styling and db.styling.keystone, stateKey="enabled" })
+    if not ns.IS_FOREVER then
+        CollectToggleable({ stateTable=db.styling and db.styling.keystone, stateKey="enabled" })
+    end
     CollectToggleable({ stateTable=db.styling and db.styling.powerBar, stateKey="enabled" })
     CollectToggleable({ stateTable=db.styling and db.styling.alerts, stateKey="enabled" })
     CollectToggleable({ stateTable=db.styling and db.styling.chatBubbles, stateKey="enabled" })

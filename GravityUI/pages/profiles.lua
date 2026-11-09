@@ -270,7 +270,8 @@ local function BuildAceDBProfilesTab(parent)
     -- =====================================================
     -- AUTO-SWITCH SECTION
     -- =====================================================
-    if db and db.IsDualSpecEnabled then
+    -- Forever: no specializations -> spec auto-switch hidden there
+    if db and db.IsDualSpecEnabled and not ns.IS_FOREVER then
         local specHeader = GUI:CreateSectionHeader(content, "Spec Auto-Switch")
         specHeader:SetPoint("TOPLEFT", PAD, y)
         y = y - specHeader.gap
@@ -282,7 +283,7 @@ local function BuildAceDBProfilesTab(parent)
         enableSwitch:SetPoint("TOPLEFT", PAD, y)
         y = y - FORM_ROW - 10
 
-        local numSpecs = GetNumSpecializations()
+        local numSpecs = (GetNumSpecializations and GetNumSpecializations()) or 0
         for i = 1, numSpecs do
             local _, specName = ns.GetSpecializationInfo(i)
             if specName then
@@ -842,11 +843,6 @@ local function BuildInstallerTab(parent)
                 -- skip
             else
             -- If selectionState[addon.label] is true (or nil->true default)
-            local function AddStringHeader(key, d)
-            if not d or type(d) ~= "table" or type(d.data) ~= "string" then return end
-            if shown[key] then return end
-            shown[key] = true
-            end
             local s = selectionState[addon.label]
             if s == nil then s = true end
             

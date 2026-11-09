@@ -1177,21 +1177,6 @@ function Styling:GetWidgetPowerBarPosition()
     return db and db.widgetPowerBar and db.widgetPowerBar.position
 end
 
-local widgetPowerBarMover = nil
-
-function Styling:SaveWidgetPowerBarPosition(point, relPoint, x, y)
-    local db = GetDB()
-    if db then
-        db.widgetPowerBar = db.widgetPowerBar or {}
-        db.widgetPowerBar.position = { point = point, relPoint = relPoint, x = x, y = y }
-    end
-end
-
-function Styling:GetWidgetPowerBarPosition()
-    local db = GetDB()
-    return db and db.widgetPowerBar and db.widgetPowerBar.position
-end
-
 function Styling:ResetWidgetPowerBarPosition()
     local db = GetDB()
     if db and db.widgetPowerBar then db.widgetPowerBar.position = nil end

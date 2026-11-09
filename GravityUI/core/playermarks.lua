@@ -3,6 +3,8 @@
 -- Uses /tm macro triggered by physical click to bypass SetRaidTarget protection
 local ADDON_NAME, ns = ...
 
+local HideMarkButton -- forward declaration (defined below, used by earlier closures)
+
 -- ============================================================================
 -- CONSTANTS
 -- ============================================================================

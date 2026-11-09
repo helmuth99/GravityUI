@@ -28,6 +28,7 @@ _G.SLASH_GRAVITYUI_RESETWINDOW1 = "/gravityreset"
 
 -- Forward Declarations
 local CreateTopBar, CreateButtonBar, CreateSidebar, CreateContentArea, UpdateButtonSelection
+local CreateSidebarButtons
 local function CreateMainWindow()
     if GUI.MainFrame then return end
 

@@ -294,7 +294,8 @@ local function GetClassColor(unit)
 end
 
 
-local function ApplyBarForUnit(bar, unit)
+local lastHealthBarTex -- PERF: texture key last applied (skip LSM:Fetch on every health tick)
+local function ApplyBarForUnit(bar, unit, forceTexture)
     local settings = GetSettings()
     if not settings or not settings.enabled then return end
 
@@ -317,11 +318,13 @@ local function ApplyBarForUnit(bar, unit)
     end
 
     -- Texture
-    if settings.healthBarTexture then
+    if settings.healthBarTexture and (forceTexture or lastHealthBarTex ~= settings.healthBarTexture) then
         local LSM = LibStub and LibStub("LibSharedMedia-3.0", true)
         if LSM then
             local tex = LSM:Fetch("statusbar", settings.healthBarTexture)
-            if tex then pcall(bar.SetStatusBarTexture, bar, tex) end
+            if tex and pcall(bar.SetStatusBarTexture, bar, tex) then
+                lastHealthBarTex = settings.healthBarTexture
+            end
         end
     end
 
@@ -342,7 +345,7 @@ local function SetupHealthBar()
         if not unit then return end
         local bar = self.StatusBar or GameTooltipStatusBar
         if not bar then return end
-        pcall(ApplyBarForUnit, bar, unit)
+        pcall(ApplyBarForUnit, bar, unit, true)
     end)
 
     -- Secondary hook: fires on every health value tick
@@ -640,7 +643,7 @@ local function InjectUnitInfo(tooltip, data)
                     skipFirst = false  -- skip name line already handled above
                 else
                     local text = fs:GetText()
-                    if text and text ~= "" then
+                    if text and not (issecretvalue and issecretvalue(text)) and text ~= "" then
 
                         -- Guild line: recolor Blizzard's own rendered line
                         if isPlayer and guildName and settings.showGuildInfo

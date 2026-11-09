@@ -126,29 +126,12 @@ Installer.registry = {
 
             if ns.IS_FOREVER then
                 -- Forever: ImportLayout calls C_EditMode.SaveLayouts internally via C code
-                -- (unhookable), and requires interfaceStyle on each layout. Additionally,
-                -- EditModeManagerFrame.highestLayoutIndexByType must be initialized.
-                -- Solution: bypass ImportLayout entirely, build the entry manually.
-                if EditModeManagerFrame then
-                    if not EditModeManagerFrame.highestLayoutIndexByType then
-                        EditModeManagerFrame.highestLayoutIndexByType = {}
-                        local existing = C_EditMode.GetLayouts()
-                        if existing and existing.layouts then
-                            for i, layout in ipairs(existing.layouts) do
-                                local lt = layout.layoutType or 1
-                                local idx = i + 3  -- Forever has 3 preset slots
-                                if not EditModeManagerFrame.highestLayoutIndexByType[lt] or idx > EditModeManagerFrame.highestLayoutIndexByType[lt] then
-                                    EditModeManagerFrame.highestLayoutIndexByType[lt] = idx
-                                end
-                            end
-                        end
-                        local accountType = Enum.EditModeLayoutType.Account
-                        if not EditModeManagerFrame.highestLayoutIndexByType[accountType] then
-                            EditModeManagerFrame.highestLayoutIndexByType[accountType] = 3
-                        end
-                    end
-                end
-
+                -- (unhookable), and requires interfaceStyle on each layout.
+                -- Solution: bypass ImportLayout entirely, build the entry manually and
+                -- only call C_EditMode.SaveLayouts. We deliberately do NOT write any
+                -- fields on EditModeManagerFrame (e.g. highestLayoutIndexByType): that
+                -- taints Edit Mode and spreads into CompactUnitFrames. Blizzard rebuilds
+                -- its own layout state from the saved data after the /reload.
                 local existingLayouts = C_EditMode.GetLayouts()
                 if not existingLayouts then
                     print("|cffff0000GravityUI:|r EditMode import failed — GetLayouts returned nil")
@@ -179,15 +162,6 @@ Installer.registry = {
                     systems        = layoutInfo.systems or {},
                 }
                 table.insert(existingLayouts.layouts, newLayout)
-
-                -- Update highestLayoutIndexByType
-                if EditModeManagerFrame and EditModeManagerFrame.highestLayoutIndexByType then
-                    local newIdx = #existingLayouts.layouts + 3
-                    local lt = layoutType
-                    if not EditModeManagerFrame.highestLayoutIndexByType[lt] or newIdx > EditModeManagerFrame.highestLayoutIndexByType[lt] then
-                        EditModeManagerFrame.highestLayoutIndexByType[lt] = newIdx
-                    end
-                end
 
                 local ok, err = pcall(C_EditMode.SaveLayouts, existingLayouts)
                 if ok then

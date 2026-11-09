@@ -15,6 +15,14 @@ if ns.IS_FOREVER then return end
 
 local issecretvalue = issecretvalue or function() return false end
 
+-- Forward refs (declared early so HideBlizzardDecorations assigns the upvalues, not globals)
+local _updateBottomTabs = nil       -- set by HideBlizzardDecorations
+local _resetSidebarToStats = nil    -- resets sidebar to Tab1 visually
+-- Forward refs for functions/state defined further below (kept out of _G)
+local UpdateStatValues
+local ScheduleStatUpdate, ScheduleGearUpdate
+local pendingStatUpdate, pendingGearUpdate = false, false
+
 ---------------------------------------------------------------------------
 -- Module Constants
 ---------------------------------------------------------------------------
@@ -2965,7 +2973,7 @@ end
 -- UPDATE: Lightweight text-only refresh. Iterates persistent entries and
 -- calls each update closure. No frame creation/destruction.
 ---------------------------------------------------------------------------
-function UpdateStatValues()
+UpdateStatValues = function()
     if #statsEntries == 0 then return end
     for _, entry in ipairs(statsEntries) do
         pcall(entry.updateFn)
@@ -3590,8 +3598,7 @@ end
 -- Hook character frame
 ---------------------------------------------------------------------------
 local characterFrameHooked = false  -- Prevent duplicate hook registration
-local _updateBottomTabs = nil       -- Forward ref: set by HideBlizzardDecorations
-local _resetSidebarToStats = nil    -- Forward ref: resets sidebar to Tab1 visually
+-- _updateBottomTabs / _resetSidebarToStats are declared at the top of the file
 local RegisterStatEvents, UnregisterStatEvents  -- Forward ref: defined after eventFrame
 
 local function HookCharacterFrame()

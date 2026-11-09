@@ -157,6 +157,8 @@ function Loot:RefreshStyling()
     end
 end
 
+local SkinLootHistoryElement  -- forward declaration (defined in the LOOT HISTORY section below)
+
 function Loot:RefreshHistoryStyling()
     local f = _G.GroupLootHistoryFrame
     if f and f.guiBackdrop then
@@ -253,7 +255,7 @@ end
 -- LOOT HISTORY (Roll Results)
 -------------------------------------------------------------------------------
 
-local function SkinLootHistoryElement(frame)
+SkinLootHistoryElement = function(frame)
     if not frame or frame.guiSkinned then return end
     if frame.IsForbidden and frame:IsForbidden() then return end
     
@@ -597,33 +599,6 @@ local function GetRollButtons(frame)
     return need, greed, pass, de, tmog
 end
 
--- Debug: /run GravityUI_DebugRollButtons()  (while a roll frame is open)
-function GravityUI_DebugRollButtons()
-    for i = 1, 4 do
-        local f = _G["GroupLootFrame" .. i]
-        if f and f:IsShown() then
-            _rollBtnCache[f] = nil
-            local need, greed, pass, de, tmog = GetRollButtons(f)
-            print("GroupLootFrame" .. i, "need", need and "ok" or "-", "greed", greed and "ok" or "-",
-                "pass", pass and "ok" or "-", "de", de and "ok" or "-", "tmog", tmog and "ok" or "-")
-            print("  tick sig:", tostring(f._guiRollBtnSig), "forever:", tostring(ns.IS_FOREVER))
-            if ns._LayoutRollButtonsForever then
-                f._guiRollErr = nil
-                local ok, res = pcall(ns._LayoutRollButtonsForever, f)
-                print("  layout now:", tostring(ok), tostring(res), "err:", tostring(f._guiRollErr))
-            end
-            for label, b in pairs({ need = need, greed = greed, pass = pass, tmog = tmog }) do
-                if b then
-                    local p, rel, rp, x, y = b:GetPoint(1)
-                    local relName = rel and (rel == f and "rollframe" or (rel.GetName and rel:GetName()) or tostring(rel)) or "nil"
-                    print("  ", label, "shown", tostring(b:IsShown()), "parentIsFrame", tostring(b:GetParent() == f),
-                        "point", tostring(p), relName, tostring(rp), tostring(x), tostring(y))
-                end
-            end
-        end
-    end
-end
-
 local function GetRollReservedWidth(frame)
     local need, greed, pass, de, tmog = GetRollButtons(frame)
     local w = 5
@@ -668,7 +643,7 @@ local function LayoutRollButtonsForever(frame)
         local btn = list[idx]
         if btn and btn:IsShown() then
             sig = sig .. idx
-            local ok, err = pcall(function()
+            local ok = pcall(function()
                 -- Do NOT reparent: Blizzard's OnClick reads the roll ID via the
                 -- button's parent chain; re-anchoring to the roll frame is enough.
                 if btn:GetWidth() ~= size then btn:SetSize(size, size) end
@@ -685,13 +660,11 @@ local function LayoutRollButtonsForever(frame)
                 end
                 btn:SetFrameLevel(frame:GetFrameLevel() + 5)
             end)
-            if not ok then frame._guiRollErr = tostring(err) end
             lastAnchor = btn
         end
     end
     return sig
 end
-ns._LayoutRollButtonsForever = LayoutRollButtonsForever
 
 local function UpdateGroupLootStyle(frame)
     if not frame then return end

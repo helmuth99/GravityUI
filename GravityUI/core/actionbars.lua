@@ -3358,7 +3358,10 @@ function ns.RefreshActionBars()
     local wowMod = MODIFIER_MAP[lockMod]
     if wowMod and GetCVar("lockActionBars") == "1" then
         SetModifiedClick("PICKUPACTION", wowMod)
-        SaveBindings(GetCurrentBindingSet())
+        local bindingSet = GetCurrentBindingSet and GetCurrentBindingSet()
+        if bindingSet == 1 or bindingSet == 2 then
+            SaveBindings(bindingSet)
+        end
     end
 
     -- Propagate fully-locked state to buttons
@@ -3614,6 +3617,7 @@ function ns.RefreshActionBars()
         -- Instead, we create a proxy mover that repositions the container via SetPoint.
         C_Timer.After(0.5, function()
             if InCombatLockdown() then return end
+            if ns.IS_FOREVER then return end  -- Forever: container is left to Blizzard (like EllesmereUI)
             if _G["GravityUI_ExtraAbilities_Proxy"] then return end
 
             -- Force-load the Blizzard addon that creates ExtraAbilityContainer
@@ -3907,6 +3911,8 @@ ns.RefreshExtraActionKeybind = RefreshExtraActionKeybind
 function ns.InitializeExtraButtons()
     local db = GetDB()
     if not db or not db.enabled then return end
+    -- Forever: no Extra Action Button / Zone Ability content; leave Blizzard's frames alone
+    if ns.IS_FOREVER then return end
 
     if ExtraActionButton1 then
         local eb = db.bars and db.bars.extraActionButton
@@ -4437,7 +4443,6 @@ if ns.IS_FOREVER then
 
     local function StanceGuard()
         stanceGuardPending = false
-        if _G.GRAVITYUI_NO_STANCEGUARD then return end  -- debug switch (/run GRAVITYUI_NO_STANCEGUARD=true)
         if not AreBarsEnabled() then return end
         ReanchorStanceButtons()
         PaintStanceButtons()

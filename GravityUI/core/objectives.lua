@@ -1285,6 +1285,9 @@ function Objectives:CheckAutoHide()
     if not db.autoHideWhenEmpty then return end
     if not ObjectiveTrackerFrame then return end
     if IsTrackerOwnedByOtherAddon() then return end  -- never fight Questie over visibility
+    -- Taint safety: the tracker holds secure quest-item buttons; Show/Hide in
+    -- combat can be blocked. Re-evaluated on the next tracker update.
+    if InCombatLockdown() then return end
 
     if EditModeManagerFrame and EditModeManagerFrame:IsShown() then
         if not ObjectiveTrackerFrame:IsShown() then ObjectiveTrackerFrame:Show() end

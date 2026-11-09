@@ -351,7 +351,8 @@ end
 
 -- Tracked Bars → Indicators
 local indicatorPage = GUI.pages and GUI.pages["indicators"]
-if indicatorPage and indicatorPage.subTabs then
+if indicatorPage and indicatorPage.subTabs and not ns.IS_FOREVER then
+    -- Forever has no Blizzard CDM (Tracked Bars), so the tab is hidden there.
     table.insert(indicatorPage.subTabs, { name = "Tracked Bars", builder = BuildTrackedBars })
 end
 

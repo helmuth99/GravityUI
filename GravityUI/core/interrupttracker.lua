@@ -8,6 +8,11 @@ LibStub("AceEvent-3.0"):Embed(InterruptTracker)
 -- ============================================================================
 local LSM = LibStub("LibSharedMedia-3.0", true)
 
+-- Forever has no legacy GetInspectSpecialization global; fall back safely.
+local GetInspectSpecialization = GetInspectSpecialization
+    or (C_SpecializationInfo and C_SpecializationInfo.GetInspectSpecialization)
+    or function() return 0 end
+
 -- Main Config (Unified source of truth)
 local INTERRUPT_CONFIG = {
     -- DEATH KNIGHT

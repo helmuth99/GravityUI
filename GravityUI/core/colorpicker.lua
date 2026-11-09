@@ -681,7 +681,7 @@ local function CreatePickerFrame()
     -- ──────────────────────────────────────────────────────────
     -- MOUSE DRAG HANDLERS
     -- ──────────────────────────────────────────────────────────
-    local dragSq, dragHue, dragAlpha = false, false, false
+    local dragSq, dragHue, dragAlpha, dragCiAlpha = false, false, false, false
 
     sqFrame:EnableMouse(true)
     sqFrame:SetScript("OnMouseDown", function(self, btn)
@@ -1287,6 +1287,7 @@ end
 
 --- Enables or disables the global Blizzard hook (replaces picker for all addons).
 --- Note: hooksecurefunc cannot be uninstalled; suppression is handled via DB flag.
+local InstallEllesmereHook  -- forward declaration (defined below in the EllesmereUI hook section)
 function CP:SetGlobalHookEnabled(enabled)
     local db = GetDB()
     if db and db.colorPicker then db.colorPicker.hookAllAddons = enabled end
@@ -1321,7 +1322,7 @@ function euiProxy:Hide()          self._shown = false end
 -- by our hooksecurefunc callback which receives info/anchorFrame directly.
 function euiProxy:Open(info, anchorFrame) end
 
-local function InstallEllesmereHook()
+InstallEllesmereHook = function()
     if euiHookInstalled then return end
     -- EllesmereUIOptions (LoadOnDemand) must be loaded for ShowColorPicker to exist.
     if not (EllesmereUI and EllesmereUI.ShowColorPicker) then return end

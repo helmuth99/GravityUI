@@ -1247,6 +1247,7 @@ end
 -------------------------------------------------------------------------------
 do
     ns.SyncEllesmereVigorBar = function()
+        if ns.IS_FOREVER then return end  -- Forever: no Skyriding; never touch EllesmereUIDB
         if not C_AddOns.IsAddOnLoaded("EllesmereUI") then return end
         local db = ns.GetDB()
         if not db then return end
@@ -1556,7 +1557,8 @@ end
 -- re-enable it through EllesmereUI.
 -------------------------------------------------------------------------------
 do
-    if C_AddOns.IsAddOnLoaded("EllesmereUI") then
+    -- Forever: EllesmereUI's Dragon Riding module does not load there -> no overlay/hooks
+    if C_AddOns.IsAddOnLoaded("EllesmereUI") and not ns.IS_FOREVER then
         local DR_CACHE_KEY   = "EllesmereUIBlizzardSkin::Dragon Riding"
         local DR_SECTION_KEY = "GENERAL"   -- frame._sectionName value
         local drSectionOverlay = nil

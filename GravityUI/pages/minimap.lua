@@ -268,8 +268,11 @@ local function BuildElementsTab(parent)
     AddRow(elemContainer, "Show Mail", "checkbox", "showMail", m, refresh)
     AddRow(elemContainer, "Show Tracking", "checkbox", "showTracking", m, refresh)
     AddRow(elemContainer, "Hide Quest Blobs", "checkbox", "hideQuestBlobs", m, refresh)
-    AddRow(elemContainer, "Show Crafting", "checkbox", "showCraftingOrder", m, refresh)
-    AddRow(elemContainer, "Show Missions", "checkbox", "showMissions", m, refresh)
+    -- Forever: no crafting orders / expansion landing page (missions) there
+    if not ns.IS_FOREVER then
+        AddRow(elemContainer, "Show Crafting", "checkbox", "showCraftingOrder", m, refresh)
+        AddRow(elemContainer, "Show Missions", "checkbox", "showMissions", m, refresh)
+    end
     AddRow(elemContainer, "Show Difficulty", "checkbox", "showDifficulty", m, refresh)
     AddRow(elemContainer, "Show Addon Compartment", "checkbox", "showAddonCompartment", m, refresh)
     AddRow(elemContainer, "Show Zoom Buttons", "checkbox", "showZoomButtons", m, refresh)
@@ -346,8 +349,10 @@ local function BuildElementsTab(parent)
 
     CreatePosRow("Mail Icon", "mailConfig")
     CreatePosRow("Tracking Icon", "trackingConfig")
-    CreatePosRow("Crafting Icon", "craftingConfig")
-    CreatePosRow("Missions Icon", "missionsConfig")
+    if not ns.IS_FOREVER then
+        CreatePosRow("Crafting Icon", "craftingConfig")
+        CreatePosRow("Missions Icon", "missionsConfig")
+    end
     CreatePosRow("Difficulty Icon", "difficultyConfig")
     CreatePosRow("Addon Compartment", "addonCompartmentConfig")
     CreatePosRow("Zoom Buttons", "zoomConfig")

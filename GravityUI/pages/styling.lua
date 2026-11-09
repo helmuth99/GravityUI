@@ -1840,7 +1840,20 @@ GUI:RegisterPage("Styling", {
         }
         -- Forever: Character/Inspect panel styling is disabled there (different
         -- Blizzard frames) -> hide the tab so EllesmereUI's sheet can be used.
-        if ns.IS_FOREVER then table.remove(tabs, 1) end
+        -- Keystone (M+ pedestal) does not exist on Forever either.
+        if ns.IS_FOREVER then
+            local FOREVER_HIDDEN = {
+                ["Character Panel"] = true,
+                ["Keystone"] = true,
+            }
+            local filtered = {}
+            for _, tab in ipairs(tabs) do
+                if not FOREVER_HIDDEN[tab.name] then
+                    table.insert(filtered, tab)
+                end
+            end
+            return filtered
+        end
         return tabs
     end)(),
     OnBuild = function(content)

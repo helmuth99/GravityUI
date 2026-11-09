@@ -3,6 +3,8 @@ local ADDON_NAME, ns = ...
 local ApplyHideSettings -- Forward declaration
 local lastHideForMinigame = nil -- specific state tracker for minigame logic
 local _otfShowHooked = false -- anti-taint: keep flag off the Blizzard frame
+local _crfmShowHooked = false -- anti-taint: keep flag off CompactRaidFrameManager
+local _thShowHooked = false -- anti-taint: keep flag off TalkingHeadFrame
 
 local function GetSettings()
     local db = ns.GetDB()
@@ -93,6 +95,32 @@ local function ShouldHideInCurrentInstance(instanceTypes)
     return false
 end
 
+-- Taint safety: the Objective Tracker holds secure quest-item buttons, so Hide()
+-- in combat can be blocked. In combat only fade it out and do the real Hide()
+-- once combat ends (re-checking the settings then).
+local otfHideQueued = false
+local otfShowQueued = false
+local function HideTrackerSafely(frame)
+    if not InCombatLockdown() then
+        frame:Hide()
+        if frame:GetAlpha() < 1 then frame:SetAlpha(1) end
+        return
+    end
+    frame:SetAlpha(0)
+    if otfHideQueued then return end
+    otfHideQueued = true
+    ns.QueueOOCAction(function()
+        otfHideQueued = false
+        local s = GetSettings()
+        local stillHide = s and (s.hideObjectiveTrackerAlways
+            or ShouldHideInCurrentInstance(s.hideObjectiveTrackerInstanceTypes))
+        if stillHide and not (EditModeManagerFrame and EditModeManagerFrame:IsShown()) then
+            frame:Hide()
+        end
+        frame:SetAlpha(1)
+    end)
+end
+
 -- Apply hide/show commands based on saved settings
 local function ApplyHideSettings()
     local settings = GetSettings()
@@ -117,7 +145,7 @@ local function ApplyHideSettings()
         end
 
         if shouldHide then
-            ObjectiveTrackerFrame:Hide()
+            HideTrackerSafely(ObjectiveTrackerFrame)
             if ObjectiveTrackerFrame.SetCollapsed then
                  -- Force collapse if hiding is tricky, but usually Hide() works
                  -- ObjectiveTrackerFrame:SetCollapsed(true)
@@ -139,7 +167,7 @@ local function ApplyHideSettings()
                         end
 
                         if shouldHideNow then
-                            self:Hide()
+                            HideTrackerSafely(self)
                         end
                     end
                 end)
@@ -149,7 +177,15 @@ local function ApplyHideSettings()
             local owned = ns.Objectives and ns.Objectives.IsTrackerOwnedByOtherAddon
                 and ns.Objectives.IsTrackerOwnedByOtherAddon()
             if not owned then
-                ObjectiveTrackerFrame:Show()
+                if ObjectiveTrackerFrame:GetAlpha() < 1 then ObjectiveTrackerFrame:SetAlpha(1) end
+                if InCombatLockdown() then
+                    if not otfShowQueued then
+                        otfShowQueued = true
+                        ns.QueueOOCAction(function() otfShowQueued = false; ApplyHideSettings() end)
+                    end
+                else
+                    ObjectiveTrackerFrame:Show()
+                end
             end
             -- ObjectiveTrackerFrame:EnableMouse(true)
         end
@@ -173,8 +209,8 @@ local function ApplyHideSettings()
              end
              
              -- Also hook Show and SetAlpha just in case external addons or Blizzard try to show it
-             if not CompactRaidFrameManager._gui_ShowHooked then
-                 CompactRaidFrameManager._gui_ShowHooked = true
+             if not _crfmShowHooked then
+                 _crfmShowHooked = true
                  hooksecurefunc(CompactRaidFrameManager, "Show", function(self)
                      local s = GetSettings()
                      if s and s.hideRaidFrameManager then
@@ -277,8 +313,8 @@ local function ApplyHideSettings()
         if settings.hideTalkingHead then
             TalkingHeadFrame:Hide()
             DisableTalkingHeadMouse()
-            if not TalkingHeadFrame._gui_ShowHooked then
-                TalkingHeadFrame._gui_ShowHooked = true
+            if not _thShowHooked then
+                _thShowHooked = true
                 hooksecurefunc(TalkingHeadFrame, "Show", function(self)
                     local s = GetSettings()
                     if s and s.hideTalkingHead then

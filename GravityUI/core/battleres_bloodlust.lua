@@ -4,6 +4,10 @@ local ADDON_NAME, ns = ...
 ns.BattleResTracker = ns.BattleResTracker or {}
 ns.BloodlustTracker = ns.BloodlustTracker or {}
 
+-- Forever: no Mythic+ / shared brez pool and no lust debuff handling there
+-- (EllesmereUI disables these trackers on Forever as well). Stand down.
+if ns.IS_FOREVER then return end
+
 local BREZ_SPELL_ID = 20484 -- Rebirth (canonical shared brez pool spell ID)
 local PREVIEW_LUST_SPELL_ID = 2825
 

@@ -136,6 +136,10 @@ local function ForceApplyLfgRolesNow()
     SetRole(dpsBtn,    GetRole("dps"))
 end
 
+-- Flag: true only when the dialog was opened via GravityUI double-click automation.
+-- When false (normal Sign-Up button click), we do NOT override manual role selections.
+local _gravityAutoMode = false
+
 local function HandleGravityLfgClick(self)
     local cfg = GetSettings()
     if not cfg or not cfg.lfgQuickJoin then return end
@@ -168,9 +172,7 @@ local function HandleGravityLfgClick(self)
 end
 
 local HooksState = {}
--- Flag: true only when the dialog was opened via GravityUI double-click automation.
--- When false (normal Sign-Up button click), we do NOT override manual role selections.
-local _gravityAutoMode = false
+-- (_gravityAutoMode is declared above HandleGravityLfgClick)
 
 local lfgRolePending = false
 local function ScheduleForceApplyLfgRoles()
@@ -1962,7 +1964,7 @@ StaticPopupDialogs["GRAVITYUI_BONUS_PASS_CONFIRM"] = {
 -- Returns the player's current loot spec name for the confirmation prompt
 local function BRC_LootSpecText()
     local specID = GetLootSpecialization and GetLootSpecialization()
-    if specID and specID > 0 then
+    if specID and specID > 0 and GetSpecializationInfoByID then
         local _, name = GetSpecializationInfoByID(specID)
         if name then return name end
     else
@@ -2056,6 +2058,8 @@ local function BRC_EnsureHooks()
 end
 
 -- Hook into BONUS_ROLL_STARTED + BonusRollFrame_StartBonusRoll
+-- Forever has no Bonus Roll system -> skip the setup entirely there.
+if not ns.IS_FOREVER then
 local brcInitFrame = CreateFrame("Frame")
 brcInitFrame:RegisterEvent("ADDON_LOADED")
 brcInitFrame:RegisterEvent("PLAYER_LOGIN")
@@ -2067,6 +2071,7 @@ brcInitFrame:SetScript("OnEvent", function(self, event, arg1)
         C_Timer.After(0, BRC_EnsureHooks)
     end
 end)
+end
 
 -- (removed: debug, test and custom position helpers)
 

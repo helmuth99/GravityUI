@@ -129,9 +129,9 @@ function Data:UpdateCharacterInfo()
     alt.class = englishClass or alt.class or "WARRIOR"
     alt.className = localizedClass or englishClass or alt.className
 
-    local currentSpec = GetSpecialization()
+    local currentSpec = ns.GetSpecialization and ns.GetSpecialization()
     if currentSpec and currentSpec > 0 then
-        local id, name, desc, icon = GetSpecializationInfo(currentSpec)
+        local id, name, desc, icon = ns.GetSpecializationInfo(currentSpec)
         if icon and icon ~= 0 then
             alt.specId = id
             alt.specName = name

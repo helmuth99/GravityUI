@@ -708,6 +708,7 @@ end
 -- EllesmereUI (field-tested 2026-07-25) confirms CHAT_MSG_WHISPER is safe to
 -- filter directly in Midnight 12.x without tainting chatEditLastTell.
 local guiMessageFilterRegistered = false
+local HookTransformText -- forward declaration (defined below)
 local function RegisterMessageFilter()
     if guiMessageFilterRegistered then return end
     guiMessageFilterRegistered = true
@@ -785,7 +786,7 @@ local function RegisterMessageFilter()
 end
 
 -- Text transform pipeline — called from the message filter for every chat line.
-function HookTransformText(text)
+HookTransformText = function(text)
     if not text or type(text) ~= "string" then return text end
     local ok, result = pcall(MakeURLsClickable, text)
     if ok and result then return result end

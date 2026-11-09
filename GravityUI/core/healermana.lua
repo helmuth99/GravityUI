@@ -456,12 +456,16 @@ function HM:FindHealers()
 
     -- Only-if-healer gate (12.1 safe role detection)
     if db.onlyIfHealer then
-        local spec = ns.GetSpecialization and ns.GetSpecialization() or (GetSpecialization and GetSpecialization())
         local role
+        if ns.IS_FOREVER then
+            role = ns.GetForeverPlayerRole and ns.GetForeverPlayerRole()
+        else
+        local spec = ns.GetSpecialization and ns.GetSpecialization() or (GetSpecialization and GetSpecialization())
         if spec and GetSpecializationInfo then
             role = select(5, GetSpecializationInfo(spec))
         elseif spec and GetSpecializationRole then
             role = GetSpecializationRole(spec)
+        end
         end
         if role ~= "HEALER" then self:HideAllFrames(); return end
     end
@@ -578,27 +582,9 @@ function HM:StopTicker()
     if self.ticker then self.ticker:Cancel(); self.ticker = nil end
 end
 
-function HM:HideAllFrames()
-    for _, f in pairs(self.healerFrames) do
-        f:Hide()
-    end
-end
-
-function HM:UpdateStyles()
-    local db = GetDB()
-    if not db then return end
-    local font = (ns.Styling and ns.Styling.GetFontPath and ns.Styling:GetFontPath()) or DEFAULT_FONT
-    local fontSize = db.fontSize or 12
-    local iconSize = db.iconSize or 24
-    local frameW = db.frameWidth or 160
-
-    for _, frame in pairs(self.healerFrames) do
-        frame:SetSize(frameW, iconSize)
-        if frame.iconFrame then frame.iconFrame:SetSize(iconSize, iconSize) end
-        if frame.name then frame.name:SetFont(font, math.max(fontSize - 1, 9), "OUTLINE") end
-        if frame.mana then frame.mana:SetFont(font, fontSize, "OUTLINE") end
-    end
-end
+-- NOTE: HM:HideAllFrames is defined above (FIND HEALERS & UPDATE) and
+-- HM:UpdateStyles below (ENABLE / DISABLE / APPLY / STYLES). The former
+-- duplicate definitions here silently overrode them and were removed.
 
 -- ============================================================================
 -- PREVIEW (Edit Mode)
@@ -690,13 +676,7 @@ function HM:EnsureContainer()
     if not self.containerFrame then self:CreateContainer() end
 end
 
-function HM:ToggleMover()
-    if self.isPreview then
-        self:HidePreview()
-    else
-        self:ShowPreview()
-    end
-end
+-- (HM:ToggleMover is defined further below, after ApplySettings)
 
 -- ============================================================================
 -- EVENTS

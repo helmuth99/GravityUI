@@ -677,7 +677,7 @@ local function UpdatePreviewPlaceholders(show)
     for _, def in ipairs(definitions) do
         local f = previewFrames[def.key]
         -- Show only if Preview Mode is ON AND the specific feature is ENABLED
-        if show and s[def.visKey] then
+        if show and s[def.visKey] and not (ns.IS_FOREVER and (def.key == "craftingConfig" or def.key == "missionsConfig")) then
             if not f then 
                 f = CreatePreviewFrame(def.key, def.icon)
             end
@@ -799,7 +799,9 @@ local function UpdateButtonVisibility()
     end
     
     -- Missions (Expansion Landing Page)
-    if ExpansionLandingPageMinimapButton then
+    -- Forever: left untouched (like EllesmereUI) - no landing page there and
+    -- replacing methods on the Blizzard button would only spread taint.
+    if ExpansionLandingPageMinimapButton and not ns.IS_FOREVER then
         -- Fix for SetText crash (missing title)
         if not ExpansionLandingPageMinimapButton.gravityCrashFix then
              local old = ExpansionLandingPageMinimapButton.SetTooltip
@@ -1128,7 +1130,8 @@ local function UpdateDungeonEye()
                  if QueueStatusButton.previewTex then QueueStatusButton.previewTex:Hide() end
                  
                  -- We hide it to clear the forced preview, then let QueueStatusFrame.Update decides if it should be shown
-                 if QueueStatusButton:IsShown() and not C_LFGList.HasActiveEntryInfo() and not IsInGroup() and not QueueStatusFrame:IsShown() then
+                 local hasLFGEntry = C_LFGList and C_LFGList.HasActiveEntryInfo and C_LFGList.HasActiveEntryInfo()
+                if QueueStatusButton:IsShown() and not hasLFGEntry and not IsInGroup() and not QueueStatusFrame:IsShown() then
                       -- Crude check, better to just rely on system update
                       QueueStatusButton:Hide()
                  end

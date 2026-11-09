@@ -319,12 +319,8 @@ function RaidWarnings.RemoveCustomSpell(id)
 end
 
 -- ============================================================================
--- INITIALIZATION
+-- INITIALIZATION -> see RaidWarnings.Initialize at the end of this file
 -- ============================================================================
-function RaidWarnings.Initialize()
-    CreateAlertFrame()
-    CreateTextInfoFrame()
-end
 
 function RaidWarnings.CheckDurability()
     local db = ns.GetDB()

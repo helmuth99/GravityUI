@@ -937,7 +937,8 @@ local function BuildEllesmereUI(parent)
     cdmNote:SetPoint("RIGHT", content, "RIGHT", -15, 0)
     yOffset = yOffset - 40
 
-    -- Liquid Luster Bar
+    -- Liquid Luster Bar (Retail-only potion; module is disabled on Forever)
+    if not ns.IS_FOREVER then
     local llHdr = GUI:CreateSectionHeader(content, "Liquid Luster Bar")
     llHdr:SetPoint("TOPLEFT", 10, yOffset)
     llHdr:SetPoint("RIGHT", content, "RIGHT", -10, 0)
@@ -1111,6 +1112,7 @@ local function BuildEllesmereUI(parent)
     end)
     llTestBtn:SetPoint("TOPLEFT", LL_LABEL_X, yOffset)
     yOffset = yOffset - 40
+    end -- not ns.IS_FOREVER (Liquid Luster)
 
     -- Focus Castbar Sound Alert
     local focusHdr = GUI:CreateSectionHeader(content, "Focus Castbar Sound")
@@ -1593,6 +1595,7 @@ ns.GUI:RegisterPage("features", {
                 ["Dragonriding"] = true,
                 ["M+ Teleport"] = true,
                 ["Gravity Alt Manager"] = true,
+                ["Bonus Roll"] = true,  -- no Bonus Roll system on Forever
             }
             local filtered = {}
             for _, tab in ipairs(tabs) do

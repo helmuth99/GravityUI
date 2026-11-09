@@ -526,6 +526,12 @@ local function BuildManaLustBRTracker(parent)
     hmMoverBtn:SetPoint("TOPLEFT", 10, -10 - (content.rowCount * (ROW_HEIGHT + 5)))
     content.rowCount = content.rowCount + 1.6
 
+    -- Forever: Battle Res / Bloodlust trackers are disabled there (like EllesmereUI)
+    if ns.IS_FOREVER then
+        content:SetHeight(50 + (content.rowCount * (ROW_HEIGHT + 5)))
+        return
+    end
+
     -- ─────────────────────────────────────────────────────────────
     -- 2. BATTLE RES TRACKER
     -- ─────────────────────────────────────────────────────────────
@@ -749,6 +755,10 @@ ns.GUI:RegisterPage("indicators", {
             local filtered = {}
             for _, tab in ipairs(tabs) do
                 if not FOREVER_HIDDEN[tab.name] then
+                    if tab.name == "Mana/Lust/BR Tracker" then
+                        -- Only the Healer Mana part exists on Forever
+                        tab = { name = "Healer Mana", builder = tab.builder }
+                    end
                     table.insert(filtered, tab)
                 end
             end

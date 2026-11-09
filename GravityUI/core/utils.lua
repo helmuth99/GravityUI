@@ -76,10 +76,10 @@ end
 
 -- Get player spec name
 function ns.GetSpecName()
-    local specIndex = GetSpecialization()
+    local specIndex = ns.GetSpecialization and ns.GetSpecialization()
     if not specIndex then return "No Spec" end
     
-    local _, name = GetSpecializationInfo(specIndex)
+    local _, name = ns.GetSpecializationInfo(specIndex)
     return name or "Unknown"
 end
 

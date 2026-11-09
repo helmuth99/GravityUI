@@ -9,6 +9,14 @@ local strformat = string.format
 local GetSpecialization = (C_SpecializationInfo and C_SpecializationInfo.GetSpecialization) or GetSpecialization
 local GetSpecializationInfo = (C_SpecializationInfo and C_SpecializationInfo.GetSpecializationInfo) or GetSpecializationInfo
 
+-- File scoped state (declared early so all functions below capture the upvalues)
+local DB -- File scoped database variable
+local trackedList = {}
+local ticker
+local mainContainer
+local isMoverShown = false
+local moverFrame
+
 -------------------------------------------------------------------------------
 --  MOVEMENT ABILITIES (class -> specID -> {spellIDs})
 -------------------------------------------------------------------------------
@@ -115,7 +123,10 @@ local function GetActiveFreeMovementBuff()
     for _, buff in ipairs(FREE_MOVEMENT_BUFFS) do
         local aura = C_UnitAuras.GetPlayerAuraBySpellID(buff.id)
         if aura then
-            if aura.expirationTime and aura.expirationTime > now then
+            local isSecret = issecretvalue and (issecretvalue(aura.expirationTime) or issecretvalue(aura.duration))
+            if isSecret then
+                return buff, 10
+            elseif aura.expirationTime and aura.expirationTime > now then
                 return buff, aura.expirationTime - now
             elseif not aura.expirationTime or aura.expirationTime == 0 then
                 return buff, aura.duration or 10
@@ -152,11 +163,6 @@ local function SpellIsEnabled(spellID)
     end
     return not MOVEMENT_DEFAULT_OFF[spellID]
 end
-
-local DB -- File scoped database variable
-local trackedList = {}
-local ticker
-local mainContainer
 
 -- Cache for instance type check (updated on zone change)
 local cachedIsInDungeonOrRaid = false
@@ -287,6 +293,21 @@ function CooldownText:Initialize()
     local classData = MOVEMENT_ABILITIES[playerClass]
     if classData then
         local specSpells = classData[specID]
+        if ns.IS_FOREVER then
+            -- Forever has no specs: use every class preset the player actually knows
+            specSpells = {}
+            local known = {}
+            local isKnown = IsPlayerSpell or IsSpellKnown
+            for _, spells in pairs(classData) do
+                for _, spellID in ipairs(spells) do
+                    if not known[spellID] and isKnown and isKnown(spellID) then
+                        known[spellID] = true
+                        table.insert(specSpells, spellID)
+                    end
+                end
+            end
+            table.sort(specSpells)
+        end
         if specSpells then
             local seen = {}
             for _, spellID in ipairs(specSpells) do
@@ -354,6 +375,12 @@ function CooldownText:CreateBaseFrames()
     self.frame:RegisterEvent("TRAIT_CONFIG_UPDATED")
     self.frame:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED")
     self.frame:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
+    if ns.IS_FOREVER then
+        -- Forever: presets depend on known spells (no specs) -> rebuild on new spells.
+        -- Event name differs between client versions; pcall avoids "unknown event".
+        pcall(self.frame.RegisterEvent, self.frame, "LEARNED_SPELL_IN_SKILL_LINE")
+        pcall(self.frame.RegisterEvent, self.frame, "LEARNED_SPELL_IN_TAB")
+    end
     -- Zone change: update instance cache cheaply
     self.frame:RegisterEvent("PLAYER_ENTERING_WORLD")
     self.frame:RegisterEvent("ZONE_CHANGED_NEW_AREA")
@@ -363,8 +390,14 @@ function CooldownText:CreateBaseFrames()
     -- the event-storm caused by rapid GCD/cooldown fires during combat.
     self.frame:SetScript("OnEvent", function(selfFrame, event, unit)
         if event == "UNIT_AURA" then
-            if DB and DB.freeMovementAlert then
-                self:UpdateCooldowns()
+            -- PERF: coalesce aura bursts into one update (and skip when the
+            -- ticker already refreshes every tick)
+            if DB and DB.freeMovementAlert and not ticker and not self._auraUpdatePending then
+                self._auraUpdatePending = true
+                C_Timer.After(0.1, function()
+                    self._auraUpdatePending = false
+                    self:UpdateCooldowns()
+                end)
             end
         elseif event == "PLAYER_ENTERING_WORLD" or event == "ZONE_CHANGED_NEW_AREA" then
             UpdateInstanceCache()
@@ -527,9 +560,6 @@ loadFrame:RegisterEvent("PLAYER_LOGIN")
 loadFrame:SetScript("OnEvent", function(self, event)
     ns.CooldownText:Initialize()
 end)
-
-local isMoverShown = false
-local moverFrame
 
 function CooldownText:ToggleMover(forceState)
     if not mainContainer then self:CreateBaseFrames() end

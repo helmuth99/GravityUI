@@ -220,22 +220,23 @@ local function ProcessAuraContainer(container, isBuff)
     end
 end
 
+local _buffHidingHooked, _debuffHidingHooked = false, false -- anti-taint: flags kept off Blizzard frames
 local function ApplyFrameHiding()
     local settings = GetSettings()
     if not settings then return end
 
     if BuffFrame then
         BuffFrame:SetShown(not settings.hideBuffFrame)
-        if not BuffFrame._gui_HidingHooked then
-            BuffFrame._gui_HidingHooked = true
+        if not _buffHidingHooked then
+            _buffHidingHooked = true
             hooksecurefunc(BuffFrame, "Show", function(self) if GetSettings().hideBuffFrame then self:Hide() end end)
         end
     end
 
     if DebuffFrame then
         DebuffFrame:SetShown(not settings.hideDebuffFrame)
-        if not DebuffFrame._gui_HidingHooked then
-            DebuffFrame._gui_HidingHooked = true
+        if not _debuffHidingHooked then
+            _debuffHidingHooked = true
             hooksecurefunc(DebuffFrame, "Show", function(self) if GetSettings().hideDebuffFrame then self:Hide() end end)
         end
     end

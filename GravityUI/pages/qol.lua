@@ -242,26 +242,34 @@ local function BuildQoL(parent)
     ColAddRow(leftCol, "Auto-Select Gossip", "checkbox", "autoSelectGossip", dbUI, nil)
     ColInfoLine(leftCol, "Auto-pick single NPC dialog option.")
 
-    ColAddRow(leftCol, "EditMode on Spec Switch", "checkbox", "checkEditmodeOnSpecSwitch", dbUI, nil)
+    -- Forever: single spec and a single expansion -> both options are pointless there
+    if not ns.IS_FOREVER then
+        ColAddRow(leftCol, "EditMode on Spec Switch", "checkbox", "checkEditmodeOnSpecSwitch", dbUI, nil)
 
-    ColAddRow(leftCol, "AH: Current Expansion", "checkbox", "ahCurrentExpansionFilter", dbUI, nil)
-    ColInfoLine(leftCol, "Auto-filter AH to current expansion.")
+        ColAddRow(leftCol, "AH: Current Expansion", "checkbox", "ahCurrentExpansionFilter", dbUI, nil)
+        ColInfoLine(leftCol, "Auto-filter AH to current expansion.")
+    end
 
-    ColAddRow(leftCol, "Widget Power (Prey)", "checkbox", "showWidgetPowerValue", dbUI, function(enabled) if ns.UpdateWidgetPowerValueVisibility then ns.UpdateWidgetPowerValueVisibility(enabled) end end)
+    -- Forever: Prey widget and Quick Salvage (Retail crafting) don't exist there
+    if not ns.IS_FOREVER then
+        ColAddRow(leftCol, "Widget Power (Prey)", "checkbox", "showWidgetPowerValue", dbUI, function(enabled) if ns.UpdateWidgetPowerValueVisibility then ns.UpdateWidgetPowerValueVisibility(enabled) end end)
 
-    leftCol.rowCount = leftCol.rowCount + 0.5
-    ColSubLabel(leftCol, "Quick Salvage")
-    ColAddRow(leftCol, "Enable Quick Salvage", "checkbox", "enabled", dbUI.quickSalvage, nil)
-    local modOptions = {{value="ALT", text="Alt"}, {value="ALTSHIFT", text="Alt + Shift"}, {value="ALTCTRL", text="Alt + Ctrl"}}
-    ColDropdown(leftCol, "Modifier", modOptions, "modifier", dbUI.quickSalvage, nil)
-    ColInfoLine(leftCol, "Hold modifier + hover to salvage.")
+        leftCol.rowCount = leftCol.rowCount + 0.5
+        ColSubLabel(leftCol, "Quick Salvage")
+        ColAddRow(leftCol, "Enable Quick Salvage", "checkbox", "enabled", dbUI.quickSalvage, nil)
+        local modOptions = {{value="ALT", text="Alt"}, {value="ALTSHIFT", text="Alt + Shift"}, {value="ALTCTRL", text="Alt + Ctrl"}}
+        ColDropdown(leftCol, "Modifier", modOptions, "modifier", dbUI.quickSalvage, nil)
+        ColInfoLine(leftCol, "Hold modifier + hover to salvage.")
+    end
 
     ---------------------------------------------------------------------------
     -- RIGHT COLUMN: Original QoL items
     ---------------------------------------------------------------------------
     ColSubLabel(rightCol, "Containers & Loot")
     ColAddRow(rightCol, "Auto Open Containers", "checkbox", "autoOpenContainers", dbUI, nil)
-    ColAddRow(rightCol, "   - Excl. Warbound", "checkbox", "autoOpenContainersExcludeWarbound", dbUI, nil)
+    if not ns.IS_FOREVER then  -- Forever: no Warband
+        ColAddRow(rightCol, "   - Excl. Warbound", "checkbox", "autoOpenContainersExcludeWarbound", dbUI, nil)
+    end
     ColInfoLine(rightCol, "Auto-opens bags, caches, parcels.")
 
     rightCol.rowCount = rightCol.rowCount + 0.3
@@ -335,6 +343,8 @@ local function BuildAutomation(parent)
     ColSubLabel(rightCol, "Group & LFG")
 
     ColAddRow(rightCol, "Auto Accept Role Check", "checkbox", "autoRoleAccept", dbUI, nil)
+    -- Forever: no Premade Group Finder (C_LFGList) -> LFG quick-apply options hidden
+    if not ns.IS_FOREVER then
     ColAddRow(rightCol, "LFG Queue on Double Click", "checkbox", "lfgQuickJoin", dbUI, nil)
     ColInfoLine(rightCol, "Double-click a group to auto-apply.")
 
@@ -358,6 +368,7 @@ local function BuildAutomation(parent)
         end
         ColInfoLine(rightCol, "Roles for LFG quick-apply.")
     end
+    end -- not ns.IS_FOREVER (LFG quick-apply)
 
     rightCol.rowCount = rightCol.rowCount + 0.3
     ColSubLabel(rightCol, "Invites")

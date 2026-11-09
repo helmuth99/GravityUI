@@ -1001,6 +1001,8 @@ end
 
 local hudFrame
 local settingsPanel             -- the floating settings frame (forward-declared for CreateHUD closures)
+local _spCollapsed = true       -- session-only collapse state (default collapsed); forward-declared for CreateHUD closures
+local _spCurrentProvider = nil  -- currently active provider key; forward-declared for CreateHUD closures
 
 function Movers:CreateHUD()
     if hudFrame then return end
@@ -1306,9 +1308,7 @@ end
 -- ============================================================================
 
 Movers.settingsProviders = {}   -- [pattern] = { label, tabs = { {label, build}, ... } }
--- settingsPanel is forward-declared before CreateHUD (line ~994)
-local _spCollapsed = true       -- session-only collapse state (default collapsed)
-local _spCurrentProvider = nil  -- currently active provider key
+-- settingsPanel, _spCollapsed and _spCurrentProvider are forward-declared before CreateHUD (line ~1003)
 local _spCurrentTab = 1         -- currently active tab index
 local _spRows = {}              -- active settings rows
 

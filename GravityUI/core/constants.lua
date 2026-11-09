@@ -122,4 +122,12 @@ do
         if _getMastery and specIndex then return _getMastery(specIndex, ...) end
         return nil
     end
+
+    -- Forever only: there is no spec role, so use the group role the player
+    -- picked (LFG / role check). Returns "TANK"/"HEALER"/"DAMAGER" or nil.
+    ns.GetForeverPlayerRole = function()
+        local role = UnitGroupRolesAssigned and UnitGroupRolesAssigned("player")
+        if not role or (issecretvalue and issecretvalue(role)) or role == "NONE" then return nil end
+        return role
+    end
 end

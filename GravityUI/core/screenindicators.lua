@@ -190,11 +190,13 @@ local effectiveScale = 1 -- Optimization: Cache to avoid per-frame C-API calls
 -- Taunt/Dispel cursor frames (nil until first enabled)
 local tauntCursorFrame = nil
 local dispelCursorFrame = nil
+local cursorOffsetX, cursorOffsetY = 0, 0  -- set by the cursor settings refresh
 
 ---------------------------------------------------------------------------
 -- SPEC / ROLE HELPERS
 ---------------------------------------------------------------------------
 local function GetSpecRole()
+    if ns.IS_FOREVER then return ns.GetForeverPlayerRole() end
     local spec = ns.GetSpecialization()
     if not spec then return nil end
     local _, _, _, _, role = ns.GetSpecializationInfo(spec)

@@ -12,6 +12,13 @@ local ST = ns.StanceText
 local stanceFrame = nil
 local isPreviewActive = false
 
+-- aura.spellId can be a secret value (12.x); secret values cannot be used as table keys.
+local function SafeSpellId(aura)
+    local id = aura and aura.spellId
+    if id == nil or (issecretvalue and issecretvalue(id)) then return nil end
+    return id
+end
+
 -- Paladin Aura spell IDs
 local PALADIN_AURAS = {
     [465]    = "Devotion",
@@ -86,8 +93,9 @@ local function GetCurrentStanceName()
     if class == "PALADIN" and AuraUtil and AuraUtil.ForEachAura then
         local foundAura = nil
         AuraUtil.ForEachAura("player", "HELPFUL", nil, function(aura)
-            if aura and aura.spellId and PALADIN_AURAS[aura.spellId] then
-                foundAura = PALADIN_AURAS[aura.spellId]
+            local sid = SafeSpellId(aura)
+            if sid and PALADIN_AURAS[sid] then
+                foundAura = PALADIN_AURAS[sid]
                 return true
             end
             return false
@@ -99,8 +107,9 @@ local function GetCurrentStanceName()
     if class == "ROGUE" and AuraUtil and AuraUtil.ForEachAura then
         local foundStealth = nil
         AuraUtil.ForEachAura("player", "HELPFUL", nil, function(aura)
-            if aura and aura.spellId and ROGUE_STEALTH_SPELLS[aura.spellId] then
-                foundStealth = ROGUE_STEALTH_SPELLS[aura.spellId]
+            local sid = SafeSpellId(aura)
+            if sid and ROGUE_STEALTH_SPELLS[sid] then
+                foundStealth = ROGUE_STEALTH_SPELLS[sid]
                 return true
             end
             return false
@@ -112,8 +121,9 @@ local function GetCurrentStanceName()
     if class == "PRIEST" and AuraUtil and AuraUtil.ForEachAura then
         local foundForm = nil
         AuraUtil.ForEachAura("player", "HELPFUL", nil, function(aura)
-            if aura and aura.spellId and PRIEST_FORMS[aura.spellId] then
-                foundForm = PRIEST_FORMS[aura.spellId]
+            local sid = SafeSpellId(aura)
+            if sid and PRIEST_FORMS[sid] then
+                foundForm = PRIEST_FORMS[sid]
                 return true
             end
             return false
@@ -125,8 +135,9 @@ local function GetCurrentStanceName()
     if class == "DEMONHUNTER" and AuraUtil and AuraUtil.ForEachAura then
         local foundMeta = nil
         AuraUtil.ForEachAura("player", "HELPFUL", nil, function(aura)
-            if aura and aura.spellId and DH_FORMS[aura.spellId] then
-                foundMeta = DH_FORMS[aura.spellId]
+            local sid = SafeSpellId(aura)
+            if sid and DH_FORMS[sid] then
+                foundMeta = DH_FORMS[sid]
                 return true
             end
             return false
@@ -384,14 +395,22 @@ eventFrame:RegisterEvent("PLAYER_REGEN_DISABLED")
 eventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
 eventFrame:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
 
+-- PERF: UNIT_AURA can fire many times per second; coalesce into one update.
+local auraUpdatePending = false
+local function FlushAuraUpdate()
+    auraUpdatePending = false
+    ST:UpdateDisplay()
+end
+
 eventFrame:SetScript("OnEvent", function(self, event, unit)
     if event == "PLAYER_LOGIN" then
         CreateStanceFrame()
         ST:ApplyPosition()
         ST:UpdateDisplay()
     elseif event == "UNIT_AURA" then
-        if unit == "player" then
-            ST:UpdateDisplay()
+        if unit == "player" and not auraUpdatePending then
+            auraUpdatePending = true
+            C_Timer.After(0.1, FlushAuraUpdate)
         end
     else
         ST:UpdateDisplay()

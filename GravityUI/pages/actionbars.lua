@@ -138,7 +138,10 @@ local lockProxy = setmetatable({}, {
             local wowMod = MODIFIER_MAP[v]
             if wowMod and not InCombatLockdown() then
                 SetModifiedClick("PICKUPACTION", wowMod)
-                SaveBindings(GetCurrentBindingSet())
+                local bindingSet = GetCurrentBindingSet and GetCurrentBindingSet()
+                if bindingSet == 1 or bindingSet == 2 then
+                    SaveBindings(bindingSet)
+                end
             end
             local db = ns.GetDB()
             if db and db.actionbars and db.actionbars.global then
@@ -562,12 +565,19 @@ end
 -- ═══════════════════════════════════════════════════════════════
 ns.GUI:RegisterPage("actionbars", {
     title = "Action Bars",
-    subTabs = {
-        { name = "Action Bars Settings", builder = BuildActionBarsSettings },
-        { name = "Bar Layout",           builder = BuildBarLayoutSettings },
-        { name = "Mouseover Settings",   builder = BuildMouseoverSettings },
-        { name = "Extra Action Buttons", builder = BuildSpecialButtons },
-    },
+    subTabs = (function()
+        local tabs = {
+            { name = "Action Bars Settings", builder = BuildActionBarsSettings },
+            { name = "Bar Layout",           builder = BuildBarLayoutSettings },
+            { name = "Mouseover Settings",   builder = BuildMouseoverSettings },
+        }
+        -- Forever: no Extra Action Button / Zone Ability there (EllesmereUI leaves
+        -- the container to Blizzard as well) -> tab hidden
+        if not ns.IS_FOREVER then
+            table.insert(tabs, { name = "Extra Action Buttons", builder = BuildSpecialButtons })
+        end
+        return tabs
+    end)(),
     OnBuild = function(content)
         -- Hide default scrollframe parent
         local scrollFrame = content:GetParent()
