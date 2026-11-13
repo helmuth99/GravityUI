@@ -403,10 +403,18 @@ function CooldownText:CreateBaseFrames()
             UpdateInstanceCache()
             C_Timer.After(0.5, function() self:Initialize() end)
         else
-            -- Talent / spec change
-            C_Timer.After(0.5, function() self:Initialize() end)
+            -- Talent / spec change (Forever: skipped during a dual spec switch,
+            -- the RegisterTalentSwapDone callback re-initializes afterwards)
+            C_Timer.After(0.5, function()
+                if ns.IsTalentSwapping and ns.IsTalentSwapping() then return end
+                self:Initialize()
+            end)
         end
     end)
+    if ns.IS_FOREVER and ns.RegisterTalentSwapDone and not self._swapHooked then
+        self._swapHooked = true
+        ns.RegisterTalentSwapDone(function() CooldownText:Initialize() end)
+    end
 end
 
 function CooldownText:Refresh()
@@ -488,6 +496,7 @@ end
 function CooldownText:UpdateCooldowns()
     if not mainContainer or not DB then return end
     if not DB.enabled then return end
+    if ns.IsTalentSwapping and ns.IsTalentSwapping() then return end  -- Forever: dual spec switch guard
     
     local shouldHideAll = DB.onlyRaidDungeon and not cachedIsInDungeonOrRaid
 

@@ -131,3 +131,70 @@ do
         return role
     end
 end
+
+-- Forever: dual spec (talent group) switch guard.
+-- During the switch the client rebuilds all action slots, spells, forms and
+-- cooldowns at once. Querying action/spell cooldowns (duration objects), stance
+-- data or reparenting stance buttons in that window crashed the client
+-- (ACCESS_VIOLATION) with GravityUI loaded. Modules check ns.IsTalentSwapping()
+-- and skip their work; once the switch has settled, registered callbacks run a
+-- single full refresh instead.
+do
+    local swapping = false
+    local token = 0
+    local doneCallbacks = {}
+
+    ns.IsTalentSwapping = function() return swapping end
+    ns.RegisterTalentSwapDone = function(fn)
+        if type(fn) == "function" then doneCallbacks[#doneCallbacks + 1] = fn end
+    end
+
+    if ns.IS_FOREVER then
+        local function Finish(myToken)
+            if myToken ~= token then return end  -- a newer switch extended the window
+            swapping = false
+            for _, fn in ipairs(doneCallbacks) do pcall(fn) end
+        end
+        -- (Re)start the guard window; it ends `settle` seconds after the last trigger.
+        local function Begin(settle)
+            swapping = true
+            token = token + 1
+            local myToken = token
+            C_Timer.After(settle, function() Finish(myToken) end)
+        end
+        ns._BeginTalentSwap = Begin
+
+        -- Activate Primary/Secondary Spec (cast) spell IDs
+        local DUAL_SPEC_SPELLS = { [63644] = true, [63645] = true }
+
+        -- Hook the API calls the talent UI uses to switch groups (whichever exist).
+        local function HookSwitchFn(tbl, name)
+            if tbl and type(tbl[name]) == "function" then
+                pcall(hooksecurefunc, tbl, name, function() Begin(10) end)
+            end
+        end
+        HookSwitchFn(_G, "SetActiveTalentGroup")
+        HookSwitchFn(_G, "SetActiveSpecGroup")
+        HookSwitchFn(C_SpecializationInfo, "SetActiveSpecGroup")
+        HookSwitchFn(C_SpecializationInfo, "SetActiveTalentGroup")
+        HookSwitchFn(C_Talent, "SetActiveTalentGroup")
+
+        local f = CreateFrame("Frame")
+        pcall(f.RegisterEvent, f, "ACTIVE_TALENT_GROUP_CHANGED")
+        pcall(f.RegisterUnitEvent, f, "UNIT_SPELLCAST_START", "player")
+        pcall(f.RegisterUnitEvent, f, "UNIT_SPELLCAST_STOP", "player")
+        pcall(f.RegisterUnitEvent, f, "UNIT_SPELLCAST_FAILED", "player")
+        pcall(f.RegisterUnitEvent, f, "UNIT_SPELLCAST_INTERRUPTED", "player")
+        f:SetScript("OnEvent", function(_, event, _, _, spellID)
+            if event == "ACTIVE_TALENT_GROUP_CHANGED" then
+                Begin(1.5)  -- switch done; let the slot/spell flood settle
+            elseif spellID and not (issecretvalue and issecretvalue(spellID)) and DUAL_SPEC_SPELLS[spellID] then
+                if event == "UNIT_SPELLCAST_START" then
+                    Begin(15)   -- covers the cast; ACTIVE_TALENT_GROUP_CHANGED shortens it
+                elseif swapping then
+                    Begin(2)    -- cast stopped/failed: short settle (success re-arms via the event)
+                end
+            end
+        end)
+    end
+end

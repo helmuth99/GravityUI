@@ -1741,6 +1741,7 @@ do
 
     -- Walk all buttons
     local function DispatchCooldownUpdate()
+        if ns.IsTalentSwapping and ns.IsTalentSwapping() then return end  -- Forever: dual spec switch guard
         for _, info in ipairs(BAR_CONFIG) do
             local btns = barButtons[info.key]
             if btns then
@@ -1754,6 +1755,7 @@ do
     end
 
     local function DispatchSlotChanged(changedSlot)
+        if ns.IsTalentSwapping and ns.IsTalentSwapping() then return end  -- Forever: dual spec switch guard
         if changedSlot == 0 then
             -- Full refresh (all slots)
             for _, info in ipairs(BAR_CONFIG) do
@@ -1795,6 +1797,7 @@ do
     end
 
     local function DispatchUsableUpdate()
+        if ns.IsTalentSwapping and ns.IsTalentSwapping() then return end  -- Forever: dual spec switch guard
         local db = GetDB()
         if not db then return end
         local g = db.global
@@ -1858,6 +1861,7 @@ do
         C_Timer_After(delay or 0.2, function()
             _usableRecheckPending = false
             if not AreBarsEnabled() then return end
+            if ns.IsTalentSwapping and ns.IsTalentSwapping() then return end
             DispatchUsableUpdate()
             -- Also clear stale cooldown dimming (desaturated + darkened)
             for _, info in ipairs(BAR_CONFIG) do
@@ -1911,6 +1915,9 @@ do
     dispatcher:SetScript("OnEvent", function(self, event, arg1)
         -- Safety guard: if bars got disabled between event fire and handler
         if not AreBarsEnabled() then return end
+        -- Forever: ignore the event flood of a dual spec switch; one full refresh
+        -- runs once it has settled (see RegisterTalentSwapDone below)
+        if ns.IsTalentSwapping and ns.IsTalentSwapping() then return end
 
         if event == "ACTIONBAR_UPDATE_COOLDOWN" or event == "SPELL_UPDATE_COOLDOWN" then
             DispatchCooldownUpdate()
@@ -2011,6 +2018,17 @@ do
     -- Expose for RefreshActionBars to trigger initial content refresh after re-enable
     ns._DispatchSlotChanged = DispatchSlotChanged
     ns._DispatchCooldownUpdate = DispatchCooldownUpdate
+
+    -- Forever: full refresh once a dual spec switch has settled
+    if ns.IS_FOREVER and ns.RegisterTalentSwapDone then
+        ns.RegisterTalentSwapDone(function()
+            if not AreBarsEnabled() then return end
+            DispatchSlotChanged(0)
+            DispatchUsableUpdate()
+            DispatchCooldownUpdate()
+            C_Timer_After(0.3, SyncCheckedStates)
+        end)
+    end
 end
 
 -------------------------------------------------------------------------------
@@ -3250,6 +3268,13 @@ function ns.RefreshActionBars()
     local db = GetDB()
     if not db then return end
 
+    -- Forever: never rebuild the bars in the middle of a dual spec switch
+    -- (e.g. LibDualSpec profile change); run once the switch has settled.
+    if ns.IsTalentSwapping and ns.IsTalentSwapping() then
+        ns._refreshAfterSwapQueued = true  -- picked up by the RegisterTalentSwapDone callback below
+        return
+    end
+
     if InCombatLockdown() then
         ns.QueueOOCAction(function()
             if ns.RefreshActionBars then
@@ -3755,6 +3780,16 @@ function ns.RefreshActionBars()
                 function() return true end,
                 nil
             )
+        end
+    end)
+end
+
+-- Forever: run a RefreshActionBars that was requested during a dual spec switch
+if ns.IS_FOREVER and ns.RegisterTalentSwapDone then
+    ns.RegisterTalentSwapDone(function()
+        if ns._refreshAfterSwapQueued then
+            ns._refreshAfterSwapQueued = false
+            ns.RefreshActionBars()
         end
     end)
 end
@@ -4359,6 +4394,7 @@ local _formRecheckPending = false
 local function CheckFormCountChanged()
     _formRecheckPending = false
     if not AreBarsEnabled() then return end
+    if ns.IsTalentSwapping and ns.IsTalentSwapping() then return end  -- re-run after the switch
     local n = (GetNumShapeshiftForms and GetNumShapeshiftForms()) or 0
     if _lastFormCount == nil then
         _lastFormCount = n
@@ -4392,6 +4428,10 @@ if ns.IS_FOREVER then
         _formRecheckPending = true
         C_Timer_After(0.3, CheckFormCountChanged)  -- debounce event bursts
     end)
+    -- Dual spec switch can change the number of forms/aspects: check once it settled
+    if ns.RegisterTalentSwapDone then
+        ns.RegisterTalentSwapDone(function() C_Timer_After(0.2, CheckFormCountChanged) end)
+    end
 end
 
 -- Forever: StanceBar guard.
@@ -4474,6 +4514,7 @@ if ns.IS_FOREVER then
     local function StanceGuard()
         stanceGuardPending = false
         if not AreBarsEnabled() then return end
+        if ns.IsTalentSwapping and ns.IsTalentSwapping() then return end  -- re-run after the switch
         ReanchorStanceButtons()
         PaintStanceButtons()
     end
@@ -4483,6 +4524,9 @@ if ns.IS_FOREVER then
         C_Timer_After(0, StanceGuard)  -- after Blizzard's own handler ran
     end
     ns.QueueStanceGuard = QueueStanceGuard
+    if ns.RegisterTalentSwapDone then
+        ns.RegisterTalentSwapDone(QueueStanceGuard)
+    end
 
     local stanceGuardFrame = CreateFrame("Frame")
     for _, ev in ipairs({

@@ -404,6 +404,7 @@ end
 
 local function UpdateCursorGCD()
     if not gcdCooldown then return end
+    if ns.IsTalentSwapping and ns.IsTalentSwapping() then return end  -- Forever: dual spec switch guard
     local s = GetCursorSettings()
     if not s or not s.enabled or not s.gcdEnabled then
         gcdCooldown:Hide()
@@ -577,6 +578,7 @@ end
 
 local function UpdateTauntCursor()
     if isTauntPreviewActive then return end
+    if ns.IsTalentSwapping and ns.IsTalentSwapping() then return end  -- Forever: dual spec switch guard
     local s = GetCursorSettings()
     if not s or not s.tauntCursorEnabled then
         if tauntCursorFrame then tauntCursorFrame:Hide() end
@@ -728,6 +730,7 @@ end
 
 local function UpdateDispelCursor()
     if isDispelPreviewActive then return end
+    if ns.IsTalentSwapping and ns.IsTalentSwapping() then return end  -- Forever: dual spec switch guard
     local s = GetCursorSettings()
     if not s or not s.dispelCursorEnabled then
         if dispelCursorFrame then dispelCursorFrame:Hide() end
@@ -928,6 +931,8 @@ local function QueueRangeSlotCacheUpdate()
     isRangeCacheUpdateQueued = true
     C_Timer.After(0.5, function()
         isRangeCacheUpdateQueued = false
+        -- Forever: skip during a dual spec switch (re-queued by the swap-done callback)
+        if ns.IsTalentSwapping and ns.IsTalentSwapping() then return end
         UpdateRangeSlotCache()
     end)
 end
@@ -1432,6 +1437,16 @@ eventFrame:SetScript("OnEvent", function(self, event, unit)
         QueueRangeSlotCacheUpdate()
     end
 end)
+
+-- Forever: re-evaluate cursor helpers once a dual spec switch has settled
+if ns.IS_FOREVER and ns.RegisterTalentSwapDone then
+    ns.RegisterTalentSwapDone(function()
+        QueueRangeSlotCacheUpdate()
+        UpdateCursorGCD()
+        UpdateTauntCursor()
+        UpdateDispelCursor()
+    end)
+end
 
 -- Debug Command
 SLASH_GRAVITYDEBUGRANGE1 = "/gravitydebugrange"
