@@ -2110,7 +2110,10 @@ local function BRM_Setup()
 
     f:SetMovable(true)
     f:SetClampedToScreen(true)
-    f:EnableMouse(true)
+    -- Do NOT EnableMouse on the whole BonusRollFrame: it is parented to
+    -- GroupLootContainer and its 286x76 rect (incl. invisible margins / the
+    -- container stack in the screen centre) would swallow clicks while loot
+    -- rolls are up. Dragging works through the visible children instead.
     f:RegisterForDrag("LeftButton")
     local function OnStart()
         local cfg = BRC_GetSettings()
@@ -2139,7 +2142,13 @@ local function BRM_Setup()
         end
     end
     for _, child in ipairs({ f:GetChildren() }) do
-        if child ~= f.PromptFrame or true then ForwardDrag(child) end
+        ForwardDrag(child)
+    end
+    -- Visible prompt area as drag handle (only clickable while it is shown)
+    local prompt = f.PromptFrame
+    if prompt and prompt.EnableMouse and prompt.IsMouseEnabled and not prompt:IsMouseEnabled() then
+        prompt:EnableMouse(true)
+        ForwardDrag(prompt)
     end
 
     -- Blizzard re-anchors the frame on every roll; re-apply our saved spot
