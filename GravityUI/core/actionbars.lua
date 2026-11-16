@@ -859,12 +859,28 @@ local function GetOrCreateButton(slot, parent, info, index)
         btn:SetAttribute("action", slot)
         btn.action = slot  -- Blizzard's overlay glow reads this property
 
+        -- Forever: keep the engine-side action->button registration in sync.
+        -- The template's OnLoad registered this button via
+        -- C_ActionBar.RegisterActionUIButton with the action it computed at
+        -- creation time (no "action" attribute yet -> invalid slot). Our neutered
+        -- UpdateAction never re-registers it, so the client kept up to 120 buttons
+        -- mapped to that bogus slot. When talents / dual spec rebuild the action
+        -- slots, the client walks those registrations and crashed (ACCESS_VIOLATION).
+        -- EllesmereUI keeps UpdateAction alive, which re-registers on every change.
+        local function SyncActionUIButton(b, action)
+            if ns.IS_FOREVER and action and C_ActionBar and C_ActionBar.RegisterActionUIButton then
+                pcall(C_ActionBar.RegisterActionUIButton, b, action, b.cooldown)
+            end
+        end
+        SyncActionUIButton(btn, slot)
+
         -- Keep btn.action synced when SecureStateDriver changes the attribute
         if not GFD(btn).actionSyncHooked then
             GFD(btn).actionSyncHooked = true
             btn:HookScript("OnAttributeChanged", function(self, name, value)
                 if name == "action" then
                     self.action = value
+                    SyncActionUIButton(self, value)
                 end
             end)
         end
